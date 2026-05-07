@@ -42,9 +42,9 @@ units::angle VehicleFacings::pick() const
     return random_entry( values );
 }
 
-point VehicleLocation::pick_point() const
+point_bub_ms VehicleLocation::pick_point() const
 {
-    return point( x.get(), y.get() );
+    return point_bub_ms( x.get(), y.get() );
 }
 
 /** @relates string_id */
@@ -236,21 +236,21 @@ static void builtin_jackknifed_semi( map &m, const std::string &terrainid )
 
     const units::angle facing = loc->pick_facing();
     int facing_degrees = std::lround( to_degrees( facing ) );
-    const point semi_p = loc->pick_point();
-    point trailer_p;
+    const auto semi_p = loc->pick_point();
+    point_bub_ms trailer_p;
 
     if( facing_degrees == 0 ) {
-        trailer_p.x = semi_p.x + 4;
-        trailer_p.y = semi_p.y - 10;
+        trailer_p.x() = semi_p.x() + 4;
+        trailer_p.y() = semi_p.y() - 10;
     } else if( facing_degrees == 90 ) {
-        trailer_p.x = semi_p.x + 12;
-        trailer_p.y = semi_p.y + 1;
+        trailer_p.x() = semi_p.x() + 12;
+        trailer_p.y() = semi_p.y() + 1;
     } else if( facing_degrees == 180 ) {
-        trailer_p.x = semi_p.x - 4;
-        trailer_p.y = semi_p.y + 10;
+        trailer_p.x() = semi_p.x() - 4;
+        trailer_p.y() = semi_p.y() + 10;
     } else {
-        trailer_p.x = semi_p.x - 12;
-        trailer_p.y = semi_p.y - 1;
+        trailer_p.x() = semi_p.x() - 12;
+        trailer_p.y() = semi_p.y() - 1;
     }
 
     m.add_vehicle( vgroup_id( "semi_truck" ), semi_p,

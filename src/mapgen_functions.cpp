@@ -1942,9 +1942,9 @@ void mapgen_pd_border( mapgendata &dat )
     // otherwise fall back to the default pocket dimension border terrain.
     ter_id border_ter = ter_id( "t_pd_border" );
     if( dat.m.has_dimension_bounds() ) {
-        std::optional<dimension_bounds> bounds = dat.m.get_dimension_bounds();
-        if( bounds && bounds->boundary_terrain.is_valid() ) {
-            border_ter = bounds->boundary_terrain.id();
+        const auto pocket_info = dat.m.get_pocket_info();
+        if( pocket_info.has_value() && pocket_info->bounds.boundary_terrain.is_valid() ) {
+            border_ter = pocket_info->bounds.boundary_terrain.id();
         }
     }
     fill_background( &dat.m, border_ter );

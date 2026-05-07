@@ -183,7 +183,7 @@ class DefaultRemovePartHandler : public RemovePartHandler
             }
             // TODO: maybe do this for all the nearby NPCs as well?
 
-            if( g->u.get_grab_type() == OBJECT_VEHICLE && g->u.grab_point == veh.bub_part_location( part ) ) {
+            if( g->u.get_grab_type() == OBJECT_VEHICLE && g->u.bub_pos() + g->u.grab_point == veh.bub_part_location( part ) ) {
                 if( veh.parts_at_relative( veh.part( part ).mount, false ).empty() ) {
                     add_msg( m_info, _( "The vehicle part you were holding has been destroyed!" ) );
                     g->u.grab( OBJECT_NONE );
@@ -2598,7 +2598,7 @@ bool vehicle::find_and_split_vehicles( int exclude )
             }
             checked_parts.insert( test_part );
             for( point offset : four_adjacent_offsets ) {
-                const const tripoint_mnt_veh &dp = parts[test_part].mount + offset;
+                const tripoint_mnt_veh &dp = parts[test_part].mount + offset;
                 std::vector<int> all_neighbor_parts = parts_at_relative( dp, true );
                 int neighbor_struct_part = -1;
                 for( int p : all_neighbor_parts ) {
@@ -5446,7 +5446,7 @@ int vehicle::total_solar_epower_w() const
     }
     // Weather doesn't change much across the area of the vehicle, so just
     // sample it once.
-    const weather_type_id &wtype = current_weather( bub_ms_location() );
+    const weather_type_id &wtype = current_weather( abs_ms_location() );
     const float tick_sunlight = incident_sunlight( wtype, calendar::turn );
     double intensity = tick_sunlight / default_daylight_level();
     return epower_w * intensity;
@@ -5469,7 +5469,7 @@ int vehicle::total_wind_epower_w() const
         }
 
         double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                                                bub_part_location( part ).raw(),
+                                                here.bub_to_abs( bub_part_location( part ) ),
                                                 weather.winddirection, false );
         if( windpower <= ( weather.windspeed / 10.0 ) ) {
             continue;
@@ -5998,7 +5998,7 @@ void vehicle::idle( bool on_map )
     }
 
     // Disallow running a planter underground for now
-    if( !warm_enough_to_plant( g->u.bub_pos() ) || bub_ms_location().z() < 0 ) {
+    if( !warm_enough_to_plant( g->u.abs_pos() ) || abs_ms_location().z() < 0 ) {
         for( const vpart_reference &vp : get_enabled_parts( "PLANTER" ) ) {
             if( g->u.sees( bub_ms_location() ) ) {
                 add_msg( _( "The %s's planter turns off due to low temperature." ), name );
@@ -6838,7 +6838,7 @@ void vehicle::do_towing_move()
                                                 clamp( destination_delta_y, -1, 1 ),
                                                 clamp( destination_delta_z, -1, 1 ) );
         g->m.move_vehicle( *towed_veh, move_destination, towed_veh->face );
-        towed_veh->move = tileray( point( destination_delta_x, destination_delta_y ) );
+        towed_veh->move = tileray( point_rel_ms( destination_delta_x, destination_delta_y ) );
     }
 
 }
@@ -7781,7 +7781,7 @@ void vehicle::update_time( const time_point &update_to )
     }
     // Get one weather data set per vehicle, they don't differ much across vehicle area
     const weather_sum accum_weather = sum_conditions( update_from, update_to,
-                                      abs_ms_location().raw() );
+                                      abs_ms_location() );
     // make some reference objects to use to check for reload
     const item *water = item::spawn_temporary( "water" );
     const item *water_clean = item::spawn_temporary( "water_clean" );
@@ -8045,9 +8045,9 @@ bool vehicle::refresh_zones()
                 // By continuing here and not adding to new_zones, we effectively remove it
                 continue;
             }
-            auto zone_pos = g->m.bub_to_abs( bub_part_location( part_idx ) ).raw();
+            auto zone_pos = g->m.bub_to_abs( bub_part_location( part_idx ) );
             //Set the position of the zone to that part
-            zone.set_position( std::pair<tripoint, tripoint>( zone_pos, zone_pos ), false );
+            zone.set_position( std::pair<tripoint_abs_ms, tripoint_abs_ms>( zone_pos, zone_pos ), false );
             new_zones.emplace( z.first, zone );
         }
         loot_zones = new_zones;

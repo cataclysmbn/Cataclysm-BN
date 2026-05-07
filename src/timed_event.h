@@ -2,8 +2,8 @@
 
 #include <list>
 
+#include "coordinates.h"
 #include "calendar.h"
-#include "point.h"
 
 enum timed_event_type : int {
     TIMED_EVENT_NULL,

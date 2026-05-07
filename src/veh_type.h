@@ -12,8 +12,8 @@
 
 #include "calendar.h"
 #include "color.h"
+#include "coordinates.h"
 #include "damage.h"
-#include "point.h"
 #include "requirements.h"
 #include "string_id.h"
 #include "translations.h"

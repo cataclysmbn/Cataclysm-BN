@@ -107,7 +107,7 @@ void start_location::finalize()
 }
 
 // check if tile at p should be boarded with some kind of furniture.
-static void add_boardable( const map &m, const tripoint &p, std::vector<tripoint> &vec )
+static void add_boardable( const map &m, const tripoint_bub_ms &p, std::vector<tripoint_bub_ms> &vec )
 {
     if( m.has_furn( p ) ) {
         // Don't need to board this up, is already occupied
@@ -128,12 +128,12 @@ static void add_boardable( const map &m, const tripoint &p, std::vector<tripoint
     vec.push_back( p );
 }
 
-static void board_up( map &m, const tripoint_range<tripoint> &range )
+static void board_up( map &m, const tripoint_range<tripoint_bub_ms> &range )
 {
-    std::vector<tripoint> furnitures1;
-    std::vector<tripoint> furnitures2;
-    std::vector<tripoint> boardables;
-    for( const tripoint &p : range ) {
+    std::vector<tripoint_bub_ms> furnitures1;
+    std::vector<tripoint_bub_ms> furnitures2;
+    std::vector<tripoint_bub_ms> boardables;
+    for( const tripoint_bub_ms &p : range ) {
         bool must_board_around = false;
         const ter_id t = m.ter( p );
         if( t == t_window_domestic || t == t_window || t == t_window_no_curtains ) {
@@ -153,7 +153,7 @@ static void board_up( map &m, const tripoint_range<tripoint> &range )
         }
         if( must_board_around ) {
             // Board up the surroundings of the door/window
-            for( const tripoint &neigh : points_in_radius( p, 1 ) ) {
+            for( const tripoint_bub_ms &neigh : points_in_radius( p, 1 ) ) {
                 if( neigh == p ) {
                     continue;
                 }
@@ -162,7 +162,7 @@ static void board_up( map &m, const tripoint_range<tripoint> &range )
         }
     }
     // Find all furniture that can be used to board up some place
-    for( const tripoint &p : range ) {
+    for( const tripoint_bub_ms &p : range ) {
         if( std::ranges::contains( boardables, p ) ) {
             continue;
         }
@@ -286,25 +286,25 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
  * Maybe TODO: Allow "picking up" items or parts of bashable furniture
  *             and using them to help with bash attempts.
  */
-static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
+static int rate_location( map &m, const tripoint_bub_ms &p, const bool must_be_inside,
                           const int bash_str, const int attempt,
                           std::vector<int> &checked, int checked_sy )
 {
     if( ( must_be_inside && m.is_outside( p ) ) ||
         m.impassable( p ) ||
-        checked[p.x * checked_sy + p.y] > 0 ) {
+        checked[p.x() * checked_sy + p.y()] > 0 ) {
         return 0;
     }
 
     // Vector that will be used as a stack
-    std::vector<tripoint> st;
+    std::vector<tripoint_bub_ms> st;
     st.reserve( checked.size() );
     st.push_back( p );
 
     // If not checked yet and either can be moved into, can be bashed down or opened,
     // add it on the top of the stack.
-    const auto maybe_add = [&]( const tripoint & pt, const tripoint & from ) {
-        if( checked[pt.x * checked_sy + pt.y] >= attempt ) {
+    const auto maybe_add = [&]( const tripoint_bub_ms & pt, const tripoint_bub_ms & from ) {
+        if( checked[pt.x() * checked_sy + pt.y()] >= attempt ) {
             return;
         }
 
@@ -321,16 +321,16 @@ static int rate_location( map &m, const tripoint &p, const bool must_be_inside,
         const auto cur = st.back();
         st.pop_back();
 
-        checked[cur.x * checked_sy + cur.y] = attempt;
-        if( cur.x == 0 || cur.x == g_mapsize_x - 1 ||
-            cur.y == 0 || cur.y == g_mapsize_y - 1 ||
+        checked[cur.x() * checked_sy + cur.y()] = attempt;
+        if( cur.x() == 0 || cur.x() == g_mapsize_x - 1 ||
+            cur.y() == 0 || cur.y() == g_mapsize_y - 1 ||
             m.has_flag( "GOES_UP", cur ) ) {
             return INT_MAX;
         }
 
         for( const tripoint &delta : eight_horizontal_neighbors ) {
             auto pt = cur + delta;
-            pt.z = p.z;
+            pt.z() = p.z();
             maybe_add( pt, cur );
         }
     }
@@ -343,9 +343,7 @@ void start_location::place_player( player &u ) const
     // Need the "real" map with it's inside/outside cache and the like.
     map &m = g->m;
     // Start us off somewhere in the center of the map
-    u.setx( g_half_mapsize_x );
-    u.sety( g_half_mapsize_y );
-    u.setz( g->get_levz() );
+    u.setpos( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, g->get_levz() ) );
     m.invalidate_map_cache( m.get_abs_sub().z() );
     m.build_map_cache( m.get_abs_sub().z() );
     const bool must_be_inside = !flags().contains( "ALLOW_OUTSIDE" );
@@ -367,7 +365,7 @@ void start_location::place_player( player &u ) const
     // Try some random points at start
 
     int tries = 0;
-    const auto check_spot = [&]( const tripoint & pt ) {
+    const auto check_spot = [&]( const tripoint_bub_ms & pt ) {
         tries++;
         const int rate = rate_location( m, pt, must_be_inside, bash, tries, checked, checked_sy );
         if( best_rate < rate ) {
@@ -380,7 +378,7 @@ void start_location::place_player( player &u ) const
     };
 
     while( !found_good_spot && tries < 100 ) {
-        tripoint rand_point( g_half_mapsize_x + rng( 0, SEEX * 2 - 1 ),
+        tripoint_bub_ms rand_point( g_half_mapsize_x + rng( 0, SEEX * 2 - 1 ),
                              g_half_mapsize_y + rng( 0, SEEY * 2 - 1 ),
                              u.bub_pos().z() );
         check_spot( rand_point );
@@ -412,11 +410,11 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     m.build_outside_cache( m.get_abs_sub().z() );
     const point u( g->u.bub_pos().x() % g_half_mapsize_x, g->u.bub_pos().y() % g_half_mapsize_y );
     std::vector<tripoint_bub_ms> valid;
-    for( const tripoint &p : m.points_on_zlevel() ) {
+    for( const tripoint_bub_ms &p : m.points_on_zlevel() ) {
         if( !( m.has_flag_ter( "DOOR", p ) ||
                m.has_flag_ter( "OPENCLOSE_INSIDE", p ) ||
                m.is_outside( p ) ||
-               ( p.x >= u.x - rad && p.x <= u.x + rad && p.y >= u.y - rad && p.y <= u.y + rad ) ) ) {
+               ( p.x() >= u.x - rad && p.x() <= u.x + rad && p.y() >= u.y - rad && p.y() <= u.y + rad ) ) ) {
             if( m.has_flag( "FLAMMABLE", p ) || m.has_flag( "FLAMMABLE_ASH", p ) ) {
                 valid.push_back( p );
             }
@@ -481,7 +479,7 @@ static void add_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &t
     m.load( spawn_location, false );
     // map::place_spawns internally multiplies density by rng(10, 50)
     const float density = expected_points / ( ( 10 + 50 ) / 2.0 );
-    m.place_spawns( type, 1, point_omt_ms, point_omt_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), density );
+    m.place_spawns( type, 1, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), density );
 }
 
 void start_location::surround_with_monsters(

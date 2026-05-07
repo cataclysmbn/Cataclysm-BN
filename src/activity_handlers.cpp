@@ -2225,16 +2225,21 @@ void activity_handlers::vehicle_finish( player_activity *act, player *p )
     }
     act->set_to_null();
     if( !p->is_npc() ) {
-        if( act->values.size() < 8 ) {
+        if( act->values.size() < 7 ) {
             debugmsg( "process_activity invalid ACT_VEHICLE values:%d",
                       act->values.size() );
         } else {
             if( vp ) {
                 here.invalidate_map_cache( g->get_levz() );
-                // TODO: Z (and also where the activity is queued)
-                // Or not, because the vehicle coordinates are dropped anyway
+                const bool legacy = act->values.size() == 7;
+                tripoint_mnt_veh cursor_pos;
+                if( legacy ) {
+                    cursor_pos = tripoint_mnt_veh( act->values[ 2 ], act->values[ 3 ], 0 );
+                } else {
+                    cursor_pos = tripoint_mnt_veh( act->values[ 3 ], act->values[ 4 ], act->values[ 5 ] );
+                }
                 if( !resume_for_multi_activities( *p ) ) {
-                    g->exam_vehicle( vp->vehicle(), point( act->values[ 2 ], act->values[ 3 ] ) );
+                    g->exam_vehicle( vp->vehicle(), cursor_pos );
                 }
                 return;
             } else {

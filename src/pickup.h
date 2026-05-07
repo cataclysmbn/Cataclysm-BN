@@ -2,12 +2,13 @@
 
 #include <vector>
 
+#include "coordinates.h"
+
 class item;
 class Character;
 class JsonIn;
 class JsonOut;
 class map;
-struct tripoint;
 
 template<typename T>
 class detached_ptr;

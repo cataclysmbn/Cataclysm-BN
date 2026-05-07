@@ -544,7 +544,7 @@ static std::string get_temp( const avatar &u )
     std::string temp;
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        temp = print_temperature( get_weather().get_temperature( u.bub_pos() ) );
+        temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
     }
     if( temp.empty() ) {
         return "-";
@@ -1755,13 +1755,13 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
     // wind
     const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                                            u.bub_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
+                                            u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
     mvwprintz( w, point( 8, 5 ), get_wind_color( windpower ),
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        std::string temp = print_temperature( weather.get_temperature( u.bub_pos() ) );
+        std::string temp = print_temperature( weather.get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31 - utf8_width( temp ), 5 ), c_light_gray, temp );
     }
 
@@ -1777,7 +1777,7 @@ static void render_wind( avatar &u, const catacurses::window &w, const std::stri
     const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
     const weather_manager &weather = get_weather();
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                                            u.bub_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
+                                            u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
     mvwprintz( w, point( 8, 0 ), get_wind_color( windpower ),
                get_wind_desc( windpower ) + " " + get_wind_arrow( weather.winddirection ) );
     wnoutrefresh( w );
@@ -2293,7 +2293,7 @@ static void draw_time_classic( const avatar &u, const catacurses::window &w )
 
     if( u.has_item_with_flag( json_flag_THERMOMETER ) ||
         u.has_bionic( bionic_id( "bio_infolink" ) ) ) {
-        std::string temp = print_temperature( get_weather().get_temperature( u.bub_pos() ) );
+        std::string temp = print_temperature( get_weather().get_temperature( u.abs_pos() ) );
         mvwprintz( w, point( 31, 0 ), c_light_gray, _( "Temp : " ) + temp );
     }
 

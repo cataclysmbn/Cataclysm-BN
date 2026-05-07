@@ -262,14 +262,19 @@ auto map::resize( int new_mapsize ) -> void
     dbg( DL::Info ) << "map::resize(): my_MAPSIZE: " << my_MAPSIZE;
 }
 
-void map::set_dimension_bounds( const dimension_bounds &bounds )
+std::optional<pocket_dimension_data> map::get_pocket_info() const
 {
-    current_bounds_ = bounds;
+    return pocket_info_;
 }
 
-void map::clear_dimension_bounds()
+void map::set_pocket_info( const pocket_dimension_data &info )
 {
-    current_bounds_.reset();
+    pocket_info_ = info;
+}
+
+void map::clear_pocket_info()
+{
+    pocket_info_.reset();
 }
 
 void map::clear_grid()
@@ -279,29 +284,24 @@ void map::clear_grid()
 
 bool map::has_dimension_bounds() const
 {
-    return current_bounds_.has_value();
+    return pocket_info_.has_value();
 }
 
 bool map::is_out_of_bounds( const tripoint_bub_ms &p ) const
 {
-    if( !current_bounds_ ) {
+    if( !pocket_info_ ) {
         return false;  // No bounds means infinite dimension
     }
-    return !current_bounds_->contains_local( p, tripoint_abs_sm( abs_sub ) );
+    return !pocket_info_->bounds.contains( bub_to_abs( p ) );
 }
 
 ter_id map::get_boundary_terrain() const
 {
-    if( current_bounds_ && current_bounds_->boundary_terrain.is_valid() ) {
-        return current_bounds_->boundary_terrain.id();
+    if( pocket_info_ && pocket_info_->bounds.boundary_terrain.is_valid() ) {
+        return pocket_info_->bounds.boundary_terrain.id();
     }
     // Fallback to t_null if no boundary terrain is set
     return t_null;
-}
-
-std::optional<dimension_bounds> map::get_dimension_bounds() const
-{
-    return current_bounds_;
 }
 
 void map::bind_dimension( const std::string &dim )
@@ -4418,8 +4418,8 @@ bash_results map::bash( const tripoint_bub_ms &p, const int str,
 
     // Dimension bounds cannot be bashed - show message from boundary terrain
     if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
-        if( !silent && current_bounds_ ) {
-            const ter_t &boundary_ter = current_bounds_->boundary_terrain.obj();
+        if( !silent && pocket_info_ ) {
+            const ter_t &boundary_ter = pocket_info_->bounds.boundary_terrain.obj();
             if( !boundary_ter.bash.sound_fail.empty() ) {
                 add_msg( m_info, boundary_ter.bash.sound_fail.translated() );
             }
@@ -8169,13 +8169,13 @@ static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_ty
 
 auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> void
 {
-    if( !current_bounds_ ) {
+    if( !pocket_info_ ) {
         return;
     }
-    const bool on_min_x = pos.x() == current_bounds_->min_bound.x();
-    const bool on_max_x = pos.x() == current_bounds_->max_bound.x();
-    const bool on_min_y = pos.y() == current_bounds_->min_bound.y();
-    const bool on_max_y = pos.y() == current_bounds_->max_bound.y();
+    const bool on_min_x = pos.x() == pocket_info_->bounds.min_bound.x();
+    const bool on_max_x = pos.x() == pocket_info_->bounds.max_bound.x();
+    const bool on_min_y = pos.y() == pocket_info_->bounds.min_bound.y();
+    const bool on_max_y = pos.y() == pocket_info_->bounds.max_bound.y();
     if( !on_min_x && !on_max_x && !on_min_y && !on_max_y ) {
         return;
     }
@@ -8209,7 +8209,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
     // For out-of-bounds areas in bounded dimensions, use uniform boundary terrain
     // submaps instead of nullptr.  We check in-memory only (no DB lookup) because
     // most pocket-dimension submaps are out-of-bounds.
-    if( current_bounds_ && !current_bounds_->contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
+    if( pocket_info_ && !pocket_info_->bounds.contains( tripoint_abs_sm( grid_abs_sub ) ) ) {
         mapbuffer &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
         submap *bsub = dim_buf.lookup_submap_in_memory( grid_abs_sub );
         // Diagnostic: log boundary submap creation for dimension debugging
@@ -8236,7 +8236,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
     // live independently and on_submap_loaded() finds them in the correct registry.
     submap *tmpsub = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap( grid_abs_sub );
     // Diagnostic: log in-bounds submap loading for dimension transition debugging
-    if( current_bounds_ ) {
+    if( pocket_info_ ) {
         add_msg( m_debug, "[DIM-DIAG] loadn: in-bounds submap at (%d,%d,%d) %s",
                  grid_abs_sub.x(), grid_abs_sub.y(), grid_abs_sub.z(),
                  tmpsub ? "found" : "MISSING - will generate" );
@@ -8304,7 +8304,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
     // Overlay boundary terrain on the edge tiles of this submap if it sits at the
     // edge of a bounded dimension.  Must run before actualize() so actualize() sees
     // the correct terrain.  The underlying saved/generated submap data is not modified.
-    if( current_bounds_ ) {
+    if( pocket_info_ ) {
         apply_boundary_overlay( *tmpsub, tripoint_abs_sm( grid_abs_sub ) );
     }
     if( !tmpsub->active_items.empty() ) {
@@ -10586,10 +10586,25 @@ void map::set_memory_seen_cache_dirty( const tripoint_bub_ms &p )
     }
 }
 
+void map::clip_to_bounds( point_bub_ms &p ) const
+{
+    constexpr int sms = coords::map_squares_per( coords::scale::submap );
+    p.x() = std::clamp( p.x(), 0, sms * my_MAPSIZE - 1 );
+    p.y() = std::clamp( p.y(), 0, sms * my_MAPSIZE - 1 );
+}
+
 void map::clip_to_bounds( point_bub_sm &p ) const
 {
     p.x() = std::clamp( p.x(), 0, my_MAPSIZE - 1 );
     p.y() = std::clamp( p.y(), 0, my_MAPSIZE - 1 );
+}
+
+void map::clip_to_bounds( tripoint_bub_ms &p ) const
+{
+    constexpr int sms = coords::map_squares_per( coords::scale::submap );
+    p.x() = std::clamp( p.x(), 0, sms * my_MAPSIZE - 1 );
+    p.y() = std::clamp( p.y(), 0, sms * my_MAPSIZE - 1 );
+    p.z() = std::clamp( p.z(), -OVERMAP_DEPTH, OVERMAP_HEIGHT );
 }
 
 void map::clip_to_bounds( tripoint_bub_sm &p ) const

@@ -7769,27 +7769,6 @@ bool item::is_pocket_dimension_key() const
     return pocket_dim.has_value();
 }
 
-item::pocket_dimension_data *item::get_pocket_dimension_data()
-{
-    if( pocket_dim.has_value() ) {
-        return &pocket_dim.value();
-    }
-    return nullptr;
-}
-
-const item::pocket_dimension_data *item::get_pocket_dimension_data() const
-{
-    if( pocket_dim.has_value() ) {
-        return &pocket_dim.value();
-    }
-    return nullptr;
-}
-
-void item::set_pocket_dimension_data( pocket_dimension_data &&data )
-{
-    pocket_dim = std::move( data );
-}
-
 bool item::is_funnel_container( units::volume &bigger_than ) const
 {
     if( !is_bucket() && !is_watertight_container() ) {

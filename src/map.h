@@ -16,12 +16,13 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "bodypart.h"
 #include "calendar.h"
 #include "coordinates.h"
-#include "dimension_bounds.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "filter_utils.h"
 #include "game_constants.h"
@@ -33,14 +34,12 @@
 #include "lru_cache.h"
 #include "mapdata.h"
 #include "memory_fast.h"
-#include "point.h"
 #include "shadowcasting.h"
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "units.h"
 #include "vpart_position.h"
 
-#include <variant>
 
 enum class spawn_disposition;
 struct scent_block;
@@ -470,11 +469,17 @@ class map : public submap_load_listener
          * Set the dimension bounds for this map.
          * Out-of-bounds areas will be rendered as boundary terrain and are impassable.
          */
-        void set_dimension_bounds( const dimension_bounds &bounds );
+        void set_pocket_info( const pocket_dimension_data &info );
+        /**
+         * Get the current dimension bounds (if any).
+         * Returns the full bounds structure for secondary world capture.
+         */
+        std::optional<pocket_dimension_data> get_pocket_info() const;
+
         /**
          * Clear the dimension bounds (for infinite dimensions).
          */
-        void clear_dimension_bounds();
+        void clear_pocket_info();
         /**
          * Clear all grid submap pointers (set to nullptr).
          * Must be called before clearing MAPBUFFER to prevent dangling pointers.
@@ -494,12 +499,6 @@ class map : public submap_load_listener
          * Only valid if has_dimension_bounds() is true.
          */
         ter_id get_boundary_terrain() const;
-        /**
-         * Get the current dimension bounds (if any).
-         * Returns the full bounds structure for secondary world capture.
-         */
-        std::optional<dimension_bounds> get_dimension_bounds() const;
-
         /**
          * Return the dimension ID this map is currently bound to.
          * An empty string means the primary (default) dimension.
@@ -1878,20 +1877,10 @@ class map : public submap_load_listener
 
         /** Clips the coordinates of p to fit the map bounds */
         void clip_to_bounds( tripoint_bub_sm &p ) const;
-        void clip_to_bounds( tripoint_bub_ms &p ) const {
-            // not calling reinterperate_as because it will be depreciated
-            // this just avoids a copy, don't stare for too long
-            p = tripoint_bub_ms( project_to<coords::sm>( p ).raw() );
-            clip_to_bounds( p );
-            p = project_to<coords::ms>( tripoint_bub_sm( p.raw() ) );
-        }
+        void clip_to_bounds( tripoint_bub_ms &p ) const;
 
         void clip_to_bounds( point_bub_sm &p ) const;
-        void clip_to_bounds( point_bub_ms &p ) const {
-            p = point_bub_ms( project_to<coords::sm>( p ).raw() );
-            clip_to_bounds( p );
-            p = project_to<coords::ms>( point_bub_sm( p.raw() ) );
-        }
+        void clip_to_bounds( point_bub_ms &p ) const;
 
         int getmapsize() const {
             return my_MAPSIZE;
@@ -2340,8 +2329,8 @@ class map : public submap_load_listener
         // !value || value->first != map::abs_sub means cache is invalid
         std::optional<std::pair<tripoint_abs_sm, int>> max_populated_zlev = std::nullopt;
 
-        // Dimension bounds for bounded pocket dimensions (nullopt for infinite dimensions)
-        std::optional<dimension_bounds> current_bounds_;
+        // Dimension info for bounded pocket dimensions (nullopt for infinite dimensions)
+        std::optional<pocket_dimension_data> pocket_info_;
 
         // The dimension ID this map is bound to (empty = primary dimension)
         std::string bound_dimension_;

@@ -853,8 +853,7 @@ bool game::start_game()
             .dimension_id = "",
             .world_type   = default_wt,
             .display_name = wt_ptr ? wt_ptr->name.translated() : std::string{},
-            .bounds = std::nullopt,
-            .origin_pos = tripoint_abs_sm{},
+            .pocket_info = std::nullopt
         };
         get_overmapbuffer( current_dimension_id_ ).current_region_type = wt_ptr ?
                 wt_ptr->region_settings_id : "default";
@@ -3191,8 +3190,7 @@ bool game::load( const save_t &name )
             // bounded pocket dimension after reload.  Without this, the loaded_
             // dimensions_ entry has nullopt bounds even though the dimension IS
             // bounded.
-            .bounds = get_map().get_dimension_bounds(),
-            .origin_pos = tripoint_abs_sm{},
+            .pocket_info = get_map().get_pocket_info()
         };
     }
 
@@ -4954,10 +4952,10 @@ void game::world_tick()
                 // Look up dimension bounds once per submap so we can
                 // prevent fire from escaping a bounded pocket dimension.
                 const auto dim_it = loaded_dimensions_.find( dim );
-                const std::optional<dimension_bounds> *dim_bounds =
-                    ( dim_it != loaded_dimensions_.end() && dim_it->second.bounds.has_value() )
-                    ? &dim_it->second.bounds
-                    : nullptr;
+                std::optional<dimension_bounds> dim_bounds;
+                if( dim_it != loaded_dimensions_.end() && dim_it->second.pocket_info.has_value() ) {
+                    dim_bounds = dim_it->second.pocket_info->bounds;
+                }
 
                 // Cardinal neighbours used for fire-spread boundary requests.
                 static constexpr auto card = std::array{
@@ -4969,7 +4967,7 @@ void game::world_tick()
                     // Do not request a fire-spread load outside the dimension's
                     // spatial bounds.  Fire cannot spread through boundary tiles
                     // (they are impassable non-terrain markers, not real submaps).
-                    if( dim_bounds && !( *dim_bounds )->contains( nbr ) ) {
+                    if( dim_bounds && !dim_bounds->contains( nbr ) ) {
                         return;
                     }
                     if( !submap_loader.is_requested( dim, nbr ) ) {
@@ -6377,7 +6375,7 @@ void game::save_cyborg( item *cyborg, const tripoint_bub_ms &couch_pos, Characte
 
 }
 
-void game::exam_vehicle( vehicle &veh, point c )
+void game::exam_vehicle( vehicle &veh, tripoint_mnt_veh c )
 {
     if( veh.magic ) {
         add_msg( m_info, _( "This is your %s" ), veh.name );
@@ -8850,9 +8848,9 @@ void draw_trail( const tripoint_bub_ms &start, const tripoint_bub_ms &end, const
     }
 }
 
-void game::draw_trail_to_square( const tripoint_bub_ms &t, bool bDrawX )
+void game::draw_trail_to_square( const tripoint_rel_ms &t, bool bDrawX )
 {
-    ::draw_trail( u.bub_pos(), u.bub_pos() + t.raw(), bDrawX );
+    ::draw_trail( u.bub_pos(), u.bub_pos() + t, bDrawX );
 }
 
 static void centerlistview( const tripoint_rel_ms &active_item_position, int ui_width )
@@ -13235,7 +13233,7 @@ void game::activate_dimension_state( const std::string &new_dim_id,
 
 bool game::travel_to_dimension( const std::string &dim_id,
                                 const world_type_id &world_type,
-                                const std::optional<dimension_bounds> &bounds,
+                                const std::optional<pocket_dimension_data> &pd_info,
                                 const std::optional<tripoint_abs_sm> &load_pos,
                                 const std::function<void()> &pre_load_callback )
 {
@@ -13324,12 +13322,12 @@ bool game::travel_to_dimension( const std::string &dim_id,
     {
         const bool old_is_bounded = !old_dim_id.empty() &&
                                     loaded_dimensions_.count( old_dim_id ) &&
-                                    loaded_dimensions_.at( old_dim_id ).bounds.has_value();
-        if( old_is_bounded && !bounds.has_value() ) {
+                                    loaded_dimensions_.at( old_dim_id ).pocket_info.has_value();
+        if( old_is_bounded && !pd_info.has_value() ) {
             // Exiting a bounded pocket → remember it.
             kept_pocket_dimension_id_ = old_dim_id;
             add_msg( m_debug, "[DIM] Marking pocket '%s' as kept", old_dim_id );
-        } else if( bounds.has_value() ) {
+        } else if( pd_info.has_value() ) {
             // Entering any pocket → forget the previous kept marker.
             kept_pocket_dimension_id_.clear();
         }
@@ -13370,8 +13368,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
             .dimension_id        = dim_id,
             .world_type          = effective_wt,
             .display_name        = target_type ? target_type->name.translated() : dim_id,
-            .bounds              = bounds,
-            .origin_pos          = current_abs_sm
+            .pocket_info         = pd_info
         };
     }
 
@@ -13390,11 +13387,11 @@ bool game::travel_to_dimension( const std::string &dim_id,
 
     // Clear stale bounds then install the new ones before load_map() so that
     // loadn() knows which submaps are out-of-bounds for bounded dimensions.
-    here.clear_dimension_bounds();
-    get_overmapbuffer( current_dimension_id_ ).clear_dimension_bounds();
-    if( bounds ) {
-        here.set_dimension_bounds( *bounds );
-        get_overmapbuffer( current_dimension_id_ ).set_dimension_bounds( *bounds );
+    here.clear_pocket_info();
+    get_overmapbuffer( current_dimension_id_ ).clear_pocket_info();
+    if( pd_info ) {
+        here.set_pocket_info( *pd_info );
+        get_overmapbuffer( current_dimension_id_ ).set_pocket_info( *pd_info );
     }
 
     // Invoke pre-load callback (e.g. place overmap specials) before loading submaps
@@ -15389,11 +15386,14 @@ void game::tick_temporary_pocket_dimensions()
     // Visit all pocket dimension items in the player's possession.
     // If a pocket has expired (last_player_exit + lifetime < now), close it.
     u.visit_items( [&]( item * it ) {
-        auto *pd = it->get_pocket_dimension_data();
-        if( !pd || !pd->lifetime.has_value() || !pd->last_player_exit.has_value() ) {
+        if( !it->pocket_dim.has_value() ) {
+            VisitResponse::NEXT;
+        }
+        pocket_dimension_data &pd = *it->pocket_dim->pocket_info;
+        if( !pd.lifetime.has_value() || !pd.last_player_exit.has_value() ) {
             return VisitResponse::NEXT;
         }
-        if( *pd->last_player_exit + *pd->lifetime < calendar::turn ) {
+        if( *pd.last_player_exit + *pd.lifetime < calendar::turn ) {
             add_msg( m_bad, _( "The %s flickers and goes dark — the pocket dimension has collapsed." ),
                      it->tname() );
             it->pocket_dim = std::nullopt;

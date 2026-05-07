@@ -62,14 +62,29 @@ constexpr int map_squares_per( scale s )
 }
 
 enum class origin {
-    relative, // this is a special origin that can be added to any other
+    /**
+    * This is a special origin that can be added to any other.
+    * It is intended to be used as an offset rather than a direct
+    * pointer to a location in some reference frame.
+    **/
+    relative,
     abs, // the global absolute origin for the entire game
-    bubble, // from corner of reality bubble
-    vehicle, // local space origin for vehicles, includes rotation
+    /**
+    * From corner of reality bubble.
+    * You can think of bubble space as relative to the current bubble, but
+    * this requires a reference to the bubble to convert.
+    **/
+    bubble,
+    /**
+    * local space origin for vehicles, includes rotation
+    * This is similar to bubble space, but accounts for rotation as well.
+    * Also requires a reference to the vehicle to convert.
+    **/
+    vehicle,
     submap, // from corner of submap
     overmap_terrain, // from corner of overmap_terrain
     overmap, // from corner of overmap
-    segment,
+    segment, // from corner of segment
     mem_map_region, // from corner of memory map region
 };
 

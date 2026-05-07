@@ -16,7 +16,7 @@
 #include "explosion.h"
 
 struct tripoint_distance {
-    tripoint_distance( const tripoint &p, int distance_squared )
+    tripoint_distance( const tripoint_bub_ms &p, int distance_squared )
         : p( p )
         , distance_squared( distance_squared )
     {}
@@ -33,12 +33,12 @@ struct tripoint_distance {
 
 struct aoe_flood_node {
     aoe_flood_node() = default;
-    aoe_flood_node( tripoint parent, double parent_coverage )
+    aoe_flood_node( tripoint_bub_ms parent, double parent_coverage )
         : parent( parent ), parent_coverage( parent_coverage )
     {}
     aoe_flood_node( const aoe_flood_node & ) = default;
     aoe_flood_node &operator = ( const aoe_flood_node & ) = default;
-    tripoint parent = tripoint_min;
+    tripoint_bub_ms parent = tripoint_bub_ms::min();
     double parent_coverage = 0.0;
 };
 
@@ -52,18 +52,18 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
     const auto sigdist_to_coverage = []( const double sigdist ) {
         return std::min( 1.0, -sigdist );
     };
-    const auto aoe_permeable = [&here]( const tripoint & p ) {
+    const auto aoe_permeable = [&here]( const tripoint_bub_ms & p ) {
         return here.passable( p ) ||
                // Necessary evil. TODO: Make map::shoot not evil.
                ( here.is_transparent( p ) && here.has_flag_ter( TFLAG_PERMEABLE, p ) );
     };
-    const tripoint &origin = sh.get_origin();
+    const auto &origin = tripoint_bub_ms( sh.get_origin() );
     std::priority_queue<tripoint_distance> queue;
-    std::map<tripoint, aoe_flood_node> open;
-    std::set<tripoint> closed;
+    std::map<tripoint_bub_ms, aoe_flood_node> open;
+    std::set<tripoint_bub_ms> closed;
 
-    for( const tripoint &child : here.points_in_radius( origin, 1 ) ) {
-        double coverage = sigdist_to_coverage( sh.distance_at( child ) );
+    for( const tripoint_bub_ms &child : here.points_in_radius( origin, 1 ) ) {
+        double coverage = sigdist_to_coverage( sh.distance_at( child.raw() ) );
         if( coverage > 0.0 && !get_map().obstructed_by_vehicle_rotation( origin, child ) ) {
             open[child] = aoe_flood_node( origin, 1.0 );
             queue.emplace( child, trig_dist_squared( origin, child ) );
@@ -72,7 +72,7 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
 
     open[origin] = aoe_flood_node( origin, 1.0 );
 
-    std::map<tripoint, double> final_coverage;
+    std::map<tripoint_bub_ms, double> final_coverage;
     while( !queue.empty() ) {
         auto p = queue.top().p;
         queue.pop();
@@ -113,8 +113,8 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
         }
 
         if( current_coverage > 0.0 ) {
-            for( const tripoint &child : here.points_in_radius( p, 1 ) ) {
-                double coverage = sigdist_to_coverage( sh.distance_at( child ) );
+            for( const tripoint_bub_ms &child : here.points_in_radius( p, 1 ) ) {
+                double coverage = sigdist_to_coverage( sh.distance_at( child.raw() ) );
                 if( coverage > 0.0 && !get_map().obstructed_by_vehicle_rotation( p, child ) &&
                     !closed.contains( child ) &&
                     ( !open.contains( child ) || open.at( child ).parent_coverage < current_coverage ) ) {
@@ -151,18 +151,18 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
 }
 
 // TODO: Make this not a CTRL+C+V
-std::map<tripoint, double> expected_coverage( const shape &sh, const map &here, int bash_power )
+std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here, int bash_power )
 {
     const auto sigdist_to_coverage = []( const double sigdist ) {
         return std::min( 1.0, -sigdist );
     };
-    const tripoint &origin = sh.get_origin();
+    const auto &origin = tripoint_bub_ms( sh.get_origin() );
     std::priority_queue<tripoint_distance> queue;
-    std::map<tripoint, aoe_flood_node> open;
-    std::set<tripoint> closed;
+    std::map<tripoint_bub_ms, aoe_flood_node> open;
+    std::set<tripoint_bub_ms> closed;
 
-    for( const tripoint &child : here.points_in_radius( origin, 1 ) ) {
-        double coverage = sigdist_to_coverage( sh.distance_at( child ) );
+    for( const tripoint_bub_ms &child : here.points_in_radius( origin, 1 ) ) {
+        double coverage = sigdist_to_coverage( sh.distance_at( child.raw() ) );
         if( coverage > 0.0 && !get_map().obstructed_by_vehicle_rotation( origin, child ) ) {
             open[child] = aoe_flood_node( origin, 1.0 );
             queue.emplace( child, trig_dist_squared( origin, child ) );
@@ -171,7 +171,7 @@ std::map<tripoint, double> expected_coverage( const shape &sh, const map &here, 
 
     open[origin] = aoe_flood_node( origin, 1.0 );
 
-    std::map<tripoint, double> final_coverage;
+    std::map<tripoint_bub_ms, double> final_coverage;
     while( !queue.empty() ) {
         auto p = queue.top().p;
         queue.pop();
@@ -207,8 +207,8 @@ std::map<tripoint, double> expected_coverage( const shape &sh, const map &here, 
         }
 
         if( current_coverage > 0.0 ) {
-            for( const tripoint &child : here.points_in_radius( p, 1 ) ) {
-                double coverage = sigdist_to_coverage( sh.distance_at( child ) );
+            for( const tripoint_bub_ms &child : here.points_in_radius( p, 1 ) ) {
+                double coverage = sigdist_to_coverage( sh.distance_at( child.raw() ) );
                 if( coverage > 0.0 && !get_map().obstructed_by_vehicle_rotation( p, child ) &&
                     !closed.contains( child ) &&
                     ( !open.contains( child ) || open.at( child ).parent_coverage < current_coverage ) ) {

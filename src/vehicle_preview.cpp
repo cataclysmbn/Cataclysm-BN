@@ -79,7 +79,7 @@ class veh_preview_adapter : public cata_tiles
             // tells the renderer to treat these as absolute pixel positions
             draw_from_id_string(
                 tile,
-                tripoint( pixel_pos, 0 ),
+                tripoint_bub_ms( pixel_pos.x, pixel_pos.y, 0 ),
                 bg_color,
                 fg_color,
                 lit_level::BRIGHT,
@@ -116,7 +116,7 @@ class veh_preview_adapter : public cata_tiles
 
             draw_from_id_string(
                 tile,
-                tripoint( pixel_pos, 0 ),
+                tripoint_bub_ms( pixel_pos.x, pixel_pos.y, 0 ),
                 std::nullopt,
                 std::nullopt,
                 lit_level::BRIGHT,
@@ -142,7 +142,7 @@ class veh_preview_adapter : public cata_tiles
 
             draw_from_id_string(
                 tile,
-                tripoint( pixel_pos, 0 ),
+                tripoint_bub_ms( pixel_pos.x, pixel_pos.y, 0 ),
                 std::nullopt,
                 std::nullopt,
                 lit_level::BRIGHT,
@@ -222,7 +222,7 @@ void vehicle_preview_window::draw_cursor_at_pixel( point pixel_pos )
     adapter->draw_cursor_tile( pixel_pos );
 }
 
-void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, int highlight_part )
+void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh cursor, int highlight_part )
 {
     const point center_px = calc_window_center_pixels();
 
@@ -254,14 +254,8 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
             continue;
         }
 
-        const auto mount = part.mount;
-
-        // Calculate position relative to cursor
-        // rotate(3) matches the rotation used in ASCII display_veh()
-        const point rel = ( mount + cursor_offset ).rotate( 3 );
-
         // Convert to pixel position (centered in window)
-        const point pixel_pos = center_px + point( rel.x * tile_w, rel.y * tile_h );
+        const point pixel_pos = center_px + point( cursor.x() * tile_w, cursor.y() * tile_h );
 
         // Get part rendering info
         char part_mod = 0;
@@ -275,7 +269,7 @@ void vehicle_preview_window::display( const vehicle &veh, point cursor_offset, i
 
         // Check if this part should be highlighted
         const bool is_highlighted = ( part_idx == highlight_part ) ||
-                                    ( mount == -cursor_offset ); // Cursor position
+                                    ( part.mount == cursor ); // Cursor position
         if( is_highlighted ) {
             highlight_positions.push_back( pixel_pos );
         }

@@ -24,7 +24,6 @@
 #include "character_id.h"
 #include "coordinates.h"
 #include "creature.h"
-#include "dimension_bounds.h"
 #include "dimension_info.h"
 #include "cursesdef.h"
 #include "distribution_grid.h"
@@ -278,7 +277,7 @@ class game : public submap_load_listener
         */
         bool travel_to_dimension( const std::string &dim_id,
                                   const world_type_id &world_type,
-                                  const std::optional<dimension_bounds> &bounds = std::nullopt,
+                                  const std::optional<pocket_dimension_data> &pd_info = std::nullopt,
                                   const std::optional<tripoint_abs_sm> &load_pos = std::nullopt,
                                   const std::function<void()> &pre_load_callback = nullptr );
 
@@ -705,7 +704,7 @@ class game : public submap_load_listener
         /** Long description of (visible) things at tile. */
         void extended_description( const tripoint_bub_ms &p );
 
-        void draw_trail_to_square( const tripoint_bub_ms &t, bool bDrawX );
+        void draw_trail_to_square( const tripoint_rel_ms &t, bool bDrawX );
 
         /** Custom-filtered menu for inventory and nearby items and those that within specified radius */
         item *inv_map_splice( const item_filter &filter, const std::string &title, int radius = 0,
@@ -830,7 +829,7 @@ class game : public submap_load_listener
         void set_safe_mode( safe_mode_type mode );
 
         /** open vehicle interaction screen */
-        void exam_vehicle( vehicle &veh, point cp = point_zero );
+        void exam_vehicle( vehicle &veh, tripoint_mnt_veh cp = tripoint_mnt_veh::zero() );
 
         // Forcefully close a door at p.
         // The function checks for creatures/items/vehicles at that point and

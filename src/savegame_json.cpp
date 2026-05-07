@@ -1619,7 +1619,7 @@ void npc::load( const JsonObject &data )
         if( data.read( "omy", o ) ) {
             old_coords.y += o * OMAPY * 2;
         }
-        submap_coords = point_abs_sm( old_coords + point_rel_ms( bub_pos().x() / SEEX,
+        submap_coords = point_abs_sm( old_coords + point( bub_pos().x() / SEEX,
                                       bub_pos().y() / SEEY ) );
     }
 
@@ -1635,7 +1635,7 @@ void npc::load( const JsonObject &data )
             last_player_seen_pos->z() = bub_pos().z();
         }
         // old code used tripoint_min to indicate "not a valid point"
-        if( *last_player_seen_pos == tripoint_min ) {
+        if( *last_player_seen_pos == tripoint_bub_ms::zero() ) {
             last_player_seen_pos.reset();
         }
     } else {
@@ -1661,7 +1661,7 @@ void npc::load( const JsonObject &data )
         data.read( "pulp_locationy", pulp_location->y() );
         data.read( "pulp_locationz", pulp_location->z() );
         // old code used tripoint_min to indicate "not a valid point"
-        if( *pulp_location == tripoint_min ) {
+        if( *pulp_location == tripoint_bub_ms::zero() ) {
             pulp_location.reset();
         }
     } else {
@@ -2270,14 +2270,35 @@ void item::craft_data::deserialize( const JsonObject &obj )
     obj.read( "cached_tool_selections", cached_tool_selections );
 }
 
-void item::pocket_dimension_data::serialize( JsonOut &jsout ) const
+void dimension_info::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
     jsout.member( "dimension_id", dimension_id );
     jsout.member( "world_type", world_type );
+    jsout.member( "display_name", display_name );
+    if( pocket_info.has_value() ) {
+        jsout.member( "pocket_info", *pocket_info );
+    }
+    jsout.end_object();
+}
+
+void dimension_info::deserialize( JsonIn &jsin )
+{
+    JsonObject obj = jsin.get_object();
+    obj.allow_omitted_members();
+    obj.read( "dimension_id", dimension_id );
+    obj.read( "world_type", world_type );
+    obj.read( "display_name", display_name );
+    if( obj.has_member( "pocket_info" ) ) {
+        obj.read( "pocket_info", pocket_info );
+    }
+}
+
+void pocket_dimension_data::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
     jsout.member( "entry_point", entry_point );
-    jsout.member( "bounds_min", bounds_min );
-    jsout.member( "bounds_max", bounds_max );
+    jsout.member( "bounds", bounds );
     jsout.member( "is_initialized", is_initialized );
     jsout.member( "terrain_generated", terrain_generated );
     jsout.member( "return_dimension_id", return_dimension_id );
@@ -2292,7 +2313,7 @@ void item::pocket_dimension_data::serialize( JsonOut &jsout ) const
     jsout.end_object();
 }
 
-void item::pocket_dimension_data::deserialize( JsonIn &jsin )
+void pocket_dimension_data::deserialize( JsonIn &jsin )
 {
     JsonObject obj = jsin.get_object();
     obj.allow_omitted_members();
@@ -2300,8 +2321,6 @@ void item::pocket_dimension_data::deserialize( JsonIn &jsin )
     // New format: dimension_id is the primary key.
     // Legacy compat: reconstruct dimension_id from dimension_type + instance_id.
     if( obj.has_member( "dimension_id" ) ) {
-        obj.read( "dimension_id", dimension_id );
-        obj.read( "world_type", world_type );
         obj.read( "return_dimension_id", return_dimension_id );
         obj.read( "return_world_type", return_world_type );
     } else {
@@ -2310,10 +2329,6 @@ void item::pocket_dimension_data::deserialize( JsonIn &jsin )
         std::string old_instance_id;
         obj.read( "dimension_type", old_dim_type );
         obj.read( "instance_id", old_instance_id );
-        world_type = old_dim_type;
-        if( old_dim_type.is_valid() && !old_instance_id.empty() ) {
-            dimension_id = old_dim_type.obj().save_prefix + old_instance_id + "_";
-        }
         // Old return fields
         world_type_id old_return_dim;
         std::string old_return_instance;
@@ -2330,8 +2345,7 @@ void item::pocket_dimension_data::deserialize( JsonIn &jsin )
     }
 
     obj.read( "entry_point", entry_point );
-    obj.read( "bounds_min", bounds_min );
-    obj.read( "bounds_max", bounds_max );
+    obj.read( "bounds", bounds );
     is_initialized = obj.get_bool( "is_initialized", false );
     terrain_generated = obj.get_bool( "terrain_generated", false );
     obj.read( "return_point", return_point );
@@ -2348,18 +2362,44 @@ void item::pocket_dimension_data::deserialize( JsonIn &jsin )
 }
 
 // Full equivalence. Consider only checking identifying data.
-bool item::pocket_dimension_data::operator==( const pocket_dimension_data &rhs ) const
+bool pocket_dimension_data::operator==( const pocket_dimension_data &rhs ) const
 {
-    return dimension_id == rhs.dimension_id &&
-           world_type == rhs.world_type &&
-           entry_point == rhs.entry_point &&
-           bounds_min == rhs.bounds_min &&
-           bounds_max == rhs.bounds_max &&
+    return entry_point == rhs.entry_point &&
+           bounds == rhs.bounds &&
            is_initialized == rhs.is_initialized &&
            terrain_generated == rhs.terrain_generated &&
            return_dimension_id == rhs.return_dimension_id &&
            return_world_type == rhs.return_world_type &&
            return_point == rhs.return_point;
+}
+
+void dimension_bounds::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "min_bound", min_bound );
+    jsout.member( "max_bound", max_bound );
+    jsout.member( "boundary_terrain", boundary_terrain );
+    jsout.member( "boundary_overmap_terrain", boundary_overmap_terrain );
+    jsout.end_object();
+}
+
+void dimension_bounds::deserialize( JsonIn &jsin )
+{
+    JsonObject obj = jsin.get_object();
+    obj.allow_omitted_members();
+
+    obj.read( "min_bound", min_bound );
+    obj.read( "max_bound", max_bound );
+    obj.read( "boundary_terrain", boundary_terrain );
+    obj.read( "boundary_overmap_terrain", boundary_overmap_terrain );
+}
+
+bool dimension_bounds::operator==( const dimension_bounds &rhs ) const
+{
+    return min_bound == rhs.min_bound &&
+        max_bound == rhs.max_bound &&
+        boundary_terrain == rhs.boundary_terrain &&
+        boundary_overmap_terrain == rhs.boundary_overmap_terrain;
 }
 
 // Template parameter because item::craft_data is private and I don't want to make it public.
@@ -2616,7 +2656,10 @@ void item::io( Archive &archive )
     static const cata::value_ptr<relic> null_relic_ptr = nullptr;
     archive.io( "relic_data", relic_data, null_relic_ptr );
 
-    archive.io( "pocket_dim", pocket_dim, std::optional<pocket_dimension_data>() );
+    dimension_info dim;
+    if( archive.read( "pocket_dim", dim ) ) {
+        pocket_dim = dim;
+    }
 
     archive.io( "drop_token", drop_token, decltype( drop_token )() );
 
@@ -2975,12 +3018,12 @@ void vehicle_part::serialize( JsonOut &json ) const
         json.member( "z_offset", precalc[0].z() );
     }
     json.member( "items", items );
-    if( target.first != tripoint_min ) {
+    if( target.first != tripoint_abs_ms::min() ) {
         json.member( "target_first_x", target.first.x() );
         json.member( "target_first_y", target.first.y() );
         json.member( "target_first_z", target.first.z() );
     }
-    if( target.second != tripoint_min ) {
+    if( target.second != tripoint_abs_ms::min() ) {
         json.member( "target_second_x", target.second.x() );
         json.member( "target_second_y", target.second.y() );
         json.member( "target_second_z", target.second.z() );
@@ -3001,16 +3044,18 @@ void label::deserialize( JsonIn &jsin )
 {
     JsonObject data = jsin.get_object();
     data.allow_omitted_members();
-    data.read( "x", x );
-    data.read( "y", y );
+    data.read( "x", x() );
+    data.read( "y", y() );
+    data.read( "z", z() );
     data.read( "text", text );
 }
 
 void label::serialize( JsonOut &json ) const
 {
     json.start_object();
-    json.member( "x", x );
-    json.member( "y", y );
+    json.member( "x", x() );
+    json.member( "y", y() );
+    json.member( "z", z() );
     json.member( "text", text );
     json.end_object();
 }

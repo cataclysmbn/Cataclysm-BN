@@ -3,7 +3,7 @@
 #include <map>
 #include <memory>
 
-#include "point.h"
+#include "coordinates.h"
 #include "sdl_wrappers.h"
 #include "sdl_geometry.h"
 

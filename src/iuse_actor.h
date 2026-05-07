@@ -1576,12 +1576,12 @@ class iuse_pocket_dimension : public iuse_actor
 {
     public:
         world_type_id pocket_type =
-            world_type_id( "pocket_dimension" ); // Which world_type to use for this pocket
-        std::string entry_mapgen;               // Overmap special ID for generation
-        bool persistent = false;                 // Does the pocket survive item destruction?
+            world_type_id( "pocket_dimension" );     // Which world_type to use for this pocket
+        std::string entry_mapgen;                    // Overmap special ID for generation
+        bool persistent = false;                     // Does the pocket survive item destruction?
         int need_charges = 0;
         std::optional<ter_str_id> boundary_terrain;  // Override boundary terrain for this pocket
-        std::string pocket_name;                 // Display name for this pocket on the overmap
+        std::string pocket_name;                     // Display name for this pocket on the overmap
 
         // Temporary pocket lifetime: pocket collapses this long after the player exits.
         // nullopt = permanent pocket.
@@ -1595,6 +1595,7 @@ class iuse_pocket_dimension : public iuse_actor
                                const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
     private:
+
         void initialize_pocket( item &it ) const;
         void enter_pocket( player &p, item &it ) const;
         void exit_pocket( player &p, item &it ) const;

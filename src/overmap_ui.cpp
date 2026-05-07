@@ -378,9 +378,9 @@ weather_type_id get_weather_at_point( const point_abs_omt &pos )
     if( iter == weather_cache.end() ) {
         // TODO: fix point types
         tripoint_abs_omt pos_z( pos, OVERMAP_HEIGHT );
-        const auto abs_ms_pos = project_to<coords::ms>( pos_z ).raw();
+        const auto abs_ms_pos = project_to<coords::ms>( pos_z );
         const auto &wgen = ACTIVE_OVERMAP_BUFFER.get_settings( pos_z ).weather;
-        auto weather = wgen.get_weather_conditions( abs_ms_pos, calendar::turn, g->get_seed() );
+        auto weather = wgen.get_weather_conditions( project_to<coords::ms>( pos_z ), calendar::turn, g->get_seed() );
         iter = weather_cache.insert( std::make_pair( pos, weather ) ).first;
     }
     return iter->second;
@@ -973,7 +973,7 @@ static void draw_ascii( ui_adaptor &ui,
     if( blink && uistate.place_special ) {
         for( const overmap_special_terrain &s_ter : uistate.place_special->preview_terrains() ) {
             // Preview should only yield the terrains on the zero z-level
-            assert( s_ter.p.z == 0 );
+            assert( s_ter.p.z() == 0 );
 
             // TODO: fix point types
             const point_rel_omt rp( om_direction::rotate( s_ter.p.xy(), uistate.omedit_rotation ) );
@@ -1171,11 +1171,9 @@ static void draw_ascii( ui_adaptor &ui,
                 // Check if this tile is the target of the currently selected group
 
                 // Convert to position within overmap
-                point_abs_om abs_om;
-                point_om_omt omp_in_om;
-                std::tie( abs_om, omp_in_om ) = project_remain<coords::om>( omp.xy() );
-                if( mgroup && project_to<coords::omt>( mgroup->target.xy() ) ==
-                    omp_in_om ) {
+                const auto proj = project_remain<coords::om>( omp );
+                if( mgroup && project_to<coords::om>( mgroup->target.xy() ) ==
+                    proj.quotient ) {
                     ter_color = c_red;
                     ter_sym = "x";
                 } else {
@@ -1970,8 +1968,8 @@ static void place_ter_or_special( const ui_adaptor &om_ui, tripoint_abs_omt &cur
 
             action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
 
-            if( const std::optional<tripoint> vec = ctxt.get_direction( action ) ) {
-                curs += vec->xy();
+            if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction( action ) ) {
+                curs += vec->xy().raw();
             } else if( action == "CONFIRM" ) { // Actually modify the overmap
                 if( terrain ) {
                     ACTIVE_OVERMAP_BUFFER.ter_set( curs, uistate.place_terrain->id.id() );
@@ -2086,7 +2084,7 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
         }
     }
     // literal "edge" case: the vehicle may be in a different OMT than the player
-    const tripoint_abs_omt start_omt_pos = driving ? player_veh->abs_omt_location() : player_omt_pos;
+    const tripoint_abs_omt start_omt_pos = driving ? project_to<coords::omt>( player_veh->abs_sm_pos ) : player_omt_pos;
     if( dest == player_omt_pos || dest == start_omt_pos ) {
         return {};
     } else {
@@ -2183,7 +2181,7 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
     bool show_explored = true;
     bool fast_scroll = false; /* fast scroll state should reset every time overmap UI is opened */
     int fast_scroll_offset = get_option<int>( "FAST_SCROLL_OFFSET" );
-    std::optional<tripoint> mouse_pos;
+    std::optional<tripoint_bub_ms> mouse_pos;
     std::chrono::time_point<std::chrono::steady_clock> last_blink = std::chrono::steady_clock::now();
     grids_draw_data grids_data;
     if( uistate.overmap_default_0 ) {
@@ -2209,19 +2207,19 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
 #else
         action = ictxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
 #endif
-        if( const std::optional<tripoint> vec = ictxt.get_direction( action ) ) {
+        if( const std::optional<tripoint_rel_ms> vec = ictxt.get_direction( action ) ) {
             int scroll_d = fast_scroll ? fast_scroll_offset : 1;
-            curs += vec->xy() * scroll_d;
+            curs += vec->xy().raw() * scroll_d;
         } else if( action == "MOUSE_MOVE" || action == "TIMEOUT" ) {
             auto edge_scroll = g->mouse_edge_scrolling_overmap( ictxt );
             if( edge_scroll != tripoint_rel_omt::zero() ) {
                 if( action == "MOUSE_MOVE" ) {
-                    edge_scroll *= 2;
+                    edge_scroll += edge_scroll;
                 }
                 curs += edge_scroll;
             }
         } else if( action == "SELECT" && ( mouse_pos = ictxt.get_coordinates( g->w_overmap ) ) ) {
-            curs += mouse_pos->xy();
+            curs += mouse_pos->xy().raw();
         } else if( action == "CENTER" ) {
             curs = orig;
         } else if( action == "LEVEL_DOWN" && curs.z() > -OVERMAP_DEPTH ) {

@@ -339,7 +339,7 @@ std::vector<sphere> npc::find_dangerous_explosives() const
             continue;   // Consider only imminent dangers.
         }
 
-        result.emplace_back( elem->position(), safe_range );
+        result.emplace_back( elem->position().raw(), safe_range );
     }
 
     return result;
@@ -3343,7 +3343,7 @@ void npc::drop_items( units::mass drop_weight, units::volume drop_volume, int mi
             }
         }
         if( !added_wgt ) {
-            rWgt.emplace_back( wgt_ratio, i );
+            rWgt.emplace_back( ratio_index( wgt_ratio, i ) );
         }
         for( size_t j = 0; j < rVol.size() && !added_vol; j++ ) {
             if( vol_ratio > rVol[j].ratio ) {
@@ -3352,7 +3352,7 @@ void npc::drop_items( units::mass drop_weight, units::volume drop_volume, int mi
             }
         }
         if( !added_vol ) {
-            rVol.emplace_back( vol_ratio, i );
+            rVol.emplace_back( ratio_index( vol_ratio, i ) );
         }
     }
 

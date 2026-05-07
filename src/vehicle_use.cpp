@@ -529,11 +529,11 @@ bool vehicle::interact_vehicle_locked()
                 g->u.assign_activity( ACT_HOTWIRE_CAR, moves, -1, INT_MIN, _( "Hotwire" ) );
                 // use part 0 as the reference point
                 auto q = coord_translate( parts[0].mount );
-                const tripoint abs_veh_pos = global_square_location().raw();
+                const auto abs_veh_pos = abs_ms_location();
                 //[0]
-                g->u.activity->values.push_back( abs_veh_pos.x + q.x() );
+                g->u.activity->values.push_back( abs_veh_pos.x() + q.x() );
                 //[1]
-                g->u.activity->values.push_back( abs_veh_pos.y + q.y() );
+                g->u.activity->values.push_back( abs_veh_pos.y() + q.y() );
                 //[2]
                 g->u.activity->values.push_back( g->u.get_skill_level( skill_mechanics ) );
             } else {

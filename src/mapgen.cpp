@@ -5788,18 +5788,18 @@ void map::draw_temple( const mapgendata &dat )
                                 x--;
                             }
                         } else {
-                            std::vector<tripoint_bub_ms> next;
+                            std::vector<point_bub_ms> next;
                             for( int nx = x - 1; nx <= x + 1; nx++ ) {
                                 for( int ny = y; ny <= y + 1; ny++ ) {
                                     if( ter( point_bub_ms( nx, ny ) ) == t_rock_floor ) {
-                                        next.emplace_back( nx, ny );
+                                        next.emplace_back( point_bub_ms( nx, ny ) );
                                     }
                                 }
                             }
                             if( next.empty() ) {
                                 break;
                             } else {
-                                const tripoint_bub_ms p = random_entry( next );
+                                const point_bub_ms p = random_entry( next );
                                 x = p.x();
                                 y = p.y();
                             }

@@ -70,7 +70,7 @@ const city_reference city_reference::invalid{ nullptr, tripoint_abs_sm(), -1 };
 int city_reference::get_distance_from_bounds() const
 {
     assert( city != nullptr );
-    return distance - project_to<coords::sm>( city->size );
+    return distance - coords::map_squares_per( coords::scale::submap ) * city->size;
 }
 
 omt_find_params::~omt_find_params() = default;
@@ -200,24 +200,20 @@ void overmapbuffer::fix_mongroups( overmap &new_overmap )
             new_overmap.zg.erase( it++ );
             continue;
         }
+        const auto proj = project_remain<coords::om>( mg.abs_pos );
         // Inside the bounds of the overmap?
-        if( mg.pos.x() >= 0 && mg.pos.y() >= 0 && mg.pos.x() < OMAPX * 2 &&
-            mg.pos.y() < OMAPY * 2 ) {
+        if( proj.quotient == new_overmap.pos() ) {
             ++it;
             continue;
         }
-        point_abs_sm smabs = project_combine( new_overmap.pos(), mg.pos.xy() );
-        point_abs_om omp;
-        point_om_sm sm_rem;
-        std::tie( omp, sm_rem ) = project_remain<coords::om>( smabs );
-        if( !has( omp ) ) {
+        if( !has( proj.quotient ) ) {
             // Don't generate new overmaps, as this can be called from the
             // overmap-generating code.
             ++it;
             continue;
         }
-        overmap &om = get( omp );
-        mg.pos = tripoint_om_sm( sm_rem, mg.pos.z() );
+        overmap &om = get( proj.quotient );
+        mg.abs_pos = project_combine( new_overmap.pos(), proj.remainder_tripoint );
         om.add_mon_group( mg );
         new_overmap.zg.erase( it++ );
     }
@@ -232,18 +228,15 @@ void overmapbuffer::fix_nemesis( overmap &new_overmap )
             ++it;
             continue;
         }
+        const auto proj = project_remain<coords::om>( mg.abs_pos );
 
-        if( project_to<coords::om>( mg.abs_pos.xy() ) == new_overmap.pos() ) {
+        if( proj.quotient == new_overmap.pos() ) {
             ++it;
             continue;
         }
 
-        point_abs_om omp;
-        point_om_sm sm_rem;
-        std::tie( omp, sm_rem ) = project_remain<coords::om>( mg.abs_pos.xy() );
-
-        overmap &om = get( omp );
-        mg.pos = tripoint_om_sm( sm_rem, mg.pos.z() );
+        overmap &om = get( proj.quotient );
+        mg.abs_pos = project_combine( new_overmap.pos(), proj.remainder_tripoint );
         om.add_mon_group( mg );
         new_overmap.zg.erase( it++ );
         break;
@@ -318,7 +311,7 @@ void overmapbuffer::clear()
     overmaps.clear();
     known_non_existing.clear();
     placed_unique_specials.clear();
-    current_bounds_.reset();
+    pocket_info_.reset();
     fluid_grid::clear();
 }
 
@@ -612,11 +605,7 @@ void overmapbuffer::signal_hordes( const tripoint_abs_sm &center, const int sig_
 {
     const auto radius = sig_power;
     for( auto &om : get_overmaps_near( center, radius ) ) {
-        const point_abs_sm abs_pos_om = project_to<coords::sm>( om->pos() );
-        const tripoint_rel_sm rel_pos = center - abs_pos_om;
-        // overmap::signal_hordes expects a coordinate relative to the overmap, this is easier
-        // for processing as the monster group stores is location as relative coordinates, too.
-        om->signal_hordes( rel_pos, sig_power );
+        om->signal_hordes( center, sig_power );
     }
 }
 
@@ -679,16 +668,14 @@ void overmapbuffer::remove_nemesis()
 
 mongroup *overmapbuffer::create_horde( const mongroup &group )
 {
-    point_abs_om omp;
-    point_om_sm sm_within_om;
-    std::tie( omp, sm_within_om ) = project_remain<coords::om>( group.abs_pos.xy() );
+    const auto proj = project_remain<coords::om>( group.abs_pos );
 
-    overmap &om = get( omp );
+    overmap &om = get( proj.quotient );
     auto copy = group;
-    copy.pos = tripoint_om_sm( sm_within_om, group.abs_pos.z() );
+    copy.abs_pos = group.abs_pos;
     om.add_mon_group( copy );
 
-    auto groups_range = om.zg.equal_range( copy.pos );
+    auto groups_range = om.zg.equal_range( proj.remainder_tripoint );
     auto match = std::ranges::find_if( std::ranges::subrange( groups_range.first, groups_range.second ),
     [&]( const std::pair<tripoint_om_sm, mongroup> &entry ) {
         const mongroup &stored = entry.second;
@@ -806,20 +793,20 @@ void overmapbuffer::add_vehicle( vehicle *veh )
     veh->om_id = id;
 }
 
-void overmapbuffer::set_dimension_bounds( const dimension_bounds &bounds )
+void overmapbuffer::set_pocket_info( const pocket_dimension_data &info )
 {
-    current_bounds_ = bounds;
-    bounds_oter_id_ = bounds.boundary_overmap_terrain.id();
+    pocket_info_ = info;
+    bounds_oter_id_ = info.bounds.boundary_overmap_terrain.id();
 }
 
-void overmapbuffer::clear_dimension_bounds()
+void overmapbuffer::clear_pocket_info()
 {
-    current_bounds_.reset();
+    pocket_info_.reset();
 }
 
 bool overmapbuffer::seen( const tripoint_abs_omt &p )
 {
-    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+    if( pocket_info_ && !pocket_info_->bounds.contains( p ) ) {
         return true;
     }
     if( const overmap_with_local_coords om_loc = get_existing_om_global( p ) ) {
@@ -840,7 +827,7 @@ void overmapbuffer::set_seen( const tripoint_abs_omt &p, bool seen )
 
 const oter_id &overmapbuffer::ter( const tripoint_abs_omt &p )
 {
-    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+    if( pocket_info_ && !pocket_info_->bounds.contains( p ) ) {
         return bounds_oter_id_;
     }
     const overmap_with_local_coords om_loc = get_om_global( p );
@@ -849,7 +836,7 @@ const oter_id &overmapbuffer::ter( const tripoint_abs_omt &p )
 
 const oter_id &overmapbuffer::ter_existing( const tripoint_abs_omt &p )
 {
-    if( current_bounds_ && !current_bounds_->contains_omt( p ) ) {
+    if( pocket_info_ && !pocket_info_->bounds.contains( p ) ) {
         return bounds_oter_id_;
     }
     static const oter_id ot_null;
@@ -1823,7 +1810,8 @@ std::vector<city_reference> overmapbuffer::get_cities_near( const tripoint_abs_s
 
 city_reference overmapbuffer::closest_city( const tripoint_abs_sm &center )
 {
-    const auto cities = get_cities_near( center, project_to<coords::sm>( OMAPX ) );
+    constexpr int radius = coords::map_squares_per( coords::scale::overmap ) / coords::map_squares_per( coords::scale::submap );
+    const auto cities = get_cities_near( center, radius );
 
     if( !cities.empty() ) {
         return cities.front();
@@ -1834,7 +1822,8 @@ city_reference overmapbuffer::closest_city( const tripoint_abs_sm &center )
 
 city_reference overmapbuffer::closest_known_city( const tripoint_abs_sm &center )
 {
-    const auto cities = get_cities_near( center, project_to<coords::sm>( OMAPX ) );
+    constexpr int radius = coords::map_squares_per( coords::scale::overmap ) / coords::map_squares_per( coords::scale::submap );
+    const auto cities = get_cities_near( center, radius );
     const auto it = std::ranges::find_if( cities,
     [this]( const city_reference & elem ) {
         const tripoint_abs_omt p = project_to<coords::omt>( elem.abs_sm_pos );
@@ -1869,7 +1858,7 @@ std::string overmapbuffer::get_description_at( const tripoint_abs_sm &where )
     const direction dir = direction_from( closest_cref.abs_sm_pos, where );
     const std::string dir_name = colorize( direction_name( dir ), c_light_gray );
 
-    const int sm_size = project_to<coords::sm>( closest_cref.city->size );
+    const int sm_size = coords::map_squares_per( coords::scale::submap ) * closest_cref.city->size;
     const int sm_dist = closest_cref.distance;
 
     //~ First parameter is a terrain name, second parameter is a direction, and third parameter is a city name.
@@ -1920,8 +1909,7 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
         const map &here = get_map();
         const auto local = here.abs_to_bub( ms );
         assert( here.inbounds( local ) );
-        monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ),
-                                local.raw() );
+        monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ), local );
         if( placed ) {
             // Keep pos_abs in sync with the placed local position.
             placed->pos_abs = ms;
@@ -1945,7 +1933,7 @@ void overmapbuffer::discard_monster_map( const tripoint_abs_sm &p )
 void overmapbuffer::despawn_monster( const monster &critter )
 {
     // pos_abs is stamped by game::despawn_monster() before this call, so no map context needed.
-    const tripoint_abs_sm abs_sm( project_to<coords::sm>( critter.pos_abs.raw() ) );
+    const tripoint_abs_sm abs_sm = project_to<coords::sm>( critter.pos_abs );
     // Get the overmap coordinates and get the overmap, sm is now local to that overmap
     point_abs_om omp;
     tripoint_om_sm sm;
@@ -1953,7 +1941,7 @@ void overmapbuffer::despawn_monster( const monster &critter )
     overmap &om = get( omp );
     // Store the monster using coordinates local to the overmap.
     if( critter.is_nemesis() ) {
-        const tripoint_abs_omt abs_omt( project_to<coords::omt>( critter.pos_abs.raw() ) );
+        const tripoint_abs_omt abs_omt = project_to<coords::omt>( critter.pos_abs );
         om.place_nemesis( abs_omt );
     } else {
         om.monster_map->insert( std::make_pair( sm, critter ) );
@@ -2055,7 +2043,7 @@ bool overmapbuffer::place_special( const overmap_special_id &special_id,
 
     // Get all of the overmaps within the defined radius of the center.
     for( const auto &om : get_overmaps_near(
-             project_to<coords::sm>( center ), project_to<coords::sm>( max_radius ) ) ) {
+             project_to<coords::sm>( center ), coords::map_squares_per( coords::scale::submap ) * max_radius ) ) {
 
         // We'll include points that within our radius. We reduce the radius by
         // the length of the longest side of our special so that we don't end up in a

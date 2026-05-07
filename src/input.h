@@ -631,7 +631,7 @@ class input_context
          * Get the coordinates associated with the last mouse click (if any).
          *
          * TODO: This right now is more or less specific to the map window,
-         *       and returns the absolute map coordinate.
+         *       and returns the local map coordinate.
          *       Eventually this should be made more flexible.
          *       For overmap, we'll need another version that spits out tripoint_rel_omt
          */

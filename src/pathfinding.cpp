@@ -332,7 +332,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                     pair.second.reach_from_below->to += anti_shift;
                 }
 
-                new_z_cache_open_air.emplace( shifted, pair.second );
+                new_z_cache_open_air.emplace( shifted.xy(), pair.second );
             }
             open_air_target.swap( new_z_cache_open_air );
         }

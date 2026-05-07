@@ -3420,7 +3420,7 @@ void overmap::generate( const overmap *north, const overmap *east,
         // Bounded pocket dimensions never use full overmap generation — they
         // have pre-placed terrain via overmap specials.  Also skip if the
         // world_type explicitly disables generation.
-        if( dim->bounds.has_value() ) {
+        if( dim->pocket_info.has_value() ) {
             dbg( DL::Info ) << "overmap::generate skipped for bounded dimension '"
                             << dim->dimension_id << "'";
             return;

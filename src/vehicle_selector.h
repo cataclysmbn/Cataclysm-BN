@@ -3,10 +3,10 @@
 #include <vector>
 #include <iosfwd>
 
+#include "coordinates.h"
 #include "visitable.h"
 
 class vehicle;
-struct tripoint;
 
 class vehicle_cursor : public location_visitable<vehicle_cursor>
 {

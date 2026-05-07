@@ -1007,7 +1007,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                     SDL_Color c = curses_color_to_SDL( c_pink );
                     c.a = c.a >> 1;
                     auto p = player_to_screen( omp.reinterpret_as<tripoint_bub_ms>().xy() );
-                    draw_color_at( c, p, SDL_BLENDMODE_BLEND );
+                    draw_color_at( c, point_bub_ms( p ), SDL_BLENDMODE_BLEND );
                 }
             }
 
@@ -1158,8 +1158,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     }
     if( uistate.place_special ) {
         for( const overmap_special_terrain &s_ter : uistate.place_special->preview_terrains() ) {
-            if( s_ter.p.z == 0 ) {
-                // TODO: fix point types
+            if( s_ter.p.z() == 0 ) {
                 const point_rel_omt rp( om_direction::rotate( s_ter.p.xy(), uistate.omedit_rotation ) );
                 oter_id rotated_id = s_ter.terrain->get_rotated( uistate.omedit_rotation );
                 const oter_t &terrain = *rotated_id;

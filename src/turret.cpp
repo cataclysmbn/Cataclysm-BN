@@ -57,7 +57,7 @@ std::vector<vehicle_part *> vehicle::turrets( const tripoint_bub_ms &target )
     // exclude turrets not ready to fire or where target is out of range
     res.erase( std::remove_if( res.begin(), res.end(), [&]( const vehicle_part * e ) {
         return turret_query( *e ).query() != turret_data::status::ready ||
-               rl_dist( bub_part_location( *e ).raw(), target ) > e->base->gun_range();
+               rl_dist( bub_part_location( *e ), target ) > e->base->gun_range();
     } ), res.end() );
     return res;
 }
@@ -224,7 +224,7 @@ bool turret_data::in_range( const tripoint_abs_ms &target ) const
         return false;
     }
     int range = veh->turret_query( *part ).range();
-    int dist = rl_dist( veh->bub_part_location( *part ).raw(), target );
+    int dist = rl_dist( g->m.bub_to_abs( veh->bub_part_location( *part ) ), target );
     return range >= dist;
 }
 
@@ -308,7 +308,7 @@ void turret_data::post_fire( Character &who, int shots )
     veh->drain( fuel_type_battery, mode->get_gun_ups_drain() * shots );
 }
 
-int turret_data::fire( Character &who, const tripoint_bub_ms &target )
+int turret_data::fire( Character &who, const tripoint_abs_ms &target )
 {
     if( !veh || !part ) {
         return 0;
@@ -317,8 +317,8 @@ int turret_data::fire( Character &who, const tripoint_bub_ms &target )
     auto mode = base().gun_current_mode();
 
     prepare_fire( who );
-    shots = ranged::fire_gun( who, target, mode.qty, *mode, nullptr,
-                              veh->mount_to_bubble( part->mount ).raw() );
+    shots = ranged::fire_gun( who, g->m.abs_to_bub( target ), mode.qty, *mode, nullptr,
+                              veh->mount_to_bubble( part->mount ) );
     post_fire( who, shots );
     return shots;
 }
@@ -400,7 +400,7 @@ int vehicle::turrets_aim_and_fire( std::vector<vehicle_part *> &turrets )
                 turret_data turret = turret_query( *t );
                 std::unique_ptr<npc> cpu = get_targeting_npc( *t );
                 shots += turret.fire( *cpu, t->target.second );
-                t->reset_target( bub_part_location( *t ) );
+                t->reset_target( g->m.bub_to_abs( bub_part_location( *t ) ) );
             }
         }
     }
@@ -415,7 +415,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
             debugmsg( "Expected a valid vehicle turret" );
             return false;
         }
-        t->reset_target( bub_part_location( *t ) );
+        t->reset_target( g->m.bub_to_abs( bub_part_location( *t ) ) );
     }
 
     // Get target
@@ -423,7 +423,7 @@ bool vehicle::turrets_aim( std::vector<vehicle_part *> &turrets )
 
     bool got_target = !trajectory.empty();
     if( got_target ) {
-        tripoint_bub_ms target = trajectory.back();
+        auto target = g->m.bub_to_abs( trajectory.back() );
         // Set target for any turret in range
         for( vehicle_part *t : turrets ) {
             if( turret_query( *t ).in_range( target ) ) {
@@ -460,7 +460,7 @@ void vehicle::turrets_set_targeting()
     for( auto &p : parts ) {
         if( p.is_turret() && !is_manual_turret( p ) ) {
             turrets.push_back( &p );
-            locations.push_back( bub_part_location( p ).raw() );
+            locations.push_back( bub_part_location( p ) );
         }
     }
 
@@ -503,7 +503,7 @@ void vehicle::turrets_set_targeting()
         }
 
         // clear the turret's current targets to prevent unwanted auto-firing
-        tripoint_bub_ms pos = locations[ sel ];
+        auto pos = g->m.bub_to_abs( locations[ sel ] );
         turrets[ sel ]->reset_target( pos );
     }
 }
@@ -516,7 +516,7 @@ void vehicle::turrets_set_mode()
     for( auto &p : parts ) {
         if( p.base->is_gun() && !is_manual_turret( p ) ) {
             turrets.push_back( &p );
-            locations.push_back( bub_part_location( p ).raw() );
+            locations.push_back( bub_part_location( p ) );
         }
     }
 
@@ -596,7 +596,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
     }
 
     // The position of the vehicle part.
-    auto pos = bub_part_location( pt ).raw();
+    auto pos = bub_part_location( pt );
 
     // Create the targeting computer's npc
     std::unique_ptr<npc> cpu = get_targeting_npc( pt );
@@ -615,7 +615,7 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
         // Manual target not set, find one automatically.
         // BEWARE: Calling turret_data.fire on tripoint min coordinates starts a crash
         //      triggered at `trajectory.insert( trajectory.begin(), source )` at ranged.cpp:236
-        pt.reset_target( pos );
+        pt.reset_target( g->m.bub_to_abs( pos ) );
 
         // TODO: calculate chance to hit and cap range based upon this
         int max_range = 20;
@@ -649,11 +649,11 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
             return shots;
         }
 
-        target.second = res.value().get().pos();
+        target.second = res.value().get().abs_pos();
 
     } else {
         // Target is already set, make sure we didn't move after aiming (it's a bug if we did).
-        if( pos != target.first ) {
+        if( g->m.bub_to_abs( pos ) != target.first ) {
             target.second = target.first;
             debugmsg( "%s moved after aiming but before it could fire.", cpu->name );
             return shots;
@@ -662,11 +662,11 @@ int vehicle::automatic_fire_turret( vehicle_part &pt )
 
     // Get the turret's target and reset it
     auto targ = target.second;
-    pt.reset_target( pos );
+    pt.reset_target( g->m.bub_to_abs( pos ) );
 
     shots = gun.fire( *cpu, targ );
 
-    if( shots && u_see && !g->u.sees( targ ) ) {
+    if( shots && u_see && !g->u.sees( g->m.abs_to_bub( targ ) ) ) {
         add_msg( _( "The %1$s fires its %2$s!" ), name, pt.name() );
     }
 

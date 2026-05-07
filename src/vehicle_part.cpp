@@ -664,7 +664,7 @@ bool vehicle::can_enable( const vehicle_part &pt, bool alert ) const
     }
 
     // Disallow running a planter underground for now
-    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.bub_pos() ) ||
+    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.abs_pos() ) ||
             bub_ms_location().z() < 0 ) ) {
         if( alert ) {
             add_msg( m_bad, _( "It is too cold to plant anything now." ) );

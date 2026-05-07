@@ -455,7 +455,7 @@ inline static void rcdrive( point_rel_ms d )
     }
 }
 
-static void pldrive( const tripoint_rel_ms &p )
+static void pldrive( const tripoint_rel_veh &p )
 {
     if( !g->check_safe_mode_allowed() ) {
         return;
@@ -515,12 +515,12 @@ static void pldrive( const tripoint_rel_ms &p )
             return;
         }
     }
-    veh->pldrive( get_avatar(), point_rel_ms( p.xy() ), p.z() );
+    veh->pldrive( get_avatar(), p );
 }
 
-inline static void pldrive( point_rel_ms d )
+inline static void pldrive( point_rel_veh d )
 {
-    return pldrive( tripoint_rel_ms( d, 0 ) );
+    return pldrive( tripoint_rel_veh( d, 0 ) );
 }
 
 static void open()
@@ -1925,7 +1925,7 @@ bool game::handle_action()
                 } else if( veh_ctrl ) {
                     // vehicle control uses x for steering and y for ac/deceleration,
                     // so no rotation needed
-                    pldrive( get_delta_from_movement_action( act, iso_rotate::no ) );
+                    pldrive( get_delta_from_movement_action( act, iso_rotate::no ).reinterpret_as<point_rel_veh>() );
                 } else {
                     auto dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
                     if( auto_travel_mode && !u.is_auto_moving() ) {
@@ -1982,7 +1982,7 @@ bool game::handle_action()
                     }
                 }
                 if( controlled_vehicle != nullptr && controlled_vehicle->is_aircraft() ) {
-                    pldrive( tripoint_rel_ms::below() );
+                    pldrive( tripoint_rel_veh::below() );
                 } else if( !u.in_vehicle ) {
                     vertical_move( -1, false );
                 } else if( get_map().has_rope_at( u.bub_pos() ) ) {
@@ -2038,7 +2038,7 @@ bool game::handle_action()
                 }
                 if( controlled_vehicle != nullptr ) {
                     if( controlled_vehicle->is_aircraft() ) {
-                        pldrive( tripoint_rel_ms::above() );
+                        pldrive( tripoint_rel_veh::above() );
                     } else if( ( controlled_vehicle->has_part( "ROTOR" ) ||
                                  controlled_vehicle->has_part( "BALLOON" ) ||
                                  controlled_vehicle->has_part( "WING" ) ) &&

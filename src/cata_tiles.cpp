@@ -3038,7 +3038,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             const vehicle &veh = *elem.v;
             const auto veh_pos = veh.bub_ms_location().xy();
             for( const auto &overlay_data : veh.get_debug_overlay_data() ) {
-                const auto pt = veh_pos + std::get<0>( overlay_data ).raw();
+                const auto pt = veh_pos + std::get<0>( overlay_data );
                 const int color = std::get<1>( overlay_data );
                 const std::string &text = std::get<2>( overlay_data );
                 overlay_strings.emplace( player_to_screen( pt ),

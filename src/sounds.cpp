@@ -1596,7 +1596,7 @@ void sfx::do_obstacle( const std::string &obst )
         return;
     }
 
-    int heard_volume = sfx::get_heard_volume( get_avatar().pos() );
+    int heard_volume = sfx::get_heard_volume( get_avatar().bub_pos() );
 
     static const std::set<std::string> water = {
         "t_water_sh",

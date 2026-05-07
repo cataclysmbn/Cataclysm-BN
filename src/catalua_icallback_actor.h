@@ -1,7 +1,8 @@
 #pragma once
 
-#include "iuse.h"
 #include "catalua_sol.h"
+#include "coordinates.h"
+#include "iuse.h"
 #include "ret_val.h"
 #include "type_id.h"
 
@@ -177,7 +178,7 @@ class lua_iranged_actor : public lua_icallback_actor_base
 
         /** Called after firing. Returns false to force all shots to miss. */
         bool call_on_fire( Character &who, item &gun,
-                           const tripoint &target, int shots ) const;
+                           const tripoint_bub_ms &target, int shots ) const;
         void call_on_reload( Character &who, item &it ) const;
         /** Returns false to block firing entirely (before any ammo is consumed). */
         bool call_can_fire( const Character &who, const item &gun ) const;

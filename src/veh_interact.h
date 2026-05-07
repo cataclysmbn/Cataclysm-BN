@@ -6,12 +6,12 @@
 #include <vector>
 
 #include "color.h"
+#include "coordinates.h"
 #include "cursesdef.h"
 #include "input.h"
 #include "inventory.h"
 #include "memory_fast.h"
 #include "player_activity_ptr.h"
-#include "point.h"
 #include "type_id.h"
 
 class player;
@@ -47,7 +47,7 @@ class veh_interact
         using part_selector = std::function<bool( const vehicle_part &pt )>;
 
     public:
-        static std::unique_ptr<player_activity> run( vehicle &veh, point p );
+        static std::unique_ptr<player_activity> run( vehicle &veh, tripoint_mnt_veh p );
 
         /** Prompt for a part matching the selector function */
         static vehicle_part &select_part( const vehicle &veh, const part_selector &sel,
@@ -56,13 +56,13 @@ class veh_interact
         static void complete_vehicle( Character &who );
 
     private:
-        veh_interact( vehicle &veh, point p = point_zero );
+        veh_interact( vehicle &veh, tripoint_mnt_veh p = tripoint_mnt_veh::zero() );
         ~veh_interact();
 
         item *target = nullptr;
 
-        point dd = point_zero;
-        tripoint stored_view_offset;
+        tripoint_mnt_veh vehicle_cursor = tripoint_mnt_veh::zero();
+        tripoint_rel_ms stored_view_offset;
         /* starting offset for vehicle parts description display and max offset for scrolling */
         int start_at = 0;
         int start_limit = 0;
@@ -126,8 +126,8 @@ class veh_interact
         bool format_reqs( std::string &msg, const requirement_data &reqs,
                           const std::map<skill_id, int> &skills, int moves ) const;
 
-        int part_at( point d );
-        void move_cursor( point d, int dstart_at = 0 );
+        int part_at( tripoint_bub_ms d );
+        void move_cursor( tripoint_rel_veh d, int dstart_at = 0 );
         task_reason cant_do( char mode );
         bool can_potentially_install( const vpart_info &vpart );
         /** Move index (parameter pos) according to input action:

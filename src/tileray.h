@@ -1,6 +1,6 @@
 #pragma once
 
-#include "point.h"
+#include "coordinates.h"
 #include "units_angle.h"
 
 // Class for calculating tile coordinates

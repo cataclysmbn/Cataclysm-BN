@@ -534,7 +534,7 @@ void Character::hardcoded_effects( effect &it )
                                    _( "Your flesh crawls; insects tear through the flesh and begin to emerge!" ),
                                    _( "Insects begin to emerge from <npcname>'s skin!" ) );
             for( ; num_insects > 0; num_insects-- ) {
-                if( monster *const grub = g->place_critter_around( mon_dermatik_larva, pos(), 1 ) ) {
+                if( monster *const grub = g->place_critter_around( mon_dermatik_larva, bub_pos(), 1 ) ) {
                     if( one_in( 3 ) ) {
                         grub->friendly = -1;
                     }
@@ -559,7 +559,7 @@ void Character::hardcoded_effects( effect &it )
                 //~ %s is bodypart in accusative.
                 add_msg( m_warning, _( "You start scratching your %s!" ), body_part_name_accusative( bp ) );
                 g->u.cancel_activity();
-            } else if( g->u.sees( pos() ) ) {
+            } else if( g->u.sees( bub_pos() ) ) {
                 //~ 1$s is NPC name, 2$s is bodypart in accusative.
                 add_msg( _( "%1$s starts scratching their %2$s!" ), name, body_part_name_accusative( bp ) );
             }
@@ -705,7 +705,7 @@ void Character::hardcoded_effects( effect &it )
             }
             if( one_in( 7200 - ( intense * 250 ) ) ) {
                 add_msg_if_player( m_bad, _( "You are beset with a vision of a prowling beast." ) );
-                for( const tripoint &dest : g->m.points_in_radius( pos(), 6 ) ) {
+                for( const tripoint_bub_ms &dest : g->m.points_in_radius( bub_pos(), 6 ) ) {
                     if( g->m.is_cornerfloor( dest ) ) {
                         g->m.add_field( dest, fd_tindalos_rift, 3 );
                         add_msg_if_player( m_info, _( "Your surroundings are permeated with a foul scent." ) );
@@ -797,7 +797,7 @@ void Character::hardcoded_effects( effect &it )
             } else {
                 sfx = _( "VRMMMMMM" );
             }
-            sounds::sound( pos(), volume, sounds::sound_t::activity, sfx, false, "humming", "machinery" );
+            sounds::sound( bub_pos(), volume, sounds::sound_t::activity, sfx, false, "humming", "machinery" );
         }
     } else if( id == effect_asthma ) {
         if( has_effect( effect_adrenaline ) || has_effect( effect_datura ) ) {
@@ -917,7 +917,7 @@ void Character::hardcoded_effects( effect &it )
     } else if( id == effect_grabbed ) {
         set_num_blocks_bonus( get_num_blocks_bonus() - 1 );
         int zed_number = 0;
-        for( auto &dest : g->m.points_in_radius( pos(), 1, 0 ) ) {
+        for( auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
             const monster *const mon = g->critter_at<monster>( dest );
             if( mon && mon->has_effect( effect_grabbing ) ) {
                 zed_number += mon->get_grab_strength();
@@ -1115,7 +1115,7 @@ void Character::hardcoded_effects( effect &it )
         // TODO: Move this to update_needs when NPCs can mutate
         if( calendar::once_every( 10_minutes ) && ( has_trait( trait_CHLOROMORPH ) ||
                 has_trait( trait_M_SKIN3 ) || has_trait( trait_WATERSLEEP ) ) &&
-            g->m.is_outside( pos() ) ) {
+            g->m.is_outside( bub_pos() ) ) {
             if( has_trait( trait_CHLOROMORPH ) ) {
                 // Hunger and thirst fall before your Chloromorphic physiology!
                 if( g->natural_light_level( bub_pos().z() ) >= 12 &&
@@ -1130,7 +1130,7 @@ void Character::hardcoded_effects( effect &it )
             }
             if( has_trait( trait_M_SKIN3 ) ) {
                 // Spores happen!
-                if( g->m.has_flag_ter_or_furn( "FUNGUS", pos() ) ) {
+                if( g->m.has_flag_ter_or_furn( "FUNGUS", bub_pos() ) ) {
                     if( get_fatigue() >= 0 ) {
                         mod_fatigue( -5 ); // Local guides need less sleep on fungal soil
                     }
@@ -1151,7 +1151,7 @@ void Character::hardcoded_effects( effect &it )
                     trait_SEESLEEP ) ) { // People who can see while sleeping are acclimated to the light.
                 if( has_trait( trait_HEAVYSLEEPER2 ) && !has_trait( trait_HIBERNATE ) ) {
                     // So you can too sleep through noon
-                    if( ( tirednessVal * 1.25 ) < g->m.ambient_light_at( pos() ) && ( get_fatigue() < 10 ||
+                    if( ( tirednessVal * 1.25 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                             one_in( get_fatigue() / 2 ) ) ) {
                         add_msg_if_player( _( "It's too bright to sleep." ) );
                         // Set ourselves up for removal
@@ -1160,14 +1160,14 @@ void Character::hardcoded_effects( effect &it )
                     }
                     // Ursine hibernators would likely do so indoors.  Plants, though, might be in the sun.
                 } else if( has_trait( trait_HIBERNATE ) ) {
-                    if( ( tirednessVal * 5 ) < g->m.ambient_light_at( pos() ) && ( get_fatigue() < 10 ||
+                    if( ( tirednessVal * 5 ) < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                             one_in( get_fatigue() / 2 ) ) ) {
                         add_msg_if_player( _( "It's too bright to sleep." ) );
                         // Set ourselves up for removal
                         it.set_duration( 0_turns );
                         woke_up = true;
                     }
-                } else if( tirednessVal < g->m.ambient_light_at( pos() ) && ( get_fatigue() < 10 ||
+                } else if( tirednessVal < g->m.ambient_light_at( bub_pos() ) && ( get_fatigue() < 10 ||
                            one_in( get_fatigue() / 2 ) ) ) {
                     add_msg_if_player( _( "It's too bright to sleep." ) );
                     // Set ourselves up for removal
@@ -1224,8 +1224,8 @@ void Character::hardcoded_effects( effect &it )
                 } else {
                     int max_count = rng( 1, 3 );
                     int count = 0;
-                    for( const tripoint_bub_ms &mp : g->m.points_in_radius( pos(), 1 ) ) {
-                        if( mp == pos() ) {
+                    for( const tripoint_bub_ms &mp : g->m.points_in_radius( bub_pos(), 1 ) ) {
+                        if( mp == bub_pos() ) {
                             continue;
                         }
                         if( g->m.has_flag( "FLAT", mp ) &&
@@ -1275,14 +1275,14 @@ void Character::hardcoded_effects( effect &it )
                     it.mod_duration( 10_minutes );
                 } else if( dur == 2_turns ) {
                     // let the sound code handle the wake-up part
-                    sounds::sound( pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
+                    sounds::sound( bub_pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
                                    "alarm_clock" );
                 }
             }
         } else {
             if( dur == 1_turns ) {
                 if( is_avatar() && has_alarm_clock() ) {
-                    sounds::sound( pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
+                    sounds::sound( bub_pos(), 16, sounds::sound_t::alarm, _( "beep-beep-beep!" ), false, "tool",
                                    "alarm_clock" );
                     const std::string alarm = _( "Your alarm is going off." );
                     g->cancel_activity_or_ignore_query( distraction_type::alert, alarm );

@@ -281,7 +281,7 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
     if( z != nullptr ) {
         if( z->has_effect( effect_ridden ) ) {
             add_msg( m_bad, _( "Your %s trips over a tripwire!" ), z->get_name() );
-            std::vector<tripoint> valid;
+            std::vector<tripoint_bub_ms> valid;
             for( const tripoint_bub_ms &jk : g->m.points_in_radius( p, 1 ) ) {
                 if( g->is_empty( jk ) ) {
                     valid.push_back( jk );
@@ -300,7 +300,7 @@ bool trapfunc::tripwire( const tripoint_bub_ms &p, Creature *c, item * )
             z->deal_damage( nullptr, bodypart_id( "torso" ), damage_instance( DT_TRUE, rng( 1, 4 ) ) );
         }
     } else if( n != nullptr ) {
-        std::vector<tripoint> valid;
+        std::vector<tripoint_bub_ms> valid;
         for( const tripoint_bub_ms &jk : g->m.points_in_radius( p, 1 ) ) {
             if( g->is_empty( jk ) ) {
                 valid.push_back( jk );
@@ -1021,9 +1021,10 @@ static bool query_for_item( const player *pl, const itype_id &itemname, const ch
 
 static tripoint_bub_ms random_neighbor( const tripoint_bub_ms &center )
 {
-    center.x() += rng( -1, 1 );
-    center.y() += rng( -1, 1 );
-    return center;
+    auto tmp = center;
+    tmp.x() += rng( -1, 1 );
+    tmp.y() += rng( -1, 1 );
+    return tmp;
 }
 
 static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int diff )
@@ -1045,7 +1046,7 @@ static bool sinkhole_safety_roll( player *p, const itype_id &itemname, const int
         return false;
     }
 
-    std::vector<tripoint> safe;
+    std::vector<tripoint_bub_ms> safe;
     for( const tripoint_bub_ms &tmp : g->m.points_in_radius( p->bub_pos(), 1 ) ) {
         if( here.passable( tmp ) && !here.obstructed_by_vehicle_rotation( p->bub_pos(), tmp ) &&
             here.tr_at( tmp ).loadid != tr_pit ) {
@@ -1180,7 +1181,7 @@ bool trapfunc::ledge( const tripoint_bub_ms &p, Creature *c, item * )
             return false;
         }
 
-        std::vector<tripoint> valid;
+        std::vector<tripoint_bub_ms> valid;
         for( const tripoint_bub_ms &pt : g->m.points_in_radius( below, 1 ) ) {
             if( g->is_empty( pt ) ) {
                 valid.push_back( pt );

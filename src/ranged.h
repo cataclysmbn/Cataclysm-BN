@@ -4,8 +4,8 @@
 #include <optional>
 #include <vector>
 
+#include "coordinates.h"
 #include "game_constants.h"
-#include "point.h"
 #include "type_id.h"
 
 class aim_activity_actor;
@@ -112,9 +112,9 @@ std::optional<shape_factory> get_target_shape_factory( const item &gun );
 void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &attacker,
                             item *source_weapon, const vehicle *in_veh = nullptr );
 
-std::map<tripoint, double> expected_coverage( const shape &sh, const map &here, int bash_power );
+std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here, int bash_power );
 
-void draw_cone_aoe( const tripoint &origin, const std::map<tripoint, double> &aoe );
+void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_ms, double> &aoe );
 
 void print_dmg_msg( Creature &target, Creature *source, const dealt_damage_instance &dealt_dam,
                     double severity = 1.0 );
@@ -186,7 +186,7 @@ int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
  * @return Number of shots actually fired
  */
 int fire_gun( Character &who, const tripoint_bub_ms &target, int shots, item &gun,
-              item *ammo, const std::optional<tripoint> &shot_origin = std::nullopt );
+              item *ammo, const std::optional<tripoint_bub_ms> &shot_origin = std::nullopt );
 
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
 auto throw_damage( const item &it, const int skill, const int str ) -> int;

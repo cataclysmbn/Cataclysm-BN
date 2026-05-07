@@ -497,7 +497,7 @@ lua_iranged_actor::lua_iranged_actor( const std::string &item_id,
       can_reload_func( std::move( can_reload ) ) {}
 
 bool lua_iranged_actor::call_on_fire( Character &who, item &gun,
-                                      const tripoint &target, int shots ) const
+                                      const tripoint_bub_ms &target, int shots ) const
 {
     if( on_fire_func == sol::lua_nil ) {
         return true;

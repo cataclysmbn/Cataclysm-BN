@@ -687,11 +687,7 @@ void pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_fr
             //Autopickup adjacent
             direction adjacentDir[8] = {direction::NORTH, direction::NORTHEAST, direction::EAST, direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST, direction::NORTHWEST};
             for( auto &elem : adjacentDir ) {
-
-                tripoint apos = tripoint( displace_XY( elem ), 0 );
-                apos += p;
-
-                pick_up( apos, min );
+                pick_up( p + point_rel_ms( displace_XY( elem ) ), min );
             }
         }
 

@@ -1109,17 +1109,17 @@ std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step(
 }
 
 
-std::vector<std::tuple<point_bub_ms, int, std::string>> vehicle::get_debug_overlay_data() const
+std::vector<std::tuple<point_rel_ms, int, std::string>> vehicle::get_debug_overlay_data() const
 {
     static const std::vector<std::string> debug_what = { "valid_position", "omt" };
-    std::vector<std::tuple<point_bub_ms, int, std::string>> ret;
+    std::vector<std::tuple<point_rel_ms, int, std::string>> ret;
 
     const tripoint_abs_ms veh_pos = abs_ms_location();
     if( autodrive_local_target != tripoint_abs_ms::zero() ) {
-        ret.emplace_back( ( autodrive_local_target - veh_pos.raw() ).xy(), catacurses::red, "T" );
+        ret.emplace_back( ( autodrive_local_target - veh_pos ).xy(), catacurses::red, "T" );
     }
     for( auto pt_elem : collision_check_points ) {
-        ret.emplace_back( pt_elem - veh_pos.raw().xy(), catacurses::yellow, "C" );
+        ret.emplace_back( pt_elem - veh_pos.xy(), catacurses::yellow, "C" );
     }
 
     if( !active_autodrive_controller ) {
@@ -1275,7 +1275,7 @@ autodrive_result vehicle::do_autodrive( Character &driver )
             // nothing we can do about it now, hope we don't crash!
             break;
         }
-        pldrive( driver, { signum( turn_delta ), 0 } );
+        pldrive( driver, tripoint_rel_veh{ signum( turn_delta ), 0, 0 } );
     }
     // Don't do anything else below; the driver's turn may be over (moves <= 0) so
     // any extra actions would be "cheating".

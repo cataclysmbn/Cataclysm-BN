@@ -1297,7 +1297,7 @@ class vehicle
          * @param p direction player is steering
          * @param z for vertical movement - e.g helicopters
          */
-        void pldrive( Character &driver, point_rel_ms p, int z = 0 );
+        void pldrive( Character &driver, tripoint_rel_veh p );
 
         // stub for per-vpart limit
         units::volume max_volume( int part ) const;
@@ -1878,7 +1878,7 @@ class vehicle
 
         // Returns debug data to overlay on the screen, a vector of {map tile position
         // relative to vehicle pos, color and text}.
-        std::vector<std::tuple<point_bub_ms, int, std::string>> get_debug_overlay_data() const;
+        std::vector<std::tuple<point_rel_ms, int, std::string>> get_debug_overlay_data() const;
 };
 
 namespace rot

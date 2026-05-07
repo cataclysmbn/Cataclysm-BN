@@ -15,6 +15,7 @@
 #include "coordinates.h"
 #include "damage.h"
 #include "detached_ptr.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "flat_set.h"
 #include "game_object.h"
@@ -23,6 +24,7 @@
 #include "item_contents.h"
 #include "kill_tracker.h"
 #include "location_vector.h"
+#include "overmapbuffer.h"
 #include "pimpl.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -2346,50 +2348,7 @@ class item : public location_visitable<item>, public game_object<item>
         void set_cached_tool_selections( const std::vector<comp_selection<tool_comp>> &selections );
         const std::vector<comp_selection<tool_comp>> &get_cached_tool_selections() const;
 
-        /**
-         * Data for items that act as keys to pocket dimensions.
-         */
-        struct pocket_dimension_data {
-            pocket_dimension_data() {}
-            std::string dimension_id;             // Fully-qualified dim ID (e.g. "pocket_dungeon_a1b2c3d4_")
-            world_type_id world_type;             // World type metadata for this pocket
-            tripoint_abs_omt entry_point;         // Where player spawns on entry
-            tripoint_abs_omt bounds_min;          // Minimum bounds (OMT coords)
-            tripoint_abs_omt bounds_max;          // Maximum bounds (OMT coords)
-            bool is_initialized = false;          // Has the pocket data been set up?
-            bool terrain_generated = false;       // Has the terrain been generated?
-
-            // Return tracking - where to go when exiting this pocket
-            std::string return_dimension_id;      // Which dimension to return to (empty = overworld)
-            world_type_id
-            return_world_type;      // World type of the return dimension (may be null for overworld)
-            tripoint_abs_omt return_point;        // Where to place player on exit
-
-            // Temporary pocket lifetime: set by iuse_pocket_dimension from JSON "lifetime_hours".
-            std::optional<time_point> last_player_exit;  // nullopt = player is inside
-            std::optional<time_duration> lifetime;       // nullopt = permanent
-
-            void serialize( JsonOut &jsout ) const;
-            void deserialize( JsonIn &jsin );
-
-            bool operator==( const pocket_dimension_data &rhs ) const;
-        };
-
-        std::optional<pocket_dimension_data> pocket_dim;
-
-
-        /**
-         * Get the pocket dimension data for this item.
-         * Returns nullptr if this item is not a pocket dimension key.
-         */
-        pocket_dimension_data *get_pocket_dimension_data();
-        const pocket_dimension_data *get_pocket_dimension_data() const;
-
-        /**
-         * Initialize pocket dimension data for this item.
-         * Should only be called once when the pocket is first used.
-         */
-        void set_pocket_dimension_data( pocket_dimension_data &&data );
+        std::optional<dimension_info> pocket_dim;
 
         const std::vector<enchantment> &get_enchantments() const;
 
