@@ -179,14 +179,14 @@
     "object": {
       "mapgensize": [ 8, 8 ],
       "rows": [
+        "|-------",
         "|#######",
         "--MMMMM#",
-        ".6MrrrM#",
-        "..L,,,M#",
         "..MrrrM#",
+        "..L,,,M#",
+        ".6MrrrM#",
         "--MMMMM#",
-        "|#######",
-        "|-------"
+        "|#######"
       ],
       "palettes": [ "lab_palette", "lab_loot_bionic_vault" ],
       "terrain": { "M": "t_wall_metal" },
