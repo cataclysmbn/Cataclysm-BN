@@ -723,10 +723,8 @@ void game::load_map( const tripoint_abs_sm &pos_sm,
     // The load-manager center is the middle of the loaded region, not the
     // top-left corner.  pos_sm is the top-left corner (abs_sub), so offset
     // by reality_bubble_radius_ in each horizontal direction.
-    const tripoint_abs_sm bubble_center(
-        pos_sm.raw().x + reality_bubble_radius_,
-        pos_sm.raw().y + reality_bubble_radius_,
-        pos_sm.raw().z );
+    const tripoint_abs_sm bubble_center = pos_sm + point_rel_sm( reality_bubble_radius_,
+                                          reality_bubble_radius_ );
 
     // Create or update the reality bubble request.
     if( reality_bubble_handle_ == 0 ) {
@@ -846,7 +844,7 @@ bool game::start_game()
 
     init_autosave();
 
-    background_pane background;
+    loading_image_splash background;
     static_popup popup;
     popup.message( "%s", _( "Please wait as we build your world" ) );
     ui_manager::redraw();
@@ -1168,7 +1166,6 @@ vehicle *game::place_vehicle_nearby(
             veh->dimension_id_ = target_map.get_bound_dimension();
             get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
             veh->tracking_on = true;
-            target_map.save();
             return veh;
         }
     }
@@ -1210,7 +1207,7 @@ void game::load_npcs()
         temp->place_on_map();
         // Validity guard: skip if the NPC's submap is not resident.
         // Bubble eviction is handled by on_submap_unloaded(); no inbounds check needed.
-        if( m.get_submap_at( temp->pos() ) == nullptr ) {
+        if( m.get_submap_at( tripoint_bub_ms( temp->pos() ) ) == nullptr ) {
             continue;
         }
         // In the rare case the npc was marked for death while
@@ -1253,7 +1250,7 @@ void game::load_npcs()
                 }
                 temp->place_on_map();
                 if( !req_map.inbounds( temp->pos() )
-                    || req_map.get_submap_at( temp->pos() ) == nullptr ) {
+                    || req_map.get_submap_at( tripoint_bub_ms( temp->pos() ) ) == nullptr ) {
                     continue;
                 }
                 if( temp->marked_for_death ) {
@@ -2358,7 +2355,7 @@ int get_heat_radiation( const tripoint &location, bool direct )
     for( const tripoint &dest : here.points_in_radius( location, 6 ) ) {
         int heat_intensity = 0;
 
-        maptile mt = here.maptile_at( dest );
+        maptile mt = here.maptile_at( tripoint_bub_ms( dest ) );
 
         int ffire = maptile_field_intensity( mt, fd_fire_int );
         if( ffire > 0 ) {
@@ -2698,6 +2695,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "reload_weapon" );
     ctxt.register_action( "reload_wielded" );
     ctxt.register_action( "unload" );
+    ctxt.register_action( "unload_all" );
     ctxt.register_action( "throw" );
     ctxt.register_action( "fire" );
     ctxt.register_action( "cast_spell" );
@@ -3249,7 +3247,7 @@ bool game::load( const save_t &name )
     // Old saves can have duplicates (same monster in critter_tracker and monster_map);
     // discarding in-bubble entries prevents visible duplication on load.
     {
-        const tripoint &origin = m.get_abs_sub();
+        const tripoint &origin = m.get_abs_sub().raw();
         const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : origin.z;
         const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : origin.z;
         const auto z_range = std::views::iota( zmin, zmax + 1 );
@@ -3365,7 +3363,6 @@ bool game::save_maps()
         // Drain any in-flight lazy-border preload tasks before save so that
         // save_quad workers do not race with background workers calling add_submap().
         submap_loader.drain_lazy_loads();
-        m.save();
         save_all_overmapbuffers(); // can throw — saves every loaded dimension's overmapbuffer
         // Save mapbuffers for all registered dimensions (active + any kept/non-active).
         // save_all() dispatches dimension saves in parallel; each slot uses
@@ -4914,26 +4911,22 @@ void game::world_tick()
                     std::ranges::for_each(
                         cata::views::cartesian_product( std::views::iota( 0, SEEX ),
                                                         std::views::iota( 0, SEEY ) ),
-                    [&]( auto xy ) {
-                        auto [lx, ly] = xy;
-                        if( sm_ptr->get_furn( point( lx, ly ) ).obj().has_flag( "EMITTER" ) ) {
-                            positions.emplace_back( lx, ly );
+                    [&]( const auto & xy ) {
+                        const point_sm_ms p( std::get<0>( xy ), std::get<1>( xy ) );
+                        if( sm_ptr->get_furn( p ).obj().has_flag( "EMITTER" ) ) {
+                            positions.emplace_back( p );
                         }
                     } );
                 }
                 if( !sm_ptr->emitter_cache->empty() ) {
                     ZoneScopedN( "field_emits" );
-                    const tripoint local_sm_origin( ( raw_pos.x - abs_sub.x ) * SEEX,
-                                                    ( raw_pos.y - abs_sub.y ) * SEEY,
-                                                    raw_pos.z );
-                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point & lp ) {
-                        const tripoint local_pos( local_sm_origin.x + lp.x,
-                                                  local_sm_origin.y + lp.y,
-                                                  raw_pos.z );
+                    const tripoint_bub_ms bub_sm_origin = m.abs_to_bub( project_to<coords::ms>( pos_sm ) );
+                    std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms & lp ) {
+                        const tripoint_bub_ms local_pos = bub_sm_origin + tripoint( lp.x(), lp.y(), 0 );
                         std::ranges::for_each(
                             sm_ptr->get_furn( lp ).obj().emissions,
                         [&]( const emit_id & e ) {
-                            m.emit_field( local_pos, e );
+                            m.emit_field( local_pos.raw(), e );
                         } );
                     } );
                 }
@@ -7690,7 +7683,7 @@ void game::print_trap_info( const tripoint &lp, const catacurses::window &w_look
     const trap &tr = m.tr_at( lp );
     auto printed = false;
     if( tr.can_see( lp, u ) ) {
-        partial_con *pc = m.partial_con_at( lp );
+        partial_con *pc = m.partial_con_at( tripoint_bub_ms( lp ) );
         std::string tr_name;
         if( pc && tr.loadid == tr_unfinished_construction ) {
             const construction &built = pc->id.obj();
@@ -9302,8 +9295,9 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
                                                velocity_units( VU_VEHICLE ) );
                 const std::string engine_text = string_format( _( "Engine: %s" ),
                                                 cur_vehicle->engine_on ? _( "on" ) : _( "off" ) );
-                const std::string moving_text = string_format( _( "Moving: %s" ),
-                                                moving ? _( "yes" ) : _( "no" ) );
+                const auto moving_text = string_format( _( "Moving: %s" ),
+                                                        moving ? pgettext( "vehicle status value", "yes" ) :
+                                                        pgettext( "vehicle status value", "no" ) );
                 const std::string id_text = string_format( "[%s]", cur_vehicle->type.str() );
                 const bool wheels_ok = cur_vehicle->sufficient_wheel_config();
                 const std::string wheels_text = wheels_ok ?
@@ -9339,8 +9333,9 @@ static auto list_vehicles( const vehicle_list_t &vehicle_list ) -> vehicle_menu_
                                                 volume_units_abbr() );
                 const std::string leak_text = _( "This vehicle is leaking fuel." );
                 const bool can_float = cur_vehicle->can_float();
-                const std::string float_text = string_format( _( "Floats: %s" ),
-                                               can_float ? _( "yes" ) : _( "no" ) );
+                const auto float_text = string_format( _( "Floats: %s" ),
+                                                       can_float ? pgettext( "vehicle status value", "yes" ) :
+                                                       pgettext( "vehicle status value", "no" ) );
 
                 int line = 0;
                 trim_and_print( w_vehicle_info, point( 1, line++ ), width - 4, c_light_gray,
@@ -11994,6 +11989,7 @@ bool game::grabbed_furn_move( const tripoint &dp )
     // Actually move the furniture.
     m.furn_set( fdest, m.furn( fpos ), atd ? atd->clone() : nullptr );
     m.furn_set( fpos, f_null );
+    u.clear_memorized_overlay( m.bub_to_abs( tripoint_bub_ms( fpos ) ).raw() );
 
     if( fire_intensity == 1 && !pulling_furniture ) {
         m.remove_field( fpos, fd_fire );
@@ -12109,11 +12105,11 @@ void game::resize_reality_bubble_to( int new_size )
 {
     // Capture player's absolute submap position and within-submap tile offset
     // before any coordinate system changes.
-    const tripoint old_abs_sub = m.get_abs_sub();
+    const tripoint_abs_sm old_abs_sub = m.get_abs_sub();
     const tripoint player_abs_sm(
-        old_abs_sub.x + u.posx() / SEEX,
-        old_abs_sub.y + u.posy() / SEEY,
-        old_abs_sub.z );
+        old_abs_sub.x() + u.posx() / SEEX,
+        old_abs_sub.y() + u.posy() / SEEY,
+        old_abs_sub.z() );
     const point player_within_sm( u.posx() % SEEX, u.posy() % SEEY );
 
     // The grid origin shifts by (old_half - new_half) submaps when the bubble changes size.
@@ -12210,10 +12206,10 @@ void game::resize_reality_bubble_to( int new_size )
     // triggers the collision-avoidance nudge and shifts the NPC by 1 tile.
     // onswapsetpos() bypasses that loop and directly fixes position + submap_coords.
     {
-        const tripoint new_origin_ms = sm_to_ms_copy( get_map().get_abs_sub() );
+        const auto new_origin_ms = project_to<coords::ms>( get_map().get_abs_sub() );
         std::ranges::for_each( active_npc, [&]( const auto & n ) {
             n->onswapsetpos( reality_bubble::local_square_from_global( n->global_square_location(),
-                             new_origin_ms ) );
+                             new_origin_ms.raw() ) );
             // Same as monsters above: local-coordinate paths are now stale.
             n->path.clear();
         } );
@@ -13263,8 +13259,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
             if( active_world ) {
                 active_world->start_save_tx();
             }
-            here.save();
-            get_overmapbuffer( current_dimension_id_ ).save();
+            get_overmapbuffer( current_dimension_id_ ).save( current_dimension_id_ );
             MAPBUFFER_REGISTRY.get( old_dim_id ).save();
             if( !save_dimension_data() ) {
                 if( active_world ) {
@@ -13387,14 +13382,14 @@ bool game::travel_to_dimension( const std::string &dim_id,
         player.load_map_memory();
 
         {
-            auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z;
-            auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z;
+            auto const zmin = here.has_zlevels() ? -OVERMAP_DEPTH : here.get_abs_sub().z();
+            auto const zmax = here.has_zlevels() ? OVERMAP_HEIGHT : here.get_abs_sub().z();
             for( auto z = zmin; z <= zmax; z++ ) {
                 here.access_cache( z ).map_memory_seen_cache.reset();
                 here.invalidate_map_cache( z );
             }
         }
-        here.build_map_cache( here.get_abs_sub().z );
+        here.build_map_cache( here.get_abs_sub().z() );
 
         load_npcs();
         here.spawn_monsters( true );
@@ -13648,8 +13643,10 @@ void game::vertical_shift( const int z_after )
         shift_monsters( tripoint( 0, 0, z_after - z_before ) );
         reload_npcs();
     } else {
-        // Shift the map itself
-        m.vertical_shift( z_after );
+        // Adjust the map's z-reference so get_levz() returns the new z-level.
+        // All z-levels are loaded simultaneously in z-level builds; no map load
+        // or unload is required for vertical movement.
+        m.set_abs_sub( tripoint_abs_sm( m.get_abs_sub().xy(), z_after ) );
     }
 
     m.spawn_monsters( true );
@@ -13766,9 +13763,9 @@ point game::update_map( int &x, int &y )
     // Distribution-grid tracker updates are fully incremental via
     // on_submap_loaded/unloaded; the old full-rebuild has been removed.
     if( reality_bubble_handle_ != 0 ) {
-        const tripoint &origin = m.get_abs_sub();
+        const auto &origin = m.get_abs_sub();
         const tripoint_abs_sm new_center(
-            origin.x + reality_bubble_radius_, origin.y + reality_bubble_radius_, origin.z );
+            origin.x() + reality_bubble_radius_, origin.y() + reality_bubble_radius_, origin.z() );
         submap_loader.update_request( reality_bubble_handle_, new_center );
         // Dynamically manage lazy border based on cached option.
         if( lazy_border_enabled ) {
@@ -14146,7 +14143,7 @@ void game::shift_monsters( const tripoint &shift )
         }
 
         if( ( shift.z == 0 || m.has_zlevels() )
-            && m.get_submap_at( critter.pos() ) != nullptr ) {
+            && m.get_submap_at( tripoint_bub_ms( critter.pos() ) ) != nullptr ) {
             // The critter is on a loaded submap — keep it regardless of whether
             // it's inside the render-area grid (inbounds).  Creatures can validly
             // reside in loaded-but-OOB submaps (e.g. knocked into a lazy-border
@@ -15027,26 +15024,26 @@ void game::add_artifact_dreams( )
 
 int game::get_levx() const
 {
-    return m.get_abs_sub().x;
+    return m.get_abs_sub().x();
 }
 
 int game::get_levy() const
 {
-    return m.get_abs_sub().y;
+    return m.get_abs_sub().y();
 }
 
 int game::get_levz() const
 {
-    return m.get_abs_sub().z;
+    return m.get_abs_sub().z();
 }
 
 overmap &game::get_cur_om() const
 {
     // The player is located in the middle submap of the map.
-    const tripoint sm = m.get_abs_sub() + tripoint( g_half_mapsize, g_half_mapsize, 0 );
-    const tripoint pos_om = sm_to_om_copy( sm );
+    const tripoint_abs_sm sm = m.get_abs_sub() + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+    const tripoint_abs_om pos_om = project_to<coords::om>( sm );
     // TODO: fix point types
-    return get_overmapbuffer( current_dimension_id_ ).get( point_abs_om( pos_om.xy() ) );
+    return get_overmapbuffer( current_dimension_id_ ).get( pos_om.xy() );
 }
 
 std::vector<npc *> game::allies()

@@ -368,6 +368,7 @@ void vehicle::copy_static_from( const vehicle &source )
     attached = source.attached;
     is_autodriving = source.is_autodriving;
     is_following = source.is_following;
+    follow_distance = source.follow_distance;
     is_patrolling = source.is_patrolling;
     cruise_on = source.cruise_on;
     engine_on = source.engine_on;
@@ -935,6 +936,7 @@ void vehicle::activate_magical_follow()
         if( vp.info().fuel_type == fuel_type_mana ) {
             vp.enabled = true;
             is_following = true;
+            follow_distance = 12 + mount_max.y * 3;
             engine_on = true;
         } else {
             vp.enabled = true;
@@ -952,6 +954,7 @@ void vehicle::activate_animal_follow()
             if( mon && mon->has_effect( effect_harnessed ) ) {
                 vp.enabled = true;
                 is_following = true;
+                follow_distance = 12 + mount_max.y * 3;
                 engine_on = true;
             }
         } else {
@@ -1153,11 +1156,11 @@ void vehicle::drive_to_local_target( const tripoint &target, bool follow_protoco
     }
     if( follow_protocol ) {
         if( ( ( turn_x > 0 || turn_x < 0 ) && velocity > safe_player_follow_speed ) ||
-            rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) < 7 + ( ( mount_max.y * 3 ) + 4 ) ) {
+            rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) < follow_distance - 1 ) {
             accel_y = 1;
         }
         if( ( velocity < std::min( safe_velocity(), safe_player_follow_speed ) && turn_x == 0 &&
-              rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) > 8 + ( ( mount_max.y * 3 ) + 4 ) ) ||
+              rl_dist( vehpos, g->m.getabs( g->u.pos() ) ) > follow_distance ) ||
             velocity < 45 ) {
             accel_y = -1;
         }
@@ -1755,8 +1758,8 @@ bool vehicle::can_mount( point dp, const vpart_id &id ) const
         }
     }
 
-    //Don't allow turret controls on manual-only turrets.
-    if( part.has_flag( "TURRET_CONTROLS" ) ) {
+    //Don't allow turret controls or laser designators on manual-only turrets.
+    if( part.has_flag( "TURRET_CONTROLS" ) || part.has_flag( "LASER_DESIGNATOR" ) ) {
         for( const auto &elem : parts_in_square ) {
             if( part_info( elem ).has_flag( "MANUAL" ) ) {
                 return false;
@@ -2144,7 +2147,7 @@ bool vehicle::merge_rackable_vehicle( vehicle *carry_veh, const std::vector<int>
             point carry_mount;
             for( point offset : four_cardinal_directions ) {
                 carry_mount = parts[ rack_part ].mount + offset;
-                tripoint possible_pos = mount_to_tripoint( carry_mount );
+                tripoint possible_pos = mount_to_bubble( carry_mount ).raw();
                 if( possible_pos == carry_pos ) {
                     break;
                 }
@@ -3489,9 +3492,9 @@ int vehicle::roof_at_part( const int part ) const
 
 point vehicle::coord_translate( point p ) const
 {
-    tripoint q;
-    coord_translate( pivot_rotation[0], pivot_anchor[0], p, q );
-    return q.xy();
+    return rotate_to_world( pivot_rotation[0],
+                            tripoint_mnt_veh( tripoint( pivot_anchor[0], 0 ) ),
+                            tripoint_mnt_veh( tripoint( p, 0 ) ) ).raw().xy();
 }
 
 const struct {
@@ -3529,78 +3532,98 @@ const struct {
 void vehicle::coord_translate( units::angle dir, point pivot, point p,
                                tripoint &q ) const
 {
-
-    int increment = angle_to_increment( dir );
-    point relative = p - pivot;
-    float skew = std::trunc( relative.x * rotation_info[increment].gradient );
-
-    q.x = relative.x;
-    q.y = relative.y + skew;
-
-    if( rotation_info[increment].swapXY ) {
-        auto swap = q.x;
-        q.x = q.y;
-        q.y = swap;
-    }
-    if( rotation_info[increment].flipH ) {
-        q.x = -q.x;
-    }
-    if( rotation_info[increment].flipV ) {
-        q.y = -q.y;
-    }
+    q = rotate_to_world( dir,
+                         tripoint_mnt_veh( tripoint( pivot, 0 ) ),
+                         tripoint_mnt_veh( tripoint( p, 0 ) ) ).raw();
 }
 
 void vehicle::coord_translate_reverse( units::angle dir, point pivot, const tripoint &p,
                                        point &q ) const
 {
-    int increment = angle_to_increment( dir );
-
-    q.x = p.x;
-    q.y = p.y;
-
-
-    if( rotation_info[increment].flipV ) {
-        q.y = -q.y;
-    }
-
-    if( rotation_info[increment].flipH ) {
-        q.x = -q.x;
-    }
-
-    if( rotation_info[increment].swapXY ) {
-        auto swap = q.x;
-        q.x = q.y;
-        q.y = swap;
-    }
-
-    float skew = std::trunc( q.x * rotation_info[increment].gradient );
-
-    q.y -= skew;
-
-    q += pivot;
-
+    q = rotate_to_local( dir,
+                         tripoint_mnt_veh( tripoint( pivot, 0 ) ),
+                         tripoint_rel_ms( p ) ).raw().xy();
 }
 
-tripoint vehicle::mount_to_tripoint( point mount ) const
+tripoint_bub_ms vehicle::mount_to_bubble( point mount ) const
 {
-    return mount_to_tripoint( mount, point_zero );
+    return mount_to_bubble( mount, point_zero );
 }
 
-tripoint vehicle::mount_to_tripoint( point mount, point offset ) const
+tripoint_bub_ms vehicle::mount_to_bubble( point mount, point offset ) const
 {
     tripoint mnt_translated;
-    coord_translate( pivot_rotation[0], pivot_anchor[ 0 ], mount + offset, mnt_translated );
-    return global_pos3() + mnt_translated;
+    coord_translate( pivot_rotation[0], pivot_anchor[0], mount + offset, mnt_translated );
+    return tripoint_bub_ms( global_pos3() + mnt_translated );
 }
 
-point vehicle::tripoint_to_mount( const tripoint &p ) const
+point vehicle::bubble_to_mount( const tripoint_bub_ms &p ) const
 {
-    tripoint translated = p - global_pos3();
+    tripoint translated = p.raw() - global_pos3();
 
     point result;
     coord_translate_reverse( pivot_rotation[0], pivot_anchor[0], translated, result );
 
     return result;
+}
+
+tripoint_rel_ms vehicle::rotate_to_world( units::angle dir, const tripoint_mnt_veh &pivot,
+        const tripoint_mnt_veh &p ) const
+{
+    int increment = angle_to_increment( dir );
+    auto relative = p.raw() - pivot.raw();
+    float skew = std::trunc( relative.x * rotation_info[increment].gradient );
+
+    tripoint result;
+    result.x = relative.x;
+    result.y = relative.y + static_cast<int>( skew );
+
+    if( rotation_info[increment].swapXY ) {
+        std::swap( result.x, result.y );
+    }
+    if( rotation_info[increment].flipH ) {
+        result.x = -result.x;
+    }
+    if( rotation_info[increment].flipV ) {
+        result.y = -result.y;
+    }
+    return tripoint_rel_ms( result );
+}
+
+tripoint_mnt_veh vehicle::rotate_to_local( units::angle dir, const tripoint_mnt_veh &pivot,
+        const tripoint_rel_ms &p ) const
+{
+    int increment = angle_to_increment( dir );
+
+    tripoint result = p.raw();
+
+    if( rotation_info[increment].flipV ) {
+        result.y = -result.y;
+    }
+    if( rotation_info[increment].flipH ) {
+        result.x = -result.x;
+    }
+    if( rotation_info[increment].swapXY ) {
+        std::swap( result.x, result.y );
+    }
+
+    float skew = std::trunc( result.x * rotation_info[increment].gradient );
+    result.y -= static_cast<int>( skew );
+    result += pivot.raw();
+
+    return tripoint_mnt_veh( result );
+}
+
+tripoint_abs_ms vehicle::mount_to_abs( const tripoint_mnt_veh &mount ) const
+{
+    return global_square_location() + rotate_to_world( pivot_rotation[0],
+            tripoint_mnt_veh( tripoint( pivot_anchor[0], 0 ) ), mount );
+}
+
+tripoint_mnt_veh vehicle::abs_to_mount( const tripoint_abs_ms &abs ) const
+{
+    return rotate_to_local( pivot_rotation[0], tripoint_mnt_veh( tripoint( pivot_anchor[0], 0 ) ),
+                            abs - global_square_location() );
 }
 
 int vehicle::angle_to_increment( units::angle dir )
@@ -3718,7 +3741,7 @@ std::vector<rider_data> vehicle::get_riders() const
 player *vehicle::get_passenger( int p ) const
 {
     // Compare by mount (2D vehicle-local tile) rather than global tripoint.
-    // mount_to_tripoint() uses coord_translate which can produce nonzero z on
+    // mount_to_bubble() uses coord_translate which can produce nonzero z on
     // ramp terrain, but precalc[0].z is always cleared to 0 in precalc_mounts().
     // The tripoint mismatch causes get_parts_at() to find no parts on ramps.
     const point &target_mount = parts[p].mount;
@@ -7719,7 +7742,7 @@ static bool is_sm_tile_over_water( const tripoint &real_global_pos )
 {
 
     const tripoint smp = ms_to_sm_copy( real_global_pos );
-    const point p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
+    const point_sm_ms p( modulo( real_global_pos.x, SEEX ), modulo( real_global_pos.y, SEEY ) );
     auto &mbuf = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() );
     auto sm = mbuf.lookup_submap( smp );
     if( sm == nullptr ) {
@@ -7727,8 +7750,8 @@ static bool is_sm_tile_over_water( const tripoint &real_global_pos )
         return false;
     }
 
-    if( p.x < 0 || p.x >= SEEX || p.y < 0 || p.y >= SEEY ) {
-        debugmsg( "err %d,%d", p.x, p.y );
+    if( p.x() < 0 || p.x() >= SEEX || p.y() < 0 || p.y() >= SEEY ) {
+        debugmsg( "err %d,%d", p.x(), p.y() );
         return false;
     }
 
@@ -8083,7 +8106,7 @@ bool vehicle_part_with_feature_range<vpart_bitflags>::matches( const size_t part
 
 bool vehicle::is_loaded() const
 {
-    return attached && get_map().get_submap_at( global_pos3() ) != nullptr;
+    return attached && get_map().get_submap_at( tripoint_bub_ms( global_pos3() ) ) != nullptr;
 }
 
 void vehicle::refresh_locations_hack()

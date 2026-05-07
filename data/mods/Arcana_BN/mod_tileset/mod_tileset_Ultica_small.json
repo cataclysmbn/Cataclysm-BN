@@ -1,0 +1,112 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UltimateCataclysm", "UltimateCataclysmDemo" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/arcana_expan_ultica_small.png",
+        "tiles": [
+          { "id": "essence", "fg": 0 },
+          { "id": "essence_blood", "fg": 1 },
+          { "id": "essence_dull", "fg": 2 },
+          { "id": "essence_pure", "fg": 3 },
+          { "id": "triffid_garland", "fg": 4 },
+          { "id": "amulet_exotic", "fg": 5 },
+          { "id": [ "brooch_iridescent", "mana_gem" ], "fg": 6 },
+          {
+            "id": [
+              "scroll_blank",
+              "scroll_sun",
+              "scroll_moon",
+              "scroll_artiface",
+              "scroll_nature",
+              "scroll_destruction",
+              "scroll_subversion",
+              "scroll_spell_sun",
+              "scroll_spell_moon",
+              "scroll_spell_artiface",
+              "scroll_spell_nature",
+              "scroll_spell_destruction",
+              "scroll_spell_subversion",
+              "scroll_spell_agile",
+              "scroll_spell_clairvoyance",
+              "scroll_spell_clarity",
+              "scroll_spell_confusion",
+              "scroll_spell_acidspray",
+              "scroll_spell_flame_armor",
+              "scroll_spell_free_action",
+              "scroll_spell_heal",
+              "scroll_spell_insight",
+              "scroll_spell_elecresist",
+              "scroll_spell_might",
+              "scroll_spell_plants",
+              "scroll_spell_invis",
+              "scroll_spell_lightning",
+              "scroll_spell_cleric"
+            ],
+            "fg": 7
+          },
+          {
+            "id": [
+              "totem_elecresist",
+              "totem_cleric",
+              "totem_agile",
+              "totem_confusion",
+              "totem_strength",
+              "totem_clairvoyance",
+              "totem_free_action",
+              "totem_invis",
+              "totem_plants",
+              "totem_flamearmor",
+              "totem_insight",
+              "totem_clarity",
+              "totem_lightning",
+              "totem_heal",
+              "totem_acidspray",
+              "dimensional_warp_trap"
+            ],
+            "fg": 8
+          },
+          { "id": "red_black_vulnerary", "fg": 9 },
+          { "id": "yellow_white_incense", "fg": 10 },
+          { "id": [ "flame_talisman", "water_talisman", "earth_talisman", "air_talisman" ], "fg": 11 },
+          {
+            "id": [
+              "silver_glyph",
+              "summon_kreck",
+              "summon_blank",
+              "summon_flaming_eye",
+              "summon_hunting_horror",
+              "summon_dark_wyrm",
+              "summon_mi_go",
+              "summon_jabberwock",
+              "summon_flying_polyp",
+              "summon_yugg",
+              "summon_shoggoth"
+            ],
+            "fg": 12
+          },
+          { "id": [ "graboid_fang", "iron_thorn", "dermatik_sting", "monster_fang" ], "fg": 13 },
+          { "id": "inflorescent_root", "fg": 14 },
+          { "id": "triffid_queen_flower", "fg": 15 },
+          { "id": [ "vortex_shard", "shadow_gem" ], "fg": 16 },
+          { "id": [ "bone_twisted", "gracken_knuckles" ], "fg": 17 },
+          { "id": [ "wyrmskin_piece", "iridescent_plate" ], "fg": 18 },
+          { "id": [ "blob_gem", "monster_tear", "engraved_stone" ], "fg": 19 },
+          { "id": "CF_golden_scale", "fg": 20 },
+          { "id": "arcana_strange_crystal", "fg": 21 },
+          { "id": "somen_clairvoyance", "fg": 22 },
+          { "id": "jade_wreath", "fg": 23 },
+          { "id": "meteoric_talisman", "fg": 24 },
+          { "id": "offering_chalice", "fg": 25 },
+          { "id": [ "blood_athame", "moonstone_fang" ], "fg": 26 },
+          { "id": "orb_veil", "fg": 27 },
+          { "id": "thermic_essence_cutter", "fg": 28 },
+          { "id": "offering_mission_notes", "fg": 29 }
+        ],
+        "sprite_width": 20,
+        "sprite_height": 20
+      }
+    ]
+  }
+]

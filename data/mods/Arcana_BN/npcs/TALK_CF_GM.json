@@ -1,0 +1,499 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": { "u_male": "Greetings, Brother.  This is a sacred place.", "no": "Greetings, Sister.  This is a sacred place." },
+      "no": {
+        "u_has_any_trait": [ "PROF_SANGUINE", "THRESH_DRAGONBLOOD" ],
+        "yes": {
+          "u_has_effect": "cf_mission_1",
+          "yes": "A pleasant surprise to see you working with us.  What do you require?",
+          "no": "You are not welcome here sanguinist.  State your intentions."
+        },
+        "no": {
+          "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ],
+          "yes": {
+            "u_has_effect": "cf_mission_1",
+            "yes": "Welcome, Keeper.  What do you require?",
+            "no": "Servant of the otherworldly, you are welcome here, so long as you cause no trouble."
+          },
+          "no": {
+            "u_has_trait": "PROF_ARCANIST2",
+            "yes": {
+              "u_has_effect": "cf_mission_1",
+              "yes": "Welcome back.  What do you need?",
+              "no": "I can sense the touch of the otherworldly about you.  For what purpose are you here?"
+            },
+            "no": "Welcome to our sanctum."
+          }
+        }
+      }
+    },
+    "responses": [
+      {
+        "text": "[MISSION] Sofia asked that I recruit traders or other assistance at the center.  Any advice for that?",
+        "topic": "TALK_CF_GM_ADVICE_1",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      },
+      {
+        "text": "[MISSION] Sofia asked me to investigate a lead on a remnant of the Keepers.  She said you knew more about that?",
+        "topic": "TALK_CF_GM_ADVICE_2",
+        "condition": { "u_has_mission": "MISSION_CF_REP_5" }
+      },
+      {
+        "text": "[MISSION] Sofia asked me to investigate a lead on a band of renegade Sanguine Shrikes.  Do you have any advice?",
+        "topic": "TALK_CF_GM_ADVICE_3",
+        "condition": { "u_has_mission": "MISSION_CF_REP_6" }
+      },
+      {
+        "text": "[MISSION] Nicholas asked me to investigate a research facility for a component he needs.  Do you have any advice?",
+        "topic": "TALK_CF_GM_ADVICE_4",
+        "condition": { "u_has_mission": "MISSION_CF_PURIFIER_1_3" }
+      },
+      {
+        "text": "So, how are things working out with the new arrivals so far?",
+        "topic": "TALK_CF_GM_MISSION_4_OPINION",
+        "condition": {
+          "and": [
+            { "not": { "npc_has_var": "johnathan_opinion_given", "type": "flag", "context": "knowledge", "value": "yes" } },
+            { "u_has_var": "sofia_mission_4_end", "type": "mission", "context": "rural_church", "value": "yes" }
+          ]
+        }
+      },
+      { "text": "Who are you?", "topic": "TALK_CF_GM_WHO" },
+      { "text": "What can you tell me about this place?", "topic": "TALK_CF_GM_WHERE" },
+      {
+        "text": "Are there any others of us left?",
+        "condition": { "u_has_trait": "PROF_CLEANSINGFLAME" },
+        "topic": "TALK_CF_GM_OTHERS"
+      },
+      {
+        "text": "What other arcane groups are out there?",
+        "condition": {
+          "u_has_any_trait": [
+            "PROF_ARCANIST",
+            "PROF_ARCANIST2",
+            "PROF_CLEANSINGFLAME",
+            "PROF_CLEANSINGFLAME2",
+            "PROF_SANGUINE",
+            "PROF_CHALICE",
+            "PROF_CHALICE2",
+            "THRESH_VEIL"
+          ]
+        },
+        "topic": "TALK_CF_GM_ARCANISTS"
+      },
+      {
+        "text": "What can you tell me about your group?",
+        "condition": { "not": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] } },
+        "topic": "TALK_CF_GM_GROUP"
+      },
+      {
+        "text": "What can I do to help?",
+        "condition": { "npc_has_var": "johnathan_prelude_ended", "type": "mission", "context": "rural_church", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_MISSION_LIST"
+      },
+      {
+        "text": "Alright, I think that's everything we need to track this anomaly down.",
+        "condition": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_CF_GM_PRELUDE_4_READY"
+      },
+      {
+        "text": "Any advice for this mission?",
+        "condition": { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_CF_GM_PRELUDE_4_MID_ADVICE"
+      },
+      {
+        "text": "Anything I can do to help?",
+        "condition": { "npc_has_effect": "cf_mission_3" },
+        "switch": true,
+        "topic": "TALK_CF_GM_PRELUDE_4"
+      },
+      { "text": "Anything I can do to help?", "switch": true, "default": true, "topic": "TALK_MISSION_LIST" },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM_ADVICE_1",
+    "dynamic_line": "I've never been to the center myself, so I'm not sure what to suggest.  More hands to help build and hunt would be nice, though I suppose a source of trade would be useful, to keep our supplies well stocked.  I'll trust you to use your discretion.",
+    "responses": [ { "text": "I see.  That's all then.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM_ADVICE_2",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ],
+      "yes": "I tracked their movements for some time intermittently, along with keeping tabs on other leads.  No sign of contact with any remainder of the Keepers, but they have been involved in anomalous activity within the past month prior to the beginning of all this.  I will trust you to retrieve any intel as you see fit given your connection to their order, but do exercise caution.",
+      "no": "I tracked their movements for some time intermittently, along with keeping tabs on other leads.  No sign of contact with any remainder of the Keepers, but they have been involved in anomalous activity within the past month prior to the beginning of all this.  Keep your guard up, and deal with them as needed if they seem unlikely to cooperate.  We can't afford to let this intel slip out of our grasp."
+    },
+    "responses": [ { "text": "…", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM_ADVICE_3",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_SANGUINE" ],
+      "yes": "You should know how dangerous the Shrikes are, sanguinist.  I doubt you'll be able to just walk in and charm them into giving us what we need, but you're welcome to try.  Personally I'd suggest you err on the side of caution.",
+      "no": "You can't be serious.  What, is she asking you to just walk in and make friends with them?  They're sanguinists, worse they're the ones trained to fight us.  They'll be expecting you, I'm certain.  If you insist on trying to handle this peacefully, you had better be ready for things to turn into an ambush if things go sour."
+    },
+    "responses": [ { "text": "…", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM_ADVICE_4",
+    "dynamic_line": "Most of our order had little familiarity with these laboratories.  If we knew then what we knew now, we would've tried to force our way into every last one of them.  I do, however, recall that site was the subject of an investigation by one of our urban contacts, a Purifier like Nicholas.  Shortly before all this boiled over.",
+    "responses": [
+      { "text": "What did they find?", "topic": "TALK_CF_GM_ADVICE_4_2" },
+      { "text": "I'll look into it then.", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM_ADVICE_4_2",
+    "dynamic_line": "He'd led a small hunting party with him to track a shipment, part of the intel-gathering that produced the list that allowed you to identify as a threat.  They didn't identify anything anomalous but there was mention of human trafficking, possibly experimentation.  The hunters with him were told to hold back while he attempted to sneak in.",
+    "responses": [
+      { "text": "What happened?", "topic": "TALK_CF_GM_ADVICE_4_3" },
+      { "text": "I'll see what I find, then.", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM_ADVICE_4_3",
+    "dynamic_line": "They lost him, waited over a day before leaving.  They were instructed not to assault the facility due to the risk of too many of our people being exposed, even if his life was at risk.  That place is going to be dangerous, even if they've succumbed to the apocalypse by now.  However good the intentions of their main project might have been, there's no telling what evils they might have inflicted on the world in the process.",
+    "responses": [ { "text": "I see.  Thank you for the information.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_GM_MISSION_4_OPINION",
+    "//": "Unlike Sofia, Johnathan does not trust the Old Guard if you've picked that particular resolution for Sofia's fourth mission.",
+    "dynamic_line": {
+      "u_has_var": "old_guard_presence",
+      "type": "knowledge",
+      "context": "rural_church",
+      "value": "yes",
+      "yes": "They're hard-working, but they know more than they let on.  At least, whoever sent them.  Be careful what you say around them.  They are here for a reason, and I'm concerned that it might endanger our purpose.",
+      "no": "I have my concerns, but they seem to be trustworthy.  Not well-versed in the arcane, but if need be we can teach them our ways.  Other than that, they seem to mostly just help with day-to-day tasks."
+    },
+    "responses": [
+      {
+        "text": "I see…",
+        "effect": { "npc_add_var": "johnathan_opinion_given", "type": "flag", "context": "knowledge", "value": "yes" },
+        "topic": "TALK_CF_GM"
+      }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_READY",
+    "type": "talk_topic",
+    "dynamic_line": "Good.  I've taken the time to speak with the others, pass the word around, and study our maps.  I think between what you've brought in and what the other scouts were able to find out, we have a fix on the source of this anomaly.  I want to take some time to prepare yourself, then see me when you're ready.  This may prove to be a difficult fight.",
+    "responses": [
+      {
+        "text": "Alright.",
+        "effect": [
+          { "npc_add_var": "johnathan_prelude_ended", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "u_add_var": "johnathan_prelude_ended", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "cf_church_upgrade_GM_4_prelude_a",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church"
+          },
+          {
+            "mapgen_update": "cf_church_upgrade_GM_4_prelude_b",
+            "om_terrain": "cf_church_2",
+            "om_special": "cf_rural_church"
+          },
+          {
+            "mapgen_update": "cf_church_upgrade_GM_4_prelude_c",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church"
+          },
+          {
+            "mapgen_update": "cf_church_upgrade_GM_4_prelude_d",
+            "om_terrain": "cf_church_4",
+            "om_special": "cf_rural_church"
+          }
+        ],
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_MID_ADVICE",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_mission": "MISSION_CF_GM_4_PRELUDE",
+      "yes": "Whatever killed most of the survivors is still in the area, and we know they're more dangerous at night.  Try not approach during the day.  Look for anything that seems out of place and bring it here.  If I can't figure anything out of it, I'll recommend you to Sofia.",
+      "no": {
+        "u_has_var": "johnathan_prelude_penultimate",
+        "type": "mission",
+        "context": "rural_church",
+        "value": "yes",
+        "no": "Visit the center first and foremost, but any contact that has extensive involvement with traders and explorers might know something.  Get at least five confirmed locations and we should have a better understanding of where the epicenter might be.",
+        "yes": "Bring what you found to Sofia, she should be able to help.  I'll look into consulting with the others as well, until you come back with anything."
+      }
+    },
+    "responses": [ { "text": "…", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_var": "johnathan_prelude_started",
+      "type": "mission",
+      "context": "rural_church",
+      "value": "yes",
+      "no": "There is a new problem I've been made aware of recently, but I'm afraid it's more complicated than normal.  We've been tracking reports of attacks on scavengers and anomalous activity over a wide area, without any leads on the source.  I can tell you what I know and see if we can find anything out.",
+      "yes": "Afraid I haven't acquired any new intel.  Still, I'll answer any questions and hopefully that will help narrow things down.  What do you have for me?"
+    },
+    "speaker_effect": [
+      {
+        "effect": [ { "u_add_var": "johnathan_prelude_started", "type": "mission", "context": "rural_church", "value": "yes" } ]
+      }
+    ],
+    "responses": [
+      { "text": "What sort of attacks happened?", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS" },
+      { "text": "Can you describe the anomalies?", "topic": "TALK_CF_GM_PRELUDE_4_ANOMALIES" },
+      { "text": "Who do you suggest asking about this?", "topic": "TALK_CF_GM_PRELUDE_4_PROGRESSION" },
+      { "text": "What else can you tell me?", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2" },
+      { "text": "I'll go ask around…", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS",
+    "type": "talk_topic",
+    "dynamic_line": "Anomalous monsters in small groups, sometimes lone attackers.  Most of the attacks were at night, and most of the victims attacked during the day got away unscathed.",
+    "responses": [
+      {
+        "text": "Anomalous, but more dangerous and active at night.  Any idea what that might be?",
+        "condition": { "or": [ { "u_has_intelligence": 9 }, { "u_has_perception": 9 } ] },
+        "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_1"
+      },
+      { "text": "Any information on what sort of monsters attacked them?", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2" },
+      { "text": "I have something else to ask about.", "topic": "TALK_CF_GM_PRELUDE_4" },
+      { "text": "I'll go ask around…", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_1",
+    "type": "talk_topic",
+    "dynamic_line": "I have a few ideas myself, but I don't have any first-hand accounts by the survivors so far to confirm what we're up against.  The most detail we've received so far concerns the most recent second-hand account we've received.  You might be able to find something out by following what little lead we have.",
+    "responses": [
+      { "text": "Worth a try, point me in the right direction.", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_ACCEPT" },
+      { "text": "What intel did that lead give you?", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_1_INTEL" },
+      { "text": "I have something else to ask about first.", "topic": "TALK_CF_GM_PRELUDE_4" },
+      { "text": "Nevermind for now.", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_ACCEPT",
+    "type": "talk_topic",
+    "dynamic_line": "Alright.  I'll give you directions as best as I can.  This should lead you to the last site where they broke camp before their return.  They left some of their gear with the bodies, and there might be some clues left behind.  Search for any items that stand out, possibly anomalous materials they might have scavenged from the region.",
+    "speaker_effect": [ { "effect": { "add_mission": "MISSION_CF_GM_4_PRELUDE" } } ],
+    "responses": [
+      { "text": "Do you have any advice?", "topic": "TALK_CF_GM_PRELUDE_4_ACCEPT_ADVICE" },
+      { "text": "I have something else to ask about.", "topic": "TALK_CF_GM_PRELUDE_4" },
+      { "text": "I'll be back later.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ACCEPT_ADVICE",
+    "type": "talk_topic",
+    "dynamic_line": "All I can tell you is to be careful.  They let their guard down and assumed they were in the clear, it's possible whatever killed most of the survivors is still in the area.  It's also likely they may have brought some anomalous artifact with them that could have attracted monsters to them.",
+    "responses": [
+      { "text": "I have something else to ask about.", "topic": "TALK_CF_GM_PRELUDE_4" },
+      { "text": "I'll be back later.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_1_INTEL",
+    "type": "talk_topic",
+    "dynamic_line": "A small group of survivors were traveling through the area where these attacks have been happening, a few suffered some severe injuries attempting to break contact.  They made it some distance before making camp to rest and try to treat their wounded.  Best they could to was bury the ones that succumbed to their wounds before something ran them off.  I know the location of that campsite at least, if you think it's worth investigating.",
+    "responses": [
+      { "text": "I'll do it.", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_ACCEPT" },
+      { "text": "No thanks, let's try something else.", "topic": "TALK_CF_GM_PRELUDE_4" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_2",
+    "type": "talk_topic",
+    "dynamic_line": "The attackers are evidently nocturnal, probably why the attacks are most common at night.  What few reports we have suggest they aren't natural wildlife or undead.  If there was an incursion of otherworldly abominations, you'd think we'd have an easier time pinpointing the cause.  The attacks are scattered over a wide area however, so it might just be that we have such a broad area to search.",
+    "responses": [
+      {
+        "text": "It could be provoked by a more subtle incident, like what broke the back of the Keepers.",
+        "condition": { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ] },
+        "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1"
+      },
+      {
+        "text": "They might not be physical interlopers, they could be like summoned monsters.",
+        "condition": { "or": [ { "u_has_trait": "PROF_ARCANIST2" }, { "u_has_skill": { "skill": "magic", "level": 6 } } ] },
+        "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_2"
+      },
+      { "text": "Any way we could narrow down the location?", "topic": "TALK_CF_GM_PRELUDE_4_PROGRESSION" },
+      { "text": "I need time to think about this.", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1",
+    "type": "talk_topic",
+    "dynamic_line": "That's possible.  And I know that tracking down an incident like that would be difficult.  You might be able to make some sense out of one of the most recent attacks I have information on.",
+    "responses": [
+      {
+        "text": "I think I might be able to help track the cause down, actually.",
+        "condition": { "u_has_trait": "THRESH_VEIL" },
+        "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_VEIL"
+      },
+      { "text": "Alright, tell me what you have in mind.", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_1" },
+      { "text": "Maybe another time.", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_VEIL",
+    "type": "talk_topic",
+    "dynamic_line": "If you're certain.  You're one of the Keepers Chosen, aren't you?  Whatever strange magic is at work might be something you can make use of.  I have a rough area mapped out, if you have one of their artifacts at hand?",
+    "responses": [
+      {
+        "text": "I do.  Show me what I need to do for this to work.",
+        "switch": true,
+        "condition": { "u_has_item": "veilblade" },
+        "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_RITUAL"
+      },
+      { "text": "Nevermind, let's start from the beginning.", "topic": "TALK_CF_GM_PRELUDE_4" },
+      {
+        "text": "I'll need to retrieve the artifact first.  I'll be back later.",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_RITUAL",
+    "type": "talk_topic",
+    "dynamic_line": "We'll trace the area here, with a shadow gem from one of the conventional interlopers, the resonance from your blade, and one of my compatriots providing a mask… just stay right there.",
+    "responses": [ { "text": "Alright.", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_RITUAL_2" } ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_RITUAL_2",
+    "type": "talk_topic",
+    "dynamic_line": "It's like a sort of divination, using an anomalous item with a connection to the monsters behind these attacks, the gem in this case.  And with your… connection to that entity, if this is similar to what affected the Keepers' holy site, your blade should react to this ritual…",
+    "responses": [ { "text": "Is it doing anything?", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_RITUAL_3" } ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1_RITUAL_3",
+    "type": "talk_topic",
+    "dynamic_line": "There.  I can see it through the mask, how the artifact and the gem react when used in this manner.  Give me a moment to consult with the others and speak to me when you're ready.  I hope this actually leads us the right way.",
+    "responses": [
+      {
+        "text": "…",
+        "effect": [
+          { "u_add_var": "johnathan_prelude_ended", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "npc_add_var": "johnathan_prelude_ended", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "u_add_effect": "cf_mission_1" }
+        ],
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_2",
+    "type": "talk_topic",
+    "dynamic_line": "Indeed.  I know a possible way you could help.  I don't have many exact locations of attacks to narrow things down, but I do have the location of a related incident.  Some survivors made camp after dealing with attacks from these monsters, and I suspect they left behind anomalous findings that might help us locate them.  You seem to have an eye for this, I'd like to ask for you to investigate.",
+    "responses": [
+      { "text": "I accept, tell me where to go.", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_ACCEPT" },
+      { "text": "Can you tell me more, first?", "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_1_INTEL" },
+      { "text": "I have something else to ask about first.", "topic": "TALK_CF_GM_PRELUDE_4" },
+      { "text": "Maybe later.", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_ANOMALIES",
+    "type": "talk_topic",
+    "dynamic_line": "A few examples of intermittent anomalous hazards in the general hazard, often erratic and with no evidence of a pattern.  Moreover, the few reports of people who have lingered in the area have reported a wave of bad dreams, strange visions.  Seems to describe monsters that aren't among the usual interlopers.",
+    "responses": [
+      {
+        "text": "This seems familiar.  The Keepers have suffered a similar fate in their foremost holy site, haven't they?",
+        "condition": { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ] },
+        "topic": "TALK_CF_GM_PRELUDE_4_ATTACKS_2_1"
+      },
+      { "text": "Maybe there's a way to get a more exact location?", "topic": "TALK_CF_GM_PRELUDE_4_PROGRESSION" },
+      { "text": "I need time to think about this.", "topic": "TALK_CF_GM" }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_PRELUDE_4_PROGRESSION",
+    "type": "talk_topic",
+    "dynamic_line": {
+      "u_has_var": "johnathan_opinion_given",
+      "type": "flag",
+      "context": "knowledge",
+      "value": "yes",
+      "no": "We need more information on how many attacks have actually happened, and where.  I would suggest you talk to people at the refugee center, any other location that frequently receives visits from scavengers.",
+      "yes": "We need more information on how many attacks have actually happened, and where.  I would suggest you talk to people at the refugee center, any other location that frequently receives visits from scavengers.  I'd also suggest talking to the merchants set up in the new meeting hall."
+    },
+    "responses": [
+      {
+        "text": "I'll see what I can do.",
+        "effect": { "u_add_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+        "topic": "TALK_CF_GM"
+      }
+    ]
+  },
+  {
+    "id": "TALK_CF_GM_WHO",
+    "type": "talk_topic",
+    "dynamic_line": "My name is Johnathan Leone.  I was among the founders of our order, as was Sofia it seems.  Before the founding, I held the title of Grandmaster among the order I was once a part of.",
+    "responses": [ { "text": "Grandmaster?", "topic": "TALK_CF_GM_GRANDMASTER" }, { "text": "I see.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "id": "TALK_CF_GM_GRANDMASTER",
+    "type": "talk_topic",
+    "dynamic_line": "Indeed.  Before the founding, we were a local religious institute under solemn vow.  I suspect the Church would frown upon our present conduct, our practices now so closely entwined with our heathen brethren.",
+    "responses": [ { "text": "I see.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "id": "TALK_CF_GM_WHERE",
+    "type": "talk_topic",
+    "dynamic_line": "Sofia would know more of the place.  Sadly I'm not ordained to serve the role of whoever originally tended to this place, and so sacred duties fall to Thane McKinnon.",
+    "responses": [ { "text": "What are your duties then?", "topic": "TALK_CF_GM_DO" }, { "text": "Oh, okay.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "id": "TALK_CF_GM_DO",
+    "type": "talk_topic",
+    "dynamic_line": "For now, I oversee the training and preparation of the others here, and organize scouting and supply runs.  Check with me and perhaps I'll have something for you do.",
+    "responses": [ { "text": "We'll see.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "id": "TALK_CF_GM_OTHERS",
+    "type": "talk_topic",
+    "dynamic_line": "We are not alone out there.  I am aware of other hunting parties still hanging on, though getting a fix on their location is difficult.  I've given Sofia what information I have, she might be able to do something with it if you ask her.",
+    "responses": [ { "text": "Okay.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "id": "TALK_CF_GM_ARCANISTS",
+    "type": "talk_topic",
+    "//": "It can be presumed that Johnathan can sense the difference between a member of the Sanguine Order and a non-Order Dragonblood, so only refers to them as sanguinists in the generic sense.",
+    "dynamic_line": {
+      "u_has_trait": "PROF_SANGUINE",
+      "yes": "A few scattered signs of your order, despite our conflict almost wiping us both out.  The Keepers of the Oath seem to be just about extinct too, largely thanks to your fellows.  That just leaves various cults and handfuls of independent practitioners, as far as I'm aware.  I can only pray that they don't make things worse, with no one left to guide them.",
+      "no": "The Sanguine Order, as far as I've been able to discern, has been almost wiped out.  Thank the gods for that.  I've heard barely anything of the Keepers, possibly for the best given we weren't often on speaking terms with each other.  Handful of cults here and there no doubt, but I'm not aware of any others to get tangled up in the bickering and squabbling of the old days.  Likely individuals out there surely, still dabbling in potentially dangerous magic with no one to guide them."
+    },
+    "responses": [ { "text": "I see.", "topic": "TALK_CF_GM" } ]
+  },
+  {
+    "id": "TALK_CF_GM_GROUP",
+    "type": "talk_topic",
+    "dynamic_line": "To bring justice to those who would endanger humanity, if we must.  To mend the growing wound In The Veil Between Worlds, if we can.  To guard and guide so that a dangerous path may be avoided, so we shall.  So long as the Sun shines upon the Earth.  We are hunters of the wicked and otherworldly, and protectors of the innocent.  At least, we strive to be.  There weren't that many of us, and being scattered as small parties meant that not all of us adhered to proper conduct, though it never reached the point of dissension and division.",
+    "responses": [ { "text": "I see.", "topic": "TALK_CF_GM" } ]
+  }
+]

@@ -28,7 +28,7 @@ static bool submap_has_fire( submap &sm )
     if( sm.field_count == 0 ) {
         return false;
     }
-    return std::ranges::any_of( sm.field_cache, [&]( const point & local ) {
+    return std::ranges::any_of( sm.field_cache, [&]( const point_sm_ms & local ) {
         field_entry *fe = sm.get_field( local ).find_field( fd_fire );
         return fe != nullptr && fe->is_field_alive();
     } );

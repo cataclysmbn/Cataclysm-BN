@@ -1,0 +1,285 @@
+[
+  {
+    "id": "electrothermal_arc_cannon_part",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted electrothermal arc cannon" },
+    "item": "electrothermal_arc_cannon",
+    "folded_volume": "3500 ml",
+    "color": "yellow",
+    "broken_color": "yellow",
+    "breaks_into": [
+      { "item": "steel_chunk", "count": [ 1, 6 ] },
+      { "item": "scrap", "count": [ 1, 15 ] },
+      { "item": "e_scrap", "charges": [ 1, 7 ] },
+      { "item": "cable", "charges": [ 1, 25 ] },
+      { "item": "plastic_chunk", "count": [ 1, 3 ] },
+      { "item": "copper", "charges": [ 1, 170 ] },
+      { "item": "essence_dull", "charges": [ 1, 95 ] }
+    ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 5 ], [ "electronics", 3 ], [ "magic", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ], [ "magic", 5 ] ] }
+    },
+    "description": "An experimental energy weapon that fires bolts of anomalous energy that leap from target to target, leaving burning plasma in its erratic wake.  Inefficient but highly destructive if used in a target-rich environment."
+  },
+  {
+    "id": "rift_focus_cannon_part",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted rift focus cannon" },
+    "item": "rift_focus_cannon",
+    "folded_volume": "4 L",
+    "color": "light_blue",
+    "broken_color": "light_blue",
+    "breaks_into": [
+      { "item": "steel_chunk", "count": [ 1, 5 ] },
+      { "item": "scrap", "count": [ 1, 25 ] },
+      { "item": "e_scrap", "charges": [ 1, 7 ] },
+      { "item": "cable", "charges": [ 1, 50 ] },
+      { "item": "plastic_chunk", "count": [ 1, 4 ] },
+      { "item": "gold_small", "charges": [ 1, 50 ] },
+      { "item": "essence_dull", "charges": [ 1, 160 ] }
+    ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 4 ], [ "magic", 7 ] ] },
+      "removal": { "skills": [ [ "mechanics", 5 ], [ "magic", 6 ] ] }
+    },
+    "description": "A heavy-duty experimental rifle, that exploits otherworldly energy to create highly-destructive beams of supernatural energy.  Powerful, but robots and some anomalous monsters are immune to its effects.  Requires crystallized essence to fire, and may tear holes in The Veil with each shot."
+  },
+  {
+    "id": "ethereal_crossbow_part",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted wraithslayer" },
+    "item": "ethereal_crossbow",
+    "folded_volume": "1500 ml",
+    "color": "green",
+    "broken_color": "green",
+    "breaks_into": [
+      { "item": "splinter", "count": [ 1, 6 ] },
+      { "item": "scrap", "count": 1 },
+      { "item": "gold_small", "charges": [ 1, 45 ] },
+      { "item": "essence_blood", "charges": [ 1, 4 ] }
+    ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ], [ "magic", 3 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ], [ "magic", 2 ] ] }
+    },
+    "description": "A crossbow decorated with golden symbols, seemingly lacking a bowstring.  Instead it propels bright green bolts of energy with high armor penetration."
+  },
+  {
+    "id": "ethereal_huge_crossbow_part",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted grand wraithslayer" },
+    "item": "ethereal_huge_crossbow",
+    "folded_volume": "4 L",
+    "color": "green",
+    "broken_color": "green",
+    "breaks_into": [
+      { "item": "splinter", "count": [ 1, 24 ] },
+      { "item": "scrap", "count": [ 1, 20 ] },
+      { "item": "gold_small", "charges": [ 1, 60 ] },
+      { "item": "essence_blood", "charges": [ 1, 4 ] }
+    ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ], [ "magic", 3 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ], [ "magic", 2 ] ] }
+    },
+    "description": "A massive medieval crossbow converted to an arcane weapon, removing its winch and bowstring and richly decorated with esoteric religious iconography.  It uses a large amount of dull essence to fire extremely powerful piercing bolts of energy."
+  },
+  {
+    "id": "distorion_amp_motor_part",
+    "type": "vehicle_part",
+    "location": "engine_block",
+    "name": { "str": "distortion amplifier motor" },
+    "symbol": "*",
+    "looks_like": "vgen2",
+    "color": "light_red",
+    "broken_color": "red",
+    "item": "distortion_amp_motor_item",
+    "damage_modifier": 60,
+    "backfire_threshold": 0.5,
+    "backfire_freq": 15,
+    "damaged_power_factor": 0.5,
+    "m2c": 90,
+    "fuel_type": "battery",
+    "durability": 150,
+    "power": 200000,
+    "energy_consumption": 100000,
+    "breaks_into": [
+      { "item": "scrap", "count": [ 1, 4 ] },
+      { "item": "steel_chunk", "count": [ 1, 3 ] },
+      { "item": "cable", "charges": [ 3, 6 ] },
+      { "item": "essence_dull", "count": [ 50, 100 ] }
+    ],
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 4 ], [ "electronics", 3 ], [ "magic", 5 ] ],
+        "time": "60 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 3 ], [ "electronics", 2 ], [ "magic", 4 ] ],
+        "time": "30 m",
+        "using": [ [ "vehicle_bolt", 1 ] ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 3 ], [ "electronics", 4 ], [ "magic", 6 ] ],
+        "time": "30 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "damage_reduction": { "all": 15 },
+    "flags": [ "ENGINE", "E_NO_POWER_DECAY" ],
+    "description": "A powerful electric motor relying on spatial distortion.  Outputs more energy than it consumes, but unusable as a source of free energy.  Multiple can be installed without skill penalty or loss of power, but alternators cannot be installed on it."
+  },
+  {
+    "id": "distorion_flow_rotor_part",
+    "copy-from": "distorion_amp_motor_part",
+    "type": "vehicle_part",
+    "location": "on_roof",
+    "name": { "str": "distortion flow rotor" },
+    "looks_like": "small_civilian_rotors",
+    "item": "distortion_flow_rotor_item",
+    "breaks_into": [
+      { "item": "sheet_metal_small", "count": [ 1, 2 ] },
+      { "item": "scrap", "count": [ 1, 4 ] },
+      { "item": "steel_chunk", "count": [ 1, 3 ] },
+      { "item": "cable", "charges": [ 3, 6 ] },
+      { "item": "essence_dull", "count": [ 60, 120 ] }
+    ],
+    "extend": { "flags": [ "ROTOR", "SHOCK_RESISTANT" ] },
+    "rotor_diameter": 20,
+    "description": "A powerful combination electric drive and VTOL rotor, combining multiple anomalous properties.  Outputs more energy than it consumes.  Multiple can be installed without skill penalty or loss of power, but alternators cannot be installed on it."
+  },
+  {
+    "abstract": "essence_surge_generator_abstract",
+    "type": "vehicle_part",
+    "symbol": "O",
+    "color": "light_blue",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "damage_modifier": 60,
+    "durability": 200,
+    "description": "An abstract part that essence surge generators inherit from.",
+    "location": "fuel_source",
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 5 ], [ "electronics", 4 ], [ "magic", 6 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ] ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 4 ], [ "electronics", 3 ], [ "magic", 5 ] ],
+        "time": "30 m",
+        "using": [ [ "vehicle_weld_removal", 1 ] ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 6 ], [ "electronics", 5 ], [ "magic", 7 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "REACTOR" ],
+    "breaks_into": [
+      { "item": "scrap", "count": [ 1, 4 ] },
+      { "item": "steel_chunk", "count": [ 1, 3 ] },
+      { "item": "cable", "charges": [ 3, 6 ] },
+      { "item": "essence_dull", "count": [ 25, 50 ] }
+    ],
+    "damage_reduction": { "all": 10 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "essence_surge_generator_part",
+    "copy-from": "essence_surge_generator_abstract",
+    "name": { "str": "essence surge generator" },
+    "description": "An exotic reactor that breaks down essence, in a reaction that doubles power output.  Unnaturally efficient and reliable, though limited by how precious a fuel source such otherworldly energies are.",
+    "//": "Doubles effective energy output of each essence put into it.",
+    "power": 300,
+    "epower": 300000,
+    "fuel_type": "essence",
+    "item": "essence_surge_generator_item"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "essence_blood_surge_generator_part",
+    "copy-from": "essence_surge_generator_abstract",
+    "name": { "str": "blood essence surge generator" },
+    "description": "An exotic reactor that breaks down blood essence, in a reaction that doubles power output.  Unnaturally efficient and reliable, though sustaining it with magical energy made from life force may be difficult.",
+    "power": 100,
+    "epower": 100000,
+    "fuel_type": "essence_blood",
+    "item": "essence_blood_surge_generator_item"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "essence_dull_surge_generator_part",
+    "copy-from": "essence_surge_generator_abstract",
+    "name": { "str": "dull essence surge generator" },
+    "description": "An exotic reactor that breaks down dull essence, in a reaction that doubles power output.  Unnaturally efficient and reliable, though it may be prohibitive to sustain it with large amounts of consecrated energy.",
+    "power": 10,
+    "epower": 10000,
+    "fuel_type": "essence_dull",
+    "item": "essence_dull_surge_generator_item"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "essence_pure_surge_generator_part",
+    "copy-from": "essence_surge_generator_abstract",
+    "name": { "str": "crystallized essence surge generator" },
+    "description": "An exotic reactor that breaks down crystallized essence, in a reaction that doubles power output.  Unnaturally efficient and reliable, though surely such enormous energy density is overkill for all but the hungriest of rolling bunkers?",
+    "power": 3000,
+    "epower": 3000000,
+    "fuel_type": "essence_pure",
+    "item": "essence_pure_surge_generator_item"
+  },
+  {
+    "type": "vehicle_part",
+    "id": "surge_generator_part",
+    "name": { "str": "displacement surge motor" },
+    "symbol": "*",
+    "color": "magenta",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "damage_modifier": 60,
+    "durability": 200,
+    "description": "An exotic motor, converted into a endless source of kinetic energy with even more anomalous technology.  It serves as a motor that never drains power.  Still cannot be equipped with an alternator, but multiple can be installed without skill penalty or loss of power.",
+    "backfire_threshold": 0.5,
+    "backfire_freq": 15,
+    "damaged_power_factor": 0.5,
+    "m2c": 90,
+    "power": 200000,
+    "energy_consumption": 0,
+    "fuel_type": "essence_fake",
+    "item": "displacement_surge_generator_item",
+    "location": "engine_block",
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 7 ], [ "electronics", 6 ], [ "magic", 8 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ] ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 6 ], [ "electronics", 5 ], [ "magic", 7 ] ],
+        "time": "30 m",
+        "using": [ [ "vehicle_weld_removal", 1 ] ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 8 ], [ "electronics", 7 ], [ "magic", 9 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "ENGINE", "PERPETUAL", "E_NO_POWER_DECAY" ],
+    "breaks_into": [
+      { "item": "scrap", "count": [ 1, 4 ] },
+      { "item": "steel_chunk", "count": [ 1, 3 ] },
+      { "item": "cable", "charges": [ 3, 6 ] },
+      { "item": "essence_dull", "count": [ 25, 50 ] }
+    ],
+    "damage_reduction": { "all": 10 }
+  }
+]

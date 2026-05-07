@@ -67,6 +67,18 @@
     ]
   },
   {
+    "id": "military_range_guns",
+    "type": "item_group",
+    "subtype": "distribution",
+    "//": "Selection of guns matching the casing spawns used in mass_grave_casings as used at mass graves and military camp firing range",
+    "entries": [
+      { "group": "military_standard_pistols", "prob": 10, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] },
+      { "group": "military_standard_assault_rifles", "prob": 50, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] },
+      { "group": "military_standard_sniper_rifles", "prob": 20, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] },
+      { "group": "military_standard_shotguns", "prob": 20, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] }
+    ]
+  },
+  {
     "type": "item_group",
     "id": "military_standard_assault_rifles",
     "//": "Mainly the standard rifles that an Army/Marine rifleman, Army TL, or Marine assistant automatic rifleman would use, but allow a handful of Ranger and Delta Force rifles",
@@ -180,7 +192,7 @@
       { "item": "e_tool", "prob": 50 },
       { "item": "mask_gas", "prob": 20 },
       { "item": "two_way_radio", "prob": 60 },
-      { "item": "army_powered_earmuffs", "prob": 20 },
+      { "item": "army_powered_earmuffs", "prob": 25 },
       { "item": "sheath", "contents-item": "knife_combat", "prob": 80 }
     ]
   },
@@ -806,8 +818,11 @@
       [ "motor_oil", 100 ],
       [ "solar_panel", 3 ],
       [ "recharge_station", 8 ],
-      [ "turret_mount", 12 ],
-      [ "turret_controls", 3 ]
+      [ "turret_mount", 15 ],
+      [ "laser_designator_item", 5 ],
+      [ "turret_autoloader", 5 ],
+      [ "bomber_controls", 5 ],
+      [ "turret_controls", 5 ]
     ]
   },
   {

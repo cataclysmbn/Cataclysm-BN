@@ -705,7 +705,8 @@
     "volume": "250 ml",
     "weight": "3 g",
     "ammo_type": "tape",
-    "count": 35
+    "count": 35,
+    "flags": [ "UNRECOVERABLE" ]
   },
   {
     "type": "AMMO",

@@ -197,7 +197,7 @@ static void board_up( map &m, const tripoint_range<tripoint> &range )
 
 void start_location::prepare_map( tinymap &m ) const
 {
-    const int z = m.get_abs_sub().z;
+    const int z = m.get_abs_sub().z();
     if( flags().contains( "BOARDED" ) ) {
         m.build_outside_cache( z );
         board_up( m, m.points_on_zlevel( z ) );
@@ -277,7 +277,6 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
     // TODO: fix point types
     player_start.load( player_location.raw(), false );
     prepare_map( player_start );
-    player_start.save();
 }
 
 /** Helper for place_player
@@ -348,8 +347,8 @@ void start_location::place_player( player &u ) const
     u.setx( g_half_mapsize_x );
     u.sety( g_half_mapsize_y );
     u.setz( g->get_levz() );
-    m.invalidate_map_cache( m.get_abs_sub().z );
-    m.build_map_cache( m.get_abs_sub().z );
+    m.invalidate_map_cache( m.get_abs_sub().z() );
+    m.build_map_cache( m.get_abs_sub().z() );
     const bool must_be_inside = !flags().contains( "ALLOW_OUTSIDE" );
     ///\EFFECT_STR allows player to start behind less-bashable furniture and terrain
     // TODO: Allow using items here
@@ -411,7 +410,7 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
     tinymap m;
     m.load( player_location, false );
-    m.build_outside_cache( m.get_abs_sub().z );
+    m.build_outside_cache( m.get_abs_sub().z() );
     const point u( g->u.posx() % g_half_mapsize_x, g->u.posy() % g_half_mapsize_y );
     std::vector<tripoint> valid;
     for( const tripoint &p : m.points_on_zlevel() ) {
@@ -428,7 +427,6 @@ void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
     for( size_t i = 0; i < std::min( count, valid.size() ); i++ ) {
         m.add_field( valid[i], fd_fire, 3 );
     }
-    m.save();
 }
 
 void start_location::add_map_extra( const tripoint_abs_omt &omtstart,
@@ -439,9 +437,7 @@ void start_location::add_map_extra( const tripoint_abs_omt &omtstart,
     m.load( player_location, false );
 
     // TODO: fix point types
-    MapExtras::apply_function( map_extra, m, player_location.raw() );
-
-    m.save();
+    MapExtras::apply_function( map_extra, m, player_location );
 }
 
 void start_location::handle_heli_crash( player &u ) const
@@ -487,7 +483,6 @@ static void add_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &t
     // map::place_spawns internally multiplies density by rng(10, 50)
     const float density = expected_points / ( ( 10 + 50 ) / 2.0 );
     m.place_spawns( type, 1, point_zero, point( SEEX * 2 - 1, SEEY * 2 - 1 ), density );
-    m.save();
 }
 
 void start_location::surround_with_monsters(

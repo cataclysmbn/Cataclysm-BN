@@ -1,0 +1,32 @@
+[
+  {
+    "id": "style_veil_chosen",
+    "copy-from": "style_veil_chosen",
+    "type": "martial_art",
+    "name": { "str": "Ritual Art" },
+    "//": "No, the generic D&D +1/+2 weapons don't really count as anomalous enough.",
+    "extend": {
+      "weapons": [
+        "magi_staff_minor",
+        "rune_biomancer_weapon",
+        "rune_technomancer_weapon",
+        "rune_magus_weapon",
+        "rune_kelvinist_weapon",
+        "rune_stormshaper_weapon",
+        "rune_animist_weapon",
+        "flaming_fist",
+        "flaming_fist_plus_one",
+        "flaming_fist_plus_two",
+        "gauntlet_pounding",
+        "rune_earthshaper_weapon",
+        "stonefist",
+        "stormhammer",
+        "tentacle_whip",
+        "mjolnir",
+        "gungnir",
+        "gram",
+        "laevateinn"
+      ]
+    }
+  }
+]

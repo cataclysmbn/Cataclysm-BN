@@ -1,0 +1,79 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UltimateCataclysm", "UltimateCataclysmDemo" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/arcana_expan_ultica_tall.png",
+        "tiles": [
+          { "id": "overlay_worn_satchel_eternity", "fg": 0 },
+          {
+            "id": [
+              "overlay_wielded_graboid_fang",
+              "overlay_wielded_iron_thorn",
+              "overlay_wielded_dermatik_sting",
+              "overlay_wielded_monster_fang"
+            ],
+            "fg": 1
+          },
+          { "id": "overlay_wielded_thunder_sigil", "fg": 2 },
+          { "id": "overlay_wielded_bloodscourge", "fg": 3 },
+          { "id": "overlay_wielded_hand_of_armok", "fg": 4 },
+          { "id": "overlay_wielded_scourge_staff", "fg": 5 },
+          { "id": "overlay_female_worn_somen_clairvoyance", "fg": 6 },
+          { "id": "overlay_male_worn_somen_clairvoyance", "fg": 7 },
+          { "id": "overlay_female_worn_jade_wreath", "fg": 8 },
+          { "id": "overlay_male_worn_jade_wreath", "fg": 9 },
+          { "id": [ "overlay_wielded_blood_athame", "overlay_wielded_moonstone_fang" ], "fg": 10 },
+          { "id": "overlay_wielded_offering_chalice", "fg": 11 },
+          { "id": "overlay_wielded_sun_sword", "fg": 12 },
+          { "id": "overlay_wielded_sun_sword_on", "fg": 13 },
+          { "id": "overlay_wielded_bloodaxe_act", "fg": 14 },
+          { "id": "overlay_wielded_orb_veil", "fg": 15 },
+          { "id": "overlay_wielded_staff_druidic", "fg": 16 },
+          { "id": "overlay_wielded_verge_meteoric", "fg": 17 },
+          { "id": "mon_archon", "fg": 18 },
+          { "id": [ "mon_seraphic_shade", "mon_seraphic_shade_fake" ], "fg": 19 },
+          { "id": "overlay_male_mutation_ARCANA_DRAGONSCALES", "fg": 20 },
+          { "id": "overlay_female_mutation_ARCANA_DRAGONSCALES", "fg": 21 },
+          {
+            "id": [ "overlay_male_mutation_ARCANA_SCALYWINGS", "overlay_male_mutation_ARCANA_DRAGONWINGS" ],
+            "fg": 22
+          },
+          {
+            "id": [ "overlay_female_mutation_ARCANA_SCALYWINGS", "overlay_female_mutation_ARCANA_DRAGONWINGS" ],
+            "fg": 23
+          },
+          { "id": [ "overlay_male_mutation_ARCANA_SCALYTAIL", "overlay_male_mutation_ARCANA_DRAGONTAIL" ], "fg": 24 },
+          {
+            "id": [ "overlay_female_mutation_ARCANA_SCALYTAIL", "overlay_female_mutation_ARCANA_DRAGONTAIL" ],
+            "fg": 25
+          },
+          { "id": "overlay_male_mutation_ARCANA_DRAGONMUZZLE", "fg": 26 },
+          { "id": "overlay_female_mutation_ARCANA_DRAGONMUZZLE", "fg": 27 },
+          { "id": "overlay_male_mutation_ARCANA_PLATES", "fg": 28 },
+          { "id": "overlay_female_mutation_ARCANA_PLATES", "fg": 29 },
+          { "id": "overlay_male_mutation_ARCANA_DRAGONHORNS", "fg": 30 },
+          { "id": "overlay_female_mutation_ARCANA_DRAGONHORNS", "fg": 31 },
+          { "id": "mon_flesh_angel", "fg": 32 },
+          { "id": "mon_homunculus", "fg": 33 },
+          { "id": "overlay_wielded_ethereal_crossbow", "fg": 34 },
+          { "id": "overlay_female_worn_gilded_aegis", "fg": 35 },
+          { "id": "overlay_male_worn_gilded_aegis", "fg": 36 },
+          { "id": "overlay_female_worn_somen_clairvoyance_on", "fg": 37 },
+          { "id": "overlay_male_worn_somen_clairvoyance_on", "fg": 38 },
+          { "id": "overlay_wielded_hexenhammer", "fg": 39 },
+          { "id": [ "overlay_female_worn_robe_shadow", "overlay_female_worn_robe_shadow_on" ], "fg": 40 },
+          { "id": [ "overlay_male_worn_robe_shadow", "overlay_male_worn_robe_shadow_on" ], "fg": 41 },
+          { "id": "mon_feral_summoner", "fg": 42 },
+          { "id": "mon_feral_magehunter", "fg": 43 },
+          { "id": "mon_feral_keeper", "fg": 44 },
+          { "id": "mon_feral_sanguinist", "fg": 45 }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 48,
+        "sprite_offset_y": -16
+      }
+    ]
+  }
+]

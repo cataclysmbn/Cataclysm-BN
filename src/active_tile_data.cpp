@@ -302,7 +302,7 @@ void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
     }
     std::int64_t power = this->power * to_seconds<std::int64_t>( to - get_last_updated() );
     // TODO: Make not a copy from map.cpp
-    for( item *const outer : sm->get_items( p_within_sm.raw() ) ) {
+    for( item *const outer : sm->get_items( p_within_sm ) ) {
         outer->visit_items( [&power, &grid]( item * it ) {
             item &n = *it;
             if( !n.has_flag( flag_RECHARGE ) && !n.has_flag( flag_USE_UPS ) ) {

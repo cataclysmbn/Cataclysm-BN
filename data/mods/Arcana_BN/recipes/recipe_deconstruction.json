@@ -1,0 +1,1834 @@
+[
+  {
+    "result": "arcanemap",
+    "type": "uncraft",
+    "time": "30 s",
+    "components": [ [ [ "paper", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_grove",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_sanguine",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_chalice",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_flame",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_sanguine_tenet",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_chalice_tenet",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_flame_tenet",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_sanguine_hint",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_chalice_hint",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_flame_hint",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_starry_missive",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "note_soa_mission",
+    "type": "uncraft",
+    "time": "6 s",
+    "components": [ [ [ "paper", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "essence_pure",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "4 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 300 ] ] ]
+  },
+  {
+    "result": "scroll_blank",
+    "type": "uncraft",
+    "difficulty": 0,
+    "time": "1 m",
+    "components": [ [ [ "paper", 5 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "silver_glyph",
+    "type": "uncraft",
+    "difficulty": 0,
+    "time": "1 m",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "silver_small", 95 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "CF_golden_scale",
+    "type": "uncraft",
+    "difficulty": 0,
+    "time": "1 m",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "components": [ [ [ "gold_small", 5 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_magicfordummies",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 1,
+    "time": "10 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 20 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_potioncraft",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_scrollcraft",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_bloodmagic",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 90 ] ], [ [ "ash", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_hexenhammer",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 90 ] ], [ [ "ash", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_sacrifice",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 90 ] ], [ [ "ash", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_syncretism",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 120 ] ], [ [ "ash", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "book_summoning",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 120 ] ], [ [ "ash", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "index_potioncraft",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "index_scrollcraft",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "index_bloodmagic",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "index_hexenhammer",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "index_sacrifice",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "index_syncretism",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "index_summoning",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "arcana_mech_shem",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 300 ], [ "alloy_sheet", 6 ] ] ]
+  },
+  {
+    "result": "vortex_stone",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "material_limestone", 5 ] ], [ [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "result": "petrified_eye",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "material_limestone", 30 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "spiral_stone",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "material_limestone", 15 ] ], [ [ "essence_dull", 15 ] ] ]
+  },
+  {
+    "result": "portal",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 2 ] ], [ [ "essence_dull", 300 ] ] ]
+  },
+  {
+    "result": "etched_skull",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "meal_bone", 12 ] ], [ [ "essence_dull", 300 ] ] ]
+  },
+  {
+    "result": "violin_golden",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "gold_small", 2500 ] ], [ [ "essence_dull", 300 ] ] ]
+  },
+  {
+    "result": "tindalos_whistle",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 6 ] ], [ [ "essence_dull", 300 ] ] ]
+  },
+  {
+    "result": "flame_talisman",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 0,
+    "time": "5 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 10 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "water_talisman",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 1,
+    "time": "10 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 20 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "earth_talisman",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "air_talisman",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 4 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "charm_bone_empowered",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "stinger_flute_empowered",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 100 ] ] ]
+  },
+  {
+    "result": "triffid_garland_empowered",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 70 ] ] ]
+  },
+  {
+    "result": "amulet_exotic_empowered",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "brooch_iridescent_empowered",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 110 ] ] ]
+  },
+  {
+    "result": "meteoric_talisman",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 1 ] ], [ [ "essence_dull", 100 ] ] ]
+  },
+  {
+    "result": "jade_wreath",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "material_sand", 12 ] ], [ [ "essence_dull", 100 ] ] ]
+  },
+  {
+    "result": "moonstone_fang",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "material_sand", 6 ] ], [ [ "essence_dull", 100 ] ] ]
+  },
+  {
+    "result": "verge_meteoric",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "splinter", 8 ] ],
+      [ [ "scrap", 1 ] ],
+      [ [ "gold_small", 625 ] ],
+      [ [ "silver_small", 165 ] ],
+      [ [ "essence_dull", 490 ] ]
+    ]
+  },
+  {
+    "result": "scourge_moonstone",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 20 ] ], [ [ "silver_small", 400 ] ], [ [ "material_sand", 6 ] ], [ [ "essence_dull", 400 ] ] ]
+  },
+  {
+    "result": "armor_wyrm_berserker",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 42 ] ], [ [ "scrap", 44 ] ], [ [ "essence_dull", 340 ] ] ]
+  },
+  {
+    "result": "hauberk_jade",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "rag", 25 ] ],
+      [ [ "leather", 10 ] ],
+      [ [ "scrap", 120 ] ],
+      [ [ "gold_small", 200 ] ],
+      [ [ "copper", 300 ] ],
+      [ [ "material_sand", 12 ] ],
+      [ [ "essence_blood", 44 ] ]
+    ]
+  },
+  {
+    "result": "mana_gem_dull",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "copper", 100 ] ], [ [ "essence_blood", 9 ] ] ]
+  },
+  {
+    "result": "mana_gem_blood",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 100 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "mana_gem",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "gold_small", 100 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "mana_gem_pure",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "platinum_small", 100 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "candle_warding",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 20 ] ] ]
+  },
+  {
+    "result": "offering_chalice",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "gold_small", 625 ] ], [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "robe_shadow",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "rag", 19 ] ], [ [ "essence_dull", 210 ] ] ]
+  },
+  {
+    "result": "robe_shadow_xl",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "rag", 15 ] ], [ [ "essence_dull", 210 ] ] ]
+  },
+  {
+    "result": "cyclopean_mirror",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 100 ] ], [ [ "essence_dull", 200 ] ] ]
+  },
+  {
+    "result": "gauntlets_necro",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 120 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "gauntlets_necro_xl",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 80 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "thunder_sigil",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "gold_small", 300 ] ], [ [ "silver_small", 100 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "blood_athame",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 400 ] ], [ [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "result": "armor_wyrm",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "leather", 42 ] ], [ [ "essence_dull", 40 ] ] ]
+  },
+  {
+    "result": "revenant_crown",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 600 ] ], [ [ "material_sand", 12 ] ], [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "summon_kreck",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "result": "summon_blank",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "result": "summon_flaming_eye",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "summon_hunting_horror",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "summon_dark_wyrm",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "summon_mi_go",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "summon_jabberwock",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "summon_flying_polyp",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "summon_yugg",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "summon_shoggoth",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "summon_kreck_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "result": "summon_triffid_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 30 ] ] ]
+  },
+  {
+    "result": "summon_flesh_angel_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "summon_hunting_horror_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 60 ] ] ]
+  },
+  {
+    "result": "summon_dark_wyrm_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "summon_mi_go_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 90 ] ] ]
+  },
+  {
+    "result": "summon_jabberwock_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "summon_flying_polyp_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "summon_yugg_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "summon_shoggoth_bound",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "silver_small", 95 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "dimensional_warp_trap",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 300 ] ], [ [ "silver_small", 95 ] ] ]
+  },
+  {
+    "result": "bloodaxe",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 12 ] ], [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "shrike_misericorde",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 10 ] ], [ [ "silver_small", 500 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "shrike_misericorde_folded",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 10 ] ], [ [ "silver_small", 500 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "lichhook",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap_bronze", 5 ] ], [ [ "silver_small", 60 ] ], [ [ "essence_dull", 100 ] ] ]
+  },
+  {
+    "result": "bloodscourge",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "splinter", 12 ] ], [ [ "silver_small", 475 ] ], [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "spear_pestilence",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 10 ] ], [ [ "meal_chitin_piece", 8 ] ], [ [ "essence_dull", 120 ] ] ]
+  },
+  {
+    "result": "scroll_sun",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_moon",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_artiface",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_nature",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_destruction",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 90 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_subversion",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 90 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_confusion",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 1,
+    "time": "10 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_free_action",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 1,
+    "time": "10 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_insight",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 1,
+    "time": "10 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_plants",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 1,
+    "time": "10 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 30 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_agile",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_clarity",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_acidspray",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_elecresist",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 40 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_flamearmor",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 50 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_strength",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 50 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_lightning",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 50 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_cleric",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 50 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_invis",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 80 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_clairvoyance",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 80 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "totem_heal",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 80 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_confusion",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_free_action",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_insight",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_plants",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 60 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_agile",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 100 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_clarity",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 100 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_acidspray",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 100 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_elecresist",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 100 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_flame_armor",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 110 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_might",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 110 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_lightning",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 110 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_cleric",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 110 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_invis",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 170 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_clairvoyance",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 170 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_heal",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 170 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_moon",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 140 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_sun",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 140 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_destruction",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 170 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_nature",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 140 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_artiface",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 170 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_subversion",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 200 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_earthweaving",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 150 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_dark_lance",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 210 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "scroll_spell_phase_shield",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "components": [ [ [ "essence_dull", 90 ] ], [ [ "ash", 10 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "satchel_eternity",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "rag", 6 ] ], [ [ "copper", 50 ] ], [ [ "essence_dull", 240 ] ] ]
+  },
+  {
+    "result": "staff_druidic",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "splinter", 8 ] ], [ [ "silver_small", 20 ] ], [ [ "essence_dull", 270 ] ] ]
+  },
+  {
+    "result": "orb_veil",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "time": "90 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "gold_small", 500 ] ], [ [ "material_sand", 12 ] ], [ [ "essence_dull", 300 ] ] ]
+  },
+  {
+    "result": "draconic_heart_mutator",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "using": [ [ "arcana_purification_standard", 1 ] ],
+    "tools": [ [ [ "hexenhammer", -1 ] ], [ [ "book_hexenhammer", -1 ] ] ],
+    "components": [ [ [ "essence_dull", 200 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
+    "result": "arcane_accelerator_railgun",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "silver_small", 50 ] ],
+      [ [ "scrap", 2 ] ],
+      [ [ "copper", 10 ] ],
+      [ [ "e_scrap", 4 ] ],
+      [ [ "essence_dull", 320 ] ]
+    ]
+  },
+  {
+    "result": "arcane_accelerator_plasma",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "silver_small", 50 ] ],
+      [ [ "scrap", 3 ] ],
+      [ [ "copper", 90 ] ],
+      [ [ "e_scrap", 3 ] ],
+      [ [ "essence_dull", 320 ] ]
+    ]
+  },
+  {
+    "result": "arcane_accelerator_nuke",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "silver_small", 50 ] ],
+      [ [ "scrap", 8 ] ],
+      [ [ "copper", 10 ] ],
+      [ [ "e_scrap", 5 ] ],
+      [ [ "glass_shard", 1 ] ],
+      [ [ "lead", 50 ] ],
+      [ [ "essence_dull", 320 ] ]
+    ]
+  },
+  {
+    "result": "rift_focus_cannon",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 100 ] ],
+      [ [ "e_scrap", 15 ] ],
+      [ [ "copper", 100 ] ],
+      [ [ "glass_shard", 2 ] ],
+      [ [ "plastic_chunk", 8 ] ],
+      [ [ "gold_small", 100 ] ],
+      [ [ "silver_small", 95 ] ],
+      [ [ "essence_dull", 320 ] ]
+    ]
+  },
+  {
+    "result": "bio_rift_focus_projector",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "burnt_out_bionic", 1 ] ],
+      [ [ "scrap", 15 ] ],
+      [ [ "copper", 60 ] ],
+      [ [ "gold_small", 100 ] ],
+      [ [ "silver_small", 95 ] ],
+      [ [ "essence_dull", 150 ] ]
+    ]
+  },
+  {
+    "result": "electrothermal_arc_cannon",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 60 ] ],
+      [ [ "copper", 340 ] ],
+      [ [ "e_scrap", 15 ] ],
+      [ [ "plastic_chunk", 6 ] ],
+      [ [ "essence_dull", 190 ] ]
+    ]
+  },
+  {
+    "result": "bio_electrothermal_arc_projector",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "burnt_out_bionic", 1 ] ], [ [ "scrap", 15 ] ], [ [ "copper", 110 ] ], [ [ "essence_dull", 160 ] ] ]
+  },
+  {
+    "result": "distortion_amp_motor_item",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 45 ] ], [ [ "e_scrap", 6 ] ], [ [ "copper", 30 ] ], [ [ "essence_dull", 340 ] ] ]
+  },
+  {
+    "result": "distortion_flow_rotor_item",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 60 ] ], [ [ "e_scrap", 6 ] ], [ [ "copper", 30 ] ], [ [ "essence_dull", 360 ] ] ]
+  },
+  {
+    "result": "displacement_surge_generator_item",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 45 ] ],
+      [ [ "e_scrap", 6 ] ],
+      [ [ "copper", 30 ] ],
+      [ [ "gold_small", 100 ] ],
+      [ [ "silver_glyph", 1 ] ],
+      [ [ "essence_dull", 360 ] ]
+    ]
+  },
+  {
+    "result": "essence_surge_generator_item",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 35 ] ],
+      [ [ "e_scrap", 2 ] ],
+      [ [ "copper", 70 ] ],
+      [ [ "gold_small", 100 ] ],
+      [ [ "essence_dull", 230 ] ]
+    ]
+  },
+  {
+    "result": "essence_blood_surge_generator_item",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 35 ] ],
+      [ [ "e_scrap", 2 ] ],
+      [ [ "copper", 70 ] ],
+      [ [ "silver_small", 100 ] ],
+      [ [ "essence_blood", 23 ] ]
+    ]
+  },
+  {
+    "result": "essence_dull_surge_generator_item",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 35 ] ], [ [ "e_scrap", 2 ] ], [ [ "copper", 170 ] ], [ [ "essence_dull", 230 ] ] ]
+  },
+  {
+    "result": "essence_pure_surge_generator_item",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 35 ] ],
+      [ [ "e_scrap", 2 ] ],
+      [ [ "copper", 70 ] ],
+      [ [ "platinum_small", 100 ] ],
+      [ [ "essence_dull", 230 ] ]
+    ]
+  },
+  {
+    "result": "dull_essence_UPS",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 35 ] ], [ [ "e_scrap", 2 ] ], [ [ "copper", 170 ] ], [ [ "essence_dull", 230 ] ] ]
+  },
+  {
+    "result": "bio_essence_surge_cell",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "burnt_out_bionic", 1 ] ],
+      [ [ "scrap", 15 ] ],
+      [ [ "copper", 110 ] ],
+      [ [ "lead", 100 ] ],
+      [ [ "essence_dull", 110 ] ]
+    ]
+  },
+  {
+    "result": "coalescent_converter",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 65 ] ],
+      [ [ "e_scrap", 4 ] ],
+      [ [ "copper", 230 ] ],
+      [ [ "gold_small", 625 ] ],
+      [ [ "essence_dull", 510 ] ]
+    ]
+  },
+  {
+    "result": "offering_chalice_coalescent",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "gold_small", 625 ] ],
+      [ [ "scrap", 25 ] ],
+      [ [ "e_scrap", 4 ] ],
+      [ [ "copper", 50 ] ],
+      [ [ "essence_dull", 140 ] ]
+    ]
+  },
+  {
+    "result": "bio_temporal_stimulation",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "time": "70 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "burnt_out_bionic", 1 ] ], [ [ "scrap", 15 ] ], [ [ "copper", 60 ] ], [ [ "essence_dull", 160 ] ] ]
+  },
+  {
+    "result": "bio_life_sign_suppression",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "burnt_out_bionic", 1 ] ],
+      [ [ "scrap", 15 ] ],
+      [ [ "copper", 60 ] ],
+      [ [ "silver_small", 400 ] ],
+      [ [ "essence_dull", 170 ] ]
+    ]
+  },
+  {
+    "result": "bio_kinetic_amplifier",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 3,
+    "time": "30 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "burnt_out_bionic", 1 ] ], [ [ "scrap", 15 ] ], [ [ "essence_dull", 140 ] ] ]
+  },
+  {
+    "result": "thermic_essence_cutter",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 5 ] ],
+      [ [ "e_scrap", 4 ] ],
+      [ [ "copper", 180 ] ],
+      [ [ "plastic_chunk", 1 ] ],
+      [ [ "glass_shard", 1 ] ],
+      [ [ "essence_dull", 30 ] ]
+    ]
+  },
+  {
+    "result": "spatial_displacer",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 8,
+    "time": "80 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 36 ] ], [ [ "copper", 75 ] ], [ [ "e_scrap", 7 ] ], [ [ "essence_dull", 310 ] ] ]
+  },
+  {
+    "result": "arcana_mech_power_cell",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 7,
+    "skills_required": [ [ "electronics", 5 ] ],
+    "time": "70 m",
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "CHEM", "level": 2 } ],
+    "components": [ [ [ "essence_surge_generator_item", 1 ] ], [ [ "copper", 180 ] ], [ [ "wire", 2 ] ], [ [ "amplifier", 2 ] ] ]
+  },
+  {
+    "result": "broken_mech_arcana_boss",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "skills_required": [ [ "electronics", 7 ], [ "mechanics", 7 ] ],
+    "time": "10 h",
+    "using": [ [ "soldering_standard", 30 ], [ "welding_standard", 20 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "burnt_out_bionic", 1 ] ],
+      [ [ "scrap", 160 ] ],
+      [ [ "e_scrap", 21 ] ],
+      [ [ "copper", 150 ] ],
+      [ [ "glass_shard", 2 ] ],
+      [ [ "plastic_chunk", 8 ] ],
+      [ [ "gold_small", 100 ] ],
+      [ [ "silver_small", 95 ] ],
+      [ [ "essence_dull", 820 ] ],
+      [ [ "ai_module", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "power_supply", 20 ] ],
+      [ [ "storage_battery", 2 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "alloy_plate", 15 ] ]
+    ]
+  },
+  {
+    "result": "broken_mech_arcana",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 9,
+    "skills_required": [ [ "electronics", 7 ], [ "mechanics", 7 ] ],
+    "time": "2 h",
+    "using": [ [ "soldering_standard", 30 ], [ "welding_standard", 20 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "WRENCH", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
+    "components": [
+      [ [ "rift_focus_cannon", 1 ] ],
+      [ [ "distortion_amp_motor_item", 1 ] ],
+      [ [ "bio_temporal_stimulation", 1 ] ],
+      [ [ "sensor_module", 1 ] ],
+      [ [ "memory_module", 1 ] ],
+      [ [ "pathfinding_module", 1 ] ],
+      [ [ "identification_module", 1 ] ],
+      [ [ "targeting_module", 1 ] ],
+      [ [ "drive_by_wire_controls", 1 ] ],
+      [ [ "power_supply", 20 ] ],
+      [ [ "storage_battery", 2 ] ],
+      [ [ "frame", 2 ] ],
+      [ [ "steel_plate", 15 ] ]
+    ]
+  },
+  {
+    "result": "gilded_aegis",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "leather", 20 ] ], [ [ "scrap", 40 ] ], [ [ "gold_small", 200 ] ], [ [ "essence_blood", 4 ] ] ]
+  },
+  {
+    "result": "somen_clairvoyance",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "leather", 2 ] ], [ [ "scrap", 10 ] ], [ [ "copper", 30 ] ], [ [ "essence_blood", 3 ] ] ]
+  },
+  {
+    "result": "somen_clairvoyance_xl",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "leather", 1 ] ], [ [ "scrap", 5 ] ], [ [ "copper", 15 ] ], [ [ "essence_blood", 3 ] ] ]
+  },
+  {
+    "result": "sun_sword",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "blade", 4 ] ], [ [ "gold_small", 135 ] ], [ [ "essence_blood", 5 ] ] ]
+  },
+  {
+    "result": "hexenhammer",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "splinter", 8 ] ], [ [ "scrap", 40 ] ], [ [ "silver_small", 240 ] ], [ [ "essence_blood", 2 ] ] ]
+  },
+  {
+    "result": "lucern_hexenhammer",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "splinter", 16 ] ], [ [ "scrap", 60 ] ], [ [ "silver_small", 270 ] ], [ [ "essence_blood", 2 ] ] ]
+  },
+  {
+    "result": "ethereal_crossbow",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "splinter", 6 ] ], [ [ "scrap", 1 ] ], [ [ "gold_small", 45 ] ], [ [ "essence_blood", 4 ] ] ]
+  },
+  {
+    "result": "ethereal_hand_crossbow",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "splinter", 3 ] ], [ [ "scrap", 4 ] ], [ [ "gold_small", 30 ] ], [ [ "essence_blood", 4 ] ] ]
+  },
+  {
+    "result": "ethereal_huge_crossbow",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 5,
+    "time": "50 m",
+    "tools": [ [ [ "blood_athame", -1 ] ] ],
+    "components": [ [ [ "splinter", 24 ] ], [ [ "scrap", 20 ] ], [ [ "gold_small", 60 ] ], [ [ "essence_blood", 4 ] ] ]
+  }
+]

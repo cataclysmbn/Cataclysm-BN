@@ -1,0 +1,9 @@
+[
+  {
+    "id": "style_veil_chosen",
+    "copy-from": "style_veil_chosen",
+    "type": "martial_art",
+    "name": { "str": "Ritual Art" },
+    "extend": { "weapons": [ "sword_crt", "blade_crt" ] }
+  }
+]

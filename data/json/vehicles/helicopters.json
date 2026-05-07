@@ -736,7 +736,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -1, "y": -2, "parts": [ "frame_vertical", "plating_military", "board_nw" ] },
@@ -746,7 +747,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       {
@@ -844,7 +846,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       {
@@ -958,7 +961,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -3, "y": 4, "parts": [ "frame_se", "board_se", "plating_military" ] },
@@ -975,7 +979,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -2, "y": 3, "parts": [ "frame_ne", "board_horizontal" ] },
@@ -1066,7 +1071,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       {
@@ -1075,7 +1081,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -4, "y": 0, "parts": [ "frame_vertical", "board_vertical", "storage_battery" ] },
@@ -1176,7 +1183,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -4, "y": 0, "parts": [ "frame_vertical" ] },

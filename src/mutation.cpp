@@ -561,6 +561,7 @@ void Character::activate_mutation( const trait_id &mut )
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
+    get_map().invalidate_lightmap_caches();
 
     if( mdata.transform ) {
         const cata::value_ptr<mut_transform> trans = mdata.transform;
@@ -686,6 +687,7 @@ void Character::deactivate_mutation( const trait_id &mut )
     // Handle stat changes from deactivation
     apply_mods( mut, false );
     recalc_sight_limits();
+    get_map().invalidate_lightmap_caches();
     const mutation_branch &mdata = mut.obj();
     if( mdata.transform ) {
         const cata::value_ptr<mut_transform> trans = mdata.transform;

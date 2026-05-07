@@ -201,7 +201,7 @@ void mapgen_crater( mapgendata &dat )
             if( rng( 0, dat.w_fac ) <= i && rng( 0, dat.e_fac ) <= SEEX * 2 - 1 - i &&
                 rng( 0, dat.n_fac ) <= j && rng( 0, dat.s_fac ) <= SEEX * 2 - 1 - j ) {
                 m->ter_set( point( i, j ), t_pit_shallow );
-                m->make_rubble( tripoint( i,  j, m->get_abs_sub().z ), f_rubble_rock );
+                m->make_rubble( tripoint( i,  j, m->get_abs_sub().z() ), f_rubble_rock );
                 m->set_radiation( point( i, j ), rng( 0, 4 ) * rng( 0, 2 ) );
             } else {
                 m->ter_set( point( i, j ), dat.groundcover() );
@@ -296,8 +296,8 @@ void mapgen_hive( mapgendata &dat )
                         m->ter_set( point( i + k, j + l ), t_floor_wax );
                     }
                 }
-                m->add_spawn( mon_bee, 2, { i, j, m->get_abs_sub().z } );
-                m->add_spawn( mon_beekeeper, 1, { i, j, m->get_abs_sub().z } );
+                m->add_spawn( mon_bee, 2, { i, j, m->get_abs_sub().z() } );
+                m->add_spawn( mon_beekeeper, 1, { i, j, m->get_abs_sub().z() } );
                 m->ter_set( point( i, j - 3 ), t_floor_wax );
                 m->ter_set( point( i, j + 3 ), t_floor_wax );
                 m->ter_set( point( i - 1, j - 2 ), t_floor_wax );
@@ -811,7 +811,7 @@ void mapgen_road( mapgendata &dat )
                          dat.monster_density() );
         // 1 per 10 overmaps
         if( one_in( 10000 ) ) {
-            m->add_spawn( mon_zombie_jackson, 1, { SEEX, SEEY, m->get_abs_sub().z } );
+            m->add_spawn( mon_zombie_jackson, 1, { SEEX, SEEY, m->get_abs_sub().z() } );
         }
     }
 
@@ -1189,7 +1189,7 @@ void mapgen_subway( mapgendata &dat )
     // Add patches of cave moss
     for( int i = 0; i < SEEX * 2; i++ ) {
         for( int j = 0; j < SEEY * 2; j++ ) {
-            if( one_in( 12 ) && m->ter( tripoint( point( i, j ), m->get_abs_sub().z ) ) == t_rock_floor ) {
+            if( one_in( 12 ) && m->ter( tripoint( point( i, j ), m->get_abs_sub().z() ) ) == t_rock_floor ) {
                 m->ter_set( point( i, j ), t_moss_underground );
                 // Some of that moss has mushrooms too.
                 if( one_in( 15 ) ) {
@@ -1886,7 +1886,7 @@ void mapgen_cavern( mapgendata &dat )
         }
         while( !one_in( 3 ) ) {
             for( int i = 0; i < 3; ++i ) {
-                m->put_items_from_loc( item_group_id( "cannedfood" ), tripoint( p2, m->get_abs_sub().z ),
+                m->put_items_from_loc( item_group_id( "cannedfood" ), tripoint( p2, m->get_abs_sub().z() ),
                                        dat.when() );
             }
         }
@@ -3010,19 +3010,19 @@ void mapgen_lake_shore( mapgendata &dat )
 
 void mremove_trap( map *m, point p )
 {
-    tripoint actual_location( p, m->get_abs_sub().z );
+    tripoint actual_location( p, m->get_abs_sub().z() );
     m->remove_trap( actual_location );
 }
 
 void mtrap_set( map *m, point p, trap_id type )
 {
-    tripoint actual_location( p, m->get_abs_sub().z );
+    tripoint actual_location( p, m->get_abs_sub().z() );
     m->trap_set( actual_location, type );
 }
 
 void madd_field( map *m, point p, field_type_id type, int intensity )
 {
-    tripoint actual_location( p, m->get_abs_sub().z );
+    tripoint actual_location( p, m->get_abs_sub().z() );
     m->add_field( actual_location, type, intensity, 0_turns );
 }
 

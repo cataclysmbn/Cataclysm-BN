@@ -206,8 +206,8 @@ auto move_vehicles( const elevator_vehicles &vehs, const tripoint &sm_orig, int 
     map &here = get_map();
 
     for( vehicle *v : vehs.v ) {
-        const tripoint p = rotate_point_sm( { v->global_pos3().xy(), movez }, sm_orig, turns );
-        here.displace_vehicle( *v, p - v->global_pos3() );
+        const auto p = tripoint_bub_ms{ rotate_point_sm( { v->global_pos3().xy(), movez }, sm_orig, turns ) };
+        here.displace_vehicle( *v, p - tripoint_bub_ms( v->global_pos3() ) );
         v->turn( turns * 90_degrees );
         v->face = tileray( v->turn_dir );
         v->precalc_mounts( 0, v->turn_dir, v->pivot_anchor[0] );

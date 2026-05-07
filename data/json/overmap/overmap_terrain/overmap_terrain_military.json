@@ -594,7 +594,6 @@
       "mil_airfield_z4_1_2"
     ],
     "name": "military airfield",
-    "extras": "build",
     "mondensity": 2,
     "flags": [ "SOURCE_AMMO", "SOURCE_VEHICLES", "RISK_HIGH" ]
   },

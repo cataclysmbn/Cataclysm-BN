@@ -818,11 +818,18 @@ class vehicle
         void coord_translate_reverse( units::angle dir, point pivot, const tripoint &p,
                                       point &q ) const;
 
-        tripoint mount_to_tripoint( point mount ) const;
-        tripoint mount_to_tripoint( point mount, point offset ) const;
+        tripoint_bub_ms mount_to_bubble( point mount ) const;
+        tripoint_bub_ms mount_to_bubble( point mount, point offset ) const;
 
         //Translate tile coordinates into mount coordinates
-        point tripoint_to_mount( const tripoint &p ) const;
+        point bubble_to_mount( const tripoint_bub_ms &p ) const;
+
+        tripoint_abs_ms mount_to_abs( const tripoint_mnt_veh &mount ) const;
+        tripoint_abs_ms mount_to_abs( const tripoint_mnt_veh &mount,
+                                      const tripoint_rel_veh &offset ) const {
+            return mount_to_abs( mount + offset );
+        }
+        tripoint_mnt_veh abs_to_mount( const tripoint_abs_ms &abs ) const;
 
         // Seek a vehicle part which obstructs tile with given coordinates relative to vehicle position
         int part_at( point dp ) const;
@@ -1796,6 +1803,11 @@ class vehicle
 
 
     private:
+        tripoint_rel_ms rotate_to_world( units::angle dir, const tripoint_mnt_veh &pivot,
+                                         const tripoint_mnt_veh &p ) const;
+        tripoint_mnt_veh rotate_to_local( units::angle dir, const tripoint_mnt_veh &pivot,
+                                          const tripoint_rel_ms &p ) const;
+
         bool no_refresh = false;
 
         // if true, pivot_cache needs to be recalculated
@@ -1826,6 +1838,7 @@ class vehicle
         // vehicle being driven by player/npc automatically
         bool is_autodriving = false;
         bool is_following = false;
+        int follow_distance = 0;
         bool is_patrolling = false;
         // TODO: change these to a bitset + enum?
         // cruise control on/off

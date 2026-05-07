@@ -2304,6 +2304,10 @@ bool game::handle_action()
                 avatar_action::unload( u );
                 break;
 
+            case ACTION_UNLOAD_ALL:
+                avatar_action::unload_all( u );
+                break;
+
             case ACTION_MEND:
                 avatar_action::mend( g->u, nullptr );
                 break;

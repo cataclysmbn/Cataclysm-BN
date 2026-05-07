@@ -33,17 +33,17 @@ TEST_CASE( "place_active_item_at_various_coordinates", "[item]" )
         for( int y = 0; y < g_mapsize_y; ++y ) {
             REQUIRE( g->m.i_at( { x, y, z } ).empty() );
             CAPTURE( x, y, z );
-            tripoint abs_loc = g->m.get_abs_sub() + tripoint( x / SEEX, y / SEEY, z );
-            CAPTURE( abs_loc.x, abs_loc.y, abs_loc.z );
+            auto abs_loc = g->m.get_abs_sub() + tripoint( x / SEEX, y / SEEY, z );
+            CAPTURE( abs_loc.x(), abs_loc.y(), abs_loc.z() );
             REQUIRE( g->m.get_submaps_with_active_items().empty() );
-            REQUIRE( g->m.get_submaps_with_active_items().find( abs_loc ) ==
+            REQUIRE( g->m.get_submaps_with_active_items().find( abs_loc.raw() ) ==
                      g->m.get_submaps_with_active_items().end() );
             detached_ptr<item> n = item::spawn( active );
             item &item_ref = *n;
             g->m.add_item( { x, y, z }, std::move( n ) );
             REQUIRE( item_ref.is_active() );
             REQUIRE_FALSE( g->m.get_submaps_with_active_items().empty() );
-            REQUIRE( g->m.get_submaps_with_active_items().find( abs_loc ) !=
+            REQUIRE( g->m.get_submaps_with_active_items().find( abs_loc.raw() ) !=
                      g->m.get_submaps_with_active_items().end() );
             REQUIRE_FALSE( g->m.i_at( { x, y, z } ).empty() );
             g->m.i_clear( { x, y, z } );
