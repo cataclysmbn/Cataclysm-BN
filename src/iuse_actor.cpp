@@ -8063,7 +8063,8 @@ void iuse_paint_stuff_config::set_color( item &it )
     lst.query();
 
     if( lst.ret >= 0 ) {
-        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, *RGBColor::try_parse( lst.entries[lst.ret].txt ) );
+        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR,
+                              *RGBColor::try_parse( lst.entries[lst.ret].txt ) );
     }
 }
 
