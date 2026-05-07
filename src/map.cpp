@@ -9187,6 +9187,11 @@ bool map::inbounds( const tripoint_bub_sm &p ) const
     return inbounds_z( p.z() ) && p.x() >= 0 && p.x() < max_xy && p.y() >= 0 && p.y() < max_xy;
 }
 
+bool map::inbounds( const tripoint_abs_sm &p ) const
+{
+    return inbounds( abs_to_bub( p ) );
+}
+
 bool map::is_position_simulated( const tripoint_bub_sm &p ) const
 {
     return submap_loader.is_simulated( bound_dimension_, bub_to_abs( p ) );

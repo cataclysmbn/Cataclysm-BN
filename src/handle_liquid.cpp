@@ -430,7 +430,7 @@ bool handle_liquid( item &liquid, const int radius )
     return false;
 }
 
-bool handle_liquid( tripoint_bub_ms pos, int radius )
+bool handle_liquid( const tripoint_bub_ms &pos, int radius )
 {
     map &here = get_map();
     detached_ptr<item> liquid = here.water_from( pos );

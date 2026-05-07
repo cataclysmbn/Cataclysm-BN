@@ -615,7 +615,7 @@ std::string vehicle::brake_hold_toggle_string() const
 void vehicle::autopilot_patrol_check()
 {
     zone_manager &mgr = zone_manager::get_manager();
-    if( mgr.has_near( zone_type_id( "VEHICLE_PATROL" ), global_square_location().raw(), 60 ) ) {
+    if( mgr.has_near( zone_type_id( "VEHICLE_PATROL" ), abs_ms_location(), 60 ) ) {
         enable_patrol();
     } else {
         g->zones_manager();
@@ -1032,7 +1032,7 @@ double vehicle::engine_cold_factor( const int e ) const
         return 0.0;
     }
 
-    int eff_temp = units::to_fahrenheit( get_weather().get_temperature( g->u.bub_pos() ) );
+    int eff_temp = units::to_fahrenheit( get_weather().get_temperature( g->u.abs_pos() ) );
     if( !parts[ engines[ e ] ].faults().contains( fault_glowplug ) ) {
         eff_temp = std::min( eff_temp, 20 );
     }
@@ -1221,11 +1221,11 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
     int start_time = 0;
     // record the first usable engine as the referenced position checked at the end of the engine starting activity
     bool has_starting_engine_position = false;
-    tripoint starting_engine_position;
+    tripoint_abs_ms starting_engine_position;
     for( size_t e = 0; e < engines.size(); ++e ) {
         if( !has_starting_engine_position && !parts[ engines[ e ] ].is_broken() &&
             parts[ engines[ e ] ].enabled ) {
-            starting_engine_position = bub_part_location( engines[ e ] );
+            starting_engine_position = g->m.bub_to_abs( bub_part_location( engines[ e ] ) );
             has_starting_engine_position = true;
         }
         has_engine = has_engine || is_engine_on( e );
@@ -1233,7 +1233,7 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
     }
 
     if( !has_starting_engine_position ) {
-        starting_engine_position = bub_ms_location();
+        starting_engine_position = abs_ms_location();
     }
 
     if( take_control && !g->u.controlling_vehicle ) {
@@ -1248,7 +1248,7 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
 
     if( !autodrive ) {
         g->u.assign_activity( ACT_START_ENGINES, start_time );
-        g->u.activity->placement = starting_engine_position - g->u.bub_pos();
+        g->u.activity->placement = starting_engine_position;
         g->u.activity->values.push_back( take_control );
     }
 }
@@ -1545,12 +1545,12 @@ void vehicle::operate_scoop()
         };
         sounds::sound( bub_part_location( scoop ), rng( 20, 35 ), sounds::sound_t::combat,
                        random_entry_ref( sound_msgs ), false, "vehicle", "scoop" );
-        std::vector<tripoint> parts_points;
-        for( const tripoint &current :
+        std::vector<tripoint_bub_ms> parts_points;
+        for( const tripoint_bub_ms &current :
              g->m.points_in_radius( bub_part_location( scoop ), 1 ) ) {
             parts_points.push_back( current );
         }
-        for( const tripoint &position : parts_points ) {
+        for( const tripoint_bub_ms &position : parts_points ) {
             g->m.mop_spills( position );
             if( !g->m.has_items( position ) ) {
                 continue;
@@ -1694,7 +1694,7 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     here.set_transparency_cache_dirty( sm_pos.z() );
     const auto part_location = mount_to_bubble( parts[part_index].mount );
     here.set_seen_cache_dirty( part_location );
-    const int dist = rl_dist( get_player_character().pos(), part_location );
+    const int dist = rl_dist( get_player_character().bub_pos(), part_location );
     if( dist < 20 ) {
         sfx::play_variant_sound( opening ? "vehicle_open" : "vehicle_close",
                                  parts[ part_index ].info().get_id().str(), 100 - dist * 3 );
@@ -1725,7 +1725,7 @@ void vehicle::use_monster_capture( int part, const tripoint_bub_ms &pos )
     invalidate_mass();
 }
 
-void vehicle::use_harness( int part, const tripoint &pos )
+void vehicle::use_harness( int part, const tripoint_bub_ms &pos )
 {
     if( parts[part].is_unavailable() || parts[part].removed ) {
         return;
@@ -1734,7 +1734,7 @@ void vehicle::use_harness( int part, const tripoint &pos )
         add_msg( m_info, _( "The harness is blocked." ) );
         return;
     }
-    const std::function<bool( const tripoint & )> f = []( const tripoint & pnt ) {
+    const std::function<bool( const tripoint_bub_ms & )> f = []( const tripoint_bub_ms & pnt ) {
         monster *mon_ptr = g->critter_at<monster>( pnt );
         if( mon_ptr == nullptr ) {
             return false;
@@ -1744,14 +1744,14 @@ void vehicle::use_harness( int part, const tripoint &pos )
                                       f.has_flag( MF_PET_HARNESSABLE ) ) );
     };
 
-    const std::optional<tripoint> pnt_ = choose_adjacent_highlight(
+    const std::optional<tripoint_bub_ms> pnt_ = choose_adjacent_highlight(
             _( "Where is the creature to harness?" ), _( "There is no creature to harness nearby." ), f,
             false );
     if( !pnt_ ) {
         add_msg( m_info, _( "Never mind." ) );
         return;
     }
-    const tripoint &target = *pnt_;
+    const tripoint_bub_ms &target = *pnt_;
     monster *mon_ptr = g->critter_at<monster>( target );
     if( mon_ptr == nullptr ) {
         add_msg( m_info, _( "No creature there." ) );
@@ -1879,7 +1879,7 @@ void vehicle::use_bike_rack( int part )
 }
 
 // Handles interactions with a vehicle in the examine menu.
-void vehicle::interact_with( const tripoint &pos, int interact_part )
+void vehicle::interact_with( const tripoint_bub_ms &pos, int interact_part )
 {
     avatar &you = get_avatar();
     map &here = get_map();
@@ -1888,7 +1888,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     const bool has_items_on_ground = here.sees_some_items( pos, g->u );
     const bool items_are_sealed = here.has_flag( "SEALED", pos );
 
-    auto turret = turret_query( pos );
+    auto turret = turret_query( here.bub_to_abs( pos ) );
 
     const int curtain_part = avail_part_with_feature( interact_part, "CURTAIN", true );
     const bool curtain_closed = ( curtain_part == -1 ) ? false : !parts[curtain_part].open;

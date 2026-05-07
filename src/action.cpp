@@ -517,7 +517,7 @@ std::optional<std::string> press_x_if_bound( action_id act )
     return press_x( act );
 }
 
-action_id get_movement_action_from_delta( const tripoint_bub_ms &d, const iso_rotate rot )
+action_id get_movement_action_from_delta( const tripoint_rel_ms &d, iso_rotate rot )
 {
     if( d.z() == -1 ) {
         return ACTION_MOVE_DOWN;
@@ -526,19 +526,19 @@ action_id get_movement_action_from_delta( const tripoint_bub_ms &d, const iso_ro
     }
 
     const bool iso_mode = rot == iso_rotate::yes && use_tiles && tile_iso;
-    if( d.xy() == point_bub_ms::north() ) {
+    if( d.xy() == point_rel_ms::north() ) {
         return iso_mode ? ACTION_MOVE_FORTH_LEFT : ACTION_MOVE_FORTH;
-    } else if( d.xy() == point_bub_ms::north_east() ) {
+    } else if( d.xy() == point_rel_ms::north_east() ) {
         return iso_mode ? ACTION_MOVE_FORTH : ACTION_MOVE_FORTH_RIGHT;
-    } else if( d.xy() == point_bub_ms::east() ) {
+    } else if( d.xy() == point_rel_ms::east() ) {
         return iso_mode ? ACTION_MOVE_FORTH_RIGHT : ACTION_MOVE_RIGHT;
-    } else if( d.xy() == point_bub_ms::south_east() ) {
+    } else if( d.xy() == point_rel_ms::south_east() ) {
         return iso_mode ? ACTION_MOVE_RIGHT : ACTION_MOVE_BACK_RIGHT;
-    } else if( d.xy() == point_bub_ms::south() ) {
+    } else if( d.xy() == point_rel_ms::south() ) {
         return iso_mode ? ACTION_MOVE_BACK_RIGHT : ACTION_MOVE_BACK;
-    } else if( d.xy() == point_bub_ms::south_west() ) {
+    } else if( d.xy() == point_rel_ms::south_west() ) {
         return iso_mode ? ACTION_MOVE_BACK : ACTION_MOVE_BACK_LEFT;
-    } else if( d.xy() == point_bub_ms::west() ) {
+    } else if( d.xy() == point_rel_ms::west() ) {
         return iso_mode ? ACTION_MOVE_BACK_LEFT : ACTION_MOVE_LEFT;
     } else {
         return iso_mode ? ACTION_MOVE_LEFT : ACTION_MOVE_FORTH_LEFT;

@@ -740,7 +740,7 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         }
     }
 
-    std::optional<point> blood_inside_pos;
+    std::optional<tripoint_mnt_veh> blood_inside_pos;
     for( const vpart_reference &vp : get_all_parts() ) {
         const size_t p = vp.part_index();
         vehicle_part &pt = vp.part();
@@ -893,8 +893,8 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
                 // blood is splattered around (blood_inside_pos),
                 // coordinates relative to mount point; the center is always a seat
                 if( blood_inside_pos ) {
-                    const int distSq = std::pow( blood_inside_pos->x - vp.mount().x(), 2 ) +
-                                       std::pow( blood_inside_pos->y - vp.mount().y(), 2 );
+                    const int distSq = std::pow( blood_inside_pos->x() - vp.mount().x(), 2 ) +
+                                       std::pow( blood_inside_pos->y() - vp.mount().y(), 2 );
                     if( distSq <= 1 ) {
                         pt.blood = rng( 200, 400 ) - distSq * 100;
                     }
@@ -3666,23 +3666,23 @@ bool vehicle::check_rotated_intervening( const tripoint_mnt_veh &from, const tri
     }
 
     if( abs( delta.x() ) == 2 ) { //Mostly horizontal move
-        auto t1 = from + tripoint_rel_veh( delta.x() / 2, delta.y() );
+        auto t1 = from + point_rel_veh( delta.x() / 2, delta.y() );
         if( check( this, t1 ) ) {
             return true;
         }
 
-        auto t2 = from + tripoint_rel_veh( delta.x() / 2, 0 );
+        auto t2 = from + point_rel_veh( delta.x() / 2, 0 );
         if( check( this, t2 ) ) {
             return true;
         }
 
     } else { //Mostly vertical move
-        auto t1 = from + tripoint_rel_veh( delta.x(), delta.y() / 2 );
+        auto t1 = from + point_rel_veh( delta.x(), delta.y() / 2 );
         if( check( this, t1 ) ) {
             return true;
         }
 
-        auto t2 = from + tripoint_rel_veh( 0, delta.y() / 2 );
+        auto t2 = from + point_rel_veh( 0, delta.y() / 2 );
         if( check( this, t2 ) ) {
             return true;
         }

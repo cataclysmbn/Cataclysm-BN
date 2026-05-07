@@ -4,6 +4,7 @@
 #include <vector>
 #include <utility>
 
+#include "coordinates.h"
 #include "line.h"
 #include "rng.h"
 #include "point.h"
@@ -75,6 +76,8 @@ void draw_circle( const std::function<void( coords::coord_point<Point, Origin, S
         }
     }
 }
+
+template void draw_rough_circle( const std::function<void( point_bub_ms )>&, point_bub_ms, int );
 
 void draw_line( const std::function<void( point )> &set, point p1, point p2 )
 {

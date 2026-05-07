@@ -354,9 +354,9 @@ uint32_t g_npcmove_attitude_epoch{ 0 };
 //The one and only uistate instance
 uistatedata uistate;
 
-bool is_valid_in_w_terrain( tripoint_bub_ms p )
+bool is_valid_in_w_terrain( point p )
 {
-    return p.x() >= 0 && p.x() < TERRAIN_WINDOW_WIDTH && p.y() >= 0 && p.y() < TERRAIN_WINDOW_HEIGHT;
+    return p.x >= 0 && p.x < TERRAIN_WINDOW_WIDTH && p.y >= 0 && p.y < TERRAIN_WINDOW_HEIGHT;
 }
 
 static void achievement_attained( const achievement *a )
