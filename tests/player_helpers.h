@@ -5,11 +5,11 @@
 #include <string>
 #include <vector>
 
+#include "coordinates.h"
 #include "type_id.h"
 
 class npc;
 class player;
-struct point;
 
 int get_remaining_charges( const std::string &tool_id );
 bool player_has_item_of_type( const std::string & );

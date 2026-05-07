@@ -142,10 +142,10 @@ TEST_CASE( "vehicle_part_with_feature_range_iterator_safety", "[iterator][safety
     vehicle v;
 
     // Add parts with different features at distinct locations.
-    v.install_part( tripoint_mnt_veh( 0, 0 ), vpart_id( "frame_vertical" ) ); // structure
-    v.install_part( tripoint_mnt_veh( 0, 0 ), vpart_id( "seat" ) );           // seat on structure
-    v.install_part( tripoint_mnt_veh( 1, 0 ), vpart_id( "frame_vertical" ) ); // structure
-    v.install_part( tripoint_mnt_veh( 1, 0 ), vpart_id( "seat" ) );           // seat on structure
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) ); // structure
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "seat" ) );           // seat on structure
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) ); // structure
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "seat" ) );           // seat on structure
 
     // Create a filtered range (temporary) and get iterators.
     // The range_type stores the feature filter by value in vehicle_part_iterator.

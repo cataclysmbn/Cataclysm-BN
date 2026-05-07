@@ -44,7 +44,7 @@ TEST_CASE( "line_attack", "[magic]" )
 
     // Ensure that AOE=0 spell covers the 5 tiles along vector towards target
     SECTION( "aoe=0" ) {
-        const std::set<tripoint_bub_ms> reference( { tripoint_bub_ms::east(), tripoint_bub_ms( 2, 0, 0 ), tripoint_bub_ms( 3, 0, 0 ), tripoint_bub_ms( 4, 0, 0 ), tripoint_bub_ms( 5, 0, 0 ) );
+        const std::set<tripoint_bub_ms> reference( { tripoint_bub_ms::east(), tripoint_bub_ms( 2, 0, 0 ), tripoint_bub_ms( 3, 0, 0 ), tripoint_bub_ms( 4, 0, 0 ), tripoint_bub_ms( 5, 0, 0 ) } );
 
                 std::set<tripoint_bub_ms> targets = calculate_spell_effect_area( sp, target,
                         spell_effect::spell_effect_line, c, true );

@@ -75,8 +75,8 @@ struct test_case {
         end_dir_right( end_dir_right ), canvas( canvas_arg ) {
         start_pos.raw() = canvas.replace_unique( U'*', U'x' );
         end_pos_straight.raw() = canvas.replace_unique( U'o', U'x' );
-        end_pos_left.raw() = canvas.replace_opt( U'l', U'x' ).value_or( end_pos_straight );
-        end_pos_right.raw() = canvas.replace_opt( U'r', U'x' ).value_or( end_pos_straight );
+        end_pos_left.raw() = canvas.replace_opt( U'l', U'x' ).value_or( end_pos_straight.raw() );
+        end_pos_right.raw() = canvas.replace_opt( U'r', U'x' ).value_or( end_pos_straight.raw() );
     }
 };
 

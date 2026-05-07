@@ -4,10 +4,10 @@
 
 #include <string>
 
+#include "coordinates.h"
 #include "type_id.h"
 
 class monster;
-struct tripoint;
 class time_point;
 
 void wipe_map_terrain();
