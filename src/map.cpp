@@ -175,7 +175,7 @@ auto horde_should_avoid_vehicle_tile( const map &here, const tripoint &p,
     }
 
     const auto &veh = vp->vehicle();
-    return veh.tracking_on && veh.is_owned_by( get_avatar() );
+    return veh.is_owned_by( get_avatar() );
 }
 
 } // namespace
@@ -9055,7 +9055,7 @@ void map::spawn_monsters_submap_group( const tripoint &gp, mongroup &group, bool
             }
 
             if( horde_should_avoid_vehicle_tile( *this, fp, group ) ) {
-                continue; // hordes must not appear inside player-owned tracked vehicles.
+                continue; // hordes must not appear inside player-owned vehicles.
             }
 
             locations.push_back( fp );

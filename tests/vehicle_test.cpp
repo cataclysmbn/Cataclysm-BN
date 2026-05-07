@@ -160,7 +160,7 @@ TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
     CHECK( !player_character.activity );
 }
 
-TEST_CASE( "horde_spawns_skip_owned_and_tracked_vehicle_tiles", "[horde][vehicle][monster]" )
+TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )
 {
     const auto cleanup = on_out_of_scope( [] {
         clear_all_state();
@@ -176,15 +176,6 @@ TEST_CASE( "horde_spawns_skip_owned_and_tracked_vehicle_tiles", "[horde][vehicle
         CHECK( fixture.horde->empty() );
     }
 
-    SECTION( "owned but untracked vehicle tiles remain valid horde spawn locations" ) {
-        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .owned = true } );
-
-        get_map().spawn_monsters( true );
-
-        CHECK( vehicle_points_contain_monster( fixture.vehicle_points ) );
-        CHECK( fixture.horde->empty() );
-    }
-
     SECTION( "tracked but unowned vehicle tiles remain valid horde spawn locations" ) {
         const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .tracked = true } );
 
@@ -192,6 +183,15 @@ TEST_CASE( "horde_spawns_skip_owned_and_tracked_vehicle_tiles", "[horde][vehicle
 
         CHECK( vehicle_points_contain_monster( fixture.vehicle_points ) );
         CHECK( fixture.horde->empty() );
+    }
+
+    SECTION( "owned but untracked vehicle tiles are excluded from horde spawn locations" ) {
+        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .owned = true } );
+
+        get_map().spawn_monsters( true );
+
+        CHECK_FALSE( vehicle_points_contain_monster( fixture.vehicle_points ) );
+        CHECK_FALSE( fixture.horde->empty() );
     }
 
     SECTION( "owned and tracked vehicle tiles are excluded from horde spawn locations" ) {
