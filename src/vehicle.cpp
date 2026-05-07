@@ -7857,7 +7857,7 @@ void vehicle::update_time( const time_point &update_to )
                     consume_tank->ammo_consume( max_repeats * consume_charges, global_part_pos3( *consume_tank ) );
                 }
                 if( output_tank != nullptr ) {
-                    output_tank->ammo_consume( -1 * max_repeats * output_charges, global_part_pos3( *output_tank ) );
+                    output_tank->ammo_set( output_type, output_tank->ammo_remaining() + max_repeats * output_charges );
                 }
                 discharge_battery( part.info().get_conversion_charges() * max_repeats );
             }
