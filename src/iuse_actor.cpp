@@ -8057,15 +8057,13 @@ void iuse_paint_stuff_config::set_color( item &it )
     uilist lst;
     lst.title = _( "Choose Color" );
     lst.w_height_setup = TERMY / 2;
-    std::vector<RGBColor> colors;
     for( const auto& [col, name] : RGBColor::get_all_named_colors() ) {
         lst.addentry( name );
-        colors.push_back( col );
     }
     lst.query();
 
     if( lst.ret >= 0 ) {
-        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, colors[lst.ret] );
+        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, *RGBColor::try_parse( lst.entries[lst.ret].txt ) );
     }
 }
 
