@@ -2388,7 +2388,8 @@ void veh_interact::display_veh()
         mvwprintz( w_disp, point_zero, c_green, "CoM   %d,%d", com.x(), com.y() );
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         mvwprintz( w_disp, point( 0, 1 ), c_red,   "Pivot %d,%d", pivot.x(), pivot.y() );
-        mvwprintz( w_disp, point( 0, 2 ), c_dark_gray, "Cur   %d,%d", vehicle_cursor.x(), vehicle_cursor.y() );
+        mvwprintz( w_disp, point( 0, 2 ), c_dark_gray, "Cur   %d,%d", vehicle_cursor.x(),
+                   vehicle_cursor.y() );
 
         const point_rel_ms com_s = veh->coord_translate( com - vehicle_cursor.raw() ).xy() + h_size;
         const point_rel_ms pivot_s = veh->coord_translate( pivot - vehicle_cursor.raw() ).xy() + h_size;
@@ -3226,15 +3227,15 @@ void veh_interact::complete_vehicle( Character &who )
         }
     }
     vehicle *const veh = &vp->vehicle();
-    
+
     const vpart_id part_id( who.activity->str_values[0] );
     int vehicle_part = who.activity->values[6];
     tripoint_mnt_veh cursor_pos;
-    if ( legacy )
-    {
+    if( legacy ) {
         cursor_pos = tripoint_mnt_veh( -who.activity->values[4], -who.activity->values[5], 0 );
     } else {
-        cursor_pos = tripoint_mnt_veh( who.activity->values[3], who.activity->values[4], who.activity->values[5] );
+        cursor_pos = tripoint_mnt_veh( who.activity->values[3], who.activity->values[4],
+                                       who.activity->values[5] );
     }
 
     const vpart_info &vpinfo = part_id.obj();
@@ -3281,7 +3282,8 @@ void veh_interact::complete_vehicle( Character &who )
             int partnum = !base->is_null() ? veh->install_part( cursor_pos, part_id,
                           std::move( base ) ) : -1;
             if( partnum < 0 ) {
-                debugmsg( "complete_vehicle install part fails dx=%d dy=%d dz=%d id=%s", cursor_pos.x(), cursor_pos.y(), cursor_pos.z(), part_id.c_str() );
+                debugmsg( "complete_vehicle install part fails dx=%d dy=%d dz=%d id=%s", cursor_pos.x(),
+                          cursor_pos.y(), cursor_pos.z(), part_id.c_str() );
                 break;
             }
 

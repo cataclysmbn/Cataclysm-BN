@@ -28,20 +28,17 @@ struct dimension_bounds {
     // What to display for out-of-bounds overmap tiles
     oter_str_id boundary_overmap_terrain;
 
-    bool contains( const tripoint_abs_sm &p ) const
-    {
+    bool contains( const tripoint_abs_sm &p ) const {
         return p.x() >= min_bound.x() && p.x() <= max_bound.x() &&
-           p.y() >= min_bound.y() && p.y() <= max_bound.y() &&
-           p.z() >= min_bound.z() && p.z() <= max_bound.z();
+               p.y() >= min_bound.y() && p.y() <= max_bound.y() &&
+               p.z() >= min_bound.z() && p.z() <= max_bound.z();
     }
 
-    bool contains( const tripoint_abs_omt &p ) const
-    {
+    bool contains( const tripoint_abs_omt &p ) const {
         return contains( project_to<coords::sm>( p ) );
     }
 
-    bool contains( const tripoint_abs_ms &p ) const
-    {
+    bool contains( const tripoint_abs_ms &p ) const {
         return contains( project_to<coords::sm>( p ) );
     }
 
@@ -69,10 +66,10 @@ struct pocket_dimension_data {
 
     // Return tracking - where to go when exiting this pocket
     std::string return_dimension_id;     // Which dimension to return to (empty = overworld)
-    world_type_id return_world_type;     // World type of the return dimension (may be null for overworld)
+    world_type_id
+    return_world_type;     // World type of the return dimension (may be null for overworld)
     tripoint_abs_ms return_point;        // Where to place player on exit
-    const tripoint_abs_sm get_preload_point() const
-    {
+    const tripoint_abs_sm get_preload_point() const {
         return project_to<coords::sm>( return_point ) - point_rel_sm( g_half_mapsize, g_half_mapsize );
     }
 

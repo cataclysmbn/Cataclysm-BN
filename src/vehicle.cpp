@@ -183,7 +183,8 @@ class DefaultRemovePartHandler : public RemovePartHandler
             }
             // TODO: maybe do this for all the nearby NPCs as well?
 
-            if( g->u.get_grab_type() == OBJECT_VEHICLE && g->u.bub_pos() + g->u.grab_point == veh.bub_part_location( part ) ) {
+            if( g->u.get_grab_type() == OBJECT_VEHICLE &&
+                g->u.bub_pos() + g->u.grab_point == veh.bub_part_location( part ) ) {
                 if( veh.parts_at_relative( veh.part( part ).mount, false ).empty() ) {
                     add_msg( m_info, _( "The vehicle part you were holding has been destroyed!" ) );
                     g->u.grab( OBJECT_NONE );

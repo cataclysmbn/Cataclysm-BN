@@ -1716,7 +1716,7 @@ void vehicle::check_falling_or_floating()
         if( is_falling ) {
             is_falling &= here.has_flag_ter_or_furn( TFLAG_NO_FLOOR, p ) &&
                           ( p.z() > -OVERMAP_DEPTH ) &&
-                            !here.supports_above( p + tripoint_rel_ms::below() );
+                          !here.supports_above( p + tripoint_rel_ms::below() );
         }
         deep_water_tiles += here.has_flag( TFLAG_DEEP_WATER, p ) ? 1 : 0;
         water_tiles += here.has_flag( TFLAG_SWIMMABLE, p ) ? 1 : 0;

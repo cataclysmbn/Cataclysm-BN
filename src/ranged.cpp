@@ -2350,7 +2350,8 @@ static void cycle_action( item &weap, const tripoint_bub_ms &pos )
     // eject casings and linkages in random direction avoiding walls using player position as fallback
     std::vector<tripoint_bub_ms> tiles = closest_points_first( pos, 1 );
     tiles.erase( tiles.begin() );
-    tiles.erase( std::remove_if( tiles.begin(), tiles.end(), [&pos, &here]( const tripoint_bub_ms & e ) {
+    tiles.erase( std::remove_if( tiles.begin(), tiles.end(), [&pos,
+    &here]( const tripoint_bub_ms & e ) {
         return !here.passable( e ) || here.obstructed_by_vehicle_rotation( pos, e );
     } ), tiles.end() );
     auto eject = tiles.empty() ? pos : random_entry( tiles );

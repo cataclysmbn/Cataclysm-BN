@@ -1810,7 +1810,8 @@ std::vector<city_reference> overmapbuffer::get_cities_near( const tripoint_abs_s
 
 city_reference overmapbuffer::closest_city( const tripoint_abs_sm &center )
 {
-    constexpr int radius = coords::map_squares_per( coords::scale::overmap ) / coords::map_squares_per( coords::scale::submap );
+    constexpr int radius = coords::map_squares_per( coords::scale::overmap ) / coords::map_squares_per(
+                               coords::scale::submap );
     const auto cities = get_cities_near( center, radius );
 
     if( !cities.empty() ) {
@@ -1822,7 +1823,8 @@ city_reference overmapbuffer::closest_city( const tripoint_abs_sm &center )
 
 city_reference overmapbuffer::closest_known_city( const tripoint_abs_sm &center )
 {
-    constexpr int radius = coords::map_squares_per( coords::scale::overmap ) / coords::map_squares_per( coords::scale::submap );
+    constexpr int radius = coords::map_squares_per( coords::scale::overmap ) / coords::map_squares_per(
+                               coords::scale::submap );
     const auto cities = get_cities_near( center, radius );
     const auto it = std::ranges::find_if( cities,
     [this]( const city_reference & elem ) {
@@ -2043,7 +2045,8 @@ bool overmapbuffer::place_special( const overmap_special_id &special_id,
 
     // Get all of the overmaps within the defined radius of the center.
     for( const auto &om : get_overmaps_near(
-             project_to<coords::sm>( center ), coords::map_squares_per( coords::scale::submap ) * max_radius ) ) {
+             project_to<coords::sm>( center ),
+             coords::map_squares_per( coords::scale::submap ) * max_radius ) ) {
 
         // We'll include points that within our radius. We reduce the radius by
         // the length of the longest side of our special so that we don't end up in a

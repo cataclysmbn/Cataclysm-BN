@@ -7160,9 +7160,11 @@ void iuse_dimension_travel::dimension_travel( player &p, item &, const tripoint_
         // Only set load_pos when at least one side has a non-trivial scale.
         // Cross-multiply to compare ratios without floating point.
         if( src_num * destination.obj().scale_den != src_den * destination.obj().scale_num ) {
-            const int scalar = src_num * destination.obj().scale_den / ( src_den * destination.obj().scale_num );
+            const int scalar = src_num * destination.obj().scale_den / ( src_den *
+                               destination.obj().scale_num );
             abs_pos = tripoint_abs_ms( p.abs_pos().raw() * scalar );
-            load_pos = project_to<coords::sm>( abs_pos.value() ) - tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+            load_pos = project_to<coords::sm>( abs_pos.value() ) - tripoint_rel_sm( g_half_mapsize,
+                       g_half_mapsize, 0 );
         }
     }
 
@@ -7297,7 +7299,8 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
             // Set bounds based on the special's extent
             // The special's coordinates are relative, so we use them directly
             pd.pocket_info->bounds.min_bound = tripoint_abs_sm::zero() + project_to<coords::sm>( min_pos );
-            pd.pocket_info->bounds.max_bound = tripoint_abs_sm::south_east() + project_to<coords::sm>( max_pos );
+            pd.pocket_info->bounds.max_bound = tripoint_abs_sm::south_east() + project_to<coords::sm>
+                                               ( max_pos );
 
         } else {
             debugmsg( "iuse_pocket_dimension: overmap_special '%s' has no locations", entry_mapgen );
@@ -7316,7 +7319,7 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
         pd.pocket_info->bounds.boundary_terrain = *boundary_terrain;
     } else {
         pd.pocket_info->bounds.boundary_terrain = pocket_type.obj().boundary_terrain.value_or(
-                                      ter_str_id( "t_pd_border" ) );
+                    ter_str_id( "t_pd_border" ) );
     }
     pd.pocket_info->bounds.boundary_overmap_terrain = oter_str_id( "pd_border" );
 
@@ -7388,7 +7391,8 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
                 auto &pd_omb = get_overmapbuffer( dim_info.dimension_id );
                 const auto proj = project_remain<coords::om>( pd.entry_point );
                 overmap &om = pd_omb.get( proj.quotient );
-                om.place_special_forced( special_id, project_to<coords::omt>( proj.remainder_tripoint ), om_direction::type::north );
+                om.place_special_forced( special_id, project_to<coords::omt>( proj.remainder_tripoint ),
+                                         om_direction::type::north );
                 pd.terrain_generated = true;
             }
         };
@@ -7488,7 +7492,8 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
                 it.get_var( "origin_pos_y", 0 ),
                 it.get_var( "origin_pos_z", 0 ) );
             auto wt_id = world_type_id( origin_dim );
-            const auto preload_point = project_to<coords::sm>( origin_pos ) - point_rel_sm( g_half_mapsize, g_half_mapsize );
+            const auto preload_point = project_to<coords::sm>( origin_pos ) - point_rel_sm( g_half_mapsize,
+                                       g_half_mapsize );
             g->travel_to_dimension( origin_dim, wt_id, std::nullopt, preload_point );
             p.setpos( get_map().abs_to_bub( origin_pos ) );
             g->update_map( p );
@@ -7543,7 +7548,8 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 
     // Travel back to the return dimension (no bounds = infinite dimension).
     // travel_to_dimension clears stale bounds before loading the map.
-    g->travel_to_dimension( pd.return_dimension_id, pd.return_world_type, std::nullopt, pd.get_preload_point() );
+    g->travel_to_dimension( pd.return_dimension_id, pd.return_world_type, std::nullopt,
+                            pd.get_preload_point() );
 
     p.setpos( find_safe_spawn( get_map().abs_to_bub( pd.return_point ) ) );
 

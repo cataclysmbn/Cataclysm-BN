@@ -380,7 +380,8 @@ weather_type_id get_weather_at_point( const point_abs_omt &pos )
         tripoint_abs_omt pos_z( pos, OVERMAP_HEIGHT );
         const auto abs_ms_pos = project_to<coords::ms>( pos_z );
         const auto &wgen = ACTIVE_OVERMAP_BUFFER.get_settings( pos_z ).weather;
-        auto weather = wgen.get_weather_conditions( project_to<coords::ms>( pos_z ), calendar::turn, g->get_seed() );
+        auto weather = wgen.get_weather_conditions( project_to<coords::ms>( pos_z ), calendar::turn,
+                       g->get_seed() );
         iter = weather_cache.insert( std::make_pair( pos, weather ) ).first;
     }
     return iter->second;
@@ -2084,7 +2085,8 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
         }
     }
     // literal "edge" case: the vehicle may be in a different OMT than the player
-    const tripoint_abs_omt start_omt_pos = driving ? project_to<coords::omt>( player_veh->abs_sm_pos ) : player_omt_pos;
+    const tripoint_abs_omt start_omt_pos = driving ? project_to<coords::omt>
+                                           ( player_veh->abs_sm_pos ) : player_omt_pos;
     if( dest == player_omt_pos || dest == start_omt_pos ) {
         return {};
     } else {

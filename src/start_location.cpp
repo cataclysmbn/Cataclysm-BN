@@ -107,7 +107,8 @@ void start_location::finalize()
 }
 
 // check if tile at p should be boarded with some kind of furniture.
-static void add_boardable( const map &m, const tripoint_bub_ms &p, std::vector<tripoint_bub_ms> &vec )
+static void add_boardable( const map &m, const tripoint_bub_ms &p,
+                           std::vector<tripoint_bub_ms> &vec )
 {
     if( m.has_furn( p ) ) {
         // Don't need to board this up, is already occupied
@@ -379,8 +380,8 @@ void start_location::place_player( player &u ) const
 
     while( !found_good_spot && tries < 100 ) {
         tripoint_bub_ms rand_point( g_half_mapsize_x + rng( 0, SEEX * 2 - 1 ),
-                             g_half_mapsize_y + rng( 0, SEEY * 2 - 1 ),
-                             u.bub_pos().z() );
+                                    g_half_mapsize_y + rng( 0, SEEY * 2 - 1 ),
+                                    u.bub_pos().z() );
         check_spot( rand_point );
     }
     // If we haven't got a good location by now, screw it and brute force it
@@ -479,7 +480,8 @@ static void add_monsters( const tripoint_abs_omt &omtstart, const mongroup_id &t
     m.load( spawn_location, false );
     // map::place_spawns internally multiplies density by rng(10, 50)
     const float density = expected_points / ( ( 10 + 50 ) / 2.0 );
-    m.place_spawns( type, 1, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ), density );
+    m.place_spawns( type, 1, point_bub_ms::zero(), point_bub_ms( SEEX * 2 - 1, SEEY * 2 - 1 ),
+                    density );
 }
 
 void start_location::surround_with_monsters(

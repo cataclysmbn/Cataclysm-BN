@@ -222,7 +222,8 @@ void vehicle_preview_window::draw_cursor_at_pixel( point pixel_pos )
     adapter->draw_cursor_tile( pixel_pos );
 }
 
-void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh cursor, int highlight_part )
+void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh cursor,
+                                      int highlight_part )
 {
     const point center_px = calc_window_center_pixels();
 

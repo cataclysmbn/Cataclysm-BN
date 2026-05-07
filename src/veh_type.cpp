@@ -1180,7 +1180,8 @@ void vehicle_prototype::load( const JsonObject &jo )
     }
 
     for( JsonObject part : jo.get_array( "parts" ) ) {
-        auto pos = tripoint_mnt_veh( part.get_int( "x" ), part.get_int( "y" ), part.has_int( "z" ) ? part.get_int( "z" ) : 0 );
+        auto pos = tripoint_mnt_veh( part.get_int( "x" ), part.get_int( "y" ),
+                                     part.has_int( "z" ) ? part.get_int( "z" ) : 0 );
 
         if( part.has_string( "part" ) ) {
             add_part_obj( part, pos );

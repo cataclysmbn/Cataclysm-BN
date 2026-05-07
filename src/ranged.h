@@ -112,7 +112,8 @@ std::optional<shape_factory> get_target_shape_factory( const item &gun );
 void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &attacker,
                             item *source_weapon, const vehicle *in_veh = nullptr );
 
-std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here, int bash_power );
+std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here,
+        int bash_power );
 
 void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_ms, double> &aoe );
 

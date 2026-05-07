@@ -2397,9 +2397,9 @@ void dimension_bounds::deserialize( JsonIn &jsin )
 bool dimension_bounds::operator==( const dimension_bounds &rhs ) const
 {
     return min_bound == rhs.min_bound &&
-        max_bound == rhs.max_bound &&
-        boundary_terrain == rhs.boundary_terrain &&
-        boundary_overmap_terrain == rhs.boundary_overmap_terrain;
+           max_bound == rhs.max_bound &&
+           boundary_terrain == rhs.boundary_terrain &&
+           boundary_overmap_terrain == rhs.boundary_overmap_terrain;
 }
 
 // Template parameter because item::craft_data is private and I don't want to make it public.

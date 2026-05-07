@@ -151,7 +151,8 @@ void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &a
 }
 
 // TODO: Make this not a CTRL+C+V
-std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here, int bash_power )
+std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here,
+        int bash_power )
 {
     const auto sigdist_to_coverage = []( const double sigdist ) {
         return std::min( 1.0, -sigdist );
