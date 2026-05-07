@@ -159,6 +159,27 @@ static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
 static const std::string str_DOOR_LOCKING( "DOOR_LOCKING" );
 static const std::string str_OPENCLOSE_INSIDE( "OPENCLOSE_INSIDE" );
 
+namespace
+{
+
+auto horde_should_avoid_vehicle_tile( const map &here, const tripoint &p,
+                                      const mongroup &group ) -> bool
+{
+    if( !group.horde ) {
+        return false;
+    }
+
+    const auto vp = here.veh_at( p );
+    if( !vp ) {
+        return false;
+    }
+
+    const auto &veh = vp->vehicle();
+    return veh.is_owned_by( get_avatar() );
+}
+
+} // namespace
+
 #define dbg(x) DebugLog((x),DC::Map)
 
 static location_vector<item> nulitems( new
@@ -9031,6 +9052,10 @@ void map::spawn_monsters_submap_group( const tripoint &gp, mongroup &group, bool
 
             if( !ignore_inside_checks && !is_outside( fp ) ) {
                 continue; // monster must spawn outside.
+            }
+
+            if( horde_should_avoid_vehicle_tile( *this, fp, group ) ) {
+                continue; // hordes must not appear inside player-owned vehicles.
             }
 
             locations.push_back( fp );

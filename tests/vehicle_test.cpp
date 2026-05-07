@@ -1,17 +1,23 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
 #include "avatar.h"
+#include "cata_utility.h"
 #include "damage.h"
 #include "enums.h"
 #include "game.h"
 #include "item.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "mongroup.h"
+#include "monster.h"
+#include "overmapbuffer.h"
 #include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -19,6 +25,81 @@
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "veh_type.h"
+
+namespace
+{
+
+const auto horde_spawn_test_group = mongroup_id( "GROUP_ZOMBIE" );
+const auto horde_spawn_test_monster = mtype_id( "mon_zombie" );
+
+struct horde_vehicle_spawn_options {
+    bool owned = false;
+    bool tracked = false;
+};
+
+struct horde_vehicle_spawn_fixture {
+    std::set<tripoint> vehicle_points;
+    mongroup *horde = nullptr;
+};
+
+auto point_has_monster( const tripoint &p ) -> bool
+{
+    return g->critter_at<monster>( p ) != nullptr;
+}
+
+auto vehicle_points_contain_monster( const std::set<tripoint> &vehicle_points ) -> bool
+{
+    return std::ranges::any_of( vehicle_points, point_has_monster );
+}
+
+auto make_horde_vehicle_spawn_fixture( const horde_vehicle_spawn_options &options )
+-> horde_vehicle_spawn_fixture
+{
+    clear_all_state();
+    ACTIVE_OVERMAP_BUFFER.clear();
+
+    auto &here = get_map();
+    auto &you = get_avatar();
+    const auto target_submap = tripoint( here.getmapsize() / 2, here.getmapsize() / 2, 0 );
+    const auto target_submap_origin = sm_to_ms_copy( target_submap );
+    const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
+    const auto vehicle_origin = target_submap_origin + tripoint( SEEX / 2, SEEY / 2, 0 );
+
+    you.setpos( vehicle_origin + tripoint( 0, 0, -2 ) );
+    const auto veh = here.add_vehicle( vproto_id( "car" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+
+    auto group = mongroup( horde_spawn_test_group, tripoint_zero, 1, 0 );
+    group.abs_pos = here.bub_to_abs( tripoint_bub_sm( target_submap ) );
+    group.horde = true;
+    group.interest = 10;
+    group.monsters.emplace_back( horde_spawn_test_monster );
+
+    const auto horde = ACTIVE_OVERMAP_BUFFER.create_horde( group );
+    REQUIRE( horde != nullptr );
+
+    if( options.owned ) {
+        veh->set_owner( you );
+    }
+    if( options.tracked ) {
+        veh->toggle_tracking();
+    }
+
+    const auto vehicle_points = veh->get_points( true );
+    const auto horde_spawn_blocking_terrain = ter_id( "t_wall" );
+    std::ranges::for_each( here.points_in_rectangle( target_submap_origin, target_submap_end ),
+    [&]( const auto & p ) {
+        if( !vehicle_points.contains( p ) ) {
+            here.ter_set( p, horde_spawn_blocking_terrain );
+        }
+    } );
+    here.invalidate_map_cache( target_submap.z );
+    here.build_map_cache( target_submap.z, true );
+
+    return horde_vehicle_spawn_fixture{ .vehicle_points = vehicle_points, .horde = horde };
+}
+
+} // namespace
 
 TEST_CASE( "detaching_vehicle_unboards_passengers" )
 {
@@ -77,6 +158,51 @@ TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
     CHECK( player_character.controlling_vehicle );
     CHECK_FALSE( veh_ptr->engine_on );
     CHECK( !player_character.activity );
+}
+
+TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )
+{
+    const auto cleanup = on_out_of_scope( [] {
+        clear_all_state();
+        ACTIVE_OVERMAP_BUFFER.clear();
+    } );
+
+    SECTION( "unowned and untracked vehicle tiles remain valid horde spawn locations" ) {
+        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{} );
+
+        get_map().spawn_monsters( true );
+
+        CHECK( vehicle_points_contain_monster( fixture.vehicle_points ) );
+        CHECK( fixture.horde->empty() );
+    }
+
+    SECTION( "tracked but unowned vehicle tiles remain valid horde spawn locations" ) {
+        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .tracked = true } );
+
+        get_map().spawn_monsters( true );
+
+        CHECK( vehicle_points_contain_monster( fixture.vehicle_points ) );
+        CHECK( fixture.horde->empty() );
+    }
+
+    SECTION( "owned but untracked vehicle tiles are excluded from horde spawn locations" ) {
+        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .owned = true } );
+
+        get_map().spawn_monsters( true );
+
+        CHECK_FALSE( vehicle_points_contain_monster( fixture.vehicle_points ) );
+        CHECK_FALSE( fixture.horde->empty() );
+    }
+
+    SECTION( "owned and tracked vehicle tiles are excluded from horde spawn locations" ) {
+        const auto fixture = make_horde_vehicle_spawn_fixture( horde_vehicle_spawn_options{ .owned = true,
+                             .tracked = true } );
+
+        get_map().spawn_monsters( true );
+
+        CHECK_FALSE( vehicle_points_contain_monster( fixture.vehicle_points ) );
+        CHECK_FALSE( fixture.horde->empty() );
+    }
 }
 
 TEST_CASE( "add_item_to_broken_vehicle_part" )

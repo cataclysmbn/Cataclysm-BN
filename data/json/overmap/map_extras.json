@@ -109,7 +109,7 @@
   {
     "id": "mx_military",
     "type": "map_extra",
-    "name": "Military",
+    "name": { "ctxt": "map extra", "str": "Military" },
     "looks_like": "mon_zombie_soldier",
     "description": "Several corpses of soldiers are here.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_military" },
