@@ -22,6 +22,7 @@
     "warmth": 50,
     "material_thickness": 7,
     "environmental_protection": 6,
+    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
     "flags": [ "WATERPROOF", "STURDY" ]
   },
   {
@@ -72,6 +73,7 @@
     "warmth": 60,
     "material_thickness": 10,
     "environmental_protection": 10,
+    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -133,6 +135,7 @@
     "warmth": 60,
     "material_thickness": 12,
     "environmental_protection": 10,
+    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -194,6 +197,7 @@
     "warmth": 60,
     "material_thickness": 8,
     "environmental_protection": 10,
+    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -732,6 +736,7 @@
     "warmth": 20,
     "material_thickness": 6,
     "environmental_protection": 3,
+    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
     "max_charges": 500,
     "ammo": "battery",
     "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },

@@ -1103,7 +1103,7 @@ more structured function.
 },
 "use_action": {
     "type": "sew_advanced",  // Modify clothing
-    "materials": [           // materials to deal with.
+    "materials": [           // materials to deal with. Power armor can be targeted when its material matches.
         "cotton",
         "leather"
     ],

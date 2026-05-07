@@ -151,6 +151,7 @@
     "encumbrance": 10,
     "warmth": 15,
     "material_thickness": 4,
+    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
     "flags": [ "OUTER", "STURDY" ]
   },
   {
@@ -226,6 +227,7 @@
     "encumbrance": 6,
     "warmth": 10,
     "material_thickness": 4,
+    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
     "flags": [ "OUTER", "WATER_FRIENDLY" ]
   },
   {
