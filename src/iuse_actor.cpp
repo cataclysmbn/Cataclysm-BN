@@ -7613,7 +7613,12 @@ std::string enum_to_string<iuse_paint_stuff_config::paint_layer>
 }
 
 
-void iuse_paint_stuff::load( const JsonObject & ) { }
+void iuse_paint_stuff::load( const JsonObject &jo )
+{
+    if( jo.has_member( "charge_cost" ) ) {
+        charge_cost = jo.get_float( "charge_cost" );
+    }
+}
 
 void iuse_paint_stuff_config::load( const JsonObject &jo )
 {
@@ -7633,6 +7638,7 @@ auto iuse_paint_stuff_config::use( player &, item &it, bool, const tripoint & ) 
 
     std::vector<std::pair<std::string, eMode>> choices{};
     choices.push_back( {_( "Change Layer" ), Layer} );
+
     if( color_swap ) {
         choices.push_back( {_( "Change Color" ), ColorSwap} );
     }
@@ -7770,8 +7776,24 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
     const auto [p0, p1] = area.value();
     const auto layer = iuse_paint_stuff_config::get_paint_layer( it );
 
-    int painted = 0;
+    const auto get_cost = [&]() {
+        switch( layer ) {
+            default:
+                return charge_cost;
+            case iuse_paint_stuff_config::fg:
+            case iuse_paint_stuff_config::bg:
+                return charge_cost / 2;
+        }
+    };
+
+    float charges_used = 0.0f;
+    const float mod_cost = get_cost();
+
     for( const auto &p : tripoint_range( p0, p1 ) ) {
+        if( ( charges_used + mod_cost ) > it.charges ) {
+            break;
+        }
+
         const auto vpart = here.veh_at( p );
         if( !vpart.has_value() ) {
             continue;
@@ -7787,29 +7809,25 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
             case iuse_paint_stuff_config::both:
                 if( p_fg != col || p_bg != col ) {
                     disp_part.set_color( col, col );
-                    ++painted;
                 }
                 break;
             case iuse_paint_stuff_config::fg:
                 if( p_fg != col ) {
                     disp_part.set_color( p_bg, col );
-                    ++painted;
                 }
                 break;
             case iuse_paint_stuff_config::bg:
                 if( p_bg != col ) {
                     disp_part.set_color( col, p_fg );
-                    ++painted;
                 }
                 break;
         }
 
-        if( painted == it.charges ) {
-            break;
-        }
+        charges_used += mod_cost;
     }
 
-    return painted;
+    const auto final_cost = static_cast<int>( std::ceil( charges_used * mod_cost ) );
+    return std::min( 1, final_cost );
 }
 
 auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
@@ -8047,7 +8065,7 @@ void iuse_paint_stuff_config::set_color( item &it )
     lst.query();
 
     if( lst.ret >= 0 ) {
-        it.set_var<RGBColor>( PAINT_VAR, colors[lst.ret] );
+        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, colors[lst.ret] );
     }
 }
 

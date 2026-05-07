@@ -1617,6 +1617,9 @@ class iuse_portal_link : public iuse_actor
 
 class iuse_paint_stuff_config : public iuse_actor
 {
+    private:
+        bool color_swap = false;
+
     public:
         enum paint_layer {
             both = 0,
@@ -1625,10 +1628,8 @@ class iuse_paint_stuff_config : public iuse_actor
             num_layers
         };
 
-        static constexpr std::string PAINT_VAR = "PAINT_COLOR";
         static constexpr std::string LAYER_VAR = "PAINT_LAYER";
         static constexpr std::string IUSE_ACTION = "paint_stuff_cfg";
-        bool color_swap = false;
 
         iuse_paint_stuff_config( const std::string &type = IUSE_ACTION ) : iuse_actor( type ) {}
         ~iuse_paint_stuff_config() override = default;
@@ -1645,6 +1646,9 @@ class iuse_paint_stuff_config : public iuse_actor
 
 class iuse_paint_stuff : public iuse_actor
 {
+    private:
+        float charge_cost = 1.0f;
+
     public:
         static constexpr std::string PAINT_VAR = "PAINT_COLOR";
         static constexpr std::string IUSE_ACTION = "paint_stuff";
@@ -1662,6 +1666,7 @@ class iuse_paint_stuff : public iuse_actor
 
         static std::optional<RGBColor> try_get_paint_color( const item &it );
         static RGBColor get_paint_color( item &it );
+
     private:
         static bool is_paintable_terrain( map &, const tripoint & );
         auto set_vars( data_vars::data_set &, const RGBColor &, iuse_paint_stuff_config::paint_layer );

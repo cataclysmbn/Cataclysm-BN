@@ -647,7 +647,7 @@
     "initial_charges": 10,
     "max_charges": 10,
     "charges_per_use": 0,
-    "use_action": [ "paint_stuff", { "type": "paint_stuff_cfg", "color_swap": false } ],
+    "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": false } ],
     "flags": [ "WRITE_MESSAGE" ]
   },
   {
@@ -666,7 +666,7 @@
     "initial_charges": 10,
     "max_charges": 10,
     "charges_per_use": 0,
-    "use_action": [ "paint_stuff", { "type": "paint_stuff_cfg", "color_swap": true } ],
+    "use_action": [ { "type": "paint_stuff", "charge_cost": 0 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
     "flags": [ "WRITE_MESSAGE" ]
   },
   {
