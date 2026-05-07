@@ -49,7 +49,8 @@ TEST_CASE( "auto_consume_priority", "[auto_consume][food][zone]" )
                   zone_origin_absolute + zone_size );
     };
 
-    static auto place_items = [&]( const std::vector<std::pair<item *, tripoint_bub_ms>> &item_pairs ) ->
+    static auto place_items = [&]( const std::vector<std::pair<item *, tripoint_bub_ms>> &item_pairs )
+                              ->
     void {
         for( const auto &[ item, pos ] : item_pairs )
         {

@@ -101,7 +101,8 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
     bool had_any = false;
     CHECK( s->distance_at( rl_vec3d( origin ) ) > 0.0 );
     CHECK( cov[origin] <= 0.0 );
-    for( const tripoint_bub_ms &p : here.points_in_rectangle( tripoint_bub_ms( expanded_bb.p_min ), tripoint_bub_ms( expanded_bb.p_max ) ) ) {
+    for( const tripoint_bub_ms &p : here.points_in_rectangle( tripoint_bub_ms( expanded_bb.p_min ),
+            tripoint_bub_ms( expanded_bb.p_max ) ) ) {
         double signed_distance = s->distance_at( p.raw() );
         bool distance_on_shape_is_negative = signed_distance < 0.0;
         bool point_is_covered = cov.contains( p ) && cov.at( p ) > 0.0;
@@ -129,7 +130,8 @@ TEST_CASE( "expected shape coverage mass test", "[shape]" )
     }
 
     // Hard case
-    shape_coverage_vs_distance_no_obstacle( c, {65, 65, 0}, tripoint_bub_ms{65, 65, 0} + point_rel_ms( 2, 1 ) );
+    shape_coverage_vs_distance_no_obstacle( c, {65, 65, 0}, tripoint_bub_ms{65, 65, 0} + point_rel_ms(
+            2, 1 ) );
 }
 
 TEST_CASE( "expected shape coverage without obstacles", "[shape]" )

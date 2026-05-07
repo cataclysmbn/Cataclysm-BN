@@ -290,7 +290,8 @@ TEST_CASE( "overlapping_vehicles_make_wreck" )
     check_wreckage( -OVERMAP_DEPTH );
 }
 
-static void test_coord_translate( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_mnt_veh &p,
+static void test_coord_translate( units::angle dir, const tripoint_mnt_veh &pivot,
+                                  const tripoint_mnt_veh &p,
                                   tripoint_rel_ms &q )
 {
     tileray tdir( dir );

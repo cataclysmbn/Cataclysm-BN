@@ -41,7 +41,8 @@ static void oldCastLight( float ( &output_cache )[MAPSIZE * SEEX][MAPSIZE * SEEY
     for( int distance = row; distance <= radius && !blocked; distance++ ) {
         delta.y() = -distance;
         for( delta.x() = -distance; delta.x() <= 0; delta.x()++ ) {
-            const point current( offsetX + delta.x() * xx + delta.y() * xy, offsetY + delta.x() * yx + delta.y() * yy );
+            const point current( offsetX + delta.x() * xx + delta.y() * xy,
+                                 offsetY + delta.x() * yx + delta.y() * yy );
             const float leftSlope = ( delta.x() - 0.5f ) / ( delta.y() + 0.5f );
             const float rightSlope = ( delta.x() + 0.5f ) / ( delta.y() - 0.5f );
 

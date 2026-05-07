@@ -87,7 +87,8 @@ static std::ostream &operator<<( std::ostream &os, const std::vector<track> &vec
 /**
  * Simulate a player running from the monster, checking if it can catch up.
  **/
-static int can_catch_player( const std::string &monster_type, const tripoint_rel_ms &direction_of_flight )
+static int can_catch_player( const std::string &monster_type,
+                             const tripoint_rel_ms &direction_of_flight )
 {
     clear_map();
     REQUIRE( g->num_creatures() == 1 ); // the player
@@ -158,7 +159,8 @@ static int can_catch_player( const std::string &monster_type, const tripoint_rel
 
 // Verify that the named monster has the expected effective speed, not reduced
 // due to wasted motion from shambling.
-static void check_shamble_speed( const std::string &monster_type, const tripoint_bub_ms &destination )
+static void check_shamble_speed( const std::string &monster_type,
+                                 const tripoint_bub_ms &destination )
 {
     // Scale the scaling factor based on the ratio of diagonal to cardinal steps.
     const float slope = get_normalized_angle( point_zero, destination.raw().xy() );

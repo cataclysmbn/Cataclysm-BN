@@ -166,7 +166,7 @@ TEST_CASE( "vehicle_part_with_feature_range_iterator_safety", "[iterator][safety
 TEST_CASE( "vehicle_part_iterator_copy_semantics", "[iterator][safety]" )
 {
     vehicle v;
-    
+
     v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
     v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) );
     v.install_part( tripoint_mnt_veh( 2, 0, 0 ), vpart_id( "frame_vertical" ) );
@@ -188,7 +188,7 @@ TEST_CASE( "vehicle_part_iterator_copy_semantics", "[iterator][safety]" )
 TEST_CASE( "vehicle_part_range_for_temporary_safety", "[iterator][safety]" )
 {
     vehicle v;
-    
+
     v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
     v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) );
     v.install_part( tripoint_mnt_veh( 2, 0, 0 ), vpart_id( "frame_vertical" ) );

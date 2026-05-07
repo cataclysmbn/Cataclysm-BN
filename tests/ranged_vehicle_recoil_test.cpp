@@ -40,7 +40,8 @@ TEST_CASE( "firing_from_a_vehicle_applies_recoil_to_the_vehicle", "[vehicle][gun
 
     REQUIRE( veh->velocity == 0 );
 
-    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint_rel_ms( 5, 0, 0 ),
+    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint_rel_ms( 5, 0,
+                             0 ),
                              1 );
 
     REQUIRE( shots_fired == 1 );
@@ -72,7 +73,8 @@ TEST_CASE( "vehicle gun recoil scaling factor can disable vehicle thrust", "[veh
 
     REQUIRE( veh->velocity == 0 );
 
-    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint_rel_ms( 5, 0, 0 ),
+    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint_rel_ms( 5, 0,
+                             0 ),
                              1 );
 
     REQUIRE( shots_fired == 1 );
@@ -84,9 +86,11 @@ TEST_CASE( "brake hold toggles parked braking drag", "[vehicle][drag]" )
     clear_all_state();
 
     auto &here = get_map();
-    auto *const bicycle = here.add_vehicle( vproto_id( "bicycle" ), tripoint_bub_ms( 60, 60, 0 ), 0_degrees, 0,
+    auto *const bicycle = here.add_vehicle( vproto_id( "bicycle" ), tripoint_bub_ms( 60, 60, 0 ),
+                                            0_degrees, 0,
                                             0 );
-    auto *const shopping_cart = here.add_vehicle( vproto_id( "shopping_cart" ), tripoint_bub_ms( 70, 60, 0 ),
+    auto *const shopping_cart = here.add_vehicle( vproto_id( "shopping_cart" ), tripoint_bub_ms( 70, 60,
+                                0 ),
                                 0_degrees, 0, 0 );
 
     REQUIRE( bicycle != nullptr );
@@ -114,7 +118,8 @@ TEST_CASE( "single birdshot can move a swivel chair one tile on office floor at 
     const auto vehicle_origin = tripoint_bub_ms( 60, 60, 0 );
 
     for( const auto x : std::views::iota( 40, 81 ) ) {
-        here.ter_set( tripoint_bub_ms( x, vehicle_origin.y(), vehicle_origin.z() ), ter_id( "t_linoleum_white" ) );
+        here.ter_set( tripoint_bub_ms( x, vehicle_origin.y(), vehicle_origin.z() ),
+                      ter_id( "t_linoleum_white" ) );
         here.furn_set( tripoint_bub_ms( x, vehicle_origin.y(), vehicle_origin.z() ), furn_id( "f_null" ) );
     }
 
@@ -134,7 +139,8 @@ TEST_CASE( "single birdshot can move a swivel chair one tile on office floor at 
 
     const auto starting_pos = veh->bub_ms_location();
 
-    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint_rel_ms( 5, 0, 0 ),
+    const auto shots_fired = ranged::fire_gun( player_character, vehicle_origin + tripoint_rel_ms( 5, 0,
+                             0 ),
                              1 );
 
     REQUIRE( shots_fired == 1 );
@@ -165,8 +171,10 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
     auto *const veh = here.add_vehicle( vproto_id( "shopping_cart" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh != nullptr );
 
-    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "turret_mount_manual_steel" ), true ) >= 0 );
-    const auto turret_index = veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "mounted_browning" ), true );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "turret_mount_manual_steel" ),
+                                true ) >= 0 );
+    const auto turret_index = veh->install_part( tripoint_mnt_veh::zero(),
+                              vpart_id( "mounted_browning" ), true );
     REQUIRE( turret_index >= 0 );
     REQUIRE( veh->part( turret_index ).ammo_set( itype_id( "50bmg" ) ) );
 
@@ -184,7 +192,8 @@ TEST_CASE( "vehicle gun recoil can launch a shopping cart with a mounted M2 Brow
     auto shots_fired = 0;
     for( const auto _ : std::views::iota( 0, 5 ) ) {
         ( void ) _;
-        shots_fired += turret.fire( player_character, here.bub_to_abs( vehicle_origin ) + tripoint_rel_ms( 10, 0, 0 ) );
+        shots_fired += turret.fire( player_character,
+                                    here.bub_to_abs( vehicle_origin ) + tripoint_rel_ms( 10, 0, 0 ) );
     }
 
     REQUIRE( shots_fired == 15 );

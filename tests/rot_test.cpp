@@ -124,7 +124,8 @@ TEST_CASE( "Items rot away" )
             calendar::turn = calendar::start_of_cataclysm + 1_minutes;
         }
 
-        detached_ptr<item> test_item = item::process( item::spawn( "meat_cooked" ), nullptr, tripoint_bub_ms::zero(),
+        detached_ptr<item> test_item = item::process( item::spawn( "meat_cooked" ), nullptr,
+                                       tripoint_bub_ms::zero(),
                                        false, temperature_flag::TEMP_HEATER, weather );
         map &m = get_map();
         m.add_item_or_charges( loc, std::move( test_item ), false );

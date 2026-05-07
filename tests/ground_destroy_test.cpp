@@ -162,7 +162,8 @@ TEST_CASE( "collapse_checks", "[.]" )
 
     map &here = get_map();
     // build a structure
-    const tripoint_bub_ms &midair = tripoint_bub_ms( tripoint_bub_ms::zero().xy(), tripoint_bub_ms::zero().z() + 1 );
+    const tripoint_bub_ms &midair = tripoint_bub_ms( tripoint_bub_ms::zero().xy(),
+                                    tripoint_bub_ms::zero().z() + 1 );
     for( const tripoint_bub_ms &pt : here.points_in_radius( midair, wall_size, 1 ) ) {
         here.ter_set( pt, floor_id );
     }
