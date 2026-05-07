@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "avatar.h"
+#include "coordinates.h"
 #include "game.h"
 #include "map.h"
 #include "map_helpers.h"
@@ -22,7 +23,6 @@
 #include "game_constants.h"
 #include "item.h"
 #include "line.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -31,7 +31,7 @@
 using move_statistics = statistics<int>;
 
 static int moves_to_destination( const std::string &monster_type,
-                                 const tripoint &start, const tripoint &end )
+                                 const tripoint_bub_ms &start, const tripoint_bub_ms &end )
 {
     clear_creatures();
     REQUIRE( g->num_creatures() == 1 ); // the player
@@ -64,7 +64,7 @@ struct track {
     char participant;
     int moves;
     int distance;
-    tripoint location;
+    tripoint_bub_ms location;
 };
 
 static std::ostream &operator<<( std::ostream &os, track const &value )
@@ -87,7 +87,7 @@ static std::ostream &operator<<( std::ostream &os, const std::vector<track> &vec
 /**
  * Simulate a player running from the monster, checking if it can catch up.
  **/
-static int can_catch_player( const std::string &monster_type, const tripoint &direction_of_flight )
+static int can_catch_player( const std::string &monster_type, const tripoint_rel_ms &direction_of_flight )
 {
     clear_map();
     REQUIRE( g->num_creatures() == 1 ); // the player
@@ -96,12 +96,11 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
     std::vector<detached_ptr<item>> temp;
     while( test_player.takeoff( test_player.i_at( -2 ), &temp ) );
 
-    const tripoint center{ 65, 65, 0 };
+    const tripoint_bub_ms center{ 65, 65, 0 };
     test_player.setpos( center );
     test_player.set_moves( 0 );
     // Give the player a head start.
-    const auto monster_start = { -10 * direction_of_flight + test_player.bub_pos()
-                               };
+    const auto monster_start = test_player.bub_pos() + ( direction_of_flight * -10 );
     monster &test_monster = spawn_test_monster( monster_type, monster_start );
     // Get it riled up and give it a goal.
     test_monster.anger = 100;
@@ -115,10 +114,10 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
         test_player.mod_moves( target_speed );
         while( test_player.moves >= 0 ) {
             test_player.setpos( test_player.bub_pos() + direction_of_flight );
-            if( test_player.bub_pos().x < SEEX * int( MAPSIZE / 2 ) ||
-                test_player.bub_pos().y < SEEY * int( MAPSIZE / 2 ) ||
-                test_player.bub_pos().x >= SEEX * ( 1 + int( MAPSIZE / 2 ) ) ||
-                test_player.bub_pos().y >= SEEY * ( 1 + int( MAPSIZE / 2 ) ) ) {
+            if( test_player.bub_pos().x() < SEEX * int( MAPSIZE / 2 ) ||
+                test_player.bub_pos().y() < SEEY * int( MAPSIZE / 2 ) ||
+                test_player.bub_pos().x() >= SEEX * ( 1 + int( MAPSIZE / 2 ) ) ||
+                test_player.bub_pos().y() >= SEEY * ( 1 + int( MAPSIZE / 2 ) ) ) {
                 auto offset = center - test_player.bub_pos();
                 test_player.setpos( center );
                 test_monster.setpos( test_monster.bub_pos() + offset );
@@ -159,17 +158,17 @@ static int can_catch_player( const std::string &monster_type, const tripoint &di
 
 // Verify that the named monster has the expected effective speed, not reduced
 // due to wasted motion from shambling.
-static void check_shamble_speed( const std::string &monster_type, const tripoint &destination )
+static void check_shamble_speed( const std::string &monster_type, const tripoint_bub_ms &destination )
 {
     // Scale the scaling factor based on the ratio of diagonal to cardinal steps.
-    const float slope = get_normalized_angle( point_zero, destination.xy() );
+    const float slope = get_normalized_angle( point_zero, destination.raw().xy() );
     const float diagonal_multiplier = 1.0 + ( get_option<bool>( "CIRCLEDIST" ) ?
                                       ( slope * 0.41 ) : 0.0 );
     INFO( monster_type << " " << destination );
     // Wandering makes things nondeterministic, so look at the distribution rather than a target number.
     move_statistics move_stats;
     for( int i = 0; i < 10; ++i ) {
-        move_stats.add( moves_to_destination( monster_type, tripoint_zero, destination ) );
+        move_stats.add( moves_to_destination( monster_type, tripoint_bub_ms::zero(), destination ) );
         if( ( move_stats.avg() / ( 10000.0 * diagonal_multiplier ) ) ==
             Approx( 1.0 ).epsilon( 0.02 ) ) {
             break;
@@ -261,11 +260,11 @@ static void monster_check()
 {
     const float diagonal_multiplier = ( get_option<bool>( "CIRCLEDIST" ) ? 1.41 : 1.0 );
     // Have a monster walk some distance in a direction and measure how long it takes.
-    float vert_move = moves_to_destination( "mon_pig", tripoint_zero, {100, 0, 0} );
+    float vert_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero(), {100, 0, 0} );
     CHECK( ( vert_move / 10000.0 ) == Approx( 1.0 ) );
-    int horiz_move = moves_to_destination( "mon_pig", tripoint_zero, {0, 100, 0} );
+    int horiz_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero(), {0, 100, 0} );
     CHECK( ( horiz_move / 10000.0 ) == Approx( 1.0 ) );
-    int diag_move = moves_to_destination( "mon_pig", tripoint_zero, {100, 100, 0} );
+    int diag_move = moves_to_destination( "mon_pig", tripoint_bub_ms::zero(), {100, 100, 0} );
     CHECK( ( diag_move / ( 10000.0 * diagonal_multiplier ) ) == Approx( 1.0 ).epsilon( 0.05 ) );
 
     check_shamble_speed( "mon_pig", {100, 0, 0} );
@@ -290,10 +289,10 @@ static void monster_check()
 
     // Verify that a walking player can escape from a zombie, but is caught by a zombie dog.
     INFO( "Trigdist is " << ( get_option<bool>( "CIRCLEDIST" ) ? "on" : "off" ) );
-    CHECK( can_catch_player( "mon_zombie", tripoint_east ) < 0 );
-    CHECK( can_catch_player( "mon_zombie", tripoint_south_east ) < 0 );
-    CHECK( can_catch_player( "mon_zombie_dog", tripoint_east ) > 0 );
-    CHECK( can_catch_player( "mon_zombie_dog", tripoint_south_east ) > 0 );
+    CHECK( can_catch_player( "mon_zombie", tripoint_rel_ms::east() ) < 0 );
+    CHECK( can_catch_player( "mon_zombie", tripoint_rel_ms::south_east() ) < 0 );
+    CHECK( can_catch_player( "mon_zombie_dog", tripoint_rel_ms::east() ) > 0 );
+    CHECK( can_catch_player( "mon_zombie_dog", tripoint_rel_ms::south_east() ) > 0 );
 }
 
 // Write out a map of slope at which monster is moving to time required to reach their destination.
@@ -342,11 +341,11 @@ TEST_CASE( "monster_move_through_vehicle_holes" )
 {
     clear_all_state();
     put_player_underground();
-    tripoint origin( 60, 60, 0 );
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );
 
-    tripoint mon_origin = origin + tripoint( -2, 1, 0 );
+    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
     monster &zombie = spawn_test_monster( "mon_zombie", mon_origin );
     zombie.move_to( mon_origin + tripoint_north_west, false, false, 0.0f );
 
@@ -365,8 +364,8 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
 
     avatar &you = get_avatar();
     auto &here = get_map();
-    const auto avatar_pos = tripoint{ 60, 60, 2 };
-    const auto zombie_pos = tripoint{ 60, 60, 1 };
+    const auto avatar_pos = tripoint_bub_ms{ 60, 60, 2 };
+    const auto zombie_pos = tripoint_bub_ms{ 60, 60, 1 };
     you.setpos( avatar_pos );
 
     monster &grabber = spawn_test_monster( "mon_zombie_grabber", zombie_pos );
@@ -389,8 +388,8 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
         auto *veh = here.add_vehicle( vproto_id( "none" ), avatar_pos, 0_degrees, 0, 0 );
 
         REQUIRE( veh != nullptr );
-        veh->install_part( point_zero, vpart_frame_vertical );
-        veh->install_part( point_zero, vpart_seat );
+        veh->install_part( tripoint_mnt_veh::zero(), vpart_frame_vertical );
+        veh->install_part( tripoint_mnt_veh::zero(), vpart_seat );
         here.add_vehicle_to_cache( veh );
 
         CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
@@ -400,7 +399,7 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
         auto *blimp = here.add_vehicle( vproto_id( "blimp" ), avatar_pos, 0_degrees, 0, 0 );
 
         REQUIRE( blimp != nullptr );
-        const auto cockpit_part = blimp->part_with_feature( point_zero, "BOARDABLE", true );
+        const auto cockpit_part = blimp->part_with_feature( tripoint_mnt_veh::zero(), "BOARDABLE", true );
         REQUIRE( cockpit_part != -1 );
 
         const auto blimp_tile = blimp->bub_part_location( cockpit_part );

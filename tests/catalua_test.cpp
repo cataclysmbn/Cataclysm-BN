@@ -7,6 +7,7 @@
 #include "catalua_serde.h"
 #include "catalua_sol.h"
 #include "clzones.h"
+#include "coordinates.h"
 #include "debug.h"
 #include "faction.h"
 #include "fstream_utils.h"
@@ -14,7 +15,6 @@
 #include "map.h"
 #include "mapdata.h"
 #include "options.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
@@ -276,7 +276,7 @@ TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
     clear_all_state();
 
     auto &here = get_map();
-    const auto origin = tripoint( 60, 60, 0 );
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
     const auto original_facing = -90_degrees;
     const auto overridden_facing = 180_degrees;
     auto *vehicle_ptr = here.add_vehicle( vproto_id( "bicycle" ), origin, original_facing, 0, 0 );

@@ -12,6 +12,7 @@
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
+#include "coordinates.h"
 #include "game_inventory.h"
 #include "inventory.h"
 #include "item.h"
@@ -21,7 +22,6 @@
 #include "options_helpers.h"
 #include "player.h"
 #include "player_activity.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "visitable.h"
@@ -682,7 +682,7 @@ TEST_CASE( "Inventory letter test", "[invlet]" )
 {
     clear_all_state();
     player &dummy = get_avatar();
-    const tripoint spot( 60, 60, 0 );
+    const tripoint_bub_ms spot( 60, 60, 0 );
     dummy.setpos( spot );
     get_map().ter_set( spot, ter_id( "t_dirt" ) );
     get_map().furn_set( spot, furn_id( "f_null" ) );

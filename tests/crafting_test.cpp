@@ -15,6 +15,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_functions.h"
+#include "coordinates.h"
 #include "craft_command.h"
 #include "crafting.h"
 #include "distribution_grid.h"
@@ -28,7 +29,6 @@
 #include "overmapbuffer.h"
 #include "player_activity.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
@@ -254,12 +254,12 @@ TEST_CASE( "crafting_with_a_companion", "[.]" )
         standard_npc who( "helper" );
 
         who.set_attitude( NPCATT_FOLLOW );
-        who.spawn_at_sm( tripoint_zero );
+        who.spawn_at_sm( tripoint_abs_sm::zero() );
 
         g->load_npcs();
 
         CHECK( !dummy.in_vehicle );
-        dummy.setpos( who.pos() );
+        dummy.setpos( who.bub_pos() );
         const auto helpers( character_funcs::get_crafting_helpers( dummy ) );
 
         REQUIRE( std::find( helpers.begin(), helpers.end(), &who ) != helpers.end() );
@@ -515,9 +515,8 @@ static int resume_craft()
     REQUIRE( crafts.size() == 1 );
     item *craft = crafts.front();
     set_time( midday ); // Ensure light for crafting
-    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.bub_pos()} )
-             ==
-             1.0 );
+    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.abs_pos()} )
+             == 1.0 );
     REQUIRE( !you.activity );
     avatar_funcs::use_item( you, *craft );
     REQUIRE( you.activity );
@@ -645,7 +644,7 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
     clear_all_state();
     map &m = get_map();
     avatar &u = get_avatar();
-    constexpr tripoint start_pos = tripoint( 60, 60, 0 );
+    constexpr tripoint_bub_ms start_pos = tripoint_bub_ms( 60, 60, 0 );
     const tripoint_abs_ms start_pos_abs( m.bub_to_abs( start_pos ) );
     u.setpos( start_pos );
     clear_avatar();

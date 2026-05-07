@@ -8,12 +8,12 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "coordinates.h"
 #include "flag.h"
 #include "game.h"
 #include "item.h"
 #include "map.h"
 #include "map_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"
@@ -31,7 +31,7 @@ TEST_CASE( "vehicle power with reactor and solar panels", "[vehicle][power]" )
     map &here = get_map();
 
     SECTION( "vehicle with reactor" ) {
-        const tripoint reactor_origin = tripoint( 10, 10, 0 );
+        const tripoint_bub_ms reactor_origin = tripoint_bub_ms( 10, 10, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "reactor_test" ), reactor_origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
 
@@ -60,7 +60,7 @@ TEST_CASE( "vehicle power with reactor and solar panels", "[vehicle][power]" )
     }
 
     SECTION( "vehicle with solar panels" ) {
-        const tripoint solar_origin = tripoint( 5, 5, 0 );
+        const tripoint_bub_ms solar_origin = tripoint_bub_ms( 5, 5, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "solar_panel_test" ), solar_origin, 0_degrees, 0,
                                              0 );
         REQUIRE( veh_ptr != nullptr );
@@ -125,7 +125,7 @@ TEST_CASE( "maximum reverse velocity", "[vehicle][power][reverse]" )
     map &here = get_map();
 
     GIVEN( "a scooter with combustion engine and charged battery" ) {
-        const tripoint origin = tripoint( 10, 0, 0 );
+        const tripoint_bub_ms origin = tripoint_bub_ms( 10, 0, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "scooter_test" ), origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
         veh_ptr->charge_battery( 600 );
@@ -150,7 +150,7 @@ TEST_CASE( "maximum reverse velocity", "[vehicle][power][reverse]" )
     }
 
     GIVEN( "a scooter with an electric motor and charged battery" ) {
-        const tripoint origin = tripoint( 15, 0, 0 );
+        const tripoint_bub_ms origin = tripoint_bub_ms( 15, 0, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "scooter_electric_test" ), origin, 0_degrees, 0,
                                              0 );
         REQUIRE( veh_ptr != nullptr );
@@ -181,14 +181,14 @@ TEST_CASE( "Vehicle charging station", "[vehicle][power]" )
     build_test_map( ter_id( "t_pavement" ) );
 
     GIVEN( "Vehicle with a charged battery and an active recharging station on a box" ) {
-        const tripoint vehicle_origin = tripoint( 10, 10, 0 );
+        const tripoint_bub_ms vehicle_origin = tripoint_bub_ms( 10, 10, 0 );
         vehicle *veh_ptr = g->m.add_vehicle( vproto_id( "recharge_test" ), vehicle_origin, 0_degrees, 100,
                                              0 );
         REQUIRE( veh_ptr != nullptr );
         REQUIRE( veh_ptr->fuel_left( fuel_type_battery ) > 1000 );
         veh_ptr->update_time( calendar::turn_zero );
 
-        auto cargo_part_index = veh_ptr->part_with_feature( point_zero, "CARGO", true );
+        auto cargo_part_index = veh_ptr->part_with_feature( tripoint_mnt_veh::zero(), "CARGO", true );
         REQUIRE( cargo_part_index >= 0 );
         vehicle_part &cargo_part = veh_ptr->part( cargo_part_index );
 

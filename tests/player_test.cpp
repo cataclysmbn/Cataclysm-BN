@@ -282,7 +282,7 @@ static void guarantee_neutral_weather( const player &p, weather_manager &weather
     const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( p.global_omt_location() );
     bool sheltered = g->is_sheltered( p.bub_pos() );
     double total_windpower = get_local_windpower( weather.windspeed, cur_om_ter,
-                             p.bub_pos(),
+                             p.abs_pos(),
                              weather.winddirection, sheltered );
     int air_humidity = get_local_humidity( wp.humidity, weather.weather_id, sheltered );
 
@@ -426,7 +426,7 @@ static int find_converging_water_temp( player &p, int expected_water, int expect
         get_weather().water_temperature = units::from_fahrenheit( actual_water );
         get_weather().clear_temp_cache();
         const int actual_temperature = units::celsius_to_fahrenheit( get_weather().get_water_temperature(
-                                           p.bub_pos() ).value() );
+                                           p.abs_pos() ).value() );
         REQUIRE( actual_temperature == actual_water );
 
         int converged_temperature = converge_temperature( p, 10000 )[0];
@@ -464,7 +464,7 @@ TEST_CASE( "Player body temperatures in water.", "[.][bodytemp]" )
     clear_all_state();
     player &dummy = get_avatar();
 
-    const tripoint &pos = dummy.bub_pos();
+    const tripoint_bub_ms &pos = dummy.bub_pos();
 
     get_map().ter_set( pos, t_water_dp );
     REQUIRE( get_map().has_flag( TFLAG_SWIMMABLE, pos ) );
@@ -521,7 +521,7 @@ TEST_CASE( "Water hypothermia check.", "[.][bodytemp]" )
     clear_all_state();
     player &dummy = get_avatar();
 
-    const tripoint &pos = dummy.bub_pos();
+    const tripoint_bub_ms &pos = dummy.bub_pos();
 
     get_map().ter_set( pos, t_water_dp );
     REQUIRE( get_map().has_flag( TFLAG_SWIMMABLE, pos ) );
@@ -553,14 +553,14 @@ TEST_CASE( "player_move_through_vehicle_holes" )
     clear_all_state();
     player &dummy = get_avatar();
 
-    const tripoint &pos = dummy.bub_pos();
+    const tripoint_bub_ms &pos = dummy.bub_pos();
 
-    get_map().add_vehicle( vproto_id( "apc" ), pos + tripoint( 2, -1, 0 ), -45_degrees, 0, 0 );
+    get_map().add_vehicle( vproto_id( "apc" ), pos + tripoint_rel_ms( 2, -1, 0 ), -45_degrees, 0, 0 );
 
-    REQUIRE( get_avatar().pos() == pos );
+    REQUIRE( get_avatar().bub_pos() == pos );
 
-    avatar_action::move( get_avatar(), get_map(), point_north_west );
+    avatar_action::move( get_avatar(), get_map(), point_rel_ms::north_west() );
 
-    CHECK( get_avatar().pos() == pos );
+    CHECK( get_avatar().bub_pos() == pos );
 
 }

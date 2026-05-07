@@ -35,15 +35,15 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     REQUIRE( get_map().has_zlevels() );
     get_player_character().setpos( {60, 60, -2} );
 
-    const auto shooter_pos = tripoint( 60, 60, 0 );
-    const auto target_pos = tripoint( 62, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
     auto shooter = standard_npc( "shooter", shooter_pos );
     shooter.set_skill_level( skill_gun, 10 );
     shooter.set_skill_level( skill_shotgun, 10 );
 
     auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy().raw(), tripoint_zero );
+    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
     target->setpos( target_pos );
     for( const auto &armor_id : armor_ids ) {
         target->worn.push_back( item::spawn( armor_id ) );
@@ -86,7 +86,7 @@ static auto fire_shells_at_target( const itype_id &ammo_id,
 }
 
 static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
-        const tripoint &origin, const tripoint &end )
+        const tripoint_bub_ms &origin, const tripoint_bub_ms &end )
 {
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
     projectile p;
@@ -101,11 +101,11 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
     bool had_any = false;
     CHECK( s->distance_at( rl_vec3d( origin ) ) > 0.0 );
     CHECK( cov[origin] <= 0.0 );
-    for( const tripoint &p : here.points_in_rectangle( expanded_bb.p_min, expanded_bb.p_max ) ) {
-        double signed_distance = s->distance_at( p );
+    for( const tripoint_bub_ms &p : here.points_in_rectangle( tripoint_bub_ms( expanded_bb.p_min ), tripoint_bub_ms( expanded_bb.p_max ) ) ) {
+        double signed_distance = s->distance_at( p.raw() );
         bool distance_on_shape_is_negative = signed_distance < 0.0;
         bool point_is_covered = cov.contains( p ) && cov.at( p ) > 0.0;
-        bool in_bounding_box = bb.contains( p );
+        bool in_bounding_box = bb.contains( p.raw() );
         CAPTURE( p );
         CAPTURE( signed_distance );
         CAPTURE( cov[p] );
@@ -123,22 +123,22 @@ TEST_CASE( "expected shape coverage mass test", "[shape]" )
 {
     clear_all_state();
     cone_factory c( 15_degrees, 10.0 );
-    const tripoint origin( 60, 60, 0 );
-    for( const tripoint &end : points_in_radius<tripoint>( origin, 5 ) ) {
+    const tripoint_bub_ms origin( 60, 60, 0 );
+    for( const tripoint_bub_ms &end : points_in_radius<tripoint_bub_ms>( origin, 5 ) ) {
         shape_coverage_vs_distance_no_obstacle( c, origin, end );
     }
 
     // Hard case
-    shape_coverage_vs_distance_no_obstacle( c, {65, 65, 0}, tripoint{65, 65, 0} + point( 2, 1 ) );
+    shape_coverage_vs_distance_no_obstacle( c, {65, 65, 0}, tripoint_bub_ms{65, 65, 0} + point_rel_ms( 2, 1 ) );
 }
 
 TEST_CASE( "expected shape coverage without obstacles", "[shape]" )
 {
     clear_all_state();
     cone_factory c( 22.5_degrees, 10.0 );
-    const tripoint origin( 60, 60, 0 );
-    const tripoint offset( 5, 5, 0 );
-    const tripoint end = origin + offset;
+    const tripoint_bub_ms origin( 60, 60, 0 );
+    const tripoint_rel_ms offset( 5, 5, 0 );
+    const tripoint_bub_ms end = origin + offset;
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
     auto cov = ranged::expected_coverage( *s, get_map(), 3 );
 
@@ -154,12 +154,12 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
 {
     clear_all_state();
     cone_factory c( 22.5_degrees, 10.0 );
-    const tripoint origin( 60, 60, 0 );
-    const tripoint offset( 5, 0, 0 );
-    const tripoint end = origin + offset;
+    const tripoint_bub_ms origin( 60, 60, 0 );
+    const tripoint_rel_ms offset( 5, 0, 0 );
+    const tripoint_bub_ms end = origin + offset;
     map &here = get_map();
     for( int wall_offset = -10; wall_offset <= 10; wall_offset++ ) {
-        here.ter_set( tripoint( 62, 60 + wall_offset, 0 ), t_window );
+        here.ter_set( tripoint_bub_ms( 62, 60 + wall_offset, 0 ), t_window );
     }
 
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
@@ -196,8 +196,8 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
     REQUIRE( get_map().has_zlevels() );
 
     auto &shooter = get_player_character();
-    const auto shooter_pos = tripoint( 60, 60, 0 );
-    const auto target_pos = tripoint( 62, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
     shooter.set_body();
     shooter.setpos( shooter_pos );
     shooter.set_skill_level( skill_gun, 10 );
@@ -205,7 +205,7 @@ TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
 
     auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy().raw(), tripoint_zero );
+    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
     target->setpos( target_pos );
     ACTIVE_OVERMAP_BUFFER.insert_npc( target );
     g->load_npcs();

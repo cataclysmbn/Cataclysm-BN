@@ -2451,7 +2451,7 @@ class scoped_map_context
 
 // Shift a square grid bitset (side length `size`, submap stride `multiplier`) by `s` submaps.
 void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier,
-                         const point_bub_ms &s );
+                         const point_rel_sm &s );
 
 bool ter_furn_has_flag( const ter_t &ter, const furn_t &furn, ter_bitflags flag );
 class tinymap : public map

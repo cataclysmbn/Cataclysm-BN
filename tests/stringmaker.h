@@ -8,6 +8,7 @@
 #include "cuboid_rectangle.h"
 #include "catch/catch.hpp"
 #include "cata_variant.h"
+#include "coordinates"
 #include "dialogue.h"
 #include "distribution_grid.h"
 #include "item.h"
@@ -69,7 +70,7 @@ struct StringMaker<point> {
 template<>
 struct StringMaker<tripoint> {
     static std::string convert( const tripoint &p ) {
-        return string_format( "tripoint( %d, %d, %d )", p.x, p.y, p.z );
+        return string_format( "tripoint_bub_ms( %d, %d, %d )", p.x, p.y, p.z );
     }
 };
 

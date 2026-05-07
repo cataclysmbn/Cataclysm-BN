@@ -9,11 +9,11 @@
 #include <random>
 #include <vector>
 
+#include "coordinates.h"
 #include "game_constants.h"
 #include "lightmap.h"
 #include "line.h" // For rl_dist.
 #include "map.h"
-#include "point.h"
 #include "rng.h"
 #include "shadowcasting.h"
 #include "state_helpers.h"
@@ -37,13 +37,13 @@ static void oldCastLight( float ( &output_cache )[MAPSIZE * SEEX][MAPSIZE * SEEY
         return;
     }
     bool blocked = false;
-    tripoint delta;
+    tripoint_rel_ms delta;
     for( int distance = row; distance <= radius && !blocked; distance++ ) {
-        delta.y = -distance;
-        for( delta.x = -distance; delta.x <= 0; delta.x++ ) {
-            const point current( offsetX + delta.x * xx + delta.y * xy, offsetY + delta.x * yx + delta.y * yy );
-            const float leftSlope = ( delta.x - 0.5f ) / ( delta.y + 0.5f );
-            const float rightSlope = ( delta.x + 0.5f ) / ( delta.y - 0.5f );
+        delta.y() = -distance;
+        for( delta.x() = -distance; delta.x() <= 0; delta.x()++ ) {
+            const point current( offsetX + delta.x() * xx + delta.y() * xy, offsetY + delta.x() * yx + delta.y() * yy );
+            const float leftSlope = ( delta.x() - 0.5f ) / ( delta.y() + 0.5f );
+            const float rightSlope = ( delta.x() + 0.5f ) / ( delta.y() - 0.5f );
 
             if( start < rightSlope ) {
                 continue;
@@ -52,7 +52,7 @@ static void oldCastLight( float ( &output_cache )[MAPSIZE * SEEX][MAPSIZE * SEEY
             }
 
             //check if it's within the visible area and mark visible if so
-            if( rl_dist( tripoint_zero, delta ) <= radius ) {
+            if( rl_dist( tripoint_rel_ms::zero(), delta ) <= radius ) {
                 output_cache[current.x][current.y] = VISIBILITY_FULL;
             }
 
@@ -91,8 +91,8 @@ static bool bresenham_visibility_check(
     }
     bool visible = true;
     const int junk = 0;
-    bresenham( p, offset, junk,
-    [&transparency_cache, &visible]( const point_bub_ms & new_point ) {
+    bresenham( p.raw(), offset.raw(), junk,
+    [&transparency_cache, &visible]( const point & new_point ) {
         if( transparency_cache[new_point.x][new_point.y] <=
             LIGHT_TRANSPARENCY_SOLID ) {
             visible = false;
@@ -152,7 +152,7 @@ bool grids_are_equivalent( float control[MAPSIZE * SEEX][MAPSIZE * SEEY],
 }
 
 template<typename Exp>
-void print_grid_comparison( const point &offset,
+void print_grid_comparison( const point_bub_ms &offset,
                             float ( &transparency_cache )[MAPSIZE * SEEX][MAPSIZE * SEEY],
                             float control[MAPSIZE * SEEX][MAPSIZE * SEEY],
                             Exp experiment[MAPSIZE * SEEX][MAPSIZE * SEEY] )
@@ -188,7 +188,7 @@ void print_grid_comparison( const point &offset,
             if( transparency_cache[x][y] == LIGHT_TRANSPARENCY_SOLID ) {
                 output = '#';
             }
-            if( x == offset.x && y == offset.y ) {
+            if( x == offset.x() && y == offset.y() ) {
                 output = '@';
             }
             cata_printf( "%c", output );
@@ -253,17 +253,17 @@ static void shadowcasting_runoff( const int iterations, const bool test_bresenha
     const auto start1 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
         // First the control algorithm.
-        oldCastLight( seen_squares_control, transparency_cache, 0, 1, 1, 0, offset.x, offset.y, 0 );
-        oldCastLight( seen_squares_control, transparency_cache, 1, 0, 0, 1, offset.x, offset.y, 0 );
+        oldCastLight( seen_squares_control, transparency_cache, 0, 1, 1, 0, offset.x(), offset.y(), 0 );
+        oldCastLight( seen_squares_control, transparency_cache, 1, 0, 0, 1, offset.x(), offset.y(), 0 );
 
-        oldCastLight( seen_squares_control, transparency_cache, 0, -1, 1, 0, offset.x, offset.y, 0 );
-        oldCastLight( seen_squares_control, transparency_cache, -1, 0, 0, 1, offset.x, offset.y, 0 );
+        oldCastLight( seen_squares_control, transparency_cache, 0, -1, 1, 0, offset.x(), offset.y(), 0 );
+        oldCastLight( seen_squares_control, transparency_cache, -1, 0, 0, 1, offset.x(), offset.y(), 0 );
 
-        oldCastLight( seen_squares_control, transparency_cache, 0, 1, -1, 0, offset.x, offset.y, 0 );
-        oldCastLight( seen_squares_control, transparency_cache, 1, 0, 0, -1, offset.x, offset.y, 0 );
+        oldCastLight( seen_squares_control, transparency_cache, 0, 1, -1, 0, offset.x(), offset.y(), 0 );
+        oldCastLight( seen_squares_control, transparency_cache, 1, 0, 0, -1, offset.x(), offset.y(), 0 );
 
-        oldCastLight( seen_squares_control, transparency_cache, 0, -1, -1, 0, offset.x, offset.y, 0 );
-        oldCastLight( seen_squares_control, transparency_cache, -1, 0, 0, -1, offset.x, offset.y, 0 );
+        oldCastLight( seen_squares_control, transparency_cache, 0, -1, -1, 0, offset.x(), offset.y(), 0 );
+        oldCastLight( seen_squares_control, transparency_cache, -1, 0, 0, -1, offset.x(), offset.y(), 0 );
     }
     const auto end1 = std::chrono::high_resolution_clock::now();
 
@@ -395,7 +395,7 @@ static void shadowcasting_3d_2d( const int iterations )
 
     map dummy;
 
-    const tripoint offset( 65, 65, 0 );
+    const tripoint_bub_ms offset( 65, 65, 0 );
 
     const auto start1 = std::chrono::high_resolution_clock::now();
     for( int i = 0; i < iterations; i++ ) {
@@ -406,7 +406,7 @@ static void shadowcasting_3d_2d( const int iterations )
     }
     const auto end1 = std::chrono::high_resolution_clock::now();
 
-    const tripoint origin( offset );
+    const tripoint_bub_ms origin( offset );
     // TODO: Give some more proper values here (all z-levels share the same 2D test data).
     // Build cache_grid_ref wrappers so cast_zlight can index into the flat C arrays.
     array_of_grids_of<float>                 seen_caches;
@@ -458,11 +458,11 @@ static constexpr float O = LIGHT_TRANSPARENCY_SOLID;
 static constexpr float V = LIGHT_TRANSPARENCY_OPEN_AIR;
 static constexpr float X = LIGHT_TRANSPARENCY_SOLID;
 
-const tripoint_bub_ms ORIGIN( 65, 65 );
+const tripoint_bub_ms ORIGIN( 65, 65, 0 );
 
 struct grid_overlay {
     std::vector<std::vector<float>> data;
-    tripoint offset;
+    tripoint_bub_ms offset;
     float default_value;
 
     // origin_offset is specified as the coordinates of the "camera" within the overlay.
@@ -481,16 +481,16 @@ struct grid_overlay {
         return data[0].size();
     }
 
-    float get_global( const tripoint &p ) const {
-        if( p.y >= offset.y && p.y < offset.y + height() &&
-            p.x >= offset.x && p.x < offset.x + width() ) {
-            return data[ p.y - offset.y ][ p.x - offset.x ];
+    float get_global( const tripoint_bub_ms &p ) const {
+        if( p.y() >= offset.y() && p.y() < offset.y() + height() &&
+            p.x() >= offset.x() && p.x() < offset.x() + width() ) {
+            return data[p.y() - offset.y()][p.x() - offset.x()];
         }
         return default_value;
     }
 
-    float get_local( const tripoint &p ) const {
-        return data[ p.y ][ p.x ];
+    float get_local( const tripoint_bub_ms &p ) const {
+        return data[p.y()][p.x()];
     }
 };
 
@@ -511,21 +511,21 @@ static void run_spot_check( const grid_overlay &test_case, const grid_overlay &e
 
     for( int x = 0; x < MAPSIZE * SEEX; ++x ) {
         for( int y = 0; y < MAPSIZE * SEEY; ++y ) {
-            transparency_cache[x][y] = test_case.get_global( point( x, y ) );
+            transparency_cache[x][y] = test_case.get_global( tripoint_bub_ms( x, y, 0 ) );
         }
     }
 
     castLightAll( &seen_squares[0][0], &transparency_cache[0][0], &blocked_cache[0][0],
-                  MAPSIZE * SEEX, MAPSIZE * SEEY, ORIGIN, 0, VISIBILITY_FULL, k_sight_model );
+                  MAPSIZE * SEEX, MAPSIZE * SEEY, ORIGIN.xy(), 0, VISIBILITY_FULL, k_sight_model );
     // Compares the whole grid, but out-of-bounds compares will de-facto pass.
     for( int y = 0; y < expected_result.height(); ++y ) {
         for( int x = 0; x < expected_result.width(); ++x ) {
             INFO( "x:" << x << " y:" << y << " expected:" << expected_result.data[y][x] << " actual:" <<
-                  seen_squares[expected_result.offset.x + x][expected_result.offset.y + y] );
-            if( V == expected_result.get_local( point( x, y ) ) ) {
-                CHECK( seen_squares[expected_result.offset.x + x][expected_result.offset.y + y] > 0 );
+                  seen_squares[expected_result.offset.x() + x][expected_result.offset.y() + y] );
+            if( V == expected_result.get_local( tripoint_bub_ms( x, y, 0 ) ) ) {
+                CHECK( seen_squares[expected_result.offset.x() + x][expected_result.offset.y() + y] > 0 );
             } else {
-                CHECK( seen_squares[expected_result.offset.x + x][expected_result.offset.y + y] == 0 );
+                CHECK( seen_squares[expected_result.offset.x() + x][expected_result.offset.y() + y] == 0 );
             }
         }
     }

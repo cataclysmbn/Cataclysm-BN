@@ -9,6 +9,7 @@
 #include "calendar.h"
 #include "character.h"
 #include "character_id.h"
+#include "coordinates.h"
 #include "dialogue.h"
 #include "effect.h"
 #include "faction.h"
@@ -26,7 +27,6 @@
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -86,9 +86,8 @@ static std::string gen_dynamic_line( dialogue &d )
 
 static void change_om_type( const std::string &new_type )
 {
-    // TODO: fix point types
     const tripoint_abs_omt omt_pos( project_to<coords::omt>( get_map().bub_to_abs(
-                                        get_player_character().pos() ) ) );
+                                        get_player_character().bub_pos() ) ) );
     ACTIVE_OVERMAP_BUFFER.ter_set( omt_pos, oter_id( new_type ) );
 }
 

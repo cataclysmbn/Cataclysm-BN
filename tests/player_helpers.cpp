@@ -13,6 +13,7 @@
 #include "character_id.h"
 #include "character_functions.h"
 #include "consumption.h"
+#include "coordinates.h"
 #include "game.h"
 #include "inventory.h"
 #include "item.h"
@@ -24,7 +25,6 @@
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
-#include "point.h"
 #include "stomach.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -125,7 +125,7 @@ void clear_character( player &dummy, bool debug_storage )
     dummy.cash = 0;
     dummy.dodges_left = 1;
 
-    const tripoint spot( 60, 60, 0 );
+    const tripoint_bub_ms spot( 60, 60, 0 );
     dummy.setpos( spot );
 
     dummy.invalidate_crafting_inventory();

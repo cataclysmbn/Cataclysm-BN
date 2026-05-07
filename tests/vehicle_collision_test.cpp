@@ -1,8 +1,8 @@
 #include "catch/catch.hpp"
 
+#include "coordinates.h"
 #include "map.h"
 #include "map_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"
@@ -35,8 +35,8 @@ TEST_CASE( "vehicle_collision_with_wall_terminates", "[vehicle]" )
     build_test_map( ter_id( "t_pavement" ) );
     clear_vehicles();
 
-    auto const veh_pos = tripoint( 60, 60, 0 );
-    auto const wall_pos = tripoint( 60, 59, 0 );
+    auto const veh_pos = tripoint_bub_ms( 60, 60, 0 );
+    auto const wall_pos = tripoint_bub_ms( 60, 59, 0 );
 
     auto *veh_ptr = here.add_vehicle( vproto_id( "bicycle_test" ), veh_pos, 270_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );

@@ -21,7 +21,7 @@ TEST_CASE( "vehicle_split_section" )
         CHECK( !player_character.in_vehicle );
         const tripoint_bub_ms test_origin( 15, 15, 0 );
         player_character.setpos( test_origin );
-        tripoint vehicle_origin = tripoint( 10, 10, 0 );
+        auto vehicle_origin = tripoint_bub_ms( 10, 10, 0 );
         VehicleList vehs = here.get_vehicles();
         vehicle *veh_ptr;
         for( auto &vehs_v : vehs ) {
@@ -31,7 +31,7 @@ TEST_CASE( "vehicle_split_section" )
         REQUIRE( here.get_vehicles().empty() );
         veh_ptr = here.add_vehicle( vproto_id( "cross_split_test" ), vehicle_origin, dir, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
-        std::set<tripoint> original_points = veh_ptr->get_points( true );
+        std::set<tripoint_abs_ms> original_points = veh_ptr->get_points( true );
 
         here.destroy( vehicle_origin );
         veh_ptr->part_removal_cleanup();
@@ -45,21 +45,21 @@ TEST_CASE( "vehicle_split_section" )
             CHECK( vehs[ 1 ].v->part_count() == 12 );
             CHECK( vehs[ 2 ].v->part_count() == 2 + 1 ); // 1 Extra part for auto generated door lock ( 2 + 1 )
             CHECK( vehs[ 3 ].v->part_count() == 3 );
-            std::vector<std::set<tripoint>> all_points;
+            std::vector<std::set<tripoint_abs_ms>> all_points;
             for( int i = 0; i < 4; i++ ) {
-                std::set<tripoint> &veh_points = vehs[ i ].v->get_points( true );
+                std::set<tripoint_abs_ms> &veh_points = vehs[ i ].v->get_points( true );
                 all_points.push_back( veh_points );
             }
             for( int i = 0; i < 4; i++ ) {
-                std::set<tripoint> &veh_points = all_points[ i ];
+                std::set<tripoint_abs_ms> &veh_points = all_points[ i ];
                 // every point in the new vehicle was in the old vehicle
-                for( const tripoint &vpos : veh_points ) {
+                for( const tripoint_abs_ms &vpos : veh_points ) {
                     CHECK( original_points.find( vpos ) != original_points.end() );
                 }
                 // no point in any new vehicle is in any other new vehicle
                 for( int j = i + 1; j < 4; j++ ) {
-                    std::set<tripoint> &other_points = all_points[ j ];
-                    for( const tripoint &vpos : veh_points ) {
+                    std::set<tripoint_abs_ms> &other_points = all_points[ j ];
+                    for( const tripoint_abs_ms &vpos : veh_points ) {
                         CHECK( other_points.find( vpos ) == other_points.end() );
                     }
                 }
@@ -70,7 +70,7 @@ TEST_CASE( "vehicle_split_section" )
             here.destroy_vehicle( vehs[ 0 ].v );
         }
         REQUIRE( here.get_vehicles().empty() );
-        vehicle_origin = tripoint( 20, 20, 0 );
+        vehicle_origin = tripoint_bub_ms( 20, 20, 0 );
         veh_ptr = here.add_vehicle( vproto_id( "circle_split_test" ), vehicle_origin, dir, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
         here.destroy( vehicle_origin );

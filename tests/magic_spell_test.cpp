@@ -530,8 +530,8 @@ TEST_CASE( "spell effect - target_attack", "[magic][spell][effect][target_attack
 {
     clear_all_state();
     // Locations for avatar and monster
-    const tripoint dummy_loc = { 60, 60, 0 };
-    const tripoint mummy_loc = { 62, 60, 0 };
+    const tripoint_bub_ms dummy_loc = { 60, 60, 0 };
+    const tripoint_bub_ms mummy_loc = { 62, 60, 0 };
 
     // For tracking spell damage
     int before_hp = 0;
@@ -583,8 +583,8 @@ TEST_CASE( "spell effect - summon", "[magic][spell][effect][summon]" )
 {
     clear_all_state();
     // Avatar/spellcaster and summoned mummy locations
-    const tripoint dummy_loc = { 60, 60, 0 };
-    const tripoint mummy_loc = { 61, 60, 0 };
+    const tripoint_bub_ms dummy_loc = { 60, 60, 0 };
+    const tripoint_bub_ms mummy_loc = { 61, 60, 0 };
 
     avatar &dummy = g->u;
     clear_character( dummy );

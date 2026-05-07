@@ -6,8 +6,8 @@
 #include "map_helpers.h"
 #include "map_setup_helpers.h"
 #include "map.h"
+#include "coordinates.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
@@ -53,16 +53,16 @@ struct test_case {
 
     uint32_t scope;
 
-    tripoint start_pos;
+    tripoint_bub_ms start_pos;
     units::angle start_dir;
 
-    tripoint end_pos_straight;
+    tripoint_bub_ms end_pos_straight;
     units::angle end_dir_straight;
 
-    tripoint end_pos_left;
+    tripoint_bub_ms end_pos_left;
     units::angle end_dir_left;
 
-    tripoint end_pos_right;
+    tripoint_bub_ms end_pos_right;
     units::angle end_dir_right;
 
     map_helpers::canvas canvas;
@@ -73,10 +73,10 @@ struct test_case {
         veh_id( veh_id ), scope( scope ), start_dir( start_dir ),
         end_dir_straight( end_dir_straight ), end_dir_left( end_dir_left ),
         end_dir_right( end_dir_right ), canvas( canvas_arg ) {
-        start_pos = canvas.replace_unique( U'*', U'x' );
-        end_pos_straight = canvas.replace_unique( U'o', U'x' );
-        end_pos_left = canvas.replace_opt( U'l', U'x' ).value_or( end_pos_straight );
-        end_pos_right = canvas.replace_opt( U'r', U'x' ).value_or( end_pos_straight );
+        start_pos.raw() = canvas.replace_unique( U'*', U'x' );
+        end_pos_straight.raw() = canvas.replace_unique( U'o', U'x' );
+        end_pos_left.raw() = canvas.replace_opt( U'l', U'x' ).value_or( end_pos_straight );
+        end_pos_right.raw() = canvas.replace_opt( U'r', U'x' ).value_or( end_pos_straight );
     }
 };
 
@@ -91,7 +91,7 @@ static void clear_game( const ter_id &terrain )
     avatar &u = get_avatar();
     // Move player somewhere safe
     REQUIRE_FALSE( u.in_vehicle );
-    u.setpos( tripoint_zero );
+    u.setpos( tripoint_bub_ms::zero() );
     // Blind the player to avoid needless drawing-related overhead
     u.add_effect( effect_blind, 365_days, bodypart_str_id::NULL_ID() );
 
@@ -102,10 +102,10 @@ static void build_map_from_canvas( const map_helpers::canvas &canvas, const trip
 {
     auto adapter = map_helpers::canvas_adapter( legend )
     .with_setter( [canvas_pos]( const tripoint & p, const std::string & s ) {
-        get_map().ter_set( p + canvas_pos, ter_str_id( s ).id() );
+        get_map().ter_set( tripoint_bub_ms( p ) + canvas_pos, ter_str_id( s ).id() );
     } )
     .with_getter( [canvas_pos]( const tripoint & p ) {
-        return get_map().ter( p + canvas_pos ).id().str();
+        return get_map().ter( tripoint_bub_ms( p ) + canvas_pos ).id().str();
     } );
 
     adapter.set_all( canvas );
@@ -134,7 +134,7 @@ static vehicle &add_moving_vehicle(
     units::angle face_dir
 )
 {
-    tripoint initial_veh_pos( g_mapsize_x * 3 / 4, g_mapsize_y * 3 / 4, 0 );
+    tripoint_bub_ms initial_veh_pos( g_mapsize_x * 3 / 4, g_mapsize_y * 3 / 4, 0 );
     vehicle *veh_ptr = here.add_vehicle( vproto_id( veh_id ), initial_veh_pos, face_dir, 45, 0 );
     REQUIRE( veh_ptr != nullptr );
     vehicle &veh = *veh_ptr;
@@ -159,7 +159,7 @@ static vehicle &add_moving_vehicle(
     veh.velocity = tgt_velocity;
     veh.vertical_velocity = 0;
 
-    const auto pivot_bub_ms_location = []( const vehicle & veh ) -> tripoint {
+    const auto pivot_bub_ms_location = []( const vehicle & veh ) -> tripoint_bub_ms {
         return veh.bub_ms_location() + veh.coord_translate( veh.pivot_point() );
     };
 
@@ -183,7 +183,7 @@ static vehicle &add_moving_vehicle(
     CAPTURE( pivot_bub_ms_location( veh ) );
 
     REQUIRE( pivot_bub_ms_location( veh ) == veh.bub_ms_location() );
-    REQUIRE( pivot_bub_ms_location( veh ) == vehicle_pos.raw() );
+    REQUIRE( pivot_bub_ms_location( veh ) == vehicle_pos );
 
     return veh;
 }
@@ -193,7 +193,7 @@ static void test_rail_movement( const test_case &t,
                                 tripoint_bub_ms vehicle_pos,
                                 units::angle face_dir,
                                 units::angle turn_delta,
-                                tripoint expected_pos,
+                                tripoint_bub_ms expected_pos,
                                 units::angle expected_dir )
 {
     CAPTURE( vehicle_pos );
@@ -231,8 +231,8 @@ static void test_rail_movement( const test_case &t,
             // 'REQUIRE' here is behind an if check to reduce impact on Catch statistics
             REQUIRE( !veh.skidding );
         }
-        for( const tripoint &pos : veh.get_points() ) {
-            ter_id ter_here = here.ter( pos );
+        for( const tripoint_abs_ms &pos : veh.get_points() ) {
+            ter_id ter_here = here.ter( here.abs_to_bub( pos ) );
             if( !ter_here ) {
                 // 'REQUIRE' here is behind an if check to reduce impact on Catch statistics
                 REQUIRE( ter_here );
@@ -279,10 +279,10 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
     tripoint canvas_pos = tripoint( ( point( g_mapsize_x, g_mapsize_y ) - canvas.size().xy() ) / 2, 0 );
 
     point sz = t.canvas.size().xy();
-    tripoint start_pos = canvas_pos + t.start_pos.rotate_2d( i_rot, sz );
-    tripoint end_pos_s = canvas_pos + t.end_pos_straight.rotate_2d( i_rot, sz );
-    tripoint end_pos_l = canvas_pos + t.end_pos_left.rotate_2d( i_rot, sz );
-    tripoint end_pos_r = canvas_pos + t.end_pos_right.rotate_2d( i_rot, sz );
+    auto start_pos = tripoint_bub_ms( canvas_pos ) + t.start_pos.raw().rotate_2d( i_rot, sz );
+    auto end_pos_s = tripoint_bub_ms( canvas_pos ) + t.end_pos_straight.raw().rotate_2d( i_rot, sz );
+    auto end_pos_l = tripoint_bub_ms( canvas_pos ) + t.end_pos_left.raw().rotate_2d( i_rot, sz );
+    auto end_pos_r = tripoint_bub_ms( canvas_pos ) + t.end_pos_right.raw().rotate_2d( i_rot, sz );
 
     units::angle rot = i_rot * 90_degrees;
     units::angle start_dir = normalize( t.start_dir + rot );
@@ -292,8 +292,8 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
     // This tripoint_bub_ms cast is making me cry
     // I don't want to fix the cascading issues from proper declaration
     const auto run_case = [&]( const char *label, const int move_dir,
-                               const tripoint & vehicle_pos, const units::angle face_dir,
-                               const units::angle turn_delta, const tripoint & expected_pos,
+                               const tripoint_bub_ms & vehicle_pos, const units::angle face_dir,
+                               const units::angle turn_delta, const tripoint_bub_ms & expected_pos,
     const units::angle expected_dir ) {
         CAPTURE( label );
         clear_game( t_floor );

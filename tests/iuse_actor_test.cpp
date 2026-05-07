@@ -4,21 +4,21 @@
 #include <memory>
 
 #include "avatar.h"
+#include "coordinates.h"
 #include "game.h"
 #include "item.h"
 #include "monster.h"
 #include "mtype.h"
 #include "player.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
 
 static monster *find_adjacent_monster( const tripoint_bub_ms &pos )
 {
-    tripoint target = pos;
-    for( target.x = pos.x - 1; target.x <= pos.x + 1; target.x++ ) {
-        for( target.y = pos.y - 1; target.y <= pos.y + 1; target.y++ ) {
+    tripoint_bub_ms target = pos;
+    for( target.x() = pos.x() - 1; target.x() <= pos.x() + 1; target.x()++ ) {
+        for( target.y() = pos.y() - 1; target.y() <= pos.y() + 1; target.y()++ ) {
             if( target == pos ) {
                 continue;
             }

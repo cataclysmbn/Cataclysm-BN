@@ -7,6 +7,7 @@
 
 #include "avatar.h"
 #include "calendar.h"
+#include "coordinates.h"
 #include "game.h"
 #include "inventory.h"
 #include "item.h"
@@ -14,7 +15,6 @@
 #include "map_helpers.h"
 #include "player_helpers.h"
 #include "player_activity.h"
-#include "point.h"
 #include "requirements.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -123,7 +123,7 @@ TEST_CASE( "debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_int
     you.toggle_trait( trait_DEBUG_HS );
     you.set_body();
 
-    const tripoint vehicle_origin( 60, 60, 0 );
+    const tripoint_bub_ms vehicle_origin( 60, 60, 0 );
     you.setpos( vehicle_origin + point_south );
 
     vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), vehicle_origin, 0_degrees, 0, 0 );
@@ -136,18 +136,17 @@ TEST_CASE( "debug_hammerspace_installs_full_vehicle_battery", "[vehicle][veh_int
 
     you.assign_activity( ACT_VEHICLE, 1, static_cast<int>( 'i' ) );
     you.activity->values = {
-        reference_pos.x,
-        reference_pos.y,
+        reference_pos.x(),
+        reference_pos.y(),
+        reference_pos.z(),
         0,
         0,
         0,
-        0,
-        reference_part_index,
-        reference_pos.z,
+        reference_part_index
     };
     you.activity->str_values.push_back( install_part_id.str() );
-    for( const tripoint &p : veh_ptr->get_points( true ) ) {
-        you.activity->coord_set.insert( here.bub_to_abs( p ) );
+    for( const tripoint_abs_ms &p : veh_ptr->get_points( true ) ) {
+        you.activity->coord_set.insert( p );
     }
 
     veh_interact::complete_vehicle( you );
