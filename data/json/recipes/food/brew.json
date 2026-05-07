@@ -210,7 +210,7 @@
     "components": [
       [ [ "water", 15 ], [ "water_clean", 15 ] ],
       [ [ "cornmeal", 12 ], [ "buckwheat", 2 ] ],
-      [ [ "sugar", 16 ] ],
+      [ [ "sugar", 24 ] ],
       [ [ "yeast", 2 ] ]
     ]
   },
