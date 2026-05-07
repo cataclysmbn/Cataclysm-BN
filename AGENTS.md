@@ -113,6 +113,15 @@ deno task docs:gen
 
 - **Commit**: Commit **ATOMICALLY**. **MUST** Follow [Conventional Commits](./docs/en/contribute/changelog_guidelines.md). **MUST NOT** add body/footer unless critical.
 
+## WHEN working on i18n / PO context
+
+- **MUST NOT** reduce requested string/context coverage for review risk or churn. If the user names a word and its meanings, handle every named meaning.
+- If adding JSON context requires loader support, add loader support instead of leaving a source uncontexted.
+- **MUST** run `msgfmt -f -c -o /tmp/ko.mo lang/po/ko.po` after touching Korean PO files and fix reported errors before PR.
+- **MUST** run `./tools/check_po_printf_format.py` after touching PO files and fix reported errors before PR.
+- Do not call PO/printf errors pre-existing to skip them when the task touches that locale or validation path.
+- If a mistake is found during the task, update AGENTS/skill immediately and fix the current branch before summarizing.
+
 ## WHEN translating docs
 
 When translating, MUST search for correct glossary, e.g
