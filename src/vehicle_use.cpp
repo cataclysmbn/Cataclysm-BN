@@ -14,7 +14,6 @@
 #include <memory>
 #include <optional>
 #include <sstream>
-#include <string>
 #include <tuple>
 
 #include "action.h"
@@ -642,7 +641,6 @@ void vehicle::toggle_autopilot()
     smenu.addentry_col( STOP, true, 'S', _( "Stop…" ),
                         "", string_format( _( "Stop all autopilot related activities." ) ) );
     smenu.query();
-    auto popup = string_input_popup();
     switch( smenu.ret ) {
         case PATROL:
             autopilot_patrol_check();
