@@ -82,7 +82,7 @@
     "looks_like": "m4a1",
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
-    "ammo": [ "223", "308", "300blk", "3006" ],
+    "ammo": [ "223", "308", "300blk", "3006", "277" ],
     "ranged_damage": { "damage_type": "bullet", "amount": -5 },
     "dispersion": 220,
     "durability": 6,
@@ -109,6 +109,7 @@
           "survivor223mag"
         ]
       ],
+      [ "277", [ "ar10mag_20rd" ] ],
       [
         "308",
         [
