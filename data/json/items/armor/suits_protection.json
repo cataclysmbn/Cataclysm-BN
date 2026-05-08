@@ -170,7 +170,8 @@
     "encumbrance": 30,
     "warmth": 10,
     "material_thickness": 4,
-    "flags": [ "VARSIZE", "OUTER", "STURDY" ]
+    "flags": [ "VARSIZE", "OUTER", "STURDY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "armor_lightplate_superalloy",
@@ -263,7 +264,8 @@
     "encumbrance": 45,
     "warmth": 10,
     "material_thickness": 5,
-    "flags": [ "VARSIZE", "OUTER", "FANCY" ]
+    "flags": [ "VARSIZE", "OUTER", "FANCY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "armor_plate_superalloy",
