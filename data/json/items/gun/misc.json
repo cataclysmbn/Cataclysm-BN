@@ -90,7 +90,7 @@
     "reload": 200,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "magazines": [
-        [
+      [
         "223",
         [
           "stanag30",
@@ -107,8 +107,10 @@
           "stanag150",
           "carbonmag_223",
           "survivor223mag"
-        ]],
-        ["308",
+        ]
+      ],
+      [
+        "308",
         [
           "falbigmag",
           "falmag",
@@ -128,8 +130,10 @@
           "hk417_makeshiftmag",
           "ar10mag_20rd",
           "ar10_makeshiftmag"
-        ]],
-        ["300blk",
+        ]
+      ],
+      [
+        "300blk",
         [
           "stanag30",
           "stanag5",
@@ -145,13 +149,9 @@
           "stanag150",
           "carbonmag_223",
           "survivor223mag"
-        ]],
-        ["3006",
-        [
-          "m1918bigmag",
-          "m1918mag",
-          "blrmag"
-        ]]
-      ]
+        ]
+      ],
+      [ "3006", [ "m1918bigmag", "m1918mag", "blrmag" ] ]
+    ]
   }
 ]

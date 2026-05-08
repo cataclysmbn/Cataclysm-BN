@@ -95,7 +95,7 @@
     "difficulty": 5,
     "value": 50000,
     "item": "software_lab_data",
-    "start": "create_lab_console", 
+    "start": "create_lab_console",
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_SCIENCE_REP_3",
     "end": {

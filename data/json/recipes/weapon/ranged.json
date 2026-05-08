@@ -1609,10 +1609,12 @@
     "skills_required": [ [ "mechanics", 2 ], [ "rifle", 3 ] ],
     "time": "2 h 30 m",
     "book_learn": [ [ "recipe_oldguard", 3 ] ],
-    "qualities": [ { "id": "CUT_M", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "HAMMER_FINE", "level": 1 }, { "id": "DRILL", "level": 1 } ],
-    "components": [ [ [ "m4a1", 1 ] ],
-                    [ [ "pipe", 1 ] ],
-                    [ [ "scrap", 5 ] ]
-                  ]
+    "qualities": [
+      { "id": "CUT_M", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "HAMMER_FINE", "level": 1 },
+      { "id": "DRILL", "level": 1 }
+    ],
+    "components": [ [ [ "m4a1", 1 ] ], [ [ "pipe", 1 ] ], [ [ "scrap", 5 ] ] ]
   }
 ]
