@@ -534,6 +534,18 @@
     "type": "json_flag"
   },
   {
+    "id": "NATURE_CAMO",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>natural environments</info>."
+  },
+  {
+    "id": "URBAN_CAMO",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>urban and rocky environments</info>."
+  },
+  {
     "id": "NO_CVD",
     "type": "json_flag",
     "context": [ "GENERIC", "TOOL" ],
