@@ -2174,7 +2174,6 @@
     "book_learn": [
       [ "textbook_computer", 1 ],
       [ "advanced_electronics", 1 ],
-      [ "reference_aircraft", 1 ],
       [ "reference_fabrication1", 1 ]
     ],
     "using": [ [ "3d_printing_standard", 5 ] ],
@@ -2205,7 +2204,6 @@
     "book_learn": [
       [ "textbook_computer", 1 ],
       [ "advanced_electronics", 1 ],
-      [ "reference_aircraft", 1 ],
       [ "reference_fabrication1", 1 ]
     ],
     "using": [ [ "3d_printing_standard", 10 ] ],
