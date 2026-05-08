@@ -1615,6 +1615,7 @@
       { "id": "HAMMER_FINE", "level": 1 },
       { "id": "DRILL", "level": 1 }
     ],
-    "components": [ [ [ "m4a1", 1 ] ], [ [ "pipe", 1 ] ], [ [ "scrap", 5 ] ] ]
+    "components": [ [ [ "m4a1", 1 ] ], [ [ "pipe", 1 ] ], [ [ "scrap", 5 ] ] ],
+    "flags": [ "SECRET" ]
   }
 ]
