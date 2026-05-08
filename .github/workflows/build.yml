@@ -135,7 +135,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CDDA_TILESETS_REPO: I-am-Erk/CDDA-Tilesets
           CDDA_TILESETS_RELEASE: "2026-05-03"
-          CDDA_TILESETS: UltimateCataclysm ChibiUltica Ultica_iso
+          CDDA_TILESETS: UltimateCataclysm ChibiUltica
         shell: bash
         run: |
           set -euo pipefail
@@ -159,7 +159,7 @@ jobs:
 
           Source repository: https://github.com/I-am-Erk/CDDA-Tilesets
           Source release: https://github.com/I-am-Erk/CDDA-Tilesets/releases/tag/2026-05-03
-          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip, Ultica_iso.zip
+          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip
 
           The CDDA-Tilesets repository states that Cataclysm: Dark Days Ahead and
           the Ultimate Cataclysm tileset are volunteer contributions under the
