@@ -951,8 +951,6 @@
       [ [ "copper", 12 ], [ "cartridgebrass", 24 ] ]
     ]
   },
-
-
   {
     "result": "bp_277_fmj",
     "type": "recipe",
@@ -967,12 +965,7 @@
     "charges": 1,
     "reversible": true,
     "using": [ [ "rifle_bullet_forming", 9 ], [ "ammo_bullet", 6 ] ],
-    "components": [
-      [ [ "277_casing", 1 ] ],
-      [ [ "lgrifle_primer", 1 ] ],
-      [ [ "chem_black_powder", 12 ] ],
-      [ [ "copper", 3 ] ]
-    ]
+    "components": [ [ [ "277_casing", 1 ] ], [ [ "lgrifle_primer", 1 ] ], [ [ "chem_black_powder", 12 ] ], [ [ "copper", 3 ] ] ]
   },
   {
     "result": "bp_277_fmj",
