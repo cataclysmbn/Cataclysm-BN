@@ -1441,7 +1441,7 @@ int iuse::mycus( player *p, item *it, bool t, const tripoint &pos )
 int iuse::petfood( player *p, item *it, bool, const tripoint & )
 {
     if( !it->is_comestible() ) {
-        p->add_msg_if_player( _( "You doubt someone would want to eat % 1$s." ), it->tname() );
+        p->add_msg_if_player( _( "You doubt someone would want to eat %1$s." ), it->tname() );
         return 0;
     }
 

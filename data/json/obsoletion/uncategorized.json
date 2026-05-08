@@ -2243,7 +2243,7 @@
     "chip_resist": 20,
     "dmg_adj": [ "chipped", "cracked", "split", "broken" ],
     "bash_dmg_verb": "cracked",
-    "cut_dmg_verb": "cut"
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" }
   },
   {
     "id": "t_tarptent",

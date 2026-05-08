@@ -894,6 +894,7 @@
     "flags": [
       "SEES",
       "HEARS",
+      "GOODHEARING",
       "SMELLS",
       "WARM",
       "BASHES",
@@ -947,6 +948,7 @@
     "flags": [
       "SEES",
       "HEARS",
+      "GOODHEARING",
       "SMELLS",
       "WARM",
       "BASHES",

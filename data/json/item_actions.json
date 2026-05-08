@@ -427,7 +427,7 @@
   {
     "type": "item_action",
     "id": "FISH_ROD",
-    "name": { "str": "Fish" }
+    "name": { "ctxt": "fishing action", "str": "Fish" }
   },
   {
     "type": "item_action",

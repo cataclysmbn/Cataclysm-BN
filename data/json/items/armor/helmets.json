@@ -19,7 +19,8 @@
     "warmth": 5,
     "material_thickness": 2,
     "qualities": [ [ "COOK", 3 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CHEM", 1 ] ],
-    "techniques": [ "WBLOCK_1" ]
+    "techniques": [ "WBLOCK_1" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ]
   },
   {
     "id": "headgear",
@@ -84,7 +85,8 @@
     "encumbrance": 25,
     "material": [ "hardsteel" ],
     "color": "dark_gray",
-    "material_thickness": 5
+    "material_thickness": 5,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "tac_fullhelmet",
@@ -203,7 +205,8 @@
     "warmth": 10,
     "material_thickness": 4,
     "techniques": [ "WBLOCK_1" ],
-    "flags": [ "VARSIZE", "STURDY" ]
+    "flags": [ "VARSIZE", "STURDY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "helmet_barbute_superalloy",
@@ -594,7 +597,8 @@
     "material_thickness": 5,
     "environmental_protection": 1,
     "techniques": [ "WBLOCK_1" ],
-    "flags": [ "VARSIZE", "STURDY", "HELMET_COMPAT" ]
+    "flags": [ "VARSIZE", "STURDY", "HELMET_COMPAT" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "helmet_plate_superalloy",
@@ -808,7 +812,8 @@
     "warmth": 5,
     "material_thickness": 2,
     "techniques": [ "WBLOCK_1" ],
-    "flags": [ "OVERSIZE" ]
+    "flags": [ "OVERSIZE" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ]
   },
   {
     "id": "helmet_bone",
