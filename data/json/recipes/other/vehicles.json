@@ -2171,11 +2171,7 @@
     "difficulty": 2,
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
-    "book_learn": [
-      [ "textbook_computer", 1 ],
-      [ "advanced_electronics", 1 ],
-      [ "reference_fabrication1", 1 ]
-    ],
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 5 ] ],
     "components": [ [ [ "carbon_fiber_filament", 50 ] ] ]
   },
@@ -2201,11 +2197,7 @@
     "difficulty": 2,
     "skills_required": [ [ "fabrication", 2 ] ],
     "time": "10 m",
-    "book_learn": [
-      [ "textbook_computer", 1 ],
-      [ "advanced_electronics", 1 ],
-      [ "reference_fabrication1", 1 ]
-    ],
+    "book_learn": [ [ "textbook_computer", 1 ], [ "advanced_electronics", 1 ], [ "reference_fabrication1", 1 ] ],
     "using": [ [ "3d_printing_standard", 10 ] ],
     "components": [ [ [ "carbon_fiber_filament", 75 ] ] ]
   },
