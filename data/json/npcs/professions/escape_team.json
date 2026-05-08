@@ -1,0 +1,96 @@
+[
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_ESCAPIST",
+    "name": { "str": "Escapist" },
+    "job_description": "I'm looking for a way out.",
+    "common": false,
+    "traits": [
+      { "group": "BG_survival_story_CRIMINAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "worn_override": "NC_PROF_ESCAPIST_worn",
+    "carry_override": "NC_PROF_ESCAPIST_melee",
+    "weapon_override": "NC_PROF_ESCAPIST_melee",
+    "bonus_str": { "rng": [ -2, 2 ] },
+    "bonus_dex": { "rng": [ -2, 2 ] },
+    "bonus_int": { "rng": [ -2, 2 ] },
+    "bonus_per": { "rng": [ -2, 2 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_ESCAPIST_worn",
+    "subtype": "collection",
+    "entries": [ { "item": "striped_shirt" }, { "item": "striped_pants" }, { "item": "socks" }, { "item": "sneakers" } ]
+  },
+  {
+    "id": "NC_PROF_ESCAPIST_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "null" } ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_ESCAPIST_LAB",
+    "name": { "str": "Mutant Patient" },
+    "job_description": "I'm looking for a way out.",
+    "common": false,
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" },
+      { "group": "NPC_mutation_traits" }
+    ],
+    "worn_override": "NC_PROF_ESCAPIST_LAB_worn",
+    "carry_override": "NC_PROF_ESCAPIST_LAB_melee",
+    "weapon_override": "NC_PROF_ESCAPIST_LAB_melee",
+    "bonus_str": { "rng": [ -2, 2 ] },
+    "bonus_dex": { "rng": [ -2, 2 ] },
+    "bonus_int": { "rng": [ -2, 2 ] },
+    "bonus_per": { "rng": [ -2, 2 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_ESCAPIST_LAB_worn",
+    "subtype": "collection",
+    "entries": [ { "item": "briefs" }, { "item": "subsuit_xl" } ]
+  },
+  {
+    "id": "NC_PROF_ESCAPIST_LAB_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "null" } ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_ESCAPIST_MIGO",
+    "name": { "str": "Captive" },
+    "job_description": "I'm looking for a way out.",
+    "common": false,
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "worn_override": "NC_PROF_ESCAPIST_MIGO_worn",
+    "carry_override": "NC_PROF_ESCAPIST_MIGO_melee",
+    "weapon_override": "NC_PROF_ESCAPIST_MIGO_melee",
+    "bonus_str": { "rng": [ -2, 2 ] },
+    "bonus_dex": { "rng": [ -2, 2 ] },
+    "bonus_int": { "rng": [ -2, 2 ] },
+    "bonus_per": { "rng": [ -2, 2 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_ESCAPIST_MIGO_worn",
+    "subtype": "collection",
+    "entries": [ { "item": "null" } ]
+  },
+  {
+    "id": "NC_PROF_ESCAPIST_MIGO_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "null" } ]
+  }
+]

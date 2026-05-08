@@ -13,6 +13,7 @@
     "name": "custom_empty",
     "//": "Don't remove this vehicle definition!",
     "blueprint": [ "H" ],
+    "flags": [ "VEHICLE_UNLOCKED", "VEHICLE_NO_LOCKS", "VEHICLE_NO_HOTWIRE" ],
     "parts": [  ]
   }
 ]

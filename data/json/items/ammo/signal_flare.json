@@ -21,6 +21,13 @@
     "recoil": 100,
     "loudness": 55,
     "drop": "handflare_lit",
-    "effects": [ "NEVER_MISFIRES", "NO_EMBED" ]
+    "effects": [ "NEVER_MISFIRES", "NO_EMBED", "NO_PENETRATE_OBSTACLES" ]
+  },
+  {
+    "id": "signal_flare_test",
+    "type": "AMMO",
+    "name": { "str": "signal flare half-testing" },
+    "copy-from": "signal_flare",
+    "drop_count": 150
   }
 ]

@@ -39,7 +39,7 @@
       "E": "f_sink",
       "F": "f_chair",
       "G": "f_locker",
-      "H": "f_table",
+      "H": [ [ "f_table", 9 ], "f_table_flipped" ],
       "I": "f_sofa"
     }
   },

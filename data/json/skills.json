@@ -55,14 +55,16 @@
     "id": "driving",
     "name": { "str": "Driving" },
     "description": "Your skill in operating and steering a vehicle in motion.  A higher level allows greater control over vehicles at higher speeds, and reduces the penalty of shooting while driving.",
-    "display_category": "display_interaction"
+    "display_category": "display_interaction",
+    "tags": [ "unaffected_by_focus" ]
   },
   {
     "type": "skill",
     "id": "swimming",
-    "name": { "str": "Swimming" },
-    "description": "Your ability to stay afloat and move around in bodies of water.  This skill keeps you from drowning, affects your combat effectiveness and speed in deep water, and determines the detriment of swimming with heavier gear.",
+    "name": { "str": "Athletics" },
+    "description": "Your capability to perform physically demanding tasks such as running, jumping, climbing, and swimming efficiently. This skill influences your overall performance when swimming, reduces stamina consumption of physical activity, and reduces the impact of encumbrance.",
     "display_category": "display_interaction",
+    "tags": [ "unaffected_by_focus" ],
     "companion_skill_practice": [ { "skill": "", "weight": 5 }, { "skill": "gathering", "weight": 5 }, { "skill": "trapping", "weight": 5 } ]
   },
   {

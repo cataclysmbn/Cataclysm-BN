@@ -1,0 +1,302 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "ore_vein_copper",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "line": "terrain", "id": "t_rock_ore_copper", "x": [ 4, 6 ], "x2": [ 17, 19 ], "y": [ 4, 6 ], "y2": [ 17, 19 ] },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_copper",
+          "x": [ 4, 6 ],
+          "x2": [ 17, 19 ],
+          "y": [ 4, 6 ],
+          "y2": [ 17, 19 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_copper",
+          "x": [ 4, 6 ],
+          "x2": [ 17, 19 ],
+          "y": [ 4, 6 ],
+          "y2": [ 17, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "ore_vein_iron",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "line": "terrain", "id": "t_rock_ore_iron", "x": [ 4, 6 ], "x2": [ 17, 19 ], "y": [ 4, 6 ], "y2": [ 17, 19 ] },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_iron",
+          "x": [ 4, 6 ],
+          "x2": [ 17, 19 ],
+          "y": [ 4, 6 ],
+          "y2": [ 17, 19 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_iron",
+          "x": [ 4, 6 ],
+          "x2": [ 17, 19 ],
+          "y": [ 4, 6 ],
+          "y2": [ 17, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "ore_vein_lead",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "line": "terrain", "id": "t_rock_ore_lead", "x": [ 4, 6 ], "x2": [ 17, 19 ], "y": [ 4, 6 ], "y2": [ 17, 19 ] },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_lead",
+          "x": [ 4, 6 ],
+          "x2": [ 17, 19 ],
+          "y": [ 4, 6 ],
+          "y2": [ 17, 19 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_lead",
+          "x": [ 4, 6 ],
+          "x2": [ 17, 19 ],
+          "y": [ 4, 6 ],
+          "y2": [ 17, 19 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "ore_vein_tin",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "line": "terrain", "id": "t_rock_ore_tin", "x": [ 6, 8 ], "x2": [ 15, 17 ], "y": [ 6, 8 ], "y2": [ 15, 17 ] },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_tin",
+          "x": [ 6, 8 ],
+          "x2": [ 15, 17 ],
+          "y": [ 6, 8 ],
+          "y2": [ 15, 17 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_tin",
+          "x": [ 6, 8 ],
+          "x2": [ 15, 17 ],
+          "y": [ 6, 8 ],
+          "y2": [ 15, 17 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "ore_vein_silver",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "line": "terrain", "id": "t_rock_ore_silver", "x": [ 6, 8 ], "x2": [ 15, 17 ], "y": [ 6, 8 ], "y2": [ 15, 17 ] },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_silver",
+          "x": [ 6, 8 ],
+          "x2": [ 15, 17 ],
+          "y": [ 6, 8 ],
+          "y2": [ 15, 17 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_silver",
+          "x": [ 6, 8 ],
+          "x2": [ 15, 17 ],
+          "y": [ 6, 8 ],
+          "y2": [ 15, 17 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "ore_vein_gold",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "line": "terrain", "id": "t_rock_ore_gold", "x": [ 8, 10 ], "x2": [ 13, 15 ], "y": [ 8, 10 ], "y2": [ 13, 15 ] },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_gold",
+          "x": [ 8, 10 ],
+          "x2": [ 13, 15 ],
+          "y": [ 8, 10 ],
+          "y2": [ 13, 15 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_gold",
+          "x": [ 8, 10 ],
+          "x2": [ 13, 15 ],
+          "y": [ 8, 10 ],
+          "y2": [ 13, 15 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "horizontal_ore_vein_copper",
+    "object": {
+      "mapgensize": [ 16, 16 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "square": "terrain", "id": "t_rock", "x": 0, "x2": 15, "y": 0, "y2": 2 },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_copper",
+          "x": [ 0, 2 ],
+          "x2": [ 9, 11 ],
+          "y": [ 0, 2 ],
+          "y2": [ 0, 2 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_copper",
+          "x": [ 0, 2 ],
+          "x2": [ 9, 11 ],
+          "y": [ 0, 2 ],
+          "y2": [ 0, 2 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_copper",
+          "x": [ 0, 2 ],
+          "x2": [ 9, 11 ],
+          "y": [ 0, 2 ],
+          "y2": [ 0, 2 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "horizontal_ore_vein_iron",
+    "object": {
+      "mapgensize": [ 16, 16 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "square": "terrain", "id": "t_rock", "x": 0, "x2": 15, "y": 0, "y2": 2 },
+        { "line": "terrain", "id": "t_rock_ore_iron", "x": [ 0, 2 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_iron", "x": [ 0, 2 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_iron", "x": [ 0, 2 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "horizontal_ore_vein_lead",
+    "object": {
+      "mapgensize": [ 16, 16 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "square": "terrain", "id": "t_rock", "x": 0, "x2": 15, "y": 0, "y2": 2 },
+        { "line": "terrain", "id": "t_rock_ore_lead", "x": [ 0, 2 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_lead", "x": [ 0, 2 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_lead", "x": [ 0, 2 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "horizontal_ore_vein_tin",
+    "object": {
+      "mapgensize": [ 16, 16 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "square": "terrain", "id": "t_rock", "x": 0, "x2": 15, "y": 0, "y2": 2 },
+        { "line": "terrain", "id": "t_rock_ore_tin", "x": [ 2, 4 ], "x2": [ 11, 13 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_tin", "x": [ 2, 4 ], "x2": [ 11, 13 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_tin", "x": [ 2, 4 ], "x2": [ 11, 13 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "horizontal_ore_vein_silver",
+    "object": {
+      "mapgensize": [ 16, 16 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "square": "terrain", "id": "t_rock", "x": 0, "x2": 15, "y": 0, "y2": 2 },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_silver",
+          "x": [ 2, 4 ],
+          "x2": [ 11, 13 ],
+          "y": [ 0, 2 ],
+          "y2": [ 0, 2 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_silver",
+          "x": [ 2, 4 ],
+          "x2": [ 11, 13 ],
+          "y": [ 0, 2 ],
+          "y2": [ 0, 2 ]
+        },
+        {
+          "line": "terrain",
+          "id": "t_rock_ore_silver",
+          "x": [ 2, 4 ],
+          "x2": [ 11, 13 ],
+          "y": [ 0, 2 ],
+          "y2": [ 0, 2 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "horizontal_ore_vein_gold",
+    "object": {
+      "mapgensize": [ 16, 16 ],
+      "rotation": [ 0, 3 ],
+      "set": [
+        { "square": "terrain", "id": "t_rock", "x": 0, "x2": 15, "y": 0, "y2": 2 },
+        { "line": "terrain", "id": "t_rock_ore_gold", "x": [ 4, 6 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_gold", "x": [ 4, 6 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] },
+        { "line": "terrain", "id": "t_rock_ore_gold", "x": [ 4, 6 ], "x2": [ 9, 11 ], "y": [ 0, 2 ], "y2": [ 0, 2 ] }
+      ]
+    }
+  }
+]

@@ -1,477 +1,249 @@
 [
   {
-    "id": "hair_black_crewcut",
+    "id": "hair_black",
     "type": "mutation",
-    "name": { "str": "Hair: black, crew-cut" },
-    "description": "Crewcut black hair style.",
+    "name": { "str": "Hair color: black" },
+    "description": "You have black hair.",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_black", "hair_crewcut" ],
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_brown",
+    "type": "mutation",
+    "name": { "str": "Hair color: dark brown" },
+    "description": "You have dark brown hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_light_brown",
+    "type": "mutation",
+    "name": { "str": "Hair color: light brown" },
+    "description": "You have light brown hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_blond",
+    "type": "mutation",
+    "name": { "str": "Hair color: golden blond" },
+    "description": "You have golden blond hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_platinum_blond",
+    "type": "mutation",
+    "name": { "str": "Hair color: platinum blond" },
+    "description": "You have platinum blond hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_red",
+    "type": "mutation",
+    "name": { "str": "Hair color: red" },
+    "description": "You have red hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_gray",
+    "type": "mutation",
+    "name": { "str": "Hair color: gray" },
+    "description": "You have gray hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_white",
+    "type": "mutation",
+    "name": { "str": "Hair color: white" },
+    "description": "You have white hair.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "hair_color" ]
+  },
+  {
+    "id": "hair_crewcut",
+    "type": "mutation",
+    "name": { "str": "Hair style: crew-cut" },
+    "description": "Crew-cut hair",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_black_mohawk",
+    "id": "hair_mohawk",
     "type": "mutation",
-    "name": { "str": "Hair: black, mohawk" },
-    "description": "Mohawk black hair style.",
+    "name": { "str": "Hair style: mohawk" },
+    "description": "Hair buzzes at the sides",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_black", "hair_mohawk" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_black_fro",
+    "id": "hair_fro",
     "type": "mutation",
-    "name": { "str": "Hair: black, 'fro" },
-    "description": "'Fro black hair style.",
+    "name": { "str": "Hair style: 'fro" },
+    "description": "Well groomed 'fro",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_black", "hair_fro" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_black_short",
+    "id": "hair_short",
     "type": "mutation",
-    "name": { "str": "Hair: black, short" },
-    "description": "Short black hair style",
+    "name": { "str": "Hair style: short" },
+    "description": "Short hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_black", "hair_short" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_black_medium",
+    "id": "hair_medium",
     "type": "mutation",
-    "name": { "str": "Hair: black, medium-length" },
-    "description": "Medium-length black hair style.",
+    "name": { "str": "Hair style: medium-length" },
+    "description": "Medium-length hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_black", "hair_medium" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_black_long",
+    "id": "hair_long",
     "type": "mutation",
-    "name": { "str": "Hair: black, long" },
-    "description": "Long black hair style.",
+    "name": { "str": "Hair style: long" },
+    "description": "Long hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_black", "hair_long" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_brown_crewcut",
+    "id": "hair_treated",
     "type": "mutation",
-    "name": { "str": "Hair: brown, crew-cut" },
-    "description": "Crewcut brown hair style.",
+    "name": { "str": "Hair style: treated" },
+    "description": "Well treated hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_brown", "hair_crewcut" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_brown_mohawk",
+    "id": "hair_cropped",
     "type": "mutation",
-    "name": { "str": "Hair: brown, mohawk" },
-    "description": "Mohawk brown hair style.",
+    "name": { "str": "Hair style: cropped" },
+    "description": "Cropped hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_brown", "hair_mohawk" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_brown_fro",
+    "id": "hair_parted",
     "type": "mutation",
-    "name": { "str": "Hair: brown, 'fro" },
-    "description": "'Fro brown hair style.",
+    "name": { "str": "Hair style: parted" },
+    "description": "Lightly parted hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_brown", "hair_fro" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_brown_short",
+    "id": "hair_ponytail",
     "type": "mutation",
-    "name": { "str": "Hair: brown, short" },
-    "description": "Short brown hair style",
+    "name": { "str": "Hair style: ponytail" },
+    "description": "Hair done up in a ponytail",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_brown", "hair_short" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_brown_medium",
+    "id": "hair_swept",
     "type": "mutation",
-    "name": { "str": "Hair: brown, medium-length" },
-    "description": "Medium-length brown hair style.",
+    "name": { "str": "Hair style: swept" },
+    "description": "Hair with flair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_brown", "hair_medium" ],
     "types": [ "hair_style" ]
   },
   {
-    "id": "hair_brown_long",
+    "id": "hair_overflowing",
     "type": "mutation",
-    "name": { "str": "Hair: brown, long" },
-    "description": "Long brown hair style.",
+    "name": { "str": "Hair style: overflowing" },
+    "description": "Very long, flowing hair",
     "points": 0,
     "starting_trait": true,
     "valid": false,
     "purifiable": false,
     "player_display": false,
-    "flags": [ "hair_brown", "hair_long" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_blond_crewcut",
-    "type": "mutation",
-    "name": { "str": "Hair: blond, crew-cut" },
-    "description": "Crewcut blond hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_blond", "hair_crewcut" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_blond_mohawk",
-    "type": "mutation",
-    "name": { "str": "Hair: blond, mohawk" },
-    "description": "Mohawk blond hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_blond", "hair_mohawk" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_blond_fro",
-    "type": "mutation",
-    "name": { "str": "Hair: blond, 'fro" },
-    "description": "'Fro blond hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_blond", "hair_fro" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_blond_short",
-    "type": "mutation",
-    "name": { "str": "Hair: blond, short" },
-    "description": "Short blond hair style",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_blond", "hair_short" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_blond_medium",
-    "type": "mutation",
-    "name": { "str": "Hair: blond, medium-length" },
-    "description": "Medium-length blond hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_blond", "hair_medium" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_blond_long",
-    "type": "mutation",
-    "name": { "str": "Hair: blond, long" },
-    "description": "Long blond hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_blond", "hair_long" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_red_crewcut",
-    "type": "mutation",
-    "name": { "str": "Hair: red, crew-cut" },
-    "description": "Crewcut red hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_red", "hair_crewcut" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_red_mohawk",
-    "type": "mutation",
-    "name": { "str": "Hair: red, mohawk" },
-    "description": "Mohawk red hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_red", "hair_mohawk" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_red_fro",
-    "type": "mutation",
-    "name": { "str": "Hair: red, 'fro" },
-    "description": "'Fro red hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_red", "hair_fro" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_red_short",
-    "type": "mutation",
-    "name": { "str": "Hair: red, short" },
-    "description": "Short red hair style",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_red", "hair_short" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_red_medium",
-    "type": "mutation",
-    "name": { "str": "Hair: red, medium-length" },
-    "description": "Medium-length red hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_red", "hair_medium" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_red_long",
-    "type": "mutation",
-    "name": { "str": "Hair: red, long" },
-    "description": "Long red hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_red", "hair_long" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_gray_crewcut",
-    "type": "mutation",
-    "name": { "str": "Hair: gray, crew-cut" },
-    "description": "Crewcut gray hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_gray", "hair_crewcut" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_gray_mohawk",
-    "type": "mutation",
-    "name": { "str": "Hair: gray, mohawk" },
-    "description": "Mohawk gray hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_gray", "hair_mohawk" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_gray_fro",
-    "type": "mutation",
-    "name": { "str": "Hair: gray, 'fro" },
-    "description": "'Fro gray hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_gray", "hair_fro" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_gray_short",
-    "type": "mutation",
-    "name": { "str": "Hair: gray, short" },
-    "description": "Short gray hair style",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_gray", "hair_short" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_gray_medium",
-    "type": "mutation",
-    "name": { "str": "Hair: gray, medium-length" },
-    "description": "Medium-length gray hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_gray", "hair_medium" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_gray_long",
-    "type": "mutation",
-    "name": { "str": "Hair: gray, long" },
-    "description": "Long gray hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_gray", "hair_long" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_white_crewcut",
-    "type": "mutation",
-    "name": { "str": "Hair: white, crew-cut" },
-    "description": "Crewcut white hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_white", "hair_crewcut" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_white_mohawk",
-    "type": "mutation",
-    "name": { "str": "Hair: white, mohawk" },
-    "description": "Mohawk white hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_white", "hair_mohawk" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_white_fro",
-    "type": "mutation",
-    "name": { "str": "Hair: white, 'fro" },
-    "description": "'Fro white hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_white", "hair_fro" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_white_short",
-    "type": "mutation",
-    "name": { "str": "Hair: white, short" },
-    "description": "Short white hair style",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_white", "hair_short" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_white_medium",
-    "type": "mutation",
-    "name": { "str": "Hair: white, medium-length" },
-    "description": "Medium-length white hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_white", "hair_medium" ],
-    "types": [ "hair_style" ]
-  },
-  {
-    "id": "hair_white_long",
-    "type": "mutation",
-    "name": { "str": "Hair: white, long" },
-    "description": "Long white hair style.",
-    "points": 0,
-    "starting_trait": true,
-    "valid": false,
-    "purifiable": false,
-    "player_display": false,
-    "flags": [ "hair_white", "hair_long" ],
     "types": [ "hair_style" ]
   },
   {
     "id": "HAIR_BALD",
     "type": "mutation",
-    "name": { "str": "Hair: none" },
-    "description": "You are bald.",
+    "name": { "str": "Hair style: bald" },
+    "description": "No hair on head",
     "points": 0,
     "starting_trait": true,
     "valid": false,
@@ -486,7 +258,7 @@
     "description": "You have blue eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -498,7 +270,7 @@
     "description": "You have brown eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -510,7 +282,7 @@
     "description": "You have hazel eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -522,7 +294,7 @@
     "description": "You have amber eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -534,7 +306,7 @@
     "description": "You have gray eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -546,7 +318,7 @@
     "description": "You have green eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -558,7 +330,7 @@
     "description": "You have incredibly rare red eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
@@ -570,10 +342,22 @@
     "description": "You have incredibly rare violet eyes.",
     "points": 0,
     "starting_trait": true,
-    "valid": false,
+    "valid": true,
     "purifiable": false,
     "player_display": false,
     "types": [ "eye_color" ]
+  },
+  {
+    "type": "mutation",
+    "id": "PALE",
+    "name": { "str": "Pale Skin" },
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Your skin is rather pale.",
+    "types": [ "skin_tone" ]
   },
   {
     "id": "SKIN_DARK",
@@ -636,6 +420,18 @@
     "types": [ "skin_tone" ]
   },
   {
+    "id": "SKIN_OLIVE",
+    "type": "mutation",
+    "name": { "str": "Skin tone: olive" },
+    "description": "You have an olive skin tone.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "skin_tone" ]
+  },
+  {
     "id": "FACIAL_HAIR_NONE",
     "type": "mutation",
     "name": { "str": "Facial hair: none" },
@@ -645,7 +441,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_GOATEE",
@@ -657,7 +454,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CIRCLE",
@@ -669,7 +467,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ROYALE",
@@ -681,7 +480,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ANCHOR",
@@ -693,7 +493,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SHORTBOXED",
@@ -705,7 +506,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHEVRON",
@@ -717,7 +519,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_3DAYSTUBBLE",
@@ -729,7 +532,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_HORSESHOE",
@@ -741,7 +545,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_MUSTACHE",
@@ -753,7 +558,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_MUTTONCHOPS",
@@ -765,7 +571,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_GUNSLINGER",
@@ -777,7 +584,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_STRIP",
@@ -789,7 +597,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_CURTAIN",
@@ -801,7 +610,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_CHIN_STRAP",
@@ -813,7 +623,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_BEARD",
@@ -825,7 +636,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_HANDLEBAR",
@@ -837,7 +649,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_NECKBEARD",
@@ -849,7 +662,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_PENCIL",
@@ -861,7 +675,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SHENANDOAH",
@@ -873,7 +688,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SIDEBURNS",
@@ -885,7 +701,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_SOUL_PATCH",
@@ -897,7 +714,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_TOOTHBRUSH",
@@ -909,7 +727,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_VANDYKE",
@@ -921,7 +740,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_WALRUS",
@@ -933,7 +753,8 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   },
   {
     "id": "FACIAL_HAIR_ZAPPA",
@@ -945,6 +766,33 @@
     "starting_trait": true,
     "purifiable": false,
     "player_display": false,
-    "types": [ "facial_hair" ]
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
+  },
+  {
+    "id": "FACIAL_HAIR_WIZENED",
+    "type": "mutation",
+    "name": { "str": "Facial hair: wizened" },
+    "description": "You have a long, flowing beard that indicates wisdom.",
+    "points": 0,
+    "valid": false,
+    "starting_trait": true,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
+  },
+  {
+    "id": "FACIAL_HAIR_JAW_SCRUFF",
+    "type": "mutation",
+    "name": { "str": "Facial hair: jaw scruff" },
+    "description": "You have wispy hair growing along your jawline.",
+    "points": 0,
+    "valid": false,
+    "starting_trait": true,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "facial_hair" ],
+    "flags": [ "MALE_PREFERRED" ]
   }
 ]

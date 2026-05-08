@@ -9,7 +9,16 @@
     "description": "Ichaival, the bow of Odin.  Rumored to fire 10 arrows with every pull of the string.  It has gold and silver ornaments on it, as well as an ornate Raven.",
     "price": "1600 USD",
     "material": [ "orichalcum_metal", "gold", "wood" ],
-    "flags": [ "FIRE_TWOHAND", "STR_DRAW", "RELOAD_AND_SHOOT", "PRIMITIVE_RANGED_WEAPON", "BELTED", "COMPACT", "WATER_FRIENDLY" ],
+    "flags": [
+      "FIRE_TWOHAND",
+      "STR_DRAW",
+      "RELOAD_AND_SHOOT",
+      "PRIMITIVE_RANGED_WEAPON",
+      "BELTED",
+      "COMPACT",
+      "WATER_FRIENDLY",
+      "ALLOWS_WINGS"
+    ],
     "skill": "archery",
     "min_strength": 8,
     "ammo": [ "arrow_orichalcum", "arrow" ],

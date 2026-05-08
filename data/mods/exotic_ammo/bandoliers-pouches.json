@@ -155,21 +155,9 @@
   },
   {
     "id": "bandolier_rifle",
+    "copy-from": "bandolier_rifle",
     "type": "ARMOR",
     "name": { "str": "rifle bandolier" },
-    "description": "A leather bandolier for keeping rifle cartridges close to hand.",
-    "weight": "140 g",
-    "volume": "250 ml",
-    "price": "19 USD",
-    "price_postapoc": "15 USD",
-    "material": [ "leather" ],
-    "symbol": "[",
-    "looks_like": "leather_belt",
-    "color": "dark_gray",
-    "covers": [ "torso" ],
-    "coverage": 10,
-    "encumbrance": 1,
-    "material_thickness": 1,
     "use_action": {
       "type": "bandolier",
       "capacity": 25,
@@ -191,26 +179,13 @@
         "700nx"
       ],
       "draw_cost": 20
-    },
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
+    }
   },
   {
     "id": "bandolier_wrist",
+    "copy-from": "bandolier_wrist",
     "type": "ARMOR",
     "name": { "str": "wrist bandolier" },
-    "description": "A small fabric bandolier for rifle cartridges designed to be worn around the wrist.",
-    "weight": "30 g",
-    "volume": "250 ml",
-    "price": "29 USD",
-    "price_postapoc": "5 USD",
-    "material": [ "cotton" ],
-    "symbol": "[",
-    "looks_like": "leather_belt",
-    "color": "dark_gray",
-    "covers": [ "hand_either" ],
-    "coverage": 5,
-    "encumbrance": 1,
-    "material_thickness": 1,
     "use_action": {
       "type": "bandolier",
       "capacity": 6,
@@ -232,8 +207,6 @@
         "700nx"
       ],
       "draw_cost": 20
-    },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_NATURAL_ATTACKS" ]
+    }
   }
 ]

@@ -17,6 +17,12 @@
 
 class Item_group;
 class Item_spawn_data;
+class lua_iwieldable_actor;
+class lua_iwearable_actor;
+class lua_iequippable_actor;
+class lua_istate_actor;
+class lua_imelee_actor;
+class lua_iranged_actor;
 class relic;
 
 namespace cata
@@ -235,6 +241,9 @@ class Item_factory
 
         std::list<itype_id> subtype_replacement( const itype_id & ) const;
 
+        // For very rare cases
+        use_function usage_from_string( const std::string &type ) const;
+
     private:
         /** Set at finalization and prevents alterations to the static item templates */
         bool frozen = false;
@@ -310,8 +319,6 @@ class Item_factory
         void set_use_methods_from_array( const JsonArray &array,
                                          std::map<std::string, use_function> &use_methods );
 
-        use_function usage_from_string( const std::string &type ) const;
-
         std::pair<std::string, use_function> usage_from_object( const JsonObject &obj );
 
         static std::optional<JsonArray> extend_has_member( const JsonObject &jo,
@@ -365,7 +372,26 @@ class Item_factory
     public:
         void add_actor( std::unique_ptr<iuse_actor> );
 
+        // Lua callback actor registration (one per callback category)
+        void add_iwieldable_actor( const itype_id &id, std::unique_ptr<lua_iwieldable_actor> actor );
+        void add_iwearable_actor( const itype_id &id, std::unique_ptr<lua_iwearable_actor> actor );
+        void add_iequippable_actor( const itype_id &id, std::unique_ptr<lua_iequippable_actor> actor );
+        void add_istate_actor( const itype_id &id, std::unique_ptr<lua_istate_actor> actor );
+        void add_imelee_actor( const itype_id &id, std::unique_ptr<lua_imelee_actor> actor );
+        void add_iranged_actor( const itype_id &id, std::unique_ptr<lua_iranged_actor> actor );
+
+        /** Wire callback actor pointers onto itype objects. Called during finalize(). */
+        void resolve_lua_callbacks();
+
     private:
+        // Lua callback actor storage (owning)
+        std::map<itype_id, std::unique_ptr<lua_iwieldable_actor>> iwieldable_actors;
+        std::map<itype_id, std::unique_ptr<lua_iwearable_actor>> iwearable_actors;
+        std::map<itype_id, std::unique_ptr<lua_iequippable_actor>> iequippable_actors;
+        std::map<itype_id, std::unique_ptr<lua_istate_actor>> istate_actors;
+        std::map<itype_id, std::unique_ptr<lua_imelee_actor>> imelee_actors;
+        std::map<itype_id, std::unique_ptr<lua_iranged_actor>> iranged_actors;
+
         std::map<itype_id, migration> migrations;
 
         /**

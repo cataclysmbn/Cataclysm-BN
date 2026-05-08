@@ -1,18 +1,24 @@
 #include "mattack_actors.h"
 
 #include <algorithm>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <optional>
 
+#include "ammo_effect.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "creature.h"
+#include "creature_functions.h"
 #include "enums.h"
+#include "field_type.h"
 #include "game.h"
 #include "generic_factory.h"
 #include "gun_mode.h"
 #include "int_id.h"
+#include "itype.h"
+#include "iuse_actor.h"
 #include "item.h"
 #include "json.h"
 #include "line.h"
@@ -221,6 +227,98 @@ bool mon_spellcasting_actor::call( monster &mon ) const
     }
 
     spell_data.cast_all_effects( mon, target );
+
+    return true;
+}
+
+std::unique_ptr<mattack_actor> deployer_actor::clone() const
+{
+    return std::make_unique<deployer_actor>( *this );
+}
+
+void deployer_actor::load_internal( const JsonObject &obj, const std::string & )
+{
+    for( const JsonMember member : obj.get_object( "deployables" ) ) {
+        const JsonObject jo = member.get_object();
+        grenades[itype_id( member.name() )] = {
+            _( jo.get_string( "message" ) ),
+            jo.get_int( "chance" ),
+            jo.get_float( "ammo_percentage" ),
+            jo.get_int( "range" )
+        };
+    }
+}
+
+bool deployer_actor::call( monster &mon ) const
+{
+    if( !mon.can_act() ) {
+        return false;
+    }
+    bool has_attack_target = mon.attack_target();
+    has_attack_target = has_attack_target || ( !mon.friendly && mon.sees( g->u ) );
+    if( !has_attack_target ) {
+        // this is an attack. there is no reason to attack if there isn't a real target.
+        return false;
+    }
+
+    int total_ammo = 0;
+    for( const auto &ammo_entry : mon.type->starting_ammo ) {
+        total_ammo += ammo_entry.second;
+    }
+    if( total_ammo == 0 ) {
+        // Should never happen, but protect us from a div/0 if it does.
+        return false;
+    }
+
+    // Find how much ammo we currently have to get the total ratio
+    int curr_ammo = 0;
+    for( const auto &amm : mon.ammo ) {
+        curr_ammo += amm.second;
+    }
+    float rat = curr_ammo / static_cast<float>( total_ammo );
+
+    weighted_float_list<itype_id> possible_attacks;
+    for( const auto &amm : mon.ammo ) {
+        if( amm.second > 0 && grenades.at( amm.first ).ammo_percentage >= rat ) {
+            possible_attacks.add( amm.first, 1.0 / grenades.at( amm.first ).chance );
+        }
+    }
+    if( possible_attacks.empty() ) {
+        return false;
+    }
+
+    itype_id att = *possible_attacks.pick();
+
+    std::vector<tripoint> empty_points_in_rad;
+
+    auto points_in_rad = g->m.points_in_radius( mon.pos(), grenades.at( att ).range );
+    for( tripoint p : points_in_rad ) {
+        if( g->is_empty( p ) ) {
+            empty_points_in_rad.push_back( p );
+        }
+    }
+
+    // Get our monster type
+    const use_function *usage = att->get_use( "place_monster" );
+    if( usage == nullptr ) {
+        // Invalid bomb item usage, Toggle this special off so we stop processing
+        add_msg( m_debug, "Invalid bomb item usage in deployer special for %s.", mon.name() );
+        return false;
+    }
+    auto *actor = dynamic_cast<const place_monster_iuse *>( usage->get_actor_ptr() );
+    if( actor == nullptr ) {
+        // Invalid bomb item, Toggle this special off so we stop processing
+        add_msg( m_debug, "Invalid bomb type in deployer special for %s.", mon.name() );
+        return false;
+    }
+
+    const tripoint where = empty_points_in_rad[ rng( 0, empty_points_in_rad.size() - 1 ) ];
+
+    if( monster *const hack = g->place_critter_at( actor->mtypeid, where ) ) {
+        mon.ammo[att]--;
+        hack->make_ally( mon );
+        add_msg( m_bad, grenades.at( att ).message );
+    }
 
     return true;
 }
@@ -556,58 +654,53 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
 } // namespace
 
-
 bool gun_actor::call( monster &z ) const
 {
-    Creature *target;
-    tripoint aim_at;
-    bool untargeted = false;
+    /// common firing logic.
+    /// @param target_critter can be nullptr if shooting at a vehicle (untargeted).
+    auto attempt_shoot = [&]( const tripoint & aim_pos, Creature * target_critter ) {
+        if( target_critter && z.attitude_to( *target_critter ) == Attitude::A_FRIENDLY ) { return false; }
+
+        const int dist = rl_dist( z.pos(), aim_pos );
+        for( const auto &entry : ranges ) {
+            if( dist >= entry.first.first && dist <= entry.first.second ) {
+                // If target_critter is null, it's "untargeted" (vehicle), so we skip try_target.
+                if( !target_critter || try_target( z, *target_critter ) ) {
+                    shoot( z, aim_pos, entry.second );
+                }
+                return true;
+            }
+        }
+        return false;
+    };
 
     if( z.friendly ) {
-        int max_range = get_max_range();
+        const int max_range = get_max_range();
 
-        int hostiles; // hostiles which cannot be engaged without risking friendly fire
-        target = z.auto_find_hostile_target( max_range, hostiles );
-        if( !target ) {
-            if( hostiles > 0 && g->u.sees( z ) ) {
-                add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
-                                              "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
-                                              hostiles ),
-                         z.name(), hostiles );
-            }
-            return false;
-        }
-        aim_at = target->pos();
-    } else {
-        target = z.attack_target();
-        if( !target || ( !target->is_monster() && !z.aggro_character ) || !z.sees( *target ) ) {
-            if( !target_moving_vehicles ) {
-                return false;
-            }
-            //No living targets, try to find a moving car
-            std::optional<tripoint> aim = find_target_vehicle( z, get_max_range() );
-            if( !aim ) {
-                return false;
-            }
-            aim_at = *aim;
-            untargeted = true;
-        } else {
-            aim_at = target->pos();
-        }
-    }
+        const item gun_item( gun_type );
+        const bool has_trail = std::ranges::any_of( gun_item.ammo_effects(),
+        []( const ammo_effect_str_id & ae ) { return ae->trail_field_type && ae->trail_field_type != fd_null; } );
 
-    // One last check to make sure we're not firing on a friendly
-    if( target && z.attitude_to( *target ) == Attitude::A_FRIENDLY ) {
+        auto res = creature_functions::auto_find_hostile_target( z, { .range = max_range, .trail = has_trail, .area = 0 } );
+        if( res ) {
+            return attempt_shoot( res.value().get().pos(), &res.value().get() );
+        }
+        if( const int hostiles = res.error(); hostiles > 0 && g->u.sees( z ) ) {
+            add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
+                                          "Pointed in your direction, the %s emits %d annoyed sounding beeps.",
+                                          hostiles ), z.name(), hostiles );
+        }
         return false;
     }
-    int dist = rl_dist( z.pos(), aim_at );
-    for( const auto &e : ranges ) {
-        if( dist >= e.first.first && dist <= e.first.second ) {
-            if( untargeted || try_target( z, *target ) ) {
-                shoot( z, aim_at, e.second );
-            }
 
-            return true;
+    Creature *target = z.attack_target();
+
+    if( target && ( target->is_monster() || z.aggro_character ) && z.sees( *target ) ) {
+        return attempt_shoot( target->pos(), target );
+    }
+    if( target_moving_vehicles ) {
+        if( const auto vehicle_pos = find_target_vehicle( z, get_max_range() ) ) {
+            return attempt_shoot( *vehicle_pos, nullptr );
         }
     }
     return false;
@@ -682,7 +775,12 @@ void gun_actor::shoot( monster &z, const tripoint &target, const gun_mode_id &mo
     standard_npc tmp( _( "The " ) + z.name(), z.pos(), {}, 8,
                       fake_str, fake_dex, fake_int, fake_per );
     tmp.set_fake( true );
-    tmp.set_attitude( z.friendly ? NPCATT_FOLLOW : NPCATT_KILL );
+    if( z.friendly ) {
+        tmp.set_attitude( NPCATT_FOLLOW );
+        tmp.set_fac( faction_id( "your_followers" ) );
+    } else {
+        tmp.set_attitude( NPCATT_KILL );
+    }
     tmp.recoil = inital_recoil; // set inital recoil
     if( no_crits ) {
         tmp.toggle_trait( trait_NORANGEDCRIT );

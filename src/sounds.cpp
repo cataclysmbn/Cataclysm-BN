@@ -263,7 +263,7 @@ static std::vector<centroid> cluster_sounds( std::vector<std::pair<tripoint, int
                   static_cast<size_t>( std::log( input_sounds.size() ) ) );
     const size_t stopping_point = input_sounds.size() - num_seed_clusters;
     const size_t max_map_distance = sound_distance( tripoint( point_zero, OVERMAP_DEPTH ),
-                                    tripoint( MAPSIZE_X, MAPSIZE_Y, OVERMAP_HEIGHT ) );
+                                    tripoint( g_mapsize_x, g_mapsize_y, OVERMAP_HEIGHT ) );
     // Randomly choose cluster seeds.
     for( size_t i = input_sounds.size(); i > stopping_point; i-- ) {
         size_t index = rng( 0, i - 1 );
@@ -354,7 +354,7 @@ void sounds::process_sounds()
             // TODO: fix point types
             const point_abs_sm abs_sm( ms_to_sm_copy( abs_ms ) );
             const tripoint_abs_sm target( abs_sm, source.z );
-            overmap_buffer.signal_hordes( target, sig_power );
+            get_overmapbuffer( get_map().get_bound_dimension() ).signal_hordes( target, sig_power );
         }
         // Alert all monsters (that can hear) to the sound.
         for( monster &critter : g->all_monsters() ) {
@@ -368,6 +368,19 @@ void sounds::process_sounds()
     }
     recent_sounds.clear();
 }
+
+// Ensure description ends with punctuation, using a preferred character if missing
+static auto ensure_punctuation = []( const std::string &desc, char preferred )
+{
+    if( desc.empty() ) {
+        return desc;
+    }
+    char last = desc.back();
+    if( last == '.' || last == '!' || last == '?' || last == '"' ) {
+        return desc;
+    }
+    return desc + preferred;
+};
 
 // skip some sounds to avoid message spam
 static bool describe_sound( sounds::sound_t category, bool from_player_position )
@@ -419,6 +432,7 @@ static bool describe_sound( sounds::sound_t category, bool from_player_position 
 
 void sounds::process_sound_markers( Character *who )
 {
+    ZoneScoped;
     bool is_deaf = who->is_deaf();
     const float volume_multiplier = who->hearing_ability();
     const int weather_vol = get_weather().weather_id->sound_attn;
@@ -512,7 +526,8 @@ void sounds::process_sound_markers( Character *who )
         if( !sound.ambient && ( pos != who->pos() ) && !get_map().pl_sees( pos, distance_to_sound ) ) {
             if( !who->activity->is_distraction_ignored( distraction_type::noise ) &&
                 !get_safemode().is_sound_safe( sound.description, distance_to_sound ) ) {
-                const std::string query = string_format( _( "Heard %s!" ), description );
+                const std::string final_description = ensure_punctuation( description, '!' );
+                const std::string query = string_format( _( "Heard %s" ), final_description );
                 g->cancel_activity_or_ignore_query( distraction_type::noise, query );
             }
         }
@@ -523,14 +538,17 @@ void sounds::process_sound_markers( Character *who )
             if( sound.category == sound_t::combat || sound.category == sound_t::alarm ) {
                 severity = m_warning;
             }
+
+            std::string final_description = ensure_punctuation( description, '.' );
+
             // if we can see it, don't print a direction
             if( pos == who->pos() ) {
-                add_msg( severity, _( "From your position you hear %1$s" ), description );
+                add_msg( severity, _( "From your position you hear %1$s" ), final_description );
             } else if( who->sees( pos ) ) {
-                add_msg( severity, _( "You hear %1$s" ), description );
+                add_msg( severity, _( "You hear %1$s" ), final_description );
             } else {
                 std::string direction = direction_name( direction_from( who->pos(), pos ) );
-                add_msg( severity, _( "From the %1$s you hear %2$s" ), direction, description );
+                add_msg( severity, _( "From the %1$s you hear %2$s" ), direction, final_description );
             }
         }
 
@@ -1281,12 +1299,7 @@ void sfx::do_danger_music()
         return;
     }
     audio_muted = false;
-    int hostiles = 0;
-    for( auto &critter : player_character.get_visible_creatures( 40 ) ) {
-        if( player_character.attitude_to( *critter ) == Attitude::A_HOSTILE ) {
-            hostiles++;
-        }
-    }
+    const int hostiles = player_character.get_mon_visible().combat_hostile_count;
     if( hostiles == prev_hostiles ) {
         return;
     }
@@ -1448,6 +1461,7 @@ void sfx::do_footstep()
             ter_str_id( "t_underbrush_harvested_autumn" ),
             ter_str_id( "t_underbrush_harvested_winter" ),
             ter_str_id( "t_moss" ),
+            ter_str_id( "t_moss_underground" ),
             ter_str_id( "t_grass_white" ),
             ter_str_id( "t_grass_long" ),
             ter_str_id( "t_grass_tall" ),

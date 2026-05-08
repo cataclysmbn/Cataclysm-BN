@@ -42,7 +42,6 @@
         "44",
         "45",
         "45colt",
-        "46",
         "762",
         "223",
         "3006",
@@ -96,8 +95,8 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
   },
   {
     "id": "chestpouch",
@@ -127,8 +126,8 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS" ]
   },
   {
     "id": "chestrig",
@@ -156,10 +155,10 @@
       "multi": 4,
       "max_volume": "750 ml",
       "draw_cost": 40,
-      "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
+      "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS" ]
   },
   {
     "id": "javelin_bag",
@@ -218,11 +217,11 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
     },
-    "flags": [ "WATER_FRIENDLY", "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMPACT" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "COMPACT" ]
   },
   {
-    "type": "ARMOR",
     "id": "legpouch_large",
+    "type": "ARMOR",
     "name": { "str": "leg magazine pouch", "str_pl": "leg magazine pouches" },
     "description": "A fabric ammo pouch that can be strapped to your leg and capable of holding two magazines close at hand.",
     "weight": "120 g",
@@ -249,11 +248,11 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
     },
-    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT" ]
+    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE" ]
   },
   {
-    "type": "ARMOR",
     "id": "mag_satchel_leg",
+    "type": "ARMOR",
     "copy-from": "legpouch_large",
     "name": { "str": "leg magazine satchel" },
     "description": "A fabric ammo pouch that can be strapped to the leg, capable of holding a single magazine, ammo belt, or speedloader of modest size.",
@@ -300,7 +299,7 @@
       "draw_cost": 60,
       "flags": [ "MAG_COMPACT" ]
     },
-    "flags": [ "STURDY", "OUTER" ]
+    "flags": [ "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "modularvestceramic",
@@ -322,7 +321,7 @@
     "encumbrance": 15,
     "storage": "1 L",
     "warmth": 15,
-    "material_thickness": 9,
+    "material_thickness": 10,
     "use_action": {
       "type": "holster",
       "holster_prompt": "Stash ammo",
@@ -333,7 +332,7 @@
       "draw_cost": 60,
       "flags": [ "MAG_COMPACT" ]
     },
-    "flags": [ "OUTER" ]
+    "flags": [ "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "modularvesthard",
@@ -355,7 +354,7 @@
     "encumbrance": 25,
     "storage": "1 L",
     "warmth": 15,
-    "material_thickness": 5,
+    "material_thickness": 10,
     "use_action": {
       "type": "holster",
       "holster_prompt": "Stash ammo",
@@ -366,7 +365,7 @@
       "draw_cost": 60,
       "flags": [ "MAG_COMPACT" ]
     },
-    "flags": [ "STURDY", "OUTER" ]
+    "flags": [ "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "modularveststeel",
@@ -388,7 +387,7 @@
     "encumbrance": 20,
     "storage": "1 L",
     "warmth": 15,
-    "material_thickness": 8,
+    "material_thickness": 10,
     "use_action": {
       "type": "holster",
       "holster_prompt": "Stash ammo",
@@ -399,7 +398,7 @@
       "draw_cost": 60,
       "flags": [ "MAG_COMPACT" ]
     },
-    "flags": [ "STURDY", "OUTER" ]
+    "flags": [ "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "modularvestsuper",
@@ -430,7 +429,7 @@
     "encumbrance": 3,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 20, "ammo": [ "arrow", "bolt" ], "draw_cost": 20 },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "quiver_birchbark",
@@ -451,7 +450,7 @@
     "encumbrance": 10,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 20, "ammo": [ "arrow", "bolt" ], "draw_cost": 20 },
-    "flags": [ "WAIST", "COMPACT", "VARSIZE", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "VARSIZE", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "quiver_large",
@@ -496,6 +495,30 @@
     "flags": [ "BELTED", "COMPACT", "VARSIZE", "OVERSIZE", "WATER_FRIENDLY" ]
   },
   {
+    "id": "quiver_atlatl",
+    "copy-from": "quiver",
+    "type": "ARMOR",
+    "name": { "str": "atlatl dart quiver" },
+    "description": "A leather quiver worn at the waist, lengthened to hold atlatl darts.  Activate to store up to 15 darts.",
+    "weight": "400 g",
+    "volume": "1 L",
+    "coverage": 15,
+    "encumbrance": 5,
+    "use_action": { "type": "bandolier", "capacity": 10, "ammo": [ "atlatl" ], "draw_cost": 30 }
+  },
+  {
+    "id": "quiver_birchbark_atlatl",
+    "copy-from": "quiver_birchbark",
+    "type": "ARMOR",
+    "name": { "str": "birchbark atlatl dart quiver" },
+    "description": "A quiver woven from strips of birch bark, worn at the waist, lengthened to hold atlatl darts.  Activate to store up to 15 darts.",
+    "weight": "800 g",
+    "volume": "1 L",
+    "coverage": 15,
+    "encumbrance": 15,
+    "use_action": { "type": "bandolier", "capacity": 10, "ammo": [ "atlatl" ], "draw_cost": 30 }
+  },
+  {
     "id": "tacvest",
     "type": "ARMOR",
     "name": { "str": "tac vest" },
@@ -523,10 +546,10 @@
       "min_volume": "250 ml",
       "max_volume": "1 L",
       "draw_cost": 60,
-      "flags": [ "MAG_COMPACT", "MAG_BULKY" ]
+      "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
   },
   {
     "id": "xlkevlar",
@@ -604,7 +627,6 @@
         "44",
         "45",
         "45colt",
-        "46",
         "762",
         "223",
         "3006",
@@ -627,6 +649,6 @@
       ],
       "draw_cost": 35
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
   }
 ]

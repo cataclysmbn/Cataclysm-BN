@@ -38,6 +38,7 @@
         "########################################################################"
       ],
       "terrain": {
+        " ": "t_rock_floor",
         "@": [ [ "t_rock", 4 ], [ "t_rock_floor", 1 ] ],
         "#": "t_rock",
         "*": "t_railroad_track_small",
@@ -45,7 +46,8 @@
         ">": "t_slope_down"
       },
       "items": { " ": { "item": "mine_equipment", "chance": 1 } },
-      "monsters": { " ": { "monster": "GROUP_MINER", "chance": 1, "density": 0.001 } }
+      "monsters": { " ": { "monster": "GROUP_MINER", "chance": 1, "density": 0.001 } },
+      "nested": { " ": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] } }
     }
   },
   {
@@ -108,6 +110,7 @@
         "#####@@@@@@@@@@@@@@@@@@@##@@@@@@@@@@@@@@@@@@@@####@@@@@@@@@@@@@@@@@@@###"
       ],
       "terrain": {
+        " ": "t_rock_floor",
         "@": [ [ "t_rock", 4 ], [ "t_rock_floor", 1 ] ],
         "#": "t_rock",
         ">": "t_slope_down",
@@ -116,6 +119,7 @@
       },
       "furniture": { "&": "f_wreckage", "^": "f_rubble", "%": "f_rubble_rock", "!": "f_rubble_landfill" },
       "nested": {
+        " ": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] },
         "1": { "chunks": [ [ "spiral_cw", 25 ], [ "spiral_ccw", 25 ], [ "spiral_boulder_cw", 25 ], [ "spiral_boulder_ccw", 25 ] ] }
       },
       "item": { "*": { "item": "rock", "chance": 100 } },
@@ -181,9 +185,12 @@
         "#    #                                                                  ",
         "######                                                                  "
       ],
-      "terrain": { "@": [ [ "t_rock", 4 ], [ "t_rock_floor", 1 ] ], "#": "t_rock", "<": "t_slope_up" },
+      "terrain": { " ": "t_rock_floor", "@": [ [ "t_rock", 4 ], [ "t_rock_floor", 1 ] ], "#": "t_rock", "<": "t_slope_up" },
       "monsters": { " ": { "monster": "GROUP_SPIRAL", "chance": 1, "density": 0.001 } },
-      "nested": { "1": { "chunks": [ [ "spiral_cw", 50 ], [ "spiral_ccw", 50 ] ] } },
+      "nested": {
+        " ": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] },
+        "1": { "chunks": [ [ "spiral_cw", 50 ], [ "spiral_ccw", 50 ] ] }
+      },
       "items": { "!": { "item": "spiral", "chance": 60 } }
     }
   }

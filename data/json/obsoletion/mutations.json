@@ -238,5 +238,14 @@
     "points": 2,
     "description": "Obsoleted due to becoming default behavior.",
     "valid": false
+  },
+  {
+    "type": "mutation",
+    "id": "SELFAWARE",
+    "name": { "str": "Self-Aware" },
+    "points": 1,
+    "description": "This mutation is now just an option in the settings.",
+    "valid": false,
+    "active": true
   }
 ]

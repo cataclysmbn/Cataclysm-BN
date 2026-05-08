@@ -167,5 +167,18 @@
     "qualities": [ { "id": "MANA_INFUSE", "level": 2 }, { "id": "HAMMER_FINE", "level": 1 }, { "id": "CHISEL", "level": 1 } ],
     "components": [ [ [ "fabric_standard", 6, "LIST" ] ], [ [ "bulette_pearl", 1 ] ] ],
     "book_learn": [ [ "bulette_bullet_theory", 4 ] ]
+  },
+  {
+    "result": "vibrator_mana",
+    "type": "recipe",
+    "category": "CC_ENCHANTED",
+    "subcategory": "CSC_ENCHANTED_TOOLS",
+    "skill_used": "spellcraft",
+    "skills_required": [ "electronics", 1 ],
+    "difficulty": 4,
+    "autolearn": true,
+    "time": "30 m",
+    "qualities": [ { "id": "MANA_INFUSE", "level": 2 } ],
+    "components": [ [ [ "crystallized_mana", 80 ] ], [ [ "vibrator", 1 ] ] ]
   }
 ]

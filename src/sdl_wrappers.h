@@ -49,6 +49,7 @@ struct SDL_Texture_deleter {
     }
 };
 using SDL_Texture_Ptr = std::unique_ptr<SDL_Texture, SDL_Texture_deleter>;
+using SDL_Texture_SharedPtr = std::shared_ptr<SDL_Texture>;
 
 struct SDL_Surface_deleter {
     void operator()( SDL_Surface *const ptr ) {
@@ -69,6 +70,12 @@ using TTF_Font_Ptr = std::unique_ptr<TTF_Font, TTF_Font_deleter>;
  * @returns \p condition, in other words: return whether an error was logged.
  */
 bool printErrorIf( bool condition, const char *message );
+/**
+ * If the @p condition is `true`, an SDL_image error (including the given @p message
+ * and the output of @ref IMG_GetError) is logged to the debug log.
+ * @returns \p condition, in other words: return whether an error was logged.
+ */
+auto printImgErrorIf( bool condition, const char *message ) -> bool;
 /**
  * If the @p condition is `true`, an exception (including the given @p message
  * and the output of @ref SDL_GetError) is thrown.
@@ -141,5 +148,4 @@ inline bool operator!=( const SDL_Rect &lhs, const SDL_Rect &rhs )
 /**@}*/
 
 #endif // if defined(TILES)
-
 

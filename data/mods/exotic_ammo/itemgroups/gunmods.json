@@ -1,0 +1,33 @@
+[
+  {
+    "type": "item_group",
+    "id": "swat_gear",
+    "subtype": "distribution",
+    "items": [ [ "l_car_223_kit", 5 ], [ "l_dsr_223_kit", 5 ], [ "l_lmg_223_kit", 5 ], [ "l_mbr_223_kit", 5 ] ]
+  },
+  {
+    "id": "cop_armory",
+    "type": "item_group",
+    "magazine": 100,
+    "subtype": "distribution",
+    "entries": [
+      { "item": "l_car_223_kit", "prob": 5 },
+      { "item": "l_dsr_223_kit", "prob": 5 },
+      { "item": "l_lmg_223_kit", "prob": 5 },
+      { "item": "l_mbr_223_kit", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "lmoe_guns",
+    "magazine": 100,
+    "ammo": 100,
+    "subtype": "distribution",
+    "entries": [ { "item": "lwfeed", "prob": 30 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "behindcounter",
+    "items": [ [ "lwfeed", 40 ] ]
+  }
+]

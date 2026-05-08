@@ -15,5 +15,22 @@
     "durability": 6,
     "loudness": 1,
     "magazines": [ [ "chemical_spray", [ "pressurized_tank_chem" ] ] ]
+  },
+  {
+    "id": "professional_chemical_thrower",
+    "copy-from": "chemical_sprayer_base",
+    "type": "GUN",
+    "reload_noise": "slosh.",
+    "name": { "str": "chemical thrower" },
+    "description": "A bulky, commercial-grade chemical sprayer with an internal conversion mechanism that allows all sorts of chemicals to be dispersed to your surroundings.",
+    "weight": "4588 g",
+    "volume": "4250 ml",
+    "price": "200 USD",
+    "price_postapoc": "15 USD",
+    "material": [ "steel", "plastic" ],
+    "dispersion": 250,
+    "durability": 8,
+    "loudness": 1,
+    "magazines": [ [ "chemical_spray", [ "pressurized_tank_chem" ] ] ]
   }
 ]

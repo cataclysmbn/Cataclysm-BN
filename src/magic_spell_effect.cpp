@@ -41,6 +41,7 @@
 #include "map_iterator.h"
 #include "messages.h"
 #include "monster.h"
+#include "mutation.h"
 #include "overmapbuffer.h"
 #include "player.h"
 #include "point.h"
@@ -58,6 +59,7 @@
 #include "vpart_position.h"
 
 static const ammo_effect_str_id ammo_effect_magic( "magic" );
+static const efftype_id dashing_effect( "dashing" );
 
 namespace spell_detail
 {
@@ -205,7 +207,7 @@ static std::set<tripoint> spell_effect_cone_range_override( const tripoint &sour
     const units::angle start_angle = initial_angle - half_width;
     const units::angle end_angle = initial_angle + half_width;
     std::set<tripoint> end_points;
-    for( units::angle angle = start_angle; angle <= end_angle; angle += 1_degrees ) {
+    for( units::angle angle = start_angle; angle <= end_angle; angle += 0.5_degrees ) {
         tripoint potential;
         calc_ray_end( angle, range, source, potential );
         end_points.emplace( potential );
@@ -397,9 +399,6 @@ std::set<tripoint> calculate_spell_effect_area( const spell &sp, const tripoint 
         aoe_func, const Creature &caster, bool ignore_walls )
 {
     std::set<tripoint> targets = { target }; // initialize with epicenter
-    if( sp.aoe() <= 1 && sp.effect() != "line_attack" ) {
-        return targets;
-    }
 
     const int aoe_radius = sp.aoe();
     targets = aoe_func( sp, caster.pos(), target, aoe_radius, ignore_walls );
@@ -483,6 +482,7 @@ static void damage_targets( const spell &sp, Creature &caster,
                             const std::set<tripoint> &targets )
 {
     bool sound_played = false;
+    const int affected = std::ranges::count_if( targets, [&]( const auto & target ) { return g->critter_at<Creature>( target ) != nullptr; } );
     for( const tripoint &target : targets ) {
         if( !sp.is_valid_target( caster, target ) ) {
             continue;
@@ -501,6 +501,9 @@ static void damage_targets( const spell &sp, Creature &caster,
         bolt.speed = 10000;
         bolt.impact = ( caster.is_monster() ) ? sp.get_damage_instance() : sp.get_damage_instance(
                           *caster.as_character() );
+        if( sp.has_flag( spell_flag::DIVIDE_DAMAGE ) ) {
+            bolt.impact.mult_damage( 1.0f / affected );
+        }
         bolt.add_effect( ammo_effect_magic );
 
         dealt_projectile_attack atk;
@@ -894,6 +897,7 @@ void spell_effect::spawn_ethereal_item( const spell &sp, Creature &caster, const
     if( !granted->is_comestible() && !( sp.has_flag( spell_flag::PERMANENT ) ) ) {
         granted->set_var( "ethereal", to_turns<int>( sp.duration_turns() ) );
         granted->set_flag( flag_id( "ETHEREAL_ITEM" ) );
+        granted->set_flag( flag_id( "NO_SALVAGE" ) );
     }
     if( granted->count_by_charges() && sp.damage() > 0 ) {
         granted->charges = sp.damage();
@@ -932,7 +936,7 @@ void spell_effect::recover_energy( const spell &sp, Creature &caster, const trip
     if( energy_source == "MANA" ) {
         p->magic->mod_mana( *p, healing );
     } else if( energy_source == "STAMINA" ) {
-        p->mod_stamina( healing );
+        p->mod_stamina( healing, sp.has_flag( PHYSICAL ) );
     } else if( energy_source == "FATIGUE" ) {
         // fatigue is backwards
         p->mod_fatigue( -healing );
@@ -940,7 +944,7 @@ void spell_effect::recover_energy( const spell &sp, Creature &caster, const trip
         if( healing > 0 ) {
             p->mod_power_level( units::from_kilojoule( healing ) );
         } else {
-            p->mod_stamina( healing );
+            p->mod_stamina( healing, sp.has_flag( PHYSICAL ) );
         }
     } else if( energy_source == "PAIN" ) {
         // pain is backwards
@@ -1034,8 +1038,6 @@ void spell_effect::spawn_summoned_monster( const spell &sp, Creature &caster,
                 sound_played = true;
                 sp.make_sound( *iter );
             }
-        } else {
-            add_msg( m_bad, "failed to place monster" );
         }
         // whether or not we succeed in spawning a monster, we don't want to try this tripoint again
         area.erase( iter );
@@ -1050,8 +1052,13 @@ void spell_effect::spawn_summoned_vehicle( const spell &sp, Creature &caster,
         caster.add_msg_if_player( m_bad, _( "There is already a vehicle there." ) );
         return;
     }
-    if( vehicle *veh = here.add_vehicle( sp.summon_vehicle_id(), target, -90_degrees, 100, 0 ) ) {
+    vehicle *veh = here.add_vehicle( sp.summon_vehicle_id(), target, -90_degrees, 100, 0, false, false,
+                                     true );
+    if( veh ) {
         veh->magic = true;
+        if( caster.is_player() ) {
+            veh->set_owner( *caster.as_player() );
+        }
         const time_duration summon_time = sp.duration_turns();
         if( !sp.has_flag( spell_flag::PERMANENT ) ) {
             veh->summon_time_limit = summon_time;
@@ -1159,7 +1166,7 @@ void spell_effect::map_area( const spell &sp, Creature &caster, const tripoint &
         return;
     }
     const tripoint_abs_omt center = you->global_omt_location();
-    overmap_buffer.reveal( center.xy(), sp.aoe(), center.z() );
+    get_overmapbuffer( you->get_dimension() ).reveal( center.xy(), sp.aoe(), center.z() );
 }
 
 void spell_effect::morale( const spell &sp, Creature &caster, const tripoint &target )
@@ -1237,7 +1244,16 @@ void spell_effect::mutate( const spell &sp, Creature &caster, const tripoint &ta
             if( sp.has_flag( spell_flag::MUTATE_TRAIT ) ) {
                 guy->mutate_towards( trait_id( sp.effect_data() ) );
             } else {
+                // As with serum, test threshold both before and after granting mutation.
+                if( sp.has_flag( spell_flag::MUTATE_THRESH ) ) {
+                    test_crossing_threshold( *guy, mutation_category_trait::get_category(
+                                                 mutation_category_id( sp.effect_data() ) ), std::max( sp.accuracy(), 1 ) );
+                }
                 guy->mutate_category( mutation_category_id( sp.effect_data() ) );
+                if( sp.has_flag( spell_flag::MUTATE_THRESH ) ) {
+                    test_crossing_threshold( *guy, mutation_category_trait::get_category(
+                                                 mutation_category_id( sp.effect_data() ) ), std::max( sp.accuracy(), 1 ) );
+                }
             }
         }
         if( sp.has_flag( spell_flag::DUPE_SOUND ) || !sound_played ) {
@@ -1276,6 +1292,8 @@ void spell_effect::dash( const spell &sp, Creature &caster, const tripoint &targ
     }
     // save the amount of moves the caster has so we can restore them after the dash
     const int cur_moves = caster.moves;
+    // add dash "effect" for detection
+    caster.add_effect( dashing_effect, 1_turns );
     while( walk_point != trajectory.end() ) {
         if( caster_you != nullptr ) {
             if( g->critter_at( here.getlocal( *walk_point ) ) ||
@@ -1294,4 +1312,6 @@ void spell_effect::dash( const spell &sp, Creature &caster, const tripoint &targ
         --walk_point;
     }
     caster.moves = cur_moves;
+    // remove dashing effect since dashing is over
+    caster.remove_effect( dashing_effect );
 }

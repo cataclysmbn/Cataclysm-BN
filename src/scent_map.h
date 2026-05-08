@@ -1,6 +1,6 @@
 #pragma once
 
-#include <array>
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
@@ -8,7 +8,6 @@
 
 #include "calendar.h"
 #include "enums.h" // IWYU pragma: keep
-#include "game_constants.h"
 #include "point.h"
 #include "type_id.h"
 
@@ -40,18 +39,21 @@ class scent_type
 class scent_map
 {
     protected:
-        template<typename T>
-        using scent_array = std::array<std::array<T, MAPSIZE_Y>, MAPSIZE_X>;
-
-        scent_array<int> grscent;
         scenttype_id typescent;
         std::optional<tripoint> player_last_position;
         time_point player_last_moved = calendar::before_time_starts;
 
         const game &gm;
+        map &m_;
+
+        // Per-dimension sets of absolute submap positions that currently have at least
+        // one non-zero scent value. Keyed by dimension_id to match MAPBUFFER_REGISTRY.
+        // Populated by raw_scent_set(); pruned by decay() once all values reach zero.
+        // Lets decay() skip the full mapbuffer scan for each dimension.
+        std::map<std::string, std::set<tripoint>> scent_submaps_;
 
     public:
-        scent_map( const game &g ) : gm( g ) { }
+        scent_map( const game &g, map &m ) : gm( g ), m_( m ) { }
 
         void deserialize( const std::string &data, bool is_type = false );
         std::string serialize( bool is_type = false ) const;
@@ -61,11 +63,10 @@ class scent_map
         void update( const tripoint &center, map &m );
         void reset();
         void decay();
-        void shift( point sm_shift );
 
         /**
          * Get the scent value at the given position.
-         * An invalid position is allows and will yield a 0 value.
+         * An invalid position is allowed and will yield a 0 value.
          * The coordinate system is the same as the @ref map (`g->m`) uses.
          */
         /**@{*/
@@ -81,6 +82,15 @@ class scent_map
         bool inbounds( point p ) const {
             return inbounds( tripoint( p, 0 ) );
         }
+
+    private:
+        /// Read the raw scent integer stored at map-local tile (x, y, z).
+        /// Returns 0 for any unloaded submap position.
+        auto raw_scent_at( int x, int y, int z ) const -> int;
+
+        /// Write a raw scent integer to map-local tile (x, y, z).
+        /// Silently no-ops for any unloaded submap position.
+        auto raw_scent_set( int x, int y, int z, int value ) -> void;
 };
 
 

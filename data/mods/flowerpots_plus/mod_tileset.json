@@ -1,0 +1,84 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockXottoplus", "UNDEAD_PEOPLE_LIGHT", "MSX++DEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "FlowerPotsPlus.png",
+        "tiles": [
+          {
+            "id": "portable_planter_s",
+            "bg": 1,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "seed", "fg": 3, "bg": 1 },
+              { "id": "seedling", "fg": 4, "bg": 1 },
+              { "id": "mature", "fg": 5, "bg": 1 },
+              { "id": "harvest", "fg": 6, "bg": 1 }
+            ]
+          },
+          {
+            "id": "overlay_wielded_portable_planter_s",
+            "bg": 1,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "seed", "fg": 3, "bg": 2 },
+              { "id": "seedling", "fg": 4, "bg": 2 },
+              { "id": "mature", "fg": 5, "bg": 2 },
+              { "id": "harvest", "fg": 6, "bg": 2 }
+            ]
+          },
+          {
+            "id": "portable_planter_m",
+            "bg": 7,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "seed", "fg": 9, "bg": 7 },
+              { "id": "seedling", "fg": 10, "bg": 7 },
+              { "id": "mature", "fg": 11, "bg": 7 },
+              { "id": "harvest", "fg": 12, "bg": 7 }
+            ]
+          },
+          {
+            "id": "overlay_wielded_portable_planter_m",
+            "bg": 7,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "seed", "fg": 9, "bg": 8 },
+              { "id": "seedling", "fg": 10, "bg": 8 },
+              { "id": "mature", "fg": 11, "bg": 8 },
+              { "id": "harvest", "fg": 12, "bg": 8 }
+            ]
+          },
+          {
+            "id": "portable_planter_l",
+            "bg": 13,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "seed", "fg": 15, "bg": 13 },
+              { "id": "seedling", "fg": 16, "bg": 13 },
+              { "id": "mature", "fg": 17, "bg": 13 },
+              { "id": "harvest", "fg": 18, "bg": 13 }
+            ]
+          },
+          {
+            "id": "overlay_wielded_portable_planter_l",
+            "bg": 13,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "seed", "fg": 15, "bg": 14 },
+              { "id": "seedling", "fg": 16, "bg": 14 },
+              { "id": "mature", "fg": 17, "bg": 14 },
+              { "id": "harvest", "fg": 18, "bg": 14 }
+            ]
+          }
+        ],
+        "//": "range 1 to 32",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      }
+    ]
+  }
+]

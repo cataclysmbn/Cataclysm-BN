@@ -6,8 +6,8 @@
     "object": {
       "palettes": [
         "standard_domestic_palette",
-        "standard_domestic_lino_bathroom",
-        "standard_domestic_lino_kitchen",
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom",
         "standard_domestic_landscaping_palette"
       ],
       "fill_ter": "t_floor_waxed",
@@ -19,9 +19,9 @@
         "...........--...........",
         ".?????.....--.....?????.",
         ".##o#######o*#####o#o##.",
-        ".#t_|QQ|qU|L iii|R   R#.",
-        ".#S_|++|q +     +  h  o.",
-        ".#8_+  ||||b   y|PrrrP#.",
+        ".#t¨|QQ|qU|L iii|R   R#.",
+        ".#S¨|++|q +     +  h  o.",
+        ".#8¨+  ||||b   y|PrrrP#.",
         "^#BB|y         |||||||#.",
         ".#||||||||++|  +     D#.",
         ".:y h   V|WZ|  |++|  @o.",
@@ -30,15 +30,14 @@
         ".:  ff                *-",
         ".:y h          RR||+||#-",
         ".#||| ||||  l H|||   ¤#.",
-        ".#723_JJJ|a l H|d|  @@o.",
-        ".o6______|    H| +  @@o.",
+        ".#723˙JJJ|a l H|d|  @@o.",
+        ".o6˙˙˙˙˙˙|    H| +  @@o.",
         ".#641F5OJ|sHHHs|d|D  ¤#.",
         ".###o##o##:::::####oo##.",
         "....../..........^......",
         "........................"
       ],
       "terrain": {
-        "_": "t_linoleum_gray",
         ",": "t_dirtmound",
         "?": "t_shrub_lilac",
         "/": "t_region_groundcover_urban",

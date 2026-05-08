@@ -56,5 +56,15 @@
     "id": "afs_freezer",
     "type": "MIGRATION",
     "replace": "freezer"
+  },
+  {
+    "id": "afs_atomic_wraitheon_music",
+    "type": "MIGRATION",
+    "replace": "afs_wraitheon_smartphone_music"
+  },
+  {
+    "id": "afs_atomic_wraitheon_flashlight",
+    "type": "MIGRATION",
+    "replace": "afs_wraitheon_smartphone_flashlight"
   }
 ]

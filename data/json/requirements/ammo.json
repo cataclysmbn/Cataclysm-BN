@@ -21,7 +21,7 @@
     "id": "ammo_357mag",
     "type": "requirement",
     "//": "Components required for .357 Magnum ammo",
-    "components": [ [ [ "357mag_casing", 1 ] ], [ [ "lgpistol_primer", 1 ] ] ]
+    "components": [ [ [ "357mag_casing", 1 ] ], [ [ "smpistol_primer", 1 ] ] ]
   },
   {
     "id": "ammo_357sig",
@@ -185,6 +185,7 @@
     "id": "explosives_casting_standard",
     "type": "requirement",
     "//": "References needed for forge and crucible to recast your stabilized explosives",
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ], [ [ "forge", 25 ] ] ]
+    "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ],
+    "tools": [ [ [ "forge", 25 ] ] ]
   }
 ]

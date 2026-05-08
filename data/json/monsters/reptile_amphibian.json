@@ -34,7 +34,7 @@
     "id": "mon_gator",
     "type": "MONSTER",
     "name": { "str": "sewer gator" },
-    "description": "In the late 20th century, there was an urban legend about pet alligators getting flushed down the toilet and growing to adulthood in sewers.  This large specimen doesn't look like it sees humans as anything other than a meal.",
+    "description": "Old urban legends talked about pet alligators getting flushed down the toilet and growing to adulthood in sewers.  More recently, gators have been seen migrating farther north as climate change drives them to adapt or die.  Wherever it came from, this large specimen doesn't look like it sees humans as anything other than a meal.",
     "default_faction": "gator",
     "bodytype": "gator",
     "categories": [ "WILDLIFE" ],
@@ -144,7 +144,7 @@
     "armor_bullet": 3,
     "vision_day": 30,
     "vision_night": 5,
-    "harvest": "mutant_animal_large_scute",
+    "harvest": "mutant_animal_toothy_scute",
     "special_attacks": [
       [ "RATTLE", 6 ],
       {
@@ -164,7 +164,7 @@
     "id": "mon_sewer_snake",
     "type": "MONSTER",
     "name": { "str": "sewer snake" },
-    "description": "An aggressive mutant variety of the worm snake, turned pale yellow from its underground life.  It swarms beneath the ground and is named for its habit of infesting sewer lines.",
+    "description": "An aggressive mutant variety of the worm snake, turned pale yellow from its underground life.  It swarms beneath the ground and is named for its habit of infesting sewer lines, but sometimes these creatures escape the storm drains and get washed downstream into other waterways.",
     "default_faction": "mutant",
     "bodytype": "snake",
     "species": [ "REPTILE" ],
@@ -185,7 +185,7 @@
     "dodge": 1,
     "vision_day": 1,
     "vision_night": 30,
-    "harvest": "mutant_animal_large_noskin",
+    "harvest": "mutant_animal_toothy_scute",
     "path_settings": { "max_dist": 5 },
     "death_function": [ "NORMAL" ],
     "flags": [ "SEES", "SMELLS", "WARM", "VENOM", "SWIMS" ]

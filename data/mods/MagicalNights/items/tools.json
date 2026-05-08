@@ -87,7 +87,7 @@
     "encumbrance": 1,
     "warmth": 0,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "ONLY_ONE", "COMPACT", "POWERARMOR_COMPATIBLE" ],
+    "flags": [ "SKINTIGHT", "ONLY_ONE", "COMPACT", "POWERARMOR_COMPATIBLE", "ALLOWS_HORNS" ],
     "qualities": [ [ "MANA_FOCUS", 1 ] ]
   },
   {
@@ -95,15 +95,23 @@
     "name": "sewing kit",
     "copy-from": "sewing_kit",
     "type": "TOOL",
-    "use_action": {
-      "type": "repair_item",
-      "item_action_type": "repair_fabric",
-      "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin", "scute", "black_dragon_hide" ],
-      "skill": "tailor",
-      "tool_quality": 0,
-      "cost_scaling": 0.1,
-      "move_cost": 1000
-    }
+    "use_action": [
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_fabric",
+        "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin", "scute", "black_dragon_hide" ],
+        "skill": "tailor",
+        "tool_quality": 2,
+        "cost_scaling": 0.1,
+        "move_cost": 1000
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "gutskin", "scute", "black_dragon_hide" ],
+        "skill": "tailor",
+        "clothing_mods": [ "furred", "wooled", "resized_large", "resized_small", "pocketed", "owlbear_furred" ]
+      }
+    ]
   },
   {
     "id": "tailors_kit",
@@ -129,7 +137,7 @@
           "black_dragon_hide"
         ],
         "skill": "tailor",
-        "tool_quality": 1,
+        "tool_quality": 3,
         "cost_scaling": 0.1,
         "move_cost": 800
       },
@@ -145,22 +153,22 @@
           "nomex",
           "kevlar",
           "neoprene",
-          "scute",
           "gutskin",
-          "plastic",
-          "kevlar_rigid",
+          "scute",
           "black_dragon_hide"
         ],
         "skill": "tailor",
         "clothing_mods": [
           "leather_padded",
           "steel_padded",
+          "hard_steel_padded",
           "alloy_padded",
           "kevlar_padded",
           "nomex_padded",
           "furred",
           "wooled",
           "resized_large",
+          "resized_small",
           "pocketed",
           "owlbear_furred",
           "demonchitin_padded",

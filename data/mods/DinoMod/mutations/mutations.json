@@ -250,6 +250,7 @@
     "threshreq": [ "THRESH_TYRANT" ],
     "category": [ "TYRANT" ],
     "restricts_gear": [ "mouth" ],
+    "allowed_items": [ "ALLOWS_MUZZLE" ],
     "social_modifiers": { "intimidate": 20 },
     "attacks": {
       "attack_text_u": "You tear into %s with your serrated teeth",
@@ -292,6 +293,7 @@
     "category": [ "STEGO" ],
     "restricts_gear": [ "leg_l", "leg_r" ],
     "allow_soft_gear": true,
+    "allowed_items": [ "ALLOWS_TAIL" ],
     "attacks": {
       "attack_text_u": "You smash %s with your tail",
       "attack_text_npc": "%1$s smashes %2$s with their tail",

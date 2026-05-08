@@ -16,8 +16,10 @@
       { "monster": "mon_centipede_giant", "freq": 100, "cost_multiplier": 1 },
       { "monster": "mon_chud", "freq": 50, "cost_multiplier": 1 },
       { "monster": "mon_one_eye", "freq": 25, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_necro", "freq": 8, "cost_multiplier": 20, "starts": 500 },
-      { "monster": "mon_zombie_master", "freq": 2, "cost_multiplier": 25, "starts": 1000 }
+      { "monster": "mon_skeleton_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
+      { "monster": "mon_skeleton_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 },
+      { "monster": "mon_zombie_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
+      { "monster": "mon_zombie_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 }
     ]
   },
   {
@@ -35,8 +37,10 @@
       { "monster": "mon_irradiated_wanderer_3", "freq": 75, "cost_multiplier": 1 },
       { "monster": "mon_irradiated_wanderer_4", "freq": 25, "cost_multiplier": 1 },
       { "monster": "mon_charred_nightmare", "freq": 5, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_necro", "freq": 8, "cost_multiplier": 20, "starts": 500 },
-      { "monster": "mon_zombie_master", "freq": 2, "cost_multiplier": 25, "starts": 1000 }
+      { "monster": "mon_skeleton_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
+      { "monster": "mon_skeleton_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 },
+      { "monster": "mon_zombie_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
+      { "monster": "mon_zombie_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 }
     ]
   },
   {

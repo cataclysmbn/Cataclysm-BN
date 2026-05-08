@@ -91,6 +91,7 @@ Checks: >
   -readability-identifier-naming,
 
   -readability-avoid-nested-conditional-operator,
+  -readability-math-missing-parentheses,
   -bugprone-unchecked-optional-access,
   -bugprone-chained-comparison,
   -bugprone-easily-swappable-parameters,

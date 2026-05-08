@@ -197,10 +197,11 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "<color_c_white>Melee damage</color>: Bash: <color_c_yellow>7</color>"
             "  To-hit bonus: <color_c_yellow>-2</color>\n"
             "Moves per attack: <color_c_yellow>79</color>\n"
+            "Stamina Cost: <color_c_yellow>91</color>\n"
             "Typical damage per second:\n"
             "Best: <color_c_yellow>5.20</color>"
-            "  Vs. Agile: <color_c_yellow>2.16</color>"
-            "  Vs. Armored: <color_c_yellow>0.21</color>\n" );
+            "  Vs. Agile: <color_c_yellow>1.62</color>"
+            "  Vs. Armored: <color_c_yellow>0.00</color>\n" );
     }
 
     SECTION( "bash and cut damage" ) {
@@ -211,10 +212,11 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "  Cut: <color_c_yellow>5</color>"
             "  To-hit bonus: <color_c_yellow>+2</color>\n"
             "Moves per attack: <color_c_yellow>145</color>\n"
+            "Stamina Cost: <color_c_yellow>275</color>\n"
             "Typical damage per second:\n"
-            "Best: <color_c_yellow>9.65</color>"
-            "  Vs. Agile: <color_c_yellow>5.91</color>"
-            "  Vs. Armored: <color_c_yellow>3.46</color>\n" );
+            "Best: <color_c_yellow>10.94</color>"
+            "  Vs. Agile: <color_c_yellow>5.60</color>"
+            "  Vs. Armored: <color_c_yellow>0.78</color>\n" );
     }
 
     SECTION( "bash and pierce damage" ) {
@@ -225,10 +227,11 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "  Pierce: <color_c_yellow>11</color>"
             "  To-hit bonus: <color_c_yellow>+0</color>\n"
             "Moves per attack: <color_c_yellow>100</color>\n"
+            "Stamina Cost: <color_c_yellow>106</color>\n"
             "Typical damage per second:\n"
             "Best: <color_c_yellow>9.61</color>"
-            "  Vs. Agile: <color_c_yellow>4.97</color>"
-            "  Vs. Armored: <color_c_yellow>0.26</color>\n"
+            "  Vs. Agile: <color_c_yellow>3.95</color>"
+            "  Vs. Armored: <color_c_yellow>0.00</color>\n"
         );
     }
 
@@ -240,9 +243,10 @@ TEST_CASE( "weapon attack ratings and moves", "[item][iteminfo][weapon]" )
             "  Cut: <color_c_yellow>1</color>"
             "  To-hit bonus: <color_c_yellow>+0</color>\n"
             "Moves per attack: <color_c_yellow>65</color>\n"
+            "Stamina Cost: <color_c_yellow>68</color>\n"
             "Typical damage per second:\n"
             "Best: <color_c_yellow>5.25</color>"
-            "  Vs. Agile: <color_c_yellow>2.63</color>"
+            "  Vs. Agile: <color_c_yellow>2.09</color>"
             "  Vs. Armored: <color_c_yellow>0.00</color>\n" );
     }
 
@@ -867,11 +871,11 @@ TEST_CASE( "repairable and with what tools", "[item][iteminfo][repair]" )
 
     test_info_contains(
         *item::spawn( "test_halligan" ), q,
-        "<color_c_white>Repair</color> using charcoal forge, Advanced Grid 3D Printer, grid forge, grid welder, electric forge, extended toolset, arc welder, or makeshift arc welder.\n" );
+        "<color_c_white>Repair</color> using advanced 3D printer, charcoal forge, Advanced Grid 3D Printer, grid forge, grid welder, electric forge, integrated toolset, arc welder, or makeshift arc welder.\n" );
 
     test_info_contains(
         *item::spawn( "test_hazmat_suit" ), q,
-        "<color_c_white>Repair</color> using advanced 3D printer, 3D printer, Grid 3D Printer, Advanced Grid 3D Printer, grid soldering iron, alcohol-fueled soldering iron, electric soldering iron, TEST soldering iron, or extended toolset.\n" );
+        "<color_c_white>Repair</color> using advanced 3D printer, 3D printer, Grid 3D Printer, Advanced Grid 3D Printer, grid soldering iron, alcohol-fueled soldering iron, electric soldering iron, TEST soldering iron, or integrated toolset.\n" );
 
     test_info_contains(
         *item::spawn( "test_rock" ), q, "* This item is <color_c_red>not repairable</color>.\n" );

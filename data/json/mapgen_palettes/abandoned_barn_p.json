@@ -77,7 +77,7 @@
       "R": "f_rubble_rock",
       "s": "f_straw_bed",
       "S": "f_still",
-      "T": "f_table",
+      "T": [ [ "f_table", 4 ], "f_table_flipped" ],
       "u": "f_utility_shelf"
     }
   }

@@ -9,6 +9,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <ranges>
 
 #include "bionics.h"
 #include "calendar.h"
@@ -34,6 +35,7 @@
 #include "skill.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
@@ -116,7 +118,7 @@ class wish_mutate_callback: public uilist_callback
                 // Extracting selected option & filtering traits on category presence
                 const auto entry = entries[ret];
                 auto predicate = [&]( const int idx ) {
-                    return entry->second.find( *vTraits[idx] ) != entry->second.end();
+                    return entry->second.contains( *vTraits[idx] );
                 };
                 menu->filterpredicate( predicate );
                 return true;
@@ -132,7 +134,7 @@ class wish_mutate_callback: public uilist_callback
                     vTraits.push_back( traits_iter.id );
                     pTraits[traits_iter.id] = p->has_trait( traits_iter.id );
                     for( auto &category : traits_iter.category ) {
-                        if( category_mutations.find( category ) == category_mutations.end() ) {
+                        if( !category_mutations.contains( category ) ) {
                             category_mutations[category] = std::set<mutation_branch>();
                         }
                         category_mutations[category].insert( traits_iter );
@@ -188,14 +190,10 @@ class wish_mutate_callback: public uilist_callback
                     }
                 }
 
-                if( !mdata.threshreq.empty() ) {
+                if( mdata.threshold_tier != 0 ) {
                     line2++;
-                    mvwprintz( menu->window, point( startx, line2 ), c_light_gray, _( "Thresholds required:" ) );
-                    for( const trait_id &j : mdata.threshreq ) {
-                        mvwprintz( menu->window, point( startx + 21, line2 ), mcolor( j ),
-                                   mutation_branch::get_name( j ) );
-                        line2++;
-                    }
+                    mvwprintz( menu->window, point( startx, line2 ), c_light_gray, _( "Threshold tier: %d" ),
+                               mdata.threshold_tier );
                 }
 
                 if( !mdata.cancels.empty() ) {
@@ -435,35 +433,51 @@ void debug_menu::wishbionics( Character &c )
                 break;
             }
             case 3: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in kJ)?  Currently: %s" ),
-                               units::display( power_max ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in kJ)?  Currently: %s" ),
+                                                  units::display( power_max ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_max_power_level( units::from_kilojoule( new_value ) );
                     c.set_power_level( c.get_power_level() );
                 }
                 break;
             }
             case 4: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in J)?  Currently: %s" ),
-                               units::display( power_max ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in J)?  Currently: %s" ),
+                                                  units::display( power_max ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_max_power_level( units::from_joule( new_value ) );
                     c.set_power_level( c.get_power_level() );
                 }
                 break;
             }
             case 5: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in kJ)?  Currently: %s" ),
-                               units::display( power_level ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in kJ)?  Currently: %s" ),
+                                                  units::display( power_level ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_power_level( units::from_kilojoule( new_value ) );
                 }
                 break;
             }
             case 6: {
-                int new_value = 0;
-                if( query_int( new_value, _( "Set the value to (in J)?  Currently: %s" ),
-                               units::display( power_level ) ) ) {
+                string_input_popup popup;
+                const int64_t new_value = popup
+                                          .title( string_format( _( "Set the value to (in J)?  Currently: %s" ),
+                                                  units::display( power_level ) ) )
+                                          .only_digits( true )
+                                          .query_int64_t();
+                if( !popup.canceled() ) {
                     c.set_power_level( units::from_joule( new_value ) );
                 }
                 break;
@@ -542,8 +556,9 @@ class wish_monster_callback: public uilist_callback
             if( valid_entnum ) {
                 tmp->print_info( w_info, 2, 5, 1 );
 
-                std::string header = string_format( "#%d: %s (%d)%s", entnum, tmp->type->nname(),
-                                                    group, hallucination ? _( " (hallucination)" ) : "" );
+                std::string header = string_format( "#%d: %s (%d)%s%s", entnum, tmp->type->nname(),
+                                                    group, friendly ? _( " (friendly)" ) : "",
+                                                    hallucination ? _( " (hallucination)" ) : "" );
                 mvwprintz( w_info, point( ( getmaxx( w_info ) - utf8_width( header ) ) / 2, 0 ), c_cyan, header );
             }
 
@@ -679,8 +694,24 @@ class wish_item_callback: public uilist_callback
 
                 std::vector<iteminfo> info = tmp.info();
                 std::string info_string = format_item_info( info, {} );
-                fold_and_print( menu->window, point( startx, starty ), menu->pad_right - 1, c_light_gray,
-                                info_string );
+                const auto info_lines = foldstring( info_string, menu->pad_right - 1 );
+                int line_y = starty;
+                for( const std::string &line_text : info_lines ) {
+                    if( line_y >= menu->w_height - 1 ) {
+                        break;
+                    }
+                    const std::string stripped = trim_whitespaces(
+                                                     remove_color_tags( line_text ) );
+                    if( stripped == "--" ) {
+                        mvwhline( menu->window, point( startx, line_y ), LINE_OXOX,
+                                  menu->pad_right - 1 );
+                    } else if( !stripped.empty() ) {
+                        nc_color cur_color = c_light_gray;
+                        print_colored_text( menu->window, point( startx, line_y ), cur_color,
+                                            c_light_gray, line_text );
+                    }
+                    ++line_y;
+                }
             }
 
             if( spawn_everything ) {

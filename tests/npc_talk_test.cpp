@@ -90,7 +90,7 @@ static void change_om_type( const std::string &new_type )
     // TODO: fix point types
     const tripoint_abs_omt omt_pos( ms_to_omt_copy( get_map().getabs(
                                         get_player_character().pos() ) ) );
-    overmap_buffer.ter_set( omt_pos, oter_id( new_type ) );
+    ACTIVE_OVERMAP_BUFFER.ter_set( omt_pos, oter_id( new_type ) );
 }
 
 static npc &prep_test( dialogue &d )
@@ -350,6 +350,40 @@ TEST_CASE( "npc_talk_allies", "[npc_talk]" )
     gen_response_lines( d, 2 );
     CHECK( d.responses[0].text == "This is a basic test response." );
     CHECK( d.responses[1].text == "This is a npc allies 1 test response." );
+}
+
+TEST_CASE( "npc_talk_mind_control_clears_assigned_missions", "[npc_talk]" )
+{
+    clear_all_state();
+    dialogue d;
+    npc &talker_npc = prep_test( d );
+    avatar &player_character = get_avatar();
+
+    mission *test_mission = nullptr;
+    for( const mission_type &some_mission : mission_type::get_all() ) {
+        if( some_mission.goal == MGOAL_ASSASSINATE ) {
+            test_mission = mission::reserve_new( some_mission.id, talker_npc.getID() );
+            break;
+        }
+    }
+    REQUIRE( test_mission != nullptr );
+
+    if( test_mission->get_assigned_player_id() == player_character.getID() ) {
+        player_character.on_mission_assignment( *test_mission );
+    } else {
+        test_mission->assign( player_character );
+    }
+    talker_npc.chatbin.missions_assigned.push_back( test_mission );
+    talker_npc.chatbin.mission_selected = test_mission;
+
+    d.add_topic( "TALK_MIND_CONTROL" );
+    CHECK( gen_dynamic_line( d ) == "YES, MASTER!" );
+    CHECK( player_character.get_active_missions().empty() );
+    CHECK( player_character.get_failed_missions().size() == 1 );
+    CHECK( player_character.get_failed_missions().front() == test_mission );
+    CHECK( talker_npc.chatbin.missions_assigned.empty() );
+    CHECK( talker_npc.chatbin.mission_selected == nullptr );
+    CHECK( talker_npc.is_player_ally() );
 }
 
 TEST_CASE( "npc_talk_rules", "[npc_talk]" )

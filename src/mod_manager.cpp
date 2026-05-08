@@ -41,7 +41,7 @@ bool string_id<MOD_INFORMATION>::is_valid() const
     return world_generator->get_mod_manager().mod_map.contains( *this );
 }
 
-std::string MOD_INFORMATION::name() const
+auto MOD_INFORMATION::name() const -> std::string
 {
     if( translatable_info.name().empty() ) {
         // "No name" gets confusing if many mods have no name
@@ -52,7 +52,16 @@ std::string MOD_INFORMATION::name() const
     }
 }
 
-std::string MOD_INFORMATION::description() const
+auto MOD_INFORMATION::name_raw() const -> std::string
+{
+    if( translatable_info.name_raw().empty() ) {
+        return string_format( "No name (%s)", ident.c_str() );
+    } else {
+        return translatable_info.name_raw();
+    }
+}
+
+auto MOD_INFORMATION::description() const -> std::string
 {
     return translatable_info.description();
 }
@@ -278,8 +287,10 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
     const std::string m_descr = jo.get_string( "description", "" );
     modfile.set_translatable_info( translatable_mod_info( m_name, m_descr, modfile.path ) );
 
+    assign( jo, "license", modfile.license );
     assign( jo, "authors", modfile.authors );
     assign( jo, "maintainers", modfile.maintainers );
+    assign( jo, "loading_images", modfile.loading_images );
     assign( jo, "version", modfile.version );
     assign( jo, "lua_api_version", modfile.lua_api_version );
     assign( jo, "dependencies", modfile.dependencies );
@@ -447,7 +458,7 @@ void mod_manager::load_mods_list( WORLDINFO *world ) const
     read_from_file_json( get_mods_list_file( world ), [&]( JsonIn & jsin ) {
         for( const std::string line : jsin.get_array() ) {
             const mod_id mod( line );
-            if( std::find( amo.begin(), amo.end(), mod ) != amo.end() ) {
+            if( std::ranges::contains( amo, mod ) ) {
                 continue;
             }
             const auto iter = mod_replacements.find( mod );
@@ -512,15 +523,15 @@ translatable_mod_info::translatable_mod_info()
 
 translatable_mod_info::translatable_mod_info( std::string name,
         std::string description, std::string mod_path ) :
-    mod_path( std::move( mod_path ) ), name_raw( std::move( name ) ),
+    mod_path( std::move( mod_path ) ), name_raw_( std::move( name ) ),
     description_raw( std::move( description ) )
 {
     language_version = INVALID_LANGUAGE_VERSION;
 }
 
-std::string translatable_mod_info::name()
+auto translatable_mod_info::name() -> std::string
 {
-    if( name_raw.empty() ) {
+    if( name_raw_.empty() ) {
         return "";
     }
     if( language_version != detail::get_current_language_version() ) {
@@ -529,7 +540,12 @@ std::string translatable_mod_info::name()
     return name_tr;
 }
 
-std::string translatable_mod_info::description()
+auto translatable_mod_info::name_raw() const -> std::string
+{
+    return name_raw_;
+}
+
+auto translatable_mod_info::description() -> std::string
 {
     if( description_raw.empty() ) {
         return "";

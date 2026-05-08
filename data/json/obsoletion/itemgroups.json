@@ -121,7 +121,8 @@
       [ "crackpipe", 10 ],
       [ "weed", 10 ],
       [ "joint", 10 ],
-      [ "smart_phone", 20 ],
+      [ "smart_phone", 15 ],
+      [ "wrist_comp_budget", 5 ],
       [ "camera", 20 ],
       [ "chem_hexamine", 5 ]
     ]
@@ -158,7 +159,8 @@
       [ "cig", 20 ],
       [ "weed", 10 ],
       [ "joint", 10 ],
-      [ "smart_phone", 50 ]
+      [ "smart_phone", 30 ],
+      [ "wrist_comp_budget", 20 ]
     ]
   },
   {
@@ -194,7 +196,57 @@
       [ "cig", 20 ],
       [ "weed", 10 ],
       [ "joint", 10 ],
-      [ "smart_phone", 50 ]
+      [ "smart_phone", 30 ],
+      [ "wrist_comp_budget", 20 ]
+    ]
+  },
+  {
+    "id": "SUS_silverware",
+    "type": "item_group",
+    "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
+    "//2": "This group is for a silverware drawer.",
+    "subtype": "collection",
+    "entries": [ { "item": "knife_steak", "prob": 85 } ]
+  },
+  {
+    "id": "SUS_utensils",
+    "type": "item_group",
+    "//": "SUS item groups are collections that contain a reasonable realistic distribution of items that might spawn in a given storage furniture.",
+    "//2": "This group is for a utensils drawer.",
+    "subtype": "collection",
+    "entries": [ { "item": "tongs", "prob": 95 }, { "item": "tongs", "prob": 50 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "nanofab_recipes",
+    "//": "Very rare high level loot. This list doesn't spawn anywhere directly, it is used to create the recipes inside nanofabricator templates. ",
+    "//2": "rough organization: bots, power, armor, weapon mods, weapons, misc",
+    "magazine": 100,
+    "subtype": "distribution",
+    "entries": [
+      { "item": "rx11_stimpack", "prob": 10 },
+      { "item": "rx12_injector", "prob": 10 },
+      { "item": "ampoule", "prob": 10 },
+      { "item": "stimpack_ammo", "prob": 10 },
+      { "item": "high_density_capacitor", "prob": 10 },
+      { "item": "beam_scatterer", "prob": 10 },
+      { "item": "hk_g80", "prob": 10 },
+      { "item": "hk_g80mag", "prob": 10 },
+      { "item": "12mm", "prob": 10 },
+      { "item": "plasma_rifle", "prob": 10 },
+      { "item": "rm11b_sniper_rifle", "prob": 10 },
+      { "item": "emp_gun", "prob": 10 },
+      { "item": "plasma_gun", "prob": 10 },
+      { "item": "laser_rifle", "prob": 10 },
+      { "item": "v29", "prob": 10 },
+      { "item": "alloy_plate", "prob": 10 },
+      { "item": "mininuke", "prob": 10 },
+      { "item": "tool_rdx_charge", "prob": 10 },
+      { "item": "50_mk211", "prob": 10 },
+      { "item": "solar_panel_v3", "prob": 10 },
+      { "item": "portal", "prob": 10 },
+      { "item": "tool_rdx_charge", "prob": 10 },
+      { "item": "v29", "prob": 10 }
     ]
   }
 ]

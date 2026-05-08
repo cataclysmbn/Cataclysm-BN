@@ -3,7 +3,19 @@
     "type": "palette",
     "id": "cave_palette",
     "terrain": { ".": "t_rock", " ": "t_rock_floor" },
-    "monster": { " ": { "monster": "mon_sewer_rat", "chance": 20 } }
+    "monster": { " ": { "monster": "mon_sewer_rat", "chance": 20 } },
+    "nested": { " ": { "chunks": [ [ "null", 7 ], [ "place_cave_moss", 1 ] ] } }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "place_cave_moss",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ " " ],
+      "terrain": { " ": "t_moss_underground" },
+      "furniture": { " ": [ [ "f_null", 14 ], "f_cave_mushrooms" ] }
+    }
   },
   {
     "type": "mapgen",

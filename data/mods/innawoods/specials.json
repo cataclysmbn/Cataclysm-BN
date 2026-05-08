@@ -361,6 +361,12 @@
   },
   {
     "type": "overmap_special",
+    "id": "solar_farm",
+    "copy-from": "solar_farm",
+    "occurrences": [ 0, 0 ]
+  },
+  {
+    "type": "overmap_special",
     "id": "power_station_small",
     "copy-from": "power_station_small",
     "occurrences": [ 0, 0 ]

@@ -45,8 +45,10 @@
  * appropriately and so the counts of a redirected reference should only ever go down.
  */
 
+#include <atomic>
 #include <memory>
 #include <algorithm>
+#include <mutex>
 #include <unordered_map>
 
 #include "debug.h"
@@ -60,7 +62,7 @@ class JsonOut;
 template<typename T> class cata_arena;
 template<typename T> class cache_reference;
 
-void reset_save_ids( uint32_t prefix, bool quitting );
+auto reset_save_ids( uint32_t prefix, bool quitting ) -> void;
 
 extern uint64_t save_id_prefix;
 extern bool save_and_quit;
@@ -73,7 +75,7 @@ class safe_reference
     public:
         using id_type = uint64_t;
 
-        friend void reset_save_ids( uint32_t, bool );
+        friend auto reset_save_ids( uint32_t, bool ) -> void;
         friend T;
         friend game;
         friend cata_arena<T>;
@@ -110,9 +112,12 @@ class safe_reference
 
         inline static rbp_type records_by_pointer;
         inline static rbi_type records_by_id;
-        inline static uint32_t next_id = 1;
+        // Atomic so that concurrent save_quad() workers can call serialize() without
+        // racing on ID generation.  Reads/writes to individual record fields are safe
+        // across workers because each item belongs to exactly one quad (distinct records).
+        inline static std::atomic<uint32_t> next_id = 1;
 
-        void fill( T *obj ) {
+        auto fill( T *obj ) -> void {
             rbp_it search = records_by_pointer.find( obj );
             if( search != records_by_pointer.end() ) {
                 rec = search->second;
@@ -121,7 +126,7 @@ class safe_reference
                 records_by_pointer.insert( {obj, rec} );
             }
         }
-        void fill( id_type id ) {
+        auto fill( id_type id ) -> void {
             rbi_it search = records_by_id.find( id );
             if( search != records_by_id.end() ) {
                 rec = search->second;
@@ -132,19 +137,13 @@ class safe_reference
             }
         }
 
-        static bool id_is_destroyed( id_type id ) {
-            return ( id & DESTROYED_MASK ) != 0;
-        }
+        static auto id_is_destroyed( id_type id ) -> bool { return ( id & DESTROYED_MASK ) != 0; }
 
-        static bool id_is_redirected( id_type id ) {
-            return ( id & REDIRECTED_MASK ) != 0;
-        }
+        static auto id_is_redirected( id_type id ) -> bool { return ( id & REDIRECTED_MASK ) != 0; }
 
-        static id_type base_id( id_type id ) {
-            return ( id & ~( DESTROYED_MASK | REDIRECTED_MASK ) );
-        }
+        static auto base_id( id_type id ) -> id_type { return ( id & ~( DESTROYED_MASK | REDIRECTED_MASK ) ); }
 
-        void resolve_redirects() const {
+        auto resolve_redirects() const -> void {
             while( rec != nullptr && id_is_redirected( rec->id ) ) {
                 if( rec->mem_count == 1 && rec->json_count == 0 ) {
                     record *old_rec = rec;
@@ -158,7 +157,7 @@ class safe_reference
             }
         }
 
-        void remove() {
+        auto remove() -> void {
             resolve_redirects();
             if( rec == nullptr ) {
                 return;
@@ -186,19 +185,17 @@ class safe_reference
             }
         }
 
-        static void register_load( T *obj, id_type id );
+        static auto register_load( T *obj, id_type id ) -> void;
 
-        static id_type lookup_id( const T *obj );
+        static auto lookup_id( const T *obj ) -> id_type;
 
-        static void mark_destroyed( T *obj );
+        static auto mark_destroyed( T *obj ) -> void;
 
-        static void mark_deallocated( T *obj );
-        static void serialize_global( JsonOut &json );
-        static void deserialize_global( const JsonArray &jsin );
+        static auto mark_deallocated( T *obj ) -> void;
+        static auto serialize_global( JsonOut &json ) -> void;
+        static auto deserialize_global( const JsonArray &jsin ) -> void;
 
-        static id_type generate_new_id() {
-            return save_id_prefix | next_id++;
-        }
+        static auto generate_new_id() -> id_type { return save_id_prefix | next_id++; }
 
     public:
 
@@ -210,22 +207,18 @@ class safe_reference
         safe_reference( const safe_reference<T> &source );
         safe_reference( safe_reference<T> &&source ) noexcept ;
 
-        safe_reference<T> &operator=( const safe_reference<T> &source );
+        auto operator=( const safe_reference<T> &source ) -> safe_reference<T> &;
 
-        safe_reference<T> &operator=( safe_reference<T> &&source ) noexcept ;
+        auto operator=( safe_reference<T> &&source ) noexcept -> safe_reference<T> &;
 
         ~safe_reference();
-        static void cleanup();
+        static auto cleanup() -> void;
 
-        bool is_unassigned() const {
-            return rec == nullptr;
-        }
+        auto is_unassigned() const -> bool { return rec == nullptr; }
 
-        bool is_accessible() const {
-            return rec != nullptr && rec->target.p != nullptr;
-        }
+        auto is_accessible() const -> bool { return rec != nullptr && rec->target.p != nullptr; }
 
-        bool is_unloaded() const {
+        auto is_unloaded() const -> bool {
             resolve_redirects();
             if( is_unassigned() ) {
                 return false;
@@ -237,7 +230,7 @@ class safe_reference
                                                    !rec->target.p->is_detached() ) );
         }
 
-        bool is_destroyed() const {
+        auto is_destroyed() const -> bool {
             resolve_redirects();
             if( is_unassigned() ) {
                 return false;
@@ -245,7 +238,7 @@ class safe_reference
             return ( rec->id & DESTROYED_MASK ) != 0;
         }
 
-        id_type serialize() const {
+        auto serialize() const -> id_type {
             if( rec == nullptr ) {
                 return ID_NONE;
             }
@@ -260,7 +253,7 @@ class safe_reference
             return rec->id;
         }
 
-        void deserialize( id_type id ) {
+        auto deserialize( id_type id ) -> void {
             fill( id );
             if( rec == nullptr ) {
                 return;
@@ -271,7 +264,7 @@ class safe_reference
             rec->mem_count++;
         }
 
-        const T *get_const() const {
+        auto get_const() const -> const T* { // *NOPAD*
             if( !rec || !rec->target.p ) {
                 //TODO! more safety and proper error
                 return nullptr;
@@ -279,7 +272,7 @@ class safe_reference
             return rec->target.p;
         }
 
-        T *get() const {
+        auto get() const -> T* { // *NOPAD*
             resolve_redirects();
             if( !*this ) {
                 debugmsg( "Attempted to resolve invalid safe reference" );
@@ -288,29 +281,19 @@ class safe_reference
             return rec->target.p;
         }
 
-        explicit operator bool() const {
-            return !!*this;
-        }
+        explicit operator bool() const { return !!*this; }
 
-        bool operator!() const {
-            return is_unassigned() || is_unloaded() || is_destroyed();
-        }
+        auto operator!() const -> bool { return is_unassigned() || is_unloaded() || is_destroyed(); }
 
-        T &operator*() const {
-            return *get();
-        }
-
-        T *operator->() const {
-            return get();
-        }
-
-        bool operator==( const safe_reference<T> &against ) const {
+        auto operator*() const -> T& { return *get(); }  // *NOPAD*
+        auto operator->() const -> T* { return get(); }  // *NOPAD*
+        auto operator==( const safe_reference<T> &against ) const -> bool {
             resolve_redirects();
             against.resolve_redirects();
             return rec == against.rec;
         }
 
-        bool operator==( const T &against ) const {
+        auto operator==( const T &against ) const -> bool {
             if( !rec ) {
                 return false;
             }
@@ -318,7 +301,7 @@ class safe_reference
             return rec->target.p == &against;
         }
 
-        bool operator==( const T *against ) const {
+        auto operator==( const T *against ) const -> bool {
             if( !rec ) {
                 return against == nullptr;
             }
@@ -327,16 +310,14 @@ class safe_reference
         }
 
         template <typename U>
-        bool operator!=( const U against ) const {
-            return !( *this == against );
-        }
+        auto operator!=( const U against ) const -> bool { return !( *this == against ); }
 
         /**
          * Merge the secondary object into the primary. This means all
          * references to the secondary will now point to the primary.
          * Typically you'll want to destroy the secondary shortly afterwards.
          */
-        static void merge( T *primary, T *secondary ) {
+        static auto merge( T *primary, T *secondary ) -> void {
 
             rbp_it sec_search = records_by_pointer.find( secondary );
 
@@ -391,15 +372,21 @@ class cache_reference
         using ref_map_it = typename ref_map::iterator;
 
         inline static ref_map reference_map;
+        // Guards all access to reference_map.  Needed because preload_quad() deserialises
+        // submaps (including their active_item_cache) on worker threads, which constructs
+        // cache_reference objects concurrently.  Uncontended on the main thread so the
+        // cost during normal gameplay is a single atomic CAS per lock/unlock.
+        inline static std::mutex reference_map_mutex_;
 
-        void invalidate() {
+        auto invalidate() -> void {
             p = nullptr;
         }
 
-        void add_to_map() {
+        auto add_to_map() -> void {
             if( !p ) {
                 return;
             }
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( p );
             if( search != reference_map.end() ) {
                 search->second.push_back( this );
@@ -408,10 +395,11 @@ class cache_reference
             }
         }
 
-        void remove_from_map() {
+        auto remove_from_map() -> void {
             if( !p ) {
                 return;
             }
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( p );
             if( search != reference_map.end() ) {
                 ref_list &list = search->second;
@@ -426,7 +414,8 @@ class cache_reference
 
     public:
 
-        static void mark_destroyed( T *obj ) {
+        static auto mark_destroyed( T *obj ) -> void {
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( obj );
             if( search == reference_map.end() ) {
                 return;
@@ -459,6 +448,7 @@ class cache_reference
             if( !p ) {
                 return;
             }
+            auto lk = std::lock_guard( reference_map_mutex_ );
             ref_map_it search = reference_map.find( p );
             if( search == reference_map.end() ) {
                 debugmsg( "Couldn't find cached reference in reference map." );
@@ -469,7 +459,7 @@ class cache_reference
             std::replace( list.begin(), list.end(), &source, this );
         }
 
-        cache_reference<T> &operator=( const cache_reference<T> &source ) {
+        auto operator=( const cache_reference<T> &source ) -> cache_reference<T>& { // *NOPAD*
             if( !p && !source.p ) {
                 return *this;
             }
@@ -484,7 +474,7 @@ class cache_reference
             return *this;
         }
 
-        cache_reference<T> &operator=( cache_reference<T> &&source )  noexcept {
+        auto operator=( cache_reference<T> &&source )  noexcept -> cache_reference<T>& { // *NOPAD*
             if( !p && !source.p ) {
                 return *this;
             }
@@ -507,7 +497,7 @@ class cache_reference
             remove_from_map();
         }
 
-        T *get() const {
+        auto get() const -> T* { // *NOPAD*
             if( !*this ) {
                 debugmsg( "Tried to access invalid safe_reference" );
                 return nullptr;
@@ -515,46 +505,34 @@ class cache_reference
             return p;
         }
 
-        explicit operator bool() const {
-            return !!*this;
-        }
+        explicit operator bool() const { return !!*this; }
 
-        bool operator!() const {
-            return p == nullptr;
-        }
+        auto operator!() const -> bool { return p == nullptr; }
 
-        T &operator*() const {
-            return *get();
-        }
+        auto operator*() const -> T& { return *get(); } // *NOPAD*
 
-        T *operator->() const {
-            return get();
-        }
+        auto operator->() const -> T* { return get(); } // *NOPAD*
 
-        bool operator==( const cache_reference<T> &against ) const {
-            return against.p == p;
-        }
+        auto operator==( const cache_reference<T> & ) const -> bool = default;
+        auto operator<=>( const cache_reference<T> & ) const = default; // *NOPAD*
 
-        bool operator==( const T &against ) const {
-            return p == &against;
-        }
+        friend auto operator==( const cache_reference<T> &lhs, const T &rhs ) -> bool { return lhs.p == &rhs; }
+        friend auto operator==( const T &lhs, const cache_reference<T> &rhs ) -> bool { return &lhs == rhs.p; }
 
-        bool operator==( const T *against ) const {
-            return p == against;
-        }
+        friend auto operator==( const cache_reference<T> &lhs, const T *rhs ) -> bool { return lhs.p == rhs; }
+        friend auto operator==( const T *lhs, const cache_reference<T> &rhs ) -> bool { return lhs == rhs.p; }
 
-        template <typename U>
-        bool operator!=( const U against ) const {
-            return !( *this == against );
-        }
+        friend auto operator<=>( const cache_reference<T> &lhs, const T &rhs ) { return lhs.p <=> &rhs; } // *NOPAD*
+        friend auto operator<=>( const T &lhs, const cache_reference<T> &rhs ) { return &lhs <=> rhs.p; } // *NOPAD*
+
+        friend auto operator<=>( const cache_reference<T> &lhs, const T *rhs ) { return lhs.p <=> rhs; } // *NOPAD*
+        friend auto operator<=>( const T *lhs, const cache_reference<T> &rhs ) { return lhs <=> rhs.p; } // *NOPAD*
 };
 
 template<typename T>
-void deserialize( safe_reference<T> &, JsonIn & );
+auto deserialize( safe_reference<T> &, JsonIn & ) -> void;
 
 template<typename T>
-void serialize( const safe_reference<T> &, JsonOut & );
+auto serialize( const safe_reference<T> &, JsonOut & ) -> void;
 
-void cleanup_references();
-
-
+auto cleanup_references() -> void;

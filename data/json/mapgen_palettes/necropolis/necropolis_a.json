@@ -3,6 +3,7 @@
     "type": "palette",
     "id": "necropolis_a",
     "furniture": {
+      "`": [ [ "f_null", 90 ], [ "f_space_heater_off", 6 ], [ "f_space_heater_large", 4 ] ],
       "Ю": "f_camp_chair",
       "Я": "f_tourist_table",
       "@": "f_bed",
@@ -176,6 +177,6 @@
       "o": { "item": "homebooks", "chance": 50, "repeat": 2 },
       "o̱": { "item": "manuals", "chance": 75, "repeat": [ 1, 2 ] }
     },
-    "nested": { "v": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
+    "nested": { "v": { "chunks": [ [ "null", 195 ], [ "house_place_air_conditioner", 5 ] ] } }
   }
 ]

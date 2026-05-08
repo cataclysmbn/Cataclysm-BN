@@ -14,6 +14,6 @@
   },
   {
     "type": "MONSTER_BLACKLIST",
-    "monsters": [ "mon_zombie_necro" ]
+    "monsters": [ "mon_zombie_necro", "mon_skeleton_necro" ]
   }
 ]

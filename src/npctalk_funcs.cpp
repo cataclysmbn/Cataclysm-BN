@@ -79,12 +79,11 @@ static const efftype_id effect_npc_suspend( "npc_suspend" );
 static const efftype_id effect_pet( "pet" );
 static const efftype_id effect_sleep( "sleep" );
 
+static const flag_id flag_BIONIC_WEAPON( "BIONIC_WEAPON" );
+
 static const mtype_id mon_chicken( "mon_chicken" );
 static const mtype_id mon_cow( "mon_cow" );
 static const mtype_id mon_horse( "mon_horse" );
-
-static const bionic_id bio_power_storage( "bio_power_storage" );
-static const bionic_id bio_power_storage_mkII( "bio_power_storage_mkII" );
 
 struct itype;
 
@@ -293,6 +292,11 @@ void talk_function::revert_activity( npc &p )
     p.revert_after_activity();
 }
 
+void talk_function::do_craft( npc &p )
+{
+    p.do_npc_craft();
+}
+
 void talk_function::goto_location( npc &p )
 {
     int i = 0;
@@ -312,8 +316,8 @@ void talk_function::goto_location( npc &p )
         destination = g->u.global_omt_location();
     }
     p.goal = destination;
-    p.omt_path = overmap_buffer.get_travel_path( p.global_omt_location(), p.goal,
-                 overmap_path_params::for_npc() );
+    p.omt_path = get_overmapbuffer( p.get_dimension() ).get_travel_path(
+                     p.global_omt_location(), p.goal, overmap_path_params::for_npc() );
     if( destination == tripoint_abs_omt() || destination == overmap::invalid_tripoint ||
         p.omt_path.empty() ) {
         p.goal = npc::no_goal_point;
@@ -373,6 +377,11 @@ void talk_function::wake_up( npc &p )
     // TODO: Get mad at player for waking us up unless we're in danger
 }
 
+void talk_function::control_npc( npc &p )
+{
+    get_avatar().control_npc( p );
+}
+
 void talk_function::reveal_stats( npc &p )
 {
     character_display::disp_info( p );
@@ -424,17 +433,13 @@ void talk_function::bionic_remove( npc &p )
     std::vector<itype_id> bionic_types;
     std::vector<std::string> bionic_names;
     for( const bionic &bio : all_bio ) {
-        if( std::ranges::find( bionic_types,
-                               bio.info().itype() ) == bionic_types.end() ) {
-            if( bio.id != bio_power_storage ||
-                bio.id != bio_power_storage_mkII ) {
-                bionic_types.push_back( bio.info().itype() );
-                if( bio.info().itype().is_valid() ) {
-                    item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );
-                    bionic_names.push_back( tmp->tname() + " - " + format_money( 50000 + ( tmp->price( true ) / 4 ) ) );
-                } else {
-                    bionic_names.push_back( bio.id.str() + " - " + format_money( 50000 ) );
-                }
+        if( !std::ranges::contains( bionic_types, bio.info().itype() ) ) {
+            bionic_types.push_back( bio.info().itype() );
+            if( bio.info().itype().is_valid() ) {
+                item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );
+                bionic_names.push_back( tmp->tname() + " - " + format_money( 50000 + ( tmp->price( true ) / 4 ) ) );
+            } else {
+                bionic_names.push_back( bio.id.str() + " - " + format_money( 50000 ) );
             }
         }
     }
@@ -611,8 +616,9 @@ void talk_function::buy_10_logs( npc &p )
     find_params.search_range = { 0, 1 };
     find_params.search_layers = { 0, 0 };
 
-    std::vector<tripoint_abs_omt> places = overmap_buffer.find_all(
-            get_player_character().global_omt_location(), find_params );
+    std::vector<tripoint_abs_omt> places = get_overmapbuffer(
+            get_player_character().get_dimension() ).find_all(
+                    get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -620,7 +626,8 @@ void talk_function::buy_10_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( const tripoint_abs_omt &i : places ) {
-        if( &cur_om == overmap_buffer.get_existing_om_global( i ).om ) {
+        if( &cur_om == get_overmapbuffer( get_player_character().get_dimension() ).get_existing_om_global(
+                i ).om ) {
             places_om.push_back( i );
         }
     }
@@ -629,7 +636,6 @@ void talk_function::buy_10_logs( npc &p )
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
     bay.spawn_item( point( 7, 15 ), "log", 10 );
-    bay.save();
 
     p.add_effect( effect_currently_busy, 1_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -643,7 +649,8 @@ void talk_function::buy_100_logs( npc &p )
     find_params.search_layers = { 0, 0 };
 
     std::vector<tripoint_abs_omt> places =
-        overmap_buffer.find_all( get_player_character().global_omt_location(), find_params );
+        get_overmapbuffer( get_player_character().get_dimension() ).find_all(
+            get_player_character().global_omt_location(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -651,7 +658,8 @@ void talk_function::buy_100_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( auto &i : places ) {
-        if( &cur_om == overmap_buffer.get_existing_om_global( i ).om ) {
+        if( &cur_om == get_overmapbuffer( get_player_character().get_dimension() ).get_existing_om_global(
+                i ).om ) {
             places_om.push_back( i );
         }
     }
@@ -660,7 +668,6 @@ void talk_function::buy_100_logs( npc &p )
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
     bay.spawn_item( point( 7, 15 ), "log", 100 );
-    bay.save();
 
     p.add_effect( effect_currently_busy, 7_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -692,7 +699,7 @@ void talk_function::deny_lead( npc &p )
 
 void talk_function::deny_equipment( npc &p )
 {
-    p.add_effect( effect_asked_for_item, 1_hours );
+    p.add_effect( effect_asked_for_item, 6_hours );
 }
 
 void talk_function::deny_train( npc &p )
@@ -813,7 +820,18 @@ void talk_function::player_weapon_away( npc &/*p*/ )
 
 void talk_function::player_weapon_drop( npc &/*p*/ )
 {
-    get_map().add_item_or_charges( g->u.pos(), g->u.remove_primary_weapon() );
+    for( item *weapon : g->u.wielded_items() ) {
+        const auto ret = g->u.can_unwield( *weapon );
+        if( ret.success() ) {
+            get_map().add_item_or_charges( g->u.pos(), g->u.remove_primary_weapon() );
+        }
+    }
+
+    for( bionic &i : *g->u.my_bionics ) {
+        if( i.powered && i.info().has_flag( flag_BIONIC_WEAPON ) ) {
+            g->u.deactivate_bionic( i );
+        }
+    }
 }
 
 void talk_function::lead_to_safety( npc &p )
@@ -827,6 +845,11 @@ void talk_function::lead_to_safety( npc &p )
 
 bool npc_trading::pay_npc( npc &np, int cost )
 {
+    // Free items should never trigger trading
+    if( cost <= 0 ) {
+        return true;
+    }
+
     if( np.op_of_u.owed >= cost ) {
         np.op_of_u.owed -= cost;
         return true;
@@ -939,7 +962,7 @@ void talk_function::set_npc_pickup( npc &p )
 void talk_function::npc_die( npc &p )
 {
     p.die( nullptr );
-    const shared_ptr_fast<npc> guy = overmap_buffer.find_npc( p.getID() );
+    const shared_ptr_fast<npc> guy = get_overmapbuffer( p.get_dimension() ).find_npc( p.getID() );
     if( guy && !guy->is_dead() ) {
         guy->marked_for_death = true;
     }

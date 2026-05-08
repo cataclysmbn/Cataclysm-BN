@@ -8,7 +8,7 @@
 #include "translations.h"
 #include "type_id.h"
 
-using weather_effect_fn = void ( * )( int intensity );
+using weather_effect_fn = std::function<void( int )>;
 
 template<typename E> struct enum_traits;
 template<typename T> class generic_factory;

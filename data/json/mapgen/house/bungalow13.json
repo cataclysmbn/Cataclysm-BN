@@ -4,7 +4,7 @@
     "om_terrain": "bungalow13",
     "method": "json",
     "object": {
-      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_bathroom", "standard_domestic_landscaping_palette" ],
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
       "fill_ter": "t_floor",
       "rows": [
         "...........---.p........",
@@ -26,14 +26,13 @@
         ".||+||||+|||+|||||||+||.",
         ".|b dd +        +    ¤|.",
         ".oy    ||+||||+|||d @@o.",
-        ".oy    |P  E|__QQ|d @@o.",
-        ".|D @@ | &  |B___|y  ¤|.",
+        ".oy    |P  E|¨¨QQ|d @@o.",
+        ".|D @@ | &  |B¨¨¨|y  ¤|.",
         "^|D @@¤|rrr/|B8St|D  b|.",
         ".|||oo|||o||||o|||oo|||.",
         "................^......."
       ],
       "terrain": {
-        "_": "t_linoleum_gray",
         ":": "t_thconc_floor",
         "g": "t_thconc_floor",
         "w": "t_thconc_floor",

@@ -46,7 +46,11 @@ end
 mod.set_remote_base = function(item, p_omt) item:set_var_tri(mod.var_base, p_omt) end
 
 -- Look for spawned remotes and bind them to given omt
-mod.on_mapgen_postprocess_hook = function(map, p_omt, when)
+---@param params OnMapgenPostprocessParams
+mod.on_mapgen_postprocess_hook = function(params)
+  local map = params.map
+  local p_omt = params.omt
+
   local mapsize = map:get_map_size()
   local item_id = mod.item_id
   for y = 0, mapsize - 1 do
@@ -118,7 +122,7 @@ mod.get_neighbours_at = function(opts, block, p)
   local v = opts[k]
   if v ~= nil and v.idx == block.idx then
     opts[k] = nil
-    block.points[#block.points + 1] = p
+    table.insert(block.points, p)
     if v.can_open then block.can_open_num = block.can_open_num + 1 end
     if v.can_close then block.can_close_num = block.can_close_num + 1 end
     mod.get_neighbours(opts, block, p)
@@ -214,7 +218,7 @@ mod.build_target_list = function(map, pos_omt)
     block.can_close = block.can_close_num > 0
 
     -- Add block to list
-    ret[#ret + 1] = block
+    table.insert(ret, block)
   end
 
   return ret
@@ -300,7 +304,10 @@ mod.invoke_block = function(block, grid)
 end
 
 -- Main iuse function. Returns amount of charges consumed from item.
-mod.iuse_function = function(who, item, pos)
+mod.iuse_function = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local user_pos = gapi.get_map():get_abs_ms(pos)
 
   -- Uncomment this so on activation the remote reconfigures itself to work in user's omt
@@ -343,17 +350,17 @@ mod.iuse_function = function(who, item, pos)
   local transforms = mod.get_transform_list()
   for block_idx, block in pairs(targets) do
     if block.can_open then
-      sel_list[#sel_list + 1] = {
+      table.insert(sel_list, {
         block = block,
         do_open = true,
         text = transforms[block.idx].name_open .. " #" .. tostring(block_idx),
-      }
+      })
     elseif block.can_close then
-      sel_list[#sel_list + 1] = {
+      table.insert(sel_list, {
         block = block,
         do_open = false,
         text = transforms[block.idx].name_close .. " #" .. tostring(block_idx),
-      }
+      })
     end
   end
 

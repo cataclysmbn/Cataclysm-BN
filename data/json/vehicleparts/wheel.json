@@ -129,6 +129,7 @@
     "description": "A pair of small rail wheels.  It performs well when riding on a pair of small rails.  It performs terribly when not on a rail.  Moreover, you can't steer it.",
     "damage_modifier": 50,
     "breaks_into": [ { "item": "scrap", "count": [ 2, 3 ] }, { "item": "steel_chunk", "count": [ 1, 2 ] } ],
+    "extend": { "flags": [ "SHOCK_RESISTANT" ] },
     "damage_reduction": { "all": 60 }
   },
   {
@@ -256,7 +257,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "STEERABLE", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT" ],
+    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "STEERABLE", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "damage_reduction": { "bash": 10 }
   },
   {
@@ -286,7 +287,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "NEEDS_JACKING", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT" ],
+    "flags": [ "WHEEL", "NEEDS_JACKING", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "damage_reduction": { "bash": 6 }
   },
   {
@@ -348,7 +349,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "plastics", 1 ] ] }
     },
-    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE" ]
+    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE", "SHOCK_RESISTANT" ]
   },
   {
     "id": "wheel_skateboard",
@@ -369,7 +370,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "1 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] },
       "install": { "skills": [ [ "mechanics", 0 ] ], "time": "1 m", "qualities": [ { "id": "WRENCH", "level": 2 } ] }
     },
-    "flags": [ "WHEEL", "NEEDS_WHEEL_MOUNT_SKATEBOARD", "STABLE", "STEERABLE" ]
+    "flags": [ "WHEEL", "NEEDS_WHEEL_MOUNT_SKATEBOARD", "STABLE", "STEERABLE", "SHOCK_RESISTANT", "FOLDABLE" ]
   },
   {
     "id": "wheel_mount_skateboard",
@@ -425,7 +426,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "vehicle_bolt", 1 ] ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE" ]
+    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE", "SHOCK_RESISTANT" ]
   },
   {
     "abstract": "wheel_motorbike_abstract",
@@ -454,7 +455,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "NEEDS_JACKING", "NEEDS_WHEEL_MOUNT_LIGHT" ],
+    "flags": [ "WHEEL", "NEEDS_JACKING", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "damage_reduction": { "bash": 10 }
   },
   {
@@ -518,7 +519,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT" ]
+    "flags": [ "WHEEL", "FOLDABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ]
   },
   {
     "id": "wheel_tricycle",
@@ -541,7 +542,7 @@
     "rolling_resistance": 10,
     "wheel_type": "standard",
     "contact_area": 10,
-    "flags": [ "STABLE", "STEERABLE", "WHEEL", "NEEDS_JACKING" ],
+    "flags": [ "STABLE", "STEERABLE", "WHEEL", "NEEDS_JACKING", "SHOCK_RESISTANT" ],
     "damage_reduction": { "bash": 8 }
   },
   {
@@ -572,7 +573,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE", "NEEDS_WHEEL_MOUNT_LIGHT" ],
+    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "damage_reduction": { "bash": 8 }
   },
   {
@@ -603,7 +604,7 @@
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
     },
-    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE", "NEEDS_WHEEL_MOUNT_LIGHT" ],
+    "flags": [ "WHEEL", "NEEDS_JACKING", "STABLE", "FOLDABLE", "STEERABLE", "NEEDS_WHEEL_MOUNT_LIGHT", "SHOCK_RESISTANT" ],
     "damage_reduction": { "bash": 6 }
   },
   {
@@ -663,7 +664,11 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
       "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "5 m", "qualities": [ { "id": "SAW_W", "level": 1 } ] },
-      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "50 s", "using": [ [ "adhesive", 1 ], [ "wood_structural_small", 1 ] ] }
+      "repair": {
+        "skills": [ [ "mechanics", 2 ] ],
+        "time": "50 s",
+        "using": [ [ "nail_any_adhesive", 1 ], [ "wood_structural_small", 1 ] ]
+      }
     },
     "rolling_resistance": 2.15,
     "wheel_type": "rigid",
@@ -723,15 +728,111 @@
     "durability": 25,
     "damage_modifier": 50,
     "folded_volume": "2500 ml",
-    "flags": [ "WHEEL", "STABLE", "FOLDABLE" ],
+    "flags": [ "WHEEL", "STABLE", "FOLDABLE", "SHOCK_RESISTANT" ],
     "wheel_type": "rigid",
     "contact_area": 50,
     "breaks_into": [ { "item": "splinter", "count": [ 3, 6 ] } ],
     "requirements": {
       "install": { "skills": [ [ "survival", 0 ] ], "time": "15 m", "using": [ [ "nail_glue", 1 ] ] },
       "removal": { "skills": [ [ "survival", 0 ] ], "time": "10 m" },
-      "repair": { "skills": [ [ "survival", 1 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_small_wood", 2 ] ] }
+      "repair": {
+        "skills": [ [ "survival", 1 ] ],
+        "time": "15 m",
+        "using": [ [ "nail_any_adhesive", 1 ], [ "vehicle_repair_small_wood", 2 ] ]
+      }
     },
     "damage_reduction": { "all": 8 }
+  },
+  {
+    "id": "tread1",
+    "type": "vehicle_part",
+    "name": { "str": "rubber treads" },
+    "item": "tread1",
+    "location": "under",
+    "symbol": "|",
+    "broken_symbol": "x",
+    "color": "dark_gray",
+    "broken_color": "light_gray",
+    "durability": 2000,
+    "damage_modifier": 50,
+    "description": "A section of continuous track, the kind mounted on construction vehicles and military fighting vehicles.  It acts as a wheel, and the broad surface provides plenty of traction to move heavy vehicles off-road, but at the cost of speed due to the heavy weight.",
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 2, 4 ] },
+      { "item": "steel_chunk", "count": [ 6, 12 ] },
+      { "item": "scrap", "count": [ 8, 18 ] },
+      { "item": "chunk_rubber", "count": [ 10, 20 ] },
+      { "item": "chain", "count": [ 0, 1 ] }
+    ],
+    "rolling_resistance": 3.5,
+    "wheel_type": "treads",
+    "contact_area": 900,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 7 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ], [ "tire_repair", 1 ] ]
+      }
+    },
+    "flags": [ "WHEEL", "VARIABLE_SIZE", "MULTISQUARE", "TRACKED" ]
+  },
+  {
+    "id": "tread2",
+    "type": "vehicle_part",
+    "name": { "str": "steel treads" },
+    "item": "tread2",
+    "location": "under",
+    "symbol": "|",
+    "broken_symbol": "x",
+    "color": "dark_gray",
+    "broken_color": "light_gray",
+    "durability": 3500,
+    "damage_modifier": 50,
+    "description": "A section of continuous track, the kind mounted on construction vehicles and military fighting vehicles.  It acts as a wheel, and the broad surface provides plenty of traction to move heavy vehicles off-road, but at the cost of speed due to the heavy weight.",
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 8, 16 ] },
+      { "item": "steel_chunk", "count": [ 20, 40 ] },
+      { "item": "scrap", "count": [ 50, 75 ] },
+      { "item": "chain", "count": [ 0, 1 ] }
+    ],
+    "rolling_resistance": 3,
+    "wheel_type": "treads",
+    "contact_area": 2500,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 5 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 2 ] ] }
+    },
+    "flags": [ "WHEEL", "VARIABLE_SIZE", "MULTISQUARE", "TRACKED" ]
+  },
+  {
+    "id": "tread3",
+    "type": "vehicle_part",
+    "name": { "str": "tank treads" },
+    "item": "tread3",
+    "location": "under",
+    "symbol": "|",
+    "broken_symbol": "x",
+    "color": "dark_gray",
+    "broken_color": "light_gray",
+    "durability": 5000,
+    "damage_modifier": 50,
+    "description": "A section of continuous track, the kind mounted on construction vehicles and military fighting vehicles.  It acts as a wheel, and the broad surface provides plenty of traction to move heavy vehicles off-road, but at the cost of speed due to the heavy weight.",
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 12, 30 ] },
+      { "item": "steel_chunk", "count": [ 25, 60 ] },
+      { "item": "scrap", "count": [ 60, 120 ] },
+      { "item": "chain", "count": [ 0, 1 ] }
+    ],
+    "rolling_resistance": 3,
+    "wheel_type": "treads",
+    "contact_area": 3600,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 5 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_standard", 1 ] ] }
+    },
+    "flags": [ "WHEEL", "VARIABLE_SIZE", "MULTISQUARE", "TRACKED" ]
   }
 ]

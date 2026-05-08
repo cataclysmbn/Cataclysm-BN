@@ -1,0 +1,155 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_ARSONIST",
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_ARSONIST_GM_PRELUDE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_ARSONIST_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "A while back I ran into something like that myself, actually.  Was in the evening, a few strange creatures showed up while I was starting a controlled burn of an abandoned block.  Came out of the shadows and it seemed like the shadows followed them.  I cut down the street and it seems the firelight either scared them off or distracted them."
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_ARSONIST_WORLD_OPTIMISTIC",
+    "responses": [
+      {
+        "text": "There are people surviving out there, at least.  Still work to be done.",
+        "topic": "TALK_ARSONIST_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            {
+              "not": { "npc_has_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_ARSONIST_CF_REP_MISSION_4",
+    "dynamic_line": {
+      "u_has_var": "tacoma_started",
+      "type": "knowledge",
+      "context": "flag",
+      "value": "yes",
+      "yes": "Yeah, I guess they have that ranch thing set up out there, and every so often people like me stop by.  Guessing you mean some other bunch of people though?  What're they like?",
+      "no": "Most I've seen are small groups holed up in buildings and the like.  Couple other holdouts here and there I guess.  What sort of work were you talking about, though?"
+    },
+    "responses": [
+      {
+        "text": "It's a group operating out of a rural church along the roadside, I was asked to see if I could find another trading partner for them.",
+        "switch": true,
+        "topic": "TALK_ARSONIST_CF_REP_MISSION_4_DESCRIBE",
+        "condition": { "u_has_var": "tacoma_started", "type": "knowledge", "context": "flag", "value": "yes" }
+      },
+      {
+        "text": "There's a decent-sized holdout I was asked to help find another trading partner for.",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_ARSONIST_CF_REP_MISSION_4_HELP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_ARSONIST_CF_REP_MISSION_4_DESCRIBE",
+    "dynamic_line": "I've heard a little bit about a place like before, from a couple other local scavengers.  Never visited them myself, a bit out of the way from where I prefer to scout out, plus I'd rather not set fires where they might cause trouble for other holdouts.  I could try telling the other scavs about there being work there, I guess.",
+    "responses": [
+      { "text": "I'd appreciate the help if you could, sure.", "topic": "TALK_ARSONIST_CF_REP_MISSION_4_DEAL" },
+      { "text": "It's fine, I was going to look into other options just in case.", "topic": "TALK_ARSONIST" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_ARSONIST_CF_REP_MISSION_4_DEAL",
+    "dynamic_line": "Might as well while I'm here, might get a few looters tied up in steady work instead of poking around in buildings I'm trying to work on.",
+    "responses": [
+      {
+        "text": "Thanks!  I've talked to a few others as well, that should be enough to get word out.  I should go check up on them.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "Thanks!  I might talk to someone else to help get word out.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "Thanks!  I'll see if talking to a couple other people will help.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "switch": true,
+        "default": true,
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_ARSONIST_CF_REP_MISSION_4_HELP",
+    "dynamic_line": "Huh, might be interesting.  What can you tell me about them?",
+    "responses": [
+      {
+        "text": "They're operating out of a rural parish church, and have been expanding to make their settlement more self-sufficient.",
+        "topic": "TALK_ARSONIST_CF_REP_MISSION_4_DESCRIBE"
+      }
+    ]
+  }
+]

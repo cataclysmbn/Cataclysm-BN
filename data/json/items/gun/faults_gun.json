@@ -19,6 +19,7 @@
             [
               [ "gasoline", 50 ],
               [ "diesel", 50 ],
+              [ "chem_butane", 50 ],
               [ "chem_ethanol", 50 ],
               [ "chem_methanol", 50 ],
               [ "denat_alcohol", 50 ],
@@ -48,6 +49,7 @@
             [
               [ "gasoline", 50 ],
               [ "diesel", 50 ],
+              [ "chem_butane", 50 ],
               [ "chem_ethanol", 50 ],
               [ "chem_methanol", 50 ],
               [ "denat_alcohol", 50 ],
@@ -126,6 +128,7 @@
             [
               [ "gasoline", 50 ],
               [ "diesel", 50 ],
+              [ "chem_butane", 50 ],
               [ "chem_ethanol", 50 ],
               [ "chem_methanol", 50 ],
               [ "denat_alcohol", 50 ],
@@ -155,6 +158,7 @@
             [
               [ "gasoline", 50 ],
               [ "diesel", 50 ],
+              [ "chem_butane", 50 ],
               [ "chem_ethanol", 50 ],
               [ "chem_methanol", 50 ],
               [ "denat_alcohol", 50 ],

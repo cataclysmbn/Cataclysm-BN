@@ -88,6 +88,15 @@
     "capacity": 10000
   },
   {
+    "id": "sea_scooter_battery",
+    "copy-from": "medium_storage_battery",
+    "type": "MAGAZINE",
+    "name": { "str": "sea scooter battery", "str_pl": "sea scooter batteries" },
+    "description": "A medium storage battery customized to fit specifically inside the hull of a sea scooter. It also weighs less.",
+    "weight": "10 kg",
+    "volume": "5 L"
+  },
+  {
     "id": "small_storage_battery",
     "copy-from": "storage_battery",
     "type": "MAGAZINE",

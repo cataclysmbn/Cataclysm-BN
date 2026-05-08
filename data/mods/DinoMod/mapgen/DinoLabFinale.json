@@ -146,7 +146,8 @@
       },
       "place_loot": [
         { "group": "mech_power_cell_spawn", "x": 1, "y": [ 1, 4 ] },
-        { "item": "id_science", "x": [ 19, 20 ], "y": [ 2, 5 ] }
+        { "item": "id_science", "x": [ 19, 20 ], "y": [ 2, 5 ] },
+        { "group": "dinomod_finale_genome_drive", "x": [ 19, 20 ], "y": [ 2, 5 ] }
       ],
       "place_monster": [
         { "monster": "mon_deinonychus", "x": [ 7, 8 ], "y": [ 17, 18 ], "chance": 90, "repeat": [ 1, 5 ] },

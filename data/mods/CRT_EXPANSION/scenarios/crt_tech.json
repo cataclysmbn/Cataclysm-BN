@@ -1,0 +1,85 @@
+[
+  {
+    "type": "profession",
+    "id": "crt_engineer_t3",
+    "name": "C.R.I.T. Engineer",
+    "description": "You were scheduled to fix the several of the lab facilities in New England and show other researchers the new weapons you were working on.  When the Cataclysm broke out, it made it so testing was easier to do, but then again nothing seems to making that much sense.  Time to bug-out!",
+    "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
+    "points": 12,
+    "skills": [
+      { "level": 8, "name": "electronics" },
+      { "level": 5, "name": "mechanics" },
+      { "level": 8, "name": "fabrication" },
+      { "level": 4, "name": "pistol" },
+      { "level": 4, "name": "gun" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "rucksack",
+          "ds_armor",
+          "ds_monitor",
+          "army_top",
+          "crt_gloves",
+          "crt_gloves_liner",
+          "crt_belt",
+          "socks",
+          "toolbox",
+          "mre_veggy_box",
+          "lighter",
+          "id_military",
+          "id_science"
+        ],
+        "entries": [
+          { "item": "water_clean", "container-item": "crt_canteen" },
+          { "item": "plasma", "charges": 13 },
+          { "item": "nail", "charges": 75 },
+          { "item": "crt_solarpack", "contents-item": [ "ds_line_gun", "ds_rivet_gun" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "crt_engineer_t1",
+    "name": "C.R.I.T. Technician",
+    "description": "Unlike most of CRIT you haven't gone into the field often. Mostly your place is to repair vehicles and parts of bases. When the cataclysm struck you were barely able to escape the base. At least you had some of your gear, but it seems your pistol was scuffed up",
+    "points": 4,
+    "traits": [ "MARTIAL_CRT", "PROF_MILITARY" ],
+    "skills": [
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "pistol" },
+      { "level": 4, "name": "fabrication" },
+      { "level": 4, "name": "mechanics" }
+    ],
+    "items": {
+      "both": {
+        "ammo": 100,
+        "items": [
+          "crt_helmet",
+          "crt_helmet_liner",
+          "crt_jacket",
+          "crt_sarmor",
+          "crt_pants",
+          "crt_gloves",
+          "crt_gloves_liner",
+          "crt_canteen",
+          "crt_med_kit",
+          "crt_legrig",
+          "socks",
+          "crt_la_boots"
+        ],
+        "entries": [
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "crt_solarpack", "contents-item": [ "crt_laser_pistol_brk", "knife_crt" ] },
+          { "item": "sleeping_bag_roll", "custom-flags": [ "no_auto_equip" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  }
+]

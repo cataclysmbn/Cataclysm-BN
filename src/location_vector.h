@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "detached_ptr.h"
+#include "coordinates.h"
 
 template<typename T>
 class location;
@@ -83,6 +84,11 @@ class location_vector
 
                 iterator &operator+=( difference_type t ) {
                     it += t;
+                    return *this;
+                }
+
+                iterator &operator-=( difference_type t ) {
+                    it -= t;
                     return *this;
                 }
 
@@ -176,6 +182,11 @@ class location_vector
 
                 const_iterator &operator+=( difference_type t ) {
                     it += t;
+                    return *this;
+                }
+
+                const_iterator &operator-=( difference_type t ) {
+                    it -= t;
                     return *this;
                 }
 

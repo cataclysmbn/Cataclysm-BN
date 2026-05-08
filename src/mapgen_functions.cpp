@@ -100,7 +100,6 @@ building_gen_pointer get_mapgen_cfunction( const std::string &ident )
             { "road_end",         &mapgen_road },
             { "road_tee",         &mapgen_road },
             { "road_four_way",    &mapgen_road },
-            { "field",            &mapgen_field },
             { "highway",          &mapgen_highway },
             { "railroad_straight", &mapgen_railroad },
             { "railroad_curved",   &mapgen_railroad },
@@ -137,6 +136,7 @@ building_gen_pointer get_mapgen_cfunction( const std::string &ident )
 
             { "tutorial", &mapgen_tutorial },
             { "lake_shore", &mapgen_lake_shore },
+            { "pd_border", &mapgen_pd_border },
         }
     };
     const auto iter = pointers.find( ident );
@@ -201,7 +201,7 @@ void mapgen_crater( mapgendata &dat )
             if( rng( 0, dat.w_fac ) <= i && rng( 0, dat.e_fac ) <= SEEX * 2 - 1 - i &&
                 rng( 0, dat.n_fac ) <= j && rng( 0, dat.s_fac ) <= SEEX * 2 - 1 - j ) {
                 m->ter_set( point( i, j ), t_pit_shallow );
-                m->make_rubble( tripoint( i,  j, m->get_abs_sub().z ), f_rubble_rock );
+                m->make_rubble( tripoint( i,  j, m->get_abs_sub().z() ), f_rubble_rock );
                 m->set_radiation( point( i, j ), rng( 0, 4 ) * rng( 0, 2 ) );
             } else {
                 m->ter_set( point( i, j ), dat.groundcover() );
@@ -296,8 +296,8 @@ void mapgen_hive( mapgendata &dat )
                         m->ter_set( point( i + k, j + l ), t_floor_wax );
                     }
                 }
-                m->add_spawn( mon_bee, 2, { i, j, m->get_abs_sub().z } );
-                m->add_spawn( mon_beekeeper, 1, { i, j, m->get_abs_sub().z } );
+                m->add_spawn( mon_bee, 2, { i, j, m->get_abs_sub().z() } );
+                m->add_spawn( mon_beekeeper, 1, { i, j, m->get_abs_sub().z() } );
                 m->ter_set( point( i, j - 3 ), t_floor_wax );
                 m->ter_set( point( i, j + 3 ), t_floor_wax );
                 m->ter_set( point( i - 1, j - 2 ), t_floor_wax );
@@ -811,7 +811,7 @@ void mapgen_road( mapgendata &dat )
                          dat.monster_density() );
         // 1 per 10 overmaps
         if( one_in( 10000 ) ) {
-            m->add_spawn( mon_zombie_jackson, 1, { SEEX, SEEY, m->get_abs_sub().z } );
+            m->add_spawn( mon_zombie_jackson, 1, { SEEX, SEEY, m->get_abs_sub().z() } );
         }
     }
 
@@ -1184,6 +1184,19 @@ void mapgen_subway( mapgendata &dat )
                                                 f_null ) );
             VehicleSpawn::apply( vspawn_id( "default_subway_deadend" ), *m, "subway" );
             break;
+    }
+
+    // Add patches of cave moss
+    for( int i = 0; i < SEEX * 2; i++ ) {
+        for( int j = 0; j < SEEY * 2; j++ ) {
+            if( one_in( 12 ) && m->ter( tripoint( point( i, j ), m->get_abs_sub().z() ) ) == t_rock_floor ) {
+                m->ter_set( point( i, j ), t_moss_underground );
+                // Some of that moss has mushrooms too.
+                if( one_in( 15 ) ) {
+                    m->furn_set( point( i, j ), f_cave_mushrooms );
+                }
+            }
+        }
     }
 
     // finally, unrotate the map
@@ -1873,7 +1886,7 @@ void mapgen_cavern( mapgendata &dat )
         }
         while( !one_in( 3 ) ) {
             for( int i = 0; i < 3; ++i ) {
-                m->put_items_from_loc( item_group_id( "cannedfood" ), tripoint( p2, m->get_abs_sub().z ),
+                m->put_items_from_loc( item_group_id( "cannedfood" ), tripoint( p2, m->get_abs_sub().z() ),
                                        dat.when() );
             }
         }
@@ -1912,6 +1925,20 @@ void mapgen_rock( mapgendata &dat )
 void mapgen_open_air( mapgendata &dat )
 {
     fill_background( &dat.m, t_open_air );
+}
+
+void mapgen_pd_border( mapgendata &dat )
+{
+    // Use the boundary terrain from the map's dimension bounds if available,
+    // otherwise fall back to the default pocket dimension border terrain.
+    ter_id border_ter = ter_id( "t_pd_border" );
+    if( dat.m.has_dimension_bounds() ) {
+        std::optional<dimension_bounds> bounds = dat.m.get_dimension_bounds();
+        if( bounds && bounds->boundary_terrain.is_valid() ) {
+            border_ter = bounds->boundary_terrain.id();
+        }
+    }
+    fill_background( &dat.m, border_ter );
 }
 
 void mapgen_rift( mapgendata &dat )
@@ -2928,6 +2955,33 @@ void mapgen_lake_shore( mapgendata &dat )
         for( auto &wp : water_points ) {
             m->ter_set( wp, water_tile );
             m->furn_set( wp, f_null );
+            if( dat.zlevel() == dat.region.overmap_lake.lake_depth ) {
+                if( one_in( 4 ) ) {
+                    m->ter_set( wp, t_lake_moss );
+                }
+
+                switch( rng( 1, 20 ) ) {
+                    case 1:
+                        m->furn_set( wp, f_lake_pondweed );
+                        break;
+                    case 2:
+                        m->furn_set( wp, f_lake_detritus );
+                        break;
+                    case 3:
+                        m->furn_set( wp, f_lake_liverwort );
+                        break;
+                    case 4:
+                        if( x_in_y( 2, 5 ) ) {
+                            m->furn_set( wp, f_lake_eelgrass );
+                        } else {
+                            m->furn_set( wp, f_lake_hornwort );
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
         }
     };
 
@@ -2956,19 +3010,19 @@ void mapgen_lake_shore( mapgendata &dat )
 
 void mremove_trap( map *m, point p )
 {
-    tripoint actual_location( p, m->get_abs_sub().z );
+    tripoint actual_location( p, m->get_abs_sub().z() );
     m->remove_trap( actual_location );
 }
 
 void mtrap_set( map *m, point p, trap_id type )
 {
-    tripoint actual_location( p, m->get_abs_sub().z );
+    tripoint actual_location( p, m->get_abs_sub().z() );
     m->trap_set( actual_location, type );
 }
 
 void madd_field( map *m, point p, field_type_id type, int intensity )
 {
-    tripoint actual_location( p, m->get_abs_sub().z );
+    tripoint actual_location( p, m->get_abs_sub().z() );
     m->add_field( actual_location, type, intensity, 0_turns );
 }
 

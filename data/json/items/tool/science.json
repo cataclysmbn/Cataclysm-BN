@@ -102,34 +102,6 @@
     ]
   },
   {
-    "id": "butane_tank",
-    "type": "TOOL",
-    "category": "tools_chemistry",
-    "name": { "str": "butane tank", "str_pl": "tanks of butane" },
-    "description": "This is a tank of liquid compressed butane.  It can be used to extract essential oils from organic material.",
-    "weight": "22700 g",
-    "volume": "18950 ml",
-    "price": "250 USD",
-    "to_hit": -4,
-    "bashing": 10,
-    "material": [ "steel", "plastic" ],
-    "symbol": ";",
-    "color": "dark_gray",
-    "max_charges": 2000,
-    "initial_charges": 2000,
-    "charges_per_use": 1,
-    "turns_per_charge": 2000,
-    "looks_like": "oxygen_tank",
-    "flags": [ "NO_UNLOAD" ],
-    "explosion": {
-      "power": 90100,
-      "distance_factor": 0.5,
-      "fire": true,
-      "shrapnel": { "casing_mass": 200, "fragment_mass": 1, "recovery": 0 }
-    },
-    "explode_in_fire": true
-  },
-  {
     "id": "hydrogen_tank",
     "type": "TOOL",
     "category": "tools_chemistry",
@@ -450,7 +422,7 @@
     "material": [ "plastic" ],
     "symbol": ";",
     "color": "light_gray",
-    "use_action": [ "REPORT_GRID_CHARGE", "REPORT_GRID_CONNECTIONS", "MODIFY_GRID_CONNECTIONS" ],
+    "use_action": [ "VOLTMETER" ],
     "flags": [ "BELT_CLIP" ],
     "qualities": [ [ "VOLT_MEASURE", 1 ] ],
     "magazines": [
@@ -709,8 +681,8 @@
     "type": "TOOL",
     "category": "tools_workshop",
     "name": { "str": "3D printer" },
-    "description": "Although it's not nearly as fancy as the experimental nanofabricators, this civilian-grade 3D printer can produce almost any item out of plastic, polymer, or carbon fiber…  so long as you can program it.",
-    "weight": "2000 g",
+    "description": "Although it's not nearly as fancy as the experimental nanofabricators, this civilian-grade 3D printer can produce almost any item out of plastic, polymer, or carbon fiber…  so long as you can program it.  It's also useful for repairing items made out of plastic or carbon fiber.",
+    "weight": "2 kg",
     "volume": "1500 ml",
     "price": "400 USD",
     "price_postapoc": "20 USD",
@@ -726,9 +698,10 @@
         "type": "repair_item",
         "item_action_type": "repair_metal",
         "materials": [ "plastic", "carbon_fiber" ],
-        "skill": "fabrication",
+        "skill": "computer",
+        "tool_quality": 1,
         "cost_scaling": 0.1,
-        "move_cost": 1500
+        "move_cost": 800
       },
       { "flame": false, "type": "cauterize" }
     ],
@@ -745,8 +718,45 @@
     "type": "TOOL",
     "copy-from": "3d_printer_basic",
     "name": { "str": "advanced 3D printer" },
-    "description": "Recent advances in 3D printing technology have resulted in the ability to quickly and cheaply 3D print metals and alloys.  Such 3D printers are highly expensive, but sought out by collectors and preppers alike.",
+    "description": "Recent advances in 3D printing technology have resulted in the ability to quickly and cheaply 3D print metals and alloys.  Such 3D printers are highly expensive, but sought out by collectors and preppers alike.  In addition to crafting, it can be used to repair polymer and metal items alike, or permeate fabric items with carbon fiber for added protection.",
+    "weight": "4 kg",
+    "volume": "3 L",
     "price": "2000 USD",
-    "price_postapoc": "50 USD"
+    "price_postapoc": "50 USD",
+    "use_action": [
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_metal",
+        "materials": [
+          "lead",
+          "tin",
+          "zinc",
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "bronze",
+          "silver",
+          "gold",
+          "platinum",
+          "superalloy",
+          "plastic",
+          "carbon_fiber"
+        ],
+        "skill": "computer",
+        "tool_quality": 3,
+        "cost_scaling": 0.1,
+        "move_cost": 400
+      },
+      { "flame": false, "type": "cauterize" },
+      {
+        "type": "sew_advanced",
+        "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "neoprene", "gutskin", "scute" ],
+        "skill": "tailor",
+        "clothing_mods": [ "carbon_fiber_padded" ]
+      }
+    ]
   }
 ]

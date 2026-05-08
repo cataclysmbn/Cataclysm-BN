@@ -1,0 +1,19 @@
+[
+  {
+    "type": "monstergroup",
+    "//": "Add feral domestic animals to wilderness spawns since there are no farms in innawoods",
+    "//2": "Chances are 10x lower and pack size 1/2 as the world is mostly wilderness",
+    "name": "GROUP_FOREST",
+    "monsters": [
+      { "monster": "mon_chicken", "freq": 5, "cost_multiplier": 10, "pack_size": [ 1, 8 ] },
+      { "monster": "mon_cow", "freq": 5, "cost_multiplier": 25, "pack_size": [ 1, 84 ] },
+      { "monster": "mon_horse", "freq": 5, "cost_multiplier": 25, "pack_size": [ 1, 2 ] },
+      { "monster": "mon_pig", "freq": 1, "cost_multiplier": 25, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_pig", "freq": 1, "cost_multiplier": 25, "ends": 72, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_pig", "freq": 1, "cost_multiplier": 25, "ends": 168, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_pig", "freq": 1, "cost_multiplier": 25, "ends": 672, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_pig", "freq": 1, "cost_multiplier": 25, "ends": 2160, "pack_size": [ 1, 3 ] },
+      { "monster": "mon_sheep", "freq": 5, "cost_multiplier": 25, "pack_size": [ 1, 12 ] }
+    ]
+  }
+]

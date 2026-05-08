@@ -13,6 +13,7 @@
 
 #include "calendar.h"
 #include "coordinates.h"
+#include "damage.h"
 #include "detached_ptr.h"
 #include "enums.h"
 #include "flat_set.h"
@@ -28,6 +29,7 @@
 #include "units.h"
 #include "value_ptr.h"
 #include "visitable.h"
+#include "data_vars.h"
 
 class Character;
 class JsonIn;
@@ -597,7 +599,7 @@ class item : public location_visitable<item>, public game_object<item>
          * If `practical` is false, returns pre-cataclysm market value,
          * otherwise returns approximate post-cataclysm value.
          */
-        int price( bool practical ) const;
+        auto price( bool practical ) const -> float;
 
         /**
          * Whether two items should stack when displayed in a inventory menu.
@@ -653,6 +655,10 @@ class item : public location_visitable<item>, public game_object<item>
          * takes. The actual time depends heavily on the attacker, see melee.cpp.
          */
         int attack_cost() const;
+        /**
+         * Stamina consumed to use this weapon in melee
+         */
+        int stamina_cost() const;
 
         /** Damage of given type caused when this item is used as melee weapon */
         int damage_melee( damage_type dt ) const;
@@ -719,9 +725,31 @@ class item : public location_visitable<item>, public game_object<item>
         int reach_range( const Character &guy ) const;
 
         /**
-         * Sets time until activation for an item that will self-activate in the future.
+         * Sets item charges.
          **/
-        void set_countdown( int num_turns );
+        void set_charges( int value );
+
+        /**
+         * Sets a generic counter to be used with item flags
+         * Also used by countdown activation and crafting progress
+         **/
+        void set_counter( int value );
+        int get_counter() const;
+
+        /**
+         * Returns true if this item is currently active and uses an explicit
+         * per-turn integer countdown counter (itype::countdown_interval > 0).
+         * Used by batch_turns_items() to identify items that need timer advance.
+         */
+        bool has_explicit_turn_timer() const;
+
+        /**
+         * Advance the item's countdown counter by @p n turns (batch catchup).
+         * Clamps the counter at 0; does NOT fire the countdown_action — that
+         * happens on the next normal in-bubble process_items() call.
+         * No-op if has_explicit_turn_timer() is false.
+         */
+        void advance_timer( int n );
 
         /**
          * Consumes specified charges (or fewer) from this and any contained items
@@ -787,6 +815,8 @@ class item : public location_visitable<item>, public game_object<item>
         bool is_container_empty() const;
         /** Whether removing this item's contents will permanently alter it. */
         bool is_non_resealable_container() const;
+        /** Weather the item is contained in a container. */
+        bool is_in_container() const;
         /**
          * Whether this item has no more free capacity for its current content.
          * @param allow_bucket Allow filling non-sealable containers
@@ -925,7 +955,7 @@ class item : public location_visitable<item>, public game_object<item>
         bool goes_bad() const;
 
         /** whether an item is perishable (can rot), even if it is currently in a preserving container */
-        bool goes_bad_after_opening() const;
+        bool goes_bad_after_opening( bool strict = false ) const;
 
         /** Get the shelf life of the item*/
         time_duration get_shelf_life() const;
@@ -1050,6 +1080,10 @@ class item : public location_visitable<item>, public game_object<item>
          * If contents nonempty, return true if item phase is same, else false
          */
         bool contents_made_of( phase_id phase ) const;
+        /**
+         * If contents nonempty, return true if itype phase is same, else false
+         */
+        bool contents_normally_made_of( phase_id phase ) const;
         /**
          * Are we solid, liquid, gas, plasma?
          */
@@ -1270,6 +1304,7 @@ class item : public location_visitable<item>, public game_object<item>
         bool is_transformable() const;
         bool is_artifact() const;
         bool is_relic() const;
+        bool is_pocket_dimension_key() const;
         bool is_bucket() const;
         bool is_bucket_nonempty() const;
 
@@ -1300,10 +1335,12 @@ class item : public location_visitable<item>, public game_object<item>
 
         /** Returns energy of one charge of this item as fuel for an engine. */
         float fuel_energy() const;
-        /** Returns the string of the id of the terrain that pumps this fuel, if any. */
-        std::string fuel_pump_terrain() const;
+        /** Returns the id of the terrain that pumps this fuel, if any. */
+        ter_id fuel_pump_terrain() const;
         bool has_explosion_data() const;
         struct fuel_explosion get_explosion_data();
+        float get_kcal_mult() const;
+        void set_kcal_mult( float val );
 
         /**
          * Can this item have given item/itype as content?
@@ -1428,6 +1465,11 @@ class item : public location_visitable<item>, public game_object<item>
          */
         void on_wield( player &p, int mv = 0 );
         /**
+         * Callback when a player stops wielding the item.
+         * @param who character that has stopped wielding item
+         */
+        void on_unwield( Character &who );
+        /**
          * Callback when a player starts carrying the item. The item is already in the inventory
          * and is called from there. This is not called when the item is added to the inventory
          * from worn vector or weapon slot. The item is considered already carried.
@@ -1489,25 +1531,65 @@ class item : public location_visitable<item>, public game_object<item>
          * </code>
          */
         /*@{*/
-        void set_var( const std::string &name, int value );
-        void set_var( const std::string &name, long long value );
+
+        template<typename T>
+        T get_var( const std::string &name, const T &default_value ) const {
+            return item_vars_.get<T>( name, default_value );
+        }
+
+        template<typename T>
+        void set_var( const std::string &name, const T &value ) {
+            item_vars_.set<T>( name, value );
+        }
+
+        std::string get_var( const std::string &name, const char *default_value ) const {
+            return item_vars_.get( name, default_value );
+        }
+
+        std::string get_var( const std::string &name, const std::string &default_value ) const {
+            return item_vars_.get( name, default_value );
+        }
+
+        std::string get_var( const std::string &name ) const {
+            return item_vars_.get( name, "" );
+        }
+
+        void set_var( const std::string &name, const char *value ) {
+            item_vars_.set( name, value );
+        };
+
+        void set_var( const std::string &name, const std::string &value ) {
+            item_vars_.set( name, value );
+        };
+
+        /*
+        void set_var( const std::string &name, int value ) { item_vars_.set<int>( name,  value ); };
+        void set_var( const std::string &name, long long value ) { item_vars_.set<long long>( name,  value ); };
         // Acceptable to use long as part of overload set
         // NOLINTNEXTLINE(cata-no-long)
-        void set_var( const std::string &name, long value );
-        void set_var( const std::string &name, double value );
-        double get_var( const std::string &name, double default_value ) const;
-        void set_var( const std::string &name, const tripoint &value );
-        tripoint get_var( const std::string &name, const tripoint &default_value ) const;
-        void set_var( const std::string &name, const std::string &value );
-        std::string get_var( const std::string &name, const std::string &default_value ) const;
-        /** Get the variable, if it does not exists, returns an empty string. */
-        std::string get_var( const std::string &name ) const;
-        /** Whether the variable is defined at all. */
-        bool has_var( const std::string &name ) const;
-        /** Erase the value of the given variable. */
-        void erase_var( const std::string &name );
-        /** Removes all item variables. */
-        void clear_vars();
+        //void set_var( const std::string &name, long value ) { item_vars_.set<long>( name, value ); };
+        void set_var( const std::string &name, double value ) { item_vars_.set<double>( name, value ); };
+        void set_var( const std::string &name, const tripoint &value ) { item_vars_.set<tripoint>( name, value ); };
+        void set_var( const std::string &name, const std::string &value ) { item_vars_.set( name, value ); };
+
+        double get_var( const std::string &name, double default_value ) const { return item_vars_.get<double>( name, default_value ); }
+        tripoint get_var( const std::string &name, const tripoint &default_value ) const { return item_vars_.get<tripoint>( name, default_value ); }
+        std::string get_var( const std::string &name, const std::string &default_value ) const { return item_vars_.get( name, default_value ); }
+        std::string get_var( const std::string &name ) const { return item_vars_.get( name, "" ); }
+        */
+
+        auto has_var( const std::string &name ) const -> bool { return item_vars_.contains( name ); }
+        auto erase_var( const std::string &name ) -> void { item_vars_.erase( name ); }
+        auto clear_vars() -> void { item_vars_.clear(); }
+
+        // TODO in follow-up PR:
+        // remove internal usage of get_var / set_var internally
+        // mark as [[deprecated]]
+        // completely remove in a future update
+
+        auto item_vars() -> data_vars::data_set & { return item_vars_; } // *NOPAD*
+        auto item_vars() const -> const data_vars::data_set & { return item_vars_; } // *NOPAD*
+
         /** Adds child items to the contents of this one. */
         void add_item_with_id( const itype_id &itype, int count = 1 );
         /** Checks if this item contains an item with itype. */
@@ -2025,7 +2107,18 @@ class item : public location_visitable<item>, public game_object<item>
          * Summed range value of a gun, including values from mods. Returns 0 on non-gun items.
          */
         int gun_range( bool with_ammo = true ) const;
-
+        /**
+         * Summed projectile speed value (m/s) of a gun, including values from mods. Returns 10 on non-gun items.
+         */
+        int gun_speed( bool with_ammo = true ) const;
+        /**
+         * Summed bonus to the aimed critical base multiplier, including values from mods. Returns 0 on non-gun items.
+         */
+        double gun_aimed_crit_bonus( bool with_ammo = true ) const;
+        /**
+         * Summed bonus to the aimed critical max potential multiplier value of a gun, including values from mods. Returns 0 on non-gun items.
+         */
+        double gun_aimed_crit_max_bonus( bool with_ammo = true ) const;
         /**
          * Get multiplier on recoil considering handling and attached gunmods.
          * @param bipod whether any bipods should be considered
@@ -2250,6 +2343,51 @@ class item : public location_visitable<item>, public game_object<item>
         void set_cached_tool_selections( const std::vector<comp_selection<tool_comp>> &selections );
         const std::vector<comp_selection<tool_comp>> &get_cached_tool_selections() const;
 
+        /**
+         * Data for items that act as keys to pocket dimensions.
+         */
+        struct pocket_dimension_data {
+            pocket_dimension_data() {}
+            std::string dimension_id;             // Fully-qualified dim ID (e.g. "pocket_dungeon_a1b2c3d4_")
+            world_type_id world_type;             // World type metadata for this pocket
+            tripoint_abs_omt entry_point;         // Where player spawns on entry
+            tripoint_abs_omt bounds_min;          // Minimum bounds (OMT coords)
+            tripoint_abs_omt bounds_max;          // Maximum bounds (OMT coords)
+            bool is_initialized = false;          // Has the pocket data been set up?
+            bool terrain_generated = false;       // Has the terrain been generated?
+
+            // Return tracking - where to go when exiting this pocket
+            std::string return_dimension_id;      // Which dimension to return to (empty = overworld)
+            world_type_id
+            return_world_type;      // World type of the return dimension (may be null for overworld)
+            tripoint_abs_omt return_point;        // Where to place player on exit
+
+            // Temporary pocket lifetime: set by iuse_pocket_dimension from JSON "lifetime_hours".
+            std::optional<time_point> last_player_exit;  // nullopt = player is inside
+            std::optional<time_duration> lifetime;       // nullopt = permanent
+
+            void serialize( JsonOut &jsout ) const;
+            void deserialize( JsonIn &jsin );
+
+            bool operator==( const pocket_dimension_data &rhs ) const;
+        };
+
+        std::optional<pocket_dimension_data> pocket_dim;
+
+
+        /**
+         * Get the pocket dimension data for this item.
+         * Returns nullptr if this item is not a pocket dimension key.
+         */
+        pocket_dimension_data *get_pocket_dimension_data();
+        const pocket_dimension_data *get_pocket_dimension_data() const;
+
+        /**
+         * Initialize pocket dimension data for this item.
+         * Should only be called once when the pocket is first used.
+         */
+        void set_pocket_dimension_data( pocket_dimension_data &&data );
+
         const std::vector<enchantment> &get_enchantments() const;
 
         /**
@@ -2339,6 +2477,8 @@ class item : public location_visitable<item>, public game_object<item>
         // Place conditions that should remove fake smoke item in this sub-function
         static detached_ptr<item> process_fake_smoke( detached_ptr<item> &&self, player *carrier,
                 const tripoint &pos );
+        static detached_ptr<item> process_fake_cloning_vat( detached_ptr<item> &&self, player *carrier,
+                const tripoint &pos );
         static detached_ptr<item> process_fake_mill( detached_ptr<item> &&self, player *carrier,
                 const tripoint &pos );
         static detached_ptr<item> process_cable( detached_ptr<item> &&self, player *carrier,
@@ -2368,13 +2508,33 @@ class item : public location_visitable<item>, public game_object<item>
         const location_vector<item> &get_components() const;
         location_vector<item> &get_components();
         const mtype *get_corpse_mon() const;
+        auto get_melee_damage_bonus() const -> const damage_instance &;
+        auto set_melee_damage_bonus( const damage_instance &bonus ) -> void;
+        auto get_melee_hit_bonus() const -> int;
+        auto set_melee_hit_bonus( int bonus ) -> void;
+        auto get_ranged_damage_bonus() const -> const damage_instance &;
+        auto set_ranged_damage_bonus( const damage_instance &bonus ) -> void;
+        auto get_range_bonus() const -> int;
+        auto set_range_bonus( int bonus ) -> void;
+        auto get_dispersion_bonus() const -> int;
+        auto set_dispersion_bonus( int bonus ) -> void;
+        auto get_recoil_bonus() const -> int;
+        auto set_recoil_bonus( int bonus ) -> void;
     private:
         location_vector<item> components;
         const itype *curammo = nullptr;
-        std::map<std::string, std::string> item_vars;
+        data_vars::data_set item_vars_ = {};
         const mtype *corpse = nullptr;
         std::string corpse_name;       // Name of the late lamented
         std::set<matec_id> techniques; // item specific techniques
+
+        damage_instance melee_damage_bonus;
+        int melee_hit_bonus = 0;
+        damage_instance ranged_damage_bonus;
+        int range_bonus = 0;
+        int dispersion_bonus = 0;
+        int recoil_bonus = 0;
+
 
         /**
          * Data for items that represent in-progress crafts.
@@ -2408,7 +2568,7 @@ class item : public location_visitable<item>, public game_object<item>
         int frequency = 0;         // Radio frequency
         snippet_id snip_id = snippet_id::NULL_ID(); // Associated dynamic text snippet id.
         int irradiation = 0;       // Tracks radiation dosage.
-        int item_counter = 0;      // generic counter to be used with item flags
+
         int mission_id = -1;       // Refers to a mission in game's master list
         int player_id = -1;        // Only give a mission to the right player!
 
@@ -2418,6 +2578,8 @@ class item : public location_visitable<item>, public game_object<item>
         bool encumbrance_update_ = false;
 
     private:
+        // generic counter to be used with item flags
+        int item_counter = 0;
         /**
          * Accumulated rot, expressed as time the item has been in standard temperature.
          * It is compared to shelf life (@ref islot_comestible::spoils) to decide if
@@ -2643,5 +2805,4 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-
 

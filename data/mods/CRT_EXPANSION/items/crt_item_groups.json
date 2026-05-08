@@ -1,6 +1,136 @@
 [
   {
     "type": "item_group",
+    "id": "crt_eng_set",
+    "//": "C.R.I.T. Science lab set",
+    "items": [
+      {
+        "collection": [
+          { "group": "underwear" },
+          { "group": "lab_torso" },
+          { "group": "lab_shoes" },
+          { "item": "crt_jacket" },
+          { "item": "crt_dress_pants" },
+          { "item": "crt_dress_shoes" },
+          { "item": "crt_rec_gloves" },
+          { "item": "crt_belt" },
+          { "item": "crt_rec_hat" },
+          { "item": "crt_la_boots", "prob": 5 },
+          { "item": "crt_gasmask", "prob": 10 },
+          { "item": "ds_monitor", "prob": 2 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_lab_loot",
+    "items": [
+      {
+        "distribution": [
+          { "group": "guns_energy", "prob": 10 },
+          { "group": "crt_food", "prob": 10 },
+          { "group": "crt_armor", "prob": 25 },
+          { "group": "crt_special_armor", "prob": 10 },
+          { "group": "crt_rare", "prob": 5 },
+          { "group": "rare", "prob": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_food",
+    "items": [
+      {
+        "distribution": [ { "item": "crt_canteen", "prob": 40 }, { "item": "crt_mess_kit", "prob": 40 }, { "item": "crt_med_kit", "prob": 20 } ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_special_armor",
+    "items": [
+      {
+        "distribution": [
+          { "collection": [ { "item": "crt_earmor" }, { "item": "crt_earmor_boots" } ], "prob": 25 },
+          { "item": "crt_aarmor", "prob": 50 },
+          { "item": "crt_warmor", "prob": 25 },
+          { "collection": [ { "item": "ds_armor" }, { "item": "ds_monitor" } ], "prob": 10 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_armor",
+    "items": [
+      {
+        "collection": [
+          {
+            "distribution": [
+              { "item": "crt_jacket", "prob": 50 },
+              { "item": "crt_iduster", "prob": 20 },
+              { "item": "crt_chestrig", "prob": 20 },
+              { "item": "crt_sarmor", "prob": 10 }
+            ]
+          },
+          { "distribution": [ { "item": "crt_la_boots", "prob": 50 }, { "item": "crt_boots", "prob": 50 } ] },
+          {
+            "distribution": [ { "item": "crt_pants", "prob": 70 }, { "item": "crt_legrig", "prob": 20 }, { "item": "crt_sarmor", "prob": 10 } ]
+          },
+          { "item": "knife_crt", "prob": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mil_jackets",
+    "items": [
+      {
+        "distribution": [ { "item": "crt_jacket", "prob": 10 }, { "item": "crt_iduster", "prob": 10 }, { "item": "jacket_army", "prob": 80 } ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mil_pants",
+    "items": [ { "distribution": [ { "item": "crt_pants", "prob": 20 }, { "item": "pants_army", "prob": 80 } ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mil_boots",
+    "items": [
+      {
+        "distribution": [ { "item": "crt_la_boots", "prob": 10 }, { "item": "crt_boots", "prob": 10 }, { "item": "boots_combat", "prob": 80 } ]
+      }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mil_belts",
+    "items": [ { "distribution": [ { "item": "crt_belt", "prob": 20 }, { "item": "webbing_belt", "prob": 80 } ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "crt_rare",
+    "items": [
+      { "item": "ds_monitor", "prob": 10 },
+      { "item": "crt_laser_pistol", "prob": 40 },
+      { "item": "crt_laser_gatling", "prob": 20 },
+      { "item": "crt_laser_carbine", "prob": 20 },
+      { "item": "crt_energy_rifle", "prob": 20 },
+      { "item": "crt_fire_glove", "prob": 10 },
+      { "item": "beam_difractor", "prob": 20 },
+      { "item": "crt_em_vest", "prob": 20 },
+      { "item": "sword_crt", "prob": 10 },
+      { "item": "blade_crt", "prob": 10 },
+      { "item": "crt_solarpack", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "gunmod_common",
     "//": "Common gunmods typically owned by citizens and found in many locations.",
     "items": [ [ "bthk_stock", 50 ] ]
@@ -16,42 +146,13 @@
     "id": "military",
     "subtype": "distribution",
     "entries": [
-      { "item": "crt_fire_glove", "prob": 5 },
-      { "item": "crt_laser_pistol", "prob": 5 },
-      { "item": "ds_ripper", "prob": 10 },
-      { "item": "ds_pulse_rifle", "prob": 10 },
-      { "item": "pulsesb", "prob": 10 },
+      { "group": "crt_armor", "prob": 5 },
       { "item": "crt_gasmask", "prob": 25 },
-      { "item": "crt_em_vest", "prob": 50 },
       { "item": "knife_crt", "prob": 5 },
       { "item": "flare_gmod", "prob": 5 },
       { "item": "crt_knuckledusters", "prob": 5 },
-      { "item": "sword_crt", "prob": 15 },
-      { "item": "blade_crt", "prob": 15 },
       { "item": "crt_hatchet", "prob": 10 },
       { "item": "crt_nstick", "prob": 10 }
-    ]
-  },
-  {
-    "type": "item_group",
-    "id": "army_personal_locker",
-    "subtype": "distribution",
-    "entries": [
-      { "item": "crt_la_boots", "prob": 20 },
-      { "item": "crt_chestrig", "prob": 10 },
-      { "item": "crt_iduster", "prob": 10 },
-      { "item": "crt_jacket", "prob": 50 },
-      { "item": "crt_pants", "prob": 50 },
-      { "item": "crt_legrig", "prob": 20 },
-      { "item": "crt_earmor", "prob": 5 },
-      { "item": "crt_earmor_boots", "prob": 5 },
-      { "item": "crt_sarmor", "prob": 5 },
-      { "item": "crt_dress_pants", "prob": 30 },
-      { "item": "crt_dress_shoes", "prob": 30 },
-      { "item": "crt_rec_gloves", "prob": 20 },
-      { "item": "crt_rec_duster", "prob": 10 },
-      { "item": "crt_rec_hat", "prob": 30 },
-      { "item": "knife_crt", "prob": 5 }
     ]
   },
   {
@@ -78,89 +179,83 @@
   {
     "type": "item_group",
     "id": "guns_rifle_rare",
-    "items": [ { "item": "pelletgun", "prob": 25, "charges-min": 0, "charges-max": 1 } ]
+    "items": [
+      { "item": "crt_pelletgun", "prob": 25, "charges-min": 0, "charges-max": 1 },
+      { "item": "crt_pelletsniper", "prob": 5, "charges-min": 0, "charges-max": 1 }
+    ]
   },
   {
     "type": "item_group",
     "id": "ammo_rifle_rare",
     "items": [
-      { "item": "pellet", "prob": 25 },
-      { "item": "dhp_pellet", "prob": 10 },
-      { "item": "hp_pellet", "prob": 10 },
-      { "item": "alloy_pellet", "prob": 5 }
-    ]
-  },
-  {
-    "id": "clothing_military",
-    "type": "item_group",
-    "subtype": "collection",
-    "//": "Standard (non-winter) set of clothes worn by soldiers and paramilitary forces.",
-    "items": [
-      {
-        "distribution": [
-          { "collection": [ { "item": "crt_rec_duster" }, { "item": "crt_rec_hat", "prob": 50 } ], "prob": 50 },
-          { "collection": [ { "item": "crt_legguard" }, { "item": "crt_legguard" } ], "prob": 25 },
-          { "item": "crt_aarmor", "prob": 15 },
-          {
-            "collection": [ { "item": "crt_sarmor" }, { "distribution": [ { "item": "crt_earmor" }, { "item": "crt_warmor" } ] } ],
-            "prob": 10
-          }
-        ],
-        "prob": 10
-      }
-    ]
-  },
-  {
-    "id": "clothing_military_winter",
-    "type": "item_group",
-    "subtype": "collection",
-    "//": "Winter set of clothes worn by soldiers and paramilitary forces.",
-    "items": [
-      {
-        "distribution": [
-          { "collection": [ { "item": "crt_rec_duster" }, { "item": "crt_rec_hat", "prob": 50 } ], "prob": 50 },
-          { "collection": [ { "item": "crt_legguard" }, { "item": "crt_legguard" } ], "prob": 25 },
-          { "item": "crt_aarmor", "prob": 15 },
-          {
-            "collection": [ { "item": "crt_sarmor" }, { "distribution": [ { "item": "crt_earmor" }, { "item": "crt_warmor" } ] } ],
-            "prob": 10
-          }
-        ],
-        "prob": 10
-      }
+      { "item": "crt_pellet", "prob": 25 },
+      { "item": "crt_dhp_pellet", "prob": 10 },
+      { "item": "crt_hp_pellet", "prob": 10 },
+      { "item": "crt_alloy_pellet", "prob": 5 }
     ]
   },
   {
     "id": "clothing_soldier_shirt",
     "type": "item_group",
     "subtype": "distribution",
-    "entries": [ { "distribution": [ { "item": "tshirt", "prob": 4 }, { "item": "crt_jacket", "prob": 1 } ] } ]
+    "entries": [ { "item": "crt_sarmor", "prob": 5 } ]
+  },
+  {
+    "id": "clothing_military",
+    "type": "item_group",
+    "subtype": "collection",
+    "//": "Standard (non-winter) set of clothes worn by soldiers and paramilitary forces.",
+    "delete": [ { "item": "boots_combat" }, { "item": "jacket_army" }, { "item": "pants_army" }, { "item": "webbing_belt" } ],
+    "items": [ { "group": "mil_jackets" }, { "group": "mil_boots" }, { "group": "mil_pants" }, { "group": "mil_belts" } ]
+  },
+  {
+    "id": "clothing_military_winter",
+    "type": "item_group",
+    "subtype": "collection",
+    "//": "Winter set of clothes worn by soldiers and paramilitary forces.",
+    "delete": [ { "item": "boots_combat" }, { "item": "webbing_belt" } ],
+    "items": [ { "group": "mil_boots" }, { "group": "mil_belts" } ]
   },
   {
     "type": "item_group",
     "id": "mil_accessories",
-    "items": [ [ "crt_mess_kit", 10 ], [ "crt_etool", 15 ], [ "crt_canteen", 10 ], [ "crt_gasmask", 10 ] ]
+    "items": [ [ "crt_mess_kit", 10 ], [ "crt_etool", 15 ], [ "crt_canteen", 10 ], [ "crt_med_kit", 5 ], [ "crt_gasmask", 10 ] ]
   },
   {
     "type": "item_group",
     "id": "camping",
-    "items": [ [ "pellet", 4 ], [ "dhp_pellet", 2 ], [ "hp_pellet", 1 ], [ "alloy_pellet", 1 ], [ "pelletgun", 10 ] ]
+    "items": [
+      [ "crt_pellet", 4 ],
+      [ "crt_dhp_pellet", 2 ],
+      [ "crt_hp_pellet", 1 ],
+      [ "crt_alloy_pellet", 1 ],
+      [ "crt_pelletgun", 10 ],
+      [ "crt_pelletsniper", 2 ]
+    ]
   },
   {
     "type": "item_group",
     "id": "bedroom",
     "subtype": "distribution",
     "entries": [
-      { "item": "pellet", "prob": 4 },
-      { "item": "dhp_pellet", "prob": 2 },
-      { "item": "hp_pellet", "prob": 1 },
-      { "item": "alloy_pellet", "prob": 1 },
-      { "item": "pelletgun", "prob": 10 }
+      { "item": "crt_pellet", "prob": 4 },
+      { "item": "crt_dhp_pellet", "prob": 2 },
+      { "item": "crt_hp_pellet", "prob": 1 },
+      { "item": "crt_alloy_pellet", "prob": 1 },
+      { "item": "crt_pelletgun", "prob": 10 },
+      { "item": "crt_pelletsniper", "prob": 2 }
     ]
   },
   {
     "type": "item_group",
     "id": "lab_dorm",
-    "items": [ [ "pellet", 4 ], [ "dhp_pellet", 2 ], [ "hp_pellet", 1 ], [ "alloy_pellet", 1 ], [ "pelletgun", 10 ] ]
+    "items": [
+      [ "crt_pellet", 4 ],
+      [ "crt_dhp_pellet", 2 ],
+      [ "crt_hp_pellet", 1 ],
+      [ "crt_alloy_pellet", 1 ],
+      [ "crt_pelletgun", 10 ],
+      [ "crt_pelletsniper", 10 ]
+    ]
   }
 ]

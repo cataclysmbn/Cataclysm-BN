@@ -1,0 +1,90 @@
+[
+  {
+    "result": "9x18mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "38super_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 3 ] ] ]
+  },
+  {
+    "result": "700nx_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 18 ] ] ]
+  },
+  {
+    "result": "460_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "454_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "500_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "57mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ] ]
+  },
+  {
+    "result": "46mm_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 2 ] ] ]
+  },
+  {
+    "result": "545_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  },
+  {
+    "result": "270win_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 7 ] ] ]
+  },
+  {
+    "result": "762_25_casing",
+    "type": "uncraft",
+    "time": "10 s",
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "charges": 1,
+    "components": [ [ [ "cartridgebrass", 4 ] ] ]
+  }
+]

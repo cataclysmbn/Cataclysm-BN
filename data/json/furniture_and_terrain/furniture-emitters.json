@@ -28,5 +28,20 @@
     "required_str": -1,
     "flags": [ "TRANSPARENT", "EMITTER" ],
     "emissions": [ "emit_fog_plume" ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_hot_spring",
+    "looks_like": "f_rubble_rock",
+    "name": "natural gas vent",
+    "description": "A natural gas vent on the lake bed that is currently emitting heat.",
+    "symbol": "H",
+    "color": "white",
+    "move_cost_mod": 6,
+    "coverage": 30,
+    "light_emitted": 1,
+    "required_str": -1,
+    "flags": [ "TRANSPARENT", "EMITTER" ],
+    "emissions": [ "emit_smoke_plume" ]
   }
 ]

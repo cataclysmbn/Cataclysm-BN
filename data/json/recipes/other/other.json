@@ -6,7 +6,9 @@
     "subcategory": "CSC_OTHER_OTHER",
     "skill_used": "fabrication",
     "difficulty": 4,
-    "time": "10 m",
+    "time": "15 m",
+    "batch_time_factors": [ 80, 4 ],
+    "autolearn": [ [ "fabrication", 6 ], [ "cooking", 4 ] ],
     "book_learn": [ [ "concrete_book", 4 ] ],
     "tools": [ [ [ "con_mix", 50 ] ] ],
     "components": [ [ [ "material_cement", 50 ] ], [ [ "material_sand", 25 ] ], [ [ "pebble", 20 ] ] ]
@@ -149,6 +151,35 @@
   },
   {
     "type": "recipe",
+    "result": "raft_board",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "30 m",
+    "reversible": true,
+    "autolearn": true,
+    "components": [ [ [ "log", 4 ] ], [ [ "rope_natural_short", 2, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "gas_sac_buoyancy_cell",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "time": "1 h",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [
+      [ [ "c_hydrogen_gas", 25 ] ],
+      [ [ "bag_plastic", 12 ], [ "bag_zipper", 12 ] ],
+      [ [ "rope_natural_short", 1, "LIST" ] ],
+      [ [ "plastic_sheet", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "candle",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
@@ -212,6 +243,7 @@
     "difficulty": 2,
     "time": "10 m",
     "book_learn": [ [ "concrete_book", 2 ] ],
+    "autolearn": [ [ "fabrication", 6 ], [ "cooking", 4 ] ],
     "tools": [ [ [ "con_mix", 50 ] ] ],
     "components": [ [ [ "material_cement", 50 ] ], [ [ "material_sand", 150 ] ] ]
   },
@@ -354,7 +386,9 @@
         [ "bread_sandwich", 1, "LIST" ],
         [ "macaroni_raw", 1 ],
         [ "spaghetti_raw", 1 ],
-        [ "noodles_fast", 1 ]
+        [ "noodles_fast", 1 ],
+        [ "assorted_bugs", 1 ],
+        [ "clam", 1 ]
       ]
     ]
   },
@@ -465,7 +499,6 @@
     "type": "recipe",
     "result": "freezer",
     "copy-from": "fridge",
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
     "components": [
       [ [ "sheet_metal", 6 ] ],
       [ [ "sheet_metal_small", 4 ] ],
@@ -478,6 +511,29 @@
       [ [ "thermostat", 1 ] ],
       [ [ "light_bulb", 1 ] ],
       [ [ "motor_tiny", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "freezer_industrial",
+    "copy-from": "fridge",
+    "decomp_learn": 6,
+    "book_learn": [ [ "textbook_mechanics", 6 ], [ "manual_mechanics", 6 ], [ "textbook_fabrication", 6 ] ],
+    "using": [ [ "soldering_standard", 50 ], [ "welding_standard", 100 ] ],
+    "difficulty": 6,
+    "skills_required": [ [ "electronics", 2 ], [ "mechanics", 2 ] ],
+    "components": [
+      [ [ "sheet_metal", 36 ] ],
+      [ [ "sheet_metal_small", 10 ] ],
+      [ [ "steel_chunk", 10 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "condensor_coil", 2 ] ],
+      [ [ "evaporator_coil", 2 ] ],
+      [ [ "refrigerant_tank", 2 ] ],
+      [ [ "thermostat", 1 ] ],
+      [ [ "light_bulb", 1 ] ],
+      [ [ "motor_tiny", 2 ] ]
     ]
   },
   {
@@ -499,7 +555,7 @@
       [ [ "steel_chunk", 3 ] ],
       [ [ "cable", 3 ] ],
       [ [ "hose", 1 ] ],
-      [ [ "reinforced_glass_pane", 1 ] ],
+      [ [ "reinforced_glass_sheet", 1 ] ],
       [ [ "condensor_coil", 1 ] ],
       [ [ "evaporator_coil", 1 ] ],
       [ [ "refrigerant_tank", 1 ] ],
@@ -519,7 +575,7 @@
       [ [ "steel_chunk", 3 ] ],
       [ [ "cable", 3 ] ],
       [ [ "hose", 1 ] ],
-      [ [ "reinforced_glass_pane", 1 ] ],
+      [ [ "reinforced_glass_sheet", 1 ] ],
       [ [ "condensor_coil", 1 ] ],
       [ [ "evaporator_coil", 1 ] ],
       [ [ "refrigerant_tank", 1 ] ],
@@ -580,13 +636,79 @@
     "difficulty": 10,
     "time": "1 h 20 m",
     "book_learn": [ [ "sa_cryptology_key", 10 ] ],
-    "tools": [
-      [ [ "software_hacking", -1 ], [ "control_laptop", -1 ] ],
-      [ [ "laptop", -1 ], [ "control_laptop", -1 ] ],
-      [ [ "sa_cryptology_key", -1 ] ],
-      [ [ "black_box", -1 ] ]
-    ],
+    "using": [ [ "coding_standard", 120 ], [ "hacking_standard", -1 ] ],
+    "tools": [ [ [ "sa_cryptology_key", -1 ] ], [ [ "black_box", -1 ] ] ],
     "components": [ [ [ "paper", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "mobile_memory_card_used",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "computer",
+    "difficulty": 2,
+    "time": "20 m",
+    "using": [ [ "coding_standard", 120 ], [ "utility_software_standard", -1 ] ],
+    "components": [ [ [ "mobile_memory_card", 1 ], [ "mobile_memory_card_encrypted", 1 ] ] ]
+  },
+  {
+    "result": "software_medical",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "computer",
+    "skills_required": [ "firstaid", 8 ],
+    "reversible": true,
+    "contained": true,
+    "difficulty": 6,
+    "autolearn": true,
+    "time": "6 h",
+    "book_learn": [ [ "reference_firstaid1", 8 ] ],
+    "using": [ [ "coding_standard", 120 ], [ "math_software_standard", -1 ] ],
+    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
+  },
+  {
+    "result": "software_math",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "computer",
+    "reversible": true,
+    "contained": true,
+    "difficulty": 8,
+    "autolearn": true,
+    "//": "weird to use cooking here, but it represents science skill",
+    "skills_required": [ "cooking", 8 ],
+    "time": "6 h",
+    "book_learn": [ [ "reference_cooking", 8 ] ],
+    "using": [ [ "coding_standard", 120 ] ],
+    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
+  },
+  {
+    "result": "software_useless",
+    "//": "intended as an XP/practice recipe",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "computer",
+    "reversible": true,
+    "contained": true,
+    "difficulty": 3,
+    "autolearn": true,
+    "time": "1 h",
+    "using": [ [ "coding_standard", 120 ] ],
+    "components": [ [ [ "usb_drive", 1 ], [ "mobile_memory_card_used", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "satellitemap",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "computer",
+    "difficulty": 8,
+    "time": "4 h",
+    "using": [ [ "coding_standard", 120 ], [ "hacking_standard", -1 ] ],
+    "components": [ [ [ "paper", 25 ] ] ]
   },
   {
     "result": "cot",
@@ -735,8 +857,7 @@
     "difficulty": 4,
     "time": "35 m",
     "book_learn": [ [ "glassblowing_book", 4 ] ],
-    "qualities": [ { "id": "CHISEL", "level": 3 } ],
-    "tools": [ [ [ "tongs", -1 ] ], [ [ "pipe", -1 ] ], [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ], [ [ "forge", 50 ] ] ],
+    "using": [ [ "glassblowing_standard", 10 ] ],
     "components": [ [ [ "glass_shard", 2 ], [ "flask_glass", 2 ], [ "test_tube", 4 ], [ "marble", 50 ] ] ]
   },
   {
@@ -760,5 +881,61 @@
       [ [ "sheet_metal_small", 10 ] ],
       [ [ "broken_dissector", 1 ] ]
     ]
+  },
+  {
+    "type": "recipe",
+    "result": "carbondioxide_tank",
+    "byproducts": [ [ "material_quicklime" ] ],
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "skills_required": [ "cooking", 2 ],
+    "difficulty": 3,
+    "time": "30 m",
+    "batch_time_factors": [ 75, 4 ],
+    "book_learn": [ [ "concrete_book", 3 ], [ "adv_chemistry", 3 ], [ "textbook_chemistry", 3 ], [ "reference_cooking", 4 ] ],
+    "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ],
+    "tools": [ [ [ "forge", 250 ], [ "oxy_torch", 50 ] ] ],
+    "components": [ [ [ "material_limestone", 50 ] ], [ [ "metal_tank_little", 1 ] ] ]
+  },
+  {
+    "type": "uncraft",
+    "result": "carbondioxide_tank",
+    "time": "30 s",
+    "components": [ [ [ "metal_tank_little", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "money_pile",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 0,
+    "time": "1 m",
+    "reversible": true,
+    "autolearn": true,
+    "components": [ [ [ "money_bundle", 10 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "biomaterial",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_OTHER",
+    "skill_used": "cooking",
+    "//": "high first aid since we're already simplifying DNA extraction and the nutrients such",
+    "skills_required": [ [ "firstaid", 8 ] ],
+    "difficulty": 8,
+    "time": "2 h",
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [
+      { "id": "CONCENTRATE", "level": 1 },
+      { "id": "SEPARATE", "level": 1 },
+      { "id": "ANALYSIS", "level": 1 },
+      { "id": "DISTILL", "level": 1 },
+      { "id": "CHEM", "level": 3 }
+    ],
+    "tools": [ [ [ "surface_heat", 30, "LIST" ] ] ],
+    "components": [ [ [ "meat_red", 1, "LIST" ] ], [ [ "veggy_any", 1, "LIST" ] ], [ [ "saline", 7 ] ], [ [ "chem_peptone_broth", 1 ] ] ]
   }
 ]

@@ -88,7 +88,7 @@
       "items": {
         "r": [ { "item": "cleaning", "chance": 90 }, { "item": "hardware", "chance": 90 } ],
         "t": { "item": "hardware", "chance": 90 },
-        "*": { "item": "nuclear_waste", "chance": 70 }
+        "*": { "item": "nuclear_waste", "chance": 25 }
       },
       "monster": { "M": { "monster": "mon_hazmatbot" } }
     }
@@ -142,7 +142,7 @@
       },
       "furniture": { "T": "f_standing_tank", "t": "f_steam_turbine" },
       "liquids": { "T": { "liquid": "water", "amount": [ 0, 100 ] } },
-      "items": { "*": { "item": "nuclear_waste", "chance": 70 } },
+      "items": { "*": { "item": "nuclear_waste", "chance": 25 } },
       "monster": { "M": { "monster": "mon_hazmatbot" } }
     }
   },
@@ -192,7 +192,7 @@
         "d": { "item": "cop_armory", "chance": 5 },
         "l": { "item": "reactor_gear", "chance": 70 },
         "r": { "item": "cleaning", "chance": 100 },
-        "*": { "item": "nuclear_waste", "chance": 70 }
+        "*": { "item": "nuclear_waste", "chance": 25 }
       },
       "monster": { "M": { "monster": "mon_hazmatbot" } }
     }

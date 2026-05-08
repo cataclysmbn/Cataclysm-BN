@@ -7,7 +7,7 @@
     "description": "The Colt Army Model 1860 is a cap & ball .44-caliber revolver.  It was used during the American Civil War, and made by Colt's Manufacturing Company.",
     "weight": "1188 g",
     "volume": "486 ml",
-    "barrel_length": "50 ml",
+    "barrel_volume": "50 ml",
     "price": "430 USD",
     "price_postapoc": "30 USD",
     "material": [ "steel", "wood" ],
@@ -43,5 +43,22 @@
       [ "sights", 1 ]
     ],
     "built_in_mods": [ "lemat_revolver_shotgun" ]
+  },
+  {
+    "id": "colt_ring",
+    "copy-from": "rifle_manual_cap_ball",
+    "type": "GUN",
+    "looks_like": "henry_big_boy",
+    "name": { "str": "Colt Ring Lever Rifle" },
+    "description": "The Colt Ring Lever Rifle was one of the first true lever-action rifles, designed to utilize the same caplock ammo as Colt revolvers.  It was famously used in the second Seminole war, where the Seminole people had learned to strike American soldiers while they were reloading their muskets.",
+    "weight": "4300 g",
+    "volume": "3 L",
+    "price": "1300 USD",
+    "price_postapoc": "50 USD",
+    "material": [ "steel", "wood" ],
+    "color": "brown",
+    "ammo": "44paper",
+    "dispersion": 280,
+    "clip_size": 8
   }
 ]

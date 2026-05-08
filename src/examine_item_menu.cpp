@@ -237,7 +237,7 @@ bool run(
         } );
     }
 
-    if( get_option<std::string>( "HHG_URL" ).length() > 0 ) {
+    if( !get_option<std::string>( "HHG_URL" ).empty() ) {
         add_entry( "OPEN_ITEM_IN_HHG", hint_rating::good, [&]() {
             open_url( get_option<std::string>( "HHG_URL" ) + std::string( "/item/" ) + itm.typeId().c_str() +
                       std::string( "?t=UNDEAD_PEOPLE" ) );

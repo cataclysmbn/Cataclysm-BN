@@ -7,7 +7,6 @@
     "skills_required": [ "launcher", 2 ],
     "time": "10 m",
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "tools": [ [ [ "swage", -1 ] ] ],
     "components": [
       [ [ "40x53mm_m169_casing", 1 ] ],
       [ [ "chem_compositionb", 32 ] ],
@@ -15,6 +14,39 @@
       [ [ "impact_fuze", 1 ] ],
       [ [ "lgrifle_primer", 1 ] ]
     ],
+    "charges": 1
+  },
+  {
+    "result": "40x53mm_buckshot_m169",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "launcher", 2 ],
+    "time": "5 m",
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "40x53mm_m169_casing", 1 ] ], [ [ "lead", 16 ] ], [ [ "gunpowder", 35 ] ], [ [ "lgrifle_primer", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "40x53mm_slug_m169",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "launcher", 2 ],
+    "time": "5 m",
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "40x53mm_m169_casing", 1 ] ], [ [ "lead", 16 ] ], [ [ "gunpowder", 35 ] ], [ [ "lgrifle_primer", 1 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "40x53mm_m1001",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "launcher", 2 ],
+    "time": "5 m",
+    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
+    "components": [ [ [ "40x53mm_m169_casing", 1 ] ], [ [ "combatnail", 100 ] ], [ [ "gunpowder", 35 ] ], [ [ "lgrifle_primer", 1 ] ] ],
     "charges": 1
   }
 ]

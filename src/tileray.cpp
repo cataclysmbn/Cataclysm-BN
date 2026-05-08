@@ -146,6 +146,19 @@ int tileray::dir_symbol( int sym ) const
         case 'X':
             return "XcXcXcXc"[dir8()];
 
+        case 'L':
+            // Right double and vertical single
+            return "TRBL"[dir4()];
+        case 'R':
+            // Left double and vertical single
+            return "BLTR"[dir4()];
+        case 'T':
+            // Down double and vertical single
+            return "RBLT"[dir4()];
+        case 'B':
+            // Up double and vertical single
+            return "LTRB"[dir4()];
+
         case '[':
             // [ not rotated to ] because they might represent different items
             return "-\\[/-\\[/"[dir8()];

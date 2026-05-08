@@ -20,7 +20,9 @@ import android.content.DialogInterface;
 import android.content.pm.PackageInfo;
 import android.content.res.AssetManager;
 import android.os.*;
+import android.provider.Settings;
 import android.preference.PreferenceManager;
+import android.net.Uri;
 import android.util.Log;
 
 public class SplashScreen extends Activity {
@@ -28,8 +30,8 @@ public class SplashScreen extends Activity {
     private static final int INSTALL_DIALOG_ID = 0;
     private ProgressDialog installDialog;
 
-    public CharSequence[] mSettingsNames = { "Software rendering", "Force fullscreen", "Trap Back button" };
-    public boolean[] mSettingsValues = { false, false, true };
+    public CharSequence[] mSettingsNames = { "Software rendering", "Force fullscreen", "Trap Back button", "Use Legacy Storage" };
+    public boolean[] mSettingsValues = { false, false, true, false };
 
     private String getVersionName() {
         try {
@@ -48,6 +50,7 @@ public class SplashScreen extends Activity {
         super.onCreate(savedInstanceState);
 
         // Start the game if already installed, otherwise start installing...
+        
         if (getVersionName().equals(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("installed", ""))) {
             startGameActivity(false);
         }
@@ -92,11 +95,23 @@ public class SplashScreen extends Activity {
     private final class StartGameRunnable implements Runnable {
         @Override
         public void run() {
-            Intent intent = new Intent(SplashScreen.this, CataclysmDDA.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-            startActivity(intent);
-            finish();
-            overridePendingTransition(0, 0);
+            if( !PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean("Use Legacy Storage", false) && 
+                 Build.VERSION.SDK_INT >= 30 && !Environment.isExternalStorageManager() ) {
+                Intent intent = new Intent(
+                    Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION, 
+                    Uri.parse("package:" + getPackageName())
+                );
+                startActivity(intent);
+                finish();
+            }
+            if( PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getBoolean("Use Legacy Storage", false) || 
+                Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager() ) {
+                Intent intent = new Intent(SplashScreen.this, CataclysmDDA.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+                startActivity(intent);
+                finish();
+                overridePendingTransition(0, 0);
+            }
         }
     }
 

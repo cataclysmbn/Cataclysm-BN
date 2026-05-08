@@ -16,7 +16,8 @@
     "type": "item_group",
     "id": "ic_merch",
     "items": [
-      [ "smart_phone", 20 ],
+      [ "smart_phone", 10 ],
+      [ "wrist_comp_budget", 10 ],
       [ "mag_computer", 20 ],
       { "group": "ammo_pocket_batteries_full", "prob": 20 },
       [ "radio", 20 ],

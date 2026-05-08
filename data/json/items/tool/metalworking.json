@@ -153,7 +153,7 @@
     "material": "ceramic",
     "symbol": ";",
     "color": "dark_gray",
-    "qualities": [ [ "COOK", 1 ], [ "CHEM", 1 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ] ]
+    "qualities": [ [ "COOK", 1 ], [ "CHEM", 1 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CONTAIN_HOT", 2 ] ]
   },
   {
     "id": "crucible_clay",
@@ -170,7 +170,7 @@
     "material": "clay",
     "symbol": ";",
     "color": "brown",
-    "qualities": [ [ "COOK", 1 ], [ "CHEM", 1 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ] ]
+    "qualities": [ [ "COOK", 1 ], [ "CHEM", 1 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CONTAIN_HOT", 1 ] ]
   },
   {
     "id": "forge",
@@ -227,7 +227,7 @@
     "type": "TOOL",
     "category": "tools_workshop",
     "name": { "str": "hydraulic press" },
-    "description": "A large, barely portable hydraulic press, that uses a 36kW motor to squash whatever needs squashing.  Do not put your hand in here, it will get squashed.  Can run off heavy-duty batteries, or installed to run off a power grid instead.",
+    "description": "A large, barely portable hydraulic press, that uses a 36kW motor to squash whatever needs squashing.  Do not put your hand in here, it will get squashed.  Can run off heavy-duty batteries, installed to run off a power grid, or mounted on a vehicle.",
     "weight": "320 kg",
     "volume": "130 L",
     "price": "1200 USD",
@@ -321,7 +321,7 @@
     "volume": "500 ml",
     "price": "10 USD",
     "price_postapoc": "5 USD",
-    "material": "iron",
+    "material": "steel",
     "symbol": ",",
     "color": "light_gray",
     "flags": [ "NO_SALVAGE" ]
@@ -341,6 +341,7 @@
     "material": "steel",
     "symbol": ";",
     "color": "light_gray",
+    "qualities": [ [ "SWAGING", 1 ], [ "CASING_FORMING", 1 ] ],
     "flags": [ "DURABLE_MELEE" ]
   },
   {
@@ -357,7 +358,7 @@
     "material": "steel",
     "symbol": ";",
     "color": "light_gray",
-    "qualities": [ [ "COOK", 1 ] ],
+    "qualities": [ [ "COOK", 1 ], [ "GRIP_HOT", 2 ] ],
     "use_action": "HEAT_FOOD",
     "flags": [ "BELT_CLIP", "ALLOWS_REMOTE_USE" ]
   }

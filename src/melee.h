@@ -7,6 +7,8 @@ class item;
 struct damage_instance;
 struct attack_statblock;
 
+enum damage_type : int;
+
 /*
  * statistics data for melee attacks, used for test purposes
  */
@@ -51,6 +53,8 @@ void roll_cut_damage( const Character &c, bool crit, damage_instance &di, bool a
 /** Adds player's total stab damage to the damage instance */
 void roll_stab_damage( const Character &c, bool crit, damage_instance &di, bool average,
                        const item &weap, const attack_statblock &attack );
+void roll_non_physical_damage( const Character &c, bool crit, damage_instance &di, bool average,
+                               const item &weap, const attack_statblock &attack, damage_type dt );
 
 // Temporary function that returns any attack from the weapon
 // TODO: Remove

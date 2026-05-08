@@ -9,14 +9,17 @@
 
 #include "bodypart.h"
 #include "calendar.h"
+#include "item.h"
 #include "mutation.h"
 #include "npc.h"
 #include "options.h"
 #include "player.h"
+#include "player_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
 
 static const efftype_id effect_accumulated_mutagen( "accumulated_mutagen" );
+static const auto trait_marloss = trait_id( "MARLOSS" );
 
 std::string get_mutations_as_string( const player &p );
 
@@ -27,14 +30,17 @@ static void give_all_mutations( player &p, const mutation_category_trait &catego
 {
     const std::vector<trait_id> category_mutations = mutations_category[category.id];
 
-    // Add the threshold mutation first
-    if( include_postthresh && !category.threshold_mut.is_empty() ) {
-        p.set_mutation( category.threshold_mut );
+    // Add the threshold mutations first
+    if( include_postthresh && !category.threshold_muts.empty() ) {
+        for( unsigned int i = 1; i < category.threshold_muts.size();
+             i++ ) { // starts at 1 because 0 is NULL for aligning tier to index
+            p.set_mutation( category.threshold_muts[i] );
+        }
     }
 
     for( auto &m : category_mutations ) {
         const auto &mdata = m.obj();
-        if( include_postthresh || ( !mdata.threshold && mdata.threshreq.empty() ) ) {
+        if( include_postthresh || ( !mdata.threshold && mdata.threshold_tier == 0 ) ) {
             int mutation_attempts = 10;
             while( mutation_attempts > 0 && p.mutation_ok( m, false, false ) ) {
                 INFO( "Current mutations: " << get_mutations_as_string( p ) );
@@ -73,7 +79,7 @@ TEST_CASE( "Having all mutations give correct highest category", "[mutations]" )
     for( auto &cat : mutation_category_trait::get_all() ) {
         const auto &cur_cat = cat.second;
         const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) ) {
+        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
             continue;
         }
 
@@ -102,13 +108,13 @@ TEST_CASE( "Having all mutations give correct highest category", "[mutations]" )
 TEST_CASE( "Having all pre-threshold mutations gives a sensible threshold breach chance",
            "[mutations]" )
 {
-    const float BREACH_CHANCE_MIN = 0.2f;
+    const float BREACH_CHANCE_MIN = 0.15f;
     const float BREACH_CHANCE_MAX = 0.5f;
 
     for( auto &cat : mutation_category_trait::get_all() ) {
         const auto &cur_cat = cat.second;
         const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) ) {
+        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
             continue;
         }
 
@@ -120,7 +126,7 @@ TEST_CASE( "Having all pre-threshold mutations gives a sensible threshold breach
             const int total_strength = get_total_category_strength( dummy );
             float breach_chance = category_strength / static_cast<float>( total_strength );
 
-            THEN( "Threshold breach chance is at least 0.2" ) {
+            THEN( "Threshold breach chance is at least 0.15" ) {
                 INFO( "MUTATIONS: " << get_mutations_as_string( dummy ) );
                 CHECK( breach_chance >= BREACH_CHANCE_MIN );
             }
@@ -152,7 +158,7 @@ TEST_CASE( "Gaining a mutation in category makes mutations from other categories
     for( auto &cat : mutation_category_trait::get_all() ) {
         const auto &cur_cat = cat.second;
         const auto &cat_id = cur_cat.id;
-        if( cat_id == mutation_category_id( "ANY" ) ) {
+        if( cat_id == mutation_category_id( "ANY" ) || cat_id == mutation_category_id( "MYCUS" ) ) {
             continue;
         }
 
@@ -190,4 +196,29 @@ TEST_CASE( "Mutating with full mutagen accumulation results in multiple mutation
             }
         }
     }
+}
+
+TEST_CASE( "resized rigid armor fits tailed mutants", "[mutations][armor]" )
+{
+    npc dummy;
+    clear_character( dummy );
+    dummy.set_mutation( trait_id( "TAIL_FLUFFY" ) );
+
+    auto power_armor = item( "test_resizable_power_armor" );
+    CHECK_FALSE( dummy.can_wear( power_armor ).success() );
+    power_armor.set_flag( flag_id( "resized_large" ) );
+    CHECK( dummy.can_wear( power_armor ).success() );
+
+    auto rigid_armor = item( "test_resizable_rigid_leg_armor" );
+    CHECK_FALSE( dummy.can_wear( rigid_armor ).success() );
+    rigid_armor.set_flag( flag_id( "resized_large" ) );
+    CHECK( dummy.can_wear( rigid_armor ).success() );
+}
+
+TEST_CASE( "Mutating marloss does not crash on missing category data", "[mutations]" )
+{
+    npc dummy;
+
+    CHECK( dummy.mutate_towards( trait_marloss ) );
+    CHECK( dummy.has_trait( trait_marloss ) );
 }

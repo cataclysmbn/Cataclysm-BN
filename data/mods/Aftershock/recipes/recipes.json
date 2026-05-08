@@ -401,7 +401,6 @@
     "reversible": true,
     "autolearn": true,
     "using": [ [ "forging_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "afs_titanium_small", 400 ] ] ]
   },
   {
@@ -416,7 +415,6 @@
     "reversible": true,
     "autolearn": true,
     "using": [ [ "forging_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "afs_titanium_small", 400 ] ] ]
   },
   {

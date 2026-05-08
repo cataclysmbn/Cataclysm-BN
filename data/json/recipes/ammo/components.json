@@ -19,31 +19,11 @@
     "//": "Roughly consistent by weight, about 70 grams of material.",
     "charges": 35,
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
-    "components": [ [ [ "chem_saltpetre", 10 ] ], [ [ "chem_sulphur", 20 ] ], [ [ "charcoal", 1 ], [ "coal_lump", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "chem_black_powder",
-    "id_suffix": "generic",
-    "category": "CC_AMMO",
-    "subcategory": "CSC_AMMO_COMPONENTS",
-    "skill_used": "fabrication",
-    "skills_required": [ "cooking", 1 ],
-    "difficulty": 4,
-    "time": "2 m",
-    "book_learn": [
-      [ "textbook_anarch", 4 ],
-      [ "recipe_bullets", 2 ],
-      [ "manual_shotgun", 3 ],
-      [ "manual_pistol", 3 ],
-      [ "adv_chemistry", 3 ],
-      [ "textbook_chemistry", 3 ],
-      [ "reference_cooking", 4 ]
-    ],
-    "charges": 10,
-    "qualities": [ { "id": "CHEM", "level": 2 } ],
-    "tools": [ [ [ "hotplate", 5 ], [ "toolset", 5 ] ] ],
-    "components": [ [ [ "oxy_powder", 5 ] ], [ [ "lye_powder", 5 ] ], [ [ "charcoal", 1 ], [ "coal_lump", 1 ] ] ]
+    "components": [
+      [ [ "chem_saltpetre", 10 ], [ "oxy_powder", 10 ] ],
+      [ [ "chem_sulphur", 20 ], [ "lye_powder", 20 ] ],
+      [ [ "charcoal", 1 ], [ "coal_lump", 1 ] ]
+    ]
   },
   {
     "type": "recipe",
@@ -120,8 +100,7 @@
     "charges": 1,
     "decomp_learn": 6,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
       [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
@@ -139,8 +118,7 @@
     "time": "22 m 30 s",
     "charges": 50,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
@@ -167,8 +145,7 @@
     "charges": 1,
     "decomp_learn": 6,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
       [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
@@ -186,8 +163,7 @@
     "time": "22 m 30 s",
     "charges": 50,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
@@ -214,8 +190,7 @@
     "charges": 1,
     "decomp_learn": 6,
     "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
       [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
@@ -233,8 +208,7 @@
     "time": "22 m 30 s",
     "charges": 50,
     "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
@@ -261,8 +235,7 @@
     "charges": 1,
     "decomp_learn": 6,
     "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
       [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
@@ -280,8 +253,7 @@
     "time": "22 m 30 s",
     "charges": 50,
     "book_learn": [ [ "mag_rifle", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
@@ -308,8 +280,7 @@
     "charges": 1,
     "decomp_learn": 6,
     "book_learn": [ [ "manual_shotgun", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
       [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ]
@@ -327,8 +298,7 @@
     "time": "22 m 30 s",
     "charges": 50,
     "book_learn": [ [ "manual_shotgun", 3 ], [ "recipe_bullets", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [
         [ "can_drink_unsealed", 1 ],
@@ -346,6 +316,7 @@
     "type": "recipe",
     "result": "380_casing",
     "id_suffix": "resize",
+    "byproducts": [ [ "cartridgebrass", 2 ] ],
     "category": "CC_AMMO",
     "subcategory": "CSC_AMMO_COMPONENTS",
     "skill_used": "fabrication",
@@ -354,8 +325,7 @@
     "time": "2 m 6 s",
     "batch_time_factors": [ 80, 5 ],
     "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
-    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "DRILL", "level": 2 } ],
-    "tools": [ [ [ "press", -1 ] ], [ [ "cordless_drill", 2 ] ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "DRILL", "level": 2 }, { "id": "CASING_PRESSING", "level": 2 } ],
     "components": [ [ [ "223_casing", 1 ] ] ]
   },
   {
@@ -370,9 +340,23 @@
     "time": "2 m 6 s",
     "batch_time_factors": [ 60, 5 ],
     "book_learn": [ [ "manual_rifle", 5 ], [ "recipe_bullets", 3 ] ],
-    "qualities": [ { "id": "SAW_M", "level": 1 } ],
-    "tools": [ [ [ "press", -1 ] ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "CASING_PRESSING", "level": 2 } ],
     "components": [ [ [ "223_casing", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "38_casing",
+    "id_suffix": "resize",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "skills_required": [ "gun", 3 ],
+    "time": "2 m",
+    "batch_time_factors": [ 60, 5 ],
+    "book_learn": [ [ "manual_pistol", 5 ], [ "recipe_bullets", 3 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 }, { "id": "CASING_PRESSING", "level": 2 } ],
+    "components": [ [ [ "357mag_casing", 1 ] ] ]
   },
   {
     "result": "cannonball_explosive",
@@ -384,9 +368,8 @@
     "time": "75 m",
     "batch_time_factors": [ 90, 4 ],
     "reversible": true,
-    "book_learn": [ [ "manual_launcher", 6 ], [ "textbook_anarch", 7 ] ],
+    "book_learn": [ [ "manual_launcher", 6 ], [ "textbook_launcher", 6 ], [ "textbook_anarch", 7 ] ],
     "using": [ [ "blacksmithing_intermediate", 12 ], [ "steel_tiny", 12 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [
       [ [ "volatile_explosive", 75, "LIST" ], [ "stable_explosive", 75, "LIST" ], [ "military_explosive", 75, "LIST" ] ],
       [
@@ -410,8 +393,9 @@
     "batch_time_factors": [ 90, 4 ],
     "reversible": true,
     "autolearn": true,
+    "book_learn": [ [ "manual_launcher", 2 ], [ "textbook_launcher", 2 ] ],
     "using": [ [ "forging_standard", 8 ], [ "steel_tiny", 8 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ]
   },
   {
     "type": "recipe",
@@ -423,7 +407,9 @@
     "skills_required": [ "gun", 3 ],
     "difficulty": 4,
     "time": "30 s",
+    "reversible": true,
     "charges": 1,
+    "decomp_learn": 6,
     "book_learn": [ [ "manual_pistol", 3 ], [ "recipe_bullets", 2 ] ],
     "components": [ [ [ "22_casing", 1 ] ], [ [ "oxy_powder", 1 ], [ "chem_match_head_powder", 1 ] ] ]
   },
@@ -436,11 +422,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 5 ] ] ]
   },
@@ -453,11 +436,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 2 ] ] ]
   },
@@ -470,11 +450,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 7 ] ] ]
   },
@@ -487,11 +464,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 7 ] ] ]
   },
@@ -504,11 +478,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 6 ] ] ]
   },
@@ -521,11 +492,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 6 ] ] ]
   },
@@ -538,11 +506,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 2 ] ] ]
   },
@@ -555,11 +520,8 @@
     "difficulty": 4,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 3 ] ] ]
   },
@@ -572,11 +534,8 @@
     "difficulty": 4,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 3 ] ] ]
   },
@@ -589,11 +548,8 @@
     "difficulty": 4,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 3 ] ] ]
   },
@@ -606,11 +562,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 4 ] ] ]
   },
@@ -622,12 +575,9 @@
     "skill_used": "fabrication",
     "difficulty": 4,
     "time": "5 m",
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 4 ] ] ]
   },
@@ -640,11 +590,8 @@
     "difficulty": 4,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 4 ] ] ]
   },
@@ -657,11 +604,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 7 ] ] ]
   },
@@ -674,11 +618,8 @@
     "difficulty": 6,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 18 ] ] ]
   },
@@ -691,11 +632,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 7 ] ] ]
   },
@@ -708,11 +646,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 6 ] ] ]
   },
@@ -725,11 +660,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 3 ] ] ]
   },
@@ -742,11 +674,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 3 ] ] ]
   },
@@ -759,11 +688,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 3 ] ] ]
   },
@@ -776,11 +702,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 3 ] ] ]
   },
@@ -793,11 +716,8 @@
     "difficulty": 5,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 5 ] ] ]
   },
@@ -810,12 +730,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_shotgun", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ],
-      [ [ "mold_plastic", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ], [ [ "mold_plastic", -1 ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 2 ] ], [ [ "plastic_scrap", 2 ] ] ]
   },
@@ -828,12 +744,8 @@
     "difficulty": 3,
     "time": "5 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_shotgun", 3 ] ],
-    "tools": [
-      [ [ "hydraulic_press", 10 ] ],
-      [ [ "forging_standard", 1, "LIST" ] ],
-      [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ],
-      [ [ "mold_plastic", -1 ] ]
-    ],
+    "qualities": [ { "id": "CASING_FORMING", "level": 1 } ],
+    "tools": [ [ [ "hydraulic_press", 10 ] ], [ [ "forging_standard", 1, "LIST" ] ], [ [ "mold_plastic", -1 ] ] ],
     "charges": 1,
     "components": [ [ [ "cartridgebrass", 1 ] ], [ [ "plastic_scrap", 1 ] ] ]
   },
@@ -848,9 +760,8 @@
     "time": "10 m",
     "reversible": true,
     "decomp_learn": 8,
-    "book_learn": [ [ "manual_traps_mil", 5 ], [ "manual_launcher", 6 ], [ "textbook_anarch", 7 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "book_learn": [ [ "manual_traps_mil", 5 ], [ "manual_launcher", 6 ], [ "textbook_launcher", 6 ], [ "textbook_anarch", 7 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "//": "Components called for explicitly instead of volatile_explosive in order to use smaller amounts, and to place HTMD first",
     "components": [
       [ [ "copper", 1 ], [ "cartridgebrass", 2 ], [ "aluminum_foil", 2 ] ],
@@ -875,9 +786,8 @@
     "time": "10 m",
     "reversible": true,
     "decomp_learn": 9,
-    "book_learn": [ [ "manual_traps_mil", 6 ], [ "manual_launcher", 7 ], [ "textbook_anarch", 8 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ], [ "small_repairkit", -1 ], [ "large_repairkit", -1 ] ] ],
+    "book_learn": [ [ "manual_traps_mil", 6 ], [ "manual_launcher", 7 ], [ "textbook_launcher", 6 ], [ "textbook_anarch", 8 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
     "components": [
       [ [ "copper", 2 ], [ "cartridgebrass", 4 ], [ "aluminum_foil", 4 ] ],
       [
@@ -889,6 +799,65 @@
       ],
       [ [ "chem_hmtd", 3 ], [ "gunpowder", 2 ], [ "chem_black_powder", 4 ], [ "chem_match_head_powder", 8 ] ],
       [ [ "fuse", 2 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "120mm_casing",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "launcher", 4 ], [ "mechanics", 1 ] ],
+    "difficulty": 6,
+    "time": "90 m",
+    "book_learn": [ [ "textbook_launcher", 6 ], [ "textbook_anarch", 8 ] ],
+    "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_tiny", 2 ] ],
+    "components": [ [ [ "120mm_case_base", 1 ] ] ]
+  },
+  {
+    "result": "electric_primer_120mm",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "skills_required": [ [ "electronics", 5 ], [ "launcher", 3 ] ],
+    "time": "10 m",
+    "reversible": true,
+    "decomp_learn": 7,
+    "book_learn": [ [ "textbook_launcher", 5 ], [ "recipe_bullets", 6 ], [ "textbook_anarch", 7 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "CASING_FORMING", "level": 1 } ],
+    "charges": 1,
+    "components": [
+      [ [ "copper", 5 ], [ "cartridgebrass", 10 ], [ "aluminum_foil", 10 ] ],
+      [ [ "cable", 2 ] ],
+      [ [ "gunpowder", 2 ], [ "chem_black_powder", 4 ], [ "chem_match_head_powder", 8 ], [ "chem_hmtd", 3 ] ]
+    ]
+  },
+  {
+    "result": "primer_155mm",
+    "type": "recipe",
+    "category": "CC_AMMO",
+    "subcategory": "CSC_AMMO_COMPONENTS",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "skills_required": [ [ "launcher", 3 ] ],
+    "time": "10 m",
+    "reversible": true,
+    "decomp_learn": 8,
+    "book_learn": [ [ "textbook_launcher", 6 ], [ "recipe_bullets", 7 ], [ "textbook_anarch", 8 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 3 }, { "id": "CASING_FORMING", "level": 1 } ],
+    "charges": 1,
+    "components": [
+      [ [ "copper", 10 ], [ "cartridgebrass", 20 ], [ "aluminum_foil", 20 ] ],
+      [
+        [ "smpistol_primer", 1 ],
+        [ "lgpistol_primer", 1 ],
+        [ "smrifle_primer", 1 ],
+        [ "lgrifle_primer", 1 ],
+        [ "shotgun_primer", 1 ]
+      ],
+      [ [ "gunpowder", 4 ], [ "chem_black_powder", 8 ], [ "chem_match_head_powder", 16 ], [ "chem_hmtd", 6 ] ]
     ]
   }
 ]

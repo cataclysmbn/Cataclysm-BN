@@ -24,6 +24,7 @@
 
 class Character;
 class item;
+class npc;
 class npc_template;
 class player;
 struct iteminfo;
@@ -449,6 +450,37 @@ class change_scent_iuse : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
 };
 
+class cloning_syringe_iuse : public iuse_actor
+{
+    public:
+        /** How many move points this action takes. */
+        int moves = 100;
+        /** How many move points this action takes. */
+        int charges_to_use = 10;
+
+        cloning_syringe_iuse() : iuse_actor( "cloning_syringe" ) { }
+        ~cloning_syringe_iuse() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+
+class dna_editor_iuse : public iuse_actor
+{
+    public:
+        /** How many move points this action takes. */
+        int moves = 100;
+        /** How many move points this action takes. */
+        int charges_to_use = 10;
+
+        dna_editor_iuse() : iuse_actor( "dna_editor" ) { }
+        ~dna_editor_iuse() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
 /**
  * This iuse contains the logic to summon an npc on the map.
  */
@@ -735,11 +767,11 @@ class musical_instrument_actor : public iuse_actor
         /**
         * List of sound descriptions for players
         */
-        std::vector< std::string > player_descriptions;
+        std::vector<std::string> player_descriptions;
         /**
         * List of sound descriptions for NPCs
         */
-        std::vector< std::string > npc_descriptions;
+        std::vector<std::string> npc_descriptions;
         /**
          * Display description once per this duration (@ref calendar::once_every).
          */
@@ -1160,6 +1192,7 @@ class mutagen_iv_actor : public iuse_actor
 {
     public:
         mutation_category_id mutation_category;
+        unsigned short tier;
 
         mutagen_iv_actor() : iuse_actor( "mutagen_iv" ) {}
 
@@ -1265,3 +1298,317 @@ class heat_food_actor : public iuse_actor
         std::unique_ptr<iuse_actor> clone() const override;
 };
 
+class multicooker_iuse : public iuse_actor
+{
+    public:
+        bool do_hallu;
+        int charges_to_start;
+        float time_mult = 1.0f;
+        float charges_per_minute;
+        std::set<itype_id> recipes;
+        std::set<std::string> subcategories;
+        std::set<std::string> temporary_tools;
+
+        multicooker_iuse( const std::string &type = "multicooker" ) : iuse_actor( type ) {}
+
+        ~multicooker_iuse() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+/**
+ * Recharge a battery by hand-cranking.
+ */
+class hand_crank_actor : public iuse_actor
+{
+    public:
+        time_duration charge_interval = 144_seconds;
+        int charge_amount = 1;
+        int fatigue_per_interval = 1;
+        itype_id ammo_type = itype_id( "battery" );
+        std::string activity_name = "charging";
+        std::string start_message = "You start cranking the %s to charge its %s.";
+        std::string already_charged_message =
+            "You could use the %s to charge its %s, but it's already charged.";
+        std::string need_battery_message = "You need a rechargeable battery cell to charge.";
+        std::string underwater_message = "It's not waterproof enough to work underwater.";
+        std::string exhausted_message = "You're too exhausted to keep cranking.";
+        std::string fully_charged_message = "You've charged the battery completely.";
+
+        hand_crank_actor( const std::string &type = "HAND_CRANK" ) : iuse_actor( type ) {}
+        ~hand_crank_actor() override = default;
+        auto load( const JsonObject &obj ) -> void override;
+        auto use( player &p, item &it, bool, const tripoint & ) const -> int override;
+        auto can_use( const Character &, const item &, bool,
+                      const tripoint & ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
+};
+
+/**
+ * Relieve some tension built up in the cataclysm
+ * More generalized form of old VIBE iuse
+ */
+class sex_toy_actor : public iuse_actor
+{
+    public:
+        int moves;
+
+        sex_toy_actor( const std::string &type = "sex_toy" ) : iuse_actor( type ) {};
+        ~sex_toy_actor() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &i, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+/**
+ * Use an item to train your skills
+ */
+class train_skill_actor : public iuse_actor
+{
+    public:
+        std::string training_skill;
+        int training_skill_min_level;
+        int training_skill_xp;
+        int training_skill_xp_chance;
+        int training_skill_max_level;
+        int training_skill_fatigue;
+        int training_skill_interval;
+        std::string training_msg;
+
+        train_skill_actor( const std::string &type = "train_skill" ) : iuse_actor( type ) {};
+        ~train_skill_actor() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &i, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+
+class iuse_music_player : public iuse_actor
+{
+    public:
+        /** displayed if player sees transformation with %s replaced by item name */
+        translation msg_transform;
+
+        /** type of the resulting item */
+        itype_id target;
+
+        /**does the item requires to be worn to be activable*/
+        bool need_worn = false;
+
+        /**does the item requires to be wielded to be activable*/
+        bool need_wielding = false;
+
+        /** subtracted from @ref Creature::moves when transformation is successful */
+        int moves = 0;
+
+        /** minimum charges (if any) required for transformation */
+        int need_charges = 0;
+
+        /** charges needed for process of transforming item */
+        int transform_charges = 0;
+
+        iuse_music_player( const std::string &type = "music_player" ) : iuse_actor( type ) {}
+
+        ~iuse_music_player() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+//TODO: Incomplete class, this should have stuff regarding skill later!
+class iuse_prospect_pick : public iuse_actor
+{
+    public:
+        /**Tile radius to reveal ores in rocks and stones */
+        int range;
+
+        iuse_prospect_pick( const std::string &type = "prospect_pick" ) : iuse_actor( type ) {}
+        ~iuse_prospect_pick() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+class iuse_reveal_contents : public iuse_actor
+{
+    public:
+        //What itemgroup is inside the thing?
+        item_group_id contents_group;
+        //what is displayed on opening? eg: you pull a [item dropped]!; %s will be replaced with the name of the "package", can be nothing
+        std::string open_message;
+        iuse_reveal_contents( const std::string &type = "reveal_contents" ) : iuse_actor( type ) {}
+        ~iuse_reveal_contents() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+};
+
+class iuse_flowerpot_collect;
+
+class iuse_flowerpot_plant final : public iuse_actor
+{
+        friend iuse_flowerpot_collect;
+    public:
+        constexpr static auto VAR_SEED_TYPE = "flowerpot_seed";
+        constexpr static auto VAR_PLANTED_DATE = "flowerpot_date";
+        constexpr static auto VAR_FERT_AMT = "flowerpot_fert_amt";
+        constexpr static auto VAR_SEED_AMT = "flowerpot_seed_amt";
+        constexpr static auto IUSE_ACTOR = "flowerpot_plant";
+
+        iuse_flowerpot_plant( const std::string &type = IUSE_ACTOR ) : iuse_actor( type ) {}
+        ~iuse_flowerpot_plant() override = default;
+        void load( const JsonObject &jo ) override;
+        int use( player &who, item &i, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const override;
+        void info( const item &, std::vector<iteminfo> & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        enum growth_stage : int {
+            empty,
+            seed,
+            seedling,
+            mature,
+            harvest
+        };
+        struct growth_info {
+            itype_id seed_id;
+            time_point planted_time;
+            time_duration epoch;
+            float harvest_mult;
+            int fert_amt;
+            int seed_amt;
+            auto elapsed_time() const -> time_duration;
+            auto remaining_time() const -> time_duration;
+            auto stage() const -> growth_stage;
+            auto plant_name() const -> std::string;
+            double progress() const;
+        };
+
+        static bool empty_pot_selector( const item &it );
+        static bool full_pot_selector( const item &it );
+        static void set_growing_plant( item &i, itype_id seed, time_point planted_time, int seeds,
+                                       int fertilizer );
+        static void clear_growing_plant( item &i );
+        static auto query_adjacent_pot( const player &, bool empty = true ) -> std::optional<item *>;
+
+        auto get_info( const item & ) const -> growth_info;
+        auto calculate_growth_time( const itype_id &, int used_fert ) const -> time_duration;
+        void update( item & ) const;
+
+        auto on_use_add_fertilizer( player &, item &, const tripoint & ) const -> int;
+        auto on_use_plant( player &, item &, const tripoint & ) const -> int;
+        auto on_use_harvest( player &, item &, const tripoint & ) const -> int;
+        auto on_tick( player &, item &, const tripoint & ) const -> int;
+
+        std::array<itype_id, 5> stages;
+        std::pair<int, int> seeds_per_use = {1, 4};
+        std::pair<int, int> fert_per_use = {0, 3};
+        float harvest_mult = 1;
+        float growth_rate = 1;
+        float fert_boost = 0.25;
+        std::set<std::string> terrain = { "PLANTABLE" };
+};
+
+class iuse_flowerpot_collect final : public iuse_actor
+{
+        friend iuse_flowerpot_plant;
+    public:
+        iuse_flowerpot_collect( const std::string &type = "flowerpot_collect" ) : iuse_actor(
+                type ) {}
+        ~iuse_flowerpot_collect() override = default;
+        void load( const JsonObject &obj ) override;
+        auto use( player &who, item &i, bool, const tripoint & ) const -> int override;
+        auto can_use( const Character &, const item &, bool,
+                      const tripoint & ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
+    private:
+        static void transfer_map_to_flowerpot( const tripoint &map_pos,
+                                               item &flowerpot,
+                                               const iuse_flowerpot_plant *actor,
+                                               const itype_id &seed_type );
+};
+
+class iuse_dimension_travel : public iuse_actor
+{
+    public:
+        world_type_id destination;
+        int travel_radius = 1;
+        int need_charges = 1;
+        std::string fail_message;
+        std::string success_message;
+
+        iuse_dimension_travel( const std::string &type = "dimension_travel" ) : iuse_actor( type ) {}
+        ~iuse_dimension_travel() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &it, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        void dimension_travel( player &p, item &, const tripoint &pos ) const;
+};
+
+/**
+ * iuse_actor for items that function as keys to pocket dimensions.
+ * When used from the base dimension, enters the pocket.
+ * When used from inside the pocket, exits to the return point.
+ */
+class iuse_pocket_dimension : public iuse_actor
+{
+    public:
+        world_type_id pocket_type =
+            world_type_id( "pocket_dimension" ); // Which world_type to use for this pocket
+        std::string entry_mapgen;               // Overmap special ID for generation
+        bool persistent = false;                 // Does the pocket survive item destruction?
+        int need_charges = 0;
+        std::optional<ter_str_id> boundary_terrain;  // Override boundary terrain for this pocket
+        std::string pocket_name;                 // Display name for this pocket on the overmap
+
+        // Temporary pocket lifetime: pocket collapses this long after the player exits.
+        // nullopt = permanent pocket.
+        std::optional<time_duration> lifetime;
+
+        iuse_pocket_dimension( const std::string &type = "pocket_dimension" ) : iuse_actor( type ) {}
+        ~iuse_pocket_dimension() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &it, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        void initialize_pocket( item &it ) const;
+        void enter_pocket( player &p, item &it ) const;
+        void exit_pocket( player &p, item &it ) const;
+};
+
+/**
+ * An item that can be "tuned" to a portal_tile and then used to teleport to it.
+ *
+ * When used near a matching portal (furniture with a portal_tile whose
+ * linkable_item_flag matches @ref required_portal_flag), the item links itself.
+ * When used away from a portal while linked, it teleports the player to the
+ * portal and optionally stores the origin for a return trip.
+ *
+ * Item variables stored on the instance:
+ *   "portal_linked"            — bool, true once linked
+ *   "linked_dim_id"            — string, target dimension
+ *   "linked_pos_x/y/z"        — int, target tripoint_abs_ms
+ *   "origin_dim_id"            — string, stored on first teleport (if can_return)
+ *   "origin_pos_x/y/z"        — int, origin tripoint_abs_ms
+ */
+class iuse_portal_link : public iuse_actor
+{
+    public:
+        std::string required_portal_flag;  // portal_tile::linkable_item_flag must match this
+        bool can_return = false;           // store origin for a return trip
+        int charges_per_use = 0;           // charges consumed per teleport
+
+        iuse_portal_link( const std::string &type = "portal_link" ) : iuse_actor( type ) {}
+        ~iuse_portal_link() override = default;
+        void load( const JsonObject &obj ) override;
+        auto use( player &p, item &it, bool, const tripoint &pos ) const -> int override;
+        auto can_use( const Character &, const item &it, bool,
+                      const tripoint &pos ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
+};

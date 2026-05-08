@@ -205,6 +205,9 @@ using vproto_id = string_id<vehicle_prototype>;
 struct weather_type;
 using weather_type_id = string_id<weather_type>;
 
+struct world_type;
+using world_type_id = string_id<world_type>;
+
 class zone_type;
 using zone_type_id = string_id<zone_type>;
 

@@ -8,6 +8,7 @@
     "weight": "5 kg",
     "volume": "1 L",
     "price": "25 kUSD",
+    "price_postapoc": "25 USD",
     "to_hit": 1,
     "material": [ "neoprene", "kevlar" ],
     "symbol": "[",
@@ -31,6 +32,7 @@
     "color": "dark_gray",
     "weight": "1500 g",
     "price": "2500 USD",
+    "price_postapoc": "10 USD",
     "warmth": 40,
     "encumbrance": 17,
     "material_thickness": 5,
@@ -45,6 +47,7 @@
     "weight": "1060 g",
     "volume": "1500 ml",
     "price": "1 kUSD",
+    "price_postapoc": "20 USD",
     "to_hit": -1,
     "bashing": 2,
     "material": [ "rubber", "superalloy", "nomex" ],
@@ -67,10 +70,10 @@
     "description": "C.R.I.T. standard-issue gloves.  Made with superalloy mesh for those with gene-modding and/or mutations while still allowing greater manipulation of items and moderate protection.",
     "encumbrance": 12,
     "coverage": 85,
-    "warmth": 20,
+    "warmth": 15,
     "material": [ "kevlar", "superalloy" ],
     "material_thickness": 2,
-    "flags": [ "ALLOWS_NATURAL_ATTACKS", "STURDY", "WATERPROOF" ]
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "STURDY", "WATERPROOF", "ALLOWS_CLAWS" ] }
   },
   {
     "id": "crt_gloves_liner",
@@ -78,26 +81,34 @@
     "type": "ARMOR",
     "name": { "str": "pair of C.R.I.T. fingertip-less liners", "str_pl": "pairs of C.R.I.T. fingertip-less liners" },
     "description": "C.R.I.T. standard-issue glove liners.  Made with neoprene and rubber mesh for warmth and fingertip-less for those with gene-modding and/or mutations while still allowing greater manipulation of items and moderate protection.",
-    "encumbrance": 3,
+    "encumbrance": 1,
     "coverage": 85,
     "warmth": 15,
     "material": [ "neoprene", "rubber" ],
     "material_thickness": 1,
-    "flags": [ "ALLOWS_NATURAL_ATTACKS", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
+    "extend": { "flags": [ "SKINTIGHT", "POWERARMOR_COMPATIBLE" ] }
   },
   {
     "id": "crt_backpack",
     "copy-from": "molle_pack",
     "type": "ARMOR",
     "name": "C.R.I.T. backpack",
-    "description": "C.R.I.T. standard-issue pack.  Based on the MOLLE backpack's design, this smaller pack strikes a fine balance between storage space and encumbrance and allows a larger weapon to be holstered, drawing and holstering is still rather awkward even with the magnetized clips, but practice helps.",
+    "description": "C.R.I.T. standard-issue pack.  Based on the MOLLE backpack's design, this smaller pack strikes a fine balance between storage space and encumbrance and allows multiple larger weapons to be holstered, drawing and holstering is still rather awkward even with the magnetized clips, but practice helps.",
     "color": "dark_gray",
     "storage": "9 L",
     "encumbrance": 3,
     "max_encumbrance": 7,
     "material_thickness": 2,
     "material": [ "leather", "kevlar" ],
-    "use_action": { "type": "holster", "max_volume": "3250 ml", "draw_cost": 150, "skills": [ "smg", "shotgun", "rifle" ] },
+    "use_action": {
+      "type": "holster",
+      "max_volume": "3250 ml",
+      "min_volume": "250ml",
+      "draw_cost": 150,
+      "multi": 3,
+      "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ],
+      "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "SHEATH_AXE", "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER", "BELT_CLIP" ]
+    },
     "flags": [ "BELTED", "OVERSIZE", "NO_QUICKDRAW", "STURDY", "WATERPROOF" ]
   },
   {
@@ -108,7 +119,17 @@
     "description": "C.R.I.T. standard-issue chestrig, has mesh and MOLLE loops for gear and slots with light-armor padding.",
     "color": "dark_gray",
     "material": [ "kevlar", "plastic" ],
-    "flags": [ "STURDY", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
+    "use_action": {
+      "type": "holster",
+      "holster_prompt": "Stash ammo",
+      "holster_msg": "You stash your %s.",
+      "multi": 4,
+      "max_volume": "750 ml",
+      "draw_cost": 40,
+      "skills": [ "pistol", "smg", "shotgun", "launcher" ],
+      "flags": [ "SHEATH_KNIFE", "BELT_CLIP", "MAG_COMPACT", "SPEEDLOADER" ]
+    },
+    "flags": [ "STURDY", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_WINGS" ]
   },
   {
     "id": "crt_legguard",
@@ -121,9 +142,10 @@
     "weight": "1300 g",
     "volume": "1500 ml",
     "price": "200 USD",
+    "price_postapoc": "2 USD",
     "warmth": 17,
     "symbol": ":",
-    "flags": [ "STURDY", "BELTED", "BLOCK_WHILE_WORN", "WATER_FRIENDLY" ]
+    "flags": [ "OUTER", "STURDY", "BELTED", "BLOCK_WHILE_WORN", "WATER_FRIENDLY" ]
   },
   {
     "id": "crt_armguard",
@@ -133,7 +155,8 @@
     "description": "A pair of arm guards made from superalloy molded upon neoprene, and then insulated with rubber.  They are sturdy and will block attacks, but they are ridiculously heavy.",
     "weight": "1820 g",
     "volume": "3 L",
-    "price": "2 kUSD",
+    "price": "200 USD",
+    "price_postapoc": "2 USD",
     "to_hit": 1,
     "material": [ "superalloy", "neoprene", "rubber" ],
     "symbol": "[",
@@ -141,11 +164,11 @@
     "looks_like": "armguard_hard",
     "covers": [ "arms" ],
     "coverage": 100,
-    "encumbrance": 20,
+    "encumbrance": 10,
     "warmth": 17,
     "material_thickness": 4,
     "environmental_protection": 3,
-    "flags": [ "STURDY", "BELTED", "BLOCK_WHILE_WORN", "WATER_FRIENDLY" ]
+    "flags": [ "OUTER", "STURDY", "BELTED", "BLOCK_WHILE_WORN", "WATER_FRIENDLY" ]
   },
   {
     "id": "crt_belt",
@@ -155,7 +178,7 @@
     "description": "C.R.I.T. standard-issue belt.  Keeps your trousers up and your weapons on your hip.",
     "color": "dark_gray",
     "material": [ "leather", "brass" ],
-    "flags": [ "WATER_FRIENDLY" ]
+    "extend": { "flags": [ "WATER_FRIENDLY" ] }
   },
   {
     "id": "crt_iduster",
@@ -166,6 +189,7 @@
     "weight": "2120 g",
     "volume": "5750 ml",
     "price": "255 USD",
+    "price_postapoc": "30 USD",
     "to_hit": -1,
     "material": [ "neoprene", "rubber", "kevlar" ],
     "symbol": "[",
@@ -173,12 +197,12 @@
     "looks_like": "duster_survivor",
     "covers": [ "torso", "arms", "legs" ],
     "coverage": 100,
-    "encumbrance": 20,
+    "encumbrance": 18,
     "storage": "4500 ml",
     "warmth": 20,
-    "material_thickness": 3,
+    "material_thickness": 4,
     "environmental_protection": 9,
-    "flags": [ "POCKETS", "OUTER", "COLLAR", "STURDY", "WATERPROOF", "RAINPROOF" ]
+    "flags": [ "POCKETS", "OUTER", "COLLAR", "STURDY", "WATERPROOF", "RAINPROOF", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
   },
   {
     "id": "ds_monitor",
@@ -188,6 +212,7 @@
     "weight": "500 g",
     "volume": "0 ml",
     "price": "250 kUSD",
+    "price_postapoc": "250 USD",
     "to_hit": -3,
     "material": [ "plastic", "steel" ],
     "symbol": "[",
@@ -221,6 +246,7 @@
     "weight": "13460 g",
     "volume": "14250 ml",
     "price": "9000 kUSD",
+    "price_postapoc": "250 USD",
     "to_hit": -5,
     "bashing": 8,
     "material": [ "superalloy", "nomex", "kevlar" ],
@@ -245,6 +271,7 @@
     "weight": "11460 g",
     "volume": "11250 ml",
     "price": "9000 kUSD",
+    "price_postapoc": "125 USD",
     "to_hit": -5,
     "bashing": 8,
     "material": [ "kevlar", "nomex", "plastic" ],
@@ -254,8 +281,8 @@
     "coverage": 100,
     "encumbrance": 25,
     "warmth": 25,
-    "storage": "1250 ml",
-    "material_thickness": 5,
+    "storage": "5 L",
+    "material_thickness": 6,
     "environmental_protection": 25,
     "flags": [ "VARSIZE", "WATERPROOF", "HOOD", "COLLAR", "RAINPROOF", "STURDY", "RAD_RESIST", "OUTER" ]
   },
@@ -268,6 +295,7 @@
     "weight": "255 g",
     "volume": "500 ml",
     "price": "30 USD",
+    "price_postapoc": "3 USD",
     "material": [ "plastic", "cotton", "rubber" ],
     "symbol": "[",
     "color": "dark_gray",
@@ -277,7 +305,7 @@
     "encumbrance": 3,
     "storage": "1500 ml",
     "material_thickness": 2,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "BELTED", "COMPACT", "RAINPROOF" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "BELTED", "COMPACT", "RAINPROOF", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "crt_earmor",
@@ -287,6 +315,7 @@
     "weight": "21460 g",
     "volume": "11250 ml",
     "price": "9000 kUSD",
+    "price_postapoc": "90 USD",
     "to_hit": -5,
     "bashing": 8,
     "material": [ "steel", "kevlar" ],
@@ -294,12 +323,12 @@
     "color": "cyan",
     "covers": [ "torso", "legs", "arms" ],
     "coverage": 90,
-    "encumbrance": 35,
+    "encumbrance": 30,
     "warmth": 20,
     "storage": "1750 ml",
-    "material_thickness": 4,
+    "material_thickness": 5,
     "environmental_protection": 5,
-    "flags": [ "VARSIZE", "STURDY", "BELTED" ]
+    "flags": [ "VARSIZE", "STURDY", "BELTED", "OVERSIZE" ]
   },
   {
     "id": "crt_earmor_boots",
@@ -309,6 +338,7 @@
     "weight": "2060 g",
     "volume": "1500 ml",
     "price": "1 kUSD",
+    "price_postapoc": "5 USD",
     "to_hit": -1,
     "bashing": 2,
     "material": [ "kevlar", "superalloy" ],
@@ -330,13 +360,14 @@
     "weight": "5439 g",
     "volume": "6250 ml",
     "price": "9000 kUSD",
+    "price_postapoc": "90 USD",
     "material": [ "neoprene", "kevlar", "superalloy" ],
     "symbol": "[",
     "color": "light_blue",
     "covers": [ "torso", "legs", "arms" ],
     "coverage": 100,
     "encumbrance": 7,
-    "warmth": 20,
+    "warmth": 10,
     "storage": "2500 ml",
     "material_thickness": 2,
     "environmental_protection": 3,
@@ -350,15 +381,16 @@
     "weight": "42563 g",
     "volume": "12500 ml",
     "price": "1000 kUSD",
+    "price_postapoc": "100 USD",
     "material": [ "hardsteel", "steel", "kevlar" ],
     "symbol": "[",
     "color": "light_green",
     "covers": [ "torso", "legs", "arms" ],
     "coverage": 100,
-    "encumbrance": 40,
+    "encumbrance": 35,
     "warmth": 25,
-    "storage": "4 L",
-    "material_thickness": 3,
+    "storage": "14 L",
+    "material_thickness": 5,
     "environmental_protection": 10,
     "use_action": { "type": "holster", "max_volume": "3750 ml", "draw_cost": 155, "skills": [ "smg", "shotgun", "rifle", "launcher" ] },
     "flags": [ "VARSIZE", "WATERPROOF", "OUTER", "OVERSIZE", "COLLAR", "STURDY", "NO_QUICKDRAW" ]

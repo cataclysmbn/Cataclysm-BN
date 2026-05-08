@@ -70,7 +70,7 @@ bool advanced_inventory_pane::is_filtered( const item &it ) const
     }
 
     const std::string str = it.tname();
-    if( filtercache.find( str ) == filtercache.end() ) {
+    if( !filtercache.contains( str ) ) {
         const auto filter_fn = item_filter_from_string( filter );
         filtercache[str] = filter_fn;
 

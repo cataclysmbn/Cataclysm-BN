@@ -1,0 +1,1042 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP",
+    "dynamic_line": {
+      "u_has_effect": "cf_mission_1",
+      "yes": "Welcome once again.  How may I help you?",
+      "no": {
+        "u_has_trait": "PROF_SANGUINE",
+        "yes": {
+          "u_has_effect": "sofia_motive_explained",
+          "yes": "Greetings.  You are welcome here, so long as you cause no trouble.",
+          "no": "Greetings.  I know you are, or were, a follower of the Path to Power.  For what purpose have you come here?"
+        },
+        "no": {
+          "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+          "yes": {
+            "u_male": "Welcome, Brother.  I knew we were not alone just yet.",
+            "no": "Welcome, Sister.  I knew we were not alone just yet."
+          },
+          "no": {
+            "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ],
+            "yes": {
+              "u_has_effect": "sofia_motive_explained",
+              "yes": "Greetings.  I hope that we can work together.",
+              "no": "Greetings, Keeper.  The others cannot see the mark of your god upon you, as I can.  We need not be enemies, if your intentions are peaceful."
+            },
+            "no": "Welcome, traveler.  You may rest here if in need, meager though our sanctum may be."
+          }
+        }
+      }
+    },
+    "speaker_effect": {
+      "condition": { "not": { "u_has_effect": "sofia_deacon_message" } },
+      "effect": { "u_add_effect": "sofia_deacon_message" }
+    },
+    "responses": [
+      {
+        "text": "[MISSION] I need another copy of the trade arrangements, please.",
+        "topic": "TALK_CF_REP_MISSION_2_COPY",
+        "condition": {
+          "and": [
+            { "not": { "u_has_item": "cf_rep_trade_arrangement" } },
+            { "u_has_mission": "MISSION_CF_REP_2" },
+            { "not": { "u_has_effect": "cf_mission_receipt" } }
+          ]
+        }
+      },
+      {
+        "text": "[MISSION] What can you tell me about the \"strange grove\" Johnathan asked me to investigate?",
+        "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_1",
+        "condition": { "u_has_mission": "MISSION_CF_GM_1" }
+      },
+      {
+        "text": "[MISSION] What can you tell me about this sanctum Johnathan sent me to investigate?",
+        "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_2",
+        "condition": { "u_has_mission": "MISSION_CF_GM_2" }
+      },
+      {
+        "text": "[MISSION] What can you tell me about these sanguinists that Johnathan has asked me to deal with?",
+        "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_3",
+        "condition": { "u_has_mission": "MISSION_CF_GM_3" }
+      },
+      {
+        "text": "[MISSION] The deacon at the refugee center asked me to check up on you.",
+        "topic": "TALK_CF_REP_DEACON_MISSION",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_deacon_message", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "not": { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL", "PROF_SANGUINE" ] } },
+            { "u_has_mission": "MISSION_CF_DEACON_1" }
+          ]
+        }
+      },
+      {
+        "text": "[MISSION] Johnathan sent me to investigate an anomaly, I found this journal.  Can you interpret it?",
+        "topic": "TALK_CF_REP_PRELUDE_JOURNAL",
+        "condition": {
+          "and": [
+            { "u_has_item": "arcana_dream_journal" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "u_has_var": "johnathan_prelude_penultimate",
+              "type": "mission",
+              "context": "rural_church",
+              "value": "yes"
+            }
+          ]
+        },
+        "effect": [ { "u_consume_item": "arcana_dream_journal" } ]
+      },
+      {
+        "text": "[MISSION] Johnathan sent me to investigate an anomaly, I found a strange gem there.  What do you make of it?",
+        "topic": "TALK_CF_REP_PRELUDE_GEM",
+        "condition": {
+          "and": [
+            { "u_has_item": "arcana_strange_crystal" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "u_has_var": "johnathan_prelude_penultimate",
+              "type": "mission",
+              "context": "rural_church",
+              "value": "yes"
+            }
+          ]
+        },
+        "effect": [ { "u_consume_item": "arcana_strange_crystal" } ]
+      },
+      {
+        "text": "[MISSION] Johnathan asked me about an anomaly he's investigating and told me about a survivor campsite that might have a clue.  Any advice?",
+        "topic": "TALK_CF_REP_PRELUDE_CAMP",
+        "condition": { "u_has_mission": "MISSION_CF_GM_4_PRELUDE" }
+      },
+      {
+        "text": "[MISSION] Johnathan asked me about an anomaly he's investigating, and suggested I ask for information from other people.  Who should I ask?",
+        "topic": "TALK_CF_REP_JOHNATHAN_PRELUDE",
+        "condition": {
+          "and": [
+            { "not": { "u_has_mission": "MISSION_CF_GM_4_PRELUDE" } },
+            {
+              "not": { "u_has_var": "johnathan_prelude_penultimate", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_ended", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+          ]
+        }
+      },
+      {
+        "text": "[MISSION] Nicholas asked me to investigate a research facility for a component he needs.  Do you have any advice?",
+        "topic": "TALK_CF_REP_NICHOLAS_ADVICE",
+        "condition": { "u_has_mission": "MISSION_CF_PURIFIER_1_3" }
+      },
+      {
+        "text": "[MISSION] About this \"bone charm\" you asked me to make…",
+        "topic": "TALK_CF_REP_MISSION_1",
+        "condition": { "u_has_mission": "MISSION_CF_REP_1" }
+      },
+      {
+        "text": "So, how are things working out with the new arrivals so far?",
+        "topic": "TALK_CF_REP_MISSION_4_OPINION",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_opinion_given", "type": "flag", "context": "knowledge", "value": "yes" } },
+            { "u_has_var": "sofia_mission_4_end", "type": "mission", "context": "rural_church", "value": "yes" }
+          ]
+        }
+      },
+      { "text": "What is this place?", "topic": "TALK_CF_REP_WHERE" },
+      { "text": "Who are you?", "topic": "TALK_CF_REP_WHO" },
+      {
+        "text": "What can you tell me about the others?",
+        "topic": "TALK_CF_REP_GM",
+        "condition": { "npc_has_effect": "cf_mission_3" }
+      },
+      {
+        "text": "Why didn't you attack me?",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "u_has_trait": "PROF_SANGUINE" }
+          ]
+        },
+        "topic": "TALK_CF_REP_SANGUINE_ASK"
+      },
+      {
+        "text": "I'm not here to fight you.",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "u_has_trait": "PROF_SANGUINE" }
+          ]
+        },
+        "topic": "TALK_CF_REP_SANGUINE_MOTIVE_1"
+      },
+      {
+        "text": "I have my own reasons for being here.",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "u_has_trait": "PROF_SANGUINE" }
+          ]
+        },
+        "topic": "TALK_CF_REP_SANGUINE_MOTIVE_2"
+      },
+      {
+        "text": "I have been chosen by them, though I am no Keeper.",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "not": { "u_has_trait": "PROF_CHALICE" } },
+            { "not": { "u_has_trait": "PROF_CHALICE2" } },
+            { "u_has_trait": "THRESH_VEIL" }
+          ]
+        },
+        "topic": "TALK_CF_REP_CHOSEN"
+      },
+      {
+        "text": "I am not here for a fight.  He From Beyond The Veil has seen fit to ensure our meeting.",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2" ] }
+          ]
+        },
+        "topic": "TALK_CF_REP_CHALICE_MOTIVE_1"
+      },
+      {
+        "text": "We have been both allies and enemies in the past.  I am trusting that the cycle will not repeat.",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2" ] }
+          ]
+        },
+        "topic": "TALK_CF_REP_CHALICE_MOTIVE_2"
+      },
+      {
+        "text": "I was told about this place by the merchant at the refugee center, and decided to see if things are any better here.",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "u_has_effect": "rural_church_aware" },
+            { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL", "PROF_SANGUINE" ] }
+          ]
+        },
+        "topic": "TALK_CF_REP_MERCHANT_MOTIVE"
+      },
+      {
+        "text": "I was sent by the deacon at the refugee center, to check up on you.",
+        "condition": {
+          "and": [
+            { "not": { "u_has_effect": "cf_mission_1" } },
+            { "not": { "u_has_effect": "sofia_motive_explained" } },
+            { "u_has_mission": "MISSION_CF_DEACON_1" },
+            { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL", "PROF_SANGUINE" ] }
+          ]
+        },
+        "topic": "TALK_CF_REP_DEACON_MOTIVE"
+      },
+      {
+        "text": "Can you teach me any spells?",
+        "topic": "TALK_CF_REP_SPELL_MENU",
+        "condition": {
+          "and": [
+            { "u_has_effect": "cf_mission_1" },
+            {
+              "not": { "u_has_var": "sofia_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" }
+            }
+          ]
+        }
+      },
+      {
+        "text": "Do you have anything to trade?",
+        "effect": "start_trade",
+        "condition": { "u_has_effect": "cf_sofia_traded" },
+        "switch": true,
+        "topic": "TALK_CF_REP"
+      },
+      { "text": "Do you have anything to trade?", "switch": true, "default": true, "topic": "TALK_CF_REP_TRADE" },
+      { "text": "Anything I can do to help?", "topic": "TALK_MISSION_LIST" },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_MISSION_2_COPY",
+    "type": "talk_topic",
+    "dynamic_line": "Oh, okay.  Should be easy enough to replace, since the list is a bit short.  Our needs and resources haven't changed at the moment anyway.  Here you go.",
+    "responses": [ { "text": "Thank you.", "topic": "TALK_CF_REP", "effect": { "u_buy_item": "cf_rep_trade_arrangement" } } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_DEACON_MISSION",
+    "dynamic_line": "I see.  I'm glad that he's doing alright over there.  If you get the chance to stop by, be sure to tell him we're doing okay.  Should put his mind at ease, as I'm sure he's needed over there.",
+    "responses": [
+      {
+        "text": "Alright.",
+        "topic": "TALK_CF_REP",
+        "effect": { "u_add_var": "sofia_deacon_message", "type": "mission", "context": "rural_church", "value": "yes" }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_1",
+    "dynamic_line": "An old arcanist enclave, right?  I'm afraid I don't know much of practical value beyond Johnathan's own judgment on the potential threat.  But I do recall a bit about the place prior to its infestation.",
+    "responses": [
+      { "text": "What do you know about what the place used to be?", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_1_1" },
+      { "text": "Know anything about what happened to the place?", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_1_2" },
+      { "text": "Another time, perhaps.  Thank you though.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_1_1",
+    "dynamic_line": "It was used by a group of scholars, mystics, and such.  Long before all this started, before the great wounds in The Veil, even before our group became involved in all these strange things.",
+    "responses": [
+      { "text": "What did they do there, back then?", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_1_3" },
+      {
+        "text": "I see.  I have something else to ask you about the place.",
+        "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_1"
+      },
+      { "text": "I see.  That's all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_1_3",
+    "dynamic_line": "Studied, wrote, whatever they researched there laid the foundations for many other practices you've surely seen hints of.  Only thing it was missing was a way to turn hypothesis into practice, and others found that out once the people there abandoned the place.",
+    "responses": [
+      { "text": "I see.  I have something else to ask you about the place.", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_1" },
+      { "text": "I see.  That's all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_1_2",
+    "dynamic_line": "As far as I know, they abandoned the place and it simply fell into ruin.  I had assumed that they lacked the means to put any of their ideas into practice back then, but if there are anomalies afflicting the place than there must have been something to allow these problems to flare up so long after they left.",
+    "responses": [
+      { "text": "I see.  I have something else to ask you about the place.", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_1" },
+      { "text": "I see.  That's all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_2",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": "I know about that place, yes.  The Sanctum of St. John.  Don't know if you ever had the chance to visit it before all this happened, but it was the only sanctum built by our own hand.  Only one I know of, at least.  Anything you wish to know, I will answer as best as I can recall.",
+      "no": "I know about that place, yes.  We called it the Sanctum of St. John.  As far as I am aware, it was the only refuge we constructed ourselves, rather than being sheltered by our contacts elsewhere.  What do you wish to know about it?"
+    },
+    "responses": [
+      { "text": "What can you tell me about the layout of the place?", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_2_1" },
+      { "text": "What happened to it?", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_2_2" },
+      { "text": "Another time, perhaps.  Thank you though.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_2_1",
+    "dynamic_line": "Like any proper sanctum, there's a main hall just beyond the entrance, common rooms for the benefit of any people sheltered there, and downstairs past the shrine.  Workspaces, archives, armories and the like will be downstairs, and they're likely to be infested by abominations given what what others have mentioned.  The main room there will be divided into hallways by the stone supports and walls, you might be able to use them to keep any monsters down there bunched up.  As for what's beyond that, I…",
+    "responses": [
+      { "text": "Yes?  What's wrong?", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_2_3" },
+      { "text": "Maybe it would be better to ask about something else.", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_2" },
+      { "text": "It's fine.  That's all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_2_3",
+    "dynamic_line": "The floor below that used to be our ritual room, along with the tomb for those that've fallen in battle.  What the others said, that part of the structure has been completely subverted by some unknown intrusion from Beyond.  It's bad enough that those who fell trying to hold those monsters back went unburied, but gods know what happened to those laid to rest there.  You'll need to take down a barrier sealing off the stairs, you'll see one of our swords.  You'll be able to remove it to dispel the barrier easily enough.  Whatever you do, please come back safely.",
+    "responses": [
+      { "text": "I'd like to ask about something else, please.", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_2" },
+      { "text": "Thank you.  That's it for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_2_2",
+    "dynamic_line": "When all this started, many places suffered anomalies and hazards of various sorts.  The mere nature of our work down there, dismantling dangerous objects recovered on hunts, evidently allowed such things to happen even there, despite all our efforts to be cautious.  The hunters there held off what came crawling out from Beyond as best as they could, but they couldn't… I'm sorry.  It's unavoidable in our line of work, but we lost so many down there, that day.  Whatever fate the gods mandate for them, I hope they are at peace.",
+    "responses": [
+      { "text": "Maybe it would be better to ask about something else.", "topic": "TALK_CF_REP_JOHNATHAN_ADVICE_2" },
+      { "text": "That's all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_ADVICE_3",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": "You know your duty.  \"If they are a threat to humanity, be they blood mage or bandit, offer no mercy and expect none in return.\"  Those among the Order who are willing to abandon their ways, or even merely offer truce to us, are vanishingly rare.  They are continuing their studies, continuing to prey upon the innocent to fuel their practices.  May Odin grant you victory in battle.",
+      "no": {
+        "u_has_trait": "PROF_SANGUINE",
+        "yes": "You have seen the worst of your order.  I would advise caution, and be prepared for a fight even if they recognize that you're one of them.  That you pursue this task means I can trust you to do what's right.  They're preying upon people just as the Order has for decades, and not even the threat of humanity's extinction has swayed them.  It's unfortunate, as killing each other is the last thing we should be doing in times like these, but they must be brought to justice.",
+        "no": "The Sanguine Order is dangerous.  It is not merely their dabbling in dangerous forces, they were a threat even before their discoveries.  They are murderers, worse than any petty bandit.  While I am hopeful that some of their number might face the threat of humanity's end, and come to understand this cannot continue, this group has been confirmed to still be just as senseless in their actions as the Order typically is.  Do not trust them, and do not underestimate them."
+      }
+    },
+    "responses": [
+      {
+        "text": "\"Dii supra et infra, dōnēs nobis virtus.\"  I'll deal with them.",
+        "switch": true,
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+        "topic": "TALK_CF_REP"
+      },
+      {
+        "text": "We'll see what comes of it, hunter.",
+        "switch": true,
+        "condition": { "u_has_trait": "PROF_SANGUINE" },
+        "topic": "TALK_CF_REP"
+      },
+      {
+        "text": "So be it.  \"No matter the cost, no matter what we must do, for the strength and safety of this world…\"",
+        "switch": true,
+        "condition": { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2" ] },
+        "topic": "TALK_CF_REP"
+      },
+      { "text": "Understood.  Thank you.", "switch": true, "default": true, "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_JOHNATHAN_PRELUDE",
+    "dynamic_line": {
+      "u_has_var": "sofia_opinion_given",
+      "type": "flag",
+      "context": "knowledge",
+      "value": "yes",
+      "yes": "Ask the merchant contacts here before you leave, you might be able to get a bit out information out of them first.  Then check with the refugee center.  We've tracked area anomalies like this before, just get more info on where these attacks have taken place and we should be able to figure things out from here.",
+      "no": "I'd primarily suggest the refugee center, as they may be able to help provide more information.  What we need is simply confirming specific locations of where attacks have taken place.  We can handle it from there, afterward."
+    },
+    "responses": [ { "text": "Okay, thanks.", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "id": "TALK_CF_REP_PRELUDE_JOURNAL",
+    "type": "talk_topic",
+    "dynamic_line": "Let me take a look at this.  Looks like the entries describe a series of strange events and dreams experienced ever since passing through the anomalous region.  Lot of rambling, bit out of order too.  Like they skipped a few pages then filled in the blanks with later entries… but, I think I see roughly how things went down.",
+    "responses": [ { "text": "Anything useful?", "topic": "TALK_CF_REP_PRELUDE_JOURNAL_2" } ]
+  },
+  {
+    "id": "TALK_CF_REP_PRELUDE_JOURNAL_2",
+    "type": "talk_topic",
+    "dynamic_line": "A few of their early entries, the first few days into the journey, references nearby landmarks.  The last one before things go off the rails mentions a recently-built otherworldly structure in their path, and I can confirm which location that is.  Given the description suggests something anomalous happened there more recently, it's possible that the source of this took up residence there.  Go talk to Johnathan, tell him we have what we need.",
+    "speaker_effect": [
+      {
+        "effect": [
+          { "u_add_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "npc_add_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+        ]
+      }
+    ],
+    "responses": [
+      { "text": "Thank you.  One more thing before I go.", "topic": "TALK_CF_REP" },
+      { "text": "Thank you.  Bye for now.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_PRELUDE_GEM",
+    "type": "talk_topic",
+    "dynamic_line": "That looks like an artifact made from a shadow gem.  The alterations made to it aren't human, that much is clear.  It's burnt-out too, but I can figure out what it did when it activated.  In fact, given what we know this likely caused the secondary attack at their campsite.  Let me get a mask from one of the others.",
+    "responses": [ { "text": "Okay…", "topic": "TALK_CF_REP_PRELUDE_GEM_2" } ]
+  },
+  {
+    "id": "TALK_CF_REP_PRELUDE_GEM_2",
+    "type": "talk_topic",
+    "dynamic_line": "It still has some lingering aftereffects.  Like a trail of energy burnt into what remains of its enchantments, essentially pointing in the direction of the source as of the moment it activated.  That'd be no good to us just standing here, but we know the rough area of the anomalous region, and we know where it was when it activated.  Go tell Johnathan we have what we need to pinpoint the source.",
+    "speaker_effect": [
+      {
+        "effect": [
+          { "u_add_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" },
+          { "npc_add_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+        ]
+      }
+    ],
+    "responses": [
+      { "text": "Thank you.  One more thing before I go.", "topic": "TALK_CF_REP" },
+      { "text": "Thank you.  Bye for now.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_PRELUDE_CAMP",
+    "type": "talk_topic",
+    "dynamic_line": "I heard about that incident.  Gods, if I recall they lost three people there.  They'd buried two who had succumbed to previous injuries, before something attacked them.  The third stayed behind to buy the others time to escape with their lives.",
+    "responses": [
+      { "text": "What should I look for?", "topic": "TALK_CF_REP_PRELUDE_CAMP_2" },
+      { "text": "That's all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_PRELUDE_CAMP_2",
+    "type": "talk_topic",
+    "dynamic_line": "Any anomalous artifacts you can find in the items they left behind, any books or other written intel might be useful too.  If you find something, return to Johnathan with it first, then if needed he'll ask you to show it to me.  I pray that you will return safe, and victorious over whatever caused this.",
+    "responses": [ { "text": "Alright.  Thank you.", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SANGUINE_ASK",
+    "dynamic_line": "You had to have known what you were walking into.  Either you are here to make peace, or else there is a trick at play here.  If so, know that we are watching.  Now please, for what purpose have you come here?",
+    "responses": [
+      { "text": "You are correct.  I'm not here for a fight.", "topic": "TALK_CF_REP_SANGUINE_MOTIVE_1" },
+      { "text": "My reasons are my own.", "topic": "TALK_CF_REP_SANGUINE_MOTIVE_2" },
+      {
+        "text": "[ATTACK] To finish what my fellows started.  I need no tricks to put your kind down.",
+        "topic": "TALK_DONE",
+        "effect": [ { "u_faction_rep": -30 }, "insult_combat" ]
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SANGUINE_MOTIVE_1",
+    "dynamic_line": "So I see.  If you are here with honest intent, I can guide you.  Let us set things right.",
+    "responses": [
+      {
+        "text": "We'll see what can be done.",
+        "effect": { "u_add_effect": "sofia_motive_explained" },
+        "topic": "TALK_CF_REP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SANGUINE_MOTIVE_2",
+    "dynamic_line": "I am willing to trust you, if you prove yourself.  Your reasons are your own, but remember that we will not let our guard down.",
+    "responses": [
+      {
+        "text": "Alright.",
+        "effect": { "u_add_effect": "sofia_motive_explained" },
+        "opinion": { "value": -1 },
+        "topic": "TALK_CF_REP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_CHOSEN",
+    "dynamic_line": "I see.  However you accomplished that, I'm impressed.  I hope that you have learned caution and temperance regarding powers from the Beyond.  I can offer any guidance I can, if you accept it.",
+    "responses": [
+      {
+        "text": "We'll see.",
+        "effect": { "u_add_effect": "sofia_motive_explained" },
+        "opinion": { "value": 1 },
+        "topic": "TALK_CF_REP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_CHALICE_MOTIVE_1",
+    "dynamic_line": "So it seems.  Whether your god or those we follow, our meeting was fated.  I'm certain of it.  This is an opportunity to work together.",
+    "responses": [
+      {
+        "text": "Perhaps we will, then.",
+        "effect": { "u_add_effect": "sofia_motive_explained" },
+        "opinion": { "trust": 1 },
+        "topic": "TALK_CF_REP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_CHALICE_MOTIVE_2",
+    "dynamic_line": "You have my word.  Neither of us can afford to be enemies anymore.",
+    "responses": [
+      {
+        "text": "Thank you.",
+        "effect": { "u_add_effect": "sofia_motive_explained" },
+        "opinion": { "value": 1, "anger": -1 },
+        "topic": "TALK_CF_REP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_MERCHANT_MOTIVE",
+    "dynamic_line": {
+      "u_has_trait": "PROF_SANGUINE",
+      "yes": "And yet you came here, knowing the potential danger.  Or did you think us extinct?  Perhaps that means you can be trusted.  If your intent remains honest, we need not be enemies.  But we shall see.",
+      "no": "Then hopefully this means we need not be enemies.  The gods ensured that mortal means would lead us to meet.  Remind us of our shared humanity, perhaps.  We shall see if this holds true."
+    },
+    "responses": [ { "text": "We'll see.", "effect": { "u_add_effect": "sofia_motive_explained" }, "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_DEACON_MOTIVE",
+    "dynamic_line": {
+      "u_has_trait": "PROF_SANGUINE",
+      "yes": "That young man knows nothing of our history.  I fear he may be too trusting, to have asked for your assistance.  I will give you the benefit of the doubt for now, but if I find that you've harmed him, I will slay you myself.  Understood?",
+      "no": "The deacon of this church does not know of our nature, unlike the priest who would normally be attending this place.  If you get the opportunity to visit him again, I'm sure he'll be relieved to know that we're still holding on."
+    },
+    "responses": [
+      {
+        "text": "…",
+        "switch": true,
+        "effect": { "u_add_effect": "sofia_motive_explained" },
+        "condition": { "u_has_trait": "PROF_SANGUINE" },
+        "topic": "TALK_CF_REP"
+      },
+      {
+        "text": "I see.",
+        "switch": true,
+        "default": true,
+        "effect": { "u_add_effect": "sofia_motive_explained" },
+        "topic": "TALK_CF_REP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_NICHOLAS_ADVICE",
+    "dynamic_line": "We never learned much about these labs, not until after reports coming in from scavengers.  If they were involved in the arcane, or some other anomalous activity, then the Veil might be especially weak there.  We've already heard stories of abominations both earthly and otherworldly infesting these places, a lab of this nature will likely be even worse.  Be well-armed, make sure you have a path of escape before forcing your way in deeper.  Any written intel or warning signs you find down there might be of vital importance.",
+    "responses": [ { "text": "I'll be careful then.", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_MISSION_1",
+    "dynamic_line": "What do you wish to know?  As I said, I can explain why we need one if you wish.  I can also try to help advise you on what creatures might be useful to hunt for the materials needed to make one.",
+    "responses": [
+      {
+        "text": "It's a protective spell, I'm guessing?",
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2", "PROF_CHALICE", "PROF_CHALICE2", "THRESH_VEIL" ] },
+        "switch": true,
+        "topic": "TALK_CF_REP_MISSION_1_HOW_KNOWN"
+      },
+      {
+        "text": "What sort of ritual does this entail?",
+        "condition": { "u_has_any_trait": [ "PROF_ARCANIST", "PROF_ARCANIST2", "PROF_SANGUINE", "THRESH_DRAGONBLOOD" ] },
+        "switch": true,
+        "topic": "TALK_CF_REP_MISSION_1_HOW_ARCANIST"
+      },
+      {
+        "text": "I'm not sure how it'd help protect this place.",
+        "condition": { "or": [ { "u_has_effect": "cf_sofia_notes_given" }, { "u_has_skill": { "skill": "magic", "level": 1 } } ] },
+        "switch": true,
+        "topic": "TALK_CF_REP_MISSION_1_HOW"
+      },
+      {
+        "text": "This just seems like a very strange request.",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_CF_REP_MISSION_1_WHY"
+      },
+      {
+        "text": "Where would I find the materials needed to make one of these things?",
+        "topic": "TALK_CF_REP_MISSION_1_WHERE"
+      },
+      { "text": "Never mind, I'll figure it out.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_MISSION_1_HOW_KNOWN",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": "Indeed.  There are still concerns that the fabric of The Veil may still be unstable and vulnerable to new anomalies, and the potential for otherworldly monsters being attracted to this place.  Same method by which we safeguarded our sanctums, until most of them were overwhelmed the day everything boiled over.",
+      "no": "You are correct.  Our methods may differ from that of the Keepers, but the objective is similar.  With the right rituals we can reduce the rest of any additional anomalies opening up too close to us, and make the place less visible to any interlopers already in this world.  That will allow us to use the arcane items at our disposal to the fullest, otherwise we'd basically be lighting up a beacon for every otherwordly monster within a couple miles."
+    },
+    "responses": [
+      { "text": "So how do I go about making one?", "topic": "TALK_CF_REP_MISSION_1_WHERE" },
+      { "text": "That's all for now, thank you.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_MISSION_1_HOW_ARCANIST",
+    "type": "talk_topic",
+    "dynamic_line": "A protective spell that will shroud this location from interlopers in the area, and reduce the risk of any anomalies.  Without that, we can't use every tool at our disposal to safeguard this place to the fullest.",
+    "responses": [
+      { "text": "So how do I go about making one?", "topic": "TALK_CF_REP_MISSION_1_WHERE" },
+      { "text": "That's all for now, thank you.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_MISSION_1_HOW",
+    "type": "talk_topic",
+    "dynamic_line": "It's a ritual to protect this location.  I would hope that you've gained some familiarity with the strange beasts and otherworldly phenomenon.  I suspect it would also be useful to you, to go hunting for creatures of this sort to see for yourself how abnormal things have become, and adding a personal touch to this component would also be a useful learning experience of its own.",
+    "responses": [
+      { "text": "So how do I go about making one?", "topic": "TALK_CF_REP_MISSION_1_WHERE" },
+      { "text": "That's all for now, thank you.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_MISSION_1_WHY",
+    "type": "talk_topic",
+    "dynamic_line": "Understandable, the purpose of it concerns ritual protection of this place.  It may seem of little importance to you, but remember that hunting down the materials needed to make one means at least one less abomination endangering other people.  That, and what you might learn of these hazards now afflicting our reality during your hunt, will offer valuable experience.  I hope that is acceptable, if nothing else?",
+    "responses": [
+      { "text": "Fine, any advice on what to hunt for?", "topic": "TALK_CF_REP_MISSION_1_WHERE" },
+      { "text": "We'll see, maybe.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_MISSION_1_WHERE",
+    "type": "talk_topic",
+    "dynamic_line": "Materials used to make these items are commonly wrested from beasts such as what other survivors call \"grackens\" as well as \"krecks\" which have been seen lingering near tears in reality, or lurking near the remains of slain soldiers and other groups.  Abominations some have termed hunting horrors and flying polyps may also be a source, though more dangerous.",
+    "responses": [
+      { "text": "Anything else?", "topic": "TALK_CF_REP_MISSION_1_WHERE_2" },
+      { "text": "Guess we'll see what I can do.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "id": "TALK_CF_REP_MISSION_1_WHERE_2",
+    "type": "talk_topic",
+    "dynamic_line": "Some of the undead, most prominently the ones contorting into predatory forms, and those afflicted by bony growths taking over their bodies, have been known to yield such materials as well.  Even some living beings native to this world, afflicted by mutation and contorted into forms no natural process could mimic, can display anomalous properties that would linger in their bodies well after death.",
+    "responses": [ { "text": "That's all for now, I guess.", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_MISSION_4_OPINION",
+    "dynamic_line": "They've been helpful so far.  Supplies are coming in and going out, slowly but surely.  And they seem to be getting along well enough with the others, we might eventually gain recruits thanks to your efforts.",
+    "responses": [
+      {
+        "text": "That's good to hear.",
+        "effect": { "u_add_var": "sofia_opinion_given", "type": "flag", "context": "knowledge", "value": "yes" },
+        "topic": "TALK_CF_REP"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_WHERE",
+    "dynamic_line": "Before all this started, an old parish church.  Many of our sanctums took the form of any church, hof, or other such place sympathetic to our cause.  I'd known the priest here for years, and he sheltered us many times despite the heathen nature of many of us, including myself.  This was a natural choice on realizing how dire the situation was, though we found the place abandoned at some point during the chaos.",
+    "responses": [
+      {
+        "text": "What did you mean by heathen?",
+        "condition": { "not": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] } },
+        "topic": "TALK_CF_REP_HEATHEN"
+      },
+      { "text": "And what cause would that be?", "topic": "TALK_CF_REP_CAUSE" },
+      { "text": "I see.  That is all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_HEATHEN",
+    "dynamic_line": "Our order was composed of people from various religions.  Not only Abrahamic ones of various sorts, but those that would be considered pagan.  Asatruan, in my case.  Over time our practices mingled, a shared influence affecting our approach to the arcane.",
+    "responses": [
+      {
+        "text": "And what approach is that?",
+        "condition": {
+          "or": [
+            {
+              "u_has_any_trait": [
+                "PROF_ARCANIST",
+                "PROF_ARCANIST2",
+                "PROF_SANGUINE",
+                "PROF_CHALICE",
+                "PROF_CHALICE2",
+                "THRESH_VEIL",
+                "THRESH_DRAGONBLOOD"
+              ]
+            },
+            { "u_has_skill": { "skill": "magic", "level": 1 } }
+          ]
+        },
+        "switch": true,
+        "topic": "TALK_CF_REP_ARCANE_2"
+      },
+      { "text": "What do you mean, arcane?", "switch": true, "default": true, "topic": "TALK_CF_REP_ARCANE_2" },
+      { "text": "…", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_ARCANE_2",
+    "dynamic_line": {
+      "u_has_effect": "cf_sofia_notes_given",
+      "yes": "There are many approaches to handling these forces.  Some have chosen recklessness, as though it is a drug to be abused.  Others, superstitious faith and worship of powers that do not belong in our world.  We seek to study these anomalies cautiously, and keep others safe from more dangerous artifacts if we must.  The acolyte I took those notes from, the ones I gave you, learned the importance of caution the hard way, and did not live to benefit from that experience.  That is why we have resorted to extreme measures to deal with dangerous relics in the past.",
+      "no": "There are many approaches to handling these forces.  Some have chosen recklessness, as though it is a drug to be abused.  Others, superstitious faith and worship of powers that do not belong in our world.  We seek to study these anomalies cautiously, and keep others safe from more dangerous artifacts if we must.  If it means containment, or destruction, so be it.  I prefer instead to teach others how to handle such safely, for caution is a lesson many learn the hard way, and few survive such experiences."
+    },
+    "responses": [ { "text": "Alright…", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_ARCANE",
+    "dynamic_line": {
+      "u_has_effect": "cf_sofia_notes_given",
+      "yes": "Things may have reached their boiling point rather recently, but less-disruptive events have been happening here and there for a bit before all this.  There is a logic to it, and I hope if you attempt to understand it yourself you'll be cautious in your efforts.",
+      "no": "We've taken to referring to certain supernatural events as such, and the methods some have found to exploit these effects.  Things may have reached their boiling point rather recently, but less-disruptive events have been happening here and there for a bit before all this.  Given things like strange monsters being called from gods-know-where, cultists fueling rituals with blood, and the like, it's hard not to refer to such as magical, even if there is some manner of logic to it.  Here.  This may help you make sense of what we've had to deal with, to some extent."
+    },
+    "responses": [
+      {
+        "text": "I see.  I think…",
+        "switch": true,
+        "topic": "TALK_CF_REP",
+        "condition": { "u_has_effect": "cf_sofia_notes_given" }
+      },
+      {
+        "text": "O …kay.  I see.  I think…",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_CF_REP",
+        "effect": [ { "u_buy_item": "book_magicfordummies" }, { "u_add_effect": "cf_sofia_notes_given" } ]
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_CAUSE",
+    "dynamic_line": {
+      "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ],
+      "yes": "An interesting question, from one of my kin.  We have not strayed from our goal of protecting the innocent against the dangers of the Beyond.",
+      "no": "Before all this boiled over, who would believe us?  With the dead rising, and strange powers decaying the very fabric of reality, we can afford to be more open about our nature.  We seek to protect people from dangerous magic and otherworldly monsters.  The first signs of these threats were isolated, forbidden knowledge slipping through the cracks, minor symptoms of whatever caused this.  Now it is more than any one group can handle, I fear."
+    },
+    "responses": [
+      {
+        "text": "Magic?  I'm still not sure I can believe that.",
+        "condition": {
+          "not": {
+            "u_has_any_trait": [
+              "PROF_ARCANIST",
+              "PROF_ARCANIST2",
+              "PROF_CLEANSINGFLAME",
+              "PROF_CLEANSINGFLAME2",
+              "PROF_SANGUINE",
+              "PROF_CHALICE",
+              "PROF_CHALICE2",
+              "THRESH_VEIL",
+              "THRESH_DRAGONBLOOD"
+            ]
+          }
+        },
+        "topic": "TALK_CF_REP_MAGIC"
+      },
+      { "text": "I see.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_MAGIC",
+    "dynamic_line": {
+      "u_has_effect": "cf_sofia_notes_given",
+      "yes": "You have every right to consider it absurd.  We speak of magic and the arcane, when it's something effects we use with only enough comprehension to use safely.  Perhaps calling it such when there is an order to it, a logic of its own, may be incorrect as well.  But it's useful to remind us to treat even the items we're familiar with cautiously, and never make the assumption that we understand enough to make a rash mistake.",
+      "no": "You have every right to consider it absurd.  We speak of magic and the arcane, when it's something effects we use with only enough comprehension to use safely.  Perhaps calling it such when there is an order to it, a logic of its own, may be incorrect as well.  Here.  This may prove better than trying to toy with the unknown unaided."
+    },
+    "responses": [
+      { "text": "…", "switch": true, "topic": "TALK_CF_REP", "condition": { "u_has_effect": "cf_sofia_notes_given" } },
+      {
+        "text": "Er.  Thanks, I think.",
+        "switch": true,
+        "default": true,
+        "topic": "TALK_CF_REP",
+        "effect": [ { "u_buy_item": "book_magicfordummies" }, { "u_add_effect": "cf_sofia_notes_given" } ]
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_WHO",
+    "dynamic_line": "Sofia McKinnon, entitled as Thane by our founding, and a Sister of the Cleansing Flame.",
+    "responses": [
+      {
+        "text": "Is this all that's left of us?",
+        "switch": true,
+        "condition": { "u_has_any_trait": [ "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ] },
+        "topic": "TALK_CF_REP_CF_LEFT"
+      },
+      { "text": "The Cleansing Flame?", "switch": true, "default": true, "topic": "TALK_CF_REP_CF_QUERY" },
+      { "text": "Why are you called Thane?", "topic": "TALK_CF_REP_THANE" },
+      { "text": "I see.  That is all for now.", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_CF_LEFT",
+    "dynamic_line": {
+      "npc_has_effect": "cf_mission_3",
+      "yes": "Do not lose hope yet.  Already our efforts bore fruit, and more are surely out there.  If the gods will it, we will endure.",
+      "no": "I do not know for certain.  Between trying to get anything to come in via radio, and our contact with the refugee center, I have heard nothing else so far, but I will keep searching.  We must never give up."
+    },
+    "responses": [ { "text": "So long as the Sun shines upon the Earth…", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_CF_QUERY",
+    "dynamic_line": "A religious order.  Of many faiths, along many paths.  We were never that large in size, mostly just a few local communities united by the depredations of a cult.  Before any of these arcane goings-on happened, but when the cracks in the Veil began to show its effects, we adapted just as the Sanguine Order did.",
+    "responses": [
+      {
+        "text": "What do you mean, arcane?",
+        "condition": {
+          "not": {
+            "u_has_any_trait": [
+              "PROF_ARCANIST",
+              "PROF_ARCANIST2",
+              "PROF_SANGUINE",
+              "PROF_CHALICE",
+              "PROF_CHALICE2",
+              "THRESH_VEIL",
+              "THRESH_DRAGONBLOOD"
+            ]
+          }
+        },
+        "topic": "TALK_CF_REP_ARCANE"
+      },
+      {
+        "text": "The Veil?",
+        "condition": {
+          "not": {
+            "u_has_any_trait": [
+              "PROF_ARCANIST",
+              "PROF_ARCANIST2",
+              "PROF_SANGUINE",
+              "PROF_CHALICE",
+              "PROF_CHALICE2",
+              "THRESH_VEIL",
+              "THRESH_DRAGONBLOOD"
+            ]
+          }
+        },
+        "topic": "TALK_CF_REP_VEIL"
+      },
+      {
+        "text": "And who were the Sanguine Order?",
+        "condition": { "not": { "u_has_any_trait": [ "PROF_SANGUINE", "PROF_CHALICE", "PROF_CHALICE2" ] } },
+        "topic": "TALK_CF_REP_SANGUINE_QUERY"
+      },
+      { "text": "…", "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_VEIL",
+    "dynamic_line": "Our term for whatever effect seems to be linked to some of the monsters that have invaded this realm.  You may have seen these rifts or holes during your travels, or heard others report of them.  Things coming out of them?  Whatever caused them, there has to be some way to prevent things from getting worse.",
+    "responses": [ { "text": "I …see.  Never mind.", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SANGUINE_QUERY",
+    "dynamic_line": {
+      "u_has_trait": "THRESH_DRAGONBLOOD",
+      "yes": "I had thought from your alterations that you were familiar with them.  They were the ones that developed the practices that you yourself have benefited from.  A band of murderous cultists, even before all this started and they found ways to exploit these anomalies.",
+      "no": "A local cult that used to infest this area's rural regions, and their effects on our community led to our own group being formed.  Like us, before things boiled over there were some initial supernatural effects, and with that came ways of using it to one's benefit.  Their rituals went from simple murder to something dangerous to more than just their victims."
+    },
+    "responses": [ { "text": "…", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_THANE",
+    "dynamic_line": "A reminder of our history.  Before our founding, when we were a few disparate groups of various religions.  Including followers of the old gods such as myself, who used titles and ranks where now we are merely Brothers and Sisters.",
+    "responses": [ { "text": "Oh, okay.", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "id": "TALK_CF_REP_GM",
+    "type": "talk_topic",
+    "dynamic_line": "A few others among our order, some having had contact with our fellows working closer to the cities.  Grandmaster Leone seems to be the most senior of the group, and he provided me with a lot of information I'll need to examine closely.  Might lead us to other survivors to get in touch with.  Might be a good idea to speak with him as well.",
+    "responses": [ { "text": "We'll see.", "topic": "TALK_CF_REP" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SPELL_MENU",
+    "dynamic_line": "There are a few Magic Signs I could pass on to you.  Since you've aided us, I could teach you the use of Heat Ward, Poison Armor, or Ward Against Evil, if you don't already know them.  I will need a given amount of Golden Scales, to cover the materials and essence that go into copying these secrets into a form others can use.",
+    "responses": [
+      {
+        "text": "What can you tell me about Heat Ward?",
+        "condition": { "not": { "u_has_trait": "SPELL_FLAMEARMOR" } },
+        "topic": "TALK_CF_REP_SPELL_MENU_1"
+      },
+      {
+        "text": "What can you tell me about Poison Armor?",
+        "condition": { "not": { "u_has_trait": "SPELL_POISONARMOR" } },
+        "topic": "TALK_CF_REP_SPELL_MENU_2"
+      },
+      {
+        "text": "What can you tell me about Ward Against Evil?",
+        "condition": { "not": { "u_has_trait": "SPELL_CLERIC" } },
+        "topic": "TALK_CF_REP_SPELL_MENU_3"
+      },
+      {
+        "text": "There's nothing more I could learn from you.  Thanks anyway.",
+        "switch": true,
+        "condition": {
+          "and": [ { "u_has_trait": "SPELL_FLAMEARMOR" }, { "u_has_trait": "SPELL_POISONARMOR" }, { "u_has_trait": "SPELL_CLERIC" } ]
+        },
+        "effect": { "u_add_var": "sofia_all_spells_known", "type": "flag", "context": "knowledge", "value": "yes" },
+        "topic": "TALK_CF_REP"
+      },
+      { "text": "Maybe another time.", "switch": true, "default": true, "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SPELL_MENU_1",
+    "dynamic_line": "It's a spell some of our hunters learn to protect against overheating and smoke inhalation.  It's not enough to negate being immersed in flame, but you won't catch alight from it.  I'll need 4 Golden Scales to cover the cost of materials and for warding the ritual preparations.",
+    "responses": [
+      {
+        "text": "[GS4] You have a deal, then.",
+        "condition": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } },
+        "effect": [ { "u_consume_item": "CF_golden_scale", "count": 4 }, { "u_add_trait": "SPELL_FLAMEARMOR" } ],
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "I'll need more Scales for that.  Maybe later.",
+        "switch": true,
+        "condition": { "not": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } } },
+        "topic": "TALK_CF_REP"
+      },
+      { "text": "Not right now.", "switch": true, "default": true, "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SPELL_MENU_2",
+    "dynamic_line": "It guards the body against toxins of nearly any sort.  Poison gas, venom from mutant beasts, I've seen it ease signs of radiation sickness as well.  I'll need 3 Golden Scales to cover the cost of materials and for warding the ritual preparations.",
+    "responses": [
+      {
+        "text": "[GS3] You have a deal, then.",
+        "condition": { "u_has_items": { "item": "CF_golden_scale", "count": 3 } },
+        "effect": [ { "u_consume_item": "CF_golden_scale", "count": 3 }, { "u_add_trait": "SPELL_POISONARMOR" } ],
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "I'll need more Scales for that.  Maybe later.",
+        "switch": true,
+        "condition": { "not": { "u_has_items": { "item": "CF_golden_scale", "count": 3 } } },
+        "topic": "TALK_CF_REP"
+      },
+      { "text": "Not right now.", "switch": true, "default": true, "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_SPELL_MENU_3",
+    "dynamic_line": "This is a sacred protective spell against otherworldly influences.  Things that draw attention from Beyond or instability on the victim, likely the most common example.  I'll need 4 Golden Scales to cover the cost of materials and for warding the ritual preparations.",
+    "responses": [
+      {
+        "text": "[GS4] You have a deal, then.",
+        "condition": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } },
+        "effect": [ { "u_consume_item": "CF_golden_scale", "count": 4 }, { "u_add_trait": "SPELL_CLERIC" } ],
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "I'll need more Scales for that.  Maybe later.",
+        "switch": true,
+        "condition": { "not": { "u_has_items": { "item": "CF_golden_scale", "count": 4 } } },
+        "topic": "TALK_CF_REP"
+      },
+      { "text": "Not right now.", "switch": true, "default": true, "topic": "TALK_CF_REP" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_CF_REP_TRADE",
+    "dynamic_line": "The entrance and kitchen have a handful of things you may use if you are in need.  Beyond that we don't have much to spare, but I will offer you what I can.  We've taken to using measured blanks of gold in lieu of currency, which we used to use for repairing some of our items.  The others can vouch for the purity and weight being standardized.",
+    "responses": [
+      {
+        "text": "Let's trade then.",
+        "effect": [ { "u_add_effect": "cf_sofia_traded" }, "start_trade" ],
+        "topic": "TALK_CF_REP"
+      },
+      { "text": "It's fine, never mind.", "topic": "TALK_CF_REP" }
+    ]
+  }
+]

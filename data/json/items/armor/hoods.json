@@ -19,7 +19,7 @@
     "warmth": 10,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "OUTER" ]
+    "flags": [ "VARSIZE", "OUTER", "ALLOWS_MUZZLE" ]
   },
   {
     "id": "chainmail_hood",
@@ -31,14 +31,14 @@
     "price": "5012 cent",
     "price_postapoc": "25 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel" ],
     "symbol": "[",
     "looks_like": "balclava",
     "color": "light_red",
     "covers": [ "head" ],
-    "coverage": 95,
-    "encumbrance": 10,
-    "material_thickness": 4,
+    "coverage": 100,
+    "encumbrance": 20,
+    "material_thickness": 3,
     "flags": [ "VARSIZE", "STURDY", "HELMET_COMPAT" ]
   },
   {

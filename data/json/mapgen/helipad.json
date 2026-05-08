@@ -116,7 +116,7 @@
         "d": { "item": "SUS_office_desk", "chance": 50 },
         "f": { "item": "SUS_office_filing_cabinet", "chance": 90 },
         "4": { "item": "military_standard_shotguns", "chance": 50 },
-        "#": { "item": "SUS_utensils", "chance": 50 },
+        "#": { "item": "SUS_kitchen_misc", "chance": 50 },
         "t": { "item": "SUS_dishes", "chance": 50 },
         "[": { "item": "SUS_fridge", "chance": 50 },
         "O": { "item": "SUS_oven", "chance": 75 },

@@ -123,6 +123,7 @@
   {
     "id": "katar",
     "type": "GENERIC",
+    "weapon_category": [ "FIST_WEAPONS", "SHORT_SWORDS" ],
     "name": { "str": "katar" },
     "copy-from": "knuckle_katar",
     "description": "A steel brace with a metal blade at the end, designed to allow the user to stab and slash with the same motions as a punch.",
@@ -136,6 +137,7 @@
   {
     "id": "jamadhar",
     "type": "GENERIC",
+    "weapon_category": [ "FIST_WEAPONS", "SHORT_SWORDS" ],
     "name": { "str": "jamadhar" },
     "copy-from": "knuckle_katar",
     "description": "A steel brace with two thinner, pointed blades at the end, designed primarily to stab victims when used to punch.",
@@ -192,7 +194,7 @@
     "volume": "750 ml",
     "price": "220 USD",
     "price_postapoc": "4 USD",
-    "weapon_category": [ "FIST_WEAPONS" ],
+    "weapon_category": [ "FIST_WEAPONS", "KNIVES" ],
     "bashing": 6,
     "cutting": 7,
     "material": [ "steel" ],

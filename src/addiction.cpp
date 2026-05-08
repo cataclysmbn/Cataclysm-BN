@@ -17,6 +17,7 @@
 static const efftype_id effect_hallu( "hallu" );
 static const efftype_id effect_meth( "meth" );
 static const efftype_id effect_shakes( "shakes" );
+static const efftype_id effect_took_antinarcoleptic( "took_antinarcoleptic" );
 
 static const trait_id trait_MUT_JUNKIE( "MUT_JUNKIE" );
 
@@ -104,19 +105,37 @@ void addict_effect( Character &u, addiction &add )
             if( x_in_y( in, to_turns<int>( 2_hours ) ) ) {
                 u.mod_healthy_mod( -1, -in * 10 );
             }
-            if( x_in_y( in, to_turns<int>( 2_minutes ) * 20 ) ) {
-                const std::string msg_1 = add.type == add_type::ALCOHOL ?
-                                          _( "You could use a drink." ) :
-                                          _( "You could use some diazepam." );
-                u.add_msg_if_player( m_warning, msg_1 );
-                u.add_morale( morale_type, -35, -10 * in );
-            } else if( calendar::once_every( 1_minutes ) && rng( 8, 300 ) < in ) {
-                const std::string msg_2 = add.type == add_type::ALCOHOL ?
-                                          _( "Your hands start shaking… you need a drink bad!" ) :
-                                          _( "You're shaking… you need some diazepam!" );
-                u.add_msg_if_player( m_bad, msg_2 );
-                u.add_morale( morale_type, -35, -10 * in );
-                u.add_effect( effect_shakes, 5_minutes );
+
+            const bool is_alcohol = add.type == add_type::ALCOHOL;
+            const bool on_ghb = is_alcohol && u.has_effect( effect_took_antinarcoleptic );
+
+            // Hardcoded morale penalties depending on GHB effect
+            const int morale_penalty_min = on_ghb ? -18 : -35;  // roughly half
+            const int morale_penalty_max = on_ghb ? -5 * in : -10 * in;
+
+            if( is_alcohol || add.type == add_type::DIAZEPAM ) {
+                if( x_in_y( in, to_turns<int>( 2_minutes ) * 20 ) && ( !on_ghb || one_in( 2 ) ) ) {
+                    const std::string msg_1 = is_alcohol ?
+                                              _( "You could use a drink." ) :
+                                              _( "You could use some diazepam." );
+                    u.add_msg_if_player( m_warning, msg_1 );
+                    u.add_morale( morale_type, morale_penalty_min, morale_penalty_max );
+                    if( on_ghb && one_in( 5 ) ) {
+                        u.add_msg_if_player( _( "The GHB makes it not so bad." ) );
+                    }
+                } else if( calendar::once_every( 1_minutes ) && rng( 8, 300 ) < in && ( !on_ghb || one_in( 2 ) ) ) {
+                    const std::string msg_2 = is_alcohol ?
+                                              _( "Your hands start shaking… you need a drink bad!" ) :
+                                              _( "You're shaking… you need some diazepam!" );
+                    u.add_msg_if_player( m_bad, msg_2 );
+                    u.add_morale( morale_type, morale_penalty_min, morale_penalty_max );
+
+                    const time_duration shake_duration = on_ghb ? 2_minutes : 5_minutes;
+                    u.add_effect( effect_shakes, shake_duration );
+                    if( on_ghb && one_in( 5 ) ) {
+                        u.add_msg_if_player( _( "The GHB makes it not so bad." ) );
+                    }
+                }
             }
             break;
         }

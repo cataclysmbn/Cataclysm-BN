@@ -20,7 +20,7 @@
     "subtype": "distribution",
     "entries": [
       { "item": "material_rocksalt", "prob": 50 },
-      { "item": "coal_lump", "charges": [ 250, 500 ], "prob": 30 },
+      { "item": "coal_lump", "charges": [ 200, 400 ], "prob": 30 },
       { "item": "material_zincite", "count": [ 1, 4 ], "prob": 10 },
       { "item": "material_rhodonite", "prob": 10 }
     ]
@@ -113,17 +113,7 @@
     "coverage": 60,
     "connects_to": "WALL",
     "roof": "t_flat_roof",
-    "flags": [
-      "TRANSPARENT",
-      "FLAMMABLE",
-      "PLACE_ITEM",
-      "INDOORS",
-      "AUTO_WALL_SYMBOL",
-      "BASHABLE",
-      "THIN_OBSTACLE",
-      "MOUNTABLE",
-      "SHORT"
-    ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "PLACE_ITEM", "AUTO_WALL_SYMBOL", "BASHABLE", "THIN_OBSTACLE", "MOUNTABLE", "SHORT" ],
     "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "2x4", "count": 10 }, { "item": "nail", "charges": 20 } ] },
     "bash": {
       "str_min": 15,
@@ -474,9 +464,9 @@
       "sound_fail": "whump!",
       "ter_set": "t_rock_floor",
       "items": [
-        { "item": "rock", "count": [ 35, 50 ] },
+        { "item": "rock", "count": [ 25, 40 ] },
         { "item": "sharp_rock", "count": [ 3, 7 ] },
-        { "item": "material_limestone", "charges": [ 5, 15 ], "prob": 80 },
+        { "item": "material_limestone", "charges": [ 400, 800 ], "prob": 40 },
         { "item": "material_rocksalt", "prob": 10 }
       ],
       "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
@@ -515,6 +505,7 @@
     "looks_like": "t_brick_wall",
     "move_cost": 0,
     "coverage": 100,
+    "roof": "t_flat_roof",
     "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND" ],
     "connects_to": "WALL",
     "bash": {
@@ -600,6 +591,32 @@
       "sound": "metal screeching!",
       "sound_fail": "clang!",
       "ter_set": "t_null",
+      "items": [
+        { "item": "steel_lump", "count": [ 1, 4 ] },
+        { "item": "steel_chunk", "count": [ 3, 12 ] },
+        { "item": "scrap", "count": [ 9, 36 ] }
+      ],
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 600 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_wall_bulkhead_underwater",
+    "name": "underwater bulkhead",
+    "description": "An industrially fabricated thick sheet carefully positioned, this wall is capable of resisting extreme elements as well as hostile forces.  Seems to have sprung a leak, however.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "move_cost": 0,
+    "coverage": 100,
+    "looks_like": "t_wall_metal",
+    "roof": "t_metal_flat_roof",
+    "flags": [ "NOITEM", "SUPPORTS_ROOF", "WALL", "NO_SCENT", "AUTO_WALL_SYMBOL", "MINEABLE", "BLOCK_WIND", "WATER_CUBE" ],
+    "bash": {
+      "str_min": 200,
+      "str_max": 600,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "ter_set": "t_water_cube",
       "items": [
         { "item": "steel_lump", "count": [ 1, 4 ] },
         { "item": "steel_chunk", "count": [ 3, 12 ] },
@@ -878,6 +895,32 @@
   },
   {
     "type": "terrain",
+    "id": "t_wall_wood_underwater",
+    "copy-from": "t_wall_wood",
+    "name": "underwater wooden wall",
+    "description": "A decaying old section of wooden wall, soaked through and leaking.  It will likely crumble to bits if damaged.",
+    "symbol": "LINE_OXOX",
+    "color": "light_red",
+    "roof": "t_floor_wood_underwater",
+    "extend": { "flags": [ "LIQUID", "SWIMMABLE", "WATER_CUBE", "DEEP_WATER", "GOES_UP" ] },
+    "delete": { "flags": [ "FLAMMABLE" ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 100,
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "ter_set": "t_floor_wood_underwater",
+      "items": [
+        { "item": "2x4", "count": [ 0, 3 ] },
+        { "item": "wood_panel", "count": [ 0, 2 ] },
+        { "item": "nail", "charges": [ 1, 5 ] },
+        { "item": "splinter", "count": [ 1, 4 ] }
+      ],
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 100 }
+    }
+  },
+  {
+    "type": "terrain",
     "id": "t_wall_log_half",
     "name": "half-built log wall",
     "description": "A half-constructed wall of notched logs that interlock to provide stability.  Needs a few more logs to hold up a roof.  Looks flammable.",
@@ -1076,20 +1119,15 @@
     "color": "dark_gray",
     "move_cost": 0,
     "coverage": 100,
-    "flags": [ "NOITEM", "WALL", "PERMEABLE", "SUPPORTS_ROOF", "AUTO_WALL_SYMBOL", "MINEABLE" ],
+    "flags": [ "NOITEM", "WALL", "REDUCE_SCENT", "BLOCK_WIND", "SUPPORTS_ROOF", "AUTO_WALL_SYMBOL", "MINEABLE" ],
     "connects_to": "WALL",
     "bash": {
       "str_min": 60,
       "str_max": 200,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
-      "ter_set": "t_floor",
-      "items": [
-        { "item": "pipe", "count": [ 1, 6 ] },
-        { "item": "scrap", "count": [ 1, 40 ] },
-        { "item": "sheet_metal", "count": [ 1, 2 ] },
-        { "item": "steel_chunk", "count": [ 1, 30 ] }
-      ],
+      "ter_set": "t_null",
+      "items": [ { "item": "scrap", "count": [ 1, 40 ] }, { "item": "steel_chunk", "count": [ 1, 30 ] } ],
       "ranged": { "reduction": [ 60, 60 ], "destroy_threshold": 200 }
     }
   },
@@ -1120,21 +1158,22 @@
     "id": "t_junk_palisade",
     "name": "junk metal barrier",
     "looks_like": "t_scrap_wall_halfway",
-    "description": "A simple wall of rusty scrap metal bolted and wire-tied to a makeshift frame.  Very fashionable in post-apocalyptic shantytowns.  This one isn't quite strong enough to support a roof, but could be reinforced.",
+    "description": "A short wall of rusty scrap metal bolted and wire-tied to a makeshift frame.  Very fashionable in post-apocalyptic shantytowns.  This one isn't quite strong enough to support a roof, but could be reinforced.",
     "symbol": "LINE_OXOX",
     "color": "dark_gray",
     "move_cost": 0,
     "coverage": 60,
-    "flags": [ "NOITEM", "WALL", "PERMEABLE", "AUTO_WALL_SYMBOL", "MINEABLE" ],
+    "flags": [ "TRANSPARENT", "NOITEM", "PERMEABLE", "AUTO_WALL_SYMBOL", "MINEABLE", "MOUNTABLE" ],
     "connects_to": "WALL",
     "bash": {
       "str_min": 30,
       "str_max": 200,
       "sound": "metal screeching!",
       "sound_fail": "clang!",
-      "ter_set": "t_floor",
-      "items": [ { "item": "pipe", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 1, 40 ] } ],
-      "ranged": { "reduction": [ 30, 30 ], "destroy_threshold": 200 }
+      "ter_set": "t_null",
+      "items": [ { "item": "scrap", "count": [ 1, 40 ] } ],
+      "//": "reduction and destroy_threshold equal to completed version",
+      "ranged": { "reduction": [ 60, 60 ], "destroy_threshold": 200, "block_unaimed_chance": "50%" }
     }
   },
   {
@@ -1360,7 +1399,7 @@
       "sound_fail_vol": 4,
       "ter_set": "t_floor_paper",
       "//": "Go straight through without taking any damage.",
-      "ranged": { "block_unaimed_chance": "0%" }
+      "ranged": { "block_unaimed_chance": "100%" }
     }
   },
   {
@@ -1379,7 +1418,7 @@
       "sound_fail_vol": 4,
       "ter_set": "t_floor_paper_noroof",
       "//": "Go straight through without taking any damage.",
-      "ranged": { "block_unaimed_chance": "0%" }
+      "ranged": { "block_unaimed_chance": "100%" }
     }
   },
   {
@@ -1467,10 +1506,11 @@
       "ter_set": "t_rock_floor",
       "ter_set_bashed_from_above": "t_rock_floor_no_roof",
       "items": [
-        { "item": "rock", "count": [ 65, 85 ] },
+        { "item": "rock", "count": [ 55, 75 ] },
         { "item": "sharp_rock", "count": [ 5, 9 ] },
-        { "item": "material_limestone", "charges": [ 10, 25 ], "prob": 80 },
-        { "group": "rock_mining_extra", "prob": 25 }
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "group": "rock_mining_extra", "prob": 25 },
+        { "item": "geode", "prob": 5 }
       ],
       "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
@@ -1495,8 +1535,9 @@
       "items": [
         { "item": "rock", "count": [ 35, 50 ] },
         { "item": "sharp_rock", "count": [ 3, 7 ] },
-        { "item": "material_limestone", "charges": [ 5, 15 ], "prob": 80 },
-        { "item": "material_rocksalt", "prob": 10 }
+        { "item": "material_limestone", "charges": [ 400, 800 ], "prob": 40 },
+        { "item": "material_rocksalt", "prob": 10 },
+        { "item": "geode", "prob": 5 }
       ],
       "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
@@ -1521,8 +1562,9 @@
       "items": [
         { "item": "rock", "count": [ 35, 50 ] },
         { "item": "sharp_rock", "count": [ 3, 7 ] },
-        { "item": "material_limestone", "charges": [ 5, 15 ], "prob": 80 },
-        { "item": "material_rocksalt", "prob": 10 }
+        { "item": "material_limestone", "charges": [ 400, 800 ], "prob": 40 },
+        { "item": "material_rocksalt", "prob": 10 },
+        { "item": "geode", "prob": 5 }
       ],
       "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
@@ -1548,7 +1590,402 @@
         { "item": "rock", "count": [ 35, 50 ] },
         { "item": "sharp_rock", "count": [ 3, 7 ] },
         { "item": "material_limestone", "charges": [ 5, 15 ], "prob": 80 },
-        { "item": "material_rocksalt", "prob": 10 }
+        { "item": "material_rocksalt", "prob": 10 },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_iron",
+    "copy-from": "t_rock",
+    "name": "iron ore vein",
+    "description": "Solid rock, with an exposed seam of reddish-brown iron ore.",
+    "symbol": "#",
+    "color": "brown",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "iron_ore", "count": [ 20, 40 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_banded_iron",
+    "copy-from": "t_rock",
+    "name": "banded-iron ore vein",
+    "description": "Solid rock, with an exposed seam of brown-red banded-iron ore.",
+    "symbol": "#",
+    "color": "brown",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "iron_ore", "count": [ 18, 36 ] },
+        { "item": "gold_ore", "count": [ 2, 4 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_copper",
+    "copy-from": "t_rock",
+    "name": "copper ore vein",
+    "description": "Solid rock, with an exposed seam of green copper ore.",
+    "symbol": "#",
+    "color": "green",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "copper_ore", "count": [ 20, 40 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_tetrahedrite",
+    "copy-from": "t_rock",
+    "name": "tetrahedrite ore vein",
+    "description": "Solid rock, with an exposed seam of grey tetrahedrite ore.",
+    "symbol": "#",
+    "color": "light_gray",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "copper_ore", "count": [ 12, 24 ] },
+        { "item": "chunk_sulfur", "count": [ 4, 8 ] },
+        { "item": "iron_ore", "count": [ 4, 8 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_chalcopyrite",
+    "copy-from": "t_rock",
+    "name": "chalcopyrite ore vein",
+    "description": "Solid rock, with an exposed seam of light-green chalcopyrite ore.",
+    "symbol": "#",
+    "color": "light_green",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "copper_ore", "count": [ 5, 10 ] },
+        { "item": "chunk_sulfur", "count": [ 10, 20 ] },
+        { "item": "iron_ore", "count": [ 5, 10 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_lead",
+    "copy-from": "t_rock",
+    "name": "lead ore vein",
+    "description": "Solid rock, with an exposed dull gray and yellow seam of lead ore.",
+    "symbol": "#",
+    "color": "dark_gray",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "lead_ore", "count": [ 20, 40 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_galena",
+    "copy-from": "t_rock",
+    "name": "galena ore vein",
+    "description": "Solid rock, with an exposed dull gray seam of galena ore.",
+    "symbol": "#",
+    "color": "light_gray",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "lead_ore", "count": [ 10, 20 ] },
+        { "item": "silver_ore", "count": [ 10, 20 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_galenau",
+    "copy-from": "t_rock",
+    "name": "galenau ore vein",
+    "description": "Solid rock, with an exposed yellow-grey seam of galenau ore.",
+    "//": "This ore doesnt actually exist. The Calamity sure is wild huh?",
+    "symbol": "#",
+    "color": "light_gray",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "lead_ore", "count": [ 10, 20 ] },
+        { "item": "gold_ore", "count": [ 10, 20 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_tin",
+    "copy-from": "t_rock",
+    "name": "tin ore vein",
+    "description": "Solid rock, with dark gray hints of what you're fairly certain is an ore of tin.",
+    "symbol": "#",
+    "color": "dark_gray",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "tin_ore", "count": [ 20, 40 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_coppin",
+    "copy-from": "t_rock",
+    "name": "coppin ore vein",
+    "description": "Solid rock, with a seeming mixture of copper and tin ore.",
+    "//": "This ore, also, does not exist. Tin is a very boring metal apparently.",
+    "symbol": "#",
+    "color": "light_green",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "tin_ore", "count": [ 10, 20 ] },
+        { "item": "copper_ore", "count": [ 10, 20 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_bronzium",
+    "copy-from": "t_rock",
+    "name": "bronzium ore vein",
+    "description": "Solid rock, with a seeming mixture of copper and tin ore. Faintly resembles crude bronze.",
+    "//": "This ore, also, does not exist. No one likes tin apparently.",
+    "symbol": "#",
+    "color": "light_green",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "tin_ore", "count": [ 5, 10 ] },
+        { "item": "copper_ore", "count": [ 15, 30 ] },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_silver",
+    "copy-from": "t_rock",
+    "name": "silver ore vein",
+    "description": "Solid rock, with an exposed gray gleam of silver ore.  There might be a few bits of native silver hidden within, but most of it will need to be processed.",
+    "symbol": "#",
+    "color": "light_gray",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "silver_ore", "count": [ 15, 30 ] },
+        { "item": "silver_small", "charges": [ 50, 100 ], "prob": 25 },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_gold",
+    "copy-from": "t_rock",
+    "name": "gold vein",
+    "description": "Hot damn, you've struck gold!  Gleaming through the rock in its native form, it's almost enough to make one forget how much less valuable it is after the end of the world.",
+    "symbol": "#",
+    "color": "yellow",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "gold_ore", "count": [ 15, 30 ] },
+        { "item": "gold_small", "charges": [ 50, 100 ], "prob": 25 },
+        { "item": "geode", "prob": 5 }
+      ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_rock_ore_electrumite",
+    "copy-from": "t_rock",
+    "name": "electrumite ore vein",
+    "description": "Solid rock, with an exposed silvered yellow gleam of electrumite ore.",
+    "//": "Doesnt exist, but electrum does. Blame the calamity.",
+    "symbol": "#",
+    "color": "light_gray",
+    "looks_like": "t_fault",
+    "bash": {
+      "str_min": 100,
+      "str_max": 400,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_rock_floor",
+      "ter_set_bashed_from_above": "t_rock_floor_no_roof",
+      "items": [
+        { "item": "rock", "count": [ 55, 75 ] },
+        { "item": "sharp_rock", "count": [ 5, 9 ] },
+        { "item": "material_limestone", "charges": [ 500, 1000 ], "prob": 40 },
+        { "item": "silver_ore", "count": [ 10, 20 ] },
+        { "item": "gold_ore", "count": [ 10, 20 ] },
+        { "item": "geode", "prob": 5 }
       ],
       "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
       "ranged": { "reduction": [ 200, 200 ], "destroy_threshold": 200 }
@@ -1763,5 +2200,169 @@
     "color": "light_green",
     "move_cost": 0,
     "flags": [ "TRANSPARENT", "CONTAINER", "REDUCE_SCENT", "PERMEABLE", "PLACE_ITEM" ]
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_wood",
+    "copy-from": "t_wall_wood",
+    "name": "wooden fortification",
+    "description": "A wooden wall with a firing hole carved out of it, which you can fire through unimpeded if you're adjacent to it.  It doesn't take much out of incoming fire, but it's better than nothing.",
+    "symbol": "LINE_OXOX",
+    "color": "light_red",
+    "coverage": 80,
+    "bash": {
+      "str_min": 12,
+      "str_max": 150,
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "//": "Skip straight to the version that already has holes in it",
+      "ter_set": "t_wall_wood_broken",
+      "items": [
+        { "item": "2x4", "count": [ 0, 3 ] },
+        { "item": "wood_panel", "count": [ 0, 2 ] },
+        { "item": "nail", "charges": [ 1, 5 ] },
+        { "item": "splinter", "count": [ 1, 4 ] }
+      ],
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 150, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_wood_underwater",
+    "copy-from": "t_fortification_wood",
+    "name": "underwater wooden fortification",
+    "description": "A waterlogged gunport from the age of sail.  If you have a speargun to fire through it with, it might still serve as light cover against any unexpected encounters with gun-toting sharks.",
+    "symbol": "LINE_OXOX",
+    "color": "light_red",
+    "looks_like": "t_fortification_wood",
+    "roof": "t_floor_wood_underwater",
+    "bash": {
+      "str_min": 12,
+      "str_max": 100,
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "ter_set": "t_floor_wood_underwater",
+      "items": [
+        { "item": "2x4", "count": [ 0, 3 ] },
+        { "item": "wood_panel", "count": [ 0, 2 ] },
+        { "item": "nail", "charges": [ 1, 5 ] },
+        { "item": "splinter", "count": [ 1, 4 ] }
+      ],
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 100, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "LIQUID", "SWIMMABLE", "WATER_CUBE", "DEEP_WATER", "GOES_UP" ] },
+    "delete": { "flags": [ "FLAMMABLE" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_log",
+    "copy-from": "t_wall_log",
+    "name": "log fortification",
+    "description": "Stout timbers with a firing hole carved into it, letting you fire unimpeded if you're adjacent to it.  Provides pretty good cover, but might falter against higher-end firepower.",
+    "symbol": "LINE_OXOX",
+    "color": "brown",
+    "coverage": 80,
+    "bash": {
+      "str_min": 60,
+      "str_max": 180,
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "//": "Skip straight to the version that already has holes in it",
+      "ter_set": "t_wall_log_broken",
+      "items": [ { "item": "splinter", "count": [ 5, 10 ] } ],
+      "ranged": { "reduction": [ 60, 60 ], "destroy_threshold": 180, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_drystone",
+    "copy-from": "t_drystone_wall",
+    "name": "field stone fortification",
+    "description": "A sturdy dry stone wall with a firing hole chiseled out, letting you fire unhindered when adjacent to it.  Basic as it may be, simple stones provide effective cover.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "coverage": 80,
+    "bash": {
+      "str_min": 50,
+      "str_max": 200,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_null",
+      "items": [ { "item": "rock", "count": [ 6, 14 ] }, { "item": "pebble", "count": [ 20, 38 ] } ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 100, 100 ], "destroy_threshold": 100, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_stone",
+    "copy-from": "t_rock_wall",
+    "name": "stone fortification",
+    "description": "A sturdy stone wall with a firing hole chiseled out, letting you fire unhindered when adjacent to it.  An excellent source of cover against anything short of siege weapons.",
+    "symbol": "LINE_OXOX",
+    "color": "light_gray",
+    "coverage": 80,
+    "bash": {
+      "str_min": 80,
+      "str_max": 300,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "ter_set": "t_null",
+      "items": [ { "item": "rock", "count": [ 6, 14 ] } ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 160, 160 ], "destroy_threshold": 160, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_brick",
+    "copy-from": "t_brick_wall",
+    "name": "brick fortification",
+    "description": "A solid brick wall with a firing hole built into it, providing an opening to shoot through unimpeded while adjacent to it.  A sturdy source of cover against incoming fire.",
+    "symbol": "LINE_OXOX",
+    "color": "brown",
+    "coverage": 80,
+    "bash": {
+      "str_min": 60,
+      "str_max": 160,
+      "sound": "crash!",
+      "sound_fail": "bash!",
+      "ter_set": "t_null",
+      "items": [ { "item": "rock", "count": [ 7, 12 ] }, { "item": "brick", "count": [ 2, 4 ] } ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 120, 120 ], "destroy_threshold": 120, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
+  },
+  {
+    "type": "terrain",
+    "id": "t_fortification_adobe",
+    "copy-from": "t_adobe_brick_wall",
+    "name": "adobe fortification",
+    "description": "A solid adobe brick wall with a firing hole built into it, providing an opening to fire through when adjacent to it.  Fairly solid cover against muskets and most small arms alike.",
+    "symbol": "LINE_OXOX",
+    "color": "brown",
+    "coverage": 80,
+    "bash": {
+      "str_min": 45,
+      "str_max": 120,
+      "sound": "crash!",
+      "sound_fail": "bash!",
+      "ter_set": "t_null",
+      "items": [ { "item": "material_soil", "count": [ 6, 15 ] }, { "item": "adobe_brick", "count": [ 2, 4 ] } ],
+      "//": "Stone obstacles have double the expected reduction but lower destroy_threshold in return",
+      "ranged": { "reduction": [ 90, 90 ], "destroy_threshold": 90, "block_unaimed_chance": "75%" }
+    },
+    "extend": { "flags": [ "TRANSPARENT", "REDUCE_SCENT", "MOUNTABLE" ] },
+    "delete": { "flags": [ "NO_SCENT", "BLOCK_WIND" ] }
   }
 ]

@@ -19,7 +19,7 @@
     "recoil": 150,
     "count": 4,
     "loudness": 60,
-    "effects": [ "COOKOFF", "PYROPHORIC", "TRAIL", "NEVER_MISFIRES" ]
+    "effects": [ "COOKOFF", "PYROPHORIC", "TRAIL", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -39,6 +39,6 @@
     "dispersion": 30,
     "recoil": 225,
     "loudness": 75,
-    "effects": [ "COOKOFF", "EXPLOSIVE_BIG", "TRAIL" ]
+    "effects": [ "COOKOFF", "EXPLOSIVE_BIG", "TRAIL", "NO_PENETRATE_OBSTACLES" ]
   }
 ]

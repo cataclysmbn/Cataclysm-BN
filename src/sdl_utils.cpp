@@ -13,11 +13,14 @@
 
 color_pixel_function_map builtin_color_pixel_functions = {
     { "color_pixel_none", nullptr },
+    { "color_pixel_copy", color_pixel_copy },
     { "color_pixel_darken", color_pixel_darken },
     { "color_pixel_sepia", color_pixel_sepia },
     { "color_pixel_grayscale", color_pixel_grayscale },
     { "color_pixel_nightvision", color_pixel_nightvision },
     { "color_pixel_overexposed", color_pixel_overexposed },
+    { "color_pixel_underwater", color_pixel_underwater },
+    { "color_pixel_underwater_dark", color_pixel_underwater_dark },
     { "color_pixel_zoverlay", color_pixel_z_overlay },
 };
 
@@ -105,6 +108,40 @@ SDL_Color color_pixel_overexposed( const SDL_Color &color )
         static_cast<Uint8>( result >> 3 ),
         color.a
     };
+}
+
+SDL_Color color_pixel_underwater( const SDL_Color &color )
+{
+    if( is_black( color ) ) {
+        return color;
+    }
+
+    return {
+        std::max<Uint8>( 175 * color.r >> 8, 0x01 ),
+        std::max<Uint8>( 225 * color.g >> 8, 0x01 ),
+        std::max<Uint8>( 250 * color.b >> 8, 0x01 ),
+        color.a
+    };
+}
+
+SDL_Color color_pixel_underwater_dark( const SDL_Color &color )
+{
+    if( is_black( color ) ) {
+        return color;
+    }
+
+    // Half the levels of bright version, except slightly more red to keep it from getting too dark.
+    return {
+        std::max<Uint8>( 100 * color.r >> 8, 0x01 ),
+        std::max<Uint8>( 113 * color.g >> 8, 0x01 ),
+        std::max<Uint8>( 125 * color.b >> 8, 0x01 ),
+        color.a
+    };
+}
+
+SDL_Color color_pixel_copy( const SDL_Color &color )
+{
+    return color;
 }
 
 SDL_Color color_pixel_darken( const SDL_Color &color )
@@ -214,6 +251,62 @@ SDL_Rect fit_rect_inside( const SDL_Rect &inner, const SDL_Rect &outer )
     const point p( outer.x + ( outer.w - w ) / 2, outer.y + ( outer.h - h ) / 2 );
 
     return SDL_Rect{ p.x, p.y, w, h };
+}
+
+void get_pixel_rgba( const SDL_Surface *surface, int x, int y,
+                     Uint8 &r, Uint8 &g, Uint8 &b, Uint8 &a )
+{
+    auto *pixels = static_cast<Uint8 *>( surface->pixels );
+    Uint8 *p = pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
+
+    Uint32 pixel;
+    switch( surface->format->BytesPerPixel ) {
+        case 4:
+            pixel = *reinterpret_cast<Uint32 *>( p );
+            break;
+        case 3:
+            // 24-bit surfaces (rare)
+            if constexpr( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
+                pixel = p[0] << 16 | p[1] << 8 | p[2];
+            } else {
+                pixel = p[0] | p[1] << 8 | p[2] << 16;
+            }
+            break;
+        default:
+            pixel = 0;
+            break;
+    }
+
+    SDL_GetRGBA( pixel, surface->format, &r, &g, &b, &a );
+}
+
+void set_pixel_rgba( const SDL_Surface *surface, int x, int y,
+                     Uint8 r, Uint8 g, Uint8 b, Uint8 a )
+{
+    Uint32 pixel = SDL_MapRGBA( surface->format, r, g, b, a );
+
+    auto *pixels = static_cast<Uint8 *>( surface->pixels );
+    Uint8 *p = pixels + y * surface->pitch + x * surface->format->BytesPerPixel;
+
+    switch( surface->format->BytesPerPixel ) {
+        case 4:
+            *reinterpret_cast<Uint32 *>( p ) = pixel;
+            break;
+        case 3:
+            // 24-bit surfaces (rare)
+            if constexpr( SDL_BYTEORDER == SDL_BIG_ENDIAN ) {
+                p[0] = ( pixel >> 16 ) & 0xff;
+                p[1] = ( pixel >> 8 ) & 0xff;
+                p[2] = pixel & 0xff;
+            } else {
+                p[0] = pixel & 0xff;
+                p[1] = ( pixel >> 8 ) & 0xff;
+                p[2] = ( pixel >> 16 ) & 0xff;
+            }
+            break;
+        default:
+            break;
+    }
 }
 
 #endif // SDL_TILES

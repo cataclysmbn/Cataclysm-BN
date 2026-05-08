@@ -343,6 +343,25 @@
   },
   {
     "type": "recipe",
+    "result": "cream_pie",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_BREAD",
+    "skill_used": "cooking",
+    "difficulty": 5,
+    "time": "40 m",
+    "batch_time_factors": [ 50, 3 ],
+    "book_learn": [ [ "baking_book", 3 ], [ "family_cookbook", 3 ], [ "sweets_book", 3 ] ],
+    "qualities": [ { "id": "COOK", "level": 2 } ],
+    "tools": [ [ [ "surface_heat", 6, "LIST" ] ] ],
+    "components": [
+      [ [ "flour", 30 ] ],
+      [ [ "milk_standard_raw", 4, "LIST" ] ],
+      [ [ "sugar", 20 ], [ "syrup", 4 ], [ "beet_syrup", 4 ], [ "molasses", 4 ] ],
+      [ [ "water", 1 ], [ "water_clean", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "brioche",
     "category": "CC_FOOD",
     "subcategory": "CSC_FOOD_BREAD",
@@ -461,6 +480,29 @@
         [ "wild_herbs", 1 ],
         [ "soysauce", 1 ]
       ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "fried_blinkie",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_BREAD",
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "time": "45 s",
+    "charges": 1,
+    "autolearn": true,
+    "batch_time_factors": [ 80, 1 ],
+    "qualities": [ { "id": "COOK", "level": 2 } ],
+    "tools": [ [ [ "surface_heat", 10, "LIST" ] ] ],
+    "components": [
+      [ [ "blinkie", 1 ] ],
+      [ [ "milk_standard_raw", 1, "LIST" ], [ "milk_powder", 1 ] ],
+      [ [ "eggs_small_dry", 1, "LIST" ] ],
+      [ [ "flour", 1 ] ],
+      [ [ "sugar", 2 ] ],
+      [ [ "splinter", 1 ] ],
+      [ [ "any_butter_or_oil", 1, "LIST" ] ]
     ]
   }
 ]

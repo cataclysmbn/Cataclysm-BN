@@ -116,7 +116,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "lab_room_7x7_turret",
+    "nested_mapgen_id": "lab_room_7x7",
     "object": {
       "mapgensize": [ 7, 7 ],
       "rotation": [ 0, 3 ],
@@ -297,7 +297,7 @@
         "........."
       ],
       "palettes": [ "lab_palette" ],
-      "terrain": { "C": [ "t_vat" ] },
+      "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": { "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] } }
     }
   },
@@ -320,7 +320,7 @@
         "........."
       ],
       "palettes": [ "lab_palette" ],
-      "terrain": { "C": [ "t_vat" ] },
+      "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": {
         "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] },
         "c": { "items": [ { "item": "mut_lab", "chance": 20 } ] }
@@ -347,7 +347,7 @@
         "cccc.cccc"
       ],
       "palettes": [ "lab_palette" ],
-      "terrain": { "C": [ "t_vat" ] },
+      "furniture": { "C": [ "f_cloning_vat" ] },
       "mapping": {
         "C": { "items": [ { "item": "cloning_vat", "chance": 50 } ] },
         "c": { "items": [ { "item": "mut_lab", "chance": 15 } ] }
@@ -422,7 +422,15 @@
       "terrain": { ",": "t_floor_blue" },
       "place_monster": [
         {
-          "monster": [ "mon_zombie_brute", "mon_zombie_screecher", "mon_zombie_hollow", "mon_zombie_master", "mon_zombie_necro" ],
+          "monster": [
+            "mon_zombie_brute",
+            "mon_zombie_screecher",
+            "mon_zombie_hollow",
+            "mon_skeleton_master",
+            "mon_skeleton_necro",
+            "mon_zombie_master",
+            "mon_zombie_necro"
+          ],
           "x": [ 2, 3 ],
           "y": [ 1, 3 ],
           "chance": 80

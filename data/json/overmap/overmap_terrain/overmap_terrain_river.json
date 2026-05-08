@@ -7,6 +7,7 @@
     "sym": "R",
     "color": "blue",
     "see_cost": 1,
+    "spawns": { "group": "GROUP_RIVER", "population": [ 1, 3 ], "chance": 15 },
     "flags": [ "RIVER", "NO_ROTATE", "SOURCE_DRINK" ]
   },
   {
@@ -19,8 +20,7 @@
   {
     "type": "overmap_terrain",
     "id": "river_center",
-    "copy-from": "generic_river",
-    "mapgen": [ { "method": "builtin", "name": "river_center" } ]
+    "copy-from": "generic_river"
   },
   {
     "type": "overmap_terrain",

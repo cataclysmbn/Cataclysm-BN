@@ -11,7 +11,7 @@
     "color": "dark_gray",
     "symbol": "/",
     "material": [ "steel" ],
-    "qualities": [ [ "HAMMER", 1 ] ],
+    "qualities": [ [ "HAMMER", 1 ], [ "GLASSBLOWING", 1 ] ],
     "techniques": [ "WBLOCK_1" ],
     "volume": "500 ml",
     "bashing": 12,
@@ -91,7 +91,8 @@
     "volume": "250 ml",
     "bashing": 5,
     "price": "75 USD",
-    "price_postapoc": "10 cent"
+    "price_postapoc": "10 cent",
+    "qualities": [ [ "GLASSBLOWING", 1 ] ]
   },
   {
     "id": "material_aluminium_ingot",
@@ -216,7 +217,7 @@
     "price_postapoc": "50 cent",
     "count": 100,
     "stack_size": 100,
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "material": [ "powder" ],
     "symbol": "=",
     "color": "dark_gray",

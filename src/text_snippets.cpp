@@ -61,7 +61,7 @@ void snippet_library::add_snippet_from_json( const std::string &category, const 
         if( id.is_null() ) {
             jo.throw_error( "Null snippet id specified", "id" );
         }
-        if( snippets_by_id.find( id ) != snippets_by_id.end() ) {
+        if( snippets_by_id.contains( id ) ) {
             jo.throw_error( "Duplicate snippet id", "id" );
         }
         snippets_by_category[category].ids.emplace_back( id );
@@ -86,7 +86,7 @@ void snippet_library::clear_snippets()
 
 bool snippet_library::has_category( const std::string &category ) const
 {
-    return snippets_by_category.find( category ) != snippets_by_category.end();
+    return snippets_by_category.contains( category );
 }
 
 std::optional<translation> snippet_library::get_snippet_by_id( const snippet_id &id ) const
@@ -119,7 +119,7 @@ const translation &snippet_library::get_snippet_ref_by_id( const snippet_id &id 
 
 bool snippet_library::has_snippet_with_id( const snippet_id &id ) const
 {
-    return snippets_by_id.find( id ) != snippets_by_id.end();
+    return snippets_by_id.contains( id );
 }
 
 std::string snippet_library::expand( const std::string &str ) const

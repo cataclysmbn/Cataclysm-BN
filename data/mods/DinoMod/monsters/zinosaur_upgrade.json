@@ -4061,7 +4061,7 @@
     "luminance": 20,
     "proportional": { "hp": 1.5, "speed": 0.8 },
     "relative": { "armor_bash": 30, "armor_cut": 37 },
-    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES" ] },
+    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES", "VOLATILE" ] },
     "special_attacks": [ [ "GRAB", 30 ], [ "FLAMETHROWER", 30 ] ],
     "upgrades": {  },
     "death_drops": [
@@ -4085,7 +4085,7 @@
     "luminance": 20,
     "proportional": { "hp": 1.5, "speed": 0.8 },
     "relative": { "armor_bash": 30, "armor_cut": 37 },
-    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES" ] },
+    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES", "VOLATILE" ] },
     "special_attacks": [ [ "GRAB", 30 ], [ "FLAMETHROWER", 30 ] ],
     "upgrades": {  },
     "death_drops": [
@@ -4109,7 +4109,7 @@
     "luminance": 20,
     "proportional": { "hp": 1.5, "speed": 0.8 },
     "relative": { "armor_bash": 30, "armor_cut": 37, "armor_stab": 30, "armor_acid": 3 },
-    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES" ] },
+    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES", "VOLATILE" ] },
     "starting_ammo": { "50bmg": 400 },
     "special_when_hit": [ "RETURN_FIRE", 100 ],
     "special_attacks": [
@@ -4155,7 +4155,7 @@
     "luminance": 20,
     "proportional": { "hp": 1.5, "speed": 0.8 },
     "relative": { "armor_bash": 30, "armor_cut": 37, "armor_stab": 30, "armor_acid": 3 },
-    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES" ] },
+    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES", "VOLATILE" ] },
     "special_attacks": [ [ "MULTI_ROBOT", 300 ] ],
     "upgrades": {  },
     "death_drops": [
@@ -4178,7 +4178,7 @@
     "luminance": 20,
     "proportional": { "hp": 1.5, "speed": 0.8 },
     "relative": { "armor_bash": 30, "armor_cut": 37, "armor_stab": 30, "armor_acid": 3 },
-    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES" ] },
+    "extend": { "flags": [ "DRIPS_GASOLINE", "LOUDMOVES", "VOLATILE" ] },
     "starting_ammo": { "50bmg": 400 },
     "special_when_hit": [ "RETURN_FIRE", 100 ],
     "special_attacks": [ [ "MULTI_ROBOT", 300 ] ],

@@ -19,7 +19,7 @@
     "use_action": {
       "type": "bandolier",
       "capacity": 40,
-      "ammo": [ "32", "38", "357mag", "357sig", "380", "40", "10mm", "44", "45", "45colt", "46", "57", "9mm" ],
+      "ammo": [ "32", "38", "357mag", "357sig", "380", "40", "10mm", "44", "45", "45colt", "9mm" ],
       "draw_cost": 20
     },
     "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "FANCY" ]
@@ -137,8 +137,8 @@
       "ammo": [ "22", "223", "300blk", "5x50", "3006", "308", "300", "762", "762R", "8x40mm", "4570", "50" ],
       "draw_cost": 20
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_NATURAL_ATTACKS" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ]
   },
   {
     "id": "grenade_pouch",
@@ -158,7 +158,7 @@
     "encumbrance": 4,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 6, "ammo": [ "40x46mm", "40x53mm" ], "draw_cost": 20 },
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "stone_pouch",
@@ -179,7 +179,7 @@
     "encumbrance": 4,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 20, "ammo": [ "rock" ], "draw_cost": 20 },
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "grenadebandolier",
@@ -208,8 +208,8 @@
       "draw_cost": 30,
       "flags": [ "GRENADE" ]
     },
-    "valid_mods": [ "resized_large" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE" ]
   },
   {
     "id": "bandolier_grenade",

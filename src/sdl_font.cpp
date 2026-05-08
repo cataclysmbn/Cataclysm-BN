@@ -160,12 +160,56 @@ void Font::draw_ascii_lines( const SDL_Renderer_Ptr &renderer, const GeometryRen
             geometry->vertical_line( renderer, p + point( ( width / 2 ), 0 ), p.y + height, 2,
                                      sdl_color );
             break;
-        // box bottom east T (left, down, up)
+        // box bottom west T (left, down, up)
         case LINE_XOXX_C:
             geometry->vertical_line( renderer, p + point( ( width / 2 ), 0 ), p.y + height, 2,
                                      sdl_color );
             geometry->horizontal_line( renderer, p + point( 0, ( height / 2 ) ), p.x + ( width / 2 ), 1,
                                        sdl_color );
+            break;
+        // right double and vertical single
+        case LINE_XDXO_C:
+            geometry->vertical_line( renderer, p + point( ( width / 2 ), 0 ), p.y + height, 2,
+                                     sdl_color );
+            geometry->horizontal_line( renderer, p + point( ( width / 2 ), ( height / 3 ) ),
+                                       p.x + width,
+                                       1,
+                                       sdl_color );
+            geometry->horizontal_line( renderer, p + point( ( width / 2 ), ( height * 2 / 3 ) ),
+                                       p.x + width,
+                                       1,
+                                       sdl_color );
+            break;
+        // up double and horizontal single
+        case LINE_DXOX_C:
+            geometry->horizontal_line( renderer, p + point( 0, ( height / 2 ) ), p.x + width, 1,
+                                       sdl_color );
+            geometry->vertical_line( renderer, p + point( ( width / 3 ), 0 ), p.y + ( height / 2 ), 2,
+                                     sdl_color );
+            geometry->vertical_line( renderer, p + point( ( width * 2 / 3 ), 0 ), p.y + ( height / 2 ), 2,
+                                     sdl_color );
+            break;
+        // left double and vertical single
+        case LINE_XOXD_C:
+            geometry->vertical_line( renderer, p + point( ( width / 2 ), 0 ), p.y + height, 2,
+                                     sdl_color );
+            geometry->horizontal_line( renderer, p + point( 0, ( height / 3 ) ), p.x + ( width / 2 ), 1,
+                                       sdl_color );
+            geometry->horizontal_line( renderer, p + point( 0, ( height * 2 / 3 ) ), p.x + ( width / 2 ), 1,
+                                       sdl_color );
+            break;
+        // down double and horizontal single
+        case LINE_OXDX_C:
+            geometry->horizontal_line( renderer, p + point( 0, ( height / 2 ) ), p.x + width, 1,
+                                       sdl_color );
+            geometry->vertical_line( renderer, p + point( ( width / 3 ), ( height / 2 ) ),
+                                     p.y + height,
+                                     2,
+                                     sdl_color );
+            geometry->vertical_line( renderer, p + point( ( width * 2 / 3 ), ( height / 2 ) ),
+                                     p.y + height,
+                                     2,
+                                     sdl_color );
             break;
         default:
             break;

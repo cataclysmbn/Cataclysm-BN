@@ -61,7 +61,8 @@
     "id": "packaging",
     "subtype": "collection",
     "items": [
-      { "item": "bag_plastic", "prob": 90 },
+      { "item": "bag_plastic", "prob": 60 },
+      { "item": "bag_zipper", "prob": 30 },
       { "item": "bubblewrap", "prob": 60 },
       { "item": "bag_canvas", "prob": 50 },
       { "item": "bag_canvas_small", "prob": 50 },

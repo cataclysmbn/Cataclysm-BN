@@ -23,7 +23,7 @@ const octokit = new Octokit({ auth: Deno.env.get("GITHUB_TOKEN") })
 const getDiffs = async (pr: number) => {
   const res = await octokit.paginate(
     octokit.rest.pulls.listFiles,
-    { owner: "cataclysmbnteam", repo: "Cataclysm-BN", pull_number: pr },
+    { owner: "cataclysmbn", repo: "Cataclysm-BN", pull_number: pr },
   )
   const pathsFilter = new RegExp(`(^${paths.join("|")})/.*\\.(cpp|h|hpp)`)
 

@@ -80,7 +80,11 @@
       [ "inj_iron", 100 ],
       [ "prozac", 100 ],
       [ "thorazine", 100 ],
-      [ "xanax", 100 ]
+      [ "ghb", 100 ],
+      [ "xanax", 100 ],
+      [ "purifier", 3 ],
+      [ "iv_purifier", 1 ],
+      [ "purifier_smart_shot", 1 ]
     ]
   },
   {
@@ -206,6 +210,7 @@
       [ "coke", 8 ],
       [ "meth", 2 ],
       [ "heroin", 1 ],
+      [ "ghb", 2 ],
       [ "sizzurp", 4 ],
       [ "syringe", 8 ],
       [ "crack", 8 ],

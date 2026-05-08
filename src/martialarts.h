@@ -46,6 +46,9 @@ class weapon_category
         bool was_loaded = false;
 
         translation name_;
+
+    public:
+        LUA_TYPE_OPS( weapon_category, id );
 };
 
 matype_id martial_art_learned_from( const itype & );
@@ -184,6 +187,9 @@ class ma_buff
         int block_bonus( const Character &u ) const;
         int arpen_bonus( const Character &u, damage_type dt ) const;
 
+        //returns armor multipliers for target
+        float tg_armor_mult( const Character &u, damage_type dt ) const;
+
         // returns the armor bonus for various armor stats (equivalent to armor)
         int armor_bonus( const Character &guy, damage_type dt ) const;
 
@@ -306,6 +312,8 @@ class martialart
         std::vector<mabuff_id> onmiss_buffs;
         std::vector<mabuff_id> oncrit_buffs;
         std::vector<mabuff_id> onkill_buffs;
+    public:
+        LUA_TYPE_OPS( martialart, id );
 };
 
 class ma_style_callback : public uilist_callback

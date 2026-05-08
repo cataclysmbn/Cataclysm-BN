@@ -16,7 +16,7 @@
     "durability": 7,
     "clip_size": 1,
     "reload": 750,
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "blackpowder_tolerance": 96,
     "valid_mod_locations": [
       [ "accessories", 2 ],

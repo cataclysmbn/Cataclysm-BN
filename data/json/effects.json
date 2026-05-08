@@ -250,7 +250,8 @@
     "id": "tied",
     "name": [ "Tied Up" ],
     "desc": [ "AI tag used for tied up critters.  This is a bug if you have it." ],
-    "permanent": true
+    "permanent": true,
+    "show_in_info": true
   },
   {
     "type": "effect_type",
@@ -285,6 +286,15 @@
       "AI tag for ABSORBS_SPLITS monsters having recently divided, forcing a cooldown between splits.  This is a bug if you have it."
     ],
     "max_duration": "1 m"
+  },
+  {
+    "type": "effect_type",
+    "id": "dashing",
+    "name": [ "Dashing" ],
+    "desc": [
+      "Dummy tag for recognizing if a creature is currently using a dash spell effect.  If you see this lingering, that's a bug."
+    ],
+    "permanent": true
   },
   {
     "//": "ACTUAL PLAYER EFFECTS START HERE",
@@ -887,6 +897,13 @@
     "id": "took_thorazine_visible",
     "name": [ "Took Thorazine" ],
     "desc": [ "You took Thorazine some time ago and you might still be under its influence." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "took_antinarcoleptic",
+    "name": [ "Took GHB" ],
+    "desc": [ "You took GHB some time ago and you might still be under its influence." ],
+    "blood_analysis_description": "GHB"
   },
   {
     "type": "effect_type",
@@ -1546,6 +1563,17 @@
   },
   {
     "type": "effect_type",
+    "id": "well_fed",
+    "name": [ "Well Fed" ],
+    "desc": [
+      "This animal has been fed quality food and is healthier and more productive. It matures 30% faster, produces 30% more offspring per birth, and generates 30% more milk. They also will heal injuries twice as quickly."
+    ],
+    "rating": "good",
+    "max_duration": "24 h",
+    "show_in_info": true
+  },
+  {
+    "type": "effect_type",
     "id": "contacts",
     "name": [ "Contact Lenses" ],
     "desc": [ "You are wearing contact lenses." ],
@@ -2192,17 +2220,19 @@
     "int_dur_factor": "5 seconds",
     "max_duration": "30 s",
     "rating": "bad",
+    "resist_traits": [ "POISRESIST" ],
     "miss_messages": [ [ "You feel groggy in this sweltering, foul air.", 2 ] ],
     "harmful_cough": false,
-    "base_mods": { "cough_chance": [ -1002 ] },
+    "base_mods": { "vomit_chance_bot": [ 100 ], "cough_chance_bot": [ 500 ] },
     "scaling_mods": {
-      "str_mod": [ -0.25 ],
-      "per_mod": [ -0.5 ],
-      "dex_mod": [ -0.25 ],
-      "int_mod": [ -0.75 ],
-      "speed_mod": [ -10 ],
-      "vomit_chance": [ 10 ],
-      "cough_chance": [ 501 ],
+      "str_mod": [ -0.25, -0.125 ],
+      "per_mod": [ -0.5, -0.25 ],
+      "dex_mod": [ -0.25, -0.125 ],
+      "int_mod": [ -0.75, -0.375 ],
+      "speed_mod": [ -10, -5 ],
+      "vomit_chance": [ 2, 1 ],
+      "vomit_tick": [ 5, 10 ],
+      "cough_chance": [ 2, 1 ],
       "hit_mod": [ -0.25 ],
       "dodge_mod": [ -0.25 ],
       "bash_mod": [ -0.25 ],
@@ -2541,5 +2571,37 @@
     "rating": "neutral",
     "max_duration": "999999 d",
     "show_in_info": true
+  },
+  {
+    "type": "effect_type",
+    "id": "acid_burn_pain",
+    "name": [ "Acid Burn", "Corrosive Trauma", "Tissue Corrosion" ],
+    "desc": [
+      "Your skin burns painfully from acid exposure.",
+      "A harsh chemical reaction leaves your skin blistered and screaming.",
+      "Your skin bubbles and breaks down under intense acid exposure."
+    ],
+    "rating": "bad",
+    "max_intensity": 1,
+    "int_dur_factor": "1 m",
+    "max_duration": "10 m",
+    "base_mods": { "pain_amount": [ 1 ], "pain_max": [ 1 ], "pain_max_val": [ 100 ] },
+    "scaling_mods": { "pain_min": [ 1 ], "pain_max": [ 5 ], "pain_chance": [ 2 ], "pain_max_val": [ 100 ] }
+  },
+  {
+    "type": "effect_type",
+    "id": "acid_burn_pain_light",
+    "name": [ "Mild Acid Burn", "Tingling Corrosion", "Acidic Residue" ],
+    "desc": [
+      "Your skin itches and tingles from light acid exposure.",
+      "Your skin tingles uncomfortably as acid begins to eat away at it.",
+      "A leftover trace of acid is causing a subtle sting."
+    ],
+    "rating": "bad",
+    "max_intensity": 1,
+    "int_dur_factor": "30 s",
+    "max_duration": "10 m",
+    "base_mods": { "pain_amount": [ 0 ], "pain_max": [ 1 ], "pain_max_val": [ 10 ] },
+    "scaling_mods": { "pain_min": [ 1 ], "pain_max": [ 1 ], "pain_chance": [ 10 ], "pain_max_val": [ 10 ] }
   }
 ]

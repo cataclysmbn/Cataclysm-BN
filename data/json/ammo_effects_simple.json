@@ -5,6 +5,11 @@
     "//": "Always hits torso, no damage scaling."
   },
   {
+    "id": "THROWN",
+    "type": "ammo_effect",
+    "//": "Used to distinguish thrown ranged attacks."
+  },
+  {
     "id": "ACT_ON_RANGED_HIT",
     "type": "ammo_effect",
     "//": "The item will be processed on the hit tile before (or instead) being dropped."

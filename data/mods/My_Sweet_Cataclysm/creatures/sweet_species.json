@@ -5,35 +5,35 @@
     "name": { "str": "marshmallow" },
     "anger_triggers": [ "HURT" ],
     "fear_triggers": [ "FIRE" ],
-    "footsteps": "shlop."
+    "footsteps": [ "shlop." ]
   },
   {
     "type": "SPECIES",
     "id": "GUMMY",
     "name": { "str": "gummy", "str_pl": "gummies" },
     "anger_triggers": [ "HURT" ],
-    "footsteps": "pop."
+    "footsteps": [ "pop." ]
   },
   {
     "type": "SPECIES",
     "id": "CRACKER",
     "name": { "str": "cracker" },
     "fear_triggers": [ "HURT" ],
-    "footsteps": "tac."
+    "footsteps": [ "tac." ]
   },
   {
     "type": "SPECIES",
     "id": "COOKIE",
     "name": { "str": "cookie" },
     "fear_triggers": [ "HURT", "SOUND" ],
-    "footsteps": "pat."
+    "footsteps": [ "pat." ]
   },
   {
     "type": "SPECIES",
     "id": "NECCO",
     "name": { "str": "necco" },
     "fear_triggers": [ "HURT" ],
-    "footsteps": "tap."
+    "footsteps": [ "tap." ]
   },
   {
     "type": "SPECIES",
@@ -41,6 +41,6 @@
     "name": { "str": "chewing gum" },
     "anger_triggers": [ "FRIEND_DIED" ],
     "fear_triggers": [ "HURT", "FIRE" ],
-    "footsteps": "shlip."
+    "footsteps": [ "shlip." ]
   }
 ]

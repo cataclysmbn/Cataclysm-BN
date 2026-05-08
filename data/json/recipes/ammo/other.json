@@ -33,8 +33,8 @@
     "time": "60 m",
     "autolearn": true,
     "book_learn": [ [ "glassblowing_book", 5 ] ],
+    "using": [ [ "glassblowing_easy", 5 ] ],
     "charges": 25,
-    "tools": [ [ [ "tongs", -1 ] ], [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ], [ [ "forge", 25 ] ] ],
     "components": [ [ [ "glass_shard", 1 ], [ "flask_glass", 1 ], [ "test_tube", 2 ] ] ]
   },
   {
@@ -49,7 +49,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_fabrication", 1 ] ],
     "using": [ [ "forging_standard", 5 ] ],
-    "tools": [ [ [ "press", -1 ] ], [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
+    "qualities": [ { "id": "CASING_PRESSING", "level": 2 }, { "id": "CONTAIN_HOT", "level": 1 } ],
     "components": [ [ [ "weights", 34, "LIST" ], [ "steel_tiny", 2, "LIST" ] ] ]
   },
   {
@@ -112,8 +112,7 @@
     "time": "30 m",
     "batch_time_factors": [ 70, 1 ],
     "autolearn": true,
-    "using": [ [ "blacksmithing_intermediate", 16 ], [ "steel_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "using": [ [ "blacksmithing_intermediate", 16 ], [ "steel_standard", 1 ] ]
   },
   {
     "type": "recipe",
@@ -149,10 +148,8 @@
     "batch_time_factors": [ 70, 1 ],
     "autolearn": true,
     "charges": 1,
-    "tools": [
-      [ [ "brick_kiln", 10 ], [ "kiln", 10 ], [ "surface_heat", 10, "LIST" ] ],
-      [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ]
-    ],
+    "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ],
+    "tools": [ [ [ "brick_kiln", 10 ], [ "kiln", 10 ], [ "surface_heat", 10, "LIST" ] ] ],
     "components": [ [ [ "lead", 50 ], [ "bismuth", 125 ] ] ]
   },
   {
@@ -166,10 +163,8 @@
     "batch_time_factors": [ 70, 1 ],
     "autolearn": true,
     "charges": 6,
-    "tools": [
-      [ [ "brick_kiln", 10 ], [ "kiln", 10 ], [ "surface_heat", 10, "LIST" ] ],
-      [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ]
-    ],
+    "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ],
+    "tools": [ [ [ "brick_kiln", 10 ], [ "kiln", 10 ], [ "surface_heat", 10, "LIST" ] ] ],
     "components": [ [ [ "lead", 50 ], [ "bismuth", 125 ] ] ]
   },
   {
@@ -210,7 +205,6 @@
     "time": "30 m",
     "batch_time_factors": [ 70, 1 ],
     "autolearn": true,
-    "using": [ [ "blacksmithing_intermediate", 16 ], [ "steel_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "using": [ [ "blacksmithing_intermediate", 16 ], [ "steel_standard", 1 ] ]
   }
 ]

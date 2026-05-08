@@ -57,7 +57,7 @@
     "description": "A semi-automatic rifle using .357 SIG rounds, also known as Moriarti MA-357Sig-16.  It is also compatible with Glock 31 magazines.",
     "weight": "3000 g",
     "volume": "2 L",
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "price": "1000 USD",
     "price_postapoc": "40 USD",
     "material": [ "steel", "plastic" ],

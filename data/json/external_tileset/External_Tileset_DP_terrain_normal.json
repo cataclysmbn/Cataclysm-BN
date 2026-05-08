@@ -30,7 +30,56 @@
           { "id": "t_door_metal_welded_peephole", "fg": 24 },
           { "id": "t_door_metal_welded_lab", "fg": 25 },
           { "id": "t_door_metal_welded_bulkhead", "fg": 26 },
-          { "id": "t_door_metal_welded_bars", "fg": 27 }
+          { "id": "t_door_metal_welded_bars", "fg": 27 },
+          { "id": "t_fortification_wood", "fg": 28 },
+          { "id": "t_fortification_log", "fg": 29 },
+          { "id": "t_fortification_drystone", "fg": 30 },
+          { "id": "t_fortification_stone", "fg": 31 },
+          { "id": "t_fortification_brick", "fg": 32 },
+          { "id": "t_fortification_adobe", "fg": 33 },
+          { "id": [ "t_adobe_brick_floor", "t_adobe_brick_floor_noroof" ], "fg": 34 },
+          {
+            "id": "t_lake_trunk",
+            "fg": 35,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 35 },
+              { "id": "corner", "fg": [ 36, 37, 38, 39 ] },
+              { "id": "edge", "fg": [ 40, 41 ] },
+              { "id": "end_piece", "fg": [ 42, 43, 44, 45 ] },
+              { "id": "t_connection", "fg": [ 46, 47, 48, 49 ] },
+              { "id": "unconnected", "fg": 50 }
+            ]
+          },
+          {
+            "id": "t_lake_moss",
+            "fg": 51,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 51, "bg": 67 },
+              { "id": "corner", "fg": [ 52, 53, 54, 55 ], "bg": 67 },
+              { "id": "edge", "fg": [ 56, 57 ], "bg": 67 },
+              { "id": "end_piece", "fg": [ 58, 59, 60, 61 ], "bg": 67 },
+              { "id": "t_connection", "fg": [ 62, 63, 64, 65 ], "bg": 67 },
+              { "id": "unconnected", "fg": 66, "bg": 67 }
+            ]
+          },
+          {
+            "id": "t_moss_underground",
+            "fg": 51,
+            "rotates": false,
+            "multitile": true,
+            "additional_tiles": [
+              { "id": "center", "fg": 51, "bg": 68 },
+              { "id": "corner", "fg": [ 52, 53, 54, 55 ], "bg": 68 },
+              { "id": "edge", "fg": [ 56, 57 ], "bg": 68 },
+              { "id": "end_piece", "fg": [ 58, 59, 60, 61 ], "bg": 68 },
+              { "id": "t_connection", "fg": [ 62, 63, 64, 65 ], "bg": 68 },
+              { "id": "unconnected", "fg": 66, "bg": 68 }
+            ]
+          }
         ],
         "sprite_width": 32,
         "sprite_height": 32

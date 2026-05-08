@@ -102,8 +102,7 @@
     "skills_required": [ "mechanics", 1 ],
     "time": "30 m",
     "autolearn": true,
-    "using": [ [ "blacksmithing_intermediate", 1 ], [ "steel_tiny", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "using": [ [ "blacksmithing_intermediate", 1 ], [ "steel_tiny", 1 ] ]
   },
   {
     "result": "sheet_metal",
@@ -114,8 +113,7 @@
     "difficulty": 3,
     "time": "30 m",
     "autolearn": true,
-    "using": [ [ "blacksmithing_standard", 5 ], [ "steel_standard", 6 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "using": [ [ "blacksmithing_standard", 5 ], [ "steel_standard", 6 ] ]
   },
   {
     "result": "sheet_metal",
@@ -139,8 +137,7 @@
     "difficulty": 3,
     "time": "20 m",
     "autolearn": true,
-    "using": [ [ "blacksmithing_intermediate", 1 ], [ "steel_tiny", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "using": [ [ "blacksmithing_intermediate", 1 ], [ "steel_tiny", 1 ] ]
   },
   {
     "type": "recipe",

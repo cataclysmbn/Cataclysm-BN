@@ -88,13 +88,15 @@
     "type": "furniture",
     "id": "f_robotic_arm",
     "name": "robotic arm",
-    "description": "Automation!  Science!  Industry!  Make a better horse!  This robot arm promises to do it all.  Except it's currently unpowered.  You could remove the casing and retrieve the electronics through disassembly.",
+    "description": "Automation!  Science!  Industry!  Make a better horse!  This robot arm promises to do it all.  Except it's currently unpowered.  You could remove the casing and retrieve the electronics through disassembly, or ifyou get power running it could help practice the Fabrication skill.",
     "symbol": "&",
     "bgcolor": "yellow",
     "move_cost_mod": 3,
     "coverage": 30,
     "required_str": 18,
     "flags": [ "TRANSPARENT", "MOUNTABLE" ],
+    "crafting_pseudo_item": "fake_training_fabrication",
+    "examine_action": "use_furn_fake_item",
     "deconstruct": {
       "items": [
         { "item": "processor", "prob": 75 },
@@ -167,7 +169,7 @@
     "type": "furniture",
     "id": "f_control_station",
     "name": "control station",
-    "description": "Assorted electronic interfaces and screens.  You could scavenge it for parts.",
+    "description": "Assorted electronic interfaces and screens.  You could scavenge it for parts, or get power going and use it to practice Electronics.",
     "symbol": "$",
     "color": "yellow",
     "looks_like": "t_machinery_electronic",
@@ -175,6 +177,8 @@
     "coverage": 55,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "BASHABLE", "FLAMMABLE", "PLACE_ITEM" ],
+    "crafting_pseudo_item": "fake_training_electronics_high",
+    "examine_action": "use_furn_fake_item",
     "deconstruct": {
       "items": [
         { "item": "wire", "count": [ 1, 3 ] },
@@ -221,13 +225,15 @@
     "id": "f_electrical_conduit",
     "name": "electrical conduit",
     "looks_like": "f_cable_connector",
-    "description": "A thick bundle of electrical wiring protected by a metal conduit.",
+    "description": "A thick bundle of electrical wiring protected by a metal conduit.  Could be useful for practicing your Electronics skill.",
     "symbol": "|",
     "color": "light_gray",
     "move_cost_mod": 1,
     "coverage": 30,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "NOCOLLIDE", "ADV_DECONSTRUCT" ],
+    "crafting_pseudo_item": "fake_training_electronics_high",
+    "examine_action": "use_furn_fake_item",
     "deconstruct": {
       "items": [
         { "item": "scrap", "count": [ 1, 4 ] },
@@ -256,13 +262,15 @@
     "id": "f_capacitor",
     "name": "capacitor bank",
     "looks_like": "f_machinery_electronic",
-    "description": "A bank of heavy metal cylinders connected by large wires.",
+    "description": "A bank of heavy metal cylinders connected by large wires.  Could be useful for practicing your Electronics skill.",
     "symbol": "=",
     "color": "light_blue",
     "move_cost_mod": 4,
     "coverage": 40,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "MOUNTABLE", "ADV_DECONSTRUCT" ],
+    "crafting_pseudo_item": "fake_training_electronics_high",
+    "examine_action": "use_furn_fake_item",
     "deconstruct": {
       "items": [
         { "item": "scrap", "count": [ 1, 4 ] },
@@ -339,5 +347,49 @@
     "//": "Matches the power output across 5 minutes that the capacitors and conduits provided on first implementation",
     "//2": "Please keep steady_consumer to 300 s or more to avoid lag.",
     "active": [ "steady_consumer", { "power": -49, "consume_every": "300 s" } ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_water_wheel_turbine",
+    "name": "hydroelectric turbine assembly",
+    "description": "A huge turbine meant for generating power from flowing water.  What's left of it is a far cry from the megawatts of power it used to output, but it could still be hooked up to provide power to a nearby base.  Alternatively, it could be salvaged for parts that could be used for power generation elsewhere.",
+    "symbol": "&",
+    "color": "light_gray",
+    "looks_like": "t_generator_broken",
+    "move_cost_mod": 4,
+    "coverage": 55,
+    "required_str": -1,
+    "//": "Double that of the regular large turbine when kept intact",
+    "//2": "Please keep steady_consumer to 300 s or more to avoid lag.",
+    "active": [ "steady_consumer", { "power": -324, "consume_every": "300 s" } ],
+    "deconstruct": {
+      "items": [
+        { "item": "frame", "prob": 80 },
+        { "item": "chain", "count": [ 1, 2 ] },
+        { "item": "pipe", "count": [ 1, 2 ] },
+        { "item": "sheet_metal", "count": [ 1, 3 ] },
+        { "item": "steel_lump", "count": [ 1, 3 ] },
+        { "item": "steel_chunk", "count": [ 3, 6 ] },
+        { "item": "xl_water_wheel", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 32,
+      "str_max": 80,
+      "sound": "crash!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "sheet_metal", "prob": 75 },
+        { "item": "sheet_metal_small", "count": [ 10, 20 ] },
+        { "item": "steel_lump", "count": [ 4, 8 ] },
+        { "item": "steel_chunk", "count": [ 5, 10 ] },
+        { "item": "scrap", "count": [ 6, 12 ] },
+        { "item": "solder_wire", "charges": [ 10, 20 ] },
+        { "item": "cable", "charges": [ 10, 15 ] },
+        { "item": "pipe", "count": [ 0, 3 ] }
+      ],
+      "//": "Variable reduction, destroy_threshold equal to str_min instead of str_max due to delicate electronics",
+      "ranged": { "reduction": [ 16, 32 ], "destroy_threshold": 32, "block_unaimed_chance": "50%" }
+    }
   }
 ]

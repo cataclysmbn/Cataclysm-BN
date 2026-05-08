@@ -109,5 +109,14 @@
     "mutagen_message": "You feel like literally jumping for joy!",
     "iv_message": "You feel the most intense craving for carrots you've ever had...",
     "memorial_message": "Acquired a taste for carrots."
+  },
+  {
+    "type": "mutation_category",
+    "id": "LAMIA",
+    "name": "Lamia",
+    "threshold_mut": "THRESH_LAMIA",
+    "mutagen_message": "You feel a slithering feeling.",
+    "iv_message": "You hiss, left reeling from the strange sensations.",
+    "memorial_message": "Seized opportunity in their coils."
   }
 ]

@@ -4,6 +4,7 @@
 #include <optional>
 
 #include "catalua_type_operators.h"
+#include "enum_traits.h"
 #include "string_id.h"
 #include "translations.h"
 #include "character_stat.h"
@@ -13,12 +14,25 @@ class JsonObject;
 class activity_type;
 class player;
 class player_activity;
-
 using activity_id = string_id<activity_type>;
 
 /** @relates string_id */
 template<>
 const activity_type &string_id<activity_type>::obj() const;
+
+/** Controls which (if any) performance-bubble shrink applies while this activity is running. */
+enum class activity_bubble_effect : int {
+    none,      ///< No bubble resize (default).
+    mobile,    ///< Shrink to ACTIVITY_MOBILE_BUBBLE_SIZE (player is moving/working).
+    idle,      ///< Shrink to ACTIVITY_IDLE_BUBBLE_SIZE (player is stationary/waiting).
+    last,
+};
+
+template<>
+struct enum_traits<activity_bubble_effect> {
+    static constexpr activity_bubble_effect last = activity_bubble_effect::last;
+};
+
 
 
 template<typename T>
@@ -79,6 +93,7 @@ class activity_type
         bool morale_blocked_ = false;
         bool verbose_tooltip_ = true;
         unsigned short max_assistants_ = 0;
+        activity_bubble_effect bubble_effect_ = activity_bubble_effect::none;
 
     public:
         std::vector<activity_req<character_stat>> stats;
@@ -144,6 +159,9 @@ class activity_type
         }
         inline bool verbose_tooltip() const {
             return verbose_tooltip_;
+        }
+        inline activity_bubble_effect bubble_effect() const {
+            return bubble_effect_;
         }
 
         inline unsigned short max_assistants() const {

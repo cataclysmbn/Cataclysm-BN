@@ -1,6 +1,7 @@
 #include "mongroup.h"
 
 #include <algorithm>
+#include <ranges>
 #include <utility>
 
 #include "assign.h"
@@ -96,7 +97,7 @@ const MonsterGroup &MonsterGroupManager::GetUpgradedMonsterGroup( const mongroup
 
 //Quantity is adjusted directly as a side effect of this function
 MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
-    const mongroup_id &group_name, int *quantity )
+    const mongroup_id &group_name, int *quantity, bool use_pack_size )
 {
     auto &group = GetUpgradedMonsterGroup( group_name );
     int spawn_chance = rng( 1, group.freq_total ); //Default 1000 unless specified
@@ -173,11 +174,11 @@ MonsterGroupResult MonsterGroupManager::GetResultFromGroup(
         if( valid_entry ) {
             //If the monsters frequency is greater than the spawn_chance, select this spawn rule
             if( it->frequency >= spawn_chance ) {
-                if( it->pack_maximum > 1 ) {
-                    spawn_details = MonsterGroupResult( it->name, rng( it->pack_minimum, it->pack_maximum ) );
-                } else {
-                    spawn_details = MonsterGroupResult( it->name, 1 );
+                int pack_size = 1;
+                if( use_pack_size || it->pack_maximum > 1 ) {
+                    pack_size = rng( it->pack_minimum, it->pack_maximum );
                 }
+                spawn_details = MonsterGroupResult( it->name, pack_size );
                 //And if a quantity pointer with remaining value was passed, will modify the external value as a side effect
                 //We will reduce it by the spawn rule's cost multiplier
                 if( quantity ) {
@@ -260,6 +261,14 @@ const MonsterGroup &MonsterGroupManager::GetMonsterGroup( const mongroup_id &gro
     } else {
         return it->second;
     }
+}
+
+auto MonsterGroupManager::get_all_group_ids() -> std::vector<mongroup_id>
+{
+    namespace views = std::views;
+    return monsterGroupMap
+           | views::keys
+           | std::ranges::to<std::vector<mongroup_id>>();
 }
 
 void MonsterGroupManager::LoadMonsterBlacklist( const JsonObject &jo )

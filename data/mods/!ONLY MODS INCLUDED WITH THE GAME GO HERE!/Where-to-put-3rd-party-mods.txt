@@ -1,0 +1,9 @@
+Where you put the third party mods depends on whether you installed manually or with Catapult. No matter which you do, 3rd party mods do not go in data/mods. That folder should be reserved for in-repo mods only, especially given correctly updating will wipe the contents of that folder!
+
+For a manual installation, you should use the player mods folder in the root folder for Cataclysm (i.e. the folder containing the data folder and the executable). If it is not present, you may need to create it (or check for XDG or /home related paths if on Linux and using a custom build)
+
+For Catapult, you would put them in bn/userdata/mods (creating the folder if it's not already there) inside your catapult installation. For example, it might look like Catapult/bn/userdata/mods.
+
+For Linux users using the XDG directories (but NOT the flatpak): The user mods directory should be in ~/.local/share/cataclysm-bn/mods (~/.local/share/cataclysm-bn is the user directory in general)
+
+For flatpak users, the user mods folder is ~/.var/app/org.cataclysmbn.CataclysmBN/data/cataclysm-bn/mods (the user directory in general is ~/.var/app/org.cataclysmbn.CataclysmBN/data/cataclysm-bn/)

@@ -41,8 +41,7 @@
     "difficulty": 7,
     "time": "1 h",
     "autolearn": true,
-    "qualities": [ { "id": "CHISEL", "level": 3 } ],
-    "tools": [ [ [ "tongs", -1 ] ], [ [ "pipe", -1 ] ], [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ], [ [ "forge", 75 ] ] ],
+    "using": [ [ "glassblowing_standard", 15 ] ],
     "components": [
       [ [ "glass_shard", 3 ], [ "pipe_glass", 1 ], [ "flask_glass", 3 ], [ "test_tube", 6 ], [ "marble", 75 ] ],
       [ [ "plastic_chunk", 1 ] ]
@@ -59,9 +58,7 @@
     "time": "300 m",
     "reversible": true,
     "autolearn": true,
-    "using": [ [ "forging_standard", 10 ], [ "steel_standard", 5 ] ],
-    "qualities": [ { "id": "ANVIL", "level": 3 }, { "id": "HAMMER", "level": 3 } ],
-    "tools": [ [ [ "tongs", -1 ] ], [ [ "swage", -1 ] ] ]
+    "using": [ [ "blacksmithing_advanced", 10 ], [ "steel_standard", 5 ] ]
   },
   {
     "result": "jack_small",

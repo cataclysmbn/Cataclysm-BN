@@ -1,0 +1,24 @@
+[
+  {
+    "result": "410shot_000",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "410shot_hull", 1 ] ], [ [ "shotgun_primer", 1 ] ], [ [ "gunpowder", 5 ] ], [ [ "lead", 5 ] ] ],
+    "charges": 1
+  },
+  {
+    "result": "bp_410shot_000",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 2,
+    "skills_required": [ "gun", 1 ],
+    "time": "10 s",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "410shot_hull", 1 ] ], [ [ "shotgun_primer", 1 ] ], [ [ "chem_black_powder", 5 ] ], [ [ "lead", 5 ] ] ],
+    "charges": 1
+  }
+]

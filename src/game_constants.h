@@ -25,7 +25,13 @@ static constexpr int MAX_ITEM_IN_VEHICLE_STORAGE = MAX_ITEM_IN_SQUARE;
 // only can wear a maximum of two of any type of clothing.
 static constexpr int MAX_WORN_PER_TYPE = 2;
 
-static constexpr int MAPSIZE = 11;
+// Maximum configurable reality bubble size.
+// The REALITY_BUBBLE_SIZE option is capped to this value.
+static constexpr int REALITY_BUBBLE_SIZE_MAX = 16;
+
+// MAPSIZE is the number of submaps in each direction.
+// Formula: 2 * REALITY_BUBBLE_SIZE_MAX + 3
+static constexpr int MAPSIZE = 2 * REALITY_BUBBLE_SIZE_MAX + 3;
 static constexpr int HALF_MAPSIZE = static_cast<int>( MAPSIZE / 2 );
 
 // SEEX/SEEY define the size of a nonant, or grid.
@@ -118,7 +124,30 @@ static constexpr int MAX_SKILL = 10;
 static constexpr int MAX_STAT = 20;
 
 // Maximum range at which ranged attacks can be executed.
-static constexpr int RANGE_HARD_CAP = 60;
+// Equals the compile-time maximum view distance; actual runtime cap uses g_max_view_distance.
+static constexpr int RANGE_HARD_CAP = MAX_VIEW_DISTANCE;
+
+/// Player-facing size setting (1–REALITY_BUBBLE_SIZE_MAX, default 4).
+/// Represents the submap radius: how many submaps the player can see beyond the center.
+extern int g_reality_bubble_size;
+/// Submap radius = size+1 (half the loaded grid width; center submap is implied).
+extern int g_half_mapsize;
+/// Total submaps per dimension = 2*size+3.
+extern int g_mapsize;
+/// Tile width of the loaded area = SEEX * g_mapsize.
+extern int g_mapsize_x;
+/// Tile height of the loaded area = SEEY * g_mapsize.
+extern int g_mapsize_y;
+/// Half tile width = SEEX * g_half_mapsize.
+extern int g_half_mapsize_x;
+/// Half tile height = SEEY * g_half_mapsize.
+extern int g_half_mapsize_y;
+/// Maximum player sight range = SEEX * g_half_mapsize.
+extern int g_max_view_distance;
+/// Visibility threshold at max view distance for "obstructed" determination.
+/// Computed as 1/exp(LIGHT_TRANSPARENCY_OPEN_AIR * g_max_view_distance).
+/// Scales with bubble size so vision cutoff matches g_max_view_distance.
+extern float g_visible_threshold;
 
 // Accuracy levels which a shots tangent must be below.
 constexpr double accuracy_headshot = 0.1;

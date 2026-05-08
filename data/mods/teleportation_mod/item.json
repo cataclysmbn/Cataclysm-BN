@@ -50,7 +50,8 @@
     "to_hit": -4,
     "bashing": 1,
     "use_action": "teleporter_anchor_use",
-    "looks_like": "telepad"
+    "looks_like": "telepad",
+    "flags": [ "DESTROY_ON_DECHARGE" ]
   },
   {
     "id": "teleporter_station_undeployed",
@@ -68,7 +69,8 @@
     "to_hit": -4,
     "bashing": 1,
     "use_action": "teleporter_station_use",
-    "looks_like": "f_MRI"
+    "looks_like": "f_MRI",
+    "flags": [ "DESTROY_ON_DECHARGE" ]
   },
   {
     "id": "schematics_teleportation",

@@ -3,9 +3,9 @@
     "id": "debug_mon",
     "type": "MONSTER",
     "name": { "str": "debug monster" },
-    "description": "This monster exists only for testing purposes.",
+    "description": "This monster exists only for testing purposes.  It's used in the DPS calculations for Best.",
     "default_faction": "",
-    "species": [ "ZOMBIE" ],
+    "species": [ "DEBUG" ],
     "volume": "62500 ml",
     "weight": "81500 g",
     "hp": 10000,
@@ -29,6 +29,38 @@
     "copy-from": "debug_mon",
     "name": { "str": "menacing debug monster" },
     "description": "This monster exists only for testing purposes.  It's threatening enough to warrant bullets from NPCs",
+    "diff": 1
+  },
+  {
+    "id": "debug_mon_agile",
+    "type": "MONSTER",
+    "copy-from": "debug_mon",
+    "name": { "str": "agile debug monster" },
+    "dodge": 5,
+    "description": "This monster exists only for testing purposes.  It's used in the DPS calculations for Agile.",
+    "diff": 1
+  },
+  {
+    "id": "debug_mon_armored",
+    "type": "MONSTER",
+    "copy-from": "debug_mon",
+    "name": { "str": "armored debug monster" },
+    "armor_bash": 25,
+    "armor_cut": 25,
+    "armor_bullet": 25,
+    "description": "This monster exists only for testing purposes.  It's used in the DPS calculations for Armored.",
+    "diff": 1
+  },
+  {
+    "id": "debug_mon_mixed",
+    "type": "MONSTER",
+    "copy-from": "debug_mon",
+    "name": { "str": "mixed debug monster" },
+    "armor_bash": 25,
+    "armor_cut": 25,
+    "armor_bullet": 25,
+    "dodge": 5,
+    "description": "This monster exists only for testing purposes.  It's used in the DPS calculations for Mixed.",
     "diff": 1
   },
   {

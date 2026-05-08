@@ -78,6 +78,7 @@ harvest_entry harvest_entry::load( const JsonObject &jo, const std::string &src 
     assign( jo, "mass_ratio", ret.mass_ratio, strict, 0.00f );
     assign( jo, "flags", ret.flags );
     assign( jo, "faults", ret.faults );
+    assign( jo, "no_auto_pickup", ret.no_auto_pickup, strict );
 
     return ret;
 }

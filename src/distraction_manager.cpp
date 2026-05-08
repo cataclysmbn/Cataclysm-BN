@@ -145,7 +145,7 @@ void distraction_manager_gui::show()
         calcStartPos( startPosition, currentLine, iContentHeight, num_distractions );
 
         for( int i = startPosition; i < num_distractions; ++i ) {
-            if( distractions.find( distractions_status[i] ) == distractions.end() ) {
+            if( !distractions.contains( distractions_status[i] ) ) {
                 debugmsg( "Distraction not valid for Distraction Manager" );
                 continue;
             }

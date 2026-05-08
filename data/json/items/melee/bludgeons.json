@@ -109,6 +109,17 @@
     "price_postapoc": "1750 cent"
   },
   {
+    "id": "bat_metal_bolted",
+    "type": "GENERIC",
+    "copy-from": "bat_metal",
+    "name": { "str": "bolted bat" },
+    "description": "An aluminum baseball bat with several large bolts driven through it, making it a brutal melee weapon.",
+    "weight": "850 g",
+    "relative": { "to_hit": -1, "bashing": 7 },
+    "extend": { "techniques": [ "BRUTAL" ] },
+    "price_postapoc": "2500 cent"
+  },
+  {
     "id": "baton",
     "type": "GENERIC",
     "category": "weapons",
@@ -764,10 +775,19 @@
     "magazines": [
       [
         "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
       ]
     ],
-    "magazine_well": "500 ml"
+    "magazine_well": "250 ml",
+    "extend": { "flags": [ "COMBAT_NPC_USE" ] }
   },
   {
     "id": "shock_staff_on",
@@ -778,9 +798,16 @@
     "revert_to": "shock_staff",
     "revert_msg": "The %s's batteries run dry.",
     "use_action": { "type": "transform", "msg": "You press a button and the staff turns off.", "target": "shock_staff" },
-    "extend": { "flags": [ "TRADER_AVOID", "SHOCKING" ] },
-    "power_draw": 5000000,
-    "magazine_well": "500 ml"
+    "//": "Roughly +25% electric damage",
+    "attacks": [
+      {
+        "id": "BASH",
+        "to_hit": 3,
+        "damage": { "values": [ { "damage_type": "bash", "amount": 30 }, { "damage_type": "electric", "amount": 8 } ] }
+      }
+    ],
+    "extend": { "flags": [ "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "power_draw": 500000
   },
   {
     "id": "rock_sock",
@@ -896,14 +923,22 @@
       "need_charges_msg": "The %s's batteries are dead.",
       "target": "shocktonfa_on"
     },
-    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "BELT_CLIP" ],
+    "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE", "BELT_CLIP", "COMBAT_NPC_USE" ],
     "magazines": [
       [
         "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
       ]
     ],
-    "magazine_well": "500 ml"
+    "magazine_well": "250 ml"
   },
   {
     "id": "shocktonfa_on",
@@ -914,9 +949,16 @@
     "revert_to": "shocktonfa_off",
     "revert_msg": "The %s's batteries run dry.",
     "use_action": { "type": "transform", "msg": "You press a button and the tonfa turns off.", "target": "shocktonfa_off" },
-    "extend": { "flags": [ "TRADER_AVOID", "SHOCKING" ] },
-    "power_draw": 5000000,
-    "magazine_well": "500 ml"
+    "//": "Roughly +25% electric damage",
+    "attacks": [
+      {
+        "id": "BASH",
+        "to_hit": 2,
+        "damage": { "values": [ { "damage_type": "bash", "amount": 20 }, { "damage_type": "electric", "amount": 5 } ] }
+      }
+    ],
+    "extend": { "flags": [ "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "power_draw": 500000
   },
   {
     "id": "warhammer",
@@ -1020,34 +1062,22 @@
   {
     "type": "GENERIC",
     "id": "battletorch_done",
-    "name": { "str": "burnt out battletorch" },
-    "description": "A sturdy wood bat, wrapped in flame-resistant Nomex fabric.  Makes a good melee weapon but better be disassembled to recycle the baseball bat and some Nomex patches.",
-    "weight": "1343 g",
-    "to_hit": 3,
-    "color": "brown",
-    "symbol": "/",
-    "material": [ "wood" ],
-    "techniques": [ "WBLOCK_1" ],
-    "flags": [ "DURABLE_MELEE" ],
-    "volume": "1750 ml",
-    "bashing": 19,
-    "price": "180 USD"
+    "copy-from": "bat",
+    "name": { "str": "burnt out battletorch", "str_pl": "burnt out battletorches" },
+    "description": "A sturdy wood bat, wrapped in flame-resistant Nomex fabric.  Makes a good melee weapon, but could be disassembled to recycle the baseball bat and some Nomex patches.",
+    "relative": { "weight": "250 g" },
+    "material": [ "wood", "nomex" ]
   },
   {
     "id": "battletorch",
+    "copy-from": "bat",
     "type": "TOOL",
-    "category": "weapons",
-    "name": { "str": "battletorch" },
+    "name": { "str": "battletorch", "str_pl": "battletorches" },
     "description": "This is sturdy wood bat, wrapped in gasoline-soaked rags and flame-resistant Nomex fabric.  Light it, and the ball game will REALLY heat up.  You'll need a lighter or matches to light it.",
-    "weight": "1485 g",
-    "volume": "2 L",
-    "to_hit": 3,
-    "bashing": 18,
+    "relative": { "weight": "250 g" },
     "material": [ "wood", "nomex" ],
-    "symbol": "/",
-    "color": "brown",
-    "initial_charges": 25,
-    "max_charges": 25,
+    "initial_charges": 100,
+    "max_charges": 100,
     "charges_per_use": 1,
     "techniques": [ "WBLOCK_1" ],
     "use_action": {
@@ -1058,26 +1088,25 @@
       "menu_text": "Light",
       "type": "transform"
     },
-    "flags": [ "DURABLE_MELEE" ]
+    "extend": { "flags": [ "COMBAT_NPC_USE" ] }
   },
   {
     "id": "battletorch_lit",
+    "copy-from": "battletorch",
     "type": "TOOL",
-    "category": "weapons",
-    "name": { "str": "battletorch" },
+    "name": { "str": "battletorch (lit)", "str_pl": "battletorches (lit)" },
     "description": "This is a sturdy wood bat, wrapped in gasoline-soaked rags and flame-resistant Nomex fabric.  It is burning brightly, and makes it much easier to see the baselines at night games (It also makes the umpire FAR more likely to call a ball instead of a strike).",
-    "weight": "1485 g",
-    "volume": "2 L",
-    "to_hit": 3,
-    "bashing": 18,
-    "material": [ "wood", "nomex" ],
-    "symbol": "/",
     "color": "red",
-    "initial_charges": 25,
-    "max_charges": 25,
     "turns_per_charge": 20,
     "revert_to": "battletorch_done",
-    "techniques": [ "WBLOCK_1" ],
+    "//": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "BASH",
+        "to_hit": 3,
+        "damage": { "values": [ { "damage_type": "bash", "amount": 26 }, { "damage_type": "heat", "amount": 7 } ] }
+      }
+    ],
     "use_action": [
       { "type": "firestarter", "moves": 30 },
       {
@@ -1088,6 +1117,39 @@
         "type": "transform"
       }
     ],
-    "flags": [ "FIRE", "LIGHT_310", "CHARGEDIM", "FLAMING", "DURABLE_MELEE", "TRADER_AVOID", "WATER_EXTINGUISH" ]
+    "extend": { "flags": [ "FIRE", "LIGHT_310", "CHARGEDIM", "DURABLE_MELEE", "TRADER_AVOID", "WATER_EXTINGUISH", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "greatclub_wood",
+    "type": "GENERIC",
+    "category": "weapons",
+    "weapon_category": [ "CLUBS" ],
+    "name": { "str": "wooden greatclub" },
+    "description": "One of humanity's oldest weapons pushed to an inhuman extreme.  Despite its simplicity, this two-handed club carved from a log requires considerable strength and skill to use effectively.",
+    "weight": "2500 g",
+    "volume": "3 L",
+    "price_postapoc": "5 USD",
+    "bashing": 45,
+    "to_hit": -2,
+    "material": [ "wood" ],
+    "symbol": "/",
+    "color": "brown",
+    "looks_like": "bat",
+    "techniques": [ "WIDE", "BRUTAL" ],
+    "flags": [ "ALWAYS_TWOHAND" ]
+  },
+  {
+    "id": "greatclub_iron",
+    "copy-from": "greatclub_wood",
+    "type": "GENERIC",
+    "name": { "str": "ironshod greatclub" },
+    "description": "A massive two-handed club, carved from a log and reinforced with iron bands that give it even more heft.  This weapon embodies the phrase \"like giving a kanabō to an oni\" as anyone capable of using it effectively could likely tear their enemies apart with their bare hands.",
+    "weight": "3500 g",
+    "price_postapoc": "20 USD",
+    "bashing": 60,
+    "material": [ "wood", "iron" ],
+    "color": "light_gray",
+    "looks_like": "bwirebat",
+    "extend": { "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE" ] }
   }
 ]

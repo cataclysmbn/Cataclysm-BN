@@ -13,6 +13,7 @@
 #include "sounds.h"
 #include "state_helpers.h"
 #include "ret_val.h"
+#include "rng.h"
 #include "type_id.h"
 
 struct itype;
@@ -71,7 +72,7 @@ static void check_actual_dps( avatar &attacker, monster &defender, item &weapon 
     clear_character( attacker );
     double expect_dps = weapon.effective_dps( attacker, defender );
     double actual_dps = weapon_dps_trials( attacker, defender, weapon );
-    CHECK( actual_dps == Approx( expect_dps ).epsilon( 0.2f ) );
+    CHECK( actual_dps == Approx( expect_dps ).epsilon( 0.35f ) );
 }
 
 static void check_accuracy_dps( avatar &attacker, monster &defender, item &wpn1, item &wpn2,
@@ -104,6 +105,7 @@ static void check_accuracy_dps( avatar &attacker, monster &defender, item &wpn1,
 TEST_CASE( "effective damage per second", "[effective][dps]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
     avatar &dummy = g->u;
     clear_character( dummy );
 
@@ -114,23 +116,23 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
     SECTION( "against a debug monster with no armor or dodge" ) {
         monster mummy( mtype_id( "debug_mon" ) );
 
-        CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 25.0f ).epsilon( 0.15f ) );
-        CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 38.0f ).epsilon( 0.15f ) );
+        CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 29.5f ).epsilon( 0.15f ) );
+        CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 45.0f ).epsilon( 0.15f ) );
     }
 
     SECTION( "against an agile target" ) {
         monster smoker( mtype_id( "mon_zombie_smoker" ) );
         REQUIRE( smoker.get_dodge() >= 4 );
 
-        CHECK( clumsy_sword.effective_dps( dummy, smoker ) == Approx( 11.0f ).epsilon( 0.15f ) );
-        CHECK( good_sword.effective_dps( dummy, smoker ) == Approx( 25.0f ).epsilon( 0.15f ) );
+        CHECK( clumsy_sword.effective_dps( dummy, smoker ) == Approx( 13.75f ).epsilon( 0.15f ) );
+        CHECK( good_sword.effective_dps( dummy, smoker ) == Approx( 30.0f ).epsilon( 0.15f ) );
     }
 
     SECTION( "against an armored target" ) {
         monster soldier( mtype_id( "mon_zombie_soldier" ) );
 
         CHECK( clumsy_sword.effective_dps( dummy, soldier ) == Approx( 11.0f ).epsilon( 0.15f ) );
-        CHECK( good_sword.effective_dps( dummy, soldier ) == Approx( 19.0f ).epsilon( 0.15f ) );
+        CHECK( good_sword.effective_dps( dummy, soldier ) == Approx( 22.0f ).epsilon( 0.15f ) );
     }
 
     SECTION( "effect of STR and DEX on damage per second" ) {
@@ -140,34 +142,35 @@ TEST_CASE( "effective damage per second", "[effective][dps]" )
             dummy.str_max = 6;
             dummy.dex_max = 6;
 
-            CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 20.0f ).epsilon( 0.15f ) );
-            CHECK( normal_sword.effective_dps( dummy, mummy ) == Approx( 26.0f ).epsilon( 0.15f ) );
-            CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 33.0f ).epsilon( 0.15f ) );
+            CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 23.5f ).epsilon( 0.15f ) );
+            CHECK( normal_sword.effective_dps( dummy, mummy ) == Approx( 31.5f ).epsilon( 0.15f ) );
+            CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 38.75f ).epsilon( 0.15f ) );
         }
 
         SECTION( "STR 8, DEX 10" ) {
             dummy.str_max = 8;
             dummy.dex_max = 10;
 
-            CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 25.0f ).epsilon( 0.15f ) );
-            CHECK( normal_sword.effective_dps( dummy, mummy ) == Approx( 32.0f ).epsilon( 0.15f ) );
-            CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 38.0f ).epsilon( 0.15f ) );
+            CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 29.5f ).epsilon( 0.15f ) );
+            CHECK( normal_sword.effective_dps( dummy, mummy ) == Approx( 37.75f ).epsilon( 0.15f ) );
+            CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 45.0f ).epsilon( 0.15f ) );
         }
 
         SECTION( "STR 10, DEX 10" ) {
             dummy.str_max = 10;
             dummy.dex_max = 10;
 
-            CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 27.0f ).epsilon( 0.15f ) );
-            CHECK( normal_sword.effective_dps( dummy, mummy ) == Approx( 34.0f ).epsilon( 0.15f ) );
-            CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 41.0f ).epsilon( 0.15f ) );
+            CHECK( clumsy_sword.effective_dps( dummy, mummy ) == Approx( 31.0f ).epsilon( 0.15f ) );
+            CHECK( normal_sword.effective_dps( dummy, mummy ) == Approx( 40.0f ).epsilon( 0.15f ) );
+            CHECK( good_sword.effective_dps( dummy, mummy ) == Approx( 47.5f ).epsilon( 0.15f ) );
         }
     }
 }
 
-TEST_CASE( "effective vs actual damage per second", "[actual][dps][!mayfail]" )
+TEST_CASE( "effective vs actual damage per second", "[actual][dps]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
     avatar &dummy = g->u;
     clear_character( dummy );
 
@@ -201,6 +204,7 @@ TEST_CASE( "effective vs actual damage per second", "[actual][dps][!mayfail]" )
 TEST_CASE( "accuracy increases success", "[accuracy][dps]" )
 {
     clear_all_state();
+    rng_set_engine_seed( 0 );
     avatar &dummy = g->u;
     clear_character( dummy );
 

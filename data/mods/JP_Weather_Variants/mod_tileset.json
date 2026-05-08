@@ -1,0 +1,37 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "weather_big.png",
+        "tiles": [ { "id": "weather_geomagnetic", "fg": 0, "rotates": false } ],
+        "//": "range 1 to 16",
+        "sprite_width": 64,
+        "sprite_height": 64,
+        "sprite_offset_x": 16,
+        "sprite_offset_y": 0
+      },
+      {
+        "file": "weather_normal.png",
+        "tiles": [
+          { "id": "rainbow", "fg": 1, "rotates": false },
+          { "id": "sundog", "fg": 2, "rotates": false },
+          { "id": "northern_lights", "fg": 3, "rotates": false },
+          { "id": "geomagnetic_storm", "fg": 4, "rotates": false },
+          { "id": "acid_flurries", "fg": 5, "rotates": false },
+          { "id": "acid_snow", "fg": 6, "rotates": false },
+          { "id": "acid_snowstorm", "fg": 7, "rotates": false },
+          { "id": "weather_acid_snow", "fg": 8, "rotates": false },
+          { "id": "starry_night", "fg": 9, "rotates": false },
+          { "id": "clear_night", "fg": 10, "rotates": false }
+        ],
+        "//": "range 1 to 16",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      }
+    ]
+  }
+]

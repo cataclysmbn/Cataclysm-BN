@@ -74,7 +74,8 @@
         "damage": {
           "values": [
             { "damage_type": "bash", "amount": 1 },
-            { "damage_type": "stab", "amount": 10, "armor_penetration": 1, "armor_multiplier": 0.2 }
+            { "damage_type": "stab", "amount": 10, "armor_penetration": 1, "armor_multiplier": 0.2 },
+            { "damage_type": "dark", "amount": 8 }
           ]
         }
       }

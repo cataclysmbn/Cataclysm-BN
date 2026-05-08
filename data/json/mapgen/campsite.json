@@ -250,7 +250,7 @@
         "+": "f_canvas_door",
         "-": "f_camp_chair",
         "b": "f_brazier",
-        "r": "f_tourist_table"
+        "r": [ [ "f_tourist_table", 4 ], "f_tourist_table_flipped" ]
       },
       "place_items": [
         { "item": "cannedfood", "x": [ 15, 3 ], "y": [ 20, 8 ], "chance": 90 },

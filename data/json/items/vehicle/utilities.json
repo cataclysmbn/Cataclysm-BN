@@ -113,22 +113,6 @@
   },
   {
     "type": "GENERIC",
-    "id": "washing_machine",
-    "name": { "str": "washing machine" },
-    "description": "A very small washing machine designed for use in vehicles.",
-    "weight": "31752 g",
-    "to_hit": -8,
-    "color": "light_blue",
-    "symbol": "]",
-    "material": "steel",
-    "volume": "125 L",
-    "bashing": 8,
-    "category": "veh_parts",
-    "price": "600 USD",
-    "price_postapoc": "5 USD"
-  },
-  {
-    "type": "GENERIC",
     "id": "programmable_autopilot",
     "name": { "str": "programmable autopilot" },
     "description": "A computer system hooked up to the steering and engine of a vehicle to allow it to follow simple paths.",
@@ -145,6 +129,48 @@
   },
   {
     "type": "GENERIC",
+    "id": "minifridge",
+    "name": { "str": "minifridge" },
+    "description": "A very small fridge for keeping food cool.  Provides some insulation from outside weather.",
+    "weight": "31752 g",
+    "to_hit": -8,
+    "color": "light_blue",
+    "symbol": "]",
+    "material": "steel",
+    "volume": "125 L",
+    "bashing": 8,
+    "category": "veh_parts",
+    "price": "600 USD",
+    "price_postapoc": "5 USD"
+  },
+  {
+    "type": "GENERIC",
+    "id": "minifreezer",
+    "name": { "str": "minifreezer" },
+    "description": "Compact version of a chest freezer, designed as a mobile solution for freezing food.  Provides insulation from the elements.",
+    "price": "700 USD",
+    "price_postapoc": "40 USD",
+    "copy-from": "minifridge"
+  },
+  {
+    "type": "GENERIC",
+    "id": "cloning_vat",
+    "name": { "str": "cloning vat" },
+    "looks_like": "t_vat",
+    "description": "A vessel designed to grow and sustain living beings.  If constructed and provided with sufficient power, it can take a sterile artificial womb and a DNA sample and create a viable clone.",
+    "weight": "200 kg",
+    "to_hit": -8,
+    "color": "light_blue",
+    "symbol": "V",
+    "material": "steel",
+    "volume": "200 L",
+    "bashing": 8,
+    "category": "veh_parts",
+    "price": "100 kUSD",
+    "price_postapoc": "500 USD"
+  },
+  {
+    "type": "GENERIC",
     "id": "vh_autoclave",
     "name": { "str": "mountable autoclave" },
     "description": "This autoclave has been rigged to run off a vehicle power grid.",
@@ -154,7 +180,7 @@
     "color": "yellow",
     "weight": "34500 g",
     "volume": "76 L",
-    "copy-from": "washing_machine"
+    "copy-from": "minifridge"
   },
   {
     "type": "GENERIC",
@@ -183,32 +209,8 @@
     "looks_like": "f_autodoc_couch"
   },
   {
-    "type": "GENERIC",
-    "copy-from": "washing_machine",
-    "id": "minifridge",
-    "name": { "str": "minifridge" },
-    "description": "A very small fridge for keeping food cool.  Provides some insulation from outside weather."
-  },
-  {
-    "type": "GENERIC",
-    "id": "minifreezer",
-    "name": { "str": "minifreezer" },
-    "description": "Compact version of a chest freezer, designed as a mobile solution for freezing food.  Provides insulation from the elements.",
-    "price": "700 USD",
-    "price_postapoc": "40 USD",
-    "copy-from": "minifridge"
-  },
-  {
-    "type": "GENERIC",
-    "id": "dishwasher",
-    "name": { "str": "dishwasher" },
-    "description": "A very small dishwasher designed for use in vehicles.",
-    "looks_like": "washing_machine",
-    "copy-from": "washing_machine"
-  },
-  {
     "type": "CONTAINER",
-    "copy-from": "washing_machine",
+    "copy-from": "minifridge",
     "id": "fridgetank",
     "name": { "str": "refrigerated tank" },
     "description": "A 60L refrigerated tank for keeping liquids cool.  Provides some insulation from outside weather.",

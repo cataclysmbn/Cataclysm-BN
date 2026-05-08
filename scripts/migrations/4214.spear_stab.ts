@@ -2,7 +2,7 @@ import { baseCli } from "$catjazz/mod.ts"
 import { z } from "$catjazz/deps/zod.ts"
 
 /**
- * [PR#4214](https://github.com/cataclysmbnteam/Cataclysm-BN/pull/4211)
+ * [PR#4214](https://github.com/cataclysmbn/Cataclysm-BN/pull/4211)
  *
  * for items with `SPEAR` flag,
  * 1. if it has `REACH_ATTACK`, also add `STAB` flag.

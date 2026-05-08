@@ -46,6 +46,17 @@
   },
   {
     "type": "furniture",
+    "id": "f_alien_anemone_clogged",
+    "copy-from": "f_alien_anemone",
+    "name": "clogged-up wafting anemone",
+    "description": "A fleshy white protuberance growing from the floor, with a cluster of tendrils pouring out of it.  Someone's sabotaged it, pouring alien resin over its tendrils to halt its emissions.",
+    "symbol": "V",
+    "color": "white",
+    "emissions": [  ],
+    "delete": { "flags": [ "EMITTER" ] }
+  },
+  {
+    "type": "furniture",
     "id": "f_alien_gasper",
     "name": "gasping tube",
     "description": "This is a meaty green stalactite with a thickened hide like that of a starfish, extending from the floor to the ceiling.  In the center is a series of ports somewhat like mouths, from which pour bursts of a vile smelling gas.",
@@ -67,6 +78,16 @@
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 15, 30 ], "destroy_threshold": 60, "block_unaimed_chance": "25%" }
     }
+  },
+  {
+    "type": "furniture",
+    "id": "f_alien_gasper_clogged",
+    "copy-from": "f_alien_gasper",
+    "name": "clogged-up gasping tube",
+    "description": "This is a meaty green stalactite with a thickened hide like that of a starfish.  Someone's sabotaged it, pouring alien resin into every hole they could find to grind its constant noxious emissions to a near-halt.",
+    "symbol": "{",
+    "color": "green",
+    "emissions": [ "emit_migo_atmosphere_clogged", "emit_hot_air_migo_clogged" ]
   },
   {
     "type": "furniture",
@@ -94,7 +115,7 @@
     "coverage": 40,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "EMITTER", "MINEABLE" ],
-    "emissions": [ "emit_hot_air_migo_seep", "emit_shock_burst" ],
+    "emissions": [ "emit_migo_atmosphere_seep", "emit_hot_air_migo_seep", "emit_shock_burst" ],
     "//": "TODO: Make a custom toxic gas emission that is not visible to the player",
     "bash": {
       "str_min": 50,
@@ -105,6 +126,16 @@
       "//": "reduction matches that of weakest furniture that turns into this when destroyed",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 120, "block_unaimed_chance": "25%" }
     }
+  },
+  {
+    "type": "furniture",
+    "id": "f_alien_scar_clogged",
+    "copy-from": "f_alien_scar",
+    "name": "clogged-up scarred lump",
+    "description": "This is a pile of unidentified twitching alien flesh.  Someone's done even more to sabotage it, plugging this gaping wound in the alien hive full of resin to stop it from leaking alien gases.",
+    "symbol": "{",
+    "color": "green",
+    "emissions": [ "emit_shock_burst" ]
   },
   {
     "type": "furniture",
@@ -129,6 +160,16 @@
   },
   {
     "type": "furniture",
+    "id": "f_alien_scar_small_clogged",
+    "copy-from": "f_alien_scar_small",
+    "name": "clogged-up scarred lump",
+    "description": "This is a small patch of mangled alien flesh, sabotaged even further by being given a heavy coating of resin to stop it from leaking noxius gases.",
+    "symbol": "{",
+    "color": "green",
+    "emissions": [ "emit_shock_burst" ]
+  },
+  {
+    "type": "furniture",
     "id": "f_alien_pod",
     "name": "slimy pod",
     "description": "This is a slick, translucent pod suspended on a thin stalk.  It is covered in a thick mucus, obscuring whatever is floating in the gel-like substance inside.  You could fairly easily tear it from the stalk and see if anything is inside.",
@@ -138,14 +179,19 @@
     "coverage": 40,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT" ],
-    "//": "Because pod type used in most mi-go areas is random, item drops are generated here instead.",
-    "deconstruct": { "items": [ { "group": "migo_pod_storage", "prob": 50, "count": [ 1, 2 ] } ] },
+    "deployed_item": "alien_pod_storage",
+    "examine_action": "deployed_furniture",
+    "deconstruct": { "items": [ { "item": "alien_pod_storage", "count": 1 } ] },
     "bash": {
       "str_min": 8,
       "str_max": 40,
       "sound": "splorch!",
       "sound_fail": "whump.",
-      "items": [ { "item": "fetid_goop", "count": [ 5, 10 ], "prob": 100 }, { "group": "migo_pod_storage", "prob": 50 } ],
+      "items": [
+        { "item": "resin_chunk", "count": [ 0, 2 ] },
+        { "item": "fetid_goop", "count": [ 0, 2 ] },
+        { "group": "migo_pod_storage", "prob": 50 }
+      ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
     }
@@ -162,13 +208,19 @@
     "required_str": -1,
     "light_emitted": 3,
     "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT" ],
-    "deconstruct": { "items": [ { "group": "migo_pod_samples", "count": [ 1, 3 ] } ] },
+    "deployed_item": "alien_pod_organ",
+    "examine_action": "deployed_furniture",
+    "deconstruct": { "items": [ { "item": "alien_pod_organ", "count": 1 } ] },
     "bash": {
       "str_min": 8,
       "str_max": 40,
       "sound": "splorch!",
       "sound_fail": "whump.",
-      "items": [ { "group": "migo_pod_samples", "prob": 75, "count": [ 1, 2 ] } ],
+      "items": [
+        { "item": "resin_chunk", "count": [ 0, 2 ] },
+        { "item": "fetid_goop", "count": [ 0, 2 ] },
+        { "group": "migo_pod_samples", "prob": 50, "count": [ 1, 2 ] }
+      ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
     }
@@ -184,13 +236,15 @@
     "coverage": 40,
     "required_str": -1,
     "flags": [ "TRANSPARENT", "EASY_DECONSTRUCT" ],
-    "deconstruct": { "items": [ { "item": "alien_pod_resin", "count": [ 6, 8 ] } ] },
+    "deployed_item": "alien_pod_resin",
+    "examine_action": "deployed_furniture",
+    "deconstruct": { "items": [ { "item": "alien_pod_resin", "count": 1 } ] },
     "bash": {
       "str_min": 8,
       "str_max": 40,
       "sound": "splorch!",
       "sound_fail": "whump.",
-      "items": [ { "item": "alien_pod_resin", "count": [ 1, 2 ] } ],
+      "items": [ { "item": "resin_chunk", "count": [ 1, 5 ] } ],
       "//": "Variable reduction since might hit more or less material.",
       "ranged": { "reduction": [ 4, 8 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
     }

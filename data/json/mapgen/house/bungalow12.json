@@ -6,8 +6,8 @@
     "object": {
       "palettes": [
         "standard_domestic_palette",
-        "standard_domestic_lino_kitchen",
-        "standard_domestic_lino_bathroom",
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom",
         "standard_domestic_landscaping_palette"
       ],
       "fill_ter": "t_floor",
@@ -15,16 +15,16 @@
         ".-------p...............",
         ".------!!!!!..!!!!!.....",
         ".-!###o###oo##oo####~~~.",
-        ".-!#J4666,y h y  +Z#`&~.",
-        ".-!oO,,,,, hffh  +W#`&~.",
-        ".-!oJ,3JA,  ff  y###`&~.",
-        ".-!#5,2J,, hffh y:````~.",
-        ".-##F,1JA,   h   ¶``₸`~.",
+        ".-!#J4666˙y h y  +Z#`&~.",
+        ".-!oO˙˙˙˙˙ hffh  +W#`&~.",
+        ".-!oJ˙3JA˙  ff  y###`&~.",
+        ".-!#5˙2J˙˙ hffh y:````~.",
+        ".-##F˙1JA˙   h   ¶``₸`~.",
         ".-oL             #₸KK₸~.",
         ".-*      |||||| |######.",
         ".-#||||| sHHHHs |D¤@@¤#.",
         ".%#BBwQ| ////// |  @@ #.",
-        ".%o,,,,+ E/ll/H |d    o.",
+        ".%o¨¨¨¨+ E/ll/H |d    o.",
         ".%#t8S8| /////H +     #.",
         ".%#||||| ////// ||||++#.",
         "..#dDɸ +  RxxRR |dd|00#.",
@@ -50,10 +50,9 @@
         "K": "t_concrete",
         "₸": "t_concrete",
         "~": "t_glass_railing",
-        "A": "t_linoleum_gray",
-        ",": "t_linoleum_gray",
-        "W": "t_linoleum_gray",
-        "Z": "t_linoleum_gray"
+        "A": { "param": "linoleum_color_kitchen", "fallback": "t_linoleum_white" },
+        "W": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
+        "Z": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" }
       },
       "furniture": { "&": [ "f_indoor_plant", "f_indoor_plant_y" ], "0": "f_clothing_rail" },
       "items": {

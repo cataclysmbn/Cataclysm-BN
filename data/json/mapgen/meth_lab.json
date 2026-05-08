@@ -32,7 +32,7 @@
         ".|9  99    99   +     |.",
         ".| 9            |     3.",
         ".|    9         |W    |.",
-        ".|99999999999999|<    |.",
+        ".|99999999999999|<  >>|.",
         ".----------------------.",
         "...4...................."
       ],
@@ -55,12 +55,13 @@
       "furniture": { "'": "f_street_light", "9": "f_rack", ">": "f_counter", "G": "f_oven", "W": "f_water_heater" },
       "place_items": [
         { "item": "trash", "x": [ 2, 21 ], "y": [ 2, 21 ], "chance": 90, "repeat": [ 2, 3 ] },
-        { "item": "methchef", "x": [ 10, 10 ], "y": [ 8, 8 ], "chance": 90 },
-        { "item": "methlab", "x": [ 10, 10 ], "y": [ 9, 9 ], "chance": 90 },
-        { "item": "methchef", "x": [ 10, 10 ], "y": [ 10, 11 ], "chance": 70 },
-        { "item": "methlab", "x": [ 15, 15 ], "y": [ 8, 11 ], "chance": 90 },
-        { "item": "methlab", "x": [ 14, 14 ], "y": [ 8, 8 ], "chance": 90 },
-        { "item": "methlab", "x": [ 14, 14 ], "y": [ 11, 11 ], "chance": 90 }
+        { "item": "methchef", "x": 10, "y": 8, "chance": 90 },
+        { "item": "methlab", "x": 10, "y": 9, "chance": 90 },
+        { "item": "methchef", "x": 10, "y": [ 10, 11 ], "chance": 70 },
+        { "item": "methlab", "x": 15, "y": [ 8, 11 ], "chance": 90 },
+        { "item": "methlab", "x": 14, "y": 8, "chance": 90 },
+        { "item": "methlab", "x": 14, "y": 11, "chance": 90 },
+        { "item": "stash_drugrunner", "x": [ 20, 21 ], "y": 21, "chance": 30 }
       ],
       "place_monsters": [ { "monster": "GROUP_ZOMBIE", "x": [ 2, 21 ], "y": [ 2, 21 ], "chance": 2, "repeat": [ 2, 3 ] } ]
     }

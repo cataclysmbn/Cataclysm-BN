@@ -85,9 +85,9 @@ TEST_CASE( "item sizing display", "[item][iteminfo][display_name][sizing]" )
 
     }
 
-    GIVEN( "player is a small size" ) {
+    GIVEN( "player is a tiny size" ) {
         g->u.clear_mutations();
-        g->u.toggle_trait( trait_id( "SMALL_OK" ) );
+        g->u.toggle_trait( trait_id( "SMALL2_OK" ) );
 
         WHEN( "the item is a normal size" ) {
             std::string name = item::spawn_temporary( "chestguard_hard" )->display_name();

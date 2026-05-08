@@ -6,8 +6,8 @@
     "object": {
       "palettes": [
         "standard_domestic_palette",
-        "standard_domestic_lino_kitchen",
-        "standard_domestic_lino_bathroom",
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom",
         "standard_domestic_landscaping_palette"
       ],
       "fill_ter": "t_floor_waxed",
@@ -16,9 +16,9 @@
         ".[..-------------------.",
         ".##oo#####o######oo##--.",
         ".#432F51|Qt8|D |¤@@¤#--.",
-        ".#6____O|__S|D + @@ o--.",
-        ".#6__nJJ|8_B|  |    o--.",
-        ".: h  AA|8_B|$v|dd y#--.",
+        ".#6˙˙˙˙O|¨¨S|D + @@ o--.",
+        ".#6˙˙nJJ|8¨B|  |    o--.",
+        ".: h  AA|8¨B|$v|dd y#--.",
         ".: ff   ||+|||||||+|#--.",
         ".:hffh  |y         yo--.",
         ".: h       y#########--.",
@@ -32,20 +32,19 @@
         ".#r  P|RRR     |    #%..",
         ".#||||||||     +  @@o...",
         ".#RR    +  y|+||  @@o...",
-        ".o   h  ||+||__|   ¤#.~~",
+        ".o   h  ||+||¨¨|   ¤#.~~",
         ".# yrrr |U q|ZW|II b#.~~",
         ".##oo############oo##.~~",
         "........................"
       ],
       "terrain": {
         "#": "t_wall_r",
-        "_": "t_linoleum_gray",
         ",": "t_floor_noroof",
         "~": "t_shrub_lilac",
         "¥": "t_railing_v",
         "=": "t_carpet_green",
-        "W": "t_linoleum_gray",
-        "Z": "t_linoleum_gray"
+        "W": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
+        "Z": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" }
       },
       "furniture": { "$": "f_rack" },
       "items": { "$": { "item": "clothing_outdoor_shoes", "chance": 50 } },

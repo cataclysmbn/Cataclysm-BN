@@ -99,9 +99,16 @@
     },
     "responses": [
       { "text": "Let's trade.", "effect": "start_trade", "topic": "TALK_ROBOFAC_FREE_MERCHANT" },
+      { "text": "When is the next shipment?", "topic": "TALK_ROBOFAC_FREE_MERCHANT_INTERVAL" },
       { "text": "What are you doing here?", "topic": "TALK_ROBOFAC_FREE_MERCHANT_DOING" },
       { "text": "Well, bye.", "topic": "TALK_DONE" }
     ]
+  },
+  {
+    "id": "TALK_ROBOFAC_FREE_MERCHANT_INTERVAL",
+    "type": "talk_topic",
+    "dynamic_line": "Around <interval>, if the caravan doesn't run into trouble.",
+    "responses": [ { "text": "Thanks for the info, bye.", "topic": "TALK_DONE" } ]
   },
   {
     "id": "TALK_ROBOFAC_FREE_MERCHANT_DOING",

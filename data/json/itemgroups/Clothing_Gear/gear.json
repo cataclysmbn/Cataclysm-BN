@@ -14,6 +14,7 @@
       [ "flashbang", 30 ],
       [ "goggles_ir", 10 ],
       [ "goggles_nv", 10 ],
+      [ "army_powered_earmuffs", 10 ],
       [ "helmet_lobster", 5 ],
       [ "helmet_riot", 5 ],
       [ "holo_sight", 20 ],
@@ -34,7 +35,29 @@
       [ "tac_fullhelmet", 5 ],
       [ "tac_helmet", 10 ],
       [ "shield_riot", 20 ],
-      [ "shield_ballistic", 5 ]
+      [ "shield_ballistic", 5 ],
+      [ "shield_ballistic_large", 5 ]
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gear_labsecurity",
+    "subtype": "collection",
+    "//": "Used for the prisoner containment guard gear lockers",
+    "items": [
+      { "group": "cop_weapons", "prob": 40 },
+      [ "helmet_riot", 40 ],
+      [ "armor_riot", 40 ],
+      [ "heavy_flashlight", 30 ],
+      [ "baton", 30 ],
+      [ "two_way_radio", 20 ],
+      [ "tazer", 30 ],
+      [ "tacvest", 30 ],
+      [ "holster", 30 ],
+      [ "kevlar", 40 ],
+      [ "mask_gas", 20 ],
+      [ "shield_riot", 20 ],
+      [ "dragonskin", 5 ]
     ]
   },
   {
@@ -98,7 +121,8 @@
       [ "shovel", 15 ],
       [ "shovel_short", 5 ],
       [ "cell_phone", 1 ],
-      [ "smart_phone", 20 ],
+      [ "smart_phone", 15 ],
+      [ "wrist_comp_budget", 5 ],
       [ "airhorn", 5 ],
       [ "boltcutters", 5 ],
       [ "tacvest", 10 ],
@@ -182,6 +206,8 @@
       { "item": "wetsuit_gloves", "prob": 70 },
       { "item": "wetsuit_booties", "prob": 70 },
       { "item": "swim_fins", "prob": 100 },
+      { "item": "flotation_vest", "prob": 10 },
+      { "item": "sea_scooter", "prob": 20 },
       {
         "distribution": [
           { "item": "airspeargun", "prob": 20 },

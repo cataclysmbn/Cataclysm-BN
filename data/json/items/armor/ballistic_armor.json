@@ -10,7 +10,7 @@
     "price_postapoc": "60 USD",
     "to_hit": -3,
     "bashing": 6,
-    "material": [ "lightceramic", "kevlar" ],
+    "material": [ "ceramic", "kevlar" ],
     "symbol": "[",
     "looks_like": "kevlar",
     "color": "light_red",
@@ -18,9 +18,9 @@
     "coverage": 95,
     "encumbrance": 12,
     "warmth": 12,
-    "material_thickness": 5,
+    "material_thickness": 6,
     "//": "Ceramic disks inside block addition of steel plating modification",
-    "flags": [ "OUTER", "NO_REPAIR" ]
+    "flags": [ "OUTER", "NO_REPAIR", "ALLOWS_WINGS" ]
   },
   {
     "id": "dragonskinempty",
@@ -42,8 +42,8 @@
     "coverage": 25,
     "encumbrance": 6,
     "warmth": 10,
-    "material_thickness": 2,
-    "flags": [ "STURDY", "OUTER" ]
+    "material_thickness": 3,
+    "flags": [ "STURDY", "OUTER", "ALLOWS_WINGS" ]
   },
   {
     "id": "flotation_vest_sandbag",
@@ -61,5 +61,52 @@
     "material_thickness": 6,
     "extend": { "flags": [ "OVERSIZE", "FRAGILE" ] },
     "delete": { "flags": [ "FLOTATION", "WATER_FRIENDLY" ] }
+  },
+  {
+    "id": "armor_trench",
+    "type": "ARMOR",
+    "name": { "str": "hard steel trench armor" },
+    "description": "Cumbersome body armor forged from hardened steel plating.  Very heavy, but able to take considerable punishment.",
+    "//": "44-45 kg is the commonly cited value for the complete set, possible figure of 9 kg for the helm.",
+    "weight": "36 kg",
+    "volume": "20 L",
+    "price": "200 USD",
+    "price_postapoc": "20 USD",
+    "to_hit": -3,
+    "bashing": 6,
+    "material": [ "hardsteel" ],
+    "symbol": "[",
+    "looks_like": "cuirass_scrap",
+    "color": "light_gray",
+    "covers": [ "torso" ],
+    "coverage": 95,
+    "encumbrance": 50,
+    "warmth": 30,
+    "material_thickness": 8,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ],
+    "flags": [ "OUTER", "STURDY" ]
+  },
+  {
+    "id": "helm_trench",
+    "type": "ARMOR",
+    "name": { "str": "hard steel trench helmet" },
+    "description": "A cumbersome full-face helm forged from hardened steel plating.  Very heavy, but able to take considerable punishment.",
+    "weight": "9 kg",
+    "volume": "4 L",
+    "price": "50 USD",
+    "price_postapoc": "10 USD",
+    "to_hit": -1,
+    "bashing": 2,
+    "material": [ "hardsteel" ],
+    "symbol": "[",
+    "looks_like": "helmet_scrap",
+    "color": "light_gray",
+    "covers": [ "head", "mouth", "eyes" ],
+    "coverage": 95,
+    "encumbrance": 50,
+    "warmth": 30,
+    "material_thickness": 8,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ],
+    "flags": [ "OUTER", "STURDY" ]
   }
 ]

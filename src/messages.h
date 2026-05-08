@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "cached_options.h"
+#include "message_types.h"
 #include "string_formatter.h"
 #include "enums.h"
 #include "debug.h"

@@ -17,6 +17,7 @@
     "i18n",
     "balance",
     "port",
+    "mods/Arcana",
     "mods/CheesyInnaWoodFixes",
     "mods/DinoMod",
     "mods/MMA",
@@ -64,6 +65,7 @@
     "mods/teleportation_tech",
     "mods/test_data",
     "mods/udp_redux",
+    "mods/lethal_zeds",
     "mods"
   ]
 }

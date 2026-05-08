@@ -37,6 +37,17 @@
   },
   {
     "type": "GENERIC",
+    "id": "survivors_workbench",
+    "name": { "str": "survivors workbench", "str_pl": "survivors workbenches" },
+    "description": "A sturdy workbench built out of metal.  It is perfect for crafting large and heavy things.  This one contains a few extra tools and supplies, making it more useful than a standard workbench.",
+    "weight": "23400 g",
+    "material": [ "steel" ],
+    "bashing": 8,
+    "price": "500 USD",
+    "copy-from": "v_table"
+  },
+  {
+    "type": "GENERIC",
     "id": "robobench",
     "name": { "str": "robobench", "str_pl": "robobenches" },
     "description": "Having upgraded the basic workbench, you've now created a robotic workbench that helps speed up crafting.",

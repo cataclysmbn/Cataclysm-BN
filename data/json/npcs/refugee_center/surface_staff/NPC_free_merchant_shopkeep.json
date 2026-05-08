@@ -258,6 +258,7 @@
       },
       { "text": "Can I do anything for the center?", "topic": "TALK_MISSION_LIST" },
       { "text": "Let's trade then.", "effect": "start_trade", "topic": "TALK_EVAC_MERCHANT" },
+      { "text": "When will you have new stuff in stock?", "topic": "TALK_EVAC_MERCHANT_ASKED_RESTOCK" },
       {
         "text": "What's with these 'free merchant certified notes'?",
         "topic": "TALK_EVAC_MERCHANT_MERCH",
@@ -266,6 +267,18 @@
       { "text": "What's your story?", "topic": "TALK_EVAC_MERCHANT_BACKGROUND" },
       { "text": "What was it you were saying before?", "topic": "TALK_NONE" },
       { "text": "Well, I'd better be going.  Bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_EVAC_MERCHANT_ASKED_RESTOCK",
+    "type": "talk_topic",
+    "dynamic_line": [
+      "Next shipment should arrive in around <interval>.",
+      "Stick around for <interval>, there will surely be something you'd like."
+    ],
+    "responses": [
+      { "text": "Actually, I wanted to ask…", "topic": "TALK_EVAC_MERCHANT" },
+      { "text": "Thanks, I will make sure to check back.  Farewell.", "topic": "TALK_DONE" }
     ]
   },
   {
@@ -496,15 +509,15 @@
     "type": "mission_definition",
     "name": { "str": "Clear Back Bay" },
     "description": "Clear out the barricaded back area in the refugee center and lay the former leader of the Free Merchants to rest, in exchange for the local currency: Free Merchant certified notes.",
-    "goal": "MGOAL_KILL_MONSTER",
+    "goal": "MGOAL_KILL_MONSTERS",
     "difficulty": 2,
     "value": 50000,
     "start": {
       "assign_mission_target": { "om_terrain": "evac_center_9", "reveal_radius": 1 },
       "update_mapgen": {
         "om_terrain": "evac_center_9",
-        "place_monster": [ { "group": "GROUP_REFUGEE_BOSS_ZOMBIE", "x": 10, "y": 10, "target": true } ],
-        "place_monsters": [ { "monster": "GROUP_REFUGEE_CENTER_BACK_ROOM", "x": [ 2, 15 ], "y": [ 4, 20 ], "density": 0.6 } ]
+        "place_monster": [ { "group": "GROUP_REFUGEE_BOSS_ZOMBIE", "x": [ 10, 10 ], "y": [ 10, 10 ], "target": true } ],
+        "place_monsters": [ { "monster": "GROUP_REFUGEE_CENTER_BACK_ROOM", "x": [ 2, 15 ], "y": [ 4, 20 ], "density": 0.6, "target": true } ]
       }
     },
     "end": {

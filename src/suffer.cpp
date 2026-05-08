@@ -44,6 +44,7 @@
 #include "overmapbuffer.h"
 #include "pldata.h"
 #include "point.h"
+#include "regional_settings.h"
 #include "rng.h"
 #include "skill.h"
 #include "sounds.h"
@@ -69,7 +70,6 @@ static const bionic_id bio_leaky( "bio_leaky" );
 static const bionic_id bio_noise( "bio_noise" );
 static const bionic_id bio_power_weakness( "bio_power_weakness" );
 static const bionic_id bio_reactor( "bio_reactor" );
-static const bionic_id bio_advreactor( "bio_advreactor" );
 static const bionic_id bio_reactoroverride( "bio_reactoroverride" );
 static const bionic_id bio_shakes( "bio_shakes" );
 static const bionic_id bio_sleepy( "bio_sleepy" );
@@ -103,6 +103,7 @@ static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_took_antiasthmatic( "took_antiasthmatic" );
 static const efftype_id effect_took_thorazine( "took_thorazine" );
+static const efftype_id effect_took_antinarcoleptic( "took_antinarcoleptic" );
 static const efftype_id effect_valium( "valium" );
 static const efftype_id effect_visuals( "visuals" );
 
@@ -124,6 +125,7 @@ static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
 static const trait_id trait_FRESHWATEROSMOSIS( "FRESHWATEROSMOSIS" );
 static const trait_id trait_GILLS( "GILLS" );
 static const trait_id trait_GILLS_CEPH( "GILLS_CEPH" );
+static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
 static const trait_id trait_JITTERY( "JITTERY" );
 static const trait_id trait_KILLER( "KILLER" );
 static const trait_id trait_LEAVES( "LEAVES" );
@@ -256,7 +258,7 @@ void Character::suffer_while_underwater()
             add_msg_if_player( m_bad, _( "You're drowning!" ) );
             // NPCs are not currently programmed to avoid or get out of deep water,
             // so disable drowning damage for them.
-            // https://github.com/cataclysmbnteam/Cataclysm-BN/issues/3266
+            // https://github.com/cataclysmbn/Cataclysm-BN/issues/3266
             if( !is_npc() ) {
                 apply_damage( nullptr, bodypart_id( "torso" ), rng( 1, 4 ) );
             }
@@ -325,7 +327,8 @@ void Character::suffer_while_awake( const int current_stim )
         suffer_from_schizophrenia();
     }
 
-    if( ( has_trait( trait_NARCOLEPTIC ) || has_artifact_with( AEP_SCHIZO ) ) ) {
+    if( ( has_trait( trait_NARCOLEPTIC ) || has_artifact_with( AEP_SCHIZO ) ) &&
+        !has_effect( effect_took_antinarcoleptic ) ) {
         if( one_turn_in( 8_hours ) ) {
             add_msg_player_or_npc( m_bad,
                                    _( "You're suddenly overcome with the urge to sleep and you pass out." ),
@@ -335,10 +338,16 @@ void Character::suffer_while_awake( const int current_stim )
     }
 
     if( has_trait( trait_JITTERY ) && !has_effect( effect_shakes ) ) {
+
+        int total_kcal = get_stored_kcal() + stomach.get_calories();
+        int max_kcal = max_stored_kcal();
+        float days_left = static_cast<float>( total_kcal ) / bmr();
+        float days_max = static_cast<float>( max_kcal ) / bmr();
+
         if( current_stim > 50 && one_in( to_turns<int>( 30_minutes ) - ( current_stim * 6 ) ) ) {
             add_effect( effect_shakes, 30_minutes + 1_turns * current_stim );
-        } else if( ( get_kcal_percent() < 0.95f ) &&
-                   one_turn_in( 60_minutes - 1_seconds * ( max_stored_kcal() - get_stored_kcal() ) ) ) {
+        } else if( ( days_max - days_left >= 0.5f ) && //matches hunger state in get_hunger_description
+                   one_turn_in( 60_minutes - 1_seconds * ( max_kcal - total_kcal ) ) ) {
             add_effect( effect_shakes, 40_minutes );
         }
     }
@@ -355,6 +364,10 @@ void Character::suffer_while_awake( const int current_stim )
 
     if( has_trait( trait_VOMITOUS ) && one_turn_in( 7_hours ) ) {
         vomit();
+    }
+
+    if( has_trait( trait_HAS_NEMESIS ) && one_turn_in( 2_minutes ) ) {
+        signal_nemesis();
     }
 
     if( has_trait( trait_SHOUT1 ) && one_turn_in( 6_hours ) ) {
@@ -511,15 +524,10 @@ void Character::suffer_from_schizophrenia()
         shout( SNIPPET.random_from_category( "schizo_self_shout" ).value_or( translation() ).translated() );
         return;
     }
-    // Drop weapon
-    if( one_turn_in( 2_days ) && !weapon.is_null() ) {
-        const translation snip = SNIPPET.random_from_category( "schizo_weapon_drop" ).value_or(
-                                     translation() );
-        std::string str = string_format( snip, i_name_w );
-        str[0] = toupper( str[0] );
-
-        add_msg_if_player( m_bad, "%s", str );
-        drop( primary_weapon(), pos() );
+    // Focus debuff
+    if( one_turn_in( 8_hours ) ) {
+        add_msg_if_player( m_bad, _( "You find it hard to focus all of a sudden." ) );
+        focus_pool -= rng( 20, 40 );
         return;
     }
     // Talk to self
@@ -540,7 +548,8 @@ void Character::suffer_from_schizophrenia()
     }
     // Follower turns hostile
     if( one_turn_in( 4_hours ) ) {
-        std::vector<shared_ptr_fast<npc>> followers = overmap_buffer.get_npcs_near_player( 12 );
+        std::vector<shared_ptr_fast<npc>> followers = get_overmapbuffer(
+                                           get_dimension() ).get_npcs_near_player( 12 );
 
         std::string who_gets_angry = name;
         if( !followers.empty() ) {
@@ -595,13 +604,13 @@ void Character::suffer_from_schizophrenia()
         // Weapon is concerned for player if bleeding
         // Weapon is concerned for itself if damaged
         // Otherwise random chit-chat
-        std::vector<weak_ptr_fast<monster>> mons = g->all_monsters().items;
+        auto mons = g->all_monsters().items;
 
         std::string i_talk_w;
         bool does_talk = false;
-        if( !mons.empty() && one_turn_in( 12_minutes ) ) {
+        if( !mons->empty() && one_turn_in( 12_minutes ) ) {
             std::vector<std::string> seen_mons;
-            for( weak_ptr_fast<monster> &n : mons ) {
+            for( auto &n : *mons ) {
                 if( sees( *n.lock() ) ) {
                     seen_mons.emplace_back( n.lock()->get_name() );
                 }
@@ -1258,48 +1267,21 @@ void Character::suffer_from_radiation()
         mod_rad( -5 );
     }
 
-    // Microreactor CBM
-    if( get_fuel_type_available( itype_plut_cell ) > 0 ) {
-        if( calendar::once_every( 60_minutes ) ) {
-            int rad_mod = 0;
-            rad_mod += has_bionic( bio_reactor ) ? 3 : 0;
+    // Microreactor CBM. advanced microreactor is safe to use
+    if( has_active_bionic( bio_reactor ) ) {
+        mod_rad( 1 );
+    }
+    // Reactor override increases power output but irradiates you faster
+    if( has_active_bionic( bio_reactoroverride ) ) {
+        int current_fuel_stock = std::stoi( get_value( itype_plut_cell.str() ) );
 
-            if( rad_mod > 1 ) {
-                mod_rad( rad_mod );
-            }
-        }
+        current_fuel_stock -= 50;
 
-        bool powered_reactor = false;
+        set_value( itype_plut_cell.str(), std::to_string( current_fuel_stock ) );
+        update_fuel_storage( itype_plut_cell );
 
-        if( has_bionic( bio_reactor ) ) {
-            if( get_bionic_state( bio_reactor ).powered ) {
-                powered_reactor = true;
-            } else {
-                mod_power_level( 50_J );
-            }
-        }
-
-        if( has_bionic( bio_advreactor ) ) {
-            if( get_bionic_state( bio_advreactor ).powered ) {
-                powered_reactor = true;
-            } else {
-                mod_power_level( 75_J );
-            }
-        }
-
-        if( has_bionic( bio_reactoroverride ) && powered_reactor ) {
-            if( get_bionic_state( bio_reactoroverride ).powered ) {
-                int current_fuel_stock = std::stoi( get_value( itype_plut_cell.str() ) );
-
-                current_fuel_stock -= 50;
-
-                set_value( itype_plut_cell.str(), std::to_string( current_fuel_stock ) );
-                update_fuel_storage( itype_plut_cell );
-
-                mod_power_level( 40_kJ );
-                mod_rad( 2 );
-            }
-        }
+        mod_power_level( 40_kJ );
+        mod_rad( 2 );
     }
 }
 
@@ -1554,6 +1536,53 @@ void Character::suffer()
     for( const std::pair<const bodypart_str_id, bodypart> &elem : get_body() ) {
         if( elem.second.get_hp_cur() <= 0 ) {
             add_effect( effect_disabled, 1_turns, elem.first );
+        }
+    }
+
+    const auto dim = get_dimension();
+    const auto &effects = get_overmapbuffer( dim ).get_settings( global_omt_location() ).region_effects;
+    for( const auto& [type, effect_list] : effects ) {
+        switch( type ) {
+            case region_effect_type::generic:
+                break;
+            case region_effect_type::sunlight:
+                if( !g->is_in_sunlight( pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::surface:
+                if( pos().z < 0 || !g->is_sheltered( pos() ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::night_time:
+                if( !is_night( calendar::turn ) ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::sleep:
+                if( !in_sleep_state() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underwater:
+                if( !is_underwater() ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::underground:
+                if( pos().z >= 0 ) {
+                    continue;
+                }
+                break;
+            case region_effect_type::num_types:
+                break;
+        }
+
+        for( const auto &effect : effect_list ) {
+            if( effect.second <= 1 || one_in( effect.second ) ) {
+                add_effect( effect.first, 1_turns );
+            }
         }
     }
 

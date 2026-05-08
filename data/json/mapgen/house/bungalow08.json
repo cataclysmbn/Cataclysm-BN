@@ -4,7 +4,7 @@
     "om_terrain": "bungalow08",
     "method": "json",
     "object": {
-      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_bathroom", "standard_domestic_landscaping_palette" ],
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
       "fill_ter": "t_floor",
       "rows": [
         ".......!--!.............",
@@ -19,7 +19,7 @@
         ".# @@ |b```L|      s#...",
         ".o    | ```    |||||#...",
         ".o    +        |w8St#...",
-        ".# |++|++|     +____o...",
+        ".# |++|++|     +¨¨¨¨o...",
         ".#ɸ|dD|WZ|  yRR|QBB8#...",
         ".#||||||||  R|||||||#...",
         "^#v+  +     R|y VV y#...",
@@ -35,12 +35,11 @@
       "terrain": {
         "#": "t_wall_p",
         "`": "t_carpet_red",
-        "_": "t_linoleum_gray",
         "|": "t_wall",
         "?": "t_column",
         ";": "t_water_sh",
-        "W": "t_linoleum_gray",
-        "Z": "t_linoleum_gray",
+        "W": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
+        "Z": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
         ",": "t_carpet_yellow",
         "f": "t_carpet_yellow",
         "&": "t_carpet_yellow",

@@ -45,6 +45,7 @@ void do_chop_trees( npc & );
 void do_fishing( npc & );
 void do_farming( npc & );
 void do_butcher( npc & );
+void do_craft( npc & );
 void revert_activity( npc & );
 void goto_location( npc & );
 void assign_base( npc & );
@@ -80,6 +81,7 @@ void lead_to_safety( npc & );
 void start_training( npc & );
 
 void wake_up( npc & );
+void control_npc( npc & );
 void copy_npc_rules( npc &p );
 void set_npc_pickup( npc &p );
 void npc_die( npc &p );

@@ -34,7 +34,7 @@
     },
     "furniture": {
       "4": "f_indoor_plant",
-      "6": "f_table",
+      "6": [ [ "f_table", 9 ], "f_table_flipped" ],
       "8": "f_bathtub",
       "9": "f_rack",
       ":": "f_dresser",

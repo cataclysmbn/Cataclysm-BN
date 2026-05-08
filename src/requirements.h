@@ -1,5 +1,7 @@
 #pragma once
 
+#include "catalua_type_operators.h"
+
 #include <map>
 #include <set>
 #include <string>
@@ -44,6 +46,9 @@ struct quality {
     quality_id id;
     translation name;
 
+    float crafting_speed_bonus_per_level = 0.0f;
+    int crafting_speed_level_offset = 0;
+
     /** Materials it can salvage */
     std::set<material_id> salvagable_materials;
     std::vector<std::pair<int, std::string>> usages;
@@ -52,6 +57,8 @@ struct quality {
 
     static void reset();
     static void load_static( const JsonObject &jo, const std::string &src );
+
+    LUA_TYPE_OPS( quality, id );
 };
 
 struct component {
@@ -467,5 +474,3 @@ class deduped_requirement_data
         bool is_too_complex_ = false;
         std::vector<requirement_data> alternatives_;
 };
-
-

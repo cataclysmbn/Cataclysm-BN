@@ -101,8 +101,15 @@
         "text": "Crypto coins?  Are you insane, there isn't any global internet now.",
         "topic": "TALK_PrepNet_gardener_currency"
       },
-      { "text": "What can I buy here?", "effect": "start_trade", "topic": "TALK_PrepNet_gardener_1" }
+      { "text": "What can I buy here?", "effect": "start_trade", "topic": "TALK_PrepNet_gardener_1" },
+      { "text": "When will you have more?", "topic": "TALK_PrepNet_gardener_restock" }
     ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_PrepNet_gardener_restock",
+    "dynamic_line": "Around <interval>.",
+    "responses": [ { "text": "Alright then, bye.", "topic": "TALK_DONE" } ]
   },
   {
     "type": "talk_topic",
@@ -122,7 +129,8 @@
     "dynamic_line": "We use so-called crypto coins for money here.  They were a pre-Cataclysm attempt to abstract money even further and create electronic cash.  Now it's a joke because we use physical coins.  Barter only gets you so far.  And one day we'll have the Net back up.",
     "responses": [
       { "text": "Oh, okay.", "topic": "TALK_PrepNet_gardener_1" },
-      { "text": "What can I buy here?", "effect": "start_trade", "topic": "TALK_PrepNet_gardener_1" }
+      { "text": "What can I buy here?", "effect": "start_trade", "topic": "TALK_PrepNet_gardener_1" },
+      { "text": "When will you have more?", "topic": "TALK_PrepNet_gardener_restock" }
     ]
   },
   {

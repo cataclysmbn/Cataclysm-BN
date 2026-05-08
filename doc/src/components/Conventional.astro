@@ -6,104 +6,106 @@ const modScopes = json.scopes.filter((scope) => scope.startsWith("mods/"))
 ---
 
 <style>
-    optgroup,
-    label,
-    select,
-    select[name="scope"] option {
-        margin-top: 0 !important;
-    }
-    input {
-        width: 100%;
-    }
-    input:disabled {
-        background-color: var(--sl-color-gray-6);
-    }
-    fieldset {
-        display: grid;
-        grid-template-columns: max-content 1fr;
-        gap: 1rem;
-    }
+  optgroup,
+  label,
+  select,
+  select[name="scope"] option {
+    margin-top: 0 !important;
+  }
+  input {
+    width: 100%;
+  }
+  input:disabled {
+    background-color: var(--sl-color-gray-6);
+  }
+  fieldset {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 1rem;
+  }
 
-    fieldset label {
-        justify-self: end;
-    }
+  fieldset label {
+    justify-self: end;
+  }
 </style>
 
 <script>
-    // well this isn't very great but it was quick and dirty to write
+  // well this isn't very great but it was quick and dirty to write
 
-    const outputElem = document.querySelector("input[name=output]") as HTMLInputElement
-    const typeElem = document.querySelector("select[name=type]") as HTMLSelectElement
-    const scopeElems = document.querySelectorAll(
-        "select[name=scope] optgroup option",
-    ) as NodeListOf<HTMLOptionElement>
+  const outputElem = document.querySelector("input[name=output]") as HTMLInputElement
+  const typeElem = document.querySelector("select[name=type]") as HTMLSelectElement
+  const scopeElems = document.querySelectorAll(
+    "select[name=scope] optgroup option",
+  ) as NodeListOf<HTMLOptionElement>
 
-    const subjectElem = document.querySelector("input[name=subject]") as HTMLInputElement
+  const subjectElem = document.querySelector("input[name=subject]") as HTMLInputElement
 
-    let type = typeElem.value
-    let subject = subjectElem.value
-    const scopes = new Set()
+  let type = typeElem.value
+  let subject = subjectElem.value
+  const scopes = new Set()
 
-    const updateOutput = () => {
-        outputElem.disabled = type.length === 0 || subject.length === 0
+  const updateOutput = () => {
+    outputElem.disabled = type.length === 0 || subject.length === 0
 
-        const output = `${type}${scopes.size ? `(${Array.from(scopes).join(",")})` : ""}: ${subject}`
-        outputElem.value = output
-    }
+    const output = `${type}${
+      scopes.size ? `(${Array.from(scopes).join(",")})` : ""
+    }: ${subject}`
+    outputElem.value = output
+  }
 
-    typeElem.addEventListener("change", (e) => {
-        type = (e.target as HTMLSelectElement).value
-        updateOutput()
-    })
-
-    scopeElems.forEach((scopeElem) =>
-        scopeElem.addEventListener("click", (e) => {
-            const scope = (e.target as HTMLOptionElement).value
-            scopes.has(scope) ? scopes.delete(scope) : scopes.add(scope)
-            updateOutput()
-        }),
-    )
-
-    subjectElem.addEventListener("input", (e) => {
-        subject = (e.target as HTMLInputElement).value
-        updateOutput()
-    })
-
-    // initialize state
+  typeElem.addEventListener("change", (e) => {
+    type = (e.target as HTMLSelectElement).value
     updateOutput()
+  })
 
-    // clipboard
-    document.querySelector("form")!.addEventListener("submit", (e) => {
-        e.preventDefault()
-        navigator.clipboard.writeText(outputElem.value)
+  scopeElems.forEach((scopeElem) =>
+    scopeElem.addEventListener("click", (e) => {
+      const scope = (e.target as HTMLOptionElement).value
+      scopes.has(scope) ? scopes.delete(scope) : scopes.add(scope)
+      updateOutput()
     })
+  )
+
+  subjectElem.addEventListener("input", (e) => {
+    subject = (e.target as HTMLInputElement).value
+    updateOutput()
+  })
+
+  // initialize state
+  updateOutput()
+
+  // clipboard
+  document.querySelector("form")!.addEventListener("submit", (e) => {
+    e.preventDefault()
+    navigator.clipboard.writeText(outputElem.value)
+  })
 </script>
 
 <form>
-    <fieldset>
-        <label for="type">Type</label>
-        <select name="type" required>
-            <option value="">select type</option>
-            {json.types.map((type) => <option value={type}>{type}</option>)}
-        </select>
-        <label for="scope">Scope</label>
-        <select name="scope" multiple size="6">
-            <optgroup label="general">
-                {generalScopes.map((scope) => <option value={scope}>{scope}</option>)}
-            </optgroup>
-            <optgroup label="mods">
-                {modScopes.map((scope) => <option value={scope}>{scope}</option>)}
-            </optgroup>
-        </select>
-        <label for="subject">Subject</label>
-        <input
-            type="text"
-            name="subject"
-            placeholder="summarize what does this PR does here"
-            required
-        />
-    </fieldset>
-    <label for="output">Output</label>
-    <input type="text" name="output" />
-    <button type="submit">copy to clipboard</button>
+  <fieldset>
+    <label for="type">Type</label>
+    <select name="type" required>
+      <option value="">select type</option>
+      {json.types.map((type) => <option value={type}>{type}</option>)}
+    </select>
+    <label for="scope">Scope</label>
+    <select name="scope" multiple size="6">
+      <optgroup label="general">
+        {generalScopes.map((scope) => <option value={scope}>{scope}</option>)}
+      </optgroup>
+      <optgroup label="mods">
+        {modScopes.map((scope) => <option value={scope}>{scope}</option>)}
+      </optgroup>
+    </select>
+    <label for="subject">Subject</label>
+    <input
+      type="text"
+      name="subject"
+      placeholder="summarize what does this PR does here"
+      required
+    />
+  </fieldset>
+  <label for="output">Output</label>
+  <input type="text" name="output" />
+  <button type="submit">copy to clipboard</button>
 </form>

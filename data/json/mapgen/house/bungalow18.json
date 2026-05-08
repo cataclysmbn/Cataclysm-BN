@@ -4,7 +4,7 @@
     "om_terrain": "bungalow18",
     "method": "json",
     "object": {
-      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_bathroom", "standard_domestic_landscaping_palette" ],
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
       "fill_ter": "t_floor_waxed",
       "rows": [
         "................_______.",
@@ -15,15 +15,15 @@
         "............----_______.",
         ".%%%...%%%..--.._______.",
         ".##o####oo##o*#########.",
-        ".#B/t|@¤  d|i |Lq|D zD#.",
-        ".#B/S|@   ɸ|i +  ||+||#.",
-        ".#//8| h  ||? ||||y  ¤#.",
-        "^#Q/8|rrr +   + U|d @@o.",
+        ".#B¨t|@¤  d|i |Lq|D zD#.",
+        ".#B¨S|@   ɸ|i +  ||+||#.",
+        ".#¨¨8| h  ||? ||||y  ¤#.",
+        "^#Q¨8|rrr +   + U|d @@o.",
         ".#|+|||||||y  |zU|d @@o.",
         ".oy  b yRRR   ||||   ¤#.",
         ".oy           T  +    #.",
         ".#|+||           |||||#^",
-        ".#W/Z|  R|         666#.",
+        ".#W¨Z|  R|         666#.",
         ".#||||  R|    h |&   7#.",
         ".#  ll  T|a hff |& J 4#.",
         ".ox ll  E|   ffh|Y J 2o.",
@@ -33,11 +33,10 @@
         "...............---......"
       ],
       "terrain": {
-        "/": "t_linoleum_gray",
-        "Z": "t_linoleum_gray",
-        "W": "t_linoleum_gray",
+        "Z": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
+        "W": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
         "#": "t_adobe_brick_wall",
-        "Q": "t_linoleum_gray"
+        "Q": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" }
       },
       "furniture": { "&": "f_bookcase", "?": "f_rack" },
       "items": { "?": { "item": "clothing_outdoor_shoes", "chance": 50, "repeat": [ 1, 3 ] } },

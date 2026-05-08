@@ -113,20 +113,6 @@
   },
   {
     "type": "EXTERNAL_OPTION",
-    "name": "SPEEDYDEX_MIN_DEX",
-    "info": "The minimum dex required for speedydex mod to add speed",
-    "stype": "int",
-    "value": 0
-  },
-  {
-    "type": "EXTERNAL_OPTION",
-    "name": "SPEEDYDEX_DEX_SPEED",
-    "info": "The amount of moves gained per dex above SPEEDYDEX_MIN_DEX",
-    "stype": "int",
-    "value": 0
-  },
-  {
-    "type": "EXTERNAL_OPTION",
     "name": "MAX_HARVEST_COUNT",
     "info": "The maximum amount of produce that can be harvested from a plant.",
     "stype": "int",
@@ -250,5 +236,33 @@
     "info": "The integer flat rate for mana regen (per hour) that should be used as a baseline if enabled.",
     "stype": "int",
     "value": 100
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "MAGIC_STAT_SCALING_PERCENT",
+    "info": "The percentage bonus (or malus) that each point away from the base 8 should get you (i.e. 10 is 10%).",
+    "stype": "int",
+    "value": 10
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "UNDERGROUND_TEMPERATURE_INFLUENCED_BY_SURFACE",
+    "info": "If true, underground temperatures are influenced by surface weather conditions. At z=-1 (50% influence), z=-2 (25%), z<=-3 (0%, annual average only).",
+    "stype": "bool",
+    "value": false
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "AVATAR_LEVEL_XP_COEFF",
+    "info": "An integer coefficient for determining the XP thresholds for leveling up in STK and similar",
+    "stype": "int",
+    "value": 400
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "ALWAYS_SHOW_MANA",
+    "info": "If true, always display the mana in the sidebar. Primarily useful for magic-related mods.",
+    "stype": "bool",
+    "value": false
   }
 ]

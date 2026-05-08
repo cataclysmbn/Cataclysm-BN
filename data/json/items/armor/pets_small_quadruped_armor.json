@@ -124,16 +124,15 @@
     "copy-from": "small_quadruped_armor",
     "color": "light_cyan",
     "name": { "str": "superalloy small quadruped armor" },
-    "description": "A thin mesh interwoven with superalloy plates and pouches for military working small quadrupeds that covers from the dewlap to the croup, down to the elbows.  You could put this on a friendly small quadruped.",
+    "description": "A thin mesh interwoven with superalloy plates for military working small quadrupeds that covers from the dewlap to the croup, down to the elbows.  You could put this on a friendly small quadruped.",
     "looks_like": "chitin_armor_small_quadruped",
     "price": "1300 USD",
     "price_postapoc": "50 USD",
     "material": [ "superalloy" ],
-    "weight": "3125 g",
+    "weight": "6100 g",
     "volume": "4500 ml",
     "material_thickness": 4,
-    "environmental_protection": 3,
-    "storage": "25 L"
+    "environmental_protection": 3
   },
   {
     "id": "saddlebag_small_quadruped",

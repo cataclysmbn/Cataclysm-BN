@@ -20,9 +20,9 @@
     "id": "bio_blade_weapon",
     "type": "GENERIC",
     "category": "weapons",
-    "weapon_category": [ "BIONIC_WEAPONRY", "BIONIC_SWORDS" ],
+    "weapon_category": [ "BIONIC_WEAPONRY", "BIONIC_SWORDS", "FIST_WEAPONS", "SHORT_SWORDS" ],
     "name": { "str": "monomolecular blade" },
-    "description": "A foot-long blade made from high-tech alloy and edged with bonded nanocrystals.",
+    "description": "A 30cm-long blade made from high-tech alloy and edged with bonded nanocrystals.",
     "weight": "100 g",
     "to_hit": 3,
     "color": "dark_gray",
@@ -50,6 +50,7 @@
     "volume": "250 ml",
     "cutting": 28,
     "flags": [ "REACH_ATTACK", "NO_DROP", "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID", "WHIP" ],
-    "qualities": [ [ "SAW_M", 1 ], [ "SAW_W", 1 ] ]
+    "qualities": [ [ "SAW_M", 1 ], [ "SAW_W", 1 ] ],
+    "use_action": [ "HACKSAW" ]
   }
 ]

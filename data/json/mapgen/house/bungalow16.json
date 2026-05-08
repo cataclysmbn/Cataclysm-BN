@@ -4,7 +4,7 @@
     "om_terrain": "bungalow16",
     "method": "json",
     "object": {
-      "palettes": [ "standard_domestic_palette", "standard_domestic_lino_bathroom", "standard_domestic_landscaping_palette" ],
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
       "fill_ter": "t_floor",
       "rows": [
         "..........p--...........",
@@ -17,7 +17,7 @@
         ".#    l H##o*##|,,,,,P#.",
         ".o  |||||||L |c+,{$$,,o.",
         ".#  |BtS8Q|  |||||||+|#.",
-        ".#  |B____+  ƏƏ      T#^",
+        ".#  |B¨¨¨¨+  ƏƏ      T#^",
         ".#  |||||||           #.",
         ".#Y   TVV|y     R|+|++#.",
         ".#476           R|q|ZW#.",
@@ -34,7 +34,6 @@
       ],
       "terrain": {
         "~": "t_door_glass_c",
-        "_": "t_linoleum_gray",
         "=": "t_carpet_purple",
         ",": "t_carpet_red",
         "¤": "t_carpet_red",
@@ -53,8 +52,8 @@
         "r": "t_carpet_red",
         "}": "t_carpet_red",
         "]": "t_carpet_red",
-        "W": "t_linoleum_gray",
-        "Z": "t_linoleum_gray"
+        "W": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" },
+        "Z": { "param": "linoleum_color_bathroom", "fallback": "t_linoleum_white" }
       },
       "furniture": {
         "$": "f_dresser",

@@ -2,7 +2,7 @@
   {
     "type": "item_group",
     "id": "pawn",
-    "items": [ [ "700nx", 1 ], [ "700nx_casing", 1 ], [ "trex_gun", 1 ], [ "raging_bull", 1 ], [ "sw_500", 1 ] ]
+    "items": [ [ "700nx", 1 ], [ "700nx_casing", 1 ], [ "trex_gun", 1 ], [ "raging_bull", 1 ], [ "sw_500", 1 ], [ "mn_ebr_kit", 1 ] ]
   },
   {
     "type": "item_group",
@@ -21,6 +21,12 @@
     "id": "defense_caravan_ammunition",
     "subtype": "collection",
     "items": [ { "item": "57mm" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "defense_caravan_ranged",
+    "subtype": "collection",
+    "items": [ { "item": "fn_p90" } ]
   },
   {
     "type": "item_group",
@@ -47,5 +53,11 @@
     "id": "NC_BANDIT_smg",
     "subtype": "distribution",
     "entries": [ { "item": "ppsh", "prob": 4 }, { "item": "skorpion_82", "prob": 3 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_SCAVENGER_pistols",
+    "subtype": "distribution",
+    "entries": [ { "item": "makarov", "prob": 5 } ]
   }
 ]

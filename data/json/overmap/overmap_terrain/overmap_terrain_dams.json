@@ -1,0 +1,50 @@
+[
+  {
+    "type": "overmap_terrain",
+    "//": "Legacy bridge that blocks river",
+    "id": "dam",
+    "copy-from": "generic_bridge",
+    "name": "Dam",
+    "extras": "damhead_ground",
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "IS_BRIDGE" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "dam_under",
+    "copy-from": "generic_bridge",
+    "color": "dark_gray",
+    "name": "Dam",
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "IS_BRIDGE" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "dam_center_under",
+    "copy-from": "generic_bridge",
+    "color": "dark_gray",
+    "name": "Dam Passthrough",
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "IS_BRIDGE" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "dam_road",
+    "copy-from": "generic_bridge",
+    "name": "Dam (overpass)"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "damhead_ground",
+    "copy-from": "generic_bridge",
+    "name": "Dam (ground)",
+    "sym": "v",
+    "color": "dark_gray",
+    "extras": "damhead_ground",
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "IS_BRIDGE" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "damhead_ramp",
+    "copy-from": "generic_bridge",
+    "name": "Dam (ramp)",
+    "sym": "^"
+  }
+]

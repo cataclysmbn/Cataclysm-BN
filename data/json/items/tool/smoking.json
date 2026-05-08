@@ -192,7 +192,6 @@
     "price": "25 USD",
     "price_postapoc": "1 USD",
     "material": "plastic",
-    "ammo": "battery",
     "max_charges": 30,
     "initial_charges": 30,
     "charges_per_use": 1,

@@ -13,7 +13,16 @@
     "covers": [ "hand_either" ],
     "coverage": 0,
     "warmth": 0,
-    "flags": [ "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "FANCY", "ONLY_ONE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "COMPACT" ]
+    "flags": [
+      "WATER_FRIENDLY",
+      "ALLOWS_NATURAL_ATTACKS",
+      "FANCY",
+      "ONLY_ONE",
+      "SKINTIGHT",
+      "POWERARMOR_COMPATIBLE",
+      "COMPACT",
+      "ALLOWS_CLAWS"
+    ]
   },
   {
     "abstract": "mring_silver",
@@ -29,7 +38,16 @@
     "covers": [ "hand_either" ],
     "coverage": 0,
     "warmth": 0,
-    "flags": [ "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "FANCY", "ONLY_ONE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "COMPACT" ]
+    "flags": [
+      "WATER_FRIENDLY",
+      "ALLOWS_NATURAL_ATTACKS",
+      "FANCY",
+      "ONLY_ONE",
+      "SKINTIGHT",
+      "POWERARMOR_COMPATIBLE",
+      "COMPACT",
+      "ALLOWS_CLAWS"
+    ]
   },
   {
     "abstract": "mring_gold",
@@ -45,7 +63,16 @@
     "covers": [ "hand_either" ],
     "coverage": 0,
     "warmth": 0,
-    "flags": [ "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "FANCY", "ONLY_ONE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "COMPACT" ]
+    "flags": [
+      "WATER_FRIENDLY",
+      "ALLOWS_NATURAL_ATTACKS",
+      "FANCY",
+      "ONLY_ONE",
+      "SKINTIGHT",
+      "POWERARMOR_COMPATIBLE",
+      "COMPACT",
+      "ALLOWS_CLAWS"
+    ]
   },
   {
     "abstract": "mring_platinum",
@@ -61,7 +88,16 @@
     "covers": [ "hand_either" ],
     "coverage": 0,
     "warmth": 0,
-    "flags": [ "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "FANCY", "ONLY_ONE", "SKINTIGHT", "POWERARMOR_COMPATIBLE", "COMPACT" ]
+    "flags": [
+      "WATER_FRIENDLY",
+      "ALLOWS_NATURAL_ATTACKS",
+      "FANCY",
+      "ONLY_ONE",
+      "SKINTIGHT",
+      "POWERARMOR_COMPATIBLE",
+      "COMPACT",
+      "ALLOWS_CLAWS"
+    ]
   },
   {
     "copy-from": "mring_silver",

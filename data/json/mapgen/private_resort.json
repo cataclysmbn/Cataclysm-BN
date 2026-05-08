@@ -125,8 +125,8 @@
           "item": {
             "subtype": "distribution",
             "entries": [
-              { "group": "SUS_silverware", "prob": 50 },
-              { "group": "SUS_utensils", "prob": 50 },
+              { "group": "SUS_kitchen_misc", "prob": 50 },
+              { "group": "SUS_kitchen_misc", "prob": 50 },
               { "group": "SUS_knife_drawer", "prob": 25 },
               { "group": "SUS_junk_drawer", "prob": 10 },
               { "group": "SUS_dishes", "prob": 50 },

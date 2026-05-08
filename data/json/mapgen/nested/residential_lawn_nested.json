@@ -43,7 +43,7 @@
             [ "res_lawn_corpse", 5 ],
             [ "res_lawn_trimmings", 5 ],
             [ "res_lawn_bloodpool", 5 ],
-            [ "res_lawn_randomnpc", 1 ],
+            [ "res_lawn_randomnpc", 2 ],
             [ "res_lawn_boulder", 5 ]
           ],
           "x": 0,
@@ -348,7 +348,7 @@
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "res_lawn_randomnpc",
-    "//": "friend or foe?",
+    "//": "friend or foe? probably going to die anyway",
     "object": {
       "mapgensize": [ 3, 3 ],
       "rows": [
@@ -357,7 +357,7 @@
         "___"
       ],
       "terrain": { "_": "t_null" },
-      "place_npcs": [ { "class": "survivor_camper", "x": [ 0, 2 ], "y": [ 0, 2 ] } ]
+      "place_npcs": [ { "class": "NPC_wandering_scavenger", "x": [ 0, 2 ], "y": [ 0, 2 ] } ]
     }
   },
   {
@@ -539,7 +539,7 @@
             [ "res_lawn_trimmings", 5 ],
             [ "res_backyard_dirtpatch", 5 ],
             [ "res_lawn_bloodpool", 5 ],
-            [ "res_lawn_randomnpc", 1 ],
+            [ "res_lawn_randomnpc", 2 ],
             [ "res_lawn_boulder", 5 ]
           ],
           "x": 0,

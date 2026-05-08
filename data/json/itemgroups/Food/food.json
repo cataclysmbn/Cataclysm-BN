@@ -234,6 +234,7 @@
       { "item": "toastem", "prob": 30 },
       { "item": "toastem2", "prob": 30 },
       { "item": "toastem3", "prob": 35 },
+      { "item": "blinkie", "prob": 20 },
       { "item": "toasterpastryfrozen", "prob": 20 },
       { "item": "sugar", "prob": 20 },
       { "item": "lemonade_powder", "prob": 5 },
@@ -420,6 +421,7 @@
     "subtype": "distribution",
     "entries": [
       { "item": "cola", "prob": 60 },
+      { "item": "zero_cola", "prob": 60 },
       { "item": "colamdew", "prob": 55 },
       { "item": "creamsoda", "prob": 50 },
       { "item": "lemonlime", "prob": 50 },
@@ -486,7 +488,8 @@
       { "item": "coffee_syrup", "prob": 10 },
       { "item": "fruit_leather", "prob": 25 },
       { "item": "kernels", "prob": 25 },
-      { "item": "pine_nuts", "prob": 5 }
+      { "item": "pine_nuts", "prob": 5 },
+      { "item": "blinkie", "prob": 10 }
     ]
   },
   {
@@ -564,8 +567,15 @@
       { "item": "pie_meat", "prob": 18 },
       { "item": "pie_maple", "prob": 9 },
       { "group": "dessert", "prob": 20 },
-      { "item": "bibimbap", "prob": 4 }
+      { "item": "bibimbap", "prob": 4 },
+      { "item": "fried_blinkie", "prob": 4 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "blinkie_van",
+    "subtype": "distribution",
+    "entries": [ { "item": "blinkie", "count": [ 15, 60 ], "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -619,6 +629,8 @@
       { "item": "choc_drink", "count": [ 1, 6 ], "prob": 30 },
       { "item": "cola", "count": [ 1, 6 ], "prob": 25 },
       { "item": "cola", "charges": [ 4, 8 ], "prob": 25, "container-item": "bottle_twoliter" },
+      { "item": "zero_cola", "count": [ 1, 6 ], "prob": 25 },
+      { "item": "zero_cola", "charges": [ 4, 8 ], "prob": 25, "container-item": "bottle_twoliter" },
       { "item": "colamdew", "count": [ 1, 6 ], "prob": 25 },
       { "item": "colamdew", "charges": [ 4, 8 ], "prob": 25, "container-item": "bottle_twoliter" },
       { "item": "cranberry_juice", "count": [ 1, 6 ], "prob": 50 },

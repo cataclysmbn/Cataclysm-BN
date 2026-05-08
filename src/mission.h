@@ -37,7 +37,7 @@ namespace debug_menu
 class mission_debug;
 } // namespace debug_menu
 
-enum mission_origin {
+enum mission_origin : int {
     ORIGIN_NULL = 0,
     ORIGIN_GAME_START, // Given when the game starts
     ORIGIN_OPENER_NPC, // NPC comes up to you when the game starts
@@ -52,7 +52,7 @@ struct enum_traits<mission_origin> {
     static constexpr mission_origin last = mission_origin::NUM_ORIGIN;
 };
 
-enum mission_goal {
+enum mission_goal : int {
     MGOAL_NULL = 0,
     MGOAL_GO_TO,             // Reach a certain overmap tile
     MGOAL_GO_TO_TYPE,        // Instead of a point, go to an oter_type_id map tile like "hospital_entrance"
@@ -64,12 +64,14 @@ enum mission_goal {
     MGOAL_ASSASSINATE,       // Kill a given NPC
     MGOAL_KILL_MONSTER,      // Kill a particular hostile monster
     MGOAL_KILL_MONSTER_TYPE, // Kill a number of a given monster type
+    MGOAL_KILL_NEMESIS,      // Kill the nemesis monster from the "hunted" trait
     MGOAL_RECRUIT_NPC,       // Recruit a given NPC
     MGOAL_RECRUIT_NPC_CLASS, // Recruit an NPC class
     MGOAL_COMPUTER_TOGGLE,   // Activating the correct terminal will complete the mission
     MGOAL_KILL_MONSTER_SPEC,  // Kill a number of monsters from a given species
     MGOAL_TALK_TO_NPC,       // Talk to a given NPC
     MGOAL_CONDITION,         // Satisfy the dynamically created condition and talk to the mission giver
+    MGOAL_KILL_MONSTERS,     // Kill a number of specific mission-tagged monsters
     NUM_MGOAL
 };
 
@@ -97,6 +99,7 @@ struct mission_start {
     static void place_dog( mission * );          // Put a dog in a house!
     static void place_zombie_mom( mission * );   // Put a zombie mom in a house!
     static void kill_horde_master( mission * );  // Kill the master zombie at the center of the horde
+    static void kill_nemesis( mission * );       // Kill the nemesis spawned with the "hunted" trait
     static void place_npc_software( mission * ); // Put NPC-type-dependent software
     static void place_priest_diary( mission * ); // Hides the priest's diary in a local house
     static void place_deposit_box( mission * );  // Place a safe deposit box in a nearby bank
@@ -157,13 +160,13 @@ struct mission_target_params {
 
 namespace mission_util
 {
-tripoint_abs_omt random_house_in_closest_city();
+tripoint_abs_omt random_house_in_closest_city( overmapbuffer &omb );
 tripoint_abs_omt target_closest_lab_entrance( const tripoint_abs_omt &origin, int reveal_rad,
         mission *miss );
 bool reveal_road( const tripoint_abs_omt &source, const tripoint_abs_omt &dest,
                   overmapbuffer &omb );
 tripoint_abs_omt reveal_om_ter( const std::string &omter, int reveal_rad, bool must_see,
-                                int target_z = 0 );
+                                overmapbuffer &omb, int target_z = 0 );
 tripoint_abs_omt target_om_ter( const std::string &omter, int reveal_rad, mission *miss,
                                 bool must_see, int target_z = 0 );
 tripoint_abs_omt target_om_ter_random(
@@ -197,6 +200,8 @@ struct mission_type {
         // Matches it to a mission_type_id above
         mission_type_id id = mission_type_id( "MISSION_NULL" );
         bool was_loaded = false;
+
+        LUA_TYPE_OPS( mission_type, id );
     private:
         // The untranslated name of the mission
         translation name = to_translation( "Bugged mission type" );
@@ -327,7 +332,7 @@ class mission
         // Monster species that are to be killed
         species_id monster_species;
         // The number of monsters you need to kill
-        int monster_kill_goal = 0;
+        int monster_kill_goal = -1;
         // The kill count you need to reach to complete mission
         int kill_count_to_reach = 0;
         time_point deadline;
@@ -343,6 +348,8 @@ class mission
         mission_type_id follow_up;
         // The id of the player that has accepted this mission.
         character_id player_id;
+        // Dimension in which mission targets exist; empty = primary dimension (legacy saves)
+        std::string dimension_id_;
     public:
 
         std::string name();
@@ -365,8 +372,10 @@ class mission
         int get_id() const;
         const itype_id &get_item_id() const;
         character_id get_npc_id() const;
+        const std::string &get_dimension() const;
         const std::vector<std::pair<int, itype_id>> &get_likely_rewards() const;
         bool has_generic_rewards() const;
+        void register_kill_needed();
         /**
          * Whether the mission is assigned to a player character. If not, the mission is free and
          * can be assigned.
@@ -473,5 +482,4 @@ template<>
 struct enum_traits<mission::mission_status> {
     static constexpr mission::mission_status last = mission::mission_status::num_mission_status;
 };
-
 

@@ -1,0 +1,21 @@
+menu_links:
+  - text: Github Repository
+    href: https://github.com/cataclysmbn/Cataclysm-BN
+    icon: github-logo
+  - text: BN Item Guide
+    href: https://cataclysmbn-guide.com/
+    icon: book
+  - text: Discord
+    href: https://discord.gg/XW7XhXuZ89
+    icon: discord-logo
+  - text: Reddit
+    href: https://www.reddit.com/r/cataclysmbn/
+    icon: reddit-logo
+
+repo:
+  url: https://github.com/cataclysmbn/Cataclysm-BN
+  path: /docs
+
+extra_head: |
+  <link rel="stylesheet" href="/prism.css">
+  <script type="module" src="/redirect.js"></script>

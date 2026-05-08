@@ -690,6 +690,7 @@ ifeq ($(TILES), 1)
   endif
 
   DEFINES += -DTILES
+  DEFINES += -DDYNAMIC_ATLAS
 
   ifeq ($(TARGETSYSTEM),WINDOWS)
     ifndef DYNAMIC_LINKING
@@ -994,20 +995,21 @@ install: version $(TARGET)
 	mkdir -p $(DATA_PREFIX)
 	mkdir -p $(BIN_PREFIX)
 	install --mode=755 $(TARGET) $(BIN_PREFIX)
-	cp -R --no-preserve=ownership data/font $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/json $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/mods $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/names $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/raw $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/motd $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/credits $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/title $(DATA_PREFIX)
-	cp -R --no-preserve=ownership data/help $(DATA_PREFIX)
+	cp -R data/font $(DATA_PREFIX)
+	cp -R data/json $(DATA_PREFIX)
+	cp -R data/mods $(DATA_PREFIX)
+	cp -R data/names $(DATA_PREFIX)
+	cp -R data/raw $(DATA_PREFIX)
+	cp -R data/motd $(DATA_PREFIX)
+	cp -R data/credits $(DATA_PREFIX)
+	cp -R data/title $(DATA_PREFIX)
+	cp -R data/help $(DATA_PREFIX)
+	cp -R data/lua $(DATA_PREFIX)
 ifeq ($(TILES), 1)
-	cp -R --no-preserve=ownership gfx $(DATA_PREFIX)
+	cp -R gfx $(DATA_PREFIX)
 endif
 ifeq ($(SOUND), 1)
-	cp -R --no-preserve=ownership data/sound $(DATA_PREFIX)
+	cp -R data/sound $(DATA_PREFIX)
 endif
 	install --mode=644 data/changelog.txt data/cataicon.ico \
                    LICENSE.txt LICENSE-OFL-Terminus-Font.txt -t $(DATA_PREFIX)
@@ -1034,6 +1036,7 @@ install: version $(TARGET)
 	cp -R --no-preserve=ownership data/credits $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/title $(DATA_PREFIX)
 	cp -R --no-preserve=ownership data/help $(DATA_PREFIX)
+	cp -R --no-preserve=ownership data/lua $(DATA_PREFIX)
 ifeq ($(TILES), 1)
 	cp -R --no-preserve=ownership gfx $(DATA_PREFIX)
 endif
@@ -1089,6 +1092,7 @@ endif
 	cp -R data/credits $(APPDATADIR)
 	cp -R data/title $(APPDATADIR)
 	cp -R data/help $(APPDATADIR)
+	cp -R data/lua $(APPDATADIR)
 ifdef LANGUAGES
 	lang/compile_mo.sh $(LANGUAGES)
 	mkdir -p $(APPRESOURCESDIR)/lang/mo/
@@ -1173,8 +1177,10 @@ endif
 
 style-json: json_blacklist $(JSON_FORMATTER_BIN)
 ifndef CROSS
-	find data -name "*.json" -print0 | grep -v -z -F -f json_blacklist | \
-	  xargs -0 -L 1 $(JSON_FORMATTER_BIN)
+	find data -name "*.json" | grep -F -v -f json_blacklist | \
+	while IFS="" read -r file; do \
+		[ -f "$$file" ] && $(JSON_FORMATTER_BIN) "$$file"; \
+	done
 else
 	@echo Cannot run json formatter in cross compiles.
 endif

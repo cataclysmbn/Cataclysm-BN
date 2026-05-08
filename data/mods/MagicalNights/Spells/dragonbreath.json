@@ -19,6 +19,7 @@
     "max_field_intensity": 4,
     "field_chance": 2,
     "field_intensity_increment": 0.1,
+    "scale_int": true,
     "flags": [ "VERBAL", "NO_HANDS", "NO_LEGS" ]
   }
 ]

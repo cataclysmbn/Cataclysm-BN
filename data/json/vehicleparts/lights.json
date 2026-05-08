@@ -23,7 +23,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "AISLE_LIGHT", "ENABLED_DRAINS_EPOWER", "FOLDABLE" ]
+    "flags": [ "AISLE_LIGHT", "ENABLED_DRAINS_EPOWER", "FOLDABLE", "SHOCK_RESISTANT" ]
   },
   {
     "id": "atomic_lamp",
@@ -48,7 +48,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "ATOMIC_LIGHT", "LEAK_DAM", "RADIOACTIVE", "FOLDABLE" ]
+    "flags": [ "ATOMIC_LIGHT", "LEAK_DAM", "RADIOACTIVE", "FOLDABLE", "SHOCK_RESISTANT" ]
   },
   {
     "id": "atomic_light",
@@ -90,7 +90,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "CIRCLE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER" ]
+    "flags": [ "CIRCLE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ]
   },
   {
     "id": "directed_floodlight",
@@ -102,7 +102,7 @@
     "description": "A very bright, directed light that illuminates a half-circular area outside the vehicle when turned on.  During installation, you can choose what direction to point the light.",
     "//": "8000lm 100W LED floodlight",
     "epower": -100,
-    "flags": [ "HALF_CIRCLE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER" ]
+    "flags": [ "HALF_CIRCLE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ]
   },
   {
     "id": "headlight",
@@ -129,7 +129,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "CONE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER" ]
+    "flags": [ "CONE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ]
   },
   {
     "id": "motorcycle_headlight",
@@ -156,7 +156,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "CONE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER" ]
+    "flags": [ "CONE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ]
   },
   {
     "id": "wide_headlight",
@@ -218,7 +218,7 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "CIRCLE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER" ],
+    "flags": [ "CIRCLE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ],
     "damage_reduction": { "all": 6 }
   },
   {
@@ -269,7 +269,7 @@
         "using": [ [ "soldering_standard", 5 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "AISLE", "BOARDABLE", "AISLE_LIGHT", "ENABLED_DRAINS_EPOWER" ]
+    "flags": [ "AISLE", "BOARDABLE", "AISLE_LIGHT", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ]
   },
   {
     "id": "lit_aisle_vertical",

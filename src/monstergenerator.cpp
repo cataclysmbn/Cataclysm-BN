@@ -76,6 +76,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_KEENNOSE: return "KEENNOSE";
         case MF_STUMBLES: return "STUMBLES";
         case MF_WARM: return "WARM";
+        case MF_NEMESIS: return "NEMESIS";
         case MF_NOHEAD: return "NOHEAD";
         case MF_HARDTOSHOOT: return "HARDTOSHOOT";
         case MF_GRABS: return "GRABS";
@@ -125,6 +126,7 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_FAT: return "FAT";
         case MF_CONSOLE_DESPAWN: return "CONSOLE_DESPAWN";
         case MF_IMMOBILE: return "IMMOBILE";
+        case MF_STATIONARY: return "STATIONARY";
         case MF_ID_CARD_DESPAWN: return "ID_CARD_DESPAWN";
         case MF_RIDEABLE_MECH: return "RIDEABLE_MECH";
         case MF_CARD_OVERRIDE: return "CARD_OVERRIDE";
@@ -184,6 +186,27 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_LOUDMOVES: return "LOUDMOVES";
         case MF_DROPS_AMMO: return "DROPS_AMMO";
         case MF_CAN_BE_ORDERED: return "CAN_BE_ORDERED";
+        case MF_SMALL_HEAD: return "SMALL_HEAD";
+        case MF_TINY_HEAD: return "TINY_HEAD";
+        case MF_NO_HEAD_BONUS_CRIT: return "NO_HEAD_BONUS_CRIT";
+        case MF_HEAD_BONUS_MAX_CRIT_1: return "HEAD_BONUS_CRIT_1";
+        case MF_HEAD_BONUS_MAX_CRIT_2: return "HEAD_BONUS_CRIT_2";
+        case MF_TORSO_BONUS_MAX_CRIT_1: return "TORSO_BONUS_CRIT_1";
+        case MF_TORSO_BONUS_MAX_CRIT_2: return "TORSO_BONUS_CRIT_2";
+        case MF_PROJECTILE_RESISTANT_1: return "PROJECTILE_RESISTANT_1";
+        case MF_PROJECTILE_RESISTANT_2: return "PROJECTILE_RESISTANT_2";
+        case MF_PROJECTILE_RESISTANT_3: return "PROJECTILE_RESISTANT_3";
+        case MF_PROJECTILE_RESISTANT_4: return "PROJECTILE_RESISTANT_4";
+        case MF_VOLATILE: return "VOLATILE";
+        case MF_CANT_CLONE: return "CANT_CLONE";
+        case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
+        case MF_MOUNTABLE_LADDER: return "MOUNTABLE_LADDER";
+        case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
+        case MF_MOUNTABLE_DOORS: return "MOUNTABLE_DOORS";
+        case MF_MOUNTABLE_LEDGE: return "MOUNTABLE_LEDGE";        
+        case MF_FACTION_MEMORY: return "FACTION_MEMORY";
+        case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
+        case MF_CANT_TRAIN: return "CANT_TRAIN";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
@@ -699,6 +722,7 @@ void pet_food_data::load( const JsonObject &jo )
     mandatory( jo, was_loaded, "food", food );
     optional( jo, was_loaded, "feed", feed );
     optional( jo, was_loaded, "pet", pet );
+    optional( jo, was_loaded, "tamer_traits", tamer_traits );
 }
 
 void pet_food_data::deserialize( JsonIn &jsin )
@@ -776,6 +800,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     assign( jo, "vision_day", vision_day, strict, 0 );
     assign( jo, "vision_night", vision_night, strict, 0 );
+    optional( jo, was_loaded, "preferred_z", preferred_z );
 
     optional( jo, was_loaded, "regenerates", regenerates, 0 );
     optional( jo, was_loaded, "regenerates_in_dark", regenerates_in_dark, false );
@@ -1227,7 +1252,7 @@ void species_type::load( const JsonObject &jo, const std::string & )
     }
     optional( jo, was_loaded, "name", name, no_translation( id.c_str() ) );
     optional( jo, was_loaded, "description", description );
-    optional( jo, was_loaded, "footsteps", footsteps, to_translation( "footsteps." ) );
+    optional( jo, was_loaded, "footsteps", footsteps );
     const auto flag_reader = enum_flags_reader<m_flag> { "monster flag" };
     optional( jo, was_loaded, "flags", flags, flag_reader );
 
@@ -1325,6 +1350,8 @@ mtype_special_attack MonsterGenerator::create_actor( const JsonObject &obj,
         new_attack = std::make_unique<gun_actor>();
     } else if( attack_type == "spell" ) {
         new_attack = std::make_unique<mon_spellcasting_actor>();
+    } else if( attack_type == "deployer" ) {
+        new_attack = std::make_unique<deployer_actor>();
     } else {
         obj.throw_error( "unknown monster attack", "attack_type" );
     }

@@ -51,7 +51,16 @@
           { "id": "t_treetop_season_autumn", "fg": 31 },
           { "id": "t_treetop_season_winter", "fg": 32 },
           { "id": "t_treetop_evergreen", "fg": 33 },
-          { "id": "t_treetop_dead", "fg": 34 }
+          { "id": "t_treetop_dead", "fg": 34 },
+          { "id": "mon_zombie_scientist_evolved_emp", "fg": 35 },
+          { "id": "mon_zombie_seaweed_brute", "fg": 36 },
+          { "id": "mon_zombie_technician_evolved_iron2", "fg": 37 },
+          { "id": [ "t_grass_tall_season_spring", "t_grass_tall_season_summer" ], "fg": 38 },
+          { "id": "t_grass_tall_season_autumn", "fg": 39 },
+          { "id": "t_grass_tall_season_winter", "fg": 40 },
+          { "id": "overlay_worn_helmet_conical", "fg": 41 },
+          { "id": "mon_triffid_radiant_boss", "fg": 42 },
+          { "id": "corpse_mon_triffid_radiant_boss", "fg": 43 }
         ],
         "sprite_width": 64,
         "sprite_height": 80,

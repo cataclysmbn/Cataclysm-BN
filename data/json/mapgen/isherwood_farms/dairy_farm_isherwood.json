@@ -96,12 +96,12 @@
         "D": { "item": "clothing_outdoor_set", "chance": 30, "repeat": [ 1, 2 ] },
         "s": [
           { "item": "SUS_dishes", "chance": 20, "repeat": [ 2, 4 ] },
-          { "item": "SUS_silverware", "chance": 20, "repeat": [ 2, 4 ] },
+          { "item": "SUS_kitchen_misc", "chance": 20, "repeat": [ 2, 4 ] },
           { "item": "SUS_knife_drawer", "chance": 20 }
         ],
         "c": [
           { "item": "SUS_cookware", "chance": 20, "repeat": [ 2, 4 ] },
-          { "item": "SUS_utensils", "chance": 20, "repeat": [ 2, 4 ] }
+          { "item": "SUS_kitchen_misc", "chance": 20, "repeat": [ 2, 4 ] }
         ],
         "t": { "item": "trash", "chance": 20, "repeat": [ 2, 4 ] }
       },

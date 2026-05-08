@@ -280,7 +280,7 @@
     "material": [ "flesh" ],
     "volume": "250 ml",
     "charges": 4,
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 4,
     "vitamins": [ [ "meat_allergen", 1 ] ]
   },
@@ -1049,7 +1049,7 @@
     "description": "Low-sodium preserved meat.  It was boiled and canned.  Contains most of the nutrition, but little of the savor of cooked meat.",
     "price": "250 cent",
     "price_postapoc": "250 cent",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 2
   },
   {
@@ -1288,6 +1288,7 @@
     "price": "9 USD",
     "price_postapoc": "3 USD",
     "delete": { "flags": [ "NUTRIENT_OVERRIDE" ] },
+    "extend": { "flags": [ "SMOKED" ] },
     "material": [ "flesh" ],
     "primary_material": "cured_meat",
     "volume": "125 ml",
@@ -1414,6 +1415,7 @@
     "volume": "125 ml",
     "fun": -4,
     "delete": { "flags": [ "RAW" ] },
+    "extend": { "flags": [ "SMOKED" ] },
     "vitamins": [ [ "meat_allergen", 1 ] ]
   },
   {
@@ -1471,7 +1473,7 @@
     "spoils_in": "3 day",
     "calories": 206,
     "vitamins": [ [ "vitC", 0 ], [ "calcium", 1 ], [ "iron", 100 ], [ "vitB", 0 ] ],
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ]
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ]
   },
   {
     "id": "bibimbap",
@@ -1612,5 +1614,25 @@
     "fun": 5,
     "looks_like": "meat_cooked",
     "vitamins": [ [ "meat_allergen", 1 ] ]
+  },
+  {
+    "id": "assorted_bugs_fried",
+    "type": "COMESTIBLE",
+    "copy-from": "assorted_bugs",
+    "name": { "str_sp": "fried bugs" },
+    "description": "A crispy, crunchy mix of fried bugs.  Roasted and seasoned, they almost taste like a snack food if you can get over what you're eating.",
+    "calories": 45,
+    "fun": 1,
+    "flags": [ "EATEN_HOT" ]
+  },
+  {
+    "id": "clam_fried",
+    "type": "COMESTIBLE",
+    "copy-from": "clam",
+    "name": { "str_sp": "fried clam" },
+    "description": "Crispy fried clam strips, golden-brown and delicious.  A New England specialty.",
+    "calories": 55,
+    "fun": 8,
+    "flags": [ "EATEN_HOT" ]
   }
 ]

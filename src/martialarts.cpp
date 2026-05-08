@@ -793,6 +793,10 @@ float ma_buff::damage_mult( const Character &u, damage_type dt ) const
 {
     return bonuses.get_mult( u, affected_stat::DAMAGE, dt );
 }
+float ma_buff::tg_armor_mult( const Character &u, damage_type dt ) const
+{
+    return bonuses.get_mult( u, affected_stat::TARGET_ARMOR_MULTIPLIER, dt );
+}
 bool ma_buff::is_throw_immune() const
 {
     return throw_immune;
@@ -1241,6 +1245,17 @@ int Character::mabuff_arpen_bonus( damage_type type ) const
     } );
     return ret;
 }
+float Character::mabuff_tg_armor_mult( damage_type type ) const
+{
+    float ret = 1.f;
+    accumulate_ma_buff_effects( *effects, [&ret, type, this]( const ma_buff & b, const effect & d ) {
+        // This is correct, so that a 20% buff (1.2) plus a 20% buff (1.2)
+        // becomes 1.4 instead of 2.4 (which would be a 240% buff)
+        ret *= d.get_intensity() * ( b.tg_armor_mult( *this, type ) - 1 ) + 1;
+    } );
+    return ret;
+}
+
 int Character::mabuff_armor_bonus( damage_type type ) const
 {
     int ret = 0;

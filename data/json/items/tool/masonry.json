@@ -19,7 +19,8 @@
     "charges_per_use": 75,
     "max_charges": 450,
     "techniques": [ "SWEEP" ],
-    "qualities": [ [ "AXE", 3 ] ],
+    "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -29,7 +30,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "FRAGILE_MELEE" ]
+    "flags": [ "NONCONDUCTIVE", "POWERED", "FRAGILE_MELEE", "COMBAT_NPC_USE" ]
   },
   {
     "id": "masonrysaw_on",
@@ -47,7 +48,7 @@
     "qualities": [ [ "BUTCHER", -100 ] ],
     "revert_msg": "Your masonry saw goes quiet",
     "use_action": { "type": "transform", "target": "masonrysaw_off", "msg": "You turn off the masonry saw." },
-    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE" ]
+    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "FRAGILE_MELEE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
   },
   {
     "id": "grinder_blade",

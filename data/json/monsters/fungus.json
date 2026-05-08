@@ -483,11 +483,7 @@
     "vision_night": 5,
     "harvest": "zombie",
     "special_attacks": [ [ "scratch", 15 ], [ "FUNGUS", 200 ] ],
-    "death_drops": {
-      "subtype": "collection",
-      "groups": [ [ "default_zombie_clothes", 100 ], [ "child_items", 65 ] ],
-      "//": "cloth as any other zombie (always), additional items from child_items (sometimes)"
-    },
+    "death_drops": "default_zombie_children_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_child_scorched",
     "flags": [ "SEES", "SMELLS", "STUMBLES", "WARM", "BASHES", "POISON", "NO_BREATHE" ],

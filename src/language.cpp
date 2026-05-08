@@ -235,7 +235,7 @@ static std::vector<language_info> load_languages( const std::string &filepath )
 
     for( language_info &info : ret ) {
         for( const std::string &g : info.genders ) {
-            if( std::ranges::find( all_genders, g ) == all_genders.end() ) {
+            if( !std::ranges::contains( all_genders, g ) ) {
                 debugmsg( "Unexpected gender '%s' in grammatical gender list for language '%d'",
                           g, info.id );
             }
@@ -555,10 +555,10 @@ void translatable_mod_info::update()
     language_version = detail::get_current_language_version();
 
     // First, try base game's translation file (for in-repo mods)
-    name_tr = _( name_raw );
+    name_tr = _( name_raw_ );
     description_tr = _( description_raw );
 
-    if( name_tr != name_raw || description_tr != description_raw ) {
+    if( name_tr != name_raw_ || description_tr != description_raw ) {
         return;
     }
 
@@ -570,6 +570,6 @@ void translatable_mod_info::update()
     }
     trans_library lib = trans_library::create( std::move( list ) );
 
-    name_tr = lib.get( name_raw.c_str() );
+    name_tr = lib.get( name_raw_.c_str() );
     description_tr = lib.get( description_raw.c_str() );
 }

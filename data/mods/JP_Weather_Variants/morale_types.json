@@ -1,0 +1,17 @@
+[
+  {
+    "id": "morale_weather_rainbow",
+    "type": "morale_type",
+    "text": "Saw a rainbow"
+  },
+  {
+    "id": "morale_weather_sundog",
+    "type": "morale_type",
+    "text": "Saw a sundog"
+  },
+  {
+    "id": "morale_weather_geomagnetic_lights",
+    "type": "morale_type",
+    "text": "Saw northern lights"
+  }
+]

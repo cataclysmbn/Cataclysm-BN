@@ -22,7 +22,7 @@
     "name": "integral plasma ejector",
     "skill": "rifle",
     "modes": [ [ "DEFAULT", "semi-auto", 1 ], [ "BURST", "2 rd.", 2 ] ],
-    "ammo_effects": [ "PLASMA", "EXPLOSIVE", "STREAM_BIG", "WIDE", "FLAME" ]
+    "ammo_effects": [ "PLASMA", "EXPLOSIVE", "STREAM_BIG", "WIDE", "FLAME", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "id": "railgun",

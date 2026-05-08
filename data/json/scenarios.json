@@ -28,28 +28,40 @@
       "sloc_church",
       "sloc_cemetery"
     ],
+    "professions": [ "neighborhood_watch" ],
+    "add_professions": true,
     "start_name": "In Town",
     "flags": [ "CITY_START" ]
   },
   {
     "type": "scenario",
-    "id": "largebuilding",
-    "name": "Large Building",
-    "points": -2,
-    "description": "Whether due to stubbornness, ignorance, or just plain bad luck, you missed the evacuation, and are stuck in a large building full of the risen dead.",
+    "id": "lakesurface",
+    "name": "Pond Scum",
+    "points": 1,
+    "description": "Before the cataclysm, you spent your days exploring the local area's lakes and waterways.",
     "allowed_locs": [
-      "sloc_mall_loading_area",
-      "sloc_mall_loading_area_roof",
-      "sloc_mall_food_court",
-      "sloc_apartments_rooftop",
-      "sloc_apartments_house",
-      "sloc_hospital",
-      "sloc_bastion_fort",
-      "sloc_convention_center_rooftop"
+      "sloc_marina",
+      "sloc_lighthouse_ground",
+      "sloc_freshwater_research_station",
+      "sloc_cabin_lake",
+      "sloc_deserted_island"
     ],
-    "start_name": "In Large Building",
-    "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
-    "flags": [ "CITY_START", "LONE_START" ]
+    "professions": [
+      "prof_pirate",
+      "prof_pirate_captain",
+      "smuggler",
+      "castaway",
+      "professional_diver",
+      "underwater_welder",
+      "bionic_diver",
+      "fisher",
+      "davy_jones",
+      "specops_frogman",
+      "lagoon_creature",
+      "sharkboy"
+    ],
+    "start_name": "Lake Surface",
+    "flags": [ "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -72,8 +84,21 @@
       "sloc_cemetery",
       "sloc_fire_station",
       "sloc_police",
-      "sloc_town_hall"
+      "sloc_town_hall",
+      "sloc_mall_loading_area",
+      "sloc_mall_loading_area_roof",
+      "sloc_mall_food_court",
+      "sloc_apartments_rooftop",
+      "sloc_apartments_house",
+      "sloc_hospital",
+      "sloc_bastion_fort",
+      "sloc_marina",
+      "sloc_convention_center_rooftop",
+      "sloc_school",
+      "sloc_mansion"
     ],
+    "professions": [ "neighborhood_watch" ],
+    "add_professions": true,
     "start_name": "In Town",
     "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
     "flags": [ "CITY_START", "LONE_START" ]
@@ -85,18 +110,36 @@
     "points": 1,
     "description": "You've found some distant safe place, devoid of the living dead.  Looks like you're on your own...",
     "allowed_locs": [
-      "sloc_refugee_center",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
       "sloc_cabin",
       "sloc_lmoe",
       "sloc_horse_ranch",
-      "sloc_lighthouse_ground",
       "sloc_cabin_lake",
-      "sloc_freshwater_research_station"
+      "sloc_lodge_ground",
+      "sloc_freshwater_research_station",
+      "sloc_marina"
     ],
     "start_name": "Safe Building",
     "flags": [ "LONE_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "survivor_holdout",
+    "name": "Survivor Holdout",
+    "points": 1,
+    "description": "A few days after fleeing the chaos of the cities, you've finally found a place still inhabited by the living.",
+    "allowed_locs": [
+      "sloc_refugee_center",
+      "sloc_farm_isherwood",
+      "sloc_cabin_lapin",
+      "sloc_occupied_chemlab",
+      "sloc_occupied_scrapyard",
+      "sloc_occupied_lumbermill",
+      "sloc_hub_01"
+    ],
+    "start_name": "Inhabited Refuge",
+    "flags": [ "CITY_START", "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -105,6 +148,8 @@
     "flags": [ "INFECTED", "CITY_START" ],
     "id": "infected",
     "points": -4,
+    "professions": [ "neighborhood_watch" ],
+    "add_professions": true,
     "start_name": "In Town",
     "allowed_locs": [
       "sloc_shelter_vandalized",
@@ -128,11 +173,46 @@
   },
   {
     "type": "scenario",
+    "id": "hunted_start",
+    "name": "Challenge - Hunted",
+    "points": -2,
+    "forced_traits": [ "HAS_NEMESIS" ],
+    "description": "Since the start of the Cataclysm, something has been hunting you relentlessly.  You can outrun it, but it always seems to find you eventually.  The only escape is for one of you to die.",
+    "allowed_locs": [
+      "sloc_house",
+      "sloc_house_boarded",
+      "sloc_school",
+      "sloc_grocery_store",
+      "sloc_gun_store",
+      "sloc_garage",
+      "sloc_pawn_shop",
+      "sloc_bank",
+      "sloc_military_surplus",
+      "sloc_furniture_store",
+      "sloc_library",
+      "sloc_bookstore",
+      "sloc_zoo_giftshop",
+      "sloc_zoo_cages",
+      "sloc_golfcourse_mid_course",
+      "sloc_golfcourse_clubhouse",
+      "sloc_church",
+      "sloc_cemetery",
+      "sloc_apartments_rooftop",
+      "sloc_hospital"
+    ],
+    "start_name": "In Town",
+    "flags": [ "CHALLENGE", "LONE_START" ],
+    "missions": [ "MISSION_KILL_NEMESIS" ]
+  },
+  {
+    "type": "scenario",
     "name": "Burning Building",
     "description": "The building you had chosen to reside in has suddenly caught fire!  You might want to leave.",
     "flags": [ "FIRE_START", "CITY_START" ],
     "id": "fire",
     "points": -2,
+    "professions": [ "neighborhood_watch" ],
+    "add_professions": true,
     "start_name": "In Town",
     "allowed_locs": [
       "sloc_house",
@@ -183,21 +263,21 @@
       "prof_fursuiter",
       "clown",
       "broken_cyborg",
-      "true_foodperson"
+      "true_foodperson",
+      "elite_specops"
     ],
     "flags": [ "FIRE_START", "INFECTED", "BAD_DAY", "CHALLENGE", "CITY_START" ]
   },
   {
     "type": "scenario",
     "id": "medieval",
-    "name": "Challenge - Medieval Peasant",
-    "points": -7,
-    "description": "Som nigromancie hath brought yow hidder!  Ye have only the hoose on youre legges and the knyf at youre syde and youre prayeres to Marie moder of God.",
+    "name": "Challenge - Temporal Anomaly",
+    "points": 0,
+    "description": "A temporal distortion has hurled you into this collapsing world. You arrive carrying only the few items that mattered most to you - the things tied to who you are, or who you were meant to become.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_forest", "sloc_field" ],
-    "professions": [ "churl" ],
-    "forced_traits": [ "ILLITERATE", "ANTIJUNK", "STRONGSTOMACH", "UNSTYLISH", "SPIRITUAL" ],
-    "forbidden_traits": [ "FASTREADER", "SLOWREADER" ],
+    "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
+    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder" ],
+    "forbids_bionics": true,
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
   {
@@ -234,6 +314,7 @@
       "prof_feral_survivalist",
       "prof_feral_soldier",
       "prof_feral_cyborg",
+      "prof_feral_mutant",
       "prof_feral_maid",
       "prof_feral_socialite",
       "prof_feral_armored",
@@ -262,7 +343,8 @@
       "cykotic",
       "convict_political",
       "homeless",
-      "convict_ratman"
+      "convict_ratman",
+      "mutant_escape_team_lab"
     ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
     "traits": [
@@ -314,10 +396,12 @@
       "WINGS_BIRD",
       "WINGS_INSECT",
       "WINGS_BAT",
+      "TAIL_SNAKE",
       "SMALL",
       "LARGE"
     ],
-    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
+    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
+    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
   },
   {
     "type": "scenario",
@@ -326,9 +410,30 @@
     "points": -8,
     "description": "You were deemed non-essential and made to stay behind during the lab evacuation.  Find a way to escape or starve to death.",
     "start_name": "Locked Lab",
-    "professions": [ "labtech", "bionic_labtech", "security", "medic", "bionic_installer", "bio_medic", "bionic_mentat", "bionic_spy" ],
+    "professions": [
+      "labtech",
+      "bionic_labtech",
+      "security",
+      "medic",
+      "bionic_installer",
+      "bio_medic",
+      "bionic_mentat",
+      "bionic_spy",
+      "bio_specops",
+      "military_saboteur",
+      "hacker"
+    ],
     "allowed_locs": [ "sloc_lab_random", "sloc_lab_escape_cells", "sloc_lab_finale", "sloc_ice_lab_stairs", "sloc_ice_lab_finale" ],
-    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ]
+    "flags": [ "CHALLENGE", "CITY_START", "LONE_START" ],
+    "bionics": [
+      "bio_atomic_battery",
+      "bio_surgical_razor",
+      "bio_metabolics",
+      "bio_torsionratchet",
+      "bio_tools",
+      "bio_memory",
+      "bio_geiger"
+    ]
   },
   {
     "type": "scenario",
@@ -349,12 +454,16 @@
     "allowed_locs": [
       "sloc_field",
       "sloc_forest",
+      "sloc_swamp",
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
+      "sloc_airport",
       "sloc_campsite",
       "sloc_campground",
-      "sloc_bastion_fort"
+      "sloc_bastion_fort",
+      "sloc_marina"
     ],
     "start_name": "Outside Town",
     "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
@@ -370,7 +479,9 @@
       "waste_ranger",
       "player_bandit",
       "monster_hunter",
-      "monster_slayer"
+      "monster_slayer",
+      "gyro_pilot",
+      "bird_pilot"
     ]
   },
   {
@@ -382,14 +493,18 @@
     "allowed_locs": [
       "sloc_field",
       "sloc_forest",
+      "sloc_swamp",
       "sloc_cabin",
       "sloc_hermit_shack",
       "sloc_farm_survivalist",
+      "sloc_lodge_ground",
+      "sloc_airport",
       "sloc_campsite",
       "sloc_campground",
       "sloc_cabin_lake",
       "sloc_lighthouse_ground",
-      "sloc_bastion_fort"
+      "sloc_bastion_fort",
+      "sloc_marina"
     ],
     "start_name": "Outside Town",
     "flags": [ "SUM_ADV_START", "LONE_START" ],
@@ -404,7 +519,9 @@
       "waste_ranger",
       "player_bandit",
       "monster_hunter",
-      "monster_slayer"
+      "monster_slayer",
+      "gyro_pilot",
+      "bird_pilot"
     ]
   },
   {
@@ -415,7 +532,7 @@
     "description": "When the apocalypse broke out, you were funneled into the nearest shelter.  Here you have lived, never leaving, lest the unknowns of the outside world hurt you.  Supplies are running low, and for the first time since the Cataclysm, you will be forced to face the outside world.",
     "allowed_locs": [ "sloc_lmoe_empty", "sloc_shelter" ],
     "start_name": "Enclosed Shelter",
-    "flags": [ "WIN_START", "LONE_START" ],
+    "flags": [ "WIN_START", "LONE_START", "CITY_START" ],
     "professions": [
       "sheltered_militia",
       "sheltered_survivor",
@@ -426,7 +543,8 @@
       "lumberjack",
       "lawyer",
       "politician",
-      "unemployed"
+      "unemployed",
+      "neighborhood_watch"
     ]
   },
   {
@@ -458,7 +576,8 @@
       "convict_political",
       "convict_ratman",
       "k9_cop",
-      "cop"
+      "cop",
+      "convict_escape_team"
     ],
     "flags": [ "CITY_START", "LONE_START" ]
   },
@@ -478,7 +597,8 @@
       "convict_political",
       "convict_ratman",
       "k9_cop",
-      "cop"
+      "cop",
+      "convict_escape_team"
     ],
     "flags": [ "LONE_START", "CHALLENGE", "OUTDOOR" ]
   },
@@ -490,7 +610,7 @@
     "description": "You find yourself in the most alien place you've ever seen.  The hot humid air and the organic aspect of the structure makes you feel like you're trapped inside a giant creature.  Whatever it is, you need to get out of here before They find you.",
     "allowed_locs": [ "sloc_mi-go_camp" ],
     "start_name": "Mi-Go Camp",
-    "professions": [ "captive", "rescuer", "monster_hunter" ],
+    "professions": [ "captive", "migo_escapee", "migo_experiment", "rescuer", "monster_hunter", "escape_team_migo" ],
     "flags": [ "LONE_START", "CHALLENGE", "WIN_START" ]
   },
   {
@@ -500,7 +620,7 @@
     "points": 2,
     "description": "Since birth, your sole purpose in life has been the advancement of genetic science, willingly or not.  Once the Cataclysm struck, you left the lab, and wandered aimlessly, ending up in a forest.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_forest", "sloc_field" ],
+    "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
     "professions": [ "unemployed", "mutant_patient", "mutant_volunteer", "broken_cyborg", "faulty_bionic", "cykotic", "convict_political" ],
     "traits": [
       "ELFAEYES",
@@ -551,10 +671,12 @@
       "WINGS_BIRD",
       "WINGS_INSECT",
       "WINGS_BAT",
+      "TAIL_SNAKE",
       "SMALL",
       "LARGE"
     ],
-    "flags": [ "LONE_START" ]
+    "flags": [ "LONE_START" ],
+    "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ]
   },
   {
     "type": "scenario",
@@ -587,7 +709,7 @@
     "points": 0,
     "description": "You find yourself amongst trees.  The screaming and the moaning is fainter this far from civilization, but you'd better know what you're doing out here.",
     "start_name": "Wilderness",
-    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_campsite", "sloc_campground", "sloc_deserted_island" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp", "sloc_campsite", "sloc_campground", "sloc_deserted_island" ],
     "flags": [ "LONE_START" ]
   },
   {
@@ -597,7 +719,7 @@
     "points": -5,
     "description": "While being transported to a different military base, the pilot lost control of the helicopter and crashed in the middle of nowhere.  Hopefully some of the soldiers that were with you also survived the accident.",
     "start_name": "Crash site",
-    "allowed_locs": [ "sloc_field", "sloc_forest" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp" ],
     "professions": [
       "soldier",
       "mil_auto_rifleman",
@@ -605,18 +727,38 @@
       "mil_marksman",
       "prof_combat_engineer",
       "specops",
+      "specops_frogman",
       "power_armor_soldier",
+      "lifter_mech_pilot",
+      "combat_mech_pilot",
+      "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
       "assassin",
       "politician",
-      "mili_pilot"
+      "mili_pilot",
+      "fighter_pilot",
+      "major-general"
     ],
     "map_extra": "mx_helicopter",
-    "flags": [ "HELI_CRASH", "LONE_START" ]
+    "flags": [ "HELI_CRASH", "LONE_START" ],
+    "bionics": [
+      "bio_reactor",
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
   },
   {
     "type": "scenario",
@@ -633,11 +775,13 @@
       "gangster",
       "prof_ninja",
       "specops",
+      "specops_frogman",
       "bionic_spy",
       "bionic_hitman",
       "bio_gangster",
       "razorgirl",
-      "bio_sniper"
+      "bio_sniper",
+      "bio_specops"
     ],
     "flags": [ "CITY_START" ],
     "missions": [ "MISSION_ASSASSINATION" ]
@@ -650,7 +794,17 @@
     "description": "You were participating in a mining operation when you found… something.  You're not sure what, but it sure is dark down here.",
     "start_name": "Bottom of a mine",
     "allowed_locs": [ "sloc_mine_finale" ],
-    "professions": [ "miner", "labtech", "bionic_labtech", "security", "bionic_worker", "archaeologist", "drone_op", "demolition_expert" ],
+    "professions": [
+      "miner",
+      "labtech",
+      "bionic_labtech",
+      "security",
+      "bionic_worker",
+      "archaeologist",
+      "drone_op",
+      "demolition_expert",
+      "lifter_mech_pilot"
+    ],
     "flags": [ "CITY_START", "LONE_START" ]
   },
   {
@@ -660,10 +814,41 @@
     "points": 2,
     "description": "Once it became clear that the world was ending you took to the skies, hoping that your flying skills could lead you to safety.  With no safe landing zones, knowing fuel will soon be a concern, you made a quick landing to plan your next move.",
     "start_name": "Emergency Landing Site",
-    "allowed_locs": [ "sloc_field", "sloc_forest" ],
+    "allowed_locs": [ "sloc_field", "sloc_forest", "sloc_swamp" ],
     "missions": [ "MISSION_HELICOPTER_REFUEL" ],
-    "professions": [ "heli_pilot_scenario", "gyro_pilot", "mili_pilot_blackhawk" ],
+    "professions": [
+      "heli_pilot_scenario",
+      "blimp_pilot_scenario",
+      "plane_pilot_scenario",
+      "medic_pilot",
+      "gyro_pilot",
+      "bird_pilot",
+      "mili_pilot_blackhawk",
+      "fighter_pilot_f35",
+      "airship_pilot",
+      "airboat_pilot",
+      "aircanoe_pilot"
+    ],
     "flags": [ "LONE_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "basement_dweller",
+    "name": "Basement Dweller",
+    "points": 1,
+    "description": "You were happiest tucked away below street level, tinkering and hiding in your basement.",
+    "start_name": "Basement Hideout",
+    "allowed_locs": [
+      "sloc_basement_bionic",
+      "sloc_basement_game",
+      "sloc_basement_chem",
+      "sloc_basement_hidden_lab",
+      "sloc_basement_meth",
+      "sloc_basement_messed",
+      "sloc_basement_survival",
+      "sloc_basement_weed"
+    ],
+    "flags": [ "CITY_START", "LONE_START" ]
   },
   {
     "type": "scenario",
@@ -689,6 +874,18 @@
       "bionic_prepper",
       "bionic_installer",
       "bionic_labtech"
+    ],
+    "bionics": [
+      "bio_atomic_battery",
+      "bn_bio_solar",
+      "bio_climate",
+      "bio_evap",
+      "bio_metabolics",
+      "bio_recycler",
+      "bio_shock_absorber",
+      "bio_tools",
+      "bio_torsionratchet",
+      "bio_weight"
     ]
   },
   {
@@ -707,15 +904,35 @@
       "mil_marksman",
       "prof_combat_engineer",
       "specops",
+      "specops_frogman",
       "power_armor_soldier",
+      "lifter_mech_pilot",
+      "combat_mech_pilot",
+      "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "labtech",
       "bionic_labtech",
       "medic",
-      "mili_pilot"
+      "mili_pilot",
+      "fighter_pilot",
+      "major-general"
     ],
-    "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ]
+    "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
+    "bionics": [
+      "bio_reactor",
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
   },
   {
     "type": "scenario",
@@ -758,13 +975,71 @@
       "mil_grenadier",
       "mil_marksman",
       "specops",
+      "specops_frogman",
       "power_armor_soldier",
+      "lifter_mech_pilot",
+      "combat_mech_pilot",
+      "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "medic",
       "mili_pilot",
-      "prof_combat_engineer"
+      "fighter_pilot",
+      "prof_combat_engineer",
+      "major-general"
     ],
-    "flags": [ "CHALLENGE", "LONE_START" ]
+    "flags": [ "CHALLENGE", "LONE_START" ],
+    "bionics": [
+      "bio_reactor",
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
+  },
+  {
+    "type": "scenario",
+    "id": "tankmod_armored_warfare",
+    "name": "Armored Apocalypse",
+    "points": 0,
+    "description": "Wandering in search of any other survivors after a disastrous mobilization, your tank and its crew have slowly been worn down by attrition.  After trying to establish communications using an old radio tower, the only other surviving crew member went off in search of supplies and fuel a few days ago.  Now something's stirred up the undead, several are converging on your position.",
+    "vehicle": "tank_m1_abrams",
+    "professions": [ "tankmod_driver", "tankmod_gunner", "tankmod_loader", "tankmod_commander" ],
+    "start_name": "Radio Tower",
+    "allowed_locs": [ "sloc_tankmod_radio_tower" ],
+    "missions": [ "MISSION_TANK_SUPPLY_RUN" ],
+    "surround_groups": [ [ "GROUP_BLACK_ROAD", 70.0 ] ],
+    "flags": [ "CITY_START", "LONE_START", "SUM_START" ],
+    "bionics": [
+      "bio_reactor",
+      "bio_metabolics",
+      "bio_ethanol",
+      "bio_ups",
+      "bio_targeting",
+      "bio_geiger",
+      "bio_power_armor_interface",
+      "bio_cqb",
+      "bio_blade",
+      "bio_weight"
+    ]
+  },
+  {
+    "type": "scenario",
+    "id": "irs_auditing",
+    "name": "Death And Taxes",
+    "points": 0,
+    "description": "Conducting an audit of a corporate office's records as part of a career-making official investigation, you found your hosts suddenly much less cooperative. It may be time to render summary judgment and haul ass out of this tower of toil.",
+    "start_name": "Office Tower",
+    "allowed_locs": [ "sloc_office_tower" ],
+    "missions": [ "MISSION_ONE_LAST_AUDIT" ],
+    "professions": [ "irs", "lawyer", "politician" ],
+    "flags": [ "LONE_START", "CITY_START" ]
   }
 ]

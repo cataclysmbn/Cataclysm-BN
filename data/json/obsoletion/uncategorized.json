@@ -421,5 +421,1855 @@
     "id": "HAND_AXES",
     "name": "Hand Axes",
     "//": "Axe with a short handle, typically wielded in one hand, ocassionally thrown."
+  },
+  {
+    "type": "snippet",
+    "category": "schizo_weapon_drop",
+    "text": [
+      "%1$s starts burning your hands!",
+      "%1$s feels freezing cold!",
+      "An electric shock shoots into your hand from %1$s!",
+      "%1$s lied to you.",
+      "%1$s was working for… THEM",
+      "%1$s said something stupid.",
+      "%1$s is running away!",
+      "%1$s finds you filthy."
+    ]
+  },
+  {
+    "type": "terrain",
+    "id": "t_single_pane_glass",
+    "name": "Single glazed glass window",
+    "description": "A giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_single_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 1 } ] },
+    "bash": {
+      "str_min": 2,
+      "str_max": 4,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 2 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 2 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_single_pane_glass_open",
+    "name": "Single glazed glass window open",
+    "description": "A giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "close": "t_single_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 1 } ] },
+    "bash": {
+      "str_min": 2,
+      "str_max": 4,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_single_pane_glass_with_curtain",
+    "name": "Single glazed glass window with a curtain",
+    "description": "A glazed window with fancy curtains on the inside that is closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_single_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_single_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 3 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 2,
+      "str_max": 4,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 2 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 2 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_single_pane_glass_with_curtain_open_window_closed",
+    "name": "Single glazed glass window with a curtain",
+    "description": "A glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_single_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_single_pane_glass_with_curtain",
+    "open": "t_single_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 2,
+      "str_max": 4,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 2 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 2 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_single_pane_glass_with_curtain_open",
+    "name": "Single glazed glass window with a curtain",
+    "description": "A glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_single_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_single_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 3 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 2,
+      "str_max": 4,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_single_pane_glass",
+    "name": "Reinforced single glazed glass window",
+    "description": "A giant sheet of reinforced glass inserted into a glazed window frame.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_reinforced_single_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 2 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_single_pane_glass_open",
+    "name": "Reinforced single glazed glass window open",
+    "description": "A giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "close": "t_reinforced_single_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 2 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_single_pane_glass_with_curtain",
+    "name": "Reinforced single glazed glass window with a curtain",
+    "description": "A window with fancy curtains on the inside that is drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_reinforced_single_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_reinforced_single_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_single_pane_glass_with_curtain_open_window_closed",
+    "name": "reinforced single glazed glass window with a curtain",
+    "description": "A reinforced window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_reinforced_single_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_single_pane_glass_with_curtain",
+    "open": "t_reinforced_single_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_single_pane_glass_with_curtain_open",
+    "name": "Reinforced single glazed glass window with a curtain",
+    "description": "A reinforced window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_reinforced_single_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_single_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_double_pane_glass",
+    "name": "Double glazed glass window",
+    "description": "Two giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_double_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 1 } ] },
+    "bash": {
+      "str_min": 3,
+      "str_max": 6,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 3 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 3 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_double_pane_glass_open",
+    "name": "Double glazed glass window open",
+    "description": "Two giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "close": "t_double_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 1 } ] },
+    "bash": {
+      "str_min": 3,
+      "str_max": 6,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_double_pane_glass_with_curtain",
+    "name": "Double glazed glass window with a curtain",
+    "description": "A double glazed window with fancy curtains on the inside that is closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_double_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_double_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 3 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 3,
+      "str_max": 6,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 3 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 3 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_double_pane_glass_with_curtain_open_window_closed",
+    "name": "Double glazed glass window with a curtain",
+    "description": "A double glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_double_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_double_pane_glass_with_curtain",
+    "open": "t_double_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 3,
+      "str_max": 6,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 3 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 3 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_double_pane_glass_with_curtain_open",
+    "name": "Double glazed glass window with a curtain",
+    "description": "A double glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_double_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_double_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 3 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 3,
+      "str_max": 6,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_double_pane_glass",
+    "name": "Reinforced double glazed glass window",
+    "description": "A reinforced double glazed window inserted into a frame.  The outer layer comprises a pane of reinforced glass for extra security.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_reinforced_double_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 2 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_double_pane_glass_open",
+    "name": "Reinforced double glazed glass window open",
+    "description": "A double glazed window with a giant sheet of reinforced glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "\"",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_reinforced_double_pane_glass",
+    "close": "t_reinforced_double_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 2 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 3, 8 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_double_pane_glass_with_curtain",
+    "name": "Reinforced double glazed glass window with a curtain",
+    "description": "A double glazed window with fancy curtains on the inside that is closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_reinforced_double_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_reinforced_double_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_double_pane_glass_with_curtain_open_window_closed",
+    "name": "Reinforced double glazed glass window with a curtain",
+    "description": "A double glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "NO_SCENT",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_reinforced_double_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_double_pane_glass_with_curtain",
+    "open": "t_reinforced_double_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 2 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_double_pane_glass_with_curtain_open",
+    "name": "Reinforced double glazed glass window with a curtain",
+    "description": "A double glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_reinforced_double_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_double_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_triple_pane_glass",
+    "name": "Triple glazed glass window",
+    "description": "Three giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_triple_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 3 } ] },
+    "bash": {
+      "str_min": 4,
+      "str_max": 8,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 5, 12 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 4 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 4 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_triple_pane_glass_open",
+    "name": "Triple glazed glass window",
+    "description": "A triple glazed giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "close": "t_triple_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 3 } ] },
+    "bash": {
+      "str_min": 4,
+      "str_max": 8,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 5, 12 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_triple_pane_glass_with_curtain",
+    "name": "Triple glazed glass window with a curtain",
+    "description": "A triple glazed window with fancy curtains on the inside that is closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_triple_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_triple_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 3 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 4,
+      "str_max": 8,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 5, 12 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 4 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 4 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_triple_pane_glass_with_curtain_open_window_closed",
+    "name": "Triple glazed glass window with a curtain",
+    "description": "A triple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_triple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_triple_pane_glass_with_curtain",
+    "open": "t_triple_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 4,
+      "str_max": 8,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 4 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 4 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_triple_pane_glass_with_curtain_open",
+    "name": "Triple-pane glass window with a curtain",
+    "description": "A triple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_triple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_triple_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 3 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 4,
+      "str_max": 8,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 5, 12 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_triple_pane_glass",
+    "name": "Reinforced-triple pane glass window",
+    "description": "Three glass sheets inserted as well as one reinforced glass sheet inserted into a window frame.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_reinforced_triple_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 3 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 5, 12 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_triple_pane_glass_open",
+    "name": "Reinforced-triple pane glass window",
+    "description": "Three glass sheets inserted as well as one giant sheet of reinforced glass sheet inserted into a window frame.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "close": "t_reinforced_triple_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 3 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 5, 12 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_triple_pane_glass_with_curtain",
+    "name": "Reinforced triple glazed glass window with a curtain",
+    "description": "A triple glazed window with fancy curtains on the inside that is closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_reinforced_triple_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_reinforced_triple_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 5, 12 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_triple_pane_glass_with_curtain_open_window_closed",
+    "name": "Reinforced triple-pane glass window with a curtain",
+    "description": "A triple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "NO_SCENT",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_reinforced_triple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_triple_pane_glass_with_curtain",
+    "open": "t_reinforced_triple_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_triple_pane_glass_with_curtain_open",
+    "name": "Reinforced triple glazed glass window with a curtain",
+    "description": "A triple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_reinforced_triple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_triple_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 5, 12 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_quadruple_pane_glass",
+    "name": "Quadruple glazed glass window",
+    "description": "Four giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_quadruple_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 4 } ] },
+    "bash": {
+      "str_min": 5,
+      "str_max": 10,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 10, 20 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 5 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 5 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_quadruple_pane_glass_open",
+    "name": "Quadruple glazed glass window",
+    "description": "An open quadruple glazed window.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "REDUCE_SCENT",
+      "CONNECT_TO_WALL",
+      "PERMEABLE"
+    ],
+    "close": "t_quadruple_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "glass_sheet", "count": 4 } ] },
+    "bash": {
+      "str_min": 5,
+      "str_max": 10,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 10, 20 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_quadruple_pane_glass_with_curtain",
+    "name": "Quadruple glazed glass window with a curtain",
+    "description": "A quadruple glazed window with fancy curtains on the inside that is closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_quadruple_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_quadruple_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 4 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 5,
+      "str_max": 10,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 10, 20 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 5 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 5 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_quadruple_pane_glass_with_curtain_open_window_closed",
+    "name": "Quadruple glazed glass window with a curtain",
+    "description": "A quadruple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_quadruple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_quadruple_pane_glass_with_curtain",
+    "open": "t_quadruple_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 5,
+      "str_max": 10,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 5 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 5 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_quadruple_pane_glass_with_curtain_open",
+    "name": "Quadruple glazed glass window with a curtain",
+    "description": "A quadruple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_quadruple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_quadruple_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 4 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 5,
+      "str_max": 10,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 10, 20 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_quadruple_pane_glass",
+    "name": "Reinforced quadruple glazed glass window",
+    "description": "Three large sheets of glass and 1 reinforced sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND"
+    ],
+    "examine_action": "locked_object",
+    "open": "t_reinforced_quadruple_pane_glass_open",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 4 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 10, 20 ] }
+      ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_quadruple_pane_glass_open",
+    "name": "Reinforced quadruple glazed glass window",
+    "description": "Three giant sheet of glass inserted into a window frame.",
+    "looks_like": "t_window_no_curtains_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "close": "t_reinforced_quadruple_pane_glass",
+    "deconstruct": { "ter_set": "t_window_empty", "items": [ { "item": "reinforced_glass_sheet", "count": 4 } ] },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "glass_shard", "count": [ 10, 20 ] }
+      ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_quadruple_pane_glass_with_curtain",
+    "name": "reinforced quadruple glazed glass window with a curtain",
+    "description": "A reinforced quadruple glazed window with fancy curtains on the inside that is closed to block visibility and shut out any light.",
+    "looks_like": "t_curtains",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "NO_SCENT",
+      "CONNECT_TO_WALL",
+      "BLOCK_WIND",
+      "WINDOW"
+    ],
+    "curtain_transform": "t_reinforced_quadruple_pane_glass",
+    "examine_action": "curtains",
+    "open": "t_reinforced_quadruple_double_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 4 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 10, 20 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_quadruple_double_pane_glass_with_curtain_open_window_closed",
+    "name": "Reinforced quadruple glazed glass window with a curtain",
+    "description": "A reinforced quadruple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_domestic",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 0,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "BLOCK_WIND"
+    ],
+    "curtain_transform": "t_reinforced_quadruple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_quadruple_pane_glass_with_curtain",
+    "open": "t_reinforced_quadruple_pane_glass_with_curtain_open",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 2 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 30,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 3, 8 ] } ],
+      "//": "reduction and destroy_threshold are lower for plain glass",
+      "ranged": { "reduction": [ 1, 12 ], "reduction_laser": [ 0, 5 ], "destroy_threshold": 12 }
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_reinforced_quadruple_pane_glass_with_curtain_open",
+    "name": "Reinforced quadruple glazed glass window with a curtain",
+    "description": "A reinforced quadruple glazed window with fancy curtains on the inside that can be drawn closed to block visibility and shut out any light.",
+    "looks_like": "t_window_open",
+    "symbol": "|",
+    "color": "light_cyan",
+    "move_cost": 4,
+    "coverage": 60,
+    "roof": "t_flat_roof",
+    "flags": [
+      "TRANSPARENT",
+      "FLAMMABLE",
+      "NOITEM",
+      "OPENCLOSE_INSIDE",
+      "MOUNTABLE",
+      "NO_SCENT",
+      "BARRICADABLE_WINDOW_CURTAINS",
+      "CONNECT_TO_WALL",
+      "THIN_OBSTACLE",
+      "SMALL_PASSAGE",
+      "PERMEABLE"
+    ],
+    "curtain_transform": "t_reinforced_quadruple_pane_glass",
+    "examine_action": "curtains",
+    "close": "t_reinforced_quadruple_double_pane_glass_with_curtain_open_window_closed",
+    "deconstruct": {
+      "ter_set": "t_window_empty",
+      "items": [
+        { "item": "stick", "count": 1 },
+        { "item": "sheet", "count": 2 },
+        { "item": "glass_sheet", "count": 4 },
+        { "item": "nail", "charges": [ 3, 4 ] },
+        { "item": "string_36", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 25,
+      "str_max": 40,
+      "sound": "glass breaking!",
+      "sound_fail": "whack!",
+      "sound_vol": 16,
+      "sound_fail_vol": 10,
+      "ter_set": "t_window_frame",
+      "items": [ { "item": "glass_shard", "count": [ 10, 20 ] } ]
+    }
+  },
+  {
+    "type": "material",
+    "id": "lightceramic",
+    "name": "Dragon Scale",
+    "density": 4,
+    "reinforces": true,
+    "bash_resist": 4,
+    "cut_resist": 8,
+    "bullet_resist": 10,
+    "acid_resist": 10,
+    "fire_resist": 10,
+    "elec_resist": 10,
+    "chip_resist": 20,
+    "dmg_adj": [ "chipped", "cracked", "split", "broken" ],
+    "bash_dmg_verb": "cracked",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" }
+  },
+  {
+    "id": "t_tarptent",
+    "type": "terrain",
+    "name": "tarp lean-to",
+    "description": "A small shelter covered by waterproof tarp, that can be used to take refuge from the elements.",
+    "symbol": ";",
+    "color": "light_blue",
+    "looks_like": "t_leanto",
+    "move_cost": 2,
+    "bash": {
+      "str_min": 6,
+      "str_max": 12,
+      "ter_set": "t_dirt",
+      "sound": "crash!",
+      "sound_fail": "whack!",
+      "items": [
+        { "item": "stick", "count": [ 1, 2 ] },
+        { "item": "splinter", "count": [ 1, 4 ] },
+        { "item": "plastic_chunk", "count": [ 4, 8 ] }
+      ]
+    },
+    "deconstruct": {
+      "ter_set": "t_dirt",
+      "items": [ { "item": "pointy_stick", "count": 4 }, { "item": "string_6", "count": 4 }, { "item": "tarp", "count": 1 } ]
+    },
+    "flags": [ "TRANSPARENT", "FLAMMABLE", "THIN_OBSTACLE", "MOUNTABLE", "EASY_DECONSTRUCT", "FLAT", "BLOCK_WIND" ]
   }
 ]

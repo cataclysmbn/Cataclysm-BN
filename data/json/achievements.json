@@ -163,7 +163,7 @@
     "id": "achievement_mutation_threshold_bird",
     "type": "achievement",
     "name": { "str": "[Mutation] The Modern-Day Dinosaur" },
-    "description": "It's not flight (yet), it's falling with style.  You are now a post-threshold Bird mutant.",
+    "description": "I can see my house from here!  You are now a post-threshold Bird mutant.",
     "hidden_by": [ "achievement_mutation_threshold_bird" ],
     "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_bird", "is": ">=", "target": 1 } ]
   },
@@ -286,6 +286,15 @@
     "description": "Be what you want to be, the only creatures that could tell you otherwise are made of meat.  You are now a post-threshold Raptor mutant.",
     "hidden_by": [ "achievement_mutation_threshold_raptor" ],
     "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_raptor", "is": ">=", "target": 1 } ]
+  },
+  {
+    "id": "achievement_mutation_threshold_serpent",
+    "type": "achievement",
+    "name": { "str": "[Mutation] No Step On Snek" },
+    "description": "Legs are for chumps.  You are now a post-threshold Serpent mutant.",
+    "//": "Threshold achievements are hidden until obtained",
+    "hidden_by": [ "achievement_mutation_threshold_serpent" ],
+    "requirements": [ { "event_statistic": "num_avatar_mutation_threshold_serpent", "is": ">=", "target": 1 } ]
   },
   {
     "id": "achievement_mutation_threshold_slime",

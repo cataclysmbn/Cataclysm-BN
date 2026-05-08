@@ -10,6 +10,8 @@
         "distribution": [ { "group": "tools_carpentry", "prob": 30 }, { "group": "tools_common", "prob": 70 } ],
         "prob": 30
       },
+      { "item": "subwaymap", "prob": 2 },
+      { "item": "sewermap", "prob": 2 },
       { "group": "supplies_electronics", "prob": 50 },
       { "item": "id_industrial", "prob": 20 }
     ]
@@ -23,7 +25,13 @@
       { "group": "clothing_work_glasses", "prob": 60, "damage": [ 1, 4 ] },
       { "group": "clothing_work_gloves", "prob": 75, "damage": [ 1, 4 ] },
       { "group": "clothing_work_mask", "prob": 40, "damage": [ 1, 4 ] },
-      { "item": "ear_plugs", "prob": 15, "damage": [ 1, 4 ] },
+      {
+        "distribution": [
+          { "item": "ear_plugs", "prob": 50, "damage": [ 1, 4 ] },
+          { "item": "attached_ear_plugs_off", "prob": 50, "damage": [ 1, 4 ] }
+        ],
+        "prob": 15
+      },
       { "item": "tool_belt", "prob": 25, "damage": [ 1, 4 ] },
       {
         "distribution": [
@@ -36,10 +44,46 @@
       },
       { "group": "underwear", "damage": [ 1, 4 ] },
       { "item": "miner_hat", "prob": 90, "damage": [ 1, 4 ] },
+      { "item": "cavemap", "prob": 4 },
+      { "item": "subwaymap", "prob": 2 },
+      { "item": "sewermap", "prob": 2 },
       {
         "distribution": [ { "group": "mine_equipment", "prob": 50 }, { "group": "mine_materials", "prob": 50 } ],
         "prob": 60
       }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_zombie_technician_evolved_iron_death_drops",
+    "entries": [ { "group": "mon_zombie_technician_death_drops" }, { "group": "recycle_steel", "count": [ 2, 4 ] } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_zombie_technician_evolved_iron2_death_drops",
+    "entries": [
+      { "item": "rag", "count": [ 3, 6 ], "prob": 50 },
+      { "group": "clothing_work_boots", "damage": [ 1, 4 ] },
+      { "group": "clothing_work_pants", "damage": [ 1, 4 ] },
+      { "group": "underwear", "damage": [ 1, 4 ] },
+      {
+        "distribution": [
+          { "item": "ear_plugs", "prob": 50, "damage": [ 1, 4 ] },
+          { "item": "attached_ear_plugs_off", "prob": 50, "damage": [ 1, 4 ] }
+        ],
+        "prob": 15
+      },
+      {
+        "distribution": [ { "group": "tools_carpentry", "prob": 30 }, { "group": "tools_common", "prob": 70 } ],
+        "prob": 30
+      },
+      { "group": "supplies_electronics", "prob": 50 },
+      { "item": "subwaymap", "prob": 2 },
+      { "item": "sewermap", "prob": 2 },
+      { "item": "id_industrial", "prob": 20 },
+      { "group": "recycle_steel", "count": [ 4, 8 ] }
     ]
   }
 ]

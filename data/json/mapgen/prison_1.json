@@ -659,7 +659,8 @@
         "Q": { "item": "prison_canine_food", "chance": 70, "repeat": [ 3, 5 ] },
         "R": [
           { "item": "animalshelter_softdrug", "chance": 70, "repeat": [ 1, 2 ] },
-          { "item": "animalshelter_hardrug", "chance": 30, "repeat": [ 1, 2 ] }
+          { "item": "animalshelter_hardrug", "chance": 30, "repeat": [ 1, 2 ] },
+          { "item": "dog_cop", "chance": 30 }
         ],
         "U": { "item": "prison_canine_bowl", "chance": 70 },
         "Y": { "item": "clothing_outdoor_torso", "chance": 60 },
@@ -833,11 +834,13 @@
     "items": [
       [ "dog_whistle", 10 ],
       [ "pet_carrier", 30 ],
+      [ "kevlar_armor_small_quadruped", 30 ],
       [ "towel", 20 ],
       [ "soap", 10 ],
       [ "gloves_medical", 20 ],
       [ "rag", 15 ],
-      [ "bag_plastic", 20 ],
+      [ "bag_plastic", 15 ],
+      [ "bag_zipper", 5 ],
       [ "jerky", 40 ],
       [ "rope_6", 15 ]
     ]

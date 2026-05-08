@@ -178,6 +178,16 @@
     "category": "valuables"
   },
   {
+    "id": "software_utility",
+    "copy-from": "software",
+    "type": "GENERIC",
+    "name": { "str_sp": "UniTool" },
+    "description": "A versatile software toolkit - unzips archives, flashes drives, and a variety of other digital tasks.",
+    "price": "5 USD",
+    "price_postapoc": "0 cent",
+    "category": "valuables"
+  },
+  {
     "id": "software_hacking",
     "copy-from": "software",
     "type": "GENERIC",
@@ -254,6 +264,16 @@
     "name": { "str": "integrated circuit datasheet archives", "str_pl": "misc software" },
     "description": "Huge archives of numerous IC circuit datasheets from several major manufacturers.  Probably valuable to the right person, as it would be hard to salvage and reuse these components without them.",
     "price": "400 USD",
+    "price_postapoc": "0 cent",
+    "category": "valuables"
+  },
+  {
+    "id": "software_cryptow",
+    "copy-from": "software",
+    "type": "GENERIC",
+    "name": { "str_sp": "undeclared crypto wallet" },
+    "description": "A cryptocoin fortune equivalent to $250,000 that someone really didn't want to report to Uncle Sam. A pity it's useless now...",
+    "price": "250000 USD",
     "price_postapoc": "0 cent",
     "category": "valuables"
   }

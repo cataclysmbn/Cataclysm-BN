@@ -18,6 +18,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "data_vars.h"
 
 struct ter_t;
 using ter_str_id = string_id<ter_t>;
@@ -225,7 +226,6 @@ struct pry_result {
  * ALARMED - Sets off an alarm if smashed
  * SUPPORTS_ROOF - Used as a boundary for roof construction
  * MINEABLE - Able to broken with the jackhammer/pickaxe, but does not necessarily support a roof
- * INDOORS - Has roof over it; blocks rain, sunlight, etc.
  * COLLAPSES - Has a roof that can collapse
  * FLAMMABLE_ASH - Burns to ash rather than rubble.
  * REDUCE_SCENT - Reduces scent even more, only works if also bashable
@@ -241,6 +241,7 @@ struct pry_result {
  * HIDE_PLACE - Creature on this tile can't be seen by other creature not standing on adjacent tiles
  * BLOCK_WIND - This tile will partially block wind
  * FLAT_SURF - Furniture or terrain or vehicle part with flat hard surface (ex. table, but not chair; tree stump, etc.).
+ * NO_MEMORY - Don't put this terrain in map memory. Used for open air and similar.
  *
  * Currently only used for Fungal conversions
  * WALL - This terrain is an upright obstacle
@@ -283,7 +284,6 @@ enum ter_bitflags : int {
     TFLAG_COLLAPSES,
     TFLAG_FLAMMABLE_ASH,
     TFLAG_DESTROY_ITEM,
-    TFLAG_INDOORS,
     TFLAG_LIQUIDCONT,
     TFLAG_FIRE_CONTAINER,
     TFLAG_FLAMMABLE_HARD,
@@ -326,6 +326,7 @@ enum ter_bitflags : int {
     TFLAG_FRIDGE,
     TFLAG_FREEZER,
     TFLAG_ELEVATOR,
+    TFLAG_NO_MEMORY,
     NUM_TERFLAGS
 };
 
@@ -483,6 +484,8 @@ struct map_data_common_t {
 
         iexamine_function examine; // What happens when the terrain/furniture is examined
 
+        data_vars::data_set default_vars;
+
         /**
          * When will this terrain/furniture get harvested and what will drop?
          * Note: This excludes items that take extra tools to harvest.
@@ -592,6 +595,41 @@ void reset_furn_ter();
  * The terrain list contains the master list of  information and metadata for a given type of terrain.
  */
 
+enum class fluid_grid_role {
+    tank,
+    fixture,
+    transformer,
+    rain_collector
+};
+
+struct fluid_grid_transform_io {
+    itype_id liquid;
+    units::volume amount = 0_ml;
+};
+
+struct fluid_grid_transform_recipe {
+    std::vector<fluid_grid_transform_io> inputs;
+    std::vector<fluid_grid_transform_io> outputs;
+};
+
+struct fluid_grid_transformer_config {
+    time_duration tick_interval = 1_seconds;
+    double collector_area_m2 = 0.0;
+    std::vector<fluid_grid_transform_recipe> transforms;
+};
+
+struct fluid_grid_data {
+    fluid_grid_role role = fluid_grid_role::tank;
+    bool allow_input = false;
+    bool allow_output = false;
+    std::set<itype_id> allowed_liquids;
+    std::optional<units::volume> capacity;
+    bool use_keg_capacity = false;
+    std::optional<furn_str_id> connected_variant;
+    std::optional<furn_str_id> disconnected_variant;
+    std::optional<fluid_grid_transformer_config> transformer;
+};
+
 struct furn_t : map_data_common_t {
 
     std::vector<std::pair<furn_str_id, mod_id>> src;
@@ -627,6 +665,7 @@ struct furn_t : map_data_common_t {
     std::optional<float> surgery_skill_multiplier;
 
     cata::poly_serialized<active_tile_data> active;
+    std::optional<fluid_grid_data> fluid_grid;
 
     std::vector<itype> crafting_pseudo_item_types() const;
     std::vector<itype> crafting_ammo_item_types() const;
@@ -649,6 +688,8 @@ void load_terrain( const JsonObject &jo, const std::string &src );
 
 void verify_furniture();
 void verify_terrain();
+auto fluid_grid_connected_variant( const furn_id &id ) -> std::optional<furn_id>;
+auto fluid_grid_disconnected_variant( const furn_id &id ) -> std::optional<furn_id>;
 
 /*
 runtime index: ter_id
@@ -665,7 +706,7 @@ extern ter_id t_null,
        t_pit_corpsed, t_pit_covered, t_pit_spiked, t_pit_spiked_covered, t_pit_glass, t_pit_glass_covered,
        t_rock_floor,
        t_grass, t_grass_long, t_grass_tall, t_grass_golf, t_grass_dead, t_grass_white, t_moss,
-       t_metal_floor,
+       t_moss_underground, t_metal_floor,
        t_pavement, t_pavement_y, t_sidewalk, t_concrete,
        t_thconc_floor, t_thconc_floor_olight, t_strconc_floor,
        t_floor, t_floor_waxed,
@@ -727,7 +768,7 @@ extern ter_id t_null,
        t_fungus_mound, t_fungus, t_shrub_fungal, t_tree_fungal, t_tree_fungal_young, t_marloss_tree,
        // Water, lava, etc.
        t_water_moving_dp, t_water_moving_sh, t_water_sh, t_swater_sh, t_water_dp, t_swater_dp,
-       t_water_cube, t_lake_bed, t_water_pool, t_sewage,
+       t_water_cube, t_lake_bed, t_lake_moss, t_water_pool, t_sewage,
        t_lava,
        // More embellishments than you can shake a stick at.
        t_sandbox, t_slide, t_monkey_bars, t_backboard,
@@ -771,7 +812,9 @@ extern ter_id t_null,
        t_railroad_track, t_railroad_track_h, t_railroad_track_v, t_railroad_track_d, t_railroad_track_d1,
        t_railroad_track_d2,
        t_railroad_track_on_tie, t_railroad_track_h_on_tie, t_railroad_track_v_on_tie,
-       t_railroad_track_d_on_tie;
+       t_railroad_track_d_on_tie,
+       t_pd_border,
+       t_rock_border;
 
 /*
 runtime index: furn_id
@@ -779,7 +822,8 @@ furn_id refers to a position in the furnlist[] where the furn_t struct is stored
 about ter_id above.
 */
 extern furn_id f_null,
-       f_hay, f_cattails,
+       f_hay, f_cattails, f_lake_pondweed, f_lake_detritus, f_lake_liverwort, f_lake_eelgrass,
+       f_lake_hornwort, f_cave_mushrooms,
        f_rubble, f_rubble_rock, f_wreckage, f_ash,
        f_barricade_road, f_sandbag_half, f_sandbag_wall,
        f_bulletin,
@@ -825,5 +869,3 @@ extern furn_id f_null,
 
 // consistency checking of terlist & furnlist.
 void check_furniture_and_terrain();
-
-

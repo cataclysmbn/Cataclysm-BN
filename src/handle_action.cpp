@@ -1,8 +1,12 @@
 #include "game.h" // IWYU pragma: associated
 
+#include <cctype>
+#include <charconv>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -81,6 +85,7 @@
 #include "scores_ui.h"
 #include "sounds.h"
 #include "string_formatter.h"
+#include "string_utils.h"
 #include "string_id.h"
 #include "string_input_popup.h"
 #include "translations.h"
@@ -116,7 +121,6 @@ static const efftype_id effect_alarm_clock( "alarm_clock" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_relax_gas( "relax_gas" );
 
-static const itype_id itype_radiocontrol( "radiocontrol" );
 static const itype_id itype_shoulder_strap( "shoulder_strap" );
 static const itype_id itype_pistol_lanyard( "pistol_lanyard" );
 
@@ -195,7 +199,7 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     const level_cache &map_cache = m.get_cache_ref( u.posz() );
     const auto &visibility_cache = map_cache.visibility_cache;
 
-    const int TOTAL_VIEW = MAX_VIEW_DISTANCE * 2 + 1;
+    const int TOTAL_VIEW = g_max_view_distance * 2 + 1;
     point iStart( ( TERRAIN_WINDOW_WIDTH > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_WIDTH - TOTAL_VIEW ) / 2 : 0,
                   ( TERRAIN_WINDOW_HEIGHT > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_HEIGHT - TOTAL_VIEW ) / 2 :
                   0 );
@@ -220,8 +224,8 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
     if( tile_iso && use_tiles ) {
         iStart.x = 0;
         iStart.y = 0;
-        iEnd.x = MAPSIZE_X;
-        iEnd.y = MAPSIZE_Y;
+        iEnd.x = g_mapsize_x;
+        iEnd.y = g_mapsize_y;
         offset.x = 0;
         offset.y = 0;
     }
@@ -233,9 +237,13 @@ static void generate_weather_anim_frame( const weather_type_id &wtype, weather_p
         const point iRand{ rng( iStart.x, iEnd.x - 1 ), rng( iStart.y, iEnd.y - 1 ) };
         const point map( iRand + offset );
 
+        if( !map_cache.inbounds( map ) ) {
+            continue;
+        }
+
         const tripoint mapp( map, u.posz() );
 
-        const lit_level lighting = visibility_cache[mapp.x][mapp.y];
+        const lit_level lighting = visibility_cache[map_cache.idx( mapp.x, mapp.y )];
 
         if( m.is_outside( mapp ) && m.get_visibility( lighting, cache ) == VIS_CLEAR &&
             !g->critter_at( mapp, true ) ) {
@@ -274,8 +282,6 @@ input_context game::get_player_input( std::string &action )
     } else {
         ctxt = get_default_mode_input_context();
     }
-
-    m.update_visibility_cache( u.posz() );
 
     user_turn current_turn;
 
@@ -487,7 +493,7 @@ static void pldrive( const tripoint &p )
             return;
         }
     } else {
-        if( empty( veh->get_avail_parts( "REMOTE_CONTROLS" ) ) ) {
+        if( veh->get_avail_parts( "REMOTE_CONTROLS" ).empty() ) {
             add_msg( m_info, _( "Can't drive this vehicle remotely.  It has no working controls." ) );
             return;
         }
@@ -530,39 +536,14 @@ static void open()
     const tripoint openp = *openp_;
     map &here = get_map();
 
-    u.moves -= 100;
-
     if( const optional_vpart_position vp = here.veh_at( openp ) ) {
-        vehicle *const veh = &vp->vehicle();
-        int openable = veh->next_part_to_open( vp->part_index() );
+        const vehicle *const veh = &vp->vehicle();
+        const int openable = veh->next_part_to_open( vp->part_index() );
         if( openable >= 0 ) {
             const vehicle *player_veh = veh_pointer_or_null( here.veh_at( u.pos() ) );
-            bool outside = !player_veh || player_veh != veh;
-            if( !outside ) {
-                if( !veh->handle_potential_theft( get_avatar() ) ) {
-                    u.moves += 100;
-                    return;
-                } else {
-                    veh->open( openable );
-                }
-            } else {
-                // Outside means we check if there's anything in that tile outside-openable.
-                // If there is, we open everything on tile. This means opening a closed,
-                // curtained door from outside is possible, but it will magically open the
-                // curtains as well.
-                int outside_openable = veh->next_part_to_open( vp->part_index(), true );
-                if( outside_openable == -1 ) {
-                    const std::string name = veh->part_info( openable ).name();
-                    add_msg( m_info, _( "That %s can only opened from the inside." ), name );
-                    u.moves += 100;
-                } else {
-                    if( !veh->handle_potential_theft( get_avatar() ) ) {
-                        u.moves += 100;
-                        return;
-                    } else {
-                        veh->open_all_at( openable );
-                    }
-                }
+            const bool outside = !player_veh || player_veh != veh;
+            if( here.open_door_veh( &get_avatar(), vp, openp, !outside ) ) {
+                u.moves -= 100;
             }
         } else {
             // If there are any OPENABLE parts here, they must be already open
@@ -571,14 +552,10 @@ static void open()
                 const std::string name = already_open->info().name();
                 add_msg( m_info, _( "That %s is already open." ), name );
             }
-            u.moves += 100;
         }
-        return;
-    }
-
-    bool didit = here.open_door( openp, !here.is_outside( u.pos() ) );
-
-    if( !didit ) {
+    } else if( here.open_door( &u, openp, !here.is_outside( u.pos() ) ) ) {
+        u.moves -= 100;
+    } else {
         const ter_str_id tid = here.ter( openp ).id();
 
         if( here.has_flag( flag_LOCKED, openp ) ) {
@@ -587,11 +564,9 @@ static void open()
         } else if( tid.obj().close ) {
             // if the following message appears unexpectedly, the prior check was for t_door_o
             add_msg( m_info, _( "That door is already open." ) );
-            u.moves += 100;
             return;
         }
         add_msg( m_info, _( "No door there." ) );
-        u.moves += 100;
     }
 }
 
@@ -874,6 +849,66 @@ static int try_set_alarm()
     return as_m.ret;
 }
 
+
+static auto parse_custom_wait_duration( const std::string &value ) -> std::optional<time_duration>
+{
+    const auto trimmed_value = trim_whitespaces( value );
+    if( trimmed_value.empty() ) {
+        return std::nullopt;
+    }
+    auto digits_end = decltype( trimmed_value.size() ) { 0 };
+    while( digits_end < trimmed_value.size() &&
+           std::isdigit( static_cast<unsigned char>( trimmed_value[digits_end] ) ) ) {
+        ++digits_end;
+    }
+    if( digits_end == 0 ) {
+        return std::nullopt;
+    }
+    const auto numeric_text = trimmed_value.substr( 0, digits_end );
+    auto amount = std::int64_t( 0 );
+    const auto parse_result = std::from_chars( numeric_text.data(),
+                              numeric_text.data() + numeric_text.size(),
+                              amount );
+    if( parse_result.ec != std::errc() ) {
+        return std::nullopt;
+    }
+    auto suffix_pos = digits_end;
+    while( suffix_pos < trimmed_value.size() &&
+           std::isspace( static_cast<unsigned char>( trimmed_value[suffix_pos] ) ) ) {
+        ++suffix_pos;
+    }
+    auto unit = 'm';
+    auto has_unit = false;
+    if( suffix_pos < trimmed_value.size() ) {
+        unit = trimmed_value[suffix_pos];
+        ++suffix_pos;
+        has_unit = true;
+        while( suffix_pos < trimmed_value.size() ) {
+            if( !std::isspace( static_cast<unsigned char>( trimmed_value[suffix_pos] ) ) ) {
+                return std::nullopt;
+            }
+            ++suffix_pos;
+        }
+    }
+    const auto normalized_unit = static_cast<char>( std::tolower( static_cast<unsigned char>
+                                 ( unit ) ) );
+    switch( normalized_unit ) {
+        case 's':
+            return amount * 1_seconds;
+        case 'm':
+            return amount * 1_minutes;
+        case 'h':
+            return amount * 1_hours;
+        case 'd':
+            return amount * 1_days;
+        default:
+            if( !has_unit ) {
+                return amount * 1_minutes;
+            }
+            return std::nullopt;
+    }
+}
+
 static void wait()
 {
     std::map<int, time_duration> durations;
@@ -978,11 +1013,19 @@ static void wait()
 
     time_duration time_to_wait;
     if( as_m.ret == 13 ) {
-        int minutes = string_input_popup()
-                      .title( _( "How long?  (in minutes)" ) )
-                      .identifier( "wait_duration" )
-                      .query_int();
-        time_to_wait = minutes * 1_minutes;
+        const auto duration_input = string_input_popup()
+                                    .title( _( "How long?  (e.g. 10s, 15m, 1h)" ) )
+                                    .identifier( "wait_duration" )
+                                    .query_string();
+        if( duration_input.empty() ) {
+            return;
+        }
+        const auto parsed_duration = parse_custom_wait_duration( duration_input );
+        if( !parsed_duration ) {
+            add_msg( m_bad, _( "Invalid duration. Use s, m, h, or d suffixes." ) );
+            return;
+        }
+        time_to_wait = *parsed_duration;
     } else {
 
         const auto dur_iter = durations.find( as_m.ret );
@@ -1355,7 +1398,7 @@ static void fire()
             return;
         }
 
-        if( vp.part_with_feature( "CONTROLS", true ) ) {
+        if( vp.part_with_feature( "CONTROLS", true ) && vp->vehicle().has_part( "TURRET" ) ) {
             if( vp->vehicle().turrets_aim_and_fire_mult( u, turret_filter_types::MANUAL, true ) ) {
                 return;
             }
@@ -1364,32 +1407,41 @@ static void fire()
         std::vector<std::string> options;
         std::vector<std::function<void()>> actions;
 
+        bool do_autofire = false;
         for( auto &w : u.worn ) {
             if( w->type->can_use( "holster" ) && !w->has_flag( flag_NO_QUICKDRAW ) &&
                 !w->contents.empty() && w->contents.front().is_gun() ) {
                 //~ draw (first) gun contained in holster
                 //~ %1$s: weapon name, %2$s: container name, %3$d: remaining ammo count
-                options.push_back( string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
-                                                  w->contents.front().tname(),
-                                                  w->type_name(),
-                                                  w->contents.front().ammo_remaining() ) );
+                options.push_back( "Draw: " + string_format( pgettext( "holster", "%1$s from %2$s (%3$d)" ),
+                                   w->contents.front().tname(),
+                                   w->type_name(),
+                                   w->contents.front().ammo_remaining() ) );
 
                 actions.emplace_back( [&] { u.invoke_item( w, "holster" ); } );
 
+            } else if( w->is_gun() && w->has_flag( flag_WORN_GUN ) ) {
+                options.push_back( "Fire: " + w->display_name() );
+                actions.emplace_back( [&] { avatar_action::fire_ranged_gear( u, w ); } );
+                do_autofire = true;
             } else if( w->is_gun() && w->gunmod_find( itype_shoulder_strap ) ) {
                 // wield item currently worn using shoulder strap
-                options.push_back( w->display_name() );
+                options.push_back( "Wield: " + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             } else if( w->is_gun() && w->gunmod_find( itype_pistol_lanyard ) ) {
                 // wield item currently worn using pistol lanyard
-                options.push_back( w->display_name() );
+                options.push_back( "Wield: " + w->display_name() );
                 actions.emplace_back( [&] { u.wield( *w ); } );
             }
         }
         if( !options.empty() ) {
-            int sel = uilist( _( "Draw what?" ), options );
-            if( sel >= 0 ) {
-                actions[sel]();
+            if( options.size() == 1 && do_autofire ) {
+                actions[0]();
+            } else {
+                int sel = uilist( _( "Do what?" ), options );
+                if( sel >= 0 ) {
+                    actions[sel]();
+                }
             }
         }
     }
@@ -1435,11 +1487,90 @@ static void open_movement_mode_menu()
     }
 }
 
-static void cast_spell()
+namespace
 {
-    player &u = g->u;
+auto start_spellcasting_activity( player &u, spell &sp ) -> void
+{
+    auto cast_spell = std::make_unique<player_activity>( ACT_SPELLCASTING,
+                      sp.casting_time( u ) );
+    // [0] this is used as a spell level override for items casting spells
+    cast_spell->values.emplace_back( -1 );
+    // [1] if this value is 1, the spell never fails
+    cast_spell->values.emplace_back( 0 );
+    // [2] this value overrides the mana cost if set to 0
+    cast_spell->values.emplace_back( 1 );
+    cast_spell->name = sp.id().c_str();
+    if( u.magic->casting_ignore ) {
+        const auto ignored_distractions = std::vector<distraction_type> {
+            distraction_type::alert,
+            distraction_type::noise,
+            distraction_type::pain,
+            distraction_type::attacked,
+            distraction_type::hostile_spotted_near,
+            distraction_type::hostile_spotted_far,
+            distraction_type::talked_to,
+            distraction_type::asthma,
+            distraction_type::weather_change
+        };
+        for( const auto ignored : ignored_distractions ) {
+            cast_spell->ignore_distraction( ignored );
+        }
+    }
 
-    std::vector<spell_id> spells = u.magic->spells();
+    u.magic->set_last_cast_spell( sp.id() );
+    u.assign_activity( std::move( cast_spell ), false );
+}
+
+auto try_cast_spell( player &u, spell &sp ) -> bool
+{
+    if( !( sp.has_flag( spell_flag::BRAWL ) || sp.has_flag( spell_flag::PHYSICAL ) ) &&
+        u.has_trait( trait_BRAWLER ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "Pfft, that spell is for COWARDS, and a Brawler like you is no coward!" ) );
+        return false;
+    }
+
+    const auto blockers = sp.get_blocker_muts();
+    if( !blockers.empty() ) {
+        for( const auto &blocker : blockers ) {
+            if( u.has_trait( blocker ) ) {
+                add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                         _( "Your %s mutation prevents you from casting this spell!" ), blocker->name() );
+                return false;
+            }
+        }
+    }
+
+    if( u.is_armed() && !( sp.has_flag( spell_flag::NO_HANDS ) ||
+                           sp.has_flag( spell_flag::PHYSICAL ) ) &&
+        !u.primary_weapon().has_flag( flag_MAGIC_FOCUS ) && u.primary_weapon().is_two_handed( u ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You need at least one hand free to cast this spell!" ) );
+        return false;
+    }
+
+    if( !u.magic->has_enough_energy( u, sp ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You don't have enough %s to cast the spell." ),
+                 sp.energy_string() );
+        return false;
+    }
+
+    if( sp.energy_source() == hp_energy && !u.has_quality( qual_CUT ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You cannot cast Blood Magic without a cutting implement." ) );
+        return false;
+    }
+
+    start_spellcasting_activity( u, sp );
+    return true;
+}
+
+auto cast_spell() -> void
+{
+    auto &u = g->u;
+
+    auto spells = u.magic->spells();
 
     if( spells.empty() ) {
         add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
@@ -1447,14 +1578,14 @@ static void cast_spell()
         return;
     }
 
-    bool can_cast_spells = false;
-    bool has_brawler_spell = false;
-    for( spell_id sp : spells ) {
-        spell temp_spell = u.magic->get_spell( sp );
+    auto can_cast_spells = false;
+    auto has_brawler_spell = false;
+    for( const auto &sp : spells ) {
+        auto temp_spell = u.magic->get_spell( sp );
         if( temp_spell.can_cast( u ) ) {
             can_cast_spells = true;
         }
-        if( temp_spell.has_flag( spell_flag::BRAWL ) ) {
+        if( temp_spell.has_flag( spell_flag::BRAWL ) || temp_spell.has_flag( spell_flag::PHYSICAL ) ) {
             has_brawler_spell = true;
         }
     }
@@ -1470,78 +1601,32 @@ static void cast_spell()
         return;
     }
 
-    const int spell_index = u.magic->select_spell( u );
+    const auto spell_index = u.magic->select_spell( u );
     if( spell_index < 0 ) {
         return;
     }
 
-    spell &sp = *u.magic->get_spells()[spell_index];
+    auto &sp = *u.magic->get_spells()[spell_index];
 
-    if( !sp.has_flag( spell_flag::BRAWL ) && u.has_trait( trait_BRAWLER ) ) {
-        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "Pfft, that spell is for COWARDS, and a Brawler like you is no coward!" ) );
-        return;
-    }
-
-    std::set<trait_id> blockers = sp.get_blocker_muts();
-    if( !blockers.empty() ) {
-        for( trait_id blocker : blockers ) {
-            if( u.has_trait( blocker ) ) {
-                add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                         _( "Your %s mutation prevents you from casting this spell!" ), blocker->name() );
-                return;
-            }
-        }
-    }
-
-    if( u.is_armed() && !sp.has_flag( spell_flag::NO_HANDS ) &&
-        !u.primary_weapon().has_flag( flag_MAGIC_FOCUS ) && u.primary_weapon().is_two_handed( u ) ) {
-        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You need your hands free to cast this spell!" ) );
-        return;
-    }
-
-    if( !u.magic->has_enough_energy( u, sp ) ) {
-        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You don't have enough %s to cast the spell." ),
-                 sp.energy_string() );
-        return;
-    }
-
-    if( sp.energy_source() == hp_energy && !u.has_quality( qual_CUT ) ) {
-        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
-                 _( "You cannot cast Blood Magic without a cutting implement." ) );
-        return;
-    }
-
-    std::unique_ptr<player_activity> cast_spell = std::make_unique<player_activity>( ACT_SPELLCASTING,
-            sp.casting_time( u ) );
-    // [0] this is used as a spell level override for items casting spells
-    cast_spell->values.emplace_back( -1 );
-    // [1] if this value is 1, the spell never fails
-    cast_spell->values.emplace_back( 0 );
-    // [2] this value overrides the mana cost if set to 0
-    cast_spell->values.emplace_back( 1 );
-    cast_spell->name = sp.id().c_str();
-    if( u.magic->casting_ignore ) {
-        const std::vector<distraction_type> ignored_distractions = {
-            distraction_type::alert,
-            distraction_type::noise,
-            distraction_type::pain,
-            distraction_type::attacked,
-            distraction_type::hostile_spotted_near,
-            distraction_type::hostile_spotted_far,
-            distraction_type::talked_to,
-            distraction_type::asthma,
-            distraction_type::weather_change
-        };
-        for( const distraction_type ignored : ignored_distractions ) {
-            cast_spell->ignore_distraction( ignored );
-        }
-    }
-    u.assign_activity( std::move( cast_spell ),
-                       false );
+    try_cast_spell( u, sp );
 }
+
+auto cast_last_spell() -> void
+{
+    auto &u = g->u;
+
+    const auto last_cast_spell = u.magic->last_cast_spell();
+    if( !last_cast_spell ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You haven't cast any spells yet." ) );
+        return;
+    }
+
+    auto &sp = u.magic->get_spell( *last_cast_spell );
+    try_cast_spell( u, sp );
+}
+
+} // namespace
 
 void game::open_consume_item_menu()
 {
@@ -1593,8 +1678,13 @@ bool game::handle_action()
     }
 
     const optional_vpart_position vp = m.veh_at( u.pos() );
-    bool veh_ctrl = !u.is_dead_state() &&
-                    ( ( vp && vp->vehicle().player_in_control( u ) ) || remoteveh() != nullptr );
+    const auto player_vehicle = vp ? &vp->vehicle() : nullptr;
+    const bool local_vehicle_in_control = vp && vp->vehicle().player_in_control( u );
+    const auto remote_vehicle = remoteveh();
+    const auto controlled_vehicle = remote_vehicle != nullptr ? remote_vehicle :
+                                    local_vehicle_in_control ? player_vehicle : nullptr;
+    const auto veh_ctrl = !u.is_dead_state() && ( local_vehicle_in_control ||
+                          remote_vehicle != nullptr );
 
     // If performing an action with right mouse button, co-ordinates
     // of location clicked.
@@ -1827,7 +1917,7 @@ bool game::handle_action()
             case ACTION_MOVE_LEFT:
             case ACTION_MOVE_FORTH_LEFT:
                 if( !u.get_value( "remote_controlling" ).empty() &&
-                    ( u.has_active_item( itype_radiocontrol ) ||
+                    ( u.has_active_item_with_action( "RADIOCONTROL" ) ||
                       u.has_active_bionic( bio_remote ) ) ) {
                     rcdrive( get_delta_from_movement_action( act, iso_rotate::yes ) );
                 } else if( veh_ctrl ) {
@@ -1866,34 +1956,131 @@ bool game::handle_action()
                 break;
             case ACTION_MOVE_DOWN:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
-                        break;
+                    const monster *mon = u.mounted_creature.get();
+                    bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
+
+                    if( ladder ) {
+                        const bool can_use_ladder =
+                            mon->has_flag( MF_MOUNTABLE_LADDER ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_ladder ) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
+                    } else {
+                        const bool can_use_stairs =
+                            mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_stairs ) {
+                            add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
+                            break;
+                        }
                     }
                 }
-                if( !u.in_vehicle ) {
-                    vertical_move( -1, false );
-                } else if( veh_ctrl && vp->vehicle().is_rotorcraft() ) {
+                if( controlled_vehicle != nullptr && controlled_vehicle->is_aircraft() ) {
                     pldrive( tripoint_below );
+                } else if( !u.in_vehicle ) {
+                    vertical_move( -1, false );
+                } else if( get_map().has_rope_at( u.pos() ) ) {
+                    map &here = get_map();
+                    const optional_vpart_position vp = here.veh_at( u.pos() );
+                    const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
+                    if( idx != -1 ) {
+                        const vpart_info info = vp->vehicle().part_info( idx );
+                        tripoint where = u.pos();
+                        tripoint below = where;
+                        if( get_map().ter( where ).id().str() != "t_open_air" ) {
+                            break;
+                        }
+                        below.z--;
+                        // Keep going down until we find a tile that is NOT open air
+                        while( get_map().ter( below ).id().str() == "t_open_air" ) {
+                            where.z--;
+                            below.z--;
+                        }
+                        const int dist = u.pos().z - below.z;
+                        if( info.ladder_length() >= dist ) {
+                            get_map().unboard_vehicle( u.pos() );
+                            vertical_move( -dist, true );
+                        }
+                    }
                 }
                 break;
 
             case ACTION_MOVE_UP:
                 if( u.is_mounted() ) {
-                    auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
-                        add_msg( m_info, _( "You can't go down stairs while you're riding." ) );
-                        break;
+                    const monster *mon = u.mounted_creature.get();
+                    bool ladder = m.has_flag( "DIFFICULT_Z", u.pos() );
+
+                    if( ladder ) {
+                        const bool can_use_ladder =
+                            mon->has_flag( MF_MOUNTABLE_LADDER ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_ladder ) {
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
+                            break;
+                        }
+                    } else {
+                        const bool can_use_stairs =
+                            mon->has_flag( MF_MOUNTABLE_STAIRS ) ||
+                            mon->has_flag( MF_FLIES );
+
+                        if( !can_use_stairs ) {
+                            add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );
+                            break;
+                        }
                     }
                 }
-                if( !u.in_vehicle ) {
-                    vertical_move( 1, false );
-                } else if( veh_ctrl && vp->vehicle().is_rotorcraft() ) {
-                    pldrive( tripoint_above );
-                } else if( veh_ctrl && vp->vehicle().has_part( "ROTOR" ) &&
-                           !vp->vehicle().has_sufficient_rotorlift() ) {
-                    add_msg( m_bad, _( "The rotors struggle to generate enough lift!" ) );
+                if( controlled_vehicle != nullptr ) {
+                    if( controlled_vehicle->is_aircraft() ) {
+                        pldrive( tripoint_above );
+                    } else if( ( controlled_vehicle->has_part( "ROTOR" ) ||
+                                 controlled_vehicle->has_part( "BALLOON" ) ||
+                                 controlled_vehicle->has_part( "WING" ) ) &&
+                               !controlled_vehicle->has_sufficient_lift() ) {
+                        add_msg( m_bad, _( "The craft struggles to generate enough lift!" ) );
+                    } else {
+                        u.add_msg_if_player( _( "You need a propeller to take off!" ) );
+                    }
+                } else if( !u.in_vehicle ) {
+                    if( get_map().has_rope_at( u.pos() ) ) {
+                        point xy = u.pos().xy();
+                        map &here = get_map();
+                        tripoint where = u.pos();
+                        tripoint above = where;
+                        above.z++;
+                        if( get_map().ter( above ).id().str() != "t_open_air" ) {
+                            vertical_move( 1, false );
+                            break;
+                        }
+                        // Keep going down until we find a tile that is NOT open air
+                        while( get_map().ter( above ).id().str() == "t_open_air" &&
+                               !here.veh_at( tripoint( xy, above.z ) ) )  {
+                            above.z++;
+                        }
+                        const optional_vpart_position vp = here.veh_at( tripoint( xy, above.z ) );
+                        const int dist = above.z - u.pos().z;
+                        if( vp ) {
+                            const int idx = vp->vehicle().part_with_feature( vp->part_index(), VPFLAG_LADDER, true );
+                            if( idx != -1 ) {
+                                const vpart_info info = vp->vehicle().part_info( idx );
+                                if( info.ladder_length() >= dist ) {
+                                    vertical_move( dist, true );
+                                    here.board_vehicle( u.pos(), u.as_character() );
+                                    break;
+                                }
+                            }
+                        } else {
+                            vertical_move( 1, false );
+                        }
+                    } else {
+                        vertical_move( 1, false );
+                    }
+                } else {
+                    u.add_msg_if_player( _( "You need a propeller to take off!" ) );
                 }
                 break;
 
@@ -1902,7 +2089,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't open things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't open things while you're riding." ) );
                         break;
                     } else {
@@ -1918,7 +2105,7 @@ bool game::handle_action()
                     add_msg( m_info, _( "You can't close things while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
                     auto mon = u.mounted_creature.get();
-                    if( !mon->has_flag( MF_RIDEABLE_MECH ) ) {
+                    if( !mon->has_flag( MF_MOUNTABLE_DOORS ) ) {
                         add_msg( m_info, _( "You can't close things while you're riding." ) );
                         break;
                     } else {
@@ -2117,6 +2304,10 @@ bool game::handle_action()
                 avatar_action::unload( u );
                 break;
 
+            case ACTION_UNLOAD_ALL:
+                avatar_action::unload_all( u );
+                break;
+
             case ACTION_MEND:
                 avatar_action::mend( g->u, nullptr );
                 break;
@@ -2132,6 +2323,9 @@ bool game::handle_action()
 
             case ACTION_CAST_SPELL:
                 cast_spell();
+                break;
+            case ACTION_CAST_LAST_SPELL:
+                cast_last_spell();
                 break;
 
             case ACTION_FIRE_BURST: {
@@ -2395,7 +2589,7 @@ bool game::handle_action()
                 break;
 
             case ACTION_OPEN_WIKI:
-                if( get_option<std::string>( "WIKI_DOC_URL" ).length() > 0 ) {
+                if( !get_option<std::string>( "WIKI_DOC_URL" ).empty() ) {
                     open_url( get_option<std::string>( "WIKI_DOC_URL" ) );
                 } else {
                     add_msg( m_bad, _( "Invalid Wiki URL specified!" ) );
@@ -2405,7 +2599,7 @@ bool game::handle_action()
                 break;
 
             case ACTION_OPEN_HHG:
-                if( get_option<std::string>( "HHG_URL" ).length() > 0 ) {
+                if( !get_option<std::string>( "HHG_URL" ).empty() ) {
                     open_url( get_option<std::string>( "HHG_URL" ) + std::string( "/?t=UNDEAD_PEOPLE" ) );
                 } else {
                     add_msg( m_bad, _( "Invalid Hitchhiker's Guide URL specified!" ) );
@@ -2599,8 +2793,19 @@ bool game::handle_action()
                 display_transparency();
                 break;
 
+            case ACTION_DISPLAY_OUTSIDE:
+                if( MAP_SHARING::isCompetitive() && !MAP_SHARING::isDebugger() ) {
+                    break;    //don't do anything when sharing and not debugger
+                }
+                display_outside();
+                break;
+
             case ACTION_DISPLAY_SUBMAP_GRID:
                 g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
+                break;
+
+            case ACTION_TOGGLE_ZONE_OVERLAY:
+                g->show_zone_overlay = !g->show_zone_overlay;
                 break;
 
             case ACTION_TOGGLE_HOUR_TIMER:

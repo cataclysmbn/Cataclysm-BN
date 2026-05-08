@@ -1,20 +1,22 @@
 [
   {
-    "type": "vehicle",
     "id": "canoe",
+    "type": "vehicle",
     "name": "canoe",
     "blueprint": [ [ "<OO>" ] ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat", "hand_paddles", "boat_board" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board", "seat" ] },
+      { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "boat_board" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board", "seat_wood_light" ] },
       { "x": 2, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board" ] },
       { "x": -1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board" ] }
-    ]
+    ],
+    "items": [  ]
   },
   {
-    "type": "vehicle",
     "id": "DUKW",
+    "type": "vehicle",
     "name": "Amphibious Truck",
+    "blueprint": [  ],
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_cross", "seat", "seatbelt", "controls", "dashboard", "roof", "metal_boat_hull" ] },
       { "x": 0, "y": 1, "parts": [ "frame_cross", "seat", "seatbelt", "roof", "metal_boat_hull" ] },
@@ -28,17 +30,26 @@
       { "x": 1, "y": 3, "parts": [ "frame_vertical", "windshield", "wheel_mount_medium_steerable", "wheel_wide" ] },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "halfboard_nw", "metal_boat_hull" ] },
       { "x": 2, "y": 0, "parts": [ "frame_horizontal", "halfboard_horizontal", "headlight", "metal_boat_hull" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal", "metal_boat_hull" ] },
-      { "x": 2, "y": 1, "parts": [ "engine_v6", "alternator_truck", "battery_car" ] },
+      {
+        "x": 2,
+        "y": 1,
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "metal_boat_hull", "engine_v6", "alternator_truck", "battery_car" ]
+      },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal", "headlight", "metal_boat_hull" ] },
       { "x": 2, "y": 3, "parts": [ "frame_ne", "halfboard_ne", "metal_boat_hull" ] },
-      { "x": -1, "y": -1, "parts": [ "frame_vertical", "windshield", "metal_boat_hull" ] },
-      { "x": -1, "y": -1, "part": "tank", "fuel": "gasoline" },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "frame_vertical", "windshield", "metal_boat_hull", { "part": "tank", "fuel": "gasoline" } ]
+      },
       { "x": -1, "y": 0, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
       { "x": -1, "y": 2, "parts": [ "frame_cross", "windshield", "metal_boat_hull" ] },
-      { "x": -1, "y": 3, "parts": [ "frame_vertical", "windshield", "metal_boat_hull" ] },
-      { "x": -1, "y": 3, "part": "tank", "fuel": "gasoline" },
+      {
+        "x": -1,
+        "y": 3,
+        "parts": [ "frame_vertical", "windshield", "metal_boat_hull", { "part": "tank", "fuel": "gasoline" } ]
+      },
       { "x": -2, "y": -1, "parts": [ "frame_vertical", "halfboard_vertical", "metal_boat_hull" ] },
       { "x": -2, "y": 0, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -2, "y": 1, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
@@ -59,48 +70,112 @@
       { "x": -5, "y": 1, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -5, "y": 2, "parts": [ "frame_cross", "cargo_space", "metal_boat_hull" ] },
       { "x": -5, "y": 3, "parts": [ "frame_se", "halfboard_se", "metal_boat_hull" ] }
-    ]
+    ],
+    "items": [  ]
   },
   {
-    "type": "vehicle",
     "id": "kayak",
+    "type": "vehicle",
     "name": "kayak",
     "blueprint": [ [ "<O>" ] ],
     "parts": [
       { "x": 0, "y": 0, "parts": [ "xlframe_horizontal", "seat", "hand_paddles", "plastic_boat_hull" ] },
       { "x": 1, "y": 0, "parts": [ "xlframe_horizontal", "plastic_boat_hull" ] },
       { "x": -1, "y": 0, "parts": [ "xlframe_horizontal", "plastic_boat_hull" ] }
-    ]
+    ],
+    "items": [  ]
   },
   {
-    "type": "vehicle",
     "id": "kayak_racing",
+    "type": "vehicle",
     "name": "racing kayak",
     "blueprint": [ [ "<O>" ] ],
     "parts": [
       { "x": 0, "y": 0, "parts": [ "xlframe_horizontal", "seat", "hand_paddles", "carbonfiber_boat_hull" ] },
       { "x": 1, "y": 0, "parts": [ "xlframe_horizontal", "carbonfiber_boat_hull" ] },
       { "x": -1, "y": 0, "parts": [ "xlframe_horizontal", "carbonfiber_boat_hull" ] }
-    ]
+    ],
+    "items": [  ]
   },
   {
+    "id": "kayak_motorized",
     "type": "vehicle",
+    "name": "motorized kayak",
+    "blueprint": [ [ "<O>" ] ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "xlframe_horizontal", "seat", "hand_paddles", "carbonfiber_boat_hull" ] },
+      { "x": 1, "y": 0, "parts": [ "xlframe_horizontal", "carbonfiber_boat_hull" ] },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [
+          "xlframe_horizontal",
+          "carbonfiber_boat_hull",
+          "battery_motorbike",
+          "engine_1cyl",
+          "alternator_motorbike",
+          { "part": "tank_small", "fuel": "gasoline" }
+        ]
+      }
+    ],
+    "items": [  ]
+  },
+  {
+    "id": "jetski",
+    "type": "vehicle",
+    "name": "Jetski",
+    "blueprint": [ [ "<O#" ] ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "xlframe_horizontal", "controls", "seat", "plastic_boat_hull" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [
+          "xlframe_horizontal",
+          "plastic_boat_hull",
+          "battery_motorbike",
+          "engine_1cyl_large",
+          "alternator_motorbike",
+          { "part": "tank_small", "fuel": "gasoline" }
+        ]
+      },
+      { "x": -1, "y": 0, "parts": [ "xlframe_horizontal", "plastic_boat_hull", "trunk" ] }
+    ],
+    "items": [ { "x": -1, "y": 0, "chance": 50, "items": [ "flotation_vest" ] } ]
+  },
+  {
+    "id": "sea_scooter",
+    "type": "vehicle",
+    "name": "sea scooter",
+    "blueprint": [ [ "O" ] ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "sea_scooter_hull", "sea_scooter_battery", "controls_electronic", "motorcycle_headlight" ]
+      }
+    ],
+    "items": [  ]
+  },
+  {
     "id": "raft",
+    "type": "vehicle",
     "name": "raft",
     "blueprint": [
       [ "OO" ],
       [ "OO" ]
     ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "seat", "hand_paddles", "boat_board" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_wood_cross", "seat", "boat_board" ] },
-      { "x": 1, "y": 1, "parts": [ "frame_wood_cross", "seat", "boat_board" ] },
-      { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "seat", "boat_board" ] }
-    ]
+      { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "hand_paddles", "raft_board" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_cross", "raft_board" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_wood_cross", "raft_board" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "sail", "raft_board" ] }
+    ],
+    "items": [  ]
   },
   {
-    "type": "vehicle",
     "id": "inflatable_boat",
+    "type": "vehicle",
     "name": "inflatable boat",
     "blueprint": [
       [ "OO" ],
@@ -111,75 +186,94 @@
       { "x": 1, "y": 0, "parts": [ "inflatable_section", "inflatable_airbag" ] },
       { "x": 1, "y": 1, "parts": [ "inflatable_section", "inflatable_airbag" ] },
       { "x": 0, "y": 1, "parts": [ "inflatable_section", "inflatable_airbag" ] }
-    ]
+    ],
+    "items": [  ]
   },
   {
-    "type": "vehicle",
     "id": "boat_motor_single",
+    "type": "vehicle",
     "name": "motor boat",
     "blueprint": [
-      [ "|--\\" ],
-      [ "|==O>" ],
-      [ "|--/ " ]
+      [ "OOOO " ],
+      [ "O=#'O" ],
+      [ "OOOO " ]
     ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_vertical", "metal_boat_hull" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "metal_boat_hull" ] },
-      { "x": 2, "y": 0, "parts": [ "frame_horizontal", "metal_boat_hull" ] },
-      { "x": 3, "y": 0, "parts": [ "frame_sw", "metal_boat_hull" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "aluminium_boat_hull", "engine_1cyl_large", "alternator_bicycle", "battery_motorbike" ]
+      },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "frame_cross", "aluminium_boat_hull", "trunk", { "part": "tank", "fuel": "gasoline" } ]
+      },
       {
         "x": 0,
-        "y": 1,
-        "parts": [ "frame_vertical", "metal_boat_hull", "engine_1cyl_large", "alternator_bicycle", "battery_motorbike" ]
+        "y": 0,
+        "parts": [ "frame_cross", "aluminium_boat_hull", "seat", "seatbelt", "controls", "dashboard" ]
       },
-      { "x": 1, "y": 1, "parts": [ "frame_cross", "metal_boat_hull", "trunk" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_cross", "metal_boat_hull" ] },
-      { "x": 2, "y": 1, "part": "tank", "fuel": "gasoline" },
-      { "x": 3, "y": 1, "parts": [ "frame_cross", "metal_boat_hull", "seat", "seatbelt", "controls", "dashboard" ] },
-      { "x": 4, "y": 1, "parts": [ "frame_horizontal", "metal_boat_hull", "windshield" ] },
-      { "x": 0, "y": 2, "parts": [ "frame_vertical", "metal_boat_hull" ] },
-      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "metal_boat_hull" ] },
-      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "metal_boat_hull" ] },
-      { "x": 3, "y": 2, "parts": [ "frame_ne", "metal_boat_hull" ] }
+      { "x": 1, "y": 0, "parts": [ "frame_cross", "aluminium_boat_hull", "windshield" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_ne", "aluminium_boat_hull" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_sw", "aluminium_boat_hull" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_nw", "aluminium_boat_hull" ] }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -1, "y": 0, "chance": 25, "item_groups": [ "tools_survival", "tools_survival" ] }
     ]
   },
   {
-    "type": "vehicle",
     "id": "hovercraft_motor_single",
+    "type": "vehicle",
     "name": "hovercraft",
     "blueprint": [
-      [ "|--\\" ],
-      [ "|==O>" ],
-      [ "|--/ " ]
+      [ "OOOO " ],
+      [ "O=#'O" ],
+      [ "OOOO " ]
     ],
     "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_vertical", "hovercraft_section" ] },
-      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "hovercraft_section" ] },
-      { "x": 2, "y": 0, "parts": [ "frame_horizontal", "hovercraft_section" ] },
-      { "x": 3, "y": 0, "parts": [ "frame_sw", "hovercraft_section" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "xlframe_horizontal", "hovercraft_section", "engine_1cyl_large", "alternator_bicycle", "battery_motorbike" ]
+      },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "xlframe_cross", "hovercraft_section", "trunk", { "part": "tank", "fuel": "gasoline" } ]
+      },
       {
         "x": 0,
-        "y": 1,
-        "parts": [ "frame_vertical", "hovercraft_section", "engine_1cyl_large", "alternator_bicycle", "battery_motorbike" ]
+        "y": 0,
+        "parts": [ "xlframe_cross", "hovercraft_section", "seat", "seatbelt", "controls", "dashboard" ]
       },
-      { "x": 1, "y": 1, "parts": [ "frame_cross", "hovercraft_section", "trunk" ] },
-      { "x": 2, "y": 1, "parts": [ "frame_cross", "hovercraft_section" ] },
-      { "x": 2, "y": 1, "part": "tank", "fuel": "gasoline" },
-      {
-        "x": 3,
-        "y": 1,
-        "parts": [ "frame_cross", "hovercraft_section", "seat", "seatbelt", "controls", "dashboard" ]
-      },
-      { "x": 4, "y": 1, "parts": [ "frame_horizontal", "hovercraft_section", "windshield" ] },
-      { "x": 0, "y": 2, "parts": [ "frame_vertical", "hovercraft_section" ] },
-      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "hovercraft_section" ] },
-      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "hovercraft_section" ] },
-      { "x": 3, "y": 2, "parts": [ "frame_ne", "hovercraft_section" ] }
+      { "x": 1, "y": 0, "parts": [ "xlframe_cross", "hovercraft_section", "windshield" ] },
+      { "x": 2, "y": 0, "parts": [ "xlframe_vertical", "hovercraft_section" ] },
+      { "x": -2, "y": 1, "parts": [ "xlframe_se", "hovercraft_section" ] },
+      { "x": -1, "y": 1, "parts": [ "xlframe_vertical", "hovercraft_section" ] },
+      { "x": 0, "y": 1, "parts": [ "xlframe_vertical", "hovercraft_section" ] },
+      { "x": 1, "y": 1, "parts": [ "xlframe_ne", "hovercraft_section" ] },
+      { "x": -2, "y": -1, "parts": [ "xlframe_sw", "hovercraft_section" ] },
+      { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "hovercraft_section" ] },
+      { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "hovercraft_section" ] },
+      { "x": 1, "y": -1, "parts": [ "xlframe_nw", "hovercraft_section" ] }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -1, "y": 0, "chance": 25, "item_groups": [ "tools_survival", "tools_survival" ] }
     ]
   },
   {
-    "type": "vehicle",
     "id": "wood_rowboat_double",
+    "type": "vehicle",
     "name": "wooden rowboat",
     "blueprint": [
       [ " /\\" ],
@@ -207,6 +301,1630 @@
       { "x": 2, "y": 2, "parts": [ "frame_wood_ne", "boat_board" ] },
       { "x": 3, "y": 0, "parts": [ "frame_wood_nw", "boat_board" ] },
       { "x": 3, "y": 1, "parts": [ "frame_wood_ne", "boat_board" ] }
+    ],
+    "items": [  ]
+  },
+  {
+    "id": "sailboat",
+    "type": "vehicle",
+    "name": "Sailboat",
+    "blueprint": [
+      [ " ||||||||++|||  " ],
+      [ "||heeh|______|| " ],
+      [ "|__hh_|_______||" ],
+      [ "'_____+__S===_F|" ],
+      [ "|_____|_______||" ],
+      [ "||##==|______|| " ],
+      [ " ||||||||++|||  " ]
+    ],
+    "parts": [
+      { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "windshield", "v_curtain", "boat_board" ] },
+      { "x": -8, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -7, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_wood_horizontal", "door_wood_opaque", "boat_board" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": 0, "parts": [ "frame_wood_vertical", "seat_wood", "sail_large", "boat_board" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "boat_board" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "boat_board" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "boat_board" ] },
+      { "x": 4, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      {
+        "x": 5,
+        "y": 0,
+        "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "mounted_american_flag", "boat_board" ]
+      },
+      { "x": 6, "y": 0, "parts": [ "frame_wood_horizontal", "woodhalfboard_horizontal", "boat_board" ] },
+      { "x": -9, "y": 1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -8, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -7, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 4, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 5, "y": 1, "parts": [ "frame_wood_sw", "woodhalfboard_sw", "boat_board" ] },
+      { "x": 6, "y": 1, "parts": [ "frame_wood_ne", "woodhalfboard_ne", "boat_board" ] },
+      { "x": -9, "y": 2, "parts": [ "frame_wood_se", "woodboard_se", "boat_board" ] },
+      { "x": -8, "y": 2, "parts": [ "frame_wood_nw", "woodboard_nw", "boat_board" ] },
+      { "x": -7, "y": 2, "parts": [ "frame_wood_vertical", "bed", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": 2, "parts": [ "frame_wood_vertical", "bed", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": 2, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 4, "y": 2, "parts": [ "frame_wood_sw", "woodhalfboard_sw", "boat_board" ] },
+      { "x": 5, "y": 2, "parts": [ "frame_wood_ne", "woodhalfboard_ne", "boat_board" ] },
+      { "x": -8, "y": 3, "parts": [ "frame_wood_se", "woodboard_se", "boat_board" ] },
+      { "x": -7, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -6, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -5, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -4, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -3, "y": 3, "parts": [ "frame_wood_ne", "woodboard_ne", "boat_board" ] },
+      { "x": -2, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": -1, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": 0, "y": 3, "parts": [ "frame_wood_vertical", "door_wood", "boat_board" ] },
+      { "x": 1, "y": 3, "parts": [ "frame_wood_vertical", "door_wood", "boat_board" ] },
+      { "x": 2, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": 3, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": 4, "y": 3, "parts": [ "frame_wood_ne", "woodhalfboard_ne", "boat_board" ] },
+      { "x": -9, "y": -1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -8, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -7, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": -1, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": -1, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 4, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 5, "y": -1, "parts": [ "frame_wood_se", "woodhalfboard_se", "boat_board" ] },
+      { "x": 6, "y": -1, "parts": [ "frame_wood_nw", "woodhalfboard_nw", "boat_board" ] },
+      { "x": -9, "y": -2, "parts": [ "frame_wood_sw", "woodboard_sw", "boat_board" ] },
+      { "x": -8, "y": -2, "parts": [ "frame_wood_ne", "woodboard_ne", "boat_board" ] },
+      { "x": -7, "y": -2, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": -2, "parts": [ "frame_wood_vertical", "veh_table_wood", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": -2, "parts": [ "frame_wood_vertical", "veh_table_wood", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": -2, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": -2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 4, "y": -2, "parts": [ "frame_wood_se", "woodhalfboard_se", "boat_board" ] },
+      { "x": 5, "y": -2, "parts": [ "frame_wood_nw", "woodhalfboard_nw", "boat_board" ] },
+      { "x": -8, "y": -3, "parts": [ "frame_wood_sw", "woodboard_sw", "boat_board" ] },
+      { "x": -7, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -6, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -5, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -4, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "boat_board" ] },
+      { "x": -3, "y": -3, "parts": [ "frame_wood_nw", "woodboard_nw", "boat_board" ] },
+      { "x": -2, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": -1, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": 0, "y": -3, "parts": [ "frame_wood_vertical", "door_wood", "boat_board" ] },
+      { "x": 1, "y": -3, "parts": [ "frame_wood_vertical", "door_wood", "boat_board" ] },
+      { "x": 2, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": 3, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "boat_board" ] },
+      { "x": 4, "y": -3, "parts": [ "frame_wood_nw", "woodhalfboard_nw", "boat_board" ] }
+    ],
+    "items": [
+      { "x": 1, "y": 0, "chance": 75, "item_groups": [ "supplies_ship_rigging", "fishing_items" ] },
+      { "x": 2, "y": 0, "chance": 75, "item_groups": [ "supplies_ship_rigging", "fishing_items" ] },
+      { "x": 3, "y": 0, "chance": 75, "item_groups": [ "supplies_ship_rigging", "fishing_items" ] },
+      { "x": 1, "y": 0, "chance": 50, "items": [ "flotation_vest" ] },
+      { "x": 2, "y": 0, "chance": 50, "items": [ "flotation_vest" ] },
+      { "x": 3, "y": 0, "chance": 50, "items": [ "flotation_vest" ] },
+      { "x": -5, "y": -2, "chance": 50, "items": [ "waterwaymap" ] },
+      { "x": -5, "y": 2, "chance": 75, "item_groups": [ "tools_survival", "tools_survival" ] },
+      { "x": -5, "y": 2, "chance": 50, "item_groups": [ "tools_survival", "tools_survival" ] },
+      { "x": -5, "y": 2, "chance": 25, "item_groups": [ "tools_survival", "tools_survival" ] },
+      { "x": -4, "y": 2, "chance": 75, "item_groups": [ "stash_food", "stash_food", "drugs_heal_simple" ] },
+      { "x": -4, "y": 2, "chance": 50, "item_groups": [ "stash_food", "stash_food", "drugs_heal_simple" ] },
+      { "x": -4, "y": 2, "chance": 25, "item_groups": [ "stash_food", "stash_food", "drugs_heal_simple" ] }
     ]
+  },
+  {
+    "id": "pirate_ship",
+    "type": "vehicle",
+    "name": "Pirate Ship",
+    "blueprint": [
+      [ " ||||||||++|||   " ],
+      [ "||heeh|_____t||  " ],
+      [ "|=_hh_|_______|| " ],
+      [ "|=____+__S===_F|>" ],
+      [ "|=____|_______|| " ],
+      [ "||##__|_____t||  " ],
+      [ " ||||||||++|||   " ]
+    ],
+    "parts": [
+      { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "plating_wood", "boat_board" ] },
+      { "x": -8, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
+      { "x": -7, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_wood_horizontal", "door_wood_opaque", "boat_board" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": 0, "parts": [ "frame_wood_vertical", "seat_wood", "sail_large", "boat_board" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "boat_board" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "boat_board" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "boat_board" ] },
+      { "x": 4, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      {
+        "x": 5,
+        "y": 0,
+        "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "mounted_pirate_flag", "boat_board" ]
+      },
+      {
+        "x": 6,
+        "y": 0,
+        "parts": [ "frame_wood_horizontal", "woodhalfboard_horizontal", "plating_wood", "boat_board" ]
+      },
+      { "x": 7, "y": 0, "parts": [ "ram_wood" ] },
+      { "x": -9, "y": 1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "plating_wood", "boat_board" ] },
+      { "x": -8, "y": 1, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
+      { "x": -7, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 4, "y": 1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 5, "y": 1, "parts": [ "frame_wood_sw", "woodhalfboard_sw", "plating_wood", "boat_board" ] },
+      { "x": 6, "y": 1, "parts": [ "frame_wood_ne", "woodhalfboard_ne", "plating_wood", "boat_board" ] },
+      { "x": -9, "y": 2, "parts": [ "frame_wood_se", "woodboard_se", "plating_wood", "boat_board" ] },
+      { "x": -8, "y": 2, "parts": [ "frame_wood_nw", "woodboard_nw", "plating_wood", "boat_board" ] },
+      { "x": -7, "y": 2, "parts": [ "frame_wood_vertical", "bed", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": 2, "parts": [ "frame_wood_vertical", "bed", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_wood_horizontal", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      {
+        "x": 3,
+        "y": 2,
+        "parts": [
+          "frame_wood_vertical",
+          "wood box",
+          "turret_mount_manual_wood",
+          {
+            "ammo_types": [ "cannon_round_ball", "cannon_canister_shot" ],
+            "part": "mounted_3in_ordnance_rifle",
+            "ammo": 50,
+            "ammo_qty": [ 1, 1 ]
+          },
+          "boat_board"
+        ]
+      },
+      { "x": 4, "y": 2, "parts": [ "frame_wood_sw", "woodhalfboard_sw", "plating_wood", "boat_board" ] },
+      { "x": 5, "y": 2, "parts": [ "frame_wood_ne", "woodhalfboard_ne", "plating_wood", "boat_board" ] },
+      { "x": -8, "y": 3, "parts": [ "frame_wood_se", "woodboard_se", "plating_wood", "boat_board" ] },
+      { "x": -7, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -6, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -5, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -4, "y": 3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -3, "y": 3, "parts": [ "frame_wood_ne", "woodboard_ne", "plating_wood", "boat_board" ] },
+      { "x": -2, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -1, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": 0, "y": 3, "parts": [ "frame_wood_vertical", "door_wood", "plating_wood", "boat_board" ] },
+      { "x": 1, "y": 3, "parts": [ "frame_wood_vertical", "door_wood", "plating_wood", "boat_board" ] },
+      { "x": 2, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": 3, "y": 3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": 4, "y": 3, "parts": [ "frame_wood_ne", "woodhalfboard_ne", "plating_wood", "boat_board" ] },
+      { "x": -9, "y": -1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "plating_wood", "boat_board" ] },
+      { "x": -8, "y": -1, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
+      { "x": -7, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": -1, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": -1, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 3, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 4, "y": -1, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 5, "y": -1, "parts": [ "frame_wood_se", "woodhalfboard_se", "plating_wood", "boat_board" ] },
+      { "x": 6, "y": -1, "parts": [ "frame_wood_nw", "woodhalfboard_nw", "plating_wood", "boat_board" ] },
+      { "x": -9, "y": -2, "parts": [ "frame_wood_sw", "woodboard_sw", "plating_wood", "boat_board" ] },
+      { "x": -8, "y": -2, "parts": [ "frame_wood_ne", "woodboard_ne", "plating_wood", "boat_board" ] },
+      { "x": -7, "y": -2, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -6, "y": -2, "parts": [ "frame_wood_vertical", "veh_table_wood", "roof_wood", "boat_board" ] },
+      { "x": -5, "y": -2, "parts": [ "frame_wood_vertical", "veh_table_wood", "roof_wood", "boat_board" ] },
+      { "x": -4, "y": -2, "parts": [ "frame_wood_vertical", "seat_wood", "roof_wood", "boat_board" ] },
+      { "x": -3, "y": -2, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "boat_board" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_wood_horizontal", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "boat_board" ] },
+      {
+        "x": 3,
+        "y": -2,
+        "parts": [
+          "frame_wood_vertical",
+          "wood box",
+          "turret_mount_manual_wood",
+          {
+            "ammo_types": [ "cannon_round_ball", "cannon_canister_shot" ],
+            "part": "mounted_3in_ordnance_rifle",
+            "ammo": 50,
+            "ammo_qty": [ 1, 1 ]
+          },
+          "boat_board"
+        ]
+      },
+      { "x": 4, "y": -2, "parts": [ "frame_wood_se", "woodhalfboard_se", "plating_wood", "boat_board" ] },
+      { "x": 5, "y": -2, "parts": [ "frame_wood_nw", "woodhalfboard_nw", "plating_wood", "boat_board" ] },
+      { "x": -8, "y": -3, "parts": [ "frame_wood_sw", "woodboard_sw", "plating_wood", "boat_board" ] },
+      { "x": -7, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -6, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -5, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -4, "y": -3, "parts": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -3, "y": -3, "parts": [ "frame_wood_nw", "woodboard_nw", "plating_wood", "boat_board" ] },
+      { "x": -2, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": -1, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": 0, "y": -3, "parts": [ "frame_wood_vertical", "door_wood", "plating_wood", "boat_board" ] },
+      { "x": 1, "y": -3, "parts": [ "frame_wood_vertical", "door_wood", "plating_wood", "boat_board" ] },
+      { "x": 2, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": 3, "y": -3, "parts": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "boat_board" ] },
+      { "x": 4, "y": -3, "parts": [ "frame_wood_nw", "woodhalfboard_nw", "plating_wood", "boat_board" ] }
+    ],
+    "items": [
+      { "x": 3, "y": 2, "chance": 50, "item_groups": [ "supplies_cannonball" ] },
+      { "x": 3, "y": -2, "chance": 50, "item_groups": [ "supplies_cannonball" ] },
+      { "x": 1, "y": 0, "chance": 100, "item_groups": [ "supplies_ship_rigging" ] },
+      { "x": 2, "y": 0, "chance": 100, "item_groups": [ "supplies_ship_rigging" ] },
+      { "x": 3, "y": 0, "chance": 100, "item_groups": [ "supplies_ship_rigging" ] },
+      { "x": 3, "y": 0, "chance": 100, "item_groups": [ "supplies_powder_mag" ] },
+      { "x": -8, "y": 0, "chance": 100, "item_groups": [ "supplies_naval_cache" ] },
+      { "x": -8, "y": 1, "chance": 100, "item_groups": [ "supplies_naval_cache" ] },
+      { "x": -8, "y": -1, "chance": 100, "item_groups": [ "supplies_naval_cache" ] },
+      { "x": -5, "y": -2, "chance": 50, "items": [ "survivor_scope" ] },
+      { "x": -5, "y": -2, "chance": 50, "items": [ "waterwaymap" ] },
+      { "x": -6, "y": -2, "chance": 75, "item_groups": [ "jewelry_safe", "jewelry_safe" ] },
+      { "x": -6, "y": -2, "chance": 50, "item_groups": [ "jewelry_safe", "jewelry_safe" ] },
+      { "x": -6, "y": -2, "chance": 25, "item_groups": [ "jewelry_safe", "jewelry_safe" ] }
+    ]
+  },
+  {
+    "id": "CG_patrol_boat",
+    "type": "vehicle",
+    "name": "Coast Guard Patrol Boat",
+    "//": "Roughly based off a mix of the RB-S II and Defender-class boats",
+    "blueprint": [
+      [ "|O||'+'||| " ],
+      [ "|=t'#_#'_||" ],
+      [ "|__+___+_t|" ],
+      [ "|=t'#_#'_||" ],
+      [ "|O||'+'||| " ]
+    ],
+    "parts": [
+      {
+        "x": -6,
+        "y": 0,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "engine_v6", "alternator_truck", "battery_car", "metal_boat_hull" ]
+      },
+      {
+        "x": -5,
+        "y": 0,
+        "parts": [ "frame_cross", "trunk_floor", { "part": "tank", "fuel": "avgas" }, "metal_boat_hull" ]
+      },
+      {
+        "x": -4,
+        "y": 0,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "762_51", "762_51_incendiary" ],
+            "part": "mounted_m240",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "frame_horizontal", "reinforced_windshield", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls", "dashboard", "vehicle_clock", "horn_car", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "reinforced_windshield", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": 4, "y": 0, "parts": [ "frame_nw", "hdhalfboard_nw", "metal_boat_hull" ] },
+      { "x": -6, "y": 1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      { "x": -5, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_horizontal", "hdhatch", "plating_steel", "metal_boat_hull" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "floodlight", "metal_boat_hull" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "light_blue", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "frame_cross", "aisle_vertical", "hdroof", "mounted_american_flag", "metal_boat_hull" ]
+      },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "hdhatch", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      {
+        "x": 3,
+        "y": 1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 4, "y": 1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      {
+        "x": -6,
+        "y": 2,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "engine_v6", "alternator_truck", "battery_car", "metal_boat_hull" ]
+      },
+      {
+        "x": -5,
+        "y": 2,
+        "parts": [ "frame_cross", "trunk_floor", { "part": "tank", "fuel": "avgas" }, "metal_boat_hull" ]
+      },
+      {
+        "x": -4,
+        "y": 2,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "762_51", "762_51_incendiary" ],
+            "part": "mounted_m240",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      {
+        "x": -3,
+        "y": 2,
+        "parts": [ "frame_horizontal", "reinforced_windshield", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -2,
+        "y": 2,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": 2,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "reinforced_windshield", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": 4, "y": 2, "parts": [ "frame_ne", "hdhalfboard_ne", "metal_boat_hull" ] },
+      { "x": -6, "y": 3, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": -5, "y": 3, "parts": [ "frame_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 3, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": -3, "y": 3, "parts": [ "frame_se", "hdhalfboard_se", "plating_steel", "metal_boat_hull" ] },
+      { "x": -2, "y": 3, "parts": [ "frame_vertical", "reinforced_windshield", "plating_steel", "metal_boat_hull" ] },
+      { "x": -1, "y": 3, "parts": [ "frame_vertical", "hdhatch_right", "plating_steel", "metal_boat_hull" ] },
+      { "x": 0, "y": 3, "parts": [ "frame_vertical", "reinforced_windshield", "plating_steel", "metal_boat_hull" ] },
+      { "x": 1, "y": 3, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": 3, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 3, "parts": [ "frame_ne", "hdhalfboard_ne", "metal_boat_hull" ] },
+      { "x": -6, "y": -1, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": -5, "y": -1, "parts": [ "frame_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_sw", "hdhalfboard_sw", "plating_steel", "metal_boat_hull" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_vertical", "reinforced_windshield", "plating_steel", "metal_boat_hull" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "hdhatch_left", "plating_steel", "metal_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "reinforced_windshield", "plating_steel", "metal_boat_hull" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": -1, "parts": [ "frame_nw", "hdhalfboard_nw", "metal_boat_hull" ] }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 25, "items": [ "flotation_vest", "waterwaymap" ] },
+      { "x": 0, "y": 0, "chance": 5, "items": [ "mil_gps_device" ] },
+      { "x": -2, "y": 0, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -2, "y": 0, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": 0, "y": 2, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": 0, "y": 2, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": -2, "y": 2, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -2, "y": 2, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": -4, "y": 0, "chance": 50, "item_groups": [ "on_hand_308" ] },
+      { "x": -4, "y": 0, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -4, "y": 2, "chance": 50, "item_groups": [ "on_hand_308" ] },
+      { "x": -4, "y": 2, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": 3, "y": 1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": 3, "y": 1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -5, "y": 0, "chance": 75, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -5, "y": 0, "chance": 50, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -5, "y": 0, "chance": 25, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -5, "y": 2, "chance": 75, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -5, "y": 2, "chance": 50, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -5, "y": 2, "chance": 25, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] }
+    ]
+  },
+  {
+    "id": "CG_cutter",
+    "type": "vehicle",
+    "name": "Coast Guard Cutter",
+    "//": "Based on Sentinel-class but greatly reduced in size to actually spawn and compacted into a 2D floorplan, 25mm also swapped for a mk 19.",
+    "blueprint": [
+      [ "||OO||||||||||||||   " ],
+      [ "|=_______________||  " ],
+      [ "|=__||_|''+'|_||__|| " ],
+      [ "O___|t_'_#_#'_t|=__||" ],
+      [ "O______+___#'__|=T__|" ],
+      [ "O___|t_'##__'_t|=__||" ],
+      [ "|=__||_|''+'|_||__|| " ],
+      [ "|=_______________||  " ],
+      [ "||OO||||||||||||||   " ]
+    ],
+    "parts": [
+      { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -9, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -8, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -6, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "hdhatch", "metal_boat_hull" ] },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "frame_cross", "aisle_vertical", "hdroof", "mounted_american_flag", "metal_boat_hull" ]
+      },
+      { "x": -2, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "floodlight", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "horn_ship",
+          "hdroof",
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": 0, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      { "x": 5, "y": 0, "parts": [ "frame_cross", "trunk", "metal_boat_hull" ] },
+      {
+        "x": 6,
+        "y": 0,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 7, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 8, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      {
+        "x": 9,
+        "y": 0,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      { "x": -11, "y": 1, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -9, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -8, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      {
+        "x": -6,
+        "y": 1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": -5, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      {
+        "x": -3,
+        "y": 1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "light_blue", "metal_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      {
+        "x": 3,
+        "y": 1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 4, "y": 1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      { "x": 5, "y": 1, "parts": [ "frame_cross", "trunk", "metal_boat_hull" ] },
+      { "x": 6, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 8, "y": 1, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": 9, "y": 1, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": 2,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": 2,
+        "parts": [ "frame_cross", "trunk", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      {
+        "x": -9,
+        "y": 2,
+        "parts": [ "frame_cross", "aisle_vertical", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      { "x": -8, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 2, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": -6, "y": 2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "hdhatch_right", "metal_boat_hull" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_ne", "hdhalfboard_ne", "metal_boat_hull" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": 2, "parts": [ "frame_ne", "hdhalfboard_ne", "metal_boat_hull" ] },
+      { "x": 5, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": 2, "parts": [ "frame_sw", "hdhalfboard_sw", "plating_steel", "metal_boat_hull" ] },
+      { "x": 8, "y": 2, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": 3,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": 3,
+        "parts": [ "frame_cross", "trunk", "diesel_engine_v12", "generator_7500w", "metal_boat_hull" ]
+      },
+      { "x": -9, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "storage_battery", "metal_boat_hull" ] },
+      { "x": -8, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -6, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -3, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -2, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -1, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 2, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 5, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": 3, "parts": [ "frame_sw", "hdhalfboard_sw", "plating_steel", "metal_boat_hull" ] },
+      { "x": 7, "y": 3, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      { "x": -11, "y": 4, "parts": [ "frame_se", "hdhalfboard_se", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -9, "y": 4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -8, "y": 4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -7, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -6, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -5, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -4, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -3, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -2, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -1, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 0, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 1, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 3, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 4, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 5, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 6, "y": 4, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      { "x": -11, "y": -1, "parts": [ "frame_horizontal", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -9, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -8, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": -1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      {
+        "x": -6,
+        "y": -1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": -5, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "light_blue", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      {
+        "x": 3,
+        "y": -1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 4, "y": -1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      { "x": 5, "y": -1, "parts": [ "frame_cross", "trunk", "metal_boat_hull" ] },
+      { "x": 6, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 8, "y": -1, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": 9, "y": -1, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": -2,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": -2,
+        "parts": [ "frame_cross", "trunk", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      {
+        "x": -9,
+        "y": -2,
+        "parts": [ "frame_cross", "aisle_vertical", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      { "x": -8, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": -2, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": -6, "y": -2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": -2, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": -3, "y": -2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_vertical", "hdhatch_left", "metal_boat_hull" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_nw", "hdhalfboard_nw", "metal_boat_hull" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": -2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": -2, "parts": [ "frame_nw", "hdhalfboard_nw", "metal_boat_hull" ] },
+      { "x": 5, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": -2, "parts": [ "frame_se", "hdhalfboard_se", "plating_steel", "metal_boat_hull" ] },
+      { "x": 8, "y": -2, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": -3,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": -3,
+        "parts": [ "frame_cross", "trunk", "diesel_engine_v12", "generator_7500w", "metal_boat_hull" ]
+      },
+      { "x": -9, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "storage_battery", "metal_boat_hull" ] },
+      { "x": -8, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -6, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -3, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -2, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -1, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 2, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 5, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": -3, "parts": [ "frame_se", "hdhalfboard_se", "plating_steel", "metal_boat_hull" ] },
+      { "x": 7, "y": -3, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] },
+      { "x": -11, "y": -4, "parts": [ "frame_sw", "hdhalfboard_sw", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -9, "y": -4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -8, "y": -4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -7, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -6, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -5, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -4, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -3, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -2, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -1, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 0, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 1, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 3, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 4, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 5, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 6, "y": -4, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 25, "items": [ "flotation_vest", "waterwaymap" ] },
+      { "x": 0, "y": 0, "chance": 5, "items": [ "mil_gps_device" ] },
+      { "x": -3, "y": 1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -3, "y": 1, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": -2, "y": 1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -2, "y": 1, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": -2, "y": -1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -2, "y": -1, "chance": 10, "item_groups": [ "infantry_officer_gear" ] },
+      { "x": 0, "y": -1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": 0, "y": -1, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": 6, "y": 0, "chance": 50, "items": [ "40x53mm_m430a1" ] },
+      { "x": 6, "y": 0, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -6, "y": 1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": -6, "y": 1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": 3, "y": 1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": 3, "y": 1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -6, "y": -1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": -6, "y": -1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": 3, "y": -1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": 3, "y": -1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -10, "y": 3, "chance": 75, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": 3, "chance": 50, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": 3, "chance": 25, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": 2, "chance": 50, "items": [ "inflatable_boat", "hand_pump" ] },
+      { "x": -10, "y": 2, "chance": 25, "item_groups": [ "fuel_diesel" ] },
+      { "x": -10, "y": -2, "chance": 50, "items": [ "inflatable_boat", "hand_pump" ] },
+      { "x": -10, "y": -2, "chance": 25, "item_groups": [ "fuel_diesel" ] },
+      { "x": -10, "y": -3, "chance": 75, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": -3, "chance": 50, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": -3, "chance": 25, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": 5, "y": 0, "chance": 50, "item_groups": [ "infantry_common_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": 0, "chance": 50, "item_groups": [ "infantry_medical_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": 1, "chance": 50, "item_groups": [ "infantry_common_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": 1, "chance": 50, "item_groups": [ "infantry_medical_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": -1, "chance": 50, "item_groups": [ "infantry_common_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": -1, "chance": 50, "item_groups": [ "infantry_medical_gear", "mil_food_nodrugs" ] }
+    ]
+  },
+  {
+    "id": "CG_cutter_25mm",
+    "type": "vehicle",
+    "name": "Coast Guard Cutter",
+    "//": "Based on Sentinel-class but greatly reduced in size to actually spawn and compacted into a 2D floorplan, 25mm version of above cutter.",
+    "blueprint": [
+      [ "||OO||||||||||||||   " ],
+      [ "|=_______________||  " ],
+      [ "|=__||_|''+'|_||__|| " ],
+      [ "O___|t_'_#_#'_t|=__||" ],
+      [ "O______+___#'__|=T__|" ],
+      [ "O___|t_'##__'_t|=__||" ],
+      [ "|=__||_|''+'|_||__|| " ],
+      [ "|=_______________||  " ],
+      [ "||OO||||||||||||||   " ]
+    ],
+    "parts": [
+      { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -9, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -8, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -6, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "hdhatch", "metal_boat_hull" ] },
+      {
+        "x": -3,
+        "y": 0,
+        "parts": [ "frame_cross", "aisle_vertical", "hdroof", "mounted_american_flag", "metal_boat_hull" ]
+      },
+      { "x": -2, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "floodlight", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls", "dashboard", "vehicle_clock", "horn_big", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": 0, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      { "x": 5, "y": 0, "parts": [ "frame_cross", "trunk", "metal_boat_hull" ] },
+      {
+        "x": 6,
+        "y": 0,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "part": "mounted_25mm_autocannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 7, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 8, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      {
+        "x": 9,
+        "y": 0,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      { "x": -11, "y": 1, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -9, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -8, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      {
+        "x": -6,
+        "y": 1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": -5, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      {
+        "x": -3,
+        "y": 1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "light_blue", "metal_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      {
+        "x": 3,
+        "y": 1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 4, "y": 1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      { "x": 5, "y": 1, "parts": [ "frame_cross", "trunk", "metal_boat_hull" ] },
+      { "x": 6, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 8, "y": 1, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": 9, "y": 1, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": 2,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": 2,
+        "parts": [ "frame_cross", "trunk", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      {
+        "x": -9,
+        "y": 2,
+        "parts": [ "frame_cross", "aisle_vertical", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      { "x": -8, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 2, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": -6, "y": 2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "hdhatch_right", "metal_boat_hull" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_ne", "hdhalfboard_ne", "metal_boat_hull" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": 2, "parts": [ "frame_ne", "hdhalfboard_ne", "metal_boat_hull" ] },
+      { "x": 5, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": 2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": 2, "parts": [ "frame_sw", "hdhalfboard_sw", "plating_steel", "metal_boat_hull" ] },
+      { "x": 8, "y": 2, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": 3,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": 3,
+        "parts": [ "frame_cross", "trunk", "diesel_engine_v12", "generator_7500w", "metal_boat_hull" ]
+      },
+      { "x": -9, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "storage_battery", "metal_boat_hull" ] },
+      { "x": -8, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -6, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -3, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -2, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -1, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 2, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 5, "y": 3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": 3, "parts": [ "frame_sw", "hdhalfboard_sw", "plating_steel", "metal_boat_hull" ] },
+      { "x": 7, "y": 3, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      { "x": -11, "y": 4, "parts": [ "frame_se", "hdhalfboard_se", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -9, "y": 4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -8, "y": 4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -7, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -6, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -5, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -4, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -3, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -2, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -1, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 0, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 1, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 3, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 4, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 5, "y": 4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 6, "y": 4, "parts": [ "frame_ne", "hdhalfboard_ne", "plating_steel", "metal_boat_hull" ] },
+      { "x": -11, "y": -1, "parts": [ "frame_horizontal", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -9, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -8, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": -1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      {
+        "x": -6,
+        "y": -1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": -5, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "metal_boat_hull" ] },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "hdroof", "light_blue", "metal_boat_hull" ] },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "frame_cross", "seat", "seatbelt", "controls_electronic", "hdroof", "metal_boat_hull" ]
+      },
+      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      {
+        "x": 3,
+        "y": -1,
+        "parts": [
+          "frame_cross",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          {
+            "ammo_types": [ "50bmg", "50_incendiary", "50ss" ],
+            "part": "mounted_browning",
+            "ammo": 60,
+            "ammo_qty": [ 10, 100 ]
+          },
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 4, "y": -1, "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "metal_boat_hull" ] },
+      { "x": 5, "y": -1, "parts": [ "frame_cross", "trunk", "metal_boat_hull" ] },
+      { "x": 6, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": -1, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 8, "y": -1, "parts": [ "frame_se", "hdhalfboard_se", "metal_boat_hull" ] },
+      { "x": 9, "y": -1, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": -2,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": -2,
+        "parts": [ "frame_cross", "trunk", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      {
+        "x": -9,
+        "y": -2,
+        "parts": [ "frame_cross", "aisle_vertical", { "fuel": "jp8", "part": "tank_30gal_drum" }, "metal_boat_hull" ]
+      },
+      { "x": -8, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": -2, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": -6, "y": -2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": -2, "parts": [ "frame_sw", "hdhalfboard_sw", "metal_boat_hull" ] },
+      { "x": -3, "y": -2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_vertical", "hdhatch_left", "metal_boat_hull" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_vertical", "reinforced_windshield", "metal_boat_hull" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_nw", "hdhalfboard_nw", "metal_boat_hull" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": -2, "parts": [ "frame_vertical", "hdhalfboard_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": -2, "parts": [ "frame_nw", "hdhalfboard_nw", "metal_boat_hull" ] },
+      { "x": 5, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": -2, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 7, "y": -2, "parts": [ "frame_se", "hdhalfboard_se", "plating_steel", "metal_boat_hull" ] },
+      { "x": 8, "y": -2, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] },
+      {
+        "x": -11,
+        "y": -3,
+        "parts": [ "frame_horizontal", "hdhalfboard_horizontal", "plating_steel", "metal_boat_hull" ]
+      },
+      {
+        "x": -10,
+        "y": -3,
+        "parts": [ "frame_cross", "trunk", "diesel_engine_v12", "generator_7500w", "metal_boat_hull" ]
+      },
+      { "x": -9, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "storage_battery", "metal_boat_hull" ] },
+      { "x": -8, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -7, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -6, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -5, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -4, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -3, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -2, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": -1, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 2, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 3, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 4, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 5, "y": -3, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
+      { "x": 6, "y": -3, "parts": [ "frame_se", "hdhalfboard_se", "plating_steel", "metal_boat_hull" ] },
+      { "x": 7, "y": -3, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] },
+      { "x": -11, "y": -4, "parts": [ "frame_sw", "hdhalfboard_sw", "plating_steel", "metal_boat_hull" ] },
+      { "x": -10, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -9, "y": -4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -8, "y": -4, "parts": [ "frame_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -7, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -6, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -5, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -4, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -3, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -2, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": -1, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 0, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 1, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 2, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 3, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 4, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 5, "y": -4, "parts": [ "frame_vertical", "hdhalfboard_vertical", "plating_steel", "metal_boat_hull" ] },
+      { "x": 6, "y": -4, "parts": [ "frame_nw", "hdhalfboard_nw", "plating_steel", "metal_boat_hull" ] }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 25, "items": [ "flotation_vest", "waterwaymap" ] },
+      { "x": 0, "y": 0, "chance": 5, "items": [ "mil_gps_device" ] },
+      { "x": -3, "y": 1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -3, "y": 1, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": -2, "y": 1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -2, "y": 1, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": -2, "y": -1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": -2, "y": -1, "chance": 10, "item_groups": [ "infantry_officer_gear" ] },
+      { "x": 0, "y": -1, "chance": 25, "items": [ "flotation_vest" ] },
+      { "x": 0, "y": -1, "chance": 25, "item_groups": [ "army_personal_locker", "guns_milspec" ] },
+      { "x": 6, "y": 0, "chance": 50, "items": [ "40x53mm_m430a1" ] },
+      { "x": 6, "y": 0, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -6, "y": 1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": -6, "y": 1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": 3, "y": 1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": 3, "y": 1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -6, "y": -1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": -6, "y": -1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": 3, "y": -1, "chance": 50, "item_groups": [ "on_hand_50" ] },
+      { "x": 3, "y": -1, "chance": 25, "items": [ "flotation_vest", "ear_plugs" ] },
+      { "x": -10, "y": 3, "chance": 75, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": 3, "chance": 50, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": 3, "chance": 25, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": 2, "chance": 50, "items": [ "inflatable_boat", "hand_pump" ] },
+      { "x": -10, "y": 2, "chance": 25, "item_groups": [ "fuel_diesel" ] },
+      { "x": -10, "y": -2, "chance": 50, "items": [ "inflatable_boat", "hand_pump" ] },
+      { "x": -10, "y": -2, "chance": 25, "item_groups": [ "fuel_diesel" ] },
+      { "x": -10, "y": -3, "chance": 75, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": -3, "chance": 50, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": -10, "y": -3, "chance": 25, "item_groups": [ "mil_food_nodrugs", "gear_medical", "fireman_gear" ] },
+      { "x": 5, "y": 0, "chance": 50, "item_groups": [ "infantry_common_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": 0, "chance": 50, "item_groups": [ "infantry_medical_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": 1, "chance": 50, "item_groups": [ "infantry_common_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": 1, "chance": 50, "item_groups": [ "infantry_medical_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": -1, "chance": 50, "item_groups": [ "infantry_common_gear", "mil_food_nodrugs" ] },
+      { "x": 5, "y": -1, "chance": 50, "item_groups": [ "infantry_medical_gear", "mil_food_nodrugs" ] }
+    ]
+  },
+  {
+    "id": "boat_motor_police",
+    "type": "vehicle",
+    "name": "Police Boat",
+    "blueprint": [
+      [ "|||| " ],
+      [ "=#'||" ],
+      [ "=#'||" ],
+      [ "|||| " ]
+    ],
+    "parts": [
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "xlframe_vertical", "trunk", "engine_v8", "alternator_car", "battery_car", "roof_cloth", "metal_boat_hull" ]
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "xlframe_vertical",
+          "seat",
+          "seatbelt",
+          "controls",
+          "dashboard",
+          { "part": "tank", "fuel": "gasoline" },
+          "roof_cloth",
+          "light_red",
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": 0, "parts": [ "xlframe_horizontal", "metal_boat_hull" ] },
+      { "x": 3, "y": 0, "parts": [ "xlframe_horizontal", "metal_boat_hull" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "xlframe_vertical", "trunk", "engine_v8", "alternator_car", "battery_car", "roof_cloth", "metal_boat_hull" ]
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [
+          "xlframe_vertical",
+          "seat",
+          "seatbelt",
+          { "part": "tank", "fuel": "gasoline" },
+          "roof_cloth",
+          "light_blue",
+          "metal_boat_hull"
+        ]
+      },
+      { "x": 1, "y": 1, "parts": [ "xlframe_vertical", "windshield", "metal_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "xlframe_horizontal", "metal_boat_hull" ] },
+      { "x": 3, "y": 1, "parts": [ "xlframe_horizontal", "metal_boat_hull" ] },
+      { "x": -1, "y": 2, "parts": [ "xlframe_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": 2, "parts": [ "xlframe_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": 2, "parts": [ "xlframe_vertical", "metal_boat_hull" ] },
+      { "x": 2, "y": 2, "parts": [ "xlframe_ne", "metal_boat_hull" ] },
+      { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": -1, "parts": [ "xlframe_vertical", "metal_boat_hull" ] },
+      { "x": 2, "y": -1, "parts": [ "xlframe_nw", "metal_boat_hull" ] }
+    ],
+    "items": [
+      { "x": -1, "y": 0, "chance": 5, "item_groups": [ "tools_entry" ] },
+      { "x": -1, "y": 0, "chance": 5, "item_groups": [ "cop_gear" ] },
+      { "x": 0, "y": 1, "chance": 3, "magazine": 100, "ammo": 50, "item_groups": [ "cop_weapons" ] }
+    ]
+  },
+  {
+    "id": "boat_motor_smuggler",
+    "type": "vehicle",
+    "name": "Smuggling Speedboat",
+    "//": "Go-fast boats aren't normally armed, but keeps things interesting plus could assume Hell's Raiders up-gunned one.",
+    "blueprint": [
+      [ "=|||| " ],
+      [ "=t#'||" ],
+      [ "=|||| " ]
+    ],
+    "parts": [
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "xlframe_vertical", "trunk", { "part": "tank", "fuel": "gasoline" }, "carbonfiber_boat_hull" ]
+      },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [
+          "xlframe_vertical",
+          "seat",
+          "seatbelt",
+          "turret_mount",
+          { "ammo_types": [ "223" ], "part": "m249", "ammo": 60, "ammo_qty": [ 10, 100 ] },
+          "carbonfiber_boat_hull"
+        ]
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "xlframe_vertical", "seat", "seatbelt", "controls", "dashboard", "carbonfiber_boat_hull" ]
+      },
+      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "windshield", "carbonfiber_boat_hull" ] },
+      { "x": 2, "y": 0, "parts": [ "xlframe_horizontal", "carbonfiber_boat_hull" ] },
+      { "x": 3, "y": 0, "parts": [ "xlframe_horizontal", "carbonfiber_boat_hull" ] },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "xlframe_vertical", "trunk", "engine_v8", "alternator_car", "battery_car", "carbonfiber_boat_hull" ]
+      },
+      { "x": -1, "y": 1, "parts": [ "xlframe_vertical", "carbonfiber_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "xlframe_vertical", "carbonfiber_boat_hull" ] },
+      { "x": 1, "y": 1, "parts": [ "xlframe_vertical", "carbonfiber_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "xlframe_ne", "carbonfiber_boat_hull" ] },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "xlframe_vertical", "trunk", "engine_v8", "alternator_car", "battery_car", "carbonfiber_boat_hull" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "mounted_pirate_flag", "carbonfiber_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "carbonfiber_boat_hull" ] },
+      { "x": 1, "y": -1, "parts": [ "xlframe_vertical", "carbonfiber_boat_hull" ] },
+      { "x": 2, "y": -1, "parts": [ "xlframe_nw", "carbonfiber_boat_hull" ] }
+    ],
+    "items": [
+      { "x": -2, "y": 0, "chance": 100, "item_groups": [ "stash_drugrunner" ] },
+      { "x": -2, "y": 1, "chance": 100, "item_groups": [ "stash_drugrunner" ] },
+      { "x": -2, "y": -1, "chance": 100, "item_groups": [ "stash_drugrunner" ] }
+    ]
+  },
+  {
+    "id": "barge_trailer",
+    "type": "vehicle",
+    "name": "Barge Trailer",
+    "blueprint": [  ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "hdframe_vertical_2", "cargo_space", "metal_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "hdframe_vertical_2", "cargo_space", "metal_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 0, "y": -2, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 1, "y": 0, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 1, "y": -1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 1, "y": 1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 1, "y": -2, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -1, "y": 0, "parts": [ "hdframe_cross", "cargo_space", "metal_boat_hull" ] },
+      { "x": -1, "y": -1, "parts": [ "hdframe_cross", "cargo_space", "metal_boat_hull" ] },
+      { "x": -1, "y": 1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -1, "y": -2, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 2, "y": 0, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 2, "y": -1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 2, "y": -2, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -2, "y": 0, "parts": [ "hdframe_cross", "cargo_space", "metal_boat_hull" ] },
+      { "x": -2, "y": -1, "parts": [ "hdframe_cross", "cargo_space", "metal_boat_hull" ] },
+      { "x": 3, "y": 0, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 3, "y": -1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 3, "y": 1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 3, "y": -2, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -3, "y": 0, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -3, "y": -1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -3, "y": -2, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 4, "y": 0, "parts": [ "hdframe_cross", "cargo_space", "metal_boat_hull" ] },
+      { "x": 4, "y": -1, "parts": [ "hdframe_cross", "cargo_space", "metal_boat_hull" ] },
+      { "x": 4, "y": 1, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": 4, "y": -2, "parts": [ "hdframe_horizontal", "cargo_space", "metal_boat_hull" ] },
+      { "x": -2, "y": 1, "parts": [ "hdframe_vertical", "cargo_space", "metal_boat_hull" ] },
+      { "x": -2, "y": -2, "parts": [ "hdframe_vertical", "cargo_space", "metal_boat_hull" ] }
+    ],
+    "items": [  ]
+  },
+  {
+    "id": "scuba_boat",
+    "type": "vehicle",
+    "name": "Scuba Boat",
+    "//": "has foldable seats,floor trunks for individual divers and a heater for warming up after diving. the main trunk generally has spare tanks or rebreathers.",
+    "blueprint": [  ],
+    "parts": [
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [
+          "frame_horizontal",
+          "aluminium_boat_hull",
+          "roof_cloth",
+          "folding_seat",
+          "battery_car",
+          "alternator_car",
+          "engine_inline4",
+          "aisle_horizontal"
+        ]
+      },
+      { "x": -1, "y": 0, "parts": [ "aluminium_boat_hull", "frame_cross", "roof_cloth", "aisle_horizontal" ] },
+      { "x": 0, "y": 0, "parts": [ "aluminium_boat_hull", "roof_cloth", "frame_vertical", "aisle_horizontal" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
+      },
+      { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull", "halfboard_vertical_right" ] },
+      { "x": 1, "y": 1, "parts": [ "aluminium_boat_hull", "frame_vertical", "halfboard_vertical_right" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_sw", "aluminium_boat_hull", "trunk_floor", "roof_cloth" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_cross", "aluminium_boat_hull", "halfboard_horizontal" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_cross", "aluminium_boat_hull", "halfboard_horizontal" ] },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_cross", "aluminium_boat_hull", "roof_cloth", "trunk", "mountable_heater" ]
+      },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "frame_cross", "aluminium_boat_hull", "roof_cloth", "folding_seat", "aisle_horizontal" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_cross", "aluminium_boat_hull", "roof_cloth", "trunk_floor" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_sw", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull", "halfboard_vertical_left" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull", "halfboard_vertical_left" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      {
+        "x": -3,
+        "y": 1,
+        "parts": [ "frame_vertical", "aluminium_boat_hull", { "part": "tank", "fuel": "gasoline" }, "xlhalfboard_vertical" ]
+      },
+      { "x": -3, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "aluminium_boat_hull" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_horizontal", "aluminium_boat_hull" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_cross", "aluminium_boat_hull", "trunk_floor" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_cross", "aluminium_boat_hull", "folding_seat", "aisle_horizontal" ] },
+      { "x": -4, "y": -2, "parts": [ "frame_sw", "aluminium_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_ne", "aluminium_boat_hull", "halfboard_ne" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_nw", "aluminium_boat_hull", "halfboard_nw" ] },
+      { "x": 3, "y": -1, "parts": [ "frame_horizontal", "halfboard_nw" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_horizontal", "halfboard_ne" ] }
+    ],
+    "items": [
+      { "x": 1, "y": -1, "chance": 50, "items": [ "flotation_vest", "waterwaymap" ], "item_groups": [ "SUS_scuba_gear" ] },
+      { "x": 1, "y": -1, "chance": 33, "items": [ "scuba_tank", "scuba_tank" ] },
+      { "x": 1, "y": -1, "chance": 33, "items": [ "small_scuba_tank", "small_scuba_tank", "small_scuba_tank" ] },
+      { "x": 1, "y": -1, "chance": 33, "items": [ "rebreather", "rebreather_filter", "rebreather_filter" ] },
+      { "x": -1, "y": -1, "chance": 75, "item_groups": [ "SUS_scuba_gear" ] },
+      { "x": -2, "y": -1, "chance": 75, "item_groups": [ "SUS_scuba_gear" ] },
+      { "x": -3, "y": -1, "chance": 75, "item_groups": [ "SUS_scuba_gear" ] }
+    ]
+  },
+  {
+    "id": "fishing_boat",
+    "type": "vehicle",
+    "name": "Fishing Boat",
+    "//": "has a fridge and floor trunks. the main fridge generally has alcohol and fish.",
+    "blueprint": [  ],
+    "parts": [
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [
+          "frame_horizontal",
+          "aluminium_boat_hull",
+          "roof_cloth",
+          "battery_car",
+          "alternator_car",
+          "engine_inline4",
+          "folding_seat",
+          "aisle_horizontal"
+        ]
+      },
+      { "x": -1, "y": 0, "parts": [ "aluminium_boat_hull", "frame_cross", "roof_cloth", "aisle_horizontal" ] },
+      { "x": 0, "y": 0, "parts": [ "aluminium_boat_hull", "roof_cloth", "frame_vertical", "aisle_horizontal" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
+      },
+      { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull", "halfboard_vertical_right" ] },
+      { "x": 1, "y": 1, "parts": [ "aluminium_boat_hull", "frame_vertical", "halfboard_vertical_right" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_sw", "aluminium_boat_hull", "trunk_floor", "roof_cloth" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_cross", "aluminium_boat_hull", "halfboard_horizontal" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_cross", "aluminium_boat_hull", "halfboard_horizontal" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_cross", "aluminium_boat_hull", "roof_cloth", "minifridge" ] },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "frame_cross", "aluminium_boat_hull", "roof_cloth", "folding_seat", "aisle_horizontal" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_cross", "aluminium_boat_hull", "roof_cloth", "trunk_floor" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_sw", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull", "halfboard_vertical_left" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull", "halfboard_vertical_left" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
+      {
+        "x": -3,
+        "y": 1,
+        "parts": [ "frame_vertical", "aluminium_boat_hull", { "part": "tank", "fuel": "gasoline" }, "xlhalfboard_vertical" ]
+      },
+      { "x": -3, "y": -2, "parts": [ "frame_vertical", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "aluminium_boat_hull" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_horizontal", "aluminium_boat_hull" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_cross", "aluminium_boat_hull", "trunk_floor" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_cross", "aluminium_boat_hull", "folding_seat", "aisle_horizontal" ] },
+      { "x": -4, "y": -2, "parts": [ "frame_sw", "aluminium_boat_hull" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_ne", "aluminium_boat_hull", "halfboard_ne" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_nw", "aluminium_boat_hull", "halfboard_nw" ] },
+      { "x": 3, "y": -1, "parts": [ "frame_horizontal", "halfboard_nw" ] },
+      { "x": 3, "y": 0, "parts": [ "frame_horizontal", "halfboard_ne" ] }
+    ],
+    "items": [
+      { "x": 1, "y": -1, "chance": 100, "item_groups": [ "fishing_boat_fridge" ] },
+      { "x": -1, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -2, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -3, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -1, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -2, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -3, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -1, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -2, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] },
+      { "x": -3, "y": -1, "chance": 100, "item_groups": [ "fishing_items" ] }
+    ]
+  },
+  {
+    "id": "water_autosweeper",
+    "type": "vehicle",
+    "name": "Automatic Water Skimmer",
+    "blueprint": [  ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "robot_controls", "engine_electric", "roof", "metal_boat_hull" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "vehicle_scoop" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_horizontal", "hatch", "metal_boat_hull" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "frame_horizontal", "board_horizontal", "headlight", "omnicam", "metal_boat_hull" ]
+      },
+      {
+        "x": -2,
+        "y": -1,
+        "parts": [ "frame_horizontal", "storage_battery_mount", "storage_battery_removable", "board_sw", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "board_nw", "metal_boat_hull" ] },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "frame_horizontal", "storage_battery_mount", "storage_battery_removable", "board_se", "metal_boat_hull" ]
+      },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical", "board_vertical", "metal_boat_hull" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "board_ne", "metal_boat_hull" ] }
+    ],
+    "items": [  ]
   }
 ]

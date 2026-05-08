@@ -67,6 +67,9 @@ class emit
 
         /** used during JSON loading only */
         std::string field_name;
+
+    public:
+        LUA_TYPE_OPS( emit, id_ );
 };
 
 

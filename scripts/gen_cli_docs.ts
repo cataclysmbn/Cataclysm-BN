@@ -37,19 +37,14 @@ const toMarkdown = (text: string): string => {
 
   return /*md*/ `\
 ---
-title: CLI Options
-editUrl: false
-sidebar:
-  badge:
-    text: Generated
-    status: note
+edit: false
 ---
 
-:::note
+# CLI Options
 
-This page is auto-generated from \`tools/gen_cli_docs.ts\` and should not be edited directly.
-
-:::
+> [!NOTE]
+>
+> This page is auto-generated from \`tools/gen_cli_docs.ts\` and should not be edited directly.
 
 The game executable can not only run your favorite roguelike,
 but also provides a number of command line options to help modders and developers.
@@ -60,15 +55,20 @@ ${sections}
 }
 
 if (import.meta.main) {
-  const command = new Deno.Command("./cataclysm-bn-tiles", { args: ["--help"] })
+  const { Command } = await import("@cliffy/command")
+
+  const { options: { output } } = await new Command()
+    .description("Generates markdown documentation for the game executable.")
+    .option("-o, --output <output:string>", "Output file path", { required: true })
+    .parse(Deno.args)
+
+  const command = new Deno.Command(Deno.env.get("CATA_EXE") ?? "./cataclysm-bn-tiles", {
+    args: ["--help"],
+  })
   const { stdout } = await command.output()
 
   const text = new TextDecoder().decode(stdout)
 
   const result = toMarkdown(text)
-  const docsUrl = new URL(
-    "../doc/src/content/docs/en/dev/reference/cli_options.md",
-    import.meta.url,
-  )
-  await Deno.writeTextFile(docsUrl, result)
+  await Deno.writeTextFile(output, result)
 }

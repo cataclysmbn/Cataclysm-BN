@@ -89,6 +89,7 @@
       "Л": "f_rack",
       "Y": "f_locker",
       "Z": "f_dryer",
+      "|": [ "f_crate_c", "f_crate_c", "f_crate_c", "f_crate_o" ],
       "Ж": [ "f_crate_c", "f_crate_c", "f_crate_c", "f_crate_o" ],
       "ж": [ "f_crate_c", "f_crate_c", "f_crate_c", "f_crate_o" ],
       "Ω": [ "f_crate_c", "f_crate_c", "f_crate_c", "f_crate_o" ],
@@ -253,6 +254,7 @@
         { "item": "supplies_spares_vehicle", "chance": 50, "repeat": [ 1, 4 ] },
         { "item": "supplies_metal", "chance": 30, "repeat": [ 0, 3 ] }
       ],
+      "|": [ { "item": "aircraft_carrier_heavy_munitions", "chance": 50, "repeat": [ 1, 3 ] } ],
       "Ω": [
         { "item": "ammo_atomic_batteries_full", "chance": 45, "repeat": [ 0, 2 ] },
         { "item": "ammo_any_batteries_full", "chance": 45, "repeat": [ 0, 2 ] },
@@ -308,7 +310,7 @@
       "β": [
         { "item": "SUS_cookware", "chance": 100, "repeat": [ 0, 4 ] },
         { "item": "SUS_knife_drawer", "chance": 100, "repeat": [ 0, 4 ] },
-        { "item": "SUS_utensils", "chance": 100, "repeat": [ 0, 4 ] },
+        { "item": "SUS_kitchen_misc", "chance": 100, "repeat": [ 0, 4 ] },
         { "item": "SUS_dishes", "chance": 100, "repeat": [ 0, 4 ] },
         { "item": "SUS_spice_collection", "chance": 100, "repeat": [ 0, 15 ] }
       ],
@@ -318,7 +320,7 @@
     "traps": { "=": "tr_rollmat" },
     "nested": {
       "δ": { "chunks": [ [ "null", 2 ], [ "crates_supplies_mechanics", 3 ] ] },
-      "ε": { "chunks": [ [ "null", 2 ], [ "crates_armament_milspec", 3 ] ] },
+      "ε": { "chunks": [ [ "null", 2 ], [ "crates_armament_milspec", 2 ], [ "crates_armament_milspec_heavy", 1 ] ] },
       "ζ": { "chunks": [ [ "null", 2 ], [ "crates_random_supply", 3 ] ] }
     },
     "vehicles": {

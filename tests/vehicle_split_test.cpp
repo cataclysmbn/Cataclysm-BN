@@ -43,7 +43,7 @@ TEST_CASE( "vehicle_split_section" )
             // correct number of parts
             CHECK( vehs[ 0 ].v->part_count() == 12 );
             CHECK( vehs[ 1 ].v->part_count() == 12 );
-            CHECK( vehs[ 2 ].v->part_count() == 2 );
+            CHECK( vehs[ 2 ].v->part_count() == 2 + 1 ); // 1 Extra part for auto generated door lock ( 2 + 1 )
             CHECK( vehs[ 3 ].v->part_count() == 3 );
             std::vector<std::set<tripoint>> all_points;
             for( int i = 0; i < 4; i++ ) {
@@ -79,7 +79,7 @@ TEST_CASE( "vehicle_split_section" )
         vehs = here.get_vehicles();
         CHECK( vehs.size() == 1 );
         if( vehs.size() == 1 ) {
-            CHECK( vehs[ 0 ].v->part_count() == 38 );
+            CHECK( vehs[ 0 ].v->part_count() == 38 + 3 ); // 3 Extra part for auto generated door lock
         }
         break;
     }

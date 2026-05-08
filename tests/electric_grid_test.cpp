@@ -22,6 +22,7 @@ static furn_str_id f_battery( "f_battery" );
 static furn_str_id f_cable_connector( "f_cable_connector" );
 static furn_str_id f_floor_lamp( "f_floor_lamp" );
 static furn_str_id f_floor_lamp_on( "f_floor_lamp_on" );
+static furn_str_id f_solar_unit( "f_solar_unit" );
 
 static itype_id itype_battery( "battery" );
 
@@ -110,8 +111,8 @@ struct grid_setup {
 static void clear_grid_connections( map &m )
 {
     // TODO: fix point types
-    auto om = overmap_buffer.get_om_global( project_to<coords::omt>( tripoint_abs_sm(
-            m.get_abs_sub() ) ) );
+    auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( project_to<coords::omt>( tripoint_abs_sm(
+                  m.get_abs_sub() ) ) );
     om.om->set_electric_grid_connections( om.local, {} );
 }
 
@@ -161,14 +162,13 @@ TEST_CASE( "grid_and_vehicle_outside_bubble", "[grids][vehicle]" )
     clear_all_state();
     put_player_underground();
     map &m = get_map();
-    const tripoint old_abs_sub = m.get_abs_sub();
+    const auto old_abs_sub = m.get_abs_sub();
     // Ugly: we move the real map instead of the tinymap to reuse clear_map() results
     m.load( m.get_abs_sub() + point( m.getmapsize(), 0 ), true );
     GIVEN( "vehicle and battery are on one grid" ) {
         tinymap tm;
         tm.load( old_abs_sub, false );
         auto setup = set_up_grid( tm );
-        tm.save();
         test_grid_veh( setup.grid, setup.veh, setup.battery );
     }
 }
@@ -433,13 +433,43 @@ TEST_CASE( "grid_furn_transform_queue_outside_bubble", "[grids]" )
 
     sm = MAPBUFFER.lookup_submap( pos_abs_sm );
     REQUIRE( sm );
-    REQUIRE( sm->get_furn( pos_in_sm.raw() ).id() != f_floor_lamp_on );
+    REQUIRE( sm->get_furn( pos_in_sm ).id() != f_floor_lamp_on );
     REQUIRE( active_tiles::furn_at<active_tile_data>( pos_abs ) == nullptr );
 
     tf_queue.apply( MAPBUFFER, get_distribution_grid_tracker(), get_player_character(), get_map() );
 
     sm = MAPBUFFER.lookup_submap( pos_abs_sm );
     REQUIRE( sm );
-    REQUIRE( sm->get_furn( pos_in_sm.raw() ).id() == f_floor_lamp_on );
+    REQUIRE( sm->get_furn( pos_in_sm ).id() == f_floor_lamp_on );
     REQUIRE( active_tiles::furn_at<steady_consumer_tile>( pos_abs ) != nullptr );
+}
+
+TEST_CASE( "grid_power_stats", "[grids]" )
+{
+    clear_all_state();
+    put_player_underground();
+    clear_grid_connections( get_map() );
+
+    GIVEN( "battery, solar panel and consumer on one grid" ) {
+        const auto solar_local = tripoint( 15, 10, 0 );
+        const auto consumer_local = tripoint( 13, 10, 0 );
+        const auto battery_local = tripoint( 14, 10, 0 );
+        const auto solar_abs =  tripoint_abs_ms( get_map().getabs( solar_local ) );
+        const auto consumer_abs =  tripoint_abs_ms( get_map().getabs( consumer_local ) );
+
+        get_map().furn_set( consumer_local, f_floor_lamp_on );
+        get_map().furn_set( battery_local, f_battery );
+        get_map().furn_set( solar_local, f_solar_unit );
+
+        auto &grid = get_distribution_grid_tracker().grid_at( consumer_abs );
+        auto *solar = active_tiles::furn_at<solar_tile>( solar_abs );
+        auto *consumer = active_tiles::furn_at<steady_consumer_tile>( consumer_abs );
+        REQUIRE( consumer );
+
+        auto [gen, cons] = grid.get_power_stat();
+        THEN( "grid reports solar generation and consumer power consumption" ) {
+            CHECK( gen == solar->get_power_w() );
+            CHECK( cons == consumer->power );
+        }
+    }
 }

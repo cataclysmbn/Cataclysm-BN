@@ -135,8 +135,8 @@ TEST_CASE( "maximum reverse velocity", "[vehicle][power][reverse]" )
             veh_ptr->start_engines();
 
             THEN( "it can go in both forward and reverse" ) {
-                int max_fwd = veh_ptr->max_velocity( false );
-                int max_rev = veh_ptr->max_reverse_velocity( false );
+                int max_fwd = veh_ptr->max_velocity( false, true );
+                int max_rev = veh_ptr->max_reverse_velocity( false, true );
 
                 CHECK( max_rev < 0 );
                 CHECK( max_fwd > 0 );
@@ -161,8 +161,8 @@ TEST_CASE( "maximum reverse velocity", "[vehicle][power][reverse]" )
             veh_ptr->start_engines();
 
             THEN( "it can go in both forward and reverse" ) {
-                int max_fwd = veh_ptr->max_velocity( false );
-                int max_rev = veh_ptr->max_reverse_velocity( false );
+                int max_fwd = veh_ptr->max_velocity( false, true );
+                int max_rev = veh_ptr->max_reverse_velocity( false, true );
 
                 CHECK( max_rev < 0 );
                 CHECK( max_fwd > 0 );

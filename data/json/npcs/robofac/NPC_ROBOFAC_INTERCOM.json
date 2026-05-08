@@ -294,6 +294,11 @@
         "effect": "start_trade"
       },
       {
+        "text": "Know when you'll get another shipment?",
+        "condition": { "npc_has_var": "npc_intercom_trade", "type": "dialogue", "context": "intercom", "value": "yes" },
+        "topic": "TALK_ROBOFAC_INTERCOM_RESTOCK"
+      },
+      {
         "text": "It's the apocalypse out here!  Please let me in!",
         "condition": {
           "and": [
@@ -401,7 +406,16 @@
       "effect": { "npc_add_var": "npc_intercom_trade", "type": "dialogue", "context": "intercom", "value": "yes" },
       "sentinel": "intercom_trade"
     },
-    "responses": [ { "text": "…", "effect": "start_trade", "topic": "TALK_DONE" } ]
+    "responses": [
+      { "text": "…", "effect": "start_trade", "topic": "TALK_DONE" },
+      { "text": "Know when you'll get another shipment?", "topic": "TALK_ROBOFAC_INTERCOM_RESTOCK" }
+    ]
+  },
+  {
+    "id": "TALK_ROBOFAC_INTERCOM_RESTOCK",
+    "type": "talk_topic",
+    "dynamic_line": "Around <interval>, if the caravan doesn't run into trouble.",
+    "responses": [ { "text": "Thanks for the info, bye.", "topic": "TALK_DONE" } ]
   },
   {
     "id": "TALK_ROBOFAC_INTERCOM_PROTOTYPE_ASK",

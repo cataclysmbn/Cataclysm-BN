@@ -145,5 +145,25 @@
     "price": "5 kUSD",
     "price_postapoc": "30 USD",
     "copy-from": "vehicle_controls"
+  },
+  {
+    "type": "GENERIC",
+    "id": "laser_designator_item",
+    "copy-from": "turret_controls",
+    "name": { "str": "vehicle laser designator" },
+    "description": "A laser rangefinder with associated targeting software, designed to be installed on a vehicle-mounted turret.  Installing it on a vehicle-mounted weapon will greatly increases accuracy, but only when firing it remotely such as from the vehicle control menu."
+  },
+  {
+    "type": "GENERIC",
+    "id": "bomber_controls",
+    "name": { "str": "bomb bay" },
+    "description": "A set of motors and various mechanical linkages banded together to allow for activation and dropping of select items from cargo spaces.",
+    "weight": "4000 g",
+    "color": "white",
+    "symbol": "&",
+    "volume": "9 L",
+    "price": "5 kUSD",
+    "price_postapoc": "30 USD",
+    "copy-from": "vehicle_controls"
   }
 ]

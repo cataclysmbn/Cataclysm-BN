@@ -12,7 +12,7 @@
         "____"
       ],
       "terrain": { "_": "t_flat_roof" },
-      "furniture": { "c": "f_camp_chair", "x": "f_sandbag_wall", "t": "f_table" },
+      "furniture": { "c": "f_camp_chair", "x": "f_sandbag_wall", "t": [ [ "f_table", 9 ], "f_table_flipped" ] },
       "place_loot": [
         { "group": "roof_trash", "x": [ 0, 3 ], "y": 3, "chance": 30, "repeat": [ 1, 2 ] },
         { "group": "alcohol_bottled_canned", "x": [ 1, 3 ], "y": 3, "chance": 80 },
@@ -34,7 +34,7 @@
         "c___"
       ],
       "terrain": { "_": "t_flat_roof", "c": "t_flat_roof", "b": "t_flat_roof", "t": "t_flat_roof" },
-      "furniture": { "c": "f_camp_chair", "b": "f_brazier", "t": "f_table" },
+      "furniture": { "c": "f_camp_chair", "b": "f_brazier", "t": [ [ "f_table", 9 ], "f_table_flipped" ] },
       "place_items": [
         { "item": "roof_trash", "x": [ 0, 3 ], "y": [ 0, 3 ], "chance": 35, "repeat": [ 1, 2 ] },
         { "item": "alcohol_bottled_canned", "x": [ 1, 2 ], "y": 2, "chance": 50 },
@@ -310,7 +310,7 @@
         { "point": "trap", "id": "tr_cot", "x": 3, "y": 5 }
       ],
       "terrain": { ".": "t_null" },
-      "furniture": { "o": "f_camp_chair", "a": "f_brazier", "A": "f_tourist_table" },
+      "furniture": { "o": "f_camp_chair", "a": "f_brazier", "A": [ [ "f_tourist_table", 9 ], "f_tourist_table_flipped" ] },
       "place_loot": [
         { "group": "cannedfood", "x": [ 2, 3 ], "y": 0, "repeat": [ 2, 3 ] },
         { "group": "camping", "x": [ 0, 5 ], "y": [ 0, 3 ], "chance": 50, "repeat": [ 2, 3 ] },
@@ -583,7 +583,8 @@
             [ "res_roof_survivorbag", 2 ],
             [ "res_roof_scope", 5 ],
             [ "res_roof_feral", 1 ],
-            [ "res_roof_wasp", 1 ]
+            [ "res_roof_wasp", 1 ],
+            [ "res_roof_randomnpc", 1 ]
           ],
           "x": [ 0 ],
           "y": [ 0 ]
@@ -694,6 +695,22 @@
         { "group": "drugs_heal_simple", "x": 0, "y": 0, "chance": 20, "repeat": [ 2, 3 ] },
         { "item": "duffelbag", "x": 0, "y": 0 }
       ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "res_roof_randomnpc",
+    "//": "friend or foe? a bit safer up here",
+    "object": {
+      "mapgensize": [ 3, 3 ],
+      "rows": [
+        "___",
+        "___",
+        "___"
+      ],
+      "terrain": { "_": "t_null" },
+      "place_npcs": [ { "class": "NPC_wandering_scavenger", "x": [ 0, 2 ], "y": [ 0, 2 ] } ]
     }
   }
 ]

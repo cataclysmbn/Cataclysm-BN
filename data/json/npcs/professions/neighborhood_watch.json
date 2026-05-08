@@ -1,0 +1,219 @@
+[
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_NEIGHBORHOOD_HUNTER",
+    "name": { "str": "Neighborhood Hunter" },
+    "job_description": "I'm just trying to survive.",
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "common": false,
+    "worn_override": "NC_PROF_NEIGHBORHOOD_HUNTER_worn",
+    "carry_override": "NC_PROF_NEIGHBORHOOD_HUNTER_carry",
+    "weapon_override": "NC_PROF_NEIGHBORHOOD_HUNTER_melee",
+    "bonus_str": { "rng": [ -2, 0 ] },
+    "bonus_dex": { "rng": [ -2, 2 ] },
+    "bonus_int": { "rng": [ -2, 0 ] },
+    "bonus_per": { "rng": [ 2, 4 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_HUNTER_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "wristwatch" },
+      { "item": "flotation_vest_sandbag" },
+      { "item": "army_top" },
+      { "item": "knit_scarf" },
+      { "item": "socks" },
+      { "item": "boots_steel" },
+      { "item": "pants_cargo" },
+      { "item": "jacket_flannel" },
+      { "item": "hat_hunting" },
+      { "item": "bandolier_rifle", "contents-group": "bandolier_rifle_hunter" },
+      { "item": "sheath", "contents-item": "knife_hunting" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_HUNTER_carry",
+    "subtype": "collection",
+    "entries": [
+      { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+      { "item": "tent_kit" },
+      { "group": "snacks", "count": [ 1, 3 ] },
+      { "item": "smart_phone" },
+      { "item": "beer", "count": [ 1, 6 ] },
+      { "item": "mag_rifle" }
+    ]
+  },
+  {
+    "id": "NC_PROF_NEIGHBORHOOD_HUNTER_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "remington_700", "ammo-item": "3006", "charges": 4, "contents-item": "shoulder_strap" } ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_NEIGHBORHOOD_MECHANIC",
+    "name": { "str": "Neighborhood Mechanic" },
+    "job_description": "I'm just trying to survive.",
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "common": false,
+    "worn_override": "NC_PROF_NEIGHBORHOOD_MECHANIC_worn",
+    "carry_override": "NC_PROF_NEIGHBORHOOD_MECHANIC_carry",
+    "weapon_override": "NC_PROF_NEIGHBORHOOD_MECHANIC_melee",
+    "bonus_str": { "rng": [ 2, 4 ] },
+    "bonus_dex": { "rng": [ -1, 1 ] },
+    "bonus_int": { "rng": [ 2, 4 ] },
+    "bonus_per": { "rng": [ -1, 1 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_MECHANIC_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "slingpack" },
+      { "item": "chestguard_hard" },
+      { "item": "legguard_hard" },
+      { "item": "tank_top" },
+      { "item": "jeans" },
+      { "item": "socks" },
+      { "item": "boots_steel" },
+      { "item": "wristwatch" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_MECHANIC_carry",
+    "subtype": "collection",
+    "entries": [
+      { "item": "goggles_welding", "custom-flags": [ "no_auto_equip" ] },
+      { "item": "smart_phone" },
+      { "item": "tool_belt", "contents-item": [ "wrench", "screwdriver" ] },
+      { "item": "medium_battery_cell", "ammo-item": "battery", "charges": 500, "container-item": "welder" },
+      { "item": "duct_tape" },
+      { "item": "mag_cars" },
+      { "group": "snacks", "count": [ 1, 3 ] },
+      { "item": "beer", "count": [ 1, 6 ] }
+    ]
+  },
+  {
+    "id": "NC_PROF_NEIGHBORHOOD_MECHANIC_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "bat_metal" } ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_NEIGHBORHOOD_DOCTOR",
+    "name": { "str": "Neighborhood Doctor" },
+    "job_description": "I'm just trying to survive.",
+    "traits": [
+      { "group": "BG_survival_story_UNIVERSAL" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "common": false,
+    "worn_override": "NC_PROF_NEIGHBORHOOD_DOCTOR_worn",
+    "carry_override": "NC_PROF_NEIGHBORHOOD_DOCTOR_carry",
+    "weapon_override": "NC_PROF_NEIGHBORHOOD_DOCTOR_melee",
+    "bonus_str": { "rng": [ -2, 0 ] },
+    "bonus_dex": { "rng": [ -2, 0 ] },
+    "bonus_int": { "rng": [ 2, 4 ] },
+    "bonus_per": { "rng": [ 2, 4 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_DOCTOR_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "dress_shirt" },
+      { "item": "pants" },
+      { "item": "coat_lab" },
+      { "item": "dress_shoes" },
+      { "item": "socks" },
+      { "item": "wristwatch" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_DOCTOR_carry",
+    "subtype": "collection",
+    "entries": [
+      { "item": "1st_aid" },
+      { "item": "smart_phone" },
+      { "item": "gloves_medical" },
+      { "item": "stethoscope" },
+      { "item": "water_clean" },
+      { "item": "mag_firstaid" }
+    ]
+  },
+  {
+    "id": "NC_PROF_NEIGHBORHOOD_DOCTOR_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "scalpel" } ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_PROF_NEIGHBORHOOD_DELINQUENT",
+    "name": { "str": "Neighborhood Delinquent" },
+    "job_description": "I'm just trying to survive.",
+    "traits": [
+      { "group": "BG_survival_story_TEENAGER" },
+      { "group": "NPC_starting_traits" },
+      { "group": "Appearance_demographics" }
+    ],
+    "common": false,
+    "worn_override": "NC_PROF_NEIGHBORHOOD_DELINQUENT_worn",
+    "carry_override": "NC_PROF_NEIGHBORHOOD_DELINQUENT_carry",
+    "weapon_override": "NC_PROF_NEIGHBORHOOD_DELINQUENT_melee",
+    "bonus_str": { "rng": [ -2, 1 ] },
+    "bonus_dex": { "rng": [ -2, 1 ] },
+    "bonus_int": { "rng": [ -2, 1 ] },
+    "bonus_per": { "rng": [ -2, 1 ] }
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_DELINQUENT_worn",
+    "subtype": "collection",
+    "entries": [
+      { "item": "tshirt" },
+      { "item": "jeans" },
+      { "item": "hoodie" },
+      { "item": "socks" },
+      { "item": "sneakers" },
+      { "item": "gloves_light_fingerless" },
+      { "item": "slingpack" },
+      { "item": "wristwatch" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_PROF_NEIGHBORHOOD_DELINQUENT_carry",
+    "subtype": "collection",
+    "entries": [
+      { "item": "hairpin", "count": 2 },
+      { "item": "marble", "count": 2 },
+      { "item": "matches" },
+      { "item": "radio_car_box" },
+      { "item": "smart_phone" },
+      { "item": "mag_comic" },
+      { "group": "snacks", "count": [ 1, 3 ] },
+      { "item": "energy_drink", "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "NC_PROF_NEIGHBORHOOD_DELINQUENT_melee",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "slingshot" } ]
+  }
+]

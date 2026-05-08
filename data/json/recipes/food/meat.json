@@ -318,8 +318,9 @@
     "subcategory": "CSC_FOOD_MEAT",
     "skill_used": "cooking",
     "time": "3 m",
+    "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "components": [ [ [ "dry_meat", 1 ] ], [ [ "water_clean", 1 ] ] ]
   },
@@ -330,8 +331,9 @@
     "subcategory": "CSC_FOOD_MEAT",
     "skill_used": "cooking",
     "time": "3 m",
+    "batch_time_factors": [ 80, 1 ],
     "autolearn": true,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_EASY" ],
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "components": [ [ [ "dry_fish", 1 ] ], [ [ "water_clean", 1 ] ] ]
   },
@@ -403,6 +405,7 @@
         [ "burdock_cooked", 1 ],
         [ "veggy_wild_cooked", 1 ],
         [ "veggy_cooked", 1 ],
+        [ "lake_greens", 1 ],
         [ "spinach", 2 ],
         [ "grape_leaves", 2 ]
       ],
@@ -431,6 +434,7 @@
         [ "burdock_cooked", 2 ],
         [ "veggy_wild_cooked", 2 ],
         [ "veggy_cooked", 2 ],
+        [ "lake_greens", 2 ],
         [ "spinach", 2 ],
         [ "grape_leaves", 2 ]
       ],
@@ -1260,6 +1264,7 @@
         [ "dandelion_cooked", 1 ],
         [ "burdock_cooked", 1 ],
         [ "chili_pepper_roasted", 1 ],
+        [ "lake_greens", 1 ],
         [ "spinach", 1 ],
         [ "grape_leaves", 1 ]
       ],
@@ -1441,8 +1446,7 @@
       [ [ "hotdogs_frozen", 1 ], [ "hotdogs_cooked", 1 ], [ "bratwurst_sausage", 1 ], [ "sausage_wasteland", 1 ] ],
       [ [ "splinter", 1 ] ],
       [ [ "cornmeal", 1 ] ],
-      [ [ "cooking_oil", 1 ], [ "cooking_oil2", 1 ] ],
-      [ [ "bag_plastic", 1 ] ]
+      [ [ "cooking_oil", 1 ], [ "cooking_oil2", 1 ] ]
     ]
   },
   {
@@ -2032,6 +2036,7 @@
         [ "veggy_wild_cooked", 2 ],
         [ "irradiated_cabbage", 2 ],
         [ "cabbage", 2 ],
+        [ "lake_greens", 2 ],
         [ "spinach", 2 ],
         [ "grape_leaves", 2 ]
       ],

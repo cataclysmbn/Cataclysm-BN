@@ -16,6 +16,6 @@
     "damage": { "damage_type": "stab", "amount": 14 },
     "stack_size": 2,
     "loudness": 0,
-    "effects": [ "MININUKE_MOD", "NEVER_MISFIRES" ]
+    "effects": [ "MININUKE_MOD", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   }
 ]

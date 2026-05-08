@@ -1,0 +1,344 @@
+[
+  {
+    "type": "vehicle_part",
+    "id": "water_wheel",
+    "name": { "str": "water wheel" },
+    "symbol": "*",
+    "color": "yellow",
+    "broken_symbol": "x",
+    "broken_color": "yellow",
+    "damage_modifier": 10,
+    "durability": 50,
+    "description": "A water wheel.  Will slowly recharge the vehicle's electrical power when built over shallow moving water.",
+    "epower": 240,
+    "item": "water_wheel",
+    "location": "center",
+    "flags": [ "WATER_WHEEL", "OBSTACLE" ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "250 s", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "250 s", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "20 s", "using": [ [ "rope_natural_short", 1 ] ] }
+    },
+    "breaks_into": [ { "item": "splinter", "count": [ 40, 60 ] } ],
+    "damage_reduction": { "all": 15, "stab": 6, "cut": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "xl_water_wheel",
+    "name": { "str": "large water wheel" },
+    "symbol": "o",
+    "looks_like": "water_wheel",
+    "color": "yellow",
+    "broken_symbol": "x",
+    "broken_color": "yellow",
+    "damage_modifier": 10,
+    "durability": 80,
+    "description": "A large water wheel with wooden supports.  Will recharge the vehicle's electrical power when built over shallow moving water.",
+    "epower": 540,
+    "item": "xl_water_wheel",
+    "location": "center",
+    "flags": [ "WATER_WHEEL", "OBSTACLE", "EXTRA_DRAG" ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "750 s", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "time": "750 s", "qualities": [ { "id": "WRENCH", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 s", "using": [ [ "rope_natural_short", 2 ] ] }
+    },
+    "breaks_into": [ { "item": "splinter", "count": [ 60, 100 ] } ],
+    "damage_reduction": { "all": 16, "stab": 6, "cut": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "wind_turbine",
+    "name": { "str": "wind turbine" },
+    "symbol": "T",
+    "color": "yellow",
+    "broken_symbol": "X",
+    "broken_color": "yellow",
+    "damage_modifier": 10,
+    "durability": 15,
+    "description": "A small wind turbine.  Will slowly recharge the vehicle's electrical power when exposed to the wind depending on wind speed.",
+    "epower": 30,
+    "item": "wind_turbine",
+    "location": "on_roof",
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 1 ], [ "electronics", 2 ] ],
+        "time": "150 s",
+        "qualities": [ { "id": "WRENCH", "level": 1 } ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 1 ], [ "electronics", 2 ] ],
+        "time": "150 s",
+        "qualities": [ { "id": "WRENCH", "level": 1 } ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 1 ], [ "electronics", 2 ] ],
+        "time": "20 s",
+        "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ]
+      }
+    },
+    "flags": [ "WIND_TURBINE" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 2, 4 ] },
+      { "item": "steel_chunk", "count": [ 2, 4 ] },
+      { "item": "scrap", "count": [ 2, 4 ] }
+    ],
+    "damage_reduction": { "all": 8 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "xl_wind_turbine",
+    "name": { "str": "large wind turbine" },
+    "symbol": "Y",
+    "looks_like": "wind_turbine",
+    "color": "yellow",
+    "broken_symbol": "X",
+    "broken_color": "yellow",
+    "damage_modifier": 10,
+    "durability": 70,
+    "description": "A large wind turbine with stabilizing legs.  Will recharge the vehicle's electrical power when exposed to the wind depending on wind speed.  Will cause extra drag on the vehicle.",
+    "epower": 90,
+    "item": "xl_wind_turbine",
+    "location": "on_roof",
+    "power": -3000,
+    "requirements": {
+      "install": {
+        "skills": [ [ "mechanics", 2 ], [ "electronics", 2 ] ],
+        "time": "450 s",
+        "qualities": [ { "id": "WRENCH", "level": 1 } ]
+      },
+      "removal": {
+        "skills": [ [ "mechanics", 2 ], [ "electronics", 2 ] ],
+        "time": "450 s",
+        "qualities": [ { "id": "WRENCH", "level": 1 } ]
+      },
+      "repair": {
+        "skills": [ [ "mechanics", 2 ], [ "electronics", 2 ] ],
+        "time": "1 m",
+        "using": [ [ "welding_standard", 15 ], [ "steel_tiny", 3 ] ]
+      }
+    },
+    "flags": [ "WIND_TURBINE", "EXTRA_DRAG" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 6, 12 ] },
+      { "item": "steel_chunk", "count": [ 6, 12 ] },
+      { "item": "scrap", "count": [ 6, 12 ] }
+    ],
+    "damage_reduction": { "all": 9 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "foldable_solar_panel",
+    "name": { "str": "foldable solar panel" },
+    "symbol": "#",
+    "color": "yellow",
+    "broken_symbol": "x",
+    "broken_color": "yellow",
+    "looks_like": "solar_panel",
+    "damage_modifier": 10,
+    "durability": 20,
+    "description": "A foldable solar panel.  Will very slowly recharge the vehicle's electrical power when exposed to the sun.  Clouds will slow the recharge speed even more.",
+    "epower": 40,
+    "item": "foldable_solar_panel",
+    "folded_volume": "1 L",
+    "location": "on_roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "electronics", 6 ] ],
+        "time": "50 m",
+        "using": [ [ "vehicle_screw", 1 ], [ "solar_panel", 1 ], [ "soldering_standard", 8 ] ]
+      }
+    },
+    "flags": [ "SOLAR_PANEL", "FOLDABLE", "SHOCK_RESISTANT" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 2, 4 ] },
+      { "item": "steel_chunk", "count": [ 2, 4 ] },
+      { "item": "scrap", "count": [ 2, 4 ] },
+      { "item": "solar_cell", "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "solar_panel",
+    "name": { "str": "solar panel" },
+    "symbol": "#",
+    "color": "yellow",
+    "broken_symbol": "x",
+    "broken_color": "yellow",
+    "damage_modifier": 10,
+    "durability": 20,
+    "description": "A solar panel.  Will slowly recharge the vehicle's electrical power when exposed to the sun.  Clouds will slow the recharge speed even more.",
+    "epower": 80,
+    "item": "solar_panel",
+    "location": "on_roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "electronics", 6 ] ],
+        "time": "50 m",
+        "using": [ [ "vehicle_screw", 1 ], [ "solar_panel", 1 ], [ "soldering_standard", 8 ] ]
+      }
+    },
+    "flags": [ "SOLAR_PANEL", "SHOCK_RESISTANT" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 2, 4 ] },
+      { "item": "steel_chunk", "count": [ 2, 4 ] },
+      { "item": "scrap", "count": [ 2, 4 ] },
+      { "item": "solar_cell", "count": [ 1, 4 ] }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "reinforced_solar_panel",
+    "copy-from": "solar_panel",
+    "looks_like": "solar_panel",
+    "name": { "str": "reinforced solar panel" },
+    "color": "light_blue",
+    "broken_color": "light_gray",
+    "proportional": { "epower": 0.9 },
+    "damage_modifier": 80,
+    "durability": 300,
+    "description": "A solar panel.  Will slowly recharge the vehicle's electrical power when exposed to the sun.  Clouds will slow the recharge speed even more.  Reinforced with armored glass to make it more resistant to damage.",
+    "item": "reinforced_solar_panel",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "electronics", 6 ] ],
+        "time": "50 m",
+        "using": [ [ "vehicle_screw", 1 ], [ "solar_panel", 1 ], [ "soldering_standard", 8 ], [ "welding_standard", 1 ] ]
+      }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 4, 7 ] },
+      { "item": "steel_chunk", "count": [ 4, 7 ] },
+      { "item": "scrap", "count": [ 4, 7 ] },
+      { "item": "solar_cell", "count": [ 1, 4 ] }
+    ],
+    "damage_reduction": { "all": 12 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "solar_panel_v2",
+    "copy-from": "solar_panel",
+    "name": { "str": "upgraded solar panel" },
+    "looks_like": "solar_panel",
+    "description": "A high performance solar panel.  Will slowly recharge the vehicle's electrical power when exposed to the sun.  Clouds will slow the recharge speed even more.",
+    "item": "solar_panel_v2",
+    "proportional": { "epower": 2 },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ] },
+      "repair": {
+        "skills": [ [ "electronics", 8 ] ],
+        "time": "75 m",
+        "using": [ [ "vehicle_screw", 1 ], [ "solar_panel_v2", 1 ], [ "soldering_standard", 16 ] ]
+      }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 2, 4 ] },
+      { "item": "steel_chunk", "count": [ 2, 4 ] },
+      { "item": "scrap", "count": [ 2, 4 ] },
+      { "item": "solar_cell", "count": [ 1, 6 ] }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "reinforced_solar_panel_v2",
+    "copy-from": "solar_panel_v2",
+    "looks_like": "reinforced_solar_panel",
+    "name": { "str": "upgraded reinforced solar panel" },
+    "color": "light_blue",
+    "broken_color": "light_gray",
+    "proportional": { "epower": 0.9 },
+    "damage_modifier": 80,
+    "durability": 300,
+    "description": "A high performance solar panel.  Will slowly recharge the vehicle's electrical power when exposed to the sun.  Clouds will slow the recharge speed even more.  Reinforced with armored glass to make it more resistant to damage.",
+    "item": "reinforced_solar_panel_v2",
+    "requirements": {
+      "repair": {
+        "skills": [ [ "electronics", 8 ] ],
+        "time": "75 m",
+        "using": [ [ "vehicle_screw", 1 ], [ "solar_panel_v2", 1 ], [ "soldering_standard", 16 ], [ "welding_standard", 1 ] ]
+      }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 4, 7 ] },
+      { "item": "steel_chunk", "count": [ 4, 7 ] },
+      { "item": "scrap", "count": [ 4, 7 ] },
+      { "item": "solar_cell", "count": [ 1, 6 ] }
+    ],
+    "damage_reduction": { "all": 10 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "minireactor",
+    "name": { "str": "minireactor" },
+    "symbol": "O",
+    "color": "light_green",
+    "broken_symbol": "#",
+    "broken_color": "red",
+    "damage_modifier": 80,
+    "durability": 580,
+    "description": "A small nuclear reactor.  When loaded with plutonium cells and turned on it will generate a lot of electrical power.  Capable of providing 50,000 kJ per individual cell, ten times its maximum possible output if used in non-nuclear systems.",
+    "power": 100,
+    "//": "Here it is a multiplier on power efficiency - 1 unit of plutonium is 100 units of battery",
+    "epower": 100000,
+    "fuel_type": "plut_cell",
+    "item": "minireactor",
+    "location": "fuel_source",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 7 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "REACTOR" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 6, 11 ] },
+      { "item": "steel_chunk", "count": [ 6, 11 ] },
+      { "item": "scrap", "count": [ 6, 11 ] }
+    ],
+    "damage_reduction": { "all": 50 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "vp_plut_generator",
+    "name": { "str": "plutonium generator" },
+    "symbol": "O",
+    "color": "light_green",
+    "broken_symbol": "#",
+    "broken_color": "red",
+    "looks_like": "robot_controls",
+    "damage_modifier": 80,
+    "durability": 750,
+    "description": "A nuclear reactor, sealed and configured to provide nearly limitless electrical power from refined nuclear fuel.  It can generate a small but constant source of electricity.",
+    "power": 100,
+    "//": "Here it is a multiplier on power efficiency - 1 unit of plutonium is 100 units of battery",
+    "epower": 333,
+    "fuel_type": "plut_cell",
+    "item": "plut_generator_item",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 7 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 8 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "flags": [ "REACTOR", "PERPETUAL", "OBSTACLE" ],
+    "breaks_into": [
+      { "item": "scrap", "count": [ 4, 16 ] },
+      { "item": "steel_chunk", "count": [ 1, 6 ] },
+      { "item": "plut_cell", "charges": [ 0, 3 ] },
+      { "item": "lead", "charges": [ 12, 18 ] }
+    ],
+    "damage_reduction": { "all": 75 }
+  }
+]

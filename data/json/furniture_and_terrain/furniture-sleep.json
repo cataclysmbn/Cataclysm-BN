@@ -256,5 +256,34 @@
       "sound_fail": "whump.",
       "items": [ { "item": "felt_patch", "count": [ 40, 55 ] }, { "item": "yarn", "count": [ 500, 650 ] } ]
     }
+  },
+  {
+    "type": "furniture",
+    "id": "f_bathtub_money",
+    "name": "bathtub full of money",
+    "symbol": "~",
+    "description": "You could lay in and take a soothing bath, if there were running water.  Instead, you have a bathtub full of cash.  Now you can lay in it and take a scrooge mcduck-style slumber.",
+    "color": "white",
+    "move_cost_mod": 3,
+    "coverage": 40,
+    "comfort": 4,
+    "floor_bedding_warmth": 700,
+    "required_str": -1,
+    "looks_like": "f_bathtub",
+    "flags": [ "TRANSPARENT", "BLOCKSDOOR", "MOUNTABLE" ],
+    "bash": {
+      "str_min": 12,
+      "str_max": 50,
+      "sound": "porcelain breaking!",
+      "sound_fail": "whunk!",
+      "items": [
+        { "item": "cu_pipe", "prob": 50 },
+        { "item": "water_faucet", "prob": 50 },
+        { "item": "money_bundle", "count": [ 4, 10 ] },
+        { "item": "ceramic_shard", "count": [ 6, 18 ] }
+      ],
+      "//": "ceramic obstacles have destroy_threshold equal to str_min since more fragile",
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 12, "block_unaimed_chance": "25%" }
+    }
   }
 ]

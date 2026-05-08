@@ -87,6 +87,7 @@
     "dynamic_line": [ "Sure thing.  I've got a few things on hand, sold in batches of 10-piece each.  What'll ya have?" ],
     "responses": [
       { "text": "Nevermind.", "topic": "TALK_NONE" },
+      { "text": "Find anything good?", "topic": "TALK_SCRAP_TRADER_ASK_INTERVAL" },
       {
         "text": "I'd like some specialty metals.",
         "topic": "TALK_SCRAP_TRADER_BULK_SELL_SPECIALTY",
@@ -210,5 +211,11 @@
         "topic": "TALK_SCRAP_TRADER_BULK_SELL_END"
       }
     ]
+  },
+  {
+    "id": "TALK_SCRAP_TRADER_ASK_INTERVAL",
+    "type": "talk_topic",
+    "dynamic_line": "Nope, although I have a really good claim by the river.  Gonna go fetch them soon, be right back in <interval>.",
+    "responses": [ { "text": "Well, good luck.", "topic": "TALK_NPC_SCRAP_TRADER" } ]
   }
 ]

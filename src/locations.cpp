@@ -17,7 +17,7 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "veh_type.h"
-
+#include "game.h"
 namespace
 {
 
@@ -71,6 +71,41 @@ int fake_item_location::obtain_cost( const Character &, int, const item * ) cons
 std::string fake_item_location::describe( const Character *, const item * ) const
 {
     return "Error: Nowhere";
+}
+
+std::string temp_item_location::describe( const Character *, const item * ) const
+{
+    return "You shouldn't see this";
+}
+detached_ptr<item> temp_item_location::detach( item *it )
+{
+    debugmsg( "Attempted to detach a fake item\nPlease report this as a bug" );
+    return item::spawn( *it );
+}
+
+void temp_item_location::attach( detached_ptr<item> &&it )
+{
+    g->add_fake_item( std::move( it ) );
+}
+
+bool temp_item_location::is_loaded( const item * ) const
+{
+    return false; //Loaded means in the reality bubble so no
+}
+
+tripoint temp_item_location::position( const item * ) const
+{
+    return tripoint_zero;
+}
+
+item_location_type temp_item_location::where() const
+{
+    return item_location_type::character;
+}
+
+int temp_item_location::obtain_cost( const Character &, int, const item * ) const
+{
+    return 100;
 }
 
 detached_ptr<item> character_item_location::detach( item *it )
@@ -192,14 +227,7 @@ item_location_type wield_item_location::where( ) const
 detached_ptr<item> worn_item_location::detach( item *it )
 {
     detached_ptr<item> res;
-    holder->remove_worn_items_with( [&it, &res]( detached_ptr<item> &&ch ) {
-        if( &*ch == it ) {
-            res = std::move( ch );
-            return detached_ptr<item>();
-        } else {
-            return std::move( ch );
-        }
-    } );
+    res = holder->worn.remove( it );
     if( !res ) {
         debugmsg( "Failed to find worn item in detach" );
     }
@@ -227,7 +255,7 @@ std::string worn_item_location::describe( const Character *ch, const item * ) co
     return holder->name;
 }
 
-tile_item_location::tile_item_location( tripoint position )
+tile_item_location::tile_item_location( const tripoint_abs_ms &position )
 {
     pos = position;
 }
@@ -400,12 +428,12 @@ bool vehicle_item_location::is_loaded( const item * ) const
     }
 
     //Have to check the bounds, the vehicle might be half outside the bubble
-    return get_map().inbounds( veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    return get_map().inbounds( veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
 }
 
 tripoint vehicle_item_location::position( const item * ) const
 {
-    return veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount );
+    return veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ).raw();
 }
 
 item_location_type vehicle_item_location::where() const
@@ -431,7 +459,7 @@ int vehicle_item_location::obtain_cost( const Character &ch, int qty, const item
     const item *obj = cost_split_helper( it, qty );
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *obj, true,
              VEHICLE_HANDLING_PENALTY );
-    mv += 100 * rl_dist( ch.pos(), veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    mv += 100 * rl_dist( ch.bub_pos(), veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
     return mv;
 }
 
@@ -507,11 +535,11 @@ item_location_type contents_item_location::where() const
 
 int contents_item_location::obtain_cost( const Character &ch, int qty, const item *it ) const
 {
-    if( container->can_holster( *it ) ) {
+    if( container->get_use( "holster" ) ) {
         auto ptr = dynamic_cast<const holster_actor *>
                    ( container->type->get_use( "holster" )->get_actor_ptr() );
         return dynamic_cast<const player *>( &ch )->item_handling_cost( *it, false, ptr->draw_cost );
-    } else if( container->is_bandolier() ) {
+    } else if( container->get_use( "bandolier" ) ) {
         auto ptr = dynamic_cast<const bandolier_actor *>
                    ( container->type->get_use( "bandolier" )->get_actor_ptr() );
         return dynamic_cast<const player *>( &ch )->item_handling_cost( *it, false, ptr->draw_cost );
@@ -545,7 +573,12 @@ void component_item_location::attach( detached_ptr<item> &&obj )
     return container->add_component( std::move( obj ) );
 }
 
-partial_con_item_location::partial_con_item_location( tripoint position ) : tile_item_location(
+partial_con_item_location::partial_con_item_location( const tripoint_bub_ms &position ) :
+    tile_item_location(
+        bub_to_abs( position ) ) {}
+
+partial_con_item_location::partial_con_item_location( const tripoint_abs_ms &position ) :
+    tile_item_location(
         position ) {}
 
 detached_ptr<item> partial_con_item_location::detach( item * )

@@ -55,12 +55,12 @@
     "price": "5012 cent",
     "price_postapoc": "25 USD",
     "to_hit": -1,
-    "material": [ "iron", "cotton" ],
+    "material": [ "steel", "leather" ],
     "symbol": "[",
     "color": "light_red",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 30,
+    "encumbrance": 20,
     "material_thickness": 4,
     "flags": [ "VARSIZE", "STURDY" ]
   },
@@ -85,7 +85,7 @@
     "warmth": 25,
     "material_thickness": 4,
     "environmental_protection": 6,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "STURDY", "WATERPROOF" ]
   },
   {
@@ -144,7 +144,7 @@
     "warmth": 15,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "STURDY" ]
   },
   {
@@ -167,7 +167,7 @@
     "warmth": 15,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded", "resized_large" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "STURDY" ]
   },
   {
@@ -191,7 +191,7 @@
     "warmth": 15,
     "material_thickness": 4,
     "environmental_protection": 1,
-    "flags": [ "VARSIZE", "STURDY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "STURDY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ]
   },
   {
     "id": "gauntlets_plarmor",
@@ -201,8 +201,7 @@
     "description": "Heavy fingerless leather gloves that have been reinforced with strategically-placed metal plates.  Flexible and tough.",
     "material": [ "leather", "iron" ],
     "looks_like": "gloves_plate",
-    "encumbrance": 8,
-    "proportional": { "price": 4, "price_postapoc": 1.2 },
+    "proportional": { "price": 4, "price_postapoc": 1.2, "encumbrance": 1.25 },
     "relative": { "weight": "250 g" }
   },
   {
@@ -243,7 +242,7 @@
     "coverage": 50,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATER_FRIENDLY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ]
   },
   {
     "id": "gloves_fingerless_mod",
@@ -264,7 +263,7 @@
     "encumbrance": 3,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ]
   },
   {
     "id": "gloves_fsurvivor",
@@ -307,7 +306,7 @@
     "encumbrance": 30,
     "warmth": 70,
     "material_thickness": 3,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "gloves_fur_fingerless",
@@ -322,7 +321,7 @@
     "coverage": 50,
     "warmth": 28,
     "encumbrance": 20,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS" ] }
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] }
   },
   {
     "id": "gloves_hsurvivor",
@@ -397,7 +396,7 @@
     "encumbrance": 10,
     "warmth": 25,
     "material_thickness": 1,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "WATERPROOF" ]
   },
   {
@@ -419,7 +418,7 @@
     "encumbrance": 2,
     "warmth": 20,
     "material_thickness": 2,
-    "valid_mods": [ "resized_large" ],
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "WATER_FRIENDLY" ]
   },
   {
@@ -435,7 +434,7 @@
     "coverage": 50,
     "warmth": 8,
     "encumbrance": 0,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS" ] }
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] }
   },
   {
     "id": "gloves_liner",
@@ -515,7 +514,7 @@
     "warmth": 12,
     "material_thickness": 3,
     "environmental_protection": 3,
-    "flags": [ "VARSIZE", "WATERPROOF", "STURDY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "WATERPROOF", "STURDY", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ]
   },
   {
     "id": "gloves_medical",
@@ -556,9 +555,9 @@
     "color": "light_gray",
     "covers": [ "hands" ],
     "coverage": 100,
-    "encumbrance": 20,
+    "encumbrance": 25,
     "warmth": 20,
-    "material_thickness": 4,
+    "material_thickness": 5,
     "environmental_protection": 1,
     "flags": [ "VARSIZE", "STURDY" ]
   },
@@ -570,7 +569,7 @@
     "description": "An set of armor-plated leather gloves, made with lightweight superalloy.",
     "material": [ "superalloy", "leather" ],
     "color": "light_cyan",
-    "encumbrance": 15,
+    "encumbrance": 20,
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -661,7 +660,7 @@
     "encumbrance": 40,
     "warmth": 70,
     "material_thickness": 4,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "gloves_wool",
@@ -697,7 +696,7 @@
     "coverage": 50,
     "warmth": 24,
     "encumbrance": 7,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS" ] }
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] }
   },
   {
     "id": "gloves_work",
@@ -719,7 +718,7 @@
     "warmth": 25,
     "material_thickness": 3,
     "environmental_protection": 5,
-    "valid_mods": [ "steel_padded", "alloy_padded" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "WATERPROOF", "STURDY" ]
   },
   {
@@ -931,7 +930,7 @@
     "coverage": 40,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ]
   },
   {
     "id": "stockings_tent_arms",
@@ -951,7 +950,7 @@
     "encumbrance": 10,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "VARSIZE", "SKINTIGHT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
   },
   {
     "id": "winter_gloves_army",
@@ -973,7 +972,7 @@
     "encumbrance": 20,
     "warmth": 50,
     "material_thickness": 4,
-    "valid_mods": [ "resized_large" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "gloves_golf",
@@ -1004,7 +1003,7 @@
     "description": "A custom pair of fingerless armored gloves made using a 3D printer.  Its rigid plates are more comparable to metal than kevlar, but it's very protective and lightweight.",
     "copy-from": "gloves_plate",
     "material": [ "carbon_fiber" ],
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS" ] },
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] },
     "proportional": { "weight": 0.6, "price": 2, "price_postapoc": 2 }
   },
   {
@@ -1014,6 +1013,7 @@
     "description": "Gauntlets made from the hardened scales of large reptiles.",
     "copy-from": "gauntlets_larmor",
     "material": [ "scute" ],
+    "color": "green",
     "material_thickness": 5,
     "environmental_protection": 4
   }

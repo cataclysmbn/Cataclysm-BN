@@ -41,7 +41,7 @@
     "description": "This fine lever action rifle is chambered in the powerful .44 magnum cartridge and features a sleek octagonal barrel with a tube fed magazine.  Go get 'em cowboy!",
     "weight": "3937 g",
     "volume": "3 L",
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "price": "89995 cent",
     "price_postapoc": "35 USD",
     "material": [ "steel", "wood" ],
@@ -51,6 +51,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 180,
     "clip_size": 10,
+    "flags": [ "RELOAD_ONE" ],
     "valid_mod_locations": [
       [ "accessories", 2 ],
       [ "barrel", 1 ],
@@ -81,7 +82,7 @@
     "material": [ "steel", "wood" ],
     "color": "brown",
     "ammo": "44",
-    "barrel_length": "750 ml"
+    "barrel_volume": "750 ml"
   },
   {
     "id": "ruger_redhawk",
@@ -91,7 +92,7 @@
     "description": "One of the most powerful handguns in the world when it was released in 1979, the Redhawk offers very sturdy construction, with an appearance that is reminiscent of \"Wild West\" revolvers.",
     "weight": "1386 g",
     "volume": "750 ml",
-    "barrel_length": "100 ml",
+    "barrel_volume": "100 ml",
     "price": "861 USD",
     "price_postapoc": "2750 cent",
     "ascii_picture": "redhawk",
@@ -121,7 +122,7 @@
     "description": "A stainless steel, six-shot, double-action revolver with a matte black plastic handle manufactured by Smith & Wesson.  Though hardly the most powerful handgun in the world any more, it could still blow a zombie's head clean off.",
     "weight": "1267 g",
     "volume": "750 ml",
-    "barrel_length": "100 ml",
+    "barrel_volume": "100 ml",
     "price": "861 USD",
     "price_postapoc": "2750 cent",
     "bashing": 10,

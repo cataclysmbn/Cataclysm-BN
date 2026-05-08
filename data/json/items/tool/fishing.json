@@ -14,7 +14,7 @@
     "symbol": ";",
     "color": "green",
     "ammo": "fish_bait",
-    "max_charges": 5,
+    "max_charges": 20,
     "use_action": "FISH_TRAP"
   },
   {

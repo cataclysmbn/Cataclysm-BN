@@ -1,0 +1,77 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ [ "wooden_shipwreck_a", "wooden_shipwreck_b" ] ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_floor_wood_underwater",
+      "rows": [
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~||||F|F|F|F|========|F|F|F|F|F|F|F|F||~~~",
+        "~~~~~|||==.T.T.T.T..........T.T.T.T.T.T.T.T.||~~",
+        "~~~|||.==....................................|~~",
+        "~~||..==...........________..................|~~",
+        "~~|...=.....I......________.I........I.......|~~",
+        "~~||..==...........________..................|~~",
+        "~~~|||.==....................................|~~",
+        "~~~~~|||==.T.T.T.T..........T.T.T.T.T.T.T.T.||~~",
+        "~~~~~~~||||F|F|F|F|========|F|F|F|F|F|F|F|F||~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+      ],
+      "palettes": [ "lake_bed_palette" ],
+      "terrain": {
+        "~": "t_lake_bed",
+        "|": [ [ "t_wall_wood_underwater", 8 ], "t_floor_wood_underwater", "t_lake_bed" ],
+        "F": [ [ "t_fortification_wood_underwater", 8 ], "t_floor_wood_underwater", "t_lake_bed" ],
+        "=": [ [ "t_railing_underwater", 8 ], "t_floor_wood_underwater", "t_lake_bed" ],
+        ".": [ [ "t_floor_wood_underwater", 4 ], "t_lake_bed" ]
+      },
+      "furniture": { ".": [ [ "f_null", 19 ], "f_rubble" ], "I": "f_flagpole_wood", "T": [ [ "f_null", 4 ], "f_wreckage" ] },
+      "items": { ".": { "item": "underwater_wood_beam_spawn", "chance": 5 } },
+      "nested": {
+        "_": { "chunks": [ [ "null", 75 ], [ "sunken_ship_wood_cargo", 25 ] ] },
+        "T": { "chunks": [ [ "null", 90 ], [ "sunken_ship_cannon_spawn", 10 ] ] }
+      },
+      "place_monster": [
+        { "group": "GROUP_UNDERWATER_PEST", "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 1, 2 ] },
+        { "group": "GROUP_UNDERWATER_PEST", "x": [ 25, 46 ], "y": [ 1, 22 ], "repeat": [ 1, 2 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "sunken_ship_wood_cargo",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "C" ],
+      "furniture": { "C": [ "f_crate_c", [ "f_chest", 4 ] ] },
+      "items": { "C": { "item": "sunken_ship_wood_cargo", "chance": 100 } }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "sunken_ship_cannon_spawn",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rows": [ "T" ],
+      "furniture": { "T": "f_wreckage" },
+      "items": { "T": { "item": "underwater_cannon_spawn", "chance": 100 } }
+    }
+  }
+]

@@ -148,8 +148,21 @@
     "id": "black_dbone_longsword",
     "name": { "str": "acid-infused dragonbone longsword" },
     "description": "A variant of the longsword that is made of dragonbone, now with the acidic ire of a black dragon imbued within.",
-    "proportional": { "cutting": 1.2, "price": 10 },
-    "extend": { "flags": [ "ACIDIC" ] },
+    "proportional": { "price": 10 },
+    "//": "Roughly +25% acid damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 13 },
+            { "damage_type": "cut", "amount": 44 },
+            { "damage_type": "acid", "amount": 15 }
+          ]
+        }
+      }
+    ],
     "color": "green"
   },
   {
@@ -158,8 +171,21 @@
     "id": "black_dbone_battleaxe",
     "name": { "str": "acid-infused dragonbone battleaxe" },
     "description": "A variant of the battleaxe that is made of dragonbone, now with the acidic ire of a black dragon imbued within.",
-    "proportional": { "cutting": 1.2, "price": 10 },
-    "extend": { "flags": [ "ACIDIC" ] },
+    "proportional": { "price": 10 },
+    "//": "Roughly +25% acid damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 22 },
+            { "damage_type": "cut", "amount": 52 },
+            { "damage_type": "acid", "amount": 19 }
+          ]
+        }
+      }
+    ],
     "color": "green"
   },
   {
@@ -168,8 +194,21 @@
     "id": "black_dbone_qiang",
     "name": { "str": "acid-infused dragonbone qiang" },
     "description": "A variant of the qiang that is made of dragonbone, now with the acidic ire of a black dragon imbued within.",
-    "proportional": { "cutting": 1.2, "price": 10 },
-    "extend": { "flags": [ "ACIDIC" ] },
+    "proportional": { "price": 10 },
+    "//": "Roughly +25% acid damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 0,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 5 },
+            { "damage_type": "cut", "amount": 40 },
+            { "damage_type": "acid", "amount": 12 }
+          ]
+        }
+      }
+    ],
     "color": "green"
   },
   {
@@ -178,8 +217,21 @@
     "id": "black_dbone_tachi",
     "name": { "str": "acid-infused dragonbone tachi" },
     "description": "A variant of the tachi that is made of dragonbone, now with the acidic ire of a black dragon imbued within.",
-    "proportional": { "cutting": 1.2, "price": 10 },
-    "extend": { "flags": [ "ACIDIC" ] },
+    "proportional": { "price": 10 },
+    "//": "Roughly +25% acid damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 5 },
+            { "damage_type": "cut", "amount": 44 },
+            { "damage_type": "acid", "amount": 13 }
+          ]
+        }
+      }
+    ],
     "color": "green"
   }
 ]

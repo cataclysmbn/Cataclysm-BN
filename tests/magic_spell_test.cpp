@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 
 #include "avatar.h"
+#include "fstream_utils.h"
 #include "game.h"
 #include "magic.h"
 #include "monster.h"
@@ -101,6 +102,39 @@ TEST_CASE( "spell level", "[magic][spell][level]" )
             }
         }
     }
+}
+
+TEST_CASE( "known magic remembers the last cast spell", "[magic][spell][save]" )
+{
+    clear_all_state();
+    clear_avatar();
+
+    const auto pew_id = spell_id( "test_spell_pew" );
+    const auto lava_id = spell_id( "test_spell_lava" );
+
+    g->u.magic->learn_spell( pew_id, g->u, true );
+    g->u.magic->learn_spell( lava_id, g->u, true );
+
+    CHECK( !g->u.magic->last_cast_spell().has_value() );
+
+    g->u.magic->set_last_cast_spell( lava_id );
+    REQUIRE( g->u.magic->last_cast_spell().has_value() );
+    CHECK( *g->u.magic->last_cast_spell() == lava_id );
+
+    const auto serialized_magic = serialize_wrapper( [&]( JsonOut & jsout ) {
+        g->u.magic->serialize( jsout );
+    } );
+
+    auto loaded_magic = known_magic();
+    deserialize_wrapper( [&]( JsonIn & jsin ) {
+        loaded_magic.deserialize( jsin );
+    }, serialized_magic );
+
+    REQUIRE( loaded_magic.last_cast_spell().has_value() );
+    CHECK( *loaded_magic.last_cast_spell() == lava_id );
+
+    loaded_magic.forget_spell( lava_id );
+    CHECK( !loaded_magic.last_cast_spell().has_value() );
 }
 
 // Return experience points needed to level up a spell, starting at from_level
@@ -233,7 +267,7 @@ static int spell_damage( const spell_id sp_id, const int spell_level )
 {
     spell test_spell( sp_id );
     test_spell.set_level( spell_level );
-    return test_spell.damage();
+    return test_spell.get_damage_instance().total_damage();
 }
 
 static int spell_damage_character( const spell_id sp_id, const int spell_level,
@@ -241,7 +275,7 @@ static int spell_damage_character( const spell_id sp_id, const int spell_level,
 {
     spell test_spell( sp_id );
     test_spell.set_level( spell_level );
-    return test_spell.damage_as_character( guy );
+    return test_spell.get_damage_instance( guy ).total_damage();
 }
 
 TEST_CASE( "spell damage", "[magic][spell][damage]" )
@@ -249,10 +283,15 @@ TEST_CASE( "spell damage", "[magic][spell][damage]" )
     clear_all_state();
     spell_id pew_id( "test_spell_pew" );
     spell_id pew_melee_id( "test_spell_pew_melee" );
+    spell_id pew_int_id( "test_spell_pew_int_scaling" );
+    spell_id pew_physical_id( "test_spell_pew_physical" );
+    spell_id pew_cut_id( "test_spell_pew_melee_cut" );
     const spell_type &pew_type = pew_id.obj();
     avatar &dummy = g->u;
     clear_character( dummy );
     dummy.set_primary_weapon( item::spawn( "katana" ) );
+    dummy.int_max = 16;
+    dummy.set_mutation( trait_id( "BRAWLER" ) );
 
     // Level 0 damage for this spell is 1
     REQUIRE( pew_type.min_damage == 1 );
@@ -284,6 +323,12 @@ TEST_CASE( "spell damage", "[magic][spell][damage]" )
     SECTION( "spells that have character-dependent bonuses correctly vary damage" ) {
         // ADD_MELEE_DAM
         CHECK( spell_damage( pew_melee_id, 1 ) < spell_damage_character( pew_melee_id, 1, dummy ) );
+        // int_scale
+        CHECK( spell_damage( pew_int_id, 1 ) < spell_damage_character( pew_int_id, 1, dummy ) );
+        // PHYSICAL (Level increased to properly test smaller bonus)
+        CHECK( spell_damage( pew_physical_id, 5 ) < spell_damage_character( pew_melee_id, 5, dummy ) );
+        // melee_dam: ["physical"]
+        CHECK( spell_damage( pew_cut_id, 1 ) < spell_damage_character( pew_cut_id, 1, dummy ) );
     }
 }
 
@@ -638,4 +683,3 @@ TEST_CASE( "spell effect - recover_energy", "[magic][spell][effect][recover_ener
         CHECK( dummy.get_pain() == 2 );
     }
 }
-

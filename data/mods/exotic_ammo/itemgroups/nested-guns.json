@@ -597,5 +597,170 @@
       { "item": "tokarevmag", "charges-min": 0, "ammo-group": "on_hand_762x25", "prob": 50 },
       { "group": "on_hand_762x25", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
+  },
+  {
+    "id": "everyday_enforcer45",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_enforcer_45", "ammo-group": "on_hand_45" },
+      { "item": "460_speedloader6", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_45" },
+      { "item": "460_speedloader6", "charges-min": 0, "ammo-group": "on_hand_45", "prob": 50 },
+      { "group": "on_hand_45", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lsp45",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_sp_45", "ammo-group": "on_hand_45" },
+      { "item": "lw12mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_45" },
+      { "item": "lw12mag", "charges-min": 0, "ammo-group": "on_hand_45", "prob": 50 },
+      { "group": "on_hand_45", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lmp45",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_mp_45", "ammo-group": "on_hand_45" },
+      { "item": "lw12mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_45" },
+      { "item": "lw12mag", "charges-min": 0, "ammo-group": "on_hand_45", "prob": 50 },
+      { "group": "on_hand_45", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_llong45",
+    "type": "item_group",
+    "//": "this is a distribution for the gun and some ammo to repack, no magazines",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_long_45", "ammo-group": "on_hand_45" },
+      { "group": "on_hand_45", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lbase223",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_base_223", "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "ammo-group": "on_hand_223", "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lcar223",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_car_223", "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "ammo-group": "on_hand_223", "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_ldsr223",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_dsr_223", "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "ammo-group": "on_hand_223", "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_llmg223",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_lmg_223", "ammo-group": "on_hand_223" },
+      { "item": "belt223", "ammo-group": "on_hand_223", "charges": [ 1, 100 ], "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lmbr223",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_mbr_223", "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_223" },
+      { "item": "lw223mag", "charges-min": 0, "ammo-group": "on_hand_223", "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lbak223",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_bak_223", "ammo-group": "on_hand_223" },
+      { "item": "223_speedloader5", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_223" },
+      { "item": "223_speedloader5", "charges-min": 0, "ammo-group": "on_hand_223", "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_rm360",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "rm360_carbine", "ammo-group": "on_hand_22" },
+      { "item": "360_200_mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_22" },
+      { "item": "360_200_mag", "charges-min": 0, "ammo-group": "on_hand_22", "prob": 50 },
+      { "group": "on_hand_22", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lookout9mm",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_lookout_9mm", "ammo-group": "on_hand_9mm" },
+      { "item": "9mm_speedloader7", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_9mm" },
+      { "item": "9mm_speedloader7", "charges-min": 0, "ammo-group": "on_hand_9mm", "prob": 50 },
+      { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lmp9mm",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_mp_9mm", "ammo-group": "on_hand_9mm" },
+      { "item": "lw21mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_9mm" },
+      { "item": "lw21mag", "charges-min": 0, "ammo-group": "on_hand_9mm", "prob": 50 },
+      { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_lsp9mm",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "l_sp_9mm", "ammo-group": "on_hand_9mm" },
+      { "item": "lw21mag", "charges-min": 0, "prob": 80, "ammo-group": "on_hand_9mm" },
+      { "item": "lw21mag", "charges-min": 0, "ammo-group": "on_hand_9mm", "prob": 50 },
+      { "group": "on_hand_9mm", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
   }
 ]

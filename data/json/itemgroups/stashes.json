@@ -8,6 +8,7 @@
       { "group": "softdrinks_canned", "prob": 380 },
       { "group": "salty_snacks", "prob": 135 },
       { "item": "cola", "prob": 25, "container-item": "bottle_glass" },
+      { "item": "zero_cola", "prob": 25, "container-item": "bottle_glass" },
       { "item": "creamsoda", "prob": 25, "container-item": "bottle_glass" },
       { "item": "lemonlime", "prob": 25, "container-item": "bottle_glass" },
       { "item": "orangesoda", "prob": 25, "container-item": "bottle_glass" },
@@ -65,12 +66,33 @@
       [ "sizzurp", 4 ],
       [ "meth", 2 ],
       [ "heroin", 1 ],
+      [ "ghb", 4 ],
       [ "crack", 4 ],
       [ "crackpipe", 7 ],
       [ "antifungal", 1 ],
       [ "antiparasitic", 2 ],
       [ "diazepam", 1 ],
       [ "lsd", 6 ]
+    ]
+  },
+  {
+    "id": "stash_drugrunner",
+    "//": "Large supplies of hard drugs (or occasionally tax-free marijuana) and cash, used by smuggler and drug deal locations.",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "coke", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 75 },
+      {
+        "distribution": [
+          { "item": "meth", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 40 },
+          { "item": "crack", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 25 },
+          { "item": "heroin", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 25 },
+          { "item": "weed", "charges": [ 50, 500 ], "container-item": "bag_plastic", "prob": 10 }
+        ],
+        "prob": 50
+      },
+      { "item": "money_bundle", "count": [ 5, 50 ], "prob": 50 },
+      { "item": "money_pile", "count": [ 1, 3 ], "prob": 10 }
     ]
   }
 ]

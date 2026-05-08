@@ -746,5 +746,18 @@
     "qualities": [ { "id": "CUT", "level": 1 } ],
     "components": [ [ [ "mycus_fruit", 1 ] ] ],
     "flags": [ "ALLOW_ROTTEN" ]
+  },
+  {
+    "result": "seed_cotton_boll",
+    "type": "recipe",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_SEEDS",
+    "skill_used": "survival",
+    "difficulty": 2,
+    "time": "5 m",
+    "autolearn": true,
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "cotton_boll", 1 ] ] ],
+    "flags": [ "ALLOW_ROTTEN" ]
   }
 ]

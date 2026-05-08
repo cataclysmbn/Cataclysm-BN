@@ -1,0 +1,1193 @@
+[
+  {
+    "id": "plane_small",
+    "type": "vehicle",
+    "name": "Small 2-seater Plane",
+    "blueprint": [
+      [ "       |   " ],
+      [ "       |   " ],
+      [ "|   --'+'- " ],
+      [ "|----=##'-X" ],
+      [ "|   --'+'- " ],
+      [ "       |   " ],
+      [ "       |   " ]
+    ],
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "roof", "wing_metal_horizontal" ]
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "xlframe_vertical", "windshield_vertical_right", { "part": "tank", "fuel": "avgas" }, "wing_metal_horizontal" ]
+      },
+      { "x": 0, "y": 2, "parts": [ "wing_metal_external_horizontal" ] },
+      { "x": 0, "y": 3, "parts": [ "wing_metal_external_horizontal" ] },
+      { "x": 0, "y": 4, "parts": [ "lit_wing_metal_external_right" ] },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "xlframe_vertical", "windshield_vertical_left", { "part": "tank", "fuel": "avgas" }, "wing_metal_horizontal" ]
+      },
+      { "x": 0, "y": -2, "parts": [ "wing_metal_external_horizontal" ] },
+      { "x": 0, "y": -3, "parts": [ "wing_metal_external_horizontal" ] },
+      { "x": 0, "y": -4, "parts": [ "lit_wing_metal_external_left" ] },
+      { "x": 1, "y": 0, "parts": [ "xlframe_cross", "windshield_horizontal_front" ] },
+      { "x": 1, "y": 1, "parts": [ "xlframe_vertical", "windshield_ne" ] },
+      { "x": 1, "y": -1, "parts": [ "xlframe_vertical", "windshield_nw" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [
+          "xlframe_horizontal",
+          "aluminum_halfboard_horizontal_front",
+          "engine_inline4",
+          "alternator_car",
+          "battery_car",
+          "headlight",
+          "wheel_mount_light_steerable",
+          "wheel_small"
+        ]
+      },
+      { "x": 2, "y": 1, "parts": [ "xlframe_ne", "aluminum_halfboard_ne" ] },
+      { "x": 2, "y": -1, "parts": [ "xlframe_nw", "aluminum_halfboard_nw" ] },
+      { "x": 3, "y": 0, "parts": [ "propeller_metal" ] },
+      { "x": -1, "y": 0, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "xlframe_vertical", "windshield_vertical_right", "door_vertical_right", "wheel_mount_light", "wheel_small" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "door_vertical_left", "wheel_mount_light", "wheel_small" ] },
+      { "x": -2, "y": 0, "parts": [ "xlframe_cross", "trunk", "roof" ] },
+      { "x": -2, "y": 1, "parts": [ "xlframe_vertical", "aluminum_halfboard_vertical_right" ] },
+      { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "aluminum_halfboard_vertical_left" ] },
+      { "x": -3, "y": 0, "parts": [ "xlframe_cross", "windshield_horizontal_rear" ] },
+      { "x": -3, "y": 1, "parts": [ "xlframe_vertical", "aluminum_halfboard_se" ] },
+      { "x": -3, "y": -1, "parts": [ "xlframe_vertical", "aluminum_halfboard_sw" ] },
+      { "x": -4, "y": 0, "parts": [ "xlframe_cross", "aluminum_halfboard_vertical" ] },
+      { "x": -5, "y": 0, "parts": [ "xlframe_cross", "aluminum_halfboard_vertical" ] },
+      { "x": -6, "y": 0, "parts": [ "xlframe_cross", "aluminum_halfboard_vertical" ] },
+      { "x": -7, "y": 0, "parts": [ "lit_wing_metal_external_horizontal" ] },
+      { "x": -7, "y": 1, "parts": [ "wing_metal_external_right" ] },
+      { "x": -7, "y": -1, "parts": [ "wing_metal_external_left" ] }
+    ],
+    "items": [
+      { "x": -2, "y": 0, "chance": 50, "items": [ "lighter" ] },
+      { "x": -2, "y": 0, "chance": 50, "items": [ "duct_tape" ] },
+      { "x": -2, "y": 0, "chance": 50, "items": [ "flashlight" ] },
+      { "x": -2, "y": 0, "chance": 25, "items": [ "caff_gum" ] },
+      { "x": -2, "y": 0, "chance": 10, "items": [ "gum" ] },
+      { "x": -2, "y": 0, "chance": 10, "items": [ "nic_gum" ] },
+      { "x": -2, "y": 0, "chance": 5, "items": [ "roadmap" ] }
+    ]
+  },
+  {
+    "id": "plane_small_wood",
+    "type": "vehicle",
+    "name": "Homebuilt Wooden Plane",
+    "blueprint": [
+      [ "     |   " ],
+      [ "     |   " ],
+      [ "|    |   " ],
+      [ "|----=#'X" ],
+      [ "|    |   " ],
+      [ "     |   " ],
+      [ "     |   " ]
+    ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "frame_wood_light_cross", "seat_wood_light", "controls", "dashboard", "roof_cloth" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [
+          "frame_wood_light_vertical",
+          "windshield_horizontal_front",
+          "engine_1cyl_large",
+          "alternator_motorbike",
+          "battery_motorbike",
+          "motorcycle_headlight"
+        ]
+      },
+      { "x": 2, "y": 0, "parts": [ "propeller_wood" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_wood_light_cross", "cargo_bag", "roof_cloth", "wing_wood_horizontal" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_wood_light_cross", { "part": "tank", "fuel": "gasoline" }, "cloth_halfboard_vertical" ]
+      },
+      { "x": -3, "y": 0, "parts": [ "frame_wood_light_cross", "cloth_halfboard_vertical" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_wood_light_cross", "cloth_halfboard_vertical" ] },
+      {
+        "x": -5,
+        "y": 0,
+        "parts": [ "frame_wood_light_cross", "cloth_halfboard_vertical", "wheel_mount_light_steerable", "wheel_small" ]
+      },
+      { "x": -6, "y": 0, "parts": [ "lit_wing_wood_external_horizontal" ] },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "frame_wood_light_cross", "wheel_mount_light", "wheel_small", "wing_wood_horizontal" ]
+      },
+      { "x": -1, "y": -2, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": -3, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": -4, "parts": [ "lit_wing_wood_external_left" ] },
+      {
+        "x": -1,
+        "y": 1,
+        "parts": [ "frame_wood_light_cross", "wheel_mount_light", "wheel_small", "wing_wood_horizontal" ]
+      },
+      { "x": -1, "y": 2, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": 3, "parts": [ "wing_wood_external_horizontal" ] },
+      { "x": -1, "y": 4, "parts": [ "lit_wing_wood_external_right" ] },
+      { "x": -6, "y": -1, "parts": [ "wing_wood_external_left" ] },
+      { "x": -6, "y": 1, "parts": [ "wing_wood_external_right" ] }
+    ],
+    "items": [
+      { "x": -1, "y": 0, "chance": 50, "items": [ "knit_scarf" ] },
+      { "x": -1, "y": 0, "chance": 50, "items": [ "gloves_leather" ] },
+      { "x": -1, "y": 0, "chance": 50, "items": [ "goggles_ski" ] },
+      { "x": -1, "y": 0, "chance": 25, "items": [ "ref_lighter" ] },
+      { "x": -1, "y": 0, "chance": 25, "items": [ "gasoline_lantern" ] },
+      { "x": -1, "y": 0, "chance": 10, "items": [ "sewing_kit" ] },
+      { "x": -1, "y": 0, "chance": 5, "items": [ "roadmap" ] }
+    ]
+  },
+  {
+    "id": "blimp",
+    "type": "vehicle",
+    "name": "Commercial Blimp",
+    "blueprint": [
+      "  OOOOOOOOOOOO ",
+      " OOO->OOOOOOOOO ",
+      "OOOO--'''+''OOOO",
+      "OOOO-=###_#'OOOO",
+      "OOOO-=###__'OOOO",
+      "OOOO--'''+''OOOO",
+      " OOO->OOOOOOOOO ",
+      "  OOOOOOOOOOOO "
+    ],
+    "blueprint_origin": { "x": 10, "y": 3 },
+    "palette": { "O": [ "airship_balloon_external" ] },
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "black_box", "roof", "airship_balloon" ]
+      },
+      { "x": 0, "y": 1, "parts": [ "xlframe_cross", "aisle_vertical", "roof", "airship_balloon" ] },
+      { "x": 0, "y": 2, "parts": [ "xlframe_vertical", "windshield_vertical_right", "airship_balloon" ] },
+      { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "windshield_vertical_left", "airship_balloon" ] },
+      { "x": 1, "y": 0, "parts": [ "xlframe_horizontal", "windshield_horizontal_front", "airship_balloon" ] },
+      { "x": 1, "y": 1, "parts": [ "xlframe_horizontal", "windshield_horizontal_front", "airship_balloon" ] },
+      { "x": 1, "y": 2, "parts": [ "xlframe_ne", "windshield_ne", "airship_balloon" ] },
+      { "x": 1, "y": -1, "parts": [ "xlframe_nw", "windshield_nw", "airship_balloon" ] },
+      { "x": -1, "y": 0, "parts": [ "xlframe_cross", "aisle_vertical", "roof", "airship_balloon" ] },
+      { "x": -1, "y": 1, "parts": [ "xlframe_cross", "aisle_vertical", "roof", "airship_balloon" ] },
+      { "x": -1, "y": 2, "parts": [ "xlframe_vertical", "door_sliding", "airship_balloon" ] },
+      { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "door_sliding", "airship_balloon" ] },
+      { "x": -2, "y": 0, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof", "airship_balloon" ] },
+      { "x": -2, "y": 1, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof", "airship_balloon" ] },
+      { "x": -2, "y": 2, "parts": [ "xlframe_vertical", "windshield_vertical_right", "airship_balloon" ] },
+      { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "windshield_vertical_left", "airship_balloon" ] },
+      { "x": -3, "y": 0, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof", "airship_balloon" ] },
+      { "x": -3, "y": 1, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof", "airship_balloon" ] },
+      { "x": -3, "y": 2, "parts": [ "xlframe_vertical", "windshield_vertical_right", "airship_balloon" ] },
+      { "x": -3, "y": -1, "parts": [ "xlframe_vertical", "windshield_vertical_left", "airship_balloon" ] },
+      { "x": -4, "y": 0, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof", "airship_balloon" ] },
+      { "x": -4, "y": 1, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof", "airship_balloon" ] },
+      { "x": -4, "y": 2, "parts": [ "xlframe_vertical", "windshield_vertical_right", "airship_balloon" ] },
+      { "x": -4, "y": -1, "parts": [ "xlframe_vertical", "windshield_vertical_left", "airship_balloon" ] },
+      { "x": -5, "y": 0, "parts": [ "xlframe_cross", "trunk", "roof", "airship_balloon" ] },
+      { "x": -5, "y": 1, "parts": [ "xlframe_cross", "trunk", "roof", "airship_balloon" ] },
+      {
+        "x": -5,
+        "y": 2,
+        "parts": [
+          "xlframe_vertical",
+          "aluminum_board_vertical_right",
+          { "part": "afs_roof_external_tank", "fuel": "avgas" },
+          "airship_balloon"
+        ]
+      },
+      { "x": -5, "y": 3, "parts": [ "propeller_metal" ] },
+      {
+        "x": -5,
+        "y": -1,
+        "parts": [
+          "xlframe_vertical",
+          "aluminum_board_vertical_left",
+          { "part": "afs_roof_external_tank", "fuel": "avgas" },
+          "airship_balloon"
+        ]
+      },
+      { "x": -5, "y": -2, "parts": [ "propeller_metal" ] },
+      { "x": -6, "y": 0, "parts": [ "xlframe_cross", "aluminum_board_horizontal_rear", "airship_balloon" ] },
+      { "x": -6, "y": 1, "parts": [ "xlframe_cross", "aluminum_board_horizontal_rear", "airship_balloon" ] },
+      { "x": -6, "y": 2, "parts": [ "xlframe_vertical", "aluminum_board_se", "airship_balloon" ] },
+      {
+        "x": -6,
+        "y": 3,
+        "parts": [ "xlframe_vertical", "aluminum_halfboard_vertical", "engine_v6", "battery_car", "alternator_car", "airship_balloon" ]
+      },
+      { "x": -6, "y": -1, "parts": [ "xlframe_vertical", "aluminum_board_sw", "airship_balloon" ] },
+      {
+        "x": -6,
+        "y": -2,
+        "parts": [ "xlframe_vertical", "aluminum_halfboard_vertical", "engine_v6", "battery_car", "alternator_car", "airship_balloon" ]
+      }
+    ],
+    "items": [
+      { "x": -5, "y": 1, "chance": 75, "items": "jersey" },
+      { "x": -5, "y": 1, "chance": 50, "items": "jersey" },
+      { "x": -5, "y": 1, "chance": 50, "items": "hat_ball" },
+      { "x": -5, "y": 1, "chance": 25, "items": "hat_ball" },
+      { "x": -5, "y": 1, "chance": 25, "items": "tshirt_tour" },
+      { "x": -5, "y": 1, "chance": 10, "items": "tshirt_tour" },
+      { "x": -2, "y": 1, "chance": 50, "items": "microphone_xlr_generic" },
+      { "x": -2, "y": 1, "chance": 25, "items": "camera_pro" },
+      { "x": -2, "y": 0, "chance": 25, "items": "novel_sports" },
+      { "x": -2, "y": 0, "chance": 5, "items": "touristmap" },
+      { "x": 0, "y": 0, "chance": 10, "items": "fancy_sunglasses" },
+      { "x": 0, "y": 0, "chance": 5, "items": "binoculars" }
+    ]
+  },
+  {
+    "type": "vehicle",
+    "id": "airship",
+    "name": "airship",
+    "blueprint": [
+      "    OOOOOOOOOOOOOO    ",
+      "  OOOOOOOOOOOOOOOOOO  ",
+      " OOO1----7==++==&OOOO ",
+      "OOO19heeh|____tT#&OOOO",
+      "OOO2o.hh.|_______#&OOO",
+      "OOOEo....X__>^____*POO",
+      "OOO2o....|_______!(OOO",
+      "OOO37BB..|____tT!(OOOO",
+      " OOO3----9==++==(OOOO ",
+      "  OOOOOOOOOOOOOOOOOO  ",
+      "    OOOOOOOOOOOOOO    "
+    ],
+    "blueprint_origin": { "x": 13, "y": 5 },
+    "palette": {
+      "^": [ "frame_wood_cross", "seat_wood", "controls", "airship_balloon" ],
+      ".": [ "frame_wood_cross", "wooden_aisle_vertical", "roof_wood", "airship_balloon" ],
+      "_": [ "frame_wood_cross", "wooden_aisle_vertical", "airship_balloon" ],
+      ">": [ "frame_wood_cross", "wooden_aisle_horizontal", "airship_balloon", "ladder_3" ],
+      "+": [ "frame_wood_vertical", "door_wood", "plating_wood", "airship_balloon" ],
+      "=": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "airship_balloon" ],
+      "!": [ "frame_wood_sw", "woodhalfboard_sw", "plating_wood", "airship_balloon" ],
+      "#": [ "frame_wood_se", "woodhalfboard_se", "plating_wood", "airship_balloon" ],
+      "&": [ "frame_wood_nw", "woodhalfboard_nw", "plating_wood", "airship_balloon" ],
+      "*": [ "frame_wood_horizontal", "woodhalfboard_horizontal", "plating_wood", "airship_balloon" ],
+      "(": [ "frame_wood_ne", "woodhalfboard_ne", "plating_wood", "airship_balloon" ],
+      "-": [ "frame_wood_vertical", "woodboard_vertical", "plating_wood", "airship_balloon" ],
+      "|": [ "frame_wood_horizontal", "woodboard_horizontal", "airship_balloon" ],
+      "1": [ "frame_wood_sw", "woodboard_sw", "plating_wood", "airship_balloon" ],
+      "2": [ "frame_wood_horizontal", "woodboard_horizontal", "plating_wood", "airship_balloon" ],
+      "3": [ "frame_wood_se", "woodboard_se", "plating_wood", "airship_balloon" ],
+      "7": [ "frame_wood_nw", "woodboard_nw", "plating_wood", "airship_balloon" ],
+      "9": [ "frame_wood_ne", "woodboard_ne", "plating_wood", "airship_balloon" ],
+      "B": [ "frame_wood_cross", "bed", "roof_wood", "airship_balloon" ],
+      "E": [ "frame_wood_horizontal", "woodboard_horizontal", "engine_steam_small", "plating_wood", "airship_balloon" ],
+      "e": [ "frame_wood_cross", "veh_table_wood", "roof_wood", "airship_balloon" ],
+      "h": [ "frame_wood_cross", "seat_wood", "roof_wood", "airship_balloon" ],
+      "O": [ "airship_balloon_external" ],
+      "P": [ "propeller_wood" ],
+      "t": [ "frame_wood_cross", "wood box", "airship_balloon" ],
+      "X": [ "frame_wood_cross", "door_wood_opaque", "airship_balloon" ],
+      "o": [ "frame_wood_cross", "wood box", "roof_wood", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ],
+      "T": [
+        "frame_wood_cross",
+        "seat_wood",
+        "turret_mount_manual_wood",
+        {
+          "ammo_types": [ "rock", "sling_bullet", "ammo_ballista_wood", "ammo_ballista_iron" ],
+          "part": "mounted_launcher_ballista",
+          "ammo": 75,
+          "ammo_qty": [ 1, 10 ]
+        }
+      ]
+    },
+    "items": [
+      { "x": 1, "y": 2, "chance": 50, "item_groups": [ "supplies_skyfarer_ballista" ] },
+      { "x": 1, "y": -2, "chance": 50, "item_groups": [ "supplies_skyfarer_ballista" ] }
+    ]
+  },
+  {
+    "type": "vehicle",
+    "id": "airboat",
+    "name": "airboat",
+    "blueprint": [
+      "  OOOOOOOO  ",
+      " OO1-+-7OOO ",
+      "OOO|o_^37OOO",
+      "OOOE>__t|POO",
+      "OOO|o_T19OOO",
+      " OO3-+-9OOO ",
+      "  OOOOOOOO  "
+    ],
+    "blueprint_origin": { "x": 6, "y": 2 },
+    "palette": {
+      "^": [ "frame_wood_cross", "seat_wood", "controls", "airship_balloon" ],
+      "_": [ "frame_wood_cross", "wooden_aisle_vertical", "airship_balloon" ],
+      ">": [ "frame_wood_cross", "wooden_aisle_horizontal", "airship_balloon", "ladder_3" ],
+      "+": [ "frame_wood_vertical", "door_wood", "plating_wood", "airship_balloon" ],
+      "-": [ "frame_wood_vertical", "woodhalfboard_vertical", "plating_wood", "airship_balloon" ],
+      "|": [ "frame_wood_horizontal", "woodhalfboard_horizontal", "plating_wood", "airship_balloon" ],
+      "1": [ "frame_wood_sw", "woodhalfboard_sw", "plating_wood", "airship_balloon" ],
+      "3": [ "frame_wood_se", "woodhalfboard_se", "plating_wood", "airship_balloon" ],
+      "7": [ "frame_wood_nw", "woodhalfboard_nw", "plating_wood", "airship_balloon" ],
+      "9": [ "frame_wood_ne", "woodhalfboard_ne", "plating_wood", "airship_balloon" ],
+      "E": [ "frame_wood_horizontal", "woodhalfboard_horizontal", "engine_steam_small", "plating_wood", "airship_balloon" ],
+      "O": [ "airship_balloon_external" ],
+      "P": [ "propeller_wood" ],
+      "t": [ "frame_wood_cross", "wood box", "airship_balloon" ],
+      "o": [ "frame_wood_cross", "wood box", { "part": "fuel_bunker", "fuel": "coal_lump" }, "airship_balloon" ],
+      "T": [
+        "frame_wood_cross",
+        "seat_wood",
+        "turret_mount_manual_wood",
+        {
+          "ammo_types": [ "rock", "sling_bullet", "ammo_ballista_wood", "ammo_ballista_iron" ],
+          "part": "mounted_launcher_ballista",
+          "ammo": 75,
+          "ammo_qty": [ 1, 10 ]
+        }
+      ]
+    },
+    "items": [ { "x": 1, "y": 1, "chance": 75, "item_groups": [ "supplies_skyfarer_ballista" ] } ]
+  },
+  {
+    "type": "vehicle",
+    "id": "aircanoe",
+    "name": "aircanoe",
+    "blueprint": [ [ "<OO>" ] ],
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "sail_large", "airship_balloon" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "wood box", "airship_balloon" ] },
+      { "x": 2, "y": 0, "parts": [ "propeller_wood" ] },
+      { "x": 3, "y": 0, "parts": [ "airship_balloon_external" ] },
+      { "x": 4, "y": 0, "parts": [ "airship_balloon_external" ] },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "frame_wood_horizontal", "wooden_aisle_horizontal", "airship_balloon", "ladder_3" ]
+      },
+      { "x": -2, "y": 0, "parts": [ "airship_balloon_external" ] },
+      { "x": -3, "y": 0, "parts": [ "airship_balloon_external" ] },
+      { "x": -2, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": -1, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": 0, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": 1, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": 2, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": 3, "y": 1, "parts": [ "airship_balloon_external" ] },
+      { "x": -2, "y": -1, "parts": [ "airship_balloon_external" ] },
+      { "x": -1, "y": -1, "parts": [ "airship_balloon_external" ] },
+      { "x": 0, "y": -1, "parts": [ "airship_balloon_external" ] },
+      { "x": 1, "y": -1, "parts": [ "airship_balloon_external" ] },
+      { "x": 2, "y": -1, "parts": [ "airship_balloon_external" ] },
+      { "x": 3, "y": -1, "parts": [ "airship_balloon_external" ] }
+    ]
+  },
+  {
+    "id": "passenger_plane",
+    "type": "vehicle",
+    "name": "Passenger Plane",
+    "parts": [
+      { "x": 4, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor" ] },
+      { "x": 9, "y": 1, "parts": [ "frame_horizontal_2", "headlight", "halfboard_ne" ] },
+      { "x": 6, "y": 0, "parts": [ "frame_vertical_2", "roof", "door_internal" ] },
+      { "x": 8, "y": 2, "parts": [ "frame_horizontal", "windshield_ne_edge" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "wheel_mount_medium", "windshield", "wheel", "v_shutter" ] },
+      { "x": 8, "y": -1, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_horizontal_2", "roof", "board_horizontal" ] },
+      {
+        "x": 4,
+        "y": 1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "parts": [ "frame_horizontal_2", "roof", "folding_seat", "controls_electronic", "cargo_space" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "door_internal" ] },
+      {
+        "x": 3,
+        "y": -1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      { "x": 8, "y": 0, "parts": [ "frame_horizontal", "windshield", "inboard_mirror" ] },
+      {
+        "x": -2,
+        "y": 1,
+        "parts": [ "frame_horizontal_2", "roof", "water_faucet", "veh_table", "towel_hanger", "inboard_mirror" ]
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      { "x": 3, "y": -2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      {
+        "x": 5,
+        "y": -1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      {
+        "x": 7,
+        "y": -1,
+        "parts": [
+          "frame_vertical_2",
+          "seat",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "roof",
+          "programmable_autopilot",
+          "black_box",
+          "tracker"
+        ]
+      },
+      { "x": 9, "y": -1, "parts": [ "frame_horizontal_2", "halfboard_nw", "headlight" ] },
+      { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "roof", "aisle_horizontal" ] },
+      { "x": 6, "y": -1, "parts": [ "frame_horizontal_2", "roof", "board_horizontal" ] },
+      { "x": 5, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "windshield_horizontal_front", "v_shutter" ] },
+      {
+        "x": -2,
+        "y": 2,
+        "parts": [ "frame_vertical", "board_vertical", { "part": "tank_55gal_drum", "fuel": "avgas" } ]
+      },
+      { "x": 7, "y": 2, "parts": [ "frame_vertical", "windshield_horizontal_front" ] },
+      { "x": 7, "y": 0, "parts": [ "frame_vertical_2", "roof", "aisle_vertical", "aisle_lights" ] },
+      { "x": 7, "y": -2, "parts": [ "frame_vertical", "windshield" ] },
+      { "x": 8, "y": 1, "parts": [ "frame_horizontal", "windshield" ] },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      { "x": -1, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical_2", "aisle_vertical", "roof", "aisle_lights" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_horizontal_2", "roof", "minifridge" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_horizontal", "wheel_mount_medium", "windshield", "wheel", "v_shutter" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      { "x": -2, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 7, "y": 1, "parts": [ "frame_vertical_2", "roof", "seat", "drive_by_wire_controls" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      { "x": 6, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 4, "y": 2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      { "x": 5, "y": 1, "parts": [ "frame_horizontal_2", "roof", "aisle_horizontal" ] },
+      { "x": 6, "y": 2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 5, "y": 2, "parts": [ "frame_vertical", "door_sliding" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      {
+        "x": 4,
+        "y": -1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_horizontal_2", "roof", "board_horizontal" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor" ] },
+      { "x": 3, "y": 0, "parts": [ "roof", "frame_cross", "trunk_floor" ] },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      { "x": 6, "y": 1, "parts": [ "frame_horizontal_2", "roof", "board_horizontal" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_horizontal_2", "roof", "seat" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor" ] },
+      {
+        "x": 9,
+        "y": 0,
+        "parts": [ "frame_cover", "halfboard_cover", "wheel_mount_light_steerable", "wheel_small", "horn_ship" ]
+      },
+      { "x": 8, "y": -2, "parts": [ "frame_horizontal", "windshield_nw_edge" ] },
+      {
+        "x": 2,
+        "y": 1,
+        "parts": [ "frame_horizontal_2", "roof", "reclining_seat_leather", "seatbelt", "aisle_lights" ]
+      },
+      { "x": 5, "y": -2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      { "x": 4, "y": -2, "parts": [ "frame_vertical", "windshield", "v_shutter" ] },
+      { "x": 3, "y": 3, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 4, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 5, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 6, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 7, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 8, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -8, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -7, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -6, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -5, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -4, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -3, "part": "wing_metal_external_horizontal" },
+      { "x": 4, "y": -3, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": -4, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      {
+        "x": 4,
+        "y": -5,
+        "parts": [ "frame_horizontal", "engine_v6", "alternator_truck", "battery_car", "lit_wing_metal_horizontal" ]
+      },
+      { "x": 4, "y": -6, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": -7, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": 3, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": 4, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      {
+        "x": 4,
+        "y": 5,
+        "parts": [ "frame_horizontal", "engine_v6", "alternator_truck", "battery_car", "lit_wing_metal_horizontal" ]
+      },
+      { "x": 4, "y": 6, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_cross", "halfboard_horizontal_front" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_cross", "halfboard_horizontal_front" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_cross", "halfboard_horizontal_front" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_cross", "halfboard_vertical", "beeper" ] },
+      { "x": -5, "y": 0, "parts": [ "frame_cross", "halfboard_vertical" ] },
+      { "x": -6, "y": 0, "parts": [ "frame_cross", "halfboard_vertical" ] },
+      { "x": -3, "y": -2, "parts": [ "frame_cross", "board_sw" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_cross", "board_sw" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_cross", "board_se" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_cross", "board_se" ] },
+      { "x": -7, "y": 0, "part": "wing_metal_external_horizontal" },
+      { "x": -7, "y": 1, "part": "wing_metal_external_horizontal" },
+      { "x": -7, "y": -1, "part": "wing_metal_external_horizontal" },
+      { "x": -7, "y": -2, "part": "wing_metal_external_left" },
+      { "x": -7, "y": 2, "part": "wing_metal_external_right" },
+      { "x": 5, "y": 5, "part": "propeller_metal" },
+      { "x": 5, "y": -5, "part": "propeller_metal" },
+      { "x": 4, "y": 7, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": 8, "part": "lit_wing_metal_external_horizontal" },
+      { "x": 4, "y": -8, "part": "lit_wing_metal_external_horizontal" },
+      { "x": 3, "y": -9, "part": "wing_metal_external_horizontal" },
+      { "x": 4, "y": -9, "part": "wing_metal_external_left" },
+      { "x": 3, "y": 9, "part": "wing_metal_external_horizontal" },
+      { "x": 4, "y": 9, "part": "wing_metal_external_right" }
+    ],
+    "items": [
+      { "x": 7, "y": -1, "chance": 100, "items": [ "1st_aid", "powered_earmuffs" ] },
+      { "x": 7, "y": -1, "chance": 50, "items": [ "smart_phone" ] },
+      { "x": 0, "y": -1, "chance": 80, "item_groups": [ "bar_fridge" ] },
+      { "x": 0, "y": -1, "chance": 80, "item_groups": [ "bar_fridge" ] },
+      { "x": 0, "y": -1, "chance": 80, "item_groups": [ "bar_fridge" ] },
+      { "x": 5, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 4, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 3, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 2, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 5, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 4, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 3, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 2, "y": 0, "chance": 80, "item_groups": [ "airliner_luggage" ] },
+      { "x": 0, "y": 1, "chance": 80, "item_groups": [ "snacks_fancy" ] },
+      { "x": 0, "y": 1, "chance": 80, "item_groups": [ "snacks_fancy" ] },
+      { "x": 0, "y": 1, "chance": 80, "item_groups": [ "snacks_fancy" ] }
+    ]
+  },
+  {
+    "id": "plane_cargo_items",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [
+      {
+        "distribution": [
+          { "item": "box_medium", "contents-group": [ "crate_stack", "crate_stack" ], "prob": 100 },
+          { "item": "box_large", "contents-group": [ "crate_stack", "crate_stack" ], "prob": 100 }
+        ],
+        "prob": 80
+      }
+    ]
+  },
+  {
+    "id": "cargo_plane",
+    "type": "vehicle",
+    "name": "Cargo Plane",
+    "parts": [
+      { "x": 4, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space", "aisle_lights" ] },
+      { "x": 9, "y": 1, "parts": [ "frame_horizontal_2", "headlight", "halfboard_ne" ] },
+      { "x": 6, "y": 0, "parts": [ "frame_vertical_2", "roof", "door_internal" ] },
+      { "x": 8, "y": 2, "parts": [ "frame_horizontal", "windshield_ne_edge" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "wheel_mount_medium", "wheel", "door_sliding" ] },
+      { "x": 8, "y": -1, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 4, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space", "aisle_lights" ] },
+      { "x": 3, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 8, "y": 0, "parts": [ "frame_horizontal", "windshield", "inboard_mirror" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 3, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 3, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 5, "y": -1, "parts": [ "frame_horizontal_2", "roof", "aisle_horizontal" ] },
+      {
+        "x": 7,
+        "y": -1,
+        "parts": [
+          "frame_vertical_2",
+          "seat",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "roof",
+          "programmable_autopilot",
+          "black_box",
+          "tracker"
+        ]
+      },
+      { "x": 9, "y": -1, "parts": [ "frame_horizontal_2", "halfboard_nw", "headlight" ] },
+      { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space" ] },
+      { "x": 6, "y": -1, "parts": [ "frame_horizontal_2", "roof", "board_horizontal" ] },
+      { "x": 5, "y": 0, "parts": [ "frame_vertical_2", "roof", "aisle_horizontal" ] },
+      { "x": 0, "y": -2, "parts": [ "frame_vertical", "door_sliding" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door_sliding" ] },
+      {
+        "x": -2,
+        "y": 2,
+        "parts": [ "frame_vertical", "board_vertical", { "part": "tank_55gal_drum", "fuel": "avgas" } ]
+      },
+      { "x": 7, "y": 2, "parts": [ "frame_vertical", "windshield_horizontal_front" ] },
+      { "x": 7, "y": 0, "parts": [ "frame_vertical_2", "roof", "aisle_vertical", "aisle_lights" ] },
+      { "x": 7, "y": -2, "parts": [ "frame_vertical", "windshield" ] },
+      { "x": 8, "y": 1, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_horizontal", "wheel_mount_medium", "wheel", "door_sliding" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": -2, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 7, "y": 1, "parts": [ "frame_vertical_2", "roof", "seat", "drive_by_wire_controls" ] },
+      { "x": 2, "y": -2, "parts": [ "frame_vertical", "door_sliding" ] },
+      { "x": 6, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 4, "y": 2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 5, "y": 1, "parts": [ "frame_horizontal_2", "roof", "aisle_horizontal" ] },
+      { "x": 6, "y": 2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 5, "y": 2, "parts": [ "frame_vertical", "door_sliding" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_vertical", "door_sliding" ] },
+      { "x": 4, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space", "aisle_lights" ] },
+      { "x": 3, "y": 0, "parts": [ "roof", "frame_cross", "cargo_space" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 3, "y": 2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 6, "y": 1, "parts": [ "frame_horizontal_2", "roof", "board_horizontal" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space" ] },
+      {
+        "x": 9,
+        "y": 0,
+        "parts": [ "frame_cover", "halfboard_cover", "wheel_mount_light_steerable", "wheel_small", "horn_ship" ]
+      },
+      { "x": 8, "y": -2, "parts": [ "frame_horizontal", "windshield_nw_edge" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal_2", "roof", "cargo_space" ] },
+      { "x": 5, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 4, "y": -2, "parts": [ "frame_vertical", "board_vertical" ] },
+      { "x": 3, "y": 3, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 4, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 5, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 6, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 7, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": 8, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -8, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -7, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -6, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -5, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -4, "part": "wing_metal_external_horizontal" },
+      { "x": 3, "y": -3, "part": "wing_metal_external_horizontal" },
+      { "x": 4, "y": -3, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": -4, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      {
+        "x": 4,
+        "y": -5,
+        "parts": [ "frame_horizontal", "engine_v6", "alternator_truck", "battery_car", "lit_wing_metal_horizontal" ]
+      },
+      { "x": 4, "y": -6, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": -7, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": 3, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": 4, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      {
+        "x": 4,
+        "y": 5,
+        "parts": [ "frame_horizontal", "engine_v6", "alternator_truck", "battery_car", "lit_wing_metal_horizontal" ]
+      },
+      { "x": 4, "y": 6, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": -3, "y": -1, "parts": [ "frame_cross", "halfboard_horizontal_front" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_cross", "halfboard_horizontal_front" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_cross", "halfboard_horizontal_front" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_cross", "halfboard_vertical", "beeper" ] },
+      { "x": -5, "y": 0, "parts": [ "frame_cross", "halfboard_vertical" ] },
+      { "x": -6, "y": 0, "parts": [ "frame_cross", "halfboard_vertical" ] },
+      { "x": -3, "y": -2, "parts": [ "frame_cross", "board_sw" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_cross", "board_sw" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_cross", "board_se" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_cross", "board_se" ] },
+      { "x": -7, "y": 0, "part": "wing_metal_external_horizontal" },
+      { "x": -7, "y": 1, "part": "wing_metal_external_horizontal" },
+      { "x": -7, "y": -1, "part": "wing_metal_external_horizontal" },
+      { "x": -7, "y": -2, "part": "wing_metal_external_left" },
+      { "x": -7, "y": 2, "part": "wing_metal_external_right" },
+      { "x": 5, "y": 5, "part": "propeller_metal" },
+      { "x": 5, "y": -5, "part": "propeller_metal" },
+      { "x": 4, "y": 7, "parts": [ "frame_horizontal", "wing_metal_horizontal" ] },
+      { "x": 4, "y": 8, "part": "lit_wing_metal_external_horizontal" },
+      { "x": 4, "y": -8, "part": "lit_wing_metal_external_horizontal" },
+      { "x": 3, "y": -9, "part": "wing_metal_external_horizontal" },
+      { "x": 4, "y": -9, "part": "wing_metal_external_left" },
+      { "x": 3, "y": 9, "part": "wing_metal_external_horizontal" },
+      { "x": 4, "y": 9, "part": "wing_metal_external_right" }
+    ],
+    "items": [
+      { "x": 7, "y": -1, "chance": 100, "items": [ "1st_aid", "powered_earmuffs" ] },
+      { "x": 7, "y": -1, "chance": 50, "items": [ "smart_phone" ] },
+      { "x": -2, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -2, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -2, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -1, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -1, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -1, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 0, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 0, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 0, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 1, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 1, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 1, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 2, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 2, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 2, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 3, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 3, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 3, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 4, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 4, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 4, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -2, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -2, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -2, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -1, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -1, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": -1, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 0, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 0, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 0, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 1, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 1, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 1, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 2, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 2, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 2, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 3, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 3, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 3, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 4, "y": -1, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 4, "y": 0, "chance": 80, "item_groups": [ "plane_cargo_items" ] },
+      { "x": 4, "y": 1, "chance": 80, "item_groups": [ "plane_cargo_items" ] }
+    ]
+  },
+  {
+    "id": "motorcycle_plane",
+    "type": "vehicle",
+    "name": "Bikeplane",
+    "parts": [
+      { "x": 1, "y": 0, "parts": [ "frame_carbon_vertical_2", "wheel_mount_light_steerable", "wheel_motorbike_or" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_carbon_vertical",
+          { "part": "tank_small", "fuel": "gasoline" },
+          "saddle_motor",
+          "controls",
+          "battery_motorbike_small",
+          "engine_1cyl_large",
+          "alternator_motorbike"
+        ]
+      },
+      {
+        "x": -1,
+        "y": 0,
+        "parts": [ "frame_carbon_vertical", "muffler", "wheel_mount_light", "wheel_motorbike_or_rear", "folding_seat" ]
+      },
+      { "x": -2, "y": 0, "part": "lit_wing_carbon_external_horizontal" },
+      { "x": -2, "y": 1, "part": "wing_carbon_external_right" },
+      { "x": -2, "y": -1, "part": "wing_carbon_external_left" },
+      { "x": 0, "y": 1, "part": "wing_carbon_external_horizontal" },
+      { "x": 0, "y": -1, "part": "wing_carbon_external_horizontal" },
+      { "x": 0, "y": -2, "part": "lit_wing_carbon_external_left" },
+      { "x": 0, "y": 2, "part": "lit_wing_carbon_external_right" },
+      { "x": 2, "y": 0, "part": "propeller_metal" }
+    ]
+  },
+  {
+    "id": "plane_f35_lightning",
+    "type": "vehicle",
+    "name": "F-35 Strike Fighter",
+    "blueprint": [
+      "  |&       ",
+      "! {|!      ",
+      "{-=G=BB147 ",
+      " TEFF--2S8>",
+      "{-=G=BB369 ",
+      "# {|#      ",
+      "  |(       "
+    ],
+    "blueprint_origin": { "x": 8, "y": 3 },
+    "palette": {
+      "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],
+      ">": [ "xlframe_vertical", "carbon_halfboard_cover" ],
+      "=": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wing_carbon_horizontal" ],
+      "B": [ "xlframe_vertical", "trunk_carbon", "bomber controls" ],
+      "F": [
+        "xlframe_vertical",
+        "carbon_halfboard_vertical",
+        { "part": "tank_30gal_drum", "fuel": "jp8" },
+        "wing_carbon_horizontal"
+      ],
+      "E": [
+        "xlframe_vertical",
+        "carbon_halfboard_vertical",
+        "engine_turbine_large",
+        "alternator_car",
+        "medium_storage_battery",
+        "wing_carbon_horizontal"
+      ],
+      "G": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wheel_mount_medium", "wheel", "wing_carbon_horizontal" ],
+      "S": [
+        "xlframe_vertical",
+        "seat",
+        "seatbelt_heavyduty",
+        "controls",
+        "dashboard",
+        "black_box",
+        "programmable_autopilot",
+        "tracker",
+        "roof",
+        "wheel_mount_medium_steerable",
+        "wheel"
+      ],
+      "T": [ "jet_thruster_external" ],
+      "1": [ "xlframe_vertical", "windshield_sw" ],
+      "2": [ "xlframe_vertical", "windshield_horizontal_rear" ],
+      "3": [ "xlframe_vertical", "windshield_se" ],
+      "4": [ "xlframe_vertical", "door_vertical_left" ],
+      "6": [ "xlframe_vertical", "door_vertical_right" ],
+      "7": [
+        "xlframe_nw",
+        "windshield_nw",
+        "turret_mount",
+        {
+          "part": "mounted_25mm_rotary_cannon",
+          "ammo": 80,
+          "ammo_types": [ "25mm_apds", "25mm_hei" ],
+          "ammo_qty": [ 10, 50 ]
+        },
+        "laser_designator_part"
+      ],
+      "8": [ "xlframe_vertical", "windshield_horizontal_front" ],
+      "9": [ "xlframe_ne", "windshield_ne" ],
+      "|": [ "wing_carbon_external_horizontal" ],
+      "{": [ "lit_wing_carbon_external_horizontal" ],
+      "!": [ "wing_carbon_external_left" ],
+      "&": [ "lit_wing_carbon_external_left" ],
+      "#": [ "wing_carbon_external_right" ],
+      "(": [ "lit_wing_carbon_external_right" ]
+    },
+    "items": [
+      { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": -2, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -3, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -2, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -3, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] }
+    ]
+  },
+  {
+    "id": "plane_av8_harrier",
+    "type": "vehicle",
+    "name": "AV-8 Harrier",
+    "blueprint": [
+      "  |&       ",
+      "  |b!      ",
+      "! |B=--147 ",
+      "|-=FGET2S8>",
+      "# |B=--369 ",
+      "  |b#      ",
+      "  |(       "
+    ],
+    "blueprint_origin": { "x": 8, "y": 3 },
+    "palette": {
+      "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],
+      ">": [ "xlframe_vertical", "carbon_halfboard_cover" ],
+      "=": [ "xlframe_vertical", "carbon_halfboard_horizontal", "wing_carbon_horizontal" ],
+      "B": [ "xlframe_vertical", "trunk_carbon", "bomber controls", "wing_carbon_horizontal" ],
+      "b": [ "xlframe_vertical", "trunk_carbon", "bomber controls", "wheel_mount_light", "wheel_small", "wing_carbon_horizontal" ],
+      "E": [ "xlframe_vertical", "carbon_halfboard_vertical", "engine_turbine_medium", "alternator_car", "medium_storage_battery" ],
+      "F": [
+        "xlframe_vertical",
+        "trunk_carbon",
+        { "part": "tank_30gal_drum", "fuel": "jp8" },
+        "bomber controls",
+        "wing_carbon_horizontal"
+      ],
+      "G": [
+        "xlframe_vertical",
+        "carbon_halfboard_horizontal",
+        "wheel_mount_medium",
+        "wheel",
+        { "part": "tank_30gal_drum", "fuel": "jp8" },
+        "wing_carbon_horizontal"
+      ],
+      "S": [
+        "xlframe_vertical",
+        "seat",
+        "seatbelt_heavyduty",
+        "controls",
+        "dashboard",
+        "black_box",
+        "programmable_autopilot",
+        "tracker",
+        "roof"
+      ],
+      "T": [ "xlframe_vertical", "carbon_halfboard_vertical", "vtol_thruster" ],
+      "1": [ "xlframe_vertical", "windshield_sw" ],
+      "2": [ "xlframe_vertical", "windshield_horizontal_rear", "wheel_mount_medium_steerable", "wheel" ],
+      "3": [ "xlframe_vertical", "windshield_se" ],
+      "4": [ "xlframe_vertical", "door_vertical_left" ],
+      "6": [ "xlframe_vertical", "door_vertical_right" ],
+      "7": [
+        "xlframe_nw",
+        "windshield_nw",
+        "turret_mount",
+        {
+          "part": "mounted_25mm_rotary_cannon",
+          "ammo": 80,
+          "ammo_types": [ "25mm_apds", "25mm_hei" ],
+          "ammo_qty": [ 10, 50 ]
+        },
+        "laser_designator_part"
+      ],
+      "8": [ "xlframe_vertical", "windshield_horizontal_front" ],
+      "9": [ "xlframe_ne", "windshield_ne" ],
+      "|": [ "wing_carbon_external_horizontal" ],
+      "!": [ "wing_carbon_external_left" ],
+      "&": [ "lit_wing_carbon_external_left" ],
+      "#": [ "wing_carbon_external_right" ],
+      "(": [ "lit_wing_carbon_external_right" ]
+    },
+    "items": [
+      { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": -5, "y": -2, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": -1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": 0, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": 1, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": 2, "chance": 50, "items": [ "aerial_bomb" ] }
+    ]
+  },
+  {
+    "id": "plane_f15e_eagle",
+    "type": "vehicle",
+    "name": "F-15E Strike Eagle",
+    "parts": [
+      { "x": -6, "y": -1, "parts": [ "xlframe_vertical", "wing_carbon_horizontal", "carbon_halfboard_vertical" ] },
+      {
+        "x": -5,
+        "y": -1,
+        "parts": [ "xlframe_vertical", "wheel_mount_medium", "wheel", "wing_carbon_horizontal", "carbon_halfboard_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": -1,
+        "parts": [ "xlframe_vertical", "wing_carbon_horizontal", "carbon_halfboard_vertical_left" ]
+      },
+      { "x": -3, "y": -1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_left" ] },
+      { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "door_vertical_left" ] },
+      { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "windshield_sw" ] },
+      { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "door_vertical_left" ] },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [
+          "xlframe_nw",
+          "windshield_nw",
+          "turret_mount",
+          {
+            "part": "mounted_25mm_rotary_cannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          },
+          "laser_designator_part"
+        ]
+      },
+      {
+        "x": -6,
+        "y": 0,
+        "parts": [ "xlframe_vertical", "medium_storage_battery", "wing_carbon_horizontal", "carbon_halfboard_vertical" ]
+      },
+      {
+        "x": -5,
+        "y": 0,
+        "parts": [
+          "xlframe_vertical",
+          { "part": "tank_30gal_drum", "fuel": "jp8" },
+          "wing_carbon_horizontal",
+          "carbon_halfboard_vertical"
+        ]
+      },
+      {
+        "x": -4,
+        "y": 0,
+        "parts": [
+          "xlframe_vertical",
+          { "part": "tank_30gal_drum", "fuel": "jp8" },
+          "wing_carbon_horizontal",
+          "carbon_halfboard_vertical"
+        ]
+      },
+      { "x": -3, "y": 0, "parts": [ "xlframe_vertical", "windshield_horizontal_rear" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "xlframe_vertical", "seat", "controls", "dashboard", "seatbelt_heavyduty", "roof" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "xlframe_vertical", "roof", "windshield_horizontal_rear" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "xlframe_vertical",
+          "seat",
+          "seatbelt_heavyduty",
+          "controls",
+          "dashboard",
+          "black_box",
+          "programmable_autopilot",
+          "tracker",
+          "roof",
+          "wheel_mount_medium_steerable",
+          "wheel"
+        ]
+      },
+      { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "windshield_horizontal_front" ] },
+      { "x": 2, "y": 0, "parts": [ "xlframe_vertical", "carbon_halfboard_cover" ] },
+      { "x": -6, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical", "wing_carbon_horizontal" ] },
+      {
+        "x": -5,
+        "y": 1,
+        "parts": [ "xlframe_vertical", "wheel_mount_medium", "wheel", "wing_carbon_horizontal", "carbon_halfboard_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": 1,
+        "parts": [ "xlframe_vertical", "wing_carbon_horizontal", "carbon_halfboard_vertical_right" ]
+      },
+      { "x": -3, "y": 1, "parts": [ "xlframe_vertical", "carbon_halfboard_vertical_right" ] },
+      { "x": -2, "y": 1, "parts": [ "xlframe_vertical", "door_vertical_right" ] },
+      { "x": -1, "y": 1, "parts": [ "xlframe_vertical", "windshield_se_edge" ] },
+      { "x": 0, "y": 1, "parts": [ "xlframe_vertical", "door_vertical_right" ] },
+      { "x": 1, "y": 1, "parts": [ "xlframe_ne", "windshield_ne" ] },
+      { "x": -2, "y": -2, "parts": [ "xlframe_nw", "carbon_halfboard_cover" ] },
+      { "x": -2, "y": 2, "parts": [ "xlframe_ne", "carbon_halfboard_cover" ] },
+      { "x": -3, "y": 2, "parts": [ "xlframe_vertical", "bomber controls", "trunk_carbon" ] },
+      { "x": -3, "y": -2, "parts": [ "xlframe_vertical", "bomber controls", "trunk_carbon" ] },
+      {
+        "x": -4,
+        "y": 2,
+        "parts": [ "xlframe_vertical_2", "wing_carbon_horizontal", "carbon_halfboard_vertical_right" ]
+      },
+      {
+        "x": -5,
+        "y": 2,
+        "parts": [ "xlframe_vertical_2", "wing_carbon_horizontal", "carbon_halfboard_vertical_right" ]
+      },
+      {
+        "x": -6,
+        "y": 2,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_right", "wing_carbon_horizontal" ]
+      },
+      { "x": -4, "y": 3, "part": "wing_carbon_external_right" },
+      { "x": -6, "y": 4, "part": "wing_carbon_external_horizontal" },
+      {
+        "x": -4,
+        "y": -2,
+        "parts": [ "xlframe_vertical_2", "wing_carbon_horizontal", "carbon_halfboard_vertical_2_left" ]
+      },
+      {
+        "x": -5,
+        "y": -2,
+        "parts": [ "xlframe_vertical_2", "wing_carbon_horizontal", "carbon_halfboard_vertical_left" ]
+      },
+      {
+        "x": -6,
+        "y": -2,
+        "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_left", "wing_carbon_horizontal" ]
+      },
+      { "x": -4, "y": -3, "part": "wing_carbon_external_left" },
+      { "x": -6, "y": -4, "part": "wing_carbon_external_horizontal" },
+      {
+        "x": -5,
+        "y": -3,
+        "parts": [ "xlframe_vertical", "bomber controls", "trunk_carbon_flat", { "part": "tank", "fuel": "jp8" } ]
+      },
+      {
+        "x": -5,
+        "y": 3,
+        "parts": [ "xlframe_vertical", "bomber controls", "trunk_carbon_flat", { "part": "tank", "fuel": "jp8" } ]
+      },
+      { "x": -8, "y": 1, "part": "jet_thruster_external" },
+      { "x": -8, "y": -1, "part": "jet_thruster_external" },
+      {
+        "x": -7,
+        "y": -1,
+        "parts": [ "xlframe_vertical_2", "engine_turbine_large", "alternator_car", "carbon_halfboard_vertical" ]
+      },
+      {
+        "x": -7,
+        "y": 1,
+        "parts": [ "xlframe_vertical_2", "engine_turbine_large", "alternator_car", "carbon_halfboard_vertical" ]
+      },
+      { "x": -7, "y": -2, "parts": [ "xlframe_vertical_2", "bomber controls", "trunk_carbon" ] },
+      { "x": -8, "y": -2, "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_T_left" ] },
+      { "x": -9, "y": -2, "part": "lit_wing_carbon_external_horizontal" },
+      { "x": -7, "y": 2, "parts": [ "xlframe_vertical_2", "bomber controls", "trunk_carbon" ] },
+      { "x": -8, "y": 2, "parts": [ "xlframe_vertical_2", "carbon_halfboard_vertical_T_right" ] },
+      { "x": -9, "y": -3, "part": "wing_carbon_external_left" },
+      { "x": -9, "y": 2, "part": "lit_wing_carbon_external_horizontal" },
+      { "x": -9, "y": 3, "part": "wing_carbon_external_right" },
+      { "x": -7, "y": 5, "part": "wing_carbon_external_horizontal" },
+      { "x": -7, "y": 4, "part": "wing_carbon_external_horizontal" },
+      { "x": -7, "y": -5, "part": "wing_carbon_external_horizontal" },
+      { "x": -7, "y": -4, "part": "wing_carbon_external_horizontal" },
+      { "x": -6, "y": -3, "part": "wing_carbon_external_horizontal" },
+      { "x": -5, "y": -4, "part": "wing_carbon_external_left" },
+      { "x": -6, "y": -5, "part": "lit_wing_carbon_external_left" },
+      { "x": -7, "y": -3, "part": "lit_wing_carbon_external_horizontal" },
+      { "x": -5, "y": 4, "part": "wing_carbon_external_right" },
+      { "x": -7, "y": 3, "part": "lit_wing_carbon_external_horizontal" },
+      { "x": -6, "y": 5, "part": "lit_wing_carbon_external_right" },
+      { "x": -6, "y": 3, "part": "wing_carbon_external_horizontal" },
+      { "x": -8, "y": 0, "parts": [ "xlframe_cover", "carbon_halfboard_horizontal_rear" ] },
+      { "x": -7, "y": 0, "parts": [ "xlframe_vertical", "wing_carbon_horizontal", "carbon_halfboard_vertical" ] }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": -2, "y": 0, "chance": 100, "item_groups": [ "pilot_bail_kit" ] },
+      { "x": -3, "y": 2, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -3, "y": -2, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": 3, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -5, "y": -3, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -7, "y": 2, "chance": 50, "items": [ "aerial_bomb" ] },
+      { "x": -7, "y": -2, "chance": 50, "items": [ "aerial_bomb" ] }
+    ]
+  }
+]

@@ -33,6 +33,7 @@
       "acidchitin",
       "alien_resin",
       "bone",
+      "carbon_fiber",
       "chitin",
       "cotton",
       "faux_fur",
@@ -97,7 +98,8 @@
   {
     "type": "tool_quality",
     "id": "HAMMER",
-    "name": { "str": "hammering" }
+    "name": { "str": "hammering" },
+    "salvagable_materials": [ "copper", "glass", "gold", "lead", "platinum", "silver", "tin", "zinc" ]
   },
   {
     "type": "tool_quality",
@@ -115,14 +117,14 @@
     "id": "SAW_M",
     "name": { "str": "metal sawing" },
     "usages": [ [ 2, [ "HACKSAW", "saw_barrel" ] ] ],
-    "salvagable_materials": [ "steel", "budget_steel", "tin", "silver", "gold", "copper", "iron" ]
+    "salvagable_materials": [ "steel", "budget_steel", "tin", "lead", "silver", "gold", "copper", "platinum", "iron", "bronze", "zinc" ]
   },
   {
     "type": "tool_quality",
     "id": "SAW_M_FINE",
     "copy-from": "SAW_M",
     "name": { "str": "fine metal sawing" },
-    "extend": { "salvagable_materials": [ "hardsteel" ] }
+    "extend": { "salvagable_materials": [ "hardsteel", "superalloy" ] }
   },
   {
     "type": "tool_quality",
@@ -164,7 +166,7 @@
     "type": "tool_quality",
     "id": "DIG",
     "name": { "str": "digging" },
-    "usages": [ [ 1, [ "MAKEMOUND", "DIG", "FILL_PIT", "DIG_CHANNEL" ] ], [ 2, [ "CLEAR_RUBBLE" ] ] ]
+    "usages": [ [ 1, [ "MAKEMOUND", "DIG", "FILL_PIT", "DIG_CHANNEL", "flowerpot_collect" ] ], [ 2, [ "CLEAR_RUBBLE" ] ] ]
   },
   {
     "type": "tool_quality",
@@ -231,7 +233,9 @@
   {
     "type": "tool_quality",
     "id": "SEW",
-    "name": { "str": "sewing" }
+    "name": { "str": "sewing" },
+    "crafting_speed_bonus_per_level": 1.1,
+    "crafting_speed_level_offset": 2
   },
   {
     "type": "tool_quality",
@@ -349,5 +353,40 @@
     "type": "tool_quality",
     "id": "CUT_M",
     "name": { "str": "metal cutting" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "GRIP_HOT",
+    "name": { "str": "hot gripping" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "CONTAIN_HOT",
+    "name": { "str": "hot containing" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "SWAGING",
+    "name": { "str": "swaging" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "GLASSBLOWING",
+    "name": { "str": "glassblowing" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "CASING_FORMING",
+    "name": { "str": "casing forming" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "CASING_PRESSING",
+    "name": { "str": "ammunition reloading" }
+  },
+  {
+    "type": "tool_quality",
+    "id": "SLEEP_AID",
+    "name": { "str": "sleep aid" }
   }
 ]

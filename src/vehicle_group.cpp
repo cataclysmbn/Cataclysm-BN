@@ -9,6 +9,7 @@
 #include "json.h"
 #include "map.h"
 #include "memory_fast.h"
+#include "options.h"
 #include "point.h"
 #include "rng.h"
 #include "translations.h"
@@ -200,10 +201,15 @@ void VehicleSpawn::reset()
 
 void VehicleSpawn::apply( map &m, const std::string &terrain_name ) const
 {
-    const shared_ptr_fast<VehicleFunction> *func = types.pick();
-    if( func == nullptr ) {
-        debugmsg( "unable to find valid function for vehicle spawn" );
-    } else {
+    const auto vehicle_spawn_rate = get_option<float>( "VEHICLE_SPAWNRATE" );
+    const auto num_applications = roll_remainder( vehicle_spawn_rate );
+
+    for( int i = 0; i < num_applications; i++ ) {
+        const shared_ptr_fast<VehicleFunction> *func = types.pick();
+        if( func == nullptr ) {
+            debugmsg( "unable to find valid function for vehicle spawn" );
+            return;
+        }
         ( *func )->apply( m, terrain_name );
     }
 }
@@ -291,7 +297,7 @@ static void builtin_parkinglot( map &m, const std::string & )
         tripoint pos_p;
         pos_p.x = rng( 0, 1 ) * 15 + rng( 4, 5 );
         pos_p.y = rng( 0, 4 ) * 4 + rng( 2, 4 );
-        pos_p.z = m.get_abs_sub().z;
+        pos_p.z = m.get_abs_sub().z();
 
         if( !m.veh_at( pos_p ) ) {
             units::angle facing;

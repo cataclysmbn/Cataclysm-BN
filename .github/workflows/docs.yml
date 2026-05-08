@@ -1,0 +1,97 @@
+name: Publish on GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths: [docs/**]
+  workflow_run:
+    workflows: ["Experimental Release"]
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: docs
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            docs
+
+      - name: Download Lua reference/annotations from experimental release
+        working-directory: .
+        id: download-lua-docs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            run_id="${{ github.event.workflow_run.id }}"
+          else
+            run_id=$(gh run list \
+              --workflow=experimental-release.yml \
+              --branch=main \
+              --status=success \
+              --limit=20 \
+              --json databaseId \
+              --jq '.[0].databaseId')
+          fi
+
+          if [ -z "$run_id" ]; then
+            echo "::warning::No successful experimental release run found for branch main, skipping lua docs"
+            echo "downloaded=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if gh run download "$run_id" --name lua-docs --dir .; then
+            echo "downloaded=true" >> $GITHUB_OUTPUT
+            echo "run_id=$run_id" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Failed to download lua-docs artifact, continuing without it"
+            echo "downloaded=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Summary of Lua docs download
+        working-directory: .
+        if: steps.download-lua-docs.outputs.downloaded == 'true'
+        run: |
+          echo "## 📥 Lua Documentation Downloaded" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "From [run #${{ steps.download-lua-docs.outputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ steps.download-lua-docs.outputs.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f lua_annotations.lua ] && [ -f docs/en/mod/lua/reference/lua.md ]; then
+            echo "- \`lua_annotations.lua\`: $(wc -l < lua_annotations.lua) lines" >> $GITHUB_STEP_SUMMARY
+            echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Setup Deno environment
+        uses: denoland/setup-deno@v2
+        with: { cache: true }
+
+      - name: Build site
+        run: deno task build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # https://github.com/actions/upload-pages-artifact/issues/74
+          path: "docs/_site"
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

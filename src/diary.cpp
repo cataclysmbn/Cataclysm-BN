@@ -99,7 +99,7 @@ void diary::spell_changes()
         if( !curr_page->known_spells.empty() ) {
             bool flag = true;
             for( const std::pair<const string_id<spell_type>, int> &elem : curr_page->known_spells ) {
-                if( prev_page->known_spells.find( elem.first ) != prev_page->known_spells.end() ) {
+                if( prev_page->known_spells.contains( elem.first ) ) {
                     const int prev_lvl = prev_page->known_spells[elem.first];
                     if( elem.second != prev_lvl ) {
                         if( flag ) {
@@ -363,8 +363,7 @@ void diary::kill_changes()
             bool flag = true;
             for( const std::string &npc_name : curr_page->npc_kills ) {
 
-                if( ( std::find( prev_npc_kills.begin(), prev_npc_kills.end(),
-                                 npc_name ) == prev_npc_kills.end() ) ) {
+                if( !std::ranges::contains( prev_npc_kills, npc_name ) ) {
                     if( flag ) {
                         add_to_change_list( _( "NPC killed:" ) );
                         flag = false;
@@ -408,7 +407,7 @@ void diary::skill_changes()
 
         bool flag = true;
         for( const std::pair<const string_id<Skill>, int> &elem : curr_page->skill_levels ) {
-            if( prev_page->skill_levels.find( elem.first ) != prev_page->skill_levels.end() ) {
+            if( prev_page->skill_levels.contains( elem.first ) ) {
                 if( prev_page->skill_levels[elem.first] != elem.second ) {
                     if( flag ) {
                         add_to_change_list( _( "Skills:" ) );

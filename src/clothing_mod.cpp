@@ -99,7 +99,8 @@ float clothing_mod::get_mod_val( const clothing_mod_type &type, const item &it )
 {
     const int thickness = it.get_thickness();
     const int coverage = it.get_avg_coverage();
-    const int vol = it.base_volume() / 1_liter;
+    // This way ensures that items under a liter won't truncate down to 0 before it can reach round_up
+    const float vol = it.base_volume() / 1_ml / 1000.0f;
     float result = 0.0f;
     for( const mod_value &mv : mod_values ) {
         if( mv.type == type ) {

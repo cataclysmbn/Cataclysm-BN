@@ -192,7 +192,9 @@
               { "id": "unconnected", "fg": 181 }
             ]
           },
-          { "id": "t_door_metal_welded_lab", "fg": 182 }
+          { "id": "t_door_metal_welded_lab", "fg": 182 },
+          { "id": "t_fortification_brick", "fg": 183 },
+          { "id": "t_fortification_adobe", "fg": 184 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

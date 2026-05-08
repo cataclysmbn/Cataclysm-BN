@@ -46,5 +46,17 @@
       "novice_stormshaper",
       "novice_kelvinist"
     ]
+  },
+  {
+    "type": "scenario",
+    "id": "cyberpunk",
+    "copy-from": "cyberpunk",
+    "extend": { "bionics": [ "bio_sneeze_beam" ] }
+  },
+  {
+    "type": "scenario",
+    "id": "lab_staff",
+    "copy-from": "lab_staff",
+    "extend": { "bionics": [ "bio_sneeze_beam" ] }
   }
 ]

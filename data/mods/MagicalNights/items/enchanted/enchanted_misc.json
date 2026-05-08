@@ -58,6 +58,7 @@
     "material": [ "gold" ],
     "symbol": "[",
     "color": "yellow",
+    "relic_data": { "recharge_scheme": [ { "type": "time", "req": "none", "interval": "24 h", "rate": 1 } ] },
     "initial_charges": 5,
     "max_charges": 5,
     "charges_per_use": 1,
@@ -90,10 +91,18 @@
   {
     "id": "mtorch_everburning_lit",
     "type": "TOOL",
-    "name": { "str": "everburning torch", "str_pl": "everburning torches" },
+    "name": { "str": "everburning torch (lit)", "str_pl": "everburning torches (lit)" },
     "copy-from": "mtorch_everburning",
     "revert_to": "mtorch_everburning",
     "sub": "fire",
+    "//": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "BASH",
+        "to_hit": 1,
+        "damage": { "values": [ { "damage_type": "bash", "amount": 8 }, { "damage_type": "heat", "amount": 2 } ] }
+      }
+    ],
     "use_action": [
       { "type": "firestarter", "moves": 30 },
       {
@@ -145,6 +154,7 @@
         "materials": [
           "cotton",
           "leather",
+          "nylon",
           "wool",
           "fur",
           "faux_fur",
@@ -153,11 +163,10 @@
           "neoprene",
           "gutskin",
           "scute",
-          "black_dragon_hide",
-          "demon_chitin"
+          "black_dragon_hide"
         ],
         "skill": "tailor",
-        "tool_quality": 1,
+        "tool_quality": 3,
         "cost_scaling": 0.1,
         "move_cost": 500
       },
@@ -166,6 +175,7 @@
         "materials": [
           "cotton",
           "leather",
+          "nylon",
           "wool",
           "fur",
           "faux_fur",
@@ -173,20 +183,21 @@
           "kevlar",
           "neoprene",
           "gutskin",
-          "plastic",
           "scute",
-          "kevlar_rigid"
+          "black_dragon_hide"
         ],
         "skill": "tailor",
         "clothing_mods": [
           "leather_padded",
           "steel_padded",
+          "hard_steel_padded",
           "alloy_padded",
           "kevlar_padded",
           "nomex_padded",
           "furred",
           "wooled",
           "resized_large",
+          "resized_small",
           "pocketed",
           "owlbear_furred",
           "demonchitin_padded",
@@ -304,5 +315,24 @@
     "charges_per_use": 1,
     "use_action": { "type": "cast_spell", "spell_id": "give_bulette_40", "no_fail": true, "level": 1 },
     "relic_data": { "recharge_scheme": [ { "type": "time", "req": "none", "interval": "2 h", "rate": 1 } ] }
+  },
+  {
+    "id": "vibrator_mana",
+    "type": "TOOL",
+    "category": "electronics",
+    "name": { "str": "mana-fueled vibrator" },
+    "looks_like": "vibrator",
+    "description": "This mana-devouring device is just the thing to knead the tension out and help you relax.  Wizards have needs too, after all.",
+    "weight": "500 g",
+    "volume": "500 ml",
+    "price": "55 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "aluminum", "plastic" ],
+    "symbol": ";",
+    "color": "dark_gray",
+    "ammo": "crystallized_mana",
+    "magazines": [ [ "crystallized_mana", [ "small_mana_crystal" ] ] ],
+    "use_action": { "type": "sex_toy", "moves": 60000 },
+    "magazine_well": "250 ml"
   }
 ]

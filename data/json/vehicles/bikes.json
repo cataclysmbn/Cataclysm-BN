@@ -251,7 +251,7 @@
     "parts": [
       { "x": 0, "y": 0, "parts": [ "xlframe_vertical_2", "saddle_motor", "horn_bicycle", "foot_pedals" ] },
       { "x": 1, "y": 0, "parts": [ "xlframe_vertical", "wheel_mount_light_steerable", "wheel_bicycle" ] },
-      { "x": -1, "y": 0, "parts": [ "xlframe_vertical_2", "saddle_pedal" ] },
+      { "x": -1, "y": 0, "parts": [ "xlframe_vertical_2", "saddle_pedal", "foot_pedals" ] },
       {
         "x": -2,
         "y": 0,
@@ -271,9 +271,7 @@
     "type": "vehicle",
     "name": "Unicycle",
     "blueprint": [ "#" ],
-    "parts": [
-      { "x": 0, "y": 0, "parts": [ "frame_handle", "saddle_pedal", "foot_pedals", "wheel_mount_light", "wheel_unicycle" ] }
-    ]
+    "parts": [ { "x": 0, "y": 0, "parts": [ "frame_handle", "saddle", "foot_pedals", "wheel_mount_light", "wheel_unicycle" ] } ]
   },
   {
     "id": "bicycle_plastic",

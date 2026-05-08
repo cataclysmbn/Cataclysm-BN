@@ -67,6 +67,6 @@
     "difficulty": 1,
     "time": "10 s",
     "qualities": [ { "id": "CUT", "level": 1 } ],
-    "components": [ [ [ "alloy_sheet", 10 ] ] ]
+    "components": [ [ [ "alloy_sheet", 14 ] ] ]
   }
 ]

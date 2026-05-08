@@ -1,9 +1,44 @@
 [
   {
+    "type": "palette",
+    "id": "lake_bed_palette",
+    "terrain": { "~": [ [ "t_lake_bed", 75 ], [ "t_lake_moss", 24 ], [ "t_lake_trunk", 1 ] ] },
+    "furniture": {
+      "f": "f_fog",
+      "h": "f_hot_spring",
+      "r": "f_rubble_rock",
+      "~": [
+        [ "f_null", 75 ],
+        [ "f_lake_liverwort", 5 ],
+        [ "f_lake_hornwort", 3 ],
+        [ "f_lake_eelgrass", 2 ],
+        [ "f_lake_detritus", 5 ],
+        [ "f_lake_pondweed", 5 ],
+        [ "f_rubble_rock", 2 ],
+        [ "f_boulder_small_underwater", 1 ],
+        [ "f_boulder_medium", 1 ],
+        [ "f_boulder_large", 1 ]
+      ]
+    }
+  },
+  {
     "type": "mapgen",
     "method": "json",
     "om_terrain": [ "lake_surface" ],
-    "object": { "fill_ter": "t_water_dp" }
+    "object": {
+      "fill_ter": "t_water_dp",
+      "place_nested": [ { "chunks": [ [ "null", 198 ], [ "lakesurface_debris", 2 ], [ "lakesurface_vehicle_spawn", 1 ] ], "x": 0, "y": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "river_center" ],
+    "//": "not lake stuff, but seemed like this would be the best spot for this definition",
+    "object": {
+      "fill_ter": "t_water_moving_dp",
+      "place_vehicles": [ { "vehicle": "river_boats", "x": [ 11, 12 ], "y": [ 11, 12 ], "rotation": [ 0, 90, 180, 270 ], "chance": 1 } ]
+    }
   },
   {
     "type": "mapgen",
@@ -15,6 +50,332 @@
     "type": "mapgen",
     "method": "json",
     "om_terrain": [ "lake_bed" ],
-    "object": { "fill_ter": "t_lake_bed" }
+    "object": {
+      "fill_ter": "t_lake_bed",
+      "rows": [
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~"
+      ],
+      "palettes": [ "lake_bed_palette" ],
+      "items": { "~": { "item": "lake_bed", "chance": 1 } },
+      "place_nested": [
+        {
+          "chunks": [
+            [ "null", 90 ],
+            [ "lakebed_12x12_pests", 5 ],
+            [ "lakebed_12x12_tree", 1 ],
+            [ "lakebed_12x12_hot_spring", 1 ],
+            [ "lakebed_12x12_debris", 1 ],
+            [ "lakebed_12x12_toxic_waste_dump", 1 ],
+            [ "lakebed_12x12_safes", 1 ],
+            [ "lakebed_12x12_sunken_corpses", 1 ]
+          ],
+          "x": [ 1, 11 ],
+          "y": [ 1, 11 ]
+        }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_tree",
+    "//": "Deadwood that's been dragged down to the bottom",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "set": [ { "line": "terrain", "id": "t_lake_trunk", "x": [ 0, 5 ], "x2": [ 6, 11 ], "y": [ 0, 5 ], "y2": [ 6, 11 ] } ],
+      "place_loot": [
+        { "item": "splinter", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 2, 6 ] },
+        { "item": "stick", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 3 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_hot_spring",
+    "//": "Hotspring with local underwater spawns",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "place_monster": [ { "group": "GROUP_UNDERWATER_PEST", "x": [ 0, 11 ], "y": [ 0, 11 ] } ],
+      "place_furniture": [ { "furn": "f_hot_spring", "x": [ 0, 11 ], "y": [ 1, 11 ], "repeat": [ 3, 8 ] } ],
+      "place_loot": [ { "item": "chunk_sulfur", "x": [ 2, 9 ], "y": [ 2, 9 ], "repeat": [ 1, 3 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_debris",
+    "//": "Random trash",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "place_furniture": [
+        { "furn": "f_wreckage", "x": [ 0, 11 ], "y": [ 1, 11 ], "repeat": [ 2, 5 ] },
+        { "furn": "f_rubble_landfill", "x": [ 0, 11 ], "y": [ 1, 11 ], "repeat": [ 2, 5 ] },
+        { "furn": "f_rubble", "x": [ 0, 11 ], "y": [ 1, 11 ], "repeat": [ 2, 5 ] }
+      ],
+      "place_items": [ { "item": "lake_bed", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 5, 10 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakesurface_debris",
+    "//": "Random floating surface trash and an autoskimmer",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "place_furniture": [
+        { "furn": "f_rubble_water", "x": [ 6, 18 ], "y": [ 6, 18 ], "repeat": [ 10, 15 ] },
+        { "furn": "f_rubble_water", "x": [ 9, 14 ], "y": [ 9, 14 ], "repeat": [ 20, 25 ] }
+      ],
+      "place_vehicles": [
+        {
+          "chance": 10,
+          "fuel": 0,
+          "rotation": [ 0, 90, 180 ],
+          "status": 1,
+          "vehicle": "water_autosweeper",
+          "x": [ 15, 16 ],
+          "y": [ 15, 16 ]
+        }
+      ],
+      "place_items": [ { "item": "trash", "x": [ 9, 14 ], "y": [ 9, 14 ], "repeat": [ 100, 200 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakesurface_vehicle_spawn",
+    "//": "Random boat, effective spawn rate is 0.5%",
+    "object": {
+      "mapgensize": [ 24, 24 ],
+      "rotation": [ 0, 3 ],
+      "place_vehicles": [ { "vehicle": "lake_boats", "x": [ 11, 12 ], "y": [ 11, 12 ], "rotation": [ 0, 90, 180, 270 ], "chance": 100 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_pests",
+    "//": "A group of underwater enemies",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "place_monster": [ { "group": "GROUP_UNDERWATER_PEST", "x": [ 0, 11 ], "y": [ 0, 11 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_safes",
+    "//": "Someone dumped a safe or three overboard",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "place_furniture": [ { "furn": "f_wreckage", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 4 ] } ],
+      "place_nested": [
+        { "chunks": [ "lakebed_1x1_safe" ], "x": [ 0, 11 ], "y": [ 0, 11 ] },
+        { "chunks": [ "null", "lakebed_1x1_safe" ], "x": [ 0, 11 ], "y": [ 0, 11 ] },
+        { "chunks": [ "null", "lakebed_1x1_safe" ], "x": [ 0, 11 ], "y": [ 0, 11 ] }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_sunken_corpses",
+    "//": "Weighted-down bodies dumped into the lake",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "place_items": [ { "item": "lakebed_sunken_corpse", "x": [ 2, 11 ], "y": [ 2, 11 ], "chance": 75, "repeat": [ 2, 6 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_1x1_safe",
+    "//": "The actual safe itself",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "rotation": [ 0, 3 ],
+      "place_furniture": [ { "furn": "f_safe_l", "x": [ 0, 0 ], "y": [ 0, 0 ], "repeat": [ 1, 4 ] } ],
+      "place_items": [ { "chance": 75, "item": "vault", "x": 0, "y": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lakebed_12x12_toxic_waste_dump",
+    "//": "Toxic waste dump",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "www  ww  www",
+        "www  ww  www",
+        "www      www",
+        "     ww     ",
+        "    wWWw    ",
+        "ww wWWWWw ww",
+        "ww wWWWWw ww",
+        "    wWWw    ",
+        "     ww     ",
+        "www      www",
+        "www  ww  www",
+        "www  ww  www"
+      ],
+      "set": [ { "square": "radiation", "amount": [ 20, 60 ], "x": 0, "y": 0, "x2": 11, "y2": 11 } ],
+      "furniture": { "W": [ [ "f_wreckage", 9 ], "f_rubble" ], "w": [ [ "f_null", 3 ], "f_wreckage", "f_rubble", "f_rubble_landfill" ] },
+      "items": { "W": { "item": "underwater_toxic_waste", "chance": 25 }, "w": { "item": "underwater_toxic_waste", "chance": 5 } },
+      "place_monster": [ { "monster": "mon_zhark", "x": [ 0, 11 ], "y": [ 0, 11 ], "repeat": [ 1, 4 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lake_bed_lab_entrance_roof" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_water_cube",
+      "rows": [
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~WWWW~~~~~~~~~~",
+        "~~~~~~~~~~WWWW~~~~~~~~~~",
+        "~~~~~~~~~WWWWWW~~~~~~~~~",
+        "~~~~~~~WWWWWWWWWW~~~~~~~",
+        "~~~~~~~WWWWWWWWWW~~~~~~~",
+        "~~~~~~~WWWWWWWWWW~~~~~~~",
+        "~~~~~~~WWWWWWWWWW~~~~~~~",
+        "~~~~~~~~~WWWWWW~~~~~~~~~",
+        "~~~~~~~~~~WWWW~~~~~~~~~~",
+        "~~~~~~~~~~WWWW~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~"
+      ],
+      "terrain": { "W": "t_bulkhead_roof", "~": "t_water_cube" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lake_bed_lab_entrance" ],
+    "weight": 100,
+    "//": "D and S should eventually be replaced with card reader door/keypad",
+    "object": {
+      "fill_ter": "t_lake_bed",
+      "rows": [
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~WDDW~~~~~~~~~~",
+        "~~~~~~~~~~W..W~~~~~~~~~~",
+        "~~~~~~~~~WWDDWW~~~~~~~~~",
+        "~~~~~~~WWW....WWW~~~~~~~",
+        "~~~~~~~D.D.>>.D.D~~~~~~~",
+        "~~~~~~~D.D.>>.D.D~~~~~~~",
+        "~~~~~~~WWW....WWW~~~~~~~",
+        "~~~~~~~~~WWDDWW~~~~~~~~~",
+        "~~~~~~~~~~W..W~~~~~~~~~~",
+        "~~~~~~~~~~WDDW~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~",
+        "~~~~~~~~~~~~~~~~~~~~~~~~"
+      ],
+      "palettes": [ "lake_bed_palette" ],
+      "items": { "~": { "item": "lake_bed", "chance": 1 } },
+      "terrain": { ">": "t_stairs_down", "W": "t_wall_bulkhead", ".": "t_bulkhead_floor", "D": "t_door_metal_bulkhead_c" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lake_bed_lab_entrance_airlock" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "~~~~~~~~~~~~~~~~~~~~~~~W",
+        "~~~~~~~~~~~~~~~~~~~~~~~W",
+        "~~~~~~~~~~~~~~~~~~~~~~~W",
+        "~~~WWWWWWWWDDWWWWWWWW~~W",
+        "~~~W~~~~~W~~~~W~~~~~W~~W",
+        "~~~Wl~b~~W~~~~W~~b~lW~~W",
+        "~~~Wl~b~~D~~~~D~~b~lW~~W",
+        "~~~Wl~b~~W~~~~W~~b~lW~~W",
+        "~~~Wl~b~~Wu~~uW~~b~lW~~W",
+        "~~~Wl~b~~WW++WW~~b~lW~~W",
+        "~~~Wl~b~~W~~~~W~~b~lW~~W",
+        "~~~Wl~b~~+~<<~+~~b~lW~~+",
+        "~~~Wl~b~~+~<<~+~~b~lW~~+",
+        "~~~W~~~~~W~~~~W~~~~~W~~W",
+        "~~~WWWDWWWW++WWWWDWWW~~W",
+        "~~~W~~~~~~~~~~~~~~~~W~~W",
+        "~~~W~~~~~~~~~~~~~~~~W~~W",
+        "~~~W~~~~~~~~~~~~~~~~W~~W",
+        "~~~W~~~~~~~~~~~~~~~~W~~W",
+        "~~~W~~~~~~~~~~~~~~~~W~~W",
+        "~~~WWWWWWWWDDWWWWWWWW~~W",
+        "~~~~~~~~~~~~~~~~~~~~~~~W",
+        "~~~~~~~~~~~~~~~~~~~~~~~W",
+        "WWWWWWWWWWW++WWWWWWWWWWW"
+      ],
+      "terrain": {
+        "+": "t_door_metal_c",
+        "W": "t_concrete_wall",
+        "~": "t_thconc_floor",
+        "D": "t_door_metal_lab_c",
+        "u": "t_thconc_floor_olight",
+        "<": "t_stairs_up"
+      },
+      "furniture": { "b": "f_bench", "l": "f_locker" },
+      "items": { "l": { "item": "SUS_scuba_gear", "chance": 50 } },
+      "place_nested": [ { "chunks": [ "sub_f_crate" ], "x": [ 4, 19 ], "y": [ 15, 19 ], "repeat": 15 } ]
+    }
   }
 ]

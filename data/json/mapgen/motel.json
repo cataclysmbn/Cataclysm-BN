@@ -12,8 +12,10 @@
     "monsters": [
       { "monster": "mon_zombie_swimmer", "freq": 500, "cost_multiplier": 2 },
       { "monster": "mon_zombie_child", "freq": 150, "cost_multiplier": 1 },
-      { "monster": "mon_zombie_necro", "freq": 8, "cost_multiplier": 20, "starts": 500 },
-      { "monster": "mon_zombie_master", "freq": 2, "cost_multiplier": 25, "starts": 1000 }
+      { "monster": "mon_skeleton_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
+      { "monster": "mon_skeleton_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 },
+      { "monster": "mon_zombie_necro", "freq": 4, "cost_multiplier": 20, "starts": 500 },
+      { "monster": "mon_zombie_master", "freq": 1, "cost_multiplier": 25, "starts": 1000 }
     ]
   },
   {

@@ -132,7 +132,7 @@
     "vision_night": 5,
     "harvest": "zombie",
     "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_RAPTOR_UPGRADES" },
-    "special_attacks": [ { "id": "impale", "damage_max_instance": [ { "damage_type": "stab", "amount": 15, "armor_multiplier": 0.6 } ] } ],
+    "special_attacks": [ { "id": "impale_lesser" } ],
     "path_settings": { "max_dist": 45, "max_length": 15, "avoid_traps": true, "allow_open_doors": false, "bash_strength": 3 },
     "death_function": [ "NORMAL" ],
     "flags": [
@@ -158,7 +158,7 @@
     "copy-from": "mon_spawn_raptor",
     "color": "light_gray",
     "description": "An uncanny shadow envelops this creature.  You can make out the outline of three flapping wings connected to a jagged pointed object.",
-    "extend": { "flags": [ "NIGHT_INVISIBILITY" ] },
+    "extend": { "flags": [ "NIGHT_INVISIBILITY", "HARDTOSHOOT" ] },
     "vision_day": 10,
     "vision_night": 25
   },
@@ -170,10 +170,8 @@
     "speed": 100,
     "color": "red",
     "description": "This small winged predator darts through the air on three thinly haired wings that look like stretched human hands.  Where the wings meet juts a jagged spike and a bloated fleshy belly.",
-    "special_attacks": [
-      [ "SUICIDE", 20 ],
-      { "id": "impale", "damage_max_instance": [ { "damage_type": "stab", "amount": 15, "armor_multiplier": 0.6 } ] }
-    ],
+    "extend": { "flags": [ "VOLATILE" ] },
+    "special_attacks": [ [ "SUICIDE", 20 ], { "id": "impale_lesser" } ],
     "death_function": [ "EXPLODE" ]
   },
   {
@@ -186,10 +184,7 @@
     "description": "This small winged predator darts through the air on three thinly haired wings that look like stretched human hands.  Where the wings meet juts a jagged spike with a pulsing electrical glow.",
     "melee_damage": [ { "damage_type": "electric", "amount": 8 } ],
     "luminance": 8,
-    "special_attacks": [
-      [ "SHOCKSTORM", 25 ],
-      { "id": "impale", "damage_max_instance": [ { "damage_type": "stab", "amount": 15, "armor_multiplier": 0.6 } ] }
-    ],
+    "special_attacks": [ [ "TAZER", 10 ], { "id": "impale_lesser" } ],
     "special_when_hit": [ "ZAPBACK", 100 ],
     "extend": { "flags": [ "ELECTRIC" ] }
   }

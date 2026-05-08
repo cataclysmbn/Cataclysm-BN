@@ -20,7 +20,7 @@
     "count": 4,
     "stack_size": 1,
     "loudness": 90,
-    "effects": [ "COOKOFF", "EXPLOSIVE_BIG_PLUS_FRAG", "NEVER_MISFIRES" ]
+    "effects": [ "COOKOFF", "EXPLOSIVE_BIG_PLUS_FRAG", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -37,7 +37,7 @@
     "range": 100,
     "dispersion": 75,
     "recoil": 60,
-    "effects": [ "COOKOFF", "EXPLOSIVE_HUGE", "NEVER_MISFIRES" ]
+    "effects": [ "COOKOFF", "EXPLOSIVE_HUGE", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -51,7 +51,7 @@
     "weight": "3100 g",
     "range": 140,
     "dispersion": 30,
-    "extend": { "effects": [ "SMOKE_BIG" ] },
+    "extend": { "effects": [ "SMOKE_BIG", "NO_PENETRATE_OBSTACLES" ] },
     "delete": { "effects": [ "EXPLOSIVE_BIG_PLUS_FRAG" ] }
   }
 ]

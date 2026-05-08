@@ -1,12 +1,25 @@
 [
   {
     "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_ACID",
+    "default": "mon_zombie_corrosive",
+    "//": "Acidic zombie upgrades",
+    "monsters": [
+      { "monster": "mon_zombie_acid_mortar", "freq": 150, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_acid_spawner", "freq": 150, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_ichor_brute", "freq": 100, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_ichor_stalker", "freq": 100, "cost_multiplier": 5 }
+    ]
+  },
+  {
+    "type": "monstergroup",
     "name": "GROUP_ZOMBIE_BRUTE",
     "default": "mon_zombie_brute",
     "//": "Brute upgrades",
     "monsters": [
       { "monster": "mon_zombie_brute_grappler", "freq": 231, "cost_multiplier": 10 },
       { "monster": "mon_zombie_brute_ninja", "freq": 112, "cost_multiplier": 10 },
+      { "monster": "mon_zombie_ichor_brute", "freq": 100, "cost_multiplier": 10 },
       { "monster": "mon_zombie_hulk", "freq": 100, "cost_multiplier": 50 },
       { "monster": "mon_gas_zombie", "freq": 70, "cost_multiplier": 10 }
     ]
@@ -34,6 +47,15 @@
     ]
   },
   {
+    "name": "GROUP_SKELETON_UPGRADE",
+    "type": "monstergroup",
+    "default": "mon_skeleton_brute",
+    "monsters": [
+      { "monster": "mon_skeleton_brute", "freq": 80, "cost_multiplier": 2 },
+      { "monster": "mon_skeleton_brute", "freq": 80, "cost_multiplier": 2 }
+    ]
+  },
+  {
     "type": "monstergroup",
     "name": "GROUP_CHILD_ZOMBIE_UPGRADE",
     "default": "mon_zombie_shriekling",
@@ -54,14 +76,18 @@
     "monsters": [
       { "monster": "mon_zombie_nullfield", "freq": 550, "cost_multiplier": 0 },
       { "monster": "mon_zombie_brute_shocker", "freq": 300, "cost_multiplier": 2 },
-      { "monster": "mon_skeleton_electric", "freq": 300, "cost_multiplier": 2 }
+      { "monster": "mon_skeleton_electric", "freq": 300, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_stormbringer", "freq": 250, "cost_multiplier": 2, "starts": 500 }
     ]
   },
   {
     "type": "monstergroup",
     "name": "GROUP_BOOMER_UPGRADE",
     "default": "mon_boomer_huge",
-    "monsters": [ { "monster": "mon_gas_zombie", "freq": 50, "cost_multiplier": 10 } ]
+    "monsters": [
+      { "monster": "mon_gas_zombie", "freq": 50, "cost_multiplier": 10 },
+      { "monster": "mon_zomballoon", "freq": 50, "cost_multiplier": 10 }
+    ]
   },
   {
     "type": "monstergroup",
@@ -69,9 +95,11 @@
     "default": "mon_zombie_kevlar_1",
     "//": "Masters pick from here when upgrading.",
     "monsters": [
+      { "monster": "mon_zombie_supply_sergeant", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_blackops_1", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_acid_1", "freq": 100, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_soldier_acid_2", "freq": 150, "cost_multiplier": 2 }
+      { "monster": "mon_zombie_soldier_acid_2", "freq": 150, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_soldier_acid_3", "freq": 50, "cost_multiplier": 10 }
     ]
   },
   {
@@ -82,6 +110,7 @@
       { "monster": "mon_zombie_soldier_blackops_1", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_acid_1", "freq": 100, "cost_multiplier": 2 },
       { "monster": "mon_zombie_soldier_acid_2", "freq": 150, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_soldier_acid_3", "freq": 50, "cost_multiplier": 10 },
       { "monster": "mon_zombie_smoker", "freq": 100, "cost_multiplier": 5 },
       { "monster": "mon_gas_zombie", "freq": 50, "cost_multiplier": 10 },
       { "monster": "mon_zombie_fiend", "freq": 50, "cost_multiplier": 10 }
@@ -91,7 +120,10 @@
     "type": "monstergroup",
     "name": "GROUP_ZOMBIE_DOG_UPGRADE",
     "default": "mon_dog_skeleton",
-    "monsters": [ { "monster": "mon_dog_zombie_rot", "freq": 100, "cost_multiplier": 2 } ]
+    "monsters": [
+      { "monster": "mon_dog_zombie_rot", "freq": 100, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_ichor_beast", "freq": 30, "cost_multiplier": 10 }
+    ]
   },
   {
     "type": "monstergroup",
@@ -121,6 +153,7 @@
     "//": "Shady upgrades.  Note that 'freq' units are tenth of a percent, with default filling in the gap.",
     "monsters": [
       { "monster": "mon_zombie_brute_ninja", "freq": 500, "cost_multiplier": 10 },
+      { "monster": "mon_zombie_darkfield", "freq": 500, "cost_multiplier": 10 },
       { "monster": "mon_zombie_pupa_decoy_shady", "freq": 250, "cost_multiplier": 0 },
       { "monster": "mon_zombie_pupa_shady", "freq": 250, "cost_multiplier": 10 }
     ]
@@ -131,7 +164,50 @@
     "default": "mon_zombie_kevlar_1",
     "monsters": [
       { "monster": "mon_zombie_tough", "freq": 250, "cost_multiplier": 2 },
-      { "monster": "mon_zombie_hunter", "freq": 100, "cost_multiplier": 2 }
+      { "monster": "mon_zombie_hunter", "freq": 100, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_ichor_stalker", "freq": 50, "cost_multiplier": 10 }
     ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_UPGRADES_MEDICAL",
+    "default": "mon_zombie_vivisector",
+    "monsters": [ { "monster": "mon_zombie_conjoiner", "freq": 300, "cost_multiplier": 2 } ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_SCIENCE_UPGRADE",
+    "default": "mon_zombie_scientist_evolved_igor",
+    "monsters": [
+      { "monster": "mon_zombie_scientist_evolved_emp", "freq": 200, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_scientist_evolved_possessed", "freq": 100, "cost_multiplier": 5 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_SMOKER_UPGRADE",
+    "default": "mon_zombie_smoker_evolved_grappler",
+    "monsters": [ { "monster": "mon_zombie_smoker_evolved_toxic", "freq": 250, "cost_multiplier": 5 } ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_SWIMMER_UPGRADE",
+    "default": "mon_zombie_mancroc",
+    "monsters": [
+      { "monster": "mon_zombie_squidman", "freq": 250, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_seaweed", "freq": 250, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_TECHNICIAN_UPGRADE",
+    "default": "mon_zombie_technician_evolved_electric",
+    "monsters": [ { "monster": "mon_zombie_technician_evolved_iron", "freq": 500, "cost_multiplier": 5 } ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ZOMBIE_MINER_UPGRADE",
+    "default": "mon_zombie_miner_evolved_moleman",
+    "monsters": [ { "monster": "mon_zombie_miner_evolved_shady", "freq": 300, "cost_multiplier": 2 } ]
   }
 ]

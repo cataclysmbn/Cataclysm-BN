@@ -14,5 +14,11 @@
     "name": "STATS_THROUGH_KILLS",
     "stype": "bool",
     "value": true
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "MAGIC_STAT_SCALING_PERCENT",
+    "stype": "int",
+    "value": 5
   }
 ]

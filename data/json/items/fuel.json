@@ -263,5 +263,29 @@
     "price_postapoc": "5 USD",
     "ammo_type": "flammable",
     "range": 0
+  },
+  {
+    "id": "chem_butane",
+    "type": "AMMO",
+    "name": { "str_sp": "butane" },
+    "description": "A flammable natural gas product typically used in lighters, stored as a pressurized liquid.  It could be useful as a fuel, but also as a solvent or chemical reagent.",
+    "weight": "60 mg",
+    "volume": "250 ml",
+    "price": "2 USD",
+    "price_postapoc": "5 USD",
+    "count": 250,
+    "category": "chems",
+    "phase": "liquid",
+    "//": "Todo: make spray cans able to hold either butane or spray paint, and only allow grafiti if loaded with paint.",
+    "container": "bottle_plastic",
+    "material": "hydrocarbons",
+    "symbol": "~",
+    "color": "white",
+    "looks_like": "denat_alcohol",
+    "ammo_type": "lighter_fluid",
+    "fuel": {
+      "energy": 27.76,
+      "explosion_data": { "chance_hot": 5, "chance_cold": 10, "factor": 0.2, "fiery": true, "size_factor": 0.1 }
+    }
   }
 ]

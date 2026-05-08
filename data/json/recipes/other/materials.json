@@ -33,7 +33,7 @@
     "time": "1 h",
     "autolearn": true,
     "batch_time_factors": [ 83, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "rock_quern", -1 ], [ "clay_quern", -1 ] ] ],
     "components": [ [ [ "chitin_piece", 1 ], [ "acidchitin_piece", 1 ] ] ]
   },
@@ -49,28 +49,13 @@
     "time": "1 h 30 m",
     "autolearn": true,
     "batch_time_factors": [ 83, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "mortar_pestle", -1 ] ] ],
     "components": [ [ [ "chitin_piece", 1 ] ] ]
   },
   {
     "type": "recipe",
     "result": "reinforced_glass_sheet",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 4,
-    "time": "20 m",
-    "reversible": true,
-    "decomp_learn": 3,
-    "autolearn": true,
-    "using": [ [ "welding_standard", 10 ] ],
-    "qualities": [ { "id": "SAW_M", "level": 1 } ],
-    "components": [ [ [ "reinforced_glass_pane", 4 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "reinforced_glass_pane",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
     "skill_used": "fabrication",
@@ -164,7 +149,6 @@
     "time": "1 m",
     "autolearn": true,
     "charges": 6,
-    "flags": [ "BLIND_HARD" ],
     "components": [ [ [ "paper", 1 ] ] ]
   },
   {
@@ -257,7 +241,6 @@
     "time": "30 m",
     "autolearn": true,
     "using": [ [ "blacksmithing_intermediate", 2 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "scrap", 3 ] ] ]
   },
   {
@@ -282,8 +265,8 @@
     "difficulty": 3,
     "time": "1 h",
     "autolearn": true,
-    "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 2 } ],
-    "tools": [ [ [ "swage", -1 ] ], [ [ "surface_heat", 2, "LIST" ], [ "forge", 2 ], [ "oxy_torch", 2 ] ] ],
+    "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 2 }, { "id": "SWAGING", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 2, "LIST" ], [ "forge", 2 ], [ "oxy_torch", 2 ] ] ],
     "components": [ [ [ "wire", 3 ] ] ]
   },
   {
@@ -350,19 +333,6 @@
   },
   {
     "type": "recipe",
-    "result": "metal_tank",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 1,
-    "time": "2 m",
-    "autolearn": true,
-    "using": [ [ "welding_standard", 5 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "components": [ [ [ "sheet_metal", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
     "result": "it_battery_mount",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
@@ -374,19 +344,6 @@
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 } ],
     "using": [ [ "steel_tiny", 1 ], [ "welding_standard", 5 ] ],
     "components": [ [ [ "sheet_metal", 2 ] ], [ [ "pipe", 2 ] ], [ [ "chain", 1 ] ], [ [ "circuit", 1 ] ] ]
-  },
-  {
-    "type": "recipe",
-    "result": "metal_tank_little",
-    "category": "CC_OTHER",
-    "subcategory": "CSC_OTHER_MATERIALS",
-    "skill_used": "fabrication",
-    "difficulty": 1,
-    "time": "30 s",
-    "autolearn": true,
-    "using": [ [ "welding_standard", 2 ] ],
-    "qualities": [ { "id": "HAMMER", "level": 2 } ],
-    "components": [ [ [ "sheet_metal_small", 3 ] ] ]
   },
   {
     "type": "recipe",
@@ -421,8 +378,7 @@
     "difficulty": 4,
     "time": "1 h 40 m",
     "autolearn": true,
-    "using": [ [ "blacksmithing_advanced", 32 ], [ "steel_standard", 8 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "using": [ [ "blacksmithing_advanced", 32 ], [ "steel_standard", 8 ] ]
   },
   {
     "type": "recipe",
@@ -460,10 +416,9 @@
     "book_learn": [ [ "glassblowing_book", 5 ], [ "reference_cooking", 7 ] ],
     "result_mult": 4,
     "qualities": [ { "id": "CHEM", "level": 2 } ],
+    "using": [ [ "glassblowing_easy", 5 ] ],
     "tools": [
-      [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ],
       [ [ "tool_flat_press_large", 1, "LIST" ], [ "tool_flat_press_small", 1, "LIST" ] ],
-      [ [ "forge", 25 ] ],
       [ [ "surface_heat", 15, "LIST" ] ]
     ],
     "components": [
@@ -483,12 +438,8 @@
     "difficulty": 3,
     "time": "1 h",
     "autolearn": true,
-    "tools": [
-      [ [ "tongs", -1 ] ],
-      [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ],
-      [ [ "tool_flat_press_large", 1, "LIST" ] ],
-      [ [ "forge", 75 ] ]
-    ],
+    "using": [ [ "glassblowing_easy", 15 ] ],
+    "tools": [ [ [ "tool_flat_press_large", 1, "LIST" ] ] ],
     "components": [ [ [ "glass_shard", 18 ], [ "jar_glass", 9 ], [ "flask_glass", 18 ], [ "test_tube", 36 ] ] ]
   },
   {
@@ -501,9 +452,11 @@
     "difficulty": 3,
     "time": "12 m",
     "charges": 10,
-    "batch_time_factors": [ 75, 4 ],
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": [ [ "fabrication", 4 ], [ "cooking", 4 ] ],
     "book_learn": [ [ "concrete_book", 3 ], [ "adv_chemistry", 3 ], [ "textbook_chemistry", 3 ], [ "reference_cooking", 4 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ], [ [ "forge", 50 ], [ "oxy_torch", 10 ] ] ],
+    "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ],
+    "tools": [ [ [ "forge", 50 ], [ "oxy_torch", 10 ] ] ],
     "components": [ [ [ "material_limestone", 10 ] ] ]
   },
   {
@@ -515,9 +468,11 @@
     "skills_required": [ "cooking", 3 ],
     "difficulty": 4,
     "time": "1 h 30 m",
+    "autolearn": [ [ "cooking", 6 ] ],
     "book_learn": [ [ "concrete_book", 4 ] ],
-    "batch_time_factors": [ 75, 3 ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ], [ [ "forge", 250 ], [ "oxy_torch", 50 ] ] ],
+    "batch_time_factors": [ 90, 3 ],
+    "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ],
+    "tools": [ [ [ "forge", 250 ], [ "oxy_torch", 50 ] ] ],
     "components": [ [ [ "material_quicklime", 50 ] ], [ [ "material_sand", 50 ] ] ]
   },
   {
@@ -529,8 +484,7 @@
     "difficulty": 5,
     "time": "1 h 30 m",
     "autolearn": true,
-    "qualities": [ { "id": "ANVIL", "level": 3 }, { "id": "HAMMER", "level": 3 }, { "id": "CHISEL", "level": 3 } ],
-    "tools": [ [ [ "tongs", -1 ] ], [ [ "swage", -1 ] ], [ [ "forge", 50 ], [ "oxy_torch", 10 ] ] ],
+    "using": [ [ "blacksmithing_advanced", 2 ] ],
     "components": [ [ [ "copper_scrap_equivalent", 7, "LIST" ] ] ]
   },
   {
@@ -591,7 +545,7 @@
     "difficulty": 3,
     "time": "1 h",
     "autolearn": true,
-    "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_tiny", 2 ] ]
+    "using": [ [ "blacksmithing_advanced", 2 ], [ "steel_standard", 1 ] ]
   },
   {
     "type": "recipe",
@@ -629,6 +583,27 @@
   },
   {
     "type": "recipe",
+    "result": "chunk_rubber",
+    "id_suffix": "chemistry",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "cooking",
+    "difficulty": 5,
+    "time": "30 m",
+    "book_learn": [ [ "adv_chemistry", 3 ], [ "textbook_chemistry", 3 ], [ "reference_cooking", 5 ] ],
+    "batch_time_factors": [ 80, 4 ],
+    "qualities": [ { "id": "CHEM", "level": 2 }, { "id": "FINE_DISTILL", "level": 1 } ],
+    "tools": [ [ [ "surface_heat", 50, "LIST" ] ] ],
+    "//": "Rough abstraction of making butadiene using butane and a metal catalyst, styrene from methanol (note: we're missing toluene and a zeolite catalyst), then combining with hydroperoxide produced from ether (note: also missing alkyl mercaptan ).",
+    "components": [
+      [ [ "chem_butane", 250 ] ],
+      [ [ "chem_methanol", 50 ] ],
+      [ [ "chem_aluminium_powder", 10 ], [ "chem_chromium_oxide", 10 ] ],
+      [ [ "ether", 25 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "spring",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_MATERIALS",
@@ -645,7 +620,8 @@
     "subcategory": "CSC_OTHER_MATERIALS",
     "skill_used": "fabrication",
     "difficulty": 3,
-    "time": "1 h 30 m",
+    "time": "1 h",
+    "batch_time_factors": [ 80, 5 ],
     "autolearn": true,
     "using": [ [ "blacksmithing_advanced", 1 ], [ "steel_tiny", 1 ] ]
   },
@@ -660,7 +636,6 @@
     "autolearn": true,
     "using": [ [ "forging_standard", 10 ], [ "steel_standard", 5 ] ],
     "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_W", "level": 2 } ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "2x4", 24 ] ], [ [ "nail_glue", 40, "LIST" ] ] ]
   },
   {
@@ -862,7 +837,7 @@
     "difficulty": 2,
     "time": "40 m",
     "autolearn": true,
-    "batch_time_factors": [ 75, 4 ],
+    "batch_time_factors": [ 90, 4 ],
     "using": [ [ "earthenware_firing", 60 ] ],
     "components": [ [ [ "clay_lump", 1 ] ], [ [ "water", 1 ], [ "water_clean", 1 ] ] ]
   },
@@ -979,7 +954,7 @@
       ]
     ],
     "components": [
-      [ [ "chem_ethanol", 50 ], [ "denat_alcohol", 50 ] ],
+      [ [ "chem_ethanol", 50 ], [ "denat_alcohol", 50 ], [ "disinfectant_makeshift", 2 ] ],
       [ [ "copper_scrap_equivalent", 2, "LIST" ] ],
       [ [ "acid", 1 ] ],
       [ [ "bleach", 2 ] ],
@@ -1080,9 +1055,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "rag", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 10 ] ] ]
   },
   {
     "result": "bundle_leather",
@@ -1094,9 +1069,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "leather", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "leather", 10 ] ] ]
   },
   {
     "result": "bundle_wool",
@@ -1108,9 +1083,9 @@
     "difficulty": 1,
     "time": "1 m",
     "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
     "using": [ [ "filament", 8 ] ],
-    "components": [ [ [ "felt_patch", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "felt_patch", 10 ] ] ]
   },
   {
     "type": "recipe",
@@ -1121,6 +1096,7 @@
     "time": "2 m",
     "autolearn": true,
     "qualities": [ { "id": "DIG", "level": 3 } ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_sand", 3000 ] ] ]
   },
   {
@@ -1131,6 +1107,7 @@
     "skill_used": "fabrication",
     "time": "2 m",
     "autolearn": true,
+    "flags": [ "BLIND_NO_EFFECT" ],
     "qualities": [ { "id": "DIG", "level": 3 } ],
     "components": [ [ [ "bag_canvas", 1 ] ], [ [ "material_soil", 3 ] ] ]
   },
@@ -1145,7 +1122,6 @@
     "batch_time_factors": [ 90, 4 ],
     "autolearn": true,
     "using": [ [ "forging_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [
       [ [ "tin", 10 ], [ "aluminum_foil", 10 ], [ "chem_aluminium_powder", 15 ], [ "can_drink_unsealed", 2 ] ],
       [ [ "copper_scrap_equivalent", 4, "LIST" ] ]
@@ -1164,7 +1140,6 @@
     "batch_time_factors": [ 90, 4 ],
     "autolearn": true,
     "using": [ [ "forging_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "material_aluminium_ingot", 1 ] ], [ [ "copper_scrap_equivalent", 40, "LIST" ] ] ]
   },
   {
@@ -1176,7 +1151,6 @@
     "difficulty": 1,
     "time": "30 m",
     "book_learn": [ [ "recipe_bullets", 2 ], [ "mag_rifle", 3 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "charges": 100,
     "using": [ [ "blacksmithing_intermediate", 1 ] ],
     "components": [ [ [ "zinc_metal", 400 ] ], [ [ "copper", 35 ] ] ]
@@ -1190,12 +1164,8 @@
     "difficulty": 4,
     "time": "1 h",
     "autolearn": true,
-    "tools": [
-      [ [ "tongs", -1 ] ],
-      [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ],
-      [ [ "tool_flat_press_large", 1, "LIST" ] ],
-      [ [ "forge", 75 ] ]
-    ],
+    "using": [ [ "glassblowing_easy", 15 ] ],
+    "tools": [ [ [ "tool_flat_press_large", 1, "LIST" ] ] ],
     "components": [ [ [ "glass_shard", 40 ], [ "flask_glass", 12 ], [ "jar_glass", 4 ] ] ]
   },
   {
@@ -1263,7 +1233,7 @@
     "//": "sawing it down doesn't teach anything useful",
     "autolearn": true,
     "using": [ [ "blacksmithing_standard", 4 ], [ "steel_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "qualities": [ { "id": "CONTAIN_HOT", "level": 1 } ]
   },
   {
     "type": "recipe",
@@ -1276,7 +1246,6 @@
     "batch_time_factors": [ 90, 4 ],
     "autolearn": true,
     "using": [ [ "forging_standard", 6 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "//": "Additional coal and flux to increase carbon content, oil for quenching.",
     "components": [
       [ [ "steel_armor", 1 ] ],
@@ -1407,7 +1376,6 @@
     "reversible": true,
     "autolearn": true,
     "using": [ [ "forging_standard", 4 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "can_drink_unsealed", 27 ], [ "aluminum_foil", 68 ], [ "chem_aluminium_powder", 135 ] ] ]
   },
   {
@@ -1434,7 +1402,6 @@
     "reversible": true,
     "autolearn": true,
     "using": [ [ "forging_standard", 1 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "components": [ [ [ "scrap", 5 ] ] ]
   },
   {
@@ -1448,8 +1415,7 @@
     "batch_time_factors": [ 90, 4 ],
     "reversible": true,
     "autolearn": true,
-    "using": [ [ "forging_standard", 4 ], [ "steel_tiny", 4 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ]
+    "using": [ [ "forging_standard", 4 ], [ "steel_tiny", 4 ] ]
   },
   {
     "result": "steel_lump",
@@ -1472,10 +1438,153 @@
       [ "welding_book", 3 ]
     ],
     "using": [ [ "forging_standard", 6 ] ],
-    "tools": [ [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ] ],
     "//": "Additional coal required for carburization, proportionate by weight.  Yield is roughly 25%.",
     "components": [
       [ [ "iron_ore", 1 ] ],
+      [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
+      [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
+    ]
+  },
+  {
+    "result": "copper",
+    "charges": 250,
+    "id_suffix": "smelt",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "survival", 4 ],
+    "time": "75 m",
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": true,
+    "book_learn": [
+      [ "jewelry_book", 3 ],
+      [ "textbook_survival", 3 ],
+      [ "manual_survival", 3 ],
+      [ "atomic_survival", 3 ],
+      [ "survival_book", 3 ],
+      [ "welding_book", 3 ]
+    ],
+    "using": [ [ "forging_standard", 6 ] ],
+    "//": "25% yield, coal and flux also used in reduction.",
+    "components": [
+      [ [ "copper_ore", 1 ] ],
+      [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
+      [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
+    ]
+  },
+  {
+    "result": "lead",
+    "charges": 250,
+    "id_suffix": "smelt",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "survival", 4 ],
+    "time": "75 m",
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": true,
+    "book_learn": [
+      [ "recipe_bullets", 3 ],
+      [ "textbook_survival", 3 ],
+      [ "manual_survival", 3 ],
+      [ "atomic_survival", 3 ],
+      [ "survival_book", 3 ],
+      [ "welding_book", 3 ]
+    ],
+    "using": [ [ "forging_standard", 6 ] ],
+    "//": "25% yield, coal and flux also used in reduction.",
+    "components": [
+      [ [ "lead_ore", 1 ] ],
+      [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
+      [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
+    ]
+  },
+  {
+    "result": "tin",
+    "charges": 250,
+    "id_suffix": "smelt",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "skills_required": [ "survival", 3 ],
+    "time": "75 m",
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": true,
+    "book_learn": [
+      [ "textbook_survival", 2 ],
+      [ "manual_survival", 2 ],
+      [ "atomic_survival", 2 ],
+      [ "survival_book", 2 ],
+      [ "welding_book", 2 ]
+    ],
+    "using": [ [ "forging_standard", 4 ] ],
+    "//": "25% yield, coal and flux also used in reduction.",
+    "components": [
+      [ [ "tin_ore", 1 ] ],
+      [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
+      [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
+    ]
+  },
+  {
+    "result": "silver_small",
+    "charges": 250,
+    "id_suffix": "smelt",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "skills_required": [ "survival", 3 ],
+    "time": "75 m",
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": true,
+    "book_learn": [
+      [ "jewelry_book", 3 ],
+      [ "textbook_survival", 2 ],
+      [ "manual_survival", 2 ],
+      [ "atomic_survival", 2 ],
+      [ "survival_book", 2 ],
+      [ "welding_book", 2 ]
+    ],
+    "using": [ [ "forging_standard", 4 ] ],
+    "//": "25% yield, coal and flux also used in reduction.",
+    "components": [
+      [ [ "silver_ore", 1 ] ],
+      [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
+      [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
+    ]
+  },
+  {
+    "result": "gold_small",
+    "charges": 250,
+    "id_suffix": "smelt",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MATERIALS",
+    "skill_used": "fabrication",
+    "difficulty": 3,
+    "skills_required": [ "survival", 3 ],
+    "time": "75 m",
+    "batch_time_factors": [ 90, 4 ],
+    "autolearn": true,
+    "book_learn": [
+      [ "jewelry_book", 3 ],
+      [ "textbook_survival", 2 ],
+      [ "manual_survival", 2 ],
+      [ "atomic_survival", 2 ],
+      [ "survival_book", 2 ],
+      [ "welding_book", 2 ]
+    ],
+    "using": [ [ "forging_standard", 4 ] ],
+    "//": "25% yield, coal and flux also used in reduction.",
+    "components": [
+      [ [ "gold_ore", 1 ] ],
       [ [ "coal_lump", 4 ], [ "charcoal", 16 ] ],
       [ [ "material_limestone", 2 ], [ "material_quicklime", 2 ], [ "chem_carbide", 40 ] ]
     ]
@@ -1603,13 +1712,9 @@
     "time": "30 m",
     "book_learn": [ [ "glassblowing_book", 4 ], [ "textbook_fabrication", 5 ], [ "welding_book", 5 ] ],
     "batch_time_factors": [ 90, 2 ],
+    "using": [ [ "glassblowing_easy", 12 ] ],
     "qualities": [ { "id": "CHEM", "level": 1 } ],
-    "tools": [
-      [ [ "tongs", -1 ] ],
-      [ [ "crucible", -1 ], [ "crucible_clay", -1 ] ],
-      [ [ "tool_flat_press_large", 1, "LIST" ], [ "tool_flat_press_small", 1, "LIST" ] ],
-      [ [ "forge", 60 ] ]
-    ],
+    "tools": [ [ [ "tool_flat_press_large", 1, "LIST" ], [ "tool_flat_press_small", 1, "LIST" ] ] ],
     "components": [ [ [ "glass_shard", 2 ] ], [ [ "chem_sulphur", 1 ] ], [ [ "scrap", 1 ] ], [ [ "charcoal", 1 ] ] ]
   },
   {

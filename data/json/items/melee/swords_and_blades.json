@@ -289,7 +289,7 @@
     "type": "TOOL",
     "category": "tools_workshop",
     "weapon_category": [ "KNIVES" ],
-    "description": "A femur or other bone, at least 30 cm long, which has been broken at one end and sharpened into a cutting tool.  Its jagged edge is wicked but fragile.",
+    "description": "A femur or other bone, at least 30 cm long, which has been broken at one end and sharpened into a cutting tool.  Its jagged edge is serviceable but fragile.",
     "symbol": "/",
     "color": "white",
     "weight": "169 g",
@@ -298,9 +298,9 @@
     "price": "0 cent",
     "price_postapoc": "0 cent",
     "bashing": 4,
-    "cutting": 20,
+    "cutting": 8,
     "material": [ "bone" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 12 ] ],
+    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 11 ] ],
     "flags": [ "STAB", "SHEATH_KNIFE", "FRAGILE_MELEE" ]
   },
   {
@@ -736,8 +736,8 @@
     "price": "120 USD",
     "price_postapoc": "25 USD",
     "to_hit": 1,
-    "bashing": 8,
-    "cutting": 28,
+    "bashing": 3,
+    "cutting": 27,
     "material": "bronze",
     "symbol": "!",
     "color": "yellow",
@@ -778,7 +778,7 @@
     "price": "125 USD",
     "price_postapoc": "35 USD",
     "bashing": 7,
-    "cutting": 28,
+    "cutting": 26,
     "material": "bronze",
     "symbol": "/",
     "color": "yellow",
@@ -1128,15 +1128,23 @@
       "need_charges_msg": "The %s's batteries are dead.",
       "target": "shock_foil_on"
     },
-    "extend": { "flags": [ "NONCONDUCTIVE" ] },
+    "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
     "magazines": [
       [
         "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
       ]
     ],
-    "magazine_well": "500 ml"
+    "magazine_well": "250 ml"
   },
   {
     "id": "shock_foil_on",
@@ -1147,9 +1155,22 @@
     "revert_to": "shock_foil",
     "revert_msg": "The %s's batteries run dry.",
     "use_action": { "type": "transform", "msg": "You press a button and the foil turns off.", "target": "shock_foil" },
-    "extend": { "flags": [ "TRADER_AVOID", "SHOCKING" ] },
-    "power_draw": 5000000,
-    "magazine_well": "500 ml"
+    "//": "Roughly +25% electric damage",
+    "attacks": [
+      {
+        "id": "THRUST",
+        "to_hit": 0,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 1 },
+            { "damage_type": "stab", "amount": 4 },
+            { "damage_type": "electric", "amount": 2 }
+          ]
+        }
+      }
+    ],
+    "extend": { "flags": [ "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "power_draw": 500000
   },
   {
     "id": "fencing_epee",
@@ -1187,15 +1208,23 @@
       "need_charges_msg": "The %s's batteries are dead.",
       "target": "shock_epee_on"
     },
-    "extend": { "flags": [ "NONCONDUCTIVE" ] },
+    "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
     "magazines": [
       [
         "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
       ]
     ],
-    "magazine_well": "500 ml"
+    "magazine_well": "250 ml"
   },
   {
     "id": "shock_epee_on",
@@ -1206,9 +1235,22 @@
     "revert_to": "shock_epee",
     "revert_msg": "The %s's batteries run dry.",
     "use_action": { "type": "transform", "msg": "You press a button and the epee turns off.", "target": "shock_epee" },
-    "extend": { "flags": [ "TRADER_AVOID", "SHOCKING" ] },
-    "power_draw": 5000000,
-    "magazine_well": "500 ml"
+    "//": "Roughly +25% electric damage",
+    "attacks": [
+      {
+        "id": "THRUST",
+        "to_hit": 0,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 3 },
+            { "damage_type": "stab", "amount": 12 },
+            { "damage_type": "electric", "amount": 4 }
+          ]
+        }
+      }
+    ],
+    "extend": { "flags": [ "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "power_draw": 500000
   },
   {
     "id": "fencing_sabre",
@@ -1245,15 +1287,23 @@
       "need_charges_msg": "The %s's batteries are dead.",
       "target": "shock_sabre_on"
     },
-    "extend": { "flags": [ "NONCONDUCTIVE" ] },
+    "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
     "magazines": [
       [
         "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
       ]
     ],
-    "magazine_well": "500 ml"
+    "magazine_well": "250 ml"
   },
   {
     "id": "shock_sabre_on",
@@ -1264,9 +1314,22 @@
     "revert_to": "shock_sabre",
     "revert_msg": "The %s's batteries run dry.",
     "use_action": { "type": "transform", "msg": "You press a button and the foil crackles with electricity.", "target": "shock_sabre" },
-    "extend": { "flags": [ "TRADER_AVOID", "SHOCKING" ] },
-    "power_draw": 5000000,
-    "magazine_well": "500 ml"
+    "//": "Roughly +25% electric damage",
+    "attacks": [
+      {
+        "id": "THRUST",
+        "to_hit": 0,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 1 },
+            { "damage_type": "stab", "amount": 11 },
+            { "damage_type": "electric", "amount": 3 }
+          ]
+        }
+      }
+    ],
+    "extend": { "flags": [ "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "power_draw": 500000
   },
   {
     "id": "sword_cane",
@@ -1374,15 +1437,23 @@
       "need_charges_msg": "The %s's batteries are dead.",
       "target": "shock_rapier_on"
     },
-    "extend": { "flags": [ "NONCONDUCTIVE" ] },
+    "extend": { "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ] },
     "relative": { "volume": "250 ml", "weight": "151 g" },
     "magazines": [
       [
         "battery",
-        [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
+        [
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell",
+          "light_minus_disposable_cell",
+          "light_disposable_cell"
+        ]
       ]
     ],
-    "magazine_well": "500 ml"
+    "magazine_well": "250 ml"
   },
   {
     "id": "shock_rapier_on",
@@ -1393,9 +1464,22 @@
     "revert_to": "shock_rapier_off",
     "revert_msg": "The %s's batteries run dry.",
     "use_action": { "type": "transform", "msg": "You press a button and the rapier turns off.", "target": "shock_rapier_off" },
-    "extend": { "flags": [ "TRADER_AVOID", "SHOCKING" ] },
-    "power_draw": 5000000,
-    "magazine_well": "500 ml"
+    "extend": { "flags": [ "TRADER_AVOID", "COMBAT_NPC_ON" ] },
+    "//": "Roughly +25% electric damage",
+    "attacks": [
+      {
+        "id": "THRUST",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 2 },
+            { "damage_type": "stab", "amount": 29 },
+            { "damage_type": "electric", "amount": 8 }
+          ]
+        }
+      }
+    ],
+    "power_draw": 500000
   },
   {
     "id": "rapier_fake",
@@ -1505,7 +1589,8 @@
     "max_charges": 800,
     "charges_per_use": 75,
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
-    "qualities": [ [ "AXE", 3 ] ],
+    "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -1515,7 +1600,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND" ]
+    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ]
   },
   {
     "id": "cs_lajatang_on",
@@ -1532,7 +1617,16 @@
     "qualities": [ [ "BUTCHER", -250 ] ],
     "turns_per_charge": 1,
     "charges_per_use": 0,
-    "flags": [ "MESSY", "FRAGILE_MELEE", "TRADER_AVOID", "NONCONDUCTIVE", "ALWAYS_TWOHAND", "WATER_DISABLE" ]
+    "flags": [
+      "MESSY",
+      "FRAGILE_MELEE",
+      "TRADER_AVOID",
+      "NONCONDUCTIVE",
+      "ALWAYS_TWOHAND",
+      "WATER_DISABLE",
+      "COMBAT_NPC_USE",
+      "COMBAT_NPC_ON"
+    ]
   },
   {
     "id": "ecs_lajatang_off",
@@ -1553,7 +1647,8 @@
     "ammo": "battery",
     "charges_per_use": 375,
     "techniques": [ "WBLOCK_1", "SPIN", "SWEEP" ],
-    "qualities": [ [ "AXE", 3 ] ],
+    "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -1563,7 +1658,7 @@
       "transform_charges": 5,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND" ],
+    "flags": [ "NONCONDUCTIVE", "POWERED", "ALWAYS_TWOHAND", "COMBAT_NPC_USE" ],
     "magazines": [
       [ "battery", [ "heavy_battery_cell", "heavy_plus_battery_cell", "heavy_atomic_battery_cell", "heavy_disposable_cell" ] ]
     ],
@@ -1584,7 +1679,16 @@
     "revert_msg": "Your chainsaw lajatang goes quiet",
     "use_action": { "type": "transform", "target": "ecs_lajatang_off", "msg": "You turn off the chainsaw lajatang." },
     "qualities": [ [ "BUTCHER", -250 ] ],
-    "flags": [ "MESSY", "DURABLE_MELEE", "TRADER_AVOID", "NONCONDUCTIVE", "ALWAYS_TWOHAND", "WATER_DISABLE" ],
+    "flags": [
+      "MESSY",
+      "DURABLE_MELEE",
+      "TRADER_AVOID",
+      "NONCONDUCTIVE",
+      "ALWAYS_TWOHAND",
+      "WATER_DISABLE",
+      "COMBAT_NPC_USE",
+      "COMBAT_NPC_ON"
+    ],
     "magazine_well": "1000 ml"
   },
   {
@@ -1710,7 +1814,8 @@
     "ammo": "gasoline",
     "charges_per_use": 75,
     "max_charges": 450,
-    "qualities": [ [ "AXE", 3 ] ],
+    "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -1721,7 +1826,7 @@
       "need_dry": true
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
-    "flags": [ "ALWAYS_TWOHAND", "POWERED" ]
+    "flags": [ "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ]
   },
   {
     "id": "combatsaw_on",
@@ -1737,7 +1842,7 @@
     "qualities": [ [ "BUTCHER", -120 ] ],
     "revert_msg": "Your combat chainsaw goes quiet",
     "use_action": { "type": "transform", "target": "combatsaw_off", "msg": "You turn off the combat chainsaw." },
-    "flags": [ "MESSY", "DURABLE_MELEE", "TRADER_AVOID", "ALWAYS_TWOHAND", "WATER_DISABLE" ]
+    "flags": [ "MESSY", "DURABLE_MELEE", "TRADER_AVOID", "ALWAYS_TWOHAND", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
   },
   {
     "id": "e_combatsaw_off",
@@ -1757,7 +1862,8 @@
     "color": "light_gray",
     "ammo": "battery",
     "charges_per_use": 375,
-    "qualities": [ [ "AXE", 3 ] ],
+    "qualities": [ [ "AXE", 4 ] ],
+    "crafting_speed_modifier": 1.25,
     "use_action": {
       "type": "transform",
       "active": true,
@@ -1768,7 +1874,7 @@
       "need_dry": true
     },
     "techniques": [ "WBLOCK_1", "SWEEP" ],
-    "flags": [ "ALWAYS_TWOHAND", "POWERED" ],
+    "flags": [ "ALWAYS_TWOHAND", "POWERED", "COMBAT_NPC_USE" ],
     "magazines": [
       [
         "battery",
@@ -1791,7 +1897,7 @@
     "qualities": [ [ "BUTCHER", -120 ] ],
     "revert_msg": "Your combat chainsaw goes quiet",
     "use_action": { "type": "transform", "target": "e_combatsaw_off", "msg": "You turn off the combat chainsaw." },
-    "flags": [ "MESSY", "DURABLE_MELEE", "TRADER_AVOID", "ALWAYS_TWOHAND", "WATER_DISABLE" ],
+    "flags": [ "MESSY", "DURABLE_MELEE", "TRADER_AVOID", "ALWAYS_TWOHAND", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ],
     "magazine_well": "500 ml"
   },
   {
@@ -1836,7 +1942,21 @@
     "price_postapoc": "1550 cent",
     "use_action": "HOTPLATE",
     "qualities": [ [ "CUT", 1 ], [ "CUT_FINE", 1 ], [ "BUTCHER", 30 ] ],
-    "flags": [ "STAB", "SHEATH_KNIFE", "LEAK_DAM", "RADIOACTIVE", "FLAMING" ]
+    "//": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "THRUST",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 2 },
+            { "damage_type": "stab", "amount": 18 },
+            { "damage_type": "heat", "amount": 5 }
+          ]
+        }
+      }
+    ],
+    "flags": [ "STAB", "SHEATH_KNIFE", "LEAK_DAM", "RADIOACTIVE" ]
   },
   {
     "id": "knife_carbon",
@@ -1969,35 +2089,25 @@
   },
   {
     "id": "shishkebab_off",
+    "copy-from": "machete",
     "type": "TOOL",
-    "category": "weapons",
     "name": { "str": "shishkebab (off)", "str_pl": "shishkebabs (off)" },
-    "weapon_category": [ "1H_SWORDS" ],
     "description": "This is a large blade with a fuel pipe on the side, and a small tank and igniter built into the insulated hilt.  When filled with gasoline, the blade can be made scorching hot to singe enemies and light your way.  Use to ignite.",
-    "weight": "1701 g",
-    "volume": "2500 ml",
-    "price": "100 USD",
-    "bashing": 4,
-    "cutting": 18,
-    "material": [ "steel", "plastic" ],
-    "symbol": "/",
-    "color": "light_gray",
-    "ammo": "gasoline",
+    "relative": { "volume": "500 ml", "weight": "750 g" },
+    "proportional": { "price": 1.25, "price_postapoc": 1.25 },
+    "ammo": [ "gasoline", "lighter_fluid" ],
     "charges_per_use": 1,
-    "max_charges": 100,
+    "max_charges": 250,
     "use_action": {
       "type": "fireweapon_off",
       "target_id": "shishkebab_on",
       "moves": 10,
-      "noise": 10,
       "success_chance": 4,
       "success_message": "A burst of flame roars to life, crawling along the blade.",
       "failure_message": "The igniter clicks, but nothing catches.",
       "lacks_fuel_message": "You hear a sputter—it's dry. No fuel left."
     },
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -30 ] ],
-    "techniques": [ "WBLOCK_1" ],
-    "flags": [ "FIRE", "SHEATH_SWORD" ]
+    "extend": { "flags": [ "COMBAT_NPC_USE" ] }
   },
   {
     "id": "shishkebab_on",
@@ -2009,10 +2119,23 @@
     "color": "red",
     "turns_per_charge": 20,
     "revert_to": "shishkebab_off",
+    "//": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 1,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 6 },
+            { "damage_type": "cut", "amount": 21 },
+            { "damage_type": "heat", "amount": 7 }
+          ]
+        }
+      }
+    ],
     "use_action": [
       {
         "type": "fireweapon_on",
-        "noise": 10,
         "noise_chance": 25,
         "noise_message": "The shishkebab crackles as flames whip along its edge.",
         "auto_extinguish_chance": 300,
@@ -2023,6 +2146,205 @@
       },
       { "type": "firestarter", "moves": 30 }
     ],
-    "flags": [ "FIRE", "LIGHT_240", "CHARGEDIM", "FLAMING", "TRADER_AVOID" ]
+    "extend": { "flags": [ "FIRE", "LIGHT_240", "CHARGEDIM", "TRADER_AVOID", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "firekatana_off",
+    "copy-from": "katana",
+    "type": "TOOL",
+    "name": { "str": "Rising Sun" },
+    "description": "This is a katana with a nozzle just behind the cutting edge of the blade.  People love fire, and people love katanas, so why not put them together?  The gas burners attached to this blade can really turn up the heat on your foes.  Use to ignite.",
+    "relative": { "volume": "500 ml", "weight": "750 g" },
+    "proportional": { "price": 1.25, "price_postapoc": 1.25 },
+    "ammo": [ "gasoline", "lighter_fluid" ],
+    "charges_per_use": 1,
+    "max_charges": 250,
+    "use_action": {
+      "type": "fireweapon_off",
+      "target_id": "firekatana_on",
+      "moves": 10,
+      "success_message": "The Sun rises.",
+      "lacks_fuel_message": "Time stands still."
+    },
+    "extend": { "flags": [ "COMBAT_NPC_USE" ] }
+  },
+  {
+    "id": "firekatana_on",
+    "copy-from": "firekatana_off",
+    "type": "TOOL",
+    "name": { "str": "Rising Sun (on)" },
+    "description": "This is a katana that glows with the fury and heat of the SUN!  Well, okay it's not THAT hot, but getting hit with it still stings like the dickens.  Use to shut off the gas.",
+    "color": "red",
+    "turns_per_charge": 20,
+    "revert_to": "firekatana_off",
+    "//": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 5 },
+            { "damage_type": "cut", "amount": 34 },
+            { "damage_type": "heat", "amount": 10 }
+          ]
+        }
+      }
+    ],
+    "use_action": [
+      {
+        "type": "fireweapon_on",
+        "noise_chance": 35,
+        "noise_message": "The Sun shines brightly.",
+        "voluntary_extinguish_message": "The Sun sets.",
+        "charges_extinguish_message": "The Light Fades.",
+        "water_extinguish_message": "Your sword hisses in the water and goes out."
+      },
+      { "type": "firestarter", "moves": 30 }
+    ],
+    "extend": { "flags": [ "FIRE", "LIGHT_240", "CHARGEDIM", "TRADER_AVOID", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "broadfire_off",
+    "copy-from": "broadsword",
+    "type": "TOOL",
+    "name": { "str": "firebrand (off)", "str_pl": "firebrands (off)" },
+    "description": "This is a combination of two classic methods of conflict resolution, the broadsword and the torch.  Use to light it up and show those heathen zombies who's Lord around here.",
+    "relative": { "volume": "500 ml", "weight": "750 g" },
+    "proportional": { "price": 1.25, "price_postapoc": 1.25 },
+    "ammo": [ "gasoline", "lighter_fluid" ],
+    "charges_per_use": 1,
+    "max_charges": 250,
+    "use_action": {
+      "type": "fireweapon_off",
+      "target_id": "broadfire_on",
+      "moves": 10,
+      "success_message": "Charge!",
+      "lacks_fuel_message": "No strength to fight!"
+    },
+    "extend": { "flags": [ "COMBAT_NPC_USE" ] }
+  },
+  {
+    "id": "broadfire_on",
+    "copy-from": "broadfire_off",
+    "type": "TOOL",
+    "name": { "str": "firebrand (on)", "str_pl": "firebrands (on)" },
+    "description": "This is a combination of two classic methods of conflict resolution, the broadsword and the torch.  The blade is glowing with heat.  Excalibur can eat its heart out.  Use to shut it off.",
+    "color": "red",
+    "turns_per_charge": 20,
+    "revert_to": "broadfire_off",
+    "//": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 8 },
+            { "damage_type": "cut", "amount": 35 },
+            { "damage_type": "heat", "amount": 11 }
+          ]
+        }
+      }
+    ],
+    "use_action": [
+      {
+        "type": "fireweapon_on",
+        "noise_chance": 35,
+        "noise_message": "Your blade burns for combat!",
+        "voluntary_extinguish_message": "Run away!",
+        "charges_extinguish_message": "Thy strength fades!",
+        "water_extinguish_message": "Your sword hisses in the water and goes out."
+      },
+      { "type": "firestarter", "moves": 30 }
+    ],
+    "extend": { "flags": [ "FIRE", "LIGHT_240", "CHARGEDIM", "TRADER_AVOID", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "zweifire_off",
+    "copy-from": "zweihander",
+    "type": "TOOL",
+    "name": { "str": "flammenschwert", "str_pl": "flammenschwerter" },
+    "//": "All of this is SUPPOSED to be in German.",
+    "description": "Ein großes zweihaendiges Schwert aus Deutschland, an dessen Klinge sich, unter Zufuehrung von Benzin, eine anhaltende Flamme erzeugen laesst.  Es ist eine sehr maechtige Waffe.",
+    "relative": { "volume": "500 ml", "weight": "750 g" },
+    "proportional": { "price": 1.25, "price_postapoc": 1.25 },
+    "ammo": [ "gasoline", "lighter_fluid" ],
+    "charges_per_use": 1,
+    "max_charges": 250,
+    "use_action": {
+      "type": "fireweapon_off",
+      "target_id": "zweifire_on",
+      "moves": 10,
+      "success_message": "Die Klinge deines Schwertes brennt!",
+      "lacks_fuel_message": "Dein Flammenschwert hat keinen Brennstoff mehr."
+    },
+    "extend": { "flags": [ "COMBAT_NPC_USE" ] }
+  },
+  {
+    "id": "zweifire_on",
+    "copy-from": "zweifire_off",
+    "type": "TOOL",
+    "name": { "str": "flammenschwert (an)", "str_pl": "flammenschwerter (an)" },
+    "//": "All of this is SUPPOSED to be in German.",
+    "description": "Ein großes zweihaendiges Schwert aus Deutschland, an dessen Klinge sich, unter Zufuehrung von Benzin, eine anhaltende Flamme erzeugen laesst.  Es ist eine sehr maechtige Waffe.",
+    "color": "red",
+    "turns_per_charge": 20,
+    "revert_to": "zweifire_off",
+    "//2": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 2,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 18 },
+            { "damage_type": "cut", "amount": 39 },
+            { "damage_type": "heat", "amount": 15 }
+          ]
+        }
+      }
+    ],
+    "use_action": [
+      {
+        "type": "fireweapon_on",
+        "noise_chance": 35,
+        "noise_message": "Das Feuer um deine Schwertklinge leuchtet hell!",
+        "voluntary_extinguish_message": "Die Flamme deines Schwertes erlischt.",
+        "charges_extinguish_message": "Deinem Flammenschwert ist der Brennstoff ausgegangen!",
+        "water_extinguish_message": "Dein Schwert zischt und erlischt."
+      },
+      { "type": "firestarter", "moves": 30 }
+    ],
+    "extend": { "flags": [ "FIRE", "LIGHT_240", "CHARGEDIM", "TRADER_AVOID", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "radiant_blade",
+    "type": "GENERIC",
+    "category": "weapons",
+    "weapon_category": [ "JAPANESE_SWORDS", "2H_SWORDS", "MEDIEVAL_SWORDS", "1H_SWORDS" ],
+    "name": { "str": "radiant blade" },
+    "description": "Trails of brilliant light snake across the blade of this masterwork sword. Integrated with the remains of a mutant triffid, it is light and versatile enough to be easily adapted to most sword fighting styles.",
+    "weight": "350 g",
+    "volume": "2500 ml",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 3,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 4 },
+            { "damage_type": "cut", "amount": 4 },
+            { "damage_type": "light", "amount": 30 }
+          ]
+        }
+      }
+    ],
+    "material": "steel",
+    "symbol": "/",
+    "color": "light_gray",
+    "techniques": [ "RAPID", "WBLOCK_2", "WIDE", "BRUTAL" ],
+    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 9 ] ],
+    "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NONCONDUCTIVE", "TRADER_AVOID", "LIGHT_240" ]
   }
 ]

@@ -42,5 +42,11 @@
       "O": "f_alien_pod_resin"
     },
     "items": { "n": [ { "item": "migo_table_study", "chance": 50, "repeat": 2 }, { "item": "migo_table_corpses", "chance": 50 } ] }
+  },
+  {
+    "type": "palette",
+    "id": "mi-go_clutter_palette",
+    "//": "Used in nested chunks to prevent spawning loose debris under furniture",
+    "items": { " ": { "item": "migo_litter", "chance": 5 } }
   }
 ]

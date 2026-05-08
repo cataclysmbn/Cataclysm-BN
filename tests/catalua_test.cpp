@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_serde.h"
 #include "catalua_sol.h"
@@ -10,16 +11,21 @@
 #include "faction.h"
 #include "fstream_utils.h"
 #include "json.h"
+#include "map.h"
 #include "mapdata.h"
 #include "options.h"
 #include "point.h"
+#include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
 #include "type_id.h"
 #include "units_angle.h"
 #include "units_energy.h"
 #include "units_mass.h"
+#include "units_utility.h"
 #include "units_volume.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
 
 #include <optional>
 #include <string>
@@ -263,6 +269,48 @@ TEST_CASE( "lua_get_luna_type", "[lua]" )
         st["k"] = custom_udata{};
         CHECK( get_luna_type( st["k"] ) == std::nullopt );
     }
+}
+
+TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto origin = tripoint( 60, 60, 0 );
+    const auto original_facing = -90_degrees;
+    const auto overridden_facing = 180_degrees;
+    auto *vehicle_ptr = here.add_vehicle( vproto_id( "bicycle" ), origin, original_facing, 0, 0 );
+    REQUIRE( vehicle_ptr != nullptr );
+
+    sol::state lua = make_lua_state();
+    auto test_data = lua.create_table();
+    test_data["map"] = &here;
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "map_vehicle_replacement_test.lua" );
+
+    CHECK( test_data.get<int>( "vehicle_count_before" ) == 1 );
+    CHECK( test_data.get<std::string>( "vehicle_type_before" ) == "bicycle" );
+    CHECK( test_data.get<bool>( "replace_ok" ) );
+    CHECK( test_data.get<bool>( "replace_with_opts_ok" ) );
+    CHECK( test_data.get<int>( "vehicle_count_after" ) == 1 );
+    CHECK( test_data.get<std::string>( "vehicle_type_after" ) == "swivel_chair" );
+
+    const auto vehicles = here.get_vehicles();
+    REQUIRE( vehicles.size() == 1 );
+    CHECK( vehicles.front().pos == origin );
+    REQUIRE( vehicles.front().v != nullptr );
+    CHECK( vehicles.front().v->type == vproto_id( "swivel_chair" ) );
+    CHECK( normalize( vehicles.front().v->face.dir() ) == normalize( overridden_facing ) );
+    CHECK( vehicles.front().v->static_drag() == vehicles.front().v->static_drag( false ) );
+    const auto part_count = vehicles.front().v->part_count();
+    auto has_lock = false;
+    for( auto index = 0; index < part_count; ++index ) {
+        CHECK( vehicles.front().v->part( index ).damage_percent() == Approx( 0.0 ) );
+        has_lock = has_lock ||
+                   vehicles.front().v->part_with_feature( index, "DOOR_LOCKING", false ) == index;
+    }
+    CHECK( !has_lock );
 }
 
 TEST_CASE( "lua_table_serde", "[lua]" )
@@ -770,4 +818,161 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     REQUIRE( lua_energy_joules == units::to_joule( units::from_kilojoule( energy_kilojoules ) ) );
     REQUIRE( lua_mass_grams == units::to_gram( units::from_kilogram( mass_kilograms ) ) );
     REQUIRE( lua_volume_milliliters == units::to_milliliter( units::from_liter( volume_liters ) ) );
+}
+
+TEST_CASE( "lua_require_relative", "[lua]" )
+{
+    sol::state lua = make_lua_state();
+
+    // Create global table for test
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Run Lua script that uses relative require
+    run_lua_test_script( lua, "require_test_relative.lua" );
+
+    // Check results
+    int result_add = test_data["result_add"];
+    int result_mul = test_data["result_mul"];
+
+    REQUIRE( result_add == 5 );   // 2 + 3
+    REQUIRE( result_mul == 20 );  // 4 * 5
+}
+
+TEST_CASE( "lua_require_dotted", "[lua]" )
+{
+    sol::state lua = make_lua_state();
+
+    // Create global table for test
+    sol::table test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    // Run Lua script that uses dotted require
+    run_lua_test_script( lua, "require_test_dotted.lua" );
+
+    // Check results
+    int result_add = test_data["result_add"];
+    int result_mul = test_data["result_mul"];
+
+    REQUIRE( result_add == 30 );  // 10 + 20
+    REQUIRE( result_mul == 21 );  // 3 * 7
+}
+
+static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
+{
+    state.lua = make_lua_state();
+    sol::state &lua = state.lua;
+
+    sol::table game = lua.create_table();
+    sol::table hooks = lua.create_table();
+    sol::table internal = lua.create_table();
+
+    game["hooks"] = hooks;
+    game["cata_internal"] = internal;
+    game["current_mod"] = "test_mod";
+    lua.globals()["game"] = game;
+
+    game["add_hook"] = [&lua]( const std::string & hook_name, const sol::object & entry ) {
+        auto *L = lua.lua_state();
+        sol::table hooks_table = lua["game"]["hooks"];
+        sol::optional<sol::table> maybe_hook_list = hooks_table[hook_name];
+
+        if( !maybe_hook_list ) {
+            debugmsg( "Invalid hook name: %s", hook_name );
+            return;
+        }
+
+        sol::table hook_list = *maybe_hook_list;
+
+        const auto current_mod = lua["game"]["current_mod"];
+        const auto mod_id = current_mod.valid() && current_mod.get_type() == sol::type::string
+                            ? current_mod.get<std::string>()
+                            : "<unknown>";
+
+        const auto is_function = entry.is<sol::function>() || entry.is<sol::protected_function>();
+        if( is_function ) {
+            auto new_entry = lua.create_table();
+            new_entry["mod_id"] = mod_id;
+            new_entry["priority"] = 0;
+            new_entry["fn"] = entry;
+
+            sol::stack::push( L, hook_list );
+            const auto next_index = static_cast<int>( lua_rawlen( L, -1 ) ) + 1;
+            lua_pop( L, 1 );
+
+            hook_list.set( next_index, new_entry );
+            return;
+        }
+
+        if( entry.is<sol::table>() ) {
+            auto tbl = entry.as<sol::table>();
+            const auto has_mod_id = tbl["mod_id"].valid() && tbl["mod_id"].get_type() != sol::type::lua_nil;
+            if( !has_mod_id ) {
+                tbl["mod_id"] = mod_id;
+            }
+
+            sol::stack::push( L, hook_list );
+            const auto next_index = static_cast<int>( lua_rawlen( L, -1 ) ) + 1;
+            lua_pop( L, 1 );
+
+            hook_list.set( next_index, tbl );
+            return;
+        }
+
+        debugmsg( "add_hook expects function or table entry, got type: %s for hook: %s",
+                  sol::type_name( lua, entry.get_type() ).c_str(), hook_name.c_str() );
+    };
+
+    sol::table cata_tbl = lua.create_table();
+    cata_tbl.set_function( "run_hooks", [&state]( const std::string & name ) -> sol::table {
+        return cata::run_hooks( name, nullptr, { .state = &state } );
+    } );
+    cata_tbl.set_function( "run_hooks_exit_early", [&state]( const std::string & name ) -> sol::table {
+        return cata::run_hooks( name, nullptr, { .exit_early = true, .state = &state } );
+    } );
+    lua.globals()["cata"] = cata_tbl;
+}
+
+TEST_CASE( "lua_hooks_order_and_chaining", "[lua]" )
+{
+    cata::lua_state state;
+    init_test_lua_hook_state( state );
+    sol::state &lua = state.lua;
+
+    lua.globals()["game"]["hooks"]["on_game_load"] = lua.create_table();
+
+    run_lua_script( lua, "tests/lua/hooks_order_and_chaining_test.lua" );
+
+    sol::table results_tbl = lua.globals()["game"]["cata_internal"]["hook_test_results"];
+    const sol::table log_tbl = results_tbl["log"];
+
+    REQUIRE( log_tbl.valid() );
+
+    // Order should be priority 10 -> 5 -> legacy(0)
+    CHECK( log_tbl.get<std::string>( 1 ) == "p10" );
+    CHECK( log_tbl.get<std::string>( 2 ) == "p5" );
+    CHECK( log_tbl.get<std::string>( 3 ) == "legacy" );
+
+    // Ensure hooks can override params.prev and affect downstream hooks.
+    CHECK( results_tbl.get<std::string>( "prev_seen" ) == "p5_ret" );
+}
+
+TEST_CASE( "lua_hooks_exit_early", "[lua]" )
+{
+    cata::lua_state state;
+    init_test_lua_hook_state( state );
+    sol::state &lua = state.lua;
+
+    lua.globals()["game"]["hooks"]["on_game_save"] = lua.create_table();
+
+    run_lua_script( lua, "tests/lua/hooks_exit_early_test.lua" );
+
+    sol::table results_tbl = lua.globals()["game"]["cata_internal"]["hook_test_results"];
+    const sol::table log_tbl = results_tbl["log"];
+
+    REQUIRE( log_tbl.valid() );
+
+    CHECK( log_tbl.get<std::string>( 1 ) == "p10" );
+    CHECK( results_tbl.get<bool>( "allowed" ) == false );
+    CHECK( log_tbl.get<sol::optional<std::string>>( 2 ) == sol::nullopt );
 }

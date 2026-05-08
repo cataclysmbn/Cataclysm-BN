@@ -29,8 +29,14 @@
     "material": [ "steel", "leather" ],
     "volume": "500 ml",
     "weight": "970 g",
-    "to_hit": 2,
-    "bashing": 12,
+    "//": "Roughly +25% fire damage",
+    "attacks": [
+      {
+        "id": "BASH",
+        "to_hit": 2,
+        "damage": { "values": [ { "damage_type": "bash", "amount": 12 }, { "damage_type": "heat", "amount": 3 } ] }
+      }
+    ],
     "qualities": [ [ "HAMMER", 1 ] ],
     "flags": [ "UNARMED_WEAPON", "DURABLE_MELEE", "NONCONDUCTIVE", "FLAMING" ]
   },
@@ -91,7 +97,7 @@
     "range": -8,
     "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
     "reload": 200,
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "valid_mod_locations": [ [ "mechanism", 1 ] ],
     "flags": [ "UNARMED_WEAPON", "DURABLE_MELEE", "NEVER_JAMS", "RELOAD_EJECT", "RELOAD_ONE" ],
     "faults": [ "fault_gun_blackpowder", "fault_gun_dirt" ]

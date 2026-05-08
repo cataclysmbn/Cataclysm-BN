@@ -108,6 +108,16 @@ namespace io
             case enchant_vals::mod::ITEM_DAMAGE_BASH: return "ITEM_DAMAGE_BASH";
             case enchant_vals::mod::ITEM_DAMAGE_CUT: return "ITEM_DAMAGE_CUT";
             case enchant_vals::mod::ITEM_DAMAGE_STAB: return "ITEM_DAMAGE_STAB";
+            case enchant_vals::mod::ITEM_DAMAGE_FIRE: return "ITEM_DAMAGE_FIRE";
+            case enchant_vals::mod::ITEM_DAMAGE_ACID: return "ITEM_DAMAGE_ACID";
+            case enchant_vals::mod::ITEM_DAMAGE_BIO: return "ITEM_DAMAGE_BIO";
+            case enchant_vals::mod::ITEM_DAMAGE_COLD: return "ITEM_DAMAGE_COLD";
+            case enchant_vals::mod::ITEM_DAMAGE_DARK: return "ITEM_DAMAGE_DARK";
+            case enchant_vals::mod::ITEM_DAMAGE_LIGHT: return "ITEM_DAMAGE_LIGHT";
+            case enchant_vals::mod::ITEM_DAMAGE_PSI: return "ITEM_DAMAGE_PSI";
+            case enchant_vals::mod::ITEM_DAMAGE_BULLET: return "ITEM_DAMAGE_BULLET";
+            case enchant_vals::mod::ITEM_DAMAGE_ELECTRIC: return "ITEM_DAMAGE_ELECTRIC";
+            case enchant_vals::mod::ITEM_DAMAGE_TRUE: return "ITEM_DAMAGE_TRUE";
             case enchant_vals::mod::ITEM_ARMOR_BASH: return "ITEM_ARMOR_BASH";
             case enchant_vals::mod::ITEM_ARMOR_CUT: return "ITEM_ARMOR_CUT";
             case enchant_vals::mod::ITEM_ARMOR_DARK: return "ITEM_ARMOR_DARK";
@@ -121,6 +131,13 @@ namespace io
             case enchant_vals::mod::ITEM_ARMOR_ACID: return "ITEM_ARMOR_ACID";
             case enchant_vals::mod::ITEM_ARMOR_BIO: return "ITEM_ARMOR_BIO";
             case enchant_vals::mod::ITEM_ATTACK_COST: return "ITEM_ATTACK_COST";
+            case enchant_vals::mod::RANGED_DISPERSION: return "RANGED_DISPERSION";
+            case enchant_vals::mod::RANGED_DAMAGE_BULLET: return "RANGED_DAMAGE_BULLET";
+            case enchant_vals::mod::RANGED_ARMOR_PENETRATION: return "RANGED_ARMOR_PENETRATION";
+            case enchant_vals::mod::RANGED_RANGE: return "RANGED_RANGE";
+            case enchant_vals::mod::RANGED_RECOIL: return "RANGED_RECOIL";
+            case enchant_vals::mod::RANGED_RELOAD_TIME: return "RANGED_RELOAD_TIME";
+            case enchant_vals::mod::RANGED_AIM_SPEED: return "RANGED_AIM_SPEED";
             case enchant_vals::mod::NUM_MOD: break;
         }
         debugmsg( "Invalid enchant_vals::mod" );

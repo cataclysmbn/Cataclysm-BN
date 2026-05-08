@@ -18,16 +18,12 @@
     "name": { "str": "pupating zombie crawler" },
     "description": "This half of a human corpse is wrapped in sticky black fibers that cover everything neck down.  Beneath the wrapping there is strange rhythmic movement grotesque to behold.",
     "copy-from": "mon_zombie_crawler_pupa_decoy",
-    "extend": {
-      "special_attacks": [
-        {
-          "type": "spell",
-          "spell_data": { "id": "small_raptor_spawn", "hit_self": true },
-          "cooldown": 50,
-          "monster_message": "The pupating zombie crawler bursts, and gore-smeared winged beasts climb out of the corpse!"
-        }
-      ]
-    }
+    "on_death": {
+      "death_function": [ "SPLATTER", "NORMAL" ],
+      "spawn_mon_near": { "distance": 2, "ids": [ "mon_spawn_raptor", "mon_spawn_raptor", "mon_spawn_raptor" ] }
+    },
+    "extend": { "special_attacks": [ [ "SUICIDE", 5 ] ] },
+    "delete": { "flags": [ "REVIVES" ] }
   },
   {
     "id": "mon_zombie_pupa_decoy",
@@ -48,16 +44,12 @@
     "name": { "str": "pupating zombie" },
     "description": "This human corpse is wrapped in sticky black fibers that cover everything neck down.  Beneath the wrapping there is strange rhythmic movement grotesque to behold.",
     "copy-from": "mon_zombie_pupa_decoy",
-    "extend": {
-      "special_attacks": [
-        {
-          "type": "spell",
-          "spell_data": { "id": "small_raptor_spawn", "hit_self": true },
-          "cooldown": 50,
-          "monster_message": "The pupating zombie bursts, and gore-smeared winged beasts climb out of the corpse!"
-        }
-      ]
-    }
+    "on_death": {
+      "death_function": [ "SPLATTER", "NORMAL" ],
+      "spawn_mon_near": { "distance": 2, "ids": [ "mon_spawn_raptor", "mon_spawn_raptor", "mon_spawn_raptor" ] }
+    },
+    "extend": { "special_attacks": [ [ "SUICIDE", 5 ] ] },
+    "delete": { "flags": [ "REVIVES" ] }
   },
   {
     "id": "mon_zombie_pupa_decoy_shady",
@@ -80,15 +72,11 @@
     "name": { "str": "shady pupating zombie" },
     "description": "An uncanny shadow envelops this creature.  You can make out the outline of what once may have been a human being, but its edges bulge rhythmically in places that are not anatomically possible for humans.",
     "copy-from": "mon_zombie_pupa_decoy",
-    "extend": {
-      "special_attacks": [
-        {
-          "type": "spell",
-          "spell_data": { "id": "shady_raptor_spawn", "hit_self": true },
-          "cooldown": 50,
-          "monster_message": "The pupating zombie bursts, and shadowy winged beasts climb out of the corpse!"
-        }
-      ]
-    }
+    "on_death": {
+      "death_function": [ "SPLATTER", "NORMAL" ],
+      "spawn_mon_near": { "distance": 2, "ids": [ "mon_spawn_raptor_shady", "mon_spawn_raptor_shady", "mon_spawn_raptor_shady" ] }
+    },
+    "extend": { "special_attacks": [ [ "SUICIDE", 5 ] ] },
+    "delete": { "flags": [ "REVIVES" ] }
   }
 ]

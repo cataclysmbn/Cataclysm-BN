@@ -45,6 +45,7 @@
 #include "type_id.h"
 #include "ui_manager.h"
 #include "path_display.h"
+#include "get_version.h"
 
 #if defined(PREFIX)
 #   undef PREFIX
@@ -262,6 +263,7 @@ int main( int argc, char *argv[] )
                     "Checks the BN json files",
                     section_default,
                     [&verifyexit]( int, const char ** ) -> int {
+                        test_mode = true;
                         verifyexit = true;
                         return 0;
                     }
@@ -571,6 +573,9 @@ int main( int argc, char *argv[] )
                 printHelpMessage( first_pass_arguments.data(), num_first_pass_arguments,
                                   second_pass_arguments.data(), num_second_pass_arguments );
                 return 0;
+            } else if( !strcmp( argv[0], "--version" ) ) {
+                cata_printf( "%s\n", getVersionString() );
+                return 0;
             } else if( !strcmp( argv[0], "--paths" ) ) {
                 asked_game_path = true;
                 argc--;
@@ -670,6 +675,26 @@ int main( int argc, char *argv[] )
         }
     };
 
+#if defined(__ANDROID__)
+    if( !dir_exist( PATH_INFO::user_dir() ) ) {
+        check_dir_good( PATH_INFO::user_dir() );
+        std::string external_storage_path( SDL_AndroidGetExternalStoragePath() );
+        if( dir_exist( external_storage_path + "/config" ) ) {
+            std::filesystem::copy( external_storage_path + "/config", PATH_INFO::user_dir() + "config",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/font", PATH_INFO::user_dir() + "font",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/gfx", PATH_INFO::user_dir() + "gfx",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/save", PATH_INFO::user_dir() + "save",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/sound", PATH_INFO::user_dir() + "sound",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/templates", PATH_INFO::user_dir() + "templates",
+                                   std::filesystem::copy_options::recursive );
+        }
+    }
+#endif
     check_dir_good( PATH_INFO::user_dir() );
     check_dir_good( PATH_INFO::config_dir() );
     check_dir_good( PATH_INFO::savedir() );
@@ -851,6 +876,8 @@ void printHelpMessage( const arg_handler *first_pass_arguments,
     cata_printf( R"(Info:
 --help
     print this message and exit
+--version
+    print the version and exit
 --paths
     print the paths used by the game and exit
 

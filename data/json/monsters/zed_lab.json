@@ -32,7 +32,7 @@
     "death_drops": "mon_zombie_scientist_death_drops",
     "death_function": [ "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_UPGRADE" },
+    "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" },
     "flags": [
       "SEES",
       "HEARS",
@@ -50,6 +50,75 @@
       "CAN_OPEN_DOORS",
       "PRIORITIZE_TARGETS"
     ]
+  },
+  {
+    "id": "mon_zombie_scientist_evolved_igor",
+    "copy-from": "mon_zombie_scientist",
+    "type": "MONSTER",
+    "name": { "str": "elite zombie scientist" },
+    "description": "What used to be the shambling corpse of some former scientist now glowers with an eerie intelligence in its eyes.  Though more steady on its feet, its hands fumble awkwardly for hidden devices within various pockets, and the faint hum of manhack motors follow in its wake.",
+    "relative": { "hp": 20, "speed": 10, "melee_skill": 1, "dodge": 1 },
+    "starting_ammo": { "bot_manhack": 3 },
+    "path_settings": { "max_dist": 10 },
+    "special_attacks": [ [ "scratch", 20 ], [ "SCIENCE", 18 ] ],
+    "extend": { "flags": [ "DROPS_AMMO", "ACIDPROOF" ] },
+    "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
+  },
+  {
+    "id": "mon_zombie_scientist_evolved_emp",
+    "copy-from": "mon_zombie_scientist",
+    "looks_like": "mon_zombie_nullfield",
+    "type": "MONSTER",
+    "name": { "str": "zombie cybernetics researcher" },
+    "description": "Decaying flesh and torn laboratory safety gear reveal hints of embedded alloy plating and various bionics components.  Cutting-edge cybernetics seem to be the only thing keeping its rotting corpse intact, and one arm crackle with electromagnetic discharges as it reaches for its prey.",
+    "relative": { "hp": 50, "speed": -10, "melee_dice": 1, "armor_bash": 14, "armor_cut": 10, "armor_bullet": 8 },
+    "luminance": 5,
+    "special_attacks": [
+      [ "scratch", 20 ],
+      {
+        "type": "gun",
+        "cooldown": 10,
+        "move_cost": 150,
+        "gun_type": "monster_emp_gun",
+        "ranges": [ [ 3, 10, "DEFAULT" ] ],
+        "require_targeting_npc": true,
+        "require_targeting_monster": true,
+        "description": "The cybernetic zombie discharges an integrated EMP projector!",
+        "targeting_cost": 200,
+        "targeting_timeout_extend": -10,
+        "targeting_sound": "an electric hum!",
+        "targeting_volume": 50,
+        "no_ammo_sound": "faint beeping."
+      }
+    ],
+    "special_when_hit": [ "ZAPBACK", 100 ],
+    "harvest": "CBM_SUBS",
+    "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
+  },
+  {
+    "id": "mon_zombie_scientist_evolved_possessed",
+    "copy-from": "mon_zombie_scientist",
+    "looks_like": "mon_zombie_master",
+    "type": "MONSTER",
+    "name": { "str": "zombie xenotech" },
+    "description": "Shadows envelop this creature, but you can faintly make out what used to be a lab coat.  Marked by whatever perversions of science it practiced in life, the movements of its silhouette seem more lively than expected, but far from human.",
+    "relative": { "hp": 10, "speed": 25, "melee_skill": 2, "dodge": 3 },
+    "vision_night": 50,
+    "special_attacks": [
+      {
+        "type": "spell",
+        "spell_data": { "id": "spell_mothman_ninja_vanish" },
+        "cooldown": 100,
+        "monster_message": "Creeping darkness radiates from %s!"
+      },
+      [ "SHRIEK", 10 ],
+      [ "scratch", 20 ],
+      [ "STARE", 20 ]
+    ],
+    "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -1 } ],
+    "regenerates_in_dark": true,
+    "extend": { "flags": [ "HARDTOSHOOT", "NIGHT_INVISIBILITY" ] },
+    "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
   },
   {
     "id": "mon_zombie_labsecurity",

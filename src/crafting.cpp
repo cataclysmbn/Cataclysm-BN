@@ -27,6 +27,7 @@
 #include "color.h"
 #include "craft_command.h"
 #include "crafting_gui.h"
+#include "crafting_quality.h"
 #include "debug.h"
 #include "enums.h"
 #include "faction.h"
@@ -82,6 +83,7 @@ static const efftype_id effect_contacts( "contacts" );
 
 static const itype_id itype_plut_cell( "plut_cell" );
 
+static const skill_id skill_cooking( "cooking" );
 static const skill_id skill_electronics( "electronics" );
 static const skill_id skill_tailor( "tailor" );
 
@@ -90,8 +92,13 @@ static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const trait_id trait_HYPEROPIC( "HYPEROPIC" );
 
 static const flag_id flag_BIONIC_TOGGLED( "BIONIC_TOGGLED" );
+
+static const std::string flag_BLIND_NO_EFFECT( "BLIND_NO_EFFECT" );
 static const std::string flag_BLIND_EASY( "BLIND_EASY" );
 static const std::string flag_BLIND_HARD( "BLIND_HARD" );
+static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
+static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
+
 static const std::string flag_FULL_MAGAZINE( "FULL_MAGAZINE" );
 static const std::string flag_NO_RESIZE( "NO_RESIZE" );
 static const std::string flag_UNCRAFT_LIQUIDS_CONTAINED( "UNCRAFT_LIQUIDS_CONTAINED" );
@@ -117,7 +124,7 @@ static bool crafting_allowed( const Character &who, const recipe &rec )
 
 float lighting_crafting_speed_multiplier( const Character &who, const recipe &rec )
 {
-    if( character_funcs::can_see_fine_details( who ) ) {
+    if( rec.has_flag( flag_BLIND_NO_EFFECT ) || character_funcs::can_see_fine_details( who ) ) {
         return 1.0f;
     }
 
@@ -131,19 +138,53 @@ float lighting_crafting_speed_multiplier( const Character &who, const recipe &re
             character_funcs::FINE_VISION_THRESHOLD
         ) / 7.0f;
 
-    if( rec.has_flag( flag_BLIND_EASY ) ) {
-        // 100% speed in well lit area at skill+0
-        // 25% speed in pitch black at skill+0
-        // skill+2 removes speed penalty
-        return 1.0f - darkness * 0.75f * std::max( 0, 2 - skill_bonus ) / 2.0f;
-    } else if( rec.has_flag( flag_BLIND_HARD ) && skill_bonus >= 2 ) {
-        // 100% speed in well lit area at skill+2
-        // 25% speed in pitch black at skill+2
-        // skill+8 removes speed penalty
-        return 1.0f - darkness * 0.75f * std::max( 0, 8 - skill_bonus ) / 6.0f;
+    float skill_deficit = std::max( 0.0f, static_cast<float>( -skill_bonus ) );
+
+    // block_divisor: at full darkness, blocks when skill_deficit >= block_divisor
+    // base_penalty: base speed reduction at full darkness when meeting requirements
+    // deficit_scale: scales how much each point of skill deficit adds to penalty
+    // deficit_scale is set so speed hits 5% floor just before blocking threshold
+    auto calc_light_with_blocking = [&]( float block_divisor, float base_penalty,
+    float deficit_scale ) -> float {
+        // Block when skill deficit exceeds threshold for current darkness
+        if( skill_deficit >= darkness * block_divisor )
+        {
+            return 0.0f;
+        }
+        // Base darkness penalty + skill deficit penalty
+        float deficit_penalty = ( deficit_scale > 0.0f ) ? ( skill_deficit / deficit_scale ) : 0.0f;
+        float total_penalty = darkness * ( base_penalty + deficit_penalty );
+        float result = 1.0f - total_penalty;
+        // Block if penalty drives result to 0 or below
+        if( result <= 0.0f )
+        {
+            return 0.0f;
+        }
+        // Otherwise apply 5% floor (20x max slowdown)
+        return std::max( 0.05f, result );
+    };
+
+    if( rec.has_flag( flag_BLIND_IMPOSSIBLE ) ) {
+        // Auto-blocks at minimal light (~0.5 darkness) or worse
+        if( darkness >= 0.5f ) {
+            return 0.0f;
+        }
+        // In good light: 100% base penalty means mathematically blocks at full dark
+        // No explicit blocking - relies on mathematical blocking (result <= 0)
+        // deficit_scale=5 gives steep falloff with deficit
+        return calc_light_with_blocking( 1000.0f, 1.0f, 5.0f );
+    } else if( rec.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ) {
+        // Very harsh: blocks at deficit >= 3*darkness, 25% base at full dark
+        return calc_light_with_blocking( 3.0f, 0.75f, 10.0f );
+    } else if( rec.has_flag( flag_BLIND_HARD ) ) {
+        // Harsh: blocks at deficit >= 6*darkness, 40% base at full dark
+        return calc_light_with_blocking( 6.0f, 0.60f, 14.0f );
+    } else if( rec.has_flag( flag_BLIND_EASY ) ) {
+        // Lenient: blocks at deficit >= 20*darkness, 75% base at full dark
+        return calc_light_with_blocking( 20.0f, 0.25f, 27.0f );
     } else {
-        // Needs proper vision or the character is not skilled enough
-        return 0.0f;
+        // Default: blocks at deficit >= 12*darkness, 60% base at full dark
+        return calc_light_with_blocking( 12.0f, 0.40f, 20.0f );
     }
 }
 
@@ -245,24 +286,22 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
     return multiplier;
 }
 
-float crafting_speed_multiplier( const Character &who, const recipe &rec, bool in_progress )
+float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 {
-    const float result = morale_crafting_speed_multiplier( who, rec ) *
-                         lighting_crafting_speed_multiplier( who, rec );
-    // Can't start if we'd need 300% time, but we can still finish the job
-    if( !in_progress && result < 0.33f ) {
-        return 0.0f;
-    }
-    // If we're working below 10% speed, just give up
-    if( result < 0.1f ) {
-        return 0.0f;
-    }
+    const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
+    const auto result = morale_crafting_speed_multiplier( who, rec ) *
+                        lighting_crafting_speed_multiplier( who,
+                                rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                        ? 9999
+                                        : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
+                        who.mutation_value( "crafting_speed_modifier" );
 
     return result;
 }
 
 float crafting_speed_multiplier( const Character &who, const item &craft,
-                                 const bench_location &bench )
+                                 const bench_location &bench,
+                                 const std::optional<float> tools_multi_override )
 {
     if( !craft.is_craft() ) {
         debugmsg( "Can't calculate crafting speed multiplier of non-craft '%s'", craft.tname() );
@@ -274,27 +313,41 @@ float crafting_speed_multiplier( const Character &who, const item &craft,
     const float light_multi = lighting_crafting_speed_multiplier( who, rec );
     const float bench_multi = workbench_crafting_speed_multiplier( craft, bench );
     const float morale_multi = morale_crafting_speed_multiplier( who, rec );
+    const auto tools_multi = tools_multi_override
+                             ? *tools_multi_override
+                             : crafting_tools_speed_multiplier( who, rec );
+    const float mutation_multi = who.mutation_value( "crafting_speed_modifier" );
+    const float game_opt_multi = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0 ? 9999 :
+                                 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" );
 
-    const float total_multi = light_multi * bench_multi * morale_multi;
+    const auto total_multi = light_multi * bench_multi * morale_multi * tools_multi * mutation_multi *
+                             game_opt_multi;
 
     if( light_multi <= 0.0f ) {
-        who.add_msg_if_player( m_bad, _( "You can no longer see well enough to keep crafting." ) );
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "You can no longer see well enough to keep crafting." ),
+                                   _( "<npcname> can no longer see well enough to keep crafting." ) );
         return 0.0f;
     }
     if( bench_multi <= 0.1f || ( bench_multi <= 0.33f && total_multi <= 0.2f ) ) {
-        who.add_msg_if_player( m_bad, _( "The %s is too large and/or heavy to work on.  You may want to"
-                                         " use a workbench or a smaller batch size" ), craft.tname() );
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "The %s is too large and/or heavy to work on.  You may want to"
+                                      " use a workbench or a smaller batch size" ),
+                                   _( "The %s is too large and/or heavy for <npcname> to work on.  They may need"
+                                      " a workbench or a smaller batch size" ),
+                                   craft.tname() );
         return 0.0f;
     }
     if( morale_multi <= 0.2f || ( morale_multi <= 0.33f && total_multi <= 0.2f ) ) {
-        who.add_msg_if_player( m_bad, _( "Your morale is too low to continue crafting." ) );
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "Your morale is too low to continue crafting." ),
+                                   _( "<npcname>'s morale is too low to continue crafting." ) );
         return 0.0f;
     }
 
-    // If we're working below 20% speed, just give up
-    if( total_multi <= 0.2f ) {
-        who.add_msg_if_player( m_bad, _( "You are too frustrated to continue and just give up." ) );
-        return 0.0f;
+    // If we're working below 20% speed, just suggest giving up
+    if( calendar::once_every( 1_hours ) && total_multi <= 0.2f ) {
+        who.add_msg_if_player( m_bad, _( "You are too frustrated to continue and should just give up." ) );
     }
 
     if( calendar::once_every( 1_hours ) && total_multi < 0.75f ) {
@@ -322,7 +375,7 @@ bool Character::has_morale_to_craft() const
 void Character::craft( const tripoint &loc )
 {
     int batch_size = 0;
-    const recipe *rec = select_crafting_recipe( batch_size );
+    const recipe *rec = select_crafting_recipe( batch_size, *this );
     if( rec ) {
         if( crafting_allowed( *this, *rec ) ) {
             make_craft( rec->ident(), batch_size, loc );
@@ -342,7 +395,7 @@ void Character::recraft( const tripoint &loc )
 void Character::long_craft( const tripoint &loc )
 {
     int batch_size = 0;
-    const recipe *rec = select_crafting_recipe( batch_size );
+    const recipe *rec = select_crafting_recipe( batch_size, *this );
     if( rec ) {
         if( crafting_allowed( *this, *rec ) ) {
             make_all_craft( rec->ident(), batch_size, loc );
@@ -358,10 +411,14 @@ bool Character::making_would_work( const recipe_id &id_to_make, int batch_size )
     }
 
     if( !can_make( &making, batch_size ) ) {
-        std::string buffer = _( "You can no longer make that craft!" );
-        buffer += "\n";
-        buffer += making.simple_requirements().list_missing();
-        popup( buffer, PF_NONE );
+        if( is_avatar() ) {
+            std::string buffer = _( "You can no longer make that craft!" );
+            buffer += "\n";
+            buffer += making.simple_requirements().list_missing();
+            popup( buffer, PF_NONE );
+            return false;
+        }
+        add_msg_if_npc( _( "<npcname> can no longer make that craft!" ) );
         return false;
     }
 
@@ -544,9 +601,9 @@ const inventory &Character::crafting_inventory( const tripoint &src_pos, int rad
     if( src_pos == tripoint_zero ) {
         inv_pos = pos();
     }
-    if( cached_moves == moves
-        && cached_time == calendar::turn
-        && cached_position == inv_pos ) {
+    const auto cache_hit = cached_time == calendar::turn
+                           && cached_position == inv_pos;
+    if( cache_hit ) {
         return cached_crafting_inventory;
     }
     cached_crafting_inventory.form_from_map( inv_pos, radius, this, false, clear_path );
@@ -744,12 +801,16 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     item *craft_in_world = &*craft;
     set_item_inventory( *this, std::move( craft ) );
 
+
     assign_activity( ACT_CRAFT );
     activity->targets.emplace_back( craft_in_world );
-    activity->coords.push_back( bench.position );
+    activity->coords.push_back( get_map().getabs( bench.position ) );
     activity->values.push_back( command.is_long() );
     // Ugly
     activity->values.push_back( static_cast<int>( bench.type ) );
+    activity->values.push_back( 100 );
+    activity->values.push_back( 0 );
+    activity->placement = tripoint_zero;
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
@@ -1039,6 +1100,9 @@ void complete_craft( Character &who, item &craft )
 
     bool first = true;
     size_t newit_counter = 0;
+    if( craft.is_comestible() ) {
+        craft.set_kcal_mult( 1 + ( who.get_skill_level( skill_cooking ) * 0.02 ) );
+    }
     for( detached_ptr<item> &newit : newits ) {
 
         // Points to newit unless newit is a non-empty container, then it points to newit's contents.
@@ -1051,9 +1115,9 @@ void complete_craft( Character &who, item &craft )
             first = false;
             // TODO: reconsider recipe memorization
             if( who.knows_recipe( &making ) ) {
-                add_msg( _( "You craft %s from memory." ), making.result_name() );
+                who.add_msg_if_player( _( "You craft %s from memory." ), making.result_name() );
             } else {
-                add_msg( _( "You craft %s using a book as a reference." ), making.result_name() );
+                who.add_msg_if_player( _( "You craft %s using a book as a reference." ), making.result_name() );
                 // If we made it, but we don't know it,
                 // we're making it from a book and have a chance to learn it.
                 // Base expected time to learn is 1000*(difficulty^4)/skill/int moves.
@@ -1070,8 +1134,8 @@ void complete_craft( Character &who, item &craft )
                 const double time_to_learn = 1000 * 8 * std::pow( difficulty, 4 ) / learning_speed;
                 if( x_in_y( making.time, time_to_learn ) ) {
                     who.learn_recipe( &making );
-                    add_msg( m_good, _( "You memorized the recipe for %s!" ),
-                             making.result_name() );
+                    who.add_msg_if_player( m_good, _( "You memorized the recipe for %s!" ),
+                                           making.result_name() );
                 }
             }
         }
@@ -1083,6 +1147,9 @@ void complete_craft( Character &who, item &craft )
             food_contained.unset_flag( flag );
         }
 
+        if( food_contained.is_comestible() ) {
+            food_contained.set_kcal_mult( 1 + ( who.get_skill_level( skill_cooking ) * 0.02 ) );
+        }
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {
             food_contained.set_flag( flag_NUTRIENT_OVERRIDE );
@@ -1196,10 +1263,14 @@ bool Character::can_continue_craft( item &craft )
         const int batch_size = 1;
 
         if( !continue_reqs.can_make_with_inventory( crafting_inventory(), filter, batch_size ) ) {
-            std::string buffer = _( "You don't have the required components to continue crafting!" );
-            buffer += "\n";
-            buffer += continue_reqs.list_missing();
-            popup( buffer, PF_NONE );
+            if( is_avatar() ) {
+                std::string buffer = _( "You don't have the required components to continue crafting!" );
+                buffer += "\n";
+                buffer += continue_reqs.list_missing();
+                popup( buffer, PF_NONE );
+                return false;
+            }
+            add_msg_if_npc( _( "<npcname> don't have the required components to continue crafting!" ) );
             return false;
         }
 
@@ -1267,10 +1338,14 @@ bool Character::can_continue_craft( item &craft )
                 std::vector<std::vector<item_comp>>() );
 
         if( !tool_continue_reqs.can_make_with_inventory( crafting_inventory(), return_true<item> ) ) {
-            std::string buffer = _( "You don't have the necessary tools to continue crafting!" );
-            buffer += "\n";
-            buffer += tool_continue_reqs.list_missing();
-            popup( buffer, PF_NONE );
+            if( is_avatar() ) {
+                std::string buffer = _( "You don't have the necessary tools to continue crafting!" );
+                buffer += "\n";
+                buffer += tool_continue_reqs.list_missing();
+                popup( buffer, PF_NONE );
+                return false;
+            }
+            add_msg_if_npc( _( "<npcname> don't have the necessary tools to continue crafting!" ) );
             return false;
         }
 
@@ -2439,5 +2514,7 @@ int charges_for_continuing( int full_charges )
 {
     return full_charges / 20;
 }
+
+
 
 } // namespace crafting

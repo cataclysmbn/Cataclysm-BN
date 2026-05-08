@@ -535,7 +535,7 @@
       "fields": { "=": { "field": "fd_blood", "intensity": 1, "age": 990 } },
       "place_monsters": [
         { "monster": "GROUP_ZOMBIE", "x": [ 16, 20 ], "y": [ 11, 14 ], "density": 0.1 },
-        { "monster": "GROUP_CHUD", "x": [ 4, 6 ], "y": [ 16, 18 ], "density": 0.2 }
+        { "monster": "GROUP_SEWER", "x": [ 4, 6 ], "y": [ 16, 18 ], "density": 0.2 }
       ]
     }
   },

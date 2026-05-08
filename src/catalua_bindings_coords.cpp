@@ -40,15 +40,11 @@ void cata::detail::reg_point_tripoint( sol::state &lua )
 
         // Equality operator
         // It's defined as inline friend function inside point class, we can't access it and so have to improvise
-        luna::set_fx( ut, sol::meta_function::equal_to, []( const point & a, const point & b ) {
-            return a == b;
-        } );
+        luna::set_fx( ut, sol::meta_function::equal_to, []( const point & a, const point & b ) { return a == b; } );
 
         // Less-then operator
         // Same deal as with equality operator
-        luna::set_fx( ut, sol::meta_function::less_than, []( const point & a, const point & b ) {
-            return a < b;
-        } );
+        luna::set_fx( ut, sol::meta_function::less_than, []( const point & a, const point & b ) { return a < b; } );
 
         // Arithmetic operators
         // point + point
@@ -102,15 +98,11 @@ void cata::detail::reg_point_tripoint( sol::state &lua )
 
         // Equality operator
         // It's defined as inline friend function inside point class, we can't access it and so have to improvise
-        luna::set_fx( ut, sol::meta_function::equal_to, []( const tripoint & a, const tripoint & b ) {
-            return a == b;
-        } );
+        luna::set_fx( ut, sol::meta_function::equal_to, []( const tripoint & a, const tripoint & b ) { return a == b; } );
 
         // Less-then operator
         // Same deal as with equality operator
-        luna::set_fx( ut, sol::meta_function::less_than, []( const tripoint & a, const tripoint & b ) {
-            return a < b;
-        } );
+        luna::set_fx( ut, sol::meta_function::less_than, []( const tripoint & a, const tripoint & b ) { return a < b; } );
 
         // Arithmetic operators
         // tripoint + tripoint (overload 1)
@@ -168,14 +160,14 @@ void cata::detail::reg_coords_library( sol::state &lua )
     luna::set_fx( lib, "sm_to_ms", []( const tripoint & raw_rough,
     sol::optional<const point &> raw_remain ) -> tripoint {
         tripoint_rel_sm rough( raw_rough );
-        point_sm_ms remain( raw_remain ? *raw_remain : point_zero );
+        point_sm_ms remain( raw_remain.value_or( point_zero ) );
         tripoint_rel_ms fine = coords::project_combine( rough, remain );
         return fine.raw();
     } );
     luna::set_fx( lib, "omt_to_ms", []( const tripoint & raw_rough,
     sol::optional<const point &> raw_remain ) -> tripoint {
         tripoint_rel_omt rough( raw_rough );
-        point_omt_ms remain( raw_remain ? *raw_remain : point_zero );
+        point_omt_ms remain( raw_remain.value_or( point_zero ) );
         tripoint_rel_ms fine = coords::project_combine( rough, remain );
         return fine.raw();
     } );
@@ -183,7 +175,7 @@ void cata::detail::reg_coords_library( sol::state &lua )
     sol::optional<const tripoint &> raw_remain ) -> tripoint {
         point_rel_om rough( raw_rough );
         coords::coord_point<tripoint, coords::origin::overmap, coords::ms> remain(
-            raw_remain ? *raw_remain : tripoint_zero
+            raw_remain.value_or( tripoint_zero )
         );
         tripoint_rel_ms fine = coords::project_combine( rough, remain );
         return fine.raw();

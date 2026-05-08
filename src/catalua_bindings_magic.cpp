@@ -18,6 +18,7 @@ void cata::detail::reg_magic( sol::state &lua )
     reg_spell_type( lua );
     reg_spell_fake( lua );
     reg_spell( lua );
+    reg_known_magic( lua );
 }
 
 void cata::detail::reg_spell_type( sol::state &lua )
@@ -38,9 +39,7 @@ void cata::detail::reg_spell_type( sol::state &lua )
 
         // The string conversion function references this object's str_id.
         luna::set_fx( ut, sol::meta_function::to_string,
-        []( const UT_CLASS & id ) -> std::string {
-            return string_format( "%s[%s]", luna::detail::luna_traits<UT_CLASS>::name, id.id.c_str() );
-        } );
+        []( const UT_CLASS & id ) -> std::string { return string_format( "%s[%s]", luna::detail::luna_traits<UT_CLASS>::name, id.id.c_str() ); } );
 
         SET_MEMB_RO( id );
         DOC( "The name of the primary effect this spell will enact." );
@@ -90,9 +89,7 @@ void cata::detail::reg_spell_type( sol::state &lua )
 
         DOC( "Other spells cast by this spell." );
         luna::set_fx( ut, "additional_spells",
-        []( const UT_CLASS & spid ) -> std::vector<fake_spell> {
-            std::vector<fake_spell> rv = spid.additional_spells; return rv;
-        } );
+        []( const UT_CLASS & spid ) -> std::vector<fake_spell> { std::vector<fake_spell> rv = spid.additional_spells; return rv; } );
 
         DOC( "Returns a (long) list of every spell in the game." );
         SET_FX_T( get_all, const std::vector<spell_type> &() );
@@ -117,16 +114,12 @@ void cata::detail::reg_spell_fake( sol::state &lua )
         );
 
         luna::set_fx( ut, sol::meta_function::to_string,
-        []( const UT_CLASS & id ) -> std::string {
-            return string_format( "%s[%s]", luna::detail::luna_traits<UT_CLASS>::name, id.id.c_str() );
-        } );
+        []( const UT_CLASS & id ) -> std::string { return string_format( "%s[%s]", luna::detail::luna_traits<UT_CLASS>::name, id.id.c_str() ); } );
 
         SET_MEMB_RO( id );
 
         DOC( "Returns the defined maximum level of this SpellSimple instance, if defined. Otherwise, returns 0." );
-        luna::set_fx( ut, "max_level", []( UT_CLASS & sp ) -> int {
-            return sp.max_level.has_value() ? *sp.max_level : 0;
-        } );
+        luna::set_fx( ut, "max_level", []( UT_CLASS & sp ) -> int { return sp.max_level.has_value() ? *sp.max_level : 0; } );
 
         // Perhaps this should be writeable?
         SET_MEMB_RO( level );
@@ -223,4 +216,73 @@ void cata::detail::reg_spell( sol::state &lua )
         SET_FX_N_T( cast_spell_effect, "cast_single_effect", void( Creature & source, const tripoint & target ) const );
     }
 #undef UT_CLASS // #define UT_CLASS spell
+}
+
+void cata::detail::reg_known_magic( sol::state &lua )
+{
+#define UT_CLASS known_magic
+    {
+        DOC( "Represents a character's spellbook and mana pool. Manages all spells known by a character, their mana, and spell learning/forgetting." );
+        sol::usertype<UT_CLASS> ut =
+        luna::new_usertype<UT_CLASS>(
+            lua,
+            luna::no_bases,
+            luna::no_constructor
+        );
+
+        DOC( "Check if the character knows a specific spell by spell_id." );
+        luna::set_fx( ut, "knows_spell",
+                      sol::overload(
+        []( const UT_CLASS & km, const spell_id & sp ) -> bool { return km.knows_spell( sp ); },
+        []( const UT_CLASS & km ) -> bool { return km.knows_spell(); } ) );
+
+        DOC( "Learn a new spell. Requires a Character reference and spell_id. Optional force(boolean) parameter bypasses restrictions." );
+        luna::set_fx( ut, "learn_spell",
+                      []( UT_CLASS & km, const spell_id & sp, Character & guy, sol::optional<bool> force )
+        {
+            km.learn_spell( sp, guy, force.value_or( false ) );
+        } );
+
+        DOC( "Forget a known spell by spell_id." );
+        SET_FX_T( forget_spell, void( const spell_id & ) );
+
+        DOC( "Check if the character can learn a specific spell, considering traits and other restrictions." );
+        SET_FX_T( can_learn_spell, bool( const Character &, const spell_id & ) const );
+
+        DOC( "Get a reference to a known spell for editing. Returns the spell associated with the given spell_id." );
+        SET_FX_T( get_spell, spell & ( const spell_id & ) );
+
+        DOC( "Get all known spells as a vector of spell pointers." );
+        SET_FX_T( get_spells, std::vector<spell *>() );
+
+        DOC( "Get a vector of all known spell IDs." );
+        SET_FX_T( spells, std::vector<spell_id>() const );
+
+        DOC( "Get the current available mana." );
+        SET_FX_T( available_mana, int() const );
+
+        DOC( "Get the maximum mana for the given character." );
+        SET_FX_T( max_mana, int( const Character & ) const );
+
+        DOC( "Set the current mana to a specific value." );
+        SET_FX_T( set_mana, void( int ) );
+
+        DOC( "Modify the current mana by adding or subtracting an amount." );
+        SET_FX_T( mod_mana, void( const Character &, int ) );
+
+        DOC( "Get the mana regeneration rate in units per turn for the given character." );
+        SET_FX_T( mana_regen_rate, double( const Character & ) const );
+
+        DOC( "Check if the character has enough energy (of the appropriate type) to cast the given spell." );
+        SET_FX_T( has_enough_energy, bool( const Character &, spell & ) const );
+
+        DOC( "Calculate the time in moves required for the character to memorize/learn a spell." );
+        luna::set_fx( ut, "time_to_learn_spell",
+        []( const UT_CLASS & km, const Character & guy, const spell_id & sp ) -> int { return km.time_to_learn_spell( guy, sp ); } );
+
+        DOC( "Whether casting ignores all distractions. Can be read and written." );
+        SET_MEMB( casting_ignore );
+
+    }
+#undef UT_CLASS // #define UT_CLASS known_magic
 }

@@ -11,21 +11,13 @@ body:
 
         This bug report can be directly generated within the game.
 
-        ### Open Options (ESC) -> Debug Menu
+        Run `Submit a bug report on github` inside the game to submit an issue.
 
-        ![](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/doc/src/content/docs/en/contribute/img/readme-bug1.png?raw=true)
-
-        ### Open Info (i)
-
-        ![](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/doc/src/content/docs/en/contribute/img/readme-bug2.png?raw=true)
-
-        ### Submit a bug report on github (U)
-
-        ![](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/doc/src/content/docs/en/contribute/img/readme-bug3.png?raw=true)
-
-        ### Fill the form and submit
-
-        ![](https://github.com/cataclysmbnteam/Cataclysm-BN/blob/main/doc/src/content/docs/en/contribute/img/readme-bug4.png?raw=true)
+        |   1. open Options (ESC) -> Debug Menu (a)   |              2. open Info (i)               |
+        | :-----------------------------------------: | :-----------------------------------------: |
+        | ![](https://raw.githubusercontent.com/cataclysmbn/Cataclysm-BN/db6467c226f72d804cdcd1c8996f86e872066502/docs/en/contribute/img/readme-bug1.png) | ![](https://raw.githubusercontent.com/cataclysmbn/Cataclysm-BN/db6467c226f72d804cdcd1c8996f86e872066502/docs/en/contribute/img/readme-bug2.png) |
+        |  **3. Submit a bug report on github (U)**   |    **4. An link to issue is generated**     |
+        | ![](https://raw.githubusercontent.com/cataclysmbn/Cataclysm-BN/db6467c226f72d804cdcd1c8996f86e872066502/docs/en/contribute/img/readme-bug3.png) | ![](https://raw.githubusercontent.com/cataclysmbn/Cataclysm-BN/db6467c226f72d804cdcd1c8996f86e872066502/docs/en/contribute/img/readme-bug4.png) |
 
   - type: textarea
     id: describe-bug

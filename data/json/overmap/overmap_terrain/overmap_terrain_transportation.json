@@ -67,7 +67,8 @@
     "name": "bridge",
     "sym": "│",
     "color": "white",
-    "see_cost": 2
+    "see_cost": 2,
+    "flags": [ "IS_BRIDGE" ]
   },
   {
     "type": "overmap_terrain",
@@ -75,14 +76,14 @@
     "id": "bridge",
     "copy-from": "generic_bridge",
     "extras": "bridgehead_ground",
-    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY" ]
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "IS_BRIDGE" ]
   },
   {
     "type": "overmap_terrain",
     "id": "bridge_under",
     "copy-from": "generic_bridge",
     "color": "blue",
-    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY" ]
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "IS_BRIDGE" ]
   },
   {
     "type": "overmap_terrain",
@@ -97,7 +98,7 @@
     "name": "bridgehead (ground)",
     "sym": "v",
     "extras": "bridgehead_ground",
-    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY" ]
+    "flags": [ "RIVER", "IGNORE_ROTATION_FOR_ADJACENCY", "IS_BRIDGE" ]
   },
   {
     "type": "overmap_terrain",
@@ -248,6 +249,22 @@
   },
   {
     "type": "overmap_terrain",
+    "id": [ "rv_park_1", "rv_park_2", "rv_park_3", "rv_park_4" ],
+    "copy-from": "generic_city_building_no_sidewalk",
+    "name": "RV park",
+    "sym": "#",
+    "color": "light_blue",
+    "extend": { "flags": [ "GENERIC_LOOT" ] }
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "rv_park_roof_1", "rv_park_roof_2" ],
+    "copy-from": "rv_park_1",
+    "name": "RV park roof",
+    "delete": { "flags": [ "GENERIC_LOOT" ] }
+  },
+  {
+    "type": "overmap_terrain",
     "id": "sub_station",
     "name": "subway station",
     "sym": "S",
@@ -275,6 +292,7 @@
     "sym": "S",
     "color": "yellow",
     "see_cost": 5,
+    "spawns": { "group": "GROUP_SEWER", "population": [ 1, 6 ], "chance": 30 },
     "extras": "subway",
     "flags": [ "KNOWN_UP", "KNOWN_DOWN" ]
   },
@@ -286,6 +304,7 @@
     "color": "yellow",
     "see_cost": 5,
     "extras": "subway",
+    "spawns": { "group": "GROUP_SUBWAY", "population": [ 1, 6 ], "chance": 30 },
     "flags": [ "KNOWN_UP" ]
   },
   {
@@ -300,6 +319,7 @@
     "mapgen_end": [ { "method": "builtin", "name": "subway_end" } ],
     "mapgen_tee": [ { "method": "builtin", "name": "subway_tee" } ],
     "mapgen_four_way": [ { "method": "builtin", "name": "subway_four_way" } ],
+    "spawns": { "group": "GROUP_SUBWAY", "population": [ 1, 6 ], "chance": 30 },
     "flags": [ "LINEAR" ]
   },
   {
@@ -466,5 +486,13 @@
     "color": "dark_gray",
     "see_cost": 5,
     "extras": "build"
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "billboard_0", "billboard_1", "billboard_2" ],
+    "name": "billboard",
+    "sym": "T",
+    "color": "dark_gray",
+    "see_cost": 1
   }
 ]

@@ -255,7 +255,7 @@
     "difficulty": 7,
     "time": "190 m",
     "book_learn": [ [ "textbook_armwest", 6 ] ],
-    "using": [ [ "blacksmithing_advanced", 28 ], [ "steel_standard", 7 ] ],
+    "using": [ [ "blacksmithing_advanced", 28 ], [ "steel_standard", 4 ] ],
     "components": [ [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
   },
   {
@@ -268,7 +268,7 @@
     "time": "190 m",
     "book_learn": [ [ "textbook_armwest", 8 ] ],
     "using": [ [ "blacksmithing_advanced", 28 ] ],
-    "components": [ [ [ "alloy_sheet", 7 ] ], [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
+    "components": [ [ [ "alloy_sheet", 4 ] ], [ [ "fabric_hides_proper", 6, "LIST" ] ] ]
   },
   {
     "result": "legguard_metal",
@@ -292,8 +292,7 @@
     "skill_used": "survival",
     "time": "5 m",
     "autolearn": true,
-    "components": [ [ [ "paper", 60 ] ], [ [ "duct_tape", 10 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "paper", 60 ] ], [ [ "duct_tape", 10 ] ] ]
   },
   {
     "result": "legguard_scrap",
@@ -318,8 +317,7 @@
     "time": "3 m",
     "autolearn": true,
     "reversible": true,
-    "components": [ [ [ "rag", 4 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 4 ] ] ]
   },
   {
     "result": "loincloth_fur",
@@ -384,7 +382,7 @@
     "tools": [ [ [ "soldering_standard", 15, "LIST" ], [ "surface_heat", 15, "LIST" ] ] ],
     "components": [
       [ [ "rag", 15 ] ],
-      [ [ "bag_plastic", 4 ] ],
+      [ [ "bag_plastic", 4 ], [ "bag_zipper", 4 ] ],
       [
         [ "legrig", 1 ],
         [ "tool_belt", 1 ],
@@ -590,6 +588,54 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 24 ] ],
     "components": [ [ [ "rag", 30 ] ] ]
+  },
+  {
+    "result": "stockings_snake_tail",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_LEGS",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "75 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 36 ] ],
+    "components": [ [ [ "rag", 45 ] ] ]
+  },
+  {
+    "result": "stockings_snake_tail_fur",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_LEGS",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "75 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 36 ] ],
+    "components": [ [ [ "fur", 45 ] ] ]
+  },
+  {
+    "result": "stockings_snake_tail_leather",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_LEGS",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "75 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 36 ] ],
+    "components": [ [ [ "leather", 45 ] ] ]
+  },
+  {
+    "result": "stockings_snake_tail_wool",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_LEGS",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "75 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 36 ] ],
+    "components": [ [ [ "felt_patch", 45 ] ] ]
   },
   {
     "result": "under_armor_shorts",

@@ -9,7 +9,8 @@
     "time": "180 m",
     "batch_time_factors": [ 50, 2 ],
     "book_learn": [ [ "welding_book", 4 ] ],
-    "tools": [ [ [ "demon_forge", 15 ] ], [ [ "tongs", -1 ] ] ],
+    "qualities": [ { "id": "GRIP_HOT", "level": 2 } ],
+    "tools": [ [ [ "demon_forge", 15 ] ] ],
     "components": [ [ [ "orichalcum_sliver", 8 ], [ "orichalcum_lump", 2 ] ], [ [ "mercury", 100 ] ] ]
   },
   {
@@ -22,7 +23,8 @@
     "time": "180 m",
     "batch_time_factors": [ 50, 2 ],
     "book_learn": [ [ "welding_book", 4 ] ],
-    "tools": [ [ [ "demon_forge", 15 ] ], [ [ "tongs", -1 ] ] ],
+    "qualities": [ { "id": "GRIP_HOT", "level": 2 } ],
+    "tools": [ [ [ "demon_forge", 15 ] ] ],
     "components": [ [ [ "scrap_bronze", 9 ] ], [ [ "mercury", 400 ] ] ]
   },
   {
@@ -35,7 +37,8 @@
     "time": "180 m",
     "batch_time_factors": [ 50, 2 ],
     "book_learn": [ [ "welding_book", 5 ] ],
-    "tools": [ [ [ "demon_forge", 15 ] ], [ [ "tongs", -1 ] ] ],
+    "qualities": [ { "id": "GRIP_HOT", "level": 2 } ],
+    "tools": [ [ [ "demon_forge", 15 ] ] ],
     "components": [ [ [ "mithril_lump", 2 ] ], [ [ "mercury", 100 ] ] ]
   },
   {
@@ -48,7 +51,8 @@
     "time": "180 m",
     "batch_time_factors": [ 50, 2 ],
     "book_learn": [ [ "welding_book", 5 ] ],
-    "tools": [ [ [ "demon_forge", 15 ] ], [ [ "tongs", -1 ] ] ],
+    "qualities": [ { "id": "GRIP_HOT", "level": 2 } ],
+    "tools": [ [ [ "demon_forge", 15 ] ] ],
     "components": [ [ [ "silver_small", 9 ] ], [ [ "mercury", 400 ] ] ]
   },
   {

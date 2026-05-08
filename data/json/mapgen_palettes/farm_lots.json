@@ -84,6 +84,7 @@
       ">": "t_stairs_down"
     },
     "furniture": {
+      "`": [ [ "f_null", 90 ], [ "f_space_heater_off", 6 ], [ "f_space_heater_large", 4 ] ],
       "@": "f_bed",
       "B": "f_bathtub",
       "D": "f_trashcan",
@@ -128,6 +129,6 @@
       "D": { "item": "trash", "chance": 20, "repeat": [ 2, 4 ] },
       "ü": { "item": "guns_hunting_safe", "chance": 100 }
     },
-    "nested": { "v": { "chunks": [ [ "null", 90 ], [ "house_place_air_conditioner", 10 ] ] } }
+    "nested": { "v": { "chunks": [ [ "null", 95 ], [ "house_place_air_conditioner", 5 ] ] } }
   }
 ]

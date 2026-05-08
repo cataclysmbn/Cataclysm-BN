@@ -68,10 +68,10 @@
     "melee_dice": 1,
     "melee_dice_sides": 6,
     "melee_cut": 0,
-    "armor_bash": 10,
+    "armor_bash": 24,
     "armor_cut": 2,
     "armor_bullet": 2,
-    "armor_stab": 12,
+    "armor_stab": 8,
     "vision_night": 3,
     "luminance": 0,
     "harvest": "zombie_acid",
@@ -139,7 +139,7 @@
     "death_drops": "default_zombie_death_drops",
     "death_function": [ "ACID", "NORMAL" ],
     "burn_into": "mon_zombie_scorched",
-    "upgrades": { "half_life": 28, "into": "mon_zombie_corrosive" },
+    "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_ACID" },
     "flags": [
       "SEES",
       "HEARS",
@@ -202,5 +202,162 @@
       "REVIVES",
       "PUSH_MON"
     ]
+  },
+  {
+    "id": "mon_zombie_acid_mortar",
+    "type": "MONSTER",
+    "name": { "str": "acid mortar zombie" },
+    "description": "This zombie's original face is gone, and in its place is a grotesque amalgamation of bio-mortar.  Bone and flesh extending from a swollen, cracked skull form a rounded muzzle, inside of which a constantly bubbling mass of acidic fluid boils.",
+    "copy-from": "mon_zombie_soldier",
+    "looks_like": "mon_zombie_corrosive",
+    "diff": 20,
+    "harvest": "zombie_acid",
+    "relative": { "hp": 20, "speed": -10, "melee_skill": 2, "armor_bash": 5 },
+    "delete": { "flags": [ "BLEED" ], "categories": [ "CLASSIC" ] },
+    "armor_cut": 2,
+    "armor_bullet": 2,
+    "armor_stab": 12,
+    "death_drops": "default_zombie_death_drops",
+    "starting_ammo": { "acid_artillery_shell": 100 },
+    "extend": {
+      "special_attacks": [
+        [ "ACID_BARF", 10 ],
+        {
+          "type": "gun",
+          "cooldown": 15,
+          "move_cost": 50,
+          "gun_type": "acid_artillery",
+          "ammo_type": "acid_artillery_shell",
+          "no_ammo_sound": "",
+          "fake_skills": [ [ "gun", 4 ], [ "launcher", 4 ] ],
+          "fake_dex": 6,
+          "fake_per": 6,
+          "require_targeting_player": false,
+          "description": "The acid-artillery zombie launches a giant glob of acid!",
+          "ranges": [ [ 10, 40, "DEFAULT" ] ],
+          "no_crits": true
+        }
+      ],
+      "death_function": [ "ACID" ],
+      "flags": [ "ACIDPROOF", "ACID_BLOOD" ]
+    }
+  },
+  {
+    "id": "mon_zombie_acid_spawner",
+    "type": "MONSTER",
+    "name": { "str": "acid spawner zombie" },
+    "description": "This zombie's head has been horribly melted and fused, its skull horribly twisted and pushed to the side by a giant, swollen, acidic egg sac.  The egg sac pulses incessantly, spewing out self-destructive acid maggots.",
+    "copy-from": "mon_zombie_soldier",
+    "looks_like": "mon_zombie_corrosive",
+    "diff": 20,
+    "attack_cost": 100,
+    "harvest": "zombie_acid",
+    "relative": { "hp": 20, "speed": -10, "melee_skill": 2, "armor_bash": 5 },
+    "delete": { "flags": [ "BLEED" ], "categories": [ "CLASSIC" ] },
+    "armor_cut": 2,
+    "armor_bullet": 2,
+    "armor_stab": 12,
+    "vision_day": 45,
+    "death_drops": "default_zombie_death_drops",
+    "starting_ammo": { "bot_unstable_grub": 200 },
+    "extend": {
+      "special_attacks": [ [ "ACID_BARF", 2 ], [ "GRENADIER_ELITE", 10 ], { "id": "slam" } ],
+      "death_function": [ "ACID" ],
+      "flags": [ "ACIDPROOF", "ACID_BLOOD" ]
+    }
+  },
+  {
+    "id": "mon_unstable_grub",
+    "type": "MONSTER",
+    "name": { "str": "unstable acid grub" },
+    "copy-from": "mon_zombie_dog",
+    "looks_like": "mon_ant_acid_larva",
+    "description": "This unstable small creature was born from the body of an acid spawn zombie. With a horribly twisted body, the maggot is covered in sticky acid and filled with a destructive force that bubbles inside.",
+    "diff": 10,
+    "symbol": "a",
+    "color": "brown_green",
+    "hp": 25,
+    "speed": 100,
+    "melee_skill": 1,
+    "melee_dice": 2,
+    "melee_dice_sides": 1,
+    "melee_cut": 1,
+    "starting_ammo": { "unstable_grub_bomb": 1 },
+    "special_attacks": [ [ "KAMIKAZE", 0 ] ],
+    "death_function": [ "ACID", "MELT" ],
+    "extend": { "flags": [ "INTERIOR_AMMO", "ACIDPROOF", "ACID_BLOOD" ], "harvest": "exempt" }
+  },
+  {
+    "id": "mon_zombie_ichor_brute",
+    "type": "MONSTER",
+    "name": { "str": "ichor brute" },
+    "copy-from": "mon_zombie_brute",
+    "looks_like": "mon_zombie_brute",
+    "description": "A brute zombie with muscles swollen by acidic fluid and covered in festering wounds.  It oozes a sticky slime from its melting flesh, clinging to any surface it touches.",
+    "diff": 10,
+    "color": "brown_green",
+    "hp": 180,
+    "special_attacks": [
+      [ "SMASH", 30 ],
+      [ "GRAB", 7 ],
+      {
+        "id": "scratch",
+        "cooldown": 8,
+        "damage_max_instance": [ { "damage_type": "acid", "amount": 10 } ],
+        "effects": [ { "id": "slimed", "duration": 40 } ]
+      }
+    ],
+    "death_function": [ "ACID", "NORMAL" ],
+    "extend": { "flags": [ "ACIDPROOF", "ACID_BLOOD" ], "harvest": "zombie_acid" }
+  },
+  {
+    "id": "mon_zombie_ichor_beast",
+    "type": "MONSTER",
+    "name": { "str": "ichor beast" },
+    "copy-from": "mon_dog_zombie_rot",
+    "looks_like": "mon_dog_zombie_rot",
+    "description": "A large, bloated zombie dog covered in acidic slime.  Its teeth have grown longer, and its broad back is covered in gnarled muscles and pus-filled wounds.  Its body oozes slime, notably dripping from its jaws like some nightmarish imitation of a rabid dog.",
+    "diff": 10,
+    "color": "brown_green",
+    "hp": 72,
+    "special_attacks": [
+      [ "SMASH", 30 ],
+      {
+        "type": "bite",
+        "cooldown": 5,
+        "damage_max_instance": [ { "damage_type": "acid", "amount": 6 } ],
+        "effects": [ { "id": "slimed", "duration": 40 } ]
+      }
+    ],
+    "death_function": [ "ACID", "NORMAL" ],
+    "extend": { "flags": [ "ACIDPROOF", "ACID_BLOOD" ], "harvest": "zombie_acid" }
+  },
+  {
+    "id": "mon_zombie_ichor_stalker",
+    "type": "MONSTER",
+    "name": { "str": "ichor stalker" },
+    "copy-from": "mon_zombie_predator",
+    "looks_like": "mon_zombie_predator",
+    "description": "This monster barely maintains its human form, with its joints bent at strange angles.  Bright green liquid constantly oozes from the gaps between its muscles, and it moves with surprising agility.  Its teeth and claws have transformed into sharp blades, dripping with viscous slime.",
+    "diff": 10,
+    "color": "brown_green",
+    "hp": 180,
+    "special_attacks": [
+      { "type": "leap", "cooldown": 10, "max_range": 8, "min_consider_range": 3, "max_consider_range": 7 },
+      {
+        "type": "bite",
+        "cooldown": 10,
+        "damage_max_instance": [ { "damage_type": "stab", "amount": 10, "armor_multiplier": 0.2 } ]
+      },
+      { "id": "impale" },
+      {
+        "id": "scratch",
+        "cooldown": 8,
+        "damage_max_instance": [ { "damage_type": "acid", "amount": 10 } ],
+        "effects": [ { "id": "slimed", "duration": 40 } ]
+      }
+    ],
+    "death_function": [ "ACID", "NORMAL" ],
+    "extend": { "flags": [ "ACIDPROOF", "ACID_BLOOD" ], "harvest": "zombie_acid" }
   }
 ]

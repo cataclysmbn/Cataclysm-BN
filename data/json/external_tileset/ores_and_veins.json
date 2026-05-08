@@ -1,0 +1,33 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/ores_and_veins.png",
+        "tiles": [
+          { "id": "copper_ore", "fg": 0 },
+          { "id": "lead_ore", "fg": 1 },
+          { "id": "tin_ore", "fg": 2 },
+          { "id": "silver_ore", "fg": 3 },
+          { "id": "gold_ore", "fg": 4 },
+          { "id": "t_rock_ore_iron", "fg": 5 },
+          { "id": "t_rock_ore_coppin", "fg": 5 },
+          { "id": "t_rock_ore_bronzium", "fg": 5 },
+          { "id": "t_rock_ore_copper", "fg": 6 },
+          { "id": "t_rock_ore_tetrahedrite", "fg": 6 },
+          { "id": "t_rock_ore_chalcopyrite", "fg": 6 },
+          { "id": "t_rock_ore_lead", "fg": 7 },
+          { "id": "t_rock_ore_galana", "fg": 7 },
+          { "id": "t_rock_ore_galanau", "fg": 7 },
+          { "id": "t_rock_ore_tin", "fg": 8 },
+          { "id": "t_rock_ore_silver", "fg": 9 },
+          { "id": "t_rock_ore_gold", "fg": 10 },
+          { "id": "t_rock_ore_electrimite", "fg": 10 }
+        ],
+        "sprite_width": 32,
+        "sprite_height": 32
+      }
+    ]
+  }
+]

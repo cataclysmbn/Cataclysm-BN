@@ -35,5 +35,11 @@
     "skills": [ "archery", "gun", "launcher", "pistol", "rifle", "shotgun", "smg" ],
     "skill_offset": -3,
     "scaling_power": 0.4
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "MAGIC_STAT_SCALING_PERCENT",
+    "stype": "int",
+    "value": 5
   }
 ]

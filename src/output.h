@@ -33,7 +33,7 @@ class window;
 using chtype = int;
 } // namespace catacurses
 
-//      LINE_NESW  - X for on, O for off
+//      LINE_NESW  - X for on, O for off, D for double
 #define LINE_XOXO 4194424 // '|'   Vertical line. ncurses: ACS_VLINE; Unicode: U+2502
 #define LINE_OXOX 4194417 // '-'   Horizontal line. ncurses: ACS_HLINE; Unicode: U+2500
 #define LINE_XXOO 4194413 // '|_'  Lower left corner. ncurses: ACS_LLCORNER; Unicode: U+2514
@@ -46,17 +46,21 @@ using chtype = int;
 #define LINE_OXXX 4194423 // '^|^' Tee pointing down. ncurses: ACS_TTEE; Unicode: U+252C
 #define LINE_XXXX 4194414 // '-|-' Large Plus or cross over. ncurses: ACS_PLUS; Unicode: U+253C
 
-#define LINE_XOXO_C 0xa0
-#define LINE_OXOX_C 0xa1
-#define LINE_XXOO_C 0xa2
-#define LINE_OXXO_C 0xa3
-#define LINE_OOXX_C 0xa4
-#define LINE_XOOX_C 0xa5
-#define LINE_XXXO_C 0xa6
-#define LINE_XXOX_C 0xa7
-#define LINE_XOXX_C 0xa8
-#define LINE_OXXX_C 0xa9
-#define LINE_XXXX_C 0xaa
+#define LINE_XOXO_C 0xa0 // '|'   Vertical line. ncurses: ACS_VLINE; Unicode: U+2502
+#define LINE_OXOX_C 0xa1 // '-'   Horizontal line. ncurses: ACS_HLINE; Unicode: U+2500
+#define LINE_XXOO_C 0xa2 // '|_'  Lower left corner. ncurses: ACS_LLCORNER; Unicode: U+2514
+#define LINE_OXXO_C 0xa3 // '|^'  Upper left corner. ncurses: ACS_ULCORNER; Unicode: U+250C
+#define LINE_OOXX_C 0xa4 // '^|'  Upper right corner. ncurses: ACS_URCORNER; Unicode: U+2510
+#define LINE_XOOX_C 0xa5 // '_|'  Lower right corner. ncurses: ACS_LRCORNER; Unicode: U+2518
+#define LINE_XXXO_C 0xa6 // '|-'  Tee pointing right. ncurses: ACS_LTEE; Unicode: U+251C
+#define LINE_XXOX_C 0xa7 // '_|_' Tee pointing up. ncurses: ACS_BTEE; Unicode: U+2534
+#define LINE_XOXX_C 0xa8 // '-|'  Tee pointing left. ncurses: ACS_RTEE; Unicode: U+2524
+#define LINE_OXXX_C 0xa9 // '^|^' Tee pointing down. ncurses: ACS_TTEE; Unicode: U+252C
+#define LINE_XXXX_C 0xaa // '-|-' Large Plus or cross over. ncurses: ACS_PLUS; Unicode: U+253C
+#define LINE_XDXO_C 0xc6 // '|='  Right double and vertical single
+#define LINE_DXOX_C 0xd0 // '-"-' Up double and horizontal single
+#define LINE_XOXD_C 0xb5 // '=|'  Left double and vertical single
+#define LINE_OXDX_C 0xd2 // '-,,-'Down double and horizontal single
 
 #define LINE_XOXO_S "│" // '|'   Vertical line. ncurses: ACS_VLINE; Unicode: U+2502
 #define LINE_OXOX_S "─" // '-'   Horizontal line. ncurses: ACS_HLINE; Unicode: U+2500
@@ -69,18 +73,26 @@ using chtype = int;
 #define LINE_XOXX_S "┤" // '-|'  Tee pointing left. ncurses: ACS_RTEE; Unicode: U+2524
 #define LINE_OXXX_S "┬" // '^|^' Tee pointing down. ncurses: ACS_TTEE; Unicode: U+252C
 #define LINE_XXXX_S "┼" // '-|-' Large Plus or cross over. ncurses: ACS_PLUS; Unicode: U+253C
+#define LINE_XDXO_S "╞" // '|='  Right double and vertical single
+#define LINE_DXOX_S "╨" // '-"-' Up double and horizontal single
+#define LINE_XOXD_S "╡" // '=|'  Left double and vertical single
+#define LINE_OXDX_S "╥" // '-,,-'Down double and horizontal single
 
-#define LINE_XOXO_UNICODE 0x2502
-#define LINE_OXOX_UNICODE 0x2500
-#define LINE_XXOO_UNICODE 0x2514
-#define LINE_OXXO_UNICODE 0x250C
-#define LINE_OOXX_UNICODE 0x2510
-#define LINE_XOOX_UNICODE 0x2518
-#define LINE_XXXO_UNICODE 0x251C
-#define LINE_XXOX_UNICODE 0x2534
-#define LINE_XOXX_UNICODE 0x2524
-#define LINE_OXXX_UNICODE 0x252C
-#define LINE_XXXX_UNICODE 0x253C
+#define LINE_XOXO_UNICODE 0x2502 // '|'   Vertical line. ncurses: ACS_VLINE; Unicode: U+2502
+#define LINE_OXOX_UNICODE 0x2500 // '-'   Horizontal line. ncurses: ACS_HLINE; Unicode: U+2500
+#define LINE_XXOO_UNICODE 0x2514 // '|_'  Lower left corner. ncurses: ACS_LLCORNER; Unicode: U+2514
+#define LINE_OXXO_UNICODE 0x250C // '|^'  Upper left corner. ncurses: ACS_ULCORNER; Unicode: U+250C
+#define LINE_OOXX_UNICODE 0x2510 // '^|'  Upper right corner. ncurses: ACS_URCORNER; Unicode: U+2510
+#define LINE_XOOX_UNICODE 0x2518 // '_|'  Lower right corner. ncurses: ACS_LRCORNER; Unicode: U+2518
+#define LINE_XXXO_UNICODE 0x251C // '|-'  Tee pointing right. ncurses: ACS_LTEE; Unicode: U+251C
+#define LINE_XXOX_UNICODE 0x2534 // '_|_' Tee pointing up. ncurses: ACS_BTEE; Unicode: U+2534
+#define LINE_XOXX_UNICODE 0x2524 // '-|'  Tee pointing left. ncurses: ACS_RTEE; Unicode: U+2524
+#define LINE_OXXX_UNICODE 0x252C // '^|^' Tee pointing down. ncurses: ACS_TTEE; Unicode: U+252C
+#define LINE_XXXX_UNICODE 0x253C // '-|-' Large Plus or cross over. ncurses: ACS_PLUS; Unicode: U+253C
+#define LINE_XDXO_UNICODE 0x255E // '|='  Right double and vertical single
+#define LINE_DXOX_UNICODE 0x2568 // '-"-' Up double and horizontal single
+#define LINE_XOXD_UNICODE 0x2561 // '=|'  Left double and vertical single
+#define LINE_OXDX_UNICODE 0x2565 // '-,,-'Down double and horizontal single
 
 // Supports line drawing
 
@@ -564,6 +576,21 @@ std::string shortcut_text( nc_color shortcut_color, const std::string &fmt );
 std::pair<std::string, nc_color> get_bar( float cur, float max, int width = 5,
         bool extra_resolution = true,
         const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red } );
+
+/**
+ * @return Pair of a string containing the bar, and its color
+ * @param segments A vector containing N bar characters with which to fill the bar at different values
+ * @param cur Current value being formatted
+ * @param max Maximum possible value, e.g. a full bar
+ * @param extra_resolution Double the resolution of displayed values with \ symbols.
+ * @param colors A vector containing N colors with which to color the bar at different values
+ */
+// The last color is used for an empty bar
+// extra_resolution
+std::pair<std::string, nc_color> get_bar_custom(
+    const std::vector<std::string> &segments,
+    float cur, float max, int width = 5, bool extra_resolution = true,
+    const std::vector<nc_color> &colors = { c_green, c_light_green, c_yellow, c_light_red, c_red} );
 
 std::pair<std::string, nc_color> get_hp_bar( int cur_hp, int max_hp, bool is_mon = false );
 

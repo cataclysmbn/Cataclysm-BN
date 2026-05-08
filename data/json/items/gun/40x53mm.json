@@ -7,7 +7,7 @@
     "description": "A heavy, tripod-mounted belt-fed grenade launcher used by the US Military since the start of the Cold War all the way to the cataclysm, and if you can find some 40mm grenades, maybe even beyond.",
     "weight": "35200 g",
     "volume": "4 L",
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "price": "16500 USD",
     "price_postapoc": "50 USD",
     "to_hit": -1,

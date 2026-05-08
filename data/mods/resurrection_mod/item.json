@@ -1,0 +1,21 @@
+[
+  {
+    "id": "resurrection_anchor_undeployed",
+    "category": "tools",
+    "type": "TOOL",
+    "name": { "str": "resurrection anchor (undeployed)" },
+    "description": "A resurrection anchor, can be placed to function as a point for revival.",
+    "symbol": "{",
+    "color": "black",
+    "weight": "150 kg",
+    "volume": "150 L",
+    "price": "400 USD",
+    "price_postapoc": "50 USD",
+    "material": [ "steel" ],
+    "to_hit": -4,
+    "bashing": 1,
+    "use_action": "resurrection_anchor_use",
+    "looks_like": "telepad",
+    "flags": [ "DESTROY_ON_DECHARGE" ]
+  }
+]

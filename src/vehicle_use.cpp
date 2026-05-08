@@ -1,15 +1,18 @@
 #include "character.h"
+#include "units_mass.h"
 #include "vehicle.h"
 #include "vehicle_part.h" // IWYU pragma: associated
 #include "units_temperature.h"
 
 #include <algorithm>
+#include <numeric>
 #include <array>
 #include <cmath>
 #include <cstdlib>
 #include <iterator>
 #include <list>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <tuple>
 
@@ -50,6 +53,7 @@
 #include "string_formatter.h"
 #include "string_id.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "ui.h"
 #include "value_ptr.h"
@@ -110,7 +114,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
 {
     // fetch matching parts and abort early if none found
     const auto found = get_avail_parts( flag );
-    if( empty( found ) ) {
+    if( found.empty() ) {
         return;
     }
 
@@ -145,6 +149,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
             }
         }
         refresh();
+        get_map().invalidate_lightmap_caches();
     } );
 }
 
@@ -161,12 +166,12 @@ void handbrake()
     veh->cruise_velocity = 0;
     bool is_on_rails = vehicle_movement::is_on_rails( here, *veh );
     if( !is_on_rails && veh->last_turn != 0_degrees &&
-        rng( 15, 60 ) * 100 < std::abs( veh->velocity ) ) {
+        std::lround( static_cast<double>( rng( 15, 60 ) * 100 ) * 0.44704 ) < std::abs( veh->velocity ) ) {
         veh->skidding = true;
         add_msg( m_warning, _( "You lose control of %s." ), veh->name );
         veh->turn( veh->last_turn > 0_degrees ? 60_degrees : -60_degrees );
     } else {
-        int braking_power = std::abs( veh->velocity ) / 2 + 10 * 100;
+        int braking_power = std::abs( veh->velocity ) / 2 + 447;
         if( std::abs( veh->velocity ) < braking_power ) {
             veh->stop();
         } else {
@@ -185,7 +190,7 @@ void vehicle::control_doors()
     // Locations used to display the doors
     std::vector< tripoint > locations;
     // it is possible to have one door to open and one to close for single motor
-    if( empty( door_motors ) ) {
+    if( door_motors.empty() ) {
         debugmsg( "vehicle::control_doors called but no door motors found" );
         return;
     }
@@ -278,6 +283,8 @@ void vehicle::set_electronics_menu_options( std::vector<uilist_entry> &options,
     };
     add_toggle( pgettext( "electronics menu option", "reactor" ),
                 keybind( "TOGGLE_REACTOR" ), "REACTOR" );
+    add_toggle( pgettext( "electronics menu option", "door locks" ),
+                keybind( "TOGGLE_DOOR_LOCKS" ), "DOOR_LOCKING" );
     add_toggle( pgettext( "electronics menu option", "headlights" ),
                 keybind( "TOGGLE_HEADLIGHT" ), "CONE_LIGHT" );
     add_toggle( pgettext( "electronics menu option", "wide angle headlights" ),
@@ -544,19 +551,25 @@ bool vehicle::interact_vehicle_locked()
     return !( is_locked );
 }
 
-void vehicle::smash_security_system()
+std::pair<int, int> vehicle::get_controls_and_security() const
 {
-
-    //get security and controls location
     int s = -1;
     int c = -1;
-    for( int p : speciality ) {
-        if( part_flag( p, "SECURITY" ) && !parts[ p ].is_broken() ) {
+    for( const int p : speciality ) {
+        if( part_flag( p, "SECURITY" ) && parts[ p ].is_available( false ) ) {
             s = p;
             c = part_with_feature( s, "CONTROLS", true );
             break;
         }
     }
+    return std::make_pair( c, s );
+}
+
+void vehicle::smash_security_system()
+{
+    //get security and controls location
+    auto [c, s] = get_controls_and_security();
+
     //controls and security must both be valid
     if( c >= 0 && s >= 0 ) {
         ///\EFFECT_MECHANICS reduces chance of damaging controls when smashing security system
@@ -592,6 +605,11 @@ void vehicle::smash_security_system()
 std::string vehicle::tracking_toggle_string()
 {
     return tracking_on ? _( "Forget vehicle position" ) : _( "Remember vehicle position" );
+}
+
+std::string vehicle::brake_hold_toggle_string() const
+{
+    return brake_hold ? _( "Brake hold: on" ) : _( "Brake hold: off" );
 }
 
 void vehicle::autopilot_patrol_check()
@@ -634,12 +652,25 @@ void vehicle::toggle_autopilot()
             autodrive_local_target = tripoint_zero;
             stop_engines();
             break;
-        case FOLLOW:
+        case FOLLOW: {
             autopilot_on = true;
             is_following = true;
             is_patrolling = false;
+            const auto default_follow_distance = 12 + mount_max.y * 3;
+            const auto initial_follow_distance = follow_distance > 0 ? follow_distance :
+                                                 default_follow_distance;
+            const auto requested_follow_distance = string_input_popup()
+                                                   .title( _( "What distance?" ) )
+                                                   .text( std::to_string( initial_follow_distance ) )
+                                                   .only_digits( true )
+                                                   .max_length( 3 )
+                                                   .query_int();
+            follow_distance = requested_follow_distance > 0 ? requested_follow_distance :
+                              default_follow_distance;
             start_engines();
             refresh();
+            break;
+        }
         default:
             return;
     }
@@ -648,14 +679,20 @@ void vehicle::toggle_autopilot()
 void vehicle::toggle_tracking()
 {
     if( tracking_on ) {
-        overmap_buffer.remove_vehicle( this );
+        get_overmapbuffer( dimension_id_ ).remove_vehicle( this );
         tracking_on = false;
         add_msg( _( "You stop keeping track of the vehicle position." ) );
     } else {
-        overmap_buffer.add_vehicle( this );
+        get_overmapbuffer( dimension_id_ ).add_vehicle( this );
         tracking_on = true;
         add_msg( _( "You start keeping track of this vehicle's position." ) );
     }
+}
+
+void vehicle::toggle_brake_hold()
+{
+    brake_hold = !brake_hold;
+    add_msg( brake_hold ? _( "Brake hold turned on." ) : _( "Brake hold turned off." ) );
 }
 
 void vehicle::use_controls( const tripoint &pos )
@@ -667,7 +704,7 @@ void vehicle::use_controls( const tripoint &pos )
     bool has_electronic_controls = false;
     avatar &you = get_avatar();
     const auto confirm_stop_driving = [this] {
-        return !is_flying_in_air() || query_yn(
+        return !is_flying_in_air() || !has_part( VPFLAG_WING ) || query_yn(
             _( "Really let go of controls while flying?  This will result in a crash." ) );
     };
 
@@ -711,7 +748,8 @@ void vehicle::use_controls( const tripoint &pos )
         return;
     }
 
-    if( has_part( "ENGINE" ) ) {
+    if( has_part( "ENGINE" ) && !( is_flying &&
+                                   units::to_newton( total_mass() ) >= total_balloon_lift() && has_part( VPFLAG_ROTOR ) ) ) {
         if( you.controlling_vehicle || ( remote && engine_on ) ) {
             options.emplace_back( _( "Stop driving" ), keybind( "TOGGLE_ENGINE" ) );
             actions.emplace_back( [&] {
@@ -794,6 +832,12 @@ void vehicle::use_controls( const tripoint &pos )
         refresh();
     } );
 
+    options.emplace_back( brake_hold_toggle_string(), 'b' );
+    actions.emplace_back( [&] {
+        toggle_brake_hold();
+        refresh();
+    } );
+
     if( has_electronic_controls ) {
         set_electronics_menu_options( options, actions );
         options.emplace_back( _( "Control multiple electronics" ), keybind( "CONTROL_MANY_ELECTRONICS" ) );
@@ -865,6 +909,19 @@ void vehicle::use_controls( const tripoint &pos )
 
     }
 
+    if( !droppers.empty() ) {
+        options.emplace_back( _( "Activate all item droppers (Drop Everything)" ),
+                              keybind( "DROPPER_ALL" ) );
+        actions.emplace_back( [&] { item_dropper_drop_all(); refresh(); } );
+
+        options.emplace_back( _( "Activate one item dropper (Drop Everything)" ),
+                              keybind( "DROPPER_SINGLE_ALL" ) );
+        actions.emplace_back( [&] { item_dropper_drop_single( false ); refresh(); } );
+
+        options.emplace_back( _( "Activate one item dropper (Drop One Thing)" ),
+                              keybind( "DROPPER_SINGLE" ) );
+        actions.emplace_back( [&] { item_dropper_drop_single( true ); refresh(); } );
+    }
     uilist menu;
     menu.text = _( "Vehicle controls" );
     menu.entries = options;
@@ -913,7 +970,7 @@ bool vehicle::fold_up()
 
     std::string itype_id = "generic_folded_vehicle";
     for( const auto &elem : tags ) {
-        if( elem.starts_with( "convertible:" ) ) {
+        if( elem.starts_with( "convertible:" ) && !can_be_folded ) {
             itype_id = elem.substr( 12 );
             break;
         }
@@ -954,8 +1011,7 @@ bool vehicle::fold_up()
         folding_veh_item->set_var( "weight", to_milligram( total_mass() ) );
         folding_veh_item->set_var( "volume", total_folded_volume() / units::legacy_volume_factor );
         // remove "folded" from name to allow for more flexibility with folded vehicle names. also lowers first character
-        folding_veh_item->set_var( "name", string_format( _( "%s" ), ( name.empty() ? name : std::string( 1,
-                                   std::tolower( name[0] ) ) + name.substr( 1 ) ) ) );
+        folding_veh_item->set_var( "name", to_lower_case( name ) );
         folding_veh_item->set_var( "vehicle_name", name );
         // TODO: a better description?
         folding_veh_item->set_var( "description", string_format( _( "A folded %s." ), name ) );
@@ -1180,15 +1236,16 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
         starting_engine_position = global_pos3();
     }
 
+    if( take_control && !g->u.controlling_vehicle ) {
+        g->u.controlling_vehicle = true;
+        add_msg( _( "You take control of the %s." ), name );
+    }
+
     if( !has_engine ) {
         add_msg( m_info, _( "The %s doesn't have an engine!" ), name );
         return;
     }
 
-    if( take_control && !g->u.controlling_vehicle ) {
-        g->u.controlling_vehicle = true;
-        add_msg( _( "You take control of the %s." ), name );
-    }
     if( !autodrive ) {
         g->u.assign_activity( ACT_START_ENGINES, start_time );
         g->u.activity->placement = starting_engine_position - g->u.pos();
@@ -1361,9 +1418,9 @@ void vehicle::transform_terrain()
     for( const vpart_reference &vp : get_enabled_parts( "TRANSFORM_TERRAIN" ) ) {
         const tripoint start_pos = vp.pos();
         const transform_terrain_data &ttd = vp.info().transform_terrain;
-        bool prereq_fulfilled = false;
+        bool prereq_fulfilled = ttd.diggable && g->m.ter( start_pos )->is_diggable();
         for( const std::string &flag : ttd.pre_flags ) {
-            if( ( ttd.diggable && g->m.ter( start_pos )->is_diggable() ) || g->m.has_flag( flag, start_pos ) ) {
+            if( g->m.has_flag( flag, start_pos ) ) {
                 prereq_fulfilled = true;
                 break;
             }
@@ -1458,6 +1515,7 @@ void vehicle::operate_planter()
                 }
                 if( !i->count_by_charges() || i->charges == 1 ) {
                     i->set_age( 0_turns );
+                    i->set_flag( flag_id( "HIDDEN_ITEM" ) );
                     detached_ptr<item> det;
                     v.erase( it, &det );
                     g->m.add_item( loc, std::move( det ) );
@@ -1465,6 +1523,7 @@ void vehicle::operate_planter()
                     detached_ptr<item> tmp = item::spawn( *i );
                     tmp->charges = 1;
                     tmp->set_age( 0_turns );
+                    tmp->set_flag( flag_id( "HIDDEN_ITEM" ) );
                     g->m.add_item( loc, std::move( tmp ) );
                     i->charges--;
                 }
@@ -1633,7 +1692,7 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     insides_dirty = true;
     map &here = get_map();
     here.set_transparency_cache_dirty( sm_pos.z );
-    const tripoint part_location = mount_to_tripoint( parts[part_index].mount );
+    const tripoint part_location = mount_to_bubble( parts[part_index].mount ).raw();
     here.set_seen_cache_dirty( part_location );
     const int dist = rl_dist( get_player_character().pos(), part_location );
     if( dist < 20 ) {
@@ -1833,11 +1892,10 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
 
     const int curtain_part = avail_part_with_feature( interact_part, "CURTAIN", true );
     const bool curtain_closed = ( curtain_part == -1 ) ? false : !parts[curtain_part].open;
-    const bool has_kitchen = avail_part_with_feature( interact_part, "KITCHEN", true ) >= 0;
+    const bool has_hotplate = avail_part_with_feature( interact_part, "HOTPLATE", true ) >= 0;
     const bool has_faucet = avail_part_with_feature( interact_part, "FAUCET", true ) >= 0;
     const bool has_towel = avail_part_with_feature( interact_part, "TOWEL", true ) >= 0;
-    const bool has_weldrig = avail_part_with_feature( interact_part, "WELDRIG", true ) >= 0;
-    const bool has_chemlab = avail_part_with_feature( interact_part, "CHEMLAB", true ) >= 0;
+    const bool has_crafter = avail_part_with_feature( interact_part, "CRAFTER", true ) >= 0;
     const bool has_purify = avail_part_with_feature( interact_part, "WATER_PURIFIER", true ) >= 0;
     const bool has_controls = avail_part_with_feature( interact_part, "CONTROLS", true ) >= 0;
     const bool has_electronics = avail_part_with_feature( interact_part, "CTRL_ELECTRONIC", true ) >= 0;
@@ -1858,18 +1916,24 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     const bool has_harness = harness_part >= 0;
     const bool has_bike_rack = bike_rack_part >= 0;
     const bool has_planter = avail_part_with_feature( interact_part, "PLANTER", true ) >= 0;
+    const int door_lock_part = avail_part_with_feature( interact_part, "DOOR_LOCKING", true );
+    const bool has_door_lock = door_lock_part >= 0;
 
     enum {
-        EXAMINE, TRACK, HANDBRAKE, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
-        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_WELDER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_AUTODOC,
-        USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN,
+        EXAMINE, TRACK, HANDBRAKE, BRAKE_HOLD, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
+        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_CRAFTER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_AUTODOC,
+        USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN, PICK_LOCK
     };
     uilist selectmenu;
 
     selectmenu.addentry( EXAMINE, true, 'e', _( "Examine vehicle" ) );
     selectmenu.addentry( TRACK, true, keybind( "TOGGLE_TRACKING" ), tracking_toggle_string() );
+    if( has_door_lock && parts[door_lock_part].enabled ) {
+        selectmenu.addentry( PICK_LOCK, true, 'e', _( "Pick the lock" ) );
+    }
     if( has_controls ) {
         selectmenu.addentry( HANDBRAKE, true, 'h', _( "Pull handbrake" ) );
+        selectmenu.addentry( BRAKE_HOLD, true, 'b', brake_hold_toggle_string() );
         selectmenu.addentry( CONTROL, true, 'v', _( "Control vehicle" ) );
     }
     if( has_electronics ) {
@@ -1900,7 +1964,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     if( curtain_part >= 0 && curtain_closed ) {
         selectmenu.addentry( PEEK_CURTAIN, true, 'p', _( "Peek through the closed curtains" ) );
     }
-    if( ( has_kitchen || has_chemlab ) && fuel_left( itype_battery, true ) > 0 ) {
+    if( has_hotplate && fuel_left( itype_battery, true ) > 0 ) {
         selectmenu.addentry( USE_HOTPLATE, true, 'h', _( "Use the hotplate" ) );
     }
     if( has_faucet && fuel_left( itype_water_clean ) > 0 ) {
@@ -1910,8 +1974,8 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     if( has_towel ) {
         selectmenu.addentry( USE_TOWEL, true, 't', _( "Use a towel" ) );
     }
-    if( has_weldrig && fuel_left( itype_battery, true ) > 0 ) {
-        selectmenu.addentry( USE_WELDER, true, 'w', _( "Use the welding rig" ) );
+    if( has_crafter && fuel_left( itype_battery, true ) > 0 ) {
+        selectmenu.addentry( USE_CRAFTER, true, 'T', _( "Use the integrated tools" ) );
     }
     if( has_purify ) {
         bool can_purify = fuel_left( itype_battery, true ) >=
@@ -1955,7 +2019,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         auto capacity = pseudo.ammo_capacity( true );
         auto qty = capacity - discharge_battery( capacity );
         pseudo.ammo_set( itype_battery, qty );
-        you.invoke_item( &pseudo );
+        you.invoke_item( &pseudo, pos );
         charge_battery( pseudo.ammo_remaining() );
         return true;
     };
@@ -2006,14 +2070,44 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
             }
             return;
         }
-        case USE_WELDER: {
-            if( veh_tool( itype_welder ) ) {
-                // HACK: Evil hack incoming
-                activity_handlers::repair_activity_hack::patch_activity_for_vehicle_welder(
-                    *you.activity,
-                    pos, *this, interact_part
-                );
+        case USE_CRAFTER: {
+            static const flag_id flag_PSEUDO( "PSEUDO" );
+            // Some copy pasta from iexamine.cpp
+            vehicle_part &part = parts[part_with_feature( interact_part, "CRAFTER", true )];
+            const std::vector<itype_id> item_type_list = part.info().craftertools();
+            std::vector<itype_id> usable_item_types;
+            std::vector<std::string> usable_item_names;
+            for( const itype_id &id : item_type_list ) {
+                if( !id->has_use() ) {
+                    continue;
+                }
+                usable_item_types.push_back( id );
+                usable_item_names.push_back( id->nname( 1 ) );
             }
+            if( usable_item_types.empty() ) {
+                return;
+            }
+            int tool_index = 0;
+            if( usable_item_types.size() > 1 ) {
+                tool_index = uilist( _( "Which tool do you want to use?" ), usable_item_names );
+                if( tool_index < 0 || static_cast<size_t>( tool_index ) >= usable_item_types.size() ) {
+                    tool_index = -1;
+                }
+            }
+            if( tool_index < 0 ) {
+                return;
+            }
+            item &fake_item = *item::spawn_temporary( usable_item_types.at( tool_index ), calendar::turn, 0 );
+            fake_item.item_tags.insert( flag_PSEUDO );
+            fake_item.charges = fuel_left( itype_battery, true );
+            int original_charges = fake_item.charges;
+            you.invoke_item( &fake_item, pos );
+            // HACK: Evil hack incoming
+            activity_handlers::repair_activity_hack::patch_activity_for_vehicle(
+                *you.activity, pos, *this, interact_part, fake_item.typeId()
+            );
+            const int discharged = original_charges - fake_item.charges;
+            drain( itype_battery, discharged );
             return;
         }
         case USE_PURIFIER: {
@@ -2064,6 +2158,10 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
             handbrake();
             return;
         }
+        case BRAKE_HOLD: {
+            toggle_brake_hold();
+            return;
+        }
         case CONTROL: {
             use_controls( pos );
             return;
@@ -2094,6 +2192,10 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         }
         case RELOAD_PLANTER: {
             reload_seeds( pos );
+            return;
+        }
+        case PICK_LOCK: {
+            iexamine::locked_object_pickable( get_avatar(), pos );
             return;
         }
     }

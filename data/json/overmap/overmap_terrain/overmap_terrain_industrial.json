@@ -104,6 +104,14 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "solar_farm",
+    "name": "solar farm",
+    "sym": "#",
+    "color": "i_yellow",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
     "id": "pwr_sub_s",
     "name": "small power substation",
     "sym": "H",
@@ -1052,6 +1060,12 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "industrial_center_data_center_upper_roof",
+    "copy-from": "industrial_center_data_center",
+    "name": "data center roof"
+  },
+  {
+    "type": "overmap_terrain",
     "id": "industrial_center_admin",
     "name": "administration",
     "sym": "<",
@@ -1151,6 +1165,14 @@
   },
   {
     "type": "overmap_terrain",
+    "id": "mine_shaft_lower_sub_station",
+    "name": "subway station?",
+    "sym": "S",
+    "color": "dark_gray",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
     "id": [
       "mine_spiral_west",
       "mine_spiral_central",
@@ -1186,5 +1208,34 @@
     "color": "dark_gray",
     "see_cost": 5,
     "flags": [ "KNOWN_UP" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "s_lightindustry_road_0", "s_lightindustry_road_1" ],
+    "name": "light industry",
+    "sym": "─",
+    "color": "dark_gray",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "s_lightindustry_00",
+      "s_lightindustry_00_roof",
+      "s_lightindustry_01",
+      "s_lightindustry_01_roof",
+      "s_lightindustry_10",
+      "s_lightindustry_10_roof",
+      "s_lightindustry_11",
+      "s_lightindustry_11_roof"
+    ],
+    "name": "light industry",
+    "sym": "I",
+    "color": "light_blue",
+    "see_cost": 5,
+    "extras": "build",
+    "mondensity": 2
   }
 ]

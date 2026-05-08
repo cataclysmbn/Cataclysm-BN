@@ -304,7 +304,7 @@
         "f": "f_null",
         "r": "f_rubble",
         "s": "f_null",
-        "t": "f_table",
+        "t": [ [ "f_table", 4 ], "f_table_flipped" ],
         "w": "f_null",
         "|": "f_null"
       },
@@ -402,7 +402,7 @@
         "h": "f_hay",
         "r": "f_rubble",
         "s": "f_null",
-        "t": "f_table",
+        "t": [ [ "f_table", 4 ], "f_table_flipped" ],
         "w": "f_null",
         "|": "f_null"
       },
@@ -495,7 +495,7 @@
         "f": "f_null",
         "h": "f_hay",
         "r": "f_rubble",
-        "t": "f_table",
+        "t": [ [ "f_table", 4 ], "f_table_flipped" ],
         "w": "f_wreckage",
         "|": "f_null"
       },

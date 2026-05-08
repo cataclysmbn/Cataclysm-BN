@@ -1,0 +1,15 @@
+[
+  {
+    "id": "resurrection_anchor_deployed",
+    "type": "furniture",
+    "name": "Resurrection anchor (deployed)",
+    "move_cost_mod": 4,
+    "coverage": 0,
+    "required_str": 100,
+    "description": "A resurrection anchor, functioning as a spot for resurrection, the further away you are, the harder it is to bring everything back.",
+    "symbol": "O",
+    "color": "yellow",
+    "flags": [ "EASY_DECONSTRUCT", "NOCOLLIDE" ],
+    "looks_like": "telepad"
+  }
+]

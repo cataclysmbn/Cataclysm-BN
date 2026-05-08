@@ -20,13 +20,33 @@
     "category": "spare_parts",
     "name": { "str": "alien resin pod" },
     "description": "This is a large pod, the size of a keg, filled with gooey alien resin.  Squeezing it firmly causes resin to squirt from the broken stalk at the end, hardening within a few seconds of being exposed to the air.",
-    "weight": "70000 g",
-    "volume": "22000 ml",
+    "weight": "7 kg",
+    "volume": "22 L",
     "price": "100 USD",
     "price_postapoc": "5 USD",
     "material": "alien_resin",
     "symbol": "0",
     "color": "light_blue",
     "flags": [ "NO_SALVAGE" ]
+  },
+  {
+    "id": "alien_pod_storage",
+    "copy-from": "alien_pod_resin",
+    "type": "TOOL",
+    "name": { "str": "alien storage pod" },
+    "description": "This is a large pod, filled with a thick gel obscuring its contents.  Something is suspended in it, suggesting this is an alien container of some sort.  Activate to tear it open and see what's inside.",
+    "color": "magenta",
+    "use_action": { "type": "unpack", "group": "migo_storage_pod_contents" },
+    "extend": { "flags": [ "ALLOWS_REMOTE_USE" ] }
+  },
+  {
+    "id": "alien_pod_organ",
+    "copy-from": "alien_pod_resin",
+    "type": "TOOL",
+    "name": { "str": "alien organ pod" },
+    "description": "This is a large pod.  What appear to be human organs can be seen floating instead, like some sort of morbid trophy.  Activate to tear it open and see what's inside, if you really want to.",
+    "color": "yellow",
+    "use_action": { "type": "unpack", "group": "migo_organ_pod_contents" },
+    "extend": { "flags": [ "ALLOWS_REMOTE_USE" ] }
   }
 ]

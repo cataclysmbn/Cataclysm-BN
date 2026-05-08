@@ -6,6 +6,7 @@
 #include <set>
 
 #include "character_id.h"
+#include "coordinates.h"
 #include "item.h"
 #include "item_group.h"
 #include "point.h"
@@ -29,13 +30,13 @@ struct vehicle_part {
         friend class turret_data;
         friend class vehicle_base_item_location;
 
-        enum : int { passenger_flag = 1,
-                     animal_flag = 2,
-                     carried_flag = 4,
-                     carrying_flag = 8,
-                     tracked_flag = 16, //carried vehicle part with tracking enabled
-                     targets_grid = 32, // Jumper cable is to grid, not vehicle
-                   };
+        enum vp_state_flag : int { passenger_flag = 1,
+                                   animal_flag = 2,
+                                   carried_flag = 4,
+                                   carrying_flag = 8,
+                                   tracked_flag = 16, //carried vehicle part with tracking enabled
+                                   targets_grid = 32, // Jumper cable is to grid, not vehicle
+                                 };
 
         vehicle_part();
         vehicle_part( vehicle * );
@@ -49,14 +50,13 @@ struct vehicle_part {
         /** Check this instance is non-null (not default constructed) */
         explicit operator bool() const;
 
-        // TODO: Make all of those use the above enum
-        bool has_flag( const int flag ) const noexcept {
+        bool has_flag( const vp_state_flag flag ) const noexcept {
             return flag & flags;
         }
-        int  set_flag( const int flag )       noexcept {
+        int  set_flag( const vp_state_flag flag )       noexcept {
             return flags |= flag;
         }
-        int  remove_flag( const int flag )    noexcept {
+        int  remove_flag( const vp_state_flag flag )    noexcept {
             return flags &= ~flag;
         }
 
@@ -140,13 +140,13 @@ struct vehicle_part {
         /** Try to set fault returning false if specified fault cannot occur with this item */
         bool fault_set( const fault_id &f );
 
-        /** Get wheel diameter times wheel width (inches^2) or return 0 if part is not wheel */
+        /** Get wheel diameter times wheel width (millimeters^2) or return 0 if part is not wheel */
         int wheel_area() const;
 
-        /** Get wheel diameter (inches) or return 0 if part is not wheel */
+        /** Get wheel diameter (millimeters) or return 0 if part is not wheel */
         int wheel_diameter() const;
 
-        /** Get wheel width (inches) or return 0 if part is not wheel */
+        /** Get wheel width (millimeters) or return 0 if part is not wheel */
         int wheel_width() const;
 
         /**
@@ -303,6 +303,11 @@ struct vehicle_part {
          */
         character_id crew_id;
     public:
+
+        // POWER_DRAW_LINKED_PORTAL: portal tap link state (persisted per-part instance).
+        std::string portal_tap_dim_id;
+        tripoint_abs_ms portal_tap_pos;
+        bool portal_tap_linked = false;
         /** Get part definition common to all parts of this type */
         const vpart_info &info() const;
 
@@ -337,5 +342,4 @@ struct vehicle_part {
          */
         std::vector<detached_ptr<item>> pieces_for_broken_part() const;
 };
-
 

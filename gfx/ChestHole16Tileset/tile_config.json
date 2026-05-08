@@ -40694,7 +40694,7 @@
           "bg": 642
         },
         {
-          "id": ["mon_bat", "mon_bat_vampire"],
+          "id": ["mon_bat", "mon_bat_pup", "mon_bat_vampire"],
           "fg": 1623,
           "bg": 642,
           "rotates": false

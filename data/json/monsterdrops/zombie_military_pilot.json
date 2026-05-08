@@ -13,7 +13,13 @@
       { "item": "adderall", "prob": 40 },
       { "item": "id_military", "prob": 25 },
       { "group": "military_patrol_food", "prob": 30 },
-      { "item": "cash_card", "prob": 10, "charges": [ 0, 50000 ] },
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
+        ],
+        "prob": 10
+      },
       { "group": "misc_smoking", "prob": 30 }
     ]
   }

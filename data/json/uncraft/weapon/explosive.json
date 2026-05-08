@@ -6,6 +6,13 @@
     "difficulty": 6,
     "time": "10 m",
     "qualities": [ { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
-    "components": [ [ [ "copper", 50 ] ], [ [ "chem_compositionb", 300 ] ], [ [ "impact_fuze", 1 ] ], [ [ "scrap", 3 ] ] ]
+    "components": [
+      [ [ "copper", 50 ] ],
+      [ [ "chem_compositionb", 300 ] ],
+      [ [ "impact_fuze", 1 ] ],
+      [ [ "scrap", 1 ] ],
+      [ [ "material_aluminium_ingot", 2 ] ],
+      [ [ "shoulder_strap", 1 ] ]
+    ]
   }
 ]

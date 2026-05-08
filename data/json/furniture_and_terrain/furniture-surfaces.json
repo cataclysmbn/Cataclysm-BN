@@ -165,15 +165,47 @@
         { "item": "steel_chunk", "count": [ 4, 8 ] },
         { "item": "scrap", "count": [ 12, 24 ] }
       ],
-      "ranged": { "reduction": [ 35, 35 ], "destroy_threshold": 80, "block_unaimed_chance": "50%" }
+      "ranged": { "reduction": [ 35, 35 ], "destroy_threshold": 80, "block_unaimed_chance": "25%" }
     },
     "examine_action": "workbench",
     "workbench": { "multiplier": 1.2, "mass": "500 kg", "volume": "200L" }
   },
   {
     "type": "furniture",
+    "id": "f_survivors_workbench",
+    "name": "survivor workbench",
+    "description": "A sturdy workbench built out of metal.  It is perfect for crafting large and heavy things.  This one contains a few extra tools and supplies, making it more useful than a standard workbench.",
+    "symbol": "#",
+    "color": "red",
+    "move_cost_mod": 2,
+    "coverage": 50,
+    "required_str": 10,
+    "looks_like": "f_lab_bench",
+    "flags": [ "TRANSPARENT", "PLACE_ITEM", "MOUNTABLE", "FLAT_SURF", "EASY_DECONSTRUCT" ],
+    "crafting_pseudo_item": "toolbox_workshop",
+    "deconstruct": { "items": [ { "item": "survivors_workbench", "count": 1 } ] },
+    "bash": {
+      "str_min": 35,
+      "str_max": 80,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "pipe", "count": [ 4, 6 ] },
+        { "item": "sheet_metal", "count": [ 0, 1 ] },
+        { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+        { "item": "steel_chunk", "count": [ 4, 8 ] },
+        { "item": "scrap", "count": [ 12, 24 ] },
+        { "item": "toolbox_workshop", "count": [ 0, 1 ] }
+      ],
+      "ranged": { "reduction": [ 35, 35 ], "destroy_threshold": 80, "block_unaimed_chance": "25%" }
+    },
+    "examine_action": "workbench",
+    "workbench": { "multiplier": 1.5, "mass": "625 kg", "volume": "250L" }
+  },
+  {
+    "type": "furniture",
     "id": "f_robobench",
-    "name": "Robotic workbench",
+    "name": "robotic workbench",
     "description": "Having upgraded the basic workbench, you've now created a robotic workbench that helps speed up crafting.",
     "symbol": "#",
     "color": "red",
@@ -182,6 +214,7 @@
     "required_str": 10,
     "looks_like": "t_machinery_heavy",
     "flags": [ "TRANSPARENT", "PLACE_ITEM", "MOUNTABLE", "FLAT_SURF", "EASY_DECONSTRUCT" ],
+    "crafting_pseudo_item": "toolbox_workshop",
     "deconstruct": { "items": [ { "item": "robobench", "count": 1 } ] },
     "bash": {
       "str_min": 35,
@@ -193,12 +226,13 @@
         { "item": "sheet_metal", "count": [ 0, 1 ] },
         { "item": "sheet_metal_small", "count": [ 12, 24 ] },
         { "item": "steel_chunk", "count": [ 4, 8 ] },
-        { "item": "scrap", "count": [ 12, 24 ] }
+        { "item": "scrap", "count": [ 12, 24 ] },
+        { "item": "toolbox_workshop", "count": [ 0, 1 ] }
       ],
-      "ranged": { "reduction": [ 35, 35 ], "destroy_threshold": 80, "block_unaimed_chance": "50%" }
+      "ranged": { "reduction": [ 35, 35 ], "destroy_threshold": 80, "block_unaimed_chance": "25%" }
     },
     "examine_action": "workbench",
-    "workbench": { "multiplier": 1.5, "mass": "500 kg", "volume": "200L" }
+    "workbench": { "multiplier": 1.8, "mass": "750 kg", "volume": "300L" }
   },
   {
     "type": "furniture",
@@ -270,11 +304,11 @@
     "type": "furniture",
     "id": "f_tourist_table",
     "name": "tourist table",
-    "description": "Small metal folding table, ideal for off-road trips into the wild.  Can be used as a workbench in a pinch.",
+    "description": "Small metal folding table, ideal for off-road trips into the wild.  Can be used as a workbench in a pinch, or tipped over to create a more solid obstacle.",
     "symbol": "#",
     "bgcolor": "light_gray",
     "move_cost_mod": 2,
-    "coverage": 40,
+    "coverage": 30,
     "required_str": 5,
     "deployed_item": "tourist_table",
     "looks_like": "f_table",
@@ -290,20 +324,52 @@
         { "item": "pipe", "count": [ 1, 3 ] },
         { "item": "sheet_metal_small", "count": [ 4, 8 ] }
       ],
+      "ranged": { "reduction": [ 16, 16 ], "destroy_threshold": 50, "block_unaimed_chance": "25%" }
+    },
+    "examine_action": "transform",
+    "transforms_into": "f_tourist_table_flipped",
+    "prompt": "Flip tourist table",
+    "message": "You knock the tourist table onto its side.",
+    "workbench": { "multiplier": 1.05, "mass": "100 kg", "volume": "35L" }
+  },
+  {
+    "type": "furniture",
+    "id": "f_tourist_table_flipped",
+    "copy-from": "f_tourist_table",
+    "name": "flipped tourist table",
+    "description": "This little metal table looks like a bear's had lunch off it.  Examine it to set it back upright to be less of a tripping hazard.",
+    "symbol": "#",
+    "bgcolor": "light_gray",
+    "move_cost_mod": -1,
+    "coverage": 40,
+    "looks_like": "f_tourist_table",
+    "bash": {
+      "str_min": 16,
+      "str_max": 50,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "scrap", "count": [ 4, 8 ] },
+        { "item": "pipe", "count": [ 1, 3 ] },
+        { "item": "sheet_metal_small", "count": [ 4, 8 ] }
+      ],
       "ranged": { "reduction": [ 16, 16 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
     },
-    "examine_action": "workbench",
-    "workbench": { "multiplier": 1.05, "mass": "100 kg", "volume": "35L" }
+    "transforms_into": "f_tourist_table",
+    "prompt": "Set tourist table upright",
+    "message": "You set the tourist table back upright.",
+    "extend": { "flags": [ "CLIMB_SIMPLE" ] },
+    "delete": { "flags": [ "FLAT_SURF" ], "workbench": { "multiplier": 1.05, "mass": "100 kg", "volume": "35L" } }
   },
   {
     "type": "furniture",
     "id": "f_table",
     "name": "table",
-    "description": "Sit down when you eat!",
+    "description": "Sit down when you eat!  Examine to flip it on its side if you're feeling angry, or want a barricade in a hurry.",
     "symbol": "#",
     "color": "red",
     "move_cost_mod": 2,
-    "coverage": 50,
+    "coverage": 40,
     "required_str": 5,
     "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
     "deconstruct": { "items": [ { "item": "2x4", "count": 4 }, { "item": "wood_panel", "count": 1 }, { "item": "nail", "charges": 8 } ] },
@@ -318,23 +384,86 @@
         { "item": "nail", "charges": [ 4, 8 ] },
         { "item": "splinter", "count": 1 }
       ],
-      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 50, "block_unaimed_chance": "25%" }
     },
-    "examine_action": "workbench",
+    "examine_action": "transform",
+    "transforms_into": "f_table_flipped",
+    "prompt": "Flip table",
+    "message": "You flip the table onto its side.",
     "workbench": { "multiplier": 1.1, "mass": "200 kg", "volume": "75L" }
   },
   {
     "type": "furniture",
+    "id": "f_table_flipped",
+    "copy-from": "f_table",
+    "name": "flipped table",
+    "description": "Not so good for eating on, but will buy you a few more seconds before the zombies eat you.  Examine to set it back up for more civilized uses.",
+    "symbol": "#",
+    "color": "red",
+    "move_cost_mod": -1,
+    "coverage": 50,
+    "required_str": 5,
+    "bash": {
+      "str_min": 12,
+      "str_max": 50,
+      "sound": "smash!",
+      "sound_fail": "whump.",
+      "items": [
+        { "item": "2x4", "count": [ 2, 4 ] },
+        { "item": "wood_panel", "count": [ 0, 1 ] },
+        { "item": "nail", "charges": [ 4, 8 ] },
+        { "item": "splinter", "count": 1 }
+      ],
+      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
+    },
+    "transforms_into": "f_table",
+    "prompt": "Set table upright",
+    "message": "You set the table back on its feet.",
+    "extend": { "flags": [ "CLIMB_SIMPLE" ] },
+    "delete": { "flags": [ "FLAT_SURF" ], "workbench": { "multiplier": 1.1, "mass": "200 kg", "volume": "75L" } }
+  },
+  {
+    "type": "furniture",
     "id": "f_coffee_table",
-    "name": "table",
-    "description": "a low table for livingrooms.",
+    "name": "coffee table",
+    "description": "a low table for livingrooms.  Examine it to tip it onto its side, to slow down the horde in a pinch.",
     "symbol": "#",
     "color": "red",
     "looks_like": "f_table",
     "move_cost_mod": 2,
-    "coverage": 30,
+    "coverage": 20,
     "required_str": 5,
     "flags": [ "TRANSPARENT", "FLAMMABLE", "ORGANIC", "MOUNTABLE", "SHORT", "FLAT_SURF" ],
+    "deconstruct": { "items": [ { "item": "2x4", "count": 2 }, { "item": "wood_panel", "count": 1 }, { "item": "nail", "charges": 8 } ] },
+    "bash": {
+      "str_min": 10,
+      "str_max": 50,
+      "sound": "smash!",
+      "sound_fail": "whump.",
+      "items": [
+        { "item": "2x4", "count": [ 1, 2 ] },
+        { "item": "wood_panel", "count": [ 0, 1 ] },
+        { "item": "nail", "charges": [ 4, 8 ] },
+        { "item": "splinter", "count": 1 }
+      ]
+    },
+    "examine_action": "transform",
+    "transforms_into": "f_coffee_table_flipped",
+    "prompt": "Flip coffee table",
+    "message": "You kick the coffee table onto its side.",
+    "workbench": { "multiplier": 0.85, "mass": "200 kg", "volume": "75L" }
+  },
+  {
+    "type": "furniture",
+    "id": "f_coffee_table_flipped",
+    "copy-from": "f_coffee_table",
+    "name": "flipped coffee table",
+    "description": "a low table knocked onto its side.  Examine to upright it.",
+    "symbol": "#",
+    "color": "red",
+    "looks_like": "f_coffee_table",
+    "move_cost_mod": 4,
+    "coverage": 30,
     "deconstruct": { "items": [ { "item": "2x4", "count": 2 }, { "item": "wood_panel", "count": 1 }, { "item": "nail", "charges": 8 } ] },
     "bash": {
       "str_min": 10,
@@ -349,7 +478,9 @@
       ],
       "ranged": { "reduction": [ 10, 10 ], "destroy_threshold": 50, "block_unaimed_chance": "25%" }
     },
-    "examine_action": "workbench",
-    "workbench": { "multiplier": 0.85, "mass": "200 kg", "volume": "75L" }
+    "transforms_into": "f_coffee_table",
+    "prompt": "Set coffee table upright",
+    "message": "You tip the coffee table back onto its feet.",
+    "delete": { "flags": [ "FLAT_SURF" ], "workbench": { "multiplier": 0.85, "mass": "200 kg", "volume": "75L" } }
   }
 ]

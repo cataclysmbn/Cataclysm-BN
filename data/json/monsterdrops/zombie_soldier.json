@@ -19,7 +19,13 @@
       { "group": "military_standard_pistols", "prob": 50, "damage": [ 0, 2 ], "dirt": [ 0, 1500 ] },
       { "group": "military_patrol_food" },
       { "distribution": [ { "group": "infantry_officer_gear" }, { "group": "infantry_medical_gear" } ], "prob": 40 },
-      { "item": "cash_card", "prob": 10, "charges": [ 0, 50000 ] },
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
+        ],
+        "prob": 10
+      },
       { "group": "misc_smoking", "prob": 40 }
     ]
   },
@@ -42,7 +48,13 @@
       { "group": "military_standard_pistols", "prob": 50, "damage": [ 0, 2 ], "dirt": [ 0, 1500 ] },
       { "group": "military_patrol_food", "prob": 80 },
       { "distribution": [ { "group": "infantry_officer_gear" }, { "group": "infantry_medical_gear" } ], "prob": 20 },
-      { "item": "cash_card", "prob": 10, "charges": [ 0, 50000 ] },
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
+        ],
+        "prob": 10
+      },
       { "group": "misc_smoking", "prob": 30 }
     ]
   },
@@ -74,9 +86,41 @@
       {
         "collection": [ { "group": "infantry_officer_gear", "prob": 90 }, { "group": "infantry_medical_gear", "prob": 80 } ]
       },
-      { "item": "cash_card", "prob": 10, "charges-min": 0, "charges-max": 50000 },
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
+        ],
+        "prob": 10
+      },
       { "group": "misc_smoking", "prob": 30 },
-      { "item": "shield_ballistic", "prob": 10, "damage": [ 1, 4 ] }
+      {
+        "distribution": [
+          { "item": "shield_ballistic", "prob": 50, "damage": [ 1, 4 ] },
+          { "item": "shield_ballistic_large", "prob": 50, "damage": [ 1, 4 ] }
+        ],
+        "prob": 10
+      }
+    ]
+  },
+  {
+    "id": "mon_zombie_soldier_shieldman_death_drops",
+    "type": "item_group",
+    "subtype": "distribution",
+    "//": "Drops its shield, sometimes intact but damaged, other times just scraps.",
+    "entries": [
+      {
+        "collection": [ { "item": "steel_armor", "count": [ 1, 3 ] }, { "item": "steel_chunk", "count": [ 5, 10 ] } ],
+        "prob": 30
+      },
+      {
+        "collection": [ { "item": "hard_steel_armor", "count": [ 1, 3 ] }, { "item": "steel_chunk", "count": [ 5, 10 ] } ],
+        "prob": 20
+      },
+      { "item": "steel_plate", "prob": 25, "damage": [ 1, 4 ] },
+      { "item": "hard_plate", "prob": 15, "damage": [ 1, 4 ] },
+      { "item": "shield_ballistic", "prob": 5, "damage": [ 1, 4 ] },
+      { "item": "shield_ballistic_large", "prob": 5, "damage": [ 1, 4 ] }
     ]
   },
   {

@@ -151,6 +151,7 @@
     "dispersion": 120,
     "durability": 7,
     "clip_size": 2,
+    "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
     "loudness": 5
   }
 ]

@@ -27,6 +27,40 @@
 #include "output.h"
 #include "ui_manager.h"
 
+#include "ncurses_def.h"
+
+struct pairs {
+    catacurses::base_color FG;
+    catacurses::base_color BG;
+};
+
+template<>
+RGBColor color_loader<RGBColor>::from_rgb( const int r, const int g, const int b )
+{
+    RGBColor result;
+    result.b = b;       //Blue
+    result.g = g;       //Green
+    result.r = r;       //Red
+    result.a = 0xFF;    // Opaque
+    return result;
+}
+
+static std::array<RGBColor, color_loader<RGBColor>::COLOR_NAMES_COUNT> windowsPalette;
+static std::array<pairs, 100> colorpairs;
+
+auto ncurses::color_to_RGB( const nc_color &color ) -> RGBColor
+{
+    const int pair_id = color.to_color_pair_index();
+    const auto pair = colorpairs[pair_id];
+
+    int palette_index = pair.FG != 0 ? pair.FG : pair.BG;
+
+    if( color.is_bold() ) {
+        palette_index += color_loader<RGBColor>::COLOR_NAMES_COUNT / 2;
+    }
+    return windowsPalette[palette_index];
+}
+
 static void curses_check_result( const int result, const int expected, const char *const /*name*/ )
 {
     if( result != expected ) {
@@ -166,12 +200,36 @@ void catacurses::mvwvline( const window &win, point p, const chtype ch, const in
 
 void catacurses::mvwaddch( const window &win, point p, const chtype ch )
 {
-    return curses_check_result( ::mvwaddch( win.get<::WINDOW>(), p.y, p.x, ch ), OK, "mvwaddch" );
+    // HACK: can't print some box drawing characters as integers, use strings instead
+    switch( ch ) {
+        case LINE_XDXO_UNICODE:
+            return mvwprintw( win, p, LINE_XDXO_S );
+        case LINE_DXOX_UNICODE:
+            return mvwprintw( win, p, LINE_DXOX_S );
+        case LINE_XOXD_UNICODE:
+            return mvwprintw( win, p, LINE_XOXD_S );
+        case LINE_OXDX_UNICODE:
+            return mvwprintw( win, p, LINE_OXDX_S );
+        default:
+            return curses_check_result( ::mvwaddch( win.get<::WINDOW>(), p.y, p.x, ch ), OK, "mvwaddch" );
+    }
 }
 
 void catacurses::waddch( const window &win, const chtype ch )
 {
-    return curses_check_result( ::waddch( win.get<::WINDOW>(), ch ), OK, "waddch" );
+    // HACK: can't print some box drawing characters as integers, use strings instead
+    switch( ch ) {
+        case LINE_XDXO_UNICODE:
+            return wprintw( win, LINE_XDXO_S );
+        case LINE_DXOX_UNICODE:
+            return wprintw( win, LINE_DXOX_S );
+        case LINE_XOXD_UNICODE:
+            return wprintw( win, LINE_XOXD_S );
+        case LINE_OXDX_UNICODE:
+            return wprintw( win, LINE_OXDX_S );
+        default:
+            return curses_check_result( ::waddch( win.get<::WINDOW>(), ch ), OK, "waddch" );
+    }
 }
 
 void catacurses::wredrawln( const window &win, const int beg_line, const int num_lines )
@@ -211,6 +269,8 @@ static_assert( catacurses::white == COLOR_WHITE,
 
 void catacurses::init_pair( const short pair, const base_color f, const base_color b )
 {
+    colorpairs[pair].FG = f;
+    colorpairs[pair].BG = b;
     return curses_check_result( ::init_pair( pair, static_cast<short>( f ), static_cast<short>( b ) ),
                                 OK, "init_pair" );
 }
@@ -254,6 +314,7 @@ void catacurses::init_interface()
     set_escdelay( 10 ); // Make Escape actually responsive
     // TODO: error checking
     start_color();
+    color_loader<RGBColor>().load( windowsPalette );
     init_colors();
 }
 

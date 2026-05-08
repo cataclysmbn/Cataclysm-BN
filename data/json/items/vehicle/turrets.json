@@ -12,5 +12,19 @@
     "volume": "2500 ml",
     "price": "55 USD",
     "price_postapoc": "25 USD"
+  },
+  {
+    "id": "turret_autoloader",
+    "type": "GENERIC",
+    "name": { "str": "turret autoloader" },
+    "description": "An automated ammunition feeding system designed for vehicle-mounted turrets. Requires electric power to operate.",
+    "color": "light_gray",
+    "symbol": "=",
+    "material": [ "steel", "aluminum" ],
+    "category": "veh_parts",
+    "weight": "25 kg",
+    "volume": "30 L",
+    "price": "400 USD",
+    "price_postapoc": "15 USD"
   }
 ]

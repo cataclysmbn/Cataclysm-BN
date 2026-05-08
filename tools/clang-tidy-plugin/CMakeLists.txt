@@ -17,7 +17,6 @@ set(CataAnalyzerSrc
     SimplifyPointConstructorsCheck.cpp
     StringLiteralIterator.cpp
     TestFilenameCheck.cpp
-    TextStyleCheck.cpp
     TranslatorCommentsCheck.cpp
     UnusedStaticsCheck.cpp
     UseLocalizedSortingCheck.cpp

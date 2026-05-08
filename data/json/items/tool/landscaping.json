@@ -182,7 +182,7 @@
       "transform_charges": 1,
       "need_dry": true
     },
-    "flags": [ "NONCONDUCTIVE" ]
+    "flags": [ "NONCONDUCTIVE", "COMBAT_NPC_USE" ]
   },
   {
     "id": "trimmer_on",
@@ -197,6 +197,6 @@
     "revert_msg": "Your hedge trimmer goes quiet",
     "use_action": { "type": "transform", "target": "trimmer_off", "msg": "You turn off the hedge trimmer." },
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -60 ] ],
-    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE" ]
+    "flags": [ "MESSY", "TRADER_AVOID", "NONCONDUCTIVE", "WATER_DISABLE", "COMBAT_NPC_USE", "COMBAT_NPC_ON" ]
   }
 ]

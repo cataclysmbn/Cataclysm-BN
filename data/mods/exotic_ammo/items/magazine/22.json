@@ -1,0 +1,38 @@
+[
+  {
+    "id": "360_200_mag",
+    "looks_like": "mp5mag",
+    "type": "MAGAZINE",
+    "name": { "str_sp": "RMRB200 .22 magazine" },
+    "description": "A 200 round box magazine for use with the RM360 rotary carbine.",
+    "weight": "360 g",
+    "volume": "500 ml",
+    "price": "200 USD",
+    "material": [ "superalloy", "plastic" ],
+    "symbol": "#",
+    "color": "dark_gray",
+    "ammo_type": "22",
+    "capacity": 200,
+    "reliability": 10,
+    "reload_time": 60,
+    "flags": [ "MAG_COMPACT" ]
+  },
+  {
+    "id": "360_400_mag",
+    "looks_like": "mp5mag",
+    "type": "MAGAZINE",
+    "name": { "str_sp": "RMRD400 .22 drum magazine" },
+    "description": "A 400 round drum magazine for use with the RM360 rotary carbine.",
+    "weight": "440 g",
+    "volume": "750 ml",
+    "price": "300 USD",
+    "material": [ "superalloy", "plastic" ],
+    "symbol": "#",
+    "color": "dark_gray",
+    "ammo_type": "22",
+    "capacity": 400,
+    "reliability": 10,
+    "reload_time": 60,
+    "flags": [ "MAG_BULKY" ]
+  }
+]

@@ -1,1 +1,1 @@
-../../../doc/src/content/docs/en/mod/json/reference/graphics/external_tileset.md
+../../../docs/en/mod/json/reference/graphics/external_tileset.md

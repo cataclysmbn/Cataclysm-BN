@@ -9,7 +9,6 @@
 #include "language.h"
 #include "rng.h"
 #include "string_utils.h"
-#include "text_style_check.h"
 
 // int version/generation that is incremented each time language is changed
 // used to invalidate translation cache
@@ -264,43 +263,6 @@ void translation::deserialize( JsonIn &jsin )
             log_error( "Please use \"str_sp\" instead of \"str\" and \"str_pl\" "
                        "for text with identical singular and plural forms",
                        0 );
-        }
-        if( !raw_pl ) {
-            // Check for punctuation and spacing. Strings with plural forms are
-            // curently simple names, for which these checks are not necessary.
-            const auto text_style_callback =
-                [&log_error]
-                ( const text_style_fix type, const std::string & msg,
-                  const std::u32string::const_iterator & beg, const std::u32string::const_iterator & /*end*/,
-                  const std::u32string::const_iterator & /*at*/,
-                  const std::u32string::const_iterator & from, const std::u32string::const_iterator & to,
-                  const std::string & fix
-            ) {
-                std::string err;
-                switch( type ) {
-                    case text_style_fix::removal:
-                        err = msg + "\n"
-                              + "    Suggested fix: remove \"" + utf32_to_utf8( std::u32string( from, to ) ) + "\"\n"
-                              + "    At the following position (marked with caret)";
-                        break;
-                    case text_style_fix::insertion:
-                        err = msg + "\n"
-                              + "    Suggested fix: insert \"" + fix + "\"\n"
-                              + "    At the following position (marked with caret)";
-                        break;
-                    case text_style_fix::replacement:
-                        err = msg + "\n"
-                              + "    Suggested fix: replace \"" + utf32_to_utf8( std::u32string( from, to ) )
-                              + "\" with \"" + fix + "\"\n"
-                              + "    At the following position (marked with caret)";
-                        break;
-                }
-                log_error( err, std::distance( beg, to ) );
-            };
-
-            const std::u32string raw32 = utf8_to_utf32( raw );
-            text_style_check<std::u32string::const_iterator>( raw32.cbegin(), raw32.cend(),
-                    fix_end_of_string_spaces::yes, escape_unicode::no, text_style_callback );
         }
     }
 #endif

@@ -279,7 +279,7 @@ static void guarantee_neutral_weather( const player &p, weather_manager &weather
     REQUIRE( !get_map().veh_at( p.pos() ) );
 
     const w_point &wp = weather.get_precise();
-    const oter_id &cur_om_ter = overmap_buffer.ter( p.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( p.global_omt_location() );
     bool sheltered = g->is_sheltered( p.pos() );
     double total_windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                              p.pos(),
@@ -319,7 +319,7 @@ TEST_CASE( "Player body temperatures within expected bounds.", "[bodytemp][slow]
 
     SECTION( "Arctic gear target temperatures" ) {
         equip_clothing( dummy, arctic_clothing );
-        test_temperature_spread( dummy, {{-76_c, -61_c, -43_c, -17_c, 9_c, 27_c, 43_c,}} );
+        test_temperature_spread( dummy, {{-76_c, -61_c, -43_c, -17_c, 9_c, 35_c, 50_c,}} );
     }
 }
 

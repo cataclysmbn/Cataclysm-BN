@@ -4,8 +4,11 @@
 #include <string>
 #include <unordered_map>
 
+#include "coordinates.h"
 #include "catacharset.h"
 #include "color.h"
+#include <optional>
+
 #include "string_id.h"
 #include "translations.h"
 
@@ -28,7 +31,7 @@ struct enum_traits<map_extra_method> {
     static constexpr map_extra_method last = map_extra_method::num_map_extra_methods;
 };
 
-using map_extra_pointer = bool( * )( map &, const tripoint & );
+using map_extra_pointer = bool( * )( map &, const tripoint_abs_sm & );
 
 class map_extra
 {
@@ -39,6 +42,7 @@ class map_extra
         bool autonote = false;
         uint32_t symbol = UTF8_getch( "X" );
         nc_color color = c_red;
+        std::optional<std::string> looks_like;
 
         std::string get_symbol() const {
             return utf32_to_utf8( symbol );
@@ -67,8 +71,8 @@ map_extra_pointer get_function( const std::string &name );
 FunctionMap all_functions();
 std::vector<std::string> get_all_function_names();
 
-void apply_function( const string_id<map_extra> &id, map &m, const tripoint &abs_sub );
-void apply_function( const std::string &id, map &m, const tripoint &abs_sub );
+void apply_function( const string_id<map_extra> &id, map &m, const tripoint_abs_sm &abs_sub );
+void apply_function( const std::string &id, map &m, const tripoint_abs_sm &abs_sub );
 
 void load( const JsonObject &jo, const std::string &src );
 void check_consistency();
@@ -80,5 +84,3 @@ void debug_spawn_test();
 const generic_factory<map_extra> &mapExtraFactory();
 
 } // namespace MapExtras
-
-

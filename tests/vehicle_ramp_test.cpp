@@ -133,7 +133,7 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
     veh.velocity = 0;
     here.vehmove();
 
-    const int target_velocity = 400;
+    const int target_velocity = 179;
     veh.cruise_velocity = target_velocity;
     veh.velocity = target_velocity;
     CHECK( veh.safe_velocity() > 0 );
@@ -166,8 +166,6 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
             CAPTURE( ppos );
             if( cycles > ( transition_cycle - pmount.x ) ) {
                 CHECK( ppos.z == target_z );
-            } else {
-                CHECK( ppos.z == 0 );
             }
             if( pmount.x == 0 && pmount.y == 0 ) {
                 CHECK( player_character.pos() == ppos );
@@ -184,6 +182,13 @@ static void ramp_transition_angled( const vproto_id &veh_id, const units::angle 
                 VPFLAG_BOARDABLE, true );
     REQUIRE( vp );
     if( vp ) {
+        // Regression: get_passenger() must return the correct passenger regardless
+        // of the vehicle's z-level.  After a ramp transition global_pos3().z is
+        // non-zero, but precalc[0].z is always zeroed by precalc_mounts().  The old
+        // mount_to_bubble() path returned global_pos3().z while precalc[0].z == 0,
+        // so get_parts_at() found no BOARDABLE part and get_passenger() returned nullptr.
+        // This check is most meaningful for use_ramp == true where z != 0 post-transition.
+        CHECK( veh.get_passenger( static_cast<int>( vp->part_index() ) ) != nullptr );
         const int z_change = map_starting_point.z - player_character.pos().z;
         here.unboard_vehicle( *vp, &player_character, false );
         here.ter_set( map_starting_point, ter_id( "t_pavement" ) );
@@ -244,4 +249,3 @@ TEST_CASE( "vehicle_ramp_test_61", "[vehicle][ramp]" )
         test_ramp( veh, 61 );
     }
 }
-

@@ -4,10 +4,10 @@
     "id": "f_bench",
     "name": "bench",
     "symbol": "#",
-    "description": "Hobo bed.  Airy.  Use at your own risk.",
+    "description": "Hobo bed.  Airy.  Use at your own risk.  You could also examine to flip it onto its side as an obstacle.",
     "color": "brown",
     "move_cost_mod": 1,
-    "coverage": 35,
+    "coverage": 20,
     "comfort": 1,
     "floor_bedding_warmth": -1500,
     "bonus_fire_warmth_feet": 1000,
@@ -19,9 +19,38 @@
       "str_max": 40,
       "sound": "smash!",
       "sound_fail": "whump.",
+      "items": [ { "item": "2x4", "count": [ 1, 3 ] }, { "item": "nail", "charges": [ 2, 6 ] }, { "item": "splinter", "count": 1 } ]
+    },
+    "examine_action": "transform",
+    "transforms_into": "f_bench_flipped",
+    "prompt": "Flip bench",
+    "message": "You kick the bench over onto its side."
+  },
+  {
+    "type": "furniture",
+    "id": "f_bench_flipped",
+    "copy-from": "f_bench",
+    "name": "flipped bench",
+    "symbol": "#",
+    "description": "Hobo bed, now with extra hostile architecture.  Examine it to make it actually suitable to sleep on.",
+    "color": "brown",
+    "move_cost_mod": 2,
+    "coverage": 35,
+    "comfort": 0,
+    "floor_bedding_warmth": 0,
+    "bonus_fire_warmth_feet": 0,
+    "bash": {
+      "str_min": 12,
+      "str_max": 40,
+      "sound": "smash!",
+      "sound_fail": "whump.",
       "items": [ { "item": "2x4", "count": [ 1, 3 ] }, { "item": "nail", "charges": [ 2, 6 ] }, { "item": "splinter", "count": 1 } ],
       "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
-    }
+    },
+    "transforms_into": "f_bench",
+    "prompt": "Set bench upright",
+    "message": "You set the bench back upright.",
+    "delete": { "flags": [ "CAN_SIT" ] }
   },
   {
     "type": "furniture",
@@ -155,8 +184,7 @@
       "str_max": 20,
       "sound": "smash!",
       "sound_fail": "whump.",
-      "items": [ { "item": "2x4", "count": 1 }, { "item": "nail", "charges": [ 1, 5 ] }, { "item": "splinter", "count": 3 } ],
-      "ranged": { "reduction": [ 6, 6 ], "destroy_threshold": 20, "block_unaimed_chance": "25%" }
+      "items": [ { "item": "2x4", "count": 1 }, { "item": "nail", "charges": [ 1, 5 ] }, { "item": "splinter", "count": 3 } ]
     }
   },
   {
@@ -207,8 +235,7 @@
       "str_max": 40,
       "sound": "smash!",
       "sound_fail": "whump.",
-      "items": [ { "item": "splinter", "count": [ 2, 6 ] } ],
-      "ranged": { "reduction": [ 12, 12 ], "destroy_threshold": 40, "block_unaimed_chance": "25%" }
+      "items": [ { "item": "splinter", "count": [ 2, 6 ] } ]
     }
   },
   {
@@ -251,11 +278,11 @@
     "type": "furniture",
     "id": "f_metal_bench",
     "name": "metal bench",
-    "description": "A bench made of scrap metal.  Not the most comfortable furniture you've ever seen.",
+    "description": "A bench made of scrap metal.  Not the most comfortable furniture you've ever seen.  Examine it to knock it over to present more of an obstacle.",
     "symbol": "h",
     "color": "light_gray",
     "move_cost_mod": 1,
-    "coverage": 30,
+    "coverage": 20,
     "required_str": 7,
     "comfort": 1,
     "floor_bedding_warmth": -2000,
@@ -270,10 +297,43 @@
         { "item": "scrap", "count": [ 1, 4 ] },
         { "item": "sheet_metal", "count": [ 0, 1 ] },
         { "item": "pipe", "count": [ 0, 4 ] }
+      ]
+    },
+    "deconstruct": { "items": [ { "item": "scrap", "count": 3 }, { "item": "sheet_metal", "count": 1 }, { "item": "pipe", "count": 4 } ] },
+    "examine_action": "transform",
+    "transforms_into": "f_metal_bench_flipped",
+    "prompt": "Flip metal bench",
+    "message": "You kick the metal bench over onto its side."
+  },
+  {
+    "type": "furniture",
+    "id": "f_metal_bench_flipped",
+    "copy-from": "f_metal_bench",
+    "name": "flipped metal bench",
+    "description": "A bench made of scrap metal, now even more uncomfortable being used as low cover.  Examine it to reorient it for using as proper furniture.",
+    "symbol": "h",
+    "color": "light_gray",
+    "move_cost_mod": 2,
+    "coverage": 30,
+    "comfort": 0,
+    "floor_bedding_warmth": 0,
+    "bonus_fire_warmth_feet": 0,
+    "bash": {
+      "str_min": 15,
+      "str_max": 200,
+      "sound": "metal screeching!",
+      "sound_fail": "crash!",
+      "items": [
+        { "item": "scrap", "count": [ 1, 4 ] },
+        { "item": "sheet_metal", "count": [ 0, 1 ] },
+        { "item": "pipe", "count": [ 0, 4 ] }
       ],
       "ranged": { "reduction": [ 15, 15 ], "destroy_threshold": 200, "block_unaimed_chance": "25%" }
     },
-    "deconstruct": { "items": [ { "item": "scrap", "count": 3 }, { "item": "sheet_metal", "count": 1 }, { "item": "pipe", "count": 4 } ] }
+    "transforms_into": "f_metal_bench",
+    "prompt": "Set metal bench upright",
+    "message": "You set the metal bench back upright.",
+    "delete": { "flags": [ "CAN_SIT" ] }
   },
   {
     "type": "furniture",

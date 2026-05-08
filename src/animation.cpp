@@ -16,13 +16,13 @@
 #include "point.h"
 #include "popup.h"
 #include "posix_time.h"
+#include "ranged.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui_manager.h"
 #include "weather.h"
 
 #if defined(TILES)
-#include <algorithm>
 #include <memory>
 
 #include "cata_tiles.h" // all animation functions will be pushed out to a cata_tiles function in some manner
@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -46,18 +47,19 @@ class basic_animation
             delay( static_cast<size_t>( get_option<int>( "ANIMATION_DELAY" ) ) * scale * 1000000L ) {
         }
 
-        void draw() const {
+        void popup() const {
             static_popup popup;
             popup
             .wait_message( "%s", _( "Hang on a bit…" ) )
             .on_top( true );
-
+        }
+        void draw() const {
             g->invalidate_main_ui_adaptor();
             ui_manager::redraw_invalidated();
             refresh_display();
         }
-
-        void progress() const {
+        void progress( bool draw_popup = true ) const {
+            if( draw_popup ) { popup(); }
             draw();
 
             // NOLINTNEXTLINE(cata-no-long): timespec uses long int
@@ -190,8 +192,8 @@ void draw_custom_explosion_curses( game &g,
 {
     // calculate screen offset relative to player + view offset position
     const tripoint center = g.u.pos() + g.u.view_offset;
-    const tripoint topleft( center.x - getmaxx( g.w_terrain ) / 2,
-                            center.y - getmaxy( g.w_terrain ) / 2, 0 );
+    const tripoint topleft( center.x - ( getmaxx( g.w_terrain ) / 2 ),
+                            center.y - ( getmaxy( g.w_terrain ) / 2 ), 0 );
 
     explosion_animation anim;
 
@@ -257,6 +259,41 @@ void draw_custom_explosion_curses( game &g,
         }
     }
 }
+
+[[maybe_unused]]
+auto get_bullet_dir( const std::vector<tripoint> &trajectory, size_t i ) -> direction
+{
+    return i == 0 && trajectory.size() > 1 ?
+           direction_from( trajectory[i], trajectory[i + 1] ) :
+           ( i >= 1 && i < trajectory.size() ) ?
+           direction_from( trajectory[i - 1], trajectory[i] ) :
+           direction::NORTH;
+}
+
+[[maybe_unused]] auto get_bullet_rotation( direction dir ) -> int
+{
+    switch( dir ) {
+        case direction::NORTH:
+            return 0;
+        case direction::NORTHEAST:
+            return 5;
+        case direction::EAST:
+            return 3;
+        case direction::SOUTHEAST:
+            return 8;
+        case direction::SOUTH:
+            return 2;
+        case direction::SOUTHWEST:
+            return 7;
+        case direction::WEST:
+            return 1;
+        case direction::NORTHWEST:
+            return 6;
+        default:
+            return 0;
+    }
+}
+
 } // namespace
 
 #if defined(TILES)
@@ -456,6 +493,25 @@ void explosion_handler::draw_custom_explosion( const tripoint &,
 namespace
 {
 
+#if defined( TILES )
+auto get_bullet_sprite( const char bullet, const std::string &custom_sprite ) -> std::string
+{
+    if( !custom_sprite.empty() ) {
+        return custom_sprite;
+    }
+    if( bullet == '*' ) {
+        return "animation_bullet_normal_0deg";
+    }
+    if( bullet == '#' ) {
+        return "animation_bullet_flame";
+    }
+    if( bullet == '`' ) {
+        return "animation_bullet_shrapnel";
+    }
+    return {};
+}
+#endif
+
 void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tripoint *const p )
 {
     if( !is_point_visible( t ) ) {
@@ -481,10 +537,9 @@ void draw_bullet_curses( map &m, const tripoint &t, const char bullet, const tri
 } // namespace
 
 #if defined(TILES)
-/* Bullet Animation -- Maybe change this to animate the ammo itself flying through the air?*/
-// need to have a version where there is no player defined, possibly. That way shrapnel works as intended
 void game::draw_bullet( const tripoint &t, const int i,
-                        const std::vector<tripoint> &trajectory, const char bullet )
+                        const std::vector<tripoint> &trajectory, const char bullet,
+                        const std::string &custom_sprite )
 {
     if( !use_tiles ) {
         draw_bullet_curses( m, t, bullet, nullptr );
@@ -495,78 +550,11 @@ void game::draw_bullet( const tripoint &t, const int i,
         return;
     }
 
-    static const std::string bullet_unknown  {};
-    static const std::string bullet_normal_0deg {"animation_bullet_normal_0deg"};
-    static const std::string bullet_normal_45deg {"animation_bullet_normal_45deg"};
-    static const std::string bullet_flame    {"animation_bullet_flame"};
-    static const std::string bullet_shrapnel {"animation_bullet_shrapnel"};
+    const auto sprite = get_bullet_sprite( bullet, custom_sprite );
 
-    // to send to
-    enum rotation_impl : unsigned {
-        UP = 0,
-        DOWN = 2,
-        LEFT = 1,
-        RIGHT = 3,
-    };
-
-    const auto get_bullet_normal_sprite = [&]( direction dir ) {
-        switch( dir ) {
-            case direction::NORTH:
-            case direction::EAST:
-            case direction::SOUTH:
-            case direction::WEST:
-            default:
-                return bullet_normal_0deg;
-            case direction::NORTHEAST:
-            case direction::SOUTHEAST:
-            case direction::SOUTHWEST:
-            case direction::NORTHWEST:
-                return bullet_normal_45deg;
-        }
-    };
-
-    // converts direction into cata_tiles compatible rotation value
-    static const auto get_rotation = []( direction dir ) {
-        switch( dir ) {
-            default:
-            case direction::NORTH:
-            case direction::NORTHEAST:
-                return rotation_impl::UP;
-            case direction::SOUTH:
-            case direction::SOUTHWEST:
-                return rotation_impl::DOWN;
-            case direction::WEST: // for some reason it's counter-clockwise
-            case direction::NORTHWEST:
-                return rotation_impl::LEFT;
-            case direction::EAST:
-            case direction::SOUTHEAST:
-                return rotation_impl::RIGHT;
-        }
-    };
-    const auto get_dir = [&]( ) -> direction {
-        if( i == 0 && trajectory.size() > 1 )
-        {
-            return direction_from( t, trajectory[1] );
-        } else if( i >= 1 )
-        {
-            return direction_from( trajectory[i - 1], t );
-        } else
-        {
-            return direction::NORTH;
-        }
-    };
-
-    const direction dir = get_dir();
-    const rotation_impl rotation = get_rotation( dir );
-
-    const std::string &bullet_type =
-        bullet == '*' ? get_bullet_normal_sprite( dir )
-        : bullet == '#' ? bullet_flame
-        : bullet == '`' ? bullet_shrapnel
-        : bullet_unknown;
-
-    shared_ptr_fast<draw_callback_t> bullet_cb = make_shared_fast<draw_callback_t>( [&]() {
-        tilecontext->init_draw_bullet( t, bullet_type, rotation );
+    const auto rotation = get_bullet_rotation( get_bullet_dir( trajectory, static_cast<size_t>( i ) ) );
+    auto bullet_cb = make_shared_fast<draw_callback_t>( [&]() {
+        tilecontext->init_draw_bullet( t, sprite, rotation );
     } );
     add_draw_callback( bullet_cb );
 
@@ -575,11 +563,161 @@ void game::draw_bullet( const tripoint &t, const int i,
 }
 #else
 void game::draw_bullet( const tripoint &t, const int i, const std::vector<tripoint> &trajectory,
-                        const char bullet )
+                        const char bullet, const std::string & )
 {
     draw_bullet_curses( m, t, bullet, &trajectory[i] );
 }
 #endif
+
+namespace
+{
+
+auto get_longest_trajectory_size( const std::vector<std::vector<tripoint>> &trajectories ) -> size_t
+{
+    auto longest_trajectory_size = size_t{ 0 };
+    for( const auto &trajectory : trajectories ) {
+        longest_trajectory_size = std::max( longest_trajectory_size, trajectory.size() );
+    }
+    return longest_trajectory_size;
+}
+
+#if defined( TILES )
+auto append_line_points( const draw_bullet_trajectories_options &options,
+                         std::vector<tripoint> &points,
+                         std::vector<std::string> &sprites,
+                         std::vector<int> &rotations ) -> void
+{
+    const auto sprite = get_bullet_sprite( options.bullet, options.custom_sprite );
+    for( const auto &trajectory : options.trajectories ) {
+        if( trajectory.size() < 2 ) {
+            continue;
+        }
+
+        auto line_points = std::vector<tripoint>( trajectory.begin() + 1, trajectory.end() );
+        for( size_t point_index = 0; point_index < line_points.size(); point_index++ ) {
+            if( !is_point_visible( line_points[point_index] ) ) {
+                continue;
+            }
+
+            points.push_back( line_points[point_index] );
+            sprites.push_back( sprite );
+            rotations.push_back( get_bullet_rotation( get_bullet_dir( line_points, point_index ) ) );
+        }
+    }
+}
+#endif
+
+auto draw_bullet_trajectories_curses( game &g,
+                                      const draw_bullet_trajectories_options &options ) -> void
+{
+    if( options.draw_as_line ) {
+        auto bullet_cb = make_shared_fast<game::draw_callback_t>( [&]() {
+            auto &here = get_map();
+            for( const auto &trajectory : options.trajectories ) {
+                for( size_t point_index = 1; point_index < trajectory.size(); point_index++ ) {
+                    const auto &point = trajectory[point_index];
+                    if( !is_point_visible( point ) ) {
+                        continue;
+                    }
+
+                    here.drawsq( g.w_terrain, point, drawsq_params().highlight( true ) );
+                }
+            }
+        } );
+        g.add_draw_callback( bullet_cb );
+        bullet_animation().progress( false );
+        return;
+    }
+
+    const auto longest_trajectory_size = get_longest_trajectory_size( options.trajectories );
+    for( size_t step = 1; step < longest_trajectory_size; step++ ) {
+        auto bullet_cb = make_shared_fast<game::draw_callback_t>( [ &, step]() {
+            auto &here = get_map();
+            const auto view_pos = g.u.pos() + g.u.view_offset;
+            for( const auto &trajectory : options.trajectories ) {
+                if( step >= trajectory.size() || !is_point_visible( trajectory[step] ) ) {
+                    continue;
+                }
+
+                if( trajectory[step - 1].z == view_pos.z ) {
+                    here.drawsq( g.w_terrain, trajectory[step - 1], drawsq_params().center( view_pos ) );
+                }
+                if( trajectory[step].z != view_pos.z ) {
+                    continue;
+                }
+
+                mvwputch( g.w_terrain, trajectory[step].xy() - view_pos.xy() + point( POSX, POSY ),
+                          c_red, options.bullet );
+            }
+        } );
+        g.add_draw_callback( bullet_cb );
+        bullet_animation().progress();
+    }
+}
+
+} // namespace
+
+void draw_bullet_trajectories( const draw_bullet_trajectories_options &options )
+{
+    if( options.trajectories.empty() ) {
+        return;
+    }
+
+#if !defined( TILES )
+    draw_bullet_trajectories_curses( *g, options );
+    return;
+#else
+    if( !use_tiles ) {
+        draw_bullet_trajectories_curses( *g, options );
+        return;
+    }
+
+    const auto sprite = get_bullet_sprite( options.bullet, options.custom_sprite );
+    if( options.draw_as_line ) {
+        auto points = std::vector<tripoint> {};
+        auto sprites = std::vector<std::string> {};
+        auto rotations = std::vector<int> {};
+        append_line_points( options, points, sprites, rotations );
+        if( points.empty() ) {
+            return;
+        }
+
+        auto bullets_cb = make_shared_fast<game::draw_callback_t>( [&] {
+            tilecontext->init_draw_bullets( points, sprites, rotations );
+        } );
+        g->add_draw_callback( bullets_cb );
+        bullet_animation().progress( false );
+        tilecontext->void_bullet();
+        return;
+    }
+
+    const auto longest_trajectory_size = get_longest_trajectory_size( options.trajectories );
+    for( size_t step = 1; step < longest_trajectory_size; step++ ) {
+        auto points = std::vector<tripoint> {};
+        auto sprites = std::vector<std::string> {};
+        auto rotations = std::vector<int> {};
+        for( const auto &trajectory : options.trajectories ) {
+            if( step >= trajectory.size() || !is_point_visible( trajectory[step] ) ) {
+                continue;
+            }
+
+            points.push_back( trajectory[step] );
+            sprites.push_back( sprite );
+            rotations.push_back( get_bullet_rotation( get_bullet_dir( trajectory, step ) ) );
+        }
+        if( points.empty() ) {
+            continue;
+        }
+
+        auto bullets_cb = make_shared_fast<game::draw_callback_t>( [&] {
+            tilecontext->init_draw_bullets( points, sprites, rotations );
+        } );
+        g->add_draw_callback( bullets_cb );
+        bullet_animation().progress();
+        tilecontext->void_bullet();
+    }
+#endif
+}
 
 namespace
 {
@@ -654,7 +792,7 @@ void draw_hit_player_curses( const game &g, const Character &who, const int dam 
 } //namespace
 
 #if defined(TILES)
-void game::draw_hit_player( const Character &who, const int dam )
+void game::draw_hit_player( const Character &p, const int dam )
 {
     if( test_mode ) {
         // avoid segfault from null tilecontext in tests
@@ -662,7 +800,7 @@ void game::draw_hit_player( const Character &who, const int dam )
     }
 
     if( !use_tiles ) {
-        draw_hit_player_curses( *this, who, dam );
+        draw_hit_player_curses( *this, p, dam );
         return;
     }
 
@@ -671,11 +809,11 @@ void game::draw_hit_player( const Character &who, const int dam )
     static const std::string npc_male      {"npc_male"};
     static const std::string npc_female    {"npc_female"};
 
-    const std::string &type = who.is_player() ? ( who.male ? player_male : player_female )
-                              : who.male ? npc_male : npc_female;
+    const std::string &type = p.is_player() ? ( p.male ? player_male : player_female )
+                              : p.male ? npc_male : npc_female;
 
     shared_ptr_fast<draw_callback_t> hit_cb = make_shared_fast<draw_callback_t>( [&]() {
-        tilecontext->init_draw_hit( who.pos(), type );
+        tilecontext->init_draw_hit( p.pos(), type );
     } );
     add_draw_callback( hit_cb );
 
@@ -706,8 +844,8 @@ void draw_line_curses( game &g, const tripoint &center, const std::vector<tripoi
             const char sym = '?';
             const nc_color col = c_dark_gray;
             const catacurses::window &w = g.w_terrain;
-            const int k = p.x + getmaxx( w ) / 2 - center.x;
-            const int j = p.y + getmaxy( w ) / 2 - center.y;
+            const int k = p.x + ( getmaxx( w ) / 2 ) - center.x;
+            const int j = p.y + ( getmaxy( w ) / 2 ) - center.y;
             mvwputch( w, point( k, j ), col, sym );
         } else {
             // This function reveals tile at p and writes it to the player's memory
@@ -760,6 +898,46 @@ void draw_line_curses( game &g, const std::vector<tripoint> &points )
 } //namespace
 
 #if defined(TILES)
+void draw_line_of( const draw_sprite_line_options &options )
+{
+    if( !use_tiles ) {
+        draw_line_curses( *g, options.points );
+        return;
+    }
+    std::vector<tripoint> ps;
+    std::vector<std::string> ids;
+    std::vector<int> rots;
+
+    ps.reserve( options.points.size() );
+    ids.reserve( options.points.size() );
+    rots.reserve( options.points.size() );
+
+    for( size_t i = 0; i < options.points.size(); ++i ) {
+        if( !is_point_visible( options.points[i] ) ) { continue; }
+
+        int rotation;
+        if( options.rotate ) {
+            const int step = static_cast<int>( i % 8 );
+            const int cardinal_rotations[] = {0, 1, 2, 3};
+            const int diagonal_rotations[] = {5, 6, 7, 8};
+            rotation = ( step % 2 == 0 ) ? cardinal_rotations[step / 2] : diagonal_rotations[step / 2];
+        } else {
+            rotation = get_bullet_rotation( get_bullet_dir( options.points, i ) );
+        }
+
+        ps.push_back( options.points[i] );
+        ids.push_back( options.sprite );
+        rots.push_back( rotation );
+    }
+    if( ps.empty() ) { return; }
+
+    auto bullets_cb = make_shared_fast<game::draw_callback_t>( [&] {
+        tilecontext->init_draw_bullets( ps, ids, rots );
+    } );
+    g->add_draw_callback( bullets_cb );
+    bullet_animation().progress( false );
+    tilecontext->void_bullet();
+}
 void game::draw_line( const tripoint &p, const std::vector<tripoint> &points )
 {
     draw_line_curses( *this, points );
@@ -771,6 +949,10 @@ void game::draw_line( const tripoint &p, const std::vector<tripoint> &points )
     tilecontext->init_draw_line( p, points, "line_trail", false );
 }
 #else
+void draw_line_of( const draw_sprite_line_options &options )
+{
+    g->draw_line( options.p, options.points );
+}
 void game::draw_line( const tripoint &/*p*/, const std::vector<tripoint> &points )
 {
     draw_line_curses( *this, points );
@@ -879,36 +1061,77 @@ void game::draw_sct()
 
 namespace
 {
-void draw_zones_curses( const catacurses::window &w, const tripoint &start, const tripoint &end,
-                        const tripoint &offset )
+void draw_zones_curses( const catacurses::window &w, const zone_draw_options &options )
 {
-    if( end.x < start.x || end.y < start.y || end.z < start.z ) {
+    nc_color    const col = invert_color( c_light_green );
+    const bool has_points = !options.points.empty();
+    if( has_points ) {
+        std::ranges::for_each( options.points, [&]( const tripoint & location ) {
+            mvwputch( w, point( location.x - options.offset.x, location.y - options.offset.y ),
+                      col, '~' );
+        } );
+    } else {
+        if( options.end.x < options.start.x || options.end.y < options.start.y ||
+            options.end.z < options.start.z ) {
+            return;
+        }
+
+        const std::string line( options.end.x - options.start.x + 1, '~' );
+        const int x = options.start.x - options.offset.x;
+
+        for( int y = options.start.y; y <= options.end.y; ++y ) {
+            mvwprintz( w, point( x, y - options.offset.y ), col, line );
+        }
+    }
+
+    const auto bounds = [&]() -> std::optional<std::pair<point, point>> {
+        if( has_points )
+        {
+            const auto min_x = std::ranges::minmax_element( options.points, {}, &tripoint::x );
+            const auto min_y = std::ranges::minmax_element( options.points, {}, &tripoint::y );
+            return std::pair<point, point>( point( min_x.min->x, min_y.min->y ),
+                                            point( min_x.max->x, min_y.max->y ) );
+        }
+        return std::pair<point, point>( options.start.xy(), options.end.xy() );
+    }();
+
+    if( !bounds.has_value() ) {
         return;
     }
 
-    nc_color    const col = invert_color( c_light_green );
-    const std::string line( end.x - start.x + 1, '~' );
-    int         const x = start.x - offset.x;
-
-    for( int y = start.y; y <= end.y; ++y ) {
-        mvwprintz( w, point( x, y - offset.y ), col, line );
+    const point min_local = bounds->first;
+    const point max_local = bounds->second;
+    const int width = max_local.x - min_local.x + 1;
+    const int height = max_local.y - min_local.y + 1;
+    if( width <= 0 || height <= 0 ) {
+        return;
     }
+
+    const std::string label = string_format( _( "(%dx%d)" ), width, height );
+    const point center_local( ( min_local.x + max_local.x ) / 2,
+                              ( min_local.y + max_local.y ) / 2 );
+    const point label_pos = point(
+                                std::clamp( center_local.x - static_cast<int>( label.size() ) / 2,
+                                            0, getmaxx( w ) - static_cast<int>( label.size() ) ),
+                                std::clamp( center_local.y - options.offset.y, 0,
+                                            getmaxy( w ) - 1 ) );
+    mvwprintz( w, label_pos, c_white, label );
 }
 } //namespace
 
 #if defined(TILES)
-void game::draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset )
+void game::draw_zones( const zone_draw_options &options )
 {
     if( use_tiles ) {
-        tilecontext->init_draw_zones( start, end, offset );
+        tilecontext->init_draw_zones( options );
     } else {
-        draw_zones_curses( w_terrain, start, end, offset );
+        draw_zones_curses( w_terrain, options );
     }
 }
 #else
-void game::draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset )
+void game::draw_zones( const zone_draw_options &options )
 {
-    draw_zones_curses( w_terrain, start, end, offset );
+    draw_zones_curses( w_terrain, options );
 }
 #endif
 
@@ -1106,8 +1329,8 @@ static void draw_cone_aoe_curses( const tripoint &, const bucketed_points &waves
     // Calculate screen offset relative to player + view offset position
     const avatar &u = get_avatar();
     const tripoint center = u.pos() + u.view_offset;
-    const tripoint topleft( center.x - catacurses::getmaxx( g->w_terrain ) / 2,
-                            center.y - catacurses::getmaxy( g->w_terrain ) / 2, 0 );
+    const tripoint topleft( center.x - ( catacurses::getmaxx( g->w_terrain ) / 2 ),
+                            center.y - ( catacurses::getmaxy( g->w_terrain ) / 2 ), 0 );
 
     auto it = waves.begin();
     shared_ptr_fast<game::draw_callback_t> wave_cb =

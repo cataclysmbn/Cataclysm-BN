@@ -1,8 +1,6 @@
-gdebug.log_info("ebook_lua: main online.")
+local ui = require("lib.ui")
 
 local mod = game.mod_runtime[game.current_mod]
----@class storage
----@field hook_assuarance table<integer, string>
 local storage = game.mod_storage[game.current_mod]
 
 mod.storage = storage
@@ -59,21 +57,6 @@ mod.table_size = function(tbl)
   return count
 end
 
----@type fun(str: string): void
-mod.poppin = function(str)
-  local popup = QueryPopup.new()
-  popup:message(str)
-  popup:allow_any_key(true)
-  popup:query()
-end
-
----@type fun(str: string): string
-mod.poppyn = function(str)
-  local popup = QueryPopup.new()
-  popup:message(str)
-  return popup:query_yn()
-end
-
 --For colorful UI!
 ---@type fun(item: Item, ui: UiList): void
 mod.ui_coloring = function(item, ui)
@@ -104,7 +87,7 @@ mod.item_funeral = function()
   if storage.hook_assuarance[NOW:to_turns()] and (YOU:has_activity(ACT_READ) or YOU:has_activity(ACT_CRAFT)) then
     -- For more precise, what you read is needed... but I don't know how to get.
     YOU:cancel_activity()
-    mod.poppin(locale.gettext("Your e-copy is degrading!"))
+    ui.query_any_key(locale.gettext("Your e-copy is degrading!"))
     gapi.add_msg("You stop what you are doing and watch it vanishes.")
   end
   storage.hook_assuarance[NOW:to_turns()] = nil
@@ -123,7 +106,7 @@ mod.assure_timer_hook = function()
         mod.__already_assured[the_when] = true
         -- Main of assure timer hook.
         if val == "Requiem" then
-          local booked_at = mod.from_turns(the_when)
+          local booked_at = TimeDuration.from_turns(the_when)
           gdebug.log_info(string.format("Function [%s]: booked at [%d] turn after.", val, (booked_at - NOW):to_turns()))
           gapi.add_on_every_x_hook(booked_at, mod.item_funeral)
         end
@@ -199,8 +182,8 @@ mod.ebook_scan = function(user, device)
       local sel_scan = ui_scan:query()
       if sel_scan == 0 then
         if hit_end then
-          local YN = mod.poppyn(locale.gettext("WARNING: Not enough battery to scan all books.\nProceed anyway?"))
-          if YN == "YES" then
+          local YN = ui.query_yn(locale.gettext("WARNING: Not enough battery to scan all books.\nProceed anyway?"))
+          if YN then
             local count2 = 0
             for t_str, _ in pairs(found) do
               mod.insert_lib2(device, t_str)
@@ -208,7 +191,7 @@ mod.ebook_scan = function(user, device)
               if count2 >= dev_limit then break end
             end
             gapi.add_msg(MsgType.good, string.format(locale.gettext("You scanned %d book(s)."), dev_limit))
-            return dev_limit
+            return dev_limit * 10
           else --selected NO
             return -1
           end
@@ -217,7 +200,7 @@ mod.ebook_scan = function(user, device)
             mod.insert_lib2(device, t_str)
           end
           gapi.add_msg(MsgType.good, string.format(locale.gettext("You scanned %d book(s)."), num_found))
-          return num_found
+          return num_found * 10
         end
       else --selected Cancel or pressed ESC
         return -1
@@ -273,7 +256,7 @@ mod.ebook_load = function(reader, device)
         --Go back to select book menu.
       elseif minute > device.charges - 10 then
         --You input too big. Try again.
-        mod.poppin(locale.gettext("Input value is over than available charges.\nPlease check your input."))
+        ui.query_any_key(locale.gettext("Input value is over than available charges.\nPlease check your input."))
         u_input_too_big_minute = true
       else
         local selected = tmp_arr[sel + 1]
@@ -313,7 +296,7 @@ mod.ebook_load = function(reader, device)
           book_in_real.charges = 0
         end
 
-        local the_when = gapi.current_turn() + mod.from_turns(lifetime - 1)
+        local the_when = gapi.current_turn() + TimeDuration.from_turns(lifetime - 1)
         book_in_real:set_var_num("its_fate_time", the_when:to_turn())
         mod.turntimer_hook(lifetime - 1, mod.item_funeral)
 
@@ -322,9 +305,9 @@ mod.ebook_load = function(reader, device)
             "You printed a physical copy of %s.\nIt’s virtually weightless and will degrade naturally in about \n[%d minutes.]\nYou can return it to the device to recover some energy."
           ),
           selected.name,
-          mod.from_turns(lifetime):to_minutes()
+          TimeDuration.from_turns(lifetime):to_minutes()
         )
-        mod.poppin(msg)
+        ui.query_any_key(msg)
         reader:mod_moves(-100)
         return minute
       end
@@ -341,7 +324,7 @@ mod.ebook_return = function(reader, device)
     if it:has_var("aspect") then table.insert(virtual_books, it) end
   end
   if #virtual_books <= 0 then
-    mod.poppin(locale.gettext("There is no book to return."))
+    ui.query_any_key(locale.gettext("There is no book to return."))
     return -1
   end
   local letter_limit = 24
@@ -378,7 +361,7 @@ mod.check_lib = function(reader, device)
   local book_data = mod.unzip_var_lib2(device)
 
   if next(book_data) == nil then
-    mod.poppin(locale.gettext("There is no book in the device."))
+    ui.query_any_key(locale.gettext("There is no book in the device."))
     return -1
   end
 
@@ -387,7 +370,7 @@ mod.check_lib = function(reader, device)
     table.insert(book_data_items, gapi.create_item(ItypeId.new(k_ity_str), 1):tname(1, false, 0))
   end
   local book_data_list_str = table.concat(book_data_items, "\n")
-  mod.poppin(
+  ui.query_any_key(
     string.format(locale.gettext("UID:%s\n\nThis device has book data as below:\n%s"), uid, book_data_list_str)
   )
   return -1
@@ -404,7 +387,7 @@ mod.mc_io = function(reader, device)
   end
   -- Escape when no mc.
   if #your_mc == 0 then
-    mod.poppin(locale.gettext("You don't have any empty memory card."))
+    ui.query_any_key(locale.gettext("You don't have any empty memory card."))
     return -1
   end
   -- Now we have your_mc table.
@@ -452,7 +435,7 @@ mod.mc_io = function(reader, device)
             table.insert(book_data_mc_items, gapi.create_item(ItypeId.new(k_ity_str), 1):tname(1, false, 0))
           end
           local book_data_mc_text = table.concat(book_data_mc_items, "\n")
-          mod.poppin(
+          ui.query_any_key(
             string.format(locale.gettext("Book data of %s:\n%s"), that_mc:tname(1, false, 0), book_data_mc_text)
           )
         elseif ans_mc_menu == 1 then --Download
@@ -464,10 +447,10 @@ mod.mc_io = function(reader, device)
             end
           end
           if dl_count == 0 then
-            mod.poppin(string.format(locale.gettext("%s has nothing new books."), that_mc:tname(1, false, 0)))
+            ui.query_any_key(string.format(locale.gettext("%s has nothing new books."), that_mc:tname(1, false, 0)))
           else
-            mod.poppin(
-              string.format(locale.gettext("%d books downloaded from %s."), dl_count, that_mc:tname(1, false, 0))
+            ui.query_any_key(
+              string.format(locale.gettext("%1$d books downloaded from %2$s."), dl_count, that_mc:tname(1, false, 0))
             )
           end
         elseif ans_mc_menu == 2 then --Upload
@@ -479,11 +462,13 @@ mod.mc_io = function(reader, device)
             end
           end
           if ul_count == 0 then
-            mod.poppin(string.format(locale.gettext("%s has the same books already."), that_mc:tname(1, false, 0)))
+            ui.query_any_key(
+              string.format(locale.gettext("%s has the same books already."), that_mc:tname(1, false, 0))
+            )
           else
-            mod.poppin(
+            ui.query_any_key(
               string.format(
-                locale.gettext("%d books uploaded on %s.\nNaming the card is recommended."),
+                locale.gettext("%1$d books uploaded on %2$s.\nNaming the card is recommended."),
                 ul_count,
                 that_mc:tname(1, false, 0)
               )
@@ -492,20 +477,20 @@ mod.mc_io = function(reader, device)
           end
         elseif ans_mc_menu == 3 then --Remove all
           if not that_mc:has_var("book_data") then
-            mod.poppin(locale.gettext("It has no book data."))
+            ui.query_any_key(locale.gettext("It has no book data."))
           else
-            local yn1 = mod.poppyn(
+            local yn1 = ui.query_yn(
               string.format(
                 locale.gettext("Do you want to delete all of book data of %s? It's irretrievable!"),
                 that_mc:tname(1, false, 0)
               )
             )
-            if yn1 == "YES" then
-              local yn2 = mod.poppyn(locale.gettext("Are you sure to delete book data in the card?"))
-              if yn2 == "YES" then
+            if yn1 then
+              local yn2 = ui.query_yn(locale.gettext("Are you sure to delete book data in the card?"))
+              if yn2 then
                 that_mc:erase_var("name")
                 that_mc:erase_var("book_data")
-                mod.poppin(locale.gettext("The memory card is reset successfully."))
+                ui.query_any_key(locale.gettext("The memory card is reset successfully."))
                 break
               end
             end
@@ -519,7 +504,7 @@ end
 -- cloud sync. but that never works in this world.
 ---@type fun(reader: Character, device: Item): integer
 mod.cloud_sync = function(reader, device)
-  mod.poppin(
+  ui.query_any_key(
     locale.gettext(
       "ERROR: Network Connection Failed\n\nConnection denied by Protocol Zero. Server access is temporarily suspended.\nPlease wait for further updates."
     )
@@ -530,17 +515,17 @@ end
 -- Reset library. Double caution.
 ---@type fun(reader: Character, device: Item): integer
 mod.reset_lib = function(reader, device)
-  local yn1 = mod.poppyn(
+  local yn1 = ui.query_yn(
     string.format(
       locale.gettext("Do you want to delete all of book data of %s? It's irretrievable!"),
       device:tname(1, false, 0)
     )
   )
   if yn1 == "YES" then
-    local yn2 = mod.poppyn(locale.gettext("Are you sure to delete book data in the device?"))
+    local yn2 = ui.query_yn(locale.gettext("Are you sure to delete book data in the device?"))
     if yn2 == "YES" then
       device:erase_var("book_data")
-      mod.poppin(locale.gettext("The device is reset successfully."))
+      ui.query_any_key(locale.gettext("The device is reset successfully."))
       return 0
     end
   end
@@ -586,38 +571,41 @@ mod.ebook_info = function(reader, device)
 end
 
 -- The first action for this Lua
----@type fun(who: Character, item: Item, pos: Tripoint): integer
-mod.ebook_ui = function(who, item, pos)
+---@type fun(params: {user: Character, item: Item, pos: Tripoint}): integer
+mod.ebook_ui = function(params)
+  local who = params.user
+  local item = params.item
+  local pos = params.pos
   local unzip_var = mod.unzip_var_lib2(item)
   local var_count = mod.table_size(unzip_var)
-  local ui = UiList.new()
-  ui:desc_enabled(true)
-  ui:text(
+  local uilist = UiList.new()
+  uilist:desc_enabled(true)
+  uilist:text(
     string.format(
-      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavilable."),
+      locale.gettext("Welcome to e-book library!\nThis device currently holds %d book(s).\nNetwork sync unavailable."),
       var_count
     )
   )
-  ui:add_w_desc(
+  uilist:add_w_desc(
     -1,
     locale.gettext("Scan book(s)"),
-    locale.gettext("Scans all the book you have. It will progress instantly.")
+    locale.gettext("Scan all the books you have. It will progress instantly.")
   )
-  ui:add_w_desc(
+  uilist:add_w_desc(
     -1,
     locale.gettext("Load book(s)"),
     locale.gettext("Temporarily prints a physical copy from the device’s library.")
   )
-  ui:add_w_desc(
+  uilist:add_w_desc(
     -1,
     locale.gettext("Return book(s)"),
     locale.gettext("Absorbs the copy back into the device and restores partial power.")
   )
-  ui:add_w_desc(-1, locale.gettext("Info.."), locale.gettext("Shows UID, list of data, explanation for customers!"))
+  uilist:add_w_desc(-1, locale.gettext("Info.."), locale.gettext("Shows UID, list of data, explanation for customers!"))
 
   if var_count == 0 then
-    ui.entries[2].ctxt = locale.gettext("No book in device!")
-    ui.entries[2].enable = false
+    uilist.entries[2].ctxt = locale.gettext("No book in device!")
+    uilist.entries[2].enable = false
   end
 
   local actions = {
@@ -628,8 +616,8 @@ mod.ebook_ui = function(who, item, pos)
   }
 
   while true do
-    mod.ui_coloring(item, ui)
-    local ans = ui:query()
+    mod.ui_coloring(item, uilist)
+    local ans = uilist:query()
     if ans < 0 then
       gapi.add_msg("Never mind.")
       return 0

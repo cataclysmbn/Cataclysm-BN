@@ -1,0 +1,16 @@
+[
+  {
+    "id": "survivor_hairtrimmer",
+    "type": "TOOL",
+    "name": { "str": "makeshift haircut kit" },
+    "copy-from": "survivor_hairtrimmer",
+    "use_action": [ "CHANGE_HAIRSTYLE_ACTION" ]
+  },
+  {
+    "id": "elec_hairtrimmer",
+    "type": "TOOL",
+    "name": { "str": "electric hair trimmer" },
+    "copy-from": "elec_hairtrimmer",
+    "use_action": [ "CHANGE_HAIRSTYLE_ACTION" ]
+  }
+]

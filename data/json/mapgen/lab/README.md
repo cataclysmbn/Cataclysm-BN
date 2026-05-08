@@ -1,1 +1,1 @@
-../../../../doc/src/content/docs/en/mod/json/guides/map/lab.md
+../../../../docs/en/mod/json/guides/map/lab.md

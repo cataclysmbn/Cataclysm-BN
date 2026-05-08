@@ -57,7 +57,16 @@
     "id": "TALK_EVAC_HUNTER_SALE",
     "type": "talk_topic",
     "dynamic_line": "Sure, just bagged a fresh batch of meat.  You may want to grill it up before it gets too, uh… 'tender'.",
-    "responses": [ { "text": "…", "effect": "start_trade", "topic": "TALK_EVAC_HUNTER" } ]
+    "responses": [
+      { "text": "…", "effect": "start_trade", "topic": "TALK_EVAC_HUNTER" },
+      { "text": "Know when you'll get more?", "topic": "TALK_EVAC_HUNTER_RESTOCK" }
+    ]
+  },
+  {
+    "id": "TALK_EVAC_HUNTER_RESTOCK",
+    "type": "talk_topic",
+    "dynamic_line": "Around <interval>.",
+    "responses": [ { "text": "Thanks for the info, bye.", "topic": "TALK_DONE" } ]
   },
   {
     "id": "TALK_EVAC_HUNTER_ADVICE",

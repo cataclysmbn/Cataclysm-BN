@@ -166,6 +166,11 @@
   },
   {
     "type": "construction_group",
+    "id": "build_char_purifier",
+    "name": "Build Charcoal Purifier"
+  },
+  {
+    "type": "construction_group",
     "id": "build_coat_rack",
     "name": "Build Coat Rack"
   },
@@ -243,11 +248,6 @@
     "type": "construction_group",
     "id": "build_door_curtain",
     "name": "Build Door Curtain"
-  },
-  {
-    "type": "construction_group",
-    "id": "build_double_glazed_glass_window",
-    "name": "Build Double Glazed Glass Window"
   },
   {
     "type": "construction_group",
@@ -346,8 +346,18 @@
   },
   {
     "type": "construction_group",
-    "id": "build_junk_metal_floor",
+    "id": "build_junk_metal_door",
+    "name": "Build Junk Metal Door"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_junk_metal_floor_noroof",
     "name": "Build Junk Metal Floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_junk_metal_floor",
+    "name": "Build Junk Metal Roof Over Floor"
   },
   {
     "type": "construction_group",
@@ -398,6 +408,11 @@
     "type": "construction_group",
     "id": "build_makeshift_bed",
     "name": "Build Makeshift Bed"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_door_window",
+    "name": "Build Windowed Door"
   },
   {
     "type": "construction_group",
@@ -516,11 +531,6 @@
   },
   {
     "type": "construction_group",
-    "id": "build_quadruple_glazed_glass_window",
-    "name": "Build Quadruple Glazed Glass Window"
-  },
-  {
-    "type": "construction_group",
     "id": "build_rammed_earth_wall",
     "name": "Build Rammed Earth Wall"
   },
@@ -536,11 +546,6 @@
   },
   {
     "type": "construction_group",
-    "id": "build_reinforced_double_glazed_glass_window",
-    "name": "Build Reinforced Double Glazed Glass Window"
-  },
-  {
-    "type": "construction_group",
     "id": "build_reinforced_glass_window",
     "name": "Build Reinforced Glass Window"
   },
@@ -548,21 +553,6 @@
     "type": "construction_group",
     "id": "build_reinforced_plastic_window",
     "name": "Build Reinforced Plastic Window"
-  },
-  {
-    "type": "construction_group",
-    "id": "build_reinforced_quadruple_glazed_glass_window",
-    "name": "Build Reinforced Quadruple Glazed Glass Window"
-  },
-  {
-    "type": "construction_group",
-    "id": "build_reinforced_single_glazed_glass_window",
-    "name": "Build Reinforced Single Glazed Glass Window"
-  },
-  {
-    "type": "construction_group",
-    "id": "build_reinforced_triple_glazed_glass_window",
-    "name": "Build Reinforced Triple Glazed Glass Window"
   },
   {
     "type": "construction_group",
@@ -578,6 +568,11 @@
     "type": "construction_group",
     "id": "build_road_barricade",
     "name": "Build Road Barricade"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_simple_wood_barricade",
+    "name": "Build Simple Wooden Barricade"
   },
   {
     "type": "construction_group",
@@ -643,11 +638,6 @@
     "type": "construction_group",
     "id": "build_simple_concrete_wall",
     "name": "Build Simple Concrete Wall"
-  },
-  {
-    "type": "construction_group",
-    "id": "build_single_glazed_glass_window",
-    "name": "Build Single Glazed Glass Window"
   },
   {
     "type": "construction_group",
@@ -726,13 +716,13 @@
   },
   {
     "type": "construction_group",
-    "id": "build_thatched_roof",
-    "name": "Build Thatched Roof Over Dirt Floor"
+    "id": "build_tarp_lean_to_leather",
+    "name": "Build Leather Tarp Lean-To"
   },
   {
     "type": "construction_group",
-    "id": "build_triple_glazed_glass_window",
-    "name": "Build Triple Glazed Glass Window"
+    "id": "build_thatched_roof",
+    "name": "Build Thatched Roof Over Dirt Floor"
   },
   {
     "type": "construction_group",
@@ -743,6 +733,11 @@
     "type": "construction_group",
     "id": "build_warehouse_shelf",
     "name": "Build Warehouse Shelf"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_rain_collector",
+    "name": "Build Rain Collector"
   },
   {
     "type": "construction_group",
@@ -778,6 +773,11 @@
     "type": "construction_group",
     "id": "build_wood_wall",
     "name": "Build Wood Wall"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_treasure_chest",
+    "name": "Build Wooden Chest"
   },
   {
     "type": "construction_group",
@@ -982,7 +982,7 @@
   {
     "type": "construction_group",
     "id": "install_freezer",
-    "name": "Install Freezer"
+    "name": "Plug In Freezer"
   },
   {
     "type": "construction_group",
@@ -992,42 +992,52 @@
   {
     "type": "construction_group",
     "id": "install_glass_freezer",
-    "name": "Install Glass Freezer"
+    "name": "Plug In Glass Freezer"
   },
   {
     "type": "construction_group",
     "id": "install_minifridge",
-    "name": "Install Minifridge"
+    "name": "Plug In Minifridge"
   },
   {
     "type": "construction_group",
     "id": "install_minifreezer",
-    "name": "Install Minifreezer"
+    "name": "Plug In Minifreezer"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_cloning_vat",
+    "name": "Plug In Cloning Vat"
   },
   {
     "type": "construction_group",
     "id": "install_oven",
-    "name": "Install Oven"
+    "name": "Plug In Oven"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_multicooker",
+    "name": "Plug In Multi Cooker"
   },
   {
     "type": "construction_group",
     "id": "install_refrigerator",
-    "name": "Install Refrigerator"
+    "name": "Plug In Refrigerator"
   },
   {
     "type": "construction_group",
     "id": "install_glass_refrigerator",
-    "name": "Install Glass Refrigerator"
+    "name": "Plug In Glass Refrigerator"
   },
   {
     "type": "construction_group",
     "id": "install_plut_generator",
-    "name": "Install Plutonium Generator"
+    "name": "Plug In Plutonium Generator"
   },
   {
     "type": "construction_group",
     "id": "place_3d_printer_basic",
-    "name": "Place 3D Printer"
+    "name": "Plug In 3D Printer"
   },
   {
     "type": "construction_group",
@@ -1042,12 +1052,12 @@
   {
     "type": "construction_group",
     "id": "place_small_space_heater",
-    "name": "Place Small Space Heater"
+    "name": "Plug In Small Space Heater"
   },
   {
     "type": "construction_group",
     "id": "place_large_space_heater",
-    "name": "Place Large Space Heater"
+    "name": "Plug In Large Space Heater"
   },
   {
     "type": "construction_group",
@@ -1073,6 +1083,11 @@
     "type": "construction_group",
     "id": "install_solar_panel",
     "name": "Install Solar Panel"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_foldable_solar_panel",
+    "name": "Install Foldable Solar Panel"
   },
   {
     "type": "construction_group",
@@ -1113,6 +1128,11 @@
     "type": "construction_group",
     "id": "make_gravel_floor",
     "name": "Make Gravel Floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "make_trash_island",
+    "name": "Make Trash Island"
   },
   {
     "type": "construction_group",
@@ -1212,12 +1232,12 @@
   {
     "type": "construction_group",
     "id": "place_arc_welder",
-    "name": "Place Arc Welder"
+    "name": "Plug In Arc Welder"
   },
   {
     "type": "construction_group",
     "id": "place_gunsmith_kit",
-    "name": "Place Gunsmith Kit"
+    "name": "Plug In Gunsmith Kit"
   },
   {
     "type": "construction_group",
@@ -1227,7 +1247,7 @@
   {
     "type": "construction_group",
     "id": "place_charger",
-    "name": "Place Charger"
+    "name": "Plug In Charger"
   },
   {
     "type": "construction_group",
@@ -1257,12 +1277,12 @@
   {
     "type": "construction_group",
     "id": "place_electrolysis_kit",
-    "name": "Place Electrolysis Kit"
+    "name": "Plug In Electrolysis Kit"
   },
   {
     "type": "construction_group",
     "id": "place_chemisitry_set",
-    "name": "Place Chemistry Set"
+    "name": "Plug In Chemistry Set"
   },
   {
     "type": "construction_group",
@@ -1272,17 +1292,17 @@
   {
     "type": "construction_group",
     "id": "place_food_dehydrator",
-    "name": "Place Food Dehydrator"
+    "name": "Plug In Food Dehydrator"
   },
   {
     "type": "construction_group",
     "id": "place_food_processor",
-    "name": "Place Food Processor"
+    "name": "Plug In Food Processor"
   },
   {
     "type": "construction_group",
     "id": "place_soda_machine",
-    "name": "Place Soda Machine"
+    "name": "Plug In Soda Machine"
   },
   {
     "type": "construction_group",
@@ -1302,7 +1322,7 @@
   {
     "type": "construction_group",
     "id": "place_soldering_iron",
-    "name": "Place soldering iron"
+    "name": "Plug In soldering iron"
   },
   {
     "type": "construction_group",
@@ -1317,7 +1337,12 @@
   {
     "type": "construction_group",
     "id": "place_vaccuum_sealer",
-    "name": "Place Vaccuum Sealer"
+    "name": "Plug In Vaccuum Sealer"
+  },
+  {
+    "type": "construction_group",
+    "id": "install_water_purifier",
+    "name": "Install Water Purifier"
   },
   {
     "type": "construction_group",
@@ -1546,6 +1571,11 @@
   },
   {
     "type": "construction_group",
+    "id": "clog_migo_emitter_resin",
+    "name": "Clog Mi-Go gas emitter"
+  },
+  {
+    "type": "construction_group",
     "id": "build_concrete_lump",
     "name": "Remove Mi-Go gas emitter"
   },
@@ -1568,5 +1598,285 @@
     "type": "construction_group",
     "id": "install_f_recycler",
     "name": "Install Metal Compactor"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_fortification",
+    "name": "Build Fortification"
+  },
+  {
+    "type": "construction_group",
+    "id": "carve_fortification",
+    "name": "Carve Fortification"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_clay_pots",
+    "name": "Place Clay Pots"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_adobe_floor",
+    "name": "Build Adobe Floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_adobe_roof",
+    "name": "Build Roof Over Adobe Floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_bathtub_money",
+    "name": "Fill Bathtub with Money"
+  },
+  {
+    "type": "construction_group",
+    "id": "remove_bathtub_money",
+    "name": "Remove Money from Bathtub"
+  },
+  {
+    "type": "construction_group",
+    "id": "water_fill_pit",
+    "name": "Fill Pit With Water"
+  },
+  {
+    "type": "construction_group",
+    "id": "salt_water_fill_pit",
+    "name": "Fill Pit With Salt Water"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_high_end_of_a_natural_ramp",
+    "name": "Dig High End of a Ramp"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_low_end_of_a_natural_ramp",
+    "name": "Dig Low End of a Ramp"
+  },
+  {
+    "type": "construction_group",
+    "id": "makeshift_bridge",
+    "name": "Construct Crude Bridge"
+  },
+  {
+    "type": "construction_group",
+    "id": "quarry_ground",
+    "name": "Quarry Ground Away"
+  },
+  {
+    "type": "construction_group",
+    "id": "quarry_roof",
+    "name": "Remove Flat Roof"
+  },
+  {
+    "type": "construction_group",
+    "id": "add_grass",
+    "name": "Plant Grass"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_floor",
+    "name": "Build canvas flooring"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_wall",
+    "name": "Build canvas wall"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_canvas_door",
+    "name": "Build canvas door"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_peanut_bush",
+    "name": "Replant Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_peanut_bush",
+    "name": "Dig Up Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_peanut_bush_h",
+    "name": "Replant Harvested Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_peanut_bush_h",
+    "name": "Dig Up Harvested Peanut Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blueberry_bush",
+    "name": "Replant Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blueberry_bush",
+    "name": "Dig Up Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blueberry_bush_h",
+    "name": "Replant Harvested Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blueberry_bush_h",
+    "name": "Dig Up Harvested Blueberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_strawberry_bush",
+    "name": "Replant Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_strawberry_bush",
+    "name": "Dig Up Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_strawberry_bush_h",
+    "name": "Replant Harvested Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_strawberry_bush_h",
+    "name": "Dig Up Harvested Strawberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blackberry_bush",
+    "name": "Replant Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blackberry_bush",
+    "name": "Dig Up Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_blackberry_bush_h",
+    "name": "Replant Harvested Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_blackberry_bush_h",
+    "name": "Dig Up Harvested Blackberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_huckleberry_bush",
+    "name": "Replant Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_huckleberry_bush",
+    "name": "Dig Up Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_huckleberry_bush_h",
+    "name": "Replant Harvested Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_huckleberry_bush_h",
+    "name": "Dig Up Harvested Huckleberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_raspberry_bush",
+    "name": "Replant Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_raspberry_bush",
+    "name": "Dig Up Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_raspberry_bush_h",
+    "name": "Replant Harvested Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_raspberry_bush_h",
+    "name": "Dig Up Harvested Raspberry Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_grape_bush",
+    "name": "Replant Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_grape_bush",
+    "name": "Dig Up Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "replant_grape_bush_h",
+    "name": "Replant Harvested Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "dig_grape_bush_h",
+    "name": "Dig Up Harvested Grape Bush"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ebench",
+    "name": "Place Exercise Bench"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_bmachine",
+    "name": "Place Ball Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ptable",
+    "name": "Place Pool Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_arcade",
+    "name": "Place Arcade Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_pinball",
+    "name": "Place Pinball Machine"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_ergo",
+    "name": "Place Ergometer"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_treadmill",
+    "name": "Place Treadmill"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_pbag",
+    "name": "Place Punching Bag"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_spole",
+    "name": "Place Dancing Pole"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_roulette",
+    "name": "Place Roulette Table"
   }
 ]

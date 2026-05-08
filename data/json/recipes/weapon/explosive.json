@@ -86,7 +86,7 @@
     "components": [
       [ [ "paper", 5 ], [ "rolling_paper", 32 ] ],
       [ [ "acid", 2 ], [ "chem_sulphuric_acid", 2 ], [ "chem_nitric_acid", 2 ] ],
-      [ [ "ammonia", 1 ], [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ] ],
+      [ [ "ammonia", 1 ], [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ], [ "disinfectant_makeshift", 10 ] ],
       [
         [ "soap", 3 ],
         [ "edible_tallow_lard", 2, "LIST" ],
@@ -297,8 +297,11 @@
     "time": "30 s",
     "reversible": true,
     "autolearn": true,
-    "using": [ [ "accelerant_liquid", 500 ] ],
-    "components": [ [ [ "rag", 1 ] ], [ [ "bottle_glass", 1 ], [ "flask_glass", 1 ], [ "clay_canister", 1 ] ] ]
+    "components": [
+      [ [ "rag", 1 ] ],
+      [ [ "bottle_glass", 1 ], [ "flask_glass", 1 ], [ "clay_canister", 1 ] ],
+      [ [ "flammable_liquid", 500, "LIST" ], [ "disinfectant_makeshift", 20 ] ]
+    ]
   },
   {
     "result": "dynamite_bomb",
@@ -399,5 +402,22 @@
       [ [ "scrap", 20 ] ],
       [ [ "delay_fuze", 1 ], [ "fuse", 1 ] ]
     ]
+  },
+  {
+    "result": "aerial_bomb",
+    "type": "recipe",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_EXPLOSIVE",
+    "skill_used": "fabrication",
+    "skills_required": [ "mechanics", 4 ],
+    "difficulty": 6,
+    "time": "15 m",
+    "book_learn": [ [ "manual_launcher", 6 ], [ "textbook_anarch", 7 ] ],
+    "autolearn": [ [ "fabrication", 7 ], [ "mechanics", 5 ] ],
+    "reversible": true,
+    "decomp_learn": 6,
+    "using": [ [ "steel_standard", 10 ], [ "welding_standard", 10 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SAW_M", "level": 2 }, { "id": "DRILL", "level": 2 } ],
+    "components": [ [ [ "military_explosive", 3500, "LIST" ] ], [ [ "impact_fuze", 1 ] ], [ [ "steel_plate", 5 ] ] ]
   }
 ]

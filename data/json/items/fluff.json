@@ -3,7 +3,7 @@
     "id": "trade_writ_chemist",
     "type": "GENERIC",
     "name": { "str": "writ of trade (chemist)", "str_pl": "writs of trade (chemist)" },
-    "description": "A few sheets of paper from the chemist living out in the wilderness listing some of the chemical they're capable of making.",
+    "description": "A few sheets of paper from the chemist living out in the wilderness listing some of the chemicals they're capable of making.",
     "weight": "1 g",
     "volume": "5 ml",
     "price": 3000,
@@ -78,16 +78,18 @@
   {
     "id": "coin_quarter",
     "type": "GENERIC",
-    "category": "other",
+    "category": "valuables",
     "name": { "str": "coin" },
     "description": "A now-ancient form of currency.  Stripped of its original purpose, it now serves, faithfully, flippant Flippists for free.",
     "weight": "6 g",
     "volume": "1 ml",
     "price": "25 cent",
     "price_postapoc": "1 cent",
-    "material": [ "silver" ],
+    "//": "Quarters are mostly nickel but we don't have that, use zinc like what pennies are primarily made of instead.",
+    "material": [ "zinc" ],
     "symbol": "o",
     "color": "light_gray",
+    "stackable": true,
     "use_action": "COIN_FLIP"
   },
   {
@@ -103,7 +105,8 @@
     "price_postapoc": "0 cent",
     "material": [ "paper" ],
     "symbol": "*",
-    "color": "light_gray"
+    "color": "light_gray",
+    "flags": [ "MISSION_ITEM" ]
   },
   {
     "id": "chess",

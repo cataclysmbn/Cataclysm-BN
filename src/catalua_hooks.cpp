@@ -1,0 +1,67 @@
+#include "catalua_hooks.h"
+#include "catalua_impl.h"
+
+namespace cata
+{
+
+constexpr auto hook_names = std::array
+{
+    "on_game_load",
+    "on_game_save",
+    "on_game_started",
+    "on_weather_changed",
+    "on_weather_updated",
+    "on_try_npc_interaction",
+    "on_npc_interaction",
+    "on_try_monster_interaction",
+    "on_dialogue_start",
+    "on_dialogue_option",
+    "on_dialogue_end",
+    "on_character_reset_stats",
+    "on_character_effect_added",
+    "on_character_effect",
+    "on_character_effect_removed",
+    "on_mon_effect_added",
+    "on_mon_effect",
+    "on_mon_effect_removed",
+    "on_mon_death",
+    "on_character_death",
+    "on_shoot",
+    "on_throw",
+    "on_creature_dodged",
+    "on_creature_blocked",
+    "on_creature_performed_technique",
+    "on_creature_melee_attacked",
+    "on_player_try_move",
+    "on_npc_try_move",
+    "on_monster_try_move",
+    "on_character_try_move",
+    "on_mapgen_postprocess",
+    "on_explosion_start",
+    "on_creature_spawn",
+    "on_monster_spawn",
+    "on_npc_spawn",
+    "on_creature_loaded",
+    "on_monster_loaded",
+    "on_npc_loaded",
+    "on_creature_do_turn",
+    "on_npc_do_turn",
+    "on_monster_do_turn",
+    "on_make_mapgen_factory_list",
+};
+
+void define_hooks( lua_state &state )
+{
+    sol::state &lua = state.lua;
+    sol::table hooks = lua.create_table();
+
+    // Main game data table
+    sol::table gt = lua.globals()["game"];
+    gt["hooks"] = hooks;
+
+    for( const auto &hook : hook_names ) {
+        hooks[hook] = lua.create_table();
+    }
+}
+
+} // namespace cata

@@ -18,7 +18,7 @@
     "dispersion": 75,
     "recoil": 450,
     "loudness": 90,
-    "effects": [ "COOKOFF", "EXPLOSIVE_BIG", "TRAIL", "NEVER_MISFIRES" ]
+    "effects": [ "COOKOFF", "EXPLOSIVE_BIG", "TRAIL", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -38,7 +38,7 @@
     "dispersion": 75,
     "recoil": 450,
     "loudness": 90,
-    "effects": [ "COOKOFF", "EXPLOSIVE_PLUS_FRAG", "TRAIL", "NEVER_MISFIRES" ]
+    "effects": [ "COOKOFF", "EXPLOSIVE_PLUS_FRAG", "TRAIL", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -59,7 +59,7 @@
     "dispersion": 50,
     "recoil": 450,
     "loudness": 90,
-    "effects": [ "COOKOFF", "EXPLOSIVE", "TRAIL", "NEVER_MISFIRES", "PYROPHORIC" ]
+    "effects": [ "COOKOFF", "EXPLOSIVE", "TRAIL", "NEVER_MISFIRES", "PYROPHORIC", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -79,6 +79,6 @@
     "dispersion": 50,
     "recoil": 350,
     "loudness": 90,
-    "effects": [ "COOKOFF", "NEVER_MISFIRES", "FRAG_BIG" ]
+    "effects": [ "COOKOFF", "NEVER_MISFIRES", "FRAG_BIG", "NO_PENETRATE_OBSTACLES" ]
   }
 ]

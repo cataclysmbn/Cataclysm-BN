@@ -82,8 +82,15 @@
     "dynamic_line": "Then let's see what you've got to trade.",
     "responses": [
       { "text": "It was worth a try.", "topic": "TALK_WHATELY_1" },
-      { "text": "What can I buy here?", "effect": "start_trade", "topic": "TALK_WHATELY_1" }
+      { "text": "What can I buy here?", "effect": "start_trade", "topic": "TALK_WHATELY_1" },
+      { "text": "When will you have more in stock?", "topic": "TALK_WHATELY_restock" }
     ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_WHATELY_restock",
+    "dynamic_line": "Around <interval>.",
+    "responses": [ { "text": "Alright then, bye.", "topic": "TALK_DONE" } ]
   },
   {
     "type": "talk_topic",

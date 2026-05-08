@@ -173,6 +173,7 @@
     "symbol": "%",
     "quench": -1,
     "calories": 9,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "A powder-like mix of cultured yeast, good for baking and brewing alike.",
     "price": "150 cent",
     "price_postapoc": "50 cent",
@@ -197,7 +198,7 @@
     "volume": "250 ml",
     "charges": 4,
     "fun": -10,
-    "flags": [ "NUTRIENT_OVERRIDE" ]
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ]
   },
   {
     "type": "COMESTIBLE",
@@ -217,7 +218,7 @@
     "volume": "250 ml",
     "charges": 4,
     "fun": -10,
-    "flags": [ "UNSAFE_CONSUME" ]
+    "flags": [ "UNSAFE_CONSUME", "NO_COOKING_BUFF" ]
   },
   {
     "type": "COMESTIBLE",
@@ -235,7 +236,7 @@
     "price_postapoc": "10 cent",
     "material": "powder",
     "volume": "250 ml",
-    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "charges": 4,
     "fun": -10
   },
@@ -275,7 +276,7 @@
     "material": [ "bean" ],
     "volume": "500 ml",
     "charges": 2,
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "vitamins": [ [ "calcium", 9 ], [ "iron", 24 ], [ "veggy_allergen", 1 ] ]
   },
   {
@@ -318,7 +319,7 @@
     "price_postapoc": "1 USD",
     "material": [ "bean" ],
     "volume": "250 ml",
-    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "fun": 1,
     "vitamins": [ [ "calcium", 8 ], [ "vitB", 32 ], [ "veggy_allergen", 1 ] ]
   },
@@ -339,7 +340,7 @@
     "fun": -4,
     "material": [ "veggy" ],
     "volume": "85 ml",
-    "flags": [ "SMOKABLE", "EATEN_HOT", "NUTRIENT_OVERRIDE" ],
+    "flags": [ "SMOKABLE", "EATEN_HOT", "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "smoking_result": "dry_tofu",
     "vitamins": [ [ "calcium", 20 ], [ "iron", 4 ], [ "veggy_allergen", 1 ] ]
   },
@@ -373,6 +374,7 @@
     "symbol": "%",
     "healthy": 2,
     "calories": 130,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "Dehydrated tofu, sealed and still extra firm to last a long time.",
     "price": "90 cent",
     "price_postapoc": "75 cent",
@@ -481,7 +483,7 @@
     "price_postapoc": "1 USD",
     "volume": "250 ml",
     "fun": 1,
-    "flags": [ "EATEN_HOT" ]
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ]
   },
   {
     "type": "COMESTIBLE",
@@ -502,7 +504,7 @@
     "price_postapoc": "5 USD",
     "material": "powder",
     "volume": "250 ml",
-    "flags": [ "RAW" ],
+    "flags": [ "RAW", "NO_COOKING_BUFF" ],
     "calories": 23,
     "charges": 20,
     "fun": -5
@@ -530,6 +532,7 @@
     "material": "honey",
     "weight": "51 g",
     "volume": "250 ml",
+    "flags": [ "NO_COOKING_BUFF" ],
     "comestible_type": "FOOD",
     "container": "jar_glass",
     "quench": 1,
@@ -558,7 +561,7 @@
     "volume": "250 ml",
     "charges": 2,
     "vitamins": [ [ "vitA", 3 ], [ "vitC", 26 ], [ "calcium", 9 ], [ "iron", 18 ], [ "veggy_allergen", 1 ] ],
-    "flags": [ "RAW" ]
+    "flags": [ "RAW", "NO_COOKING_BUFF" ]
   },
   {
     "type": "COMESTIBLE",
@@ -597,7 +600,7 @@
     "category": "tools_farming",
     "comestible_type": "FOOD",
     "name": { "str_sp": "cattle fodder" },
-    "description": "What cattle eat.  Mainly made of grass, silage or legumes.  It's perfect for ruminants.",
+    "description": "What cattle eat.  Mainly made of grass, silage or legumes.  It's perfect for ruminants.  Activate it to attempt to tame an adjacent wild animal, or to feed it to pets to speed up healing and productivity.",
     "weight": "300 g",
     "volume": "250 ml",
     "price": "1 USD",
@@ -611,7 +614,7 @@
     "vitamins": [ [ "vitA", 20 ], [ "vitC", 45 ], [ "calcium", 5 ], [ "iron", 5 ], [ "veggy_allergen", 1 ] ],
     "fun": 5,
     "color": "brown",
-    "flags": [ "INEDIBLE", "CATTLE" ],
+    "flags": [ "INEDIBLE", "CATTLE", "NO_COOKING_BUFF" ],
     "use_action": [ "PETFOOD" ],
     "petfood": [ "CATTLEFOOD", "DINOFOOD_C" ]
   },
@@ -621,7 +624,7 @@
     "category": "tools_farming",
     "comestible_type": "FOOD",
     "name": { "str_sp": "bird food" },
-    "description": "What birds eat.  Mainly made of seeds, silage or legumes.  It's perfect for small birds.",
+    "description": "What birds eat.  Mainly made of seeds, silage or legumes.  It's perfect for small birds.  Activate it to attempt to tame an adjacent wild animal, or to feed it to pets to speed up healing and productivity.",
     "weight": "60 g",
     "volume": "50 ml",
     "price": "20 cent",
@@ -644,7 +647,7 @@
     "category": "tools_farming",
     "comestible_type": "FOOD",
     "name": { "str_sp": "dog food" },
-    "description": "This is food for dogs.  It smells strange, but dogs seem to love it.",
+    "description": "This is food for dogs.  It smells strange, but dogs seem to love it.  Activate it to attempt to tame an adjacent wild animal, or to feed it to pets to speed up healing and productivity.",
     "weight": "554 g",
     "spoils_in": "1 day",
     "container": "can_medium",
@@ -670,7 +673,7 @@
     "category": "tools_farming",
     "comestible_type": "FOOD",
     "name": { "str_sp": "cat food" },
-    "description": "This is food for cats.  It smells strange, but cats seem to love it.",
+    "description": "This is food for cats.  It smells strange, but cats seem to love it.  Activate it to attempt to tame an adjacent wild animal, or to feed it to pets to speed up healing and productivity.",
     "weight": "223 g",
     "spoils_in": "1 day",
     "container": "can_food",
@@ -689,6 +692,26 @@
     "flags": [ "FELINE" ],
     "use_action": [ "PETFOOD" ],
     "petfood": [ "CATFOOD", "DINOFOOD_B" ]
+  },
+  {
+    "id": "jellied_insects_petfood",
+    "type": "COMESTIBLE",
+    "category": "tools_farming",
+    "comestible_type": "FOOD",
+    "name": { "str_sp": "jellied insects" },
+    "description": "Preserved insect organs, perfect for animals who like extra proteins.  Activate it to attempt to tame an adjacent wild animal, or to feed it to pets to speed up healing and productivity.",
+    "weight": "60 g",
+    "volume": "50 ml",
+    "price": "20 cent",
+    "price_postapoc": "25 cent",
+    "to_hit": -5,
+    "material": [ "flesh" ],
+    "symbol": ";",
+    "color": "red",
+    "calories": 100,
+    "flags": [ "INEDIBLE", "NUTRIENT_OVERRIDE" ],
+    "use_action": [ "PETFOOD" ],
+    "petfood": [ "BATFOOD" ]
   },
   {
     "type": "COMESTIBLE",

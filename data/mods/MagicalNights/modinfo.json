@@ -4,9 +4,10 @@
     "id": "MagicalNights",
     "name": "Magical Nights",
     "authors": [ "Robbietheneko", "KorGgenT", "Aptronym", "LaVeyanFiend" ],
+    "license": "CC-BY-SA 4.0",
     "maintainers": [ "Robbietheneko" ],
     "description": "Bright Nights, but with magic!  From the ashes of Magiclysm rises a new mod, and a new head at the controls.  ",
-    "category": "content",
+    "category": "magical",
     "dependencies": [ "bn" ]
   },
   {
@@ -15,5 +16,12 @@
     "name": { "str": "Spellcraft" },
     "display_category": "display_ranged",
     "description": "Your skill in the arcane.  Represents magic theory and all that entails.  A higher skill increases how quickly you can learn spells, and decreases their spell failure chance.  You learn this skill by studying books or spells."
+  },
+  {
+    "type": "EXTERNAL_OPTION",
+    "name": "ALWAYS_SHOW_MANA",
+    "info": "If true, always display the mana in the sidebar. Primarily useful for magic-related mods.",
+    "stype": "bool",
+    "value": true
   }
 ]

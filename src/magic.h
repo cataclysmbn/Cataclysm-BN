@@ -51,15 +51,20 @@ enum spell_flag {
     CONCENTRATE, // focus affects spell fail %
     RANDOM_AOE, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_DAMAGE, // picks random number between min+increment*level and max instead of normal behavior
+    DIVIDE_DAMAGE, // divides damage equally among all the targets of the spell
     RANDOM_DURATION, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_TARGET, // picks a random valid target within your range instead of normal behavior.
+    MUTATE_THRESH, // allows mutate spell_effect to try and cross thresholds for the category provided, accuracy optionally defines highest tier of threshold to test for (default of 1).
     MUTATE_TRAIT, // overrides the mutate spell_effect to use a specific trait_id instead of a category
     WONDER, // instead of casting each of the extra_spells, it picks N of them and casts them (where N is std::min( damage(), number_of_spells ))
     PAIN_NORESIST, // pain altering spells can't be resisted (like with the deadened trait)
     NO_FAIL, // this spell cannot fail when you cast it
     BRAWL, // this spell can be used by brawlers
     DUPE_SOUND, // this spell will play 'duplicate' sounds, if relevant to the spell effect
-    ADD_MELEE_DAM, // Add melee damage to the spell's damage
+    ADD_MELEE_DAM, // Add melee damage to the spell's damage. Legacy method, "melee_dam" vector is preferred instead
+    PHYSICAL, // IMPLIES BRAWL. This spell is actually a Physical Technique / Weapon Arte / similar, and is sort-of a replacement of martial arts.
+    MOD_MELEE_MOVES, // Use melee attack cost as a base and add spell cost on top
+    MOD_MELEE_STAM, // Use melee stamina cost as a base and add spell cost on top
     LAST
 };
 
@@ -293,6 +298,9 @@ class spell_type
 
         damage_type dmg_type = damage_type::DT_NULL;
 
+        // Melee damage types that the 'spell' uses
+        std::vector<damage_type> melee_dam;
+
         // list of valid targets to be affected by the area of effect.
         enum_bitset<valid_target> effect_targets;
 
@@ -507,6 +515,8 @@ class known_magic
         std::map<spell_id, spell> spellbook;
         // invlets assigned to spell_id
         std::map<spell_id, int> invlets;
+        // the last known spell selected for casting
+        std::optional<spell_id> last_cast_spell_id;
         // the base mana a Character would start with
         int mana_base = 0;
         // current mana
@@ -534,6 +544,8 @@ class known_magic
         std::vector<spell_id> spells() const;
         // gets the spell associated with the spell_id to be edited
         spell &get_spell( const spell_id &sp );
+        auto last_cast_spell() const -> std::optional<spell_id>;
+        auto set_last_cast_spell( const spell_id &sp ) -> void;
         // opens up a ui that the Character can choose a spell from
         // returns the index of the spell in the vector of spells
         int select_spell( Character &guy );
@@ -677,5 +689,4 @@ struct area_expander {
 
     void sort_descending();
 };
-
 

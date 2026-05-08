@@ -96,8 +96,8 @@
     "subtype": "mutable",
     "locations": [ "subterranean_empty" ],
     "city_distance": [ 10, -1 ],
-    "occurrences": [ 50, 0 ],
-    "flags": [ "LAB", "UNIQUE" ],
+    "occurrences": [ 1, 2 ],
+    "flags": [ "LAB" ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road" } ],
     "check_for_locations": [
       [ [ 0, 0, 0 ], [ "wilderness" ] ],
@@ -391,5 +391,28 @@
       [ { "overmap": "central_lab_finale", "z": [ -10, -5 ], "max": { "poisson": 2 } } ],
       [ { "overmap": "central_lab_endgame", "om_pos": [ 0, 0 ], "z": "bottom", "max": 1 } ]
     ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "sunken_lab",
+    "overmaps": [
+      { "point": [ 0, 0, -4 ], "overmap": "lake_bed_lab_entrance_roof_north", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -5 ], "overmap": "lake_bed_lab_entrance_north", "locations": [ "lake_bed" ] },
+      {
+        "point": [ 0, 0, -6 ],
+        "overmap": "lake_bed_lab_entrance_airlock_north",
+        "locations": [ "subterranean_empty" ]
+      }
+    ],
+    "place_nested": [
+      { "point": [ 0, 1, -6 ], "special": "lab_basement" },
+      { "point": [ 0, -1, -6 ], "special": "lab_basement" },
+      { "point": [ 1, 0, -6 ], "special": "lab_basement" },
+      { "point": [ -1, 0, -6 ], "special": "lab_basement" }
+    ],
+    "locations": [ "lake_surface" ],
+    "city_distance": [ 20, -1 ],
+    "occurrences": [ 0, 5 ],
+    "flags": [ "LAB", "LAKE" ]
   }
 ]

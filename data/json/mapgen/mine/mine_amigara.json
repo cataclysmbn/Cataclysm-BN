@@ -64,7 +64,8 @@
           { "item": "mine_equipment", "chance": 1 }
         ]
       },
-      "traps": { "^": "tr_sinkhole" }
+      "traps": { "^": "tr_sinkhole" },
+      "nested": { " ": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] } }
     }
   },
   {
@@ -136,7 +137,11 @@
         ]
       },
       "traps": { "^": "tr_sinkhole" },
-      "computers": { "5": { "name": "NEPowerOS", "options": [ { "name": "Read logs", "action": "amigara_log" } ] } }
+      "computers": { "5": { "name": "NEPowerOS", "options": [ { "name": "Read logs", "action": "amigara_log" } ] } },
+      "nested": {
+        " ": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] },
+        ".": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] }
+      }
     }
   },
   {
@@ -172,6 +177,7 @@
         "###############################*************############################"
       ],
       "terrain": {
+        " ": "t_rock_floor",
         "@": [ [ "t_rock", 4 ], [ "t_rock_floor", 1 ] ],
         "#": "t_rock",
         "*": "t_fault",
@@ -189,7 +195,8 @@
           "options": [ { "name": "Activate Seismic Source", "action": "amigara_start" } ],
           "failures": [ { "action": "amigara" } ]
         }
-      }
+      },
+      "nested": { " ": { "chunks": [ [ "null", 9 ], [ "place_cave_moss", 1 ] ] } }
     }
   }
 ]

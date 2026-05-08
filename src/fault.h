@@ -6,6 +6,7 @@
 #include <string>
 
 #include "calendar.h"
+#include "catalua_type_operators.h"
 #include "translations.h"
 #include "type_id.h"
 
@@ -26,14 +27,14 @@ struct mending_method {
 class fault
 {
     public:
-        fault() : id_( fault_id( "null" ) ) {}
+        fault() : id_( fault_id::NULL_ID() ) {}
 
         const fault_id &id() const {
             return id_;
         }
 
         bool is_null() const {
-            return id_ == fault_id( "null" );
+            return id_ == fault_id::NULL_ID();
         }
 
         std::string name() const {
@@ -78,6 +79,9 @@ class fault
         translation description_;
         std::map<std::string, mending_method> mending_methods_;
         std::set<std::string> flags;
+
+    public:
+        LUA_TYPE_OPS( fault, id_ );
 };
 
 

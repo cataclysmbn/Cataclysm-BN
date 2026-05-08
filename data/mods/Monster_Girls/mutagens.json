@@ -153,5 +153,33 @@
     "name": "Kitsune serum",
     "description": "A super-concentrated mutagen the color of amber.  You need a syringe to inject it… if you really want to?",
     "use_action": { "type": "mutagen_iv", "mutation_category": "KITSUNE" }
+  },
+  {
+    "id": "iv_mutagen_lamia",
+    "type": "COMESTIBLE",
+    "copy-from": "iv_mutagen_serpent",
+    "name": "Lamia serum",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LAMIA" }
+  },
+  {
+    "id": "mutagen_lamia",
+    "type": "COMESTIBLE",
+    "copy-from": "mutagen_serpent",
+    "name": "Lamia mutagen",
+    "use_action": { "type": "mutagen", "mutation_category": "LAMIA" }
+  },
+  {
+    "id": "iv_mutagen_bunnygirl",
+    "type": "COMESTIBLE",
+    "copy-from": "iv_mutagen_rabbit",
+    "name": "Usagimimi serum",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BUNNYGIRL" }
+  },
+  {
+    "id": "mutagen_bunnygirl",
+    "type": "COMESTIBLE",
+    "copy-from": "mutagen_rabbit",
+    "name": "Usagimimi mutagen",
+    "use_action": { "type": "mutagen", "mutation_category": "BUNNYGIRL" }
   }
 ]

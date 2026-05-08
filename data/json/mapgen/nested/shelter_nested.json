@@ -84,7 +84,7 @@
         "=": [ "t_door_b", "t_door_locked_interior", "t_door_c", "t_door_o" ],
         "x": "t_console_broken"
       },
-      "furniture": { "b": "f_bench", "c": "f_cupboard", "l": "f_locker", "S": "f_sink", "%": "f_trashcan" },
+      "furniture": { "b": [ [ "f_bench", 9 ], "f_bench_flipped" ], "c": "f_cupboard", "l": "f_locker", "S": "f_sink", "%": "f_trashcan" },
       "computers": {
         "6": {
           "name": "Evac shelter computer",
@@ -146,7 +146,13 @@
         "=": [ "t_door_b", "t_door_locked_interior", "t_door_c", "t_door_o" ],
         "6": "t_console_broken"
       },
-      "furniture": { "b": "f_bench", "c": "f_cupboard", "l": [ [ "f_locker", 2 ], "f_wreckage" ], "S": "f_sink", "%": "f_trashcan" },
+      "furniture": {
+        "b": [ [ "f_bench", 3 ], "f_bench_flipped", "f_null" ],
+        "c": "f_cupboard",
+        "l": [ [ "f_locker", 2 ], "f_wreckage" ],
+        "S": "f_sink",
+        "%": "f_trashcan"
+      },
       "items": {
         "l": { "item": "shelter_supplies", "chance": 40 },
         "c": [ { "item": "trash", "chance": 1 }, { "item": "softdrugs", "chance": 2 }, { "item": "shelter_supplies", "chance": 10 } ],
@@ -241,7 +247,7 @@
         "+": [ "t_door_c", "t_door_b" ],
         "=": [ "t_door_b", "t_door_locked_interior", "t_door_c", "t_door_o" ]
       },
-      "furniture": { "b": "f_bench", "c": "f_cupboard", "l": "f_locker", "S": "f_sink", "%": "f_trashcan" },
+      "furniture": { "b": [ [ "f_bench", 9 ], "f_bench_flipped" ], "c": "f_cupboard", "l": "f_locker", "S": "f_sink", "%": "f_trashcan" },
       "computers": {
         "6": {
           "name": "Evac shelter computer",
@@ -299,7 +305,13 @@
         "=": [ "t_door_b", "t_door_locked_interior", "t_door_c", "t_door_o" ],
         "6": "t_console_broken"
       },
-      "furniture": { "b": "f_bench", "c": "f_cupboard", "l": [ [ "f_locker", 2 ], "f_wreckage" ], "S": "f_sink", "%": "f_trashcan" },
+      "furniture": {
+        "b": [ [ "f_bench", 3 ], "f_bench_flipped", "f_null" ],
+        "c": "f_cupboard",
+        "l": [ [ "f_locker", 2 ], "f_wreckage" ],
+        "S": "f_sink",
+        "%": "f_trashcan"
+      },
       "items": {
         "l": { "item": "shelter_supplies", "chance": 40 },
         "c": [ { "item": "trash", "chance": 1 }, { "item": "softdrugs", "chance": 2 }, { "item": "shelter_supplies", "chance": 10 } ],
@@ -395,7 +407,7 @@
         "*": "t_ladder_up",
         "x": "t_console_broken"
       },
-      "furniture": { "b": "f_bench", "c": "f_cupboard", "l": "f_locker", "S": "f_sink", "%": "f_trashcan" },
+      "furniture": { "b": [ [ "f_bench", 9 ], "f_bench_flipped" ], "c": "f_cupboard", "l": "f_locker", "S": "f_sink", "%": "f_trashcan" },
       "computers": {
         "6": {
           "name": "Evac shelter computer",
@@ -456,10 +468,26 @@
         "+": [ "t_door_c", "t_door_b" ],
         "=": [ "t_door_b", "t_door_locked_interior", "t_door_c", "t_door_o" ],
         "*": "t_ladder_up",
-        "6": [ "t_console", "t_console_broken" ],
+        "6": [ "t_console" ],
         "x": "t_console_broken"
       },
-      "furniture": { "b": "f_bench", "c": "f_cupboard", "l": [ [ "f_locker", 2 ], "f_wreckage" ], "S": "f_sink", "%": "f_trashcan" },
+      "furniture": {
+        "b": [ [ "f_bench", 3 ], "f_bench_flipped", "f_null" ],
+        "c": "f_cupboard",
+        "l": [ [ "f_locker", 2 ], "f_wreckage" ],
+        "S": "f_sink",
+        "%": "f_trashcan"
+      },
+      "computers": {
+        "6": {
+          "name": "Evac shelter computer",
+          "options": [
+            { "name": "Emergency Message", "action": "emerg_mess" },
+            { "name": "Disable External Power", "action": "complete_disable_external_power" },
+            { "name": "Contact Us", "action": "emerg_ref_center" }
+          ]
+        }
+      },
       "items": {
         "l": { "item": "shelter_supplies", "chance": 40 },
         "c": [ { "item": "trash", "chance": 1 }, { "item": "softdrugs", "chance": 2 }, { "item": "shelter_supplies", "chance": 10 } ],

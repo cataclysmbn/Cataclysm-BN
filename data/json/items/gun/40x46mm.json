@@ -6,8 +6,8 @@
     "name": { "str": "tube 40mm launcher" },
     "description": "A simple, home-made grenade launcher.  Basically a tube with a pin firing mechanism to activate the grenade.",
     "weight": "2267 g",
-    "volume": "1250 ml",
-    "barrel_length": "250 ml",
+    "volume": "1500 ml",
+    "barrel_volume": "250 ml",
     "price": "400 USD",
     "price_postapoc": "750 cent",
     "material": [ "steel", "wood" ],
@@ -53,8 +53,8 @@
     "name": { "str": "M79 launcher" },
     "description": "A widely-used grenade launcher that first saw use by American forces in the Vietnam War.  Though mostly replaced by more modern launchers, the M79 still sees use with many units worldwide.",
     "weight": "2930 g",
-    "volume": "1 L",
-    "barrel_length": "250 ml",
+    "volume": "1300 ml",
+    "barrel_volume": "250 ml",
     "price": "4 kUSD",
     "price_postapoc": "25 USD",
     "material": [ "steel", "wood" ],
@@ -82,7 +82,7 @@
     "description": "The Milkor Multi-Grenade Launcher is designed to compensate for the drawback of single-shot grenade launchers by allowing sustained heavy firepower.  However, it is still slow to reload and must be used with careful planning.",
     "weight": "5300 g",
     "volume": "2250 ml",
-    "barrel_length": "250 ml",
+    "barrel_volume": "250 ml",
     "price": "10400 USD",
     "price_postapoc": "50 USD",
     "material": "steel",
@@ -99,7 +99,8 @@
       [ "rail", 1 ],
       [ "stock", 1 ],
       [ "underbarrel", 1 ]
-    ]
+    ],
+    "default_mods": [ "folding_stock" ]
   },
   {
     "id": "rm802",
@@ -142,7 +143,7 @@
     "price_postapoc": "1750 cent",
     "modes": [ [ "DEFAULT", "single", 1, "NPC_AVOID" ], [ "MULTI", "multi", 3, [ "NPC_AVOID", "SIMULTANEOUS" ] ] ],
     "proportional": { "weight": 1.5, "volume": 1.8, "price": 2 },
-    "barrel_length": "500 ml"
+    "barrel_volume": "500 ml"
   },
   {
     "id": "pseudo_m203",

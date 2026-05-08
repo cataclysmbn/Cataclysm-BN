@@ -584,5 +584,23 @@
     "time": "1 m",
     "qualities": [ { "id": "HAMMER", "level": 1 } ],
     "components": [ [ [ "scrap", 1 ], [ "string_6", 1 ] ] ]
+  },
+  {
+    "result": "shield_ballistic",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "time": "5 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "kevlar_plate", 18 ] ], [ [ "ceramic_armor", 4 ] ], [ [ "steel_chunk", 1 ] ] ]
+  },
+  {
+    "result": "shield_ballistic_large",
+    "type": "uncraft",
+    "skill_used": "fabrication",
+    "difficulty": 5,
+    "time": "10 m",
+    "qualities": [ { "id": "CUT", "level": 1 } ],
+    "components": [ [ [ "kevlar_plate", 24 ] ], [ [ "ceramic_armor", 8 ] ], [ [ "steel_chunk", 1 ] ] ]
   }
 ]

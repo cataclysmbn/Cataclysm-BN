@@ -8,13 +8,16 @@
 #include "activity_handlers.h"
 #include "assign.h"
 #include "debug.h"
+#include "flag.h"
 #include "enum_conversions.h"
 #include "json.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
-
+#include "game.h"
+#include "player_activity.h"
+#include "item.h"
 // activity_type functions
 static std::map< activity_id, activity_type > activity_type_all;
 
@@ -39,6 +42,25 @@ bool string_id<activity_type>::is_valid() const
     return found != activity_type_all.end();
 }
 
+namespace io
+{
+template<>
+std::string enum_to_string<activity_bubble_effect>( activity_bubble_effect data )
+{
+    switch( data ) {
+        // *INDENT-OFF*
+        case activity_bubble_effect::none:   return "none";
+        case activity_bubble_effect::mobile: return "mobile";
+        case activity_bubble_effect::idle:   return "idle";
+        case activity_bubble_effect::last:   break;
+        // *INDENT-ON*
+    }
+    debugmsg( "Invalid activity_bubble_effect", data );
+    return "none";
+}
+} // namespace io
+
+
 
 void activity_type::load( const JsonObject &jo )
 {
@@ -55,6 +77,8 @@ void activity_type::load( const JsonObject &jo )
     assign( jo, "auto_needs", result.auto_needs, false );
     assign( jo, "morale_blocked", result.morale_blocked_, false );
     assign( jo, "verbose_tooltip", result.verbose_tooltip_, false );
+    result.bubble_effect_ = jo.get_enum_value<activity_bubble_effect>( "bubble_size_effect",
+                            activity_bubble_effect::none );
     if( jo.has_member( "complex_moves" ) ) {
         result.complex_moves_ = true;
         auto c_moves = jo.get_object( "complex_moves" );
@@ -139,7 +163,7 @@ void activity_type::load( const JsonObject &jo )
         }
     }
 
-    if( activity_type_all.find( result.id_ ) != activity_type_all.end() ) {
+    if( activity_type_all.contains( result.id_ ) ) {
         debugmsg( "Redefinition of %s", result.id_.c_str() );
     } else {
         activity_type_all.insert( { result.id_, result } );
@@ -152,10 +176,8 @@ void activity_type::check_consistency()
         if( pair.second.verb_.empty() ) {
             debugmsg( "%s doesn't have a verb", pair.first.c_str() );
         }
-        const bool has_actor = activity_actors::deserialize_functions.find( pair.second.id_ ) !=
-                               activity_actors::deserialize_functions.end();
-        const bool has_turn_func = activity_handlers::do_turn_functions.find( pair.second.id_ ) !=
-                                   activity_handlers::do_turn_functions.end();
+        const bool has_actor = activity_actors::deserialize_functions.contains( pair.second.id_ );
+        const bool has_turn_func = activity_handlers::do_turn_functions.contains( pair.second.id_ );
 
         if( pair.second.special_ && !( has_turn_func || has_actor ) ) {
             debugmsg( "%s needs a do_turn function or activity actor if it expects a special behaviour.",
@@ -173,14 +195,14 @@ void activity_type::check_consistency()
     }
 
     for( const auto &pair : activity_handlers::do_turn_functions ) {
-        if( activity_type_all.find( pair.first ) == activity_type_all.end() ) {
+        if( !activity_type_all.contains( pair.first ) ) {
             debugmsg( "The do_turn function %s doesn't correspond to a valid activity_type.",
                       pair.first.c_str() );
         }
     }
 
     for( const auto &pair : activity_handlers::finish_functions ) {
-        if( activity_type_all.find( pair.first ) == activity_type_all.end() ) {
+        if( !activity_type_all.contains( pair.first ) ) {
             debugmsg( "The finish_function %s doesn't correspond to a valid activity_type",
                       pair.first.c_str() );
         }
@@ -202,6 +224,12 @@ bool activity_type::call_finish( player_activity *act, player *p ) const
         pair->second( act, p );
         // kill activity sounds at finish
         sfx::end_activity_sounds();
+        if( !act->get_tools().empty() ) {
+            auto &tool = *act->get_tools().front();
+            if( tool.has_flag( flag_TEMPORARY_ITEM ) ) {
+                g->remove_fake_item( &tool );
+            }
+        }
         return true;
     }
     return false;

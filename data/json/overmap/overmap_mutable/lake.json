@@ -1,0 +1,30 @@
+[
+  {
+    "type": "overmap_special",
+    "id": "island_column_edge",
+    "locations": [ "lake_water_cube" ],
+    "occurrences": [ 0, 0 ],
+    "flags": [ "RESTRICTED" ],
+    "overmaps": [
+      { "point": [ 0, 0, -1 ], "overmap": "lake_underwater_shore", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -2 ], "overmap": "lake_underwater_shore", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -3 ], "overmap": "lake_underwater_shore", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -4 ], "overmap": "lake_underwater_shore", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -5 ], "overmap": "lake_underwater_shore", "locations": [ "lake_bed" ] }
+    ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "island_column_center",
+    "locations": [ "lake_water_cube" ],
+    "occurrences": [ 0, 0 ],
+    "flags": [ "RESTRICTED" ],
+    "overmaps": [
+      { "point": [ 0, 0, -1 ], "overmap": "empty_rock", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -2 ], "overmap": "empty_rock", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -3 ], "overmap": "empty_rock", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -4 ], "overmap": "empty_rock", "locations": [ "lake_water_cube" ] },
+      { "point": [ 0, 0, -5 ], "overmap": "empty_rock", "locations": [ "lake_bed" ] }
+    ]
+  }
+]

@@ -65,6 +65,14 @@ int OVERMAP_LEGEND_WIDTH;
 
 scrollingcombattext SCT;
 
+// These are not chars, they are multibyte utf-8 codepoints
+static const std::vector<std::string> fancy_bar_ver = {
+    "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"
+};
+static const std::vector<std::string> fancy_bar_hor = {
+    "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"
+};
+
 // utf8 version
 std::vector<std::string> foldstring( const std::string &str, int width, const char split )
 {
@@ -1093,6 +1101,7 @@ char rand_char()
 
 // this translates symbol y, u, n, b to NW, NE, SE, SW lines correspondingly
 // h, j, c to horizontal, vertical, cross correspondingly
+// L, R, T, B convert to double line ending in a single vertical or horizontal line
 int special_symbol( int sym )
 {
     switch( sym ) {
@@ -1110,6 +1119,14 @@ int special_symbol( int sym )
             return LINE_XOOX;
         case 'b':
             return LINE_XXOO;
+        case 'L':
+            return LINE_XDXO_UNICODE;
+        case 'R':
+            return LINE_XOXD_UNICODE;
+        case 'T':
+            return LINE_OXDX_UNICODE;
+        case 'B':
+            return LINE_DXOX_UNICODE;
         default:
             return sym;
     }
@@ -1578,6 +1595,34 @@ std::string shortcut_text( nc_color shortcut_color, const std::string &fmt )
 }
 
 std::pair<std::string, nc_color>
+get_bar_custom( const std::vector<std::string> &segments, float cur, float max,
+                int width, bool extra_resolution,
+                const std::vector<nc_color> &colors )
+{
+    std::string result;
+    float status = cur / max;
+    status = std::clamp( status, 0.0f, 1.0f );
+    const float sw = status * width;
+
+    nc_color col = colors[static_cast<int>( ( 1 - status ) * colors.size() )];
+    if( status == 0 ) {
+        col = colors.back();
+    } else {
+        const auto iPart = static_cast<int>( sw );
+        const auto fPart = sw - iPart;
+        for( int i = 0; i < iPart; i++ ) {
+            result += segments.back();
+        }
+        if( extra_resolution && iPart < width ) {
+            const auto index = static_cast<int>( fPart * segments.size() );
+            result += segments[index];
+        }
+    }
+
+    return std::make_pair( result, col );
+}
+
+std::pair<std::string, nc_color>
 get_bar( float cur, float max, int width, bool extra_resolution,
          const std::vector<nc_color> &colors )
 {
@@ -1608,7 +1653,16 @@ std::pair<std::string, nc_color> get_hp_bar( const int cur_hp, const int max_hp,
     if( cur_hp == 0 ) {
         return std::make_pair( "-----", c_light_gray );
     }
-    return get_bar( cur_hp, max_hp, 5, !is_mon );
+    const auto bar_style = get_option<std::string>( "HEALTH_STYLE" );
+    const bool extra_resolution = !is_mon;
+    if( bar_style == "bar_ascii" ) {
+        return get_bar( cur_hp, max_hp, 5, extra_resolution );
+    } else if( bar_style == "bar_alt" ) {
+        return get_bar_custom( fancy_bar_hor, cur_hp, max_hp, 5, extra_resolution );
+    } else if( bar_style == "bar" ) {
+        return get_bar_custom( fancy_bar_ver, cur_hp, max_hp, 5, extra_resolution );
+    }
+    return get_bar_custom( fancy_bar_ver, cur_hp, max_hp, 5, extra_resolution );
 }
 
 std::pair<std::string, nc_color> get_stamina_bar( int cur_stam, int max_stam )
@@ -1616,7 +1670,19 @@ std::pair<std::string, nc_color> get_stamina_bar( int cur_stam, int max_stam )
     if( cur_stam == 0 ) {
         return std::make_pair( "-----", c_light_gray );
     }
-    return get_bar( cur_stam, max_stam, 5, true, { c_cyan, c_light_cyan, c_yellow, c_light_red, c_red } );
+    const auto colors = { c_cyan, c_light_cyan, c_yellow, c_light_red, c_red };
+
+    const auto bar_style = get_option<std::string>( "HEALTH_STYLE" );
+    if( bar_style == "bar_ascii" ) {
+        return get_bar(
+                   cur_stam, max_stam, 5, true, colors );
+    } else if( bar_style == "bar_alt" ) {
+        return get_bar_custom(
+                   fancy_bar_hor, cur_stam, max_stam, 5, true, colors );
+    } else {
+        return get_bar_custom(
+                   fancy_bar_ver, cur_stam, max_stam, 5, true, colors );
+    }
 }
 
 std::pair<std::string, nc_color> get_light_level( const float light )
@@ -1949,41 +2015,49 @@ void scrollingcombattext::removeCreatureHP()
 std::string string_from_int( const catacurses::chtype ch )
 {
     catacurses::chtype charcode = ch;
-    // LINE_NESW  - X for on, O for off
+    // Check for box drawing characters, and return their corresponding symbols
     switch( ch ) {
         case LINE_XOXO:
-            charcode = LINE_XOXO_C;
-            break;
+        case LINE_XOXO_UNICODE:
+            return LINE_XOXO_S;
         case LINE_OXOX:
-            charcode = LINE_OXOX_C;
-            break;
+        case LINE_OXOX_UNICODE:
+            return LINE_OXOX_S;
         case LINE_XXOO:
-            charcode = LINE_XXOO_C;
-            break;
+        case LINE_XXOO_UNICODE:
+            return LINE_XXOO_S;
         case LINE_OXXO:
-            charcode = LINE_OXXO_C;
-            break;
+        case LINE_OXXO_UNICODE:
+            return LINE_OXXO_S;
         case LINE_OOXX:
-            charcode = LINE_OOXX_C;
-            break;
+        case LINE_OOXX_UNICODE:
+            return LINE_OOXX_S;
         case LINE_XOOX:
-            charcode = LINE_XOOX_C;
-            break;
+        case LINE_XOOX_UNICODE:
+            return LINE_XOOX_S;
         case LINE_XXOX:
-            charcode = LINE_XXOX_C;
-            break;
+        case LINE_XXOX_UNICODE:
+            return LINE_XXOX_S;
         case LINE_XXXO:
-            charcode = LINE_XXXO_C;
-            break;
+        case LINE_XXXO_UNICODE:
+            return LINE_XXXO_S;
         case LINE_XOXX:
-            charcode = LINE_XOXX_C;
-            break;
+        case LINE_XOXX_UNICODE:
+            return LINE_XOXX_S;
         case LINE_OXXX:
-            charcode = LINE_OXXX_C;
-            break;
+        case LINE_OXXX_UNICODE:
+            return LINE_OXXX_S;
         case LINE_XXXX:
-            charcode = LINE_XXXX_C;
-            break;
+        case LINE_XXXX_UNICODE:
+            return LINE_XXXX_S;
+        case LINE_XDXO_UNICODE:
+            return LINE_XDXO_S;
+        case LINE_DXOX_UNICODE:
+            return LINE_DXOX_S;
+        case LINE_XOXD_UNICODE:
+            return LINE_XOXD_S;
+        case LINE_OXDX_UNICODE:
+            return LINE_OXDX_S;
         default:
             charcode = ch;
             break;

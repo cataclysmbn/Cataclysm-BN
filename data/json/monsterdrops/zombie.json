@@ -125,7 +125,12 @@
       },
       { "group": "underwear", "damage": [ 1, 4 ] },
       { "distribution": [ { "group": "rad_gear", "prob": 1 } ] },
-      { "item": "cash_card", "charges-min": 0, "charges-max": 50000 }
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
+        ]
+      }
     ]
   },
   {
@@ -136,7 +141,15 @@
       { "item": "rag", "damage": [ 1, 4 ], "count": [ 1, 4 ] },
       { "group": "pants", "damage": [ 1, 4 ] },
       { "group": "default_zombie_items" },
-      { "item": "cash_card", "charges-min": 0, "charges-max": 50000 }
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 75, "charges": [ 0, 50000 ] },
+          {
+            "collection": [ { "item": "money_bundle", "count": [ 1, 2 ] }, { "item": "coin_quarter", "prob": 50, "count": [ 1, 10 ] } ],
+            "prob": 25
+          }
+        ]
+      }
     ]
   },
   {
@@ -152,7 +165,12 @@
       { "group": "fireman_head", "damage": [ 1, 4 ] },
       { "group": "hazmat_eyes", "damage": [ 1, 4 ], "prob": 33 },
       { "distribution": [ { "group": "fireman_gear", "prob": 1 } ] },
-      { "item": "cash_card", "charges-min": 0, "charges-max": 50000 }
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 80, "charges": [ 0, 50000 ] },
+          { "item": "money_bundle", "prob": 20, "count": [ 1, 2 ] }
+        ]
+      }
     ]
   },
   {
@@ -194,7 +212,16 @@
       { "group": "pants", "damage": [ 1, 4 ] },
       { "group": "shoes", "damage": [ 1, 4 ] },
       { "group": "default_zombie_items" },
-      { "item": "cash_card", "prob": 10, "charges-min": 0, "charges-max": 50000 },
+      {
+        "distribution": [
+          { "item": "cash_card", "prob": 75, "charges": [ 0, 50000 ] },
+          {
+            "collection": [ { "item": "money_bundle", "count": [ 1, 2 ] }, { "item": "coin_quarter", "prob": 50, "count": [ 1, 10 ] } ],
+            "prob": 25
+          }
+        ],
+        "prob": 10
+      },
       { "item": "fighter_sting", "prob": 60 }
     ]
   },
@@ -231,5 +258,47 @@
       },
       { "group": "vault_wanderer", "prob": 3 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_zombie_seaweed_death_drops",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "rag", "count": [ 3, 6 ], "prob": 50 },
+          { "group": "swimmer_wetsuit", "damage": [ 1, 4 ], "prob": 5 },
+          {
+            "collection": [
+              { "group": "swimmer_head", "damage": [ 1, 4 ], "prob": 75 },
+              { "group": "swimmer_torso", "damage": [ 1, 4 ], "prob": 33 },
+              { "group": "swimmer_pants", "damage": [ 1, 4 ] },
+              { "group": "swimmer_shoes", "damage": [ 1, 4 ], "prob": 25 }
+            ],
+            "prob": 45
+          }
+        ]
+      },
+      { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 10 },
+      { "group": "fishing_items_trash", "count": [ 1, 3 ] },
+      { "item": "withered", "count": [ 5, 10 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_zombie_seaweed2_death_drops",
+    "entries": [
+      { "item": "rag", "count": [ 3, 6 ], "prob": 50 },
+      { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 10 },
+      { "group": "fishing_items_trash", "count": [ 2, 4 ] },
+      { "item": "withered", "count": [ 10, 20 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_dog_death_drops",
+    "subtype": "collection",
+    "entries": [ { "group": "dog_clothes", "damage": [ 1, 4 ], "prob": 5 } ]
   }
 ]

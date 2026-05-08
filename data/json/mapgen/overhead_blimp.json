@@ -1,0 +1,22 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "//": "Used for stadiums and other sporting locations to spawn a blimp overhead, for observant players to try and get to.",
+    "om_terrain": [ "open_air_blimp" ],
+    "object": {
+      "fill_ter": "t_open_air",
+      "place_vehicles": [
+        {
+          "chance": 75,
+          "fuel": 0,
+          "rotation": [ 0, 90, 180, 270 ],
+          "status": -1,
+          "vehicle": "blimp",
+          "x": [ 11, 12 ],
+          "y": [ 11, 12 ]
+        }
+      ]
+    }
+  }
+]

@@ -12,13 +12,13 @@
     "ammo": "m235",
     "weight": "5220 g",
     "volume": "6 L",
-    "barrel_length": "500 ml",
+    "barrel_volume": "500 ml",
     "dispersion": 300,
     "durability": 7,
     "modes": [ [ "DEFAULT", "single shot", 1, "NPC_AVOID" ], [ "BURST", "all barrels", 4, "NPC_AVOID" ] ],
     "magazines": [ [ "m235", [ "m74_clip" ] ] ],
     "reload": 600,
-    "valid_mod_locations": [ [ "accessories", 4 ], [ "barrel", 1 ], [ "grip", 1 ], [ "sling", 1 ] ],
+    "valid_mod_locations": [ [ "accessories", 4 ], [ "sling", 1 ], [ "barrel", 1 ], [ "grip", 1 ], [ "sling", 1 ] ],
     "flags": [ "BACKBLAST", "NEVER_JAMS", "PYROMANIAC_WEAPON" ],
     "faults": [  ]
   },
@@ -35,13 +35,14 @@
     "extend": { "flags": [ "NO_RELOAD", "NO_UNLOAD", "BACKBLAST", "TRADER_AVOID" ] },
     "ammo": "66mm",
     "weight": "700 g",
-    "volume": "2500 ml",
+    "volume": "3 L",
     "price_postapoc": "35 USD",
     "bashing": 6,
     "dispersion": 300,
     "durability": 9,
     "clip_size": 1,
     "reload": 150,
+    "default_mods": [ "shoulder_strap" ],
     "valid_mod_locations": [ [ "accessories", 1 ], [ "sling", 1 ], [ "grip", 1 ], [ "rail", 1 ], [ "sights", 1 ], [ "underbarrel", 1 ] ]
   }
 ]

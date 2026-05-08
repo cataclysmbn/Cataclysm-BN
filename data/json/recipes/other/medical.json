@@ -167,7 +167,7 @@
     "qualities": [ { "id": "CONTAIN", "level": 1 } ],
     "components": [
       [ [ "ether", 540 ] ],
-      [ [ "heroin", 1 ], [ "oxycodone", 2 ], [ "tramadol", 3 ], [ "codeine", 4 ], [ "poppy_pain", 4 ] ]
+      [ [ "heroin", 1 ], [ "oxycodone", 2 ], [ "tramadol", 3 ], [ "ghb", 2 ], [ "codeine", 4 ], [ "poppy_pain", 4 ] ]
     ]
   },
   {
@@ -182,7 +182,14 @@
     "components": [
       [ [ "rag", 3 ], [ "medical_gauze", 1 ] ],
       [ [ "duct_tape", 20 ], [ "medical_tape", 5 ] ],
-      [ [ "disinfectant", 5 ], [ "thyme_oil", 1 ], [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ] ]
+      [
+        [ "disinfectant", 5 ],
+        [ "chem_hydrogen_peroxide", 5 ],
+        [ "thyme_oil", 1 ],
+        [ "chem_ethanol", 250 ],
+        [ "denat_alcohol", 250 ],
+        [ "disinfectant_makeshift", 10 ]
+      ]
     ]
   },
   {
@@ -241,7 +248,11 @@
     ],
     "qualities": [ { "id": "CHEM", "level": 2 } ],
     "tools": [ [ [ "surface_heat", 20, "LIST" ] ] ],
-    "components": [ [ [ "water_clean", 1 ] ], [ [ "oxy_powder", 10 ] ], [ [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ] ] ]
+    "components": [
+      [ [ "water_clean", 1 ] ],
+      [ [ "oxy_powder", 10 ] ],
+      [ [ "chem_ethanol", 250 ], [ "denat_alcohol", 250 ], [ "disinfectant_makeshift", 10 ] ]
+    ]
   },
   {
     "result": "disinfectant_makeshift",
@@ -312,7 +323,7 @@
     "time": "1 m",
     "autolearn": true,
     "charges": 4,
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "rag", 4 ] ], [ [ "disinfectant", 1 ], [ "chem_hydrogen_peroxide", 1 ] ] ]
   },
   {
@@ -325,7 +336,7 @@
     "time": "1 m",
     "autolearn": true,
     "charges": 8,
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "components": [ [ [ "cotton_ball", 8 ] ], [ [ "disinfectant", 1 ], [ "chem_hydrogen_peroxide", 1 ] ] ]
   },
   {
@@ -346,6 +357,6 @@
       [ "reference_firstaid1", 6 ]
     ],
     "tools": [ [ [ "vac_sealer", 15 ], [ "makeshift_sealer", 30 ] ] ],
-    "components": [ [ [ "bag_plastic", 1 ] ], [ [ "paper", 2 ] ] ]
+    "components": [ [ [ "bag_plastic", 1 ], [ "bag_zipper", 1 ] ], [ [ "paper", 2 ] ] ]
   }
 ]

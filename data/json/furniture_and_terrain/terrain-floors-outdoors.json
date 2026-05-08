@@ -170,7 +170,7 @@
     "color": "brown",
     "move_cost": 3,
     "coverage": 40,
-    "flags": [ "TRANSPARENT", "MOUNTABLE", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "VEH_TREAT_AS_BASH_BELOW" ],
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "SUPPORTS_ROOF", "COLLAPSES", "VEH_TREAT_AS_BASH_BELOW" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": {
       "sound": "thump",
@@ -291,7 +291,7 @@
     "name": "yellow pavement",
     "connects_to": "PAVEMENT",
     "description": "Streaks of carefully aligned yellow paint mark the road to inform drivers not to cross.  No one is enforcing these rules anymore.",
-    "symbol": ".",
+    "symbol": ":",
     "color": "yellow",
     "move_cost": 2,
     "flags": [ "TRANSPARENT", "FLAT", "ROAD", "MINEABLE" ],
@@ -401,6 +401,26 @@
   },
   {
     "type": "terrain",
+    "id": "t_floor_wood_underwater",
+    "copy-from": "t_floor_noroof",
+    "name": "underwater wooden floor",
+    "description": "Rotting old floorboards long since repurposed as Davy Jones's patio.",
+    "symbol": ".",
+    "color": "brown",
+    "extend": { "flags": [ "LIQUID", "SWIMMABLE", "WATER_CUBE", "DEEP_WATER", "GOES_UP" ] },
+    "delete": { "flags": [ "FLAMMABLE_HARD" ] },
+    "bash": {
+      "ter_set": "t_lake_bed",
+      "str_min": 20,
+      "str_max": 200,
+      "sound": "crash!",
+      "sound_fail": "whump!",
+      "bash_below": true,
+      "items": [ { "item": "splinter", "count": [ 2, 8 ] }, { "item": "nail", "charges": [ 5, 10 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
     "id": "t_metal_floor_no_roof",
     "name": "metal floor",
     "looks_like": "t_metal_floor",
@@ -421,6 +441,27 @@
         { "item": "scrap", "count": [ 9, 36 ] }
       ],
       "bash_below": true
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_junk_floor_noroof",
+    "name": "junk metal floor",
+    "description": "A simple floor of rusty scrap metal bolted and wire-tied to a makeshift frame.  Very fashionable in post-apocalyptic shantytowns.",
+    "symbol": "`",
+    "color": "dark_gray",
+    "looks_like": "t_junk_floor",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT" ],
+    "bash": {
+      "str_min": 30,
+      "str_max": 200,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "ter_set": "t_null",
+      "str_min_supported": 60,
+      "bash_below": true,
+      "items": [ { "item": "steel_chunk", "count": [ 1, 2 ] }, { "item": "scrap", "count": [ 1, 40 ] } ]
     }
   },
   {
@@ -600,5 +641,77 @@
         { "item": "rebar", "count": [ 0, 2 ] }
       ]
     }
+  },
+  {
+    "type": "terrain",
+    "id": "t_adobe_brick_floor_noroof",
+    "name": "adobe floor",
+    "description": "Adobe bricks and mortar smoothed out to make a clean fireproof floor.",
+    "symbol": ".",
+    "color": "brown",
+    "looks_like": "t_thconc_floor",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
+    "bash": {
+      "sound": "SMASH!",
+      "ter_set": "t_null",
+      "str_min": 90,
+      "str_max": 400,
+      "str_min_supported": 100,
+      "items": [ { "item": "material_soil", "count": [ 4, 10 ] }, { "item": "adobe_brick", "count": [ 2, 6 ] } ]
+    }
+  },
+  {
+    "id": "t_floating_plastic",
+    "type": "terrain",
+    "name": "trash island",
+    "looks_like": "t_window_taped",
+    "description": "A small section of floating trash debris, neatly tied and packed together.",
+    "symbol": "#",
+    "color": "light_gray",
+    "//": "intended to make static water bases possible to build besides on pre-placed islands. move cost 3 to encourage upgrading to sandy soil",
+    "move_cost": 3,
+    "bash": {
+      "str_min": 8,
+      "str_max": 20,
+      "ter_set": "t_water_dp",
+      "sound": "crunch!",
+      "sound_fail": "whump!",
+      "items": [ { "item": "plastic_chunk", "count": [ 10, 20 ] } ]
+    },
+    "deconstruct": { "ter_set": "t_water_dp", "items": [ { "item": "plastic_chunk", "count": 30 } ] },
+    "flags": [ "BASHABLE", "TRANSPARENT", "FLAT" ]
+  },
+  {
+    "type": "terrain",
+    "id": "t_floating_plastic_sand",
+    "name": "sandy trash island",
+    "looks_like": "t_sand",
+    "description": "A small section of floating trash debris, neatly tied and packed together.  This section has been covered with sand and soil, making it more stable and able to sustain certain plants.",
+    "symbol": ".",
+    "color": "yellow",
+    "move_cost": 2,
+    "//": "if we can eventually turn this into proper sand or soil, we will need to use this as an intermediate",
+    "flags": [ "TRANSPARENT", "FLAT", "VEH_TREAT_AS_BASH_BELOW" ],
+    "bash": {
+      "sound": "thump",
+      "ter_set": "t_floating_plastic",
+      "str_min": 50,
+      "str_max": 100,
+      "str_min_supported": 100,
+      "items": [ { "item": "material_sand", "charges": [ 250, 500 ] } ]
+    }
+  },
+  {
+    "type": "terrain",
+    "id": "t_od_metal_floor",
+    "looks_like": "t_metal_floor",
+    "name": "metal floor",
+    "description": "High-quality and tough checkered flooring to reduce risk of slips and falls.",
+    "symbol": ".",
+    "color": "light_cyan",
+    "move_cost": 2,
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
+    "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 100, "str_max": 500, "str_min_supported": 200 }
   }
 ]

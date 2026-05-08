@@ -36,6 +36,7 @@ using mon_action_death  = void ( * )( monster & );
 using mon_action_attack = bool ( * )( monster * );
 using mon_action_defend = void ( * )( monster &, Creature *, dealt_projectile_attack const * );
 using bodytype_id = std::string;
+using TraitSet = std::set<trait_id>;
 class JsonArray;
 class JsonObject;
 
@@ -75,6 +76,7 @@ enum m_flag : int {
     MF_KEENNOSE,            //Keen sense of smell
     MF_STUMBLES,            // Stumbles in its movement
     MF_WARM,                // Warm blooded
+    MF_NEMESIS,             // Is a nemesis monster
     MF_NOHEAD,              // Headshots not allowed!
     MF_HARDTOSHOOT,         // It's one size smaller for ranged attacks, no less then creature_size::tiny
     MF_GRABS,               // Its attacks may grab us!
@@ -118,7 +120,8 @@ enum m_flag : int {
     MF_BONES,               // May produce bones and sinews when butchered; if combined with POISON flag, tainted bones, if combined with HUMAN, human bones
     MF_FAT,                 // May produce fat when butchered; if combined with POISON flag, tainted fat
     MF_CONSOLE_DESPAWN,     // Despawns when a nearby console is properly hacked
-    MF_IMMOBILE,            // Doesn't move (e.g. turrets)
+    MF_IMMOBILE,            // Doesn't move & doesn't use non-special attacks (e.g. turrets)
+    MF_STATIONARY,          // Stationary, but will fight back (e.g. training dummies)
     MF_ID_CARD_DESPAWN,     // Despawns when a science ID card is used on a nearby console
     MF_RIDEABLE_MECH,       // A rideable mech that is immobile until ridden.
     MF_CARD_OVERRIDE,        // Not a mech, but can be converted to friendly using an ID card in the same way that mechs can.
@@ -183,6 +186,28 @@ enum m_flag : int {
     MF_STUN_IMMUNE,         // This monster is immune to the stun effect
     MF_DROPS_AMMO,          // This monster drops ammo. Check to make sure starting_ammo paramter is present for this monster type!
     MF_CAN_BE_ORDERED,      // If friendly, allow setting this monster to ignore hostiles and prioritize following the player.
+    MF_SMALL_HEAD,          // This monster has a smaller head in proportion to the rest of its body than usual, making it 20% harder to shoot the head. 0.1 -> 0.08
+    MF_TINY_HEAD,           // This monster has a tiny head in proportion to the rest of its body, making it 50% hard to shoot the head. 0.1 -> 0.05
+    MF_NO_HEAD_BONUS_CRIT,  // This monster can still be hit in the head, but cannot be dealt extra damage past the 1.5 multiplier.
+    MF_HEAD_BONUS_MAX_CRIT_1,       // This monster has a vulnerable head, increasing the maximum potential critical multiplier by 0.5 (50%)
+    MF_HEAD_BONUS_MAX_CRIT_2,       // This monster has a extremely vulnerable head, increasing the maximum potential critical multiplier by 1.0 (100%)
+    MF_TORSO_BONUS_MAX_CRIT_1,      // This monster has a vulnerable torso, increasing the maximum potential critical multiplier by 0.25 (25%)
+    MF_TORSO_BONUS_MAX_CRIT_2,      // This monster has a extremely vulnerable torso, increasing the maximum potential critical multiplier by 0.5 (50%)
+    MF_PROJECTILE_RESISTANT_1,      // This monster has a torso and limbs that are notably resistant to projectiles, with a default x1 damage mult cap.
+    MF_PROJECTILE_RESISTANT_2,      // This monster has a torso and limbs that are very resistant to projectiles, with a default x0.8 damage mult cap.
+    MF_PROJECTILE_RESISTANT_3,      // This monster has a torso and limbs that are extremely resistant to projectiles, with a default x0.5 damage mult cap.
+    MF_PROJECTILE_RESISTANT_4,      // This monster has a torso and limbs that are almost immune to projectiles, with a default x0.2 damage mult cap.
+    MF_VOLATILE,            // This monster tends to explode if hit by fire or bullets, fire weapons will always catch them on fire.
+    MF_CANT_CLONE,            // This monster can't be recreated using cloning vats, genome samples will fail if used on it.
+    MF_MOUNTABLE_STAIRS,     // When ridden, this monster can go up or down stairs and climb.
+    MF_MOUNTABLE_LADDER,    //When ridden, this monster can go up or down terrain with the DIFFICULT_Z flag (i.e ladders).
+    MF_MOUNTABLE_OBSTACLES,     // When ridden, this monster can pass obstacles like fences or doorways when mounted.
+    MF_MOUNTABLE_DOORS,     //Player can open/close doors while riding this monster
+    MF_MOUNTABLE_LEDGE,     //Player can drop down ledges while riding this monster
+    MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
+    MF_COMBAT_MOUNT,        // This monster is trained for combat
+    MF_CANT_TRAIN,            // This monster can't be trained for combat
+
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };
 
@@ -211,6 +236,7 @@ struct mon_effect_data {
 /** Pet food data */
 struct pet_food_data {
     std::set<std::string> food;
+    std::set<TraitSet> tamer_traits;
     std::string pet;
     std::string feed;
 
@@ -290,6 +316,7 @@ struct mtype {
         int speed = 0;          /** e.g. human = 100 */
         int agro = 0;           /** chance will attack [-100,100] */
         int morale = 0;         /** initial morale level at spawn */
+        std::optional<int> preferred_z;
 
         // Number of hitpoints regenerated per turn.
         int regenerates = 0;
@@ -322,7 +349,7 @@ struct mtype {
 
         /** If unset (-1) then values are calculated automatically from other properties */
         int armor_bash = -1;     /** innate armor vs. bash */
-        int armor_cut  = -1;     /** innate armor vs. cut */
+        int armor_cut = -1;     /** innate armor vs. cut */
         int armor_dark = -1;     /** innate armor vs. dark */
         int armor_light = -1;    /** innate armor vs. light */
         int armor_psi = -1;      /** innate armor vs. psi */
@@ -458,5 +485,3 @@ struct mtype {
 };
 
 mon_effect_data load_mon_effect_data( const JsonObject &e );
-
-

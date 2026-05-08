@@ -286,7 +286,7 @@
       {
         "text": "These aren't enough to finish the job, you want me to succeed, don't you…",
         "switch": true,
-        "condition": { "npc_has_effect": "asked_for_item", "or": [ "has_assigned_mission", "has_many_assigned_missions" ] },
+        "condition": { "and": [ "asked_for_item", { "or": [ "has_assigned_mission", "has_many_assigned_missions" ] } ] },
         "trial": { "type": "PERSUADE", "difficulty": 0, "mod": [ [ "TRUST", 1 ], [ "VALUE", 1 ] ] },
         "success": { "topic": "TALK_GIVE_EQUIPMENT", "effect": "give_equipment", "opinion": { "value": -1 } },
         "failure": { "topic": "TALK_DENY_EQUIPMENT", "opinion": { "value": -1 } }
@@ -435,9 +435,8 @@
     "type": "talk_topic",
     "dynamic_line": "<no>.",
     "responses": [
-      { "text": "Okay, okay, sorry.", "topic": "TALK_NONE" },
-      { "text": "Seriously, give me more stuff!", "topic": "TALK_SHARE_EQUIPMENT" },
-      { "text": "Okay, fine, bye.", "topic": "TALK_DONE" }
+      { "text": "Okay, okay, sorry.", "topic": "TALK_NONE", "effect": "deny_equipment" },
+      { "text": "Okay, fine, bye.", "topic": "TALK_DONE", "effect": "deny_equipment" }
     ]
   },
   {

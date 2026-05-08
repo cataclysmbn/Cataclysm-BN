@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "lethal_zeds",
+    "name": "<color_red>Lethal Zombies</color>",
+    "authors": [ "RoyalFox" ],
+    "maintainers": [ "RoyalFox" ],
+    "description": "For an uncompromising and brutal experience.",
+    "category": "content",
+    "dependencies": [ "bn" ]
+  }
+]

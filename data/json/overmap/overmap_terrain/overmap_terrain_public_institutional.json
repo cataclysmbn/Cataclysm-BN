@@ -264,7 +264,16 @@
       "prison_1_3f_9",
       "prison_1_b_7_hidden",
       "prison_1_b_8_hidden_lab_stairs",
-      "prison_1_b_9_hidden",
+      "prison_1_b_9_hidden"
+    ],
+    "name": "prison",
+    "sym": "p",
+    "color": "i_light_blue",
+    "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
       "prison_alcatraz_1",
       "prison_alcatraz_2",
       "prison_alcatraz_3",
@@ -296,10 +305,8 @@
       "prison_alcatraz_14_2f",
       "prison_alcatraz_15_2f"
     ],
-    "name": "prison",
-    "sym": "p",
-    "color": "i_light_blue",
-    "see_cost": 5
+    "name": "island prison",
+    "copy-from": "prison_1_1"
   },
   {
     "type": "overmap_terrain",

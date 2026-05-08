@@ -61,6 +61,7 @@ void reload_weapon( bool try_everything = true );
  * If it's a gun, some gunmods can also be loaded.
  */
 void unload( avatar &you );
+void unload_all( avatar &you );
 
 /**
  * Checks if the weapon is valid and if the player meets certain conditions for firing it.
@@ -74,7 +75,7 @@ bool can_fire_weapon( avatar &you, const map &m, const item &weapon );
  * Only call outside of can_fire_turret if using turret from vehicle controls.
  * As can_fire_turret also checks things like "do you have two hands to fire the M2HB?"
  */
-bool will_fire_turret( avatar &you );
+bool will_fire_turret( avatar &you, const turret_data &turret );
 
 /**
  * Checks if the turret is valid and if the player meets certain conditions for manually firing it.
@@ -85,6 +86,9 @@ bool can_fire_turret( avatar &you, const map &m, const turret_data &turret );
 
 /** Checks if the wielded weapon is a gun and can be fired then starts interactive aiming */
 void fire_wielded_weapon( avatar &you );
+
+/** Designates worn gun and starts interactive aiming */
+void fire_ranged_gear( avatar &you, item *gun );
 
 /** Stores fake gun specified by the mutation and starts interactive aiming */
 void fire_ranged_mutation( avatar &you, detached_ptr<item> &&fake_gun );
@@ -107,5 +111,4 @@ void plthrow( avatar &you, item *loc,
 // Use item; also tries E,R,W  'a'
 void use_item( avatar &you, item *loc = nullptr );
 } // namespace avatar_action
-
 

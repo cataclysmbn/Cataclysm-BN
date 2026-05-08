@@ -4,7 +4,6 @@
     "type": "MONSTER",
     "name": { "str": "panicked person" },
     "description": "This hysterical individual has a faint, yet fading, glint of intelligence in their bloodshot eyes.  They sometimes scream in fear and behave clearly irrationally.  This will quite likely cause their demise at the hands of the undead horde rather quickly.",
-    "looks_like": "mon_prototype_cyborg",
     "default_faction": "human",
     "bodytype": "human",
     "species": [ "HUMAN" ],
@@ -30,7 +29,7 @@
     "upgrades": { "half_life": 1, "age_grow": 1, "into_group": "GROUP_CIVILIANS_UPGRADE" },
     "dodge": 1,
     "death_drops": "default_zombie_death_drops",
-    "flags": [ "SEES", "HEARS", "WARM", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_1", "GUILT" ]
+    "flags": [ "SEES", "HEARS", "WARM", "HUMAN", "CAN_OPEN_DOORS", "PATH_AVOID_DANGER_2", "PRIORITIZE_TARGETS", "GUILT" ]
   },
   {
     "id": "mon_civilian_stationary",

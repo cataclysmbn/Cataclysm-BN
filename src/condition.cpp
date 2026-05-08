@@ -390,7 +390,7 @@ void conditional_t<T>::set_at_om_location( const JsonObject &jo, const std::stri
             actor = dynamic_cast<player *>( d.beta );
         }
         const tripoint_abs_omt omt_pos = actor->global_omt_location();
-        const oter_id &omt_ref = overmap_buffer.ter( omt_pos );
+        const oter_id &omt_ref = get_overmapbuffer( actor->get_dimension() ).ter( omt_pos );
 
         return omt_ref == oter_id( oter_no_dir( oter_id( location ) ) );
     };
@@ -742,7 +742,7 @@ template<class T>
 void conditional_t<T>::set_at_safe_space()
 {
     condition = []( const T & d ) {
-        return overmap_buffer.is_safe( d.beta->global_omt_location() );
+        return get_overmapbuffer( d.beta->get_dimension() ).is_safe( d.beta->global_omt_location() );
     };
 }
 
@@ -814,8 +814,7 @@ void conditional_t<T>::set_is_outside()
 {
     condition = []( const T & d ) {
         map &here = get_map();
-        const tripoint pos = here.getabs( d.beta->pos() );
-        return !here.has_flag( TFLAG_INDOORS, pos );
+        return here.is_outside( d.beta->pos() );
     };
 }
 

@@ -12,11 +12,13 @@
       { "point": [ 0, 1, -1 ], "overmap": "mine_shaft_middle_north" },
       { "point": [ 1, 1, -1 ], "overmap": "mine_shaft_middle_east_north" },
       { "point": [ 0, 1, -2 ], "overmap": "mine_shaft_lower_north" },
-      { "point": [ 1, 1, -2 ], "overmap": "mine_shaft_lower_east_north" }
+      { "point": [ 1, 1, -2 ], "overmap": "mine_shaft_lower_east_north" },
+      { "point": [ 0, 2, -2 ], "overmap": "mine_shaft_lower_sub_station_north" }
     ],
     "connections": [
       { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] },
-      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] }
+      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] },
+      { "point": [ 0, 3, -2 ], "connection": "subway_tunnel", "from": [ 0, 2, -2 ] }
     ],
     "place_nested": [ { "point": [ 0, 0, -1 ], "special": "mine_tunnel" } ],
     "locations": [ "wilderness" ],
@@ -42,6 +44,7 @@
       { "point": [ -1, 1, -2 ], "overmap": "mine_spiral_east_north" },
       { "point": [ -2, 1, -2 ], "overmap": "mine_spiral_central_north" },
       { "point": [ -3, 1, -2 ], "overmap": "mine_spiral_west_north" },
+      { "point": [ 0, 2, -2 ], "overmap": "mine_shaft_lower_sub_station_north" },
       { "point": [ -3, 1, -3 ], "overmap": "mine_spiral_-1_nw_north" },
       { "point": [ -2, 1, -3 ], "overmap": "mine_spiral_-1_n_north" },
       { "point": [ -1, 1, -3 ], "overmap": "mine_spiral_-1_ne_north" },
@@ -57,7 +60,8 @@
     ],
     "connections": [
       { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] },
-      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] }
+      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] },
+      { "point": [ 0, 3, -2 ], "connection": "subway_tunnel", "from": [ 0, 2, -2 ] }
     ],
     "place_nested": [ { "point": [ 0, 0, -1 ], "special": "mine_tunnel" } ],
     "locations": [ "wilderness" ],
@@ -82,6 +86,7 @@
       { "point": [ 1, 1, -2 ], "overmap": "mine_shaft_lower_east_north" },
       { "point": [ -1, 1, -2 ], "overmap": "mine_amigara_east_north" },
       { "point": [ -2, 1, -2 ], "overmap": "mine_amigara_central_north" },
+      { "point": [ 0, 2, -2 ], "overmap": "mine_shaft_lower_sub_station_north" },
       { "point": [ -3, 1, -2 ], "overmap": "mine_amigara_west_north" },
       { "point": [ -1, 1, -3 ], "overmap": "mine_amigara_-1_east_north" },
       { "point": [ -2, 1, -3 ], "overmap": "mine_amigara_-1_central_north" },
@@ -92,7 +97,8 @@
     ],
     "connections": [
       { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] },
-      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] }
+      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] },
+      { "point": [ 0, 3, -2 ], "connection": "subway_tunnel", "from": [ 0, 2, -2 ] }
     ],
     "place_nested": [ { "point": [ 0, 0, -1 ], "special": "mine_tunnel" } ],
     "locations": [ "wilderness" ],
@@ -118,11 +124,13 @@
       { "point": [ -1, 1, -2 ], "overmap": "mine_wyrms_east_north" },
       { "point": [ -2, 1, -2 ], "overmap": "mine_wyrms_central_north" },
       { "point": [ -3, 1, -2 ], "overmap": "mine_wyrms_west_north" },
+      { "point": [ 0, 2, -2 ], "overmap": "mine_shaft_lower_sub_station_north" },
       { "point": [ -3, 1, -3 ], "overmap": "mine_wyrms_finale_north" }
     ],
     "connections": [
       { "point": [ 0, -1, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] },
-      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] }
+      { "point": [ 1, -1, 0 ], "connection": "local_road", "from": [ 1, 0, 0 ] },
+      { "point": [ 0, 3, -2 ], "connection": "subway_tunnel", "from": [ 0, 2, -2 ] }
     ],
     "place_nested": [ { "point": [ 0, 0, -1 ], "special": "mine_tunnel" } ],
     "locations": [ "wilderness" ],

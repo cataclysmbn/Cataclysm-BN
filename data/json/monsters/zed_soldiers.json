@@ -180,6 +180,40 @@
     }
   },
   {
+    "id": "mon_zombie_soldier_acid_3",
+    "type": "MONSTER",
+    "name": { "str": "acid-juggernaut zombie" },
+    "description": "Destroyed hazard gear covers this zombie's grotesquely bloated body, which has been mutated by acidic compounds.  Its arms bear massive acid cannons that unleash a furious barrage of corrosive fluid, instantly melting anything that approaches.  Wherever this hulking monster treads, it leaves behind a trail of decayed, reeking residue, a testament to its overwhelming power.",
+    "copy-from": "mon_zombie_soldier",
+    "looks_like": "mon_zombie_soldier",
+    "diff": 30,
+    "attack_cost": 100,
+    "harvest": "CBM_OP2",
+    "relative": { "hp": 160, "speed": -20, "melee_skill": 8, "armor_bash": 15, "armor_cut": 10 },
+    "delete": { "flags": [ "BLEED" ], "categories": [ "CLASSIC" ] },
+    "extend": {
+      "special_attacks": [
+        [ "ACID_BARF", 3 ],
+        [ "SMASH", 15 ],
+        { "id": "slam" },
+        {
+          "type": "gun",
+          "cooldown": 4,
+          "move_cost": 50,
+          "gun_type": "acid_spray",
+          "fake_skills": [ [ "gun", 3 ], [ "rifle", 2 ] ],
+          "fake_dex": 6,
+          "fake_per": 6,
+          "require_targeting_player": false,
+          "description": "The acid-juggernaut zombie launches a hail of corrosive darts!",
+          "ranges": [ [ 2, 6, "DEFAULT" ] ]
+        }
+      ],
+      "death_function": [ "ACID" ],
+      "flags": [ "ACIDPROOF", "ACID_BLOOD" ]
+    }
+  },
+  {
     "id": "mon_zombie_kevlar_1",
     "type": "MONSTER",
     "name": { "str": "Kevlar zombie" },
@@ -355,7 +389,8 @@
       "REVIVES",
       "BLEED",
       "PUSH_MON",
-      "DRIPS_NAPALM"
+      "DRIPS_NAPALM",
+      "VOLATILE"
     ]
   },
   {
@@ -462,5 +497,93 @@
     "armor_bullet": 30,
     "harvest": "CBM_OP2",
     "special_attacks": [ [ "BIO_OP_BIOJUTSU", 15 ] ]
+  },
+  {
+    "id": "mon_zombie_supply_sergeant",
+    "type": "MONSTER",
+    "name": { "str": "zombie sergeant" },
+    "looks_like": "mon_zombie_military_pilot",
+    "description": "This zombie's tattered uniform indicates it might have once been an NCO.  A bizarre entity still clinging to past obsessions and a sense of authority, as if it was still leading the charge against the enemy it fell against.  It summons echos of fallen soldiers, with a hoarse voice that perpetually sounds like grumbling.",
+    "default_faction": "zombie",
+    "bodytype": "human",
+    "species": [ "ZOMBIE", "HUMAN" ],
+    "diff": 10,
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 100,
+    "speed": 85,
+    "material": [ "flesh" ],
+    "symbol": "Z",
+    "color": "yellow_green",
+    "aggression": 100,
+    "morale": 100,
+    "melee_skill": 7,
+    "melee_dice": 4,
+    "melee_dice_sides": 6,
+    "melee_cut": 0,
+    "dodge": 3,
+    "armor_bash": 8,
+    "armor_cut": 16,
+    "armor_bullet": 24,
+    "vision_day": 50,
+    "vision_night": 3,
+    "special_attacks": [
+      { "type": "bite", "cooldown": 5, "min_mul": 0.8 },
+      [ "GRAB", 7 ],
+      [ "scratch", 20 ],
+      {
+        "type": "spell",
+        "spell_data": { "id": "zombie_supply_sergeant_summoning", "hit_self": true },
+        "cooldown": 30,
+        "monster_message": "The zombie sergeant gargles with rage, and spectral troops begin to gather around!"
+      }
+    ],
+    "death_drops": "mon_zombie_soldier_death_drops",
+    "harvest": "CBM_OP",
+    "death_function": [ "NORMAL" ],
+    "fungalize_into": "mon_zombie_fungus",
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "WARM",
+      "BASHES",
+      "GROUP_BASH",
+      "POISON",
+      "BLEED",
+      "ACIDPROOF",
+      "ELECTRIC",
+      "NO_BREATHE",
+      "REVIVES"
+    ]
+  },
+  {
+    "id": "mon_zombie_soldier_minion",
+    "type": "MONSTER",
+    "copy-from": "mon_zombie_soldier",
+    "looks_like": "mon_zombie_soldier",
+    "//": "Look like real zombies, hit like real zombies, but overall weaker.  Keep the easter egg in the description though, per request.  If you're looking at monster descriptions to sort the real ones from the fakes, your priorities are misplaced since these can still hurt you. :3",
+    "description": "These are the pathetic beings reluctantly dragged into action under the coercive command of their commanding officer.  They still wear expressions of profound displeasure and exhibit a visibly annoyed demeanor, moving listlessly to commands that are a confused echo of their past lives.  Forcibly deployed, they shamble towards you, but their every movement clearly conveys, \"Why do I have to do this?\"",
+    "proportional": { "hp": 0.75, "speed": 0.75, "armor_bash": 0.75, "armor_cut": 0.75, "armor_bullet": 0.75 },
+    "death_function": [ "DISINTEGRATE" ]
+  },
+  {
+    "id": "mon_zombie_soldier_shieldman",
+    "type": "MONSTER",
+    "name": { "str": "zombie shieldbearer" },
+    "copy-from": "mon_zombie_soldier",
+    "looks_like": "mon_zombie_soldier",
+    "description": "Wearing a military uniform, this zombie walks slowly as it hides its body behind a hefty shield. Appearing no different from any other fallen soldier aside from its defenses, a good solid hit should either wreck its precious shield or knock it out of its grasp.",
+    "hp": 1,
+    "material": [ "steel" ],
+    "armor_bash": 40,
+    "armor_cut": 50,
+    "armor_bullet": 60,
+    "vision_day": 25,
+    "vision_night": 3,
+    "special_attacks": [ { "id": "slam" }, [ "scratch", 20 ] ],
+    "on_death": { "death_function": [  ], "spawn_mon": "mon_zombie_soldier" },
+    "death_drops": "mon_zombie_soldier_shieldman_death_drops",
+    "delete": { "flags": [ "BLEED" ], "categories": [ "CLASSIC" ] }
   }
 ]

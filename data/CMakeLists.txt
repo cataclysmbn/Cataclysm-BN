@@ -1,23 +1,17 @@
-set(CATACLYSM_DATA_DIRS
-        font
-        json
-        mods
-        names
-        raw
-        motd
-        credits
-        title
-        help)
-
-if (SOUND)
-    list(APPEND CATACLYSM_DATA_DIRS sound)
-endif ()
-
-set(CATACLYSM_DATA_FILES
-        changelog.txt
-        cataicon.ico)
-
 if (RELEASE)
-    install(DIRECTORY ${CATACLYSM_DATA_DIRS} TYPE DATA)
-    install(FILES ${CATACLYSM_DATA_FILES} TYPE DATA)
+    if (USE_PREFIX_DATA_DIR)
+        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+                TYPE DATA
+                PATTERN "CMakeLists.txt" EXCLUDE
+                PATTERN "XDG" EXCLUDE
+                PATTERN "external_tileset/README.md" EXCLUDE
+                PATTERN "mapgen/lab/README.md" EXCLUDE)
+    else()
+        install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+                DESTINATION data
+                PATTERN "CMakeLists.txt" EXCLUDE
+                PATTERN "XDG" EXCLUDE
+                PATTERN "external_tileset/README.md" EXCLUDE
+                PATTERN "mapgen/lab/README.md" EXCLUDE)
+    endif()
 endif ()

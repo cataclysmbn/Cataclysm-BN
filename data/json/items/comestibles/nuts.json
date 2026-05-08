@@ -5,7 +5,7 @@
     "name": { "str_sp": "pine nuts" },
     "weight": "30 g",
     "color": "brown",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -2,
@@ -16,7 +16,7 @@
     "price_postapoc": "6 USD",
     "material": [ "nut" ],
     "volume": "250 ml",
-    "flags": [ "NUTRIENT_OVERRIDE" ],
+    "flags": [ "NUTRIENT_OVERRIDE", "NO_COOKING_BUFF" ],
     "charges": 4,
     "vitamins": [ [ "iron", 9 ], [ "nut_allergen", 1 ] ],
     "fun": 2
@@ -47,7 +47,7 @@
     "name": { "str_sp": "pistachios" },
     "weight": "30 g",
     "color": "green",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -3,
@@ -72,7 +72,7 @@
     "healthy": 2,
     "description": "A handful of roasted nuts from a pistachio tree.",
     "price": "150 cent",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 3
   },
   {
@@ -81,7 +81,7 @@
     "name": { "str_sp": "almonds" },
     "weight": "30 g",
     "color": "brown",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -3,
@@ -108,6 +108,7 @@
     "comestible_type": "FOOD",
     "symbol": "%",
     "calories": 184,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "Pulp left over after making almond milk.  It's gritty and incredibly bland.",
     "price": "10 cent",
     "price_postapoc": "50 cent",
@@ -125,7 +126,7 @@
     "description": "A handful of roasted nuts from an almond tree.",
     "price": "150 cent",
     "price_postapoc": "6 USD",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 3
   },
   {
@@ -134,7 +135,7 @@
     "name": { "str_sp": "cashews" },
     "weight": "30 g",
     "color": "brown",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -3,
@@ -156,7 +157,7 @@
     "name": { "str_sp": "pecans" },
     "weight": "30 g",
     "color": "brown",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -3,
@@ -180,7 +181,7 @@
     "copy-from": "pecan",
     "description": "A handful of roasted nuts from a pecan tree.",
     "price": "150 cent",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 3
   },
   {
@@ -189,7 +190,7 @@
     "name": { "str_sp": "peanuts" },
     "weight": "30 g",
     "color": "brown",
-    "container": "bag_plastic",
+    "container": "bag_zipper",
     "comestible_type": "FOOD",
     "symbol": "%",
     "quench": -4,
@@ -255,7 +256,7 @@
     "healthy": 1,
     "description": "A handful of roasted nuts from a walnut tree.",
     "price": "90 cent",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 1
   },
   {
@@ -288,7 +289,7 @@
     "healthy": 1,
     "description": "A handful of roasted nuts from a chestnut tree.",
     "price": "90 cent",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 1
   },
   {
@@ -321,7 +322,7 @@
     "healthy": 1,
     "description": "A handful of roasted nuts from a hazelnut tree.",
     "price": "90 cent",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 1
   },
   {
@@ -355,7 +356,7 @@
     "description": "A handful of roasted nuts from a hickory tree.",
     "price": "90 cent",
     "price_postapoc": "5 USD",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 1
   },
   {
@@ -378,7 +379,7 @@
     "phase": "liquid",
     "charges": 4,
     "stack_size": 1,
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 5,
     "vitamins": [ [ "milk_allergen", 1 ], [ "nut_allergen", 1 ] ]
   },
@@ -415,7 +416,7 @@
     "description": "A handful roasted nuts from an oak tree.",
     "price": "90 cent",
     "price_postapoc": "2 USD",
-    "flags": [ "EATEN_HOT" ],
+    "flags": [ "EATEN_HOT", "NO_COOKING_BUFF" ],
     "fun": 1
   },
   {
@@ -429,6 +430,7 @@
     "symbol": "%",
     "healthy": 1,
     "calories": 114,
+    "flags": [ "NO_COOKING_BUFF" ],
     "description": "A serving of acorns that have been hulled, chopped, and boiled in water before being thoroughly toasted until dry.  Filling and nutritious.",
     "price": "90 cent",
     "price_postapoc": "3 USD",

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <ranges>
 #include <unordered_map>
 #include <utility>
 
@@ -70,7 +71,7 @@ const recipe &string_id<recipe>::obj() const
 template<>
 bool string_id<recipe>::is_valid() const
 {
-    return recipe_dict.recipes.find( *this ) != recipe_dict.recipes.end();
+    return recipe_dict.recipes.contains( *this );
 }
 
 const recipe &recipe_dictionary::get_uncraft( const itype_id &id )
@@ -121,10 +122,10 @@ std::vector<const recipe *> recipe_subset::favorite() const
     std::vector<const recipe *> res;
 
     std::copy_if( recipes.begin(), recipes.end(), std::back_inserter( res ), [&]( const recipe * r ) {
-        if( !*r || r->obsolete ) {
+        if( ( !*r && !r->is_nested() ) || r->obsolete ) {
             return false;
         }
-        return uistate.favorite_recipes.find( r->ident() ) != uistate.favorite_recipes.end();
+        return uistate.favorite_recipes.contains( r->ident() );
     } );
 
     return res;
@@ -135,10 +136,10 @@ std::vector<const recipe *> recipe_subset::hidden() const
     std::vector<const recipe *> res;
 
     std::copy_if( recipes.begin(), recipes.end(), std::back_inserter( res ), [&]( const recipe * r ) {
-        if( !*r || r->obsolete ) {
+        if( ( !*r && !r->is_nested() ) || r->obsolete ) {
             return false;
         }
-        return uistate.hidden_recipes.find( r->ident() ) != uistate.hidden_recipes.end();
+        return uistate.hidden_recipes.contains( r->ident() );
     } );
 
     return res;
@@ -152,12 +153,41 @@ std::vector<const recipe *> recipe_subset::recent() const
          ++rec_id ) {
         std::copy_if( recipes.begin(), recipes.end(), std::back_inserter( res ),
         [&rec_id]( const recipe * r ) {
-            return *r && !( *rec_id != r->ident() || r->obsolete );
+            return ( *r || r->is_nested() ) && !( *rec_id != r->ident() || r->obsolete );
         } );
     }
 
     return res;
 }
+
+std::vector<const recipe *> recipe_subset::nested() const
+{
+    std::vector<const recipe *> res;
+
+    std::copy_if( recipes.begin(), recipes.end(), std::back_inserter( res ), [&]( const recipe * r ) {
+        if( ( !*r && !r->is_nested() ) || r->obsolete ) {
+            return false;
+        }
+        return r->is_nested();
+    } );
+
+    return res;
+}
+
+std::vector<const recipe *> recipe_subset::expanded() const
+{
+    std::vector<const recipe *> res;
+
+    std::copy_if( recipes.begin(), recipes.end(), std::back_inserter( res ), [&]( const recipe * r ) {
+        if( ( !*r && !r->is_nested() ) || r->obsolete ) {
+            return false;
+        }
+        return uistate.expanded_recipes.find( r->ident() ) != uistate.expanded_recipes.end();
+    } );
+
+    return res;
+}
+
 std::vector<const recipe *> recipe_subset::search( const std::string &txt,
         const search_type key ) const
 {
@@ -169,7 +199,7 @@ std::vector<const recipe *> recipe_subset::search( const std::string &txt,
         }
         switch( key ) {
             case search_type::name:
-                return lcmatch( r->result_name(), txt );
+                return lcmatch( r->result_name( /*decorated=*/true ), txt );
 
             case search_type::skill:
                 return lcmatch( r->required_skills_string( nullptr, true, false ), txt );
@@ -242,7 +272,7 @@ std::vector<const recipe *> recipe_subset::search_result( const itype_id &item )
             return false;
         }
         return item == r->result() ||
-               ( r->has_byproducts() && r->byproducts.find( item ) != r->byproducts.end() );
+               ( r->has_byproducts() && r->byproducts.contains( item ) );
     } );
 
     return res;
@@ -256,6 +286,10 @@ bool recipe_subset::empty_category( const std::string &cat, const std::string &s
         return uistate.recent_recipes.empty();
     } else if( subcat == "CSC_*_HIDDEN" ) {
         return uistate.hidden_recipes.empty();
+    } else if( subcat == "CSC_*_NESTED" ) {
+        return !std::ranges::any_of( recipes, []( const recipe * r ) {
+            return *r && !r->obsolete && r->is_nested();
+        } );
     }
 
     auto iter = category.find( cat );
@@ -282,7 +316,7 @@ std::vector<const recipe *> recipe_subset::in_category( const std::string &cat,
         if( subcat.empty() ) {
             std::copy_if( iter->second.begin(), iter->second.end(),
             std::back_inserter( res ), [&]( const recipe * e ) {
-                return !e->obsolete;
+                return !e->obsolete && !e->is_nested();
             } );
         } else {
             std::copy_if( iter->second.begin(), iter->second.end(),
@@ -311,6 +345,11 @@ void recipe_dictionary::load_recipe( const JsonObject &jo, const std::string &sr
 void recipe_dictionary::load_uncraft( const JsonObject &jo, const std::string &src )
 {
     load( jo, src, recipe_dict.uncraft );
+}
+
+void recipe_dictionary::load_nested_category( const JsonObject &jo, const std::string &src )
+{
+    load( jo, src, recipe_dict.recipes );
 }
 
 recipe &recipe_dictionary::load( const JsonObject &jo, const std::string &src,
@@ -449,9 +488,14 @@ void recipe_dictionary::finalize()
 
         for( const auto &bk : r.booksets ) {
             const itype *booktype = &*bk.first;
-            int req = bk.second > 0 ? bk.second : std::max( booktype->book->req, r.difficulty );
-            islot_book::recipe_with_description_t desc{ &r, req, r.result_name(), false };
-            const_cast<islot_book &>( *booktype->book ).recipes.insert( desc );
+            const int req = bk.second > 0 ? bk.second : std::max( booktype->book->req, r.difficulty );
+            const auto desc = book_recipe {
+                .recipe = &r,
+                .skill_level = req,
+                .name = translation::to_translation( r.result_name() ),
+                .hidden = false
+            };
+            booktype->book->recipes.insert( desc );
         }
 
         // if reversible and no specific uncraft recipe exists use this recipe

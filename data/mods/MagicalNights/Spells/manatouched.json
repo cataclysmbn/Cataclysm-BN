@@ -6,6 +6,7 @@
     "description": "Crystallizes mana into solid form.  Your physiological changes have made this spell much more efficient and easier to cast.",
     "valid_targets": [ "self" ],
     "spell_class": "MANA_CRYST_MANA",
+    "scale_int": true,
     "flags": [ "PERMANENT", "NO_LEGS", "CONCENTRATE", "NO_HANDS", "NO_EXPLOSION_VFX" ],
     "max_level": 5,
     "difficulty": 3,
@@ -41,6 +42,7 @@
     "base_casting_time": 85,
     "final_casting_time": 85,
     "sound_description": "a zing",
+    "scale_int": true,
     "flags": [ "RANDOM_TARGET", "SOMATIC", "NO_LEGS" ],
     "extra_effects": [ { "id": "magic_missile" }, { "id": "magic_missile" }, { "id": "magic_missile" }, { "id": "magic_missile" } ]
   }

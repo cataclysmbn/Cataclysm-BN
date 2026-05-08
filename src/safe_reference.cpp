@@ -43,7 +43,7 @@ void safe_reference<T>::deserialize_global( const JsonArray &jsin )
 
         pair = false;
         uint32_t count = val.get_uint();
-        record *rec = new record( id );
+        auto *rec = new record( id );
         rec->json_count = count;
         records_by_id.insert( {id, rec} );
     }
@@ -95,7 +95,7 @@ void deserialize<item>( safe_reference<item> &out, JsonIn &js )
                 who_id = get_avatar().getID();
             }
 
-            Character *who = g->critter_by_id<Character>( who_id );
+            auto *who = g->critter_by_id<Character>( who_id );
             if( !who ) {
                 debugmsg( "Could not find character for item location.  May not have been loaded yet." );
                 return;
@@ -180,20 +180,20 @@ void safe_reference<T>::register_load( T *obj, id_type id )
     if( id == ID_NONE ) {
         return;
     }
-    rbi_it search = records_by_id.find( id );
+    auto search = records_by_id.find( id );
     if( search != records_by_id.end() ) {
         search->second->target.p = obj;
     } else {
-        record *rec = new record( obj, id );
+        auto *rec = new record( obj, id );
         records_by_id.insert( {id, rec} );
         records_by_pointer.insert( {obj, rec} );
     }
 }
 
 template<typename T>
-typename safe_reference<T>::id_type safe_reference<T>::lookup_id( const T *obj )
+auto safe_reference<T>::lookup_id( const T *obj ) -> safe_reference<T>::id_type
 {
-    rbp_it search = records_by_pointer.find( obj );
+    auto search = records_by_pointer.find( obj );
     if( search != records_by_pointer.end() ) {
         if( search->second->id == ID_NONE ) {
             search->second->id = generate_new_id();
@@ -206,7 +206,7 @@ typename safe_reference<T>::id_type safe_reference<T>::lookup_id( const T *obj )
 template<typename T>
 void safe_reference<T>::mark_destroyed( T *obj )
 {
-    rbp_it search = records_by_pointer.find( obj );
+    auto search = records_by_pointer.find( obj );
     if( search == records_by_pointer.end() ) {
         return;
     }
@@ -216,7 +216,7 @@ void safe_reference<T>::mark_destroyed( T *obj )
 template<typename T>
 void safe_reference<T>::mark_deallocated( T *obj )
 {
-    rbp_it search = records_by_pointer.find( obj );
+    auto search = records_by_pointer.find( obj );
     if( search == records_by_pointer.end() ) {
         return;
     }
@@ -233,13 +233,13 @@ safe_reference<T>::safe_reference( T *obj )
     rec->mem_count++;
 }
 
-
 template<typename T>
 safe_reference<T>::safe_reference( T &obj )
 {
     fill( &obj );
     rec->mem_count++;
 }
+
 template<typename T>
 safe_reference<T>::safe_reference( id_type id )
 {
@@ -251,6 +251,7 @@ safe_reference<T>::safe_reference( id_type id )
         rec->mem_count++;
     }
 }
+
 template<typename T>
 safe_reference<T>::safe_reference( const safe_reference<T> &source )
 {
@@ -259,15 +260,16 @@ safe_reference<T>::safe_reference( const safe_reference<T> &source )
         rec->mem_count++;
     }
 }
+
 template<typename T>
-safe_reference<T>::safe_reference( safe_reference<T> &&source )
-noexcept
+safe_reference<T>::safe_reference( safe_reference<T> &&source ) noexcept
 {
     rec = source.rec;
     source.rec = nullptr;
 }
+
 template<typename T>
-safe_reference<T> &safe_reference<T>::operator=( const safe_reference<T> &source )
+auto safe_reference<T>::operator=( const safe_reference<T> &source ) -> safe_reference<T> &
 {
     if( &source == this ) {
         return *this;
@@ -279,9 +281,9 @@ safe_reference<T> &safe_reference<T>::operator=( const safe_reference<T> &source
     }
     return *this;
 }
+
 template<typename T>
-safe_reference<T> &safe_reference<T>::operator=( safe_reference<T> &&source )
-noexcept
+auto safe_reference<T>::operator=( safe_reference<T> &&source ) noexcept -> safe_reference<T> &
 {
     if( &source == this ) {
         return *this;
@@ -297,7 +299,6 @@ safe_reference<T>::~safe_reference()
 {
     remove();
 }
-
 
 void cleanup_references()
 {

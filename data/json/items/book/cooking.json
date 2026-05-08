@@ -686,5 +686,23 @@
     "intelligence": 7,
     "time": "20 m",
     "fun": 1
+  },
+  {
+    "id": "note_mutagen_conspiracy",
+    "type": "BOOK",
+    "copy-from": "base_book",
+    "name": { "str": "Chemicals in the Water", "str_pl": "copies of Chemicals in the Water" },
+    "description": "A binder of notes printed off some website attempting to prove that the government puts chemicals in the water, to poison the population.  It purports to show how to isolate \"soul poisons\" found in tap water among other claims.  Someone who understands actual chemistry could learn how to isolate mutagenic compounds using improvised tools, though the many conspiracy theories and strange tangents mixed in make it hard to parse.",
+    "weight": "350 g",
+    "volume": "750 ml",
+    "price": "100 USD",
+    "price_postapoc": "1 USD",
+    "color": "white",
+    "skill": "cooking",
+    "required_level": 3,
+    "max_level": 6,
+    "intelligence": 10,
+    "time": "50 m",
+    "fun": -1
   }
 ]

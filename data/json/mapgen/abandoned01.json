@@ -70,7 +70,8 @@
       [ "bandana", 10 ],
       [ "cig", 5 ],
       [ "cell_phone", 1 ],
-      [ "smart_phone", 25 ],
+      [ "smart_phone", 20 ],
+      [ "wrist_comp_budget", 25 ],
       [ "gloves_fingerless", 5 ],
       [ "holster", 5 ],
       [ "hatchet", 5 ],
@@ -305,7 +306,7 @@
         "~": "t_fence_h"
       },
       "furniture": {
-        "6": "f_table",
+        "6": [ [ "f_table", 9 ], "f_table_flipped" ],
         "7": "f_bookcase",
         "8": "f_bathtub",
         "9": "f_rack",
@@ -387,7 +388,7 @@
         "~": "t_fence_h"
       },
       "furniture": {
-        "6": "f_table",
+        "6": [ [ "f_table", 9 ], "f_table_flipped" ],
         "7": "f_bookcase",
         "8": "f_bathtub",
         "9": "f_rack",
@@ -518,7 +519,7 @@
         "~": "t_fence_h"
       },
       "furniture": {
-        "6": "f_table",
+        "6": [ [ "f_table", 9 ], "f_table_flipped" ],
         "7": "f_bookcase",
         "8": "f_bathtub",
         "9": "f_rack",
@@ -545,7 +546,7 @@
         { "item": "pillow", "x": 6, "y": 15 },
         { "item": "sheet", "x": 6, "y": 16 },
         { "item": "sheet", "x": 9, "y": 15 },
-        { "item": "mess_kit", "x": 17, "y": 15 },
+        { "item": "gasoline_cooker", "x": 17, "y": 15 },
         { "item": "nail", "x": 15, "y": 15 },
         { "item": "ax", "x": 15, "y": 15 },
         { "item": "compositebow", "x": 16, "y": 15 },

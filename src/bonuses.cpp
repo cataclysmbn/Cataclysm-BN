@@ -14,7 +14,8 @@ static bool needs_damage_type( affected_stat as )
 {
     return as == affected_stat::DAMAGE ||
            as == affected_stat::ARMOR ||
-           as == affected_stat::ARMOR_PENETRATION;
+           as == affected_stat::ARMOR_PENETRATION ||
+           as == affected_stat::TARGET_ARMOR_MULTIPLIER;
 }
 
 static const std::map<std::string, affected_stat> affected_stat_map = {{
