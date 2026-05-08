@@ -8002,10 +8002,7 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
     }
 
     // Update abs_sm_pos for the z-level crossing.
-    const tripoint dst_abs_sm( abs_sub.x() + divide_round_to_minus_infinity( dst.x(), SEEX ),
-                               abs_sub.y() + divide_round_to_minus_infinity( dst.y(), SEEY ),
-                               dst.z() );
-    veh.abs_sm_pos = tripoint_abs_sm( dst_abs_sm );
+    veh.abs_sm_pos = project_to<coords::sm>( bub_to_abs( dst ) );
 }
 
 void map::shift( const point_rel_sm &sp )
@@ -8025,11 +8022,12 @@ void map::shift( const point_rel_sm &sp )
     set_abs_sub( abs + sp );
 
     // if player is in vehicle, (s)he must be shifted with vehicle too
+    const auto sp_ms = project_to<coords::ms>( sp );
     if( g->u.in_vehicle ) {
-        g->u.setpos( g->u.bub_pos() - project_to<coords::ms>( sp ) );
+        g->u.setpos( g->u.bub_pos() - sp_ms );
     }
 
-    g->shift_destination_preview( point_rel_ms( -sp.x() * SEEX, -sp.y() * SEEY ) );
+    g->shift_destination_preview( -sp_ms );
 
     vehicle *remoteveh = g->remoteveh();
 

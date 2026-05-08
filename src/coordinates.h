@@ -706,8 +706,8 @@ inline int square_dist_fast( const coords::coord_point<Point, Origin, Scale> &lo
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
-inline int trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
-                      const coords::coord_point<Point, Origin, Scale> &loc2 )
+inline float trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
+                        const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return trig_dist( loc1.raw(), loc2.raw() );
 }
@@ -727,8 +727,8 @@ inline int rl_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
-inline int rl_dist_exact( const coords::coord_point<Point, Origin, Scale> &loc1,
-                          const coords::coord_point<Point, Origin, Scale> &loc2 )
+inline float rl_dist_exact( const coords::coord_point<Point, Origin, Scale> &loc1,
+                             const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return rl_dist_exact( loc1.raw(), loc2.raw() );
 }

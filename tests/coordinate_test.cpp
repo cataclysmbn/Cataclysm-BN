@@ -232,8 +232,8 @@ TEST_CASE( "coord_point_distances", "[point][coords]" )
     }
 
     SECTION( "trig" ) {
-        CHECK( trig_dist( p0, p1 ) == 14 ); // int(10*sqrt(2))
-        CHECK( trig_dist( t0, t1 ) == 17 ); // int(10*sqrt(3))
+        CHECK( std::abs( trig_dist( p0, p1 ) - 14.1421 ) < 0.001 );
+        CHECK( std::abs( trig_dist( t0, t1 ) - 17.3205 ) < 0.001 );
     }
 
     SECTION( "manhattan" ) {

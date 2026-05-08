@@ -304,7 +304,7 @@ city::city( const point_om_omt &P, int const S )
 
 int city::get_distance_from( const tripoint_om_omt &p ) const
 {
-    return std::max( trig_dist( p, tripoint_om_omt{ pos, 0 } ) - size, 0 );
+    return std::max( static_cast<int>( trig_dist( p, tripoint_om_omt{ pos, 0 } ) ) - size, 0 );
 }
 
 std::map<enum radio_type, std::string> radio_type_names =

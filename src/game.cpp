@@ -13661,7 +13661,7 @@ void game::vertical_shift( const int z_after )
 
     scent.reset();
 
-    u.setpos( u.bub_pos() + tripoint_rel_ms::below() );
+    u.setpos( tripoint_bub_ms( u.bub_pos().xy(), z_after ) );
     const int z_before = get_levz();
     if( !m.has_zlevels() ) {
         m.clear_vehicle_cache( );
