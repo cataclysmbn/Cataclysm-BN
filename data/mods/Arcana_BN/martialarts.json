@@ -328,6 +328,7 @@
     "techniques": [ "tec_veil_chosen_enervation", "tec_veil_chosen_dimension_cutter" ],
     "weapons": [
       "bio_kinetic_amplifier_weapon",
+      "radiant_blade",
       "thunder_sigil",
       "hand_of_armok",
       "blood_athame",

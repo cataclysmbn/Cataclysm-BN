@@ -7210,6 +7210,15 @@ int Character::visibility( bool, int ) const
     if( ( g->u.movement_mode_is( CMM_CROUCH ) ) ) {
         stealth_modifier += crouching_bonus;
     };
+    map &here = get_map();
+    int const camo_modifier = 50;
+    if( worn_with_flag( flag_NATURE_CAMO ) && ( here.has_flag( "PLOWABLE", pos() ) ||
+            here.has_flag( "SHRUB", pos() ) ) ) {
+        stealth_modifier += camo_modifier;
+    } else if( worn_with_flag( flag_URBAN_CAMO ) && ( here.has_flag( "ROAD", pos() ) ||
+               here.has_flag( "MINEABLE", pos() ) ) ) {
+        stealth_modifier += camo_modifier;
+    }
     return clamp( 100 - stealth_modifier, 20, 160 );
 }
 

@@ -5129,8 +5129,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     }
 
     auto filter = [this]( const item & itm ) {
-        return itm.is_armor() && !itm.is_firearm() && !itm.is_power_armor() &&
-               itm.made_of_any( materials );
+        return itm.is_armor() && !itm.is_firearm() && itm.made_of_any( materials );
     };
     // note: if !p.is_npc() then p is avatar.
     item *loc = game_menus::inv::titled_filter_menu(
@@ -5185,9 +5184,11 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
 
     if( mod.has_flag( flag_VARSIZE ) && !mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_large" );
+        valid_mods.push_back( "resized_large_metal" );
     }
     if( !mod.has_flag( flag_UNDERSIZE ) && mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_small" );
+        valid_mods.push_back( "resized_small_metal" );
     }
 
     const auto get_compare_color = [&]( const int before, const int after,
@@ -5231,7 +5232,8 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
         if( !mod.has_own_flag( obj.flag ) ) {
             // Mod not already present, check if modification is possible
             if( obj.restricted &&
-                std::find( valid_mods.begin(), valid_mods.end(), obj.flag.str() ) == valid_mods.end() ) {
+                std::find( valid_mods.begin(), valid_mods.end(), obj.flag.str() ) == valid_mods.end() &&
+                std::find( valid_mods.begin(), valid_mods.end(), obj.id.str() ) == valid_mods.end() ) {
                 //~ %1$s: modification desc, %2$s: mod name
                 prompt = string_format( _( "Can't %1$s (incompatible with %2$s)" ), tolower( obj.implement_prompt ),
                                         mod.tname( 1, false ) );

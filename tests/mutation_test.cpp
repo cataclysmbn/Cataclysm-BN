@@ -9,10 +9,12 @@
 
 #include "bodypart.h"
 #include "calendar.h"
+#include "item.h"
 #include "mutation.h"
 #include "npc.h"
 #include "options.h"
 #include "player.h"
+#include "player_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
 
@@ -194,6 +196,23 @@ TEST_CASE( "Mutating with full mutagen accumulation results in multiple mutation
             }
         }
     }
+}
+
+TEST_CASE( "resized rigid armor fits tailed mutants", "[mutations][armor]" )
+{
+    npc dummy;
+    clear_character( dummy );
+    dummy.set_mutation( trait_id( "TAIL_FLUFFY" ) );
+
+    auto power_armor = item( "test_resizable_power_armor" );
+    CHECK_FALSE( dummy.can_wear( power_armor ).success() );
+    power_armor.set_flag( flag_id( "resized_large" ) );
+    CHECK( dummy.can_wear( power_armor ).success() );
+
+    auto rigid_armor = item( "test_resizable_rigid_leg_armor" );
+    CHECK_FALSE( dummy.can_wear( rigid_armor ).success() );
+    rigid_armor.set_flag( flag_id( "resized_large" ) );
+    CHECK( dummy.can_wear( rigid_armor ).success() );
 }
 
 TEST_CASE( "Mutating marloss does not crash on missing category data", "[mutations]" )

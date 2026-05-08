@@ -453,7 +453,7 @@ void uilist::setup()
     if( w_auto ) {
         w_width = 4;
         if( !title.empty() ) {
-            w_width = utf8_width( title ) + 5;
+            w_width = utf8_width( remove_color_tags( title ) ) + 5;
         }
     } else {
         w_width = w_width_setup.fun();
@@ -683,7 +683,8 @@ void uilist::show( ui_adaptor &ui )
     if( !title.empty() ) {
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         mvwprintz( window, point( 1, 0 ), border_color, "< " );
-        wprintz( window, title_color, title );
+        auto title_print_color = title_color;
+        print_colored_text( window, point( 3, 0 ), title_print_color, title_color, title, _color_error );
         wprintz( window, border_color, " >" );
     }
 

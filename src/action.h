@@ -157,6 +157,8 @@ enum action_id : int {
     ACTION_RELOAD_WIELDED,
     /** Open the unload item (e.g. firearms) select menu */
     ACTION_UNLOAD,
+    /** Unload every carried item that can be unloaded */
+    ACTION_UNLOAD_ALL,
     /** Open the mending menu (e.g. when using a sewing kit) */
     ACTION_MEND,
     /** Open the throw menu */

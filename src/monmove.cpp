@@ -957,6 +957,10 @@ void monster::apply_plan( const monster_plan_t &plan )
 static float get_stagger_adjust( const tripoint &source, const tripoint &destination,
                                  const tripoint &next_step )
 {
+    if( source.z != next_step.z ) {
+        return 1.0f;
+    }
+
     // TODO: push this down into rl_dist
     const float initial_dist =
         trigdist ? trig_dist( source, destination ) : rl_dist( source, destination );
@@ -1850,11 +1854,22 @@ int monster::calc_movecost( const tripoint &f, const tripoint &t ) const
 
     const int source_cost = g->m.move_cost( f );
     const int dest_cost = g->m.move_cost( t );
-    // Digging and flying monsters ignore terrain cost
-    if( flies() || ( digging() && g->m.ter( t )->is_diggable() ) ) {
+    // Flying monsters ignore terrain cost, but have increased cost for moving up and decreased cost for moving down.
+    if( flies() ) {
+        if( f.z == t.z ) {
+            movecost = 100;
+        } else if( t.z < f.z ) {
+            // Moving down -> .75x faster
+            movecost = 75;
+        } else {
+            // Moving up -> 4x slower
+            movecost = 400;
+        }
+    } else if( digging() && g->m.ter( t )->is_diggable() ) {
+        // Digging monsters ignore terrain cost when moving into diggable terrain, but not when moving out of it.
         movecost = 100;
-        // Swimming monsters move super fast in water
     } else if( swims() ) {
+        // Swimming monsters move super fast in water
         if( g->m.has_flag( "SWIMMABLE", f ) ) {
             movecost += 25;
         } else {

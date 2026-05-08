@@ -180,7 +180,7 @@
       "metal",
       "reggae",
       "ska",
-      "punk",
+      { "text": { "ctxt": "music genre", "str": "punk" } },
       "thrash",
       "goth",
       "industrial",
