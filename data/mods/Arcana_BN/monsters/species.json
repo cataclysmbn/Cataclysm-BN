@@ -1,0 +1,17 @@
+[
+  {
+    "type": "SPECIES",
+    "id": "ARCANA_SUMMONED",
+    "name": { "str": "summoned monster" },
+    "description": "a summoned monster",
+    "footsteps": [ "faint whispers" ],
+    "anger_triggers": [ "FRIEND_DIED", "FRIEND_ATTACKED", "HURT", "STALK", "PLAYER_CLOSE" ]
+  },
+  {
+    "type": "SPECIES",
+    "//": "This is for a touch of compatibility with Magiclysm.",
+    "id": "DRAGON",
+    "name": { "str": "dragon" },
+    "anger_triggers": [ "HURT", "PLAYER_CLOSE", "PLAYER_WEAK", "STALK" ]
+  }
+]

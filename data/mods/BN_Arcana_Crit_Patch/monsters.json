@@ -1,0 +1,44 @@
+[
+  {
+    "id": "mon_slasher",
+    "copy-from": "mon_slasher",
+    "type": "MONSTER",
+    "death_drops": "mon_slasher_death_drops"
+  },
+  {
+    "id": "mon_slasher_weak",
+    "copy-from": "mon_slasher_weak",
+    "type": "MONSTER",
+    "death_drops": "mon_slasher_weak_death_drops"
+  },
+  {
+    "id": "mon_waster",
+    "copy-from": "mon_waster",
+    "type": "MONSTER",
+    "death_drops": "mon_waster_death_drops"
+  },
+  {
+    "id": "mon_leaper",
+    "copy-from": "mon_leaper",
+    "type": "MONSTER",
+    "death_drops": "mon_leaper_death_drops"
+  },
+  {
+    "id": "mon_twitcher",
+    "copy-from": "mon_twitcher",
+    "type": "MONSTER",
+    "death_drops": "mon_twitcher_death_drops"
+  },
+  {
+    "id": "mon_pack",
+    "copy-from": "mon_pack",
+    "type": "MONSTER",
+    "death_drops": "mon_pack_death_drops"
+  },
+  {
+    "id": "mon_puker",
+    "copy-from": "mon_puker",
+    "type": "MONSTER",
+    "death_drops": "mon_puker_death_drops"
+  }
+]

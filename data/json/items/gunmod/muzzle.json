@@ -30,7 +30,7 @@
     "id": "muzzle_brake",
     "type": "GUNMOD",
     "name": { "str": "muzzle brake" },
-    "description": "A muzzle brake redirects exhaust gases to compensate for muzzle climb, improving recoil but increasing bulk, noise, and reducing accuracy slightly.",
+    "description": "A muzzle brake redirects exhaust gases to compensate for muzzle climb, improving recoil but increasing bulk and noise.",
     "weight": "380 g",
     "volume": "250 ml",
     "price": "840 USD",
@@ -40,7 +40,6 @@
     "color": "light_gray",
     "location": "muzzle",
     "mod_target_category": [ [ "RIFLES" ], [ "MACHINE_GUNS" ], [ "GATLING_GUNS" ], [ "SHOTGUNS" ] ],
-    "dispersion_modifier": 25,
     "handling_modifier": 10,
     "loudness_modifier": 30
   },

@@ -1,0 +1,32 @@
+[
+  {
+    "type": "material",
+    "id": "essencemat",
+    "name": "Magical Essence",
+    "density": 1,
+    "bash_resist": 20,
+    "cut_resist": 20,
+    "bullet_resist": 20,
+    "acid_resist": 99,
+    "fire_resist": 99,
+    "elec_resist": 99,
+    "chip_resist": 99,
+    "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
+    "bash_dmg_verb": "damaged",
+    "cut_dmg_verb": "damaged"
+  },
+  {
+    "type": "material",
+    "id": "clay",
+    "copy-from": "clay",
+    "name": "Clay",
+    "repaired_with": "clay_lump"
+  },
+  {
+    "type": "material",
+    "id": "stone",
+    "copy-from": "stone",
+    "name": "Stone",
+    "repaired_with": "rock"
+  }
+]

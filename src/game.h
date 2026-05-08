@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <ctime>
 #include <functional>
@@ -9,8 +10,11 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
+#include <shared_mutex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -20,13 +24,18 @@
 #include "character_id.h"
 #include "coordinates.h"
 #include "creature.h"
+#include "dimension_bounds.h"
+#include "dimension_info.h"
 #include "cursesdef.h"
+#include "distribution_grid.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "mapdata.h"
 #include "memory_fast.h"
 #include "pimpl.h"
 #include "point.h"
+#include "submap_load_manager.h"
+#include "zone_draw_options.h"
 #include "type_id.h"
 #include "location_vector.h"
 
@@ -36,11 +45,13 @@ class item;
 class monster;
 class spell_events;
 class drop_token_provider;
+class submap;
 
 static constexpr int DEFAULT_TILESET_ZOOM = 16;
 
 static const std::string SAVE_MASTER( "master.gsav" );
 static const std::string SAVE_ARTIFACTS( "artifacts.gsav" );
+static const std::string SAVE_DIMENSION_DATA( "dimension_data.gsav" );
 static const std::string SAVE_EXTENSION( ".sav" );
 static const std::string SAVE_EXTENSION_LOG( ".log" );
 static const std::string SAVE_EXTENSION_WEATHER( ".weather" );
@@ -53,6 +64,12 @@ extern std::unique_ptr<game> g;
 
 extern const int savegame_version;
 extern int savegame_loading_version;
+// Monotonically increasing counter; bumped whenever NPC faction membership or active NPC list
+// changes so each NPC can lazily invalidate its cached friends list.
+extern std::atomic<uint32_t> g_npc_friends_dirty_version;
+// Bumped once per npcmove() pass; monsters use it to know when their cached generic-NPC
+// attitude is stale.
+extern uint32_t g_npcmove_attitude_epoch;
 
 class input_context;
 
@@ -110,7 +127,6 @@ class timed_event_manager;
 class ui_adaptor;
 struct visibility_variables;
 
-class distribution_grid_tracker;
 struct weather_printable;
 class weather_manager;
 
@@ -138,12 +154,14 @@ bool is_valid_in_w_terrain( point p );
 // There is only one game instance, so losing a few bytes of memory
 // due to padding is not much of a concern.
 // NOLINTNEXTLINE(clang-analyzer-optin.performance.Padding)
-class game
+class game : public submap_load_listener
 {
         friend class editmap;
         friend class advanced_inventory;
         friend class main_menu;
         friend distribution_grid_tracker &get_distribution_grid_tracker();
+        friend distribution_grid_tracker *get_distribution_grid_tracker_for( const std::string & );
+        friend distribution_grid_tracker &ensure_distribution_grid_tracker_for( const std::string & );
         friend map &get_map();
         friend Character &get_player_character();
         friend avatar &get_avatar();
@@ -152,6 +170,10 @@ class game
     public:
         game();
         ~game();
+
+        // submap_load_listener interface
+        void on_submap_loaded( const tripoint_abs_sm &pos, const std::string &dim_id ) override;
+        void on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &dim_id ) override;
 
         /** Loads static data that does not depend on mods or similar. */
         void load_static_data();
@@ -171,6 +193,7 @@ class game
         /** Saving and loading functions. */
         void serialize( std::ostream &fout ); // for save
         void unserialize( std::istream &fin ); // for load
+        void unserialize_dimension_data( std::istream &fin ); // for load
         void unserialize_master( std::istream &fin ); // for load
 
         /** write statistics to stdout and @return true if successful */
@@ -237,6 +260,49 @@ class game
          */
         void vertical_move( int z, bool force, bool peeking = false );
         void start_hauling( const tripoint &pos );
+        /**
+        * Moves the player to an alternate dimension.
+        *
+        * @param dim_id      Fully-qualified dimension ID string (e.g. "nether",
+        *                    "pocket_dungeon_a1b2c3d4_").  Empty string = overworld.
+        * @param world_type  The world-type metadata (region settings, boundary terrain).
+        *                    Looked up from loaded_dimensions_ if the dimension already
+        *                    exists; used to initialise dimension_info on first visit.
+        * @param bounds      Optional spatial bounds for bounded (pocket) dimensions.
+        *                    nullopt = infinite.
+        * @param load_pos    Optional submap position to center the map load on.
+        *                    If not provided, the map loads at the player's current position.
+        * @param pre_load_callback  Optional callback invoked after dimension setup but
+        *                    before load_map(). Use this to place overmap specials so that
+        *                    submap generation uses the correct overmap terrain types.
+        */
+        bool travel_to_dimension( const std::string &dim_id,
+                                  const world_type_id &world_type,
+                                  const std::optional<dimension_bounds> &bounds = std::nullopt,
+                                  const std::optional<tripoint_abs_sm> &load_pos = std::nullopt,
+                                  const std::function<void()> &pre_load_callback = nullptr );
+
+        /**
+         * Return the dimension ID the player is currently in.
+         * Empty string = overworld (primary dimension).
+         */
+        const std::string &get_current_dimension_id() const {
+            return current_dimension_id_;
+        }
+
+        /**
+         * Return the dimension_info for the current dimension, or nullptr if not tracked
+         * (e.g. overworld on a fresh game before any travel).
+         */
+        const dimension_info *get_current_dimension_info() const;
+
+        /**
+         * Retrieve the save prefix for the current dimension.
+         * Equivalent to current_dimension_id_.
+         * @deprecated Callers should use current_dimension_id_ or get_current_dimension_id().
+         */
+        std::string get_dimension_prefix() const;
+
         /** Returns the other end of the stairs (if any). May query, affect u etc.  */
         std::optional<tripoint> find_stairs( map &mp, int z_after, bool peeking );
         std::optional<tripoint> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
@@ -327,50 +393,77 @@ class game
         friend class Creature_range;
 
         template<typename T>
-        class non_dead_range
+        class non_dead_range : public std::ranges::view_interface<non_dead_range<T>>
         {
             public:
-                std::vector<weak_ptr_fast<T>> items;
+                std::shared_ptr<std::vector<weak_ptr_fast<T>>> items;
+                non_dead_range() : items( std::make_shared<std::vector<weak_ptr_fast<T>>>() ) {}
 
                 class iterator
                 {
                     private:
-                        bool valid();
-                    public:
-                        std::vector<weak_ptr_fast<T>> &items;
+                        std::shared_ptr<std::vector<weak_ptr_fast<T>>> data_ref;
                         typename std::vector<weak_ptr_fast<T>>::iterator iter;
+
+                        auto valid() -> bool;
+
+                    public:
+                        using value_type = T;
+                        using difference_type = std::ptrdiff_t;
+                        using pointer = T *;
+                        using reference = T &;
+                        using iterator_category = std::forward_iterator_tag;
+                        using iterator_concept = std::forward_iterator_tag;
+
                         shared_ptr_fast<T> current;
 
-                        iterator( std::vector<weak_ptr_fast<T>> &i,
-                                  const typename std::vector<weak_ptr_fast<T>>::iterator t ) : items( i ), iter( t ) {
-                            while( iter != items.end() && !valid() ) {
-                                ++iter;
+                        iterator() = default;
+
+                        iterator( std::shared_ptr<std::vector<weak_ptr_fast<T>>> ref,
+                                  typename std::vector<weak_ptr_fast<T>>::iterator t )
+                            : data_ref( std::move( ref ) ), iter( t ) {
+                            if( data_ref ) {
+                                while( iter != data_ref->end() && !valid() ) {
+                                    ++iter;
+                                }
                             }
                         }
+
                         iterator( const iterator & ) = default;
                         iterator &operator=( const iterator & ) = default;
 
-                        bool operator==( const iterator &rhs ) const {
+                        auto operator==( const iterator &rhs ) const -> bool {
                             return iter == rhs.iter;
                         }
-                        bool operator!=( const iterator &rhs ) const {
-                            return !operator==( rhs );
-                        }
-                        iterator &operator++() {
+
+                        auto operator++() -> iterator& { // *NOPAD*
+                            if( !data_ref ) { return *this; }
+
                             do {
                                 ++iter;
-                            } while( iter != items.end() && !valid() );
+                            } while( iter != data_ref->end() && !valid() );
                             return *this;
                         }
-                        T &operator*() const {
+
+                        auto operator++( int ) -> iterator {
+                            auto tmp = *this;
+                            ++( *this );
+                            return tmp;
+                        }
+
+                        auto operator*() const -> reference {
                             return *current;
                         }
                 };
-                iterator begin() {
-                    return iterator( items, items.begin() );
+
+                auto begin() -> iterator {
+                    if( !items ) { return end(); }
+                    return iterator( items, items->begin() );
                 }
-                iterator end() {
-                    return iterator( items, items.end() );
+
+                auto end() -> iterator {
+                    if( !items ) { return iterator(); }
+                    return iterator( items, items->end() );
                 }
         };
 
@@ -408,6 +501,11 @@ class game
         monster_range all_monsters();
         /// Same as @ref all_creatures but iterators only over npcs.
         npc_range all_npcs();
+        /// Direct non-allocating view of the active NPC list. Only use when no NPCs will be
+        /// added or removed during iteration and dead entries are handled by the caller.
+        const std::list<shared_ptr_fast<npc>> &raw_npcs() const {
+            return active_npc;
+        }
 
         /**
          * Returns all creatures matching a predicate. Only living ( not dead ) creatures
@@ -462,6 +560,30 @@ class game
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
     private:
+        /** Resizes the reality bubble to an explicit target size.
+         *  Safe to call mid-session: despawns out-of-range entities, flushes the
+         *  background streamer, rebuilds map grid and all dependent caches.
+         */
+        void resize_reality_bubble_to( int new_size );
+
+        /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
+         *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
+         *  Called by on_options_changed() when the user changes REALITY_BUBBLE_SIZE.
+         */
+        void resize_reality_bubble();
+
+        /** Called each turn to shrink/restore the bubble based on active performance modes.
+         *  ACTIVITY_MOBILE_BUBBLE_SIZE / ACTIVITY_IDLE_BUBBLE_SIZE: shrinks while the player has a
+         *  long activity whose bubble_size_effect is "mobile" or "idle" respectively.
+         *  Entry requires activity moves >= ACTIVITY_BUBBLE_GRACE minutes.
+         *  UNDERGROUND_BUBBLE_SIZE: shrinks while underground (z < 0) with a floor above (enclosed).
+         *  VEHICLE_BUBBLE_SIZE: shrinks while actively driving or mounted.
+         *  COMBAT_BUBBLE_SIZE: shrinks while hostile creatures are visible within safe-mode range.
+         *  Underground, vehicle, and combat use turn-based hysteresis (DYNAMIC_BUBBLE_GRACE turns
+         *  to enter, immediate exit). The target is min() of all applicable sizes.
+         */
+        void update_performance_bubble();
+
         /** Unloads all NPCs.
          *
          * If you call this you must later call load_npcs, lest caches get
@@ -473,6 +595,12 @@ class game
     public:
         /** Unloads, then loads the NPCs */
         void reload_npcs();
+        /** Immediately removes NPC with the given id from active_npc. */
+        void erase_npc( character_id id );
+        /** True while npcmove() or sleep_skip_npc_process() is iterating active_npc. */
+        bool is_processing_npcs() const {
+            return processing_npcs_;
+        }
         /** Add follower id to set of followers. */
         void add_npc_follower( const character_id &id );
         /** Remove follower id from follower set. */
@@ -486,6 +614,13 @@ class game
         void validate_linked_vehicles();
         /** process vehicles that are following the player */
         void autopilot_vehicles();
+        /** Tick all active power-portal links: equalise power between linked grids,
+         *  charge upkeep, and pause links that cannot sustain their upkeep cost. */
+        void tick_portal_links();
+        /** Check all pocket dimension items in the player's inventory; close expired ones. */
+        void tick_temporary_pocket_dimensions();
+        /** Draw power from linked portals into vehicle batteries for vp_portal_tap parts. */
+        void tick_vehicle_portal_taps();
         /** Picks and spawns a random fish from the remaining fish list when a fish is caught. */
         void catch_a_monster( monster *fish, const tripoint &pos, Character *who,
                               const time_duration &catch_duration );
@@ -531,6 +666,7 @@ class game
         /** Checks whether or not there is a zone of particular type nearby */
         bool check_near_zone( const zone_type_id &type, const tripoint &where ) const;
         bool is_zones_manager_open() const;
+        bool is_zone_submap_grid_overlay_enabled() const;
         void zones_manager();
 
         // Look at nearby terrain ';', or select zone points
@@ -658,7 +794,7 @@ class game
         void draw_line( const tripoint &p, const std::vector<tripoint> &points );
         void draw_weather( const weather_printable &wPrint );
         void draw_sct();
-        void draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
+        void draw_zones( const zone_draw_options &options );
         // In curses mode, draw critter (if visible!) on its current position into w_terrain.
         // @param center the center of view, same as when calling map::draw
         void draw_critter( const Creature &critter, const tripoint &center );
@@ -735,7 +871,10 @@ class game
         //private save functions.
         // returns false if saving failed for whatever reason
         bool save_factions_missions_npcs();
+        bool save_dimension_data();
+        bool load_dimension_data();
         void reset_npc_dispositions();
+        void serialize_dimension_data( std::ostream &fout );
         void serialize_master( std::ostream &fout );
         // returns false if saving failed for whatever reason
         bool save_artifacts();
@@ -857,6 +996,11 @@ class game
 
         // Routine loop functions, approximately in order of execution
         void monmove();          // Monster movement
+        void npcmove();          // NPC movement (split from monmove for per-option sleep-skip)
+        void sleep_skip_npc_process(); // Sleep-only NPC processing when SLEEP_SKIP_NPC is active
+        int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
+        // Out-of-bubble world simulation
+        void world_tick();       // Tick all loaded submaps outside the player's reality bubble
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
@@ -905,6 +1049,7 @@ class game
         void display_lighting(); // Displays lighting conditions heat map
         void display_radiation(); // Displays radiation map
         void display_transparency(); // Displays transparency map
+        void display_outside(); // Displays outside/sheltered/indoors overlay
         void display_tiles_no_vfx(); // Disables tileset visual effects
 
         // prints the IRL time in ms of the last full in-game hour
@@ -927,6 +1072,9 @@ class game
         // ########################## DATA ################################
     private:
         // May be a bit hacky, but it's probably better than the header spaghetti
+        // Constructed with a minimal size-1 sentinel to avoid over-allocating
+        // MAPSIZE×MAPSIZE caches before init_bubble_config() runs.
+        // game::setup() calls m.resize(g_mapsize) to set the real bubble size.
         pimpl<map> map_ptr;
         pimpl<avatar> u_ptr;
         pimpl<live_view> liveview_ptr;
@@ -939,7 +1087,7 @@ class game
         pimpl<achievements_tracker> achievements_tracker_ptr;
         pimpl<memorial_logger> memorial_logger_ptr;
         pimpl<spell_events> spell_events_ptr;
-        pimpl<distribution_grid_tracker> grid_tracker_ptr;
+        std::map<std::string, std::unique_ptr<distribution_grid_tracker>> grid_trackers_;
         pimpl<weather_manager> weather_manager_ptr;
 
     public:
@@ -1006,6 +1154,24 @@ class game
         int turnssincelastmon = 0; // needed for auto run mode
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
+
+        // P-8: per-turn symmetric sight-result cache used during parallel monster
+        // planning (monmove()).  Keyed on the sorted (lo, hi) Creature pointer
+        // pair so A→B and B→A share one entry (LOS ray is symmetric).  Cleared
+        // at the start of monmove() before the parallel phase begins.  Workers
+        // hold a shared_lock for hits and upgrade to unique_lock on a miss.
+        // Lives in the public section so turn_cached_sees() in monmove.cpp can
+        // access it directly without an additional indirection layer.
+        struct TurnSightPairHash {
+            size_t operator()( const std::pair<const Creature *, const Creature *> &p ) const noexcept {
+                size_t h1 = std::hash<const Creature *> {}( p.first );
+                size_t h2 = std::hash<const Creature *> {}( p.second );
+                return h1 ^ ( h2 * 2654435761ULL );
+            }
+        };
+        std::unordered_map<std::pair<const Creature *, const Creature *>, bool, TurnSightPairHash>
+        turn_sight_cache_;
+        std::shared_mutex turn_sight_cache_mutex_;
     private:
         shared_ptr_fast<player> u_shared_ptr;
 
@@ -1032,10 +1198,14 @@ class game
         bool npcs_dirty = false;
         /** Has anything died in this turn and needs to be cleaned up? */
         bool critter_died = false;
+        /** True while npcmove()/sleep_skip_npc_process() is iterating active_npc. */
+        bool processing_npcs_ = false;
         /** Is this the first redraw since waiting (sleeping or activity) started */
         bool first_redraw_since_waiting_started = true;
         /** Is Zone manager open or not - changes graphics of some zone tiles */
         bool zones_manager_open = false;
+        /** Zone manager toggle for submap grid overlay (only active while the UI is open) */
+        bool zone_submap_grid_overlay = false;
 
         std::unique_ptr<special_game> gamemode;
 
@@ -1081,6 +1251,73 @@ class game
         @return whether player has slipped down
         */
         bool slip_down();
+
+        // Set during dimension transitions to prevent temperature/weather code from
+        // accessing partially-loaded map data. Reset to false at the start of the next turn.
+        bool swapping_dimensions = false;
+    private:
+        /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
+        /// Always use this instead of assigning the two fields separately.
+        void set_active_dimension_id( const std::string &dim_id );
+
+        /// Sequenced critical section of a dimension switch: drain all background
+        /// work, release load handles, flush the desired set, update the active
+        /// dimension ID, and clear the old dimension's distribution-grid tracker.
+        /// Must only be called from travel_to_dimension() after swapping_dimensions
+        /// is set and before bind_dimension().
+        void activate_dimension_state( const std::string &new_dim_id,
+                                       const std::string &old_dim_id );
+
+        /// Dimension ID the player is currently in.  "" = overworld (primary).
+        /// Always updated via set_active_dimension_id().
+        std::string current_dimension_id_;
+
+        /// Metadata for all dimensions that currently have at least one submap loaded.
+        /// Keyed by dimension_id.  The overworld ("") may be absent on fresh games.
+        std::unordered_map<std::string, dimension_info> loaded_dimensions_;
+
+        /// The dimension ID of the single "kept alive" pocket dimension.
+        /// Empty = no pocket is kept.  When the player enters a new bounded pocket this
+        /// slot is evicted (saved + removed from registry) and replaced with the new one.
+        std::string kept_pocket_dimension_id_;
+
+        // Handle for the reality bubble's submap_load_manager request.
+        // 0 means no request has been issued yet.
+        load_request_handle reality_bubble_handle_ = 0;
+
+        // Handle for the lazy border around the reality bubble.
+        // Controlled by LAZY_BORDER cached option.
+        load_request_handle lazy_border_handle_ = 0;
+
+        // True while the bubble is temporarily shrunk for an ongoing long activity.
+        // Entry requires >= ACTIVITY_BUBBLE_GRACE minutes remaining; once set, stays true
+        // until the activity ends regardless of remaining time.
+        // Cleared by resize_reality_bubble() so an explicit option change always wins.
+        bool in_activity_bubble_ = false;
+
+        // Consecutive turns each dynamic condition has been continuously met.
+        // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately
+        // when the condition is no longer met (no exit hysteresis).
+        int underground_bubble_turns_ = 0;
+        int vehicle_bubble_turns_ = 0;
+        int combat_bubble_turns_ = 0;
+
+        // Turns between world_tick() passes.  1 = every turn (default).
+        // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
+        int world_tick_interval_ = 1;
+
+        // Submap radius of the reality bubble = g_half_mapsize = 2*size+1.
+        // Set by init_bubble_config() in start_game() / load().
+        // Default 5 matches REALITY_BUBBLE_SIZE=2 (original 11×11 grid).
+        int reality_bubble_radius_ = 5;
+
+        // True during the update_map() shift window: abs_sub has been updated by
+        // m.shift() but creature local positions have not yet been adjusted by
+        // shift_monsters().  despawn_monster() skips recomputing pos_abs in this
+        // window because the pre-shift stamp is already correct and getabs() would
+        // return a value displaced by 1 submap in the shift direction.
+        bool shift_in_progress_ = false;
+
     private:
         location_vector<item> fake_items;
     public:
@@ -1104,5 +1341,3 @@ namespace cata_event_dispatch
 // @param p The point the avatar is moving to on map m
 void avatar_moves( const avatar &u, const map &m, const tripoint &p );
 } // namespace cata_event_dispatch
-
-

@@ -24,6 +24,7 @@
 
 class Character;
 class item;
+class npc;
 class npc_template;
 class player;
 struct iteminfo;
@@ -766,11 +767,11 @@ class musical_instrument_actor : public iuse_actor
         /**
         * List of sound descriptions for players
         */
-        std::vector< std::string > player_descriptions;
+        std::vector<std::string> player_descriptions;
         /**
         * List of sound descriptions for NPCs
         */
-        std::vector< std::string > npc_descriptions;
+        std::vector<std::string> npc_descriptions;
         /**
          * Display description once per this duration (@ref calendar::once_every).
          */
@@ -1528,4 +1529,86 @@ class iuse_flowerpot_collect final : public iuse_actor
                                                item &flowerpot,
                                                const iuse_flowerpot_plant *actor,
                                                const itype_id &seed_type );
+};
+
+class iuse_dimension_travel : public iuse_actor
+{
+    public:
+        world_type_id destination;
+        int travel_radius = 1;
+        int need_charges = 1;
+        std::string fail_message;
+        std::string success_message;
+
+        iuse_dimension_travel( const std::string &type = "dimension_travel" ) : iuse_actor( type ) {}
+        ~iuse_dimension_travel() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &it, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        void dimension_travel( player &p, item &, const tripoint &pos ) const;
+};
+
+/**
+ * iuse_actor for items that function as keys to pocket dimensions.
+ * When used from the base dimension, enters the pocket.
+ * When used from inside the pocket, exits to the return point.
+ */
+class iuse_pocket_dimension : public iuse_actor
+{
+    public:
+        world_type_id pocket_type =
+            world_type_id( "pocket_dimension" ); // Which world_type to use for this pocket
+        std::string entry_mapgen;               // Overmap special ID for generation
+        bool persistent = false;                 // Does the pocket survive item destruction?
+        int need_charges = 0;
+        std::optional<ter_str_id> boundary_terrain;  // Override boundary terrain for this pocket
+        std::string pocket_name;                 // Display name for this pocket on the overmap
+
+        // Temporary pocket lifetime: pocket collapses this long after the player exits.
+        // nullopt = permanent pocket.
+        std::optional<time_duration> lifetime;
+
+        iuse_pocket_dimension( const std::string &type = "pocket_dimension" ) : iuse_actor( type ) {}
+        ~iuse_pocket_dimension() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &p, item &, bool, const tripoint & ) const override;
+        ret_val<bool> can_use( const Character &, const item &it, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+    private:
+        void initialize_pocket( item &it ) const;
+        void enter_pocket( player &p, item &it ) const;
+        void exit_pocket( player &p, item &it ) const;
+};
+
+/**
+ * An item that can be "tuned" to a portal_tile and then used to teleport to it.
+ *
+ * When used near a matching portal (furniture with a portal_tile whose
+ * linkable_item_flag matches @ref required_portal_flag), the item links itself.
+ * When used away from a portal while linked, it teleports the player to the
+ * portal and optionally stores the origin for a return trip.
+ *
+ * Item variables stored on the instance:
+ *   "portal_linked"            — bool, true once linked
+ *   "linked_dim_id"            — string, target dimension
+ *   "linked_pos_x/y/z"        — int, target tripoint_abs_ms
+ *   "origin_dim_id"            — string, stored on first teleport (if can_return)
+ *   "origin_pos_x/y/z"        — int, origin tripoint_abs_ms
+ */
+class iuse_portal_link : public iuse_actor
+{
+    public:
+        std::string required_portal_flag;  // portal_tile::linkable_item_flag must match this
+        bool can_return = false;           // store origin for a return trip
+        int charges_per_use = 0;           // charges consumed per teleport
+
+        iuse_portal_link( const std::string &type = "portal_link" ) : iuse_actor( type ) {}
+        ~iuse_portal_link() override = default;
+        void load( const JsonObject &obj ) override;
+        auto use( player &p, item &it, bool, const tripoint &pos ) const -> int override;
+        auto can_use( const Character &, const item &it, bool,
+                      const tripoint &pos ) const -> ret_val<bool> override;
+        auto clone() const -> std::unique_ptr<iuse_actor> override;
 };

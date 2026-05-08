@@ -25,6 +25,8 @@
 #include "catalua.h"
 #include "cata_utility.h"
 #include "catalua_impl.h"
+#include "lua_sidebar_widgets.h"
+#include "panels.h"
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "construction.h"
@@ -61,8 +63,10 @@
 #include "magic_ter_furn_transform.h"
 #include "map_extras.h"
 #include "mapbuffer.h"
+#include "map_feature_descriptions.h"
 #include "mapdata.h"
 #include "mapgen.h"
+#include "mapgen_async.h"
 #include "martialarts.h"
 #include "material.h"
 #include "mission.h"
@@ -106,6 +110,7 @@
 #include "vitamin.h"
 #include "weather.h"
 #include "weather_type.h"
+#include "world_type.h"
 #include "worldfactory.h"
 
 #if defined(TILES)
@@ -257,6 +262,7 @@ void DynamicDataLoader::initialize()
     add( "fault", &fault::load_fault );
     add( "field_type", &field_types::load );
     add( "weather_type", &weather_types::load );
+    add( "world_type", &world_types::load );
     add( "ammo_effect", &ammo_effects::load );
     add( "emit", &emit::load_emit );
     add( "activity_type", &activity_type::load );
@@ -390,6 +396,7 @@ void DynamicDataLoader::initialize()
     add( "recipe_category", &load_recipe_category );
     add( "recipe",  &recipe_dictionary::load_recipe );
     add( "uncraft", &recipe_dictionary::load_uncraft );
+    add( "nested_category", &recipe_dictionary::load_nested_category );
     add( "recipe_group",  &recipe_group::load );
 
     add( "tool_quality", &quality::load_static );
@@ -409,6 +416,7 @@ void DynamicDataLoader::initialize()
     add( "overmap_special", &overmap_specials::load );
     add( "city_building", &city_buildings::load );
     add( "map_extra", &MapExtras::load );
+    add( "map_feature_description", &map_feature_descriptions::load_map_feature_descriptions );
 
     add( "region_settings", &load_region_settings );
     add( "region_overlay", &load_region_overlay );
@@ -579,6 +587,7 @@ void DynamicDataLoader::unload_data()
     json_flag::reset();
     json_trait_flag::reset();
     MapExtras::reset();
+    map_feature_descriptions::reset_map_feature_descriptions();
     mapgen_palette::reset();
     materials::reset();
     mission_type::reset();
@@ -633,6 +642,7 @@ void DynamicDataLoader::unload_data()
     vpart_info::reset();
     weapon_category::reset();
     weather_types::reset();
+    world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
 #if defined(TILES)
@@ -641,6 +651,7 @@ void DynamicDataLoader::unload_data()
 
     // Has to be cleaned last in case one of the above data collections
     // holds references to Lua functions or tables.
+    cata::lua_sidebar_widgets::clear_widgets();
     lua.reset();
 }
 
@@ -663,6 +674,7 @@ void DynamicDataLoader::finalize_loaded_data( loading_ui &ui )
             { _( "Body parts" ), &body_part_type::finalize_all },
             { _( "Bionics" ), &bionic_data::finalize_all },
             { _( "Weather types" ), &weather_types::finalize_all },
+            { _( "World types" ), &world_types::finalize_all },
             { _( "Field types" ), &field_types::finalize_all },
             { _( "Ammo effects" ), &ammo_effects::finalize_all },
             { _( "Emissions" ), &emit::finalize },
@@ -746,6 +758,7 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             },
             { _( "Vitamins" ), &vitamin::check_consistency },
             { _( "Weather types" ), &weather_types::check_consistency },
+            { _( "World types" ), &world_types::check_consistency },
             { _( "Field types" ), &field_types::check_consistency },
             { _( "Ammo effects" ), &ammo_effects::check_consistency },
             { _( "Emissions" ), &emit::check_consistency },
@@ -855,6 +868,7 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     DynamicDataLoader &loader = DynamicDataLoader::get_instance();
 
+    cata::lua_sidebar_widgets::clear_widgets();
     loader.lua = cata::make_wrapped_state();
 
     cata::init_global_state_tables( *loader.lua, available );
@@ -897,6 +911,10 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
 
     init::load_main_lua_scripts( *loader.lua, packs );
     cata::clear_mod_being_loaded( *loader.lua );
+    // Update cached hook-presence flag so worker threads know whether to queue
+    // deferred mapgen postprocess hooks (avoids lock + allocation overhead per quad
+    // when no on_mapgen_postprocess hooks are registered).
+    refresh_mapgen_postprocess_hook_presence( *loader.lua );
 }
 
 auto init::load_main_lua_scripts( cata::lua_state &state, const std::vector<mod_id> &packs ) -> int
@@ -911,7 +929,9 @@ auto init::load_main_lua_scripts( cata::lua_state &state, const std::vector<mod_
         cata::set_mod_being_loaded( state, mod );
         cata::run_mod_main_script( state, mod );
     }
-    return std::ranges::distance( range );
+    const auto loaded = std::ranges::distance( range );
+    panel_manager::get_manager().sync_lua_panels();
+    return loaded;
 }
 
 bool init::is_data_loaded()
@@ -1008,6 +1028,10 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }
 
+    // Ensure the last checked mod unloads before process exit so Lua-backed
+    // mapgen functions do not outlive the active Lua state.
+    on_out_of_scope clear_last_checked_data( [] { clear_loaded_data(); } );
+
     for( const mod_id &id : to_check ) {
         clear_loaded_data();
 
@@ -1039,7 +1063,7 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
 
         // TODO: Why would we need these calls?
         MAPBUFFER.clear();
-        overmap_buffer.clear();
+        get_primary_overmapbuffer().clear();
     }
 
     return !debug_has_error_been_observed();

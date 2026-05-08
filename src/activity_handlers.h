@@ -274,6 +274,7 @@ void chop_planks_finish( player_activity *act, player *p );
 void jackhammer_finish( player_activity *act, player *p );
 void fill_pit_finish( player_activity *act, player *p );
 void play_with_pet_finish( player_activity *act, player *p );
+void train_pet_finish( player_activity *act, player *p );
 void shaving_finish( player_activity *act, player *p );
 void haircut_finish( player_activity *act, player *p );
 void unload_mag_finish( player_activity *act, player *p );

@@ -170,13 +170,19 @@
     "id": "Hair_Style_Any",
     "subtype": "distribution",
     "traits": [
-      { "trait": "hair_crewcut", "prob": 25 },
-      { "trait": "hair_mohawk", "prob": 1 },
-      { "trait": "hair_fro", "prob": 1 },
-      { "trait": "hair_short", "prob": 35 },
-      { "trait": "hair_medium", "prob": 25 },
-      { "trait": "hair_long", "prob": 13 },
-      { "trait": "HAIR_BALD", "prob": 1 }
+      { "trait": "hair_crewcut", "prob": 50 },
+      { "trait": "hair_mohawk", "prob": 2 },
+      { "trait": "hair_fro", "prob": 2 },
+      { "trait": "hair_short", "prob": 70 },
+      { "trait": "hair_medium", "prob": 50 },
+      { "trait": "hair_long", "prob": 26 },
+      { "trait": "hair_ponytail", "prob": 6 },
+      { "trait": "hair_swept", "prob": 1 },
+      { "trait": "hair_overflowing", "prob": 1 },
+      { "trait": "hair_parted", "prob": 8 },
+      { "trait": "hair_cropped", "prob": 12 },
+      { "trait": "hair_treated", "prob": 18 },
+      { "trait": "HAIR_BALD", "prob": 2 }
     ]
   },
   {
@@ -190,6 +196,10 @@
       { "trait": "hair_short", "prob": 35 },
       { "trait": "hair_medium", "prob": 25 },
       { "trait": "hair_long", "prob": 13 },
+      { "trait": "hair_ponytail", "prob": 1 },
+      { "trait": "hair_parted", "prob": 2 },
+      { "trait": "hair_cropped", "prob": 4 },
+      { "trait": "hair_treated", "prob": 6 },
       { "trait": "HAIR_BALD", "prob": 1 }
     ]
   },
@@ -204,6 +214,8 @@
       { "trait": "hair_short", "prob": 35 },
       { "trait": "hair_medium", "prob": 25 },
       { "trait": "hair_long", "prob": 13 },
+      { "trait": "hair_parted", "prob": 6 },
+      { "trait": "hair_cropped", "prob": 10 },
       { "trait": "HAIR_BALD", "prob": 1 }
     ]
   },

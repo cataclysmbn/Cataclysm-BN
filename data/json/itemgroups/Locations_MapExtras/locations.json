@@ -57,6 +57,7 @@
       [ "mag_traps", 20 ],
       [ "manual_traps", 12 ],
       [ "trappers_companion", 2 ],
+      [ "textbook_launcher", 5 ],
       [ "mag_guns", 40 ],
       [ "mag_rifle", 40 ],
       [ "mag_shotgun", 15 ],
@@ -1582,7 +1583,8 @@
       { "item": "bondage_mask", "prob": 1 },
       { "group": "auto_sears", "prob": 20 },
       { "item": "survnote", "prob": 5 },
-      { "item": "thermos", "prob": 25 }
+      { "item": "thermos", "prob": 25 },
+      { "item": "textbook_launcher", "prob": 3 }
     ]
   },
   {
@@ -1828,6 +1830,7 @@
       [ "ZSG", 5 ],
       [ "manual_mechanics", 35 ],
       [ "manual_fabrication", 12 ],
+      [ "reference_aircraft", 4 ],
       [ "manual_speech", 50 ],
       [ "manual_business", 40 ],
       [ "manual_computers", 20 ],
@@ -2785,6 +2788,7 @@
       [ "water_clean", 80 ],
       [ "water_mineral", 5 ],
       [ "cola", 70 ],
+      [ "zero_cola", 70 ],
       [ "creamsoda", 60 ],
       [ "lemonlime", 60 ],
       [ "orangesoda", 60 ],

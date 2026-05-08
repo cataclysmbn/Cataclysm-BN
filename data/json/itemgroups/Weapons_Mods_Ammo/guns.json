@@ -663,6 +663,7 @@
       { "group": "nested_m110a1", "prob": 10 },
       { "group": "nested_needlegun", "prob": 10 },
       { "group": "nested_needlepistol", "prob": 10 },
+      { "group": "nested_dp-12", "prob": 10 },
       { "group": "nested_ksg-25", "prob": 10 },
       { "group": "nested_tavor_12", "prob": 10 },
       { "group": "nested_SPAS_12", "prob": 10 },
@@ -857,8 +858,10 @@
     "id": "guns_shotgun_obscure",
     "//": "Imported or otherwise very obscure shotguns.",
     "items": [
+      { "group": "nested_dp-12", "prob": 10 },
       { "group": "nested_ksg-25", "prob": 15 },
       { "group": "nested_saiga_12", "prob": 25 },
+      { "group": "nested_bp_12", "prob": 15 },
       { "group": "nested_saiga_410", "prob": 10 },
       { "group": "nested_streetsweeper", "prob": 5 },
       { "group": "nested_USAS_12", "prob": 10 }
@@ -869,8 +872,10 @@
     "id": "carried_guns_shotgun_obscure",
     "//": "Imported or otherwise very obscure shotguns. Actually has a decent chance of having mags instead of loose ammo.",
     "items": [
+      { "group": "everyday_dp-12", "prob": 10 },
       { "group": "everyday_ksg-25", "prob": 15 },
       { "group": "everyday_saiga_12", "prob": 25 },
+      { "group": "everyday_bp_12", "prob": 15 },
       { "group": "everyday_saiga_410", "prob": 10 },
       { "group": "everyday_streetsweeper", "prob": 5 },
       { "group": "everyday_USAS_12", "prob": 10 }
@@ -933,7 +938,8 @@
     "items": [
       { "group": "guns_launcher_flame", "prob": 20 },
       { "group": "guns_launcher_grenade", "prob": 70 },
-      { "group": "guns_launcher_rocket", "prob": 30 }
+      { "group": "guns_launcher_rocket", "prob": 30 },
+      { "group": "guns_launcher_heavy", "prob": 20 }
     ]
   },
   {

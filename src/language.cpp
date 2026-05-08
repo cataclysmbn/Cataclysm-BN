@@ -235,7 +235,7 @@ static std::vector<language_info> load_languages( const std::string &filepath )
 
     for( language_info &info : ret ) {
         for( const std::string &g : info.genders ) {
-            if( std::ranges::find( all_genders, g ) == all_genders.end() ) {
+            if( !std::ranges::contains( all_genders, g ) ) {
                 debugmsg( "Unexpected gender '%s' in grammatical gender list for language '%d'",
                           g, info.id );
             }

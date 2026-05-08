@@ -31,5 +31,25 @@
     "max_level": 3,
     "intelligence": 4,
     "time": "18 m"
+  },
+  {
+    "type": "BOOK",
+    "id": "textbook_launcher",
+    "name": { "str": "Artillery and Field Gunnery", "str_pl": "copies of Artillery and Field Gunnery" },
+    "max_level": 6,
+    "description": "A textbook on the history of modern artillery, with a number of illustrations and excerpts from various field manuals.  A competent handloader or mechanic might find additional uses for the more technical parts of the text.",
+    "weight": "1120 g",
+    "color": "green",
+    "intelligence": 8,
+    "symbol": "?",
+    "material": [ "paper" ],
+    "volume": "1 L",
+    "bashing": 8,
+    "time": "30 m",
+    "fun": 0,
+    "skill": "launcher",
+    "price": "60 USD",
+    "price_postapoc": "25 USD",
+    "required_level": 3
   }
 ]

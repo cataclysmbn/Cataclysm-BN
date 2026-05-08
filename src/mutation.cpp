@@ -73,6 +73,11 @@ static const trait_id trait_ROOTS2( "ROOTS2" );
 static const trait_id trait_ROOTS3( "ROOTS3" );
 static const trait_id trait_SLIMESPAWNER( "SLIMESPAWNER" );
 static const trait_id trait_STR_ALPHA( "STR_ALPHA" );
+
+static const trait_flag_str_id flag_MALE_EXCLUSIVE( "MALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_FEMALE_EXCLUSIVE( "FEMALE_EXCLUSIVE" );
+static const trait_flag_str_id flag_MALE_PREFERRED( "MALE_PREFERRED" );
+static const trait_flag_str_id flag_FEMALE_PREFERRED( "FEMALE_PREFERRED" );
 static const trait_id trait_THRESH_MARLOSS( "THRESH_MARLOSS" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_TREE_COMMUNION( "TREE_COMMUNION" );
@@ -101,6 +106,26 @@ std::string enum_to_string<mutagen_technique>( mutagen_technique data )
 }
 
 } // namespace io
+
+namespace
+{
+
+auto get_threshold_mutation_for_tier( const mutation_category_id &category_id,
+                                      const size_t tier ) -> trait_id
+{
+    if( !category_id.is_valid() ) {
+        return trait_id::NULL_ID();
+    }
+
+    const auto &threshold_muts = category_id->threshold_muts;
+    if( tier >= threshold_muts.size() ) {
+        return trait_id::NULL_ID();
+    }
+
+    return threshold_muts[tier];
+}
+
+} // namespace
 
 bool Character::has_trait( const trait_id &b ) const
 {
@@ -536,6 +561,7 @@ void Character::activate_mutation( const trait_id &mut )
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
+    get_map().invalidate_lightmap_caches();
 
     if( mdata.transform ) {
         const cata::value_ptr<mut_transform> trans = mdata.transform;
@@ -595,7 +621,7 @@ void Character::activate_mutation( const trait_id &mut )
         return;
     } else if( mut == trait_TREE_COMMUNION ) {
         tdata.powered = false;
-        if( !overmap_buffer.ter( global_omt_location() ).obj().is_wooded() ) {
+        if( !get_overmapbuffer( get_dimension() ).ter( global_omt_location() ).obj().is_wooded() ) {
             add_msg_if_player( m_info, _( "You can only do that in a wooded area." ) );
             return;
         }
@@ -661,6 +687,7 @@ void Character::deactivate_mutation( const trait_id &mut )
     // Handle stat changes from deactivation
     apply_mods( mut, false );
     recalc_sight_limits();
+    get_map().invalidate_lightmap_caches();
     const mutation_branch &mdata = mut.obj();
     if( mdata.transform ) {
         const cata::value_ptr<mut_transform> trans = mdata.transform;
@@ -684,6 +711,17 @@ bool Character::mutation_ok( const trait_id &mutation, bool force_good, bool for
     }
     if( mutation_branch::trait_is_blacklisted( mutation ) ) {
         return false;
+    }
+    if( male ) {
+        if( mutation->flags.contains( flag_FEMALE_EXCLUSIVE ) ||
+            mutation->flags.contains( flag_FEMALE_PREFERRED ) ) {
+            return false;
+        }
+    } else {
+        if( mutation->flags.contains( flag_MALE_EXCLUSIVE ) ||
+            mutation->flags.contains( flag_MALE_PREFERRED ) ) {
+            return false;
+        }
     }
     if( has_trait( mutation ) || has_child_flag( mutation ) ) {
         // We already have this mutation or something that replaces it.
@@ -1180,7 +1218,7 @@ bool Character::mutate_towards( const trait_id &mut )
 
     // Check mutations of the same type - except for the ones we might need for pre-reqs
     for( const auto &consider : same_type ) {
-        if( std::ranges::find( all_prereqs, consider ) == all_prereqs.end() ) {
+        if( !std::ranges::contains( all_prereqs, consider ) ) {
             cancel.push_back( consider );
         }
     }
@@ -1249,10 +1287,23 @@ bool Character::mutate_towards( const trait_id &mut )
         // Profession picks fail silently
         return false;
     }
+    if( male ) {
+        if( mdata.flags.contains( flag_FEMALE_EXCLUSIVE ) ||
+            mdata.flags.contains( flag_FEMALE_PREFERRED ) ) {
+            return false;
+        }
+    } else {
+        if( mdata.flags.contains( flag_MALE_EXCLUSIVE ) ||
+            mdata.flags.contains( flag_MALE_PREFERRED ) ) {
+            return false;
+        }
+    }
 
-    for( auto cat : mdata.category ) {
-        if( has_trait( cat->threshold_muts[tierreq] ) ) {
+    for( const auto &cat : mdata.category ) {
+        const auto threshold_mut = get_threshold_mutation_for_tier( cat, tierreq );
+        if( threshold_mut && has_trait( threshold_mut ) ) {
             has_threshreq = true;
+            break;
         }
     }
 
@@ -1657,7 +1708,23 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
 {
     // Can't cross the same tier threshold multiple times
     if( guy.thresh_tier >= tier ) {
-        return;
+        // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
+        // Mostly an issue with debug quit and similar scenarios
+        bool has_thresh = false;
+        for( const trait_id &mut : guy.get_mutations() ) {
+            if( mut->threshold ) {
+                has_thresh = true;
+                break;
+            }
+        }
+        if( has_thresh ) {
+            return;
+        } else {
+            // The character does not have a threshold mutation but has a tier greater than 0
+            // This must be a bug, reset their threshold information
+            guy.thresh_tier = 0;
+            guy.thresh_category = mutation_category_id::NULL_ID();
+        }
     }
 
     // No skipping tiers
@@ -1668,14 +1735,30 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
 
     // If there is no threshold for this category at this tier, don't check it
     const std::vector<trait_id> &mutation_thresh = m_category.threshold_muts;
-    if( mutation_thresh.size() < tier + 1 ) {
+    if( mutation_thresh.size() <= static_cast<std::vector<trait_id>::size_type>( tier ) ) {
         return;
     }
 
     mutation_category_id mutation_category = m_category.id;
     // If you've already passed a threshold, you can't get a different tree's threshold
     if( ( guy.thresh_tier > 0 ) && ( guy.thresh_category != mutation_category ) ) {
-        return;
+        // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
+        // Mostly an issue with debug quit and similar scenarios
+        bool has_thresh = false;
+        for( const trait_id &mut : guy.get_mutations() ) {
+            if( mut->threshold ) {
+                has_thresh = true;
+                break;
+            }
+        }
+        if( has_thresh ) {
+            return;
+        } else {
+            // The character does not have a threshold mutation but has a tier greater than 0
+            // This must be a bug, reset their threshold information
+            guy.thresh_tier = 0;
+            guy.thresh_category = mutation_category_id::NULL_ID();
+        }
     }
 
     int total = 0;
@@ -1761,7 +1844,7 @@ bool are_same_type_traits( const trait_id &trait_a, const trait_id &trait_b )
 
 bool contains_trait( std::vector<string_id<mutation_branch>> traits, const trait_id &trait )
 {
-    return std::ranges::find( traits, trait ) != traits.end();
+    return std::ranges::contains( traits, trait );
 }
 
 bool can_use_mutation( const trait_id &mut, const Character &character )

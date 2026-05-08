@@ -18,6 +18,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "value_ptr.h"
+#include "data_vars.h"
 
 struct ter_t;
 using ter_str_id = string_id<ter_t>;
@@ -225,7 +226,6 @@ struct pry_result {
  * ALARMED - Sets off an alarm if smashed
  * SUPPORTS_ROOF - Used as a boundary for roof construction
  * MINEABLE - Able to broken with the jackhammer/pickaxe, but does not necessarily support a roof
- * INDOORS - Has roof over it; blocks rain, sunlight, etc.
  * COLLAPSES - Has a roof that can collapse
  * FLAMMABLE_ASH - Burns to ash rather than rubble.
  * REDUCE_SCENT - Reduces scent even more, only works if also bashable
@@ -284,7 +284,6 @@ enum ter_bitflags : int {
     TFLAG_COLLAPSES,
     TFLAG_FLAMMABLE_ASH,
     TFLAG_DESTROY_ITEM,
-    TFLAG_INDOORS,
     TFLAG_LIQUIDCONT,
     TFLAG_FIRE_CONTAINER,
     TFLAG_FLAMMABLE_HARD,
@@ -484,6 +483,8 @@ struct map_data_common_t {
         std::string prompt;
 
         iexamine_function examine; // What happens when the terrain/furniture is examined
+
+        data_vars::data_set default_vars;
 
         /**
          * When will this terrain/furniture get harvested and what will drop?
@@ -811,7 +812,9 @@ extern ter_id t_null,
        t_railroad_track, t_railroad_track_h, t_railroad_track_v, t_railroad_track_d, t_railroad_track_d1,
        t_railroad_track_d2,
        t_railroad_track_on_tie, t_railroad_track_h_on_tie, t_railroad_track_v_on_tie,
-       t_railroad_track_d_on_tie;
+       t_railroad_track_d_on_tie,
+       t_pd_border,
+       t_rock_border;
 
 /*
 runtime index: furn_id

@@ -1,0 +1,27 @@
+[
+  {
+    "id": "wheel_caster",
+    "type": "vehicle_part",
+    "copy-from": "wheel_caster",
+    "rolling_resistance": 0.5
+  },
+  {
+    "id": "swivel_chair",
+    "type": "vehicle",
+    "name": "GunChair™",
+    "parts": [
+      { "x": 0, "y": 0, "parts": [ "xlframe_vertical_2", "wheel_caster", "seat" ] },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [
+          "frame_carbon_cover",
+          "turret_mount",
+          "battery_motorbike_small",
+          { "part": "mounted_m134", "ammo": 50, "ammo_types": [ "762_51" ], "ammo_qty": [ 0, 200 ] },
+          "controls"
+        ]
+      }
+    ]
+  }
+]

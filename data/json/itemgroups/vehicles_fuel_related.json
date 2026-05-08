@@ -110,5 +110,11 @@
       [ "wheel_slick", 25 ],
       [ "wheel", 50 ]
     ]
+  },
+  {
+    "id": "fuel_barrel_diesel_only",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "item": "diesel", "charges": [ 0, 50000 ], "container-item": "30gal_drum", "prob": 100 } ]
   }
 ]

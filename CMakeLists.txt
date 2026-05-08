@@ -266,7 +266,8 @@ if (NOT MSVC)
     if (NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
         set(CATA_WARNINGS "${CATA_WARNINGS} -Wredundant-decls")
     endif ()
-    set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -fsigned-char -fno-builtin-std-forward_like -fno-finite-math-only")
+    set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -fsigned-char -fno-builtin-std-forward_like")
+    add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fno-finite-math-only>)
     # Add debug symbols for non-release builds or when backtrace is enabled
     if (BACKTRACE OR NOT RELEASE)
         set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -g1")
@@ -538,9 +539,6 @@ endif()
 if (RELEASE)
     if (USE_PREFIX_DATA_DIR)
         install(DIRECTORY doc TYPE DOC)
-        install(DIRECTORY data TYPE DATA
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -549,9 +547,6 @@ if (RELEASE)
             TYPE DOC)
     else()
         install(DIRECTORY doc DESTINATION .)
-        install(DIRECTORY data DESTINATION .
-            PATTERN "json/external_tileset/README.md" EXCLUDE
-            PATTERN "json/mapgen/lab/README.md" EXCLUDE)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -571,6 +566,10 @@ if (RELEASE)
     # Install cataclysm-launcher for portable Linux builds
     if (NOT USE_PREFIX_DATA_DIR AND UNIX AND NOT APPLE)
         install(PROGRAMS ${CMAKE_SOURCE_DIR}/cataclysm-launcher
+            DESTINATION .)
+    endif()
+    if ( NOT USE_XDG_DIR AND NOT USE_HOME_DIR )
+        install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
             DESTINATION .)
     endif()
 endif()

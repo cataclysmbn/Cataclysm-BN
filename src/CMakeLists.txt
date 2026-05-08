@@ -2,13 +2,13 @@ set(MAIN_CPP ${CMAKE_SOURCE_DIR}/src/main.cpp)
 set(MESSAGES_CPP ${CMAKE_SOURCE_DIR}/src/messages.cpp)
 set(RESOURCE_RC ${CMAKE_SOURCE_DIR}/src/resource.rc)
 
-file(GLOB CATACLYSM_BN_SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
+file(GLOB CATACLYSM_BN_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
 
 list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${MAIN_CPP} ${MESSAGES_CPP})
 
 # Lua binding translation units are template-heavy and primarily run at startup;
 # compile them with no optimization to reduce build times.
-file(GLOB CATALUA_BINDINGS_SOURCES ${CMAKE_SOURCE_DIR}/src/catalua_bindings*.cpp)
+file(GLOB CATALUA_BINDINGS_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/catalua_bindings*.cpp)
 if (MSVC)
     set(CATALUA_BINDINGS_COMPILE_OPTIONS /Od)
 else ()
@@ -18,7 +18,7 @@ foreach (catalua_src IN LISTS CATALUA_BINDINGS_SOURCES)
     set_source_files_properties(${catalua_src} PROPERTIES COMPILE_OPTIONS "${CATALUA_BINDINGS_COMPILE_OPTIONS}")
 endforeach ()
 
-file(GLOB CATACLYSM_BN_HEADERS ${CMAKE_SOURCE_DIR}/src/*.h)
+file(GLOB CATACLYSM_BN_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.h)
 
 add_subdirectory(lua)
 add_subdirectory(sol)
@@ -176,7 +176,7 @@ if (TILES)
     if( LUA_DOCS_ON_BUILD AND DENO_BINARY )
         add_custom_command(
             TARGET cataclysm-bn-tiles POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E env --unset=LD_LIBRARY_PATH ${DENO_BINARY} task docs:gen
+            COMMAND ${CMAKE_COMMAND} -E env --unset=LD_LIBRARY_PATH "CATA_EXE=$<TARGET_FILE:cataclysm-bn-tiles>" ${DENO_BINARY} task docs:gen
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
             COMMENT "Generating Lua reference/annotations (deno task docs:gen)"
             VERBATIM

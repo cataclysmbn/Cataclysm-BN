@@ -6,6 +6,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <variant>
@@ -21,6 +22,7 @@
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "point.h"
+#include "zone_draw_options.h"
 #include "sdl_geometry.h"
 #include "sdl_utils.h"
 #include "sdl_wrappers.h"
@@ -61,8 +63,11 @@ struct tile_type {
     bool rotates = false;
     bool animated = false;
     bool has_om_transparency = false;
+    bool is_multitile_subtile = false;
     int height_3d = 0;
     point offset = point_zero;
+    point offset_retracted = point_zero;
+    float pixelscale = 1.0f;
 
     std::vector<std::string> available_subtiles;
     std::set<flag_id> flags;
@@ -327,6 +332,9 @@ class tileset
 
         int tile_width;
         int tile_height;
+        int zlevel_height = 0;
+        float prevent_occlusion_min_dist = 0.0f;
+        float prevent_occlusion_max_dist = 0.0f;
 
         // multiplier for pixel-doubling tilesets
         float tile_pixelscale;
@@ -389,6 +397,15 @@ class tileset
         }
         float get_tile_pixelscale() const {
             return tile_pixelscale;
+        }
+        auto get_zlevel_height() const -> int {
+            return zlevel_height;
+        }
+        auto get_prevent_occlusion_min_dist() const -> float {
+            return prevent_occlusion_min_dist;
+        }
+        auto get_prevent_occlusion_max_dist() const -> float {
+            return prevent_occlusion_max_dist;
         }
         const std::string &get_tileset_id() const {
             return tileset_id;
@@ -468,6 +485,8 @@ class tileset_loader
         const SDL_Renderer_Ptr &renderer;
 
         point sprite_offset;
+        point sprite_offset_retracted;
+        float sprite_pixelscale = 1.0f;
 
         int sprite_width = 0;
         int sprite_height = 0;
@@ -665,6 +684,7 @@ class cata_tiles
         /** Minimap functionality */
         void draw_minimap( point dest, const tripoint &center, int width, int height );
         bool minimap_requires_animation() const;
+        void reset_minimap();
 
     protected:
         /** How many rows and columns of tiles fit into given dimensions **/
@@ -767,7 +787,8 @@ class cata_tiles
                              unsigned int loc_rand, bool is_fg, int rota,
                              const tint_config &tint, lit_level ll,
                              bool apply_visual_effects, int overlay_count,
-                             int *height_3d, size_t warp_hash = TILESET_NO_WARP );
+                             int *height_3d, int retract = 0,
+                             size_t warp_hash = TILESET_NO_WARP );
 
         /**
          * @brief Calls draw_sprite_at() twice each for foreground and background.
@@ -788,7 +809,7 @@ class cata_tiles
                            unsigned int loc_rand, int rota,
                            const tint_config &bg_tint, const tint_config &fg_tint,
                            lit_level ll, bool apply_visual_effects, int &height_3d,
-                           int overlay_count );
+                           int overlay_count, int retract );
 
         /**
          * @brief Draws a colored solid color tile at position, with optional blending
@@ -948,7 +969,7 @@ class cata_tiles
         void draw_sct_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_sct();
 
-        void init_draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
+        void init_draw_zones( const zone_draw_options &options );
         void draw_zones_frame( std::multimap<point, formatted_text> &overlay_strings );
         void void_zones();
 
@@ -1115,6 +1136,8 @@ class cata_tiles
         tripoint zone_start;
         tripoint zone_end;
         tripoint zone_offset;
+        std::vector<tripoint> zone_points;
+        std::unordered_set<tripoint> zone_point_lookup;
 
         // offset values, in tile coordinates, not pixels
         point o;
@@ -1153,5 +1176,3 @@ class cata_tiles
         std::string memory_map_mode = "color_pixel_sepia";
         tileset *current_tileset() const { return tileset_ptr.get(); }
 };
-
-

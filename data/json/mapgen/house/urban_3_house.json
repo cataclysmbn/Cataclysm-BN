@@ -3,7 +3,6 @@
     "method": "json",
     "om_terrain": [ [ "urban_3_1", "urban_3_2" ] ],
     "type": "mapgen",
-    "weight": 250,
     "object": {
       "fill_ter": "t_floor",
       "rows": [
@@ -21,55 +20,38 @@
         ".....#A'''''''''#||||            H       x#.....",
         ".....#N'''''''''+>|<             HHHHy y  #.....",
         "....!#N'''''''''#||||  ##o#a#o#########o###.....",
-        "....!#''''''''''#t,,+  #``###``%......!!!^......",
+        "....!#''''''''''#t¨¨+  #``###``%......!!!^......",
         "....!#q'''''''''#88S|  o```````%................",
         ".....#########+##||||  *````````..........[.....",
-        ".....#)W|6657n,JJJ,,,,,*````````....!!!.........",
-        ".....#) +,,,,,,,,,,fff]o```````%....!X!.........",
-        ".....#)Z|4O3521F,,,]]]]#```````%....!!!.........",
+        ".....#)W|6657n˙JJJ˙˙˙˙˙*````````....!!!.........",
+        ".....#) +˙˙˙˙˙˙˙˙˙˙fff]o```````%....!X!.........",
+        ".....#)Z|4O3521F˙˙˙]]]]#```````%....!!!.........",
         ".....######ooo#####oo###```````%............[...",
         "..........!!!!!........%%%``%%%%...[............",
         "................................................",
         "................................................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
+      "palettes": [
+        "standard_domestic_palette",
+        "parameterized_linoleum_color_kitchen",
+        "parameterized_linoleum_color_bathroom",
+        "standard_domestic_landscaping_palette"
+      ],
       "terrain": {
-        "%": [ "t_region_shrub", "t_region_shrub_fruit", "t_region_shrub_decorative" ],
-        "[": [ [ "t_region_tree_fruit", 2 ], [ "t_region_tree_nut", 2 ], "t_region_tree_shade" ],
-        "!": "t_region_groundcover_urban",
+        "&": "t_gates_mech_control",
         "=": "t_door_metal_locked",
-        "_": "t_pavement",
-        "&": "t_gates_control_brick",
         "'": "t_thconc_floor",
         "q": "t_thconc_floor",
         "A": "t_thconc_floor",
         "N": "t_thconc_floor",
-        "U": "t_thconc_floor",
-        "`": "t_concrete",
         "}": "t_ponywall",
-        ",": "t_linoleum_white",
-        "O": "t_linoleum_white",
-        "F": "t_linoleum_white",
-        "1": "t_linoleum_white",
-        "2": "t_linoleum_white",
-        "3": "t_linoleum_white",
-        "4": "t_linoleum_white",
-        "5": "t_linoleum_white",
-        "6": "t_linoleum_white",
-        "7": "t_linoleum_white",
-        "8": "t_linoleum_white",
-        "n": "t_linoleum_white",
-        "J": "t_linoleum_white",
-        "Y": "t_linoleum_white",
-        "S": "t_linoleum_white",
-        "t": "t_linoleum_white",
-        "f": "t_linoleum_white",
-        "]": "t_linoleum_white"
+        "]": { "param": "linoleum_color_kitchen", "fallback": "t_linoleum_white" },
+        "f": { "param": "linoleum_color_kitchen", "fallback": "t_linoleum_white" }
       },
-      "furniture": { "!": "f_region_flower", "0": "f_stool", "]": "f_sofa", ")": "f_counter" },
+      "furniture": { "0": "f_stool", "]": "f_sofa", ")": "f_counter" },
       "place_loot": [
+        { "item": "stereo", "x": 41, "y": 10, "chance": 100 },
         { "item": "television", "x": 41, "y": 10, "chance": 100 },
-        { "item": "stereo", "x": 41, "y": 9, "chance": 100 },
         { "item": "lawnmower", "x": 6, "y": 9, "chance": 100 },
         { "item": "stepladder", "x": 6, "y": 8, "chance": 100 }
       ],
@@ -80,7 +62,6 @@
     "method": "json",
     "om_terrain": [ [ "urban_3_3", "urban_3_4" ] ],
     "type": "mapgen",
-    "weight": 250,
     "object": {
       "fill_ter": "t_floor",
       "rows": [
@@ -90,14 +71,14 @@
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-        "~~~~~#########o##################__________~~~~~",
-        "~~~~~#t,,,,8|8S8|E     IIIT     #^========%~~~~~",
-        "~~~~~#,,,,,S|,,,|d      h      s#=========0~~~~~",
-        "~~~~~o,,,,,S|t,,+             @@o=========0~~~~~",
-        "~~~~~#BB,,,8|BB,|d  yb        @@o=========0~~~~~",
-        "~~~~~#||||+|||||||+|||||  HHH  s#=========0~~~~~",
-        "~~~~~#Q +          >|D +       T#=========0~~~~~",
-        "~~~~~#|||||+|||||+|||||####a#####))))))))%0~~~~~",
+        "~~~~~#########o##################----------~~~~~",
+        "~~~~~#t¨¨¨¨8|8S8|E     IIIT     #^========!~~~~~",
+        "~~~~~#¨¨¨¨¨S|¨¨¨|d      h      s#=========-~~~~~",
+        "~~~~~o¨¨¨¨¨S|t¨¨+             @@o=========-~~~~~",
+        "~~~~~#BB¨¨¨8|BB¨|d  yb        @@o=========-~~~~~",
+        "~~~~~#||||+|||||||+|||||  HHH  s#=========-~~~~~",
+        "~~~~~#Q +          >|D +       T#=========-~~~~~",
+        "~~~~~#|||||+|||||+|||||####a#####--------!-~~~~~",
         "~~~~~# dbd   |D|D    @@#~~###~~~~~~~~~~~~~~~~~~~",
         "~~~~~#       + |Ih     #~~~~~~~~~~~~~~~~~~~~~~~~",
         "~~~~~o       |||I    hIo~~~~~~~~~~~~~~~~~~~~~~~~",
@@ -109,28 +90,15 @@
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
         "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": {
-        "~": "t_open_air",
-        "=": "t_shingle_flat_roof",
-        "&": "t_shingle_flat_roof",
-        "%": "t_gutter_drop",
-        "0": "t_gutter_west",
-        "_": "t_gutter_south",
-        ")": "t_gutter_north",
-        "B": "t_linoleum_white",
-        "S": "t_linoleum_white",
-        "t": "t_linoleum_white",
-        "8": "t_linoleum_white",
-        ",": "t_linoleum_white"
-      }
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom" ],
+      "terrain": { "~": "t_open_air", "=": "t_shingle_flat_roof", "!": "t_gutter_drop", "-": "t_gutter", "Q": "t_floor" },
+      "place_nested": [ { "chunks": [ "NC_res_roof_chunk_3X3" ], "x": [ 34, 38 ], "y": [ 8, 9 ] } ]
     }
   },
   {
     "method": "json",
     "om_terrain": [ [ "urban_3_5", "urban_3_6" ] ],
     "type": "mapgen",
-    "weight": 250,
     "object": {
       "fill_ter": "t_shingle_flat_roof",
       "rows": [
@@ -160,7 +128,8 @@
         "                                                "
       ],
       "palettes": [ "roof_palette" ],
-      "terrain": { ".": "t_shingle_flat_roof" }
+      "terrain": { ".": "t_shingle_flat_roof" },
+      "place_nested": [ { "chunks": [ "NC_res_roof_solar_4X4" ], "x": 18, "y": 11 } ]
     }
   },
   {

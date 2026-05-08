@@ -293,7 +293,7 @@ comfort_response_t base_comfort_value( const Character &who, const tripoint &p )
 
     map &here = get_map();
     const optional_vpart_position vp = here.veh_at( p );
-    const maptile tile = here.maptile_at( p );
+    const maptile tile = here.maptile_at( tripoint_bub_ms( p ) );
     const trap &trap_at_pos = tile.get_trap_t();
     const ter_id ter_at_pos = tile.get_ter();
     const furn_id furn_at_pos = tile.get_furn();

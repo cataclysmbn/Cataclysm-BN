@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "catalua_type_operators.h"
 #include "coordinates.h"
 #include "io_tags.h"
 #include "monster.h"
@@ -45,6 +46,8 @@ struct MonsterGroupEntry {
         , starts( new_starts )
         , ends( new_ends ) {
     }
+
+    LUA_TYPE_OPS( MonsterGroupEntry, name );
 };
 
 struct MonsterGroupResult {
@@ -85,6 +88,10 @@ struct mongroup {
     unsigned int radius = 1;
     unsigned int population = 1;
     tripoint_om_sm target; // location the horde is interested in.
+    // TODO(cross-dim-alias): tripoint_abs_sm has no dimension field.  A nemesis
+    // horde chasing a player who dimension-travels loses the dimension context of
+    // the target.  Full fix requires attaching a dimension_id to the target or
+    // storing it separately on mongroup.  Acceptable limitation for this PR.
     tripoint_abs_sm nemesis_target; // abs target for nemesis hordes
     int interest = 0; //interest to target in percents
     bool dying = false;
@@ -119,6 +126,7 @@ struct mongroup {
         type( ptype ), pos( ppos ), radius( prad ), population( ppop ), target( ptarget ),
         interest( pint ), dying( pdie ), horde( phorde ), diffuse( pdiff ) { }
     mongroup() = default;
+    LUA_TYPE_OPS( mongroup, type );
     bool is_safe() const;
     bool empty() const;
     void clear();
@@ -178,6 +186,7 @@ class MonsterGroupManager
         static std::vector<mtype_id> GetMonstersFromGroup( const mongroup_id &group );
         static const MonsterGroup &GetMonsterGroup( const mongroup_id &group );
         static const MonsterGroup &GetUpgradedMonsterGroup( const mongroup_id &group );
+        static std::vector<mongroup_id> get_all_group_ids();
         /**
          * Gets a random monster, weighted by frequency.
          * Ignores cost multiplier.
@@ -200,4 +209,3 @@ class MonsterGroupManager
         static t_string_set monster_categories_blacklist;
         static t_string_set monster_categories_whitelist;
 };
-

@@ -65,6 +65,12 @@ namespace calendar
  */
 bool once_every( const time_duration &event_frequency );
 
+// Returns the number of multiples of tick_length we would "pass" on our way `from` to `to`
+// For example, if `tick_length` is 1 hour, then going from 0:59 to 1:01 should return 1
+int ticks_between( const time_point &from, const time_point &to,
+                   const time_duration &tick_length );
+int ticks_between( const time_duration &duration, const time_duration &tick_length );
+
 /**
  * A number that represents the longest possible action.
  *
@@ -94,6 +100,40 @@ time_duration year_length();
 /** @returns Time of a season (configured in current world settings) */
 time_duration season_length();
 void set_season_length( int dur );
+
+/**
+ * Per-dimension sunrise/sunset configuration.
+ *
+ * Values of -1 fall back to the corresponding world option (SUNRISE_SUMMER, etc.).
+ * permanent_daylight/permanent_night override is_day()/is_night() without affecting
+ * the sunrise()/sunset() time points themselves.
+ *
+ * NOTE: A full custom-ticks-per-day system would require refactoring all from_hours()/
+ * from_days() conversion functions and their callers throughout the codebase — deferred.
+ */
+struct dim_time_config {
+    int sunrise_summer  = -1;
+    int sunrise_winter  = -1;
+    int sunrise_equinox = -1;
+    int sunset_summer   = -1;
+    int sunset_winter   = -1;
+    int sunset_equinox  = -1;
+    bool permanent_daylight = false;
+    bool permanent_night    = false;
+};
+
+/**
+ * Register per-dimension time config. Called by world_types::finalize_all() for each
+ * world_type that specifies time overrides. dim_id is the world_type id string.
+ */
+void register_dim_time_config( const std::string &dim_id, const dim_time_config &cfg );
+
+/**
+ * Set the active world type ID used by sunrise()/sunset()/is_night() etc. when no
+ * explicit dim_id is provided. Should be called whenever the player changes dimension,
+ * passing the world_type::id of the new dimension (not the dimension_id storage string).
+ */
+void set_active_world_type( const std::string &world_type_id );
 
 /**
  * @returns ratio of actual season length (a world option) to default season length. This
@@ -584,10 +624,14 @@ std::string to_string( const time_point &p );
 std::string to_string_time_of_day( const time_point &p );
 /** Returns the current light level of the moon. */
 moon_phase get_moon_phase( const time_point &p );
-/** Returns the current sunrise time based on the time of year. */
+/** Returns the current sunrise time based on the time of year, using active dimension config. */
 time_point sunrise( const time_point &p );
-/** Returns the current sunset time based on the time of year. */
+/** Returns the sunrise time for a specific dimension. */
+time_point sunrise( const time_point &p, const std::string &dim_id );
+/** Returns the current sunset time based on the time of year, using active dimension config. */
 time_point sunset( const time_point &p );
+/** Returns the sunset time for a specific dimension. */
+time_point sunset( const time_point &p, const std::string &dim_id );
 /** Returns the time it gets light based on sunrise */
 time_point daylight_time( const time_point &p );
 /** Returns the time it gets dark based on sunset */
@@ -603,7 +647,7 @@ bool is_dawn( const time_point &p );
 /** Returns the current seasonally-adjusted maximum daylight level */
 double current_daylight_level( const time_point &p );
 /** How much light is provided in full daylight */
-double default_daylight_level();
+static constexpr double default_daylight_level() { return 100.0; }
 /** Returns the current sunlight or moonlight level through the preceding functions.
  *  By default, returns sunlight level for vision, with moonlight providing a measurable amount
  *  of light.  with vision == false, returns sunlight for solar panel purposes, and moonlight

@@ -22,6 +22,7 @@ struct partial_con;
 class aim_activity_actor : public activity_actor
 {
     private:
+        safe_reference<item> weapon;
         location_ptr<item> fake_weapon;
         units::energy bp_cost_per_shot = 0_J;
         int stamina_cost_per_shot = 0;
@@ -63,6 +64,9 @@ class aim_activity_actor : public activity_actor
         /** Aiming fake gun provided by a bionic */
         static std::unique_ptr<aim_activity_actor> use_bionic( detached_ptr<item> &&fake_gun,
                 const units::energy &cost_per_shot );
+
+        /** Aiming gun provided by gear */
+        static std::unique_ptr<aim_activity_actor> use_gear( item *gun );
 
         /** Aiming fake gun provided by a mutation */
         static std::unique_ptr<aim_activity_actor> use_mutation( detached_ptr<item> &&fake_gun );

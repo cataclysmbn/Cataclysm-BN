@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <climits>
 #include <cstdlib>
 #include <functional>
@@ -264,19 +265,33 @@ class overmap
 {
     public:
         overmap( overmap && ) noexcept ;
-        overmap( const point_abs_om &p );
+        overmap( const point_abs_om &p, const std::string &dim_id = "" );
         ~overmap();
+
+        auto get_dimension_id() const -> const std::string & { // *NOPAD*
+            return dimension_id_;
+        }
 
         /**
          * Create content in the overmap.
          **/
-        void populate( overmap_special_batch &enabled_specials );
-        void populate();
+        void populate( const std::string &dim_id, overmap_special_batch &enabled_specials );
+        void populate( const std::string &dim_id );
 
         const point_abs_om &pos() const {
             return loc;
         }
 
+        /**
+         * Save this overmap to the world folder using @p dim_id to determine
+         * the correct dimension subdirectory.  Thread-safe when different overmaps
+         * are saved concurrently: each writes to a distinct file path.
+         */
+        void save( const std::string &dim_id ) const;
+
+        /** Legacy overload — delegates to save(g_active_dimension_id).
+         *  Do NOT call from background threads; see g_active_dimension_id comment
+         *  in overmapbuffer_registry.h. */
         void save() const;
 
         /**
@@ -301,6 +316,20 @@ class overmap
         const oter_id &ter( const tripoint_om_omt &p ) const;
         std::string *join_used_at( const om_pos_dir & );
         std::optional<mapgen_arguments> *mapgen_args( const tripoint_om_omt & );
+
+        /** Slot returned by get_mapgen_args_slot for lock-free fast-path access. */
+        struct mapgen_args_slot {
+            std::optional<mapgen_arguments> *args = nullptr;
+            /** Atomic flag: 0 = not yet initialized, 1 = initialized.
+             *  Access via std::atomic_ref<char>; never read/written directly. */
+            char *init_flag = nullptr;
+            explicit operator bool() const noexcept { return args != nullptr; }
+        };
+        mapgen_args_slot get_mapgen_args_slot( const tripoint_om_omt &p );
+
+        /** Rebuilds mapgen_args_init_flags_ from mapgen_arg_storage after load. */
+        void sync_mapgen_args_init_flags();
+
         bool &seen( const tripoint_om_omt &p );
         bool seen( const tripoint_om_omt &p ) const;
         bool &explored( const tripoint_om_omt &p );
@@ -425,6 +454,7 @@ class overmap
 
         bool nullbool = false;
         point_abs_om loc;
+        std::string dimension_id_;
 
         std::array<map_layer, OVERMAP_LAYERS> layer;
         std::unordered_map<tripoint_abs_omt, scent_trace> scents;
@@ -445,13 +475,17 @@ class overmap
         // to be evaluated.
         std::vector<std::optional<mapgen_arguments>> mapgen_arg_storage;
         std::unordered_map<tripoint_om_omt, int> mapgen_args_index;
+        /** Parallel to mapgen_arg_storage; non-zero means the entry is fully written.
+         *  Stored as plain char so the vector is movable; accessed atomically via
+         *  std::atomic_ref<char> to provide acquire/release ordering. */
+        std::vector<char> mapgen_args_init_flags_;
 
         oter_id get_default_terrain( int z ) const;
 
         // Initialize
         void init_layers();
         // open existing overmap, or generate a new one
-        void open( overmap_special_batch &enabled_specials );
+        void open( const std::string &dim_id, overmap_special_batch &enabled_specials );
     public:
 
         /**

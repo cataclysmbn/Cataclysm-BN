@@ -10,9 +10,11 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
+#include <mutex>
 #include <shared_mutex>
 
 #include "coordinates.h"
+#include "dimension_bounds.h"
 #include "enums.h"
 #include "json.h"
 #include "memory_fast.h"
@@ -24,6 +26,7 @@
 class character_id;
 enum class cube_direction : int;
 class map_extra;
+class mapgendata;
 class monster;
 class npc;
 class overmap;
@@ -164,13 +167,42 @@ class overmapbuffer
         overmapbuffer();
 
         /**
+         * The dimension this buffer belongs to.  Set by the overmapbuffer
+         * registry when creating the slot; used to route I/O to the correct
+         * dimension subdirectory without reading global state.
+         */
+        auto get_dimension_id() const -> const std::string & { // *NOPAD*
+            return dimension_id_;
+        }
+        void set_dimension_id( const std::string &id ) {
+            dimension_id_ = id;
+        }
+
+        /**
          * Uses overmap coordinates, that means x and y are directly
          * compared with the position of the overmap.
          */
         overmap &get( const point_abs_om & );
-        void save();
+
+        /**
+         * Save every loaded overmap to disk using @p dim_id for path resolution.
+         * Thread-safe when different dimensions save concurrently: distinct paths
+         * guarantee no file-level contention.
+         */
+        void save( const std::string &dim_id );
+
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
+
+        /**
+         * Set dimension bounds for pocket dimension overmap rendering.
+         * When set, tiles outside the bounds return boundary overmap terrain.
+         */
+        void set_dimension_bounds( const dimension_bounds &bounds );
+        /**
+         * Clear dimension bounds (e.g. when exiting a pocket dimension).
+         */
+        void clear_dimension_bounds();
 
         /**
         * Generates overmap tiles, if missing
@@ -190,6 +222,15 @@ class overmapbuffer
         void ter_set( const tripoint_abs_omt &p, const oter_id &id );
         std::string *join_used_at( const std::pair<tripoint_abs_omt, cube_direction> & );
         std::optional<mapgen_arguments> *mapgen_args( const tripoint_abs_omt & );
+        /**
+         * Thread-safe lazy initializer for overmap_special mapgen arguments.
+         * Returns the arguments for @p p, initializing them from the special's
+         * parameter definitions (using @p md as context) if not yet set.
+         * Returns std::nullopt if no args are defined for this position.
+         */
+        std::optional<mapgen_arguments> get_or_init_mapgen_args(
+            const tripoint_abs_omt &p, const mapgendata &md,
+            const std::string &terrain_type_id );
         /**
          * Uses global overmap terrain coordinates.
          */
@@ -219,6 +260,7 @@ class overmapbuffer
         int get_horde_size( const tripoint_abs_omt &p );
         std::vector<om_vehicle> get_vehicle( const tripoint_abs_omt &p );
         const regional_settings &get_settings( const tripoint_abs_omt &p );
+        std::string current_region_type;
         /**
          * Accessors for horde introspection into overmaps.
          * Probably also useful for NPC overmap-scale navigation.
@@ -428,6 +470,8 @@ class overmapbuffer
          * @param p The player's location in absolute submap coordinates.
          */
         void signal_nemesis( tripoint_abs_sm p );
+        /// Create a new monster group (useful for hordes) and return a pointer to it, or nullptr on failure.
+        mongroup *create_horde( const mongroup &group );
         /**
          * Process nearby monstergroups (dying mostly).
          */
@@ -462,6 +506,14 @@ class overmapbuffer
          * p is an absolute *submap* coordinate.
          */
         void spawn_monster( const tripoint_abs_sm &p );
+        /**
+         * Discard all monster_map entries at submap p without placing them.
+         * Used at load time to purge stale entries for in-bubble submaps that
+         * accumulated across sessions because spawn_monsters() was not called
+         * before saving.  The corresponding monsters are already present in
+         * critter_tracker; placing the stale entries would create duplicates.
+         */
+        void discard_monster_map( const tripoint_abs_sm &p );
         /**
          * Despawn the monster back onto the overmap. The monsters position
          * (monster::pos()) is interpreted as relative to the main map.
@@ -525,7 +577,39 @@ class overmapbuffer
                             int min_radius, int max_radius );
 
     private:
+        std::string dimension_id_;
         std::shared_mutex mutex;
+        /**
+         * Protects all NPC container reads and writes across every overmap in
+         * this buffer.  Must always be acquired AFTER @ref mutex (if both are
+         * needed).  Held exclusively for insert_npc() / remove_npc() and
+         * shared-equivalently for get_npcs_near() family reads.
+         *
+         * Separate from @ref mutex so that generation workers can call
+         * insert_npc() concurrently without blocking overmapbuffer reads.
+         */
+        mutable std::mutex npc_mutex_;
+        /**
+         * Protects overmap layer[z].extras and layer[z].notes writes across every
+         * overmap in this buffer.  Must be acquired AFTER any @ref mutex operation
+         * completes (same ordering rule as npc_mutex_) — in practice both
+         * get_om_global() and get_existing_om_global() acquire+release @ref mutex
+         * internally, so extras_mutex_ is acquired only after those return.
+         *
+         * Separate from @ref mutex so that generation workers can call add_extra()
+         * and add_note() concurrently without blocking unrelated overmapbuffer reads.
+         */
+        mutable std::mutex extras_mutex_;
+        /**
+         * Protects lazy initialization of overmap_special mapgen arguments stored in
+         * overmap::mapgen_arg_storage.  Must be acquired AFTER any @ref mutex operation
+         * completes — in practice get_om_global() acquires+releases @ref mutex internally,
+         * so mapgen_args_mutex_ is acquired only after that returns.
+         *
+         * Separate from @ref mutex so that generation workers can initialize args
+         * concurrently without blocking unrelated overmapbuffer reads.
+         */
+        mutable std::mutex mapgen_args_mutex_;
         /**
          * Common function used by the find_closest/all/random to determine if the location is
          * findable based on the specified criteria.
@@ -542,6 +626,11 @@ class overmapbuffer
          * to not exist on disk. See @ref get_existing for usage.
          */
         std::set<point_abs_om> known_non_existing;
+
+        // Optional dimension bounds for pocket dimension rendering
+        std::optional<dimension_bounds> current_bounds_;
+        // Cached resolved overmap terrain id for out-of-bounds tiles
+        oter_id bounds_oter_id_;
 
         // Set of globally unique overmap specials that have already been placed
         std::unordered_set<overmap_special_id> placed_unique_specials;
@@ -646,4 +735,5 @@ class overmapbuffer
         bool remove_grid_connection( const tripoint_abs_omt &lhs, const tripoint_abs_omt &rhs );
 };
 
-extern overmapbuffer overmap_buffer;
+// Provides ACTIVE_OVERMAP_BUFFER macro and get_overmapbuffer(dim_id) API.
+#include "overmapbuffer_registry.h"

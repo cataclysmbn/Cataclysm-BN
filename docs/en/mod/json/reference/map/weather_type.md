@@ -82,14 +82,17 @@ Example effect:
   "effect_id_str": "emp",
   "effect_intensity": 0, // intensity of the effect applied.
   "precipitation_name": "brain waves", // name of precipitation to display when "The <PRECIPITATION> is blocked by your umbrella!" type messages display.
-  "ignore_armor": true, // ignores all protection.
   "bodypart_string": "head", // bodypart to apply the effect on.
   "effect_msg": "You feel an odd wave-like sensation pass through your head.", // message to display in chat when the player is afflicted
   "effect_msg_frequency": 16, // chance to display this message every time the player is afflicted.
   "effect_msg_blocked_frequency": 32, // chance to display this message every time the player blocks the effect with clothing.
   "message_type": 2, // type of message to display: good, bad, mixed, etc.
-  "clothing_protection": 0, // one in X chance to block precipitation.
-  "umbrella_protection": 0 // one in X chance to block precipitation.
+  "protection_data": [
+    { "check": "RAIN_PROTECT", "odds": 1 },
+    { "check": "ACIDPROOF", "odds": 1 },
+    { "check": "DEFAULT", "odds": 2 }
+  ] //Check is a flag/trait the player may have, odds is the one in x chance this flag/trait will protect the player from this weather effect.
+  //"check": "DEFAULT" has special behaviour and will roll the one in x chance without checking if the player has a flag/trait actually called "DEFAULT"
 }
 ```
 

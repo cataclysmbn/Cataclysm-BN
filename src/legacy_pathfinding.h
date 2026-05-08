@@ -36,15 +36,6 @@ inline pf_special &operator &= ( pf_special &lhs, pf_special rhs )
     return lhs;
 }
 
-struct pathfinding_cache {
-    pathfinding_cache();
-    ~pathfinding_cache() = default;
-
-    bool dirty;
-
-    pf_special special[MAPSIZE_X][MAPSIZE_Y];
-};
-
 struct pathfinding_settings {
     int bash_strength = 0;
     int max_dist = 0;

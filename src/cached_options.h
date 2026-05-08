@@ -31,6 +31,11 @@ extern bool json_report_strict;
 extern bool use_tiles;
 
 /**
+ * Enable pinyin-based fallback matching for Chinese search text.
+ */
+extern bool use_pinyin_search;
+
+/**
  * Use tiles for 'm'ap display. Always false for ncurses build,
  * but can be toggled in sdl build.
  */
@@ -59,6 +64,20 @@ extern bool fov_3d;
 /** 3D FoV range, in Z levels, in both directions. */
 extern int fov_3d_z_range;
 
+/** 3D FoV horizontal occlusion: clip vertical-cast results with per-z 2D horizontal shadow passes. */
+extern bool fov_3d_occlusion;
+
+/** High-sprite occlusion handling mode: 0 off, 1 always, 2 automatic. */
+extern int prevent_occlusion;
+/** Retract sprites that support DDA retracted offsets while handling occlusion. */
+extern bool prevent_occlusion_retract;
+/** Prefer *_transparent tile variants while handling occlusion. */
+extern bool prevent_occlusion_transp;
+/** Override minimum automatic occlusion distance. Values <= 0 use tileset metadata. */
+extern float prevent_occlusion_min_dist;
+/** Override maximum automatic occlusion distance. Values <= 0 use tileset metadata. */
+extern float prevent_occlusion_max_dist;
+
 /** Using isometric tileset. */
 extern bool tile_iso;
 
@@ -85,6 +104,53 @@ extern int PICKUP_RANGE;
  */
 extern bool dont_debugmsg;
 
+
+/** Monster LOD (level-of-detail) options. */
+extern bool monster_lod_enabled;
+extern int  lod_tier_full_dist;
+extern int  lod_tier_coarse_dist;
+extern int  lod_demotion_cooldown;
+extern int  lod_action_budget;
+extern int  lod_macro_interval;
+extern int  lod_coarse_scent_interval;
+extern int  lod_group_morale_max_tier;
+
+/** Out-of-bubble world-tick options. */
+extern bool reality_bubble_fire_spread;
+
+extern bool lazy_border_enabled;
+
+/**
+ * Maximum number of fire-spread-loaded submaps allowed across all dimensions
+ * simultaneously.  Cached from the FIRE_SPREAD_SUBMAP_CAP world option.
+ * Read every world_tick() — must be fast.
+ */
+extern int fire_spread_submap_cap;
+
+/**
+ * How aggressively to simulate the "kept" pocket dimension while the player
+ * is away.  Cached from the POCKET_SIMULATION_LEVEL world option.
+ *
+ * "off"      → skip all non-primary-dimension processing in world_tick().
+ * Any other  → treat as "full" for now (one chunk kept loaded, fully simulated).
+ *              none/minimal/moderate distinctions are deferred to a future PR.
+ */
+enum class pocket_sim_level { off, none, minimal, moderate, full };
+extern pocket_sim_level pocket_simulation_level;
+
+/**
+ * Cached value of the SAFEMODEPROXIMITY option.
+ * 0 means "use g_max_view_distance" (the option's own zero-sentinel).
+ * Any positive value is the distance in tiles.
+ */
+extern int safe_mode_proximity;
+
+/** Multithreading options — all require restart to take effect. */
+extern bool parallel_enabled;
+extern bool parallel_monster_planning;
+extern int  monster_plan_chunk_size;
+extern bool parallel_map_cache;
+extern bool parallel_scent_update;
 
 /* Options related to fungal activity */
 struct FungalOptions {
@@ -137,5 +203,4 @@ extern error_log_format_t error_log_format;
 #else
 constexpr error_log_format_t error_log_format = error_log_format_t::human_readable;
 #endif
-
 

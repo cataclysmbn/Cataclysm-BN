@@ -1,0 +1,319 @@
+[
+  {
+    "id": "halo_draconic_might",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "aura of dragon's blood", "str_pl": "auras of dragon's blood" },
+    "description": "A strange radiance permeating your body, increasing your strength and reducing physical damage, and allowing you to use heavy weapons unsupported if otherwise unable to.",
+    "color": "dark_gray",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "values": [
+            { "value": "STRENGTH", "add": 5 },
+            { "value": "ARMOR_BASH", "add": -10 },
+            { "value": "ARMOR_CUT", "add": -20 },
+            { "value": "ARMOR_STAB", "add": -15 },
+            { "value": "ARMOR_BULLET", "add": -15 }
+          ]
+        }
+      ]
+    },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF", "HEAVY_WEAPON_SUPPORT" ] }
+  },
+  {
+    "id": "halo_phase_shield",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "sunstone halo" },
+    "description": "A strange radiance permeating your body, repelling nearby attackers away from you.",
+    "color": "dark_gray",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "hit_me_effect": [
+            {
+              "id": "arcana_react_phase_shield",
+              "once_in": 10,
+              "message": "%2$s is suddenly forced back!",
+              "npc_message": "%2$s is suddenly forced away from %1$s!"
+            }
+          ]
+        }
+      ]
+    },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
+  },
+  {
+    "id": "halo_shadowsnakes",
+    "//": "ID retained for simplicity.",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "obsidian halo" },
+    "description": "A strange radiance permeating your body, blinding attackers with otherworldly magic.",
+    "color": "dark_gray",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "hit_me_effect": [
+            {
+              "id": "arcana_react_shadowy_shield",
+              "message": "Wisps of shadow lash out at %2$s",
+              "npc_message": "Wisps of shadow jump from %1$s to %2$s."
+            }
+          ]
+        }
+      ]
+    },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
+  },
+  {
+    "id": "halo_drainlife",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "horned halo" },
+    "description": "A strange radiance permeating your body, granting you a life-draining touch.",
+    "color": "dark_gray",
+    "relic_data": {
+      "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "hit_you_effect": [ { "id": "arcana_react_drain_life" } ] } ]
+    },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
+  },
+  {
+    "id": "halo_amulet_effect",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "shrouded aura" },
+    "description": "A strange radiance permeating your body, obscuring your life force from the undead.  You will be invisible to them, but not to other creatures, and they will still be able to hear and smell you.",
+    "color": "white",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "mutations": [ "ARCANA_LIFE_SIGN_SUPPRESSION" ] } ] },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
+  },
+  {
+    "id": "halo_fadedaura",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "faded halo" },
+    "description": "A strange radiance permeating your body, hiding your aura from otherworldly creatures in exchange for being more visible to wildlife and the undead.",
+    "color": "white",
+    "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ALWAYS", "mutations": [ "ARCANA_TRANSCENDANT_AURA" ] } ] },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
+  },
+  {
+    "id": "halo_flute_effect",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "elusive aura" },
+    "description": "A strange radiance permeating your body, enhancing your movement and reflexes.",
+    "color": "white",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "values": [ { "value": "MOVE_COST", "multiply": -0.5 }, { "value": "BONUS_DODGE", "add": 5 } ],
+          "ench_effects": [ { "effect": "halo_flute_effect", "intensity": 1 } ]
+        }
+      ]
+    },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
+  },
+  {
+    "id": "halo_brooch_effect",
+    "copy-from": "spell_base",
+    "type": "ARMOR",
+    "name": { "str": "guardian aura" },
+    "description": "A strange radiance permeating your body, adding to your defenses.",
+    "color": "white",
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "values": [
+            { "value": "ARMOR_ACID", "multiply": -0.25 },
+            { "value": "ARMOR_BASH", "multiply": -0.25 },
+            { "value": "ARMOR_BIO", "multiply": -0.25 },
+            { "value": "ARMOR_COLD", "multiply": -0.25 },
+            { "value": "ARMOR_LIGHT", "multiply": -0.25 },
+            { "value": "ARMOR_DARK", "multiply": -0.25 },
+            { "value": "ARMOR_PSI", "multiply": -0.25 },
+            { "value": "ARMOR_CUT", "multiply": -0.25 },
+            { "value": "ARMOR_ELEC", "multiply": -0.25 },
+            { "value": "ARMOR_HEAT", "multiply": -0.25 },
+            { "value": "ARMOR_STAB", "multiply": -0.25 },
+            { "value": "ARMOR_BULLET", "multiply": -0.25 }
+          ]
+        }
+      ]
+    },
+    "extend": { "flags": [ "ONLY_ONE", "NO_TAKEOFF" ] }
+  },
+  {
+    "id": "triffid_garland",
+    "type": "ARMOR",
+    "name": { "str": "triffid garland" },
+    "description": "A wreath of brightly-colored flowers from another world, worn around the neck.  Aside from the otherworldly beauty afforded by its petals, it has no practical use.",
+    "weight": "40 g",
+    "volume": "50 ml",
+    "//": "Arcanist trinkets are explicitly 100% post-cataclysm, minimal value but exotic, and have some minor crafting use.",
+    "price_postapoc": "120 cent",
+    "material": [ "veggy" ],
+    "symbol": "[",
+    "looks_like": "holy_symbol_wood",
+    "color": "light_red",
+    "flags": [ "FANCY" ]
+  },
+  {
+    "id": "amulet_exotic",
+    "type": "ARMOR",
+    "name": { "str": "exotic amulet" },
+    "description": "A makeshift necklace with a single gem, a charm worked from some manner of unnatural material.",
+    "weight": "60 g",
+    "volume": "50 ml",
+    "price_postapoc": "150 cent",
+    "material": [ "stone" ],
+    "symbol": "[",
+    "looks_like": "aquamarine_silver_pendant_necklace",
+    "color": "light_gray",
+    "flags": [ "FANCY" ],
+    "use_action": "MEDITATE"
+  },
+  {
+    "id": "brooch_iridescent",
+    "type": "ARMOR",
+    "name": { "str": "iridescent brooch", "str_pl": "iridescent brooches" },
+    "description": "A hand-crafted disc brooch made from a strange, unearthly material vaguely resembling mother-of-pearl.",
+    "weight": "52 g",
+    "volume": "50 ml",
+    "price_postapoc": "2 USD",
+    "material": [ "stone" ],
+    "symbol": "[",
+    "looks_like": "jade_brooch",
+    "color": "dark_gray",
+    "flags": [ "FANCY" ]
+  },
+  {
+    "id": "mana_gem",
+    "type": "ARMOR",
+    "name": { "str": "essence gem" },
+    "description": "A strange reddish stone set in a golden talisman, worn around the neck.  It is specialized for storing a considerable reserve of magical essence, and can be used to reload magical weapons more quickly if worn.",
+    "weight": "250 g",
+    "volume": "50 ml",
+    "price_postapoc": "90 USD",
+    "price": "30 USD",
+    "material": [ "gold", "essencemat" ],
+    "symbol": "[",
+    "looks_like": "gold_locket",
+    "color": "yellow",
+    "flags": [ "NO_SALVAGE" ],
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "values": [ { "value": "MANA_REGEN", "multiply": 0.025 }, { "value": "MANA_CAP", "multiply": 0.025 } ]
+        }
+      ]
+    },
+    "use_action": { "type": "bandolier", "capacity": 200, "ammo": [ "essence_type" ], "draw_cost": 10 }
+  },
+  {
+    "id": "mana_gem_blood",
+    "copy-from": "mana_gem",
+    "type": "ARMOR",
+    "name": { "str": "blood essence gem" },
+    "description": "A strange yellow stone set in a silver talisman, worn around the neck.  It is specialized for storing a considerable reserve of magical essence, and can be used to reload magical weapons more quickly if worn.",
+    "material": [ "silver", "essencemat" ],
+    "looks_like": "silver_locket",
+    "color": "light_gray",
+    "use_action": { "type": "bandolier", "capacity": 600, "ammo": [ "essence_blood_type" ], "draw_cost": 10 }
+  },
+  {
+    "id": "mana_gem_dull",
+    "copy-from": "mana_gem",
+    "type": "ARMOR",
+    "name": { "str": "dull essence gem" },
+    "description": "A strange blue stone set in a copper talisman, worn around the neck.  It is specialized for storing a considerable reserve of dull essence, and can be used to reload magical weapons more quickly if worn.",
+    "material": [ "copper", "essencemat" ],
+    "looks_like": "copper_locket",
+    "color": "light_red",
+    "use_action": { "type": "bandolier", "capacity": 6000, "ammo": [ "essence_dull_type" ], "draw_cost": 10 }
+  },
+  {
+    "id": "mana_gem_pure",
+    "copy-from": "mana_gem",
+    "type": "ARMOR",
+    "name": { "str": "crystallized essence gem" },
+    "description": "A strange precious stone set in a platinum talisman, worn around the neck.  It is specialized for storing a considerable reserve of crystallized essence, and can be used to reload magical weapons more quickly if worn.",
+    "material": [ "platinum", "essencemat" ],
+    "looks_like": "platinum_locket",
+    "color": "white",
+    "use_action": { "type": "bandolier", "capacity": 20, "ammo": [ "essence_pure_type" ], "draw_cost": 10 }
+  },
+  {
+    "id": "satchel_eternity",
+    "type": "ARMOR",
+    "name": { "str": "satchel of eternity", "str_pl": "satchels of eternity" },
+    "description": "A small fabric pouch decorated with ornate textile imagery depicting an otherworldly abstract pattern, further adorned with copper rings and clasps.  It is said to represent the search for greater knowledge of the unknown, focused by a drive to find utility and purpose in new discoveries.  It uses the power of a vortex to store a great volume of items that can be easily accessed, but the portal's instability means being struck can potentially draw attention from Beyond or cause you to teleport.  You can also use it to set aside certain items for even faster access, if it serves as a magical focus.",
+    "weight": "610 g",
+    "volume": "500 ml",
+    "price": "1000 USD",
+    "price_postapoc": "100 USD",
+    "to_hit": 1,
+    "bashing": 1,
+    "material": [ "cotton", "copper" ],
+    "symbol": "[",
+    "looks_like": "leather_pouch",
+    "color": "light_red",
+    "covers": [ "torso" ],
+    "coverage": 15,
+    "rigid": false,
+    "encumbrance": 0,
+    "max_encumbrance": 25,
+    "storage": "50 L",
+    "material_thickness": 1,
+    "weight_capacity_modifier": 2,
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WORN",
+          "condition": "ALWAYS",
+          "hit_me_effect": [
+            {
+              "id": "arcana_react_satchel_attention",
+              "hit_self": true,
+              "once_in": 50,
+              "message": "You feel like something is watching you…",
+              "npc_message": "A strange aura of malice seems to briefly surround %1$s."
+            },
+            {
+              "id": "arcana_react_satchel_teleport",
+              "hit_self": true,
+              "once_in": 50,
+              "message": "You feel yanked in a non-existent direction!",
+              "npc_message": "%1$s suddenly warps away!"
+            }
+          ]
+        }
+      ]
+    },
+    "use_action": {
+      "type": "holster",
+      "holster_prompt": "Store magic focus",
+      "holster_msg": "You store your %s",
+      "multi": 4,
+      "min_volume": "1 ml",
+      "max_volume": "5 L",
+      "draw_cost": 0,
+      "flags": [ "MAGIC_FOCUS" ]
+    },
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "NO_SALVAGE" ]
+  }
+]

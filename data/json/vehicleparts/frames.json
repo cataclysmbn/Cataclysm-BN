@@ -209,6 +209,7 @@
       "removal": { "skills": [ [ "fabrication", 0 ] ], "time": "0 m" },
       "repair": { "skills": [ [ "fabrication", 0 ] ], "time": "5 m", "using": [ [ "adhesive", 1 ] ] }
     },
+    "folded_volume": "1250 ml",
     "flags": [
       "MOUNTABLE",
       "SEAT",
@@ -219,7 +220,8 @@
       "SEAT_REQUIRES_BALANCE",
       "BOARDABLE",
       "CONTROLS",
-      "CONTROL_WITHOUT_HANDS"
+      "CONTROL_WITHOUT_HANDS",
+      "FOLDABLE"
     ],
     "damage_reduction": { "all": 2 }
   },

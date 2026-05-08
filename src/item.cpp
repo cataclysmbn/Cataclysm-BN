@@ -117,6 +117,7 @@
 #include "vpart_position.h"
 #include "weather.h"
 #include "weather_gen.h"
+#include "wheel_dimensions.h"
 
 static const std::string GUN_MODE_VAR_NAME( "item::mode" );
 static const std::string CLOTHING_MOD_VAR_PREFIX( "clothing_mod_" );
@@ -288,7 +289,7 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
     contents( this ),
     components( new component_item_location( this ) ), bday( turn )
 {
-    item_vars = type->item_vars;
+    item_vars_ = type->item_vars;
     corpse = has_flag( flag_CORPSE ) ? &mtype_id::NULL_ID().obj() : nullptr;
     item_counter = type->countdown_interval;
 
@@ -451,7 +452,7 @@ item::item( const item &source ) : game_object<item>( source ), contents( this )
     faults = source.faults;
     item_tags = source.item_tags;
     curammo = source.curammo;
-    item_vars = source.item_vars;
+    item_vars_ = source.item_vars_;
     corpse = source.corpse;
     corpse_name = source.corpse_name;
     techniques = source.techniques;
@@ -496,7 +497,7 @@ item &item::operator=( const item &source )
     faults = source.faults;
     item_tags = source.item_tags;
     curammo = source.curammo;
-    item_vars = source.item_vars;
+    item_vars_ = source.item_vars_;
     corpse = source.corpse;
     corpse_name = source.corpse_name;
     techniques = source.techniques;
@@ -1082,7 +1083,7 @@ bool item::stacks_with( const item &rhs, bool check_components, bool skip_type_c
     if( techniques != rhs.techniques ) {
         return false;
     }
-    if( item_vars != rhs.item_vars ) {
+    if( item_vars_ != rhs.item_vars_ ) {
         return false;
     }
 
@@ -1199,96 +1200,6 @@ void item::put_in( detached_ptr<item> &&payload )
         return;
     }
     contents.insert_item( std::move( payload ) );
-}
-
-void item::set_var( const std::string &name, const int value )
-{
-    std::ostringstream tmpstream;
-    tmpstream.imbue( std::locale::classic() );
-    tmpstream << value;
-    item_vars[name] = tmpstream.str();
-}
-
-void item::set_var( const std::string &name, const long long value )
-{
-    std::ostringstream tmpstream;
-    tmpstream.imbue( std::locale::classic() );
-    tmpstream << value;
-    item_vars[name] = tmpstream.str();
-}
-
-// NOLINTNEXTLINE(cata-no-long)
-void item::set_var( const std::string &name, const long value )
-{
-    std::ostringstream tmpstream;
-    tmpstream.imbue( std::locale::classic() );
-    tmpstream << value;
-    item_vars[name] = tmpstream.str();
-}
-
-void item::set_var( const std::string &name, const double value )
-{
-    item_vars[name] = string_format( "%f", value );
-}
-
-double item::get_var( const std::string &name, const double default_value ) const
-{
-    const auto it = item_vars.find( name );
-    if( it == item_vars.end() ) {
-        return default_value;
-    }
-    return atof( it->second.c_str() );
-}
-
-void item::set_var( const std::string &name, const tripoint &value )
-{
-    item_vars[name] = string_format( "%d,%d,%d", value.x, value.y, value.z );
-}
-
-tripoint item::get_var( const std::string &name, const tripoint &default_value ) const
-{
-    const auto it = item_vars.find( name );
-    if( it == item_vars.end() ) {
-        return default_value;
-    }
-    std::vector<std::string> values = string_split( it->second, ',' );
-    return tripoint( atoi( values[0].c_str() ),
-                     atoi( values[1].c_str() ),
-                     atoi( values[2].c_str() ) );
-}
-
-void item::set_var( const std::string &name, const std::string &value )
-{
-    item_vars[name] = value;
-}
-
-std::string item::get_var( const std::string &name, const std::string &default_value ) const
-{
-    const auto it = item_vars.find( name );
-    if( it == item_vars.end() ) {
-        return default_value;
-    }
-    return it->second;
-}
-
-std::string item::get_var( const std::string &name ) const
-{
-    return get_var( name, "" );
-}
-
-bool item::has_var( const std::string &name ) const
-{
-    return item_vars.contains( name );
-}
-
-void item::erase_var( const std::string &name )
-{
-    item_vars.erase( name );
-}
-
-void item::clear_vars()
-{
-    item_vars.clear();
 }
 
 void item::add_item_with_id( const itype_id &itype, int count )
@@ -1754,8 +1665,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
 
     if( parts->test( iteminfo_parts::DESCRIPTION ) ) {
         insert_separation_line( info );
-        const std::map<std::string, std::string>::const_iterator idescription =
-            item_vars.find( "description" );
+        const auto idescription = item_vars_.find( "description" );
         const std::optional<translation> snippet = SNIPPET.get_snippet_by_id( snip_id );
         if( snippet.has_value() && ( !get_avatar().has_trait( trait_ILLITERATE ) ||
                                      !has_flag( flag_SNIPPET_NEEDS_LITERACY ) ) ) {
@@ -1766,7 +1676,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 //note that you have seen the snippet
                 get_avatar().add_snippet( snip_id );
             }
-        } else if( idescription != item_vars.end() ) {
+        } else if( idescription != item_vars_.end() ) {
             info.emplace_back( "DESCRIPTION", idescription->second );
         } else {
             if( is_craft() ) {
@@ -1780,14 +1690,13 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
                 info.emplace_back( "DESCRIPTION", type->description.translated() );
             }
         }
-        std::map<std::string, std::string>::const_iterator item_note = item_vars.find( "item_note" );
-        std::map<std::string, std::string>::const_iterator item_note_tool =
-            item_vars.find( "item_note_tool" );
+        const auto item_note = item_vars_.find( "item_note" );
+        const auto item_note_tool = item_vars_.find( "item_note_tool" );
 
-        if( item_note != item_vars.end() && parts->test( iteminfo_parts::DESCRIPTION_NOTES ) ) {
+        if( item_note != item_vars_.end() && parts->test( iteminfo_parts::DESCRIPTION_NOTES ) ) {
             std::string ntext;
             const inscribe_actor *use_actor = nullptr;
-            if( item_note_tool != item_vars.end() ) {
+            if( item_note_tool != item_vars_.end() ) {
                 const use_function *use_func = itype_id( item_note_tool->second )->get_use( "inscribe" );
                 use_actor = dynamic_cast<const inscribe_actor *>( use_func->get_actor_ptr() );
             }
@@ -1877,7 +1786,7 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
             const std::string tags_listed = enumerate_as_string( item_tags, f, enumeration_conjunction::none );
             info.emplace_back( "BASE", string_format( _( "tags: %s" ), tags_listed ) );
 
-            for( auto const &imap : item_vars ) {
+            for( auto const &imap : item_vars_ ) {
                 info.emplace_back( "BASE",
                                    string_format( _( "item var: %s, %s" ), imap.first,
                                                   imap.second ) );
@@ -2202,19 +2111,38 @@ void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
 
         if( has_flat_dmg && has_dmg_multiplier
             && has_dmg_multiplier && display_dmg_multiplier ) {
-            info.emplace_back( "AMMO", _( "Damage: " ), "",
-                               iteminfo::no_newline, ammo.damage.total_damage() );
-            info.emplace_back( "AMMO", "/", "",
-                               fd,
-                               ammo.damage.damage_units.front().damage_multiplier );
+            if( ammo.shot ) {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "x", "",
+                                   fd,
+                                   ammo.shot->count );
+                info.emplace_back( "AMMO", "/", "",
+                                   fd,
+                                   ammo.damage.damage_units.front().damage_multiplier );
+            } else {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "/", "",
+                                   fd,
+                                   ammo.damage.damage_units.front().damage_multiplier );
+            }
             // Messy ifs...
         } else if( display_dmg_multiplier && has_dmg_multiplier ) {
             info.emplace_back( "AMMO", _( "Damage multiplier: " ), "",
                                fd,
                                ammo.damage.damage_units.front().damage_multiplier );
         } else if( display_flat_dmg && has_flat_dmg ) {
-            info.emplace_back( "AMMO", _( "Damage: " ), "",
-                               f, ammo.damage.total_damage() );
+            if( ammo.shot ) {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   iteminfo::no_newline, ammo.damage.total_damage() );
+                info.emplace_back( "AMMO", "x", "",
+                                   f,
+                                   ammo.shot->count );
+            } else {
+                info.emplace_back( "AMMO", _( "Damage: " ), "",
+                                   f, ammo.damage.total_damage() );
+            }
         } else {
             didnt_print_dmg = true;
         }
@@ -2244,6 +2172,12 @@ void item::ammo_info( std::vector<iteminfo> &info, const iteminfo_query *parts, 
         if( parts->test( iteminfo_parts::AMMO_DAMAGE_DISPERSION ) && ammo.dispersion != 0 ) {
             info.emplace_back( "AMMO", space + _( "Dispersion: " ), "",
                                iteminfo::lower_is_better, ammo.dispersion );
+        }
+        if( ammo.shot ) {
+            info.emplace_back( "AMMO", space + _( "Pellet count: " ), "<num>", iteminfo::no_flags,
+                               ammo.shot->count );
+            info.emplace_back( "AMMO", space + _( "Pattern half-angle: " ), _( "<num> degrees" ),
+                               iteminfo::is_decimal, ammo.shot->half_angle );
         }
         if( parts->test( iteminfo_parts::AMMO_DAMAGE_RECOIL ) && ammo.recoil != 0 ) {
             info.emplace_back( "AMMO", _( "Recoil: " ), "",
@@ -2374,6 +2308,11 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
             info.emplace_back( "GUN", "sum_of_damage", _( " = <num>" ),
                                iteminfo::no_newline | iteminfo::no_name,
                                displayed_damage );
+            if( curammo != nullptr && curammo->ammo->shot ) {
+                info.emplace_back( "GUN", "x", "",
+                                   iteminfo::no_flags,
+                                   curammo->ammo->shot->count );
+            }
 
             if( ench_damage_bonus != 0 ) {
                 info.emplace_back( "GUN", "ench_damage", _( " (enchanted: <num>)" ),
@@ -2658,8 +2597,25 @@ void item::gun_info( const item *mod, std::vector<iteminfo> &info, const iteminf
 
     if( parts->test( iteminfo_parts::GUN_AIMING_STATS ) ) {
         insert_separation_line( info );
-        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>", iteminfo::no_flags,
-                           ranged::aim_per_move( you, *mod, MAX_RECOIL ) );
+        int final_aim = ranged::aim_per_move( you, *mod, MAX_RECOIL );
+        double add = you.bonus_from_enchantments( 0, enchant_vals::mod::RANGED_AIM_SPEED, false );
+        double mul = ( you.bonus_from_enchantments( 1000, enchant_vals::mod::RANGED_AIM_SPEED,
+                       false ) - add ) / 1000.0;
+        int base_aim = final_aim;
+        if( 1.0 + mul != 0.0 ) {
+            base_aim = std::round( ( final_aim - add ) / ( 1.0 + mul ) );
+        }
+        int ench_aim_bonus = final_aim - base_aim;
+        info.emplace_back( "GUN", _( "<bold>Base aim speed</bold>: " ), "<num>",
+                           ( ench_aim_bonus != 0 ) ? iteminfo::no_newline : iteminfo::no_flags,
+                           final_aim );
+        if( ench_aim_bonus != 0 ) {
+            info.emplace_back( "GUN", "ench_aim_speed", _( " (enchanted: <num>)" ),
+                               iteminfo::no_name | iteminfo::show_plus,
+                               ench_aim_bonus );
+            info.back().bNewLine = true;
+        }
+
         for( const ranged::aim_type &type : ranged::get_aim_types( you, *mod ) ) {
             // Nameless aim levels don't get an entry.
             if( type.name.empty() ) {
@@ -3772,6 +3728,22 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
         if( !all_techniques.empty() ) {
             const std::vector<matec_id> all_tec_sorted = sorted_lex( all_techniques );
             insert_separation_line( info );
+            if( has_flag( flag_BLOCK_WHILE_WORN ) ) {
+                matec_id tid;
+                if( has_technique( matec_id( "WBLOCK_3" ) ) ) {
+                    tid = matec_id( "WBLOCK_3" );
+                } else if( has_technique( matec_id( "WBLOCK_2" ) ) ) {
+                    tid = matec_id( "WBLOCK_2" );
+                } else if( has_technique( matec_id( "WBLOCK_1" ) ) ) {
+                    tid = matec_id( "WBLOCK_1" );
+                }
+                if( tid ) {
+                    info.emplace_back( "DESCRIPTION", _( "<bold>Techniques when worn</bold>: " ) +
+                                       string_format( "<stat>%s</stat>: <info>%s</info>", _( tid.obj().name ),
+                                                      _( tid.obj().description ) ) );
+                }
+
+            }
             info.emplace_back( "DESCRIPTION", _( "<bold>Techniques when wielded</bold>: " ) +
             enumerate_as_string( all_tec_sorted.begin(), all_tec_sorted.end(), []( const matec_id & tid ) {
                 return string_format( "<stat>%s</stat>: <info>%s</info>", _( tid.obj().name ),
@@ -4876,7 +4848,7 @@ void item::handle_pickup_ownership( Character &c )
             std::vector<npc *> witnesses;
             for( npc &elem : g->all_npcs() ) {
                 // If they already want to murder you, no point in confronting you about theft
-                if( rl_dist( elem.pos(), you.pos() ) < MAX_VIEW_DISTANCE && elem.get_faction() &&
+                if( rl_dist( elem.pos(), you.pos() ) < g_max_view_distance && elem.get_faction() &&
                     is_owned_by( elem ) && elem.sees( you.pos() ) && !elem.guaranteed_hostile() ) {
                     elem.say( "<witnessed_thievery>", 7 );
                     npc *npc_to_add = &elem;
@@ -5010,7 +4982,8 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
                                  engine_displacement() / 100.0f );
 
     } else if( is_wheel() && type->wheel->diameter > 0 ) {
-        vehtext = string_format( pgettext( "vehicle adjective", "%d\" " ), type->wheel->diameter );
+        vehtext = string_format( pgettext( "vehicle adjective", "%s " ),
+                                 wheel_dimensions::format_for_display( type->wheel->diameter ).c_str() );
     }
 
     std::string burntext;
@@ -5023,7 +4996,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     }
 
     std::string maintext;
-    if( is_corpse() || item_vars.contains( "name" ) ) {
+    if( is_corpse() || item_vars_.contains( "name" ) ) {
         maintext = type_name( quantity );
     } else if( is_craft() ) {
         maintext = string_format( _( "in progress %s" ), craft_data_->making->result_name() );
@@ -5238,7 +5211,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         ret = utf8_truncate( ret, truncate + truncate_override );
     }
 
-    if( item_vars.contains( "item_note" ) ) {
+    if( item_vars_.contains( "item_note" ) ) {
         //~ %s is an item name. This style is used to denote items with notes.
         return string_format( _( "*%s*" ), ret );
     } else {
@@ -5370,7 +5343,7 @@ std::string item::display_name( unsigned int quantity ) const
             get_var( "reveal_map_center_omt", you.global_omt_location().raw() );
         tripoint_abs_sm map_pos =
             project_to<coords::sm>( tripoint_abs_omt( map_pos_omt ) );
-        const city *c = overmap_buffer.closest_city( map_pos ).city;
+        const city *c = get_overmapbuffer( you.get_dimension() ).closest_city( map_pos ).city;
         if( c != nullptr ) {
             name = string_format( "%s %s", c->name, name );
         }
@@ -6663,8 +6636,7 @@ int item::get_encumber_when_containing(
         default:
             break;
     }
-
-    encumber += static_cast<int>( std::ceil( get_clothing_mod_val( clothing_mod_type_encumbrance ) ) );
+    encumber += std::lround( get_clothing_mod_val( clothing_mod_type_encumbrance ) );
 
     return encumber;
 }
@@ -7307,7 +7279,7 @@ bool item::only_made_of( const std::set<material_id> &mat_idents ) const
 bool item::made_of( const material_id &mat_ident ) const
 {
     const std::vector<material_id> &materials = made_of();
-    return std::ranges::find( materials, mat_ident ) != materials.end();
+    return std::ranges::contains( materials, mat_ident );
 }
 
 bool item::contents_made_of( const phase_id phase ) const
@@ -7793,6 +7765,32 @@ bool item::is_craft() const
     return craft_data_ != nullptr;
 }
 
+bool item::is_pocket_dimension_key() const
+{
+    return pocket_dim.has_value();
+}
+
+item::pocket_dimension_data *item::get_pocket_dimension_data()
+{
+    if( pocket_dim.has_value() ) {
+        return &pocket_dim.value();
+    }
+    return nullptr;
+}
+
+const item::pocket_dimension_data *item::get_pocket_dimension_data() const
+{
+    if( pocket_dim.has_value() ) {
+        return &pocket_dim.value();
+    }
+    return nullptr;
+}
+
+void item::set_pocket_dimension_data( pocket_dimension_data &&data )
+{
+    pocket_dim = std::move( data );
+}
+
 bool item::is_funnel_container( units::volume &bigger_than ) const
 {
     if( !is_bucket() && !is_watertight_container() ) {
@@ -8223,7 +8221,7 @@ int item::gun_range( bool with_ammo ) const
         }
     }
     ret += get_range_bonus();
-    return std::min( std::max( 0, ret ), RANGE_HARD_CAP );
+    return std::min( std::max( 0, ret ), g_max_view_distance );
 }
 
 int item::gun_range( const player *p ) const
@@ -8881,12 +8879,13 @@ void item::gun_cycle_mode()
     const gun_mode_id cur = gun_get_mode_id();
     const std::map<gun_mode_id, gun_mode> modes = gun_all_modes();
 
-    for( auto iter = modes.begin(); iter != modes.end(); ++iter ) {
-        if( iter->first == cur ) {
-            if( std::next( iter ) == modes.end() ) {
-                break;
-            }
-            gun_set_mode( std::next( iter )->first );
+    const auto current_mode = std::ranges::find( modes, cur, []( const auto & pair ) {
+        return pair.first;
+    } );
+    if( current_mode != modes.end() ) {
+        const auto next_mode = std::next( current_mode );
+        if( next_mode != modes.end() ) {
+            gun_set_mode( next_mode->first );
             return;
         }
     }
@@ -9613,6 +9612,23 @@ int item::get_counter() const
     return item_counter;
 }
 
+bool item::has_explicit_turn_timer() const
+{
+    return is_active() && item_counter > 0 && type->countdown_interval > 0;
+}
+
+void item::advance_timer( int n )
+{
+    if( !has_explicit_turn_timer() || n <= 0 ) {
+        return;
+    }
+    // Decrement counter, clamping at 0.  The countdown_action is deliberately
+    // NOT fired here — it will trigger on the next normal process_items() call
+    // when the submap re-enters the reality bubble, avoiding side-effects in
+    // out-of-bubble context (explosions, spawns, etc.).
+    item_counter = std::max( 0, item_counter - n );
+}
+
 void item::set_charges( int value )
 {
     if( value < 0 ) {
@@ -9837,6 +9853,15 @@ detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoin
                                         temperature_flag temperature,
                                         const weather_manager &weather )
 {
+    // Guard against null or invalid items that can survive save/load cycles
+    // during dimension transitions (e.g. zombie items from deferred arena cleanup).
+    if( !self || !self->type || self->type == nullitem() ) {
+        if( self ) {
+            debugmsg( "actualize_rot: skipping item with %s type at %s",
+                      self->type ? "null-type" : "null", pnt.to_string() );
+        }
+        return std::move( self );
+    }
     if( self->goes_bad() ) {
         return process_rot( std::move( self ), false, pnt, nullptr, temperature, weather );
     } else if( self->type->container && self->type->container->preserves ) {
@@ -9845,6 +9870,9 @@ detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoin
     } else if( self->type->container && self->type->container->seals ) {
         // Items inside rot but do not vanish as the container seals them in.
         self->contents.remove_top_items_with( [&pnt, &temperature, &weather]( detached_ptr<item> &&it ) {
+            if( !it || !it->type || it->type == nullitem() ) {
+                return std::move( it );
+            }
             if( it->goes_bad() ) {
                 it = process_rot( std::move( it ), true, pnt, nullptr, temperature, weather );
             }
@@ -9879,8 +9907,8 @@ bool item_compare_by_charges( const item &left, const item &right )
 static const std::string USED_BY_IDS( "USED_BY_IDS" );
 bool item::already_used_by_player( const player &p ) const
 {
-    const auto it = item_vars.find( USED_BY_IDS );
-    if( it == item_vars.end() ) {
+    const auto it = item_vars_.find( USED_BY_IDS );
+    if( it == item_vars_.end() ) {
         return false;
     }
     // USED_BY_IDS always starts *and* ends with a ';', the search string
@@ -9892,7 +9920,7 @@ bool item::already_used_by_player( const player &p ) const
 
 void item::mark_as_used_by_player( const player &p )
 {
-    std::string &used_by_ids = item_vars[ USED_BY_IDS ];
+    std::string &used_by_ids = item_vars_[ USED_BY_IDS ];
     if( used_by_ids.empty() ) {
         // *always* start with a ';'
         used_by_ids = ";";
@@ -10929,7 +10957,7 @@ bool item::has_effect_when_wielded( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_wielded;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_worn( art_effect_passive effect ) const
@@ -10938,7 +10966,7 @@ bool item::has_effect_when_worn( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_worn;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_carried( art_effect_passive effect ) const
@@ -10947,7 +10975,7 @@ bool item::has_effect_when_carried( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ec = type->artifact->effects_carried;
-    if( std::ranges::find( ec, effect ) != ec.end() ) {
+    if( std::ranges::contains( ec, effect ) ) {
         return true;
     }
     for( const item *i : contents.all_items_top() ) {
@@ -11033,9 +11061,9 @@ bool item::is_reloadable() const
 
 std::string item::type_name( unsigned int quantity ) const
 {
-    const auto iter = item_vars.find( "name" );
+    const auto iter = item_vars_.find( "name" );
     std::string ret_name;
-    if( iter != item_vars.end() ) {
+    if( iter != item_vars_.end() ) {
         return iter->second;
     } else {
         ret_name = type->nname( quantity );
@@ -11429,12 +11457,11 @@ std::vector<detached_ptr<item>> item::remove_components()
 
 detached_ptr<item> item::remove_component( item &it )
 {
-    for( auto iter = components.begin(); iter != components.end(); iter++ ) {
-        if( *iter == &it ) {
-            detached_ptr<item> ret;
-            components.erase( iter, &ret );
-            return ret;
-        }
+    const auto iter = std::ranges::find( components, &it );
+    if( iter != components.end() ) {
+        detached_ptr<item> ret;
+        components.erase( iter, &ret );
+        return ret;
     }
     debugmsg( "Could not find component for removal" );
     return detached_ptr<item>();

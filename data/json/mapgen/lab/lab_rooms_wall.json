@@ -172,21 +172,21 @@
     }
   },
   {
-    "//": "7x7sw bionic vault",
+    "//": "7x7nw bionic vault",
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "lab_room_7x7_wall_sw",
+    "nested_mapgen_id": "lab_room_7x7_wall_nw",
     "object": {
       "mapgensize": [ 8, 8 ],
       "rows": [
+        "|-------",
         "|#######",
         "--MMMMM#",
-        ".6MrrrM#",
-        "..L,,,M#",
         "..MrrrM#",
+        "..L,,,M#",
+        ".6MrrrM#",
         "--MMMMM#",
-        "|#######",
-        "|-------"
+        "|#######"
       ],
       "palettes": [ "lab_palette", "lab_loot_bionic_vault" ],
       "terrain": { "M": "t_wall_metal" },

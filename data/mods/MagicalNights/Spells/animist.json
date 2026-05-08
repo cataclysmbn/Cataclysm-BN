@@ -13,7 +13,7 @@
     "base_casting_time": 400,
     "casting_time_increment": -10,
     "final_casting_time": 250,
-    "base_energy_cost": 100,
+    "base_energy_cost": 1000,
     "energy_source": "MANA",
     "spell_class": "ANIMIST",
     "difficulty": 1,
@@ -22,9 +22,9 @@
     "max_range": 23,
     "range_increment": 1.5,
     "//": "duration is in moves, aka 100ths of a second",
-    "min_duration": 12000,
-    "max_duration": 36000,
-    "duration_increment": 800
+    "min_duration": 120000,
+    "max_duration": 360000,
+    "duration_increment": 8000
   },
   {
     "id": "holy_blade",

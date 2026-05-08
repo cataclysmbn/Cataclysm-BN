@@ -215,9 +215,9 @@
       "palettes": [ "speedway_palette" ],
       "terrain": { "!": "t_guardrail" },
       "place_vehicles": [
-        { "vehicle": "car_sports", "x": 91, "y": 117, "rotation": 0, "chance": 100 },
-        { "vehicle": "car_sports", "x": 91, "y": [ 125, 126 ], "rotation": 0, "chance": 100 },
-        { "vehicle": "car_sports", "x": 91, "y": 134, "rotation": 0, "chance": 100 }
+        { "vehicle": "formula1_car", "x": 91, "y": 117, "rotation": 0, "chance": 100 },
+        { "vehicle": "formula1_car", "x": 91, "y": [ 125, 126 ], "rotation": 0, "chance": 100 },
+        { "vehicle": "formula1_car", "x": 91, "y": 134, "rotation": 0, "chance": 100 }
       ]
     }
   },

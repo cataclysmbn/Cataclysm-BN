@@ -1,0 +1,586 @@
+[
+  {
+    "type": "snippet",
+    "category": "note",
+    "text": [
+      { "id": "note_arcana_1", "text": "\"The fucking time dogs don't like the crystal machine this'll show em\"" },
+      {
+        "id": "note_arcana_2",
+        "text": "\"Saw this chick with horns, just walking around in the fucking fungus.  Playing a flute like the goddamn pied piper.\""
+      },
+      {
+        "id": "note_arcana_3",
+        "text": "\"all these demons from their many hells, there is an ORDER to it, i KNOW there is\""
+      },
+      { "id": "note_arcana_4", "text": "\"Thanks for the magic spear, jackass\"" },
+      {
+        "id": "note_arcana_5",
+        "text": "\"Hey, this isn't fair!  I was only in the cult for the free robes and after-ritual donuts!  I didn't sign up for ANY of this!\""
+      },
+      {
+        "id": "note_arcana_6",
+        "text": "\"I never considered myself one of religion-- yet the lightning from my hands and my Many-Tendriled Thralls compel me to believe.\""
+      },
+      { "id": "note_arcana_7", "text": "\"The portals can be sealed, I'm sure of it!  There has to be a way…\"" },
+      {
+        "id": "note_arcana_8",
+        "text": "\"this has gotta be a joke.  alien monsters, sure.  magical essence?  pssh.  probably just a sick prank\""
+      },
+      {
+        "id": "note_arcana_9",
+        "text": "\"Dear Roger, Chappy, Allison and Tom, the cultists that showed up frantically on my doorstep and are currently using my basement for your ritual-- I hope you like molotovs.\""
+      },
+      {
+        "id": "note_arcana_10",
+        "text": "\"they are watching, they don't need to be a part of this world to fuck with us\""
+      },
+      {
+        "id": "note_arcana_11",
+        "text": "\"Blood spills from my athame.  It is his blood.  Is he reborn, revitalized through my practices?  Can I ever repay him for his sacrifice?\""
+      },
+      { "id": "note_arcana_12", "text": "\"This is NOT A REAL CHURCH\"" },
+      {
+        "id": "note_arcana_13",
+        "text": "\"alchemy is boring if you aren't taste-testing your potions, to be honest\""
+      },
+      { "id": "note_arcana_14", "text": "\"Ah, yes… I shall burn this smoke into smaller, dull bits of smoke!\"" },
+      { "id": "note_arcana_15", "text": "\"do not bbuurn hhiss rrelliics\"" },
+      { "id": "note_arcana_16", "text": "\"funny paper did a thing!  feeling great, but everything is tree.\"" }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "many_years_old_news",
+    "text": [
+      {
+        "id": "many_years_old_news_arcana_1",
+        "text": "RURAL SLAYINGS CONTINUE: Police are looking into the latest in a series of attacks on rural religious communities, and have announced a suspected connection between attacks previously thought unrelated.  \"Rural churches, small-town mosques, even neo-pagan gatherings, all of the attacks show similar patterns.\" says a local Police Chief."
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "years_old_news",
+    "text": [
+      {
+        "id": "years_old_news_arcana_1",
+        "text": "GHOST TOWN BLOODBATH - VIGILANTES SUSPECTED: State Police have uncovered the remains of a clash between a suspected cult and a local gang, in a former Appalachian mining town.  \"We first suspected that it was just a drug ring in the wrong place at the wrong time.\" says the Deputy Superintendent.  \"But there are definitely signs that someone else got involved as well, and destroyed a lot of evidence afterward.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "one_year_old_news",
+    "text": [
+      {
+        "id": "one_year_old_news_arcana_1",
+        "text": "STRANGE DREAMS CAUSED BY MASS PANIC: Locals across numerous small-town communities have reported \"visions\" and disturbing dreams over a three-night period last week.  Those interviewed consistently described floating buildings, occult activity, and demonic figures one affected pastor described as \"seraphic\".  Psychologists have attributed the wave of recurring dreams to mass panic, citing initial reports being confined to a single community before being reported elsewhere the following day."
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_grove",
+    "text": [
+      { "id": "note_grove_arcana_1", "text": "\"We have seen the other side.  We must master the potential it affords us.\"" },
+      { "id": "note_grove_arcana_2", "text": "\"They are not yet ready.  But their time will come.\"" },
+      {
+        "id": "note_grove_arcana_3",
+        "text": "\"Blood, oath, and flame.  They will not see the truth until it is too late.\""
+      },
+      { "id": "note_grove_arcana_4", "text": "\"The ritual went awry.  It won't be safe to stay here.\"" },
+      {
+        "id": "note_grove_arcana_5",
+        "text": "\"No sign of them.  Must've abandoned the place and left it to rot.  But why?\""
+      },
+      {
+        "id": "note_grove_arcana_6",
+        "text": "\"They've been here, recently.  Didn't think there was anything left for the sanguinists to pilfer.\""
+      },
+      {
+        "id": "note_grove_arcana_7",
+        "text": "\"Some sort of upheaval where the old ritual grounds used to be.  Can't tell if this happened during Zero Day or before.\""
+      },
+      { "id": "note_grove_arcana_8", "text": "\"Did they predict this?  Is that why they left?\"" }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_sanguine",
+    "text": [
+      {
+        "id": "note_sanguine_arcana_1",
+        "text": "\"The witch-hunters think they can stop this.  Think they can stop us.  The barrier is already crumbling, they can't undo this.\""
+      },
+      {
+        "id": "note_sanguine_arcana_2",
+        "text": "\"A terrible calamity has been foreseen.  We will outlast it, adapt.  We shall rule over this new world, above the weak and undeserving.\""
+      },
+      { "id": "note_sanguine_arcana_3", "text": "\"The summoning is almost complete.  We shall behold true power!\"" },
+      {
+        "id": "note_sanguine_arcana_4",
+        "text": "\"The elder magi disagree on what to do after the ritual's completion.  They should save the bickering for after we've cut the heart out from our prize.\""
+      },
+      {
+        "id": "note_sanguine_arcana_5",
+        "text": "\"Gods above and below, what did those maniacs bring forth?  What have they DONE?\""
+      },
+      {
+        "id": "note_sanguine_arcana_6",
+        "text": "\"The other magi were right, to complete the Sacrament for this purpose was foolish.  This place is lost to us.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_chalice",
+    "text": [
+      {
+        "id": "note_chalice_arcana_1",
+        "text": "\"Those fools actually believe a bunch of blood mages are causing this?  To tear down the barrier between worlds?  I don't know what is causing this, but the others are only exacerbating the problem.\""
+      },
+      {
+        "id": "note_chalice_arcana_2",
+        "text": "\"We shall bring forth our master.  The old gods shall be swept away, as we cast aside the veil of reality…\""
+      },
+      {
+        "id": "note_chalice_arcana_3",
+        "text": "\"Take heart, those faithful to the Shrouded King.  As a sign of truce, the Sanguine Order has brought to us one of the relics we once thought lost.  At last, our communion with Him shall be restored.\""
+      },
+      {
+        "id": "note_chalice_arcana_4",
+        "text": "\"The ritual blade was tainted by dark magic, it drew forth something else.  Not our master, not He From Beyond The Veil.\""
+      },
+      {
+        "id": "note_chalice_arcana_5",
+        "text": "\"That THING is not our master.  Traitorous servant of the gods, six-winged spirit from the Beyond!  It's laughing at me in the back of my mind, mocking me for hiding here while the others fought and died…\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_flame",
+    "text": [
+      {
+        "id": "note_flame_arcana_1",
+        "text": "\"By cross and hammer, crescent and gate.  Of many faiths, united in purpose, against all threats from the Beyond.\""
+      },
+      {
+        "id": "note_flame_arcana_2",
+        "text": "\"We fear the worst may soon happen.  But so long as the Sun shines upon the Earth, we will fight back.\""
+      },
+      {
+        "id": "note_flame_arcana_3",
+        "text": "\"Earlier this morning, we couldn't use our masks.  Every direction we looked through them was just a blinding light, like The Veil itself was torn open.\""
+      },
+      {
+        "id": "note_flame_arcana_4",
+        "text": "\"I think they might be right.  The Sanguine Order didn't cause this.  Something else wore down the barrier between worlds, and they merely exploited that breach.\""
+      },
+      {
+        "id": "note_flame_arcana_5",
+        "text": "\"We set up a blade ward to seal off the lower level.  This place is no longer safe, something …something evil subverted our only refuge.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_sanguine_tenet",
+    "text": [
+      {
+        "id": "note_sanguine_tenet_arcana_1",
+        "text": "\"Every day is a struggle, a constant fight to survive.  Or it can be a struggle to thrive. The weak and undeserving choose the former.  We choose the latter.  Always seek to gain, to improve, better yourself.\""
+      },
+      {
+        "id": "note_sanguine_tenet_arcana_2",
+        "text": "\"The power from Beyond is but one resource to use to strengthen oneself.  So too is any power beyond our own means.  Commit nothing, offer neither oath nor contract.  No god, no demon, no spirit can be trusted with power over you.  No holy symbol or icon shall hold sway over those who follow The Path.\""
+      },
+      {
+        "id": "note_sanguine_tenet_arcana_3",
+        "text": "\"Sometimes when following The Path to Power, the road narrows.  No longer can you walk side by side with your kindred.  If you rush ahead, you risk being stabbed in the back.  If you allow the others forward, they may leave you behind before the road widens once again.  Ask yourself, can you trust those you walk beside, or should you push them off the Path?\""
+      },
+      {
+        "id": "note_sanguine_tenet_arcana_4",
+        "text": "\"It is a part of The Struggle to adapt and thrive.  Influence both earthly and from Beyond present challenges to be overcome.  Mankind is not superior, but it is in our nature to make ourselves so.  If this means becoming something other than human, so be it.  If this means shunning such influence, so be it.  These powers are but another tool at our disposal.\""
+      },
+      {
+        "id": "note_sanguine_tenet_arcana_5",
+        "text": "\"Power demands sacrifice and struggle, and self-sacrifice is just one method.  The weak and undeserving, bested and proven inferior, are another source of sacrifice.  Even those of great power, if laid low, may serve to better the victor.  Let the blood flow and empower those who have earned it.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_chalice_tenet",
+    "text": [
+      {
+        "id": "note_chalice_tenet_arcana_1",
+        "text": "\"To gaze into the Beyond is to see the potential of a thousand worlds, and learn hidden truths.  But be cautious in these acts.  Let every wound in The Veil be a necessary one, or else leave no mark.\""
+      },
+      {
+        "id": "note_chalice_tenet_arcana_2",
+        "text": "\"A wound that is opened cannot truly be reversed, only mended.  Likewise spilt blood can only be replenished.  The wound in The Veil can be mended by steady hand, but never again shall it be the same as before.  It is our duty not to revert what has been done, but to ensure we will endure.\""
+      },
+      {
+        "id": "note_chalice_tenet_arcana_3",
+        "text": "\"Our lives, our souls, to He From Beyond The Veil.  We shall work with those who are ignorant if we must, against them if it becomes necessary.  And if we must, we shall sweep away the old gods and old ways, if that is what it takes to ensure His will is carried out.\""
+      },
+      {
+        "id": "note_chalice_tenet_arcana_4",
+        "text": "\"Through our sacrifices, we burn away what is undesirable in ourselves, and cultivate what is good.  So too shall we seek that in our other pursuits.  Those who seek to destroy evil are a part of this cycle, but their role is to leave the way clear, for those who will foster good in what remains.\""
+      },
+      {
+        "id": "note_chalice_tenet_arcana_5",
+        "text": "\"He From Beyond The Veil carries the mantle of dark yet essential purpose.  That He has answered our calls confirms the nature of our purpose.  No matter the cost, no matter what we must do, for the strength and safety of this world.  And in turn, of worlds beyond.\""
+      },
+      {
+        "id": "note_chalice_tenet_arcana_6",
+        "text": "\"While we seek an understanding of the Beyond, do not forget our humanity.  Even as we are strengthened by what we learn, we are not to subvert the natural order, whether of this world or of those beyond.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_flame_tenet",
+    "text": [
+      {
+        "id": "note_flame_tenet_arcana_1",
+        "text": "\"So long as the Sun shines upon the Earth, we must never give up.  Never allow humanity to slip into extinction.\""
+      },
+      {
+        "id": "note_flame_tenet_arcana_2",
+        "text": "\"Cast aside your schisms and strife. It has ended countless groups, but it shall not end us.  We are brothers and sisters, and we shall respect the gods in equal measure, disparate though they may be.\""
+      },
+      {
+        "id": "note_flame_tenet_arcana_3",
+        "text": "\"All powers from beyond, and all things worked from it, are a potential threat until clearly understood.  Observe in any manner that is safe, but err on the side of caution first and foremost.  If determining its nature cannot be done safely, destroy it if you must.\""
+      },
+      {
+        "id": "note_flame_tenet_arcana_4",
+        "text": "\"Suffer no cowardice, no brigandry, no lust for vengeance.  We take from others what is too dangerous to leave in their hands, and inflict no further depredation upon them unless they are a threat to humanity itself.  If they are, be they blood mage or bandit, offer no mercy and expect none in return.\""
+      },
+      {
+        "id": "note_flame_tenet_arcana_5",
+        "text": "\"Return the powers from Beyond to their rightful resting place, that no further damage to The Veil may occur.  Any magic we use is directed towards this end.  Do not be tempted to see what we destroy as a means of acquiring more power.  That leads to dangerous thoughts and an unholy cycle.\""
+      },
+      {
+        "id": "note_flame_tenet_arcana_6",
+        "text": "\"Powers from Beyond seek to bring the End of All, and it is our duty to prevent this.  Offer no intrusion upon their domain, and do not willfully consort with their power.  Few can even be reasoned with.  Any otherworldly monster must be returned to its true domain, living or dead.\""
+      },
+      {
+        "id": "note_flame_tenet_arcana_7",
+        "text": "\"Corruptive powers have inflicted grave havoc on the bodies and minds of mankind.  Their ways are many.  Some can be prevented, others are unavoidable without due caution.  Hold no malice against one corrupted by the Beyond, for the consequences are their own punishment.  And not all have entered into it willingly.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_sanguine_hint",
+    "text": [
+      {
+        "id": "note_sanguine_hint_arcana_1",
+        "text": "\"The Path to Power is one of change and adaptation.  We have learned that the influence of the Beyond can work changes upon the human form, but what we've seen so far does not seem useful for our goals.  Some of the others remain convinced that this is merely a matter of finding the right kind of influence to gain mastery over.\""
+      },
+      {
+        "id": "note_sanguine_hint_arcana_2",
+        "text": "\"The others have been gathering summoners' tomes, along with some sort of relic one of the shrikes found.  Preparing a great work of some sort, some sort of calling.  Within the old ruins, where water gathers in the circle, the magi will test the limits of human mastery over the Beyond.\""
+      },
+      {
+        "id": "note_sanguine_hint_arcana_3",
+        "text": "\"Where the waters run red with blood, our order prepares for mastery over itself.  Some of our magi seek to master the mind and soul, while others seek mastery of the body.  The Sanguine Shrikes shall provide the tiebreaking vote.\""
+      },
+      {
+        "id": "note_sanguine_hint_arcana_4",
+        "text": "\"Blood of monsters, life of the eternal.  A sign of silver, a call to the Beyond.  A holy relic laid low, bent to serve our needs.  Among the waters, the blood shall flow and the worthy shall be tested.\""
+      },
+      {
+        "id": "note_sanguine_hint_arcana_5",
+        "text": "\"We lost our main base of operations thanks to the magi of the Secta Per Aspera.  Whatever they called up for their little transhumanist experiment, it tore most of them asunder.  Should've just bled the damn thing dry like the others suggested.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_chalice_hint",
+    "text": [
+      {
+        "id": "note_chalice_hint_arcana_1",
+        "text": "\"We have been struggling to recover the sacred weapons ever since the hunters broke their peace with us.  We still do not know what form the coming darkness will take, but we know we will require the relics be returned our high priests.  The ritual weapons offer mastery over the Veil itself, and the means to salve its wounds.\""
+      },
+      {
+        "id": "note_chalice_hint_arcana_2",
+        "text": "\"A sign from the stars led us to sacred ground.  From above, to sunder sky and stone, a window into the Beyond.  Where the earth is marred by a fallen star, where stones defy gravity, fourteen of our faithful did commune with He From Beyond The Veil.  Half their number gave their lives to Him, so that seven high priests would bear seven holy weapons.  Now, we know of only one blade not yet lost to us.\""
+      },
+      {
+        "id": "note_chalice_hint_arcana_3",
+        "text": "\"Though we are lost, we are not yet broken.  Though this world teeters on the edge, we hold on to hope.  Where the stars mark the earth, flying stones bind the evil that took our greatest hope from us.  We pray to He From Beyond The Veil, that we may live to reclaim it and guide this world back into the light.\""
+      },
+      {
+        "id": "note_chalice_hint_arcana_4",
+        "text": "\"We have lost so many, countless faithful who served the Shrouded King to the end.  There are others out there, awaiting a sign of hope for this world.  But I fear the fate of this world is to be dragged into the abyss Beyond, if we cannot recover any of His relics.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_flame_hint",
+    "text": [
+      {
+        "id": "note_flame_hint_arcana_5",
+        "text": "\"We have been attempting to track the movements of the Sanguine Order in this area for months.  Stealing away with dangerous texts on summoning, and stealing holy relics of various sorts.  We're still no closer to fully understanding what their long-term plan is, nor where their most important hideouts may be.\""
+      },
+      {
+        "id": "note_flame_hint_arcana_6",
+        "text": "\"We've sought to broker a truce with the Keepers, having recently learned that the Sanguine Order acquired one of the Keepers' relics.  We don't yet know what they intend to do with it nor where it is, but we know that the sanguinist sect involved has dabbled in summoning and other acts that weaken the Veil further.  Given those relics were designed for manipulating cracks in the Veil, having it fall into their hands endangers us all.\""
+      },
+      {
+        "id": "note_flame_hint_arcana_7",
+        "text": "\"The Purifiers, working with those out in the cities, have confirmed that the worst has already come to pass.  As far as they can tell, none of the other arcane orders are connected to the deteriorating situation.  Something military, maybe in the research facilities a handful of our associates have been trying to get information on, we don't really know.  We're effectively flying blind here.\""
+      },
+      {
+        "id": "note_flame_hint_arcana_8",
+        "text": "\"The Sanctum of St. John has fallen to some unknown anomaly, and the cities are overrun with abominations.  If we can find another hunting party and secure a new sanctum, we might stand a chance.  One of the others mentioned a rumor of outsiders surviving in a refugee camp, who a few other hunters have made contact with.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_starry_correspondence",
+    "text": [
+      {
+        "id": "note_starry_correspondence_arcana_1",
+        "text": "\"Brother, I hope this missive finds you in good health.  The gates are open.  But be warned, one of our own has been led astray.  They may endanger our work.\""
+      },
+      {
+        "id": "note_starry_correspondence_arcana_2",
+        "text": "\"I am hopeful that this letter is received without issue.  I assure you that we are in no danger.  They grasp at shadows, blind to the truth.  We have greater threats to be vigilant about.\""
+      },
+      {
+        "id": "note_starry_correspondence_arcana_3",
+        "text": "\"May the stars guide this missive to you swiftly, brother.  The path is clear, but you are correct in that we have greater things to worry about.  The puppets of Rome are aware of our existence.  We cannot be certain what allies they may still be able to send against us.\""
+      },
+      {
+        "id": "note_starry_correspondence_arcana_4",
+        "text": "\"Their threats are no longer of consequence.  The time has come.  Jupiter shall devour his moons, and Mars shall be anointed by eternal flame.  Be it the servants of the blind world, the old gods, even the hunters in the darkness, we live even in death.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "note_soa_journal",
+    "text": [
+      {
+        "id": "note_soa_journal_arcana_1",
+        "text": "\"Initial reports seem to be wildly off the mark.  A lot more activity for a town this size, further recon will be required.\""
+      },
+      {
+        "id": "note_soa_journal_arcana_2",
+        "text": "\"Frequent military and civilian traffic, lots of people coming and going.  Something strange is definitely afoot, it's hard to discern if it's within our area of expertise or not.  Continue monitoring.\""
+      },
+      {
+        "id": "note_soa_journal_arcana_3",
+        "text": "\"Whatever they're up to, they aren't doing it out in the open.  Either there's C&C set up in the heart of town, or it's hidden some other way.  Observation will continue, but keep your heads down.\""
+      },
+      {
+        "id": "note_soa_journal_arcana_4",
+        "text": "\"Anomalous activity confirmed.  Latest shipments coming in differ from normal deliveries, and security is being tightened.  Maintain discretion.\""
+      },
+      {
+        "id": "note_soa_journal_arcana_5",
+        "text": "\"Surface has sustained heavy damage, unable to determine if enemy action or sabotage.  Recon reported a possible secondary entrance to their secured area, but the bombing might've collapsed it.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "radio_archive",
+    "text": [
+      {
+        "id": "radio_archive_arcana_1",
+        "text": "kshhhsk…. we're live!  To anyone listening, we've hooked up to zchzzzzch- radio tower in central ksshhsk…  gods dammit, work already!  If you're out there, I pray you can hear ..ksshhsk… hold out a little longer.  St. John is compromised, rendezvous at sanctum in zpzzzzpzz-"
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "schizo_delusion_paranoid",
+    "text": [
+      {
+        "id": "schizo_delusion_paranoid_arcana_1",
+        "text": "You have a faint sense that there are things out there far worse than the zombies."
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "arcane_lab_note_surface",
+    "text": [
+      {
+        "id": "arcane_lab_note_surface_1",
+        "text": "\"Security update: A recent security breach has been contained, an unidentified individual managed to enter the facility and nearly bypassed Sector One's automated security before being detained.  Sector Three security personnel will be investigating this incident to determine how they so easily got past Surface security.\""
+      },
+      {
+        "id": "arcane_lab_note_surface_2",
+        "text": "\"Security update: Continue monitoring the perimeter closely, last incident has proven this facility is potentially a target.  Remember to provide status updates hourly, as well as before and after shift rotation.\""
+      },
+      {
+        "id": "arcane_lab_note_surface_3",
+        "text": "\"Security Update: Emergency lockdown in effect.  Unidentified biohazard and structural failures detected in Sector Three.  Surface personnel are to assist Sector One and Sector Two personnel with evacuation to the surface, then to evacuate all non-essential security personnel.  Retain only enough personnel to prevent the facility from being further compromised.\""
+      },
+      {
+        "id": "arcane_lab_note_surface_4",
+        "text": "\"Shipment Update: Supply deliveries are to be halted for the foreseeable future due to recent instability and an in-progress state of emergency declared within the surrounding area.  Non-essential personnel are given paid leave at their discretion, to maintain minimal on-site presence until further confirmation from the Research Directive network is received regarding the future delivery of essential materials.\""
+      },
+      {
+        "id": "arcane_lab_note_surface_5",
+        "text": "\"Shipment Update: A state of emergency has halted all communications with Research Directive sites within the surrounding area.  It is unknown when shipments will resume.  Critical supplies are expected to last for two months given current level of personnel present.  All personnel are now advised to remain on-site as part of a shelter in place order.  Projects in Sectors One and Two are to be put on hold until further notice, Sector Three may continue essential projects at their discretion.\""
+      },
+      {
+        "id": "arcane_lab_note_surface_6",
+        "text": "\"Military never showed up to manage evacuation or even tell us how bad things are out there.  Priority Site, my ass.  No word's gotten word out to the other facilities, no radio contact, no calls going out.  We can't keep this place running indefinitely, and we can't send everyone home.  The people downstairs don't seem to have any plans beyond staying here and continuing their research for as long as we can afford to.  But then what?\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "arcane_lab_note_sector_one",
+    "text": [
+      {
+        "id": "arcane_lab_note_sector_one_1",
+        "text": "\"Staff Update: Cafeteria staff are advised to follow the supply rotation schedule closely when shipments are being processed, and to pay attention to labels before opening any container in secondary cold storage.  Sector Two biostorage is adjacent to secondary cold storage for efficiency of refrigeration.  While the security shutters are normally kept sealed, they can be opened when workers require more space when processing shipments, and materials may end up misplaced.  If you notice Sector Two identification on any container in food storage, notify security immediately.  Do not attempt to handle the materials yourself.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_one_2",
+        "text": "\"Staff Update: Ventilation access in Sector One utilities room is to remain locked unless undergoing maintenance, and security is to be notified of any procedure that requires access to the ventilation components in Sector Two.  Due to concerns over outside wildlife potentially getting into the Sector Two server room and damaging sensitive equipment, autonomous light security has been stationed in the ventilation network for pest control purposes.  Security must be notified before maintenance of that area to allow for the devices to be safely shut down.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_one_3",
+        "text": "\"Security Update: A emergency order has been declared following deteriorating conditions in the surrounding area, with reports of on-going military operations against suspected bioanomalies and disruption of civil order.  In addition, contact with Research Directive network has been lost.  Personnel are currently advised to shelter in place at this facility until either contact is reestablished, military assets assigned to this Priority Site arrive, or until an evacuation order is declared.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_one_4",
+        "text": "\"Security Update: All personnel are to evacuate effective immediately.  Security will escort personnel in Sector Two to Sector One, then maintain on-site presence as necessary to keep the situation under control.  Take only essential medicines, identification, and any still-functional means of emergency contact.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_one_5",
+        "text": "\"We're starting to run low on food and medical supplies.  It hasn't even been a month since this started, has it?  Given the lack of contact we must've lasted longer than other facilities in the area, but the director's going to have to give the evac order sooner or later.  No one seems to know if there's much of a world left to evac to.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "arcane_lab_note_sector_two",
+    "text": [
+      {
+        "id": "arcane_lab_note_sector_two_1",
+        "text": "\"Staff Update: Reminder that access to Sector Three surgical observation room is permitted to personnel with Access Level Epsilon or higher.  Please sign in and out with the desk in Sector Two operations before entering.  Although the observation room is not part of Sector Three's high-security area, due to the sensitive nature of some procedures, and for the sake of patient confidentially, security retains full discretion to lock access to the observation room when required.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_two_2",
+        "text": "\"Staff Update: It is unknown when, or even if, shipments from the other research facilities will resume.  Given the current shelter in place order, all projects in Sector Two are to be put on hold until further notice.  Sector Three operations are allowed to continue for as long as available research materials will allow.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_two_3",
+        "text": "\"Security Update: Reminder that access to Sector Three's high-security area is permitted only for personnel of Access Level Delta or higher.  After the incident with the unknown intruder, and due to current concerns regarding systemic infiltration of the bioanomaly, suspected to have caused the current state of emergency, lethal force is in use.  Sector Three security has installed military autonomous defenses, and access is controlled by Sector Three security personnel, who are to maintain active shifts at all hours.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_two_4",
+        "text": "\"We had a breakthrough with the armament development for the new autonomous security being tested in Sector Three.  Doctor Rynden, in either a fit of genius or insanity, was able to adapt the UPS sampling those inlay weapons from Y-25 use to the mech's rift focus system.  It doesn't match the yield of those crystal-fed projectors, but it's a start.  Doesn't draw as many complaints from the Project Kairos team about distortions messing up their readings either.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_two_5",
+        "text": "\"Something happened down in Sector Three.  We had a power fluctuation, then something exploded and most systems lost power outright.  Lot of us are injured, some badly.  They're managing an evacuation of Sectors One and Two, but lockdown's tripped so we have no status on Sector Three.  We know the bioanomaly may have affected personnel here, so security is taking things very cautiously and trying to keep triaged casualties well-separated.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "arcane_lab_note_sector_three",
+    "text": [
+      {
+        "id": "arcane_lab_note_sector_three_1",
+        "text": "\"Security Update: An intruder was recently detained attempting to obtain access to Sector Two after having already slipped into Sector One undetected.  He is to be held in Sector Three subject containment cells due to the lack of a proper holding facility, to be questioned and turned over to the proper authorities pending the state of emergency being lifted.  Several items of anomalous nature were on his person and are being investigated due to possible connection with sensitive materials being handled by personnel assigned to Project Kairos.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_2",
+        "text": "\"Security Update: Additional security assets have been prepared in Sector Three in preparation for potential consequences, in response to concerns that a dimensional fatigue event may be the cause of the other facilities falling silent.  An autonomous military exosuit, designation Z-07, codename \"Strigoi\" has had its first successful test.  In the event of a lockdown incident, Z-07 is to be activated and instructed to target all anomalous or unidentified biosigns.  Sector Three personnel are advised to keep their identification with them at all times, as it contains IFF signatures necessary for Z-07 to recognize and assist still-living personnel.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_3",
+        "text": "\"Security Update: We have completely lost contact with the Research Directive network, and must assume the worst.  Project Kairos is to be given the highest development priority.  If current projections are correct, many of the affected facilities will have suffered dimensional fatigue incidents, in addition to systemic contamination by the bioanomaly.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_4",
+        "text": "\"Project Kairos Update: With essential materials coming in following approval from nearby research facilities, we project that major breakthroughs will be made within the next few months.  Information regarding teleportation research has been been sparse owing to the secrecy of other projects under the current Research Directive, but what information they have sent to us suggests that this project may prove useful depending on the outcome of current competing hypotheses.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_5",
+        "text": "\"Project Kairos Update: Further testing has lent credence to the hypothesis that spatial manipulation science may produce a sort of ripple effect affecting the surrounding area, though we lack the data to construct a model for what the long-term consequences may be.  We have also discovered that a strong electromagnetic field can interact with these \"ripples\" while they are developing, reducing their propagation if the origin point is contained in an electromagnetic bubble.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_6",
+        "text": "\"Project Kairos Update: It took a lot of red tape, but we confirmed that there's a very faint, measurable long-term effect caused by multiple instances of spatial manipulation.  A slight decrease in the energy needed for a microportal to overcome resistance and begin manifesting.  We've been able to rule out variation in atmospheric conditions and resistance changes in the machine.  Our current research indicates this may amplify the ripple effects from spatial manipulation, but electromagnetic containment allows the ripple effect to be nullified.  Further research is required before we can report our findings, but there are growing concerns that time may be of the essence.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_7",
+        "text": "\"Project Kairos Update: The dimensional lens array should be discharged once every 24 hours so long as the project is to continue operation.  Daily test firings should continue until local spatial fluctuations normalize.  If all goes as planned, we just need to hold out for a month and it will be safe to continue to Phase 2.  Our hypothesis is that the ripple energy of a microportal, once contained, can be manipulated via other anomalous principles we've been researching.  This might enable directing that energy to somewhere that has suffered a dimensional fatigue incident, which may increase the resistance back to a level that would no longer allow for a portal to be self-sustaining.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_8",
+        "text": "\"The intruder's personal effects contain numerous anomalous technologies clearly stolen from other research facilities, but also some of unknown manufacture.  We're trying to get in touch with the other facilities to notify them of a possible leak.  Either that or someone else is exploring similar fields without us knowing about it.  China, maybe?  The intruder seemed to be a civilian according to what records we have, but we're having trouble getting any recent information on him.  The riots and state of emergency aren't making this any easier.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_9",
+        "text": "\"We're trying to coordinate efforts to regain control of the situation so the lockdown can be lifted.  We're on the edge of suffering a dimensional fatigue incident due to damage to the dimensional lens array.  Given we've been pouring everything we had into preventing this for almost a month, the initial energy release was immense and secondary effects might be even worse.\""
+      },
+      {
+        "id": "arcane_lab_note_sector_three_10",
+        "text": "\"We've got another problem.  Most of the Sector Three personnel who survived either sheltered in place at the waiting room or decided to wait upstairs near the heavy security checkout.  A secondary explosion caused by the portal surge hitting its peak caused structural damage upstairs.  We've got a partial containment breach and a second mass casualty event.  Given the strained evacuation efforts in Sector Two and evidence of bioanomaly contamination, a large reanimation event might occur before evacuation can finish.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "arcane_lab_note_finale",
+    "text": [
+      {
+        "id": "arcane_lab_note_finale_1",
+        "text": "\"The lens array was charging for a test fire.  If it hasn't fired by now, it's going to be so energized that just touching the platform might trigger a discharge.  I've volunteered to try and reach the test chamber, if it works it might disrupt the anomalies enough for lockdown to lift so the others can attempt to escape.\""
+      }
+    ]
+  },
+  {
+    "type": "snippet",
+    "category": "epilogue_factions",
+    "text": [
+      {
+        "id": "epilogue_faction_cleansing_flame_0",
+        "text": "    Facing dwindling supplies and no hope of reinforcements, Sofia's hunting party was eventually forced to abandon the old church.  The last known remnant of the Cleansing Flame steadily succumbed to the horrors of the cataclysm, sharing the same fate as those they once hunted."
+      },
+      {
+        "id": "epilogue_faction_cleansing_flame_103",
+        "text": "    Bolstered by Johnathan's hunting party, Sofia's holdout eked out a modest subsistence within their new sanctum.  Despite endless monsters and anomalies to combat, and few allies they could count on, they languished on with characteristic stubbornness.  \"So long as the Sun shines upon the Earth\" as their tenets state, as it had been and as it shall be…"
+      },
+      {
+        "id": "epilogue_faction_cleansing_flame_111",
+        "text": "    With Grandmaster Johnathan's guidance, the Cleansing Flame carved a new niche in the post-apocalyptic world.  Though the lands around their new sanctum became known as a safe haven, they remained guarded with the secrets they had learned.  They developed a reputation for being dangerously unpredictable in their dealings with other survivors, especially those found to possess old tomes and rusted relics of the orders they once persecuted.  Through their clashes with unsuspecting scavengers, the sight of gilded scales and metal masks once again struck fear into those caught dabbling in what was forbidden."
+      },
+      {
+        "id": "epilogue_faction_cleansing_flame_116",
+        "text": "    Over time people flocked to the sanctum, errant hunting parties as well as allies, both old and new, turning the rural church into a fortified oasis in a ruined world.  While the harsh reality of post-apocalyptic life would remain, new threats and new setbacks a feature of daily life, the Cleansing Flame would become a powerful ally for the survivors of New England.  There they preserved what they had learned, even the knowledge of the arcane orders they once clashed with, in the hope of passing down this knowledge to begin again…"
+      },
+      {
+        "id": "epilogue_faction_cleansing_flame_128",
+        "text": "    The sanctum grew from a few arcanists huddled in an old church, to an outpost of monster hunters bolstering the communities around it.  Preserving knowledge and teaching it to those who sought them out, they augmented the old arcane texts with new knowledge.  While they could never truly mend the wounds in the Veil, they had learned a way to salve those wounds as their rivals the Keepers once sought.  Whether it would be enough to ensure humanity's survival, it would take generations to be certain.  But they had found their purpose.  Of many faiths, united in purpose, against all threats from the Beyond."
+      },
+      {
+        "id": "epilogue_faction_keeper_remnant_22",
+        "text": "    The old hermit had seen a dream rekindled, where once he thought it lost to time.  Content despite the End of All, to know at least one of his order's relics was still intact gave him hope, bringing ease to his mind near the end of a life well-lived."
+      },
+      {
+        "id": "epilogue_faction_keeper_remnant_34",
+        "text": "    To see another take the mantle of Chosen had filled the hermit with joy, such that his old heart had nearly skipped a beat.  Despite everything that had happened, to his fellowship and to the world at large, he would accept the rigors of old age knowing that He From Beyond The Veil had not yet abandoned humanity."
+      }
+    ]
+  }
+]

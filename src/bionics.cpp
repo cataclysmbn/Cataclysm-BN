@@ -250,7 +250,7 @@ itype_id bionic_data::itype() const
 
 bool bionic_data::is_included( const bionic_id &id ) const
 {
-    return std::ranges::find( included_bionics, id ) != included_bionics.end();
+    return std::ranges::contains( included_bionics, id );
 }
 
 void bionic_data::load_bionic( const JsonObject &jo, const std::string &src )
@@ -922,15 +922,14 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
             }
 
             map_stack stack = here.i_at( p );
-            for( auto it = stack.begin(); it != stack.end(); it++ ) {
-                if( ( *it )->weight() < weight_cap &&
-                    ( *it )->made_of_any( affected_materials ) ) {
-                    detached_ptr<item> obj;
-                    stack.erase( it, &obj );
+            const auto it = std::ranges::find_if( stack, [&]( item * const candidate ) {
+                return candidate->weight() < weight_cap && candidate->made_of_any( affected_materials );
+            } );
+            if( it != stack.end() ) {
+                detached_ptr<item> obj;
+                stack.erase( it, &obj );
 
-                    affected.emplace_back( std::move( obj ), p );
-                    break;
-                }
+                affected.emplace_back( std::move( obj ), p );
             }
         }
 
@@ -998,7 +997,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
         if( optional_vpart_position vp = here.veh_at( pos() ) ) {
             vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
-        const oter_id &cur_om_ter = overmap_buffer.ter( global_omt_location() );
+        const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( global_omt_location() );
         /* cache g->get_temperature( player location ) since it is used twice. No reason to recalc */
         const auto player_local_temp = weather.get_temperature( g->u.pos() );
         /* windpower defined in internal velocity units (=.01 mph) */
@@ -1172,6 +1171,7 @@ bool Character::activate_bionic( bionic &bio, bool eff_only, bool *close_bionics
     // Recalculate stats (strength, mods from pain etc.) that could have been affected
     reset_encumbrance();
     reset();
+    here.invalidate_lightmap_caches();
 
     // Also reset crafting inventory cache if this bionic spawned a fake item
     if( !bio.info().fake_item.is_empty() ) {
@@ -1257,6 +1257,7 @@ bool Character::deactivate_bionic( bionic &bio, bool eff_only )
     // Recalculate stats (strength, mods from pain etc.) that could have been affected
     reset_encumbrance();
     reset();
+    get_map().invalidate_lightmap_caches();
     if( !bio.id->enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
@@ -1381,7 +1382,7 @@ bool Character::burn_fuel( bionic &bio, bool start )
                             }
                             const weather_manager &wm = get_weather();
                             const double windpower = get_local_windpower( wm.windspeed + vehwindspeed,
-                                                     overmap_buffer.ter( global_omt_location() ), pos(), wm.winddirection,
+                                                     get_overmapbuffer( get_dimension() ).ter( global_omt_location() ), pos(), wm.winddirection,
                                                      g->is_sheltered( pos() ) );
                             mod_power_level( units::from_kilojoule( fuel_energy ) * windpower * effective_efficiency );
                         } else {
@@ -1438,6 +1439,16 @@ bool Character::burn_fuel( bionic &bio, bool start )
     return true;
 }
 
+bool Character::has_indefinite_power_source() const
+{
+    return std::ranges::any_of( *my_bionics, []( const bionic & bio ) {
+        return std::ranges::any_of( bio.info().fuel_opts, []( const itype_id & fuel ) {
+            return fuel == fuel_type_metabolism ||
+                   item::spawn_temporary( fuel )->has_flag( flag_PERPETUAL );
+        } );
+    } );
+}
+
 void Character::passive_power_gen( bionic &bio )
 {
     const float passive_fuel_efficiency = bio.info().passive_fuel_efficiency;
@@ -1466,7 +1477,7 @@ void Character::passive_power_gen( bionic &bio )
             }
             const weather_manager &weather = get_weather();
             const double windpower = get_local_windpower( weather.windspeed + vehwindspeed,
-                                     overmap_buffer.ter( global_omt_location() ), pos(), weather.winddirection,
+                                     get_overmapbuffer( get_dimension() ).ter( global_omt_location() ), pos(), weather.winddirection,
                                      g->is_sheltered( pos() ) );
             mod_power_level( units::from_kilojoule( fuel_energy ) * windpower * effective_passive_efficiency );
         } else {
@@ -2275,13 +2286,6 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
 
     int chance_of_success = bionic_manip_cos( adjusted_skill, difficulty + 2 );
 
-    // Surgery is imminent, retract claws or blade if active
-    for( bionic &bio : *installer.my_bionics ) {
-        if( bio.powered && bio.info().has_flag( flag_BIONIC_WEAPON ) ) {
-            installer.deactivate_bionic( bio );
-        }
-    }
-
     int success = chance_of_success - rng( 1, 100 );
     if( installer.has_trait( trait_DEBUG_BIONICS ) ) {
         perform_uninstall( b_id, difficulty, success, b_id->capacity, pl_skill );
@@ -2901,17 +2905,15 @@ void Character::remove_bionic( const bionic_id &b )
     std::set<spell_id> cbm_spells;
     std::set<bionic_id> removed_bionics;
     for( bionic &i : *my_bionics ) {
-        if( b == i.id && !removed_bionics.contains( i.id ) ) {
-            const units::energy pow_up = i.id->capacity;
-            mod_max_power_level( -1 * pow_up );
-            removed_bionics.emplace( i.id );
-            continue;
-        }
 
-        // Linked bionics: if either is removed, the other is removed as well.
-        if( ( b->is_included( i.id ) || i.id->is_included( b ) ) && !removed_bionics.contains( i.id ) ) {
+        // Remove the specified bionic and any linked bionics
+        if( ( b == i.id || b->is_included( i.id ) || i.id->is_included( b ) ) &&
+            !removed_bionics.contains( i.id ) ) {
             const units::energy pow_up = i.id->capacity;
             mod_max_power_level( -1 * pow_up );
+            if( i.powered ) {
+                deactivate_bionic( i, true );
+            }
             removed_bionics.emplace( i.id );
             continue;
         }
@@ -2920,7 +2922,7 @@ void Character::remove_bionic( const bionic_id &b )
             cbm_spells.emplace( spell_pair.first );
         }
 
-        new_my_bionics.push_back( bionic( i.id, i.invlet ) );
+        new_my_bionics.push_back( i );
     }
 
     // any spells you learn from installing a bionic you forget.
@@ -2977,7 +2979,7 @@ int bionic::get_quality( const quality_id &quality ) const
 bool bionic::is_this_fuel_powered( const itype_id &this_fuel ) const
 {
     const std::vector<itype_id> fuel_op = info().fuel_opts;
-    return std::ranges::find( fuel_op, this_fuel ) != fuel_op.end();
+    return std::ranges::contains( fuel_op, this_fuel );
 }
 
 void bionic::toggle_safe_fuel_mod()

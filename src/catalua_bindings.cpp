@@ -490,20 +490,23 @@ static const auto lowercase = []( std::string t )
     return t;
 };
 
-namespace Name
+namespace
 {
-std::string string_search( sol::variadic_args va )
+
+auto string_search( sol::variadic_args va ) -> std::string
 {
-    nameFlags flags = static_cast<nameFlags>( 0 );
+    auto flags = static_cast<nameFlags>( 0 );
     // Only 9 flags exist, so cap
-    for( int i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
+    for( auto i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
         if( !va[i].is<std::string>() ) { continue; }
-        auto in = lowercase( va.get<std::string>( i ) );
-        flags = flags | usage_flag( in ) | gender_flag( in );
+        const auto in = lowercase( va.get<std::string>( i ) );
+        flags = flags | Name::usage_flag( in ) | Name::gender_flag( in );
     }
-    return get( flags );
+    return Name::get( flags );
 }
-}
+
+} // namespace
+
 void cata::detail::reg_names( sol::state &lua )
 {
     luna::userlib lib = luna::begin_lib( lua, "ch_names" );
@@ -524,7 +527,7 @@ void cata::detail::reg_names( sol::state &lua )
     DOC( "Generates a single name using any combination of search flags." );
     luna::set_fx( lib, "pick", []( sol::variadic_args va ) -> std::string {
         if( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
-        return Name::string_search( va );
+        return string_search( va );
     } );
 
     luna::finalize_lib( lib );
@@ -583,6 +586,13 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `npc` (NPC): The NPC being interacted with  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_npc_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called when the player tries to interact with a monster.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster): The monster being interacted with  " );
+    DOC( "Return false to prevent monster interaction actions from running.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_try_monster_interaction", []( const sol::table & ) {} );
 
     DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
     DOC( "The hook receives a table with keys:  " );
@@ -857,8 +867,8 @@ void cata::detail::reg_time_types( sol::state &lua )
         luna::set_fx( ut, "is_day", &is_day );
         luna::set_fx( ut, "is_dusk", &is_dusk );
         luna::set_fx( ut, "is_dawn", &is_dawn );
-        luna::set_fx( ut, "sunrise", &sunrise );
-        luna::set_fx( ut, "sunset", &sunset );
+        luna::set_fx( ut, "sunrise", []( const time_point & tp ) { return sunrise( tp ); } );
+        luna::set_fx( ut, "sunset", []( const time_point & tp ) { return sunset( tp ); } );
         luna::set_fx( ut, "moon_phase", &get_moon_phase );
         luna::set_fx( ut, "season", []( const time_point & tp ) { return calendar::name_season( season_of_year( tp ) ); } );
 
@@ -981,6 +991,8 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_mission_type( lua );
     reg_recipe( lua );
     reg_coords_library( lua );
+    reg_monster_type_ids( lua );
+    reg_monster_groups( lua );
     reg_overmap( lua );
     reg_constants( lua );
     reg_hooks_examples( lua );

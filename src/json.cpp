@@ -1783,6 +1783,26 @@ bool JsonIn::read( JsonDeserializer &j, bool throw_on_error )
     }
 }
 
+#if defined(_MSC_VER)
+bool JsonIn::read( long &i, bool throw_on_error )
+{
+    if( !test_number() ) {
+        return error_or_false( throw_on_error, "Expected number" );
+    }
+    i = static_cast<long>( get_int64() );
+    return true;
+}
+
+bool JsonIn::read( unsigned long &u, bool throw_on_error )
+{
+    if( !test_number() ) {
+        return error_or_false( throw_on_error, "Expected number" );
+    }
+    u = static_cast<unsigned long>( get_uint64() );
+    return true;
+}
+#endif
+
 /**
  * Get the normal form of a relative path. Does not work on absolute paths.
  * Slash and backslash are both treated as path separators and replaced with

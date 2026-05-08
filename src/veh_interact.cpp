@@ -63,6 +63,7 @@
 #include "vehicle_selector.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+#include "wheel_dimensions.h"
 
 #if defined(TILES)
 #include "vehicle_preview.h"
@@ -85,6 +86,20 @@ static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const activity_id ACT_VEHICLE( "ACT_VEHICLE" );
 
 static const std::string flag_MOUNTABLE( "MOUNTABLE" );
+
+namespace
+{
+
+auto spawn_debug_install_base( const vpart_info &vpinfo ) -> detached_ptr<item>
+{
+    auto spawned = item::spawn( vpinfo.item );
+    if( vpinfo.fuel_type == fuel_type_battery && spawned->ammo_capacity() > 0 ) {
+        spawned->ammo_set( spawned->ammo_default(), -1 );
+    }
+    return spawned;
+}
+
+} // namespace
 
 static inline std::string status_color( bool status )
 {
@@ -593,7 +608,7 @@ task_reason veh_interact::cant_do( char mode )
     if( cpart != -1 || cpart > veh->part_count() ) {
         const vehicle_part *pt = &veh->part( cpart );
         if( pt ) {
-            const tripoint q = veh->mount_to_tripoint( pt->mount );
+            const tripoint q = veh->mount_to_bubble( pt->mount ).raw();
             const vehicle *cacheveh = &g->m.veh_at( q )->vehicle();
             if( veh != cacheveh ) {
                 return DOUBLE_STACK;
@@ -1530,7 +1545,9 @@ void veh_interact::calc_overview()
                         "%s     <color_light_gray>%s</color>",
                         !pt.fuel_current().is_null() ? item::nname( pt.fuel_current() ) : "",
                         //~ translation should not exceed 3 console cells
-                        right_justify( pt.enabled ? _( "Yes" ) : _( "No" ), 3 ) ) );
+                        right_justify( pt.enabled ?
+                                       pgettext( "vehicle part enabled value", "Yes" ) :
+                                       pgettext( "vehicle part enabled value", "No" ), 3 ) ) );
             };
 
             // display engine faults (if any)
@@ -2175,9 +2192,9 @@ void veh_interact::do_rename()
     if( !name.empty() ) {
         veh->name = name;
         if( veh->tracking_on ) {
-            overmap_buffer.remove_vehicle( veh );
+            get_overmapbuffer( veh->dimension_id_ ).remove_vehicle( veh );
             // Add the vehicle again, this time with the new name
-            overmap_buffer.add_vehicle( veh );
+            get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
         }
     }
 }
@@ -2991,13 +3008,13 @@ void veh_interact::display_details( const vpart_info *part )
         // Note: there is no guarantee that whl is non-empty!
         const cata::value_ptr<islot_wheel> &whl = part->item->wheel;
         fold_and_print( w_details, point( col_1, line + 3 ), column_width, c_white,
-                        "%s: <color_light_gray>%d\"</color>",
+                        "%s: <color_light_gray>%s</color>",
                         small_mode ? _( "Dia" ) : _( "Wheel Diameter" ),
-                        whl ? whl->diameter : 0 );
+                        wheel_dimensions::format_for_display( whl ? whl->diameter : 0 ).c_str() );
         fold_and_print( w_details, point( col_2, line + 3 ), column_width, c_white,
-                        "%s: <color_light_gray>%d\"</color>",
+                        "%s: <color_light_gray>%s</color>",
                         small_mode ? _( "Wdt" ) : _( "Wheel Width" ),
-                        whl ? whl->width : 0 );
+                        wheel_dimensions::format_for_display( whl ? whl->width : 0 ).c_str() );
     }
 
     if( part->epower != 0 ) {
@@ -3219,31 +3236,35 @@ void veh_interact::complete_vehicle( Character &who )
             const inventory &inv = who.crafting_inventory();
 
             const auto reqs = vpinfo.install_requirements();
-            if( !reqs.can_make_with_inventory( inv, is_crafting_component ) ) {
+            const auto using_debug_hammerspace = who.has_trait( trait_DEBUG_HS );
+            if( !using_debug_hammerspace && !reqs.can_make_with_inventory( inv, is_crafting_component ) ) {
                 add_msg( m_info, _( "You don't meet the requirements to install the %s." ), vpinfo.name() );
                 break;
             }
-            //TODO!: cheeeeck
-            // consume items extracting a match for the parts base item
             detached_ptr<item> base;
-            for( const auto &e : reqs.get_components() ) {
-                for( auto &obj : who.consume_items( e, 1, is_crafting_component ) ) {
-                    if( obj->typeId() == vpinfo.item ) {
-                        base = std::move( obj );
+            if( using_debug_hammerspace ) {
+                base = spawn_debug_install_base( vpinfo );
+            } else {
+                // Consume items, extracting the specific base item for the installed part.
+                for( const auto &e : reqs.get_components() ) {
+                    for( auto &obj : who.consume_items( e, 1, is_crafting_component ) ) {
+                        if( obj->typeId() == vpinfo.item ) {
+                            base = std::move( obj );
+                        }
                     }
+                }
+
+                for( const auto &e : reqs.get_tools() ) {
+                    who.consume_tools( e );
                 }
             }
             if( !base ) {
-                if( !who.has_trait( trait_DEBUG_HS ) ) {
+                if( !using_debug_hammerspace ) {
                     add_msg( m_info, _( "Could not find base part in requirements for %s." ), vpinfo.name() );
                     break;
                 } else {
-                    base = item::spawn( vpinfo.item );
+                    base = spawn_debug_install_base( vpinfo );
                 }
-            }
-
-            for( const auto &e : reqs.get_tools() ) {
-                who.consume_tools( e );
             }
 
             who.invalidate_crafting_inventory();

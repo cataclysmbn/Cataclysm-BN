@@ -1,6 +1,6 @@
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
-
+#include "calendar.h"
 #include "coordinate_conversions.h"
 #include "debug.h"
 #include "distribution_grid.h"
@@ -11,6 +11,7 @@
 #include "map.h"
 #include "mapbuffer.h"
 #include "rng.h"
+#include "submap_load_manager.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_range.h"
@@ -31,7 +32,7 @@ T *furn_at( const tripoint_abs_ms &p )
     point_sm_ms p_within_sm;
     std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
 
-    submap *sm = MAPBUFFER.lookup_submap( p_abs_sm );
+    submap *sm = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ).lookup_submap( p_abs_sm );
     if( sm == nullptr ) {
         return nullptr;
     }
@@ -51,6 +52,40 @@ template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_m
 template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms & );
 template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms & );
 template solar_tile *furn_at<solar_tile>( const tripoint_abs_ms & );
+template grid_link_tile *furn_at<grid_link_tile>( const tripoint_abs_ms & );
+template portal_tile *furn_at<portal_tile>( const tripoint_abs_ms & );
+
+template<typename T>
+T *furn_at( const tripoint_abs_ms &p, mapbuffer &buffer )
+{
+    tripoint_abs_sm p_abs_sm;
+    point_sm_ms p_within_sm;
+    std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
+
+    submap *sm = buffer.lookup_submap( p_abs_sm );
+    if( sm == nullptr ) {
+        return nullptr;
+    }
+    auto iter = sm->active_furniture.find( p_within_sm );
+    if( iter == sm->active_furniture.end() ) {
+        return nullptr;
+    }
+
+    return dynamic_cast<T *>( &*iter->second );
+}
+
+template active_tile_data *furn_at<active_tile_data>( const tripoint_abs_ms &, mapbuffer & );
+template vehicle_connector_tile *furn_at<vehicle_connector_tile>( const tripoint_abs_ms &,
+        mapbuffer & );
+template battery_tile *furn_at<battery_tile>( const tripoint_abs_ms &, mapbuffer & );
+template steady_consumer_tile *furn_at<steady_consumer_tile>( const tripoint_abs_ms &,
+        mapbuffer & );
+template charge_watcher_tile *furn_at<charge_watcher_tile>( const tripoint_abs_ms &, mapbuffer & );
+template countdown_tile *furn_at<countdown_tile>( const tripoint_abs_ms &, mapbuffer & );
+template charger_tile *furn_at<charger_tile>( const tripoint_abs_ms &, mapbuffer & );
+template solar_tile *furn_at<solar_tile>( const tripoint_abs_ms &, mapbuffer & );
+template grid_link_tile *furn_at<grid_link_tile>( const tripoint_abs_ms &, mapbuffer & );
+template portal_tile *furn_at<portal_tile>( const tripoint_abs_ms &, mapbuffer & );
 
 void furn_transform::serialize( JsonOut &jsout ) const
 {
@@ -102,15 +137,6 @@ class null_tile_data : public active_tile_data
         void load( JsonObject & ) override
         {}
 };
-
-// Copypasted from character.cpp
-// TODO: Move somewhere (calendar?)
-inline int ticks_between( const time_point &from, const time_point &to,
-                          const time_duration &tick_length )
-{
-    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) - ( to_turn<int>
-            ( from ) / to_turns<int>( tick_length ) );
-}
 
 namespace
 {
@@ -270,13 +296,13 @@ void charger_tile::update_internal( time_point to, const tripoint_abs_ms &p,
     point_sm_ms p_within_sm;
     std::tie( p_abs_sm, p_within_sm ) = project_remain<coords::sm>( p );
 
-    submap *sm = MAPBUFFER.lookup_submap( p_abs_sm );
+    submap *sm = MAPBUFFER_REGISTRY.get( get_map().get_bound_dimension() ).lookup_submap( p_abs_sm );
     if( sm == nullptr ) {
         return;
     }
     std::int64_t power = this->power * to_seconds<std::int64_t>( to - get_last_updated() );
     // TODO: Make not a copy from map.cpp
-    for( item *const outer : sm->get_items( p_within_sm.raw() ) ) {
+    for( item *const outer : sm->get_items( p_within_sm ) ) {
         outer->visit_items( [&power, &grid]( item * it ) {
             item &n = *it;
             if( !n.has_flag( flag_RECHARGE ) && !n.has_flag( flag_USE_UPS ) ) {
@@ -327,7 +353,7 @@ void charger_tile::load( JsonObject &jo )
 void steady_consumer_tile::update_internal( time_point to, const tripoint_abs_ms &p,
         distribution_grid &grid )
 {
-    int ticks = ticks_between( get_last_updated(), to, consume_every );
+    int ticks = calendar::ticks_between( get_last_updated(), to, consume_every );
     if( ticks == 0 ) {
         return;
     }
@@ -438,6 +464,117 @@ void countdown_tile::load( JsonObject &jo )
     jo.read( "ticks", ticks );
 }
 
+void grid_link_tile::update_internal( time_point, const tripoint_abs_ms &,
+                                      distribution_grid & )
+{
+    // Power equalisation and upkeep are handled by game::tick_portal_links()
+    // outside the normal per-grid update path.  Nothing to do here.
+}
+
+active_tile_data *grid_link_tile::clone() const
+{
+    return new grid_link_tile( *this );
+}
+
+const std::string &grid_link_tile::get_type() const
+{
+    static const std::string type( "grid_link" );
+    return type;
+}
+
+void grid_link_tile::store( JsonOut &jsout ) const
+{
+    jsout.member( "linked", linked );
+    jsout.member( "paused", paused );
+    if( linked ) {
+        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_pos", target_pos.raw() );
+    }
+}
+
+void grid_link_tile::load( JsonObject &jo )
+{
+    jo.read( "linked", linked );
+    jo.read( "paused", paused );
+    if( linked ) {
+        jo.read( "target_dim_id", target_dim_id );
+        tripoint raw;
+        jo.read( "target_pos", raw );
+        target_pos = tripoint_abs_ms( raw );
+    }
+}
+
+// ---- portal_tile -----------------------------------------------------------
+
+void portal_tile::update_internal( time_point, const tripoint_abs_ms &p, distribution_grid & )
+{
+    if( !linked || load_radius <= 0 ) {
+        return;
+    }
+    // Keep target area resident each tick if a load_radius is configured.
+    const auto center_sm = project_to<coords::sm>( target_pos );
+    if( preload_handle_ == 0 ) {
+        preload_handle_ = submap_loader.request_load(
+                              load_request_source::portal_preload,
+                              target_dim_id, center_sm, load_radius );
+    } else {
+        submap_loader.update_request( preload_handle_, center_sm );
+    }
+    ( void )p;
+}
+
+active_tile_data *portal_tile::clone() const
+{
+    auto *copy = new portal_tile( *this );
+    // Don't copy the handle — the clone gets its own.
+    copy->preload_handle_ = 0;
+    return copy;
+}
+
+const std::string &portal_tile::get_type() const
+{
+    static const std::string type( "portal" );
+    return type;
+}
+
+void portal_tile::store( JsonOut &jsout ) const
+{
+    jsout.member( "linked", linked );
+    jsout.member( "allow_bionic_tap", allow_bionic_tap );
+    jsout.member( "one_way", one_way );
+    jsout.member( "load_radius", load_radius );
+    if( !linkable_item_flag.empty() ) {
+        jsout.member( "linkable_item_flag", linkable_item_flag );
+    }
+    if( !dynamic_special.is_null() ) {
+        jsout.member( "dynamic_special", dynamic_special );
+    }
+    if( linked ) {
+        jsout.member( "target_dim_id", target_dim_id );
+        jsout.member( "target_pos", target_pos.raw() );
+    }
+}
+
+void portal_tile::load( JsonObject &jo )
+{
+    jo.read( "linked", linked );
+    jo.read( "allow_bionic_tap", allow_bionic_tap );
+    jo.read( "one_way", one_way );
+    jo.read( "load_radius", load_radius );
+    jo.read( "linkable_item_flag", linkable_item_flag );
+    if( jo.has_member( "dynamic_special" ) ) {
+        jo.read( "dynamic_special", dynamic_special );
+    }
+    if( linked ) {
+        jo.read( "target_dim_id", target_dim_id );
+        tripoint raw;
+        jo.read( "target_pos", raw );
+        target_pos = tripoint_abs_ms( raw );
+    }
+}
+
+// ----------------------------------------------------------------------------
+
 static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
 {
     std::map<std::string, std::unique_ptr<active_tile_data>> type_map;
@@ -451,6 +588,8 @@ static std::map<std::string, std::unique_ptr<active_tile_data>> build_type_map()
     add_type( new steady_consumer_tile() );
     add_type( new vehicle_connector_tile() );
     add_type( new countdown_tile() );
+    add_type( new grid_link_tile() );
+    add_type( new portal_tile() );
     return type_map;
 }
 

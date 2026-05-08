@@ -38,6 +38,8 @@ void reg_mapgendata( sol::state &lua );
 void reg_mission( sol::state &lua );
 void reg_mission_type( sol::state &lua );
 void reg_monster( sol::state &lua );
+auto reg_monster_type_ids( sol::state &lua ) -> void;
+auto reg_monster_groups( sol::state &lua ) -> void;
 void mod_mutation_branch( sol::state &lua );
 void reg_magic( sol::state &lua );
 void reg_names( sol::state &lua );
@@ -64,5 +66,3 @@ void reg_units( sol::state &lua );
 void reg_all_bindings( sol::state &lua );
 
 } // namespace cata
-
-

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "game.h"
+#include "game_constants.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "point.h"
@@ -165,14 +166,22 @@ bool Pathfinding::is_in_limited_domain(
     return is_in_f_limited_area || is_in_search_radius || is_in_search_cone;
 }
 
+/// Pathfinding: constructor
+Pathfinding::Pathfinding( int mx, int my )
+    : map_x_( mx ), map_y_( my )
+    , p_map( mx * my, 0.0f )
+    , g_map( mx * my, 0.0f )
+    , tile_state( ( mx + 2 ) * ( my + 2 ), State::UNVISITED )
+{}
+
 /// Pathfinding: map indexing
 float &Pathfinding::p_at( const point &p )
 {
-    return this->p_map[p.y][p.x];
+    return this->p_map[p.y * this->map_x_ + p.x];
 };
 float &Pathfinding::g_at( const point &p )
 {
-    return this->g_map[p.y][p.x];
+    return this->g_map[p.y * this->map_x_ + p.x];
 };
 float Pathfinding::get_f_unbiased( const point &p )
 {
@@ -186,13 +195,13 @@ float Pathfinding::get_f_biased( const point &p, const point &start,
 }
 Pathfinding::State &Pathfinding::tile_state_at( const point &p )
 {
-    return this->tile_state[p.y + 1][p.x + 1];
+    return this->tile_state[( p.y + 1 ) * ( this->map_x_ + 2 ) + ( p.x + 1 )];
 }
 /// Pathfinding: d-map wide changes
 void Pathfinding::produce_d_map( point dest, int z, PathfindingSettings settings )
 {
     if( Pathfinding::d_maps_store.empty() ) {
-        std::unique_ptr<Pathfinding> d_map = std::make_unique<Pathfinding>();
+        std::unique_ptr<Pathfinding> d_map = std::make_unique<Pathfinding>( g_mapsize_x, g_mapsize_y );
         Pathfinding::d_maps_store.push_back( std::move( d_map ) );
     }
 
@@ -219,6 +228,11 @@ void Pathfinding::clear_d_maps()
     Pathfinding::d_maps.clear();
     Pathfinding::cached_closest_z_changes.clear();
 }
+void Pathfinding::clear_pool()
+{
+    clear_d_maps();
+    Pathfinding::d_maps_store.clear();
+}
 void Pathfinding::reset_maps()
 {
     this->p_at( this->dest ) = 0.0;
@@ -240,13 +254,14 @@ void Pathfinding::reset_tile_state()
 
     this->tile_state_modify_set.clear();
 
-    for( int y = 0; y < MAPSIZE_Y + 2; y++ ) {
-        this->tile_state[y][0] = State::BOUNDS;
-        this->tile_state[y][MAPSIZE_Y + 1] = State::BOUNDS;
+    const int stride = this->map_x_ + 2;
+    for( int y = 0; y < this->map_y_ + 2; y++ ) {
+        this->tile_state[y * stride + 0] = State::BOUNDS;
+        this->tile_state[y * stride + ( this->map_x_ + 1 )] = State::BOUNDS;
     }
-    for( int x = 0; x < MAPSIZE_X + 2; x++ ) {
-        this->tile_state[0][x] = State::BOUNDS;
-        this->tile_state[MAPSIZE_Y + 1][x] = State::BOUNDS;
+    for( int x = 0; x < this->map_x_ + 2; x++ ) {
+        this->tile_state[0 * stride + x] = State::BOUNDS;
+        this->tile_state[( this->map_y_ + 1 ) * stride + x] = State::BOUNDS;
     }
 }
 /// Pathfinding: Z-levels
@@ -267,18 +282,18 @@ void Pathfinding::update_z_caches( bool update_open_air )
 {
     const map &here = get_map();
 
-    point cur_z_area = here.get_abs_sub().xy();
-    sm_to_ms( cur_z_area );
+    auto cur_z_area = project_to<coords::ms>( here.get_abs_sub().xy() );
 
-    if( cur_z_area == Pathfinding::z_area ) {
+    if( cur_z_area.raw() == Pathfinding::z_area ) {
         return;
     }
 
-    const point anti_shift = Pathfinding::z_area - cur_z_area;
+    const point anti_shift = Pathfinding::z_area - cur_z_area.raw();
     // This cuboid will contain negative values, it's fine
     half_open_cuboid<tripoint> prev_z_volume_local(
         tripoint( here.getlocal( Pathfinding::z_area ), -OVERMAP_DEPTH ),
-        tripoint( here.getlocal( Pathfinding::z_area + point( MAPSIZE_X, MAPSIZE_Y ) ), OVERMAP_HEIGHT + 1 )
+        tripoint( here.getlocal( Pathfinding::z_area + point( g_mapsize_x, g_mapsize_y ) ),
+                  OVERMAP_HEIGHT + 1 )
     );
 
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
@@ -323,52 +338,52 @@ void Pathfinding::update_z_caches( bool update_open_air )
     // Finally, append newly loaded points
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         for( const tripoint &cur : here.points_on_zlevel( z ) ) {
+            const auto bubble_pos = tripoint_bub_ms( cur );
             if( prev_z_volume_local.contains( cur ) ) {
                 continue;
             }
 
-            const maptile &cur_tile = here.maptile_at( cur );
+            const maptile &cur_tile = here.maptile_at( bubble_pos );
             const auto &cur_ter = cur_tile.get_ter_t();
-
-            const point cur_point = cur.xy();
 
             if( update_open_air && cur_ter.has_flag( TFLAG_NO_FLOOR ) ) {
                 // Open air
-                const tripoint below_us = cur + tripoint_below;
+                const auto below_us = bubble_pos + tripoint_rel_ms::below();
 
-                if( !here.inbounds_z( below_us.z ) ) {
+                if( !here.inbounds_z( below_us.z() ) ) {
                     continue;
                 }
 
-                if( here.impassable_ter_furn( below_us ) ) {
+                if( here.impassable_ter_furn( below_us.raw() ) ) {
                     continue;
                 };
                 // We won't do vehicle checks for simplicity
 
-                const ZLevelChange going_to_below = ZLevelChange{ .from = cur, .to = below_us, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
-                const ZLevelChange reach_from_below = ZLevelChange{ .from = below_us, .to = cur, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const ZLevelChange going_to_below = ZLevelChange{ .from = cur, .to = below_us.raw(), .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
+                const ZLevelChange reach_from_below = ZLevelChange{ .from = below_us.raw(), .to = cur, .type = Pathfinding::ZLevelChange::Type::OPEN_AIR };
 
                 // This is stored separately from other changes because it requires a different type of processing
-                Pathfinding::get_z_cache_open_air( z ).emplace( cur_point, Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
+                Pathfinding::get_z_cache_open_air( z ).emplace( bubble_pos.raw().xy(),
+                        Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = reach_from_below, .reach_from_above = std::nullopt } );
 
                 auto &lower_level = Pathfinding::get_z_cache_open_air( z - 1 );
-                if( lower_level.contains( cur_point ) ) {
-                    lower_level[cur_point].reach_from_above = going_to_below;
+                if( lower_level.contains( bubble_pos.raw().xy() ) ) {
+                    lower_level[bubble_pos.raw().xy()].reach_from_above = going_to_below;
                 } else {
-                    lower_level.emplace( cur_point,  Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
+                    lower_level.emplace( bubble_pos.raw().xy(),  Pathfinding::ZLevelChangeOpenAirPair{ .reach_from_below = std::nullopt, .reach_from_above = going_to_below } );
                 }
             } else if( cur_ter.has_flag( TFLAG_GOES_UP ) ) {
                 // Stair bullshitery
-                const tripoint above_us = cur + tripoint_above;
+                const auto above_us = bubble_pos + tripoint_rel_ms::above();
 
-                if( !here.inbounds_z( above_us.z ) ) {
+                if( !here.inbounds_z( above_us.z() ) ) {
                     continue;
                 }
 
                 // 10 to maintain parity with legacy A*
                 // closest_points_first will ensure stairs above us directly will be hit first
-                for( const tripoint &maybe_stairs_p : closest_points_first( above_us, 10 ) ) {
-                    const maptile &maybe_stairs_tile = here.maptile_at( maybe_stairs_p );
+                for( const tripoint &maybe_stairs_p : closest_points_first( above_us.raw(), 10 ) ) {
+                    const maptile &maybe_stairs_tile = here.maptile_at( tripoint_bub_ms( maybe_stairs_p ) );
                     const auto &maybe_stair_ter = maybe_stairs_tile.get_ter_t();
 
                     if( maybe_stair_ter.has_flag( TFLAG_GOES_DOWN ) ) {
@@ -390,7 +405,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
                 // 10 to maintain parity with legacy A*
                 // closest_points_first will ensure stairs below us directly will be hit first
                 for( const tripoint &maybe_stairs_p : closest_points_first( below_us, 10 ) ) {
-                    const maptile &maybe_stairs_tile = here.maptile_at( maybe_stairs_p );
+                    const maptile &maybe_stairs_tile = here.maptile_at( tripoint_bub_ms( maybe_stairs_p ) );
                     const auto &maybe_stairs_ter = maybe_stairs_tile.get_ter_t();
 
                     if( maybe_stairs_ter.has_flag( TFLAG_GOES_UP ) ) {
@@ -423,7 +438,7 @@ void Pathfinding::update_z_caches( bool update_open_air )
         }
     }
 
-    Pathfinding::z_area = cur_z_area;
+    Pathfinding::z_area = cur_z_area.raw();
 }
 /// Pathfinding: main loops
 void Pathfinding::detect_culled_frontier(
@@ -593,17 +608,18 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
             {
                 bool is_move_valid = true;
 
+                // TODO: migrate pathfinding positions to abs so these conversions can use abs_to_mount
                 const bool is_valid_to_step_into_veh =
                     cur_vehicle == nullptr ?
                     true :
-                    cur_vehicle->allowed_move( cur_vehicle->tripoint_to_mount( cur_point_with_z ),
-                                               cur_vehicle->tripoint_to_mount( next_point_with_z ) );
+                    cur_vehicle->allowed_move( cur_vehicle->bubble_to_mount( tripoint_bub_ms( cur_point_with_z ) ),
+                                               cur_vehicle->bubble_to_mount( tripoint_bub_ms( next_point_with_z ) ) );
 
                 const bool is_valid_to_step_out_of_veh =
                     next_vehicle == nullptr ?
                     true :
-                    next_vehicle->allowed_move( next_vehicle->tripoint_to_mount( cur_point_with_z ),
-                                                next_vehicle->tripoint_to_mount( next_point_with_z ) );
+                    next_vehicle->allowed_move( next_vehicle->bubble_to_mount( tripoint_bub_ms( cur_point_with_z ) ),
+                                                next_vehicle->bubble_to_mount( tripoint_bub_ms( next_point_with_z ) ) );
 
                 is_move_valid &= is_valid_to_step_into_veh;
                 is_move_valid &= is_valid_to_step_out_of_veh;
@@ -614,7 +630,7 @@ Pathfinding::ExpansionOutcome Pathfinding::expand_2d_up_to(
                 }
             }
 
-            const maptile &new_tile = here.maptile_at_internal( cur_point_with_z );
+            const maptile &new_tile = here.maptile_at_internal( tripoint_bub_ms( cur_point_with_z ) );
             const auto &terrain = new_tile.get_ter_t();
             const auto &furniture = new_tile.get_furn_t();
             const int move_cost = here.move_cost_internal( furniture, terrain, cur_vehicle, cur_vehicle_part );

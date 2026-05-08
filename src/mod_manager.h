@@ -77,6 +77,9 @@ struct MOD_INFORMATION {
          */
         std::set<std::string> maintainers;
 
+        /** Mod-relative loading screen image file or directory paths */
+        std::set<std::string> loading_images;
+
         /**
          * Arbitrary string that should help maintainers in figuring out
          * what version of the mod the error in a bugreport comes from.
@@ -232,5 +235,3 @@ class mod_ui
         bool can_shift_up( size_t selection, const std::vector<mod_id> &active_list );
         bool can_shift_down( size_t selection, const std::vector<mod_id> &active_list );
 };
-
-

@@ -51,6 +51,49 @@
     }
   },
   {
+    "//": "triffid room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "CCC..................CCC",
+        "C......................C",
+        "..cccccccc....cccccccc..",
+        "........................",
+        ".............6..........",
+        ".....------LL------.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        "....r-,,,,,,,,,,,,-r....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....-,,,,,,,,,,,,-.....",
+        ".....--------------.....",
+        "........................",
+        "........................",
+        "..cccccccc....cccccccc..",
+        "C......................C",
+        "CCC..................CCC"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "furniture": { "R": "f_rack" },
+      "terrain": { ",": "t_grass" },
+      "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 4, "y": 11 } ],
+      "place_loot": [ { "item": "id_science", "x": 19, "y": [ 11, 13 ] } ],
+      "place_monster": [ { "monster": "mon_triffid_radiant_boss", "x": 12, "y": 12, "chance": 100 } ],
+      "computers": { "6": { "name": "High Risk Subject Containment", "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock" } ] } }
+    }
+  },
+  {
     "//": "portal room",
     "type": "mapgen",
     "method": "json",
@@ -122,7 +165,7 @@
         "...|C.......6.......|...",
         "...|-..............-|...",
         "..Y..................Y..",
-        "..Y.......?..?.......Y..",
+        "..Y..................Y..",
         "...|gggggg----gggggg|...",
         "...|txttttCCCCtttxxt|...",
         "...|r.hh........h .r|...",
@@ -130,7 +173,7 @@
         "...|r..|---MM---|..r|...",
         "-MM|---|........|---|MM-",
         "........................",
-        "........................",
+        "...........?............",
         "........................",
         "....Y..............Y....",
         "........................",
@@ -138,7 +181,7 @@
         "........................"
       ],
       "palettes": [ "lab_palette" ],
-      "monster": { "?": { "monster": "mon_turret_light" } },
+      "monster": { "?": { "monster": "mon_shade_boss" } },
       "terrain": { "o": "t_radio_tower" },
       "computers": {
         "6": {
@@ -174,7 +217,7 @@
         ".....?...|..oooo.hx|....",
         "....|--|M|..oooo..C|....",
         "....|r.M....Oooo..C|....",
-        "....|r.|xh..oooo..C|....",
+        "....|r*|xh..oooo..C|....",
         "....|rY|ttt......YC|....",
         "....|--|-----------|....",
         "........................",
@@ -192,7 +235,7 @@
       ],
       "palettes": [ "lab_palette" ],
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 5, "y": 8 } ],
-      "monster": { "?": { "monster": "mon_turret_light" } },
+      "monster": { "?": { "monster": "mon_turret_light" }, "*": { "monster": "mon_shade_boss", "chance": 25 } },
       "terrain": { "o": "t_cvdbody", "O": "t_cvdmachine" },
       "place_loot": [ { "item": "id_science", "x": [ 8, 10 ], "y": 10 } ]
     }
@@ -230,7 +273,7 @@
       ],
       "palettes": [ "lab_palette" ],
       "mapping": {
-        "r": { "item": [ { "item": "iv_mutagen_raptor", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "r": { "item": [ { "item": "iv_mutagen_elfa", "chance": 100, "repeat": [ 2, 2 ] } ] },
         "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
       }
     }
@@ -268,8 +311,16 @@
       ],
       "palettes": [ "lab_palette" ],
       "mapping": {
-        "r": { "item": [ { "item": "iv_mutagen_chimera", "chance": 100, "repeat": [ 2, 2 ] } ] },
-        "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
+        "r": { "items": [ { "item": "books_bank_vault", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "R": {
+          "items": [
+            { "item": "still_lab", "chance": 100 },
+            { "item": "analytical_set_basic", "chance": 100 },
+            { "item": "microcentrifuge", "chance": 100 },
+            { "item": "chemistry_set", "chance": 100 },
+            { "item": "purifier_smart_shot", "chance": 100 }
+          ]
+        }
       }
     }
   },
@@ -289,9 +340,9 @@
       "mapping": {
         "r": { "item": [ { "item": "plut_cell", "chance": 100, "repeat": [ 3, 8 ] } ] },
         "R": {
-          "item": [
+          "items": [
+            { "item": "ammo_heavy_batteries_full", "chance": 100 },
             { "item": "UPS_off", "chance": 100 },
-            { "item": "heavy_battery_cell", "chance": 100 },
             { "item": "v29", "chance": 100 },
             { "item": "laser_rifle", "chance": 100 },
             { "item": "plasma_gun", "chance": 100 },

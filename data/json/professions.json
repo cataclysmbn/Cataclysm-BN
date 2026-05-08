@@ -12,6 +12,12 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "tankmod_army_mags_m9",
+    "entries": [ { "item": "m9mag", "ammo-item": "9mm", "charges": 15 }, { "item": "m9mag", "ammo-item": "9mm", "charges": 15 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "hitman_pistol",
     "entries": [
       { "item": "walther_ppq_45", "ammo-item": "45_super", "charges": 12, "contents-item": [ "suppressor", "pistol_grip" ] }
@@ -95,6 +101,14 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "charged_headseat",
+    "entries": [
+      { "item": "light_disposable_cell", "ammo-item": "battery", "charges": 300, "container-item": "army_powered_earmuffs" }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "charged_tazer",
     "entries": [ { "item": "light_disposable_cell", "ammo-item": "battery", "charges": 300, "container-item": "tazer" } ]
   },
@@ -116,6 +130,15 @@
     "entries": [
       { "item": "8x40_10_mag", "ammo-item": "8mm_caseless", "charges": 10 },
       { "item": "8x40_10_mag", "ammo-item": "8mm_caseless", "charges": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "army_mags_rm216",
+    "entries": [
+      { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50 },
+      { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50 }
     ]
   },
   {
@@ -143,6 +166,15 @@
     "entries": [
       { "item": "glock17_22", "ammo-item": "9mmfmj", "charges": 22 },
       { "item": "glock17_22", "ammo-item": "9mmfmj", "charges": 22 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mags_glock19",
+    "entries": [
+      { "item": "glockmag", "ammo-item": "9mmfmj", "charges": 15 },
+      { "item": "glockmag", "ammo-item": "9mmfmj", "charges": 15 }
     ]
   },
   {
@@ -233,13 +265,13 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_bow_hunter",
-    "entries": [ { "item": "arrow_cf", "charges": 8 } ]
+    "entries": [ { "item": "arrow_cf", "charges": 20 } ]
   },
   {
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_crossbow_hunter",
-    "entries": [ { "item": "bolt_metal", "charges": 9 } ]
+    "entries": [ { "item": "bolt_metal", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -281,7 +313,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_bionic_prepper",
-    "entries": [ { "item": "bolt_steel", "charges": 20 } ]
+    "entries": [ { "item": "bolt_steel", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -293,7 +325,7 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "quiver_crossbow_wanderer",
-    "entries": [ { "item": "bolt_wood", "charges": 20 } ]
+    "entries": [ { "item": "bolt_wood", "charges": 19 } ]
   },
   {
     "type": "item_group",
@@ -367,6 +399,12 @@
     "subtype": "collection",
     "id": "bandolier_roadwarrior",
     "entries": [ { "item": "shot_00", "charges": 18 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "ammopouch_irs_ci",
+    "entries": [ { "item": "shot_00", "charges": 13 } ]
   },
   {
     "type": "item_group",
@@ -1196,6 +1234,7 @@
     "name": "Professional Cyclist",
     "description": "You were a promising young cyclist with a bright career in front of you before this all happened.  Perhaps you'll never get to participate in the grand tours now, but as the saying goes: Life is like riding a bicycle, you got to keep moving.",
     "points": 3,
+    "age": { "min": 18, "max": 27 },
     "skills": [ { "level": 1, "name": "swimming" }, { "level": 3, "name": "driving" }, { "level": 2, "name": "dodge" } ],
     "items": {
       "both": {
@@ -2037,6 +2076,7 @@
     "name": "Medical Resident",
     "description": "Fresh out of med school, you've got little in the way of practical experience.  You just hope it will be enough if the old adage of 'Doctor, heal thyself' ends up being required.",
     "points": 2,
+    "age": { "min": 25, "max": 33 },
     "skills": [ { "level": 4, "name": "firstaid" } ],
     "traits": [ "PROF_MED" ],
     "items": {
@@ -2413,6 +2453,7 @@
     "name": "Electrical Engineer",
     "description": "Fresh out of college, you've got little in the way of practical engineering experience.  The Cataclysm might prove to be a rather complicated problem to solve even from an engineering perspective, and you're not sure if you can solder your way out of this one.",
     "points": 2,
+    "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "electronics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
       "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
@@ -2426,6 +2467,7 @@
     "name": "Mechanical Engineer",
     "description": "Fresh out of college, you've got little in the way of practical engineering experience.  The Cataclysm might prove to be a rather complicated problem to solve even from an engineering perspective, and you're not sure if you will pass this stress test.",
     "points": 2,
+    "age": { "min": 22, "max": 26 },
     "skills": [ { "level": 4, "name": "mechanics" }, { "level": 2, "name": "fabrication" }, { "level": 2, "name": "computer" } ],
     "items": {
       "both": { "items": [ "pants", "dress_shirt", "socks", "dress_shoes", "wristwatch", "water_clean", "smart_phone", "file" ] },
@@ -3201,6 +3243,7 @@
     "name": "Student",
     "description": "You were a high school student, but the tests you'll face now will have much higher stakes.  There might even be something useful in one of these books you've been lugging around all year.",
     "points": 1,
+    "age": { "min": 14, "max": 18 },
     "items": {
       "both": {
         "items": [
@@ -3229,6 +3272,7 @@
     "name": "Library Nerd",
     "description": "They say reading is food for the brain, but those corpses seem to see your brain as food.  In your haste to escape, you grabbed the library's return box, but is there anything in there that might help you?",
     "points": 2,
+    "age": { "min": 14, "max": 18 },
     "traits": [ "LOVES_BOOKS" ],
     "items": {
       "both": {
@@ -3706,6 +3750,52 @@
   },
   {
     "type": "profession",
+    "id": "bio_specops",
+    "name": "Bionic Operator",
+    "description": "You were the best of the best, the military's finest, and your bionics have only enhanced your abilities.  Specializing in close quarters combat, you were sent on the most dangerous and critical missions.",
+    "points": 8,
+    "traits": [ "PROF_MILITARY" ],
+    "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
+    "skills": [
+      { "level": 2, "name": "swimming" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "smg" },
+      { "level": 3, "name": "survival" },
+      { "level": 2, "name": "cutting" },
+      { "level": 2, "name": "melee" },
+      { "level": 2, "name": "dodge" },
+      { "level": 1, "name": "firstaid" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "winter_pants_army",
+          "tshirt",
+          "winter_jacket_army",
+          "gloves_liner",
+          "gloves_tactical",
+          "mask_ski",
+          "glasses_bal",
+          "tac_helmet",
+          "socks",
+          "boots_combat",
+          "webbing_belt",
+          "wristwatch",
+          "canteen",
+          "molle_pack"
+        ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "chestrig", "contents-group": "army_mags_rm216" },
+          { "item": "5x50_50_mag", "ammo-item": "5x50heavy", "charges": 50, "container-item": "needlegun" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
     "id": "bionic_spy",
     "name": "Bionic Agent",
     "description": "Your body has several bionics worth millions of dollars, paid for by public taxes.  The government has turned you into an infiltration and recon specialist: you have night vision, an alarm, an infolink, lock picking capabilities and a hacking module.",
@@ -3939,6 +4029,7 @@
     "name": "Senior Citizen",
     "description": "You haven't seen this much blood since the war.  The whole world's gone crazy!  They ate your grandkids!  But dagnabbit, you'll make them all pay for what they've done.",
     "points": 0,
+    "age": { "min": 65, "max": 80 },
     "items": {
       "both": {
         "items": [ "tobacco", "pipe_tobacco", "ref_lighter", "socks", "dress_shoes", "knit_scarf" ],
@@ -4968,7 +5059,7 @@
           "motorbike_boots",
           "vambrace_larmor",
           "gauntlets_larmor",
-          "pickelhaube",
+          "helmet_steel",
           "mask_hockey",
           "camelbak",
           "dump_pouch",
@@ -5665,6 +5756,7 @@
     "name": "Bionic Student",
     "description": "Your parents were so obsessed with making sure you aced every test that they had you outfitted with bionics to make you smarter and never forget anything.  And now, you are facing the most dire test yet, and once again you had better succeed, or else.",
     "points": 3,
+    "age": { "min": 14, "max": 18 },
     "CBMs": [ "bio_batteries", "bio_power_storage", "bio_int_enhancer", "bio_memory" ],
     "items": {
       "both": [
@@ -6434,6 +6526,56 @@
   },
   {
     "type": "profession",
+    "id": "fighter_pilot",
+    "name": "Fighter Pilot",
+    "description": "They had you pushing your aircraft to the breaking point dropping ordinance on the undead.  After a mid-air collision forced you to eject, you were picked up by the unit you were providing air support for only for them to be wiped out to the last man.",
+    "points": 6,
+    "traits": [ "PROF_MILITARY" ],
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 5, "name": "driving" },
+      { "level": 1, "name": "pistol" },
+      { "level": 1, "name": "launcher" },
+      { "level": 3, "name": "mechanics" },
+      { "level": 3, "name": "gun" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "nomex_socks",
+          "nomex_suit",
+          "jumpsuit",
+          "boots_combat",
+          "nomex_gloves",
+          "gloves_tactical",
+          "nomex_hood",
+          "helmet_army",
+          "webbing_belt"
+        ],
+        "entries": [
+          { "item": "mil_scouter", "charges": 200 },
+          { "group": "charged_headseat", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "m17", "ammo-item": "9mm", "container-item": "holster", "charges": 17 },
+          { "item": "chestrig", "contents-group": "army_mags_m17" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boy_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "fighter_pilot_f35",
+    "name": "F-35 Fighter Pilot",
+    "description": "You thought the end of the world would see you dueling the PLAAF while ICBMs streak overhead.  Instead the end was a long day of desperate sorties as monstrosities swarmed every city within your craft's operational range.  Your airbase was overrun too, and every landing strip just seems more hostile than the last.",
+    "vehicle": "plane_f35_lightning",
+    "points": 8,
+    "copy-from": "fighter_pilot"
+  },
+  {
+    "type": "profession",
     "id": "hitman",
     "name": { "male": "Hitman", "female": "Hitwoman" },
     "description": "You were a killer for hire, trained and equipped to efficiently eliminate your target while keeping a low profile.  No one's hiring now that the world's ended, but your skills may prove useful for staying alive.",
@@ -6714,7 +6856,7 @@
           "socks",
           "boots",
           "bandana",
-          "pickelhaube",
+          "helmet_steel",
           "jacket_leather",
           "wristwatch",
           "meth",
@@ -7475,5 +7617,213 @@
       "female": [ "sports_bra", "boy_shorts" ]
     },
     "flags": [ "SCEN_ONLY", "VEH_GROUNDED" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_driver",
+    "name": "Tank Driver",
+    "description": "You were in charge of driving the tank, but without a commander it's a lot harder to get a clear picture of what's around you.",
+    "points": 4,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 4, "name": "driving" },
+      { "level": 1, "name": "mechanics" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "rifle" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_tactical", "helmet_army", "jacket_army", "webbing_belt" ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "army_mags_m4" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-item": "shoulder_strap" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_gunner",
+    "name": "Tank Gunner",
+    "description": "You were responsible for aiming and firing the main gun, but now you have no one left to spot targets for you.",
+    "points": 4,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 4, "name": "launcher" },
+      { "level": 3, "name": "gun" },
+      { "level": 3, "name": "rifle" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_tactical", "helmet_army", "jacket_army", "webbing_belt" ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "army_mags_m4" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-item": "shoulder_strap" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_loader",
+    "name": "Tank Loader",
+    "description": "Your job was to help the main gunner with loading, now you'll have to do all the work yourself.",
+    "points": 3,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 3, "name": "mechanics" },
+      { "level": 1, "name": "launcher" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" }
+    ],
+    "items": {
+      "both": {
+        "items": [ "pants_army", "socks", "boots_combat", "wristwatch", "gloves_tactical", "helmet_army", "jacket_army", "webbing_belt" ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "tankmod_army_mags_m9" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m9", "ammo-item": "9mm", "charges": 15, "container-item": "holster" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "tankmod_commander",
+    "name": "Tank Commander",
+    "description": "Your role was to coordinate the tank crew's actions and spot targets, a job made significantly harder by everyone else being either dead or MIA.",
+    "points": 5,
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 3, "name": "survival" },
+      { "level": 2, "name": "firstaid" },
+      { "level": 1, "name": "driving" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "pants_army",
+          "socks",
+          "boots_combat",
+          "wristwatch",
+          "gloves_tactical",
+          "helmet_army",
+          "jacket_army",
+          "webbing_belt",
+          "binoculars",
+          "militarymap"
+        ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "legpouch_large", "contents-group": "tankmod_army_mags_m9" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m9", "ammo-item": "9mm", "charges": 15, "container-item": "holster" }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
+    "id": "irs",
+    "name": "IRS-CI Special Agent",
+    "description": "After years of near-death encounters doing field work as a veteran special agent, nothing really fazes you anymore. You've been shot at, slashed at, swung on, and nearly run over while investigating tax fraud; this cataclysm is just a day in the life for you. With no one left to hold you accountable, taxes will be paid or capital punishment will be dispensed. You are inevitable.",
+    "points": 6,
+    "traits": [ "PROF_IRS" ],
+    "skills": [
+      { "level": 3, "name": "swimming" },
+      { "level": 3, "name": "dodge" },
+      { "level": 2, "name": "melee" },
+      { "level": 2, "name": "unarmed" },
+      { "level": 2, "name": "gun" },
+      { "level": 3, "name": "pistol" },
+      { "level": 2, "name": "shotgun" },
+      { "level": 3, "name": "computer" },
+      { "level": 1, "name": "firstaid" },
+      { "level": 3, "name": "speech" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "fancy_sunglasses",
+          "suit",
+          "tie_necktie",
+          "blue_topaz_platinum_cufflinks",
+          "platinum_ring",
+          "platinum_watch",
+          "kevlar",
+          "socks",
+          "dress_shoes",
+          "briefcase"
+        ],
+        "entries": [
+          { "item": "glock_19", "ammo-item": "9mm", "container-item": "holster", "charges": 15 },
+          { "item": "remington_870_express", "ammo-item": "shot_00", "charges": 7, "contents-item": "shoulder_strap" },
+          { "item": "tacvest", "contents-group": [ "mags_glock19" ] },
+          { "item": "ammo_satchel_leg", "contents-group": "ammopouch_irs_ci" },
+          { "item": "9mm", "charges": 5 },
+          { "item": "file", "count": 10 },
+          { "item": "record_accounting", "count": 2 },
+          { "item": "paper", "count": 20 },
+          { "item": "pen" },
+          { "item": "permanent_marker" },
+          { "item": "laptop" },
+          { "item": "smart_phone" },
+          { "item": "cig", "charges": 13, "container-item": "box_cigarette" },
+          { "item": "ref_lighter" },
+          { "item": "badge_IRS" }
+        ]
+      },
+      "male": [ "boxer_shorts", "platinum_necklace" ],
+      "female": [ "boy_shorts", "sports_bra", "blue_topaz_platinum_earring" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "elite_specops",
+    "name": "Elite Operator",
+    "description": "You were the best of the best, the military's finest, and among them you were better still.  Movies have been made about the missions you went on, and that's only the declassified ones. After getting back from yet another top secret mission, all you wanted to do was relax. Unfortunately, the Cataclysm had other plans, and now, stuck without your gear, you'll just have to show them what makes you tier one.",
+    "points": 8,
+    "traits": [ "PROF_MILITARY", "PROF_SWIMMER" ],
+    "skills": [
+      { "level": 8, "name": "swimming" },
+      { "level": 8, "name": "gun" },
+      { "level": 8, "name": "rifle" },
+      { "level": 6, "name": "survival" },
+      { "level": 3, "name": "cutting" },
+      { "level": 4, "name": "melee" },
+      { "level": 3, "name": "dodge" },
+      { "level": 3, "name": "firstaid" }
+    ],
+    "items": {
+      "both": { "items": [ "pants_army", "tshirt", "jacket_army", "socks", "boots_combat" ] },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
   }
 ]

@@ -1,8 +1,12 @@
 #include "character_turn.h"
 
+#include "active_tile_data_def.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "distribution_grid.h"
+#include "mapbuffer.h"
+#include "mapbuffer_registry.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character_effects.h"
@@ -199,6 +203,23 @@ void Character::process_turn()
 
     suffer();
 
+    // bio_portal_tap: passively draw power from a linked portal's distribution grid.
+    if( bio_portal_tap_linked && has_bionic( bionic_id( "bio_portal_tap" ) ) ) {
+        constexpr int TAP_KJ_PER_TURN = 1;  // draw up to 1 kJ per turn from the grid
+        auto *pt = active_tiles::furn_at<portal_tile>( bio_portal_tap_pos,
+                   MAPBUFFER_REGISTRY.get( bio_portal_tap_dim_id ) );
+        if( pt != nullptr && pt->linked ) {
+            // Look up the grid at the portal position.
+            if( auto *tracker = get_distribution_grid_tracker_for( bio_portal_tap_dim_id ) ) {
+                auto grid = tracker->grid_at( bio_portal_tap_pos );
+                if( grid.get_resource() >= TAP_KJ_PER_TURN ) {
+                    grid.mod_resource( -TAP_KJ_PER_TURN );
+                    mod_power_level( units::from_kilojoule( TAP_KJ_PER_TURN ) );
+                }
+            }
+        }
+    }
+
     // Handle player and NPC morale ticks
 
     if( calendar::once_every( 1_minutes ) ) {
@@ -314,7 +335,8 @@ void Character::process_turn()
             }
             // Find the amount of time passed since the player touched any of the overmap tile's submaps.
             const tripoint_abs_omt tpt( it->first, 0 );
-            const time_point last_touched = overmap_buffer.scent_at( tpt ).creation_time;
+            const time_point last_touched = get_overmapbuffer( get_avatar().get_dimension() ).scent_at(
+                                                tpt ).creation_time;
             const time_duration since_visit = now - last_touched;
             // If the player has spent little time in this overmap tile, let it decay after just an hour instead of the usual extended decay time.
             const time_duration modified_decay_time = it->second > 5_minutes ? decay_time : 1_hours;

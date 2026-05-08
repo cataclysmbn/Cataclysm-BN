@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -45,7 +46,8 @@ float morale_crafting_speed_multiplier( const Character &who, const recipe &rec 
 float lighting_crafting_speed_multiplier( const Character &who, const recipe &rec );
 float crafting_speed_multiplier( const Character &who, const recipe &rec, bool );
 float crafting_speed_multiplier( const Character &who, const item &craft,
-                                 const bench_location &bench );
+                                 const bench_location &bench,
+                                 std::optional<float> tools_multi_override = std::nullopt );
 void complete_craft( Character &who, item &craft );
 
 namespace crafting

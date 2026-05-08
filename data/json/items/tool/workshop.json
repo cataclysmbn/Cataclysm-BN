@@ -1087,7 +1087,7 @@
       {
         "type": "repair_item",
         "item_action_type": "repair_metal",
-        "materials": [ "plastic", "lead", "tin", "zinc" ],
+        "materials": [ "plastic", "lead", "tin", "zinc", "rubber" ],
         "skill": "fabrication",
         "cost_scaling": 0.1,
         "move_cost": 1500
@@ -1134,7 +1134,7 @@
       {
         "type": "repair_item",
         "item_action_type": "repair_metal",
-        "materials": [ "plastic", "lead", "tin", "zinc" ],
+        "materials": [ "plastic", "lead", "tin", "zinc", "rubber" ],
         "skill": "fabrication",
         "cost_scaling": 0.1,
         "move_cost": 1500
@@ -1261,6 +1261,25 @@
         "tool_quality": 10,
         "cost_scaling": 0.1,
         "move_cost": 500
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "bronze",
+          "silver",
+          "gold",
+          "platinum",
+          "superalloy",
+          "glass"
+        ],
+        "skill": "fabrication",
+        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ]
       }
     ],
     "flags": [ "ALLOWS_REMOTE_USE" ],

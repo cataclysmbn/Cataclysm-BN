@@ -40,6 +40,7 @@ class pixel_minimap
 
         void draw( const SDL_Rect &screen_rect, const tripoint &center );
         bool has_animated_elements() const;
+        void reset();
 
     private:
         struct submap_cache;
@@ -47,7 +48,6 @@ class pixel_minimap
         submap_cache &get_cache_at( const tripoint &abs_sm_pos );
 
         void set_screen_rect( const SDL_Rect &screen_rect );
-        void reset();
 
         void draw_beacon( const SDL_Rect &rect, const SDL_Color &color );
 

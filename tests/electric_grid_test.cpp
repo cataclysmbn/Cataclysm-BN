@@ -111,8 +111,8 @@ struct grid_setup {
 static void clear_grid_connections( map &m )
 {
     // TODO: fix point types
-    auto om = overmap_buffer.get_om_global( project_to<coords::omt>( tripoint_abs_sm(
-            m.get_abs_sub() ) ) );
+    auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( project_to<coords::omt>( tripoint_abs_sm(
+                  m.get_abs_sub() ) ) );
     om.om->set_electric_grid_connections( om.local, {} );
 }
 
@@ -162,14 +162,13 @@ TEST_CASE( "grid_and_vehicle_outside_bubble", "[grids][vehicle]" )
     clear_all_state();
     put_player_underground();
     map &m = get_map();
-    const tripoint old_abs_sub = m.get_abs_sub();
+    const auto old_abs_sub = m.get_abs_sub();
     // Ugly: we move the real map instead of the tinymap to reuse clear_map() results
     m.load( m.get_abs_sub() + point( m.getmapsize(), 0 ), true );
     GIVEN( "vehicle and battery are on one grid" ) {
         tinymap tm;
         tm.load( old_abs_sub, false );
         auto setup = set_up_grid( tm );
-        tm.save();
         test_grid_veh( setup.grid, setup.veh, setup.battery );
     }
 }
@@ -434,14 +433,14 @@ TEST_CASE( "grid_furn_transform_queue_outside_bubble", "[grids]" )
 
     sm = MAPBUFFER.lookup_submap( pos_abs_sm );
     REQUIRE( sm );
-    REQUIRE( sm->get_furn( pos_in_sm.raw() ).id() != f_floor_lamp_on );
+    REQUIRE( sm->get_furn( pos_in_sm ).id() != f_floor_lamp_on );
     REQUIRE( active_tiles::furn_at<active_tile_data>( pos_abs ) == nullptr );
 
     tf_queue.apply( MAPBUFFER, get_distribution_grid_tracker(), get_player_character(), get_map() );
 
     sm = MAPBUFFER.lookup_submap( pos_abs_sm );
     REQUIRE( sm );
-    REQUIRE( sm->get_furn( pos_in_sm.raw() ).id() == f_floor_lamp_on );
+    REQUIRE( sm->get_furn( pos_in_sm ).id() == f_floor_lamp_on );
     REQUIRE( active_tiles::furn_at<steady_consumer_tile>( pos_abs ) != nullptr );
 }
 

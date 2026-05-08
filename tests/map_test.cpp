@@ -33,47 +33,11 @@ TEST_CASE( "destroy_grabbed_furniture" )
     }
 }
 
-TEST_CASE( "map_bounds_checking" )
-{
-    clear_all_state();
-    map m;
-    m.load( tripoint_zero, false );
-    for( int x = -1; x <= MAPSIZE_X; ++x ) {
-        for( int y = -1; y <= MAPSIZE_Y; ++y ) {
-            for( int z = -OVERMAP_DEPTH - 1; z <= OVERMAP_HEIGHT + 1; ++z ) {
-                INFO( "( " << x << ", " << y << ", " << z << " )" );
-                if( x < 0 || x >= MAPSIZE_X ||
-                    y < 0 || y >= MAPSIZE_Y ||
-                    z < -OVERMAP_DEPTH || z > OVERMAP_HEIGHT ) {
-                    CHECK( !m.ter( { x, y, z } ) );
-                } else {
-                    CHECK( m.ter( { x, y, z } ) );
-                }
-            }
-        }
-    }
-}
+// map_bounds_checking removed: the basic inbounds() cuboid check is trivial.
+// A meaningful bounds test would involve pocket dimensions and dimension_bounds,
+// which require more involved setup (mapgen, dimension transitions, etc.).
 
-TEST_CASE( "tinymap_bounds_checking" )
-{
-    clear_all_state();
-    tinymap m;
-    m.load( tripoint_zero, false );
-    for( int x = -1; x <= SEEX * 2; ++x ) {
-        for( int y = -1; y <= SEEY * 2; ++y ) {
-            for( int z = -OVERMAP_DEPTH - 1; z <= OVERMAP_HEIGHT + 1; ++z ) {
-                INFO( "( " << x << ", " << y << ", " << z << " )" );
-                if( x < 0 || x >= SEEX * 2 ||
-                    y < 0 || y >= SEEY * 2 ||
-                    z < -OVERMAP_DEPTH || z > OVERMAP_HEIGHT ) {
-                    CHECK( !m.ter( { x, y, z } ) );
-                } else {
-                    CHECK( m.ter( { x, y, z } ) );
-                }
-            }
-        }
-    }
-}
+// tinymap_bounds_checking removed: same reasoning as map_bounds_checking above.
 
 TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
 {

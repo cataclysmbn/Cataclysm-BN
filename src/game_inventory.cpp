@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cmath>
 #include <cstddef>
 #include <functional>
 #include <map>
@@ -10,9 +11,11 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
@@ -37,6 +40,7 @@
 #include "iuse.h"
 #include "iuse_actor.h"
 #include "item_category.h"
+#include "material.h"
 #include "map.h"
 #include "npc.h"
 #include "options.h"
@@ -103,6 +107,35 @@ class inventory_filter_preset : public inventory_selector_preset
 
 namespace
 {
+
+class common_inventory_selector : public inventory_pick_selector
+{
+    public:
+        explicit common_inventory_selector( player &p ) : inventory_pick_selector( p ) {
+            ctxt.register_action( "unload_all",
+                                  to_translation( "Unload every carried item that can be unloaded" ) );
+        }
+
+        auto clear_shortcuts() -> void {
+            unload_all_selected = false;
+        }
+
+        [[nodiscard]] auto selected_unload_all() const -> bool {
+            return unload_all_selected;
+        }
+
+    protected:
+        auto handle_action( const std::string &action ) -> bool override {
+            if( action != "unload_all" ) {
+                return false;
+            }
+            unload_all_selected = true;
+            return true;
+        }
+
+    private:
+        bool unload_all_selected = false;
+};
 
 std::string good_bad_none( int value )
 {
@@ -219,7 +252,7 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
 
 void game_menus::inv::common( avatar &you )
 {
-    inventory_pick_selector inv_s( you );
+    common_inventory_selector inv_s( you );
 
     inv_s.set_title( _( "Inventory" ) );
     inv_s.set_hint( string_format(
@@ -232,7 +265,14 @@ void game_menus::inv::common( avatar &you )
         inv_s.clear_items();
         inv_s.add_character_items( you );
 
-        item *location = inv_s.execute();
+        inv_s.clear_shortcuts();
+        auto *location = inv_s.execute();
+
+        if( inv_s.selected_unload_all() ) {
+            avatar_action::unload_all( you );
+            started_action = true;
+            continue;
+        }
 
         if( location == nullptr ) {
             if( inv_s.keep_open ) {
@@ -865,7 +905,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
                            loc->ammo_required() );
             }
 
-            if( !it.has_flag( flag_ALLOWS_REMOTE_USE ) ) {
+            if( !it.has_flag( flag_ALLOWS_REMOTE_USE ) && !it.has_flag( flag_TEMPORARY_ITEM ) ) {
                 return pickup_inventory_preset::get_denial( loc );
             }
 
@@ -1477,8 +1517,55 @@ item *game_menus::inv::salvage( player &p )
 class repair_inventory_preset: public inventory_selector_preset
 {
     public:
-        repair_inventory_preset( const repair_item_actor *actor, const item *main_tool ) :
-            actor( actor ), main_tool( main_tool ) {
+        repair_inventory_preset( const repair_item_actor *actor, const item *main_tool,
+                                 player &character ) :
+            actor( actor ), main_tool( main_tool ), character( character ) {
+            append_cell( [ this, actor, &character ]( const item * loc ) {
+                const auto comp_needed = std::max<int>( 1,
+                                                        std::ceil( loc->volume() / 250_ml * actor->cost_scaling ) );
+                auto valid_entries = std::set<material_id> {};
+                std::ranges::for_each( actor->materials, [ &valid_entries, &loc ]( const auto & mat ) {
+                    if( loc->made_of( mat ) ) {
+                        valid_entries.emplace( mat );
+                    }
+                } );
+
+                const auto &crafting_inv = character.crafting_inventory();
+                auto listed_components = std::set<itype_id> {};
+                auto material_list = std::vector<std::string> {};
+                std::ranges::for_each( valid_entries, [ this, &listed_components, &material_list, &crafting_inv,
+                      &comp_needed ]( const auto & entry ) {
+                    const auto &component_id = entry.obj().repaired_with();
+                    if( listed_components.contains( component_id ) ) {
+                        return;
+                    }
+                    listed_components.emplace( component_id );
+                    const auto num_comp = get_cached_component_count( crafting_inv, component_id );
+                    if( num_comp > 0 ) {
+                        material_list.emplace_back( colorize( string_format( _( "%s (%d)" ), item::nname( component_id ),
+                                                              num_comp ), num_comp < comp_needed ? c_red : c_unset ) );
+                    }
+                } );
+
+                auto ret = join( material_list, ", " );
+                if( ret.empty() ) {
+                    ret = _( "<color_red>NONE</color>" );
+                }
+                return ret;
+            }, _( "MATERIALS AVAILABLE" ) );
+
+            append_cell( [ this ]( const item * loc ) {
+                const auto chance = get_cached_repair_chance( *loc );
+                return colorize( string_format( "%0.1f%%", 100.0f * chance.first ),
+                                 chance.first == 0 ? c_yellow : ( chance.second == 0 ? c_light_green : c_unset ) );
+            }, _( "SUCCESS" ) );
+
+            append_cell( [ this ]( const item * loc ) {
+                const auto chance = get_cached_repair_chance( *loc );
+                return colorize( string_format( "%0.1f%%", 100.0f * chance.second ),
+                                 chance.second > chance.first ? c_yellow : ( chance.second == 0 &&
+                                         chance.first > 0 ? c_light_green : c_unset ) );
+            }, _( "DMG" ) );
         }
 
         bool is_shown( const item *loc ) const override {
@@ -1487,17 +1574,60 @@ class repair_inventory_preset: public inventory_selector_preset
         }
 
     private:
+        auto get_cached_component_count( const inventory &crafting_inv,
+                                         const itype_id &component_id ) const -> int {
+            auto [ iter, inserted ] = component_count_cache.try_emplace( component_id, 0 );
+            if( !inserted ) {
+                return iter->second;
+            }
+
+            if( item::count_by_charges( component_id ) ) {
+                if( crafting_inv.has_charges( component_id, 1 ) ) {
+                    iter->second = crafting_inv.charges_of( component_id );
+                }
+            } else if( crafting_inv.has_amount( component_id, 1, false, is_crafting_component ) ) {
+                iter->second = crafting_inv.amount_of( component_id, false );
+            }
+            return iter->second;
+        }
+
+        auto get_cached_repair_chance( const item &loc ) const -> std::pair<float, float> {
+            auto [ iter, inserted ] = chance_cache.try_emplace( &loc );
+            if( inserted ) {
+                const auto level = character.get_skill_level( actor->used_skill );
+                const auto action_type = actor->default_action( loc, level );
+                iter->second = actor->repair_chance( character, loc, action_type );
+            }
+            return iter->second;
+        }
+
         const repair_item_actor *actor;
         const item *main_tool;
+        player &character;
+        mutable std::unordered_map<const item *, std::pair<float, float>> chance_cache;
+        mutable std::unordered_map<itype_id, int> component_count_cache;
 };
+
+static auto get_repair_hint( const player &character, const repair_item_actor *actor,
+                             const item *main_tool ) -> std::string
+{
+    auto hint = std::string{};
+    hint.append( string_format( _( "Tool: <color_cyan>%s</color>" ), main_tool->display_name() ) );
+    hint.append( " | " );
+    hint.append( string_format( _( "Skill used: <color_cyan>%s (%d)</color>" ),
+                                actor->used_skill.obj().name(),
+                                character.get_skill_level( actor->used_skill ) ) );
+    return hint;
+}
 
 item *game_menus::inv::repair( player &p, const repair_item_actor *actor,
                                const item *main_tool )
 {
-    return inv_internal( p, repair_inventory_preset( actor, main_tool ),
+    return inv_internal( p, repair_inventory_preset( actor, main_tool, p ),
                          _( "Repair what?" ), 1,
                          string_format( _( "You have no items that could be repaired with a %s." ),
-                                        main_tool->type_name( 1 ) ) );
+                                        main_tool->type_name( 1 ) ),
+                         get_repair_hint( p, actor, main_tool ) );
 }
 
 item *game_menus::inv::saw_barrel( player &p, item &tool )

@@ -19,6 +19,8 @@ auto rotate( const tripoint &p, point dim, int turns ) -> tripoint;
 /** works like rotate but for submaps. */
 auto rotate_point_sm( const tripoint &p, const tripoint &orig, int turns ) -> tripoint;
 
-auto get_rot_turns( const tripoint_abs_omt &here, const tripoint_abs_omt &there ) -> int;
+class overmapbuffer;
+auto get_rot_turns( const tripoint_abs_omt &here, const tripoint_abs_omt &there,
+                    overmapbuffer &omb ) -> int;
 
 

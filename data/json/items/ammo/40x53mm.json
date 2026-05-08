@@ -28,7 +28,8 @@
     "weight": "340 g",
     "//": "Balanced as AP.",
     "range": 10,
-    "damage": { "damage_type": "bullet", "amount": 91, "armor_penetration": 78 },
+    "damage": { "damage_type": "bullet", "amount": 7, "armor_penetration": 78 },
+    "shot": { "count": 15, "half_angle": 5 },
     "proportional": { "recoil": 1.2 },
     "casing": "40x53mm_m169_casing",
     "extend": { "effects": [ "SHOT" ] }
@@ -53,7 +54,8 @@
     "description": "An improvised 40x53mm buckshot load somewhat resembling M576.",
     "weight": "340 g",
     "range": 10,
-    "damage": { "damage_type": "bullet", "amount": 130, "armor_multiplier": 2 },
+    "damage": { "damage_type": "bullet", "amount": 13, "armor_penetration": 7 },
+    "shot": { "count": 10, "half_angle": 5 },
     "proportional": { "recoil": 1.2 },
     "casing": "40x53mm_m169_casing",
     "extend": { "effects": [ "SHOT" ] }
