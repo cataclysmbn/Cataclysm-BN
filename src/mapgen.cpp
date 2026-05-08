@@ -6648,7 +6648,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
         debugmsg( "Nonexistent vehicle type: \"%s\"", type.c_str() );
         return nullptr;
     }
-    if( !inbounds( tripoint_bub_ms( p ) ) ) {
+    if( !inbounds( p ) ) {
         dbg( DL::Warn ) << string_format( "Out of bounds add_vehicle t=%s d=%d p=%s",
                                           type, to_degrees( dir ), p.to_string() );
         return nullptr;
@@ -6656,9 +6656,9 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
 
     // debugmsg("n=%d x=%d y=%d MAPSIZE=%d ^2=%d", nonant, x, y, MAPSIZE, MAPSIZE*MAPSIZE);
     auto veh = std::make_unique<vehicle>( type, veh_fuel, veh_status, locked, has_keys );
-    auto poj = project_remain<coords::sm>( p );
-    veh->sm_pos = poj.quotient_tripoint;
-    veh->pos = poj.remainder;
+    auto proj = project_remain<coords::sm>( p );
+    veh->abs_sm_pos = bub_to_abs( proj.quotient_tripoint );
+    veh->sm_ms_pos = proj.remainder;
     veh->place_spawn_items();
     // for backwards compatibility, we always spawn with a pivot point of (0,0) so
     // that the mount at (0,0) is located at the spawn position.
@@ -6669,19 +6669,14 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
     vehicle *placed_vehicle = placed_vehicle_up.get();
 
     if( placed_vehicle != nullptr ) {
-        submap *place_on_submap = get_submap_at_grid( tripoint_bub_sm( placed_vehicle->sm_pos ) );
+        submap *place_on_submap = get_submap_at_grid( proj.quotient_tripoint );
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
         invalidate_max_populated_zlev( p.z() );
 
-        auto &ch = get_cache( placed_vehicle->sm_pos.z() );
+        auto &ch = get_cache( p.z() );
         ch.vehicle_list.insert( placed_vehicle );
         add_vehicle_to_cache( placed_vehicle );
-
-        placed_vehicle->abs_sm_pos = tripoint_abs_sm(
-                                         abs_sub.x() + placed_vehicle->sm_pos.x(),
-                                         abs_sub.y() + placed_vehicle->sm_pos.y(),
-                                         placed_vehicle->sm_pos.z() );
         loaded_vehicles.insert( placed_vehicle );
 
         //debugmsg ("grid[%d]->vehicles.size=%d veh.parts.size=%d", nonant, grid[nonant]->vehicles.size(),veh.parts.size());
@@ -6717,7 +6712,10 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
 
     for( std::vector<int>::const_iterator part = frame_indices.begin();
          part != frame_indices.end(); part++ ) {
-        const auto p = veh->bub_part_location( *part );
+        // Use abs_part_location + this map's abs_to_bub so that during mapgen
+        // (where get_map() is the player map, not this tinymap) the position
+        // checks reference the correct submap grid.
+        const auto p = abs_to_bub( veh->abs_part_location( *part ) );
 
         //Don't spawn anything in water
         if( has_flag_ter( TFLAG_DEEP_WATER, p ) && !can_float ) {
@@ -6753,14 +6751,17 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
              * p and then install them that way.
              * Create a vehicle with type "null" so it starts out empty. */
             auto wreckage = std::make_unique<vehicle>();
-            wreckage->pos = other_veh->pos;
-            wreckage->sm_pos = other_veh->sm_pos;
+            wreckage->sm_ms_pos = other_veh->sm_ms_pos;
+            wreckage->abs_sm_pos = other_veh->abs_sm_pos;
 
             //Where are we on the global scale?
             const tripoint_bub_ms bubble_pos = wreckage->bub_ms_location();
 
             // We must remove the vehicle from the map before we move away its parts
             std::unique_ptr<vehicle> old_veh = detach_vehicle( other_veh );
+            if( old_veh == nullptr ) {
+                return nullptr;
+            }
 
             for( const vpart_reference &vpr : veh->get_all_parts() ) {
                 const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->bub_part_location( vpr.part() ) );
@@ -6900,7 +6901,7 @@ void map::rotate( int turns, const bool setpos_safe )
             sm->rotate( turns );
 
             for( auto &veh : sm->vehicles ) {
-                veh->sm_pos = p;
+                veh->abs_sm_pos = bub_to_abs( p );
             }
 
             update_vehicle_list( sm, abs_sub.z() );

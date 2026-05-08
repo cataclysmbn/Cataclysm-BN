@@ -295,7 +295,7 @@ class overmapbuffer
          * used to remove the vehicle from the old overmap if the new position is
          * on another overmap.
          */
-        void move_vehicle( vehicle *veh, const point_abs_ms &old_msp );
+        void move_vehicle( vehicle *veh, const point_abs_omt &old_omt );
         /**
          * Add the vehicle to be tracked in the overmap.
          */

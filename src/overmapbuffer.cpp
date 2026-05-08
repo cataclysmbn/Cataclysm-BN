@@ -748,11 +748,9 @@ void overmapbuffer::set_scent( const tripoint_abs_omt &loc, int strength )
     om_loc.om->set_scent( loc, new_scent );
 }
 
-void overmapbuffer::move_vehicle( vehicle *veh, const point_abs_ms &old_msp )
+void overmapbuffer::move_vehicle( vehicle *veh, const point_abs_omt &old_omt )
 {
-    const point_abs_ms new_msp = veh->abs_ms_location().xy();
-    const point_abs_omt old_omt = project_to<coords::omt>( old_msp );
-    const point_abs_omt new_omt = project_to<coords::omt>( new_msp );
+    const point_abs_omt new_omt = project_to<coords::omt>( veh->abs_ms_location().xy() );
     const overmap_with_local_coords old_om_loc = get_om_global( old_omt );
     const overmap_with_local_coords new_om_loc = get_om_global( new_omt );
     if( old_om_loc.om == new_om_loc.om ) {

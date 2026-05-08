@@ -215,9 +215,12 @@ struct vehicle_part {
         /** mount point: x is on the forward/backward axis, y is on the left/right axis */
         tripoint_mnt_veh mount;
 
-        /** mount translated to face.dir [0] and turn_dir [1] */
+        /** mount translated to face.dir [0] and turn_dir [1]; XY rotation only, z is always mount.z() */
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        std::array<tripoint_rel_ms, 2> precalc = { { tripoint_rel_ms( -1, -1, 0 ), tripoint_rel_ms( -1, -1, 0 ) } };
+        std::array<point_rel_ms, 2> precalc = { { point_rel_ms( -1, -1 ), point_rel_ms( -1, -1 ) } };
+
+        /** terrain-topology z offset relative to vehicle origin, double-buffered like precalc */
+        std::array<int, 2> z_terrain = { 0, 0 };
 
         /** current part health with range [0,durability] */
         int hp() const;

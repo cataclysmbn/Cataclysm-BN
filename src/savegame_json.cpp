@@ -2928,8 +2928,8 @@ void vehicle_part::deserialize( JsonIn &jsin )
         if( std::abs( z_offset ) > 10 ) {
             data.throw_error( "z_offset out of range", "z_offset" );
         }
-        precalc[0].z() = z_offset;
-        precalc[1].z() = z_offset;
+        z_terrain[0] = z_offset;
+        z_terrain[1] = z_offset;
     }
     JsonArray ja = data.get_array( "carry" );
     size_t sz = ja.size();
@@ -3014,8 +3014,8 @@ void vehicle_part::serialize( JsonOut &json ) const
     }
     json.member( "passenger_id", passenger_id );
     json.member( "crew_id", crew_id );
-    if( precalc[0].z() ) {
-        json.member( "z_offset", precalc[0].z() );
+    if( z_terrain[0] ) {
+        json.member( "z_offset", z_terrain[0] );
     }
     json.member( "items", items );
     if( target.first != tripoint_abs_ms::min() ) {
@@ -3072,8 +3072,8 @@ void vehicle::deserialize( JsonIn &jsin )
     int mdir = 0;
 
     data.read( "type", type );
-    data.read( "posx", pos.x() );
-    data.read( "posy", pos.y() );
+    data.read( "posx", sm_ms_pos.x() );
+    data.read( "posy", sm_ms_pos.y() );
     data.read( "om_id", om_id );
     data.read( "faceDir", fdir );
     data.read( "moveDir", mdir );
@@ -3273,8 +3273,8 @@ void vehicle::serialize( JsonOut &json ) const
 {
     json.start_object();
     json.member( "type", type );
-    json.member( "posx", pos.x() );
-    json.member( "posy", pos.y() );
+    json.member( "posx", sm_ms_pos.x() );
+    json.member( "posy", sm_ms_pos.y() );
     json.member( "om_id", om_id );
     json.member( "faceDir", std::lround( to_degrees( face.dir() ) ) );
     json.member( "moveDir", std::lround( to_degrees( move.dir() ) ) );

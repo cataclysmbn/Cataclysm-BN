@@ -353,13 +353,12 @@ void map::on_submap_loaded( const tripoint_abs_sm &p, const std::string &dim_id 
     // Submap lookup — shared by vehicle fixup, active-item tracking, and grid update.
     submap *sm = MAPBUFFER_REGISTRY.get( dim_id ).lookup_submap_in_memory( p );
 
-    // Vehicle sm_pos / abs_sm_pos fixup and loaded_vehicles registration.
+    // Vehicle abs_sm_pos fixup and loaded_vehicles registration.
     // Covers all loaded submaps, including out-of-bubble ones.
     // For in-bubble submaps loadn() has already done this; the set insert is idempotent.
     if( sm != nullptr && !sm->vehicles.empty() ) {
         // Extended local grid index: may be outside [0, my_MAPSIZE) for out-of-bubble.
         for( const auto &veh : sm->vehicles ) {
-            veh->sm_pos = abs_to_bub( p );
             veh->abs_sm_pos = p;
             veh->dimension_id_ = dim_id;
             loaded_vehicles.insert( veh.get() );
@@ -638,12 +637,6 @@ void map::reset_vehicle_cache( )
     for( int zlev = zmin; zlev <= zmax; zlev++ ) {
         auto &ch = get_cache( zlev );
         for( const auto &elem : ch.vehicle_list ) {
-            // abs_sm_pos is always the authoritative absolute position.
-            // sm_pos can be stale when loadn fires during a shift and abs_sub
-            // subsequently changes (e.g. the vehicle's submap enters the grid
-            // from the fire-spread loader, or the reality bubble resizes).
-            // Recompute sm_pos here so the tile-level cache uses the right slot.
-            elem->sm_pos = abs_to_bub( elem->abs_sm_pos );
             elem->adjust_zlevel( 0, tripoint_rel_ms::zero() );
             add_vehicle_to_cache( elem );
         }
@@ -756,12 +749,12 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
         return std::unique_ptr<vehicle>();
     }
 
-    int z = veh->sm_pos.z();
+    int z = veh->abs_sm_pos.z();
     if( z < -OVERMAP_DEPTH || z > OVERMAP_HEIGHT ) {
         debugmsg( "detach_vehicle got a vehicle outside allowed z-level range!  name=%s, submap:%d,%d,%d",
-                  veh->name, veh->sm_pos.x(), veh->sm_pos.y(), veh->sm_pos.z() );
+                  veh->name, veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
         // Try to fix by moving the vehicle here
-        z = veh->sm_pos.z() = abs_sub.z();
+        z = veh->abs_sm_pos.z() = abs_sub.z();
     }
 
     // Unboard all passengers before detaching
@@ -772,10 +765,19 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
         }
     }
     veh->invalidate_towing( true );
-    submap *const current_submap = get_submap_at_grid( tripoint_bub_sm( veh->sm_pos ) );
+    // During mapgen, submaps are held in the local tinymap grid but have not yet been
+    // transferred to MAPBUFFER (that happens at the end of generate()).  Fall back to
+    // the grid lookup so wreck-merging works correctly during generation.
+    const tripoint_bub_sm bub_sm( veh->abs_sm_pos.x() - abs_sub.x(),
+                                   veh->abs_sm_pos.y() - abs_sub.y(),
+                                   veh->abs_sm_pos.z() );
+    submap *current_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( veh->abs_sm_pos );
+    if( current_submap == nullptr ) {
+        current_submap = get_submap_at_grid( bub_sm );
+    }
     if( current_submap == nullptr ) {
         debugmsg( "detach_vehicle can't find submap!  name=%s, submap:%d,%d,%d",
-                  veh->name, veh->sm_pos.x(), veh->sm_pos.y(), veh->sm_pos.z() );
+                  veh->name, veh->abs_sm_pos.x(), veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
         loaded_vehicles.erase( veh );
         dirty_vehicle_list.erase( veh );
         return std::unique_ptr<vehicle>();
@@ -798,8 +800,8 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
             return result;
         }
     }
-    debugmsg( "detach_vehicle can't find it!  name=%s, submap:%d,%d,%d", veh->name, veh->sm_pos.x(),
-              veh->sm_pos.y(), veh->sm_pos.z() );
+    debugmsg( "detach_vehicle can't find it!  name=%s, submap:%d,%d,%d", veh->name, veh->abs_sm_pos.x(),
+              veh->abs_sm_pos.y(), veh->abs_sm_pos.z() );
     return std::unique_ptr<vehicle>();
 }
 
@@ -808,7 +810,7 @@ void map::destroy_vehicle( vehicle *veh )
     detach_vehicle( veh );
 }
 
-void map::on_vehicle_moved( const point_bub_sm &sm_min, const point_bub_sm &sm_max, const int &smz )
+void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max, const int &smz )
 {
     ZoneScoped;
 
@@ -1110,7 +1112,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
     // Ensured by the splitting above
     assert( vertical == ( dp.xy() == point_rel_ms::zero() ) );
 
-    const int target_z = dp.z() + veh.sm_pos.z();
+    const int target_z = dp.z() + veh.abs_sm_pos.z();
     if( target_z < -OVERMAP_DEPTH || target_z > OVERMAP_HEIGHT ) {
         return &veh;
     }
@@ -1363,7 +1365,7 @@ float map::vehicle_vehicle_collision( vehicle &veh, vehicle &veh2,
              veh.name,  veh.part_info( c.part ).name(),
              veh2.name, veh2.part_info( c.target_part ).name() );
 
-    const bool vertical = veh.sm_pos.z() != veh2.sm_pos.z();
+    const bool vertical = veh.abs_sm_pos.z() != veh2.abs_sm_pos.z();
 
     // Used to calculate the epicenter of the collision.
     tripoint_rel_veh epicenter1;
@@ -1582,7 +1584,7 @@ bool map::deregister_vehicle_zone( zone_data &zone )
         if( it != bounds.second ) {
             vp->vehicle().loot_zones.erase( it );
             if( vp->vehicle().loot_zones.empty() ) {
-                get_cache( vp->vehicle().sm_pos.z() ).zone_vehicles.erase( &vp->vehicle() );
+                get_cache( vp->vehicle().abs_sm_pos.z() ).zone_vehicles.erase( &vp->vehicle() );
             }
             return true;
         }
@@ -1736,52 +1738,48 @@ void map::unboard_vehicle( const tripoint_bub_ms &p, bool dead_passenger )
 
 bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
 {
-    // abs_sm_pos is always authoritative.  A tinymap (e.g. fire-spread loader) that
-    // loads the same submap sets veh.sm_pos to its own local grid coordinates, which
-    // are meaningless to the main map and corrupt the position lookup.  Recompute
-    // sm_pos from abs_sm_pos before any position-dependent call so the correction
-    // applies regardless of which code path caused the staleness.
-    veh.sm_pos = abs_to_bub( veh.abs_sm_pos );
+    const auto src = veh.abs_ms_location();
+    const auto dest = src + dp;
+    const auto dest_proj = project_remain<coords::sm>( dest );
+    const bool sm_shift = veh.abs_sm_pos != dest_proj.quotient_tripoint;
 
-    const auto src = veh.bub_ms_location();
-    auto dst = src + dp;
+    submap *const src_submap = sm_shift ? MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( veh.abs_sm_pos ) : nullptr;
+    submap *const dst_submap = sm_shift ? MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( dest_proj.quotient_tripoint ) : nullptr;
 
-    point_sm_ms src_offset;
-    point_sm_ms dst_offset;
-    submap *src_submap = get_submap_at( src, src_offset );
-    submap *dst_submap = get_submap_at( dst, dst_offset );
     std::set<int> smzs;
-
-    if( src_submap == nullptr ) {
-        debugmsg( "displace_vehicle: src submap null for '%s' at %d,%d,%d",
-                  veh.name, src.x(), src.y(), src.z() );
-        return false;
-    }
-
-    // Find the vehicle's index directly in its authoritative source submap.
-    // get_submap_at() handles out-of-bubble positions via the mapbuffer fallback,
-    // so this works for vehicles loaded outside the reality bubble.
     size_t our_i = 0;
-    bool found = false;
-    for( size_t i = 0; i < src_submap->vehicles.size(); ++i ) {
-        if( src_submap->vehicles[i].get() == &veh ) {
-            our_i = i;
-            found = true;
-            break;
+
+    if( sm_shift ) {
+        if( src_submap == nullptr ) {
+            debugmsg( "displace_vehicle: src submap null for '%s' at %d,%d,%d",
+                      veh.name, src.x(), src.y(), src.z() );
+            return false;
         }
-    }
 
-    if( !found ) {
-        add_msg( m_debug, "displace_vehicle [%s] failed", veh.name );
-        return false;
-    }
+        // Find the vehicle's index directly in its authoritative source submap.
+        // get_submap_at() handles out-of-bubble positions via the mapbuffer fallback,
+        // so this works for vehicles loaded outside the reality bubble.
+        bool found = false;
+        for( size_t i = 0; i < src_submap->vehicles.size(); ++i ) {
+            if( src_submap->vehicles[i].get() == &veh ) {
+                our_i = i;
+                found = true;
+                break;
+            }
+        }
 
-    // Stop the vehicle if its destination submap is not loaded.
-    // Safety net for cases where act_on_map consumed movement before collision fired.
-    if( dst_submap == nullptr ) {
-        veh.stop();
-        dbg( DL::Error ) << "map::displace_vehicle: dst submap not loaded, stopping vehicle dp=" << dp;
-        return true;
+        if( !found ) {
+            add_msg( m_debug, "displace_vehicle [%s] failed", veh.name );
+            return false;
+        }
+
+        // Stop the vehicle if its destination submap is not loaded.
+        // Safety net for cases where act_on_map consumed movement before collision fired.
+        if( dst_submap == nullptr ) {
+            veh.stop();
+            dbg( DL::Error ) << "map::displace_vehicle: dst submap not loaded, stopping vehicle dp=" << dp;
+            return true;
+        }
     }
 
     // Need old coordinates to check for remote control
@@ -1822,10 +1820,11 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
             }
             const vehicle_part &veh_part = veh.part( prt );
 
-            auto next_pos = tripoint_rel_ms( veh_part.precalc[1] );
-
-            // Place passenger on the new part location
-            auto psgp( dst + next_pos );
+            // Place passenger on the new part location.  Z must include mount
+            // and terrain-topology offsets — precalc[1] is XY-only.
+            auto psgp = abs_to_bub( dest + tripoint_rel_ms( veh_part.precalc[1].x(),
+                                    veh_part.precalc[1].y(),
+                                    veh_part.mount.z() + veh_part.z_terrain[1] ) );
             // someone is in the way so try again
             if( g->critter_at( psgp ) ) {
                 complete = false;
@@ -1846,21 +1845,22 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // Capture the old footprint in submap grid coordinates BEFORE parts are
     // updated by advance_precalc_mounts.  precalc[0] holds local offsets from
     // the vehicle reference point; the part's global tile position is src+offset.
-    point_bub_sm veh_sm_min = { INT_MAX, INT_MAX };
-    point_bub_sm veh_sm_max = { INT_MIN, INT_MIN };
+    tripoint_bub_sm veh_sm_min = { INT_MAX, INT_MAX, INT_MAX };
+    tripoint_bub_sm veh_sm_max = { INT_MIN, INT_MIN, INT_MIN };
 
-    auto expand_bounds = [&]( const int base_x, const int base_y, const vehicle_part & prt ) {
-        const int px = divide_round_to_minus_infinity( base_x + prt.precalc[0].x(), SEEX );
-        const int py = divide_round_to_minus_infinity( base_y + prt.precalc[0].y(), SEEY );
-        veh_sm_min.x() = std::min( veh_sm_min.x(), px );
-        veh_sm_min.y() = std::min( veh_sm_min.y(), py );
-        veh_sm_max.x() = std::max( veh_sm_max.x(), px );
-        veh_sm_max.y() = std::max( veh_sm_max.y(), py );
+    auto expand_bounds = [&]( const tripoint_abs_ms &base, const vehicle_part & prt ) {
+        const auto p = project_to<coords::sm>( base + prt.precalc[0] );
+        veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
+        veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
+        veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
+        veh_sm_max.x() = std::max( veh_sm_max.x(), p.x() );
+        veh_sm_max.y() = std::max( veh_sm_max.y(), p.y() );
+        veh_sm_max.z() = std::max( veh_sm_max.z(), p.z() );
     };
 
     for( const vpart_reference &vpr : veh.get_all_parts() ) {
         if( !vpr.part().removed ) {
-            expand_bounds( src.x(), src.y(), vpr.part() );
+            expand_bounds( src, vpr.part() );
         }
     }
 
@@ -1874,51 +1874,49 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         avatar &you = get_avatar();
         for( const vpart_reference &vpr : veh.get_all_parts() ) {
             if( !vpr.part().removed ) {
-                you.clear_memorized_overlay( bub_to_abs( src + vpr.part().precalc[0] ) );
+                you.clear_memorized_overlay( src + vpr.part().precalc[0] );
             }
         }
     }
 
-    smzs = veh.advance_precalc_mounts( dst_offset, src );
+    smzs = veh.advance_precalc_mounts( src );
+    veh.sm_ms_pos = dest_proj.remainder;
 
     // Expand bounds with the new footprint (precalc[0] now holds new offsets).
     for( const vpart_reference &vpr : veh.get_all_parts() ) {
         if( !vpr.part().removed ) {
-            expand_bounds( dst.x(), dst.y(), vpr.part() );
+            expand_bounds( dest, vpr.part() );
         }
     }
 
-    if( src_submap != dst_submap ) {
-        auto dst_sub = project_to<coords::scale::submap>( dst );
-        veh.set_submap_moved( dst_sub );
+    if( sm_shift && src_submap != dst_submap ) {
         auto src_submap_veh_it = src_submap->vehicles.begin() + our_i;
         dst_submap->vehicles.push_back( std::move( *src_submap_veh_it ) );
         src_submap->vehicles.erase( src_submap_veh_it );
         dst_submap->is_uniform = false;
-        invalidate_max_populated_zlev( dst.z() );
+        invalidate_max_populated_zlev( dest.z() );
 
         // Update abs_sm_pos for the submap boundary crossing.
-        // Use floor division so negative extended-local coords (out-of-bubble) map correctly.
-        veh.abs_sm_pos = bub_to_abs( dst_sub );
+        const auto prev = veh.abs_sm_pos;
+        veh.abs_sm_pos = dest_proj.quotient_tripoint;
+        veh.update_overmap( prev );
     }
+
     if( need_update ) {
         g->update_map( g->u );
-        // update_map shifts abs_sub; recompute sm_pos so the cache lookup
-        // lands in the right grid slot after the shift.
-        veh.sm_pos = abs_to_bub( veh.abs_sm_pos );
     }
     add_vehicle_to_cache( &veh );
 
-    if( z_change || src.z() != dst.z() ) {
+    if( z_change || src.z() != dest.z() ) {
         if( z_change ) {
             g->vertical_shift( z_to );
             // vertical moves can flush the caches, so make sure we're still in the cache
             add_vehicle_to_cache( &veh );
         }
-        update_vehicle_list( dst_submap, dst.z() );
+        update_vehicle_list( dst_submap, dest.z() );
         // delete the vehicle from the source z-level vehicle cache set if it is no longer on
         // that z-level
-        if( src.z() != dst.z() ) {
+        if( src.z() != dest.z() ) {
             level_cache &ch2 = get_cache( src.z() );
             for( const vehicle *elem : ch2.vehicle_list ) {
                 if( elem == &veh ) {
@@ -1943,7 +1941,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     veh.zones_dirty = true;
 
     std::ranges::for_each( smzs, [&]( const int vsmz ) {
-        on_vehicle_moved( veh_sm_min, veh_sm_max, dst.z() + vsmz );
+        on_vehicle_moved( veh_sm_min, veh_sm_max, dest.z() + vsmz );
     } );
     return true;
 }
@@ -7959,12 +7957,10 @@ static inline void shift_tripoint_map( std::map<tripoint_bub_ms, T> &map,
 
 void map::shift_vehicle_z( vehicle &veh, int z_shift )
 {
-
-    auto src = veh.bub_ms_location();
-    auto dst = src + tripoint_above * z_shift;
-
-    submap *src_submap = get_submap_at( src );
-    submap *dst_submap = get_submap_at( dst );
+    auto src = veh.abs_sm_pos;
+    auto dst = src + tripoint_rel_sm( 0, 0, z_shift );
+    submap *src_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( src );
+    submap *dst_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( dst );
 
     int our_i = -1;
     for( size_t i = 0; i < src_submap->vehicles.size(); i++ ) {
@@ -7980,10 +7976,9 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
     }
 
     for( auto &prt : veh.get_all_parts() ) {
-        prt.part().precalc[0].z() -= z_shift;
+        prt.part().z_terrain[0] -= z_shift;
     }
 
-    veh.set_submap_moved( project_to<coords::scale::submap>( dst ) );
     auto src_submap_veh_it = src_submap->vehicles.begin() + our_i;
     dst_submap->vehicles.push_back( std::move( *src_submap_veh_it ) );
     src_submap->vehicles.erase( src_submap_veh_it );
@@ -8001,8 +7996,8 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
         }
     }
 
-    // Update abs_sm_pos for the z-level crossing.
-    veh.abs_sm_pos = project_to<coords::sm>( bub_to_abs( dst ) );
+    veh.abs_sm_pos = dst;
+    veh.update_overmap( src );
 }
 
 void map::shift( const point_rel_sm &sp )
@@ -8336,8 +8331,7 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         vehicle *veh = iter->get();
         if( veh->part_count() > 0 ) {
             // Always fix submap coordinates for easier Z-level-related operations
-            veh->sm_pos = tripoint_bub_sm( grid );
-            veh->abs_sm_pos = tripoint_abs_sm( grid_abs_sub );
+            veh->abs_sm_pos = grid_abs_sub;
             veh->dimension_id_ = bound_dimension_;
             loaded_vehicles.insert( veh );
             veh->attach();
@@ -8903,8 +8897,7 @@ void map::copy_grid( const tripoint_bub_sm &to, const tripoint_bub_sm &from )
         return;
     }
     for( auto &it : smap->vehicles ) {
-        it->sm_pos = to;
-        it->abs_sm_pos = tripoint_abs_sm( abs_sub.x() + to.x(), abs_sub.y() + to.y(), to.z() );
+        it->abs_sm_pos = bub_to_abs( to );
     }
 }
 

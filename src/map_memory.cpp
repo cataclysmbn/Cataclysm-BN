@@ -312,8 +312,8 @@ bool map_memory::save( const tripoint_abs_ms &pos )
     std::map<tripoint_abs_mmr, mm_region> regions;
     for( auto &it : submaps ) {
         const auto reg = project_to<coords::mmr>( it.first );
-        const auto sm_loc = project_to<coords::sm>( reg );
-        regions[reg].submaps[sm_loc.x()][sm_loc.y()] = it.second;
+        const auto within_reg = project_remain<coords::mmr>( it.first ).remainder;
+        regions[reg].submaps[within_reg.x()][within_reg.y()] = it.second;
     }
     submaps.clear();
 

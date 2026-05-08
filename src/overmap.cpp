@@ -6015,7 +6015,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
                 submap::swap( *destsm,  *srcsm );
 
                 for( auto &veh : destsm->vehicles ) {
-                    veh->sm_pos = here.abs_to_bub( dest_pos );
+                    veh->abs_sm_pos = dest_pos;
                 }
 
                 if( !destsm->spawns.empty() ) {                              // trigger spawnpoints

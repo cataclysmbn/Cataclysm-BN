@@ -368,9 +368,9 @@ void submap::rotate( int turns )
     }
 
     for( auto &elem : vehicles ) {
-        const point_sm_ms new_pos = rotate_point( point_sm_ms( elem->pos ) );
+        const point_sm_ms new_pos = rotate_point( elem->sm_ms_pos );
 
-        elem->pos = new_pos;
+        elem->sm_ms_pos = new_pos;
         elem->set_facing( elem->turn_dir + turns * 90_degrees );
     }
 

@@ -433,8 +433,11 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
         }
         empty = false;
         // Coordinates of where part will go due to movement (dx/dy/dz)
-        //  and turning (precalc[1])
-        const auto dsp = bub_ms_location() + dp + parts[p].precalc[1];
+        //  and turning (precalc[1]).  Z includes terrain-topology offset so
+        //  parts elevated by ramps collide at their actual z-level, not z=0.
+        const auto dsp = bub_ms_location() + dp + tripoint_rel_ms(
+                             parts[p].precalc[1],
+                             parts[p].mount.z() + parts[p].z_terrain[1] );
         veh_collision coll = part_collision( p, dsp, just_detect, bash_floor );
         if( coll.type == veh_coll_nothing ) {
             continue;
@@ -484,6 +487,8 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
         velocity = 0;
         vertical_velocity = 0;
         add_msg( m_debug, "Collision check on a dirty vehicle %s", name );
+        fprintf( stderr, "[DIAG collision DIRTY] veh=%s parts=%zu\n",
+                 name.c_str(), parts.size() );
         return true;
     }
 
@@ -508,7 +513,7 @@ veh_collision vehicle::part_collision( int part, const tripoint_bub_ms &p,
 {
     // Vertical collisions need to be handled differently
     // All collisions have to be either fully vertical or fully horizontal for now
-    const bool vert_coll = bash_floor || p.z() != sm_pos.z();
+    const bool vert_coll = bash_floor || p.z() != abs_sm_pos.z();
     Character &player_character = get_player_character();
     const bool pl_ctrl = player_in_control( player_character );
     Creature *critter = g->critter_at( p, true );
@@ -1423,13 +1428,13 @@ vehicle *vehicle::act_on_map()
                     const auto lpos = project_to<coords::sm>( gpos + prt.precalc[0] );
                     sink_sm_min.x() = std::min( sink_sm_min.x(), lpos.x() );
                     sink_sm_min.y() = std::min( sink_sm_min.y(), lpos.y() );
-                    //sink_sm_min.z() = std::min( sink_sm_min.z(), lpos.z() );
+                    sink_sm_min.z() = std::min( sink_sm_min.z(), lpos.z() );
                     sink_sm_max.x() = std::max( sink_sm_max.x(), lpos.x() );
                     sink_sm_max.y() = std::max( sink_sm_max.y(), lpos.y() );
-                    //sink_sm_max.z() = std::max( sink_sm_max.z(), lpos.z() );
+                    sink_sm_max.z() = std::max( sink_sm_max.z(), lpos.z() );
                 }
                 );
-                here.on_vehicle_moved( sink_sm_min.xy(), sink_sm_max.xy(), sm_pos.z() );
+                here.on_vehicle_moved( sink_sm_min, sink_sm_max, abs_sm_pos.z() );
             }
             // Destroy vehicle (sank to nowhere)
             here.destroy_vehicle( this );
@@ -1581,19 +1586,23 @@ vehicle *vehicle::act_on_map()
 void vehicle::shift_zlevel()
 {
     map &here = get_map();
-    int center = part_at( tripoint_rel_ms::zero() );
+
+    // Scan by mount position directly — avoids cache dependency during z-transition when
+    // precalc[0] and abs_sm_pos.z() are temporarily inconsistent.
+    const auto center_it = std::ranges::find_if( parts, []( const vehicle_part &p ) {
+        return !p.removed && p.mount == tripoint_mnt_veh::zero();
+    } );
 
     int z_shift = 0;
-    if( center == -1 ) {
-        //no center part, fall back to slower terrain check
-        auto global_center = mount_to_bubble( tripoint_mnt_veh::zero() );
+    if( center_it == parts.end() ) {
+        const auto global_center = mount_to_bubble( tripoint_mnt_veh::zero() );
         if( here.has_flag( TFLAG_RAMP_DOWN, global_center ) ) {
             z_shift = -1;
         } else if( here.has_flag( TFLAG_RAMP_UP, global_center ) ) {
             z_shift = 1;
         }
     } else {
-        z_shift = parts[center].precalc[0].z();
+        z_shift = center_it->z_terrain[0];
     }
 
     if( z_shift != 0 ) {
@@ -1603,10 +1612,16 @@ void vehicle::shift_zlevel()
 
 bool vehicle::check_on_ramp( int idir, const tripoint_rel_ms &offset ) const
 {
+    const tripoint_bub_ms origin = bub_ms_location();
     for( auto &prt : get_all_parts() ) {
-        auto partPoint = bub_ms_location() + offset + prt.part().precalc[idir];
-
-        if( g->m.has_flag( TFLAG_RAMP_UP, partPoint ) || g->m.has_flag( TFLAG_RAMP_DOWN, partPoint ) ) {
+        const vehicle_part &p = prt.part();
+        const tripoint_bub_ms part_point{
+            origin.x() + offset.x() + p.precalc[idir].x(),
+            origin.y() + offset.y() + p.precalc[idir].y(),
+            origin.z() + offset.z() + p.mount.z() + p.z_terrain[idir]
+        };
+        if( g->m.has_flag( TFLAG_RAMP_UP, part_point ) ||
+            g->m.has_flag( TFLAG_RAMP_DOWN, part_point ) ) {
             return true;
         }
     }
@@ -1615,9 +1630,13 @@ bool vehicle::check_on_ramp( int idir, const tripoint_rel_ms &offset ) const
 
 void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
 {
-    //We don't need to do anything if we're not on a ramp
-    //unless position 0 is outside the vehicle then there may be a ramp in between
-    if( part_at( tripoint_rel_ms::zero() ) != -1 && !check_on_ramp( idir, offset ) ) {
+    // We don't need to do anything if we're not on a ramp,
+    // unless the center mount is outside the vehicle (ramp may lie between parts).
+    const bool on_ramp = check_on_ramp( idir, offset );
+    const auto center_it = std::ranges::find_if( parts, []( const vehicle_part &p ) {
+        return !p.removed && p.mount == tripoint_mnt_veh::zero();
+    } );
+    if( center_it != parts.end() && !on_ramp ) {
         return;
     }
 
@@ -1640,7 +1659,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
     // it.
 
     auto &m = get_map();
-    auto bub_pos = bub_ms_location();
+    const tripoint_bub_ms bub_pos = bub_ms_location();
 
     auto new_center = bub_pos + offset;
 
@@ -1652,13 +1671,19 @@ void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
 
     std::map<point_bub_ms, int> z_cache;
 
-    //Draw a line from the center to each part, going up and down ramps as we do
+    // Draw a line from the center to each part, going up and down ramps as we do.
+    // Only XY matters for the walk destination; z_terrain[idir] is the output.
     for( auto &prt : get_all_parts() ) {
-        auto part_point = bub_pos + offset + prt.part().precalc[idir];
+        const vehicle_part &p = prt.part();
+        const tripoint_bub_ms part_point{
+            bub_pos.x() + offset.x() + p.precalc[idir].x(),
+            bub_pos.y() + offset.y() + p.precalc[idir].y(),
+            bub_pos.z()
+        };
 
         auto cache_entry = z_cache.find( part_point.xy() );
         if( cache_entry != z_cache.end() ) {
-            prt.part().precalc[idir].z() = cache_entry->second;
+            prt.part().z_terrain[idir] = cache_entry->second;
             continue;
         }
 
@@ -1681,8 +1706,9 @@ void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
                 line.z() -= 1;
             }
         }
-        prt.part().precalc[idir].z() = line.z() - bub_pos.z();
-        z_cache[part_point.xy()] = line.z() - bub_pos.z();
+        const int terrain_z = line.z() - bub_pos.z();
+        prt.part().z_terrain[idir] = terrain_z;
+        z_cache[part_point.xy()] = terrain_z;
     }
 }
 

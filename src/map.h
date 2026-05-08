@@ -595,8 +595,9 @@ class map : public submap_load_listener
          * Callback invoked when a vehicle has moved.
          * sm_min/sm_max are the bounding submap grid coords of the vehicle footprint
          * (union of old and new positions); smz is the z-level.
+         * TODO: migrate to using proper z-levels
          */
-        void on_vehicle_moved( const point_bub_sm &sm_min, const point_bub_sm &sm_max, const int &smz );
+        void on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max, const int &smz );
 
         struct apparent_light_info {
             bool obstructed;

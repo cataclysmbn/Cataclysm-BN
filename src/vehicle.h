@@ -811,7 +811,7 @@ class vehicle
 
         // Translate mount coordinates "p" into tile coordinates "q" using given pivot direction and anchor
         void coord_translate( units::angle dir, const tripoint_mnt_veh &pivot, const tripoint_mnt_veh &p,
-                              tripoint_rel_ms &q ) const;
+                              point_rel_ms &q ) const;
 
         // Translate rotated tile coordinates "p" into mount coordinates "q" using given pivot direction and anchor
         void coord_translate_reverse( units::angle dir, const tripoint_mnt_veh &pivot,
@@ -883,6 +883,8 @@ class vehicle
          */
         tripoint_bub_ms bub_part_location( const int &index ) const;
         tripoint_bub_ms bub_part_location( const vehicle_part &pt ) const;
+        tripoint_abs_ms abs_part_location( const int &index ) const;
+        tripoint_abs_ms abs_part_location( const vehicle_part &pt ) const;
         /**
          * All the fuels that are in all the tanks in the vehicle, nicely summed up.
          * Note that empty tanks don't count at all. The value is the amount as it would be
@@ -1570,12 +1572,10 @@ class vehicle
         void check_falling_or_floating();
 
         /**
-         * Update the submap coordinates and update the tracker info in the overmap
-         * (if enabled).
-         * This should be called only when the vehicle has actually been moved, not when
-         * the map is just shifted (in the later case simply set smx/smy directly).
+         * Update the tracker info in the overmap (if enabled).
+         * This should be called only when the vehicle has actually been moved.
          */
-        void set_submap_moved( const tripoint_bub_sm &p );
+        void update_overmap( const tripoint_abs_sm &prev_sm );
         void use_monster_capture( int part, const tripoint_bub_ms &pos );
         void use_bike_rack( int part );
         void use_harness( int part, const tripoint_bub_ms &pos );
@@ -1637,7 +1637,7 @@ class vehicle
         bool valid_part( int part_num ) const;
         // Updates the internal precalculated mount offsets after the vehicle has been displaced
         // used in map::displace_vehicle()
-        std::set<int> advance_precalc_mounts( const point_sm_ms &new_pos, const tripoint_bub_ms &src );
+        std::set<int> advance_precalc_mounts( const tripoint_abs_ms &src );
         // Adjust the vehicle's global z-level to match its center
         void shift_zlevel();
 
@@ -1727,23 +1727,11 @@ class vehicle
         // Subtract from parts.size() to get the real part count.
         int removed_part_count = 0;
 
-        /**
-         * Submap coordinates of the currently loaded submap (see game::m)
-         * that contains this vehicle. These values are changed when the map
-         * shifts (but the vehicle is not actually moved than, it also stays on
-         * the same submap, only the relative coordinates in map::grid have changed).
-         * These coordinates must always refer to the submap in map::grid that contains
-         * this vehicle.
-         * When the vehicle is really moved (by map::displace_vehicle), set_submap_moved
-         * is called and updates these values, when the map is only shifted or when a submap
-         * is loaded into the map the values are directly set. The vehicles position does
-         * not change therefor no call to set_submap_moved is required.
-         */
-        tripoint_bub_sm sm_pos;
-        // Absolute submap position — set by loadn(), on_submap_loaded(), copy_grid(),
-        // and displace_vehicle()/z-level transitions.  Runtime-only (not serialized).
-        // Always authoritative while the vehicle is in any loaded submap.
+        // Not serialized. When a submap is serialized, it maintains it's own vector
+        // of stored vehicles.
         tripoint_abs_sm abs_sm_pos;
+        // This *is* serialized. It's the position of the vehicle within the submap.
+        point_sm_ms sm_ms_pos;
 
         // alternator load as a percentage of engine power, in units of 0.1% so 1000 is 100.0%
         int alternator_load = 0;
@@ -1751,14 +1739,6 @@ class vehicle
         time_point occupied_cache_time = calendar::before_time_starts;
         // Turn the vehicle was last processed
         time_point last_update = calendar::before_time_starts;
-        // save values
-        /**
-         * Position of the vehicle *inside* the submap that contains the vehicle.
-         * This will (nearly) always be in the range (0...SEEX-1).
-         * Note that vehicles are "moved" by map::displace_vehicle. You should not
-         * set them directly, except when initializing the vehicle or during mapgen.
-         */
-        point_sm_ms pos;
         // vehicle current velocity, cm/s
         int velocity = 0;
         // velocity vehicle's cruise control trying to achieve

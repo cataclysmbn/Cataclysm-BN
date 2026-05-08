@@ -1150,10 +1150,10 @@ vehicle *game::place_vehicle_nearby(
                            id, tinymap_center, random_entry( angles ), rng( 50, 80 ),
                            0, false, false, true );
         if( veh ) {
-            auto abs_local = m.abs_to_bub( target_map.bub_to_abs( tinymap_center ) );
-            const auto proj = project_remain<coords::sm>( abs_local );
-            veh->sm_pos = proj.quotient_tripoint;
-            veh->pos = proj.remainder;
+            auto abs = target_map.bub_to_abs( tinymap_center );
+            const auto proj = project_remain<coords::sm>( abs );
+            veh->abs_sm_pos = proj.quotient_tripoint;
+            veh->sm_ms_pos = proj.remainder;
             veh->dimension_id_ = target_map.get_bound_dimension();
             get_overmapbuffer( veh->dimension_id_ ).add_vehicle( veh );
             veh->tracking_on = true;

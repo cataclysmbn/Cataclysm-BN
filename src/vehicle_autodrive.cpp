@@ -587,7 +587,7 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( orientation faci
         if( part.removed ) {
             continue;
         }
-        tripoint_rel_ms pos;
+        point_rel_ms pos;
         driven_veh.coord_translate( angle, pivot, part.mount, pos );
         if( !extent_map.contains( pos.y() ) ) {
             extent_map[pos.y()] = { pos.x(), pos.x() };
