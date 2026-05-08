@@ -169,6 +169,18 @@ void cata::detail::reg_types( sol::state &lua )
     }
 #undef UT_CLASS
 
+#define UT_CLASS mtype
+    {
+        sol::usertype<mtype> ut =
+            luna::new_usertype<mtype>( lua, luna::no_bases, luna::no_constructor );
+
+        SET_MEMB_RO( id );
+        SET_MEMB_RO( difficulty );
+        SET_MEMB_RO( difficulty_base );
+        SET_FX_T( nname, std::string( unsigned int ) const );
+    }
+#undef UT_CLASS
+
 #define UT_CLASS ter_t
     {
         sol::usertype<ter_t> ut =
