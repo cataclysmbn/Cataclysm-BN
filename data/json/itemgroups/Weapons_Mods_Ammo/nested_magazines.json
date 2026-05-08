@@ -413,9 +413,7 @@
     "type": "item_group",
     "subtype": "distribution",
     "ammo": 100,
-    "entries": [
-      { "item": "ar10mag_20rd", "ammo-group": "on_hand_277", "prob": 100 }
-    ]
+    "entries": [ { "item": "ar10mag_20rd", "ammo-group": "on_hand_277", "prob": 100 } ]
   },
   {
     "id": "nested_steyr_aug_mag",
