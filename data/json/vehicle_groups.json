@@ -115,9 +115,10 @@
       [ "boat_motor_police", 150 ],
       [ "CG_patrol_boat", 75 ],
       [ "CG_cutter", 25 ],
-      [ "sailboat", 125 ],
+      [ "sailboat", 100 ],
       [ "pirate_ship", 25 ],
       [ "DUKW", 75 ],
+      [ "floatplane_small", 25 ],
       [ "hovercraft_motor_single", 25 ],
       [ "CG_cutter_25mm", 25 ]
     ]
@@ -147,7 +148,8 @@
       [ "kayak_racing", 50 ],
       [ "kayak_motorized", 25 ],
       [ "wood_rowboat_double", 60 ],
-      [ "inflatable_boat", 115 ],
+      [ "inflatable_boat", 100 ],
+      [ "floatplane_small", 15 ],
       [ "jetski", 30 ],
       [ "raft", 190 ],
       [ "fishing_boat", 25 ],
