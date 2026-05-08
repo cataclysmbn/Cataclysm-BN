@@ -59,7 +59,7 @@ struct comp_selection {
     void serialize( JsonOut &jsout ) const;
     void deserialize( JsonIn &jsin );
 
-    bool operator==(const comp_selection& other) const {
+    bool operator==( const comp_selection &other ) const {
         return use_from == other.use_from &&
                comp == other.comp;
     }

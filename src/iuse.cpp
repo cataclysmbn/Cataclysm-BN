@@ -8722,7 +8722,7 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
                          it->charges,
                          it->get_counter(),
                          best_bench.position,
-                         std::vector<comp_selection<item_comp>>{},
+                         std::vector<comp_selection<item_comp>> {},
                          it->get_cached_tool_selections(),
                          it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
                      );

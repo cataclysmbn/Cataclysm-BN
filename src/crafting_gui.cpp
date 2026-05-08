@@ -1397,10 +1397,10 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 const int bs = ( batch ) ? line + 1 : 1;
                 std::vector<npc *> nearby = g->get_npcs_if( [&]( const npc & guy ) {
                     return !guy.in_sleep_state()
-                        && guy.is_obeying( crafter )
-                        && ( !guy.activity || guy.activity->is_null() )
-                        && rl_dist( guy.pos(), crafter.pos() ) <= PICKUP_RANGE
-                        && get_map().clear_path( crafter.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                           && guy.is_obeying( crafter )
+                           && ( !guy.activity || guy.activity->is_null() )
+                           && rl_dist( guy.pos(), crafter.pos() ) <= PICKUP_RANGE
+                           && get_map().clear_path( crafter.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
                 } );
                 std::vector<npc *> candidates;
                 for( npc *guy : nearby ) {

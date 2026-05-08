@@ -118,7 +118,7 @@ struct tool_comp : public component {
     component_type get_component_type() const {
         return component_type::TOOL;
     }
-    bool operator==(const tool_comp& other) const {
+    bool operator==( const tool_comp &other ) const {
         return type == other.type && count == other.count;
     }
 };
@@ -138,7 +138,7 @@ struct item_comp : public component {
     component_type get_component_type() const {
         return component_type::ITEM;
     }
-    bool operator==(const item_comp& other) const {
+    bool operator==( const item_comp &other ) const {
         return type == other.type && count == other.count;
     }
 };
