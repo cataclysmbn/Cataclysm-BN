@@ -58,6 +58,11 @@ struct comp_selection {
 
     void serialize( JsonOut &jsout ) const;
     void deserialize( JsonIn &jsin );
+
+    bool operator==(const comp_selection& other) const {
+        return use_from == other.use_from &&
+               comp == other.comp;
+    }
 };
 
 /**
@@ -95,6 +100,14 @@ class craft_command
             return rec == nullptr;
         }
         skill_id get_skill_id();
+
+        int get_batch_size() const { return batch_size; }
+        const std::vector<comp_selection<item_comp>> &get_item_selections() const {
+            return item_selections;
+        }
+        const std::vector<comp_selection<tool_comp>> &get_tool_selections() const {
+            return tool_selections;
+        }
 
     private:
         const recipe *rec = nullptr;

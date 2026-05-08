@@ -801,16 +801,28 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     item *craft_in_world = &*craft;
     set_item_inventory( *this, std::move( craft ) );
 
-
-    assign_activity( ACT_CRAFT );
-    activity->targets.emplace_back( craft_in_world );
-    activity->coords.push_back( get_map().getabs( bench.position ) );
-    activity->values.push_back( command.is_long() );
-    // Ugly
-    activity->values.push_back( static_cast<int>( bench.type ) );
-    activity->values.push_back( 100 );
-    activity->values.push_back( 0 );
-    activity->placement = tripoint_zero;
+    if( is_npc() ) {
+        auto actor = std::make_unique<craft_activity_actor>(
+                         &making,
+                         command.get_batch_size(),
+                         craft_in_world->get_counter(),
+                         bench.position,
+                         command.get_item_selections(),
+                         command.get_tool_selections(),
+                         craft_in_world->get_var( "craft_tools_fully_prepaid", 0 ) == 1
+                     );
+        assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+    } else {
+        assign_activity( ACT_CRAFT );
+        activity->targets.emplace_back( craft_in_world );
+        activity->coords.push_back( get_map().getabs( bench.position ) );
+        activity->values.push_back( command.is_long() );
+        // Ugly
+        activity->values.push_back( static_cast<int>( bench.type ) );
+        activity->values.push_back( 100 );
+        activity->values.push_back( 0 );
+        activity->placement = tripoint_zero;
+    }
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),

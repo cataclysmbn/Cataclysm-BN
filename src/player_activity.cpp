@@ -483,14 +483,14 @@ void player_activity::do_turn( player &p )
     }
 
     if( p.is_npc() ) {
-        if( p.restore_outbounds_activity() ) {
-            // npc might be operating at the edge of the reality bubble.
-            // or just now reloaded back into it, and their activity target might
-            // be still unloaded, can cause infinite loops.
-            set_to_null();
-            p.drop_invalid_inventory();
-            return;
-        }
+        // if( p.restore_outbounds_activity() ) {
+        //     // npc might be operating at the edge of the reality bubble.
+        //     // or just now reloaded back into it, and their activity target might
+        //     // be still unloaded, can cause infinite loops.
+        //     set_to_null();
+        //     p.drop_invalid_inventory();
+        //     return;
+        // }
         if( p.activity->id() == ACT_ASSIST ) {
             p.moves = 0;
             return;
