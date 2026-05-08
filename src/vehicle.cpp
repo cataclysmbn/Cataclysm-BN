@@ -4923,10 +4923,8 @@ double vehicle::coeff_water_drag() const
     }
     std::vector<int> hull_indices = all_parts_at_location( part_location_under );
     double hull_coverage;
-    if( hull_indices.empty() && floating.empty() ) {
+    if( hull_indices.empty() ) {
         hull_coverage = 0;
-    } else if( hull_indices.empty() ) {
-        hull_coverage = 1;
     } else {
         hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
     }
@@ -4938,13 +4936,20 @@ double vehicle::coeff_water_drag() const
     // Tile == 1m width
     // I have a feeling this and actual_area_m cancle out somewhere in there...
     double width_m = occupied_y.size();
+    if( width_m == 0 ) {
+        width_m = 1;
+    }
 
     // Each piece of hull is 1m^2
     // Thus area is the number of hull pieces
     double actual_area_m = hull_indices.size();
 
     // effective hull area is actual hull area * hull coverage
-    hull_area = actual_area_m * std::max( 0.1, hull_coverage );
+    if( hull_coverage == 0 ) {
+        hull_area = 0;
+    } else {
+        hull_area = actual_area_m * std::max( 0.1, hull_coverage );
+    }
     // Treat the hullform as a simple cuboid to calculate displaced depth of
     // water.
     // Apply Archimedes' principle (mass of water displaced is mass of vehicle).
@@ -4961,7 +4966,11 @@ double vehicle::coeff_water_drag() const
     // increase the streamlining as more of the boat is covered in boat boards
     double c_water_drag = 1.25 - hull_coverage;
     // hull height starts at 0.3m and goes up as you add more boat boards
-    hull_height = 0.3 + 0.5 * hull_coverage;
+    if( hull_coverage == 0 ) {
+        hull_height = 0;
+    } else {
+        hull_height = 0.3 + 0.5 * hull_coverage;
+    }
     // F_water_drag = c_water_drag * cross_area * 1/2 * water_density * v^2
     // coeff_water_resistance = c_water_drag * cross_area * 1/2 * water_density
     coefficient_water_resistance = c_water_drag * width_m * draft_m * 0.5 * water_density;
