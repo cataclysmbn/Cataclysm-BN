@@ -17,7 +17,9 @@
           { "id": [ "nature_ghillie", "overlay_wielded_nature_ghillie" ], "fg": 8 },
           { "id": "overlay_worn_nature_ghillie", "fg": 9 },
           { "id": [ "urban_ghillie", "overlay_wielded_urban_ghillie" ], "fg": 10 },
-          { "id": "overlay_worn_urban_ghillie", "fg": 11 }
+          { "id": "overlay_worn_urban_ghillie", "fg": 11 },
+          { "id": "oldguard_armor", "fg": 13 },
+          { "id": "overlay_worn_oldguard_armor", "fg": 14 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
