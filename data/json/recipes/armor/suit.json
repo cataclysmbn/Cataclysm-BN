@@ -1143,5 +1143,26 @@
       [ [ "duct_tape", 200 ] ],
       [ [ "bag_plastic", 24 ], [ "bag_zipper", 24 ], [ "plastic_shopping_bag", 12 ] ]
     ]
+  },
+  {
+    "result": "oldguard_armor",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "3 h",
+    "autolearn": false,
+    "book_learn": [ [ "recipe_oldguard", 3 ] ],
+    "using": [ [ "sewing_standard", 150 ] ],
+    "components": [
+      [ [ "fabric_standard", 20, "LIST" ] ],
+      [ [ "jacket_army", 1 ], [ "winter_jacket_army", 1 ] ],
+      [ [ "pants_army", 1 ], [ "winter_pants_army", 1 ] ],
+      [ [ "duct_tape", 300 ] ],
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
+      [ [ "kevlar_plate", 24 ] ]
+    ]
   }
 ]
