@@ -54,6 +54,16 @@ sci_amenities = function(data, map, point)
   draw_hall_set(data, map, rooms, point)
 end
 
+offices = function(data, map, point)
+  rooms = shuffle({
+    "crt_lab_veh_hall_office_paperwork",
+    "crt_lab_veh_hall_office_group_med",
+    "crt_lab_veh_hall_office_group_eng",
+    "crt_lab_veh_hall_office_cubicles",
+  })
+  draw_hall_set(data, map, rooms, point)
+end
+
 doctor = function(data, map, point)
   rooms = shuffle({
     "crt_lab_veh_hall_doctor_storage",
@@ -82,9 +92,9 @@ all = function(data, map, point)
   draw_hall_set(data, map, rooms, point)
 end
 
-local halls = { engine, all, gen_amenities, mil_amenities, sci_amenities, doctor }
+local halls = { engine, all, gen_amenities, mil_amenities, sci_amenities, doctor, offices }
 
-local halls_weight = { 100, 200, 50, 75, 75, 75 }
+local halls_weight = { 100, 200, 50, 75, 75, 75, 125 }
 
 local total_weight = 0
 

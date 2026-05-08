@@ -50,7 +50,7 @@
       },
       "furniture": { "@": "f_target", "T": "f_table" },
       "items": {
-        "C": { "item": "casings", "chance": 60, "repeat": 4 },
+        "C": { "item": "spent_batteries", "chance": 10 },
         "T": { "item": "guns_energy", "chance": 25, "repeat": [ 1, 4 ] }
       }
     }
