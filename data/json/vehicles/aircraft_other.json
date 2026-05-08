@@ -101,7 +101,7 @@
       {
         "x": 0,
         "y": 0,
-        "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "roof", "wing_metal_horizontal", "aluminium_boat_hull" ]
+        "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "roof", "wing_metal_horizontal" ]
       },
       {
         "x": 0,
@@ -111,7 +111,6 @@
           "windshield_vertical_right",
           { "part": "tank", "fuel": "avgas" },
           "wing_metal_horizontal",
-          "aluminium_boat_hull"
         ]
       },
       { "x": 0, "y": 2, "parts": [ "wing_metal_external_horizontal" ] },
@@ -131,7 +130,7 @@
       { "x": 0, "y": -2, "parts": [ "wing_metal_external_horizontal" ] },
       { "x": 0, "y": -3, "parts": [ "wing_metal_external_horizontal" ] },
       { "x": 0, "y": -4, "parts": [ "lit_wing_metal_external_left" ] },
-      { "x": 1, "y": 0, "parts": [ "xlframe_cross", "windshield_horizontal_front", "aluminium_boat_hull" ] },
+      { "x": 1, "y": 0, "parts": [ "xlframe_cross", "windshield_horizontal_front" ] },
       { "x": 1, "y": 1, "parts": [ "xlframe_vertical", "windshield_ne", "aluminium_boat_hull" ] },
       { "x": 1, "y": -1, "parts": [ "xlframe_vertical", "windshield_nw", "aluminium_boat_hull" ] },
       {
@@ -143,24 +142,23 @@
           "engine_inline4",
           "alternator_car",
           "battery_car",
-          "headlight",
-          "aluminium_boat_hull"
+          "headlight"
         ]
       },
       { "x": 2, "y": 1, "parts": [ "xlframe_ne", "aluminum_halfboard_ne", "aluminium_boat_hull" ] },
       { "x": 2, "y": -1, "parts": [ "xlframe_nw", "aluminum_halfboard_nw", "aluminium_boat_hull" ] },
       { "x": 3, "y": 0, "parts": [ "propeller_metal" ] },
-      { "x": -1, "y": 0, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof", "aluminium_boat_hull" ] },
+      { "x": -1, "y": 0, "parts": [ "xlframe_cross", "seat", "seatbelt", "roof" ] },
       {
         "x": -1,
         "y": 1,
         "parts": [ "xlframe_vertical", "windshield_vertical_right", "door_vertical_right", "aluminium_boat_hull" ]
       },
       { "x": -1, "y": -1, "parts": [ "xlframe_vertical", "door_vertical_left", "aluminium_boat_hull" ] },
-      { "x": -2, "y": 0, "parts": [ "xlframe_cross", "trunk", "roof", "aluminium_boat_hull" ] },
+      { "x": -2, "y": 0, "parts": [ "xlframe_cross", "trunk", "roof" ] },
       { "x": -2, "y": 1, "parts": [ "xlframe_vertical", "aluminum_halfboard_vertical_right", "aluminium_boat_hull" ] },
       { "x": -2, "y": -1, "parts": [ "xlframe_vertical", "aluminum_halfboard_vertical_left", "aluminium_boat_hull" ] },
-      { "x": -3, "y": 0, "parts": [ "xlframe_cross", "windshield_horizontal_rear", "aluminium_boat_hull" ] },
+      { "x": -3, "y": 0, "parts": [ "xlframe_cross", "windshield_horizontal_rear" ] },
       { "x": -3, "y": 1, "parts": [ "xlframe_vertical", "aluminum_halfboard_se", "aluminium_boat_hull" ] },
       { "x": -3, "y": -1, "parts": [ "xlframe_vertical", "aluminum_halfboard_sw", "aluminium_boat_hull" ] },
       { "x": -4, "y": 0, "parts": [ "xlframe_cross", "aluminum_halfboard_vertical" ] },

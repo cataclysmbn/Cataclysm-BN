@@ -4234,11 +4234,9 @@ int vehicle::max_water_velocity( const bool fueled, const bool ideal ) const
     int total_engine_w = ( ideal ? ideal_engine_power() : total_power_w( fueled ) );
     double total_drag = coeff_water_drag() + coeff_air_drag();
     double max_in_mps = std::cbrt( total_engine_w / total_drag );
-    const double max_air_mps = std::cbrt( foward_thrust_of_propellers( fueled, false,
-                                          ideal ) / coeff_air_drag() );
     add_msg( m_debug, "%s: power %d, c_air %3.2f, c_water %3.2f, water max_in_mps %3.2f",
              name, total_engine_w, coeff_air_drag(), coeff_water_drag(), max_in_mps );
-    return mps_to_cmps( std::max( max_in_mps, max_air_mps ) );
+    return mps_to_cmps( max_in_mps );
 }
 
 int vehicle::max_air_velocity( const bool fueled, const bool ideal ) const
@@ -4317,9 +4315,7 @@ int vehicle::safe_water_velocity( const bool fueled, const bool ideal ) const
     int total_engine_w = ( ideal ? ideal_engine_power( true ) : total_power_w( fueled, true ) );
     double total_drag = coeff_water_drag() + coeff_air_drag();
     double safe_in_mps = std::cbrt( total_engine_w / total_drag );
-    const double max_air_mps = std::cbrt( foward_thrust_of_propellers( fueled, true,
-                                          ideal ) / coeff_air_drag() );
-    return mps_to_cmps( std::max( safe_in_mps, max_air_mps ) );
+    return mps_to_cmps( safe_in_mps );
 }
 
 int vehicle::safe_velocity( const bool fueled ) const
