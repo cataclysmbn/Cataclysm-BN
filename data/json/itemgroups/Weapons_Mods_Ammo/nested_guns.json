@@ -1778,6 +1778,19 @@
     ]
   },
   {
+    "id": "nested_m7",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "m7", "ammo-group": "on_hand_277", "charges": [ 0, 20 ] },
+      { "group": "nested_m7_mag" },
+      { "group": "nested_m7_mag", "prob": 50 },
+      { "group": "on_hand_277" }
+    ]
+  },
+  {
     "id": "nested_m110a1",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

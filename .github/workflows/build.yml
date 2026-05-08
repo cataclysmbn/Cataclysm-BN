@@ -102,6 +102,7 @@ jobs:
             artifact: android-x64
             os: ubuntu-latest
             android: arm64
+            tiles: true
             ext: apk
             content-type: application/apk
 
@@ -109,6 +110,7 @@ jobs:
             artifact: android-bundle
             os: ubuntu-latest
             android: bundle
+            tiles: true
             ext: aab
             content-type: application/aap
 
@@ -126,6 +128,49 @@ jobs:
           commit sha: ${{ github.sha }}
           commit url: https://github.com/${{ github.repository }}/commit/${{ github.sha }}
           EOL
+
+      - name: Bundle CDDA tilesets
+        if: matrix.tiles == true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CDDA_TILESETS_REPO: I-am-Erk/CDDA-Tilesets
+          CDDA_TILESETS_RELEASE: "2026-05-03"
+          CDDA_TILESETS: UltimateCataclysm ChibiUltica
+        shell: bash
+        run: |
+          set -euo pipefail
+          download_dir="$RUNNER_TEMP/cdda-tilesets"
+          rm -rf "$download_dir"
+          mkdir -p "$download_dir"
+
+          for tileset in $CDDA_TILESETS; do
+            gh release download "$CDDA_TILESETS_RELEASE" \
+              --repo "$CDDA_TILESETS_REPO" \
+              --pattern "$tileset.zip" \
+              --dir "$download_dir" \
+              --clobber
+            rm -rf "gfx/$tileset"
+            unzip -q "$download_dir/$tileset.zip" -d gfx
+          done
+
+          cat >gfx/CDDA-Tilesets-2026-05-03-CREDITS.txt <<'EOF'
+          Bundled CDDA-Tilesets release assets
+          ====================================
+
+          Source repository: https://github.com/I-am-Erk/CDDA-Tilesets
+          Source release: https://github.com/I-am-Erk/CDDA-Tilesets/releases/tag/2026-05-03
+          Bundled assets: UltimateCataclysm.zip, ChibiUltica.zip
+
+          The CDDA-Tilesets repository states that Cataclysm: Dark Days Ahead and
+          the Ultimate Cataclysm tileset are volunteer contributions under the
+          Creative Commons Attribution-ShareAlike 3.0 Unported License:
+          http://creativecommons.org/licenses/by-sa/3.0/
+
+          Per the tileset metadata, further sprite credits are maintained in the
+          source repository under gfx/UltimateCataclysm and gfx.  ChibiUltica also
+          includes Dungeon Crawl: Stone Soup sprites under CC0; see its tileset.txt
+          for that notice.
+          EOF
 
       # Windows MSVC setup
       - name: Setup msys2 (windows msvc)
@@ -367,11 +412,18 @@ jobs:
         working-directory: ./android
         env:
           NDK_CCACHE: ccache
+          KEYSTORE: ${{ secrets.KEYSTORE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_PROPERTIES: ${{ secrets.KEYSTORE_PROPERTIES }}
         run: |
-          echo "${{ secrets.KEYSTORE }}" > release.keystore.asc
-          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch release.keystore.asc > app/release.keystore
-          echo "${{ secrets.KEYSTORE_PROPERTIES }}" > keystore.properties.asc
-          gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch keystore.properties.asc > keystore.properties
+          if [ -n "$KEYSTORE" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEYSTORE_PROPERTIES" ]; then
+            printf '%s' "$KEYSTORE" > release.keystore.asc
+            gpg -d --passphrase "$KEYSTORE_PASSWORD" --batch release.keystore.asc > app/release.keystore
+            printf '%s' "$KEYSTORE_PROPERTIES" > keystore.properties.asc
+            gpg -d --passphrase "$KEYSTORE_PASSWORD" --batch keystore.properties.asc > keystore.properties
+          else
+            echo "::warning::Android signing secrets are unavailable; building unsigned release artifacts"
+          fi
           chmod +x gradlew
 
           # Determine build variant based on version label

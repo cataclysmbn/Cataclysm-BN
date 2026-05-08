@@ -1299,6 +1299,18 @@
     ]
   },
   {
+    "id": "everyday_m7",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m7", "ammo-group": "on_hand_277", "charges": [ 0, 20 ] },
+      { "group": "nested_m7_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_m7_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_277", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_scar_h_grenadier",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack.  Grenadier variant",

@@ -6843,6 +6843,15 @@
   },
   {
     "type": "mutation",
+    "id": "DEBUG_WEIGHTLESSNESS",
+    "name": { "str": "Debug Weightlessness" },
+    "points": 99,
+    "valid": false,
+    "description": "Newton discovered gravity in 1687. People before 1687:",
+    "debug": true
+  },
+  {
+    "type": "mutation",
     "id": "DEBUG_BIONICS",
     "name": { "str": "Debug Bionic Installation" },
     "points": 99,
