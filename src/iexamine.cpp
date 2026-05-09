@@ -7999,6 +7999,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "deployed_furniture", &iexamine::deployed_furniture },
             { "cvdmachine", &iexamine::cvdmachine },
             { "nanofab", &iexamine::nanofab },
+            { "nanoforge", &iexamine::nanoforge },
             { "gaspump", &iexamine::gaspump },
             { "atm", &iexamine::atm },
             { "vending", &iexamine::vending },
