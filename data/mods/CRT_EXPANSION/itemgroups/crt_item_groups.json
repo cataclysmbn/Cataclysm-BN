@@ -1,6 +1,16 @@
 [
   {
     "type": "item_group",
+    "id": "spent_batteries",
+    "//": "Left behind laser pistol batteries",
+    "items": [
+      { "item": "heavy_battery_cell", "prob": 10 },
+      { "item": "heavy_plus_battery_cell", "prob": 5 },
+      { "item": "heavy_disposable_cell", "prob": 20 }
+    ]
+  },
+  {
+    "type": "item_group",
     "id": "crt_eng_set",
     "//": "C.R.I.T. Science lab set",
     "items": [

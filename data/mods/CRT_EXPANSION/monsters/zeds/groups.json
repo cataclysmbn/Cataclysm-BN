@@ -15,6 +15,27 @@
   },
   {
     "type": "monstergroup",
+    "name": "GROUP_CRT_INTERN",
+    "default": "mon_zombie",
+    "//": "Monster spawns in C.R.I.T. labs, specifically for medical zeds",
+    "monsters": [
+      { "monster": "mon_zombie", "freq": 75, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_tough", "freq": 75, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_rot", "freq": 50, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_crawler", "freq": 25, "cost_multiplier": 1 },
+      { "monster": "mon_zombie_hazmat", "freq": 10, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_static", "freq": 10, "cost_multiplier": 2 },
+      { "monster": "mon_zombie_survivor", "freq": 1, "cost_multiplier": 3 },
+      { "monster": "mon_zombie_survivor_elite", "freq": 1, "cost_multiplier": 4 },
+      { "monster": "mon_zombie_technician", "freq": 1, "cost_multiplier": 12 },
+      { "monster": "mon_zombie_runner", "freq": 10, "cost_multiplier": 5 },
+      { "monster": "mon_zombie_winged", "freq": 20, "cost_multiplier": 5, "starts": 500 },
+      { "monster": "mon_zombie_runner", "freq": 10, "cost_multiplier": 5, "pack_size": [ 1, 4 ] },
+      { "monster": "mon_zombie_brainless", "freq": 55, "cost_multiplier": 1 }
+    ]
+  },
+  {
+    "type": "monstergroup",
     "name": "GROUP_CRT_MEDICAL",
     "default": "mon_zombie_nurse",
     "//": "Monster spawns in C.R.I.T. labs, specifically for medical zeds",
