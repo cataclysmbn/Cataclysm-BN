@@ -1657,7 +1657,7 @@ class iuse_paint_stuff : public iuse_actor
         ~iuse_paint_stuff() override = default;
 
         void load( const JsonObject &obj ) override;
-        auto use( player &who, item &i, bool, const tripoint & ) const -> int override;
+        auto use( player &, item &, bool, const tripoint & ) const -> int override;
         auto can_use( const Character &, const item &, bool,
                       const tripoint & ) const -> ret_val<bool> override;
         auto clone() const -> std::unique_ptr<iuse_actor> override;
@@ -1668,7 +1668,7 @@ class iuse_paint_stuff : public iuse_actor
         static RGBColor get_paint_color( item &it );
 
     private:
-        static bool is_paintable_terrain( map &, const tripoint & );
+        static bool is_paintable_terrain( const map &, const tripoint & );
         auto set_vars( data_vars::data_set &, const RGBColor &, iuse_paint_stuff_config::paint_layer );
         auto iuse_paint_stuff_vehicle( player &, item &, bool, const tripoint & ) const -> int;
         auto iuse_paint_stuff_graffiti( player &, item &, bool, const tripoint & ) const -> int;

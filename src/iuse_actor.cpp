@@ -7675,10 +7675,9 @@ auto iuse_paint_stuff_config::use( player &, item &it, bool, const tripoint & ) 
     }
 }
 
-auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos ) const -> int
+auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint &pos ) const -> int
 {
-    auto &m = get_map();
-    const bool has_veh_near = m.has_nearby( pos, []( const map & m, const tripoint & p ) { return m.veh_at( p ).has_value(); } );
+    auto &here = get_map();
 
     enum eMode {
         Abort = 0,
@@ -7690,19 +7689,23 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
     };
 
     std::vector<std::pair<std::string, eMode>> choices{};
+    const bool has_veh_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return m.veh_at( p ).has_value(); } );
     if( has_veh_near ) {
         choices.push_back( {_( "Vehicle" ), Vehicle} );
     }
 
-    if( m.has_furn( pos ) ) {
+    const bool has_furn_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return m.has_furn( p ); } );
+    if( has_furn_near ) {
         choices.push_back( {_( "Furniture" ), Furniture} );
     }
 
-    if( m.has_items( pos ) ) {
+    const bool has_item_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return m.has_items( p ); } );
+    if( has_item_near ) {
         choices.push_back( {_( "Item" ), Item} );
     }
 
-    if( is_paintable_terrain( m, pos ) ) {
+    const bool has_terrain_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return is_paintable_terrain(m,  p ); } );
+    if( has_terrain_near ) {
         choices.push_back( {_( "Terrain" ), Terrain} );
         choices.push_back( {_( "Graffiti" ), Graffiti} );
     }
@@ -7741,34 +7744,40 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
     };
 }
 
+namespace {
 template<typename T>
-concept is_paint_fn =
+concept is_painter =
     requires(
         const T &t,
-        const RGBColor &col,
+        const RGBColorPair &col,
         const iuse_paint_stuff_config::paint_layer layer,
         const tripoint &p )
 {
-    { t( col, layer, p ) }
+    { t.can_paint( p ) }
+    -> std::same_as<bool>;
+    { t.get_color( p ) }
+    -> std::same_as<RGBColorPair>;
+    { t.set_color( col, layer, p ) }
     -> std::same_as<bool>;
 };
 
-template<typename PaintFn>
-requires is_paint_fn<PaintFn>
-static auto iuse_paint_stuff_do_paint(
-    item &it, const float charge_cost, const std::pair<tripoint, tripoint> area, const PaintFn &cb )
+template<typename Painter>
+requires is_painter<Painter>
+auto iuse_paint_stuff_do_paint(
+    item &it, const float charge_cost, const std::pair<tripoint, tripoint> area,
+    const Painter &painter )
 {
-    const auto col = iuse_paint_stuff::get_paint_color( it );
+    const auto new_col = iuse_paint_stuff::get_paint_color( it );
     const auto [p0, p1] = area;
     const auto layer = iuse_paint_stuff_config::get_paint_layer( it );
 
     const auto get_cost = [&]() {
         switch( layer ) {
-            default:
-                return charge_cost;
-            case iuse_paint_stuff_config::fg:
-            case iuse_paint_stuff_config::bg:
-                return charge_cost / 2;
+        default:
+            return charge_cost;
+        case iuse_paint_stuff_config::fg:
+        case iuse_paint_stuff_config::bg:
+            return charge_cost / 2;
         }
     };
 
@@ -7780,16 +7789,117 @@ static auto iuse_paint_stuff_do_paint(
             break;
         }
 
-        if( !cb( col, layer, pos ) ) {
+        if( !painter.can_paint( pos ) ) {
             continue;
         }
 
-        charges_used += mod_cost;
+        const auto [p_fg, p_bg] = painter.get_color( pos );
+
+        switch( layer ) {
+        default:
+        case iuse_paint_stuff_config::both:
+            if( p_fg != new_col || p_bg != new_col ) {
+                RGBColorPair newCol = {.bg = new_col, .fg = new_col};
+                if( painter.set_color( newCol, layer, pos ) ) {
+                    charges_used += mod_cost;
+                }
+            }
+            break;
+        case iuse_paint_stuff_config::fg:
+            if( p_fg != new_col ) {
+                RGBColorPair newCol = {.bg = p_bg, .fg = new_col};
+                if( painter.set_color( newCol, layer, pos ) ) {
+                    charges_used += mod_cost;
+                }
+            }
+            break;
+        case iuse_paint_stuff_config::bg:
+            if( p_bg != new_col ) {
+                RGBColorPair newCol = {.bg = new_col, .fg = p_fg};
+                if( painter.set_color( newCol, layer, pos ) ) {
+                    charges_used += mod_cost;
+                }
+            }
+            break;
+        }
     }
 
     const auto final_cost = static_cast<int>( std::ceil( charges_used ) );
     return std::max( 1, final_cost );
 }
+
+struct veh_part_painter {
+    const map &here;
+    const vehicle &target_veh;
+    using paint_layer = iuse_paint_stuff_config::paint_layer;
+    bool can_paint( const tripoint &p ) const {
+        const auto vp = here.veh_at( p );
+        if( !vp.has_value() ) {
+            return false;
+        }
+        if( &vp->vehicle() != &target_veh ) {
+            return false;
+        }
+        return true;
+    }
+    RGBColorPair get_color( const tripoint &p ) const {
+        const auto vp = here.veh_at( p );
+        const auto &disp_part = vp.part_displayed()->part();
+        return disp_part.get_color();
+    }
+    bool set_color( const RGBColorPair &col, const paint_layer, const tripoint &p ) const {
+        const auto vp = here.veh_at( p );
+        auto &disp_part = vp.part_displayed()->part();
+        disp_part.set_color( col );
+        return true;
+    }
+};
+
+template<bool Furn>
+struct ter_furn_painter {
+    const map &here;
+    using paint_layer = iuse_paint_stuff_config::paint_layer;
+    data_vars::data_set *get_vars( const tripoint &p ) const {
+        if constexpr( Furn ) {
+            return here.furn_vars( p );
+        } else {
+            return here.ter_vars( p );
+        }
+    }
+
+    bool can_paint( const tripoint &p ) const {
+        const auto _vars = get_vars( p );
+        return _vars != nullptr;
+    }
+
+    RGBColorPair get_color( const tripoint &p ) const {
+        const auto &vars = *get_vars( p );
+        const auto p_c = vars.template get<RGBColor>( TINT_COLOR_VAR_NAME, {} );
+        const auto p_fg = vars.template get<RGBColor>( TINT_COLOR_FG_VAR_NAME, p_c );
+        const auto p_bg = vars.template get<RGBColor>( TINT_COLOR_BG_VAR_NAME, p_c );
+        return RGBColorPair{.bg = p_bg, .fg = p_fg};
+    }
+
+    bool set_color( const RGBColorPair &col, const paint_layer layer, const tripoint &p ) const {
+        auto &vars = *get_vars( p );
+        switch( layer ) {
+        default:
+        case iuse_paint_stuff_config::both:
+            vars.template set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
+            vars.erase( TINT_COLOR_FG_VAR_NAME );
+            vars.erase( TINT_COLOR_BG_VAR_NAME );
+            break;
+        case iuse_paint_stuff_config::fg:
+            vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
+            break;
+        case iuse_paint_stuff_config::bg:
+            vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
+            break;
+        }
+        return true;
+    }
+};
+} // namespace
 
 auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
         const tripoint & ) const -> int
@@ -7824,47 +7934,15 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
         return 0;
     }
 
-    using paint_layer = iuse_paint_stuff_config::paint_layer;
-    const auto ff =  [&]( const RGBColor & col, const paint_layer layer, const tripoint & p ) {
-        const auto vpart = here.veh_at( p );
-        if( !vpart.has_value() ) {
-            return false;
-        }
-        if( &vpart->vehicle() != &target_veh ) {
-            return false;
-        }
-        auto &disp_part = vpart.part_displayed()->part();
-        const auto [p_bg, p_fg] = disp_part.get_color();
-
-        switch( layer ) {
-            default:
-            case iuse_paint_stuff_config::both:
-                if( p_fg != col || p_bg != col ) {
-                    disp_part.set_color( col, col );
-                }
-                break;
-            case iuse_paint_stuff_config::fg:
-                if( p_fg != col ) {
-                    disp_part.set_color( p_bg, col );
-                }
-                break;
-            case iuse_paint_stuff_config::bg:
-                if( p_bg != col ) {
-                    disp_part.set_color( col, p_fg );
-                }
-                break;
-        }
-        return true;
-    };
-
-    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), ff );
+    const auto painter = veh_part_painter{here, target_veh };
+    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), painter );
 }
 
 auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
         const tripoint &pos ) const -> int
 {
 
-    auto &m = get_map();
+    const auto &here = get_map();
 
     const auto area = choose_area( "Paint Terrain", pos );
     if( !area.has_value() ) {
@@ -7872,49 +7950,25 @@ auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
         return 0;
     }
 
-    using paint_layer = iuse_paint_stuff_config::paint_layer;
-    const auto ff =  [&]( const RGBColor & col, const paint_layer layer, const tripoint & p ) {
-        const auto _vars = m.ter_vars( p );
-        if( _vars == nullptr ) {
-            return false;
-        }
-        auto &vars = *_vars;
+    const ter_furn_painter<false> painter {here};
 
-        const auto p_c = vars.get<RGBColor>( TINT_COLOR_VAR_NAME, {} );
-        const auto p_fg = vars.get<RGBColor>( TINT_COLOR_FG_VAR_NAME, p_c );
-        const auto p_bg = vars.get<RGBColor>( TINT_COLOR_BG_VAR_NAME, p_c );
-
-        switch( layer ) {
-            default:
-            case iuse_paint_stuff_config::both:
-                if( p_fg != col || p_bg != col ) {
-                    vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col );
-                    vars.erase( TINT_COLOR_FG_VAR_NAME );
-                    vars.erase( TINT_COLOR_BG_VAR_NAME );
-                }
-                break;
-            case iuse_paint_stuff_config::fg:
-                if( p_fg != col ) {
-                    vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
-                }
-                break;
-            case iuse_paint_stuff_config::bg:
-                if( p_bg != col ) {
-                    vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
-                }
-                break;
-        }
-        return true;
-    };
-
-    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), ff );
+    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), painter );
 }
 
-auto iuse_paint_stuff::iuse_paint_stuff_furniture( player &, item &, bool,
-        const tripoint & ) const -> int
+auto iuse_paint_stuff::iuse_paint_stuff_furniture( player &, item &it, bool,
+        const tripoint &pos ) const -> int
 {
-    add_msg( _( "Never mind." ) );
-    return 0;
+    const auto &here = get_map();
+
+    const auto area = choose_area( "Paint Furniture", pos );
+    if( !area.has_value() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    const ter_furn_painter<true> painter {here};
+
+    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), painter );
 }
 
 auto iuse_paint_stuff::iuse_paint_stuff_item( player &, item &, bool,
@@ -8001,7 +8055,7 @@ void iuse_paint_stuff_config::on_placed( item &it, const map &, const tripoint &
     get_paint_layer( it, false );
 }
 
-bool iuse_paint_stuff::is_paintable_terrain( map &m, const tripoint &pos )
+bool iuse_paint_stuff::is_paintable_terrain( const map &m, const tripoint &pos )
 {
     // No Air
     if( m.has_flag_ter( TFLAG_NO_FLOOR, pos ) ) {
