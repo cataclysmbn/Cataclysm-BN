@@ -413,6 +413,99 @@ void iexamine::nanofab( player &p, const tripoint &examp )
 }
 
 /**
+ * UI FOR LAB_FINALE SUPERALLOY FORGE.
+ */
+void iexamine::nanoforge( player &p, const tripoint &examp )
+{
+    bool table_exists = false;
+    tripoint spawn_point;
+    map &here = get_map();
+    for( const auto &valid_location : here.points_in_radius( examp, 1 ) ) {
+        if( here.ter( valid_location ) == ter_str_id( "t_nanoforge_body" ) ) {
+            spawn_point = valid_location;
+            table_exists = true;
+            break;
+        }
+    }
+    if( !table_exists ) {
+        return;
+    }
+
+    std::vector<std::string> recipe_ids;
+    recipe_ids.push_back( "alloy_sheet" );
+
+    if( recipe_ids.empty() ) {
+        return;
+    }
+
+    std::string chosen_recipe;
+    if( recipe_ids.size() > 1 ) {
+        uilist menu;
+        menu.text = _( "Choose a recipe:" );
+        for( size_t i = 0; i < recipe_ids.size(); ++i ) {
+            itype_id item = itype_id( recipe_ids[i] );
+            auto button_text = string_format( "%s [%d]", item->nname( 1 ),
+                                              std::max( 1, item->volume / 250_ml ) * 5 );
+            menu.addentry( i, true, -1, button_text );
+        }
+        menu.query();
+
+        if( menu.ret >= 0 && static_cast<size_t>( menu.ret ) < recipe_ids.size() ) {
+            chosen_recipe = recipe_ids[ menu.ret ];
+        }
+    } else {
+        chosen_recipe = recipe_ids.front();
+    }
+
+    if( chosen_recipe.empty() ) {
+        return;
+    }
+
+    int item_count = 1;
+
+    detached_ptr<item> new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn );
+
+    if( new_item->made_of( LIQUID ) ) {
+        const int amount = string_input_popup()
+                           .title( _( "Dispense how many units?" ) )
+                           .width( 5 )
+                           .text( std::to_string( 1 ) )
+                           .only_digits( true )
+                           .query_int();
+        item_count = amount;
+
+        new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
+    }
+
+    auto reqs = *requirement_id( "superalloy_forge" );
+
+    if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
+        popup( "%s", reqs.list_missing() );
+        return;
+    }
+
+    for( const auto &e : reqs.get_components() ) {
+        p.consume_items( e, 1, is_crafting_component );
+    }
+    for( const auto &e : reqs.get_tools() ) {
+        p.consume_tools( e );
+    }
+    p.invalidate_crafting_inventory();
+
+    if( new_item->is_armor() && new_item->has_flag( flag_VARSIZE ) ) {
+        new_item->set_flag( flag_FIT );
+    }
+
+    // we're sticking an item from our inventory under the nanofabrication dispenser
+    if( new_item->made_of( LIQUID ) ) {
+        liquid_handler::handle_all_liquid( std::move( new_item ), PICKUP_RANGE );  // let it own the pointer
+        return;
+    }
+
+    here.add_item_or_charges( spawn_point, std::move( new_item ) );
+}
+
+/**
  * Use "gas pump."  Will pump any liquids on tile.
  */
 void iexamine::gaspump( player &p, const tripoint &examp )
