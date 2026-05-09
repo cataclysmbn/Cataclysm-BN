@@ -1,0 +1,142 @@
+[
+  {
+    "type": "vehicle_color_palette",
+    "id": "car_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "White aluminium", "weight": 8 },
+          { "color": "Silver Maple Green", "weight": 8 },
+          { "color": "North Grey", "weight": 8 },
+          { "color": "Ink Black", "weight": 8 },
+          { "color": "Silver Thistle Beige", "weight": 8 },
+          { "color": "Iris Blue", "weight": 12 },
+          { "color": "Cataclysm Red", "weight": 20 },
+          { "color": "Coral Orange", "weight": 4 },
+          { "color": "Topaz Yellow", "weight": 2 },
+          { "color": "Hedgehog Cactus Yellow Green", "weight": 2 },
+          { "color": "Forest Green", "weight": 2 },
+          { "color": "Brilliant Green", "weight": 2 },
+          { "color": "Crystal Pink", "weight": 4 },
+          { "color": "Ruby Violet", "weight": 4 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "cargo_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "inflate", "trunk", "hatch" ],
+        "colors": [
+          { "color": "White aluminium", "weight": 8 },
+          { "color": "Silver Maple Green", "weight": 8 },
+          { "color": "North Grey", "weight": 8 },
+          { "color": "Ink Black", "weight": 8 },
+          { "color": "Silver Thistle Beige", "weight": 8 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "visibility_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "inflate", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Iris Blue", "weight": 12 },
+          { "color": "Cataclysm Red", "weight": 20 },
+          { "color": "Coral Orange", "weight": 4 },
+          { "color": "Topaz Yellow", "weight": 2 },
+          { "color": "Hedgehog Cactus Yellow Green", "weight": 2 },
+          { "color": "Forest Green", "weight": 2 },
+          { "color": "Brilliant Green", "weight": 2 },
+          { "color": "Crystal Pink", "weight": 4 },
+          { "color": "Ruby Violet", "weight": 4 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Cataclysm Green", "weight": 20 },
+          { "color": "North Grey", "weight": 10 },
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "Forest Green", "weight": 5 },
+          { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "police_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "Silver Grey", "weight": 10 },
+          { "color": "Silver Fir Blue", "weight": 2 },
+          { "color": "Steel Blue", "weight": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "swat_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [ { "color": "Ink Black", "weight": 10 }, { "color": "Steel Blue", "weight": 5 } ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "construction_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [ { "color": "Traffic Yellow", "weight": 10 }, { "color": "Carrot Orange", "weight": 5 } ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "sneaky_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "North Grey", "weight": 10 },
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "Ruby Violet", "weight": 5, "//": "Sneaky military craft :)" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "fighter_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "North Grey", "weight": 10 },
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
+        ]
+      }
+    ]
+  }
+]

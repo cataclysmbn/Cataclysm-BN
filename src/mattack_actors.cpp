@@ -44,6 +44,7 @@ static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_laserlocked( "laserlocked" );
+static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_targeted( "targeted" );
 static const efftype_id effect_was_laserlocked( "was_laserlocked" );
@@ -656,6 +657,9 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint_bub_
 
 bool gun_actor::call( monster &z ) const
 {
+    if( z.type->monster_weapon && z.has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     /// common firing logic.
     /// @param target_critter can be nullptr if shooting at a vehicle (untargeted).
     auto attempt_shoot = [&]( const tripoint_bub_ms & aim_pos, Creature * target_critter ) {

@@ -116,7 +116,7 @@
   {
     "type": "mapgen",
     "method": "json",
-    "nested_mapgen_id": "lab_room_7x7_turret",
+    "nested_mapgen_id": "lab_room_7x7",
     "object": {
       "mapgensize": [ 7, 7 ],
       "rotation": [ 0, 3 ],

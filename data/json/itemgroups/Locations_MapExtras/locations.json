@@ -1830,6 +1830,7 @@
       [ "ZSG", 5 ],
       [ "manual_mechanics", 35 ],
       [ "manual_fabrication", 12 ],
+      [ "reference_aircraft", 4 ],
       [ "manual_speech", 50 ],
       [ "manual_business", 40 ],
       [ "manual_computers", 20 ],

@@ -862,6 +862,20 @@
   },
   {
     "type": "construction",
+    "id": "constr_salvage_nuclear_reactor",
+    "//": "Salvages usable compact reactor hardware from a large nuclear reactor core.",
+    "category": "OTHER",
+    "required_skills": [ [ "fabrication", 6 ], [ "electronics", 8 ], [ "mechanics", 6 ] ],
+    "time": "8 h",
+    "using": [ [ "advanced_electronics_high_voltage", 1 ], [ "metal_removal_standard", 1 ], [ "welding_standard", 12 ] ],
+    "pre_terrain": "t_nuclear_reactor",
+    "pre_special": "check_deconstruct",
+    "post_flags": [ "keep_items" ],
+    "post_special": "done_deconstruct",
+    "group": "advanced_object_deconstruction"
+  },
+  {
+    "type": "construction",
     "id": "constr_remove_grid_plut_generator",
     "//": "Removes a Plut Gen from grid.",
     "category": "OTHER",

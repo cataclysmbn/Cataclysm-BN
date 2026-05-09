@@ -97,6 +97,7 @@ void vehicle_part::copy_static_from( const vehicle_part &source )
     ammo_pref = source.ammo_pref;
     crew_id = source.crew_id;
     hack_id = source.hack_id;
+    part_color_ = source.part_color_;
 }
 
 //TODO!: This is a bit scuffed and will be until vehicles are game objects.
@@ -714,4 +715,37 @@ std::string vehicle_part::carried_name() const
         return std::string();
     }
     return carry_names.top().substr( name_offset );
+}
+
+RGBColorPair vehicle_part::get_color( bool ignore_default ) const
+{
+    if( ignore_default ) {
+        return part_color_;
+    }
+
+    const auto [def_bg, def_fg] = info().default_color;
+    const auto [set_bg, set_fg] = part_color_;
+    return RGBColorPair{
+        set_bg == RGBColor{} ? def_bg : set_bg,
+        set_fg == RGBColor{} ? def_fg : set_fg
+    };
+}
+
+void vehicle_part::set_color( const RGBColor &bg, const RGBColor &fg )
+{
+    part_color_ = RGBColorPair{
+        .bg = bg,
+        .fg = fg
+    };
+
+    auto &vars = base->item_vars();
+    if( bg == fg ) {
+        vars.set<RGBColor>( TINT_COLOR_VAR_NAME, bg );
+        vars.erase( TINT_COLOR_FG_VAR_NAME );
+        vars.erase( TINT_COLOR_BG_VAR_NAME );
+    } else {
+        vars.erase( TINT_COLOR_VAR_NAME );
+        vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, fg );
+        vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, bg );
+    }
 }

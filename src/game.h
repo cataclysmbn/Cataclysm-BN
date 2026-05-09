@@ -136,6 +136,12 @@ enum peek_act : int {
     // obvious future additional value is PA_BLIND_FIRE
 };
 
+enum look_around_mode : int {
+    LA_MODE_DEFAULT, // -+ FOV Range
+    LA_MODE_2D, // Same layer as origin
+    LA_MODE_3D // 3D, Ignore FOV Setting
+};
+
 struct look_around_result {
     std::optional<tripoint_bub_ms> position;
     std::optional<peek_act> peek_action;
@@ -671,7 +677,7 @@ class game : public submap_load_listener
         void zones_manager();
 
         // Look at nearby terrain ';', or select zone points
-        std::optional<tripoint_bub_ms> look_around( bool force_3d = false );
+        std::optional<tripoint_bub_ms> look_around( look_around_mode mode = LA_MODE_DEFAULT );
         /**
          * @brief
          *
@@ -688,7 +694,7 @@ class game : public submap_load_listener
         look_around_result look_around( bool show_window, tripoint_bub_ms &center,
                                         const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
                                         bool is_moving_zone = false, const tripoint_bub_ms &end_point = tripoint_bub_ms::zero(),
-                                        bool force_3d = false );
+                                        look_around_mode mode = LA_MODE_DEFAULT );
 
         // Shared method to print "look around" info
         void pre_print_all_tile_info( const tripoint_bub_ms &lp, const catacurses::window &w_info,

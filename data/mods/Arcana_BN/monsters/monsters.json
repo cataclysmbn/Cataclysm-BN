@@ -199,6 +199,7 @@
       }
     ],
     "//": "Here, have some chalice-specific loot",
+    "monster_weapon": "mon_archon_monster_weapon",
     "death_drops": "mon_archon_death_drops",
     "death_function": [ "NORMAL" ],
     "flags": [
@@ -1208,6 +1209,7 @@
         "no_ammo_sound": "a cry of anger!"
       }
     ],
+    "monster_weapon": "mon_feral_magehunter_monster_weapon",
     "death_drops": "mon_feral_magehunter_death_drops",
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "FIRE", "HURT" ],
     "fear_triggers": [  ],
@@ -1252,6 +1254,7 @@
         "no_crits": true
       }
     ],
+    "monster_weapon": "mon_feral_keeper_monster_weapon",
     "death_drops": "mon_feral_keeper_death_drops",
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "STALK" ]
   },
@@ -1294,6 +1297,7 @@
         "no_crits": true
       }
     ],
+    "monster_weapon": "mon_feral_sanguinist_monster_weapon",
     "death_drops": "mon_feral_sanguinist_death_drops",
     "anger_triggers": [ "FRIEND_ATTACKED", "PLAYER_CLOSE", "PLAYER_WEAK", "STALK" ],
     "extend": { "flags": [ "ACIDPROOF" ] }

@@ -1103,7 +1103,7 @@ more structured function.
 },
 "use_action": {
     "type": "sew_advanced",  // Modify clothing
-    "materials": [           // materials to deal with.
+    "materials": [           // materials to deal with. Power armor can be targeted when its material matches.
         "cotton",
         "leather"
     ],
@@ -1128,8 +1128,16 @@ more structured function.
     "spell_id": "magus_escape", // The ID of the spell to be casted
     "no_fail": true,            // Whether you can fail the cast
     "level": 10,                // The level its cast at
-    "need_worn": true,           // if you need to wear it to cast the spell
+    "need_worn": true,          // if you need to wear it to cast the spell
     "need_wielding": true       // if you need to wield it to cast the spell
+},
+"use_action": {
+    "type": "paint_stuff",      // Paints terrain or vehicles using ammo
+    "charge_cost": 0            // Number of charges to use
+},
+"use_action": {
+    "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
+    "color_swap": true          // Allow the color to be swapped to any other named color
 }
 ```
 

@@ -206,6 +206,8 @@ extern const flag_id flag_MOUNTED_GUN;
 extern const flag_id flag_MYCUS_OK;
 extern const flag_id flag_NANOFAB_TEMPLATE;
 extern const flag_id flag_NAT_UPS;
+extern const flag_id flag_NATURE_CAMO;
+extern const flag_id flag_URBAN_CAMO;
 extern const flag_id flag_NEEDS_NO_LUBE;
 extern const flag_id flag_NEEDS_UNFOLD;
 extern const flag_id flag_NEGATIVE_MONOTONY_OK;

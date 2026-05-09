@@ -1,0 +1,63 @@
+[
+  {
+    "id": "277_fmj",
+    "type": "AMMO",
+    "name": { "str": "6.8x51mm 'Fury' FMJ" },
+    "description": "A rimless cartridge that was planned to be adopted by the US military to combat advances in modern body armor, but was quietly abandoned soon after the development of caseless ammo. The FMJ rounds are meant for training and civilian use, but nonetheless pack significant firepower.",
+    "weight": "18 g",
+    "volume": "250 ml",
+    "price": "220 cent",
+    "price_postapoc": "9 USD",
+    "material": [ "brass", "powder" ],
+    "looks_like": "308",
+    "symbol": "=",
+    "color": "yellow",
+    "count": 20,
+    "stack_size": 20,
+    "ammo_type": "277",
+    "casing": "277_casing",
+    "range": 65,
+    "damage": { "damage_type": "bullet", "amount": 60, "armor_penetration": 27 },
+    "dispersion": 15,
+    "recoil": 2500,
+    "effects": [ "COOKOFF" ]
+  },
+  {
+    "id": "277_hybrid",
+    "copy-from": "277_fmj",
+    "type": "AMMO",
+    "name": { "str": "6.8x51mm 'Fury' Hybrid" },
+    "casing": "277_casing",
+    "description": "A rimless cartridge that was planned to be adopted by the US military to combat advances in modern body armor, but was quietly abandoned soon after the development of caseless. These full-power Hybrid rounds offer significant armor penetration but greatly increase recoil.",
+    "relative": { "damage": { "damage_type": "bullet", "amount": 5, "armor_penetration": 20 } },
+    "proportional": { "recoil": 1.3 }
+  },
+  {
+    "id": "bp_277_fmj",
+    "copy-from": "277_fmj",
+    "type": "AMMO",
+    "name": { "str": "6.8x51mm 'Fury' FMJ, black powder" },
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  },
+  {
+    "id": "bp_277_hybrid",
+    "copy-from": "277_hybrid",
+    "type": "AMMO",
+    "name": { "str": "6.8x51mm 'Fury' Hybrid, black powder" },
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8, "armor_penetration": 0.5 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "BLACKPOWDER", "MUZZLE_SMOKE" ] }
+  }
+]

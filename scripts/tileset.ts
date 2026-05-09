@@ -53,6 +53,7 @@ interface TileInfo {
   height?: number
   pixelscale?: number
   iso?: boolean
+  zlevel_height?: number
   retract_dist_min?: number
   retract_dist_max?: number
 }
@@ -148,6 +149,7 @@ class Tileset {
 
   spriteWidth = 16
   spriteHeight = 16
+  zlevelHeight = 0
   pixelscale = 1
   iso = false
   retractDistMin = -1.0
@@ -191,6 +193,7 @@ class Tileset {
       const baseInfo = this.info[0] as TileInfo
       this.spriteWidth = baseInfo.width ?? this.spriteWidth
       this.spriteHeight = baseInfo.height ?? this.spriteHeight
+      this.zlevelHeight = baseInfo.zlevel_height ?? this.zlevelHeight
       this.pixelscale = baseInfo.pixelscale ?? this.pixelscale
       this.retractDistMin = baseInfo.retract_dist_min ?? this.retractDistMin
       this.retractDistMax = baseInfo.retract_dist_max ?? this.retractDistMax
@@ -384,6 +387,7 @@ class Tileset {
         width: this.spriteWidth,
         height: this.spriteHeight,
         iso: this.iso,
+        zlevel_height: this.zlevelHeight,
         retract_dist_min: this.retractDistMin,
         retract_dist_max: this.retractDistMax,
       }],
@@ -842,6 +846,9 @@ class TileSheetData {
   spriteHeight: number
   spriteOffsetX: number
   spriteOffsetY: number
+  spriteOffsetXRetracted: number
+  spriteOffsetYRetracted: number
+  pixelscale: number
   writeDim: boolean
   tsPathname: string
   tsWidth: number
@@ -859,9 +866,17 @@ class TileSheetData {
     this.spriteWidth = (tilesheetData.sprite_width as number) ?? refs.defaultWidth
     this.spriteOffsetX = (tilesheetData.sprite_offset_x as number) ?? 0
     this.spriteOffsetY = (tilesheetData.sprite_offset_y as number) ?? 0
+    this.spriteOffsetXRetracted = (tilesheetData.sprite_offset_x_retracted as number) ??
+      this.spriteOffsetX
+    this.spriteOffsetYRetracted = (tilesheetData.sprite_offset_y_retracted as number) ??
+      this.spriteOffsetY
+    this.pixelscale = (tilesheetData.pixelscale as number) ?? 1.0
     this.writeDim = this.spriteWidth !== refs.defaultWidth ||
       this.spriteHeight !== refs.defaultHeight ||
-      this.spriteOffsetX !== 0 || this.spriteOffsetY !== 0
+      this.spriteOffsetX !== 0 || this.spriteOffsetY !== 0 ||
+      this.spriteOffsetXRetracted !== this.spriteOffsetX ||
+      this.spriteOffsetYRetracted !== this.spriteOffsetY ||
+      this.pixelscale !== 1.0
 
     this.tsPathname = join(refs.tilesetPathname, this.tsFilename)
 
@@ -1047,6 +1062,15 @@ class TileSheetData {
         tsTileInfo.sprite_offset_y = this.spriteOffsetY
         tsTileInfo.sprite_width = this.spriteWidth
         tsTileInfo.sprite_height = this.spriteHeight
+        if (this.spriteOffsetXRetracted !== this.spriteOffsetX) {
+          tsTileInfo.sprite_offset_x_retracted = this.spriteOffsetXRetracted
+        }
+        if (this.spriteOffsetYRetracted !== this.spriteOffsetY) {
+          tsTileInfo.sprite_offset_y_retracted = this.spriteOffsetYRetracted
+        }
+        if (this.pixelscale !== 1.0) {
+          tsTileInfo.pixelscale = this.pixelscale
+        }
       }
 
       tileInfo.push({ [this.tsFilename]: tsTileInfo })

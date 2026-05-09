@@ -1100,5 +1100,70 @@
     "autolearn": true,
     "using": [ [ "sewing_standard", 24 ] ],
     "components": [ [ [ "rag", 24 ] ] ]
+  },
+  {
+    "result": "nature_ghillie",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "skills_required": [ "survival", 5 ],
+    "time": "3 h 20 m",
+    "autolearn": false,
+    "book_learn": [ [ "tailor_portfolio", 7 ], [ "textbook_survival", 4 ], [ "atomic_survival", 5 ], [ "mag_survival", 8 ] ],
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [
+      [ [ "fabric_standard", 4, "LIST" ] ],
+      [ [ "jacket_army", 1 ], [ "army_top", 3 ] ],
+      [ [ "pants_army", 1 ], [ "army_top", 3 ] ],
+      [ [ "tacvest", 2 ], [ "webbing_belt", 3 ], [ "molle_pack", 1 ], [ "modularvest", 2 ] ],
+      [ [ "duct_tape", 200 ] ],
+      [ [ "stick", 12 ] ],
+      [ [ "plant_fibre", 24 ] ]
+    ]
+  },
+  {
+    "result": "urban_ghillie",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "skills_required": [ "survival", 5 ],
+    "time": "3 h 20 m",
+    "autolearn": false,
+    "book_learn": [ [ "tailor_portfolio", 7 ], [ "textbook_survival", 4 ], [ "atomic_survival", 5 ], [ "mag_survival", 8 ] ],
+    "using": [ [ "sewing_standard", 200 ] ],
+    "components": [
+      [ [ "fabric_standard", 4, "LIST" ] ],
+      [ [ "winter_jacket_army", 1 ] ],
+      [ [ "winter_pants_army", 1 ] ],
+      [ [ "tacvest", 2 ], [ "webbing_belt", 3 ], [ "molle_pack", 1 ], [ "modularvest", 2 ] ],
+      [ [ "duct_tape", 200 ] ],
+      [ [ "bag_plastic", 24 ], [ "bag_zipper", 24 ], [ "plastic_shopping_bag", 12 ] ]
+    ]
+  },
+  {
+    "result": "oldguard_armor",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "3 h",
+    "autolearn": false,
+    "book_learn": [ [ "recipe_oldguard", 3 ] ],
+    "using": [ [ "sewing_standard", 150 ] ],
+    "components": [
+      [ [ "fabric_standard", 20, "LIST" ] ],
+      [ [ "jacket_army", 1 ], [ "winter_jacket_army", 1 ] ],
+      [ [ "pants_army", 1 ], [ "winter_pants_army", 1 ] ],
+      [ [ "duct_tape", 300 ] ],
+      [ [ "kevlar", 1 ], [ "modularvest", 1 ], [ "swat_armor", 1 ] ],
+      [ [ "kevlar_plate", 24 ] ]
+    ],
+    "flags": [ "SECRET" ]
   }
 ]

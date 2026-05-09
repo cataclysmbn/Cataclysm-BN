@@ -151,7 +151,8 @@
       { "item": "book_icef", "prob": 8 },
       { "item": "textbook_fabrication", "prob": 12 },
       { "item": "concrete_book", "prob": 12 },
-      { "item": "reference_fabrication1", "prob": 5 }
+      { "item": "reference_fabrication1", "prob": 5 },
+      { "item": "reference_aircraft", "prob": 1 }
     ]
   },
   {
@@ -384,7 +385,8 @@
       { "item": "manual_sealing", "prob": 9 },
       { "item": "fermenting_book", "prob": 8 },
       { "item": "distilling_cookbook", "prob": 8 },
-      { "item": "sweets_book", "prob": 10 }
+      { "item": "sweets_book", "prob": 10 },
+      { "item": "reference_aircraft", "prob": 5 }
     ]
   },
   {
@@ -529,7 +531,8 @@
       { "item": "manual_barbaran", "prob": 15 },
       { "item": "manual_sealing", "prob": 190 },
       { "item": "baking_book", "prob": 190 },
-      { "group": "dojo_manuals", "prob": 20 }
+      { "group": "dojo_manuals", "prob": 20 },
+      { "item": "reference_aircraft", "prob": 10 }
     ]
   },
   {
@@ -578,7 +581,8 @@
       { "item": "manual_swordsmanship", "prob": 15 },
       { "item": "manual_barbaran", "prob": 15 },
       { "item": "book_lockpick", "prob": 1 },
-      { "group": "rare_martial_arts_books", "prob": 8 }
+      { "group": "rare_martial_arts_books", "prob": 8 },
+      { "item": "reference_aircraft", "prob": 5 }
     ]
   },
   {

@@ -425,7 +425,7 @@ static int debug_menu_uilist( bool display_all_entries = true )
 
 void teleport_short()
 {
-    const std::optional<tripoint_bub_ms> where = g->look_around( true );
+    const std::optional<tripoint_bub_ms> where = g->look_around( LA_MODE_3D );
     if( !where || *where == g->u.bub_pos() ) {
         return;
     }
@@ -518,7 +518,7 @@ void spawn_nested_mapgen()
     nest_menu.query();
     const int nest_choice = nest_menu.ret;
     if( nest_choice >= 0 && nest_choice < static_cast<int>( nest_str.size() ) ) {
-        const std::optional<tripoint_bub_ms> where = g->look_around( true );
+        const std::optional<tripoint_bub_ms> where = g->look_around( LA_MODE_3D );
         if( !where ) {
             return;
         }
@@ -1102,7 +1102,7 @@ void character_edit_menu( Character &c )
             mission_debug::edit( p );
             break;
         case edit_character::tele: {
-            if( const std::optional<tripoint_bub_ms> newpos = g->look_around( true ) ) {
+            if( const std::optional<tripoint_bub_ms> newpos = g->look_around( LA_MODE_3D ) ) {
                 p.setpos( *newpos );
                 if( p.is_player() ) {
                     if( p.is_mounted() ) {
@@ -1493,7 +1493,7 @@ static std::optional<tripoint_range<tripoint_bub_ms>> select_area()
 
     auto initial_pos = g->u.bub_pos();
     const look_around_result first = g->look_around( false, initial_pos, initial_pos,
-                                     false, true, false, false, tripoint_bub_ms::zero(), true );
+                                     false, true, false, false, tripoint_bub_ms::zero(), LA_MODE_3D );
 
     if( !first.position ) {
         return std::nullopt;
@@ -1501,7 +1501,7 @@ static std::optional<tripoint_range<tripoint_bub_ms>> select_area()
 
     popup.message( "%s", _( "Select second point." ) );
     const look_around_result second = g->look_around( false, initial_pos, *first.position,
-                                      true, true, false, false, tripoint_bub_ms::zero(), true );
+                                      true, true, false, false, tripoint_bub_ms::zero(), LA_MODE_3D );
 
     if( !second.position ) {
         return std::nullopt;
@@ -1743,7 +1743,7 @@ void debug()
             break;
 
         case DEBUG_SPAWN_ARTIFACT:
-            if( const std::optional<tripoint_bub_ms> center = g->look_around( true ) ) {
+            if( const std::optional<tripoint_bub_ms> center = g->look_around( LA_MODE_3D ) ) {
                 artifact_natural_property prop = static_cast<artifact_natural_property>( rng( ARTPROP_NULL + 1,
                                                  ARTPROP_MAX - 1 ) );
                 m.create_anomaly( *center, prop );
@@ -1826,7 +1826,7 @@ void debug()
         break;
 
         case DEBUG_GEN_SOUND: {
-            const std::optional<tripoint_bub_ms> where = g->look_around( true );
+            const std::optional<tripoint_bub_ms> where = g->look_around( LA_MODE_3D );
             if( !where ) {
                 return;
             }

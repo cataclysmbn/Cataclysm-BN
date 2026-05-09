@@ -9,9 +9,6 @@ namespace data_vars
 {
 
 template<typename T>
-struct type_converter;
-
-template<typename T>
 using type_converter_t = typename type_converter<T>::type;
 
 class data_set
@@ -25,7 +22,8 @@ class data_set
         using const_iterator = storage::const_iterator;
 
         template<typename Value, typename Conv = type_converter_t<Value>>
-        bool try_get( const std::string &key, Value &out_val, const Conv &converter = {} ) const {
+        bool try_get( const std::string &key, Value &out_val, const Conv &converter = {} )
+        const requires detail::has_converter_from_str<Conv, Value> {
             const auto it = _data.find( key );
             if( it == _data.end() ) {
                 return false;
@@ -35,7 +33,7 @@ class data_set
 
         template <typename Value, typename Conv = type_converter_t<Value>>
         Value get( const std::string &key, const Value &default_value = {}, const Conv &converter = {} )
-        const {
+        const requires detail::has_converter_from_str<Conv, Value> {
             Value val;
             if( !data_set::try_get<Value>( key, val, converter ) ) {
                 return default_value;
@@ -44,7 +42,8 @@ class data_set
         }
 
         template <typename Value, typename Conv = type_converter_t<Value>>
-        void set( const key_type &name, const Value &value, const Conv &converter = {} ) {
+        void set( const key_type &name, const Value &value, const Conv &converter = {} )
+        requires detail::has_converter_to_str<Conv, Value> {
             std::string str;
             if( !converter( value, str ) ) {
                 throw std::runtime_error( "failed to convert value to string" );

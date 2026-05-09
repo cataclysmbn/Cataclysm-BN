@@ -312,7 +312,7 @@ TEST_CASE( "check_vehicle_rotation_against_old", "[.]" )
         for( int x = -5; x <= 5; x++ ) {
             for( int y = -5; y <= 5; y++ ) {
                 tripoint_mnt_veh p = {x, y, 0};
-                tripoint_rel_ms oldRes;
+                point_rel_ms oldRes;
                 veh_ptr->coord_translate( 15_degrees * dir, pivot, p, oldRes );
 
                 tripoint_rel_ms newRes;
@@ -338,11 +338,11 @@ TEST_CASE( "vehicle_rotation_reverse" )
         for( int x = -5; x <= 5; x++ ) {
             for( int y = -5; y <= 5; y++ ) {
                 tripoint_mnt_veh p = {x, y, 0};
-                tripoint_rel_ms result;
+                point_rel_ms result;
                 veh_ptr->coord_translate( 15_degrees * dir, pivot, p, result );
 
                 tripoint_mnt_veh reversed;
-                veh_ptr->coord_translate_reverse( 15_degrees * dir, pivot, result, reversed );
+                veh_ptr->coord_translate_reverse( 15_degrees * dir, pivot, tripoint_rel_ms( result, 0 ), reversed );
 
                 CHECK( reversed.x() == p.x() );
                 CHECK( reversed.y() == p.y() );

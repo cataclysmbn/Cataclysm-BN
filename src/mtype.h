@@ -434,6 +434,10 @@ struct mtype {
          * If this monster is a rideable mech with enhanced strength, this is the strength it gives to the player
          */
         int mech_str_bonus = 0;
+        /**
+         * If present, disarming techniques will work on this creature
+         */
+        item_group_id monster_weapon;
 
         /** Emission sources that cycle each turn the monster remains alive */
         std::map<emit_id, time_duration> emit_fields;

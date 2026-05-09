@@ -3595,6 +3595,17 @@ bool map::has_adjacent_terrain_with( const tripoint_bub_ms &p,
     return false;
 }
 
+bool map::has_nearby( const tripoint_bub_ms &p,
+                      const std::function<bool( map &m, const tripoint_bub_ms &p )> &pred, int radius )
+{
+    for( const tripoint_bub_ms &adj : points_in_radius( p, radius ) ) {
+        if( pred( *this, adj ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool map::has_nearby_fire( const tripoint_bub_ms &p, int radius )
 {
     for( const tripoint_bub_ms &pt : points_in_radius( p, radius ) ) {
@@ -5612,6 +5623,8 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
         }
         current_submap->active_items.add( *new_item );
     }
+
+    new_item->on_map_placement( *this, p );
 
     current_submap->get_items( l ).push_back( std::move( new_item ) );
     return;

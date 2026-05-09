@@ -2945,6 +2945,7 @@ void vehicle_part::deserialize( JsonIn &jsin )
     data.read( "target_second_y", target.second.y() );
     data.read( "target_second_z", target.second.z() );
     data.read( "ammo_pref", ammo_pref );
+    data.read( "part_color", part_color_ );
     if( data.has_member( "portal_tap_linked" ) ) {
         data.read( "portal_tap_linked", portal_tap_linked );
         data.read( "portal_tap_dim_id", portal_tap_dim_id );
@@ -3029,6 +3030,7 @@ void vehicle_part::serialize( JsonOut &json ) const
         json.member( "target_second_z", target.second.z() );
     }
     json.member( "ammo_pref", ammo_pref );
+    json.member( "part_color", part_color_ );
     if( portal_tap_linked ) {
         json.member( "portal_tap_linked", portal_tap_linked );
         json.member( "portal_tap_dim_id", portal_tap_dim_id );

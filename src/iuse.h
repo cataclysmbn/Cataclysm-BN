@@ -9,6 +9,7 @@
 #include "type_id.h"
 #include "units.h"
 
+class map;
 class Character;
 class JsonObject;
 class item;
@@ -262,6 +263,9 @@ class iuse_actor
          * Finalizes the actor. Must be called after all items are loaded.
          */
         virtual void finalize( const itype_id &/*my_item_type*/ ) { }
+
+        virtual void on_spawned( item & ) const {}
+        virtual void on_placed( item &, const map &, const tripoint_bub_ms & ) const {}
 };
 
 struct use_function {

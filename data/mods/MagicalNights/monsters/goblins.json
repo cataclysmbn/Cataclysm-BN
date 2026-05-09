@@ -29,6 +29,7 @@
     "harvest": "human",
     "//": "We haven't demihuman, so I went with the Troll solution of just going human.",
     "death_function": [ "NORMAL" ],
+    "monster_weapon": "goblin_warrior_monster_weapon",
     "death_drops": "goblin_warrior_drops",
     "special_attacks": [ [ "crush", 5 ], { "type": "bite", "cooldown": 5 } ],
     "flags": [
@@ -52,6 +53,7 @@
     "copy-from": "mon_goblin_warrior",
     "melee_skill": 2,
     "dodge": 5,
+    "monster_weapon": "goblin_slinger_monster_weapon",
     "death_drops": "goblin_slinger_drops",
     "starting_ammo": { "pebble": 30 },
     "extend": {
@@ -82,6 +84,7 @@
     "hp": 150,
     "melee_dice_sides": 8,
     "melee_damage": [ { "damage_type": "cut", "amount": 4 } ],
+    "monster_weapon": "goblin_chieftain_monster_weapon",
     "death_drops": "goblin_chieftain_drops"
   }
 ]

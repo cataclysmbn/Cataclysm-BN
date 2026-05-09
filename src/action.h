@@ -494,6 +494,9 @@ std::optional<tripoint_bub_ms> choose_adjacent_highlight( const std::string &mes
         const std::string &failure_message, const std::function<bool( const tripoint_bub_ms & )> &allowed,
         bool allow_vertical = false );
 
+std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> choose_area( const std::string &message,
+        const tripoint_bub_ms &start_pos, bool allow_vertical = false );
+
 // (Press X (or Y)|Try) to Z
 std::string press_x( action_id act );
 std::string press_x( action_id act, const std::string &key_bound,

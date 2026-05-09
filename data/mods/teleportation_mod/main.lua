@@ -10,6 +10,7 @@ power_charge_kj_multiplier = 1000
 
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
+local ui = require("lib.ui")
 
 --Item id (static)
 
@@ -441,17 +442,12 @@ end
 mod.network_info = function(pos)
   -- spam out all stations and anchors
 
-  local ui_network_info = QueryPopup.new()
   local message_text = mod.create_network_message(pos)
-  ui_network_info:message(message_text)
-  ui_network_info:message_color(Color.c_white)
-  ui_network_info:allow_any_key(true)
-  ui_network_info:query()
+  ui.popup(message_text, Color.c_white)
   return 1
 end
 
 mod.show_readme_info = function()
-  local ui_mod_info = QueryPopup.new()
   local modinfo = [[
 Teleporters - the future, today!
 
@@ -471,10 +467,7 @@ stations are present, you can pick which one to fill.
 
 The current rate is ]] .. power_charge_kj_multiplier .. [[kJ per 1 unit
 of charge. Both rates can be changed in the config. ]]
-  ui_mod_info:message(modinfo)
-  ui_mod_info:message_color(Color.c_white)
-  ui_mod_info:allow_any_key(true)
-  ui_mod_info:query()
+  ui.popup(modinfo, Color.c_white)
   return 0
 end
 

@@ -293,6 +293,7 @@ static const efftype_id effect_flu( "flu" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_lying_down( "lying_down" );
+static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_no_sight( "no_sight" );
 static const efftype_id effect_npc_suspend( "npc_suspend" );
 static const efftype_id effect_onfire( "onfire" );
@@ -670,6 +671,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
             submap_loader.release_load( lazy_border_handle_ );
             lazy_border_handle_ = 0;
         }
+        fire_loader.clear( submap_loader );
         submap_loader.flush_prev_desired();
     }
 
@@ -1668,6 +1670,7 @@ bool game::cleanup_at_end()
 
     // Clear dimension tracking state before clearing MAPBUFFER and item types.
     // Metadata must be cleared so stale pointers are not accessed after unload_data().
+    fire_loader.clear( submap_loader );
     kept_pocket_dimension_id_.clear();
     loaded_dimensions_.clear();
 
@@ -3153,6 +3156,7 @@ bool game::load( const save_t &name )
         submap_loader.release_load( lazy_border_handle_ );
         lazy_border_handle_ = 0;
     }
+    fire_loader.clear( submap_loader );
     if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION,
             std::bind( &game::unserialize, this, _1 ) ) ) {
         return false;
@@ -4872,9 +4876,12 @@ void game::world_tick()
     ZoneScoped;
     TracyPlot( "Active Dimensions", static_cast<int64_t>( loaded_dimensions_.size() ) );
 
-    const auto  fire_spread = reality_bubble_fire_spread;
-    const auto  do_emits   = calendar::once_every( 10_seconds );
-    const auto  abs_sub    = m.get_abs_sub();
+    const auto fire_spread = reality_bubble_fire_spread;
+    const auto do_emits = calendar::once_every( 10_seconds );
+
+    if( !fire_spread ) {
+        fire_loader.clear( submap_loader );
+    }
 
     auto total_field_count = int64_t{0};
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
@@ -6247,6 +6254,9 @@ bool game::revive_corpse( const tripoint_bub_ms &p, item &it )
 
     critter.no_extra_death_drops = true;
     critter.add_effect( effect_downed, 5_turns );
+    if( critter.type->monster_weapon ) {
+        critter.add_effect( effect_monster_disarmed, 1_turns );
+    }
     for( detached_ptr<item> &component : it.remove_components() ) {
         critter.add_corpse_component( std::move( component ) );
     }
@@ -8398,21 +8408,38 @@ void game::pre_print_all_tile_info( const tripoint_bub_ms &lp, const catacurses:
     print_all_tile_info( lp, w_info, area_name, 1, first_line, last_line, cache );
 }
 
-std::optional<tripoint_bub_ms> game::look_around( bool force_3d )
+std::optional<tripoint_bub_ms> game::look_around( look_around_mode mode )
 {
     auto center = u.bub_pos() + u.view_offset;
     look_around_result result = look_around( /*show_window=*/true, center, center, false, false,
-                                false, false, tripoint_bub_ms::zero(), force_3d );
+                                false, false, tripoint_bub_ms::zero(), mode );
     return result.position;
 }
 
 look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
                                       const tripoint_bub_ms &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                      bool is_moving_zone, const tripoint_bub_ms &end_point, bool force_3d )
+                                      bool is_moving_zone, const tripoint_bub_ms &end_point, look_around_mode mode )
 {
     bVMonsterLookFire = false;
+
+    auto zlSwitch = [&]<typename T>( T normal, T m2d, T m3d ) {
+        switch( mode ) {
+            default:
+            case LA_MODE_DEFAULT:
+                return normal;
+            case LA_MODE_2D:
+                return m2d;
+            case LA_MODE_3D:
+                return m3d;
+        };
+    };
+
     // TODO: Make this `true`
-    const bool allow_zlev_move = m.has_zlevels() && ( get_option<bool>( "FOV_3D" ) || force_3d );
+    const bool allow_zlev_move = zlSwitch(
+                                     m.has_zlevels() && get_option<bool>( "FOV_3D" ),
+                                     false,
+                                     true
+                                 );
 
     temp_exit_fullscreen();
 
@@ -8510,10 +8537,10 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
 #endif // TILES
 
     const int old_levz = get_levz();
-    const int min_levz = force_3d ? -OVERMAP_DEPTH : std::max( old_levz - fov_3d_z_range,
-                         -OVERMAP_DEPTH );
-    const int max_levz = force_3d ? OVERMAP_HEIGHT : std::min( old_levz + fov_3d_z_range,
-                         OVERMAP_HEIGHT );
+    const int min_levz = zlSwitch( std::max( old_levz - fov_3d_z_range, -OVERMAP_DEPTH ),
+                                   old_levz,        -OVERMAP_DEPTH );
+    const int max_levz = zlSwitch( std::min( old_levz + fov_3d_z_range, OVERMAP_HEIGHT ), old_levz,
+                                   OVERMAP_HEIGHT );
 
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();

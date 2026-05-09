@@ -75,10 +75,8 @@
       }
     ],
     "melee_damage": [ { "damage_type": "bash", "amount": 5 } ],
-    "death_drops": {
-      "subtype": "collection",
-      "items": [ { "group": "mon_zombie_cop_death_drops", "prob": 100 }, { "item": "glock_22", "prob": 100, "charges": [ 0, 6 ] } ]
-    },
+    "monster_weapon": "mon_civilian_police_monster_weapon",
+    "death_drops": "mon_zombie_cop_death_drops",
     "extend": { "flags": [ "DROPS_AMMO" ] }
   },
   {
@@ -93,10 +91,8 @@
     "melee_skill": 2,
     "melee_dice": 2,
     "melee_dice_sides": 3,
-    "death_drops": {
-      "subtype": "collection",
-      "items": [ { "group": "default_zombie_death_drops", "prob": 100 }, { "group": "survivor_knife", "prob": 100 } ]
-    }
+    "monster_weapon": "mon_feral_survivalist_monster_weapon",
+    "death_drops": "default_zombie_death_drops"
   },
   {
     "id": "mon_civilian_icu",

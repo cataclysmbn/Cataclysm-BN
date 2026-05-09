@@ -2513,6 +2513,14 @@
   },
   {
     "type": "profession",
+    "id": "floatplane_pilot_scenario",
+    "name": "Floatplane Pilot",
+    "description": "You always loved the view of the open water from high above.  Now you have to worry about what might be lurking below the surface when you land.",
+    "vehicle": "floatplane_small",
+    "copy-from": "plane_pilot_scenario"
+  },
+  {
+    "type": "profession",
     "id": "blimp_pilot_scenario",
     "name": "Blimp Pilot",
     "description": "You once piloted a newscasting blimp, drifting above cities and fields to capture stories from the skies.",

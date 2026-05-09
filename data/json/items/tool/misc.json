@@ -636,7 +636,7 @@
     "type": "TOOL",
     "category": "tools",
     "name": { "str": "spray can" },
-    "description": "This is a spray can, filled with paint.  Use this tool to make graffiti on the floor.",
+    "description": "This is a spray can, filled with paint.  Use this tool to make graffiti on the floor or to paint objects.",
     "weight": "340 g",
     "volume": "250 ml",
     "price": "5 USD",
@@ -646,9 +646,45 @@
     "color": "light_gray",
     "initial_charges": 10,
     "max_charges": 10,
-    "charges_per_use": 1,
-    "use_action": "SPRAY_CAN",
-    "flags": [ "WRITE_MESSAGE" ]
+    "charges_per_use": 0,
+    "ammo": "spray_paint",
+    "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": false } ],
+    "flags": [ "WRITE_MESSAGE", "NO_UNLOAD" ]
+  },
+  {
+    "id": "super_spray_can",
+    "type": "TOOL",
+    "category": "tools",
+    "name": { "str": "Prototype CMHP-9000" },
+    "description": "You dont really know what this is, it appears to be filled with paint. But the paint seems to be shimmering and switching colors as you look at it. Use this tool to make graffiti on the floor or to paint objects.",
+    "weight": "340 g",
+    "volume": "250 ml",
+    "looks_like": "spray_can",
+    "price": "10000 USD",
+    "price_postapoc": "10 USD",
+    "material": "aluminum",
+    "symbol": ";",
+    "color": "light_gray",
+    "initial_charges": 10,
+    "max_charges": 10,
+    "charges_per_use": 0,
+    "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
+    "flags": [ "WRITE_MESSAGE" ],
+    "ammo": "battery",
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_disposable_cell",
+          "light_minus_disposable_cell",
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell"
+        ]
+      ]
+    ]
   },
   {
     "id": "stepladder",
