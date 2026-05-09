@@ -57,8 +57,6 @@
       { "monster": "mon_zombie_bio_op2", "freq": 25, "cost_multiplier": 5 },
       { "monster": "mon_zombie_armored", "freq": 10, "cost_multiplier": 5 },
       { "monster": "mon_zombie_supply_sergeant", "freq": 25, "cost_multiplier": 5 }
-    ],
-    "evolve_chance": 20,
-    "evolve_repeat": 2
+    ]
   }
 ]
