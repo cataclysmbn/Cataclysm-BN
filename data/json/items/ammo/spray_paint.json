@@ -3,7 +3,7 @@
     "id": "spray_paint",
     "type": "AMMO",
     "name": { "str": "spray paint" },
-    "description": "A colorful can of paint composed of unknown pigment.",
+    "description": "A refill for spray paint cans, of non-descript color.",
     "weight": "40 g",
     "volume": "250 ml",
     "price": "24 USD",
