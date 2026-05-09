@@ -653,6 +653,7 @@
   },
   {
     "id": "super_spray_can",
+    "looks_like": "spray_can",
     "type": "TOOL",
     "category": "tools",
     "name": { "str": "Prototype CMHP-9000" },
@@ -664,7 +665,6 @@
     "material": "aluminum",
     "symbol": ";",
     "color": "light_gray",
-    "looks_like": "spray_can",
     "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
     "flags": [ "WRITE_MESSAGE" ],
     "ammo": "battery",
