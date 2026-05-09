@@ -290,6 +290,7 @@ static const trait_id trait_DEBUG_LS( "DEBUG_LS" );
 static const trait_id trait_DEBUG_NIGHTVISION( "DEBUG_NIGHTVISION" );
 static const trait_id trait_DEBUG_NOTEMP( "DEBUG_NOTEMP" );
 static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
+static const trait_id trait_DEBUG_WEIGHTLESSNESS( "DEBUG_WEIGHTLESSNESS" );
 static const trait_id trait_DOWN( "DOWN" );
 static const trait_id trait_ELECTRORECEPTORS( "ELECTRORECEPTORS" );
 static const trait_id trait_FASTLEARNER( "FASTLEARNER" );
@@ -4448,17 +4449,16 @@ char_encumbrance_data Character::calc_encumbrance( const item &new_item ) const
 
 units::mass Character::get_weight() const
 {
-    units::mass ret = 0_gram;
-    units::mass wornWeight = std::accumulate( worn.begin(), worn.end(), 0_gram,
-    []( units::mass sum, const item * const & itm ) {
-        return sum + itm->weight();
-    } );
+    if( has_trait( trait_DEBUG_WEIGHTLESSNESS ) ) { return 0_gram; }
 
-    ret += bodyweight();       // The base weight of the player's body
-    ret += inv.weight();           // Weight of the stored inventory
-    ret += wornWeight;             // Weight of worn items
-    ret += primary_weapon().weight();        // Weight of wielded item
-    ret += bionics_weight();       // Weight of installed bionics
+    const auto worn_weight = std::ranges::fold_left( worn, 0_gram,
+    []( const auto sum, const auto * const itm ) { return sum + itm->weight(); } );
+
+    auto ret = bodyweight();                       // The base weight of the player's body
+    ret += inv.weight();                           // Weight of the stored inventory
+    ret += worn_weight;                            // Weight of worn items
+    ret += primary_weapon().weight();              // Weight of wielded item
+    ret += bionics_weight();                       // Weight of installed bionics
     return ret;
 }
 

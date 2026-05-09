@@ -712,6 +712,22 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_reset_stats", []( const sol::table & ) {} );
 
+    DOC( "Called when a skill is confirmed on the character display (`@`) skill tab.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC( "* `skill` (SkillId)  " );
+    DOC( "Set `params.results.handled = true` to prevent the default training toggle.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_display_skill_action", []( const sol::table & ) {} );
+
+    DOC( "Called when drawing skill info on the character display (`@`) skill tab.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC( "* `skill` (SkillId)  " );
+    DOC( "Set `params.results.text` to append text below the regular skill description.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_display_skill_info", []( const sol::table & ) {} );
+
     DOC( "Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
