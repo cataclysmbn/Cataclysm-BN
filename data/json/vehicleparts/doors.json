@@ -90,7 +90,8 @@
     },
     "damage_reduction": { "all": 25 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
+    "default_color": "#622625"
   },
   {
     "copy-from": "door_opaque_abstract",
@@ -110,7 +111,8 @@
     },
     "damage_reduction": { "all": 34 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
+    "default_color": "#622625"
   },
   {
     "abstract": "hddoor_abstract",
@@ -273,7 +275,8 @@
     },
     "damage_reduction": { "all": 36 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
+    "default_color": "#622625"
   },
   {
     "copy-from": "hatch_opaque_abstract",
