@@ -6035,5 +6035,24 @@
       [ [ "gun_module", 1 ] ],
       [ [ "tank_gun_auto", 1 ] ]
     ]
+  },
+  {
+    "result": "wooden_plane_kit",
+    "type": "uncraft",
+    "time": "10 m",
+    "//": "Contains enough raw material to make and install 1 propeller, 1 wooden frame, 10 light wooden frames, and 10 wooden aerofoils.  Just needs sheets for the aerofoils, since not all kits include covering and that'd inflate the item size even more.",
+    "components": [
+      [ [ "2x4", 80 ] ],
+      [ [ "nail", 500 ] ],
+      [ [ "rope_30", 4 ] ],
+      [ [ "chain", 1 ] ],
+      [ [ "steel_chunk", 2 ] ],
+      [ [ "glass_sheet", 1 ] ],
+      [ [ "wheel_mount_light", 3 ] ],
+      [ [ "wheel_small", 3 ] ],
+      [ [ "reference_aircraft", 1 ] ],
+      [ [ "box_large", 6 ] ]
+    ],
+    "flags": [ "BLIND_NO_EFFECT" ]
   }
 ]

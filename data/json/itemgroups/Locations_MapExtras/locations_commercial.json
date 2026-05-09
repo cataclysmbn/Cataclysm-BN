@@ -1963,5 +1963,18 @@
     "type": "item_group",
     "//": "only this for now, but when we get more clothing we should probably add some more flavor",
     "items": [ [ "hoodie_drugrug", 100 ], [ "tshirt_tour", 20 ] ]
+  },
+  {
+    "id": "sporting_vehicle_items",
+    "//": "Deployable vehicles and parts kit items.  1/3 bikes and other wheeled items, 1/3 boats and other deployable watercraft, 1/3 aircraft parts kits.",
+    "type": "item_group",
+    "items": [
+      [ "folding_bicycle", 50 ],
+      [ "folding_skateboard", 25 ],
+      [ "folding_wagon", 25 ],
+      [ "inflatable_boat", 75 ],
+      [ "sea_scooter", 25 ],
+      [ "wooden_plane_kit", 100 ]
+    ]
   }
 ]

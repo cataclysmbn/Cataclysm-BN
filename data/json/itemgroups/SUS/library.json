@@ -28,7 +28,8 @@
         "prob": 50
       },
       { "item": "textbook_carpentry", "prob": 25 },
-      { "item": "concrete_book", "prob": 25 }
+      { "item": "concrete_book", "prob": 25 },
+      { "item": "reference_aircraft", "prob": 10 }
     ]
   },
   {

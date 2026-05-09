@@ -908,5 +908,11 @@
     "copy-from": "mon_zombie_miner_evolved_shady",
     "type": "MONSTER",
     "death_drops": "mon_zombie_miner_evolved_shady_death_drops"
+  },
+  {
+    "id": "mon_triffid_radiant_boss",
+    "copy-from": "mon_triffid_radiant_boss",
+    "type": "MONSTER",
+    "death_drops": "mon_triffid_radiant_boss_death_drops"
   }
 ]
