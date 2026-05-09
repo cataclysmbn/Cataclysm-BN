@@ -323,6 +323,7 @@ void iexamine::nanofab( player &p, const tripoint &examp )
         return;
     }
 
+    auto nanofab_template;
     if( is_forge == false ) {
         auto nanofab_template = g->inv_map_splice( []( const item & e ) {
             return e.has_var( "NANOFAB_GROUP_ID" ) || e.has_var( "NANOFAB_ITEM_ID" );
@@ -332,8 +333,6 @@ void iexamine::nanofab( player &p, const tripoint &examp )
         if( !nanofab_template ) {
             return;
         }
-    } else {
-        continue;
     }
 
     std::vector<std::string> recipe_ids;
@@ -397,8 +396,8 @@ void iexamine::nanofab( player &p, const tripoint &examp )
         new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
     }
 
-    auto qty = 0;
-    auto reqs = null;
+    auto qty;
+    auto reqs;
     if( is_forge == false ) {
         qty = std::max( 1, new_item->volume() / 250_ml );
         reqs = *requirement_id( "nanofabricator" ) * qty;
