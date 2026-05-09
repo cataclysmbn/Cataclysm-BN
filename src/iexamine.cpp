@@ -304,7 +304,6 @@ void iexamine::cvdmachine( player &p, const tripoint & )
 void iexamine::nanofab( player &p, const tripoint &examp )
 {
     bool table_exists = false;
-    bool is_forge = false;
     tripoint spawn_point;
     map &here = get_map();
     for( const auto &valid_location : here.points_in_radius( examp, 1 ) ) {
@@ -312,45 +311,33 @@ void iexamine::nanofab( player &p, const tripoint &examp )
             spawn_point = valid_location;
             table_exists = true;
             break;
-        } else if( here.ter( valid_location ) == ter_str_id( "t_nanoforge_body" ) ) {
-            spawn_point = valid_location;
-            table_exists = true;
-            is_forge = true;
-            break;
         }
     }
     if( !table_exists ) {
         return;
     }
 
-    std::optional<deduped_requirement_data> nanofab_template;
-    if( is_forge == false ) {
-        nanofab_template = g->inv_map_splice( []( const item & e ) {
-            return e.has_var( "NANOFAB_GROUP_ID" ) || e.has_var( "NANOFAB_ITEM_ID" );
-        }, _( "Introduce nanofabricator template:" ), PICKUP_RANGE,
-        _( "You don't have any usable templates." ) );
+    auto nanofab_template = g->inv_map_splice( []( const item & e ) {
+        return e.has_var( "NANOFAB_GROUP_ID" ) || e.has_var( "NANOFAB_ITEM_ID" );
+    }, _( "Introduce nanofabricator template:" ), PICKUP_RANGE,
+    _( "You don't have any usable templates." ) );
 
-        if( !nanofab_template ) {
-            return;
-        }
+    if( !nanofab_template ) {
+        return;
     }
 
     std::vector<std::string> recipe_ids;
 
-    if( is_forge == false ) {
-        if( nanofab_template->has_var( "NANOFAB_GROUP_ID" ) ) {
-            // Preferred behavior: build from group
-            item_group_id group_id( nanofab_template->get_var( "NANOFAB_GROUP_ID" ) );
-            std::set<const itype *> all_items = item_group::every_possible_item_from( group_id );
-            for( const itype *it : all_items ) {
-                recipe_ids.push_back( it->get_id().str() );
-            }
-        } else if( nanofab_template->has_var( "NANOFAB_ITEM_ID" ) ) {
-            // Fallback for old templates: use single stored recipe
-            recipe_ids.push_back( nanofab_template->get_var( "NANOFAB_ITEM_ID" ) );
+    if( nanofab_template->has_var( "NANOFAB_GROUP_ID" ) ) {
+        // Preferred behavior: build from group
+        item_group_id group_id( nanofab_template->get_var( "NANOFAB_GROUP_ID" ) );
+        std::set<const itype *> all_items = item_group::every_possible_item_from( group_id );
+        for( const itype *it : all_items ) {
+            recipe_ids.push_back( it->get_id().str() );
         }
-    } else {
-        recipe_ids.push_back( "alloy_sheet" );
+    } else if( nanofab_template->has_var( "NANOFAB_ITEM_ID" ) ) {
+        // Fallback for old templates: use single stored recipe
+        recipe_ids.push_back( nanofab_template->get_var( "NANOFAB_ITEM_ID" ) );
     }
 
     if( recipe_ids.empty() ) {
@@ -396,14 +383,8 @@ void iexamine::nanofab( player &p, const tripoint &examp )
         new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
     }
 
-    std::optional<int> qty;
-    std::optional<requirement_id> reqs;
-    if( is_forge == false ) {
-        qty = std::max( 1, new_item->volume() / 250_ml );
-        reqs = *requirement_id( "nanofabricator" ) * qty;
-    } else {
-        reqs = *requirement_id( "superalloy_forge" );
-    }
+    auto qty = std::max( 1, new_item->volume() / 250_ml );
+    auto reqs = *requirement_id( "nanofabricator" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
         popup( "%s", reqs.list_missing() );
