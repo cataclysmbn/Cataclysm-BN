@@ -665,5 +665,11 @@
     "id": "25mm",
     "name": "25x137mm",
     "default": "25mm_hei"
+  },
+  {
+    "type": "ammunition_type",
+    "id": "spray_paint",
+    "name": "Spray Paint",
+    "default": "spray_paint"
   }
 ]
