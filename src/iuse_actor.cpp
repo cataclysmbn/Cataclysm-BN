@@ -7754,7 +7754,7 @@ concept is_paint_fn =
 };
 
 template<typename PaintFn>
-    requires is_paint_fn<PaintFn>
+requires is_paint_fn<PaintFn>
 static auto iuse_paint_stuff_do_paint(
     item &it, const float charge_cost, const std::pair<tripoint, tripoint> area, const PaintFn &cb )
 {
