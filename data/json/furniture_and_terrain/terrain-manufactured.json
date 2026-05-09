@@ -667,7 +667,7 @@
     "symbol": "&",
     "description": "A small computer panel attached to a superalloy forge.",
     "color": "red",
-    "looks_like": "t_console",
+    "looks_like": "t_nanofab",
     "move_cost": 0,
     "coverage": 50,
     "flags": [ "WALL", "NOITEM", "PERMEABLE" ],
