@@ -404,7 +404,7 @@
     "autolearn": true,
     "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ],
     "batch_time_factors": [ 75, 1 ],
-    "components": [ [ [ "r_paint", 1 ], [ "b_paint", 1 ], [ "w_paint", 1 ], [ "p_paint", 1 ], [ "g_paint", 1 ], [ "y_paint", 1 ],  ] ]
+    "components": [ [ [ "r_paint", 1 ], [ "b_paint", 1 ], [ "w_paint", 1 ], [ "p_paint", 1 ], [ "g_paint", 1 ], [ "y_paint", 1 ] ] ]
   },
   {
     "result": "oxyacetylene",
