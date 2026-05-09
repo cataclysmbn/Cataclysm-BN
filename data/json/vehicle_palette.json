@@ -117,9 +117,7 @@
     "palette": [
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
-        "colors": [
-          { "color": "Traffic Yellow", "weight": 1 }
-        ]
+        "colors": [ { "color": "Traffic Yellow", "weight": 1 } ]
       }
     ]
   },
@@ -129,9 +127,7 @@
     "palette": [
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
-        "colors": [
-          { "color": "Carrot Orange", "weight": 1 }
-        ]
+        "colors": [ { "color": "Carrot Orange", "weight": 1 } ]
       }
     ]
   },

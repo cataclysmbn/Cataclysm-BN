@@ -1304,7 +1304,7 @@
       [ "+OO-+-+-O" ],
       [ "       o " ]
     ],
-    "color_palette": "car_standard",  
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "lit_aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal_front", "headlight" ] },
