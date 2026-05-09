@@ -438,24 +438,7 @@ void iexamine::nanoforge( player &p, const tripoint &examp )
         return;
     }
 
-    std::string chosen_recipe;
-    if( recipe_ids.size() > 1 ) {
-        uilist menu;
-        menu.text = _( "Choose a recipe:" );
-        for( size_t i = 0; i < recipe_ids.size(); ++i ) {
-            itype_id item = itype_id( recipe_ids[i] );
-            auto button_text = string_format( "%s [%d]", item->nname( 1 ),
-                                              std::max( 1, item->volume / 250_ml ) * 5 );
-            menu.addentry( i, true, -1, button_text );
-        }
-        menu.query();
-
-        if( menu.ret >= 0 && static_cast<size_t>( menu.ret ) < recipe_ids.size() ) {
-            chosen_recipe = recipe_ids[ menu.ret ];
-        }
-    } else {
-        chosen_recipe = recipe_ids.front();
-    }
+    std::string chosen_recipe = recipe_ids.front();;
 
     if( chosen_recipe.empty() ) {
         return;
