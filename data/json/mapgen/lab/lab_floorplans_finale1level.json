@@ -287,7 +287,7 @@
       ],
       "palettes": [ "lab_palette" ],
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 5, "y": 8 } ],
-      "monster": { "?": { "monster": "mon_turret_light" }, "*": { "monster": "mon_shade_boss", "chance": 25 } },
+      "monster": { "?": { "monster": "mon_turret_light" }, "*": { "monster": "mon_shade_boss", "chance": 50 } },
       "terrain": { "o": "t_cvdbody", "O": "t_cvdmachine" },
       "place_loot": [ { "item": "id_science", "x": [ 8, 10 ], "y": 10 } ]
     }
