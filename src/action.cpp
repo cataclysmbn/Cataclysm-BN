@@ -1198,7 +1198,8 @@ std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> choose_area( const st
     popup.on_top( true );
     popup.message( "%s (%s)", message, _( "Select first point." ) );
 
-    tripoint_bub_ms center = _start_pos == tripoint_bub_ms::zero() ? ( u.bub_pos() + u.view_offset ) : _start_pos;
+    tripoint_bub_ms center = _start_pos == tripoint_bub_ms::zero() ? ( u.bub_pos() + u.view_offset ) :
+                             _start_pos;
 
     const look_around_mode mode = allow_vertical ? LA_MODE_DEFAULT : LA_MODE_2D;
     const auto [p0, _] = g->look_around( false, center, center, false, true, false, false,

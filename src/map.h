@@ -597,7 +597,8 @@ class map : public submap_load_listener
          * (union of old and new positions); smz is the z-level.
          * TODO: migrate to using proper z-levels
          */
-        void on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max, const int &smz );
+        void on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max,
+                               const int &smz );
 
         struct apparent_light_info {
             bool obstructed;
@@ -1005,7 +1006,8 @@ class map : public submap_load_listener
             return tername( tripoint_bub_ms( p, abs_sub.z() ) );
         }
 
-        bool has_nearby( const tripoint_bub_ms &p, const std::function<bool( map &m, const tripoint_bub_ms &p )> &pred,
+        bool has_nearby( const tripoint_bub_ms &p,
+                         const std::function<bool( map &m, const tripoint_bub_ms &p )> &pred,
                          int radius = 1 );
         // Check for terrain/furniture/field that provide a
         // "fire" item to be used for example when crafting or when

@@ -3483,11 +3483,11 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             const point screen_tl = player_to_screen( p.pos.xy() );
             const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
 
-                    const bool in_selected_zone = has_selected_zone && p.pos.z() == selected_z &&
-                                                  ( has_custom_selected_zone
-                                                    ? zone_point_lookup.contains( p.pos )
-                                                    : ( p.pos.x() >= selected_min.x() && p.pos.x() <= selected_max.x() &&
-                                                        p.pos.y() >= selected_min.y() && p.pos.y() <= selected_max.y() ) );
+            const bool in_selected_zone = has_selected_zone && p.pos.z() == selected_z &&
+                                          ( has_custom_selected_zone
+                                            ? zone_point_lookup.contains( p.pos )
+                                            : ( p.pos.x() >= selected_min.x() && p.pos.x() <= selected_max.x() &&
+                                                p.pos.y() >= selected_min.y() && p.pos.y() <= selected_max.y() ) );
 
             bool selected_drawn = false;
 

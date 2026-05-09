@@ -769,9 +769,10 @@ std::unique_ptr<vehicle> map::detach_vehicle( vehicle *veh )
     // transferred to MAPBUFFER (that happens at the end of generate()).  Fall back to
     // the grid lookup so wreck-merging works correctly during generation.
     const tripoint_bub_sm bub_sm( veh->abs_sm_pos.x() - abs_sub.x(),
-                                   veh->abs_sm_pos.y() - abs_sub.y(),
-                                   veh->abs_sm_pos.z() );
-    submap *current_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( veh->abs_sm_pos );
+                                  veh->abs_sm_pos.y() - abs_sub.y(),
+                                  veh->abs_sm_pos.z() );
+    submap *current_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory(
+                                 veh->abs_sm_pos );
     if( current_submap == nullptr ) {
         current_submap = get_submap_at_grid( bub_sm );
     }
@@ -810,7 +811,8 @@ void map::destroy_vehicle( vehicle *veh )
     detach_vehicle( veh );
 }
 
-void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max, const int &smz )
+void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max,
+                            const int &smz )
 {
     ZoneScoped;
 
@@ -1743,8 +1745,10 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     const auto dest_proj = project_remain<coords::sm>( dest );
     const bool sm_shift = veh.abs_sm_pos != dest_proj.quotient_tripoint;
 
-    submap *const src_submap = sm_shift ? MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( veh.abs_sm_pos ) : nullptr;
-    submap *const dst_submap = sm_shift ? MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( dest_proj.quotient_tripoint ) : nullptr;
+    submap *const src_submap = sm_shift ? MAPBUFFER_REGISTRY.get(
+                                   bound_dimension_ ).lookup_submap_in_memory( veh.abs_sm_pos ) : nullptr;
+    submap *const dst_submap = sm_shift ? MAPBUFFER_REGISTRY.get(
+                                   bound_dimension_ ).lookup_submap_in_memory( dest_proj.quotient_tripoint ) : nullptr;
 
     std::set<int> smzs;
     size_t our_i = 0;
@@ -1848,7 +1852,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     tripoint_bub_sm veh_sm_min = { INT_MAX, INT_MAX, INT_MAX };
     tripoint_bub_sm veh_sm_max = { INT_MIN, INT_MIN, INT_MIN };
 
-    auto expand_bounds = [&]( const tripoint_abs_ms &base, const vehicle_part & prt ) {
+    auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
         const auto p = project_to<coords::sm>( base + prt.precalc[0] );
         veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
         veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );

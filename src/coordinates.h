@@ -728,7 +728,7 @@ inline int rl_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 inline float rl_dist_exact( const coords::coord_point<Point, Origin, Scale> &loc1,
-                             const coords::coord_point<Point, Origin, Scale> &loc2 )
+                            const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return rl_dist_exact( loc1.raw(), loc2.raw() );
 }

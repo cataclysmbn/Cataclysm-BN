@@ -95,7 +95,8 @@ TEST_CASE( "split vehicle keeps selected structure part at origin" )
     auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
 
-    const auto anchor_frame = veh_ptr->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ), true );
+    const auto anchor_frame = veh_ptr->install_part( tripoint_mnt_veh::zero(),
+                              vpart_id( "frame_vertical" ), true );
     REQUIRE( anchor_frame >= 0 );
     const auto split_mount = tripoint_mnt_veh( 5, 0, 0 );
     const auto split_frame = veh_ptr->install_part( split_mount, vpart_id( "frame_vertical" ), true );

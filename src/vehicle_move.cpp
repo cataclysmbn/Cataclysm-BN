@@ -1589,7 +1589,7 @@ void vehicle::shift_zlevel()
 
     // Scan by mount position directly — avoids cache dependency during z-transition when
     // precalc[0] and abs_sm_pos.z() are temporarily inconsistent.
-    const auto center_it = std::ranges::find_if( parts, []( const vehicle_part &p ) {
+    const auto center_it = std::ranges::find_if( parts, []( const vehicle_part & p ) {
         return !p.removed && p.mount == tripoint_mnt_veh::zero();
     } );
 
@@ -1633,7 +1633,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
     // We don't need to do anything if we're not on a ramp,
     // unless the center mount is outside the vehicle (ramp may lie between parts).
     const bool on_ramp = check_on_ramp( idir, offset );
-    const auto center_it = std::ranges::find_if( parts, []( const vehicle_part &p ) {
+    const auto center_it = std::ranges::find_if( parts, []( const vehicle_part & p ) {
         return !p.removed && p.mount == tripoint_mnt_veh::zero();
     } );
     if( center_it != parts.end() && !on_ramp ) {
