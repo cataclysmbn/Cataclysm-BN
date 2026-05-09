@@ -338,17 +338,19 @@ void iexamine::nanofab( player &p, const tripoint &examp )
 
     std::vector<std::string> recipe_ids;
 
-    if( nanofab_template->has_var( "NANOFAB_GROUP_ID" ) ) {
-        // Preferred behavior: build from group
-        item_group_id group_id( nanofab_template->get_var( "NANOFAB_GROUP_ID" ) );
-        std::set<const itype *> all_items = item_group::every_possible_item_from( group_id );
-        for( const itype *it : all_items ) {
-            recipe_ids.push_back( it->get_id().str() );
+    if ( is_forge == false ) {
+        if( nanofab_template->has_var( "NANOFAB_GROUP_ID" ) ) {
+            // Preferred behavior: build from group
+            item_group_id group_id( nanofab_template->get_var( "NANOFAB_GROUP_ID" ) );
+            std::set<const itype *> all_items = item_group::every_possible_item_from( group_id );
+            for( const itype *it : all_items ) {
+                recipe_ids.push_back( it->get_id().str() );
+            }
+        } else if( nanofab_template->has_var( "NANOFAB_ITEM_ID" ) ) {
+            // Fallback for old templates: use single stored recipe
+            recipe_ids.push_back( nanofab_template->get_var( "NANOFAB_ITEM_ID" ) );
         }
-    } else if( nanofab_template->has_var( "NANOFAB_ITEM_ID" ) ) {
-        // Fallback for old templates: use single stored recipe
-        recipe_ids.push_back( nanofab_template->get_var( "NANOFAB_ITEM_ID" ) );
-    } else if( is_forge == true ) {
+    } else {
         recipe_ids.push_back( "alloy_sheet" );
     }
 
