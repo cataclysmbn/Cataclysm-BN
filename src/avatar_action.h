@@ -61,7 +61,7 @@ void reload_weapon( bool try_everything = true );
  * If it's a gun, some gunmods can also be loaded.
  */
 void unload( avatar &you );
-void unload_all( avatar &you );
+void unload_all( avatar &you, bool inv = true );
 
 /**
  * Checks if the weapon is valid and if the player meets certain conditions for firing it.

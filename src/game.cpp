@@ -107,6 +107,7 @@
 #include "item.h"
 #include "item_category.h"
 #include "item_contents.h"
+#include "item_functions.h";
 #include "item_stack.h"
 #include "itype.h"
 #include "iuse.h"
@@ -10708,6 +10709,7 @@ void game::butcher()
     std::vector<item *> corpses;
     std::vector<item *> disassembles;
     std::vector<item *> salvageables;
+    std::vector<item *> unloadables;
     map_stack items = m.i_at( u.bub_pos() );
     const inventory &crafting_inv = u.crafting_inventory();
     auto q_cache = u.crafting_inventory().get_quality_cache();
@@ -10717,6 +10719,7 @@ void game::butcher()
     corpses.reserve( items.size() );
     salvageables.reserve( items.size() );
     disassembles.reserve( items.size() );
+    unloadables.reserve( items.size() );
 
     // Split into corpses, disassemble-able, and salvageable items
     // It's not much additional work to just generate a corpse list and
@@ -10732,6 +10735,9 @@ void game::butcher()
                 disassembles.push_back( current_item );
             } else if( !first_item_without_tools ) {
                 first_item_without_tools = current_item;
+            }
+            if( item_funcs::can_be_unloaded( *current_item ) ) {
+                unloadables.push_back( current_item );
             }
         }
     }
@@ -10773,6 +10779,7 @@ void game::butcher()
         MULTIBUTCHER,
         MULTIDISASSEMBLE_ONE,
         MULTIDISASSEMBLE_ALL,
+        MULTIUNLOAD_ALL,
         NUM_BUTCHER_ACTIONS
     };
     // What are we butchering (i.e.. which vector to pick indices from)
@@ -10843,6 +10850,10 @@ void game::butcher()
             kmenu.addentry_col( MULTISALVAGE, true, 'z', _( "Salvage everything" ),
                                 to_string_clipped( time_duration::from_turns( time_to_salvage / 100 ) ) );
         }
+        if( unloadables.size() > 1 ) {
+            kmenu.addentry_col( MULTIUNLOAD_ALL, true, 'u', _( "Unload Everything" ),
+                                std::to_string( unloadables.size() ) + + _( " objects" ) );
+        }
 
         kmenu.query();
 
@@ -10900,6 +10911,9 @@ void game::butcher()
                     break;
                 case MULTIDISASSEMBLE_ALL:
                     crafting::disassemble_all( u, true );
+                    break;
+                case MULTIUNLOAD_ALL:
+                    avatar_action::unload_all( u, false );
                     break;
                 default:
                     debugmsg( "Invalid butchery type: %d", indexer_index );
