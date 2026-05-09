@@ -417,6 +417,11 @@ void iexamine::nanofab( player &p, const tripoint &examp )
  */
 void iexamine::nanoforge( player &p, const tripoint &examp )
 {
+    if( !query_yn( _( "Use the superalloy forge? Requires 1 sheet metal and 5 nanomaterial canisters." ) ) ) {
+        none( p, examp );
+        return;
+    }
+    
     bool table_exists = false;
     tripoint spawn_point;
     map &here = get_map();
