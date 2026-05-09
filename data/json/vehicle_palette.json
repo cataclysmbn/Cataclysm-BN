@@ -139,7 +139,7 @@
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
         "colors": [
           { "color": "Ink Black", "weight": 10 },
-          { "color": "Silver Grey", "weight": 10 },
+          { "color": "White aluminium", "weight": 10 },
           { "color": "Signal Pink", "weight": 1 }
         ]
       }
