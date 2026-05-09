@@ -1025,10 +1025,12 @@ std::string monster::extended_description() const
     }
 
     if( training_level > 0 && type->pet_training ) {
-        const auto training_adj = []( float ratio ) -> const char * {
-            if( ratio > 1.5f ) {
+        const auto training_adj = []( float ratio ) -> const char* {
+            if( ratio > 1.5f )
+            {
                 return _( "much" );
-            } else if( ratio > 1.25f ) {
+            } else if( ratio > 1.25f )
+            {
                 return _( "noticeably" );
             }
             return _( "slightly" );
