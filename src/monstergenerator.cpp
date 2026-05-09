@@ -843,6 +843,16 @@ void mtype::load( const JsonObject &jo, const std::string &src )
     // Load pet food data
     optional( jo, was_loaded, "petfood", petfood );
 
+    if( jo.has_object( "pet_training" ) ) {
+        JsonObject pt = jo.get_object( "pet_training" );
+        pet_training_multipliers ptm;
+        pt.read( "hp_mult", ptm.hp );
+        pt.read( "melee_mult", ptm.melee );
+        pt.read( "dodge_mult", ptm.dodge );
+        pt.read( "max_level", ptm.max_level );
+        pet_training = ptm;
+    }
+
     if( jo.has_array( "scents_tracked" ) ) {
         for( const std::string line : jo.get_array( "scents_tracked" ) ) {
             scents_tracked.emplace( line );

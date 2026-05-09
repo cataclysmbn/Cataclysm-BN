@@ -1024,6 +1024,29 @@ std::string monster::extended_description() const
         ss += std::string( _( "It has a head." ) ) + "\n";
     }
 
+    if( training_level > 0 && type->pet_training ) {
+        const auto training_adj = []( float ratio ) -> const char * {
+            if( ratio > 1.5f ) {
+                return _( "much" );
+            } else if( ratio > 1.25f ) {
+                return _( "noticeably" );
+            }
+            return _( "slightly" );
+        };
+        const float hp_ratio    = std::pow( type->pet_training->hp,    training_level );
+        const float melee_ratio = std::pow( type->pet_training->melee, training_level );
+        const float dodge_ratio = std::pow( type->pet_training->dodge, training_level );
+        if( hp_ratio > 1.0f ) {
+            ss += string_format( _( "It is %s tougher than normal." ),    training_adj( hp_ratio ) )    + "\n";
+        }
+        if( melee_ratio > 1.0f ) {
+            ss += string_format( _( "It is %s stronger than normal." ),   training_adj( melee_ratio ) ) + "\n";
+        }
+        if( dodge_ratio > 1.0f ) {
+            ss += string_format( _( "It is %s more agile than normal." ), training_adj( dodge_ratio ) ) + "\n";
+        }
+    }
+
     ss += "--\n";
     ss += std::string( _( "In melee, you can expect to:" ) ) + "\n";
     ss += string_format( _( "Deal average damage per second: <stat>%.1f</stat>" ),
@@ -2502,12 +2525,20 @@ int monster::get_armor_type( damage_type dt, bodypart_id bp ) const
 
 float monster::get_hit_base() const
 {
-    return type->melee_skill;
+    float base = type->melee_skill;
+    if( training_level > 0 && type->pet_training ) {
+        base *= std::pow( type->pet_training->melee, training_level );
+    }
+    return base;
 }
 
 float monster::get_dodge_base() const
 {
-    return type->sk_dodge;
+    float base = type->sk_dodge;
+    if( training_level > 0 && type->pet_training ) {
+        base *= std::pow( type->pet_training->dodge, training_level );
+    }
+    return base;
 }
 
 float monster::hit_roll() const
@@ -2573,7 +2604,11 @@ float monster::get_dodge() const
 
 float monster::get_melee() const
 {
-    return type->melee_skill;
+    float base = type->melee_skill;
+    if( training_level > 0 && type->pet_training ) {
+        base *= std::pow( type->pet_training->melee, training_level );
+    }
+    return base;
 }
 
 float monster::dodge_roll()
@@ -3749,12 +3784,16 @@ void monster::on_damage_of_type( int amt, damage_type dt, const bodypart_id &bp 
 
 int monster::get_hp_max( const bodypart_id & ) const
 {
-    return type->hp;
+    return get_hp_max();
 }
 
 int monster::get_hp_max() const
 {
-    return type->hp;
+    int base = type->hp;
+    if( training_level > 0 && type->pet_training ) {
+        return static_cast<int>( base * std::pow( type->pet_training->hp, training_level ) );
+    }
+    return base;
 }
 
 int monster::get_hp( const bodypart_id & ) const

@@ -946,6 +946,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.15, "dodge_mult": 1.15, "max_level": 3 },
     "special_attacks": [ [ "EAT_FOOD", 100 ], [ "PARROT_AT_DANGER", 0 ] ],
     "flags": [
       "ANIMAL",

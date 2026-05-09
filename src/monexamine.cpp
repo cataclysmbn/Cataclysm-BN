@@ -74,15 +74,6 @@ static const flag_id json_flag_MECH_BAT( "MECH_BAT" );
 namespace
 {
 
-auto can_train_pet( monster &z ) -> bool
-{
-    return get_player_character().get_skill_level( skill_survival ) > 3 &&
-           z.has_flag( MF_PET_MOUNTABLE ) &&
-           !z.has_flag( MF_COMBAT_MOUNT ) &&
-           !z.has_flag( MF_CANT_TRAIN ) &&
-           z.type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE );
-}
-
 } // namespace
 
 bool monexamine::pet_menu( monster &z )
@@ -164,8 +155,18 @@ bool monexamine::pet_menu( monster &z )
     if( z.has_flag( MF_CANPLAY ) ) {
         amenu.addentry( play_with_pet, true, 'y', _( "Play with %s" ), pet_name );
     }
-    if( can_train_pet( z ) ) {
-        amenu.addentry( train_combat_pet, true, '[', _( "Train %s" ), pet_name );
+    if( !z.type->pet_training ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (cannot be trained)" ), pet_name );
+    } else if( z.has_flag( MF_CANT_TRAIN ) ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (cannot be trained)" ), pet_name );
+    } else if( z.training_level >= z.type->pet_training->max_level ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (level %d/%d - fully trained)" ),
+                        pet_name, z.training_level, z.type->pet_training->max_level );
+    } else if( get_player_character().get_skill_level( skill_survival ) <= 3 ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires survival 4)" ), pet_name );
+    } else {
+        amenu.addentry( train_combat_pet, true, '[', _( "Train %s (level %d/%d)" ), pet_name,
+                        z.training_level, z.type->pet_training->max_level );
     }
     if( z.has_effect( effect_tied ) ) {
         amenu.addentry( untie, true, 'u', _( "Untie" ) );
