@@ -1403,13 +1403,24 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                            && get_map().clear_path( crafter.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
                 } );
                 std::vector<npc *> candidates;
+                bool any_knows = false;
                 for( npc *guy : nearby ) {
-                    if( guy->knows_recipe( rec ) && guy->can_make( rec, bs ) ) {
+                    if( !guy->knows_recipe( rec ) ) {
+                        continue;
+                    }
+                    any_knows = true;
+                    if( guy->can_make( rec, bs ) ) {
                         candidates.push_back( guy );
                     }
                 }
                 if( candidates.empty() ) {
-                    popup( _( "No NPC available to craft that nearby." ) );
+                    if( nearby.empty() ) {
+                        popup( _( "No NPC available to craft that nearby." ) );
+                    } else if( !any_knows ) {
+                        popup( _( "No nearby NPC knows how to craft that." ) );
+                    } else {
+                        popup( _( "No nearby NPC has the necessary components to craft that." ) );
+                    }
                 } else {
                     std::sort( candidates.begin(), candidates.end(), [&]( const npc * a, const npc * b ) {
                         return rl_dist( a->pos(), crafter.pos() ) < rl_dist( b->pos(), crafter.pos() );
