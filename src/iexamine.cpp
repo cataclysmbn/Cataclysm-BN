@@ -12,7 +12,6 @@
 #include <set>
 #include <type_traits>
 #include <utility>
-#include <any>
 
 #include "action.h"
 #include "activity_actor.h"
@@ -324,9 +323,9 @@ void iexamine::nanofab( player &p, const tripoint &examp )
         return;
     }
 
-    std::any nanofab_template;
+    std::optional<deduped_requirement_data> nanofab_template;
     if( is_forge == false ) {
-        auto nanofab_template = g->inv_map_splice( []( const item & e ) {
+        nanofab_template = g->inv_map_splice( []( const item & e ) {
             return e.has_var( "NANOFAB_GROUP_ID" ) || e.has_var( "NANOFAB_ITEM_ID" );
         }, _( "Introduce nanofabricator template:" ), PICKUP_RANGE,
         _( "You don't have any usable templates." ) );
@@ -397,8 +396,8 @@ void iexamine::nanofab( player &p, const tripoint &examp )
         new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
     }
 
-    std::any qty;
-    std::any reqs;
+    std::optional<int> qty;
+    std::optional<requirement_id> reqs;
     if( is_forge == false ) {
         qty = std::max( 1, new_item->volume() / 250_ml );
         reqs = *requirement_id( "nanofabricator" ) * qty;
