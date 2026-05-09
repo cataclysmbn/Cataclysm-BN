@@ -113,6 +113,32 @@
   },
   {
     "type": "vehicle_color_palette",
+    "id": "bus_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Traffic Yellow", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "limo_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "Silver Grey", "weight": 10 },
+          { "color": "Signal Pink", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
     "id": "sneaky_standard",
     "palette": [
       {

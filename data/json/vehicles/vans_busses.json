@@ -127,6 +127,7 @@
       [ "O----+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal_front" ] },
@@ -216,6 +217,7 @@
       [ "+===|#'|" ],
       [ "O----+-O" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -297,6 +299,7 @@
       [ "+===|#'|" ],
       [ "O----+-O" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -379,6 +382,7 @@
       [ "+===#'|" ],
       [ "o-+++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "trunk", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
@@ -458,6 +462,7 @@
       [ "+===#'|" ],
       [ "o-+++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "xlframe_vertical", "trunk", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "xlframe_vertical_2", "aisle_vertical", "roof" ] },
@@ -537,6 +542,7 @@
       [ "O-#-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -633,6 +639,7 @@
       [ "O-#-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -754,6 +761,7 @@
       [ "O-#-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -866,6 +874,7 @@
     "id": "lux_rv",
     "type": "vehicle",
     "name": "Luxury RV",
+    "color_palette": "car_standard",
     "blueprint": [  ],
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_horizontal", "floodlight", "roof" ] },
@@ -1004,6 +1013,7 @@
     "type": "vehicle",
     "name": "Survivor RV",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "trunk_floor", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_horizontal", "lit_aisle_horizontal", "aisle_curtain", "roof" ] },
@@ -1158,6 +1168,7 @@
       [ "+OO-+-+-O" ],
       [ "       o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "lit_aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal", "headlight" ] },
@@ -1293,6 +1304,7 @@
       [ "+OO-+-+-O" ],
       [ "       o " ]
     ],
+    "color_palette": "car_standard",  
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "lit_aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal_front", "headlight" ] },
@@ -1407,6 +1419,7 @@
       [ "|C=###+#'|" ],
       [ "o-+----+-o" ]
     ],
+    "color_palette": "limo_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "seat_leather", "seatbelt", "roof" ] },
       {
@@ -1512,6 +1525,7 @@
       [ "'#######.'H" ],
       [ "''O'''''+'O" ]
     ],
+    "color_palette": "bus_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight" ] },
@@ -1605,6 +1619,7 @@
       [ "'#######.'H" ],
       [ "''O'''''+'O" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight", "plating_steel" ] },
@@ -1724,6 +1739,7 @@
       [ "''O'+''''''+'O" ],
       [ "            o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight" ] },
@@ -1841,6 +1857,7 @@
       [ "''O-----'''+'O" ],
       [ "            o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight" ] },
@@ -2094,6 +2111,7 @@
       [ "+-O-+-O+" ],
       [ "      o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "chimes", "roof" ] },
