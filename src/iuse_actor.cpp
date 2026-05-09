@@ -7742,7 +7742,7 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
 }
 
 template<typename T>
-concept is_paint_area_fn =
+concept is_paint_fn =
     requires(
         const T &t,
         const RGBColor &col,
@@ -7754,7 +7754,7 @@ concept is_paint_area_fn =
 };
 
 template<typename PaintFn>
-requires is_paint_area_fn<PaintFn>
+    requires is_paint_fn<PaintFn>
 static auto iuse_paint_stuff_do_paint(
     item &it, const float charge_cost, const std::pair<tripoint, tripoint> area, const PaintFn &cb )
 {
