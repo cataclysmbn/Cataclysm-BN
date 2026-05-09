@@ -102,6 +102,7 @@
     "type": "vehicle",
     "name": "Portable Generator",
     "blueprint": [ [ "o-" ] ],
+    "color_palette": "construction_standard",
     "parts": [
       {
         "x": 1,
