@@ -154,7 +154,7 @@
         "..FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF|T+'S|S'+T|FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.............................................",
         ".................................|||||||||||............................................................................"
       ],
-      "palettes": [ { "distribution": [ [ "car_theater_full", 1 ] ] } ],
+      "palettes": [ { "distribution": [ [ "car_theater_full", 2 ], [ "car_theater", 1 ] ] } ],
       "place_vehicles": [
         { "vehicle": "parking_garage", "chance": 20, "x": 105, "y": 39, "rotation": 0 },
         { "vehicle": "parking_garage", "chance": 20, "x": 105, "y": 51, "rotation": 0 }
@@ -315,7 +315,7 @@
     "type": "palette",
     "id": "car_theater_full",
     "palettes": [ "car_theater" ],
-    "vehicles": { "1": { "vehicle": "4x4_car", "chance": 100, "rotation": 270 } },
+    "vehicles": { "1": { "vehicle": "speedway_car_truck", "chance": 80, "rotation": 270 } },
     "monster": { "_": { "group": "GROUP_MALL", "chance": 1 } }
   },
   {

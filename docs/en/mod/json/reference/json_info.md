@@ -346,11 +346,12 @@ When you sort your inventory by category, these are the categories that are disp
 
 ```json
 {
-  "type": "named_color",    // As you expect
-  "name": "Cataclysm Red",  // Name to display
-  "value": "#622625"        // Hex value of color
+  "type": "named_color", // As you expect
+  "name": "Cataclysm Red", // Name to display
+  "value": "#622625" // Hex value of color
 }
 ```
+
 ### Scent_types
 
 | Identifier        | Description                                                                    |
