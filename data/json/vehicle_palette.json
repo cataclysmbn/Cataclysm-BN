@@ -96,7 +96,11 @@
     "palette": [
       {
         "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof" ],
-        "colors": [ { "color": "#3f4535", "weight": 100 }, { "color": "#111111", "weight": 100 }, { "color": "#402248", "weight": 100 } ]
+        "colors": [
+          { "color": "North Grey", "weight": 10 },
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
+        ]
       }
     ]
   }
