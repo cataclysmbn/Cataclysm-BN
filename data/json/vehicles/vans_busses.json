@@ -2111,7 +2111,7 @@
       [ "+-O-+-O+" ],
       [ "      o " ]
     ],
-    "color_palette": "car_standard",
+    "color_palette": "wienermobile_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "chimes", "roof" ] },

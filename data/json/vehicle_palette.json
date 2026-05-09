@@ -125,6 +125,18 @@
   },
   {
     "type": "vehicle_color_palette",
+    "id": "wienermobile_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Carrot Orange", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
     "id": "limo_standard",
     "palette": [
       {
