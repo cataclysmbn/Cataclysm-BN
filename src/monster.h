@@ -528,6 +528,7 @@ class monster : public Creature, public location_visitable<monster>
         void die( Creature *killer ) override; //this is the die from Creature, it calls kill_mo
         void erase() override;
         void drop_items_on_death();
+        void drop_monster_weapon();
 
         // Other
         /**

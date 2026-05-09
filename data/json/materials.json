@@ -42,7 +42,7 @@
     "chip_resist": 12,
     "repaired_with": "resin_chunk",
     "salvaged_into": "resin_chunk",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "dented",
     "cut_dmg_verb": "gouged",
     "burn_products": [ [ "resin_chunk", 1 ] ]
@@ -88,7 +88,7 @@
     "chip_resist": 10,
     "repaired_with": "acidchitin_piece",
     "salvaged_into": "acidchitin_piece",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
     "cut_dmg_verb": "chipped",
     "burn_data": [
@@ -118,7 +118,7 @@
     "wind_resist": 90,
     "repaired_with": "bone",
     "salvaged_into": "skewer_bone",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
     "cut_dmg_verb": "chipped",
     "vitamins": [ [ "calcium", 2 ] ],
@@ -211,7 +211,7 @@
     "salvaged_into": "cardboard",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [ { "fuel": 10, "smoke": 1, "burn": 10 }, { "fuel": 8, "smoke": 1, "burn": 20 }, { "fuel": 5, "smoke": 1, "burn": 50 } ],
     "burn_products": [ [ "ash", 0.013 ] ]
   },
@@ -233,7 +233,7 @@
     "chip_resist": 20,
     "dmg_adj": [ "chipped", "cracked", "split", "broken" ],
     "bash_dmg_verb": "cracked",
-    "cut_dmg_verb": "cut"
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" }
   },
   {
     "type": "material",
@@ -254,7 +254,7 @@
     "wind_resist": 90,
     "repaired_with": "chitin_piece",
     "salvaged_into": "chitin_piece",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
     "cut_dmg_verb": "chipped",
     "burn_data": [
@@ -281,7 +281,7 @@
     "chip_resist": 6,
     "dmg_adj": [ "chipped", "scratched", "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_products": [ [ "ceramic_shard", 1 ] ]
   },
   {
@@ -329,7 +329,7 @@
     "salvaged_into": "rag",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
       { "fuel": 1, "smoke": 1, "burn": 1 },
@@ -443,7 +443,7 @@
     "elec_resist": 1,
     "chip_resist": 2,
     "repaired_with": "leather",
-    "dmg_adj": [ "scratched", "cut", "shredded", "tattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
     "cut_dmg_verb": "sliced",
     "burn_data": [
@@ -470,7 +470,7 @@
     "chip_resist": 4,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "squished",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_products": [ [ "ceramic_shard", 1 ] ]
   },
   {
@@ -492,7 +492,7 @@
     "chip_resist": 1,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "bruised",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "vitC", 2 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 2, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -574,7 +574,7 @@
     "chip_resist": 0,
     "repaired_with": "glass_shard",
     "salvaged_into": "glass_shard",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
     "cut_dmg_verb": "scratched",
     "burn_data": [
@@ -736,7 +736,7 @@
   {
     "type": "material",
     "id": "iron",
-    "name": "Iron",
+    "name": { "ctxt": "material", "str": "Iron" },
     "density": 52,
     "specific_heat_liquid": 0.82,
     "specific_heat_solid": 0.45,
@@ -776,7 +776,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "smashed",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [ { "fuel": 1, "smoke": 1, "burn": 1 }, { "fuel": 1, "smoke": 1, "burn": 2 }, { "fuel": 1, "smoke": 1, "burn": 3 } ]
   },
   {
@@ -806,7 +806,7 @@
     "salvaged_into": "kevlar_plate",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut"
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" }
   },
   {
     "type": "material",
@@ -828,7 +828,7 @@
     "salvaged_into": "kevlar_plate",
     "dmg_adj": [ "marked", "dented", "scarred", "broken" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut"
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" }
   },
   {
     "type": "material",
@@ -874,7 +874,7 @@
     "wind_resist": 90,
     "repaired_with": "leather",
     "salvaged_into": "leather",
-    "dmg_adj": [ "scratched", "cut", "shredded", "tattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
     "cut_dmg_verb": "sliced",
     "burn_data": [
@@ -930,7 +930,7 @@
     "warmth_when_wet": 1,
     "repaired_with": "neoprene",
     "salvaged_into": "neoprene",
-    "dmg_adj": [ "scratched", "cut", "shredded", "tattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
     "cut_dmg_verb": "sliced",
     "burn_data": [
@@ -961,7 +961,7 @@
     "salvaged_into": "nomex",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_products": [ [ "nomex", 1 ] ],
     "burn_data": [ { "immune": true }, { "immune": true }, { "immune": true } ]
   },
@@ -1029,7 +1029,7 @@
     "salvaged_into": "paper",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [ { "fuel": 10, "smoke": 1, "burn": 10 }, { "fuel": 8, "smoke": 1, "burn": 20 }, { "fuel": 5, "smoke": 1, "burn": 50 } ],
     "burn_products": [ [ "ash", 0.013 ] ]
   },
@@ -1053,7 +1053,7 @@
     "salvaged_into": "withered",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [ { "fuel": 10, "smoke": 1, "burn": 10 }, { "fuel": 8, "smoke": 1, "burn": 20 }, { "fuel": 5, "smoke": 1, "burn": 50 } ],
     "burn_products": [ [ "ash", 0.013 ] ]
   },
@@ -1076,7 +1076,7 @@
     "wind_resist": 90,
     "repaired_with": "plastic_chunk",
     "salvaged_into": "plastic_chunk",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "dented",
     "cut_dmg_verb": "gouged",
     "burn_data": [
@@ -1266,7 +1266,7 @@
     "fire_resist": 3,
     "elec_resist": 2,
     "chip_resist": 20,
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
     "cut_dmg_verb": "chipped",
     "burn_products": [ [ "pebble", 1 ] ]
@@ -1337,7 +1337,7 @@
     "salvaged_into": "nylon",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "ripped",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "650 ml" },
       { "fuel": 1, "smoke": 1, "burn": 1 },
@@ -1392,7 +1392,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "squished",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "calcium", 0.1 ], [ "vitA", 1 ], [ "vitC", 0.5 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -1419,7 +1419,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "squished",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "calcium", 0.1 ], [ "vitA", 2 ], [ "vitC", 4 ], [ "iron", 0.1 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -1446,7 +1446,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "squished",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "calcium", 0.3 ], [ "vitC", 0.6 ], [ "iron", 0.8 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -1473,7 +1473,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "squished",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "calcium", 1.8 ], [ "vitC", 5.2 ], [ "iron", 0.9 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -1500,7 +1500,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "damaged",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "calcium", 0.3 ], [ "iron", 1 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -1527,7 +1527,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "squished",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "calcium", 0.4 ], [ "iron", 4 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -1579,7 +1579,7 @@
     "chip_resist": 1,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "squished",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "vitB", 1 ], [ "iron", 0.1 ] ],
     "burn_data": [ { "fuel": 1, "smoke": 2, "burn": 1 }, { "fuel": 1, "smoke": 2, "burn": 2 }, { "fuel": 1, "smoke": 1, "burn": 3 } ]
   },
@@ -1634,7 +1634,7 @@
     "salvaged_into": "felt_patch",
     "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
     "bash_dmg_verb": "torn",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [
       { "fuel": 1, "smoke": 1, "burn": 1, "volume_per_turn": "1250 ml" },
       { "fuel": 1, "smoke": 1, "burn": 2 },
@@ -1685,7 +1685,7 @@
     "chip_resist": 1,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "bruised",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "vitC", 2 ] ],
     "burn_data": [
       { "fuel": 1, "smoke": 2, "burn": 1, "volume_per_turn": "1250 ml" },
@@ -1739,7 +1739,7 @@
     "chip_resist": 2,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "smashed",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [ { "fuel": 1, "smoke": 1, "burn": 1 }, { "fuel": 1, "smoke": 1, "burn": 2 }, { "fuel": 1, "smoke": 1, "burn": 3 } ]
   },
   {
@@ -1761,7 +1761,7 @@
     "chip_resist": 0,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "smashed",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "vitamins": [ [ "vitB", 0.5 ], [ "calcium", 1.5 ], [ "iron", 0.1 ] ],
     "burn_data": [
       { "fuel": -100, "smoke": 1, "burn": 1 },
@@ -1788,7 +1788,7 @@
     "chip_resist": 0,
     "dmg_adj": [ "lightly damaged", "damaged", "very damaged", "thoroughly damaged" ],
     "bash_dmg_verb": "smashed",
-    "cut_dmg_verb": "cut",
+    "cut_dmg_verb": { "ctxt": "material damage verb", "str": "cut" },
     "burn_data": [
       { "fuel": -100, "smoke": 1, "burn": 1 },
       { "fuel": -50, "smoke": 2, "burn": 1 },
@@ -1881,7 +1881,7 @@
     "chip_resist": 10,
     "repaired_with": "scute_piece",
     "salvaged_into": "scute_piece",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
     "cut_dmg_verb": "chipped",
     "burn_data": [
@@ -1910,7 +1910,7 @@
     "chip_resist": 8,
     "wind_resist": 90,
     "repaired_with": "bone_heavy",
-    "dmg_adj": [ "scratched", "cut", "cracked", "shattered" ],
+    "dmg_adj": [ "scratched", { "ctxt": "material damage adjective", "str": "cut" }, "cracked", "shattered" ],
     "bash_dmg_verb": "cracked",
     "cut_dmg_verb": "chipped",
     "burn_data": [

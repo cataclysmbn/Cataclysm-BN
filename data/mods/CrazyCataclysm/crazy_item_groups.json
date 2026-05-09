@@ -7,8 +7,14 @@
   {
     "id": "skeltal_drops",
     "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "milk", "prob": 50 } ]
+  },
+  {
+    "id": "skeltal_monster_weapon",
+    "type": "item_group",
     "subtype": "distribution",
-    "entries": [ { "item": "milk", "prob": 9 }, { "item": "trumpet", "prob": 1 } ]
+    "entries": [ { "item": "trumpet", "prob": 100 } ]
   },
   {
     "type": "item_group",

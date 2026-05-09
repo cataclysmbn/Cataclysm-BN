@@ -23,7 +23,8 @@
       }
     },
     "symbol": "\"",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#622625"
   },
   {
     "abstract": "reinforced_windshield_abstract",
@@ -50,7 +51,8 @@
       }
     },
     "symbol": "\"",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#3f4535"
   },
   {
     "abstract": "plastic_windshield_abstract",

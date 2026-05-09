@@ -342,6 +342,16 @@ When you sort your inventory by category, these are the categories that are disp
 { "name" : "Aaliyah", "gender" : "female", "usage" : "given" }, // Name, gender, "given"/"family"/"city" (first/last/city name).
 ```
 
+### Named Colors
+
+```json
+{
+  "type": "named_color", // As you expect
+  "name": "Cataclysm Red", // Name to display
+  "value": "#622625" // Hex value of color
+}
+```
+
 ### Scent_types
 
 | Identifier        | Description                                                                    |

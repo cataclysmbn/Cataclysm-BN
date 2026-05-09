@@ -1751,6 +1751,30 @@
     ]
   },
   {
+    "result": "radiant_core",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "40 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "plant_fibre", 50 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "radiant_blade",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 6,
+    "time": "60 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [
+      [ [ "scrap", 40 ] ],
+      [ [ "leather", 1 ] ],
+      [ [ "splinter", 10 ] ],
+      [ [ "plant_fibre", 50 ] ],
+      [ [ "essence_dull", 150 ] ]
+    ]
+  },
+  {
     "result": "gilded_aegis",
     "type": "uncraft",
     "skill_used": "magic",

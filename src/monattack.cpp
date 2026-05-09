@@ -114,6 +114,7 @@ static const efftype_id effect_grown_of_fuse( "grown_of_fuse" );
 static const efftype_id effect_has_bag( "has_bag" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_laserlocked( "laserlocked" );
+static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_onfire( "onfire" );
 static const efftype_id effect_operating( "operating" );
 static const efftype_id effect_paid( "paid" );
@@ -737,6 +738,9 @@ bool mattack::acid_accurate( monster *z )
 bool mattack::shockstorm( monster *z )
 {
     if( !z->can_act() ) {
+        return false;
+    }
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
         return false;
     }
 
@@ -3379,6 +3383,9 @@ bool mattack::photograph( monster *z )
 
 bool mattack::tazer( monster *z )
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     Creature *target = z->attack_target();
     if( target == nullptr || !is_adjacent( z, target, false ) ) {
         return false;
@@ -3423,6 +3430,9 @@ void mattack::taze( monster *z, Creature *target )
 
 void mattack::rifle( monster *z, Creature *target )
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return;
+    }
     const itype_id ammo_type( "556" );
     // Make sure our ammo isn't weird.
     if( z->ammo[ammo_type] > 3000 ) {
@@ -3475,6 +3485,9 @@ void mattack::rifle( monster *z, Creature *target )
 
 void mattack::frag( monster *z, Creature *target ) // This is for the bots, not a standalone turret
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return;
+    }
     const itype_id ammo_type( "40x46mm_m433" );
     // Make sure our ammo isn't weird.
     if( z->ammo[ammo_type] > 200 ) {
@@ -3538,6 +3551,9 @@ void mattack::frag( monster *z, Creature *target ) // This is for the bots, not 
 
 void mattack::tankgun( monster *z, Creature *target )
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return;
+    }
     const itype_id ammo_type( "120mm_HEAT" );
     // Make sure our ammo isn't weird.
     if( z->ammo[ammo_type] > 40 ) {
@@ -3787,6 +3803,9 @@ bool mattack::flamethrower( monster *z )
         // TODO: handle friendly monsters
         return false;
     }
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     // TODO: that is always false!
     if( z->friendly != 0 ) {
         // Attacking monsters, not the player!
@@ -3950,6 +3969,9 @@ bool mattack::copbot( monster *z )
 
 bool mattack::chickenbot( monster *z )
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     int mode = 0;
     Creature *target;
     if( z->friendly == 0 ) {
@@ -4034,6 +4056,9 @@ bool mattack::chickenbot( monster *z )
 
 bool mattack::multi_robot( monster *z )
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     int mode = 0;
     Creature *target;
     if( z->friendly == 0 ) {
@@ -4369,6 +4394,9 @@ bool mattack::stretch_bite( monster *z )
 
 bool mattack::brandish( monster *z )
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     if( z->friendly ) {
         // TODO: handle friendly monsters
         return false;
@@ -6025,6 +6053,9 @@ bool mattack::zombie_fuse( monster *z )
 
 bool mattack::doot( monster *z )
 {
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     z->moves -= 300;
     if( g->u.sees( *z ) ) {
         add_msg( _( "The %s doots its trumpet!" ), z->name() );

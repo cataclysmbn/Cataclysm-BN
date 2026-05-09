@@ -115,9 +115,11 @@
       [ "boat_motor_police", 150 ],
       [ "CG_patrol_boat", 75 ],
       [ "CG_cutter", 25 ],
-      [ "sailboat", 125 ],
+      [ "sailboat", 100 ],
+      [ "carbon_catamaran", 10 ],
       [ "pirate_ship", 25 ],
       [ "DUKW", 75 ],
+      [ "floatplane_small", 25 ],
       [ "hovercraft_motor_single", 25 ],
       [ "CG_cutter_25mm", 25 ]
     ]
@@ -147,7 +149,8 @@
       [ "kayak_racing", 50 ],
       [ "kayak_motorized", 25 ],
       [ "wood_rowboat_double", 60 ],
-      [ "inflatable_boat", 115 ],
+      [ "inflatable_boat", 100 ],
+      [ "floatplane_small", 15 ],
       [ "jetski", 30 ],
       [ "raft", 190 ],
       [ "fishing_boat", 25 ],
@@ -325,6 +328,37 @@
       [ "tricycle", 5 ],
       [ "4x4_car", 175 ],
       [ "whillys_mb", 25 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "suburban_home_compact",
+    "//": "A more compact version of suburban_home. Do not add vehicles that are longer than 6 tiles.",
+    "vehicles": [
+      [ "car", 1000 ],
+      [ "sedan", 1000 ],
+      [ "car_anmlcmpt", 150 ],
+      [ "car_hatch", 500 ],
+      [ "car_mini", 250 ],
+      [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
+      [ "beetle", 300 ],
+      [ "muscle_car", 300 ],
+      [ "car_sports", 100 ],
+      [ "car_sports_electric", 50 ],
+      [ "car_racing_electric", 5 ],
+      [ "superbike", 50 ],
+      [ "motorcycle", 200 ],
+      [ "motorcycle_cross", 25 ],
+      [ "motorcycle_enduro", 50 ],
+      [ "motorcycle_sidecart", 100 ],
+      [ "scooter", 100 ],
+      [ "scooter_electric", 100 ],
+      [ "portable_generator", 50 ],
+      [ "bicycle", 200 ],
+      [ "bicycle_dirt", 150 ],
+      [ "bicycle_electric", 100 ],
+      [ "tricycle", 5 ]
     ]
   },
   {
@@ -512,6 +546,7 @@
       [ "autotractor", 1000 ],
       [ "excavator", 500 ],
       [ "helicopter_gyro", 100 ],
+      [ "plane_small_wood", 100 ],
       [ "tractor_heavy_plow", 250 ],
       [ "tractor_heavy_seed", 250 ],
       [ "tractor_heavy_reaper", 250 ],
@@ -744,7 +779,8 @@
     "id": "runway",
     "//": "Lower chance of wrecked helis, include planes and other aircraft",
     "vehicles": [
-      [ "plane_small", 500 ],
+      [ "plane_small", 400 ],
+      [ "plane_small_wood", 100 ],
       [ "plane_f35_lightning", 25 ],
       [ "plane_av8_harrier", 5 ],
       [ "2seater2", 100 ],

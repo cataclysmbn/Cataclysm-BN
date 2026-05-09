@@ -1169,5 +1169,62 @@ std::optional<tripoint> choose_adjacent_highlight(
         g->add_draw_callback( hilite_cb );
     }
 
-    return choose_adjacent( message, allow_vertical );
+    const auto selection = choose_adjacent( message, allow_vertical );
+    if( selection.has_value() && std::ranges::contains( valid, selection.value() ) ) {
+        return selection;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::pair<tripoint, tripoint>> choose_area( const std::string &message,
+        const tripoint &_start_pos, bool allow_vertical )
+{
+
+    auto &u = g->u;
+    map &m = get_map();
+    ui_adaptor ui;
+
+    on_out_of_scope invalidate_current_ui( [&]() { ui.mark_resize(); } );
+    ui.mark_resize();
+
+    static_popup popup;
+    popup.on_top( true );
+    popup.message( "%s (%s)", message, _( "Select first point." ) );
+
+    tripoint center = _start_pos == tripoint_zero ? ( u.pos() + u.view_offset ) : _start_pos;
+
+    const look_around_mode mode = allow_vertical ? LA_MODE_DEFAULT : LA_MODE_2D;
+    const auto [p0, _] = g->look_around( false, center, center, false, true, false, false,
+                                         tripoint_zero, mode );
+    if( p0 ) {
+        auto highlight = make_shared_fast<game::draw_callback_t>( [&]() {
+            zone_draw_options opt;
+            opt.start = p0.value();
+            g->draw_zones( opt );
+        } );
+        g->add_draw_callback( highlight );
+
+        popup.message( "%s (%s)", message, _( "Select second point." ) );
+        const auto [p1, _] = g->look_around( false, center, p0.value(), true, true, false, false,
+                                             tripoint_zero, mode );
+        if( p1 ) {
+            auto first =
+                tripoint(
+                    std::min( p0->x, p1->x ),
+                    std::min( p0->y, p1->y ),
+                    std::min( p0->z, p1->z )
+                );
+            auto second =
+                tripoint(
+                    std::max( p0->x, p1->x ),
+                    std::max( p0->y, p1->y ),
+                    std::max( p0->z, p1->z )
+                );
+            return std::pair( first, second );
+        }
+    }
+
+    return std::nullopt;
+
 }

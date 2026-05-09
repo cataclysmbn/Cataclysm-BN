@@ -1970,6 +1970,7 @@
       [ "O--+-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "swat_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "aisle_horizontal", "hdroof" ] },
       { "x": 2, "y": 2, "parts": [ "hdframe_horizontal", "hdhalfboard_horizontal_2", "plating_steel" ] },

@@ -9,6 +9,7 @@
 #include "coordinates.h"
 #include "item.h"
 #include "item_group.h"
+#include "hsv_color.h"
 #include "point.h"
 #include "visitable.h"
 #include "location_ptr.h"
@@ -280,6 +281,7 @@ struct vehicle_part {
         std::pair<tripoint, tripoint> target = { tripoint_min, tripoint_min };
 
     private:
+        RGBColorPair part_color_ {};
 
         /** Copies static (i.e. non-item) properties from another part */
         void copy_static_from( const vehicle_part &source );
@@ -341,5 +343,9 @@ struct vehicle_part {
          * this part.
          */
         std::vector<detached_ptr<item>> pieces_for_broken_part() const;
+
+        RGBColorPair get_color( bool ignore_default = false ) const;
+        void set_color( const RGBColorPair &color ) { set_color( color.bg, color.fg ); }
+        void set_color( const RGBColor &bg, const RGBColor &fg );
 };
 

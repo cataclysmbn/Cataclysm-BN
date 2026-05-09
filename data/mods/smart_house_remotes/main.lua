@@ -9,6 +9,7 @@ gdebug.log_info("SHR: main.")
 --
 
 local mod = game.mod_runtime[game.current_mod]
+local ui = require("lib.ui")
 
 --[[
     When we export Lua function, Lua is smart enough not to garbage collect
@@ -242,36 +243,24 @@ end
 
 -- Show 'not enough power' error
 mod.show_low_power_error = function()
-  local pp = QueryPopup.new()
   --~ Message on the remote, stylized as calculator led display.
   --~ Shown when there's not enough grid charge.
-  pp:message(locale.gettext("Low Current At Endpoint"))
   -- This color is awful, but it's a cheap LCD display, what did you expect?
-  pp:message_color(Color.i_green)
-  pp:allow_any_key(true)
-  pp:query()
+  ui.popup(locale.gettext("Low Current At Endpoint"), Color.i_green)
 end
 
 -- Show 'no signal' error
 mod.show_no_signal_error = function()
-  local pp = QueryPopup.new()
   --~ Message on the remote, stylized as calculator led display.
   --~ Shown when player is too far away from the area.
-  pp:message(locale.gettext("No Signal"))
-  pp:message_color(Color.i_green)
-  pp:allow_any_key(true)
-  pp:query()
+  ui.popup(locale.gettext("No Signal"), Color.i_green)
 end
 
 -- Show 'no valid blocks' error
 mod.show_no_endpoints_error = function()
-  local pp = QueryPopup.new()
   --~ Message on the remote, stylized as calculator led display.
   --~ Shown when there's nothing to activate.
-  pp:message(locale.gettext("No Endpoints Available"))
-  pp:message_color(Color.i_green)
-  pp:allow_any_key(true)
-  pp:query()
+  ui.popup(locale.gettext("No Endpoints Available"), Color.i_green)
 end
 
 -- Add message indicating the remote works

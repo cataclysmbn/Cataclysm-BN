@@ -107,6 +107,7 @@
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle_group.h"
+#include "vehicle_palette.h"
 #include "vitamin.h"
 #include "weather.h"
 #include "weather_type.h"
@@ -310,6 +311,7 @@ void DynamicDataLoader::initialize()
     } );
 
     add( "vehicle_part",  &vpart_info::load );
+    add( "vehicle_color_palette",  &VehiclePalette::load );
     add( "vehicle",  &vehicle_prototype::load );
     add( "vehicle_group",  &VehicleGroup::load );
     add( "vehicle_placement",  &VehiclePlacement::load );
@@ -468,6 +470,7 @@ void DynamicDataLoader::initialize()
     add( "event_statistic", &event_statistic::load_statistic );
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
+    add( "named_color", &RGBColor::load_named_color );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
 #else
@@ -636,6 +639,7 @@ void DynamicDataLoader::unload_data()
     trap::reset();
     unload_talk_topics();
     VehicleGroup::reset();
+    VehiclePalette::reset();
     VehiclePlacement::reset();
     VehicleSpawn::reset();
     vitamin::reset();
@@ -645,6 +649,7 @@ void DynamicDataLoader::unload_data()
     world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
+    RGBColor::unload_names();
 #if defined(TILES)
     reset_mod_tileset();
 #endif

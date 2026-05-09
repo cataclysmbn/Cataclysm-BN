@@ -18,6 +18,8 @@ constexpr auto hook_names = std::array
     "on_dialogue_option",
     "on_dialogue_end",
     "on_character_reset_stats",
+    "on_character_display_skill_action",
+    "on_character_display_skill_info",
     "on_character_effect_added",
     "on_character_effect",
     "on_character_effect_removed",

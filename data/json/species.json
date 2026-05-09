@@ -39,8 +39,8 @@
   {
     "type": "SPECIES",
     "id": "FISH",
-    "name": { "str_sp": "fish" },
-    "description": "a fish",
+    "name": { "ctxt": "species", "str_sp": "fish" },
+    "description": { "ctxt": "species", "str": "a fish" },
     "fear_triggers": [ "HURT", "FRIEND_ATTACKED" ],
     "footsteps": [ "flop", "the slap of fins", "a splash", "a wet thump", "gurgle", "slosh" ]
   },
@@ -156,8 +156,8 @@
   {
     "type": "SPECIES",
     "id": "PLANT",
-    "name": { "str": "plant" },
-    "description": "a plant",
+    "name": { "ctxt": "species", "str": "plant" },
+    "description": { "ctxt": "species", "str": "a plant" },
     "fear_triggers": [ "HURT", "FIRE" ],
     "footsteps": [ "rustling", "the crunch of leaves", "crackle", "the swish of vines" ]
   },
@@ -171,8 +171,8 @@
   {
     "type": "SPECIES",
     "id": "WORM",
-    "name": { "str": "worm" },
-    "description": "a worm",
+    "name": { "ctxt": "species", "str": "worm" },
+    "description": { "ctxt": "species", "str": "a worm" },
     "footsteps": [ "a thrum", "a rumble", "vibrations", "a thud" ],
     "fear_triggers": [ "HURT" ]
   },

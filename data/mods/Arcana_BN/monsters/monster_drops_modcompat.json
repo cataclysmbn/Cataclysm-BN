@@ -173,16 +173,10 @@
   },
   {
     "id": "skeltal_drops",
-    "//": "This is done because we can access the itemgroup despite it not existing in vanilla, but can't override the monster because it only exists in Crazy Cataclysm.",
     "type": "item_group",
-    "items": [ { "group": "skeltal_drops_override", "prob": 1000 } ]
-  },
-  {
-    "type": "item_group",
-    "id": "skeltal_drops_override",
     "subtype": "collection",
-    "entries": [
-      { "distribution": [ { "item": "milk", "prob": 9 }, { "item": "trumpet", "prob": 1 } ] },
+    "//": "Adds to itemgroup",
+    "items": [
       {
         "distribution": [
           { "item": "gracken_knuckles", "prob": 50 },

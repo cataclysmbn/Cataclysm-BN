@@ -314,6 +314,14 @@ Amount of light passively output by monster. Ranges from 0 to 10.
 
 Monster hit points.
 
+## "monster_weapon"
+
+(item group, optional)
+
+An item group that is used to spawn items assumed to be the monster's wielded weapon. Having this defined will make said monster vulnerable to disarming techniques. If disarmed, a monster will have their bashing damage roll greatly reduced and any special melee damage (cut, electric, etc) reduced to zero, and they'll be unable to use certain special attacks (notably attacks of `"type": "gun"`, but also some such as `TAZER`, `SHOCKSTORM`, `FLAMETHROWER`, etc).
+
+Can freely be a collection to imply two weapons wielded in both hands, as items will be dropped on the ground instead of wielded by the attacker, even if the technique has `take_weapon` set. Itemgroup will also spawn on death as with `death_drops` if the monster was killed without being disarmed.
+
 ## "death_drops"
 
 (string or item group, optional)

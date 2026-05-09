@@ -1,0 +1,20 @@
+[
+  {
+    "id": "spray_paint",
+    "type": "AMMO",
+    "name": { "str": "spray paint" },
+    "description": "A colorful can of paint composed of unknown pigment.",
+    "weight": "40 g",
+    "volume": "250 ml",
+    "price": "24 USD",
+    "price_postapoc": "5 USD",
+    "material": [ "hydrocarbons" ],
+    "symbol": "=",
+    "color": "red",
+    "count": 100,
+    "stack_size": 100,
+    "ammo_type": "spray_paint",
+    "phase": "liquid",
+    "flags": [ "NO_DROP", "IRREMOVABLE" ]
+  }
+]
