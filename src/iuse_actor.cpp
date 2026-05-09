@@ -7704,7 +7704,7 @@ auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint 
         choices.push_back( {_( "Item" ), Item} );
     }
 
-    const bool has_terrain_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return is_paintable_terrain(m,  p ); } );
+    const bool has_terrain_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return is_paintable_terrain( m,  p ); } );
     if( has_terrain_near ) {
         choices.push_back( {_( "Terrain" ), Terrain} );
         choices.push_back( {_( "Graffiti" ), Graffiti} );
@@ -7744,7 +7744,8 @@ auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint 
     };
 }
 
-namespace {
+namespace
+{
 template<typename T>
 concept is_painter =
     requires(
@@ -7773,11 +7774,11 @@ auto iuse_paint_stuff_do_paint(
 
     const auto get_cost = [&]() {
         switch( layer ) {
-        default:
-            return charge_cost;
-        case iuse_paint_stuff_config::fg:
-        case iuse_paint_stuff_config::bg:
-            return charge_cost / 2;
+            default:
+                return charge_cost;
+            case iuse_paint_stuff_config::fg:
+            case iuse_paint_stuff_config::bg:
+                return charge_cost / 2;
         }
     };
 
@@ -7796,31 +7797,31 @@ auto iuse_paint_stuff_do_paint(
         const auto [p_fg, p_bg] = painter.get_color( pos );
 
         switch( layer ) {
-        default:
-        case iuse_paint_stuff_config::both:
-            if( p_fg != new_col || p_bg != new_col ) {
-                RGBColorPair newCol = {.bg = new_col, .fg = new_col};
-                if( painter.set_color( newCol, layer, pos ) ) {
-                    charges_used += mod_cost;
+            default:
+            case iuse_paint_stuff_config::both:
+                if( p_fg != new_col || p_bg != new_col ) {
+                    RGBColorPair newCol = {.bg = new_col, .fg = new_col};
+                    if( painter.set_color( newCol, layer, pos ) ) {
+                        charges_used += mod_cost;
+                    }
                 }
-            }
-            break;
-        case iuse_paint_stuff_config::fg:
-            if( p_fg != new_col ) {
-                RGBColorPair newCol = {.bg = p_bg, .fg = new_col};
-                if( painter.set_color( newCol, layer, pos ) ) {
-                    charges_used += mod_cost;
+                break;
+            case iuse_paint_stuff_config::fg:
+                if( p_fg != new_col ) {
+                    RGBColorPair newCol = {.bg = p_bg, .fg = new_col};
+                    if( painter.set_color( newCol, layer, pos ) ) {
+                        charges_used += mod_cost;
+                    }
                 }
-            }
-            break;
-        case iuse_paint_stuff_config::bg:
-            if( p_bg != new_col ) {
-                RGBColorPair newCol = {.bg = new_col, .fg = p_fg};
-                if( painter.set_color( newCol, layer, pos ) ) {
-                    charges_used += mod_cost;
+                break;
+            case iuse_paint_stuff_config::bg:
+                if( p_bg != new_col ) {
+                    RGBColorPair newCol = {.bg = new_col, .fg = p_fg};
+                    if( painter.set_color( newCol, layer, pos ) ) {
+                        charges_used += mod_cost;
+                    }
                 }
-            }
-            break;
+                break;
         }
     }
 
@@ -7883,18 +7884,18 @@ struct ter_furn_painter {
     bool set_color( const RGBColorPair &col, const paint_layer layer, const tripoint &p ) const {
         auto &vars = *get_vars( p );
         switch( layer ) {
-        default:
-        case iuse_paint_stuff_config::both:
-            vars.template set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
-            vars.erase( TINT_COLOR_FG_VAR_NAME );
-            vars.erase( TINT_COLOR_BG_VAR_NAME );
-            break;
-        case iuse_paint_stuff_config::fg:
-            vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
-            break;
-        case iuse_paint_stuff_config::bg:
-            vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
-            break;
+            default:
+            case iuse_paint_stuff_config::both:
+                vars.template set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
+                vars.erase( TINT_COLOR_FG_VAR_NAME );
+                vars.erase( TINT_COLOR_BG_VAR_NAME );
+                break;
+            case iuse_paint_stuff_config::fg:
+                vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
+                break;
+            case iuse_paint_stuff_config::bg:
+                vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
+                break;
         }
         return true;
     }
