@@ -1644,64 +1644,67 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     auto m = dynamic_cast<monster *>( &t );
 
     if( technique.take_weapon && !has_weapon() && p != nullptr && p->is_armed() ) {
-        if( rng( get_skill_level( skill_melee ) / 2, get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
+        if( rng( get_skill_level( skill_melee ) / 2,
+                 get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
 
-        if( p->is_player() ) {
-            add_msg_if_npc( m_bad, _( "<npcname> disarms you and takes your weapon!" ) );
-        } else {
-            add_msg_player_or_npc( m_good, _( "You disarm %s and take their weapon!" ),
-                                   _( "<npcname> disarms %s and takes their weapon!" ),
-                                   p->name );
-        }
+            if( p->is_player() ) {
+                add_msg_if_npc( m_bad, _( "<npcname> disarms you and takes your weapon!" ) );
+            } else {
+                add_msg_player_or_npc( m_good, _( "You disarm %s and take their weapon!" ),
+                                       _( "<npcname> disarms %s and takes their weapon!" ),
+                                       p->name );
+            }
 
-        wield( p->remove_primary_weapon() );
-       } else {
-        if( p->is_player() ) {
-            add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
+            wield( p->remove_primary_weapon() );
         } else {
-        add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
-                               _( "<npcname> fails to disarms %s!" ),
-                               p->name );
+            if( p->is_player() ) {
+                add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
+            } else {
+                add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
+                                       _( "<npcname> fails to disarms %s!" ),
+                                       p->name );
+            }
         }
- }
     }
 
     if( technique.disarms && p != nullptr && p->is_armed() ) {
-        if( rng( get_skill_level( skill_melee ) / 2, get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
-        g->m.add_item_or_charges( p->pos(), p->remove_primary_weapon() );
-        if( p->is_player() ) {
-            add_msg_if_npc( m_bad, _( "<npcname> disarms you!" ) );
+        if( rng( get_skill_level( skill_melee ) / 2,
+                 get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
+            g->m.add_item_or_charges( p->pos(), p->remove_primary_weapon() );
+            if( p->is_player() ) {
+                add_msg_if_npc( m_bad, _( "<npcname> disarms you!" ) );
+            } else {
+                add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
+                                       _( "<npcname> disarms %s!" ),
+                                       p->name );
+            }
         } else {
-            add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
-                                   _( "<npcname> disarms %s!" ),
-                                   p->name );
+            if( p->is_player() ) {
+                add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
+            } else {
+                add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
+                                       _( "<npcname> fails to disarms %s!" ),
+                                       p->name );
+            }
         }
-       } else {
-        if( p->is_player() ) {
-            add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
-        } else {
-        add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
-                               _( "<npcname> fails to disarms %s!" ),
-                               p->name );
-        }
-}
     }
 
     // No wielding it because monster_weapon might be a collection
     if( ( technique.disarms || technique.take_weapon ) && m != nullptr && m->type->monster_weapon &&
         !t.has_effect( effect_monster_disarmed ) ) {
-        if( rng( get_skill_level( skill_melee ) / 2, get_skill_level( skill_melee ) ) >= m->type->melee_skill ) {
+        if( rng( get_skill_level( skill_melee ) / 2,
+                 get_skill_level( skill_melee ) ) >= m->type->melee_skill ) {
 
-        m->drop_monster_weapon();
-        add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
-                               _( "<npcname> disarms %s!" ),
-                               m->disp_name() );
-        t.add_effect( effect_monster_disarmed, 1_turns );
-} else {
-        add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
-                               _( "<npcname> fails to disarms %s!" ),
-                               m->disp_name() );
-}
+            m->drop_monster_weapon();
+            add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
+                                   _( "<npcname> disarms %s!" ),
+                                   m->disp_name() );
+            t.add_effect( effect_monster_disarmed, 1_turns );
+        } else {
+            add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
+                                   _( "<npcname> fails to disarms %s!" ),
+                                   m->disp_name() );
+        }
 
     }
 
