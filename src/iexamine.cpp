@@ -454,7 +454,8 @@ void iexamine::nanoforge( player &p, const tripoint &examp )
 
     detached_ptr<item> new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn );
 
-    auto reqs = *requirement_id( "superalloy_forge" );
+    auto qty = 1;
+    auto reqs = *requirement_id( "superalloy_forge" ) * qty;
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
         popup( "%s", reqs.list_missing() );
