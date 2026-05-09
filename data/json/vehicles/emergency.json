@@ -113,6 +113,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "swat_standard",
     "parts": [
       {
         "x": 0,
@@ -481,6 +482,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -553,6 +555,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -626,6 +629,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -708,6 +712,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -792,6 +797,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -877,6 +883,7 @@
       [ "O--+-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "swat_standard",
     "parts": [
       { "x": 0, "y": 1, "parts": [ "hdframe_vertical", "aisle_horizontal", "hdroof" ] },
       {

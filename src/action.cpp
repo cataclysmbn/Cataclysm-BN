@@ -23,6 +23,7 @@
 #include "iexamine.h"
 #include "input.h"
 #include "item.h"
+#include "item_functions.h"
 #include "lua_action_menu.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -593,13 +594,15 @@ bool can_butcher_at( const tripoint &p )
     for( item *&items_it : items ) {
         if( items_it->is_corpse() ) {
             if( factor != INT_MIN  || factorD != INT_MIN ) {
-                has_corpse = true;
+                return true;
             }
         } else if( crafting::can_disassemble( you, *items_it, crafting_inv ).success() ) {
-            has_item = true;
+            return true;
+        } else if( item_funcs::can_be_unloaded( *items_it ) ) {
+            return true;
         }
     }
-    return has_corpse || has_item;
+    return false;
 }
 
 bool can_move_vertical_at( const tripoint &p, int movez )

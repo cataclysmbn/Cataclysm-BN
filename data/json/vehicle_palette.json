@@ -78,6 +78,75 @@
   },
   {
     "type": "vehicle_color_palette",
+    "id": "police_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "Silver Grey", "weight": 10 },
+          { "color": "Silver Fir Blue", "weight": 2 },
+          { "color": "Steel Blue", "weight": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "swat_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [ { "color": "Ink Black", "weight": 10 }, { "color": "Steel Blue", "weight": 5 } ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "construction_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [ { "color": "Traffic Yellow", "weight": 10 }, { "color": "Carrot Orange", "weight": 5 } ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "bus_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [ { "color": "Traffic Yellow", "weight": 1 } ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "wienermobile_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [ { "color": "Carrot Orange", "weight": 1 } ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "limo_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
+        "colors": [
+          { "color": "Ink Black", "weight": 10 },
+          { "color": "White aluminium", "weight": 10 },
+          { "color": "Signal Pink", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
     "id": "sneaky_standard",
     "palette": [
       {

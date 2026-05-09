@@ -8714,6 +8714,22 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
     p->add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
         pgettext( "in progress craft", "<npcname> starts working on the %s." ), craft_name );
+
+    if( p->is_npc() ) {
+        const recipe &rec = it->get_making();
+        auto actor = std::make_unique<craft_activity_actor>(
+                         &rec,
+                         it->charges,
+                         it->get_counter(),
+                         best_bench.position,
+                         std::vector<comp_selection<item_comp>> {},
+                         it->get_cached_tool_selections(),
+                         it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
+                     );
+        p->assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+        return 0;
+    }
+
     p->assign_activity( ACT_CRAFT );
     // Horrible! We have to find the item again...
     item *where = nullptr;
