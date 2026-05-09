@@ -23,7 +23,8 @@
           { "id": "277_fmj", "fg": 15 },
           { "id": "277_hybrid", "fg": 16 },
           { "id": "m7", "fg": 17 },
-          { "id": "overlay_wielded_m7", "fg": 18 }
+          { "id": "overlay_wielded_m7", "fg": 18 },
+          { "id": "t_nanoforge_body", "fg": 19 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
