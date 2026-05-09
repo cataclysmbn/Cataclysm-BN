@@ -629,6 +629,39 @@
   },
   {
     "type": "terrain",
+    "id": "t_nanoforge_body",
+    "name": "superalloy forge",
+    "symbol": "%",
+    "description": "A great column of advanced machinery.  Within this self-contained, miniaturized factory, several specialized 3d printers work in tandem with robotic forge units to efficiently manufacture superalloy sheets from steel sheets and nanomaterial.",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "coverage": 65,
+    "flags": [ "PLACE_ITEM" ],
+    "bash": {
+      "str_min": 120,
+      "str_max": 150,
+      "sound": "crunch!",
+      "sound_fail": "whack!",
+      "ter_set": "t_floor",
+      "items": [
+        { "item": "e_scrap", "count": [ 10, 14 ] },
+        { "item": "processor", "count": [ 10, 20 ] },
+        { "item": "RAM", "count": [ 14, 20 ] },
+        { "item": "nanomaterial", "count": 1, "prob": 10 },
+        { "item": "bearing", "charges": [ 20, 60 ] },
+        { "item": "motor", "count": 4 },
+        { "item": "power_supply", "count": [ 4, 16 ] },
+        { "item": "amplifier", "count": [ 4, 16 ] },
+        { "item": "cable", "charges": [ 250, 500 ] },
+        { "item": "circuit", "count": [ 1, 6 ] },
+        { "item": "scrap", "count": [ 12, 18 ] }
+      ],
+      "//": "Variable reduction since might hit more or less material.",
+      "ranged": { "reduction": [ 60, 120 ], "destroy_threshold": 150 }
+    }
+  },
+  {
+    "type": "terrain",
     "id": "t_vat",
     "name": "cloning vat",
     "description": "A vat full of solution, probably intended to hold growing clones of people or other life forms.",
