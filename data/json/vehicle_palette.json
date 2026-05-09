@@ -97,10 +97,7 @@
     "palette": [
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
-        "colors": [
-          { "color": "Ink Black", "weight": 10 },
-          { "color": "Steel Blue", "weight": 5 }
-        ]
+        "colors": [ { "color": "Ink Black", "weight": 10 }, { "color": "Steel Blue", "weight": 5 } ]
       }
     ]
   },
@@ -110,10 +107,7 @@
     "palette": [
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk", "hatch" ],
-        "colors": [
-          { "color": "Traffic Yellow", "weight": 10 },
-          { "color": "Carrot Orange", "weight": 5 }
-        ]
+        "colors": [ { "color": "Traffic Yellow", "weight": 10 }, { "color": "Carrot Orange", "weight": 5 } ]
       }
     ]
   },
