@@ -2103,6 +2103,7 @@
       [ "=----|  " ],
       [ "oooooo  " ]
     ],
+    "flags": [ "VEHICLE_LOCKED" ],
     "parts": [
       { "x": -3, "y": -2, "parts": [ "hdframe_vertical_2", "tread3", "plating_military" ] },
       { "x": -2, "y": -2, "parts": [ "hdframe_vertical_2", "tread3", "plating_military" ] },
@@ -2237,6 +2238,7 @@
     "id": "tank_xm_hover",
     "type": "vehicle",
     "name": "XMH Hover Tank",
+    "flags": [ "VEHICLE_LOCKED" ],
     "parts": [
       { "x": -3, "y": -2, "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_sw" ] },
       { "x": -2, "y": -2, "parts": [ "frame_carbon_cover", "plating_military", "hdhalfboard_vertical" ] },
@@ -2377,6 +2379,7 @@
     "id": "xapc_hover",
     "type": "vehicle",
     "name": "Experimental Hover APC",
+    "flags": [ "VEHICLE_LOCKED" ],
     "parts": [
       { "x": 5, "y": 2, "parts": [ "frame_carbon_cover", "hdhalfboard_ne", "plating_military" ] },
       {
