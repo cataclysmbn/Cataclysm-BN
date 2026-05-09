@@ -39,7 +39,7 @@
     "city_distance": [ 2, 10 ],
     "city_sizes": [ 3, -1 ],
     "occurrences": [ 0, 10 ],
-    "flags": [ "CLASSIC", "UNIQUE" ]
+    "flags": [ "CLASSIC" ]
   },
   {
     "type": "mapgen",

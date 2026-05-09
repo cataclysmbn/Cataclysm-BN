@@ -194,6 +194,12 @@
   },
   {
     "type": "ammunition_type",
+    "id": "277",
+    "name": "6.8x51mm",
+    "default": "277_fmj"
+  },
+  {
+    "type": "ammunition_type",
     "id": "40x46mm",
     "name": "40x46mm grenade",
     "default": "40x46mm_m433"

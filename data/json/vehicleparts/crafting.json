@@ -86,8 +86,9 @@
     "damage_reduction": { "all": 20 },
     "description": "A multi-function crafting station, with a water purifier, food processor, food dehydrator, vacuum sealer, and hand press for making ammo.  Draws power from the vehicle's batteries.  'e'xamine the tile with the kitchen buddy to access the water faucet or to purify water in a vehicle tank or in a container in your inventory.  If you attempt to craft an item that needs one of the kitchen buddy's functions, it will automatically be selected as a tool.",
     "durability": 80,
-    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "WATER_PURIFIER", "FAUCET", "COVERED" ],
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "WATER_PURIFIER", "FAUCET", "COVERED", "CONVERTER" ],
     "integrated_tools": [ "dehydrator", "vac_sealer", "food_processor", "press", "water_purifier" ],
+    "converter": { "input": "water", "input_step": 8, "output": "water_clean", "output_step": 8, "max_steps": 6, "charge_cost": 1 },
     "item": "craftrig",
     "location": "center",
     "looks_like": "f_sink",
@@ -370,7 +371,8 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "WATER_PURIFIER", "SHOCK_RESISTANT" ],
+    "converter": { "input": "water", "input_step": 8, "output": "water_clean", "output_step": 8, "max_steps": 6, "charge_cost": 1 },
+    "flags": [ "WATER_PURIFIER", "SHOCK_RESISTANT", "CONVERTER" ],
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 1, 2 ] } ],
     "damage_reduction": { "all": 26 }
   },

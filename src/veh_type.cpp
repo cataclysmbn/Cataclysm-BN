@@ -388,16 +388,13 @@ void vpart_info::load_converter( std::optional<vpslot_converter> &convertptr, co
     if( convertptr ) {
         convert_info = *convertptr;
     }
-
     JsonObject converter = jo.get_object( "converter" );
-
     assign( converter, "input", convert_info.input );
     assign( converter, "input_step", convert_info.input_step );
     assign( converter, "output", convert_info.output );
     assign( converter, "output_step", convert_info.output_step );
     assign( converter, "max_steps", convert_info.max_steps );
     assign( converter, "charge_cost", convert_info.charge_cost );
-
     convertptr = convert_info;
     assert( convertptr );
 }
@@ -461,6 +458,7 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
         JsonObject jttd = jo.get_object( "transform_terrain" );
         for( const std::string pre_flag : jttd.get_array( "pre_flags" ) ) {
             def.transform_terrain.pre_flags.emplace( pre_flag );
+
         }
         def.transform_terrain.diggable = jttd.get_bool( "diggable", false );
         def.transform_terrain.post_terrain = jttd.get_string( "post_terrain", "t_null" );
@@ -1067,18 +1065,15 @@ int vpart_info::get_max_conversions() const
 {
     return has_flag( "CONVERTER" ) ? converter_info->max_steps : 0;
 }
-
 int vpart_info::get_conversion_charges() const
 {
     return has_flag( "CONVERTER" ) ? converter_info->charge_cost : 0;
 }
-
 const std::pair<itype_id, int> vpart_info::get_conversion_input() const
 {
     return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->input,
             converter_info->input_step ) : std::make_pair( itype_id::NULL_ID(), 0 );
 }
-
 const std::pair<itype_id, int> vpart_info::get_conversion_output() const
 {
     return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->output,

@@ -83,6 +83,7 @@
  *   assemble "structure" once here instead of repeatedly later.
  */
 static const std::string part_location_structure( "structure" );
+static const std::string part_location_under( "under" );
 static const std::string part_location_center( "center" );
 static const std::string part_location_onroof( "on_roof" );
 
@@ -2025,7 +2026,8 @@ int vehicle::install_part( point dp, vehicle_part &&new_part )
                 "COOLER",
                 "WATER_PURIFIER",
                 "ROCKWHEEL",
-                "ROADHEAD"
+                "ROADHEAD",
+                "CONVERTER"
             }
         };
 
@@ -4925,31 +4927,35 @@ double vehicle::coeff_water_drag() const
     if( !coeff_water_dirty ) {
         return coefficient_water_resistance;
     }
-    std::vector<int> structure_indices = all_parts_at_location( part_location_structure );
-    if( structure_indices.empty() ) {
-        // huh?
-        coeff_water_dirty = false;
-        hull_height = 0.3;
-        draft_m = 1.0;
-        return 1250.0;
+    std::vector<int> hull_indices = all_parts_at_location( part_location_under );
+    double hull_coverage;
+    if( hull_indices.empty() ) {
+        hull_coverage = 0;
+    } else {
+        hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
     }
-    double hull_coverage = static_cast<double>( floating.size() ) / structure_indices.size();
 
-    int tile_width = mount_max.y - mount_min.y + 1;
-    double width_m = tile_to_width( tile_width );
+    std::set<int> occupied_y;
+    for( int idx : hull_indices ) {
+        occupied_y.insert( parts[idx].mount.y );
+    }
+    // Tile == 1m width
+    // I have a feeling this and actual_area_m cancle out somewhere in there...
+    double width_m = occupied_y.size();
+    if( width_m == 0 ) {
+        width_m = 1;
+    }
 
-    // actual area of the hull in m^2 (handles non-rectangular shapes)
-    // footprint area in tiles = tile width * tile length
-    // effective footprint percent = # of structure tiles / footprint area in tiles
-    // actual hull area in m^2 = footprint percent * length in meters * width in meters
-    // length in meters = length in tiles
-    // actual area in m = # of structure tiles * length in tiles * width in meters /
-    //                    ( length in tiles * width in tiles )
-    // actual area in m = # of structure tiles * width in meters / width in tiles
-    double actual_area_m = width_m * structure_indices.size() / tile_width;
+    // Each piece of hull is 1m^2
+    // Thus area is the number of hull pieces
+    double actual_area_m = hull_indices.size();
 
     // effective hull area is actual hull area * hull coverage
-    hull_area = actual_area_m * std::max( 0.1, hull_coverage );
+    if( hull_coverage == 0 ) {
+        hull_area = 0;
+    } else {
+        hull_area = actual_area_m * std::max( 0.1, hull_coverage );
+    }
     // Treat the hullform as a simple cuboid to calculate displaced depth of
     // water.
     // Apply Archimedes' principle (mass of water displaced is mass of vehicle).
@@ -4957,12 +4963,20 @@ double vehicle::coeff_water_drag() const
     // water_mass = vehicle_mass
     // area * depth = vehicle_mass / water_density
     // depth = vehicle_mass / water_density / area
-    draft_m = to_kilogram( total_mass() ) / water_density / hull_area * get_lift_percent( true );
-    draft_m = std::max( draft_m, 0.0 );
+    if( hull_area == 0 ) {
+        draft_m = 1;
+    } else {
+        draft_m = to_kilogram( total_mass() ) / water_density / hull_area * get_lift_percent( true );
+        draft_m = std::max( draft_m, 0.0 );
+    }
     // increase the streamlining as more of the boat is covered in boat boards
     double c_water_drag = 1.25 - hull_coverage;
     // hull height starts at 0.3m and goes up as you add more boat boards
-    hull_height = 0.3 + 0.5 * hull_coverage;
+    if( hull_coverage == 0 ) {
+        hull_height = 0;
+    } else {
+        hull_height = 0.3 + 0.5 * hull_coverage;
+    }
     // F_water_drag = c_water_drag * cross_area * 1/2 * water_density * v^2
     // coeff_water_resistance = c_water_drag * cross_area * 1/2 * water_density
     coefficient_water_resistance = c_water_drag * width_m * draft_m * 0.5 * water_density;
@@ -7810,14 +7824,12 @@ void vehicle::update_time( const time_point &update_to )
     if( !converters.empty() ) {
         for( int p : converters ) {
             const auto &part = parts[p];
-            if( !part.is_unavailable() ) {
+            if( !part.is_unavailable() && part.enabled ) {
                 int repeat = part.info().get_max_conversions() * to_seconds<int>( elapsed ) / 60;
                 auto [ consume_type, consume_charges ] = part.info().get_conversion_input();
                 auto [ output_type, output_charges ] = part.info().get_conversion_output();
                 const item *output = item::spawn_temporary( output_type, calendar::turn, output_charges );
-
                 vehicle_part *consume_tank = nullptr;
-
                 if( !consume_type.is_null() ) {
                     auto consume_tank_idx = std::ranges::find_if( tanks, [&]( int tank ) {
                         const auto &part = parts[tank];
@@ -7826,16 +7838,12 @@ void vehicle::update_time( const time_point &update_to )
                         }
                         return false;
                     } );
-
                     if( consume_tank_idx == tanks.end() ) {
-                        std::cout << "scrungle2\n";
                         continue;
                     }
                     consume_tank = &parts[*consume_tank_idx];
                 }
-
                 vehicle_part *output_tank = nullptr;
-
                 if( !output_type.is_null() ) {
                     auto output_tank_idx = std::ranges::find_if( tanks, [&]( int tank ) {
                         const auto &part = parts[tank];
@@ -7844,36 +7852,29 @@ void vehicle::update_time( const time_point &update_to )
                         }
                         return false;
                     } );
-
                     if( output_tank_idx == tanks.end() ) {
-                        std::cout << "scrungle\n";
                         continue;
                     }
                     output_tank = &parts[*output_tank_idx];
                 }
-
                 int max_repeats = repeat;
-                if( consume_tank != nullptr ) {
+                if( consume_tank ) {
                     max_repeats = std::min( max_repeats, consume_tank->ammo_remaining() / consume_charges );
                 }
-
                 if( output_tank ) {
-                    max_repeats = std::min( max_repeats, output_tank->ammo_remaining() / output_charges );
+                    max_repeats = std::min( max_repeats,
+                                            ( output_tank->ammo_capacity() - output_tank->ammo_remaining() ) / output_charges );
                 }
-
                 if( part.info().get_conversion_charges() > 0 ) {
                     max_repeats = std::min( max_repeats,
                                             fuel_left( itype_battery ) / part.info().get_conversion_charges() );
                 }
-
                 if( consume_tank != nullptr ) {
                     consume_tank->ammo_consume( max_repeats * consume_charges, global_part_pos3( *consume_tank ) );
                 }
-
                 if( output_tank != nullptr ) {
-                    output_tank->ammo_consume( -1 * max_repeats * output_charges, global_part_pos3( *output_tank ) );
+                    output_tank->ammo_set( output_type, output_tank->ammo_remaining() + max_repeats * output_charges );
                 }
-
                 discharge_battery( part.info().get_conversion_charges() * max_repeats );
             }
         }
