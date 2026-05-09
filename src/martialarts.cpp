@@ -1522,11 +1522,11 @@ std::string ma_technique::get_description() const
     }
 
     if( disarms ) {
-        dump += _( "* Will <info>attempt todisarm</info> the target" ) + std::string( "\n" );
+        dump += _( "* Will <info>attempt to disarm</info> the target" ) + std::string( "\n" );
     }
 
     if( take_weapon ) {
-        dump += _( "* Will <info>attempt todisarm</info> the target and <info>take their weapon</info>" ) +
+        dump += _( "* Will <info>attempt to disarm</info> the target and <info>take their weapon</info>" ) +
                 std::string( "\n" );
     }
 
