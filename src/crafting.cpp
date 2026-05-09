@@ -778,6 +778,10 @@ item *Character::start_craft( craft_command &command, const tripoint & )
     }
 
     detached_ptr<item> craft = command.create_in_progress_craft();
+    if( !craft ) {
+        debugmsg( "start_craft: create_in_progress_craft failed for %s", command.get_skill_id().str() );
+        return nullptr;
+    }
     const recipe &making = craft->get_making();
     if( get_skill_level( command.get_skill_id() ) > making.difficulty * 1.25 ) {
         character_funcs::show_skill_capped_notice( *this, command.get_skill_id() );

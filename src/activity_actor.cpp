@@ -36,6 +36,7 @@
 #include "locations.h"
 #include "map.h"
 #include "map_iterator.h"
+#include "map_selector.h"
 #include "mapdata.h"
 #include "messages.h"
 #include "npc.h"
@@ -2078,6 +2079,19 @@ item *craft_activity_actor::find_in_progress_craft( Character &who ) const
         }
         return VisitResponse::NEXT;
     } );
+    if( result ) {
+        return result;
+    }
+    // If not in inventory, check the map at the crafter's feet — set_item_inventory
+    // may have placed it there if the NPC was over their carry capacity.
+    map_selector sel( who.pos(), 0 );
+    sel.visit_items( [&]( item * it ) {
+        if( it->is_craft() && &it->get_making() == rec ) {
+            result = it;
+            return VisitResponse::ABORT;
+        }
+        return VisitResponse::NEXT;
+    } );
     return result;
 }
 
@@ -2151,8 +2165,10 @@ void craft_activity_actor::start( player_activity &act, Character &who )
 
     item *craft_item = find_in_progress_craft( who );
     if( !craft_item ) {
-        debugmsg( "craft_activity_actor::start: no in-progress craft found in inventory for %s",
-                  rec->result_name() );
+        who.add_msg_player_or_npc(
+            _( "You lost your in progress %s and had to stop crafting." ),
+            _( "<npcname> lost the in progress %s and had to stop crafting." ),
+            rec->result_name() );
         act.set_to_null();
         return;
     }
