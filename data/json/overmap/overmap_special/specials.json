@@ -2835,7 +2835,7 @@
     "locations": [ "wilderness" ],
     "city_distance": [ 0, 8 ],
     "city_sizes": [ 8, -1 ],
-    "occurrences": [ 1, 1 ],
+    "occurrences": [ 0, 1 ],
     "flags": [ "CLASSIC", "URBAN", "ELECTRIC_GRID" ]
   },
   {
