@@ -309,7 +309,7 @@
     "type": "technique",
     "id": "tec_biojutsu_disarm",
     "name": "Disarm",
-    "messages": [ "You effortlessly disarm and stun %s", "<npcname> effortlessly disarms and stuns %s" ],
+    "messages": [ "You effortlessly stun %s with a disarming blow", "<npcname> effortlessly stuns %s with a disarming blow" ],
     "skill_requirements": [ { "name": "unarmed", "level": 1 } ],
     "unarmed_allowed": true,
     "weighting": 2,
@@ -613,7 +613,7 @@
     "type": "technique",
     "id": "tec_centipede_disarm",
     "name": "Disarm",
-    "messages": [ "You disarm %s with lightning speed", "<npcname> disarms %s with lightning speed" ],
+    "messages": [ "You strike at %s's weapon with lightning speed", "<npcname> strikes at %s's weapon with lightning speed" ],
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "disarms": true
