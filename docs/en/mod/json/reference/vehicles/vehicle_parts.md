@@ -62,6 +62,7 @@ Vehicle components when installed on a vehicle.
 "lift_coff": 0.5,             // Optional field, multiplier of wing effectiveness
 "propeller_diameter": 0.5,    // Optional field, diameter of propeller
 "length": 3,                  // Optional field, z-level length of ladder
+"default_color": "#622625"    // Optional field, default tint color when none other is defined
 ```
 
 ### Integrated Tools
