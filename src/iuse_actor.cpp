@@ -7741,6 +7741,56 @@ auto iuse_paint_stuff::use( player &who, item &it, bool b, const tripoint &pos )
     };
 }
 
+template<typename T>
+concept is_paint_area_fn =
+    requires(
+        const T &t,
+        const RGBColor &col,
+        const iuse_paint_stuff_config::paint_layer layer,
+        const tripoint &p )
+{
+    { t( col, layer, p ) }
+    -> std::same_as<bool>;
+};
+
+template<typename PaintFn>
+requires is_paint_area_fn<PaintFn>
+static auto iuse_paint_stuff_do_paint(
+    item &it, const float charge_cost, const std::pair<tripoint, tripoint> area, const PaintFn &cb )
+{
+    const auto col = iuse_paint_stuff::get_paint_color( it );
+    const auto [p0, p1] = area;
+    const auto layer = iuse_paint_stuff_config::get_paint_layer( it );
+
+    const auto get_cost = [&]() {
+        switch( layer ) {
+            default:
+                return charge_cost;
+            case iuse_paint_stuff_config::fg:
+            case iuse_paint_stuff_config::bg:
+                return charge_cost / 2;
+        }
+    };
+
+    float charges_used = 0.0f;
+    const float mod_cost = get_cost();
+
+    for( const auto &pos : tripoint_range( p0, p1 ) ) {
+        if( ( charges_used + mod_cost ) > it.ammo_remaining() ) {
+            break;
+        }
+
+        if( !cb( col, layer, pos ) ) {
+            continue;
+        }
+
+        charges_used += mod_cost;
+    }
+
+    const auto final_cost = static_cast<int>( std::ceil( charges_used * mod_cost ) );
+    return std::min( 1, final_cost );
+}
+
 auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
         const tripoint & ) const -> int
 {
@@ -7774,34 +7824,14 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
         return 0;
     }
 
-    const auto col = get_paint_color( it );
-    const auto [p0, p1] = area.value();
-    const auto layer = iuse_paint_stuff_config::get_paint_layer( it );
-
-    const auto get_cost = [&]() {
-        switch( layer ) {
-            default:
-                return charge_cost;
-            case iuse_paint_stuff_config::fg:
-            case iuse_paint_stuff_config::bg:
-                return charge_cost / 2;
-        }
-    };
-
-    float charges_used = 0.0f;
-    const float mod_cost = get_cost();
-
-    for( const auto &p : tripoint_range( p0, p1 ) ) {
-        if( ( charges_used + mod_cost ) > it.ammo_remaining() ) {
-            break;
-        }
-
+    using paint_layer = iuse_paint_stuff_config::paint_layer;
+    const auto ff =  [&]( const RGBColor & col, const paint_layer layer, const tripoint & p ) {
         const auto vpart = here.veh_at( p );
         if( !vpart.has_value() ) {
-            continue;
+            return false;
         }
         if( &vpart->vehicle() != &target_veh ) {
-            continue;
+            return false;
         }
         auto &disp_part = vpart.part_displayed()->part();
         const auto [p_bg, p_fg] = disp_part.get_color();
@@ -7824,12 +7854,10 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
                 }
                 break;
         }
+        return true;
+    };
 
-        charges_used += mod_cost;
-    }
-
-    const auto final_cost = static_cast<int>( std::ceil( charges_used * mod_cost ) );
-    return std::min( 1, final_cost );
+    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), ff );
 }
 
 auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
@@ -7844,19 +7872,11 @@ auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
         return 0;
     }
 
-    const auto col = get_paint_color( it );
-    const auto [p0, p1] = area.value();
-    const auto layer = iuse_paint_stuff_config::get_paint_layer( it );
-
-    int painted = 0;
-    for( const auto &p : tripoint_range( p0, p1 ) ) {
-        if( !is_paintable_terrain( m, p ) ) {
-            continue;
-        }
-
+    using paint_layer = iuse_paint_stuff_config::paint_layer;
+    const auto ff =  [&]( const RGBColor & col, const paint_layer layer, const tripoint & p ) {
         const auto _vars = m.ter_vars( p );
         if( _vars == nullptr ) {
-            continue;
+            return false;
         }
         auto &vars = *_vars;
 
@@ -7871,29 +7891,37 @@ auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
                     vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col );
                     vars.erase( TINT_COLOR_FG_VAR_NAME );
                     vars.erase( TINT_COLOR_BG_VAR_NAME );
-                    ++painted;
                 }
                 break;
             case iuse_paint_stuff_config::fg:
                 if( p_fg != col ) {
                     vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col );
-                    ++painted;
                 }
                 break;
             case iuse_paint_stuff_config::bg:
                 if( p_bg != col ) {
                     vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col );
-                    ++painted;
                 }
                 break;
         }
+        return true;
+    };
 
-        if( painted == it.charges ) {
-            break;
-        }
-    }
+    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), ff );
+}
 
-    return painted;
+auto iuse_paint_stuff::iuse_paint_stuff_furniture( player &, item &, bool,
+        const tripoint & ) const -> int
+{
+    add_msg( _( "Never mind." ) );
+    return 0;
+}
+
+auto iuse_paint_stuff::iuse_paint_stuff_item( player &, item &, bool,
+        const tripoint & ) const -> int
+{
+    add_msg( _( "Never mind." ) );
+    return 0;
 }
 
 auto iuse_paint_stuff::iuse_paint_stuff_graffiti( player &who, item &, bool,
@@ -7945,20 +7973,6 @@ auto iuse_paint_stuff::iuse_paint_stuff_graffiti( player &who, item &, bool,
     }
     who.moves -= move_cost;
     return 1;
-}
-
-auto iuse_paint_stuff::iuse_paint_stuff_furniture( player &, item &, bool,
-        const tripoint & ) const -> int
-{
-    add_msg( _( "Never mind." ) );
-    return 0;
-}
-
-auto iuse_paint_stuff::iuse_paint_stuff_item( player &, item &, bool,
-        const tripoint & ) const -> int
-{
-    add_msg( _( "Never mind." ) );
-    return 0;
 }
 
 void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
