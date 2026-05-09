@@ -667,8 +667,23 @@
     "initial_charges": 10,
     "max_charges": 10,
     "charges_per_use": 0,
-    "use_action": [ { "type": "paint_stuff", "charge_cost": 0 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
-    "flags": [ "WRITE_MESSAGE" ]
+    "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
+    "flags": [ "WRITE_MESSAGE" ],
+    "ammo": "battery",
+    "magazines": [
+      [
+        "battery",
+        [
+          "light_disposable_cell",
+          "light_minus_disposable_cell",
+          "light_battery_cell",
+          "light_plus_battery_cell",
+          "light_minus_battery_cell",
+          "light_atomic_battery_cell",
+          "light_minus_atomic_battery_cell"
+        ]
+      ]
+    ],
   },
   {
     "id": "stepladder",
