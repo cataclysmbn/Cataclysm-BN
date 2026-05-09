@@ -7790,7 +7790,7 @@ auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
     const float mod_cost = get_cost();
 
     for( const auto &p : tripoint_range( p0, p1 ) ) {
-        if( ( charges_used + mod_cost ) > it.charges ) {
+        if( ( charges_used + mod_cost ) > it.ammo_remaining() ) {
             break;
         }
 
