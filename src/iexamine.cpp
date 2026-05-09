@@ -448,18 +448,6 @@ void iexamine::nanoforge( player &p, const tripoint &examp )
 
     detached_ptr<item> new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn );
 
-    if( new_item->made_of( LIQUID ) ) {
-        const int amount = string_input_popup()
-                           .title( _( "Dispense how many units?" ) )
-                           .width( 5 )
-                           .text( std::to_string( 1 ) )
-                           .only_digits( true )
-                           .query_int();
-        item_count = amount;
-
-        new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn, item_count );
-    }
-
     auto reqs = *requirement_id( "superalloy_forge" );
 
     if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
@@ -474,16 +462,6 @@ void iexamine::nanoforge( player &p, const tripoint &examp )
         p.consume_tools( e );
     }
     p.invalidate_crafting_inventory();
-
-    if( new_item->is_armor() && new_item->has_flag( flag_VARSIZE ) ) {
-        new_item->set_flag( flag_FIT );
-    }
-
-    // we're sticking an item from our inventory under the nanofabrication dispenser
-    if( new_item->made_of( LIQUID ) ) {
-        liquid_handler::handle_all_liquid( std::move( new_item ), PICKUP_RANGE );  // let it own the pointer
-        return;
-    }
 
     here.add_item_or_charges( spawn_point, std::move( new_item ) );
 }
