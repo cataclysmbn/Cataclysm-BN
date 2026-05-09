@@ -323,7 +323,7 @@ void iexamine::nanofab( player &p, const tripoint &examp )
         return;
     }
 
-    if ( is_forge == false ) {
+    if( is_forge == false ) {
         auto nanofab_template = g->inv_map_splice( []( const item & e ) {
             return e.has_var( "NANOFAB_GROUP_ID" ) || e.has_var( "NANOFAB_ITEM_ID" );
         }, _( "Introduce nanofabricator template:" ), PICKUP_RANGE,
@@ -338,7 +338,7 @@ void iexamine::nanofab( player &p, const tripoint &examp )
 
     std::vector<std::string> recipe_ids;
 
-    if ( is_forge == false ) {
+    if( is_forge == false ) {
         if( nanofab_template->has_var( "NANOFAB_GROUP_ID" ) ) {
             // Preferred behavior: build from group
             item_group_id group_id( nanofab_template->get_var( "NANOFAB_GROUP_ID" ) );
@@ -399,7 +399,7 @@ void iexamine::nanofab( player &p, const tripoint &examp )
 
     auto qty = 0;
     auto reqs = null;
-    if (is_forge == false ) {
+    if( is_forge == false ) {
         qty = std::max( 1, new_item->volume() / 250_ml );
         reqs = *requirement_id( "nanofabricator" ) * qty;
     } else {

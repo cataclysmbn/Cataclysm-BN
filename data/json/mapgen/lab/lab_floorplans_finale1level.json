@@ -89,9 +89,7 @@
       "terrain": { "?": "t_nanofab", "r": "t_metal_floor", "/": "t_nanoforge_body" },
       "mapping": { "R": { "item": { "item": "nanomaterial" } } },
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 7, "y": 15 } ],
-      "place_loot": [
-        { "item": "id_science", "x": 17, "y": [ 16, 17 ] }
-      ],
+      "place_loot": [ { "item": "id_science", "x": 17, "y": [ 16, 17 ] } ],
       "items": {
         "m": { "item": "sheet_metal", "chance": 50, "repeat": [ 1, 2 ] },
         "y": { "item": "alloy_sheet", "chance": 100, "repeat": [ 1, 2 ] }
