@@ -7787,8 +7787,8 @@ static auto iuse_paint_stuff_do_paint(
         charges_used += mod_cost;
     }
 
-    const auto final_cost = static_cast<int>( std::ceil( charges_used * mod_cost ) );
-    return std::min( 1, final_cost );
+    const auto final_cost = static_cast<int>( std::ceil( charges_used ) );
+    return std::max( 1, final_cost );
 }
 
 auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
