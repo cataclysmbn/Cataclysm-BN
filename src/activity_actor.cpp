@@ -2312,7 +2312,8 @@ act_progress_message craft_activity_actor::get_progress_message(
 
     const auto fmt_spd = [&]( float level, const std::string & name ) -> std::string {
         const int pct = static_cast<int>( level * 100 );
-        if( pct == 100 ) {
+        if( pct == 100 )
+        {
             return "";
         }
         nc_color col = pct > 100 ? c_green : c_red;
