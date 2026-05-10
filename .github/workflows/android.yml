@@ -66,5 +66,6 @@ jobs:
         env:
           NDK_CCACHE: ccache
         run: |
+          mkdir -p ../lang/mo
           chmod +x gradlew
-          ./gradlew -Pj=$((`nproc`+0)) -Pabi_arm_32=false assembleExperimentalRelease
+          ./gradlew -Pj=$((`nproc`+0)) -Pabi_arm_32=false -Plocalize=false assembleExperimentalRelease

@@ -478,7 +478,7 @@ curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd
 2. Pull the translation files:
 
 ```sh
-tx pull --force
+tx pull --force --all
 ```
 
 3. Build with translations enabled:

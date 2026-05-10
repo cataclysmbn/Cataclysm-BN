@@ -410,7 +410,7 @@ curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd
 2. 번역 파일을 가져옵니다:
 
 ```sh
-tx pull --force
+tx pull --force --all
 ```
 
 3. 번역을 활성화한 상태로 빌드합니다:

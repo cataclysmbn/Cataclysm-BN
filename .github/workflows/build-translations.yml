@@ -34,7 +34,15 @@ jobs:
         if: github.repository == 'cataclysmbn/Cataclysm-BN'
         env:
           TX_TOKEN: ${{ secrets.TX_TOKEN }}
-        run: tx pull --force
+        run: tx pull --force --all
+
+      - name: Verify translations were pulled
+        if: github.repository == 'cataclysmbn/Cataclysm-BN'
+        run: |
+          if ! find lang/po -maxdepth 1 -name '*.po' -print -quit | grep -q .; then
+            echo "::error::No translation files were pulled from Transifex"
+            exit 1
+          fi
 
       - name: Discard invalid translations
         run: ./lang/discard_invalid_po.sh

@@ -352,7 +352,7 @@ curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd
 2. 翻訳ファイルを取得します。
 
 ```sh
-tx pull --force
+tx pull --force --all
 ```
 
 3. 翻訳を有効にしてビルドします。
