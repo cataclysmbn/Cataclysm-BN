@@ -113,6 +113,50 @@
   },
   {
     "type": "vehicle_color_palette",
+    "id": "farm_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "colors": [
+          { "color": "Flame Red", "weight": 10 },
+          { "color": "Universal Green", "weight": 10 },
+          { "color": "LED Blue", "weight": 2 },
+          { "color": "Persian Orange", "weight": 2 },
+          { "color": "Poster Yellow", "weight": 2 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "firetruck_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "colors": [
+          { "color": "Flame Red", "weight": 20 },
+          { "color": "White aluminium", "weight": 5 },
+          { "color": "Neon Green", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "ems_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "colors": [
+          { "color": "White aluminium", "weight": 20 },
+          { "color": "Flame Red", "weight": 10 },
+          { "color": "Traffic Yellow", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
     "id": "bus_standard",
     "palette": [
       {

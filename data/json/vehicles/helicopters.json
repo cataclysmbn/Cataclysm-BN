@@ -275,6 +275,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "small_civilian_rotors", "roof" ] },
@@ -400,6 +401,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "roof" ] },
@@ -515,6 +517,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "small_civilian_rotors", "roof" ] },
@@ -575,6 +578,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_ne", "halfboard_ne" ] },
