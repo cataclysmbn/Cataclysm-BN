@@ -388,7 +388,7 @@
     "effect": "teleport",
     "valid_targets": [ "self" ],
     "scale_int": true,
-    "flags": [ "SOMATIC", "SILENT", "NO_HANDS", "TARGET_TELEPORT" ],
+    "flags": [ "SOMATIC", "SILENT", "NO_HANDS" ],
     "min_range": 5,
     "max_range": 10,
     "range_increment": 0.5,
