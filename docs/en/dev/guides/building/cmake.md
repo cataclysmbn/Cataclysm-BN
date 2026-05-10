@@ -121,7 +121,7 @@ Install dependencies via [Homebrew](https://brew.sh/):
 
 ```sh
 brew install cmake ninja ccache sdl2 sdl2_image sdl2_ttf sdl2_mixer \
-  freetype gettext sqlite pkg-config
+  freetype gettext sqlite pkg-config ncurses flac
 ```
 
 > [!NOTE]
@@ -139,11 +139,15 @@ This places executables into `out/build/osx-arm-slim/`.
 
 #### Creating a macOS Distribution
 
+The macOS distribution presets build a DMG with the `dmgdist` target. `dmgbuild` must be available on `PATH`. Tiles builds also package SDL2 frameworks from `~/Library/Frameworks` or `/Library/Frameworks`.
+
 ```sh
-cmake --preset osx-arm-dist
-cmake --build --preset osx-arm-dist
-cmake --install build --prefix cataclysmbn-osx-tiles
+python3 -m pip install dmgbuild biplist
+cmake --preset osx-tiles-arm-dist
+cmake --build --preset osx-tiles-arm-dist
 ```
+
+Use `osx-curses-arm-dist`, `osx-tiles-arm-dist`, `osx-curses-x64-dist`, or `osx-tiles-x64-dist` for the desired architecture and UI.
 
 ### Windows Subsystem for Linux (WSL)
 

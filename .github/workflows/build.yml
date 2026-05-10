@@ -67,6 +67,7 @@ jobs:
           - name: macOS Curses x64
             artifact: osx-curses-x64
             os: macos-15-intel
+            preset: osx-curses-x64-dist
             tiles: false
             sound: false
             ext: dmg
@@ -75,6 +76,7 @@ jobs:
           - name: macOS Tiles x64
             artifact: osx-tiles-x64
             os: macos-15-intel
+            preset: osx-tiles-x64-dist
             tiles: true
             sound: true
             ext: dmg
@@ -84,6 +86,7 @@ jobs:
           - name: macOS Curses ARM
             artifact: osx-curses-arm
             os: macos-15
+            preset: osx-curses-arm-dist
             tiles: false
             sound: false
             ext: dmg
@@ -92,6 +95,7 @@ jobs:
           - name: macOS Tiles ARM
             artifact: osx-tiles-arm
             os: macos-15
+            preset: osx-tiles-arm-dist
             tiles: true
             sound: true
             ext: dmg
@@ -262,10 +266,13 @@ jobs:
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja ncurses flac pkg-config
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix ncurses):$(brew --prefix flac)" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$(brew --prefix flac)/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "$PWD/venv/bin" >> "$GITHUB_PATH"
 
       - name: Setup ccache (mac)
         if: runner.os == 'macOS'
@@ -372,13 +379,16 @@ jobs:
             -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb" `
             -DestinationPath "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
 
-      # Build with Make (macOS) - TODO: migrate to CMake once dmgdist target is implemented
-      - name: Build CBN (osx)
+      - name: Configure and Build with CMake (macOS)
         if: runner.os == 'macOS'
-        run: |
-          source ./venv/bin/activate
-          make -j3 CCACHE=1 TILES=${{ matrix.tiles && '1' || '0' }} SOUND=${{ matrix.sound && '1' || '0' }} RELEASE=1 LOCALIZE=1 LANGUAGES=all BACKTRACE=0 PCH=0 USE_HOME_DIR=1 OSX_MIN=11 FRAMEWORK=1 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
-          mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.preset }}
+          buildPreset: ${{ matrix.preset }}
+
+      - name: Rename distribution package (macOS)
+        if: runner.os == 'macOS'
+        run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       # Android builds
       - name: Set up JDK 11 (android)
