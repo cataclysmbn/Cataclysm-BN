@@ -6343,9 +6343,9 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
             if( special.has_flag( "ENDGAME" ) && globally_unique ) {
                 amount_to_place = is_true_center ? 1 : 0;
             } else {
-            //FINGERS CROSSED EMOGI
-            amount_to_place = x_in_y( min, max ) && ( !globally_unique ||
-                              !get_overmapbuffer( dimension_id_ ).contains_unique_special( id ) ) ? 1 : 0;
+                //FINGERS CROSSED EMOGI
+                amount_to_place = x_in_y( min, max ) && ( !globally_unique ||
+                                  !get_overmapbuffer( dimension_id_ ).contains_unique_special( id ) ) ? 1 : 0;
             }
         } else {
             // Number of instances normalized to terrain ratio
