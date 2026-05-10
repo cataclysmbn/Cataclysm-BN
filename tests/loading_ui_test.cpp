@@ -20,8 +20,7 @@ TEST_CASE( "loading_screen_image_scales_to_full_screen_size", "[loading_ui]" )
     CHECK( *scaled_size == point( 1600, 900 ) );
 }
 
-TEST_CASE( "loading_screen_image_preserves_aspect_ratio_for_different_screen_ratio",
-           "[loading_ui]" )
+TEST_CASE( "loading_screen_image_fits_full_height_and_scales_width", "[loading_ui]" )
 {
     const auto scaled_size = get_scaled_loading_image_size( loading_image_scaling_options{
         .image_size = point( 2560, 1440 ),
@@ -30,6 +29,17 @@ TEST_CASE( "loading_screen_image_preserves_aspect_ratio_for_different_screen_rat
 
     REQUIRE( scaled_size.has_value() );
     CHECK( *scaled_size == point( 1244, 700 ) );
+}
+
+TEST_CASE( "loading_screen_image_fits_full_height_for_tall_image", "[loading_ui]" )
+{
+    const auto scaled_size = get_scaled_loading_image_size( loading_image_scaling_options{
+        .image_size = point( 1000, 2000 ),
+        .screen_size = point( 1600, 900 )
+    } );
+
+    REQUIRE( scaled_size.has_value() );
+    CHECK( *scaled_size == point( 450, 900 ) );
 }
 
 TEST_CASE( "loading_screen_image_scaling_rejects_invalid_sizes", "[loading_ui]" )

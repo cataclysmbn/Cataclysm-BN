@@ -46,14 +46,11 @@ std::optional<point>
         return std::nullopt;
     }
 
-    const auto width_scale = static_cast<double>( opts.screen_size.x ) /
-                             static_cast<double>( opts.image_size.x );
     const auto height_scale = static_cast<double>( opts.screen_size.y ) /
                               static_cast<double>( opts.image_size.y );
-    const auto scale = std::min( width_scale, height_scale );
 
-    return point( std::max( 1, static_cast<int>( std::lround( opts.image_size.x * scale ) ) ),
-                  std::max( 1, static_cast<int>( std::lround( opts.image_size.y * scale ) ) ) );
+    return point( std::max( 1, static_cast<int>( std::lround( opts.image_size.x * height_scale ) ) ),
+                  opts.screen_size.y );
 }
 
 namespace
@@ -262,8 +259,7 @@ auto get_loading_image_rect( const point &image_size ) -> std::optional<SDL_Rect
         return std::nullopt;
     }
 
-    return get_scaled_loading_image_size( loading_image_scaling_options{ .image_size = image_size,
-                                          .screen_size = window_size } )
+    return get_scaled_loading_image_size( { .image_size = image_size, .screen_size = window_size } )
     .transform( [&window_size, &buffer_size]( const point & scaled_size ) {
         const auto output_rect = SDL_Rect{
             ( window_size.x - scaled_size.x ) / 2,
@@ -362,40 +358,42 @@ struct sdl_render_state_guard {
 } // namespace
 
 #if defined( TILES )
-auto loading_image_splash::advance_loading_image() -> bool
+auto advance_loading_image( loading_image_selection_state &state ) -> bool
 {
-    if( loading_image_paths.empty() ) {
-        loading_image_path.clear();
-        loading_image_author.reset();
+    if( state.paths.empty() ) {
+        state.current_path.clear();
+        state.current_author.reset();
         return false;
     }
-    if( next_loading_image_path >= loading_image_paths.size() ) {
-        next_loading_image_path = 0;
+    if( state.next_path >= state.paths.size() ) {
+        state.next_path = 0;
     }
 
-    loading_image_path = loading_image_paths[next_loading_image_path++];
-    loading_image_author = get_loading_image_author( loading_image_path );
+    state.current_path = state.paths[state.next_path++];
+    state.current_author = get_loading_image_author( state.current_path );
     return true;
 }
 
 auto loading_image_splash::draw_current_loading_image() -> bool
 {
-    while( !loading_image_path.empty() ) {
-        const auto *const cache = get_loading_image_cache( *loading_image_cache_state, loading_image_path );
+    while( !this->selection_state->current_path.empty() ) {
+        const auto *const cache = get_loading_image_cache( *loading_image_cache_state,
+                                  this->selection_state->current_path );
         if( cache != nullptr ) {
             const auto rect = get_loading_image_rect( cache->image_size );
             if( !rect ) {
-                log_loading_image( string_format( "failed to calculate rect for '%s'", loading_image_path ) );
+                log_loading_image( string_format( "failed to calculate rect for '%s'",
+                                                  this->selection_state->current_path ) );
                 return false;
             }
             const auto &renderer = get_sdl_renderer();
             const auto render_state_guard = sdl_render_state_guard( renderer );
             clear_sdl_display_buffer();
             RenderCopy( renderer, cache->texture, nullptr, &*rect );
-            draw_loading_image_author_if_present( loading_image_author );
+            draw_loading_image_author_if_present( this->selection_state->current_author );
             return true;
         }
-        if( !advance_loading_image() ) {
+        if( !advance_loading_image( *this->selection_state ) ) {
             break;
         }
     }
@@ -404,27 +402,55 @@ auto loading_image_splash::draw_current_loading_image() -> bool
 }
 #endif
 
-loading_image_splash::loading_image_splash()
-{
 #if defined( TILES )
+loading_image_splash::loading_image_splash() : selection_state( &owned_selection_state )
+{
     loading_image_cache_state = std::make_unique<loading_image_cache>();
-#endif
 
     ui_background = std::make_unique<background_pane>( [this]() {
-#if defined( TILES )
         if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
             return;
         }
-        if( !this->loading_image_lookup_attempted && can_choose_loading_image_path() ) {
-            loading_image_paths = choose_loading_image_paths();
-            next_loading_image_path = 0;
-            this->loading_image_lookup_attempted = true;
-            advance_loading_image();
+        if( !this->selection_state->lookup_attempted && can_choose_loading_image_path() ) {
+            this->selection_state->paths = choose_loading_image_paths();
+            this->selection_state->next_path = 0;
+            this->selection_state->lookup_attempted = true;
+        }
+        if( !selected_image_for_this_ui && this->selection_state->lookup_attempted ) {
+            selected_image_for_this_ui = true;
+            advance_loading_image( *this->selection_state );
         }
         draw_current_loading_image();
-#endif
     } );
 }
+
+loading_image_splash::loading_image_splash( loading_image_selection_state &selection_state ) :
+    selection_state( &selection_state )
+{
+    loading_image_cache_state = std::make_unique<loading_image_cache>();
+
+    ui_background = std::make_unique<background_pane>( [this]() {
+        if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
+            return;
+        }
+        if( !this->selection_state->lookup_attempted && can_choose_loading_image_path() ) {
+            this->selection_state->paths = choose_loading_image_paths();
+            this->selection_state->next_path = 0;
+            this->selection_state->lookup_attempted = true;
+        }
+        if( !selected_image_for_this_ui && this->selection_state->lookup_attempted ) {
+            selected_image_for_this_ui = true;
+            advance_loading_image( *this->selection_state );
+        }
+        draw_current_loading_image();
+    } );
+}
+#else
+loading_image_splash::loading_image_splash()
+{
+    ui_background = std::make_unique<background_pane>();
+}
+#endif
 
 loading_image_splash::~loading_image_splash() = default;
 
@@ -463,7 +489,11 @@ void loading_ui::new_context( const std::string &desc )
 void loading_ui::init()
 {
     if( menu != nullptr && ui == nullptr ) {
+#if defined( TILES )
+        ui_splash = std::make_unique<loading_image_splash>( loading_image_selection );
+#else
         ui_splash = std::make_unique<loading_image_splash>();
+#endif
 
         ui = std::make_unique<ui_adaptor>();
         ui->on_screen_resize( [this]( ui_adaptor & ui ) { menu->reposition( ui ); } );
