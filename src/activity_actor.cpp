@@ -17,6 +17,7 @@
 #include "character_functions.h"
 #include "construction.h"
 #include "construction_partial.h"
+#include "craft_command.h"
 #include "crafting.h"
 #include "debug.h"
 #include "enums.h"
@@ -2060,12 +2061,14 @@ craft_activity_actor::craft_activity_actor(
     const tripoint &location,
     std::vector<comp_selection<item_comp>> item_selections,
     std::vector<comp_selection<tool_comp>> tool_selections,
-    bool tools_prepaid
+    bool tools_prepaid,
+    bool is_long
 ) : rec( rec ), batch_size( batch_size ), craft_counter( craft_counter ),
     location( location ),
     item_selections( std::move( item_selections ) ),
     tool_selections( std::move( tool_selections ) ),
     tools_prepaid( tools_prepaid ),
+    is_long( is_long ),
     is_valid( rec != nullptr )
 {}
 
@@ -2283,6 +2286,11 @@ void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Characte
     }
     ::complete_craft( who, *craft_item );
     craft_item->detach();
+    if( is_long && rec ) {
+        if( who.making_would_work( rec->ident(), batch_size ) ) {
+            who.last_craft->execute( location );
+        }
+    }
 }
 
 void craft_activity_actor::serialize( JsonOut &jsout ) const
@@ -2296,6 +2304,7 @@ void craft_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "item_selections", item_selections );
     jsout.member( "tool_selections", tool_selections );
     jsout.member( "tools_prepaid", tools_prepaid );
+    jsout.member( "is_long", is_long );
     jsout.member( "last_turn_nr", last_turn_nr );
     jsout.end_object();
 }
@@ -2321,6 +2330,7 @@ std::unique_ptr<activity_actor> craft_activity_actor::deserialize( JsonIn &jsin 
     data.read( "item_selections", actor->item_selections );
     data.read( "tool_selections", actor->tool_selections );
     data.read( "tools_prepaid", actor->tools_prepaid );
+    data.read( "is_long", actor->is_long );
     data.read( "last_turn_nr", actor->last_turn_nr );
 
     return actor;

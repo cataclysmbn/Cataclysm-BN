@@ -238,7 +238,7 @@ void player_activity::deserialize( JsonIn &jsin )
     // ACT_MIGRATION_CANCEL will clear the backlog and reset npc state
     // this may cause inconvenience but should avoid any lasting damage to npcs
     if( has_actor && type != ACT_MIGRATION_CANCEL ) {
-        if( !data.has_member( "actor" ) ) {
+        if( !data.has_member( "actor" ) || data.has_null( "actor" ) ) {
             type = ACT_MIGRATION_CANCEL;
         } else {
             auto actor = data.get_object( "actor" );

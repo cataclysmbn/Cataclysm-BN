@@ -124,6 +124,7 @@ class craft_activity_actor final : public activity_actor
         std::vector<comp_selection<tool_comp>> tool_selections;
 
         bool tools_prepaid = false;
+        bool is_long = false;
         bool is_valid = false;
         int last_turn_nr = -1;  // turn# when last do_turn ran; -1 = never set
 
@@ -147,7 +148,8 @@ class craft_activity_actor final : public activity_actor
             const tripoint &location = tripoint_zero,
             std::vector<comp_selection<item_comp>> item_selections = {},
             std::vector<comp_selection<tool_comp>> tool_selections = {},
-            bool tools_prepaid = false
+            bool tools_prepaid = false,
+            bool is_long = false
         );
 
         activity_id get_type() const override {
