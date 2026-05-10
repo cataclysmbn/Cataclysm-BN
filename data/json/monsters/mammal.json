@@ -2017,7 +2017,11 @@
     "reproduction": { "baby_monster": "mon_horse_foal", "baby_count": 1, "baby_timer": 360 },
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
     "special_attacks": [ [ "EAT_CROP", 7200 ] ],
-    "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly.", "pet": "The %s nuzzles you affectionately." },
+    "petfood": {
+      "food": [ "CATTLEFOOD" ],
+      "feed": "The %s seems to like you! It lets you pat its head and seems friendly.",
+      "pet": "The %s nuzzles you affectionately."
+    },
     "pet_training": {
       "hp_mult": 1.2,
       "melee_mult": 1.15,
