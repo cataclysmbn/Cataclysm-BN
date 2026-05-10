@@ -88,7 +88,8 @@
           { "color": "Noble Grey", "weight": 20, "//": "Federal Standard 36176" },
           { "color": "Baby Blue", "weight": 10 },
           { "color": "Onyx Black", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
-          { "color": "Technical Blue", "weight": 5 },
+          { "color": "Technical Blue", "weight": 10 },
+          { "color": "Linen Blue", "weight": 5 },
           { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
         ]
       }
