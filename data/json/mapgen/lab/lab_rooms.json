@@ -99,6 +99,29 @@
     }
   },
   {
+    "//": "7x7 dissection room",
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_room_7x7",
+    "object": {
+      "mapgensize": [ 7, 7 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "S.....S",
+        "..ccc..",
+        ".......",
+        "..6cc..",
+        ".......",
+        "ḟh...hḟ",
+        "cc...cc"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "place_traps": [ { "trap": "tr_dissector", "x": 3, "y": 2 },
+      { "trap": "tr_dissector", "x": 2, "y": 2 },
+      { "trap": "tr_dissector", "x": 4, "y": 2 } ]
+    }
+  },
+  {
     "type": "palette",
     "id": "lab_palette_map_computer",
     "computers": {
