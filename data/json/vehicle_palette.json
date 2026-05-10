@@ -263,13 +263,13 @@
         "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "Prince Grey", "weight": 10 },
-        { "color": "Ink Black", "weight": 5 },
+          { "color": "Ink Black", "weight": 5 },
           { "color": "Copper Red", "weight": 5 },
           { "color": "Persian Orange", "weight": 5 },
           { "color": "Traffic Yellow", "weight": 5 },
           { "color": "Ranger Green", "weight": 5 },
           { "color": "Caribbean Blue", "weight": 5 },
-          { "color": "Coronation Blue", "weight": 1}
+          { "color": "Coronation Blue", "weight": 1 }
         ]
       }
     ]
@@ -283,10 +283,10 @@
         "colors": [
           { "color": "White aluminium", "weight": 15 },
           { "color": "British Mauve", "weight": 10 },
-          { "color": "Pompeii Red", "weight": 10},
-          { "color": "Poster Yellow", "weight": 5},
-          { "color": "Golf Green", "weight": 5},
-          { "color": "Coronation Blue", "weight": 1}
+          { "color": "Pompeii Red", "weight": 10 },
+          { "color": "Poster Yellow", "weight": 5 },
+          { "color": "Golf Green", "weight": 5 },
+          { "color": "Coronation Blue", "weight": 1 }
         ]
       }
     ]
