@@ -195,6 +195,7 @@ static const efftype_id effect_sheared( "sheared" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_under_op( "under_operation" );
+static const efftype_id effect_well_fed( "well_fed" );
 
 static const fault_id fault_bionic_nonsterile( "fault_bionic_nonsterile" );
 
@@ -4229,6 +4230,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
         act->set_to_null();
         return;
     }
+    mon->remove_effect( effect_well_fed );
     if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
         if( mon && mon->type->pet_training ) {
             mon->training_level = std::min( mon->training_level + 1, mon->type->pet_training->max_level );

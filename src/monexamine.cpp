@@ -59,6 +59,7 @@ static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_leashed( "leashed" );
 static const efftype_id effect_led_by_leash( "led_by_leash" );
 static const efftype_id effect_tied( "tied" );
+static const efftype_id effect_well_fed( "well_fed" );
 
 static const itype_id itype_cash_card( "cash_card" );
 static const itype_id itype_id_industrial( "id_industrial" );
@@ -164,6 +165,8 @@ bool monexamine::pet_menu( monster &z )
                         pet_name, z.training_level, z.type->pet_training->max_level );
     } else if( get_player_character().get_skill_level( skill_survival ) <= 3 ) {
         amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires survival 4)" ), pet_name );
+    } else if( !z.has_effect( effect_well_fed ) ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires well-fed)" ), pet_name );
     } else {
         amenu.addentry( train_combat_pet, true, '[', _( "Train %s (level %d/%d)" ), pet_name,
                         z.training_level, z.type->pet_training->max_level );
@@ -883,8 +886,8 @@ void monexamine::play_with( monster &z )
 
 void monexamine::train_pet( monster &z )
 {
-    std::string pet_name = z.get_name();
     avatar &you = get_avatar();
+    std::string pet_name = z.get_name();
     you.assign_activity( ACT_TRAIN_PET, to_moves<int>( 60_minutes ) );
     you.activity->monsters.push_back( g->shared_from( z ) );
     you.activity->str_values.push_back( pet_name );
