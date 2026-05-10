@@ -55,5 +55,5 @@
     "weight": "4 g",
     "volume": "4 ml",
     "use_action": { "type": "ammobelt", "belt": "belt277" }
-  },
+  }
 ]
