@@ -4224,8 +4224,12 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
         auto mon = act->monsters[0].lock();
         if( mon && mon->type->pet_training ) {
             mon->training_level = std::min( mon->training_level + 1, mon->type->pet_training->max_level );
-            if( mon->training_level == 1 && mon->has_flag( MF_PET_MOUNTABLE ) ) {
-                mon->monster_flags.insert( MF_COMBAT_MOUNT );
+            for( const auto &lf : mon->type->pet_training->level_flags ) {
+                if( lf.level == mon->training_level ) {
+                    for( const m_flag f : lf.flags ) {
+                        mon->monster_flags.insert( f );
+                    }
+                }
             }
             p->add_msg_if_player( m_good,
                                   _( "Training your %s has paid off!  They are now at training level %d/%d." ),

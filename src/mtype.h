@@ -342,6 +342,11 @@ struct mtype {
         // Pet food category this monster is in
         pet_food_data petfood;
 
+        struct pet_training_level_flags {
+            int level = 0;
+            std::vector<m_flag> flags;
+        };
+
         struct pet_training_multipliers {
             // Per-level multipliers: 1.2 means each training level gives +20% of base stat.
             // Values below 1.0 would decrease stats; values above 1.0 increase them.
@@ -349,6 +354,7 @@ struct mtype {
             float melee = 1.15f;
             float dodge = 1.15f;
             int max_level = 3;
+            std::vector<pet_training_level_flags> level_flags;
         };
         // Per-level stat multipliers when this monster is trained as a pet.
         // Absent means this monster cannot be trained.
