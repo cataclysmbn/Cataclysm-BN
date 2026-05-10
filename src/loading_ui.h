@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "point.h"
+
 #if defined( TILES )
 struct loading_image_cache;
 #endif
@@ -14,6 +16,14 @@ class background_pane;
 class loading_image_splash;
 class ui_adaptor;
 class uilist;
+
+struct loading_image_scaling_options {
+    point image_size = point_zero;
+    point screen_size = point_zero;
+};
+
+auto get_scaled_loading_image_size( const loading_image_scaling_options &opts ) ->
+std::optional<point>;
 
 class loading_image_splash
 {

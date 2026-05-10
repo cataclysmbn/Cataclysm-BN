@@ -108,7 +108,7 @@
 #include "item.h"
 #include "item_category.h"
 #include "item_contents.h"
-#include "item_functions.h";
+#include "item_functions.h"
 #include "item_stack.h"
 #include "itype.h"
 #include "iuse.h"

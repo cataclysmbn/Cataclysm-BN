@@ -60,6 +60,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 - **SHOULD NOT** modify existing headers with >10 usages. Create new header with pure functions.
 - **MUST** use modern C++23 features.
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
+- **MUST NOT** manually write an options/struct type at a call site when the function parameter type makes it inferable; use `{ .field = value }` instead of `options_type{ .field = value }`.
 - **SHOULD** search for existing solution because it's a large, legacy codebase.
 
 ## Workflow
@@ -135,3 +136,5 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 
 - **Docs**: [Building](./docs/en/dev/guides/building/cmake.md), [Formatting](./docs/en/dev/guides/formatting.md), [Dev Index](./docs/en/dev/).
 - **Review**: [LLM Guide](./.github/llm_review_guide.md).
+
+- When fixing a bug, preserve requested behavior and visible content unless the user explicitly asks to remove it; fix the underlying issue instead of suppressing the affected feature.
