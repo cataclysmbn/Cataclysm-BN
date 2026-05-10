@@ -1697,5 +1697,22 @@
     "using": [ [ "forging_standard", 10 ] ],
     "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
     "components": [ [ [ "scrap", 10 ], [ "sheet_metal_small", 2 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "ammolink277",
+    "charges": 25,
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MAGAZINES",
+    "skill_used": "fabrication",
+    "difficulty": 4,
+    "skills_required": [ "gun", 1 ],
+    "time": "30 m",
+    "batch_time_factors": [ 50, 3 ],
+    "autolearn": [ [ "fabrication", 5 ], [ "gun", 2 ] ],
+    "book_learn": [ [ "manual_rifle", 3 ], [ "recipe_bullets", 3 ] ],
+    "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
+    "using": [ [ "forging_standard", 2 ] ],
+    "components": [ [ [ "scrap", 2 ] ] ]
   }
 ]
