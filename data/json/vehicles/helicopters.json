@@ -640,6 +640,7 @@
     "type": "vehicle",
     "name": "AH-64 Apache",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       {
         "x": -3,
@@ -1254,6 +1255,7 @@
     "type": "vehicle",
     "name": "V-22 Osprey",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       {
         "x": -12,
@@ -2013,6 +2015,7 @@
     "type": "vehicle",
     "name": "UH-60 Blackhawk",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof", "NBC_seal" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "roof", "NBC_seal" ] },

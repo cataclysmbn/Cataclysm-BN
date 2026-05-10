@@ -932,6 +932,7 @@
       "# {|#      ",
       "  |(       "
     ],
+    "color_palette": "military_fighter",
     "blueprint_origin": { "x": 8, "y": 3 },
     "palette": {
       "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],
@@ -1014,7 +1015,7 @@
       "  |b#      ",
       "  |(       "
     ],
-    "color_palette": "fighter_standard",
+    "color_palette": "military_fighter",
     "blueprint_origin": { "x": 8, "y": 3 },
     "palette": {
       "-": [ "xlframe_vertical", "carbon_halfboard_vertical" ],
@@ -1088,6 +1089,7 @@
     "id": "plane_f15e_eagle",
     "type": "vehicle",
     "name": "F-15E Strike Eagle",
+    "color_palette": "military_fighter",
     "parts": [
       { "x": -6, "y": -1, "parts": [ "xlframe_vertical", "wing_carbon_horizontal", "carbon_halfboard_vertical" ] },
       {

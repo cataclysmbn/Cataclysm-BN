@@ -63,6 +63,56 @@
   {
     "type": "vehicle_color_palette",
     "id": "military_standard",
+    "//": "Actual US Military vehicle colors, See: Federal Standard FED-STD-595B",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "colors": [
+          { "color": "Almond Green", "weight": 20, "//": "CARC Green 383 (Federal Standard 34094)" },
+          { "color": "Tree bark brown", "weight": 10, "//": "CARC Brown 383ish (Federal Standard 30051)" },
+          { "color": "Onyx Black", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
+          { "color": "Manzanilla Olive", "weight": 5, "//": "CARC Sand (Federal Standard 33303)"  },
+          { "color": "Light Ash Brown", "weight": 5, "//": "CARC Tan 686 (Federal Standard 33446)"  },
+          { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_fighter",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "trunk_carbon_flat", "hatch" ],
+        "colors": [
+          { "color": "Noble Grey", "weight": 20, "//": "FS 36176" },
+          { "color": "Baby Blue", "weight": 10 },
+          { "color": "Onyx Black", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
+          { "color": "Linen Blue", "weight": 5 },
+          { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_heli",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "colors": [
+          { "color": "Cataclysm Green", "weight": 20 },
+          { "color": "Onyx Black", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
+          { "color": "Baby Blue", "weight": 5 },
+          { "color": "White aluminium", "weight": 5 },
+          { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_boat",
     "palette": [
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
@@ -85,8 +135,8 @@
         "colors": [
           { "color": "Ink Black", "weight": 10 },
           { "color": "Silver Grey", "weight": 10 },
-          { "color": "Silver Fir Blue", "weight": 2 },
-          { "color": "Steel Blue", "weight": 5 }
+          { "color": "Steel Blue", "weight": 5 },
+          { "color": "Silver Fir Blue", "weight": 2, "//": "old pre-90s style police lightblue" }
         ]
       }
     ]
@@ -136,7 +186,8 @@
         "colors": [
           { "color": "Flame Red", "weight": 20 },
           { "color": "White aluminium", "weight": 5 },
-          { "color": "Neon Green", "weight": 1 }
+          { "color": "LED Green", "weight": 5, "//": "this is actually a yellow" },
+          { "color": "Neon Green", "weight": 1, "//": "airport firetruck color" }
         ]
       }
     ]
@@ -199,20 +250,6 @@
           { "color": "North Grey", "weight": 10 },
           { "color": "Ink Black", "weight": 10 },
           { "color": "Ruby Violet", "weight": 5, "//": "Sneaky military craft :)" }
-        ]
-      }
-    ]
-  },
-  {
-    "type": "vehicle_color_palette",
-    "id": "fighter_standard",
-    "palette": [
-      {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
-        "colors": [
-          { "color": "North Grey", "weight": 10 },
-          { "color": "Ink Black", "weight": 10 },
-          { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
         ]
       }
     ]
