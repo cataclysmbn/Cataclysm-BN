@@ -739,7 +739,7 @@ void vehicle_part::set_color( const RGBColor &bg, const RGBColor &fg )
         .fg = fg
     };
 
-    if (base->type->has_flag(flag_NO_PAINT)) {
+    if( base->type->has_flag( flag_NO_PAINT ) ) {
         return;
     }
 
