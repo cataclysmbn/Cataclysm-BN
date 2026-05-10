@@ -2674,6 +2674,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "examine" );
     ctxt.register_action( "advinv" );
     ctxt.register_action( "pickup" );
+    ctxt.register_action( "pickup_all" );
     ctxt.register_action( "pickup_feet" );
     ctxt.register_action( "grab" );
     ctxt.register_action( "haul" );
@@ -7348,6 +7349,11 @@ void game::pickup()
         return;
     }
     pickup( *examp_ );
+}
+
+void game::pickup_all()
+{
+    pickup::pick_up_all_nearby();
 }
 
 void game::pickup( const tripoint &p )
