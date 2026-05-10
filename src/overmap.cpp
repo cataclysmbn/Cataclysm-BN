@@ -6268,6 +6268,10 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
         if( is_true_center && s->has_flag( "ENDGAME" ) ) {
             weight *= 1000;
         }
+        // Make certain global unique specials flagged as specific to endgame don't spawn elsewhere.
+        if( !is_true_center && s->has_flag( "ENDGAME" ) && s->has_flag( "GLOBALLY_UNIQUE" ) ) {
+            weight = 0;
+        }
         return weight;
     };
     std::sort( enabled_specials.begin(), enabled_specials.end(),
@@ -6336,10 +6340,13 @@ void overmap::place_specials( overmap_special_batch &enabled_specials )
         int amount_to_place;
         if( unique || globally_unique ) {
             const overmap_special_id &id = iter.special_details->id;
-
+            if( special.has_flag( "ENDGAME" ) && globally_unique ) {
+                amount_to_place = is_true_center ? 1 : 0;
+            } else {
             //FINGERS CROSSED EMOGI
             amount_to_place = x_in_y( min, max ) && ( !globally_unique ||
                               !get_overmapbuffer( dimension_id_ ).contains_unique_special( id ) ) ? 1 : 0;
+            }
         } else {
             // Number of instances normalized to terrain ratio
             float real_max = std::max( static_cast<float>( min ), max * rate );
