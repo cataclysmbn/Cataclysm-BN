@@ -212,6 +212,8 @@ tripoint_abs_omt start_location::find_player_initial_location() const
     // creating overmaps as necessary.
     const int radius = 3;
     std::vector<point_abs_om> overmaps = closest_points_first( point_abs_om(), radius );
+    // Shuffle 8 first ones after (0,0) so that (0,0) retains priority, but if not so that we don't always start at (1,0)
+    std::shuffle( overmaps.begin() + 1, overmaps.begin() + 8, rng_get_engine() );
     for( const point_abs_om &omp : overmaps ) {
         overmap &omap = get_primary_overmapbuffer().get( omp );
         const tripoint_om_omt omtstart = omap.find_random_omt( random_target() );
