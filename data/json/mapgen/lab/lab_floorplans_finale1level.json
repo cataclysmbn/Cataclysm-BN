@@ -293,6 +293,143 @@
     }
   },
   {
+    "//": "experimental firing range room",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_finale_1level" ],
+    "weight": 100,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "xxx..................xxx",
+        "xhd..................dhx",
+        "d.d.----------------.d.d",
+        "....|//////////////|....",
+        "....|,,,,,,,,,,,,I,|....",
+        "....|,,,,,,,,,,,???|....",
+        "....|,I,,,III,,I,,,|....",
+        "....|/?/,,III,???,,|....",
+        "....|I,,,,III,,,,,,|....",
+        "....|??,,,,,,,,,,,,|....",
+        "....|,,,,,,,,,,,,,,|....",
+        "....|,,,,,I,,,,I,,,|....",
+        "....|,,,,???,,,,,,,|....",
+        "....|,,,,,,,,,,,,,,|....",
+        "....|///,,,,,,,,///|....",
+        "....|---yyyyyyyy---|....",
+        "....gr,,,,,,,,,,,,rg....",
+        "....gr,,,,OOOO,,,,rg....",
+        "....gr,,,,,,,,,,,,rg....",
+        "....gggggggGGggggggg....",
+        "........................",
+        "ddd.....xxdppdxx.....ddd",
+        "xh....................hx",
+        "xxx..................xxx"
+      ],
+      "palettes": [ "lab_palette", "lab_loot_research" ],
+      "furniture": { "I": "f_target", "y": "f_counter", "?": "f_sandbag_half", "/": "f_sandbag_wall", "O": "f_locker", "p": "f_control_station" },
+      "terrain": { "?": "t_strconc_floor", "r": "t_strconc_floor", "/": "t_strconc_floor", "O": "t_strconc_floor", "I": "t_strconc_floor" },
+      "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 5, "y": 16 }, { "chunks": [ "lab_weapon_loot" ], "x": 8, "y": 15 } ],
+      "place_loot": [
+        { "group": "mech_power_cell_spawn", "x": 18, "y": 17 },
+        { "item": "id_science", "x": 18, "y": 16 }
+      ],
+      "place_monster": [
+        { "monster": "mon_secubot", "x": [ 1, 4 ], "y": [ 20, 22 ], "chance": 90 },
+        { "monster": "mon_secubot", "x": [ 19, 20 ], "y": [ 20, 22 ], "chance": 90 },
+        { "monster": "mon_mech_recon", "x": 8, "y": 17, "chance": 50 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_weapon_loot",
+    "weight": 25,
+    "object": {
+      "mapgensize": [ 8, 3 ],
+      "rows": [
+        "yIyyyyyy",
+        ",,,,,,,,",
+        ",,OOO?,,",
+      ],
+      "palettes": [ "lab_palette" ],
+      "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },
+      "terrain": { "O": "t_strconc_floor", "I": "t_strconc_floor", "?": "t_strconc_floor" },
+      "mapping": {
+        "I": { "item": [ { "item": "plasma_gun", "chance": 100 } ] },
+        "O": { "item": [ { "item": "plasma", "chance": 100 } ] },
+        "?": { "item": [ { "item": "adv_UPS_off", "chance": 100 }, { "item": "plut_cell", "chance": 100 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_weapon_loot",
+    "weight": 25,
+    "object": {
+      "mapgensize": [ 8, 3 ],
+      "rows": [
+        "yIyyyyyy",
+        ",,,,,,,,",
+        ",,OOO?,,",
+      ],
+      "palettes": [ "lab_palette" ],
+      "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },
+      "terrain": { "O": "t_strconc_floor", "I": "t_strconc_floor", "?": "t_strconc_floor" },
+      "mapping": {
+        "I": { "item": [ { "item": "plasma_rifle", "chance": 100 } ] },
+        "O": { "item": [ { "item": "plasma", "chance": 100 } ] },
+        "?": { "item": [ { "item": "adv_UPS_off", "chance": 100 }, { "item": "plut_cell", "chance": 100 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_weapon_loot",
+    "weight": 25,
+    "object": {
+      "mapgensize": [ 8, 3 ],
+      "rows": [
+        "yIyyyyyy",
+        ",,,,,,,,",
+        ",,OOO?,,",
+      ],
+      "palettes": [ "lab_palette" ],
+      "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },
+      "terrain": { "O": "t_strconc_floor", "I": "t_strconc_floor", "?": "t_strconc_floor" },
+      "mapping": {
+        "I": { "item": [ { "item": "emp_gun", "chance": 100 } ] },
+        "O": { "item": [ { "item": "plut_cell", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "?": { "item": [ { "item": "adv_UPS_off", "chance": 100, "repeat": [ 2, 2 ] }, { "item": "plut_cell", "chance": 100 } ] }
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lab_weapon_loot",
+    "weight": 25,
+    "object": {
+      "mapgensize": [ 8, 3 ],
+      "rows": [
+        "yIyyyyyy",
+        ",,,,,,,,",
+        ",,OOO?,,",
+      ],
+      "palettes": [ "lab_palette" ],
+      "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },
+      "terrain": { "O": "t_strconc_floor", "I": "t_strconc_floor", "?": "t_strconc_floor" },
+      "mapping": {
+        "I": { "item": [ { "item": "hk_g80mag", "chance": 100, "repeat": [ 3, 4 ] }, { "item": "hk_g80", "chance": 100 } ] },
+        "O": { "item": [ { "item": "12mm", "chance": 100, "repeat": [ 2, 3 ] } ] },
+        "?": { "item": [ { "item": "adv_UPS_off", "chance": 100 }, { "item": "plut_cell", "chance": 100 } ] }
+      }
+    }
+  },
+  {
     "type": "mapgen",
     "method": "json",
     "nested_mapgen_id": "lab_finale_loot",
