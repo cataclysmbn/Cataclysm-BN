@@ -27,7 +27,7 @@
     "copy-from": "mg_base",
     "type": "GUN",
     "name": { "str": "M250" },
-    "description": "The M250 is a mountable machine gun once meant to replace the M249 SAW.  Despite its powerful cartridge and advanced optics, the M250 suffered from several flaws as a result of the extremely high-pressure round it used along with poor quality control, and as a result was relegated to special forces armories and reserves after the development of Rivtech's caseless designs.",
+    "description": "The M250 is a light machine gun once meant to replace the M249 SAW.  Despite its powerful cartridge and advanced optics, the M250 suffered from several flaws as a result of the extremely high-pressure round it used along with poor quality control, and as a result was relegated to special forces armories and reserves after the development of Rivtech's caseless designs.",
     "weight": "6000 g",
     "volume": "3 L",
     "barrel_volume": "225 ml",
