@@ -59,44 +59,6 @@ local fmt_function_signature = function(arg_list, ret_type, class_name, meta)
   return "fun(" .. params_str .. ")" .. ret_str
 end
 
----@type table<string, table<string, string[]>>
-local manual_member_signatures = {
-  Creature = {
-    sees = {
-      "fun(self: Creature, target: Tripoint | Creature): boolean",
-    },
-  },
-  Character = {
-    add_morale = {
-      "fun(self: Character, type: MoraleTypeDataId, bonus: integer, max_bonus: integer?, duration: TimeDuration?, decay_start: TimeDuration?, capped: boolean?, item_type: ItypeRaw?)",
-    },
-  },
-  coords = {
-    rl_dist = {
-      "fun(arg1: Tripoint | Point, arg2: Tripoint | Point): integer",
-    },
-  },
-  DistributionGridTracker = {
-    grid_at = {
-      "fun(self: DistributionGridTracker, pos: Tripoint): DistributionGrid",
-    },
-  },
-  gapi = {
-    get_all_npcs = {
-      "fun(): Npc[]",
-    },
-  },
-}
-
----@param class_name string
----@param member_name string
----@return string[]?
-local get_manual_member_signatures = function(class_name, member_name)
-  local class_overrides = manual_member_signatures[class_name]
-  if not class_overrides then return nil end
-  return class_overrides[member_name]
-end
-
 ---@type table<string, string>
 local operator_metamethod_names = {
   __add = "add",
@@ -192,6 +154,18 @@ end
 --[[
     Formats ---@field annotation for function members, handling overloads.
   ]]
+---@param signatures string[]
+---@return string
+local fmt_signature_union = function(signatures)
+  if #signatures <= 1 then return signatures[1] or "function" end
+
+  local wrapped = {}
+  for _, signature in ipairs(signatures) do
+    table.insert(wrapped, "(" .. signature .. ")")
+  end
+  return table.concat(wrapped, " | ")
+end
+
 ---@param member table {name:string, comment?:string, overloads:table[]}
 ---@param class_name string The name of the owning class/library
 ---@return string
@@ -215,12 +189,7 @@ local fmt_function_field = function(member, class_name)
     table.insert(signatures, signature)
   end
 
-  local manual_signatures = get_manual_member_signatures(class_name, tostring(member.name))
-  if manual_signatures then
-    for _, signature in ipairs(manual_signatures) do
-      add_signature(signature)
-    end
-  elseif member.overloads and #member.overloads > 0 then
+  if member.overloads and #member.overloads > 0 then
     for _, overload in ipairs(member.overloads) do
       add_signature(fmt_function_signature(overload.args, overload.retval, class_name, member.comment))
     end
@@ -238,7 +207,7 @@ local fmt_function_field = function(member, class_name)
     add_signature("function")
   end
 
-  local signature_union = table.concat(signatures, " | ")
+  local signature_union = fmt_signature_union(signatures)
   ret = ret .. "---@field " .. member_name .. " " .. signature_union
   if member.comment and member.comment ~= "" then
     local op = function(m)
@@ -386,26 +355,6 @@ doc_gen_func.impl = function()
 ---@field cata_internal table
 ---@field add_hook fun(hook_name: string, entry: HookEntry) @Registers a hook.
 game = {}
-
----@class gapi
----@field get_all_npcs fun(): Npc[]
-
----@class Map
----@field get_vehicles fun(self: Map): WrappedVehicle[]
----@field replace_vehicle fun(self: Map, vehicle: WrappedVehicle, vehicle_id: string, opts: table?): boolean
----@field replace_vehicle fun(self: Map, pos: Tripoint, vehicle_id: string, opts: table?): boolean
-
----@class Character
----@field activate_bionic fun(self: Character, bid: BionicDataId, block_message: boolean?): boolean
----@field deactivate_bionic fun(self: Character, bid: BionicDataId, block_message: boolean?): boolean
----@field toggle_safe_fuel_mod fun(self: Character, bid: BionicDataId)
-
----@class Npc
----@field talk_to_u fun(self: Npc, topic: string?, radio_contact: boolean?)
-
----@class overmapbuffer
----@field reveal fun(center: Tripoint, radius: integer, filter: fun(oter_id: OterIntId): boolean?): boolean
----@field reveal fun(center: Tripoint, radius: integer): boolean
 
 ---@class OnPlayerTryMoveParams
 ---@field player Avatar
