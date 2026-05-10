@@ -327,13 +327,23 @@
         "xxx..................xxx"
       ],
       "palettes": [ "lab_palette", "lab_loot_research" ],
-      "furniture": { "I": "f_target", "y": "f_counter", "?": "f_sandbag_half", "/": "f_sandbag_wall", "O": "f_locker", "p": "f_control_station" },
-      "terrain": { "?": "t_strconc_floor", "r": "t_strconc_floor", "/": "t_strconc_floor", "O": "t_strconc_floor", "I": "t_strconc_floor" },
+      "furniture": {
+        "I": "f_target",
+        "y": "f_counter",
+        "?": "f_sandbag_half",
+        "/": "f_sandbag_wall",
+        "O": "f_locker",
+        "p": "f_control_station"
+      },
+      "terrain": {
+        "?": "t_strconc_floor",
+        "r": "t_strconc_floor",
+        "/": "t_strconc_floor",
+        "O": "t_strconc_floor",
+        "I": "t_strconc_floor"
+      },
       "place_nested": [ { "chunks": [ "lab_finale_loot" ], "x": 5, "y": 16 }, { "chunks": [ "lab_weapon_loot" ], "x": 8, "y": 15 } ],
-      "place_loot": [
-        { "group": "mech_power_cell_spawn", "x": 18, "y": 17 },
-        { "item": "id_science", "x": 18, "y": 16 }
-      ],
+      "place_loot": [ { "group": "mech_power_cell_spawn", "x": 18, "y": 17 }, { "item": "id_science", "x": 18, "y": 16 } ],
       "place_monster": [
         { "monster": "mon_secubot", "x": [ 1, 4 ], "y": [ 20, 22 ], "chance": 90 },
         { "monster": "mon_secubot", "x": [ 19, 20 ], "y": [ 20, 22 ], "chance": 90 },
@@ -351,7 +361,7 @@
       "rows": [
         "yIyyyyyy",
         ",,,,,,,,",
-        ",,OOO?,,",
+        ",,OOO?,,"
       ],
       "palettes": [ "lab_palette" ],
       "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },
@@ -373,7 +383,7 @@
       "rows": [
         "yIyyyyyy",
         ",,,,,,,,",
-        ",,OOO?,,",
+        ",,OOO?,,"
       ],
       "palettes": [ "lab_palette" ],
       "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },
@@ -395,7 +405,7 @@
       "rows": [
         "yIyyyyyy",
         ",,,,,,,,",
-        ",,OOO?,,",
+        ",,OOO?,,"
       ],
       "palettes": [ "lab_palette" ],
       "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },
@@ -417,7 +427,7 @@
       "rows": [
         "yIyyyyyy",
         ",,,,,,,,",
-        ",,OOO?,,",
+        ",,OOO?,,"
       ],
       "palettes": [ "lab_palette" ],
       "furniture": { "y": "f_counter", "O": "f_locker", "I": "f_counter", "?": "f_locker" },

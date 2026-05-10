@@ -116,9 +116,11 @@
         "cc...cc"
       ],
       "palettes": [ "lab_palette", "lab_loot_research" ],
-      "place_traps": [ { "trap": "tr_dissector", "x": 3, "y": 2 },
-      { "trap": "tr_dissector", "x": 2, "y": 2 },
-      { "trap": "tr_dissector", "x": 4, "y": 2 } ]
+      "place_traps": [
+        { "trap": "tr_dissector", "x": 3, "y": 2 },
+        { "trap": "tr_dissector", "x": 2, "y": 2 },
+        { "trap": "tr_dissector", "x": 4, "y": 2 }
+      ]
     }
   },
   {
