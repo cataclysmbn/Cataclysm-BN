@@ -2061,6 +2061,21 @@
     ]
   },
   {
+    "id": "everyday_m250",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m250", "ammo-group": "on_hand_277", "charges": [ 0, 100 ] },
+      {
+        "distribution": [
+          { "item": "belt277", "ammo-group": "on_hand_277", "charges": [ 1, 100 ], "prob": 50 },
+          { "group": "on_hand_277", "prob": 50, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+        ]
+      }
+    ]
+  },
+  {
     "id": "everyday_bfg50",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
