@@ -12,6 +12,7 @@
       [ "       |   " ],
       [ "       |   " ]
     ],
+    "color_palette": "aircraft_standard",
     "parts": [
       {
         "x": 0,
@@ -97,6 +98,7 @@
       [ "    ###|## " ],
       [ "       |   " ]
     ],
+    "color_palette": "aircraft_standard",
     "parts": [
       {
         "x": 0,
@@ -259,6 +261,7 @@
       " OOO->OOOOOOOOO ",
       "  OOOOOOOOOOOO "
     ],
+    "color_palette": "aircraft_commercial",
     "blueprint_origin": { "x": 10, "y": 3 },
     "palette": { "O": [ "airship_balloon_external" ] },
     "parts": [
@@ -487,6 +490,7 @@
     "id": "passenger_plane",
     "type": "vehicle",
     "name": "Passenger Plane",
+    "color_palette": "aircraft_commercial",
     "parts": [
       { "x": 4, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor" ] },
       { "x": 9, "y": 1, "parts": [ "frame_horizontal_2", "headlight", "halfboard_ne" ] },
@@ -703,6 +707,7 @@
     "id": "cargo_plane",
     "type": "vehicle",
     "name": "Cargo Plane",
+    "color_palette": "aircraft_commercial",
     "parts": [
       { "x": 4, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space", "aisle_lights" ] },
       { "x": 9, "y": 1, "parts": [ "frame_horizontal_2", "headlight", "halfboard_ne" ] },
