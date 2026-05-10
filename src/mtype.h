@@ -354,6 +354,7 @@ struct mtype {
             float melee = 1.15f;
             float dodge = 1.15f;
             int max_level = 3;
+            int min_skill = 3;
             std::vector<pet_training_level_flags> level_flags;
         };
         // Per-level stat multipliers when this monster is trained as a pet.

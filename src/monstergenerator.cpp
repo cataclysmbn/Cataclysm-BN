@@ -850,6 +850,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         pt.read( "melee_mult", ptm.melee );
         pt.read( "dodge_mult", ptm.dodge );
         pt.read( "max_level", ptm.max_level );
+        pt.read( "min_skill", ptm.min_skill );
         if( pt.has_array( "level_flags" ) ) {
             for( JsonObject lf_obj : pt.get_array( "level_flags" ) ) {
                 pet_training_level_flags lf;

@@ -4220,8 +4220,16 @@ void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
 
 void activity_handlers::train_pet_finish( player_activity *act, player *p )
 {
+    auto mon = act->monsters[0].lock();
+    if( mon && mon->type->pet_training &&
+        p->get_skill_level( skill_survival ) < mon->type->pet_training->min_skill ) {
+        p->add_msg_if_player( m_bad,
+                              _( "You lack the skill to train %s effectively." ),
+                              act->str_values[0] );
+        act->set_to_null();
+        return;
+    }
     if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
-        auto mon = act->monsters[0].lock();
         if( mon && mon->type->pet_training ) {
             mon->training_level = std::min( mon->training_level + 1, mon->type->pet_training->max_level );
             for( const auto &lf : mon->type->pet_training->level_flags ) {

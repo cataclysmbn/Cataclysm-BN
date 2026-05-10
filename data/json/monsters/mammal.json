@@ -2628,7 +2628,7 @@
       "pet": "The %s allows you to touch it, watching you intently.",
       "tamer_traits": [ [ "THRESH_LUPINE" ] ]
     },
-    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 4 },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 5, "min_skill": 5 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ]
   }
 ]
