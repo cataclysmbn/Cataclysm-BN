@@ -71,8 +71,8 @@
           { "color": "Almond Green", "weight": 20, "//": "CARC Green 383 (Federal Standard 34094)" },
           { "color": "Tree bark brown", "weight": 10, "//": "CARC Brown 383ish (Federal Standard 30051)" },
           { "color": "Onyx Black", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
-          { "color": "Manzanilla Olive", "weight": 5, "//": "CARC Sand (Federal Standard 33303)"  },
-          { "color": "Light Ash Brown", "weight": 5, "//": "CARC Tan 686 (Federal Standard 33446)"  },
+          { "color": "Manzanilla Olive", "weight": 5, "//": "CARC Sand (Federal Standard 33303)" },
+          { "color": "Light Ash Brown", "weight": 5, "//": "CARC Tan 686 (Federal Standard 33446)" },
           { "color": "Ruby Violet", "weight": 1, "//": "Sneaky military craft :)" }
         ]
       }
