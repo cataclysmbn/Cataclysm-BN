@@ -1666,13 +1666,4 @@ class iuse_paint_stuff : public iuse_actor
 
         static std::optional<RGBColor> try_get_paint_color( const item &it );
         static RGBColor get_paint_color( item &it );
-
-    private:
-        static bool is_paintable_terrain( const map &, const tripoint & );
-        auto set_vars( data_vars::data_set &, const RGBColor &, iuse_paint_stuff_config::paint_layer );
-        auto iuse_paint_stuff_vehicle( player &, item &, bool, const tripoint & ) const -> int;
-        auto iuse_paint_stuff_graffiti( player &, item &, bool, const tripoint & ) const -> int;
-        auto iuse_paint_stuff_terrain( player &, item &, bool, const tripoint & ) const -> int;
-        auto iuse_paint_stuff_furniture( player &, item &, bool, const tripoint & ) const -> int;
-        auto iuse_paint_stuff_item( player &, item &, bool, const tripoint & ) const -> int;
 };

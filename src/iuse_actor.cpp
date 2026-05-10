@@ -115,6 +115,7 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+#include "veh_type.h"
 #include "weather.h"
 #include "world_type.h"
 
@@ -201,6 +202,8 @@ static const species_id species_ROBOT( "ROBOT" );
 static const species_id species_ZOMBIE( "ZOMBIE" );
 static const species_id species_NETHER( "NETHER" );
 static const species_id species_SKELETON( "SKELETON" );
+
+static const flag_id flag_NO_PAINT( "NO_PAINT" );
 
 class npc;
 
@@ -7585,6 +7588,515 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
 
 // ---- iuse_paint_stuff -------------------------------------------------------
 
+namespace
+{
+template<typename T, typename U>
+concept is_painter =
+    requires(
+        const T &painter,
+        const U &thing,
+        const tripoint &where,
+        const RGBColorPair &color,
+        const iuse_paint_stuff_config::paint_layer layer )
+{
+    { painter.enumerate( where ) };
+    { painter.get_cost( thing ) }
+    -> std::same_as<float>;
+    { painter.can_paint( thing ) }
+    -> std::same_as<bool>;
+    { painter.get_color( thing ) }
+    -> std::same_as<RGBColorPair>;
+    { painter.set_color( thing, color, layer ) }
+    -> std::same_as<bool>;
+    { painter.describe( thing ) }
+    -> std::same_as<std::string>;
+};
+
+template<typename Painter, typename Thing = Painter::value_type>
+requires is_painter<Painter, Thing>
+auto iuse_paint_stuff_do_paint( player &who, item &it,
+                                const float charge_cost,
+                                const std::pair<tripoint, tripoint> &area,
+                                const Painter &painter )
+{
+    const auto target_color = iuse_paint_stuff::get_paint_color( it );
+    const auto layer = iuse_paint_stuff_config::get_paint_layer( it );
+
+    float charges_used = 0.0f;
+    const float mod_cost = [&]() {
+        switch( layer ) {
+            default:
+                return charge_cost;
+            case iuse_paint_stuff_config::fg:
+            case iuse_paint_stuff_config::bg:
+                return charge_cost / 2;
+        }
+    }
+    ();
+
+    const auto col_selector = [&]( const RGBColorPair oldColor ) -> std::optional<RGBColorPair> {
+        const auto [p_fg, p_bg] = oldColor;
+        switch( layer )
+        {
+            default:
+            case iuse_paint_stuff_config::both:
+                if( p_fg != target_color || p_bg != target_color ) {
+                    return RGBColorPair{.bg = target_color, .fg = target_color};
+                }
+                break;
+            case iuse_paint_stuff_config::fg:
+                if( p_fg != target_color ) {
+                    return RGBColorPair{.bg = p_bg, .fg = target_color};
+                }
+                break;
+            case iuse_paint_stuff_config::bg:
+                if( p_bg != target_color ) {
+                    return RGBColorPair{.bg = target_color, .fg = p_fg};
+                }
+                break;
+        }
+        return std::nullopt;
+    };
+
+    for( const auto &pos : tripoint_range( area.first, area.second ) ) {
+        const auto things_at = painter.enumerate( pos );
+        bool ammo_exhausted = false;
+
+        for( const auto &thing : things_at ) {
+            if( !painter.can_paint( thing ) ) {
+                continue;
+            }
+
+            const float cost_at = painter.get_cost( thing );
+            const float iter_cost = cost_at * mod_cost;
+
+            if( ( charges_used + iter_cost ) > it.ammo_remaining() ) {
+                const auto need = static_cast<int>( std::ceil( charges_used + iter_cost ) );
+                const auto rem = static_cast<int>( it.ammo_remaining() - std::ceil( charges_used ) );
+                who.add_msg_if_player( m_info,
+                                       vgettext( "Your %s has %d charge but needs %d.",
+                                                 "Your %s has %d charges but needs %d.",
+                                                 rem ),
+                                       it.tname(), rem, need );
+                ammo_exhausted = true;
+                break;
+            }
+
+            const auto prev_col = painter.get_color( thing );
+            const auto n_col = col_selector( prev_col );
+
+            if( !n_col.has_value() ) {
+                continue;
+            }
+
+            if( painter.set_color( thing, n_col.value(), layer ) ) {
+                who.add_msg_if_player( m_info, _( "You paint the %s %s." ), painter.describe( thing ),
+                                       target_color.friendly_name() );
+                charges_used += iter_cost;
+                who.moves -= to_turns<int>( 30_seconds );
+            }
+        }
+
+        if( ammo_exhausted ) {
+            break;
+        }
+    }
+
+    const auto final_cost = static_cast<int>( std::ceil( charges_used ) );
+    return std::max( 0, final_cost );
+}
+
+RGBColorPair color_from_vars( const data_vars::data_set &vars )
+{
+    const auto p_c = vars.get<RGBColor>( TINT_COLOR_VAR_NAME, {} );
+    const auto p_fg = vars.get<RGBColor>( TINT_COLOR_FG_VAR_NAME, p_c );
+    const auto p_bg = vars.get<RGBColor>( TINT_COLOR_BG_VAR_NAME, p_c );
+    return RGBColorPair{.bg = p_bg, .fg = p_fg};
+}
+
+void color_to_vars(
+    data_vars::data_set &vars, const RGBColorPair &col,
+    const iuse_paint_stuff_config::paint_layer layer )
+{
+    switch( layer ) {
+        default:
+        case iuse_paint_stuff_config::both:
+            vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
+            vars.erase( TINT_COLOR_FG_VAR_NAME );
+            vars.erase( TINT_COLOR_BG_VAR_NAME );
+            break;
+        case iuse_paint_stuff_config::fg:
+            vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
+            break;
+        case iuse_paint_stuff_config::bg:
+            vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
+            break;
+    }
+}
+
+struct item_painter {
+    using paint_layer = iuse_paint_stuff_config::paint_layer;
+    using value_type = item*;
+
+    itype_id target_type;
+
+    auto enumerate( const tripoint &pos ) const {
+        std::vector<item *> items;
+        auto stack = get_map().i_at( pos );
+        for( const auto &i : stack ) {
+            if( target_type.is_null() || i->typeId() == target_type ) {
+                items.push_back( i );
+            }
+        }
+        return items;
+    }
+
+    static std::string describe( const value_type &p ) {
+        return p->type_name();
+    }
+
+    static auto get_cost( const value_type it ) -> float {
+        return it->count();
+    }
+
+    static auto can_paint( const item *const it ) -> bool {
+        if( it->type->phase != SOLID ) {
+            return false;
+        }
+        if( it->type->has_flag( flag_NO_PAINT ) ) {
+            return false;
+        }
+        if( it->is_corpse() ) {
+            return false;
+        }
+        if( it->is_food() ) {
+            return false;
+        }
+        return true;
+    }
+
+    static auto get_color( const value_type it ) -> RGBColorPair {
+        return color_from_vars( it->item_vars() );
+    }
+
+    static auto set_color( const value_type it, const RGBColorPair &col,
+                           const paint_layer layer ) -> bool {
+        color_to_vars( it->item_vars(), col, layer );
+        return true;
+    }
+};
+
+template<bool Roof>
+struct veh_part_painter {
+    using paint_layer = iuse_paint_stuff_config::paint_layer;
+    using value_type = std::optional<vpart_reference>;
+
+    const vehicle &target_veh;
+
+    static std::string describe( const value_type &vp ) {
+        return string_format( _( "%s's %s" ), vp->vehicle().name, vp->part().name( false ) );
+    }
+
+    constexpr std::array<value_type, 1> enumerate( const tripoint &p ) const {
+        const auto vp = get_map().veh_at( p );
+        if constexpr( Roof ) {
+            const auto roof_part = [&]() -> std::optional<vpart_reference> {
+                auto &veh = vp->vehicle();
+                const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
+                if( has_obstacle_here ) {
+                    return std::nullopt;
+                }
+                const auto part_idx = veh.roof_at_part( vp->part_index() );
+                if( part_idx != -1 ) {
+                    return vpart_reference( veh, part_idx );
+                }
+                return std::nullopt;
+            }();
+            return { roof_part };
+        } else {
+            const auto disp_part = vp.part_displayed();
+            return { disp_part };
+        }
+    }
+
+    static constexpr float get_cost( const value_type & ) {
+        return 1;
+    }
+
+    bool can_paint( const value_type &vp ) const {
+        if( !vp.has_value() ) {
+            return false;
+        }
+        if( &vp->vehicle() != &target_veh ) {
+            return false;
+        }
+        if( !item_painter::can_paint( &vp->part().get_base() ) ) {
+            return false;
+        }
+        return true;
+    }
+
+    static RGBColorPair get_color( const value_type &vp ) {
+        const auto &disp_part = vp->part();
+        return disp_part.get_color();
+    }
+
+    static bool set_color( const value_type &vp, const RGBColorPair &col, const paint_layer ) {
+        auto &disp_part = vp->part();
+        disp_part.set_color( col );
+        return true;
+    }
+};
+
+template<bool Furn>
+struct ter_furn_painter {
+    using value_type = tripoint;
+    using paint_layer = iuse_paint_stuff_config::paint_layer;
+
+    static data_vars::data_set *get_vars( const tripoint &p ) {
+        if constexpr( Furn ) {
+            return get_map().furn_vars( p );
+        } else {
+            return get_map().ter_vars( p );
+        }
+    }
+
+    static std::string describe( const value_type &p ) {
+        if constexpr( Furn ) {
+            return get_map().furn( p )->name();
+        } else {
+            return get_map().ter( p )->name();
+        }
+    }
+
+    static constexpr std::array<tripoint, 1> enumerate( const tripoint &p ) {
+        return {p};
+    }
+
+    static float get_cost( const tripoint &p ) {
+        if( get_map().has_flag_ter_or_furn( "TINY", p ) ) {
+            return 0.25f;
+        }
+        if( get_map().has_flag_ter_or_furn( "SHORT", p ) ) {
+            return 0.5f;
+        }
+        return 1;
+    }
+
+    static bool can_paint( const tripoint &p ) {
+        const auto _vars = get_vars( p );
+        if( _vars  == nullptr ) {
+            return false;
+        }
+
+        if constexpr( Furn ) {
+            if( !get_map().has_furn( p ) ) {
+                return false;
+            }
+            if( get_map().has_flag_furn( flag_NO_PAINT.str(), p ) ) {
+                return false;
+            }
+        } else {
+            // No Air
+            if( get_map().has_flag_ter( TFLAG_NO_FLOOR, p ) ) {
+                return false;
+            }
+            // No Liquids
+            if( get_map().has_flag_ter( TFLAG_LIQUID, p ) || get_map().has_flag_ter( TFLAG_SWIMMABLE, p ) ) {
+                return false;
+            }
+
+            if( get_map().has_flag_ter( flag_NO_PAINT.str(), p ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static RGBColorPair get_color( const tripoint &p ) {
+        return color_from_vars( *get_vars( p ) );
+    }
+
+    static bool set_color( const tripoint &p, const RGBColorPair &col, const paint_layer layer ) {
+        color_to_vars( *get_vars( p ), col, layer );
+        return true;
+    }
+};
+
+template<bool Roof>
+auto iuse_paint_stuff_vehicle( player &who, item &it, bool,
+                               const tripoint &, const float charge_cost ) -> int
+{
+    const auto &here = get_map();
+
+    std::set<vehicle *> tmp{};
+    const auto query_filter = [&]( const tripoint & p ) {
+        const auto veh = here.veh_at( p );
+        if( !veh.has_value() ) {
+            return false;
+        }
+        const auto [_, ok] = tmp.emplace( &veh->vehicle() );
+        return ok;
+    };
+    const auto query_name = [&]( const tripoint & p ) {
+        return here.veh_at( p )->vehicle().name;
+    };
+    const auto veh_pos_opt =
+        choose_adjacent_uilist( _( "Paint which vehicle?" ), _( "There is nothing to paint nearby." ),
+                                query_filter, query_name );
+
+    if( !veh_pos_opt.has_value() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    const auto veh_pos = veh_pos_opt.value();
+
+    const auto &target_veh = here.veh_at( veh_pos )->vehicle();
+
+    const auto area = choose_area( _( "Paint Vehicle" ), veh_pos );
+    if( !area.has_value() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    const auto painter = veh_part_painter<Roof> { target_veh };
+    return iuse_paint_stuff_do_paint( who, it, charge_cost, area.value(), painter );
+}
+
+template<bool Furn>
+auto iuse_paint_stuff_ter_furn( player &who, item &it, bool,
+                                const tripoint &pos, const float charge_cost ) -> int
+{
+    using painter_type = ter_furn_painter<Furn>;
+
+    const auto area = choose_area( _( Furn ? "Paint Furniture" : "Paint Terrain" ), pos );
+    if( !area.has_value() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    constexpr painter_type painter {};
+    return iuse_paint_stuff_do_paint( who, it, charge_cost, area.value(),
+                                      painter );
+}
+
+auto iuse_paint_stuff_item( player &who, item &it, bool,
+                            const tripoint &, const float charge_cost ) -> int
+{
+    using painter_type = item_painter;
+    auto &here = get_map();
+
+    const auto query_filter = [&]( const tripoint & p ) {
+        return here.has_item_with( p, []( const item & x ) -> bool {
+            return painter_type::can_paint( &x );
+        } ) ;
+    };
+    const auto item_pos =
+        choose_adjacent_highlight( _( "Paint which Items?" ), _( "There is nothing to paint nearby." ),
+                                   query_filter );
+    if( !item_pos.has_value() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    std::set<itype_id> types{};
+    std::vector<itype_id> typesList {};
+    for( const auto &i : here.i_at( item_pos.value() ) ) {
+        if( !painter_type::can_paint( i ) ) {
+            continue;
+        }
+
+        const auto[iter, ok] = types.emplace( i->typeId() );
+        if( ok ) {
+            typesList.push_back( i->typeId() );
+        }
+    }
+
+    itype_id target_type;
+    if( typesList.empty() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    if( typesList.size() == 1 ) {
+        target_type = typesList.at( 0 );
+    } else {
+        uilist lst;
+        lst.title = _( "Paint Items" );
+        typesList.insert( typesList.begin(), itype_id::NULL_ID() );
+        for( const auto &i : typesList ) {
+            lst.addentry( i.is_null() ? _( "Everything" ) : i->nname( 1 ) );
+        }
+        lst.query();
+
+        if( lst.ret < 0 ) {
+            add_msg( _( "Never mind." ) );
+            return 0;
+        }
+
+        target_type = typesList.at( lst.ret );
+    }
+
+    const painter_type painter { target_type };
+    const auto area = std::make_pair( item_pos.value(), item_pos.value() );
+    return iuse_paint_stuff_do_paint( who, it, charge_cost, area, painter );
+}
+
+auto iuse_paint_stuff_graffiti( player &who, item &, bool,
+                                const tripoint &, const float charge_cost ) -> int
+{
+    auto &m = get_map();
+    const std::optional<tripoint> pos_ = choose_adjacent( _( "Spray where?" ) );
+    if( !pos_ ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    const auto pos = pos_.value();
+    string_input_popup popup;
+    const std::string message = popup
+                                .description( string_format( "%s %s", _( "Spray What?" ),
+                                        _( "(To delete, clear the text and confirm)" ) ) )
+                                .text( m.has_graffiti_at( pos ) ? m.graffiti_at( pos ) : std::string() )
+                                .identifier( "graffiti" )
+                                .query_string();
+    if( popup.canceled() ) {
+        add_msg( _( "Never mind." ) );
+        return 0;
+    }
+
+    const bool grave = m.ter( pos ) == t_grave_new;
+    int move_cost;
+    if( message.empty() ) {
+        if( m.has_graffiti_at( pos ) ) {
+            move_cost = 3 * m.graffiti_at( pos ).length();
+            m.delete_graffiti( pos );
+            if( grave ) {
+                who.add_msg_if_player( m_info, _( "You blur the inscription on the grave." ) );
+            } else {
+                who.add_msg_if_player( m_info, _( "You manage to get rid of the message on the surface." ) );
+            }
+        } else {
+            add_msg( _( "Never mind." ) );
+            return 0;
+        }
+    } else {
+        m.set_graffiti( pos, message );
+        if( grave ) {
+            who.add_msg_if_player( m_info, _( "You carve an inscription on the grave." ) );
+        } else {
+            who.add_msg_if_player( m_info, _( "You write a message on the surface." ) );
+        }
+        move_cost = 2 * message.length();
+    }
+    who.moves -= move_cost;
+    return std::ceil( charge_cost );
+}
+
+} // namespace
+
+
 template<>
 struct enum_traits<iuse_paint_stuff_config::paint_layer> {
     static constexpr iuse_paint_stuff_config::paint_layer last =
@@ -7612,7 +8124,7 @@ std::string enum_to_string<iuse_paint_stuff_config::paint_layer>
     debugmsg( "Invalid layer" );
     abort();
 }
-}
+} // namespace io
 
 
 void iuse_paint_stuff::load( const JsonObject &jo )
@@ -7673,7 +8185,7 @@ auto iuse_paint_stuff_config::use( player &, item &it, bool, const tripoint & ) 
             set_color( it );
             return 0;
     }
-}
+} // namespace
 
 auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint &pos ) const -> int
 {
@@ -7682,6 +8194,7 @@ auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint 
     enum eMode {
         Abort = 0,
         Vehicle,
+        VehicleRoof,
         Furniture,
         Item,
         Terrain,
@@ -7689,22 +8202,32 @@ auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint 
     };
 
     std::vector<std::pair<std::string, eMode>> choices{};
-    const bool has_veh_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return m.veh_at( p ).has_value(); } );
-    if( has_veh_near ) {
-        choices.push_back( {_( "Vehicle" ), Vehicle} );
-    }
 
-    const bool has_furn_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return m.has_furn( p ); } );
-    if( has_furn_near ) {
-        choices.push_back( {_( "Furniture" ), Furniture} );
-    }
-
-    const bool has_item_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return m.has_items( p ); } );
+    const bool has_item_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) {
+        return m.has_items( p );
+    } );
     if( has_item_near ) {
         choices.push_back( {_( "Item" ), Item} );
     }
 
-    const bool has_terrain_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) { return is_paintable_terrain( m,  p ); } );
+    const bool has_veh_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) {
+        return m.veh_at( p ).has_value();
+    } );
+    if( has_veh_near ) {
+        choices.push_back( {_( "Vehicle" ), Vehicle} );
+        choices.push_back( {_( "Vehicle Roof" ), VehicleRoof} );
+    }
+
+    const bool has_furn_near = here.has_nearby( pos, []( const map & m, const tripoint & p ) {
+        return m.has_furn( p ) && ter_furn_painter<true>::can_paint( p );
+    } );
+    if( has_furn_near ) {
+        choices.push_back( {_( "Furniture" ), Furniture} );
+    }
+
+    const bool has_terrain_near = here.has_nearby( pos, []( const map &, const tripoint & p ) {
+        return  ter_furn_painter<false>::can_paint( p );
+    } );
     if( has_terrain_near ) {
         choices.push_back( {_( "Terrain" ), Terrain} );
         choices.push_back( {_( "Graffiti" ), Graffiti} );
@@ -7732,363 +8255,18 @@ auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint 
             add_msg( _( "Never mind." ) );
             return 0;
         case Terrain:
-            return iuse_paint_stuff_terrain( who, it, b, pos );
-        case Graffiti:
-            return iuse_paint_stuff_graffiti( who, it, b, pos );
-        case Item:
-            return iuse_paint_stuff_item( who, it, b, pos );
+            return iuse_paint_stuff_ter_furn<false>( who, it, b, pos, charge_cost );
         case Furniture:
-            return iuse_paint_stuff_furniture( who, it, b, pos );
+            return iuse_paint_stuff_ter_furn<true>( who, it, b, pos, charge_cost );
         case Vehicle:
-            return iuse_paint_stuff_vehicle( who, it, b, pos );
+            return iuse_paint_stuff_vehicle<false>( who, it, b, pos, charge_cost );
+        case VehicleRoof:
+            return iuse_paint_stuff_vehicle<true>( who, it, b, pos, charge_cost );
+        case Graffiti:
+            return iuse_paint_stuff_graffiti( who, it, b, pos, charge_cost );
+        case Item:
+            return iuse_paint_stuff_item( who, it, b, pos, charge_cost );
     };
-}
-
-namespace
-{
-template<typename T, typename U>
-concept is_painter =
-    requires(
-        const T &painter,
-        const U &thing,
-        const tripoint &where,
-        const RGBColorPair &color,
-        const iuse_paint_stuff_config::paint_layer layer )
-{
-    { painter.enumerate( where ) };
-    { painter.get_cost( thing ) }
-    -> std::same_as<float>;
-    { painter.can_paint( thing ) }
-    -> std::same_as<bool>;
-    { painter.get_color( thing ) }
-    -> std::same_as<RGBColorPair>;
-    { painter.set_color( thing, color, layer ) }
-    -> std::same_as<bool>;
-};
-
-template<typename Painter, typename Thing = Painter::value_type>
-requires is_painter<Painter, Thing>
-auto iuse_paint_stuff_do_paint(
-    item &it, const float charge_cost, const std::pair<tripoint, tripoint> &area,
-    const Painter &painter )
-{
-    const auto target_color = iuse_paint_stuff::get_paint_color( it );
-    const auto layer = iuse_paint_stuff_config::get_paint_layer( it );
-
-    float charges_used = 0.0f;
-    const float mod_cost = [&]() {
-        switch( layer ) {
-            default:
-                return charge_cost;
-            case iuse_paint_stuff_config::fg:
-            case iuse_paint_stuff_config::bg:
-                return charge_cost / 2;
-        }
-    }
-    ();
-
-    const auto col_selector = [&]( const RGBColorPair oldColor ) -> std::optional<RGBColorPair> {
-        const auto [p_fg, p_bg] = oldColor;
-        switch( layer )
-        {
-            default:
-            case iuse_paint_stuff_config::both:
-                if( p_fg != target_color || p_bg != target_color ) {
-                    return RGBColorPair{.bg = target_color, .fg = target_color};
-                }
-                break;
-            case iuse_paint_stuff_config::fg:
-                if( p_fg != target_color ) {
-                    return RGBColorPair{.bg = p_bg, .fg = target_color};
-                }
-                break;
-            case iuse_paint_stuff_config::bg:
-                if( p_bg != target_color ) {
-                    return RGBColorPair{.bg = target_color, .fg = p_fg};
-                }
-                break;
-        }
-        return std::nullopt;
-    };
-
-    for( const auto &pos : tripoint_range( area.first, area.second ) ) {
-        const auto things_at = painter.enumerate( pos );
-        bool ammo_exhausted = false;
-
-        for( const auto &thing : things_at ) {
-            if( !painter.can_paint( thing ) ) {
-                continue;
-            }
-
-            const float cost_at = painter.get_cost( thing );
-            const float iter_cost = cost_at * mod_cost;
-
-            if( ( charges_used + iter_cost ) > it.ammo_remaining() ) {
-                ammo_exhausted = true;
-                break;
-            }
-
-            const auto prev_col = painter.get_color( thing );
-            const auto n_col = col_selector( prev_col );
-
-            if( !n_col.has_value() ) {
-                continue;
-            }
-
-            if( painter.set_color( thing, n_col.value(), layer ) ) {
-                charges_used += iter_cost;
-            }
-        }
-
-        if( ammo_exhausted ) {
-            break;
-        }
-    }
-
-    const auto final_cost = static_cast<int>( std::ceil( charges_used ) );
-    return std::max( 1, final_cost );
-}
-
-struct veh_part_painter {
-    using value_type = std::optional<vpart_reference>;
-    const vehicle &target_veh;
-    using paint_layer = iuse_paint_stuff_config::paint_layer;
-
-    static constexpr std::array<value_type, 1> enumerate( const tripoint &p ) {
-        return { get_map().veh_at( p ).part_displayed() };
-    }
-
-    static constexpr float get_cost( const value_type & ) {
-        return 1;
-    }
-
-    bool can_paint( const value_type &vp ) const {
-        if( !vp.has_value() ) {
-            return false;
-        }
-        if( &vp->vehicle() != &target_veh ) {
-            return false;
-        }
-        return true;
-    }
-
-    static RGBColorPair get_color( const value_type &vp ) {
-        const auto &disp_part = vp->part();
-        return disp_part.get_color();
-    }
-
-    static bool set_color( const value_type &vp, const RGBColorPair &col, const paint_layer ) {
-        auto &disp_part = vp->part();
-        disp_part.set_color( col );
-        return true;
-    }
-};
-
-template<bool Furn>
-struct ter_furn_painter {
-    using value_type = tripoint;
-    const map &here;
-    using paint_layer = iuse_paint_stuff_config::paint_layer;
-
-    data_vars::data_set *get_vars( const tripoint &p ) const {
-        if constexpr( Furn ) {
-            return here.furn_vars( p );
-        } else {
-            return here.ter_vars( p );
-        }
-    }
-
-    static constexpr std::array<tripoint, 1> enumerate( const tripoint &p ) {
-        return {p};
-    }
-
-    float get_cost( const tripoint &p ) const {
-        if( here.has_flag_ter_or_furn( "TINY", p ) ) {
-            return 0.25f;
-        }
-        if( here.has_flag_ter_or_furn( "SHORT", p ) ) {
-            return 0.5f;
-        }
-        return 1;
-    }
-
-    bool can_paint( const tripoint &p ) const {
-        const auto _vars = get_vars( p );
-        return _vars != nullptr;
-    }
-
-    RGBColorPair get_color( const tripoint &p ) const {
-        const auto &vars = *get_vars( p );
-        const auto p_c = vars.template get<RGBColor>( TINT_COLOR_VAR_NAME, {} );
-        const auto p_fg = vars.template get<RGBColor>( TINT_COLOR_FG_VAR_NAME, p_c );
-        const auto p_bg = vars.template get<RGBColor>( TINT_COLOR_BG_VAR_NAME, p_c );
-        return RGBColorPair{.bg = p_bg, .fg = p_fg};
-    }
-
-    bool set_color( const tripoint &p, const RGBColorPair &col, const paint_layer layer ) const {
-        auto &vars = *get_vars( p );
-        switch( layer ) {
-            default:
-            case iuse_paint_stuff_config::both:
-                vars.template set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
-                vars.erase( TINT_COLOR_FG_VAR_NAME );
-                vars.erase( TINT_COLOR_BG_VAR_NAME );
-                break;
-            case iuse_paint_stuff_config::fg:
-                vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
-                break;
-            case iuse_paint_stuff_config::bg:
-                vars.template set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
-                break;
-        }
-        return true;
-    }
-};
-
-struct item_painter {
-
-};
-
-
-} // namespace
-
-auto iuse_paint_stuff::iuse_paint_stuff_vehicle( player &, item &it, bool,
-        const tripoint & ) const -> int
-{
-    const auto &here = get_map();
-
-    std::set<vehicle *> tmp{};
-    const auto query_filter = [&]( const tripoint & p ) {
-        const auto veh = here.veh_at( p );
-        if( !veh.has_value() ) {
-            return false;
-        }
-        const auto [_, ok] = tmp.emplace( &veh->vehicle() );
-        return ok;
-    };
-    const auto query_name = [&]( const tripoint & p ) {
-        return here.veh_at( p )->vehicle().name;
-    };
-    const auto veh_pos_opt =
-        choose_adjacent_uilist( _( "Paint which vehicle?" ), _( "There is nothing to paint nearby." ),
-                                query_filter, query_name );
-
-    if( !veh_pos_opt.has_value() ) {
-        add_msg( _( "Never mind." ) );
-        return 0;
-    }
-
-    const auto veh_pos = veh_pos_opt.value();
-
-    const auto &target_veh = here.veh_at( veh_pos )->vehicle();
-
-    const auto area = choose_area( "Paint Vehicle", veh_pos );
-    if( !area.has_value() ) {
-        add_msg( _( "Never mind." ) );
-        return 0;
-    }
-
-    const auto painter = veh_part_painter{ target_veh };
-    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), painter );
-}
-
-auto iuse_paint_stuff::iuse_paint_stuff_terrain( player &, item &it, bool,
-        const tripoint &pos ) const -> int
-{
-    const auto &here = get_map();
-
-    const auto area = choose_area( "Paint Terrain", pos );
-    if( !area.has_value() ) {
-        add_msg( _( "Never mind." ) );
-        return 0;
-    }
-
-    const ter_furn_painter<false> painter {here};
-    return iuse_paint_stuff_do_paint( it, charge_cost, area.value(), painter );
-}
-
-auto iuse_paint_stuff::iuse_paint_stuff_furniture( player &, item &it, bool,
-        const tripoint & ) const -> int
-{
-    const auto &here = get_map();
-
-    std::set<vehicle *> tmp{};
-    const auto query_filter = [&]( const tripoint & p ) {
-        return here.has_furn( p );
-    };
-    const auto query_name = [&]( const tripoint & p ) {
-        return here.furn( p )->name();
-    };
-
-    const auto furn_pos =
-        choose_adjacent_uilist( "Paint Furniture", _( "There is nothing to paint nearby." ),
-                                query_filter, query_name );
-    if( !furn_pos.has_value() ) {
-        add_msg( _( "Never mind." ) );
-        return 0;
-    }
-
-    const ter_furn_painter<true> painter {here};
-    const auto area = std::make_pair( furn_pos.value(), furn_pos.value() );
-    return iuse_paint_stuff_do_paint( it, charge_cost, area, painter );
-}
-
-auto iuse_paint_stuff::iuse_paint_stuff_item( player &, item &, bool,
-        const tripoint & ) const -> int
-{
-    add_msg( _( "Never mind." ) );
-    return 0;
-}
-
-auto iuse_paint_stuff::iuse_paint_stuff_graffiti( player &who, item &, bool,
-        const tripoint & ) const -> int
-{
-    auto &m = get_map();
-    const std::optional<tripoint> pos_ = choose_adjacent( _( "Spray where?" ) );
-    if( !pos_ ) {
-        add_msg( _( "Never mind." ) );
-        return 0;
-    }
-
-    const auto pos = pos_.value();
-    string_input_popup popup;
-    const std::string message = popup
-                                .description( string_format( "%s %s", _( "Spray What?" ),
-                                        _( "(To delete, clear the text and confirm)" ) ) )
-                                .text( m.has_graffiti_at( pos ) ? m.graffiti_at( pos ) : std::string() )
-                                .identifier( "graffiti" )
-                                .query_string();
-    if( popup.canceled() ) {
-        add_msg( _( "Never mind." ) );
-        return 0;
-    }
-
-    const bool grave = m.ter( pos ) == t_grave_new;
-    int move_cost;
-    if( message.empty() ) {
-        if( m.has_graffiti_at( pos ) ) {
-            move_cost = 3 * m.graffiti_at( pos ).length();
-            m.delete_graffiti( pos );
-            if( grave ) {
-                who.add_msg_if_player( m_info, _( "You blur the inscription on the grave." ) );
-            } else {
-                who.add_msg_if_player( m_info, _( "You manage to get rid of the message on the surface." ) );
-            }
-        } else {
-            add_msg( _( "Never mind." ) );
-            return 0;
-        }
-    } else {
-        m.set_graffiti( pos, message );
-        if( grave ) {
-            who.add_msg_if_player( m_info, _( "You carve an inscription on the grave." ) );
-        } else {
-            who.add_msg_if_player( m_info, _( "You write a message on the surface." ) );
-        }
-        move_cost = 2 * message.length();
-    }
-    who.moves -= move_cost;
-    return 1;
 }
 
 void iuse_paint_stuff::info( const item &it, std::vector<iteminfo> &inf ) const
@@ -8115,19 +8293,6 @@ void iuse_paint_stuff::on_placed( item &it, const map &, const tripoint & ) cons
 void iuse_paint_stuff_config::on_placed( item &it, const map &, const tripoint & ) const
 {
     get_paint_layer( it, false );
-}
-
-bool iuse_paint_stuff::is_paintable_terrain( const map &m, const tripoint &pos )
-{
-    // No Air
-    if( m.has_flag_ter( TFLAG_NO_FLOOR, pos ) ) {
-        return false;
-    }
-    // No Liquids
-    if( m.has_flag_ter( TFLAG_LIQUID, pos ) || m.has_flag_ter( TFLAG_SWIMMABLE, pos ) ) {
-        return false;
-    }
-    return true;
 }
 
 std::optional<RGBColor> iuse_paint_stuff::try_get_paint_color( const item &it )
