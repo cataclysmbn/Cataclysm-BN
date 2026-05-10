@@ -49,6 +49,28 @@
   },
   {
     "type": "recipe",
+    "result": "minireactor",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 6 ], [ "fabrication", 5 ] ],
+    "difficulty": 8,
+    "time": "8 h",
+    "book_learn": [ [ "recipe_lab_elec", 8 ], [ "recipe_mil_augs", 8 ], [ "textbook_robots", 8 ] ],
+    "using": [ [ "advanced_electronics_high_voltage", 1 ], [ "welding_standard", 20 ], [ "soldering_standard", 60 ] ],
+    "qualities": [ { "id": "SCREW_FINE", "level": 1 }, { "id": "WRENCH_FINE", "level": 1 }, { "id": "SAW_M", "level": 2 } ],
+    "components": [
+      [ [ "compact_reactor_assembly", 1 ] ],
+      [ [ "alloy_plate", 2 ] ],
+      [ [ "power_supply", 4 ] ],
+      [ [ "circuit", 6 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "cable", 20 ] ],
+      [ [ "scrap", 16 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "embryo_empty",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_OTHER",
@@ -1134,6 +1156,28 @@
   },
   {
     "type": "recipe",
+    "result": "laser_designator_item",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "electronics",
+    "skills_required": [ [ "computer", 4 ], [ "mechanics", 3 ] ],
+    "difficulty": 5,
+    "time": "2 h",
+    "autolearn": true,
+    "using": [ [ "soldering_standard", 10 ], [ "coding_standard", 60 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "//": "No robotic components required but demands an industrial laser",
+    "components": [
+      [ [ "laser_source", 1 ] ],
+      [ [ "lens", 2 ] ],
+      [ [ "amplifier", 2 ] ],
+      [ [ "power_supply", 1 ] ],
+      [ [ "cable", 10 ] ],
+      [ [ "omnicamera", 1 ], [ "camera", 1 ], [ "camera_pro", 1 ], [ "sensor_module", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "bomber_controls",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_VEHICLE",
@@ -2066,7 +2110,7 @@
       [ "textbook_carpentry", 6 ],
       [ "book_icef", 4 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 6 ]
     ],
     "using": [ [ "welding_standard", 10 ], [ "adhesive", 4 ] ],
@@ -2187,7 +2231,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
-    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_carbon_item", 1 ] ],
@@ -2310,7 +2354,7 @@
       [ "textbook_fabrication", 5 ],
       [ "welding_book", 5 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 5 ]
     ],
     "using": [ [ "welding_standard", 12 ] ],
@@ -2328,7 +2372,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
-    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_metal_item", 1 ] ],
@@ -2353,7 +2397,7 @@
       [ "welding_book", 6 ],
       [ "book_icef", 4 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 6 ]
     ],
     "using": [ [ "welding_standard", 25 ], [ "steel_standard", 5 ] ],
@@ -2376,7 +2420,7 @@
       [ "welding_book", 6 ],
       [ "book_icef", 4 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 6 ]
     ],
     "qualities": [
@@ -2386,11 +2430,10 @@
       { "id": "CUT", "level": 1 }
     ],
     "components": [
-      [ [ "log", 1 ] ],
-      [ [ "wood_structural", 1, "LIST" ] ],
+      [ [ "wood_structural_small", 5, "LIST" ] ],
       [ [ "nail_glue", 20, "LIST" ] ],
       [ [ "chain", 1 ] ],
-      [ [ "scrap", 10 ] ]
+      [ [ "steel_tiny", 2, "LIST" ] ]
     ]
   },
   {
@@ -2406,7 +2449,7 @@
       [ "textbook_fabrication", 5 ],
       [ "welding_book", 5 ],
       [ "textbook_mechanics", 4 ],
-      [ "manual_mechanics", 4 ],
+      [ "reference_aircraft", 4 ],
       [ "reference_fabrication1", 5 ]
     ],
     "using": [ [ "sewing_standard", 12 ] ],
@@ -2425,7 +2468,7 @@
     "skill_used": "electronics",
     "difficulty": 1,
     "time": "15 m",
-    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ] ],
+    "book_learn": [ [ "manual_electronics", 1 ], [ "mag_electronics", 1 ], [ "reference_aircraft", 1 ] ],
     "using": [ [ "soldering_standard", 5 ] ],
     "components": [
       [ [ "wing_wood_item", 1 ] ],

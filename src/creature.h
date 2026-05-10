@@ -16,6 +16,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "cached_options.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "memory_fast.h"
 
@@ -493,6 +494,10 @@ class Creature
         virtual int posy() const = 0;
         virtual int posz() const = 0;
         virtual const tripoint &pos() const = 0;
+        tripoint_bub_ms bub_pos() const {
+            return tripoint_bub_ms( pos() );
+        }
+        tripoint_abs_ms abs_pos() const;
 
         virtual void setpos( const tripoint &pos ) = 0;
 
@@ -551,6 +556,7 @@ class Creature
         void set_value( const std::string &key, const std::string &value );
         void remove_value( const std::string &key );
         std::string get_value( const std::string &key ) const;
+        auto get_values_map() const -> const std::unordered_map<std::string, std::string> &;
 
         virtual units::mass get_weight() const = 0;
 
@@ -1060,5 +1066,3 @@ class Creature
         int pain = 0;
         bool underwater = false;
 };
-
-

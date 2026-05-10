@@ -290,6 +290,7 @@ static const trait_id trait_DEBUG_LS( "DEBUG_LS" );
 static const trait_id trait_DEBUG_NIGHTVISION( "DEBUG_NIGHTVISION" );
 static const trait_id trait_DEBUG_NOTEMP( "DEBUG_NOTEMP" );
 static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
+static const trait_id trait_DEBUG_WEIGHTLESSNESS( "DEBUG_WEIGHTLESSNESS" );
 static const trait_id trait_DOWN( "DOWN" );
 static const trait_id trait_ELECTRORECEPTORS( "ELECTRORECEPTORS" );
 static const trait_id trait_FASTLEARNER( "FASTLEARNER" );
@@ -876,11 +877,10 @@ bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
         return false;
     }
 
-    // TODO: fix point types
-    const std::vector<tripoint> line = line_to( ompos.raw(), omt.raw(), 0, 0 );
+    const auto line = line_to( ompos, omt, 0, 0 );
     for( size_t i = 0; i < line.size() && sight_points >= 0; i++ ) {
-        const tripoint &pt = line[i];
-        const oter_id &ter = get_overmapbuffer( get_dimension() ).ter( tripoint_abs_omt( pt ) );
+        const tripoint_abs_omt &pt = line[i];
+        const oter_id &ter = get_overmapbuffer( get_dimension() ).ter( pt );
         sight_points -= static_cast<int>( ter->get_see_cost() );
         if( sight_points < 0 ) {
             return false;
@@ -958,7 +958,7 @@ bool Character::has_alarm_clock() const
     map &here = get_map();
     return ( has_item_with_flag( flag_ALARMCLOCK, true ) ||
              ( here.veh_at( pos() ) &&
-               !empty( here.veh_at( pos() )->vehicle().get_avail_parts( "ALARMCLOCK" ) ) ) ||
+               !here.veh_at( pos() )->vehicle().get_avail_parts( "ALARMCLOCK" ).empty() ) ||
              has_bionic( bio_infolink ) );
 }
 
@@ -967,7 +967,7 @@ bool Character::has_watch() const
     map &here = get_map();
     return ( has_item_with_flag( flag_WATCH, true ) ||
              ( here.veh_at( pos() ) &&
-               !empty( here.veh_at( pos() )->vehicle().get_avail_parts( "WATCH" ) ) ) ||
+               !here.veh_at( pos() )->vehicle().get_avail_parts( "WATCH" ).empty() ) ||
              has_bionic( bio_infolink ) );
 }
 
@@ -4449,17 +4449,16 @@ char_encumbrance_data Character::calc_encumbrance( const item &new_item ) const
 
 units::mass Character::get_weight() const
 {
-    units::mass ret = 0_gram;
-    units::mass wornWeight = std::accumulate( worn.begin(), worn.end(), 0_gram,
-    []( units::mass sum, const item * const & itm ) {
-        return sum + itm->weight();
-    } );
+    if( has_trait( trait_DEBUG_WEIGHTLESSNESS ) ) { return 0_gram; }
 
-    ret += bodyweight();       // The base weight of the player's body
-    ret += inv.weight();           // Weight of the stored inventory
-    ret += wornWeight;             // Weight of worn items
-    ret += primary_weapon().weight();        // Weight of wielded item
-    ret += bionics_weight();       // Weight of installed bionics
+    const auto worn_weight = std::ranges::fold_left( worn, 0_gram,
+    []( const auto sum, const auto * const itm ) { return sum + itm->weight(); } );
+
+    auto ret = bodyweight();                       // The base weight of the player's body
+    ret += inv.weight();                           // Weight of the stored inventory
+    ret += worn_weight;                            // Weight of worn items
+    ret += primary_weapon().weight();              // Weight of wielded item
+    ret += bionics_weight();                       // Weight of installed bionics
     return ret;
 }
 
@@ -7155,7 +7154,7 @@ const std::vector<material_id> Character::fleshy = { material_id( "flesh" ), mat
 bool Character::made_of( const material_id &m ) const
 {
     // TODO: check for mutations that change this.
-    return std::ranges::find( fleshy, m ) != fleshy.end();
+    return std::ranges::contains( fleshy, m );
 }
 bool Character::made_of_any( const std::set<material_id> &ms ) const
 {
@@ -7211,6 +7210,15 @@ int Character::visibility( bool, int ) const
     if( ( g->u.movement_mode_is( CMM_CROUCH ) ) ) {
         stealth_modifier += crouching_bonus;
     };
+    map &here = get_map();
+    int const camo_modifier = 50;
+    if( worn_with_flag( flag_NATURE_CAMO ) && ( here.has_flag( "PLOWABLE", pos() ) ||
+            here.has_flag( "SHRUB", pos() ) ) ) {
+        stealth_modifier += camo_modifier;
+    } else if( worn_with_flag( flag_URBAN_CAMO ) && ( here.has_flag( "ROAD", pos() ) ||
+               here.has_flag( "MINEABLE", pos() ) ) ) {
+        stealth_modifier += camo_modifier;
+    }
     return clamp( 100 - stealth_modifier, 20, 160 );
 }
 
@@ -10272,7 +10280,7 @@ bool Character::has_activity( const activity_id &type ) const
 
 bool Character::has_activity( const std::vector<activity_id> &types ) const
 {
-    return std::ranges::find( types, activity->id() ) != types.end();
+    return std::ranges::contains( types, activity->id() );
 }
 
 void Character::cancel_activity()

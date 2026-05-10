@@ -861,6 +861,10 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         melee_damage.add_damage( DT_CUT, bonus_cut );
     }
 
+    if( jo.has_member( "monster_weapon" ) ) {
+        monster_weapon = item_group::load_item_group( jo.get_member( "monster_weapon" ),
+                         "distribution" );
+    }
     if( jo.has_member( "death_drops" ) ) {
         death_drops = item_group::load_item_group( jo.get_member( "death_drops" ),
                       "distribution" );
@@ -1350,6 +1354,8 @@ mtype_special_attack MonsterGenerator::create_actor( const JsonObject &obj,
         new_attack = std::make_unique<gun_actor>();
     } else if( attack_type == "spell" ) {
         new_attack = std::make_unique<mon_spellcasting_actor>();
+    } else if( attack_type == "deployer" ) {
+        new_attack = std::make_unique<deployer_actor>();
     } else {
         obj.throw_error( "unknown monster attack", "attack_type" );
     }
@@ -1549,6 +1555,10 @@ void MonsterGenerator::check_monster_definitions() const
         if( !mon.mech_battery.is_empty() && !mon.mech_battery.is_valid() ) {
             debugmsg( "monster %s has unknown mech_battery: %s", mon.id.c_str(),
                       mon.mech_battery.c_str() );
+        }
+        if( mon.monster_weapon && !item_group::group_is_defined( mon.monster_weapon ) ) {
+            debugmsg( "monster %s has unknown monster weapon item group: %s", mon.id.c_str(),
+                      mon.monster_weapon.c_str() );
         }
         for( const scenttype_id &s_id : mon.scents_tracked ) {
             if( !s_id.is_empty() && !s_id.is_valid() ) {

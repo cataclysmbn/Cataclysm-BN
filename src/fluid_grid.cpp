@@ -288,7 +288,7 @@ auto collect_transformers( const std::set<tripoint_abs_omt> &grid,
         }
         std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
             std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
-                const auto pos = point( x, y );
+                const auto pos = point_sm_ms( x, y );
                 const auto &furn = sm->get_furn( pos ).obj();
                 if( !furn.fluid_grid ) {
                     return;
@@ -300,7 +300,7 @@ auto collect_transformers( const std::set<tripoint_abs_omt> &grid,
                 if( !furn.fluid_grid->transformer ) {
                     return;
                 }
-                const auto abs_pos = project_combine( sm_coord, point_sm_ms( pos ) );
+                const auto abs_pos = project_combine( sm_coord, pos );
                 transformers.push_back( transformer_instance{
                     .pos = abs_pos,
                     .config = &*furn.fluid_grid->transformer,
@@ -323,7 +323,7 @@ auto tank_capacity_at( mapbuffer &mb, const tripoint_abs_ms &p ) -> std::optiona
         return std::nullopt;
     }
 
-    const auto &furn = target_submap->get_furn( target_pos.raw() ).obj();
+    const auto &furn = target_submap->get_furn( target_pos ).obj();
     return tank_capacity_for_furn( furn );
 }
 
@@ -337,7 +337,7 @@ auto has_transformer_at( mapbuffer &mb, const tripoint_abs_ms &p ) -> bool
         return false;
     }
 
-    const auto &furn = target_submap->get_furn( target_pos.raw() ).obj();
+    const auto &furn = target_submap->get_furn( target_pos ).obj();
     if( !furn.fluid_grid ) {
         return false;
     }
@@ -596,7 +596,7 @@ auto submap_has_transformer( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) ->
             if( found ) {
                 return;
             }
-            const auto pos = point( x, y );
+            const auto pos = point_sm_ms( x, y );
             const auto &furn = sm->get_furn( pos ).obj();
             if( !furn.fluid_grid ) {
                 return;
@@ -700,7 +700,7 @@ auto submap_tank_cache_at( const tripoint_abs_sm &sm_coord,
     auto entry = submap_tank_cache_entry{};
     std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
         std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
-            const auto pos = point( x, y );
+            const auto pos = point_sm_ms( x, y );
             const auto &furn = sm->get_furn( pos ).obj();
             const auto tank_capacity = tank_capacity_for_furn( furn );
             if( tank_capacity ) {
@@ -1149,7 +1149,7 @@ class fluid_grid_tracker
                 return;
             }
 
-            const auto &furn = target_submap->get_furn( target_pos.raw() ).obj();
+            const auto &furn = target_submap->get_furn( target_pos ).obj();
             const auto tank_capacity = tank_capacity_for_furn( furn );
             if( !tank_capacity ) {
                 return;
@@ -1174,7 +1174,7 @@ class fluid_grid_tracker
             enforce_tank_type_limit( state, tank_count );
             grid.set_state( state );
 
-            auto &items = target_submap->get_items( target_pos.raw() );
+            auto &items = target_submap->get_items( target_pos );
             items.clear();
 
             std::ranges::for_each( overflow.stored_by_type, [&]( const auto & entry ) {
@@ -1683,7 +1683,7 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
         return;
     }
 
-    auto &items = target_submap->get_items( target_pos.raw() );
+    auto &items = target_submap->get_items( target_pos );
     std::ranges::for_each( overflow.stored_by_type, [&]( const auto & entry ) {
         if( entry.second <= 0_ml ) {
             return;

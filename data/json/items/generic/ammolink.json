@@ -25,6 +25,8 @@
     "copy-from": "ammolink",
     "type": "GENERIC",
     "name": { "str": "7.62x51mm ammo belt linkage" },
+    "weight": "4 g",
+    "volume": "4 ml",
     "use_action": { "type": "ammobelt", "belt": "belt308" }
   },
   {
@@ -32,8 +34,8 @@
     "copy-from": "ammolink",
     "type": "GENERIC",
     "name": { "str": "40mm grenade belt linkage" },
-    "weight": "10 g",
-    "volume": "10 ml",
+    "weight": "20 g",
+    "volume": "20 ml",
     "use_action": { "type": "ammobelt", "belt": "belt40mm" }
   },
   {
@@ -41,6 +43,8 @@
     "copy-from": "ammolink",
     "type": "GENERIC",
     "name": { "str": ".50 ammo belt linkage" },
+    "weight": "10 g",
+    "volume": "10 ml",
     "use_action": { "type": "ammobelt", "belt": "belt50" }
   }
 ]

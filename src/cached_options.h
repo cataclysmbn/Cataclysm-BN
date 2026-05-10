@@ -31,6 +31,11 @@ extern bool json_report_strict;
 extern bool use_tiles;
 
 /**
+ * Enable pinyin-based fallback matching for Chinese search text.
+ */
+extern bool use_pinyin_search;
+
+/**
  * Use tiles for 'm'ap display. Always false for ncurses build,
  * but can be toggled in sdl build.
  */
@@ -61,6 +66,17 @@ extern int fov_3d_z_range;
 
 /** 3D FoV horizontal occlusion: clip vertical-cast results with per-z 2D horizontal shadow passes. */
 extern bool fov_3d_occlusion;
+
+/** High-sprite occlusion handling mode: 0 off, 1 always, 2 automatic. */
+extern int prevent_occlusion;
+/** Retract sprites that support DDA retracted offsets while handling occlusion. */
+extern bool prevent_occlusion_retract;
+/** Prefer *_transparent tile variants while handling occlusion. */
+extern bool prevent_occlusion_transp;
+/** Override minimum automatic occlusion distance. Values <= 0 use tileset metadata. */
+extern float prevent_occlusion_min_dist;
+/** Override maximum automatic occlusion distance. Values <= 0 use tileset metadata. */
+extern float prevent_occlusion_max_dist;
 
 /** Using isometric tileset. */
 extern bool tile_iso;
@@ -187,5 +203,4 @@ extern error_log_format_t error_log_format;
 #else
 constexpr error_log_format_t error_log_format = error_log_format_t::human_readable;
 #endif
-
 

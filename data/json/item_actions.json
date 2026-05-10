@@ -427,7 +427,7 @@
   {
     "type": "item_action",
     "id": "FISH_ROD",
-    "name": { "str": "Fish" }
+    "name": { "ctxt": "fishing action", "str": "Fish" }
   },
   {
     "type": "item_action",
@@ -831,6 +831,11 @@
   },
   {
     "type": "item_action",
+    "id": "OBJ_VAR_VIEWER",
+    "name": { "str": "Inspect object variables" }
+  },
+  {
+    "type": "item_action",
     "id": "TOWEL",
     "name": { "str": "Dry/clean yourself" }
   },
@@ -1068,5 +1073,15 @@
     "type": "item_action",
     "id": "pocket_dimension",
     "name": { "str": "Access a pocket dimension" }
+  },
+  {
+    "type": "item_action",
+    "id": "paint_stuff",
+    "name": { "str": "Paint something" }
+  },
+  {
+    "type": "item_action",
+    "id": "paint_stuff_cfg",
+    "name": { "str": "Configure Painter" }
   }
 ]

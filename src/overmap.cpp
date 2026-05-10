@@ -5972,7 +5972,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         std::vector<std::string> directions{"_north", "_east", "_south", "_west"};
         auto &owning_omb = get_overmapbuffer( dimension_id_ );
         tripoint_om_omt local_pos = owning_omb.get_om_global( p ).local;
-        const tripoint target_sub( omt_to_sm_copy( p.raw() ) );
+        const auto target_sub( project_to<coords::sm>( p ) );
         std::string note_text( chosen );
         std::ranges::replace( note_text, '_', ' ' );
         add_note( local_pos, string_format( "Signs of %s ore nearby.", note_text ) );
@@ -6004,8 +6004,8 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
             for( int y = 0; y < 2; y++ ) {
                 // Apply previewed mapgen to map. Since this is a function for testing, we try avoid triggering
                 // functions that would alter the results
-                const tripoint dest_pos = target_sub + point( x, y );
-                const tripoint src_pos = tripoint{ x, y, p.z() };
+                const auto dest_pos = target_sub + point_rel_sm( x, y );
+                const auto src_pos = tripoint_bub_sm{ x, y, p.z() };
 
                 submap *destsm = MAPBUFFER_REGISTRY.get( dimension_id_ ).lookup_submap( dest_pos );
                 submap *srcsm = tmp.get_submap_at_grid( src_pos );
@@ -6013,7 +6013,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
                 submap::swap( *destsm,  *srcsm );
 
                 for( auto &veh : destsm->vehicles ) {
-                    veh->sm_pos = dest_pos;
+                    veh->sm_pos = dest_pos.raw();
                 }
 
                 if( !destsm->spawns.empty() ) {                              // trigger spawnpoints
@@ -6025,7 +6025,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         // Since we cleared the vehicle cache of the whole z-level (not just the generate map), we add it back here
         for( int x = 0; x < here.getmapsize(); x++ ) {
             for( int y = 0; y < here.getmapsize(); y++ ) {
-                const tripoint dest_pos = tripoint( x, y, p.z() );
+                const auto dest_pos = tripoint_bub_sm( x, y, p.z() );
                 const submap *destsm = here.get_submap_at_grid( dest_pos );
                 here.update_vehicle_list( destsm, p.z() ); // update real map's vcaches
             }

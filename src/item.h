@@ -112,6 +112,14 @@ static const std::string source_p1_name = "source_" + p1_name;
 static const std::string source_p2_name = "source_" + p2_name;
 static const tripoint_abs_ms tripoint_abs_ms_min( tripoint_min );
 
+static const std::string TINT_COLOR_VAR_NAME( "tint_color" );
+static const std::string TINT_COLOR_FG_VAR_NAME( "tint_color_fg" );
+static const std::string TINT_COLOR_BG_VAR_NAME( "tint_color_bg" );
+static const std::string TINT_MODE_VAR_NAME( "tint_blend_mode" );
+static const std::string TINT_SATURATION_VAR_NAME( "tint_saturation" );
+static const std::string TINT_CONTRAST_VAR_NAME( "tint_contrast" );
+static const std::string TINT_BRIGHTNESS_VAR_NAME( "tint_brightness" );
+
 /**
  *  Value and metadata for one property of an item
  *
@@ -1487,6 +1495,13 @@ class item : public location_visitable<item>, public game_object<item>
          */
         void on_damage( int qty, damage_type dt );
 
+        /**
+         * Callback after an item is placed on the map, for any reason
+         * @param m The Map
+         * @param p Where in the map
+         */
+        void on_map_placement( const map &m, const tripoint &p );
+
         std::vector<trait_id> mutations_from_wearing( const Character &guy ) const;
 
         /**
@@ -1532,14 +1547,14 @@ class item : public location_visitable<item>, public game_object<item>
          */
         /*@{*/
 
-        template<typename T>
-        T get_var( const std::string &name, const T &default_value ) const {
-            return item_vars_.get<T>( name, default_value );
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        T get_var( const std::string &name, const T &default_value, const Conv &conv = {} ) const {
+            return item_vars_.get<T, Conv>( name, default_value, conv );
         }
 
-        template<typename T>
-        void set_var( const std::string &name, const T &value ) {
-            item_vars_.set<T>( name, value );
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        void set_var( const std::string &name, const T &value, const Conv &conv = {} ) {
+            item_vars_.set<T>( name, value, conv );
         }
 
         std::string get_var( const std::string &name, const char *default_value ) const {
@@ -1578,16 +1593,17 @@ class item : public location_visitable<item>, public game_object<item>
         std::string get_var( const std::string &name ) const { return item_vars_.get( name, "" ); }
         */
 
-        bool has_var( const std::string &name ) const { return item_vars_.contains( name ); }
-        void erase_var( const std::string &name ) { item_vars_.erase( name ); }
-        void clear_vars() { item_vars_.clear(); }
+        auto has_var( const std::string &name ) const -> bool { return item_vars_.contains( name ); }
+        auto erase_var( const std::string &name ) -> void { item_vars_.erase( name ); }
+        auto clear_vars() -> void { item_vars_.clear(); }
 
         // TODO in follow-up PR:
         // remove internal usage of get_var / set_var internally
         // mark as [[deprecated]]
         // completely remove in a future update
 
-        data_vars::data_set &item_vars() { return item_vars_; }
+        auto item_vars() -> data_vars::data_set & { return item_vars_; } // *NOPAD*
+        auto item_vars() const -> const data_vars::data_set & { return item_vars_; } // *NOPAD*
 
         /** Adds child items to the contents of this one. */
         void add_item_with_id( const itype_id &itype, int count = 1 );
@@ -2804,5 +2820,4 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-
 

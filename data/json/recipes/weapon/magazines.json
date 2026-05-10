@@ -417,56 +417,53 @@
   {
     "type": "recipe",
     "result": "ammolink223",
-    "byproducts": [ [ "scrap", 50 ] ],
-    "charges": 10,
+    "charges": 25,
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MAGAZINES",
     "skill_used": "fabrication",
     "difficulty": 4,
     "skills_required": [ "gun", 1 ],
-    "time": "20 m",
+    "time": "30 m",
     "batch_time_factors": [ 50, 3 ],
     "autolearn": [ [ "fabrication", 5 ], [ "gun", 2 ] ],
     "book_learn": [ [ "manual_rifle", 3 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
-    "using": [ [ "forging_standard", 3 ] ],
-    "components": [ [ [ "sheet_metal", 1 ], [ "sheet_metal_small", 24 ] ] ]
+    "using": [ [ "forging_standard", 1 ] ],
+    "components": [ [ [ "scrap", 1 ] ] ]
   },
   {
     "type": "recipe",
     "result": "ammolink308",
-    "byproducts": [ [ "scrap", 50 ] ],
-    "charges": 10,
+    "charges": 25,
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MAGAZINES",
     "skill_used": "fabrication",
     "difficulty": 4,
     "skills_required": [ "gun", 1 ],
-    "time": "20 m",
+    "time": "30 m",
     "batch_time_factors": [ 50, 3 ],
     "autolearn": [ [ "fabrication", 5 ], [ "gun", 2 ] ],
     "book_learn": [ [ "manual_rifle", 3 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
-    "using": [ [ "forging_standard", 3 ] ],
-    "components": [ [ [ "sheet_metal", 1 ], [ "sheet_metal_small", 24 ] ] ]
+    "using": [ [ "forging_standard", 2 ] ],
+    "components": [ [ [ "scrap", 2 ] ] ]
   },
   {
     "type": "recipe",
     "result": "ammolink50",
-    "byproducts": [ [ "scrap", 50 ] ],
-    "charges": 10,
+    "charges": 25,
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MAGAZINES",
     "skill_used": "fabrication",
     "difficulty": 4,
     "skills_required": [ "gun", 2 ],
-    "time": "20 m",
+    "time": "45 m",
     "batch_time_factors": [ 50, 3 ],
     "autolearn": [ [ "fabrication", 5 ], [ "gun", 2 ] ],
     "book_learn": [ [ "manual_rifle", 3 ], [ "recipe_bullets", 3 ] ],
     "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
-    "using": [ [ "forging_standard", 3 ] ],
-    "components": [ [ [ "sheet_metal", 1 ], [ "sheet_metal_small", 24 ] ] ]
+    "using": [ [ "forging_standard", 5 ] ],
+    "components": [ [ [ "scrap", 5 ], [ "sheet_metal_small", 1 ] ] ]
   },
   {
     "type": "recipe",
@@ -478,13 +475,13 @@
     "skill_used": "fabrication",
     "difficulty": 4,
     "skills_required": [ "gun", 2 ],
-    "time": "25 m",
+    "time": "60 m",
     "batch_time_factors": [ 50, 3 ],
     "autolearn": [ [ "fabrication", 6 ], [ "gun", 2 ] ],
     "book_learn": [ [ "recipe_bullets", 4 ] ],
     "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
-    "using": [ [ "forging_standard", 4 ] ],
-    "components": [ [ [ "sheet_metal", 2 ], [ "sheet_metal_small", 48 ] ] ]
+    "using": [ [ "forging_standard", 10 ] ],
+    "components": [ [ [ "scrap", 10 ], [ "sheet_metal_small", 2 ] ] ]
   },
   {
     "result": "nailmag",
@@ -1687,18 +1684,18 @@
   {
     "type": "recipe",
     "result": "ammolink25mm",
-    "charges": 10,
+    "charges": 25,
     "category": "CC_WEAPON",
     "subcategory": "CSC_WEAPON_MAGAZINES",
     "skill_used": "fabrication",
     "difficulty": 4,
     "skills_required": [ "gun", 2 ],
-    "time": "25 m",
+    "time": "60 m",
     "batch_time_factors": [ 50, 3 ],
     "autolearn": [ [ "fabrication", 6 ], [ "gun", 2 ] ],
     "book_learn": [ [ "textbook_launcher", 4 ], [ "recipe_bullets", 4 ] ],
-    "using": [ [ "forging_standard", 4 ] ],
+    "using": [ [ "forging_standard", 10 ] ],
     "qualities": [ { "id": "SWAGING", "level": 1 }, { "id": "GRIP_HOT", "level": 2 } ],
-    "components": [ [ [ "sheet_metal", 2 ], [ "sheet_metal_small", 48 ] ] ]
+    "components": [ [ [ "scrap", 10 ], [ "sheet_metal_small", 2 ] ] ]
   }
 ]

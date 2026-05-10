@@ -1390,3 +1390,33 @@ void avatar_action::unload( avatar &you )
     }
     avatar_funcs::unload_item( you, *loc );
 }
+
+void avatar_action::unload_all( avatar &you, bool inv )
+{
+    bool unloaded = false;
+    if( inv ) {
+        auto items = you.all_items();
+        for( item *it : items ) {
+            if( item_funcs::can_be_unloaded( *it ) ) {
+                if( !avatar_funcs::unload_item( you, *it ) ) {
+                    break;
+                }
+                unloaded = true;
+            }
+        }
+    } else {
+        auto items = get_map().i_at( you.pos() );
+        for( item *it : items ) {
+            if( item_funcs::can_be_unloaded( *it ) ) {
+                if( !avatar_funcs::unload_item( you, *it ) ) {
+                    break;
+                }
+                unloaded = true;
+            }
+        }
+    }
+
+    if( !unloaded ) {
+        add_msg( _( "You have nothing to unload." ) );
+    }
+}

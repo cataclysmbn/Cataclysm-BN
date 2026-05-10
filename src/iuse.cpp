@@ -1441,7 +1441,7 @@ int iuse::mycus( player *p, item *it, bool t, const tripoint &pos )
 int iuse::petfood( player *p, item *it, bool, const tripoint & )
 {
     if( !it->is_comestible() ) {
-        p->add_msg_if_player( _( "You doubt someone would want to eat % 1$s." ), it->tname() );
+        p->add_msg_if_player( _( "You doubt someone would want to eat %1$s." ), it->tname() );
         return 0;
     }
 
@@ -5574,7 +5574,10 @@ auto get_hackable_friendly_monsters( game &game_ref ) -> std::vector<shared_ptr_
     auto monsters = game_ref.all_monsters();
     auto &items = monsters.items;
     auto results = std::vector<shared_ptr_fast<monster>> {};
-    std::ranges::for_each( items, [&]( const auto & weak_monster ) {
+    if( !items ) {
+        return results;
+    }
+    std::ranges::for_each( *items, [&]( const auto & weak_monster ) {
         auto current = weak_monster.lock();
         if( !current || current->is_dead() ) {
             return;
@@ -7201,7 +7204,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
                               e.c_str() );
                 }
 
-                const bool selfie = std::ranges::find( player_vec, p ) != player_vec.end();
+                const bool selfie = std::ranges::contains( player_vec, p );
 
                 if( selfie ) {
                     p->add_msg_if_player( _( "You took a selfie." ) );
@@ -7740,7 +7743,7 @@ static bool hackveh( player &p, item &it, vehicle &veh )
     if( !veh.is_locked || !veh.has_security_working() ) {
         return true;
     }
-    const bool advanced = !empty( veh.get_avail_parts( "REMOTE_CONTROLS" ) );
+    const auto advanced = !veh.get_avail_parts( "REMOTE_CONTROLS" ).empty();
     if( advanced && veh.is_alarm_on ) {
         p.add_msg_if_player( m_bad, _( "This vehicle's security system has locked you out!" ) );
         return false;
@@ -7803,8 +7806,8 @@ static vehicle *pickveh( const tripoint &center, bool advanced )
         auto &v = veh.v;
         if( rl_dist( center, v->global_pos3() ) < 40 &&
             v->fuel_left( itype_battery, true ) > 0 &&
-            ( !empty( v->get_avail_parts( advctrl ) ) ||
-              ( !advanced && !empty( v->get_avail_parts( ctrl ) ) ) ) ) {
+            ( !v->get_avail_parts( advctrl ).empty() ||
+              ( !advanced && !v->get_avail_parts( ctrl ).empty() ) ) ) {
             vehs.push_back( v );
         }
     }
@@ -7898,7 +7901,7 @@ int iuse::remoteveh( player *p, item *it, bool t, const tripoint &pos )
     } else if( choice == 1 ) {
         const auto rctrl_parts = veh->get_avail_parts( "REMOTE_CONTROLS" );
         // Revert to original behavior if we can't find remote controls.
-        if( empty( rctrl_parts ) ) {
+        if( rctrl_parts.empty() ) {
             veh->use_controls( pos );
         } else {
             veh->use_controls( rctrl_parts.begin()->pos() );
@@ -8711,6 +8714,22 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
     p->add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
         pgettext( "in progress craft", "<npcname> starts working on the %s." ), craft_name );
+
+    if( p->is_npc() ) {
+        const recipe &rec = it->get_making();
+        auto actor = std::make_unique<craft_activity_actor>(
+                         &rec,
+                         it->charges,
+                         it->get_counter(),
+                         best_bench.position,
+                         std::vector<comp_selection<item_comp>> {},
+                         it->get_cached_tool_selections(),
+                         it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
+                     );
+        p->assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+        return 0;
+    }
+
     p->assign_activity( ACT_CRAFT );
     // Horrible! We have to find the item again...
     item *where = nullptr;

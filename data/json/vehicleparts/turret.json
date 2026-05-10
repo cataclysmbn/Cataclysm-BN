@@ -817,6 +817,31 @@
   },
   {
     "type": "vehicle_part",
+    "id": "laser_designator_part",
+    "name": { "str": "laser designator" },
+    "symbol": "$",
+    "color": "light_red",
+    "broken_symbol": "$",
+    "broken_color": "red",
+    "damage_modifier": 10,
+    "durability": 50,
+    "item": "laser_designator_item",
+    "description": "An advanced laser rangefinder and guidance system.  Installing this on a turret will greatly increase its accuracy when fired remotely from vehicle controls, but will not help if fired by hand, or if out of power.",
+    "folded_volume": "1 L",
+    "flags": [ "LASER_DESIGNATOR", "UNMOUNT_ON_DAMAGE", "SHOCK_RESISTANT" ],
+    "requirements": {
+      "install": {
+        "time": "40 m",
+        "skills": [ [ "mechanics", 3 ], [ "electronics", 3 ] ],
+        "qualities": [ { "id": "SCREW", "level": 1 } ]
+      },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "3 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 3 ] ], "qualities": [ { "id": "SCREW", "level": 1 } ] }
+    },
+    "breaks_into": "ig_vp_device"
+  },
+  {
+    "type": "vehicle_part",
     "id": "bomber controls",
     "looks_like": "turret_controls",
     "name": { "str": "bomb bay" },

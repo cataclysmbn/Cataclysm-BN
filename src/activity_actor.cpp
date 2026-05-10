@@ -36,6 +36,7 @@
 #include "locations.h"
 #include "map.h"
 #include "map_iterator.h"
+#include "map_selector.h"
 #include "mapdata.h"
 #include "messages.h"
 #include "npc.h"
@@ -45,6 +46,8 @@
 #include "player_activity.h"
 #include "point.h"
 #include "ranged.h"
+#include "crafting_quality.h"
+#include "recipe.h"
 #include "recipe_dictionary.h"
 #include "rng.h"
 #include "sounds.h"
@@ -2048,13 +2051,288 @@ std::unique_ptr<activity_actor> throw_activity_actor::deserialize( JsonIn &jsin 
 }
 
 
+// ---- craft_activity_actor ----
+
+craft_activity_actor::craft_activity_actor(
+    const recipe *rec,
+    int batch_size,
+    int craft_counter,
+    const tripoint &location,
+    std::vector<comp_selection<item_comp>> item_selections,
+    std::vector<comp_selection<tool_comp>> tool_selections,
+    bool tools_prepaid
+) : rec( rec ), batch_size( batch_size ), craft_counter( craft_counter ),
+    location( location ),
+    item_selections( std::move( item_selections ) ),
+    tool_selections( std::move( tool_selections ) ),
+    tools_prepaid( tools_prepaid ),
+    is_valid( rec != nullptr )
+{}
+
+item *craft_activity_actor::find_in_progress_craft( Character &who ) const
+{
+    item *result = nullptr;
+    who.visit_items( [&]( item * it ) {
+        if( it->is_craft() && &it->get_making() == rec ) {
+            result = it;
+            return VisitResponse::ABORT;
+        }
+        return VisitResponse::NEXT;
+    } );
+    if( result ) {
+        return result;
+    }
+    // If not in inventory, check the map at the crafter's feet — set_item_inventory
+    // may have placed it there if the NPC was over their carry capacity.
+    map_selector sel( who.pos(), 0 );
+    sel.visit_items( [&]( item * it ) {
+        if( it->is_craft() && &it->get_making() == rec ) {
+            result = it;
+            return VisitResponse::ABORT;
+        }
+        return VisitResponse::NEXT;
+    } );
+    return result;
+}
+
+void craft_activity_actor::calc_all_moves( player_activity &act, Character &who )
+{
+    if( !rec || !is_valid ) {
+        act.set_to_null();
+        return;
+    }
+
+    const int current_turn = to_turn<int>( calendar::turn );
+
+    // Catch-up: apply time elapsed while NPC was outside the reality bubble.
+    // last_turn_nr >= 0 means start() already ran in a previous session.
+    if( last_turn_nr >= 0 && current_turn > last_turn_nr ) {
+        item *craft_item = find_in_progress_craft( who );
+        if( craft_item ) {
+            const int elapsed_turns = current_turn - last_turn_nr;
+            const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+            // 100 moves per turn at base speed (no modifiers applied while outside bubble)
+            const double moves_elapsed = elapsed_turns * 100.0;
+            const int old_counter = craft_item->get_counter();
+            const int new_counter = std::min(
+                                        static_cast<int>( old_counter + moves_elapsed / base_total_moves * 10'000'000.0 ),
+                                        10'000'000 );
+            craft_item->set_counter( new_counter );
+            craft_counter = new_counter;
+
+            const int five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
+            if( five_percent_steps > 0 ) {
+                who.craft_skill_gain( *craft_item, five_percent_steps );
+            }
+
+            // Re-build progress counter to match updated craft state
+            const int remaining = std::max( 0, static_cast<int>(
+                                                base_total_moves * ( 1.0 - new_counter / 10'000'000.0 ) ) );
+            if( !activity_actor::progress.empty() ) {
+                activity_actor::progress.mod_moves_left(
+                    remaining - activity_actor::progress.get_moves_left() );
+            } else {
+                activity_actor::progress.emplace( craft_item->tname(),
+                                                  static_cast<int>( base_total_moves ), remaining );
+            }
+
+            if( new_counter >= 10'000'000 ) {
+                // Drain so complete() fires on the next do_turn check
+                activity_actor::progress.mod_moves_left( -activity_actor::progress.get_moves_left() );
+            }
+        }
+    }
+
+    last_turn_nr = current_turn;
+
+    // Re-build progress counter after deserialization if catch-up didn't already do it
+    if( activity_actor::progress.empty() ) {
+        item *craft_item = find_in_progress_craft( who );
+        const std::string name = craft_item ? craft_item->tname() : rec->result_name();
+        const int base_total = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+        const int remaining = std::max( 1, static_cast<int>(
+                                            base_total * ( 1.0 - craft_counter / 10'000'000.0 ) ) );
+        activity_actor::progress.emplace( name, base_total, remaining );
+    }
+}
+
+void craft_activity_actor::start( player_activity &act, Character &who )
+{
+    if( !rec || !is_valid ) {
+        act.set_to_null();
+        return;
+    }
+
+    item *craft_item = find_in_progress_craft( who );
+    if( !craft_item ) {
+        who.add_msg_player_or_npc(
+            _( "You lost your in progress %s and had to stop crafting." ),
+            _( "<npcname> lost the in progress %s and had to stop crafting." ),
+            rec->result_name() );
+        act.set_to_null();
+        return;
+    }
+
+    craft_counter = craft_item->get_counter();
+    last_turn_nr = to_turn<int>( calendar::turn );  // mark fresh start so calc_all_moves skips catch-up
+    const int base_total = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+    const int remaining = craft_counter == 0
+                          ? base_total
+                          : std::max( 1, static_cast<int>( base_total * ( 1.0 - craft_counter / 10'000'000.0 ) ) );
+    activity_actor::progress.emplace( craft_item->tname(), base_total, remaining );
+}
+
+void craft_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    if( !rec || !is_valid ) {
+        act.set_to_null();
+        return;
+    }
+
+    item *craft_item = find_in_progress_craft( who );
+    if( !craft_item ) {
+        who.add_msg_player_or_npc(
+            _( "You no longer have the in progress craft in your possession.  "
+               "You stop crafting.  "
+               "Reactivate the in progress craft to continue crafting." ),
+            _( "<npcname> no longer has the in progress craft in their possession.  "
+               "<npcname> stops crafting." ) );
+        act.set_to_null();
+        return;
+    }
+
+    const recipe &making = *rec;
+    const bench_location bench = find_best_bench( who, *craft_item );
+    const float tools_mult = crafting_tools_speed_multiplier( who, making );
+    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, bench, tools_mult );
+    const int assistants = who.available_assistant_count( making );
+
+    if( crafting_speed <= 0.0f ) {
+        who.add_msg_player_or_npc( m_bad,
+                                   _( "You cannot continue crafting." ),
+                                   _( "<npcname> cannot continue crafting." ) );
+        act.set_to_null();
+        return;
+    }
+
+    const int old_counter = craft_item->get_counter();
+    const double base_total_moves = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
+    const double cur_total_moves = std::max( 1, making.batch_time( batch_size, crafting_speed,
+                                   assistants ) );
+    const double delta_progress = who.get_moves() > 0
+                                  ? who.get_moves() * base_total_moves / cur_total_moves
+                                  : 0.0;
+    const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
+    const int new_counter = std::min(
+                                static_cast<int>( std::round( current_progress / base_total_moves * 10'000'000.0 ) ),
+                                10'000'000 );
+    const int five_percent_steps = new_counter / 500'000 - old_counter / 500'000;
+    craft_item->set_counter( new_counter );
+    craft_counter = new_counter;
+
+    who.set_moves( 0 );
+
+    if( five_percent_steps > 0 ) {
+        who.craft_skill_gain( *craft_item, five_percent_steps );
+    }
+
+    // Keep the progress_counter in sync so the UI shows correct values
+    if( !activity_actor::progress.empty() ) {
+        const int new_moves_left = static_cast<int>(
+                                       base_total_moves * ( 1.0 - static_cast<double>( new_counter ) / 10'000'000.0 ) );
+        const int delta = new_moves_left - activity_actor::progress.get_moves_left();
+        if( delta != 0 ) {
+            activity_actor::progress.mod_moves_left( delta );
+        }
+    }
+
+    last_turn_nr = to_turn<int>( calendar::turn );
+
+    if( new_counter >= 10'000'000 ) {
+        // Signal completion so player_activity::do_turn calls finish()
+        if( !activity_actor::progress.empty() ) {
+            activity_actor::progress.mod_moves_left( -activity_actor::progress.get_moves_left() );
+        }
+    } else if( new_counter >= craft_item->get_next_failure_point() ) {
+        const bool destroy = craft_item->handle_craft_failure( who );
+        if( destroy ) {
+            who.add_msg_player_or_npc(
+                _( "There is nothing left of the %s to craft from." ),
+                _( "There is nothing left of the %s <npcname> was crafting." ),
+                craft_item->tname() );
+            craft_item->detach();
+            act.set_to_null();
+        }
+        // If !destroy, handle_craft_failure may have called cancel_activity already
+    }
+}
+
+void craft_activity_actor::finish( player_activity &act, Character &who )
+{
+    act.set_to_null();
+    do_complete_craft( act, who );
+}
+
+void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Character &who )
+{
+    item *craft_item = find_in_progress_craft( who );
+    if( !craft_item ) {
+        debugmsg( "craft_activity_actor::do_complete_craft: no craft item found for %s",
+                  rec ? rec->result_name() : "unknown" );
+        return;
+    }
+    ::complete_craft( who, *craft_item );
+    craft_item->detach();
+}
+
+void craft_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "progress", activity_actor::progress );
+    jsout.member( "recipe", rec ? rec->ident().str() : std::string() );
+    jsout.member( "batch_size", batch_size );
+    jsout.member( "craft_counter", craft_counter );
+    jsout.member( "location", location );
+    jsout.member( "item_selections", item_selections );
+    jsout.member( "tool_selections", tool_selections );
+    jsout.member( "tools_prepaid", tools_prepaid );
+    jsout.member( "last_turn_nr", last_turn_nr );
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> craft_activity_actor::deserialize( JsonIn &jsin )
+{
+    auto actor = std::make_unique<craft_activity_actor>();
+    JsonObject data = jsin.get_object();
+
+    data.read( "progress", actor->activity_actor::progress );
+    std::string recipe_str;
+    data.read( "recipe", recipe_str );
+    if( !recipe_str.empty() ) {
+        const recipe_id rid( recipe_str );
+        if( rid.is_valid() ) {
+            actor->rec = &*rid;
+            actor->is_valid = true;
+        }
+    }
+    data.read( "batch_size", actor->batch_size );
+    data.read( "craft_counter", actor->craft_counter );
+    data.read( "location", actor->location );
+    data.read( "item_selections", actor->item_selections );
+    data.read( "tool_selections", actor->tool_selections );
+    data.read( "tools_prepaid", actor->tools_prepaid );
+    data.read( "last_turn_nr", actor->last_turn_nr );
+
+    return actor;
+}
+
 inline void construction_activity_actor::calc_all_moves( player_activity &act, Character &who )
 {
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
         auto local = here.getlocal( target );
-        pc = here.partial_con_at( local );
+        pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
     //if something goes terribly wrong we don't CTD
     if( !pc ) {
@@ -2069,7 +2347,7 @@ void construction_activity_actor::start( player_activity &/*act*/, Character &/*
 {
     map &here = get_map();
     auto local = here.getlocal( target );
-    pc = here.partial_con_at( local );
+    pc = here.partial_con_at( tripoint_bub_ms( local ) );
     auto &built = *pc->id;
 
     std::string name;
@@ -2106,7 +2384,7 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     if( !pc ) {
         map &here = get_map();
         auto local = here.getlocal( target );
-        pc = here.partial_con_at( local );
+        pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
 
     // Maybe the player and the NPC are working on the same construction at the same time or toubles during load
@@ -2196,6 +2474,7 @@ deserialize_functions = {
     { activity_id( "ACT_AUTODRIVE" ), &autodrive_activity_actor::deserialize },
     { activity_id( "ACT_BOLTCUTTING" ), &boltcutting_activity_actor::deserialize },
     { activity_id( "ACT_BUILD" ), &construction_activity_actor::deserialize },
+    { activity_id( "ACT_CRAFT" ), &craft_activity_actor::deserialize },
     { activity_id( "ACT_DIG" ), &dig_activity_actor::deserialize },
     { activity_id( "ACT_DIG_CHANNEL" ), &dig_channel_activity_actor::deserialize },
     { activity_id( "ACT_DISASSEMBLE" ), &disassemble_activity_actor::deserialize },

@@ -1235,6 +1235,9 @@ class npc : public player
         void set_activity_failure_message( const std::string &msg );
         std::string consume_activity_failure_message();
         std::string peek_activity_failure_message() const;
+        // Craft related stuff
+        void do_npc_craft( const std::optional<tripoint> &loc = std::nullopt );
+        item_location get_item_to_craft();
 
         // #############   VALUES   ################
         activity_id current_activity_id = activity_id::NULL_ID();

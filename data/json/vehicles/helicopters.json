@@ -275,6 +275,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "small_civilian_rotors", "roof" ] },
@@ -400,6 +401,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "roof" ] },
@@ -515,6 +517,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "small_civilian_rotors", "roof" ] },
@@ -575,6 +578,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_ne", "halfboard_ne" ] },
@@ -636,6 +640,7 @@
     "type": "vehicle",
     "name": "AH-64 Apache",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       {
         "x": -3,
@@ -736,7 +741,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -1, "y": -2, "parts": [ "frame_vertical", "plating_military", "board_nw" ] },
@@ -746,7 +752,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       {
@@ -844,7 +851,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       {
@@ -958,7 +966,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -3, "y": 4, "parts": [ "frame_se", "board_se", "plating_military" ] },
@@ -975,7 +984,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -2, "y": 3, "parts": [ "frame_ne", "board_horizontal" ] },
@@ -1066,7 +1076,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       {
@@ -1075,7 +1086,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -4, "y": 0, "parts": [ "frame_vertical", "board_vertical", "storage_battery" ] },
@@ -1176,7 +1188,8 @@
         "parts": [
           "frame_horizontal_2",
           "turret_mount",
-          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] }
+          { "part": "tow_launcher", "ammo": 80, "ammo_types": [ "atgm_heat" ], "ammo_qty": [ 1, 1 ] },
+          "laser_designator_part"
         ]
       },
       { "x": -4, "y": 0, "parts": [ "frame_vertical" ] },
@@ -1242,6 +1255,7 @@
     "type": "vehicle",
     "name": "V-22 Osprey",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       {
         "x": -12,
@@ -2001,6 +2015,7 @@
     "type": "vehicle",
     "name": "UH-60 Blackhawk",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof", "NBC_seal" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "roof", "NBC_seal" ] },

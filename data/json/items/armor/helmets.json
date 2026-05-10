@@ -19,7 +19,8 @@
     "warmth": 5,
     "material_thickness": 2,
     "qualities": [ [ "COOK", 3 ], [ "BOIL", 2 ], [ "CONTAIN", 1 ], [ "CHEM", 1 ] ],
-    "techniques": [ "WBLOCK_1" ]
+    "techniques": [ "WBLOCK_1" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ]
   },
   {
     "id": "headgear",
@@ -84,7 +85,8 @@
     "encumbrance": 25,
     "material": [ "hardsteel" ],
     "color": "dark_gray",
-    "material_thickness": 5
+    "material_thickness": 5,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "tac_fullhelmet",
@@ -203,7 +205,8 @@
     "warmth": 10,
     "material_thickness": 4,
     "techniques": [ "WBLOCK_1" ],
-    "flags": [ "VARSIZE", "STURDY" ]
+    "flags": [ "VARSIZE", "STURDY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "helmet_barbute_superalloy",
@@ -436,6 +439,29 @@
     "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
   },
   {
+    "id": "armored_helmet_liner",
+    "repairs_like": "phase_immersion_suit",
+    "type": "ARMOR",
+    "name": { "str": "armored helmet liner" },
+    "description": "This experimental helmet liner is made out of advanced materials to provide protection while maintaining flexibility. Initially designed as supplemental head protection for the phase immersion suit, it's too thick to wear with power armor.",
+    "weight": "200 g",
+    "volume": "300 ml",
+    "price": "1000 USD",
+    "price_postapoc": "50 cent",
+    "to_hit": -1,
+    "bashing": 2,
+    "material": [ "carbide" ],
+    "symbol": "[",
+    "looks_like": "helmet_liner",
+    "color": "dark_gray",
+    "covers": [ "head" ],
+    "coverage": 100,
+    "encumbrance": 10,
+    "warmth": 30,
+    "material_thickness": 2,
+    "flags": [ "SKINTIGHT", "STURDY", "WATERPROOF" ]
+  },
+  {
     "id": "cap_arming",
     "repairs_like": "gambeson",
     "type": "ARMOR",
@@ -571,7 +597,8 @@
     "material_thickness": 5,
     "environmental_protection": 1,
     "techniques": [ "WBLOCK_1" ],
-    "flags": [ "VARSIZE", "STURDY", "HELMET_COMPAT" ]
+    "flags": [ "VARSIZE", "STURDY", "HELMET_COMPAT" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "helmet_plate_superalloy",
@@ -785,7 +812,8 @@
     "warmth": 5,
     "material_thickness": 2,
     "techniques": [ "WBLOCK_1" ],
-    "flags": [ "OVERSIZE" ]
+    "flags": [ "OVERSIZE" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ]
   },
   {
     "id": "helmet_bone",

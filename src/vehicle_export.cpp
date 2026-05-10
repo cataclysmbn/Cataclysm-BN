@@ -23,7 +23,7 @@ auto grouped_refs( const class vehicle &v ) ->  std::vector<refs>
             continue;
         }
         locations_checked.insert( p.mount() );
-        auto parts = v.get_parts_at( v.mount_to_tripoint( p.mount() ), "", part_status_flag::any );
+        auto parts = v.get_parts_at( v.mount_to_bubble( p.mount() ).raw(), "", part_status_flag::any );
         part_group.emplace_back( parts );
     }
     return part_group;

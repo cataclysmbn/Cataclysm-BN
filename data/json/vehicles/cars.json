@@ -9,6 +9,7 @@
       [ "+==#'|H" ],
       [ "-o-+-oH" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -99,6 +100,7 @@
       [ "|=|=" ],
       [ "o+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -151,6 +153,7 @@
       [ "+o#o-" ],
       [ " --- " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": -1,
@@ -197,6 +200,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -274,6 +278,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -351,6 +356,7 @@
       [ "|===-|" ],
       [ "o----o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "seat" ] },
       { "x": 0, "y": 1, "parts": [ "frame_vertical_2" ] },
@@ -393,6 +399,7 @@
       [ "+#'|" ],
       [ "o+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -460,6 +467,7 @@
       [ "+##'|" ],
       [ "o++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -536,6 +544,7 @@
       [ "+=#'|" ],
       [ "o-+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -601,6 +610,7 @@
       [ "=>'#'|" ],
       [ "o--+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -678,6 +688,7 @@
       [ "+=#'|" ],
       [ "o-+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -740,6 +751,7 @@
       [ "+=#'|" ],
       [ "o-+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -793,6 +805,7 @@
       [ "+=##'|" ],
       [ "##++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -862,6 +875,7 @@
       [ " ###--+-" ],
       [ "   ###o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -1, "y": 0, "parts": [ "xlframe_vertical_2", "box", "engine_electric", "roof", "headlight" ] },
       { "x": -1, "y": 1, "parts": [ "xlframe_vertical_2", "windshield_horizontal_front", "roof" ] },
@@ -917,6 +931,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -1009,6 +1024,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -1090,6 +1106,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -1166,6 +1183,7 @@
     "type": "vehicle",
     "name": "Survivor Car",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -1239,6 +1257,7 @@
     "type": "vehicle",
     "name": "Sedan",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -1311,6 +1330,7 @@
     "type": "vehicle",
     "name": "Electric Sedan",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,
@@ -1382,6 +1402,7 @@
     "type": "vehicle",
     "name": "Muscle Car",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": 0,

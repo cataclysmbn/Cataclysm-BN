@@ -373,6 +373,13 @@ item::item( const itype *type, time_point turn, int qty ) : type( type ),
     if( type->relic_data ) {
         relic_data = type->relic_data;
     }
+
+    for( const auto &func : type->use_methods | std::views::values ) {
+        const auto actor = func.get_actor_ptr();
+        if( actor != nullptr ) {
+            actor->on_spawned( *this );
+        }
+    }
 }
 
 item::item( const itype_id &id, time_point turn, int qty )
@@ -489,6 +496,13 @@ item::item( const item &source ) : game_object<item>( source ), contents( this )
     for( item * const &it : source.components ) {
         components.push_back( item::spawn( *it ) );
     }
+
+    for( const auto &func : type->use_methods | std::views::values ) {
+        const auto actor = func.get_actor_ptr();
+        if( actor != nullptr ) {
+            actor->on_spawned( *this );
+        }
+    }
 }
 
 item &item::operator=( const item &source )
@@ -538,6 +552,14 @@ item &item::operator=( const item &source )
     for( item * const &it : source.components ) {
         components.push_back( item::spawn( *it ) );
     }
+
+    for( const auto &func : type->use_methods | std::views::values ) {
+        const auto actor = func.get_actor_ptr();
+        if( actor != nullptr ) {
+            actor->on_spawned( *this );
+        }
+    }
+
     return *this;
 }
 
@@ -1661,6 +1683,24 @@ void item::basic_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
         }, enumeration_conjunction::none );
         info.emplace_back( "BASE", _( "Weapon Category: " ),
                            "<header>" + weapon_categories + "</header>" );
+    }
+
+    if( has_var( TINT_COLOR_VAR_NAME ) && !get_use( iuse_paint_stuff::IUSE_ACTION ) ) {
+        const auto c = get_var<RGBColor>( TINT_COLOR_VAR_NAME, {} );
+        const auto fg = get_var<RGBColor>( TINT_COLOR_FG_VAR_NAME, c );
+        const auto bg = get_var<RGBColor>( TINT_COLOR_BG_VAR_NAME, c );
+        if( fg != RGBColor{} || bg != RGBColor{} ) {
+            if( bg != fg ) {
+                info.emplace_back( "TOOL", string_format( _( "Painted With: <bold>%s, %s</bold>" ),
+                                   bg.friendly_name(), fg.friendly_name() ) );
+            } else if( bg == RGBColor{} ) {
+                info.emplace_back( "TOOL", string_format( _( "Painted With: <bold>%s</bold>" ),
+                                   fg.friendly_name() ) );
+            } else {
+                info.emplace_back( "TOOL", string_format( _( "Painted With: <bold>%s</bold>" ),
+                                   bg.friendly_name() ) );
+            }
+        }
     }
 
     if( parts->test( iteminfo_parts::DESCRIPTION ) ) {
@@ -4922,6 +4962,22 @@ void item::on_damage( int qty, damage_type )
     }
 }
 
+void item::on_map_placement( const map &m, const tripoint &p )
+{
+
+    // TODO: Move to reveal_map_actor
+    if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
+        set_var( "reveal_map_center_omt", ms_to_omt_copy( m.getabs( p ) ) );
+    }
+
+    for( const auto &func : type->use_methods | std::views::values ) {
+        const auto actor = func.get_actor_ptr();
+        if( actor != nullptr ) {
+            actor->on_placed( *this, m, p );
+        }
+    }
+}
+
 std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int truncate ) const
 {
     int dirt_level = get_var( "dirt", 0 ) / 2000;
@@ -7279,7 +7335,7 @@ bool item::only_made_of( const std::set<material_id> &mat_idents ) const
 bool item::made_of( const material_id &mat_ident ) const
 {
     const std::vector<material_id> &materials = made_of();
-    return std::ranges::find( materials, mat_ident ) != materials.end();
+    return std::ranges::contains( materials, mat_ident );
 }
 
 bool item::contents_made_of( const phase_id phase ) const
@@ -8879,12 +8935,13 @@ void item::gun_cycle_mode()
     const gun_mode_id cur = gun_get_mode_id();
     const std::map<gun_mode_id, gun_mode> modes = gun_all_modes();
 
-    for( auto iter = modes.begin(); iter != modes.end(); ++iter ) {
-        if( iter->first == cur ) {
-            if( std::next( iter ) == modes.end() ) {
-                break;
-            }
-            gun_set_mode( std::next( iter )->first );
+    const auto current_mode = std::ranges::find( modes, cur, []( const auto & pair ) {
+        return pair.first;
+    } );
+    if( current_mode != modes.end() ) {
+        const auto next_mode = std::next( current_mode );
+        if( next_mode != modes.end() ) {
+            gun_set_mode( next_mode->first );
             return;
         }
     }
@@ -10956,7 +11013,7 @@ bool item::has_effect_when_wielded( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_wielded;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_worn( art_effect_passive effect ) const
@@ -10965,7 +11022,7 @@ bool item::has_effect_when_worn( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ew = type->artifact->effects_worn;
-    return std::ranges::find( ew, effect ) != ew.end();
+    return std::ranges::contains( ew, effect );
 }
 
 bool item::has_effect_when_carried( art_effect_passive effect ) const
@@ -10974,7 +11031,7 @@ bool item::has_effect_when_carried( art_effect_passive effect ) const
         return false;
     }
     const std::vector<art_effect_passive> &ec = type->artifact->effects_carried;
-    if( std::ranges::find( ec, effect ) != ec.end() ) {
+    if( std::ranges::contains( ec, effect ) ) {
         return true;
     }
     for( const item *i : contents.all_items_top() ) {
@@ -11456,12 +11513,11 @@ std::vector<detached_ptr<item>> item::remove_components()
 
 detached_ptr<item> item::remove_component( item &it )
 {
-    for( auto iter = components.begin(); iter != components.end(); iter++ ) {
-        if( *iter == &it ) {
-            detached_ptr<item> ret;
-            components.erase( iter, &ret );
-            return ret;
-        }
+    const auto iter = std::ranges::find( components, &it );
+    if( iter != components.end() ) {
+        detached_ptr<item> ret;
+        components.erase( iter, &ret );
+        return ret;
     }
     debugmsg( "Could not find component for removal" );
     return detached_ptr<item>();

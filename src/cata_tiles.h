@@ -66,6 +66,8 @@ struct tile_type {
     bool is_multitile_subtile = false;
     int height_3d = 0;
     point offset = point_zero;
+    point offset_retracted = point_zero;
+    float pixelscale = 1.0f;
 
     std::vector<std::string> available_subtiles;
     std::set<flag_id> flags;
@@ -330,6 +332,9 @@ class tileset
 
         int tile_width;
         int tile_height;
+        int zlevel_height = 0;
+        float prevent_occlusion_min_dist = 0.0f;
+        float prevent_occlusion_max_dist = 0.0f;
 
         // multiplier for pixel-doubling tilesets
         float tile_pixelscale;
@@ -392,6 +397,15 @@ class tileset
         }
         float get_tile_pixelscale() const {
             return tile_pixelscale;
+        }
+        auto get_zlevel_height() const -> int {
+            return zlevel_height;
+        }
+        auto get_prevent_occlusion_min_dist() const -> float {
+            return prevent_occlusion_min_dist;
+        }
+        auto get_prevent_occlusion_max_dist() const -> float {
+            return prevent_occlusion_max_dist;
         }
         const std::string &get_tileset_id() const {
             return tileset_id;
@@ -471,6 +485,8 @@ class tileset_loader
         const SDL_Renderer_Ptr &renderer;
 
         point sprite_offset;
+        point sprite_offset_retracted;
+        float sprite_pixelscale = 1.0f;
 
         int sprite_width = 0;
         int sprite_height = 0;
@@ -771,7 +787,8 @@ class cata_tiles
                              unsigned int loc_rand, bool is_fg, int rota,
                              const tint_config &tint, lit_level ll,
                              bool apply_visual_effects, int overlay_count,
-                             int *height_3d, size_t warp_hash = TILESET_NO_WARP );
+                             int *height_3d, int retract = 0,
+                             size_t warp_hash = TILESET_NO_WARP );
 
         /**
          * @brief Calls draw_sprite_at() twice each for foreground and background.
@@ -792,7 +809,7 @@ class cata_tiles
                            unsigned int loc_rand, int rota,
                            const tint_config &bg_tint, const tint_config &fg_tint,
                            lit_level ll, bool apply_visual_effects, int &height_3d,
-                           int overlay_count );
+                           int overlay_count, int retract );
 
         /**
          * @brief Draws a colored solid color tile at position, with optional blending
@@ -848,26 +865,20 @@ class cata_tiles
         static auto get_trap_color( const trap &tr, const map &map, tripoint tripoint ) -> color_tint_pair;
         static auto get_field_color( const field &f, const map &m, const tripoint &p ) -> color_tint_pair;
         auto get_item_color( const item &i, const map &m, const tripoint &p ) -> color_tint_pair;
-        auto get_item_color( const item &i ) -> color_tint_pair;
         static auto get_vpart_color(
-            const optional_vpart_position &vp, const map &m, const tripoint &p ) -> color_tint_pair;
+            const optional_vpart_position &vp, const map &m, const tripoint &p,
+            const bool use_roof = false ) -> color_tint_pair;
         static auto get_monster_color(
             const monster &mon, const map &m, const tripoint &p ) -> color_tint_pair;
         static auto get_character_color(
             const Character &ch, const map &m, const tripoint &p ) -> color_tint_pair;
         auto get_effect_color(
             const effect &eff, const Character &c, const map &m, const tripoint &p ) -> color_tint_pair;
-        auto get_effect_color(
-            const effect &eff, const Character &c ) -> color_tint_pair;
         auto get_bionic_color(
             const bionic &bio, const Character &c, const map &m, const tripoint &p )-> color_tint_pair;
-        auto get_bionic_color(
-            const bionic &bio, const Character &c )-> color_tint_pair;
         auto get_mutation_color(
             const mutation &mut, const Character &c, const map &m,
             const tripoint &p )-> color_tint_pair;
-        auto get_mutation_color(
-            const mutation &mut, const Character &c )-> color_tint_pair;
 
         bool draw_terrain( const tripoint &p, lit_level ll, int &height_3d,
                            const bool ( &invisible )[5], int z_drop );

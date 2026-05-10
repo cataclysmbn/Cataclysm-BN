@@ -368,7 +368,8 @@
     "name": { "str": "flat trunk" },
     "looks_like": "hatch",
     "size": "100 L",
-    "flags": [ "OBSTACLE", "HALF_BOARD", "NO_ROOF_NEEDED", "CARGO", "LOCKABLE_CARGO" ]
+    "flags": [ "OBSTACLE", "HALF_BOARD", "NO_ROOF_NEEDED", "CARGO", "LOCKABLE_CARGO" ],
+    "default_color": "#622625"
   },
   {
     "copy-from": "trunk_flat",

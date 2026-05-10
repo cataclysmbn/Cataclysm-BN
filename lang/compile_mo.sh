@@ -20,6 +20,13 @@ then
     LOCALE_DIR="lang/mo"
 fi
 
+if msgfmt --help 2>/dev/null | grep -q -- "--no-convert"
+then
+    MSGFMT_NO_CONVERT="--no-convert"
+else
+    MSGFMT_NO_CONVERT=""
+fi
+
 # compile .mo file for each specified language
 if [ $# -gt 0 ] && [ $1 != "all" ]
 then
@@ -27,7 +34,7 @@ then
     do
         f="lang/po/${n}.po"
         mkdir -p $LOCALE_DIR/${n}/LC_MESSAGES
-        msgfmt -f -o $LOCALE_DIR/${n}/LC_MESSAGES/cataclysm-bn.mo ${f}
+        msgfmt $MSGFMT_NO_CONVERT -f -o $LOCALE_DIR/${n}/LC_MESSAGES/cataclysm-bn.mo ${f}
     done
 else
     # if nothing specified, compile .mo file for every .po file in lang/po
@@ -36,6 +43,6 @@ else
     do
         n=`basename $f .po`
         mkdir -p $LOCALE_DIR/${n}/LC_MESSAGES
-        msgfmt -f -o $LOCALE_DIR/${n}/LC_MESSAGES/cataclysm-bn.mo ${f}
+        msgfmt $MSGFMT_NO_CONVERT -f -o $LOCALE_DIR/${n}/LC_MESSAGES/cataclysm-bn.mo ${f}
     done
 fi

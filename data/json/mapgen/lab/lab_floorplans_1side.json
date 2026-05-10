@@ -166,6 +166,74 @@
     }
   },
   {
+    "//": "chemical storage (chemicals, chemistry tools, drugs) + two lab rooms (filled in with '.' in order to ensure a normal t_thconc_floor inside)",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_1side" ],
+    "weight": 130,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "|----------..----------|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........+..+.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|---------|..|---------|",
+        "|ccc8Cccc|6...|ḟxḟxxḟxḟ|",
+        "|,,,,,,,,|-LL-|,,,,,,,,|",
+        "|cSc,,cSc|%..x|,,,,,,,,|",
+        "|R,,,,,,R|-++-|ccc,,ccc|",
+        "|---++---|-++-|---++---|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|ccc,,,cccc,,cccc,,,ccc|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|R,,,,,,RR,,,,RR,,,,,,R|",
+        "|R,,,,,,RR,,,,RR,,,,,,R|",
+        "|R,,,,,,RR,,,,RR,,,,,,R|",
+        "|R,,,,,,RR,,,,RR,,,,,,R|",
+        "|----------------------|"
+      ],
+      "palettes": [ "lab_palette" ],
+      "mapping": {
+        "R": {
+          "items": [
+            { "item": "chem_lab", "chance": 40 },
+            { "item": "harddrugs", "chance": 15 },
+            { "item": "softdrugs", "chance": 15 },
+            { "item": "supplies_reagents_lab_storage", "chance": 70 }
+          ]
+        },
+        "c": { "items": [ { "item": "chem_lab", "chance": 30 } ] },
+        "ḟ": { "items": [ { "item": "supplies_reagents_lab_storage", "chance": 40 }, { "item": "mut_lab", "chance": 2 } ] }
+      },
+      "furniture": { "C": "f_centrifuge", "R": "f_utility_shelf" },
+      "computers": {
+        "6": {
+          "name": "Chemical Storage",
+          "security": 3,
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 } ],
+          "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
+        },
+        "8": {
+          "name": "Centrifuge",
+          "options": [ { "name": "Analyze blood", "action": "blood_anal" } ],
+          "failures": [ { "action": "destroy_blood" } ]
+        }
+      },
+      "place_nested": [
+        { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 1, "y": 1 },
+        { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 14, "y": 1 },
+        { "chunks": [ "lab_1side_border_doors" ], "x": 0, "y": 0 }
+      ]
+    }
+  },
+  {
     "//": "military bunker",
     "type": "mapgen",
     "method": "json",

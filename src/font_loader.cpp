@@ -4,7 +4,7 @@
 
 void ensure_unifont_loaded( std::vector<std::string> &font_list )
 {
-    if( std::ranges::find( font_list, "unifont" ) == font_list.end() ) {
+    if( !std::ranges::contains( font_list, "unifont" ) ) {
         font_list.emplace_back( PATH_INFO::fontdir() + "unifont.ttf" );
     }
 }

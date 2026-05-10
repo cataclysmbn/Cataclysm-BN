@@ -100,9 +100,9 @@
     "extend": { "cancels": [ "WEAK" ] }
   },
   {
-    "id": "STR_UP_ALPHA",
+    "id": "STR_ALPHA",
     "type": "mutation",
-    "copy-from": "STR_UP_ALPHA",
+    "copy-from": "STR_ALPHA",
     "extend": { "cancels": [ "WEAK" ] }
   },
   {

@@ -269,6 +269,7 @@
     "type": "item_group",
     "subtype": "collection",
     "groups": [
+      [ "sporting_vehicle_items", 10 ],
       [ "hardware_bulk", 40 ],
       [ "supplies_electronics", 90 ],
       [ "supplies_electronics", 10 ],

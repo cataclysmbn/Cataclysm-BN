@@ -130,7 +130,7 @@ static void build_map_from_canvas( const map_helpers::canvas &canvas, const trip
 static vehicle &add_moving_vehicle(
     map &here,
     const std::string &veh_id,
-    tripoint vehicle_pos,
+    tripoint_bub_ms vehicle_pos,
     units::angle face_dir
 )
 {
@@ -175,7 +175,7 @@ static vehicle &add_moving_vehicle(
     here.vehmove();
     veh.idle( true );
 
-    here.displace_vehicle( veh, vehicle_pos - veh.global_pos3() );
+    here.displace_vehicle( veh, vehicle_pos - tripoint_bub_ms( veh.global_pos3() ) );
 
     CAPTURE( veh.global_pos3() );
     CAPTURE( veh.pivot_point() );
@@ -183,14 +183,14 @@ static vehicle &add_moving_vehicle(
     CAPTURE( pivot_global_pos3( veh ) );
 
     REQUIRE( pivot_global_pos3( veh ) == veh.global_pos3() );
-    REQUIRE( pivot_global_pos3( veh ) == vehicle_pos );
+    REQUIRE( pivot_global_pos3( veh ) == vehicle_pos.raw() );
 
     return veh;
 }
 
 static void test_rail_movement( const test_case &t,
                                 int move_dir,
-                                tripoint vehicle_pos,
+                                tripoint_bub_ms vehicle_pos,
                                 units::angle face_dir,
                                 units::angle turn_delta,
                                 tripoint expected_pos,
@@ -289,7 +289,8 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
     units::angle end_dir_s = normalize( t.end_dir_straight + rot );
     units::angle end_dir_l = normalize( t.end_dir_left + rot );
     units::angle end_dir_r = normalize( t.end_dir_right + rot );
-
+    // This tripoint_bub_ms cast is making me cry
+    // I don't want to fix the cascading issues from proper declaration
     const auto run_case = [&]( const char *label, const int move_dir,
                                const tripoint & vehicle_pos, const units::angle face_dir,
                                const units::angle turn_delta, const tripoint & expected_pos,
@@ -297,7 +298,7 @@ static void run_test_case_at_rotation( const test_case &t, int i_rot )
         CAPTURE( label );
         clear_game( t_floor );
         build_map_from_canvas( canvas, canvas_pos );
-        test_rail_movement( t, move_dir, vehicle_pos, face_dir,
+        test_rail_movement( t, move_dir, tripoint_bub_ms( vehicle_pos ), face_dir,
                             turn_delta, expected_pos, expected_dir );
     };
 

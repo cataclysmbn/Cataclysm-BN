@@ -1582,10 +1582,10 @@ void vehicle::shift_zlevel()
     int z_shift = 0;
     if( center == -1 ) {
         //no center part, fall back to slower terrain check
-        auto global_center = mount_to_tripoint( point_zero );
-        if( here.has_flag( TFLAG_RAMP_DOWN, global_center ) ) {
+        auto global_center = mount_to_bubble( point_zero );
+        if( here.has_flag( TFLAG_RAMP_DOWN, global_center.raw() ) ) {
             z_shift = -1;
-        } else if( here.has_flag( TFLAG_RAMP_UP, global_center ) ) {
+        } else if( here.has_flag( TFLAG_RAMP_UP, global_center.raw() ) ) {
             z_shift = 1;
         }
     } else {

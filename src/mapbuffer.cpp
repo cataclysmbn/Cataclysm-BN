@@ -15,7 +15,6 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "coordinate_conversions.h"
-#include "mapgen_functions.h"
 #include "debug.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
@@ -54,18 +53,6 @@ bool mapbuffer::add_submap( const tripoint &p, std::unique_ptr<submap> &sm )
     submaps[p] = std::move( sm );
 
     return true;
-}
-
-bool mapbuffer::add_submap( const tripoint &p, submap *sm )
-{
-    // FIXME: get rid of this overload and make submap ownership semantics sane.
-    std::unique_ptr<submap> temp( sm );
-    bool result = add_submap( p, temp );
-    if( !result ) {
-        // NOLINTNEXTLINE( bugprone-unused-return-value )
-        temp.release();
-    }
-    return result;
 }
 
 void mapbuffer::remove_submap( tripoint addr )
@@ -115,24 +102,6 @@ submap *mapbuffer::load_submap( const tripoint_abs_sm &pos )
     ZoneScoped;
     // lookup_submap already handles the disk-read path transparently.
     return lookup_submap( pos.raw() );
-}
-
-void mapbuffer::unload_submap( const tripoint_abs_sm &pos )
-{
-    ZoneScoped;
-    const tripoint &p = pos.raw();
-    if( !submaps.contains( p ) ) {
-        return;
-    }
-
-    // Save the quad containing this submap to disk before evicting it.
-    const tripoint om_addr = sm_to_omt_copy( p );
-    std::list<tripoint> ignored_delete;
-    // Save without deleting the other three submaps from the buffer —
-    // only this specific submap is being evicted by the caller.
-    save_quad( om_addr, ignored_delete, false );
-
-    remove_submap( p );
 }
 
 void mapbuffer::unload_quad( const tripoint &om_addr, bool save )
@@ -307,9 +276,9 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
         g != nullptr && dimension_id_ == get_map().get_bound_dimension();
 
     map &here = get_map();
-    const tripoint map_origin = is_current_dimension
-                                ? sm_to_omt_copy( here.get_abs_sub() )
-                                : tripoint_zero;
+    const tripoint_abs_omt map_origin = is_current_dimension
+                                        ? project_to<coords::omt>( here.get_abs_sub() )
+                                        : tripoint_abs_omt{};
     const bool map_has_zlevels = g != nullptr && here.has_zlevels();
 
     // Serial collection of unique OMT quad addresses with per-quad delete flags.
@@ -356,10 +325,10 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
                 // are deleted from memory after saving.
                 const bool zlev_del = !map_has_zlevels && om_addr.z != g->get_levz();
                 quad_delete = quad_delete || zlev_del ||
-                              om_addr.x < map_origin.x ||
-                              om_addr.y < map_origin.y ||
-                              om_addr.x > map_origin.x + g_half_mapsize ||
-                              om_addr.y > map_origin.y + g_half_mapsize;
+                              om_addr.x < map_origin.x() ||
+                              om_addr.y < map_origin.y() ||
+                              om_addr.x > map_origin.x() + g_half_mapsize ||
+                              om_addr.y > map_origin.y() + g_half_mapsize;
             }
 
             quads_to_process.push_back( { om_addr, quad_delete } );
@@ -532,7 +501,7 @@ void mapbuffer::deserialize_into_vec(
                 if( skip_if && skip_if( loc ) ) {
                     skip = true;
                 } else {
-                    sm = std::make_unique<submap>( sm_to_ms_copy( submap_coordinates ) );
+                    sm = std::make_unique<submap>( project_to<coords::ms>( tripoint_abs_sm( submap_coordinates ) ) );
                 }
             } else if( skip ) {
                 jsin.skip_value();
@@ -610,56 +579,19 @@ bool mapbuffer::preload_quad( const tripoint &om_addr )
 bool mapbuffer::generate_quad( const tripoint &om_addr )
 {
     ZoneScoped;
-    const tripoint base = omt_to_sm_copy( om_addr );
+    const auto base = project_to<coords::sm>( tripoint_abs_omt( om_addr ) );
     const bool all_loaded =
-        lookup_submap_in_memory( base )
-        && lookup_submap_in_memory( { base.x + 1, base.y,     base.z } )
-        &&lookup_submap_in_memory( { base.x,     base.y + 1, base.z } )
-        &&lookup_submap_in_memory( { base.x + 1, base.y + 1, base.z } );
+        lookup_submap_in_memory( base.raw() )
+        && lookup_submap_in_memory( ( base + tripoint_rel_sm::east() ).raw() )
+        && lookup_submap_in_memory( ( base + tripoint_rel_sm::south() ).raw() )
+        && lookup_submap_in_memory( ( base + tripoint_rel_sm::south_east() ).raw() );
     if( all_loaded ) {
-        return false;
-    }
-    // Lua mapgen is not reentrant: if the terrain at this quad uses a Lua-based
-    // generator and we are on a worker thread, defer the entire generate_quad()
-    // call to the main thread rather than allocating blank submaps and bailing
-    // partway through map::generate().
-    if( is_pool_worker_thread() && omt_mapgen_uses_lua( dimension_id_, om_addr ) ) {
-        std::lock_guard<std::mutex> lk( deferred_lua_quads_mutex_ );
-        deferred_lua_quads_.push_back( om_addr );
         return false;
     }
     tinymap tmp_map;
     tmp_map.bind_dimension( dimension_id_ );
     tmp_map.generate( base, calendar::turn );
     return true;
-}
-
-auto mapbuffer::drain_deferred_lua_quads() -> std::vector<tripoint>
-{
-    std::vector<tripoint> pending;
-    {
-        std::lock_guard<std::mutex> lk( deferred_lua_quads_mutex_ );
-        pending.swap( deferred_lua_quads_ );
-    }
-
-    std::vector<tripoint> generated;
-    std::ranges::for_each( pending, [&]( const tripoint & om_addr ) {
-        if( generate_quad( om_addr ) ) {
-            generated.push_back( om_addr );
-        }
-    } );
-    return generated;
-}
-
-bool mapbuffer::load_or_generate_quad( const tripoint &om_addr )
-{
-    ZoneScoped;
-    // Return true if the quad needs saving before eviction: either mapgen ran
-    // (newly generated, not yet on disk) or data came from the write-back cache
-    // (pending_writes_) which is consumed on read and would be lost on eviction.
-    const bool from_cache = preload_quad( om_addr );
-    const bool generated  = generate_quad( om_addr );
-    return from_cache || generated;
 }
 
 void mapbuffer::presave_quad( const tripoint &om_addr )

@@ -309,7 +309,7 @@
     "type": "technique",
     "id": "tec_biojutsu_disarm",
     "name": "Disarm",
-    "messages": [ "You effortlessly disarm and stun %s", "<npcname> effortlessly disarms and stuns %s" ],
+    "messages": [ "You effortlessly stun %s with a disarming blow", "<npcname> effortlessly stuns %s with a disarming blow" ],
     "skill_requirements": [ { "name": "unarmed", "level": 1 } ],
     "unarmed_allowed": true,
     "weighting": 2,
@@ -379,9 +379,11 @@
     "skill_requirements": [ { "name": "unarmed", "level": 2 } ],
     "unarmed_allowed": true,
     "unarmed_weapons_allowed": false,
+    "force_unarmed": false,
     "weighting": 2,
     "crit_ok": true,
-    "down_dur": 2
+    "down_dur": 2,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.25 } ]
   },
   {
     "type": "technique",
@@ -412,9 +414,10 @@
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "wall_adjacent": true,
+    "force_unarmed": true,
     "crit_tec": true,
     "stun_dur": 1,
-    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.5 } ]
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -513,7 +516,10 @@
     "name": "Roundhouse Kick",
     "messages": [ "You roundhouse kick %s", "<npcname> roundhouse kicks %s" ],
     "unarmed_allowed": true,
-    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.2 } ]
+    "force_unarmed": true,
+    "knockback_dist": 1,
+    "powerful_knockback": true,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2.0 } ]
   },
   {
     "type": "technique",
@@ -522,10 +528,11 @@
     "skill_requirements": [ { "name": "unarmed", "level": 5 } ],
     "unarmed_allowed": true,
     "crit_tec": true,
+    "force_unarmed": true,
     "stun_dur": 2,
     "knockback_dist": 3,
     "powerful_knockback": true,
-    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2 } ],
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 3 } ],
     "messages": [ "Your Stinger Kick sends %s flying", "<npcname>'s Stinger Kick sends %s flying" ]
   },
   {
@@ -606,7 +613,7 @@
     "type": "technique",
     "id": "tec_centipede_disarm",
     "name": "Disarm",
-    "messages": [ "You disarm %s with lightning speed", "<npcname> disarms %s with lightning speed" ],
+    "messages": [ "You strike at %s's weapon with lightning speed", "<npcname> strikes at %s's weapon with lightning speed" ],
     "skill_requirements": [ { "name": "unarmed", "level": 4 } ],
     "unarmed_allowed": true,
     "disarms": true

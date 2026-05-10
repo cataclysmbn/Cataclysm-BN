@@ -33,24 +33,28 @@ jobs:
         include:
           - name: osx-curses-x64
             os: macos-15-intel
+            preset: osx-curses-x64-dist
             tiles: 0
             artifact: osx-curses-x64
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-tiles-x64
             os: macos-15-intel
+            preset: osx-tiles-x64-dist
             tiles: 1
             artifact: osx-tiles-x64
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-curses-arm
             os: macos-15
+            preset: osx-curses-arm-dist
             tiles: 0
             artifact: osx-curses-arm
             ext: dmg
             content: application/x-apple-diskimage
           - name: osx-tiles-arm
             os: macos-15
+            preset: osx-tiles-arm-dist
             tiles: 1
             artifact: osx-tiles-arm
             ext: dmg
@@ -77,10 +81,13 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gettext parallel llvm@20 astyle sqlite3 zlib
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl2 sdl2_image sdl2_ttf sdl2_mixer gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja ncurses flac pkg-config
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
+          echo "CMAKE_PREFIX_PATH=$(brew --prefix ncurses):$(brew --prefix flac)" >> "$GITHUB_ENV"
+          echo "PKG_CONFIG_PATH=$(brew --prefix flac)/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "$PWD/venv/bin" >> "$GITHUB_PATH"
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2
@@ -97,9 +104,10 @@ jobs:
       - name: Check Clang OK
         run: |
           echo "Clang++ version:"
-          $(brew --prefix llvm@20)/bin/clang++ --version  # Ensure clang++ is installed and working
+          clang++ --version
 
-      - name: Build
-        run: |
-          source ./venv/bin/activate
-          make -j3 CCACHE=1 TILES=${{ matrix.tiles }} SOUND=${{ matrix.tiles }} RELEASE=1 LANGUAGES=all USE_HOME_DIR=1 OSX_MIN=11 PCH=0 COMPILER=$(brew --prefix llvm@20)/bin/clang++ dmgdist
+      - name: Configure and Build with CMake
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: ${{ matrix.preset }}
+          buildPreset: ${{ matrix.preset }}

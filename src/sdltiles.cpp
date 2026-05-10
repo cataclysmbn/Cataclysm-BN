@@ -116,6 +116,7 @@ static uint32_t lastupdate = 0;
 static uint32_t interval = 25;
 static bool needupdate = false;
 static bool need_invalidate_framebuffers = false;
+static bool clear_display_buffer_before_redraw = false;
 static const std::string empty_string;
 
 palette_array windowsPalette;
@@ -206,9 +207,12 @@ static void InitSDL()
 
     // cata_tiles won't be able to load the tiles, but the normal SDL
     // code will display fine.
-    ret = IMG_Init( IMG_INIT_PNG );
-    printErrorIf( ( ret & IMG_INIT_PNG ) != IMG_INIT_PNG,
-                  "IMG_Init failed to initialize PNG support, tiles won't work" );
+    const auto image_init_flags = IMG_INIT_PNG | IMG_INIT_WEBP;
+    ret = IMG_Init( image_init_flags );
+    printImgErrorIf( ( ret & IMG_INIT_PNG ) != IMG_INIT_PNG,
+                     "IMG_Init failed to initialize PNG support, tiles won't work" );
+    printImgErrorIf( ( ret & IMG_INIT_WEBP ) != IMG_INIT_WEBP,
+                     "IMG_Init failed to initialize WebP support, some loading images won't work" );
 
     ret = SDL_InitSubSystem( SDL_INIT_JOYSTICK );
     printErrorIf( ret != 0, "Initializing joystick subsystem failed" );
@@ -845,6 +849,23 @@ static point draw_string( Font &font,
         p.x += mk_wcwidth( ch32 ) * font.width;
     }
     return p;
+}
+
+void draw_sdl_text_outlined( const sdl_text_outline_options &opts )
+{
+    if( !font || !renderer || opts.text.empty() ) { return; }
+
+    const auto outline_thickness = std::max( 0, opts.outline_thickness );
+    for( auto y = -outline_thickness; y <= outline_thickness; ++y ) {
+        for( auto x = -outline_thickness; x <= outline_thickness; ++x ) {
+            if( x != 0 || y != 0 ) {
+                draw_string( *font, renderer, geometry, opts.text, opts.pos_pixel + point( x, y ),
+                             static_cast<unsigned char>( opts.outline_color ) );
+            }
+        }
+    }
+    draw_string( *font, renderer, geometry, opts.text, opts.pos_pixel,
+                 static_cast<unsigned char>( opts.text_color ) );
 }
 
 void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bool blink )
@@ -1627,6 +1648,12 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w )
 
 void cata_cursesport::curses_drawwindow( const catacurses::window &w )
 {
+    if( clear_display_buffer_before_redraw ) {
+        clear_display_buffer_before_redraw = false;
+        SetRenderTarget( renderer, display_buffer );
+        ClearScreen();
+    }
+
     if( scaling_factor > 1 ) {
         SDL_RenderSetLogicalSize( renderer.get(), WindowWidth / scaling_factor,
                                   WindowHeight / scaling_factor );
@@ -4087,6 +4114,43 @@ window_dimensions get_window_dimensions( point pos, point size )
     return get_window_dimensions( {}, pos, size );
 }
 
+auto get_sdl_display_buffer_size() -> point
+{
+    if( !display_buffer ) { return point_zero; }
+
+    auto width = 0;
+    auto height = 0;
+    if( SDL_QueryTexture( display_buffer.get(), nullptr, nullptr, &width, &height ) != 0 ) {
+        return point_zero;
+    }
+    return point( width, height );
+}
+
+auto get_sdl_window_size() -> point
+{
+    return point( std::max( 1, WindowWidth / scaling_factor ),
+                  std::max( 1, WindowHeight / scaling_factor ) );
+}
+
+auto get_sdl_font_size() -> point
+{
+    return point( fontwidth, fontheight );
+}
+
+void clear_sdl_display_buffer()
+{
+    if( !renderer || !display_buffer ) { return; }
+
+    SetRenderTarget( renderer, display_buffer );
+    ClearScreen();
+}
+
+void clear_sdl_display_buffer_before_redraw()
+{
+    clear_display_buffer_before_redraw = true;
+    reinitialize_framebuffer( true );
+}
+
 std::optional<tripoint> input_context::get_coordinates( const catacurses::window &capture_win_ )
 {
     if( !coordinate_input_received ) {
@@ -4234,8 +4298,8 @@ bool save_screenshot( const std::string &file_path )
     }
 
     // Save screenshot as PNG file
-    if( printErrorIf( IMG_SavePNG( surface.get(), file_path.c_str() ) != 0,
-                      std::string( "save_screenshot: cannot save screenshot file: " + file_path ).c_str() ) ) {
+    if( printImgErrorIf( IMG_SavePNG( surface.get(), file_path.c_str() ) != 0,
+                         std::string( "save_screenshot: cannot save screenshot file: " + file_path ).c_str() ) ) {
         return false;
     }
 

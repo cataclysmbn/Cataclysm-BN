@@ -9,6 +9,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <unordered_set>
 
 #include "avatar.h"
@@ -669,28 +670,25 @@ item &inventory::remove_item( const item *it )
 
 item &inventory::remove_item( const int position )
 {
-    int pos = 0;
-    for( invstack::iterator iter = items.begin(); iter != items.end(); ++iter ) {
-        if( position == pos ) {
-            binned = false;
-            items_type_cached = false;
-            if( iter->size() > 1 ) {
-                std::vector<item *>::iterator stack_member = iter->begin();
-                char invlet = ( *stack_member )->invlet;
-                ++stack_member;
-                ( *stack_member )->invlet = invlet;
-            }
-            item &ret = *iter->front();
-            iter->erase( iter->begin() );
-            if( iter->empty() ) {
-                items.erase( iter );
-            }
-            return ret;
-        }
-        ++pos;
+    if( position < 0 || static_cast<size_t>( position ) >= items.size() ) {
+        return null_item_reference();
     }
 
-    return null_item_reference();
+    const auto iter = std::ranges::next( std::ranges::begin( items ), position );
+    binned = false;
+    items_type_cached = false;
+    if( iter->size() > 1 ) {
+        std::vector<item *>::iterator stack_member = iter->begin();
+        char invlet = ( *stack_member )->invlet;
+        ++stack_member;
+        ( *stack_member )->invlet = invlet;
+    }
+    item &ret = *iter->front();
+    iter->erase( iter->begin() );
+    if( iter->empty() ) {
+        items.erase( iter );
+    }
+    return ret;
 }
 
 std::vector<detached_ptr<item>> location_inventory::remove_randomly_by_volume(
@@ -1135,7 +1133,7 @@ void inventory::assign_empty_invlet( item &it, const Character &p, const bool fo
                 // don't overwrite assigned keys
                 continue;
             }
-            if( std::ranges::find( binds, inv_char ) != binds.end() ) {
+            if( std::ranges::contains( binds, inv_char ) ) {
                 // don't auto-assign bound keys
                 continue;
             }

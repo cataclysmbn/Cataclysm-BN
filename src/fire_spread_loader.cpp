@@ -17,27 +17,34 @@
 
 fire_spread_loader fire_loader;
 
+namespace
+{
+
+const auto cardinal_offsets = std::to_array( { tripoint_east, tripoint_west, tripoint_north, tripoint_south } );
+
 /**
  * Return true if the submap at @p abs_sm_pos in @p mb has at least one live
  * fire field (fd_fire intensity >= 1).
  */
 // NOTE: is_field_alive() is non-const in the current codebase, so we need a
 // non-const submap reference here even though we only read.
-static bool submap_has_fire( submap &sm )
+auto submap_has_fire( submap &sm ) -> bool
 {
     if( sm.field_count == 0 ) {
         return false;
     }
-    return std::ranges::any_of( sm.field_cache, [&]( const point & local ) {
-        field_entry *fe = sm.get_field( local ).find_field( fd_fire );
+    return std::ranges::any_of( sm.field_cache, [&]( const point_sm_ms & local ) {
+        auto *fe = sm.get_field( local ).find_field( fd_fire );
         return fe != nullptr && fe->is_field_alive();
     } );
 }
 
-void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos )
+} // namespace
+
+auto fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_sm pos ) -> void
 {
     ZoneScoped;
-    dim_pos_key key{ dim, pos };
+    const auto key = dim_pos_key{ dim, pos };
 
     // Already tracked by this loader.
     if( fire_handles_.count( key ) ) {
@@ -47,97 +54,146 @@ void fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_
     // For positions inside the bubble: always register without applying the cap —
     // they are already loaded and cost no extra memory.  We need the fire_spread
     // request to exist *before* the bubble can shift away and trigger eviction.
-    const bool in_bubble = submap_loader.is_properly_requested( dim, pos );
+    const auto in_bubble = submap_loader.is_properly_requested( dim, pos );
     if( !in_bubble ) {
+        const auto adjacent_to_proper = std::ranges::any_of( cardinal_offsets,
+        [&]( const auto & delta ) {
+            const auto nbr = tripoint_abs_sm{ pos.raw() + delta };
+            return submap_loader.is_properly_requested( dim, nbr );
+        } );
+        const auto adjacent_to_tracked = std::ranges::any_of( cardinal_offsets,
+        [&]( const auto & delta ) {
+            const auto nbr_key = dim_pos_key{ dim, tripoint_abs_sm{ pos.raw() + delta } };
+            return fire_handles_.contains( nbr_key );
+        } );
+        if( !adjacent_to_proper && !adjacent_to_tracked ) {
+            return;
+        }
+
         // Apply the cap only to genuinely out-of-bubble submaps.
-        if( fire_spread_submap_cap <= 0 || loaded_count() >= fire_spread_submap_cap ) {
+        if( fire_spread_submap_cap <= 0 ||
+            out_of_bubble_loaded_count() >= fire_spread_submap_cap ) {
             return;
         }
     }
 
     // Request a single quad (radius 0) — always covers full z-pillar.
-    load_request_handle h = submap_loader.request_load(
-                                load_request_source::fire_spread,
-                                dim,
-                                pos,
-                                0 );
+    const auto h = submap_loader.request_load(
+                       load_request_source::fire_spread,
+                       dim,
+                       pos,
+                       0 );
     fire_handles_[key] = h;
 }
 
-void fire_spread_loader::prune_disconnected( submap_load_manager &loader )
+auto fire_spread_loader::prune_disconnected( submap_load_manager &loader ) -> void
 {
     ZoneScoped;
     TracyPlot( "Fire-Loaded Submaps", static_cast<int64_t>( loaded_count() ) );
-    // Cardinal offsets for neighbor checks.
-    static const std::array<tripoint, 4> card = {{
-            tripoint{ 1, 0, 0 }, tripoint{ -1, 0, 0 },
-            tripoint{ 0, 1, 0 }, tripoint{ 0, -1, 0 }
-        }
-    };
 
-    // ---- 1. Remove handles whose submap no longer has fire ----
-    std::vector<dim_pos_key> no_fire;
-    for( auto &[key, handle] : fire_handles_ ) {
-        mapbuffer &mb = MAPBUFFER_REGISTRY.get( key.first );
-        submap *sm = mb.lookup_submap_in_memory( key.second.raw() );
+    // ---- 1. Remove no-fire boundary handles only after their adjacent fire dies ----
+    auto live_fire = std::set<dim_pos_key> {};
+    auto no_fire = std::vector<dim_pos_key> {};
+    std::ranges::for_each( fire_handles_, [&]( const auto & entry ) {
+        const auto &key = entry.first;
+        auto &mb = MAPBUFFER_REGISTRY.get( key.first );
+        auto *sm = mb.lookup_submap_in_memory( key.second.raw() );
         // sm == nullptr means the submap hasn't been loaded yet — keep the handle
         // so submap_loader.update() gets a chance to load it.  Only prune once
-        // the submap is resident in memory but no longer has fire.
-        if( sm != nullptr && !submap_has_fire( *sm ) ) {
+        // the submap is resident in memory.
+        if( sm == nullptr ) {
+            return;
+        }
+        if( submap_has_fire( *sm ) ) {
+            live_fire.insert( key );
+        } else {
             no_fire.push_back( key );
         }
-    }
-    for( const dim_pos_key &key : no_fire ) {
+    } );
+
+    const auto adjacent_to_live_fire = [&]( const dim_pos_key & key ) {
+        return std::ranges::any_of( cardinal_offsets, [&]( const auto & delta ) {
+            const auto nbr_key = dim_pos_key{ key.first, tripoint_abs_sm{ key.second.raw() + delta } };
+            return live_fire.contains( nbr_key );
+        } );
+    };
+    std::ranges::for_each( no_fire, [&]( const dim_pos_key & key ) {
+        if( adjacent_to_live_fire( key ) ) {
+            return;
+        }
         const auto it = fire_handles_.find( key );
         if( it != fire_handles_.end() ) {
             loader.release_load( it->second );
             fire_handles_.erase( it );
         }
-    }
+    } );
 
     // ---- 2. Connectivity: flood-fill from properly-loaded submaps ----
     // A fire-loaded submap is reachable if there is a cardinal path
     // through other fire-loaded submaps back to a properly-loaded one.
-    std::set<dim_pos_key> reachable;
-    std::vector<dim_pos_key> frontier;
+    auto reachable = std::set<dim_pos_key> {};
+    auto frontier = std::vector<dim_pos_key> {};
 
-    // Seed: fire handles that are directly adjacent to a properly-loaded submap.
-    for( const auto &[key, handle] : fire_handles_ ) {
-        for( const tripoint &delta : card ) {
-            const tripoint_abs_sm nbr{ key.second.raw() + delta };
-            if( loader.is_properly_requested( key.first, nbr ) ) {
-                if( reachable.insert( key ).second ) {
-                    frontier.push_back( key );
-                }
-                break;
+    // Seed: fire handles that are either properly loaded themselves or directly
+    // adjacent to a properly-loaded submap.
+    std::ranges::for_each( fire_handles_, [&]( const auto & entry ) {
+        const auto &key = entry.first;
+        if( loader.is_properly_requested( key.first, key.second ) ) {
+            if( reachable.insert( key ).second ) {
+                frontier.push_back( key );
             }
+            return;
         }
-    }
+        const auto adjacent_to_proper = std::ranges::any_of( cardinal_offsets,
+        [&]( const auto & delta ) {
+            const auto nbr = tripoint_abs_sm{ key.second.raw() + delta };
+            return loader.is_properly_requested( key.first, nbr );
+        } );
+        if( adjacent_to_proper && reachable.insert( key ).second ) {
+            frontier.push_back( key );
+        }
+    } );
 
     // BFS: expand through cardinal fire-loaded neighbors.
     while( !frontier.empty() ) {
-        const dim_pos_key cur = frontier.back();
+        const auto cur = frontier.back();
         frontier.pop_back();
-        for( const tripoint &delta : card ) {
-            const dim_pos_key nbr_key{ cur.first, tripoint_abs_sm{ cur.second.raw() + delta } };
-            if( fire_handles_.count( nbr_key ) && reachable.insert( nbr_key ).second ) {
+        for( const auto &delta : cardinal_offsets ) {
+            const auto nbr_key = dim_pos_key{ cur.first, tripoint_abs_sm{ cur.second.raw() + delta } };
+            if( fire_handles_.contains( nbr_key ) && reachable.insert( nbr_key ).second ) {
                 frontier.push_back( nbr_key );
             }
         }
     }
 
     // Release all fire handles that are not reachable.
-    std::vector<dim_pos_key> to_release;
-    for( const auto &[key, handle] : fire_handles_ ) {
-        if( !reachable.count( key ) ) {
+    auto to_release = std::vector<dim_pos_key> {};
+    std::ranges::for_each( fire_handles_, [&]( const auto & entry ) {
+        const auto &key = entry.first;
+        if( !reachable.contains( key ) ) {
             to_release.push_back( key );
         }
-    }
-    for( const dim_pos_key &key : to_release ) {
+    } );
+    for( const auto &key : to_release ) {
         const auto it = fire_handles_.find( key );
         if( it != fire_handles_.end() ) {
             loader.release_load( it->second );
             fire_handles_.erase( it );
         }
     }
+}
+
+auto fire_spread_loader::clear( submap_load_manager &loader ) -> void
+{
+    std::ranges::for_each( fire_handles_, [&]( const auto & entry ) {
+        loader.release_load( entry.second );
+    } );
+    fire_handles_.clear();
+}
+
+auto fire_spread_loader::out_of_bubble_loaded_count() const -> int
+{
+    return static_cast<int>( std::ranges::count_if( fire_handles_, []( const auto & entry ) {
+        return !submap_loader.is_properly_requested( entry.first.first, entry.first.second );
+    } ) );
 }

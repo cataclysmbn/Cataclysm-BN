@@ -14,6 +14,15 @@ if(NOT GETTEXT_MSGFMT_EXECUTABLE)
              See CMake compiling guide for details and more info.")
 endif()
 
+execute_process(
+    COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} --help
+    OUTPUT_VARIABLE MSGFMT_HELP
+    ERROR_QUIET
+)
+if (MSGFMT_HELP MATCHES "--no-convert")
+    set(CATA_MSGFMT_NO_CONVERT --no-convert)
+endif ()
+
 if (LANGUAGES STREQUAL all)
     set(LANGUAGES "")
     file(GLOB PO_FILES ${CMAKE_SOURCE_DIR}/lang/po/*.po)
@@ -53,7 +62,7 @@ foreach (LANG ${LANGUAGES})
     add_custom_command(
         OUTPUT ${MO_OUTPUT}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/lang/mo/${LANG}/LC_MESSAGES
-        COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -f ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po -o ${MO_OUTPUT}
+        COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} ${CATA_MSGFMT_NO_CONVERT} -f ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po -o ${MO_OUTPUT}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po
     )

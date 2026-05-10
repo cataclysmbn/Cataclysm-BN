@@ -22,16 +22,16 @@
 const data_vars::data_set submap::EMPTY_VARS{};
 
 template<int sx, int sy>
-void maptile_soa<sx, sy>::swap_soa_tile( point p1, point p2 )
+void maptile_soa<sx, sy>::swap_soa_tile( const point_sm_ms &p1, const point_sm_ms &p2 )
 {
 
-    std::swap( ter[p1.x][p1.y], ter[p2.x][p2.y] );
-    std::swap( frn[p1.x][p1.y], frn[p2.x][p2.y] );
-    std::swap( lum[p1.x][p1.y], lum[p2.x][p2.y] );
-    std::swap( itm[p1.x][p1.y], itm[p2.x][p2.y] );
-    std::swap( fld[p1.x][p1.y], fld[p2.x][p2.y] );
-    std::swap( trp[p1.x][p1.y], trp[p2.x][p2.y] );
-    std::swap( rad[p1.x][p1.y], rad[p2.x][p2.y] );
+    std::swap( ter[p1.x()][p1.y()], ter[p2.x()][p2.y()] );
+    std::swap( frn[p1.x()][p1.y()], frn[p2.x()][p2.y()] );
+    std::swap( lum[p1.x()][p1.y()], lum[p2.x()][p2.y()] );
+    std::swap( itm[p1.x()][p1.y()], itm[p2.x()][p2.y()] );
+    std::swap( fld[p1.x()][p1.y()], fld[p2.x()][p2.y()] );
+    std::swap( trp[p1.x()][p1.y()], trp[p2.x()][p2.y()] );
+    std::swap( rad[p1.x()][p1.y()], rad[p2.x()][p2.y()] );
 }
 
 void submap::swap( submap &first, submap &second )
@@ -71,7 +71,7 @@ void submap::swap( submap &first, submap &second )
 
 //There's not a briefer way to write this I don't think
 template<int sx, int sy>
-maptile_soa<sx, sy>::maptile_soa( tripoint offset ) : itm{{
+maptile_soa<sx, sy>::maptile_soa( const tripoint_abs_ms &offset ) : itm{{
         // NOLINTNEXTLINE(cata-use-named-point-constants)
         location_vector{ new tile_item_location( offset + point( 0, 0 ) )},
         // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -236,7 +236,7 @@ maptile_soa<sx, sy>::maptile_soa( tripoint offset ) : itm{{
 {
 }
 
-submap::submap( tripoint offset ) : maptile_soa<SEEX, SEEY>( offset )
+submap::submap( const tripoint_abs_ms &offset ) : maptile_soa<SEEX, SEEY>( offset )
 {
     std::uninitialized_fill_n( &ter[0][0], elements, t_null );
     std::uninitialized_fill_n( &frn[0][0], elements, f_null );
@@ -249,31 +249,32 @@ submap::submap( tripoint offset ) : maptile_soa<SEEX, SEEY>( offset )
 
 submap::~submap() = default;
 
-void submap::update_lum_rem( point p, const item &i )
+void submap::update_lum_rem( const point_sm_ms &p, const item &i )
 {
     is_uniform = false;
     if( !i.is_emissive() ) {
         return;
-    } else if( lum[p.x][p.y] && lum[p.x][p.y] < 255 ) {
-        lum[p.x][p.y]--;
+    } else if( lum[p.x()][p.y()] && lum[p.x()][p.y()] < 255 ) {
+        lum[p.x()][p.y()]--;
         return;
     }
 
     // Have to scan through all items to be sure removing i will actually lower
     // the count below 255.
     int count = 0;
-    for( const auto &it : itm[p.x][p.y] ) {
+    for( const auto &it : itm[p.x()][p.y()] ) {
         if( it->is_emissive() ) {
             count++;
         }
     }
 
     if( count <= 256 ) {
-        lum[p.x][p.y] = static_cast<uint8_t>( count - 1 );
+        lum[p.x()][p.y()] = static_cast<uint8_t>( count - 1 );
     }
 }
 
-void submap::insert_cosmetic( point p, const std::string &type, const std::string &str )
+void submap::insert_cosmetic( const point_sm_ms &p, const std::string &type,
+                              const std::string &str )
 {
     cosmetic_t ins;
 
@@ -301,7 +302,7 @@ static cosmetic_find_result make_result( bool b, int ndx )
     return result;
 }
 static cosmetic_find_result find_cosmetic(
-    const std::vector<submap::cosmetic_t> &cosmetics, point p, const std::string &type )
+    const std::vector<submap::cosmetic_t> &cosmetics, const point_sm_ms &p, const std::string &type )
 {
     for( size_t i = 0; i < cosmetics.size(); ++i ) {
         if( cosmetics[i].pos == p && cosmetics[i].type == type ) {
@@ -311,12 +312,12 @@ static cosmetic_find_result find_cosmetic(
     return make_result( false, -1 );
 }
 
-bool submap::has_graffiti( point p ) const
+bool submap::has_graffiti( const point_sm_ms &p ) const
 {
     return find_cosmetic( cosmetics, p, COSMETICS_GRAFFITI ).result;
 }
 
-const std::string &submap::get_graffiti( point p ) const
+const std::string &submap::get_graffiti( const point_sm_ms &p ) const
 {
     const auto fresult = find_cosmetic( cosmetics, p, COSMETICS_GRAFFITI );
     if( fresult.result ) {
@@ -325,7 +326,7 @@ const std::string &submap::get_graffiti( point p ) const
     return STRING_EMPTY;
 }
 
-void submap::set_graffiti( point p, const std::string &new_graffiti )
+void submap::set_graffiti( const point_sm_ms &p, const std::string &new_graffiti )
 {
     is_uniform = false;
     // Find signage at p if available
@@ -337,7 +338,7 @@ void submap::set_graffiti( point p, const std::string &new_graffiti )
     }
 }
 
-void submap::delete_graffiti( point p )
+void submap::delete_graffiti( const point_sm_ms &p )
 {
     is_uniform = false;
     const auto fresult = find_cosmetic( cosmetics, p, COSMETICS_GRAFFITI );
@@ -346,17 +347,17 @@ void submap::delete_graffiti( point p )
         cosmetics.pop_back();
     }
 }
-bool submap::has_signage( point p ) const
+bool submap::has_signage( const point_sm_ms &p ) const
 {
-    if( frn[p.x][p.y].obj().has_flag( "SIGN" ) ) {
+    if( frn[p.x()][p.y()].obj().has_flag( "SIGN" ) ) {
         return find_cosmetic( cosmetics, p, COSMETICS_SIGNAGE ).result;
     }
 
     return false;
 }
-std::string submap::get_signage( point p ) const
+std::string submap::get_signage( const point_sm_ms &p ) const
 {
-    if( frn[p.x][p.y].obj().has_flag( "SIGN" ) ) {
+    if( frn[p.x()][p.y()].obj().has_flag( "SIGN" ) ) {
         const auto fresult = find_cosmetic( cosmetics, p, COSMETICS_SIGNAGE );
         if( fresult.result ) {
             return cosmetics[ fresult.ndx ].str;
@@ -365,7 +366,7 @@ std::string submap::get_signage( point p ) const
 
     return STRING_EMPTY;
 }
-void submap::set_signage( point p, const std::string &s )
+void submap::set_signage( const point_sm_ms &p, const std::string &s )
 {
     is_uniform = false;
     // Find signage at p if available
@@ -376,7 +377,7 @@ void submap::set_signage( point p, const std::string &s )
         insert_cosmetic( p, COSMETICS_SIGNAGE, s );
     }
 }
-void submap::delete_signage( point p )
+void submap::delete_signage( const point_sm_ms &p )
 {
     is_uniform = false;
     const auto fresult = find_cosmetic( cosmetics, p, COSMETICS_SIGNAGE );
@@ -400,12 +401,12 @@ void submap::update_legacy_computer()
     }
 }
 
-bool submap::has_computer( point p ) const
+bool submap::has_computer( const point_sm_ms &p ) const
 {
-    return computers.contains( p ) || ( legacy_computer && ter[p.x][p.y] == t_console );
+    return computers.contains( p ) || ( legacy_computer && ter[p.x()][p.y()] == t_console );
 }
 
-const computer *submap::get_computer( point p ) const
+const computer *submap::get_computer( const point_sm_ms &p ) const
 {
     // the returned object will not get modified (should not, at least), so we
     // don't yet need to update to std::map
@@ -413,16 +414,16 @@ const computer *submap::get_computer( point p ) const
     if( it != computers.end() ) {
         return &it->second;
     }
-    if( legacy_computer && ter[p.x][p.y] == t_console ) {
+    if( legacy_computer && ter[p.x()][p.y()] == t_console ) {
         return legacy_computer.get();
     }
     return nullptr;
 }
 
-computer *submap::get_computer( point p )
+computer *submap::get_computer( const point_sm_ms &p )
 {
     // need to update to std::map first so modifications to the returned object
-    // only affects the exact point p
+    // only affects the exact const point_sm_ms &p
     update_legacy_computer();
     const auto it = computers.find( p );
     if( it != computers.end() ) {
@@ -431,7 +432,7 @@ computer *submap::get_computer( point p )
     return nullptr;
 }
 
-void submap::set_computer( point p, const computer &c )
+void submap::set_computer( const point_sm_ms &p, const computer &c )
 {
     update_legacy_computer();
     const auto it = computers.find( p );
@@ -442,7 +443,7 @@ void submap::set_computer( point p, const computer &c )
     }
 }
 
-void submap::delete_computer( point p )
+void submap::delete_computer( const point_sm_ms &p )
 {
     update_legacy_computer();
     computers.erase( p );
@@ -466,7 +467,7 @@ void submap::rotate( int turns )
         return;
     }
 
-    const auto rotate_point = [turns]( point  p ) {
+    const auto rotate_point = [turns]( const point_sm_ms & p ) {
         return p.rotate( turns, { SEEX, SEEY } );
     };
 
@@ -508,10 +509,10 @@ void submap::rotate( int turns )
                  *   As you can see, this causes the desired rotation.
                  */
 
-                point p1 = point( i, j );
-                point p2 = rotate_point( p1 );
-                point p3 = rotate_point( p2 );
-                point p4 = rotate_point( p3 );
+                const point_sm_ms &p1 = point_sm_ms( i, j );
+                const point_sm_ms &p2 = rotate_point( p1 );
+                const point_sm_ms &p3 = rotate_point( p2 );
+                const point_sm_ms &p4 = rotate_point( p3 );
 
                 swap_soa_tile( p1, p2 );
                 swap_soa_tile( p1, p3 );
@@ -529,13 +530,13 @@ void submap::rotate( int turns )
     }
 
     for( auto &elem : vehicles ) {
-        const auto new_pos = rotate_point( elem->pos );
+        const point_sm_ms new_pos = rotate_point( point_sm_ms( elem->pos ) );
 
-        elem->pos = new_pos;
+        elem->pos = new_pos.raw();
         elem->set_facing( elem->turn_dir + turns * 90_degrees );
     }
 
-    std::map<point, computer> rot_comp;
+    std::map<point_sm_ms, computer> rot_comp;
     for( auto &elem : computers ) {
         rot_comp.emplace( rotate_point( elem.first ), elem.second );
     }
@@ -543,24 +544,24 @@ void submap::rotate( int turns )
 
     std::map<point_sm_ms, cata::poly_serialized<active_tile_data>> rot_active_furn;
     for( auto &elem : active_furniture ) {
-        rot_active_furn.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
+        rot_active_furn.emplace( point_sm_ms( rotate_point( elem.first ) ), elem.second );
     }
     active_furniture = rot_active_furn;
 
-    std::unordered_map<point, data_vars::data_set> rot_frn_vars;
+    std::unordered_map<point_sm_ms, data_vars::data_set> rot_frn_vars;
     for( auto &elem : frn_vars ) {
         rot_frn_vars.emplace( rotate_point( elem.first ), elem.second );
     }
     frn_vars = rot_frn_vars;
 
-    std::unordered_map<point, data_vars::data_set> rot_ter_vars;
+    std::unordered_map<point_sm_ms, data_vars::data_set> rot_ter_vars;
     for( auto &elem : ter_vars ) {
         rot_ter_vars.emplace( rotate_point( elem.first ), elem.second );
     }
     ter_vars = rot_ter_vars;
     std::map<point_sm_ms, time_point> rot_transformer_last_run;
     for( auto &elem : transformer_last_run ) {
-        rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first.raw() ) ), elem.second );
+        rot_transformer_last_run.emplace( point_sm_ms( rotate_point( elem.first ) ), elem.second );
     }
     transformer_last_run = rot_transformer_last_run;
 
@@ -571,19 +572,20 @@ void submap::rotate( int turns )
     emitter_cache = std::nullopt;
     std::ranges::for_each(
         std::views::iota( 0, SEEX * SEEY )
-        | std::views::transform( []( int i ) -> point { return { i % SEEX, i / SEEX }; } ),
-    [this]( const point & p ) {
-        if( trp[p.x][p.y] != tr_null ) {
+        | std::views::transform( []( int i ) -> point_sm_ms { return { i % SEEX, i / SEEX }; } ),
+    [this]( const point_sm_ms & p ) {
+        if( trp[p.x()][p.y()] != tr_null ) {
             trap_cache.push_back( p );
         }
-        if( fld[p.x][p.y].displayed_field_type() ) {
+        if( fld[p.x()][p.y()].displayed_field_type() ) {
             field_cache.push_back( p );
         }
     } );
 }
 
 
-auto submap::rebuild_outside_cache( const level_cache *above, tripoint grid_pos ) -> void
+auto submap::rebuild_outside_cache( const level_cache *above,
+                                    const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !outside_dirty ) {
         return;
@@ -597,20 +599,18 @@ auto submap::rebuild_outside_cache( const level_cache *above, tripoint grid_pos 
     // A tile is outside if any tile in the 3×3 at z+1 satisfies:
     //   (outside at z+1) AND (no floor at z+1 blocking the path).
     // Out-of-bounds neighbours (edge of loaded map) are treated as inside.
-    const int abs_x0 = grid_pos.x * SEEX;
-    const int abs_y0 = grid_pos.y * SEEY;
+    const auto abs_p = project_to<coords::ms>( grid_pos ).xy();
     for( int sx = 0; sx < SEEX; ++sx ) {
         for( int sy = 0; sy < SEEY; ++sy ) {
-            const int ax = abs_x0 + sx;
-            const int ay = abs_y0 + sy;
+            const auto ap = abs_p + point{ sx, sy };
             bool result = false;
             for( int dx = -1; dx <= 1 && !result; ++dx ) {
                 for( int dy = -1; dy <= 1 && !result; ++dy ) {
-                    const point nb( ax + dx, ay + dy );
-                    if( !above->inbounds( nb ) ) {
+                    const auto nb = ap + point{ dx, dy };
+                    if( !above->inbounds( nb.raw() ) ) {
                         continue; // out of bounds = inside
                     }
-                    const int idx = above->idx( nb.x, nb.y );
+                    const int idx = above->idx( nb.x(), nb.y() );
                     if( above->outside_cache[idx] && !above->floor_cache[idx] ) {
                         result = true;
                     }
@@ -622,7 +622,8 @@ auto submap::rebuild_outside_cache( const level_cache *above, tripoint grid_pos 
     outside_dirty = false;
 }
 
-auto submap::rebuild_sheltered_cache( const level_cache *above, tripoint grid_pos ) -> void
+auto submap::rebuild_sheltered_cache( const level_cache *above,
+                                      const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !sheltered_dirty ) {
         return;
@@ -636,20 +637,18 @@ auto submap::rebuild_sheltered_cache( const level_cache *above, tripoint grid_po
     // A tile is sheltered if any tile in the 3×3 at z+1 has a floor,
     // or is itself sheltered (coverage propagates downward with a 1-tile overhang).
     // Out-of-bounds neighbours are treated as sheltered (edge of loaded map).
-    const int abs_x0 = grid_pos.x * SEEX;
-    const int abs_y0 = grid_pos.y * SEEY;
+    const auto abs_p = project_to<coords::ms>( grid_pos ).xy();
     for( int sx = 0; sx < SEEX; ++sx ) {
         for( int sy = 0; sy < SEEY; ++sy ) {
-            const int ax = abs_x0 + sx;
-            const int ay = abs_y0 + sy;
+            const auto ap = abs_p + point{ sx, sy };
             bool result = false;
             for( int dx = -1; dx <= 1 && !result; ++dx ) {
                 for( int dy = -1; dy <= 1 && !result; ++dy ) {
-                    const point nb( ax + dx, ay + dy );
-                    if( !above->inbounds( nb ) ) {
+                    const auto nb = ap + point{ dx, dy };
+                    if( !above->inbounds( nb.raw() ) ) {
                         continue; // out of bounds = open sky, not sheltered
                     }
-                    const int idx = above->idx( nb.x, nb.y );
+                    const int idx = above->idx( nb.x(), nb.y() );
                     if( above->floor_cache[idx] || above->sheltered_cache[idx] ) {
                         result = true;
                     }
@@ -661,7 +660,7 @@ auto submap::rebuild_sheltered_cache( const level_cache *above, tripoint grid_po
     sheltered_dirty = false;
 }
 
-auto submap::rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void
+auto submap::rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !floor_dirty ) {
         return;
@@ -669,13 +668,13 @@ auto submap::rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void
     // Default: has floor (non-zero).
     std::ranges::fill( std::span( &floor_cache[0][0], SEEX * SEEY ), '\x01' );
 
-    const bool lowest_z = grid_pos.z <= -OVERMAP_DEPTH;
+    const bool lowest_z = grid_pos.z() <= -OVERMAP_DEPTH;
     const submap *below = lowest_z ? nullptr
-                          : m.get_submap_at_grid( { grid_pos.x, grid_pos.y, grid_pos.z - 1 } );
+                          : m.get_submap_at_grid( grid_pos - tripoint_rel_sm( 0, 0, 1 ) );
 
     for( int sx = 0; sx < SEEX; ++sx ) {
         for( int sy = 0; sy < SEEY; ++sy ) {
-            const point sp( sx, sy );
+            const point_sm_ms sp( sx, sy );
             const auto &ter_obj = get_ter( sp ).obj();
             if( ter_obj.has_flag( TFLAG_NO_FLOOR ) || ter_obj.has_flag( TFLAG_Z_TRANSPARENT ) ) {
                 if( below && below->get_furn( sp ).obj().has_flag( TFLAG_SUN_ROOF_ABOVE ) ) {
@@ -688,21 +687,21 @@ auto submap::rebuild_floor_cache( const map &m, tripoint grid_pos ) -> void
     floor_dirty = false;
 }
 
-auto submap::rebuild_pf_cache( const map &m, tripoint grid_pos ) -> void
+auto submap::rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !pf_dirty ) {
         return;
     }
     for( int sx = 0; sx < SEEX; ++sx ) {
         for( int sy = 0; sy < SEEY; ++sy ) {
-            const point sp( sx, sy );
-            const tripoint p( grid_pos.x * SEEX + sx, grid_pos.y * SEEY + sy, grid_pos.z );
+            const point_sm_ms sp( sx, sy );
+            const tripoint_bub_ms p = project_combine( grid_pos, sp );
             auto cur_value = PF_NORMAL;
 
             const auto &terrain   = get_ter( sp ).obj();
             const auto &furniture = get_furn( sp ).obj();
             int vpart = -1;
-            const vehicle *veh = m.veh_at_internal( p, vpart );
+            const vehicle *veh = m.veh_at_internal( p.raw(), vpart );
             const int cost = m.move_cost_internal( furniture, terrain, veh, vpart );
 
             if( cost > 2 ) {
@@ -746,15 +745,15 @@ auto submap::rebuild_pf_cache( const map &m, tripoint grid_pos ) -> void
     pf_dirty = false;
 }
 
-auto submap::rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> void
+auto submap::rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void
 {
     if( !transparency_dirty ) {
         return;
     }
     // outside_cache must be current before applying the weather sight penalty.
     if( outside_dirty ) {
-        const level_cache *above = ( grid_pos.z < OVERMAP_HEIGHT )
-                                   ? &m.get_cache_ref( grid_pos.z + 1 )
+        const level_cache *above = ( grid_pos.z() < OVERMAP_HEIGHT )
+                                   ? &m.get_cache_ref( grid_pos.z() + 1 )
                                    : nullptr;
         rebuild_outside_cache( above, grid_pos );
     }
@@ -763,7 +762,7 @@ auto submap::rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> vo
 
     for( int sx = 0; sx < SEEX; ++sx ) {
         for( int sy = 0; sy < SEEY; ++sy ) {
-            const point sp( sx, sy );
+            const point_sm_ms sp( sx, sy );
 
             if( !( get_ter( sp ).obj().transparent && get_furn( sp ).obj().transparent ) ) {
                 transparency_cache[sx][sy] = LIGHT_TRANSPARENCY_SOLID;
@@ -779,7 +778,7 @@ auto submap::rebuild_transparency_cache( const map &m, tripoint grid_pos ) -> vo
                 if( !fld.first.is_valid() ) {
                     debugmsg( "rebuild_transparency_cache: invalid field type id %d at "
                               "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
-                              fld.first.to_i(), grid_pos.x, grid_pos.y, grid_pos.z,
+                              fld.first.to_i(), grid_pos.x(), grid_pos.y(), grid_pos.z(),
                               sx, sy, field_count, static_cast<int>( is_uniform ) );
                     break;
                 }

@@ -71,6 +71,23 @@
   },
   {
     "type": "recipe",
+    "result": "mutagen",
+    "id_suffix": "from_serum",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_MUTAGEN",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 4 ],
+    "difficulty": 8,
+    "time": "90 m",
+    "batch_time_factors": [ 20, 2 ],
+    "charges": 2,
+    "book_learn": [ [ "recipe_serum", 8 ], [ "recipe_labchem", 9 ] ],
+    "using": [ [ "serum_production_standard", 37 ] ],
+    "components": [ [ [ "iv_mutagen", 1 ] ] ],
+    "flags": [ "SECRET" ]
+  },
+  {
+    "type": "recipe",
     "result": "mutagen_jabberblood",
     "//": "jabberwocks have a few of these pumping in them, and they can be crushed down for a lot of mutagen",
     "byproducts": [ [ "jabberwock_heart_desiccated" ] ],

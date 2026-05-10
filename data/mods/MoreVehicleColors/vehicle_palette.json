@@ -1,0 +1,108 @@
+[
+  {
+    "type": "vehicle_color_palette",
+    "id": "car_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "inflate" ],
+        "colors": [
+          { "color": "Cataclysm Red", "weight": 20 },
+          { "color": "!white", "weight": 8 },
+          { "color": "!silver", "weight": 8 },
+          { "color": "!grey", "weight": 8 },
+          { "color": "!black", "weight": 8 },
+          { "color": "!beige", "weight": 8 },
+          { "color": "!blue", "weight": 12 },
+          { "color": "!red", "weight": 8 },
+          { "color": "!orange", "weight": 4 },
+          { "color": "!yellow", "weight": 4 },
+          { "color": "!green", "weight": 4 },
+          { "color": "!pink", "weight": 4 },
+          { "color": "!purple", "weight": 2 },
+          { "color": "!violet", "weight": 2 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "cargo_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "inflate" ],
+        "colors": [
+          { "color": "!white", "weight": 8 },
+          { "color": "!green", "weight": 8 },
+          { "color": "!grey", "weight": 8 },
+          { "color": "!black", "weight": 8 },
+          { "color": "!beige", "weight": 8 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "visibility_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof", "inflate" ],
+        "colors": [
+          { "color": "!blue", "weight": 12 },
+          { "color": "!red", "weight": 8 },
+          { "color": "!orange", "weight": 4 },
+          { "color": "!yellow", "weight": 4 },
+          { "color": "!green", "weight": 4 },
+          { "color": "!pink", "weight": 4 },
+          { "color": "!purple", "weight": 2 },
+          { "color": "!violet", "weight": 2 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_boat",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
+        "colors": [
+          { "color": "Cataclysm Green", "weight": 40 },
+          { "color": "!green", "weight": 10 },
+          { "color": "!grey", "weight": 20 },
+          { "color": "!black", "weight": 20 },
+          { "color": "!purple", "weight": 1, "//": "Sneaky Military Craft :)" },
+          { "color": "!violet", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "sneaky_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
+        "colors": [
+          { "color": "!grey", "weight": 20 },
+          { "color": "!black", "weight": 20 },
+          { "color": "!purple", "weight": 5, "//": "Sneaky Military Craft :)" },
+          { "color": "!violet", "weight": 5 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_fighter",
+    "palette": [
+      {
+        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof" ],
+        "colors": [
+          { "color": "Cataclysm Green", "weight": 100 },
+          { "color": "!black", "weight": 100 },
+          { "color": "!violet", "weight": 25 }
+        ]
+      }
+    ]
+  }
+]
