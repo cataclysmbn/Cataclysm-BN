@@ -168,6 +168,9 @@ class craft_activity_actor final : public activity_actor
         const tripoint &get_location() const { return location; }
         bool are_tools_prepaid() const { return tools_prepaid; }
 
+        act_progress_message get_progress_message( const player_activity &act,
+                const Character &who ) const override;
+
         void serialize( JsonOut &jsout ) const override;
         static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
 

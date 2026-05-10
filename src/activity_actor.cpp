@@ -2293,6 +2293,53 @@ void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Characte
     }
 }
 
+act_progress_message craft_activity_actor::get_progress_message(
+    const player_activity &act, const Character &who ) const
+{
+    if( !rec || !is_valid ) {
+        return act_progress_message::make_empty();
+    }
+
+    const int assistants = who.available_assistant_count( *rec );
+    const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+    const double remaining_pct = 1.0 - craft_counter / 10'000'000.0;
+    const float total_mult = act.speed.total();
+    const int remaining_turns = static_cast<int>( remaining_pct * base_total_moves / 100 /
+                                std::max( 0.01f, total_mult ) );
+
+    const std::string time_desc = string_format( _( "Time left: %s" ),
+                                  to_string( time_duration::from_turns( remaining_turns ) ) );
+
+    const auto fmt_spd = [&]( float level, const std::string & name ) -> std::string {
+        const int pct = static_cast<int>( level * 100 );
+        if( pct == 100 ) {
+            return "";
+        }
+        nc_color col = pct > 100 ? c_green : c_red;
+        return string_format( " - %s: %s\n", name,
+                              colorize( std::to_string( pct ) + '%', col ) );
+    };
+
+    std::string mults_desc = _( "Crafting speed multipliers:\n" );
+    const int total_pct = static_cast<int>( total_mult * 100 );
+    nc_color total_col = total_pct > 100 ? c_green : c_red;
+    mults_desc += string_format( " - %s: %s\n", _( "Total" ),
+                                 colorize( std::to_string( total_pct ) + '%', total_col ) );
+    mults_desc += fmt_spd( act.speed.player_speed, _( "Speed" ) );
+    mults_desc += fmt_spd( act.speed.light, _( "Light" ) );
+    mults_desc += fmt_spd( act.speed.bench_factor, _( "Workbench" ) );
+    mults_desc += fmt_spd( act.speed.morale, _( "Morale" ) );
+    mults_desc += fmt_spd( act.speed.tools, _( "Tools" ) );
+    if( assistants > 0 ) {
+        mults_desc += fmt_spd( act.speed.assist, _( "Assistants" ) );
+    }
+
+    return act_progress_message::make_full(
+               string_format( _( "%s: %s\n\n%s\n\n%s" ),
+                              act.get_verb().translated(), rec->result_name(),
+                              time_desc, mults_desc ) );
+}
+
 void craft_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
