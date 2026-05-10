@@ -41,7 +41,9 @@ foreach (LANG ${LANGUAGES})
 endforeach ()
 message("\n")
 
-add_custom_target(translations_prepare WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_custom_target(translations_prepare
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/lang/mo
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # Auto-Compile translation on release builds only
 if (RELEASE)
@@ -72,7 +74,7 @@ foreach (LANG ${LANGUAGES})
     list(APPEND MO_FILES ${MO_OUTPUT})
 endforeach ()
 
-add_custom_target(translations ALL DEPENDS ${MO_FILES})
+add_custom_target(translations ALL DEPENDS translations_prepare ${MO_FILES})
 
 # Install translations
 if (RELEASE)
