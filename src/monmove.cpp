@@ -1557,6 +1557,12 @@ void monster::execute_action( const monster_action_t &action )
                 this->path = maybe_new_path;
             } else {
                 this->path.clear();
+                // Cross-z pathfinding failed (no staircase route found). Clear the
+                // goal so the monster wanders instead of thrashing repath_requested
+                // every turn and spamming failed-path diagnostics.
+                if( this->goal.z != this->pos().z ) {
+                    this->unset_dest();
+                }
             }
         }
         // Tier 2: path unchanged; macro step does not use the A* path.

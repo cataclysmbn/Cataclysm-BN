@@ -1138,7 +1138,7 @@ void weather_manager::update_weather()
     w = weather_gen.get_weather( g->u.global_square_location(), calendar::turn, g->get_seed() );
     weather_type_id old_weather = weather_id;
     weather_id = weather_override ? weather_override : weather_gen.get_weather_conditions( w );
-    if( !g->u.has_artifact_with( AEP_BAD_WEATHER ) ) {
+    if( !g->u.has_artifact_with( AEP_BAD_WEATHER ) && !weather_override_permanent ) {
         weather_override = weather_type_id::NULL_ID();
     }
 

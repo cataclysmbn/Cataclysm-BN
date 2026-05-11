@@ -1851,6 +1851,12 @@ bool game::do_turn()
     } else {
         gamemode->per_turn();
         calendar::turn += 1_turns;
+        if( calendar::once_every( 1_hours ) ) {
+            cata::run_hooks( "on_hour_passed", []( sol::table & params ) {
+                params["turn"] = calendar::turn;
+                params["hour"] = hour_of_day<int>( calendar::turn );
+            } );
+        }
     }
     // Reset dimension swap flag now that the map is fully loaded and turn is processing
     swapping_dimensions = false;

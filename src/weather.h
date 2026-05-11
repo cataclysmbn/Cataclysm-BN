@@ -202,6 +202,7 @@ class weather_manager
         std::optional<int> wind_direction_override;
         std::optional<int> windspeed_override;
         weather_type_id weather_override;
+        bool weather_override_permanent = false;
         bool eternal_seasons = false;
 
         // not only sets nextweather, but updates weather as well
