@@ -85,6 +85,7 @@
 #include "morale_types.h"
 #include "mtype.h"
 #include "mutation.h"
+#include "newcharacter.h"
 #include "npc.h"
 #include "npc_class.h"
 #include "options.h"
@@ -693,6 +694,7 @@ void Character::load( const JsonObject &data )
             }
         }
     }
+    newcharacter::add_default_mutation_type_traits( *this );
     recalculate_size();
 
     data.read( "my_bionics", *my_bionics );

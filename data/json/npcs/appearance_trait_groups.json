@@ -228,6 +228,7 @@
       { "trait": "SKIN_MEDIUM", "prob": 25 },
       { "trait": "SKIN_TAN", "prob": 25 },
       { "trait": "SKIN_PINK", "prob": 5 },
+      { "trait": "SKIN_LIGHTER", "prob": 5 },
       { "trait": "SKIN_LIGHT", "prob": 10 }
     ]
   },
@@ -235,7 +236,12 @@
     "type": "trait_group",
     "id": "Skin_Fair",
     "subtype": "distribution",
-    "traits": [ { "trait": "SKIN_PINK", "prob": 5 }, { "trait": "SKIN_LIGHT", "prob": 8 }, { "trait": "SKIN_OLIVE", "prob": 3 } ]
+    "traits": [
+      { "trait": "SKIN_LIGHTER", "prob": 4 },
+      { "trait": "SKIN_PINK", "prob": 5 },
+      { "trait": "SKIN_LIGHT", "prob": 8 },
+      { "trait": "SKIN_OLIVE", "prob": 3 }
+    ]
   },
   {
     "type": "trait_group",
@@ -244,6 +250,7 @@
     "traits": [
       { "trait": "SKIN_MEDIUM", "prob": 10 },
       { "trait": "SKIN_PINK", "prob": 20 },
+      { "trait": "SKIN_LIGHTER", "prob": 15 },
       { "trait": "SKIN_LIGHT", "prob": 50 },
       { "trait": "SKIN_OLIVE", "prob": 20 }
     ]
