@@ -620,6 +620,32 @@
     ]
   },
   {
+    "type": "recipe",
+    "result": "plut_generator_item",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 7 ], [ "fabrication", 5 ] ],
+    "difficulty": 8,
+    "time": "10 h",
+    "book_learn": [ [ "recipe_lab_elec", 8 ], [ "recipe_mil_augs", 8 ], [ "textbook_robots", 8 ] ],
+    "using": [ [ "advanced_electronics_high_voltage", 1 ], [ "welding_standard", 28 ], [ "soldering_standard", 80 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M", "level": 2 } ],
+    "components": [
+      [ [ "minireactor", 1 ] ],
+      [ [ "RAM", 8 ] ],
+      [ [ "cable", 16 ] ],
+      [ [ "small_lcd_screen", 4 ] ],
+      [ [ "large_lcd_screen", 1 ] ],
+      [ [ "e_scrap", 24 ] ],
+      [ [ "circuit", 10 ] ],
+      [ [ "power_supply", 8 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "plut_cell", 8 ] ],
+      [ [ "scrap", 16 ] ]
+    ]
+  },
+  {
     "type": "uncraft",
     "result": "plut_generator_item",
     "skill_used": "electronics",

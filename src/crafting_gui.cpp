@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -29,7 +30,12 @@
 #include "item_contents.h"
 #include "itype.h"
 #include "json.h"
+#include "line.h"
+#include "map.h"
+#include "messages.h"
+#include "npc.h"
 #include "options.h"
+#include "player_activity.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "player.h"
@@ -52,7 +58,6 @@ static const std::string flag_BLIND_HARD( "BLIND_HARD" );
 static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
 static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
 
-class npc;
 
 enum TAB_MODE {
     NORMAL,
@@ -611,6 +616,7 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     ctxt.register_action( "HIDE_SHOW_RECIPE" );
     ctxt.register_action( "COMPARE" );
     ctxt.register_action( "TOGGLE_UNAVAILABLE" );
+    ctxt.register_action( "ASSIGN_NPC_CRAFT", to_translation( "Assign nearest NPC to craft" ) );
     if( highlight_unread_recipes ) {
         ctxt.register_action( "TOGGLE_RECIPE_UNREAD" );
         ctxt.register_action( "MARK_ALL_RECIPES_READ" );
@@ -1381,6 +1387,68 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 if( highlight_unread_recipes && available_recipes.contains( *chosen ) ) {
                     uistate.read_recipes.insert( chosen->ident() );
                     recalc_unread = true;
+                }
+            }
+        } else if( action == "ASSIGN_NPC_CRAFT" ) {
+            if( current.empty() || available[line].is_nested_category || current[line]->is_nested() ) {
+                popup( _( "Select a craftable recipe first." ) );
+            } else {
+                const recipe *rec = current[line];
+                const int bs = ( batch ) ? line + 1 : 1;
+                std::vector<npc *> nearby = g->get_npcs_if( [&]( const npc & guy ) {
+                    return !guy.in_sleep_state()
+                           && guy.is_obeying( crafter )
+                           && ( !guy.activity || guy.activity->is_null() )
+                           && rl_dist( guy.pos(), crafter.pos() ) <= PICKUP_RANGE
+                           && get_map().clear_path( crafter.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                } );
+                std::vector<npc *> candidates;
+                bool any_knows = false;
+                for( npc *guy : nearby ) {
+                    if( !guy->knows_recipe( rec ) ) {
+                        continue;
+                    }
+                    any_knows = true;
+                    if( guy->can_make( rec, bs ) ) {
+                        candidates.push_back( guy );
+                    }
+                }
+                if( candidates.empty() ) {
+                    if( nearby.empty() ) {
+                        popup( _( "No NPC available to craft that nearby." ) );
+                    } else if( !any_knows ) {
+                        popup( _( "No nearby NPC knows how to craft that." ) );
+                    } else {
+                        popup( _( "No nearby NPC has the necessary components to craft that." ) );
+                    }
+                } else {
+                    std::sort( candidates.begin(), candidates.end(), [&]( const npc * a, const npc * b ) {
+                        return rl_dist( a->pos(), crafter.pos() ) < rl_dist( b->pos(), crafter.pos() );
+                    } );
+                    npc *target = nullptr;
+                    if( candidates.size() == 1 ) {
+                        target = candidates.front();
+                    } else {
+                        uilist menu;
+                        menu.text = _( "Assign craft to which NPC?" );
+                        for( size_t i = 0; i < candidates.size(); i++ ) {
+                            menu.addentry( static_cast<int>( i ), true, MENU_AUTOASSIGN,
+                                           candidates[i]->get_name() );
+                        }
+                        menu.addentry( static_cast<int>( candidates.size() ), true, MENU_AUTOASSIGN,
+                                       _( "Cancel" ) );
+                        menu.query();
+                        if( menu.ret >= 0 && menu.ret < static_cast<int>( candidates.size() ) ) {
+                            target = candidates[menu.ret];
+                        }
+                    }
+                    if( target != nullptr ) {
+                        target->make_craft( rec->ident(), bs, target->pos() );
+                        add_msg( m_good, _( "%s starts crafting %s." ),
+                                 target->get_name(), rec->result_name() );
+                        chosen = nullptr;
+                        done = true;
+                    }
                 }
             }
         } else if( action == "HELP_RECIPE" ) {

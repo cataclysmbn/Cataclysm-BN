@@ -587,7 +587,8 @@
       { "group": "nested_scar_h", "prob": 50 },
       { "group": "nested_m110a1", "prob": 50 },
       { "group": "nested_acr_300blk", "prob": 15 },
-      { "group": "nested_m7", "prob": 15 }
+      { "group": "nested_m7", "prob": 15 },
+      { "group": "nested_m250", "prob": 10 }
     ]
   },
   {
@@ -616,7 +617,8 @@
       { "group": "everyday_scar_h", "prob": 50 },
       { "group": "everyday_m110a1", "prob": 50 },
       { "group": "everyday_acr_300blk", "prob": 15 },
-      { "group": "everyday_m7", "prob": 15 }
+      { "group": "everyday_m7", "prob": 15 },
+      { "group": "everyday_m250", "prob": 10 }
     ]
   },
   {

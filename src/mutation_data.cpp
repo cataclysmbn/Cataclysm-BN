@@ -591,6 +591,8 @@ static void check_consistency( const std::vector<trait_id> &mvec, const trait_id
 
 void mutation_branch::check_consistency()
 {
+    mutation_type_check_consistency();
+
     for( const auto &mdata : get_all() ) {
         const auto &mid = mdata.id;
         const std::optional<scenttype_id> &s_id = mdata.scent_typeid;

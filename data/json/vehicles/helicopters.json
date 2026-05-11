@@ -4,6 +4,7 @@
     "type": "vehicle",
     "name": "2-seater helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
       {
@@ -46,6 +47,7 @@
     "type": "vehicle",
     "name": "2-seater helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "halfboard_vertical" ] },
       {
@@ -100,6 +102,7 @@
     "type": "vehicle",
     "name": "Small helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se", "windshield" ] },
       { "x": -1, "y": -1, "parts": [ "frame_sw", "windshield" ] },
@@ -140,6 +143,7 @@
     "type": "vehicle",
     "name": "2-seater helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical" ] },
       {
@@ -190,6 +194,7 @@
     "type": "vehicle",
     "name": "Small helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se" ] },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] },
@@ -228,6 +233,7 @@
     "type": "vehicle",
     "name": "Small helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se", "aluminum_board_se" ] },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] },
@@ -275,6 +281,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "small_civilian_rotors", "roof" ] },
@@ -331,6 +338,7 @@
     "type": "vehicle",
     "name": "Small helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se", "windshield" ] },
       { "x": -1, "y": -1, "parts": [ "frame_sw" ] },
@@ -364,6 +372,7 @@
     "type": "vehicle",
     "name": "SmallFlier2 Wreck",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se", "board_se" ] },
       { "x": -1, "y": -1, "parts": [ "frame_sw", "board_sw" ] },
@@ -400,6 +409,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "roof" ] },
@@ -469,6 +479,7 @@
     "type": "vehicle",
     "name": "Small helicopter",
     "blueprint": [  ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se", "board_se" ] },
       { "x": 2, "y": -1, "parts": [ "frame_nw", "xlhalfboard_nw" ] },
@@ -515,6 +526,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "small_civilian_rotors", "roof" ] },
@@ -575,6 +587,7 @@
     "type": "vehicle",
     "name": "Medevac helicopter",
     "blueprint": [  ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_ne", "halfboard_ne" ] },
@@ -636,6 +649,7 @@
     "type": "vehicle",
     "name": "AH-64 Apache",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       {
         "x": -3,
@@ -811,6 +825,7 @@
     "type": "vehicle",
     "name": "AH-64 Apache",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", { "part": "tank_55gal_drum", "fuel": "jp8" } ] },
       {
@@ -946,6 +961,7 @@
     "type": "vehicle",
     "name": "AH-64 Apache",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       {
         "x": -3,
@@ -1042,6 +1058,7 @@
       [ "       ||     " ],
       [ "        t     " ]
     ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "board_vertical", "plating_military" ] },
       { "x": -1, "y": 1, "parts": [ "frame_ne", "board_ne", "plating_military" ] },
@@ -1168,6 +1185,7 @@
       [ "       ||     " ],
       [ "        t     " ]
     ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "board_vertical", "plating_military" ] },
       { "x": -1, "y": 1, "parts": [ "frame_ne", "board_ne", "plating_military" ] },
@@ -1250,6 +1268,7 @@
     "type": "vehicle",
     "name": "V-22 Osprey",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       {
         "x": -12,
@@ -1587,6 +1606,7 @@
     "type": "vehicle",
     "name": "V-22 Osprey",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof", "NBC_seal" ] },
       { "x": -12, "y": 2, "parts": [ "frame_vertical", "board_vertical", "plating_steel", "roof", "NBC_seal" ] },
@@ -1841,6 +1861,7 @@
     "id": "helicopter_osprey_2c",
     "type": "vehicle",
     "name": "V-22 Osprey",
+    "color_palette": "military_heli",
     "blueprint": [  ],
     "parts": [
       { "x": -12, "y": 2, "parts": [ "frame_vertical", "board_vertical", "plating_steel", "roof", "NBC_seal" ] },
@@ -2009,6 +2030,7 @@
     "type": "vehicle",
     "name": "UH-60 Blackhawk",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof", "NBC_seal" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "roof", "NBC_seal" ] },
@@ -2175,6 +2197,7 @@
     "type": "vehicle",
     "name": "UH-60 Blackhawk",
     "blueprint": [  ],
+    "color_palette": "military_heli",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof", "NBC_seal" ] },
       { "x": -1, "y": 1, "parts": [ "frame_cross", "door_internal", "roof", "NBC_seal" ] },
@@ -2342,6 +2365,7 @@
     "id": "helicopter_blackhawk_3c",
     "type": "vehicle",
     "name": "UH-60 Blackhawk",
+    "color_palette": "military_heli",
     "blueprint": [  ],
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_cross", "aisle_vertical", "roof", "NBC_seal" ] },
@@ -2448,6 +2472,7 @@
     "type": "vehicle",
     "name": "Gyrocopter",
     "blueprint": [ [ "-X#" ] ],
+    "color_palette": "aircraft_standard",
     "parts": [
       { "x": -2, "y": 0, "parts": [ "xlframe_vertical" ] },
       {

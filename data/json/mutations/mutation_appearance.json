@@ -372,6 +372,18 @@
     "types": [ "skin_tone" ]
   },
   {
+    "id": "SKIN_LIGHTER",
+    "type": "mutation",
+    "name": { "str": "Skin tone: lighter" },
+    "description": "You have a lighter peach skin tone.",
+    "points": 0,
+    "starting_trait": true,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "types": [ "skin_tone" ]
+  },
+  {
     "id": "SKIN_LIGHT",
     "type": "mutation",
     "name": { "str": "Skin tone: light" },

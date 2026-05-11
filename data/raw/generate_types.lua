@@ -128,9 +128,9 @@ end
     Formats ---@field annotation for variable members.
   ]]
 ---@param member table {name:string, vartype:string, comment?:string, hasval?:boolean, varval?:any}
----@param is_static boolean (optional) Not directly used in LuaLS field, but might be relevant contextually
+---@param _is_static boolean (optional) Not directly used in LuaLS field, but might be relevant contextually
 ---@return string
-local fmt_variable_field = function(member, is_static)
+local fmt_variable_field = function(member, _is_static)
   local ret = ""
   local member_name = tostring(member.name)
   if not string.match(member_name, "^[%a_][%w_]*$") then
@@ -154,6 +154,18 @@ end
 --[[
     Formats ---@field annotation for function members, handling overloads.
   ]]
+---@param signatures string[]
+---@return string
+local fmt_signature_union = function(signatures)
+  if #signatures <= 1 then return signatures[1] or "function" end
+
+  local wrapped = {}
+  for _, signature in ipairs(signatures) do
+    table.insert(wrapped, "(" .. signature .. ")")
+  end
+  return table.concat(wrapped, " | ")
+end
+
 ---@param member table {name:string, comment?:string, overloads:table[]}
 ---@param class_name string The name of the owning class/library
 ---@return string
@@ -167,10 +179,19 @@ local fmt_function_field = function(member, class_name)
     member_name = "['" .. member_name .. "']" -- Quote non-identifier names
   end
 
+  ---@type string[]
   local signatures = {}
+  ---@type table<string, boolean>
+  local seen_signatures = {}
+  local add_signature = function(signature)
+    if seen_signatures[signature] then return end
+    seen_signatures[signature] = true
+    table.insert(signatures, signature)
+  end
+
   if member.overloads and #member.overloads > 0 then
     for _, overload in ipairs(member.overloads) do
-      table.insert(signatures, fmt_function_signature(overload.args, overload.retval, class_name, member.comment))
+      add_signature(fmt_function_signature(overload.args, overload.retval, class_name, member.comment))
     end
   else
     -- Fallback if no overload data? Maybe treat as any function?
@@ -183,10 +204,10 @@ local fmt_function_field = function(member, class_name)
         .. member_name
         .. ". Using 'function' type.\n"
     )
-    table.insert(signatures, "function")
+    add_signature("function")
   end
 
-  local signature_union = table.concat(signatures, " | ")
+  local signature_union = fmt_signature_union(signatures)
   ret = ret .. "---@field " .. member_name .. " " .. signature_union
   if member.comment and member.comment ~= "" then
     local op = function(m)
@@ -219,7 +240,7 @@ local fmt_constructor_field = function(typename, ctors)
   table.insert(lines, "---@return " .. type)
   for _, cpp_arg_list in ipairs(ctors) do
     if cpp_arg_list and #cpp_arg_list > 0 then
-      table.insert(lines, "---@overload " .. fmt_function_signature(cpp_arg_list, typename, typename, nil))
+      table.insert(lines, "---@overload " .. fmt_function_signature(cpp_arg_list, typename, typename, ""))
     end
   end
   table.insert(lines, "function " .. type .. ".new() end")
@@ -251,12 +272,83 @@ doc_gen_func.impl = function()
 
 ---@alias HookEntry HookCallback | HookConfig
 
+---@class ItemUseParams
+---@field user Character
+---@field item Item
+---@field pos Tripoint
+
+---@class ItemEquipCheckParams
+---@field user Character
+---@field item Item
+
+---@class ItemEquipParams : ItemEquipCheckParams
+---@field move_cost integer
+
+---@class ItemStateParams
+---@field user Character
+---@field item Item
+---@field pos Tripoint
+
+---@class ItemDurabilityChangeParams
+---@field user Character
+---@field item Item
+---@field old_damage integer
+---@field new_damage integer
+
+---@class BionicCallbackParams
+---@field user Character
+---@field bionic Bionic
+
+---@class IuseFunctionTable
+---@field use fun(params: ItemUseParams): integer
+---@field can_use? fun(params: ItemUseParams): boolean
+
+---@class IwieldableFunctionTable
+---@field on_wield? fun(params: ItemEquipParams)
+---@field on_unwield? fun(params: ItemEquipCheckParams)
+---@field can_wield? fun(params: ItemEquipCheckParams): boolean
+---@field can_unwield? fun(params: ItemEquipCheckParams): boolean
+
+---@class IwearableFunctionTable
+---@field on_wear? fun(params: ItemEquipParams)
+---@field on_takeoff? fun(params: ItemEquipCheckParams)
+---@field can_wear? fun(params: ItemEquipCheckParams): boolean
+---@field can_takeoff? fun(params: ItemEquipCheckParams): boolean
+
+---@class IequippableFunctionTable
+---@field on_durability_change? fun(params: ItemDurabilityChangeParams)
+---@field on_repair? fun(params: ItemDurabilityChangeParams)
+---@field on_break? fun(params: ItemDurabilityChangeParams)
+
+---@class IstateFunctionTable
+---@field on_tick? fun(params: ItemStateParams)
+---@field on_pickup? fun(params: ItemStateParams)
+---@field on_drop? fun(params: ItemStateParams): boolean
+
+---@class BionicFunctionTable
+---@field on_activate? fun(params: BionicCallbackParams)
+---@field on_deactivate? fun(params: BionicCallbackParams)
+---@field on_installed? fun(params: BionicCallbackParams)
+---@field on_removed? fun(params: BionicCallbackParams)
+
+---@alias MapgenFunction fun(...: any): any
+
 ---@class game
 ---@field active_mods string[]
 ---@field mod_runtime table<string, any>
 ---@field mod_storage table<string, any>
 ---@field on_every_x_hooks table
----@field iuse_functions table
+---@field iuse_functions table<string, fun(params: ItemUseParams): integer | IuseFunctionTable>
+---@field iwieldable_functions table<string, IwieldableFunctionTable>
+---@field iwearable_functions table<string, IwearableFunctionTable>
+---@field iequippable_functions table<string, IequippableFunctionTable>
+---@field istate_functions table<string, IstateFunctionTable>
+---@field imelee_functions table<string, table<string, function>>
+---@field iranged_functions table<string, table<string, function>>
+---@field bionic_functions table<string, BionicFunctionTable>
+---@field mutation_functions table<string, table<string, function>>
+---@field horde_behaviours table<string, function>
+---@field mapgen_functions table<string, MapgenFunction>
 ---@field hooks hooks
 ---@field current_mod string
 ---@field current_mod_path string
@@ -353,11 +445,11 @@ on_shoot = {}
 on_throw = {}
 
 ---@class OnTryNPCInterationParams
----@field npc NPC
+---@field npc Npc
 on_try_npc_interaction = {}
 
 ---@class OnNPCInterationParams
----@field npc NPC
+---@field npc Npc
 on_npc_interaction = {}
 
 ---@class OnTryMonsterInteractionParams
@@ -365,17 +457,19 @@ on_npc_interaction = {}
 on_try_monster_interaction = {}
 
 ---@class OnDialogueStartParams
----@field npc NPC
+---@field npc Npc
 ---@field next_topic string
+---@field prev string?
 on_dialogue_start = {}
 
 ---@class OnDialogueOptionParams
----@field npc NPC
+---@field npc Npc
 ---@field next_topic string
+---@field prev string?
 on_dialogue_option = {}
 
 ---@class OnDialogueEndParams
----@field npc NPC
+---@field npc Npc
 on_dialogue_end = {}
 
 ---@class OnCreatureDodgedParams

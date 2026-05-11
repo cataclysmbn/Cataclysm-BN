@@ -1,6 +1,7 @@
 #pragma once
 
 #include "activity_actor.h"
+#include "craft_command.h"
 
 #include <optional>
 
@@ -109,6 +110,74 @@ class autodrive_activity_actor : public activity_actor
 
         void serialize( JsonOut &jsout ) const override;
         static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
+};
+
+class craft_activity_actor final : public activity_actor
+{
+    protected:
+        const recipe *rec = nullptr;
+        int batch_size = 1;
+        int craft_counter = 0;  // 0 to 10,000,000 — mirrors item's counter field
+        tripoint location;
+
+        std::vector<comp_selection<item_comp>> item_selections;
+        std::vector<comp_selection<tool_comp>> tool_selections;
+
+        bool tools_prepaid = false;
+        bool is_long = false;
+        bool is_valid = false;
+        int last_turn_nr = -1;  // turn# when last do_turn ran; -1 = never set
+
+        bool can_resume_with_internal( const activity_actor &other, const Character & ) const override {
+            const auto &c_actor = static_cast<const craft_activity_actor &>( other );
+            return equivalent_activity( c_actor );
+        }
+
+        bool equivalent_activity( const craft_activity_actor &other ) const {
+            return location == other.location &&
+                   rec == other.rec &&
+                   batch_size == other.batch_size;
+        }
+
+    public:
+        craft_activity_actor() = default;
+        explicit craft_activity_actor(
+            const recipe *rec,
+            int batch_size = 1,
+            int craft_counter = 0,
+            const tripoint &location = tripoint_zero,
+            std::vector<comp_selection<item_comp>> item_selections = {},
+            std::vector<comp_selection<tool_comp>> tool_selections = {},
+            bool tools_prepaid = false,
+            bool is_long = false
+        );
+
+        activity_id get_type() const override {
+            return activity_id( "ACT_CRAFT" );
+        }
+
+        void calc_all_moves( player_activity &act, Character &who ) override;
+        void start( player_activity &act, Character &who ) override;
+        void do_turn( player_activity &act, Character &who ) override;
+        void finish( player_activity &act, Character &who ) override;
+        void canceled( player_activity &/*act*/, Character &/*who*/ ) override {}
+
+        const recipe *get_recipe() const { return rec; }
+        int get_batch_size() const { return batch_size; }
+        int get_craft_counter() const { return craft_counter; }
+        const tripoint &get_location() const { return location; }
+        bool are_tools_prepaid() const { return tools_prepaid; }
+
+        act_progress_message get_progress_message( const player_activity &act,
+                const Character &who ) const override;
+
+        void serialize( JsonOut &jsout ) const override;
+        static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
+
+    private:
+        item *find_in_progress_craft( Character &who ) const;
+        void do_complete_craft( player_activity &act, Character &who );
+
 };
 
 class dig_activity_actor : public activity_actor

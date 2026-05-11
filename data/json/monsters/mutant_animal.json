@@ -15,6 +15,7 @@
       "feed": "The %s seems to like you!  Or maybe it just tolerates your presence better.  It's hard to tell with felines.",
       "pet": "The %s sofly purrs as you pet it.  It demands more."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.15, "dodge_mult": 1.25, "max_level": 2 },
     "flags": [
       "SEES",
       "HEARS",
@@ -433,6 +434,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.15, "dodge_mult": 1.15, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CANPLAY",

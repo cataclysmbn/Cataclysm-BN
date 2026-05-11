@@ -633,6 +633,26 @@
     "symbol": "R",
     "color": "light_green",
     "move_cost": 0,
-    "flags": [ "TRANSPARENT", "CONTAINER", "REDUCE_SCENT", "PERMEABLE", "PLACE_ITEM" ]
+    "flags": [ "TRANSPARENT", "CONTAINER", "REDUCE_SCENT", "PERMEABLE", "PLACE_ITEM", "ADV_DECONSTRUCT" ],
+    "deconstruct": {
+      "ter_set": "t_concrete",
+      "items": [
+        { "item": "compact_reactor_assembly", "count": 2 },
+        { "item": "alloy_plate", "count": [ 4, 6 ] },
+        { "item": "plut_cell", "charges": [ 24, 32 ] },
+        { "item": "lead", "charges": [ 250, 400 ] },
+        { "item": "cable", "charges": [ 60, 90 ] },
+        { "item": "power_supply", "count": [ 16, 20 ] },
+        { "item": "circuit", "count": [ 22, 28 ] },
+        { "item": "amplifier", "count": [ 10, 14 ] },
+        { "item": "RAM", "count": 8 },
+        { "item": "small_lcd_screen", "count": 4 },
+        { "item": "large_lcd_screen", "count": 1 },
+        { "item": "e_scrap", "count": 24 },
+        { "item": "scrap", "count": [ 48, 80 ] },
+        { "item": "steel_lump", "count": [ 20, 35 ] },
+        { "item": "steel_chunk", "count": [ 30, 50 ] }
+      ]
+    }
   }
 ]

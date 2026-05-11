@@ -28,7 +28,7 @@ local function add_line(lines, label, value, value_color)
 end
 
 ---@type fun(who: Character): Item[]
-local function collect_artifacts(who)
+local collect_artifacts = function(who)
   local items = who:all_items(false)
   local artifacts = {}
 
@@ -40,7 +40,7 @@ local function collect_artifacts(who)
 end
 
 ---@type fun(it: Item): string
-local function describe_artifact(it)
+local describe_artifact = function(it)
   local itype_id = it:get_type()
   local itype = itype_id:obj()
   if not itype then return locale.gettext("Unable to read artifact data.") end
@@ -65,11 +65,9 @@ local function describe_artifact(it)
   return table.concat(lines, "\n")
 end
 
----@type fun(who: Character, item: Item, pos: Tripoint): integer
+---@type fun(params: ItemUseParams): integer
 analyzer.menu = function(params)
   local who = params.user
-  local item = params.item
-  local pos = params.pos
   local artifacts = collect_artifacts(who)
 
   if #artifacts == 0 then
@@ -90,6 +88,7 @@ analyzer.menu = function(params)
   end
 
   local selected = artifacts[choice + 1]
+  if not selected then return 0 end
   local report = describe_artifact(selected)
   ui.popup(report)
 

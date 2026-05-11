@@ -10,6 +10,7 @@
       [ "======='#'|" ],
       [ "-O------+-O" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "cargo_space" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -102,6 +103,7 @@
       [ "======='#'|" ],
       [ "-O------+-O" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "cargo_space" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -604,6 +606,7 @@
       [ "==='#'|" ],
       [ "o---+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "trunk", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "windshield", "roof" ] },
@@ -678,6 +681,7 @@
       [ "==='#'|" ],
       [ "o---+-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "trunk", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "windshield", "roof" ] },
@@ -752,6 +756,7 @@
       [ "OO ---+=O-" ],
       [ "       o  " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "board_horizontal" ] },
       { "x": -1, "y": 1, "parts": [ "hdframe_horizontal", "board_horizontal" ] },

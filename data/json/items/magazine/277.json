@@ -1,0 +1,14 @@
+[
+  {
+    "id": "belt277",
+    "copy-from": "magazine_belt",
+    "looks_like": "belt308",
+    "type": "MAGAZINE",
+    "name": { "str": "6.8x51mm 'Fury' ammo belt" },
+    "ammo_type": "277",
+    "capacity": 200,
+    "count": 100,
+    "default_ammo": "277_fmj",
+    "linkage": "ammolink277"
+  }
+]

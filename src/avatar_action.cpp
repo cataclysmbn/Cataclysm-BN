@@ -1391,25 +1391,32 @@ void avatar_action::unload( avatar &you )
     avatar_funcs::unload_item( you, *loc );
 }
 
-void avatar_action::unload_all( avatar &you )
+void avatar_action::unload_all( avatar &you, bool inv )
 {
-    auto unloaded = 0;
-    while( true ) {
+    bool unloaded = false;
+    if( inv ) {
         auto items = you.all_items();
-        const auto target = std::ranges::find_if( items, []( const auto * it ) {
-            return item_funcs::can_be_unloaded( *it );
-        } );
-
-        if( target == items.end() ) {
-            break;
+        for( item *it : items ) {
+            if( item_funcs::can_be_unloaded( *it ) ) {
+                if( !avatar_funcs::unload_item( you, *it ) ) {
+                    break;
+                }
+                unloaded = true;
+            }
         }
-        if( !avatar_funcs::unload_item( you, **target ) ) {
-            break;
+    } else {
+        auto items = get_map().i_at( you.pos() );
+        for( item *it : items ) {
+            if( item_funcs::can_be_unloaded( *it ) ) {
+                if( !avatar_funcs::unload_item( you, *it ) ) {
+                    break;
+                }
+                unloaded = true;
+            }
         }
-        ++unloaded;
     }
 
-    if( unloaded == 0 ) {
+    if( !unloaded ) {
         add_msg( _( "You have nothing to unload." ) );
     }
 }

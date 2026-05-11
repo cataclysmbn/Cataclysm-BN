@@ -924,9 +924,10 @@ class game : public submap_load_listener
         void examine( const tripoint &p ); // Examine nearby terrain  'e'
         void examine();
 
-        void pickup(); // Pickup nearby items 'g', min 0
+        void pickup(); // Pick up items from one nearby tile 'g', min 0
+        void pickup_all(); // Pick up items from all nearby tiles ',', min 0
         void pickup( const tripoint &p );
-        void pickup_feet(); // Pick items at player position ',', min 1
+        void pickup_feet(); // Pick items at player position, min 1
 
         void drop(); // Drop an item  'd'
         void drop_in_direction(); // Drop w/ direction  'D'

@@ -1480,11 +1480,11 @@ tab_direction set_traits( avatar &u, points_left &points )
                     popup( _( "Your profession of %s prevents you from removing this trait." ),
                            u.prof->gender_appropriate_name( u.male ) );
                 } else {
-                    const bool is_mandatory = std::ranges::any_of( cur_trait.obj().types,
+                    const auto mandatory_type = std::ranges::find_if( cur_trait.obj().types,
                     []( const auto & t ) { return mutation_type_is_mandatory( t ); } );
-                    if( is_mandatory ) {
+                    if( mandatory_type != cur_trait.obj().types.end() ) {
                         inc_type = 0;
-                        popup( _( "You must have a trait of this type." ) );
+                        popup( _( "You need to select 1 %s." ), mutation_type_display_name( *mandatory_type ) );
                     }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
@@ -4035,6 +4035,23 @@ trait_id Character::get_random_trait( const std::function<bool( const mutation_b
     return random_entry( vTraits );
 }
 
+
+auto newcharacter::add_default_mutation_type_traits( Character &ch ) -> void
+{
+    for( const auto &default_mutation : get_default_mutations_for_types() ) {
+        const auto mutations = get_mutations_in_type( default_mutation.type_id );
+        const auto has_mutation_type = std::ranges::any_of( mutations, [&]( const auto & trait ) {
+            return ch.has_trait( trait );
+        } );
+        if( !has_mutation_type && default_mutation.trait.is_valid() ) {
+            if( ch.has_base_trait( default_mutation.trait ) ) {
+                ch.set_mutation( default_mutation.trait );
+            } else {
+                ch.toggle_trait( default_mutation.trait );
+            }
+        }
+    }
+}
 
 void Character::randomize_cosmetic_trait( std::string mutation_type )
 {

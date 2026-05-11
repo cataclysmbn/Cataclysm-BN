@@ -8714,35 +8714,20 @@ int iuse::craft( player *p, item *it, bool, const tripoint &pos )
     p->add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),
         pgettext( "in progress craft", "<npcname> starts working on the %s." ), craft_name );
-    p->assign_activity( ACT_CRAFT );
-    // Horrible! We have to find the item again...
-    item *where = nullptr;
-    if( p->has_item( *it ) ) {
-        where = it;
-    } else if( const std::optional<vpart_reference> vp = g->m.veh_at( pos ).part_with_feature( "CARGO",
-               false ) ) {
-        const vehicle_cursor vc = vehicle_cursor( vp->vehicle(), vp->part_index() );
-        if( vc.has_item( *it ) ) {
-            where = it;
-        }
-    }
 
-    if( !where ) {
-        map_cursor mc = map_cursor( pos );
-        if( mc.has_item( *it ) ) {
-            where = it;
-        } else {
-            debugmsg( "Incomplete item couldn't be found" );
-            return 0;
-        }
+    {
+        const recipe &rec = it->get_making();
+        auto actor = std::make_unique<craft_activity_actor>(
+                         &rec,
+                         it->charges,
+                         it->get_counter(),
+                         best_bench.position,
+                         std::vector<comp_selection<item_comp>> {},
+                         it->get_cached_tool_selections(),
+                         it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
+                     );
+        p->assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
     }
-    p->activity->targets.emplace_back( where );
-    p->activity->coords.push_back( get_map().getabs( best_bench.position ) );
-    p->activity->values.push_back( 0 ); // Not a long craft
-    // Ugly
-    p->activity->values.push_back( static_cast<int>( best_bench.type ) );
-    p->activity->values.push_back( 100 );
-    p->activity->values.push_back( 0 );
 
     return 0;
 }
