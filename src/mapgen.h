@@ -476,6 +476,9 @@ class update_mapgen_function_json : public mapgen_function_json_base
         ter_id fill_ter;
 };
 
+using update_mapgen_function_json_list =
+    weighted_int_list<std::shared_ptr<update_mapgen_function_json>>;
+
 class mapgen_function_json_nested : public mapgen_function_json_base
 {
     public:

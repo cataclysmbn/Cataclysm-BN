@@ -34,6 +34,7 @@
 #include "mapgen_constructor.h"
 #include "mapgen_async.h"
 #include "submap_fields.h"
+#include "weighted_list.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapgen.h"
@@ -3136,8 +3137,7 @@ void map_extra::load( const JsonObject &jo, const std::string & )
     }
 }
 
-extern std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> >
-        update_mapgen;
+extern std::map<std::string, update_mapgen_function_json_list> update_mapgen;
 
 void map_extra::check() const
 {
