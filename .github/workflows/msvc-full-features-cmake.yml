@@ -129,8 +129,6 @@ jobs:
       # bootstraps the MSVC toolchain via VsDevCmd.bat if not already in a VS environment,
       # and auto-detects ccache if present on PATH.
       - name: Configure CMake
-        env:
-          VCPKG_ROOT: "${{ runner.workspace }}/b/vcpkg"
         run: |
           cmake -G Ninja `
             -S "${{ github.workspace }}" `
