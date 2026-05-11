@@ -4155,7 +4155,8 @@ void clear_sdl_display_buffer_before_redraw()
     reinitialize_framebuffer( true );
 }
 
-std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window &capture_win_ )
+std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
+        &capture_win_ )
 {
     if( !coordinate_input_received ) {
         return std::nullopt;

@@ -1636,7 +1636,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
     } );
     if( center_it != parts.end() && !on_ramp ) {
         if( idir == 1 ) {
-            std::ranges::for_each( get_all_parts(), []( auto &prt ) {
+            std::ranges::for_each( get_all_parts(), []( auto & prt ) {
                 prt.part().z_terrain[1] = 0;
             } );
         }
