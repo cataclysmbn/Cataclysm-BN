@@ -160,6 +160,7 @@ Mutation types group related mutations together. They are defined as separate JS
   "type": "mutation_type",
   "id": "hair_color", // Unique string ID for this type
   "mandatory_one": true, // If true, characters must always have at least one mutation of this type. Implies swap_on_conflict. (default: false)
+  "default_trait": "SKIN_LIGHTER", // Optional mutation added to loaded characters that lack this mandatory type. (default: none)
   "swap_on_conflict": true, // If true, selecting a new mutation of this type in character creation automatically removes the previously held mutation of the same type instead of showing a conflict error. (default: false)
   "random_chance": 50 // Percent chance (0–100) that a mutation of this type is randomly assigned during cosmetic randomization. Only used if mandatory_one is false. (default: 0)
 }
@@ -168,5 +169,6 @@ Mutation types group related mutations together. They are defined as separate JS
 ### Notes
 
 - `mandatory_one` guarantees every new character receives exactly one mutation of that type during creation and rerolls.
+- `default_trait` lets old saves or templates that predate a mandatory appearance type receive a fallback trait when loaded.
 - `swap_on_conflict` alone (without `mandatory_one`) is useful for optional appearance types where only one option makes sense at a time (e.g. facial hair style).
 - `random_chance` and `mandatory_one` are mutually exclusive in intent: a type should use one or the other, not both.

@@ -59,6 +59,7 @@ TEST_CASE( "nearby pickup finds adjacent vehicle cargo", "[pickup][vehicle]" )
     const std::optional<vpart_reference> cargo = here.veh_at( cart_pos ).part_with_feature( "CARGO",
             true );
     REQUIRE( cargo );
+    cargo->vehicle().get_items( cargo->part_index() ).clear();
     REQUIRE_FALSE( cargo->vehicle().add_item( cargo->part(), item::spawn( "jeans" ) ) );
 
     const auto pickup_items = pickup::nearby_items_for_pickup( center );

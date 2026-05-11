@@ -43,6 +43,8 @@ trait_id random_bad_trait();
  */
 void add_traits( Character &ch );
 void add_traits( Character &ch, points_left &points );
+/** Adds configured default mutation traits when their mutation type is missing. */
+auto add_default_mutation_type_traits( Character &ch ) -> void;
 
 /** Returns true if character has a conflicting trait to the bionic. */
 bool bionic_has_conflict( const Character &ch, const bionic_id &b );

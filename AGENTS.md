@@ -12,7 +12,7 @@ Before writing **ANY** code, verify:
 | `void fn(a, b, c, d, e)`               | `void fn(options_struct)`                                                        |
 | `[](){\n return 1; \n }`               | `[](){ return 1; }`                                                              |
 
-**Prefer `std::ranges`/`std::views`/`std::ranges::to`/cata_algo.h for collection work. Avoid manual iterator increment loops unless required by mutation semantics.**
+**Prefer `std::ranges`/`std::views`/`std::ranges::to`/cata_algo.h for collection work. Avoid manual iterator increment loops unless required by mutation semantics. When a file uses multiple range/view calls, reduce repeated qualifications with local aliases such as `namespace views = std::views;` or `using std::ranges::to`; avoid broad `using namespace` directives in headers.**
 
 ## Coding Convention
 

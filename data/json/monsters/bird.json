@@ -31,6 +31,7 @@
       "feed": "The %s seems to like you!  It runs around your legs and seems friendly.",
       "pet": "The %s runs around your leg."
     },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.05, "dodge_mult": 1.1, "max_level": 1 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM" ]
   },
   {
@@ -78,7 +79,8 @@
       "food": [ "BIRDFOOD" ],
       "feed": "The %s seems to like you!",
       "pet": "The %s flies around you and briefly perches on your arm."
-    }
+    },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 }
   },
   {
     "id": "mon_duck",
@@ -112,7 +114,8 @@
       "food": [ "BIRDFOOD" ],
       "feed": "The %s seems to like you!",
       "pet": "The %s quacks happily at you as you pat its head."
-    }
+    },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.05, "dodge_mult": 1.1, "max_level": 1 }
   },
   {
     "id": "mon_goose_canadian",
@@ -165,7 +168,8 @@
       "food": [ "BIRDFOOD" ],
       "feed": "The %s seems to like you!",
       "pet": "The %s clucks happily at you as you pat its head."
-    }
+    },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.1, "max_level": 2 }
   },
   {
     "id": "mon_pheasant",

@@ -17,6 +17,7 @@
 #include "character_functions.h"
 #include "construction.h"
 #include "construction_partial.h"
+#include "craft_command.h"
 #include "crafting.h"
 #include "debug.h"
 #include "enums.h"
@@ -2060,12 +2061,14 @@ craft_activity_actor::craft_activity_actor(
     const tripoint &location,
     std::vector<comp_selection<item_comp>> item_selections,
     std::vector<comp_selection<tool_comp>> tool_selections,
-    bool tools_prepaid
+    bool tools_prepaid,
+    bool is_long
 ) : rec( rec ), batch_size( batch_size ), craft_counter( craft_counter ),
     location( location ),
     item_selections( std::move( item_selections ) ),
     tool_selections( std::move( tool_selections ) ),
     tools_prepaid( tools_prepaid ),
+    is_long( is_long ),
     is_valid( rec != nullptr )
 {}
 
@@ -2283,6 +2286,59 @@ void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Characte
     }
     ::complete_craft( who, *craft_item );
     craft_item->detach();
+    if( is_long && rec ) {
+        if( who.making_would_work( rec->ident(), batch_size ) ) {
+            who.last_craft->execute( location );
+        }
+    }
+}
+
+act_progress_message craft_activity_actor::get_progress_message(
+    const player_activity &act, const Character &who ) const
+{
+    if( !rec || !is_valid ) {
+        return act_progress_message::make_empty();
+    }
+
+    const int assistants = who.available_assistant_count( *rec );
+    const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+    const double remaining_pct = 1.0 - craft_counter / 10'000'000.0;
+    const float total_mult = act.speed.total();
+    const int remaining_turns = static_cast<int>( remaining_pct * base_total_moves / 100 /
+                                std::max( 0.01f, total_mult ) );
+
+    const std::string time_desc = string_format( _( "Time left: %s" ),
+                                  to_string( time_duration::from_turns( remaining_turns ) ) );
+
+    const auto fmt_spd = [&]( float level, const std::string & name ) -> std::string {
+        const int pct = static_cast<int>( level * 100 );
+        if( pct == 100 )
+        {
+            return "";
+        }
+        nc_color col = pct > 100 ? c_green : c_red;
+        return string_format( " - %s: %s\n", name,
+                              colorize( std::to_string( pct ) + '%', col ) );
+    };
+
+    std::string mults_desc = _( "Crafting speed multipliers:\n" );
+    const int total_pct = static_cast<int>( total_mult * 100 );
+    nc_color total_col = total_pct > 100 ? c_green : c_red;
+    mults_desc += string_format( " - %s: %s\n", _( "Total" ),
+                                 colorize( std::to_string( total_pct ) + '%', total_col ) );
+    mults_desc += fmt_spd( act.speed.player_speed, _( "Speed" ) );
+    mults_desc += fmt_spd( act.speed.light, _( "Light" ) );
+    mults_desc += fmt_spd( act.speed.bench_factor, _( "Workbench" ) );
+    mults_desc += fmt_spd( act.speed.morale, _( "Morale" ) );
+    mults_desc += fmt_spd( act.speed.tools, _( "Tools" ) );
+    if( assistants > 0 ) {
+        mults_desc += fmt_spd( act.speed.assist, _( "Assistants" ) );
+    }
+
+    return act_progress_message::make_full(
+               string_format( _( "%s: %s\n\n%s\n\n%s" ),
+                              act.get_verb().translated(), rec->result_name(),
+                              time_desc, mults_desc ) );
 }
 
 void craft_activity_actor::serialize( JsonOut &jsout ) const
@@ -2296,6 +2352,7 @@ void craft_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "item_selections", item_selections );
     jsout.member( "tool_selections", tool_selections );
     jsout.member( "tools_prepaid", tools_prepaid );
+    jsout.member( "is_long", is_long );
     jsout.member( "last_turn_nr", last_turn_nr );
     jsout.end_object();
 }
@@ -2321,6 +2378,7 @@ std::unique_ptr<activity_actor> craft_activity_actor::deserialize( JsonIn &jsin 
     data.read( "item_selections", actor->item_selections );
     data.read( "tool_selections", actor->tool_selections );
     data.read( "tools_prepaid", actor->tools_prepaid );
+    data.read( "is_long", actor->is_long );
     data.read( "last_turn_nr", actor->last_turn_nr );
 
     return actor;

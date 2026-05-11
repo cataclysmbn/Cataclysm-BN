@@ -1,25 +1,34 @@
 src:
-  - src/**/*
+  - changed-files:
+      - any-glob-to-any-file: src/**/*
 
 tests:
-  - tests/**/*
+  - changed-files:
+      - any-glob-to-any-file: tests/**/*
 
 JSON:
-  - data/**/*
+  - changed-files:
+      - any-glob-to-any-file: data/**/*
 
 mods:
-  - data/mods/**/*
+  - changed-files:
+      - any-glob-to-any-file: data/mods/**/*
 
 translation:
-  - lang/**/*
+  - changed-files:
+      - any-glob-to-any-file: lang/**/*
 
 docs:
-  - docs/**/*
+  - changed-files:
+      - any-glob-to-any-file: docs/**/*
 
 scripts:
-  - scripts/**/*
+  - changed-files:
+      - any-glob-to-any-file: scripts/**/*
 
 lua:
-  - "**/*.lua"
-  - src/catalua*.cpp
-  - src/catalua*.h
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.lua"
+          - src/catalua*.cpp
+          - src/catalua*.h
