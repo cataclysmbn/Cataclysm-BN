@@ -432,7 +432,7 @@ jobs:
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install gettext
+          sudo apt-get install cmake gettext ninja-build
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
@@ -464,6 +464,7 @@ jobs:
           else
             echo "::warning::Android signing secrets are unavailable; building unsigned release artifacts"
           fi
+          mkdir -p ../lang/mo
           chmod +x gradlew
 
           # Determine build variant based on version label
