@@ -64,6 +64,7 @@ set(CATA_CHECK_CLANG_TIDY "" CACHE STRING "Path to check_clang_tidy.py for plugi
 set(GIT_BINARY "" CACHE STRING "Git binary name or path.")
 set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
+option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
 
 if (TESTS)
 include(CTest)
@@ -133,6 +134,10 @@ include(CheckCXXCompilerFlag)
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
 #SET(CMAKE_SHARED_LIBRARY_C_FLAGS "${CMAKE_SHARED_LIBRARY_C_FLAGS} -m32")
 #SET(CMAKE_SHARED_LIBRARY_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -m32")
+
+if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+endif ()
 
 find_package(PkgConfig)
 find_package(SQLite3)
@@ -239,6 +244,7 @@ message(STATUS "LANGUAGES                     : ${LANGUAGES}")
 if (LINKER)
     message(STATUS "LINKER                        : ${LINKER}")
 endif ()
+message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
 
 message(STATUS "See CMake compiling guide for details and more info --")
 
@@ -333,24 +339,26 @@ if (TILES)
     # Find SDL, SDL_ttf & SDL_image for graphical install
     message(STATUS "Searching for SDL3 library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-        # ^^ Use sdl3-config.cmake provided by the system or VCPKG
-        find_package(SDL3 CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3-config.cmake provided by the system or VCPKG
+            find_package(SDL3 CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
         if(NOT SDL3_FOUND)
             message("Installing SDL3 from Source")
-            set(SDL_INSTALL ON)
             set(SDL_TEST_LIBRARY OFF)
+            SET(SDL_SHARED ON)
             # Install via FetchContent
             FetchContent_Declare(
                     SDL3
                     URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.8.tar.gz
-                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-                    #GIT_TAG release-3.4.8
-                    #GIT_SHALLOW    TRUE
-                    #GIT_PROGRESS   TRUE
+                    EXCLUDE_FROM_ALL
             )
             FetchContent_MakeAvailable(SDL3)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
         else()
             message("Using system SDL3")
         endif()
@@ -365,24 +373,25 @@ if (TILES)
 
     message(STATUS "Searching for SDL3_ttf library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-        # ^^ Use sdl3_ttf-config.cmake provided by the system or VCPKG
-        find_package(SDL3_ttf CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_ttf-config.cmake provided by the system or VCPKG
+            find_package(SDL3_ttf CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
         if(NOT SDL3_ttf_FOUND)
             message("Installing SDL3_ttf from Source")
-            set(SDLTTF_INSTALL ON)
             set(SDLTTF_PLUTOSVG OFF)
             # Install via FetchContent
             FetchContent_Declare(
                     SDL3_TTF
                     URL https://github.com/libsdl-org/SDL_ttf/archive/refs/tags/release-3.2.2.tar.gz
-                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf
-                    #GIT_TAG release-3.2.2
-                    #GIT_SHALLOW    TRUE
-                    #GIT_PROGRESS   TRUE
+                    EXCLUDE_FROM_ALL
             )
             FetchContent_MakeAvailable(SDL3_TTF)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_ttf-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
         else()
             message("Using system SDL3_ttf")
         endif()
@@ -397,25 +406,26 @@ if (TILES)
 
     message(STATUS "Searching for SDL3_image library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-        # ^^ Use sdl3_image-config.cmake provided by the system or VCPKG
-        find_package(SDL3_image CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_image-config.cmake provided by the system or VCPKG
+            find_package(SDL3_image CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
         if(NOT SDL3_image_FOUND)
             message("Installing SDL3_image from Source")
-            set(SDLIMAGE_INSTALL ON)
             set(SDLIMAGE_JXL ON)
             set(SDLIMAGE_PNG_LIBPNG ON)
             # Install via FetchContent
             FetchContent_Declare(
                     SDL3_IMAGE
                     URL https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-3.4.4.tar.gz
-                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL_image
-                    #GIT_TAG release-3.4.4
-                    #GIT_SHALLOW    TRUE
-                    #GIT_PROGRESS   TRUE
+                    EXCLUDE_FROM_ALL
             )
             FetchContent_MakeAvailable(SDL3_IMAGE)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_image-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
         else()
             message("Using system SDL3_image")
         endif()
@@ -460,23 +470,24 @@ if (SOUND)
     # Sound requires SDL_mixer library
     message(STATUS "Searching for SDL3_mixer library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-        # ^^ Use sdl3_mixer-config.cmake provided by the system or VCPKG
-        find_package(SDL3_mixer CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_mixer-config.cmake provided by the system or VCPKG
+            find_package(SDL3_mixer CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
         if(NOT SDL3_mixer_FOUND)
             message("Installing SDL3_mixer from Source")
-            set(SDLMIXER_INSTALL ON)
             # Install via FetchContent
             FetchContent_Declare(
                     SDL3_MIXER
                     URL https://github.com/libsdl-org/SDL_mixer/archive/refs/tags/release-3.2.0.tar.gz
-                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
-                    #GIT_TAG release-3.2.0
-                    #GIT_SHALLOW    TRUE
-                    #GIT_PROGRESS   TRUE
+                    EXCLUDE_FROM_ALL
             )
             FetchContent_MakeAvailable(SDL3_MIXER )
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_mixer-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
         else()
             message("Using system SDL3_mixer")
         endif()
