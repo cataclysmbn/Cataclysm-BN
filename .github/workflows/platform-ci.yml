@@ -1,0 +1,42 @@
+name: Platform build matrix
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "doxygen_doc/**"
+      - "lgtm/**"
+      - "utilities/**"
+      - "scripts/**"
+      - "**.md"
+      - "**.mdx"
+    types: [opened, reopened, synchronize, ready_for_review]
+
+# We only care about the latest revision of a PR, so cancel previous instances.
+concurrency:
+  group: platform-build-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  builds:
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      matrix-json: |
+        [
+          { "name": "Windows Tiles x64 MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-latest", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
+          { "name": "macOS Curses x64", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles x64", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      package-artifacts: false
+      run-tests: true
+      android-localize: false
+    secrets: inherit
