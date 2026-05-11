@@ -404,6 +404,8 @@ if (TILES)
         if(NOT SDL3_image_FOUND)
             message("Installing SDL3_image from Source")
             set(SDLIMAGE_INSTALL ON)
+            set(SDLIMAGE_JXL ON)
+            set(SDLIMAGE_PNG_LIBPNG ON)
             # Install via FetchContent
             FetchContent_Declare(
                     SDL3_IMAGE
