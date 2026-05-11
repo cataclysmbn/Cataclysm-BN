@@ -10,6 +10,7 @@ if (NOT VCPKG_MANIFEST_MODE)
 endif()
 
 include(AstyleFormatSource)
+include(FetchContent)
 
 set(CMAKE_TLS_VERIFY ON)
 
@@ -300,7 +301,6 @@ set(CMAKE_THREAD_PREFER_PTHREAD True)
 find_package(Threads REQUIRED)
 
 if (USE_TRACY)
-    include(FetchContent)
 
     if (NOT TRACY_VERSION)
         if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
@@ -335,13 +335,25 @@ if (TILES)
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
         set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
         # ^^ Use sdl3-config.cmake provided by the system or VCPKG
-        find_package(SDL3 CONFIG REQUIRED)
-        if(NOT SDL3_FOUND)
-            # Use our CMakeModules/Find/FindSDL3.cmake
-            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
-            find_package(SDL3)
-        endif()
+        find_package(SDL3 CONFIG)
         set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if(NOT SDL3_FOUND)
+            message("Installing SDL3 from Source")
+            set(SDL_INSTALL ON)
+            set(SDL_TEST_LIBRARY OFF)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3
+                    URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.8.tar.gz
+                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+                    #GIT_TAG release-3.4.8
+                    #GIT_SHALLOW    TRUE
+                    #GIT_PROGRESS   TRUE
+            )
+            FetchContent_MakeAvailable(SDL3)
+        else()
+            message("Using system SDL3")
+        endif()
     endif()
     if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
@@ -352,8 +364,29 @@ if (TILES)
     endif ()
 
     message(STATUS "Searching for SDL3_ttf library --")
-    find_package(SDL3_ttf CONFIG REQUIRED)
-    if (NOT (SDL3_TTF_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+        # ^^ Use sdl3_ttf-config.cmake provided by the system or VCPKG
+        find_package(SDL3_ttf CONFIG)
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if(NOT SDL3_ttf_FOUND)
+            message("Installing SDL3_ttf from Source")
+            set(SDLTTF_INSTALL ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_TTF
+                    URL https://github.com/libsdl-org/SDL_ttf/archive/refs/tags/release-3.2.2.tar.gz
+                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL_ttf
+                    #GIT_TAG release-3.2.2
+                    #GIT_SHALLOW    TRUE
+                    #GIT_PROGRESS   TRUE
+            )
+            FetchContent_MakeAvailable(SDL3_TTF)
+        else()
+            message("Using system SDL3_ttf")
+        endif()
+    endif()
+    if (NOT (SDL3_ttf_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
         message(FATAL_ERROR
                 "This project requires SDL3_ttf to be installed to compile in graphical mode. \
                 Please install the SDL3_ttf development libraries, \
@@ -362,8 +395,29 @@ if (TILES)
     endif ()
 
     message(STATUS "Searching for SDL3_image library --")
-    find_package(SDL3_image CONFIG REQUIRED)
-    if (NOT (SDL3_IMAGE_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+        # ^^ Use sdl3_image-config.cmake provided by the system or VCPKG
+        find_package(SDL3_image CONFIG)
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if(NOT SDL3_image_FOUND)
+            message("Installing SDL3_image from Source")
+            set(SDLIMAGE_INSTALL ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_IMAGE
+                    URL https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-3.4.4.tar.gz
+                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL_image
+                    #GIT_TAG release-3.4.4
+                    #GIT_SHALLOW    TRUE
+                    #GIT_PROGRESS   TRUE
+            )
+            FetchContent_MakeAvailable(SDL3_IMAGE)
+        else()
+            message("Using system SDL3_image")
+        endif()
+    endif()
+    if (NOT (SDL3_image_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
         message(FATAL_ERROR
                 "This project requires SDL3_image to be installed to compile in graphical mode. \
                  Please install the SDL3_image development libraries, \
@@ -402,14 +456,34 @@ if (SOUND)
 
     # Sound requires SDL_mixer library
     message(STATUS "Searching for SDL3_mixer library --")
-    find_package(SDL3_mixer CONFIG REQUIRED)
-    if (NOT (SDL3_MIXER_FOUND OR TARGET SDL3_mixer::SDL3_mixer
-                              OR TARGET SDL3_mixer::SDL3_mixer-static))
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+        # ^^ Use sdl3_mixer-config.cmake provided by the system or VCPKG
+        find_package(SDL3_mixer CONFIG)
+        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        if(NOT SDL3_mixer_FOUND)
+            message("Installing SDL3_mixer from Source")
+            set(SDLMIXER_INSTALL ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_MIXER
+                    URL https://github.com/libsdl-org/SDL_mixer/archive/refs/tags/release-3.2.0.tar.gz
+                    #GIT_REPOSITORY https://github.com/libsdl-org/SDL_mixer.git
+                    #GIT_TAG release-3.2.0
+                    #GIT_SHALLOW    TRUE
+                    #GIT_PROGRESS   TRUE
+            )
+            FetchContent_MakeAvailable(SDL3_MIXER )
+        else()
+            message("Using system SDL3_mixer")
+        endif()
+    endif()
+    if (NOT (SDL3_mixer_FOUND OR TARGET SDL3_mixer::SDL3_mixer OR TARGET SDL3_mixer::SDL3_mixer-static))
         message(FATAL_ERROR
                 "You need the SDL3_mixer development library \
                     to be able to compile with sound enabled. \
                     See CMake compiling guide for details and more info.")
-    endif()
+    endif ()
 endif ()
 
 if (BACKTRACE)
