@@ -4153,8 +4153,8 @@ void map::draw_map( mapgendata &dat )
             draw_temple( dat );
         } else if( is_ot_match( "mine", terrain_type, ot_match_type::prefix ) ) {
             draw_mine( dat );
-        } else if( is_ot_match( "lab", terrain_type, ot_match_type::contains ) ) {
-            draw_lab( dat );
+            // } else if( is_ot_match( "lab", terrain_type, ot_match_type::contains ) ) {
+            // draw_lab( dat );
         } else {
             found = false;
         }

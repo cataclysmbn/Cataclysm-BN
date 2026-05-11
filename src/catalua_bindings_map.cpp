@@ -14,6 +14,7 @@
 #include "map_iterator.h"
 #include "npc.h"
 #include "overmap.h"
+#include "sol/sol.hpp"
 #include "trap.h"
 #include "detached_ptr.h"
 #include "veh_type.h"
@@ -430,6 +431,11 @@ void cata::detail::reg_map( sol::state &lua )
             }
         } );
 
+        luna::set_fx( ut, "has_flag_at",
+                      sol::resolve<bool( const std::string &, const tripoint & ) const>( &map::has_flag ) );
+
+        luna::set_fx( ut, "has_ter_flag_at",
+                      sol::resolve<bool( const std::string &, const tripoint & ) const>( &map::has_flag_ter ) );
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
                       sol::resolve<bool( const tripoint &, const ter_id & )>( &map::ter_set ) );
@@ -442,6 +448,8 @@ void cata::detail::reg_map( sol::state &lua )
             return m.ter_set( tripoint( x, y, z ), id );
         } );
 
+        luna::set_fx( ut, "has_furn_flag_at",
+                      sol::resolve<bool( const std::string &, const tripoint & ) const>( &map::has_flag_furn ) );
         luna::set_fx( ut, "get_furn_at", sol::resolve<furn_id( const tripoint & )const>( &map::furn ) );
         luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint & p, const furn_id & id ) { m.furn_set( p, id ); } );
 
@@ -486,6 +494,8 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point topleft,
         point bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
         luna::set_fx( ut, "rotate", []( map & m, int turns ) { m.rotate( turns ); } );
+        luna::set_fx( ut, "make_rubble", []( map & m, tripoint point, furn_id & fid, ter_id & tid ) { m.make_rubble( point, fid, tid ); } );
+        luna::set_fx( ut, "destroy", []( map & m, tripoint point ) { m.destroy( point ); } );
     }
 
     // Register 'tinymap' class to be used in Lua
