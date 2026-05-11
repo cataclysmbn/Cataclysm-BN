@@ -14,12 +14,23 @@ if(NOT GETTEXT_MSGFMT_EXECUTABLE)
              See CMake compiling guide for details and more info.")
 endif()
 
+execute_process(
+    COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} --help
+    OUTPUT_VARIABLE MSGFMT_HELP
+    ERROR_QUIET
+)
+if (MSGFMT_HELP MATCHES "--no-convert")
+    set(CATA_MSGFMT_NO_CONVERT --no-convert)
+endif ()
+
 if (LANGUAGES STREQUAL all)
     set(LANGUAGES "")
     file(GLOB PO_FILES ${CMAKE_SOURCE_DIR}/lang/po/*.po)
     foreach (PO_FILE ${PO_FILES})
         get_filename_component(LANG ${PO_FILE} NAME_WE)
-        list(APPEND LANGUAGES ${LANG})
+        if (NOT LANG STREQUAL "placeholder")
+            list(APPEND LANGUAGES ${LANG})
+        endif ()
     endforeach ()
     list(REMOVE_DUPLICATES LANGUAGES)
     # End of special case
@@ -30,7 +41,9 @@ foreach (LANG ${LANGUAGES})
 endforeach ()
 message("\n")
 
-add_custom_target(translations_prepare WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+add_custom_target(translations_prepare
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/lang/mo
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
 # Auto-Compile translation on release builds only
 if (RELEASE)
@@ -53,7 +66,7 @@ foreach (LANG ${LANGUAGES})
     add_custom_command(
         OUTPUT ${MO_OUTPUT}
         COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/lang/mo/${LANG}/LC_MESSAGES
-        COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -f ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po -o ${MO_OUTPUT}
+        COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} ${CATA_MSGFMT_NO_CONVERT} -f ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po -o ${MO_OUTPUT}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po
     )
@@ -61,7 +74,7 @@ foreach (LANG ${LANGUAGES})
     list(APPEND MO_FILES ${MO_OUTPUT})
 endforeach ()
 
-add_custom_target(translations ALL DEPENDS ${MO_FILES})
+add_custom_target(translations ALL DEPENDS translations_prepare ${MO_FILES})
 
 # Install translations
 if (RELEASE)

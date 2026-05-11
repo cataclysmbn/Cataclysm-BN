@@ -487,8 +487,6 @@ bool vehicle::collision( std::vector<veh_collision> &colls,
         velocity = 0;
         vertical_velocity = 0;
         add_msg( m_debug, "Collision check on a dirty vehicle %s", name );
-        fprintf( stderr, "[DIAG collision DIRTY] veh=%s parts=%zu\n",
-                 name.c_str(), parts.size() );
         return true;
     }
 
@@ -1637,6 +1635,11 @@ void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
         return !p.removed && p.mount == tripoint_mnt_veh::zero();
     } );
     if( center_it != parts.end() && !on_ramp ) {
+        if( idir == 1 ) {
+            std::ranges::for_each( get_all_parts(), []( auto &prt ) {
+                prt.part().z_terrain[1] = 0;
+            } );
+        }
         return;
     }
 

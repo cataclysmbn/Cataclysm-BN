@@ -28,6 +28,7 @@ local function is_underwater_oter(oter_id)
 end
 
 sonar.register = function(mod)
+  ---@type fun(params: ItemUseParams): integer
   mod.sonar_scan = function(params)
     local who = params.user
     local pos = params.pos

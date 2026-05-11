@@ -1,6 +1,21 @@
 gdebug.log_info("RPG System: Preload")
 
 ---@class ModRpgSystem
+---@field on_monster_killed fun(params: OnMonDeathParams)
+---@field on_game_started fun()
+---@field on_game_load fun()
+---@field on_dialogue_end fun(params: OnDialogueEndParams)
+---@field on_character_reset_stats fun(params: OnCharacterResetStatsParams)
+---@field on_every_5_minutes fun(...: any): any
+---@field open_rpg_menu fun(params: ItemUseParams): integer
+---@field add_mutation fun(config: RpgMutationConfig?): boolean
+---@field manage_class_menu fun(player: Character)
+---@field manage_traits_menu fun(player: Character)
+---@field assign_stats_menu fun(player: Character)
+---@field show_help_menu fun(player: Character)
+---@field show_about_screen fun(player: Character)
+---@field adjust_level_scaling fun(player: Character)
+---@type ModRpgSystem
 local mod = game.mod_runtime[game.current_mod]
 
 game.add_hook("on_mon_death", function(...) return mod.on_monster_killed(...) end)

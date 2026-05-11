@@ -106,6 +106,8 @@ void clear_overmap()
 
 void clear_map()
 {
+    g->m.set_abs_sub( tripoint_abs_sm( g->m.get_abs_sub().xy(), 0 ) );
+
     // Clearing all z-levels is rather slow, so just clear the ones I know the
     // tests use for now.
     for( int z = -2; z <= 0; ++z ) {

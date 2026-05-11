@@ -156,6 +156,7 @@ static void full_map_test( const std::vector<std::string> &setup,
                     break;
                 case 'C':
                     veh = here.add_vehicle( vproto_id( vehicle_id ), p, vehicle_rotation, 0, 0 );
+                    REQUIRE( veh != nullptr );
                     for( const vpart_reference &vp : veh->get_avail_parts( "OPENABLE" ) ) {
                         veh->close( vp.part_index() );
                     }

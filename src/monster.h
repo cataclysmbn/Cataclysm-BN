@@ -610,6 +610,7 @@ class monster : public Creature, public location_visitable<monster>
 
         // DEFINING VALUES
         int friendly;
+        int training_level = 0;
         int anger = 0;
         int morale = 0;
         // Per-npcmove-pass cache of attitude_to() result for a generic NPC (no special traits).

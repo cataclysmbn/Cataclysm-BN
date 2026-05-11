@@ -252,6 +252,17 @@ void input_manager::load( const std::string &file_name, bool is_user_preferences
             events.push_back( new_event );
         }
 
+        if( is_user_preferences && context != default_context_id &&
+            action.get_bool( "is_deleted", false ) ) {
+            if( actions.contains( action_id ) ) {
+                auto &attributes = actions[action_id];
+                attributes.input_events.clear();
+                attributes.is_user_created = false;
+                attributes.is_deleted = true;
+            }
+            continue;
+        }
+
         // An invariant of this class is that user-created, local keybindings
         // with an empty set of input_events do not exist in the
         // action_contexts map. In prior versions of this class, this was not
@@ -268,8 +279,9 @@ void input_manager::load( const std::string &file_name, bool is_user_preferences
             actions.contains( action_id ) ) {
             // In case this is the second file containing user preferences,
             // this replaces the default bindings with the user's preferences.
-            action_attributes &attributes = actions[action_id];
+            auto &attributes = actions[action_id];
             attributes.input_events = events;
+            attributes.is_deleted = false;
             if( action.has_member( "is_user_created" ) ) {
                 attributes.is_user_created = action.get_bool( "is_user_created" );
             }
@@ -292,9 +304,12 @@ void input_manager::save()
 
                 jsout.member( "id", action.first );
                 jsout.member( "category", a->first );
-                bool is_user_created = action.second.is_user_created;
+                const auto is_user_created = action.second.is_user_created;
                 if( is_user_created ) {
                     jsout.member( "is_user_created", is_user_created );
+                }
+                if( action.second.is_deleted ) {
+                    jsout.member( "is_deleted", true );
                 }
 
                 jsout.member( "bindings" );
@@ -509,7 +524,7 @@ const action_attributes &input_manager::get_action_attributes(
         const t_action_contexts::const_iterator action_context = action_contexts.find( context );
         if( action_context != action_contexts.end() ) {
             const t_actions::const_iterator action = action_context->second.find( action_id );
-            if( action != action_context->second.end() ) {
+            if( action != action_context->second.end() && !action->second.is_deleted ) {
                 if( overwrites_default ) {
                     *overwrites_default = true;
                 }
@@ -562,9 +577,11 @@ input_manager::t_input_event_list &input_manager::get_or_create_event_list(
     // A new action is created in the event that the user creates a local
     // keymapping that masks a global one.
     if( !actions.contains( action_descriptor ) ) {
-        action_attributes &attributes = actions[action_descriptor];
+        auto &attributes = actions[action_descriptor];
         attributes.name = get_default_action_name( action_descriptor );
         attributes.is_user_created = true;
+    } else if( actions[action_descriptor].is_deleted ) {
+        actions[action_descriptor].is_deleted = false;
     }
 
     return actions[action_descriptor].input_events;
@@ -587,7 +604,7 @@ void input_manager::remove_input_for_action(
                 // there's an attempt to remove bindings anyway, presumably the user wants
                 // to fully remove the binding from that context.
                 if( action->second.input_events.empty() ) {
-                    actions.erase( action );
+                    action->second.is_deleted = true;
                 } else {
                     action->second.input_events.clear();
                 }

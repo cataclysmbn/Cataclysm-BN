@@ -412,6 +412,67 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
 }
 
 /**
+ * UI FOR LAB_FINALE SUPERALLOY FORGE.
+ */
+void iexamine::nanoforge( player &p, const tripoint &examp )
+{
+    if( !query_yn(
+            _( "Use the superalloy forge? Requires 1 sheet metal and 5 nanomaterial canisters." ) ) ) {
+        none( p, examp );
+        return;
+    }
+
+    bool table_exists = false;
+    tripoint spawn_point;
+    map &here = get_map();
+    for( const auto &valid_location : here.points_in_radius( examp, 1 ) ) {
+        if( here.ter( valid_location ) == ter_str_id( "t_nanoforge_body" ) ) {
+            spawn_point = valid_location;
+            table_exists = true;
+            break;
+        }
+    }
+    if( !table_exists ) {
+        return;
+    }
+
+    std::vector<std::string> recipe_ids;
+    recipe_ids.push_back( "alloy_sheet" );
+
+    if( recipe_ids.empty() ) {
+        return;
+    }
+
+    std::string chosen_recipe = recipe_ids.front();;
+
+    if( chosen_recipe.empty() ) {
+        return;
+    }
+
+    int item_count = 1;
+
+    detached_ptr<item> new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn );
+
+    auto qty = 1;
+    auto reqs = *requirement_id( "superalloy_forge" ) * qty;
+
+    if( !reqs.can_make_with_inventory( p.crafting_inventory(), is_crafting_component ) ) {
+        popup( "%s", reqs.list_missing() );
+        return;
+    }
+
+    for( const auto &e : reqs.get_components() ) {
+        p.consume_items( e, 1, is_crafting_component );
+    }
+    for( const auto &e : reqs.get_tools() ) {
+        p.consume_tools( e );
+    }
+    p.invalidate_crafting_inventory();
+
+    here.add_item_or_charges( spawn_point, std::move( new_item ) );
+}
+
+/**
  * Use "gas pump."  Will pump any liquids on tile.
  */
 void iexamine::gaspump( player &p, const tripoint_bub_ms &examp )
@@ -8004,6 +8065,7 @@ iexamine_function iexamine_function_from_string( const std::string &function_nam
             { "deployed_furniture", &iexamine::deployed_furniture },
             { "cvdmachine", &iexamine::cvdmachine },
             { "nanofab", &iexamine::nanofab },
+            { "nanoforge", &iexamine::nanoforge },
             { "gaspump", &iexamine::gaspump },
             { "atm", &iexamine::atm },
             { "vending", &iexamine::vending },

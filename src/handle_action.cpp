@@ -2162,6 +2162,16 @@ bool game::handle_action()
                 }
                 break;
 
+            case ACTION_PICKUP_ALL:
+                if( u.has_active_mutation( trait_SHELL2 ) ) {
+                    add_msg( m_info, _( "You can't pick anything up while you're in your shell." ) );
+                } else if( u.is_mounted() ) {
+                    add_msg( m_info, _( "You can't pick anything up while you're riding." ) );
+                } else {
+                    pickup_all();
+                }
+                break;
+
             case ACTION_PICKUP_FEET:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
                     add_msg( m_info, _( "You can't pick anything up while you're in your shell." ) );

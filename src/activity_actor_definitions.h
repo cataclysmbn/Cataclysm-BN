@@ -124,6 +124,7 @@ class craft_activity_actor final : public activity_actor
         std::vector<comp_selection<tool_comp>> tool_selections;
 
         bool tools_prepaid = false;
+        bool is_long = false;
         bool is_valid = false;
         int last_turn_nr = -1;  // turn# when last do_turn ran; -1 = never set
 
@@ -147,7 +148,8 @@ class craft_activity_actor final : public activity_actor
             const tripoint_abs_ms &location = tripoint_abs_ms::zero(),
             std::vector<comp_selection<item_comp>> item_selections = {},
             std::vector<comp_selection<tool_comp>> tool_selections = {},
-            bool tools_prepaid = false
+            bool tools_prepaid = false,
+            bool is_long = false
         );
 
         activity_id get_type() const override {
@@ -165,6 +167,9 @@ class craft_activity_actor final : public activity_actor
         int get_craft_counter() const { return craft_counter; }
         const tripoint_abs_ms &get_location() const { return location; }
         bool are_tools_prepaid() const { return tools_prepaid; }
+
+        act_progress_message get_progress_message( const player_activity &act,
+                const Character &who ) const override;
 
         void serialize( JsonOut &jsout ) const override;
         static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );

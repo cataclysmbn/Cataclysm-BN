@@ -631,7 +631,7 @@
       [ "|=t'#_#'_||" ],
       [ "|O||'+'||| " ]
     ],
-    "color_palette": "military_standard",
+    "color_palette": "military_boat",
     "parts": [
       {
         "x": -6,
@@ -818,7 +818,7 @@
       [ "|=_______________||  " ],
       [ "||OO||||||||||||||   " ]
     ],
-    "color_palette": "military_standard",
+    "color_palette": "military_boat",
     "parts": [
       { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
       { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
@@ -1206,7 +1206,7 @@
       [ "|=_______________||  " ],
       [ "||OO||||||||||||||   " ]
     ],
-    "color_palette": "military_standard",
+    "color_palette": "military_boat",
     "parts": [
       { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
       { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
@@ -1583,7 +1583,7 @@
       [ "=#'||" ],
       [ "|||| " ]
     ],
-    "color_palette": "military_standard",
+    "color_palette": "military_boat",
     "parts": [
       {
         "x": -1,
