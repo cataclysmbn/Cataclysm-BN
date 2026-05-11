@@ -306,7 +306,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     }
 
     DOC( "Force the current weather to the given weather type ID string, overriding the weather generator. Pass true as second argument to make it permanent (survives update_weather cycles without re-applying)." );
-    luna::set_fx( lib, "set_weather_override", []( const std::string & id, sol::optional<bool> permanent ) -> void {
+    luna::set_fx( lib, "set_weather_override", []( const std::string & id,
+    sol::optional<bool> permanent ) -> void {
         weather_manager &w = get_weather();
         w.weather_override = weather_type_id( id );
         w.weather_override_permanent = permanent.value_or( false );
