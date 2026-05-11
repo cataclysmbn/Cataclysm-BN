@@ -5,6 +5,7 @@
 // IWYU pragma: begin_exports
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wold-style-cast"
+#define SDL_ENABLE_OLD_NAMES
 #include <SDL3/SDL.h>
 #pragma GCC diagnostic pop
 #include <SDL3_image/SDL_image.h>

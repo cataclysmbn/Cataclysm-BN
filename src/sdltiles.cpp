@@ -4062,9 +4062,10 @@ auto get_sdl_display_buffer_size() -> point
 {
     if( !display_buffer ) { return point_zero; }
 
-    auto width = 0;
-    auto height = 0;
-    if( SDL_QueryTexture( display_buffer.get(), nullptr, nullptr, &width, &height ) != 0 ) {
+    auto width = 0.0f;
+    auto height = 0.0f;
+
+    if( !SDL_GetTextureSize(display_buffer.get(), &width, &height) ) {
         return point_zero;
     }
     return point( width, height );
