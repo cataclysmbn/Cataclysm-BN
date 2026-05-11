@@ -83,10 +83,10 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
 
-      - name: Install SDL3 (ubuntu)
-        if: ${{ env.SKIP == 'false' }}
-        run: |
-          sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+      #- name: Install SDL3 (ubuntu)
+      #  if: ${{ env.SKIP == 'false' }}
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
 
       - name: Install SDL3-devel Dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' }}

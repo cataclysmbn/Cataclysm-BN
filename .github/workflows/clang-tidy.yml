@@ -58,9 +58,9 @@ jobs:
             sudo update-alternatives --install /usr/bin/$bin $bin /usr/bin/$bin-$VERSION 200
           done
 
-      - name: Install SDL3
-        run: |
-          sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+      #- name: Install SDL3
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
 
       - name: Install SDL3-devel dependencies
         run: |
