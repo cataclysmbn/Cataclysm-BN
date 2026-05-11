@@ -10,6 +10,7 @@
 #include "point.h"
 #include "cached_options.h"
 #include "units_angle.h"
+#include "coordinates.h"
 
 template <typename T> struct enum_traits;
 
@@ -276,4 +277,30 @@ void calc_ray_end( units::angle, int range, const tripoint &p, tripoint &out );
  */
 units::angle coord_to_angle( const tripoint &a, const tripoint &b );
 
+template<IsCoordPoint C>
+auto rl_dist( const C &a, const C &b ) -> int
+{
+    return rl_dist( a.raw(), b.raw() );
+}
 
+template<IsCoordPoint C>
+auto rl_dist_fast( const C &a, const C &b ) -> FastDistanceApproximation
+{
+    return rl_dist_fast( a.raw(), b.raw() );
+}
+
+template<IsCoordPoint C>
+auto line_to( const C &a, const C &b, int t = 0, int t2 = 0 ) -> std::vector<C>
+{
+    std::vector<typename C::value_type> raw_line;
+    if constexpr( C::dimension == 2 ) {
+        raw_line = line_to( a.raw(), b.raw(), t );
+    } else {
+        raw_line = line_to( a.raw(), b.raw(), t, t2 );
+    }
+    auto result = std::vector<C> {};
+    result.reserve( raw_line.size() );
+    std::ranges::transform( raw_line, std::back_inserter( result ),
+    []( const auto & p ) { return C( p ); } );
+    return result;
+}

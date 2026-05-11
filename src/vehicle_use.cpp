@@ -114,7 +114,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
 {
     // fetch matching parts and abort early if none found
     const auto found = get_avail_parts( flag );
-    if( empty( found ) ) {
+    if( found.empty() ) {
         return;
     }
 
@@ -149,6 +149,7 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
             }
         }
         refresh();
+        get_map().invalidate_lightmap_caches();
     } );
 }
 
@@ -189,7 +190,7 @@ void vehicle::control_doors()
     // Locations used to display the doors
     std::vector< tripoint > locations;
     // it is possible to have one door to open and one to close for single motor
-    if( empty( door_motors ) ) {
+    if( door_motors.empty() ) {
         debugmsg( "vehicle::control_doors called but no door motors found" );
         return;
     }
@@ -324,8 +325,8 @@ void vehicle::set_electronics_menu_options( std::vector<uilist_entry> &options,
                 keybind( "TOGGLE_PLOW" ), "ROADHEAD" );
     add_toggle( pgettext( "electronics menu option", "scoop" ),
                 keybind( "TOGGLE_SCOOP" ), "SCOOP" );
-    add_toggle( pgettext( "electronics menu option", "water purifier" ),
-                keybind( "TOGGLE_WATER_PURIFIER" ), "WATER_PURIFIER" );
+    add_toggle( pgettext( "electronics menu option", "converter" ),
+                keybind( "TOGGLE_WATER_PURIFIER" ), "CONVERTER" );
 
     if( has_part( "DOOR_MOTOR" ) ) {
         options.emplace_back( _( "Toggle doors" ), keybind( "TOGGLE_DOORS" ) );
@@ -606,6 +607,11 @@ std::string vehicle::tracking_toggle_string()
     return tracking_on ? _( "Forget vehicle position" ) : _( "Remember vehicle position" );
 }
 
+std::string vehicle::brake_hold_toggle_string() const
+{
+    return brake_hold ? _( "Brake hold: on" ) : _( "Brake hold: off" );
+}
+
 void vehicle::autopilot_patrol_check()
 {
     zone_manager &mgr = zone_manager::get_manager();
@@ -646,12 +652,25 @@ void vehicle::toggle_autopilot()
             autodrive_local_target = tripoint_zero;
             stop_engines();
             break;
-        case FOLLOW:
+        case FOLLOW: {
             autopilot_on = true;
             is_following = true;
             is_patrolling = false;
+            const auto default_follow_distance = 12 + mount_max.y * 3;
+            const auto initial_follow_distance = follow_distance > 0 ? follow_distance :
+                                                 default_follow_distance;
+            const auto requested_follow_distance = string_input_popup()
+                                                   .title( _( "What distance?" ) )
+                                                   .text( std::to_string( initial_follow_distance ) )
+                                                   .only_digits( true )
+                                                   .max_length( 3 )
+                                                   .query_int();
+            follow_distance = requested_follow_distance > 0 ? requested_follow_distance :
+                              default_follow_distance;
             start_engines();
             refresh();
+            break;
+        }
         default:
             return;
     }
@@ -668,6 +687,12 @@ void vehicle::toggle_tracking()
         tracking_on = true;
         add_msg( _( "You start keeping track of this vehicle's position." ) );
     }
+}
+
+void vehicle::toggle_brake_hold()
+{
+    brake_hold = !brake_hold;
+    add_msg( brake_hold ? _( "Brake hold turned on." ) : _( "Brake hold turned off." ) );
 }
 
 void vehicle::use_controls( const tripoint &pos )
@@ -804,6 +829,12 @@ void vehicle::use_controls( const tripoint &pos )
     actions.emplace_back( [&] {
         cruise_on = !cruise_on;
         add_msg( cruise_on ? _( "Cruise control turned on" ) : _( "Cruise control turned off" ) );
+        refresh();
+    } );
+
+    options.emplace_back( brake_hold_toggle_string(), 'b' );
+    actions.emplace_back( [&] {
+        toggle_brake_hold();
         refresh();
     } );
 
@@ -1205,15 +1236,16 @@ void vehicle::start_engines( const bool take_control, const bool autodrive )
         starting_engine_position = global_pos3();
     }
 
+    if( take_control && !g->u.controlling_vehicle ) {
+        g->u.controlling_vehicle = true;
+        add_msg( _( "You take control of the %s." ), name );
+    }
+
     if( !has_engine ) {
         add_msg( m_info, _( "The %s doesn't have an engine!" ), name );
         return;
     }
 
-    if( take_control && !g->u.controlling_vehicle ) {
-        g->u.controlling_vehicle = true;
-        add_msg( _( "You take control of the %s." ), name );
-    }
     if( !autodrive ) {
         g->u.assign_activity( ACT_START_ENGINES, start_time );
         g->u.activity->placement = starting_engine_position - g->u.pos();
@@ -1660,7 +1692,7 @@ void vehicle::open_or_close( const int part_index, const bool opening )
     insides_dirty = true;
     map &here = get_map();
     here.set_transparency_cache_dirty( sm_pos.z );
-    const tripoint part_location = mount_to_tripoint( parts[part_index].mount );
+    const tripoint part_location = mount_to_bubble( parts[part_index].mount ).raw();
     here.set_seen_cache_dirty( part_location );
     const int dist = rl_dist( get_player_character().pos(), part_location );
     if( dist < 20 ) {
@@ -1888,8 +1920,8 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     const bool has_door_lock = door_lock_part >= 0;
 
     enum {
-        EXAMINE, TRACK, HANDBRAKE, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
-        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_CRAFTER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_AUTODOC,
+        EXAMINE, TRACK, HANDBRAKE, BRAKE_HOLD, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET,
+        RELOAD_TURRET, USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_CRAFTER, USE_PURIFIER, USE_AUTOCLAVE, USE_AUTODOC,
         USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, USE_TOWEL, PEEK_CURTAIN, PICK_LOCK
     };
     uilist selectmenu;
@@ -1901,6 +1933,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     }
     if( has_controls ) {
         selectmenu.addentry( HANDBRAKE, true, 'h', _( "Pull handbrake" ) );
+        selectmenu.addentry( BRAKE_HOLD, true, 'b', brake_hold_toggle_string() );
         selectmenu.addentry( CONTROL, true, 'v', _( "Control vehicle" ) );
     }
     if( has_electronics ) {
@@ -1949,8 +1982,6 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
                           itype_water_purifier->charges_to_use();
         selectmenu.addentry( USE_PURIFIER, can_purify,
                              'p', _( "Purify water in carried container" ) );
-        selectmenu.addentry( PURIFY_TANK, can_purify && fuel_left( itype_water ),
-                             'P', _( "Purify water in vehicle tank" ) );
     }
     if( has_monster_capture ) {
         selectmenu.addentry( USE_MONSTER_CAPTURE, true, 'G', _( "Capture or release a creature" ) );
@@ -1986,7 +2017,7 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         auto capacity = pseudo.ammo_capacity( true );
         auto qty = capacity - discharge_battery( capacity );
         pseudo.ammo_set( itype_battery, qty );
-        you.invoke_item( &pseudo );
+        you.invoke_item( &pseudo, pos );
         charge_battery( pseudo.ammo_remaining() );
         return true;
     };
@@ -2081,29 +2112,6 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
             veh_tool( itype_water_purifier );
             return;
         }
-        case PURIFY_TANK: {
-            auto sel = []( const vehicle_part & pt ) {
-                return pt.is_tank() && pt.ammo_current() == itype_water;
-            };
-            auto title = string_format(
-                             _( "Purify <color_%s>water</color> in tank" ),
-                             get_all_colors().get_name( itype_water->color ) );
-            auto &tank = veh_interact::select_part( *this, sel, title );
-            if( tank ) {
-                double cost = itype_water_purifier->charges_to_use();
-                if( fuel_left( itype_battery, true ) < tank.ammo_remaining() * cost ) {
-                    //~ $1 - vehicle name, $2 - part name
-                    add_msg( m_bad, _( "Insufficient power to purify the contents of the %1$s's %2$s" ),
-                             name, tank.name() );
-                } else {
-                    //~ $1 - vehicle name, $2 - part name
-                    add_msg( m_good, _( "You purify the contents of the %1$s's %2$s" ), name, tank.name() );
-                    discharge_battery( tank.ammo_remaining() * cost );
-                    tank.ammo_set( itype_water_clean, tank.ammo_remaining() );
-                }
-            }
-            return;
-        }
         case UNLOAD_TURRET: {
             avatar_funcs::unload_item( you, turret.base() );
             return;
@@ -2123,6 +2131,10 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
         }
         case HANDBRAKE: {
             handbrake();
+            return;
+        }
+        case BRAKE_HOLD: {
+            toggle_brake_hold();
             return;
         }
         case CONTROL: {

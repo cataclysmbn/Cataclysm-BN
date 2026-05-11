@@ -16,6 +16,7 @@
 #include "type_id.h"
 #include "units.h"
 #include "cached_options.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "memory_fast.h"
 
@@ -252,8 +253,10 @@ class Creature
         }
 
         /** Return the dimension this creature belongs to.
-         *  Default (player/avatar): returns g_active_dimension_id.
-         *  Overridden by npc and monster to return their stored dimension_id_. */
+         *  Base fallback: returns g_active_dimension_id (for creature subtypes
+         *  that don't track dimension explicitly).
+         *  Overridden by avatar (delegates to game::current_dimension_id_),
+         *  npc, and monster (each store their own dimension_id_). */
         virtual const std::string &get_dimension() const;
 
         /** return the direction the creature is facing, for sdl horizontal flip **/
@@ -283,6 +286,9 @@ class Creature
         virtual void bleed() const;
         /** Empty function. Should always be overwritten by the appropriate player/NPC/monster version. */
         virtual void die( Creature *killer ) = 0;
+
+        /** Removes this creature from the game without death notifications or a corpse. */
+        virtual void erase();
 
         virtual float dodge_roll() = 0;
         virtual float stability_roll() const = 0;
@@ -488,10 +494,15 @@ class Creature
         virtual int posy() const = 0;
         virtual int posz() const = 0;
         virtual const tripoint &pos() const = 0;
+        tripoint_bub_ms bub_pos() const {
+            return tripoint_bub_ms( pos() );
+        }
+        tripoint_abs_ms abs_pos() const;
 
         virtual void setpos( const tripoint &pos ) = 0;
 
         bool is_loaded() const;
+        virtual bool is_simulated() const;
 
         /** Processes move stopping effects. Returns false if movement is stopped. */
         virtual bool move_effects( bool attacking ) = 0;
@@ -545,6 +556,7 @@ class Creature
         void set_value( const std::string &key, const std::string &value );
         void remove_value( const std::string &key );
         std::string get_value( const std::string &key ) const;
+        auto get_values_map() const -> const std::unordered_map<std::string, std::string> &;
 
         virtual units::mass get_weight() const = 0;
 
@@ -1054,5 +1066,3 @@ class Creature
         int pain = 0;
         bool underwater = false;
 };
-
-

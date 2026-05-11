@@ -1,8 +1,29 @@
-# CMake + Visual Studio + Vcpkg
+# Building with Visual Studio 2022 and CMake
 
-> [!CAUTION]
->
-> CMake build is work-in-progress.
+This guide covers building Cataclysm: Bright Nights on Windows using
+Visual Studio 2022's native CMake integration. After the one-time setup,
+everything — configuration, building, debugging — is done directly inside
+Visual Studio with no external tools required.
+
+> **Legacy build:** The `.sln`-based build in `msvc-full-features/` still works
+> and is untouched by this system. Both can coexist in the same checkout.
+
+## How it works
+
+The project ships two CMake configuration files:
+
+| File                 | Used by              |
+| -------------------- | -------------------- |
+| `CMakeSettings.json` | Visual Studio IDE    |
+| `CMakePresets.json`  | cmake CLI, CI, Linux |
+
+VS reads `CMakeSettings.json` directly when you open the folder. No manual
+cmake configure step is required before opening VS.
+
+> **VS setting:** In **Tools → Options → CMake**, set
+> _"When a CMakeSettings.json or CMakePresets.json file is detected"_ to
+> **"Use CMakeSettings.json (Legacy)"** or **"Never use CMake Presets"**.
+> This ensures VS uses `CMakeSettings.json` and ignores `CMakePresets.json`.
 
 > [!TIP]
 >
@@ -11,193 +32,248 @@
 
 ## Prerequisites
 
-- `cmake` >= 3.24.0
-- `vcpkg` from [vcpkg.io](https://vcpkg.io/en/getting-started.html)
+| Tool                                          | Minimum version | Where to get it                                                   |
+| --------------------------------------------- | --------------- | ----------------------------------------------------------------- |
+| Visual Studio 2022                            | 17.6            | [visualstudio.microsoft.com](https://visualstudio.microsoft.com/) |
+| VS workload: **Desktop development with C++** | —               | VS Installer                                                      |
+| cmake                                         | 3.24            | Included with the VS workload above                               |
+| ninja                                         | any             | Included with the VS workload above                               |
+| vcpkg                                         | any             | Included with VS 2022 17.6+ (see below)                           |
+| git                                           | any             | [git-scm.com](https://git-scm.com/)                               |
 
-Note that starting from Visual Studio 2022 version 17.6, `vcpkg` is included with the distribution
-and is available in the VS developer command prompt, so you don't have to install it separately.
+### vcpkg
 
-## Configure
+Visual Studio 2022 17.6 and later includes vcpkg. If you accepted the
+recommended install options, it is already present. CMake will find it
+automatically through the `VCPKG_INSTALLATION_ROOT` environment variable
+that the VS Developer environment sets.
 
-Configuration can be done using one of the presets in `CMakePresets.json`. They will all build the
-code into the directory `out/build/<preset>/`.
+If you installed a standalone vcpkg separately, set `VCPKG_ROOT` to its
+path and CMake will use that instead.
 
-### Terminal
+---
 
-Ensure that `cmake` can find `vcpkg`. If it can't, it will complain about missing packages. You can
-do this in one of the following ways:
+## Daily workflow in Visual Studio
 
-- For VS2022 users with preinstalled `vcpkg`, `vcpkg` should already be available if you're running
-  the VS developer command prompt and not the plain terminal
-- Append `-DVCPKG_ROOT=C:\dev\vcpkg` (or whatever the path is) to any cmake configure commands
-- Set the environment variable `VCPKG_ROOT` to the path to the vcpkg checkout
-- Add the `VCPKG_ROOT` cache variable in `CMakePresets.json` with the appropriate path (not
-  recommended if you plan to work with the code later, git tracks this file)
+### 1. Open the folder
 
-Run the command
+Open Visual Studio 2022, then **File → Open → Folder…** and select the
+project's root directory (the one containing `CMakeLists.txt`).
 
-```sh
-cmake --list-presets
+Do **not** open a `.sln` file from the `msvc-full-features/` directory —
+that is the legacy build system. Both are separate; do not mix them.
+
+### 2. Select a configuration
+
+In the Standard toolbar, open the **Configuration** drop-down and choose:
+
+| Configuration    | Use when                                      |
+| ---------------- | --------------------------------------------- |
+| `Debug`          | Debugging, all symbols, no optimisation       |
+| `RelWithDebInfo` | Normal development — optimised but debuggable |
+| `Release`        | Performance testing, distribution             |
+| `Tests`          | Building and running the test suite           |
+| `Tracy`          | Performance profiling with the Tracy profiler |
+
+> **RelWithDebInfo** is the best default for day-to-day development.
+> It is optimised (so the game runs at normal speed) but retains enough
+> debug information for breakpoints and stack traces to work reliably.
+
+The `Tests` configuration is a RelWithDebInfo build with the test suite
+enabled. The other configurations have tests disabled to keep build times
+shorter.
+
+The `Tracy` configuration is a Release build with Tracy profiler
+instrumentation compiled in. See [Tracy profiling](#tracy-profiling).
+
+### 3. Build
+
+**Build → Build All** (or `Ctrl+Shift+B`).
+
+The first build downloads and compiles vcpkg dependencies, which takes a
+while. Subsequent builds are incremental.
+
+### 4. Run and debug
+
+Set the startup item in the toolbar to the executable you want:
+
+| Configuration                            | Startup item               |
+| ---------------------------------------- | -------------------------- |
+| Debug / RelWithDebInfo / Release / Tracy | **cataclysm-bn-tiles.exe** |
+| Tests                                    | **cata_test-tiles.exe**    |
+
+Then press **F5**.
+
+The working directory is set to the project root via `launch.vs.json`,
+so the game will find its data files without any additional setup.
+
+---
+
+## Customising your build
+
+To override cmake variables for your local build, open `CMakeSettings.json`
+and add entries to the `variables` array of the configuration you use.
+The file is tracked by git, so for personal overrides either edit a local
+branch or copy the configuration with a new name.
+
+### Useful variables
+
+| Variable      | Default                    | Effect                        |
+| ------------- | -------------------------- | ----------------------------- |
+| `TESTS`       | `OFF` (ON in Tests config) | Build the test suite          |
+| `JSON_FORMAT` | `ON`                       | Build the JSON formatter tool |
+| `LOCALIZE`    | `ON`                       | Build translation support     |
+| `SOUND`       | `ON`                       | Build audio support           |
+
+---
+
+## Tracy profiling
+
+[Tracy](https://github.com/wolfpld/tracy) is a real-time frame profiler.
+Select the **Tracy** configuration in the VS toolbar and build normally.
+Tracy uses `TRACY_ON_DEMAND` mode — the profiler connects and starts
+recording only when the Tracy viewer attaches, so the game is usable
+without the viewer running.
+
+Tracy is also available through the terminal workflow using the
+`windows-tiles-sounds-x64-msvc-tracy` cmake preset — see
+[Terminal workflow](#terminal-workflow).
+
+---
+
+## Terminal workflow
+
+`setup.ps1` validates prerequisites and configures the cmake preset used
+for terminal builds. Run it once from a plain PowerShell window:
+
+```powershell
+.\setup.ps1
 ```
 
-It will show the presets available to you. The list changes based on the environment you are in. If
-empty, the environment is not supported.
+The script checks all prerequisites, downloads the gettext binaries needed
+for building translations, and runs
+`cmake --preset windows-tiles-sounds-x64-msvc`.
 
-Run the command
+After that, the standard cmake commands work from a
+**VS 2022 Developer Command Prompt** or **Developer PowerShell**:
 
-```sh
-cmake --preset <preset>
+```powershell
+# Configure (one time, or after CMakeLists.txt changes)
+cmake --preset windows-tiles-sounds-x64-msvc
+
+# Build
+cmake --build --preset windows-msvc-relwithdebinfo
+
+# Run the game (from the project root directory)
+.\out\build\windows-tiles-sounds-x64-msvc\src\RelWithDebInfo\cataclysm-bn-tiles.exe
+
+# Run tests
+.\out\build\windows-tiles-sounds-x64-msvc\tests\RelWithDebInfo\cata_test-tiles.exe
+
+# Build translations only
+cmake --build --preset windows-msvc-relwithdebinfo --target translations_compile
+
+# Install (copies game + data to a self-contained directory)
+cmake --install out\build\windows-tiles-sounds-x64-msvc --config RelWithDebInfo
 ```
 
-It will download all dependencies and generate build files, as long as `vcpkg` installation is
-available.
+> **Note:** `cmake --build` from a plain terminal (not a VS Developer
+> terminal) relies on the baked VS environment in `CMakeUserPresets.json`.
+> If that file is missing, run `setup.ps1` to regenerate it, or use a
+> VS Developer Command Prompt instead.
 
-If you're using VS2022, be sure to select a preset with `2022` in its name, as presets without that
-suffix will target VS2019.
+---
 
-You can override any option by appending `-Doption=value` to this command, see
-[Build options](./cmake.md/#build-options) in CMake guide. For example, you can disable building of
-tests with `-DTESTS=OFF` if you don't care about them.
+## Troubleshooting
 
-### Visual Studio
+### CMake configure fails immediately
 
-Open the game source folder in Visual Studio.
+**Most common cause:** vcpkg is not found.
 
-Visual Studio should be able to recognize the folder as a CMake project, and may attempt to start
-configuring it, which will most likely fail because it didn't use the proper preset.
-
-The Standard toolbar shows the presets in the `Configuration` drop-down box. Choose the proper one
-(should contain `windows` and `msvc`), then from the main menu, select `Project` ->
-`Configure Cache`.
-
-If you're using VS2022, be sure to select a preset with `2022` in its name, as presets without that
-suffix are targeting VS2019.
-
-## Build
-
-### Terminal
-
-Run the command
-
-- `cmake --build --preset <preset> --config Release`
-
-You can replace `Release` with `Debug` to get a debug build, or `RelWithDebInfo` for a release build
-with less optimizations but more debug information.
-
-### Visual Studio
-
-From the Standard toolbar's `Build Preset` drop-down menu select the build preset. From the main
-menu, select `Build` -> `Build All`.
-
-You can also select between `Release`, `Debug` and `RelWithDebInfo` builds, though depending on UI
-layout the drop-down menu for this may be hidden behind the overflow button.
-
-## Translations
-
-Translations are optional and require `msgfmt` binary from `gettext` package; `vcpkg` should install
-it automatically.
-
-### Terminal
-
-Run the command
-
-- `cmake --build --preset <preset> --target translations_compile`
-
-### Visual Studio
-
-Visual Studio should have built the translations in the previous step. If it did not, open Solution
-Explorer, switch it into CMake Targets mode (can be done with right click), then right click on
-`translations_compile` target -> `Build translations_compile`.
-
-## Install
-
-> [!CAUTION]
->
-> Install is still considered WIP and has received little testing.
-
-### Visual Studio
-
-From the main menu, select `Build` -> `Install CataclysmBN`
-
-### Terminal
-
-Run the command
-
-- `cmake --install out/build/<preset>/ --config Release`
-
-Replace `Release` with your chosen build type.
-
-## Run
-
-The game and test executables will both be available in `.\Release\` folder (folder name matches
-build type, so for other build types you'll get other folder names).
-
-You can run them manually from the terminal, as long as you do it from the project's top directory
-as by default the game expects data files to be in current path.
-
-For running and debugging from Visual Studio, it's recommended to open the generated VS solution
-located at `out\build\<preset>\CataclysmBN.sln` (it will be there regardless of whether you've
-completed previous steps in IDE or terminal) and do any further work with it instead.
-
-Alternatively, it's possible to stay in the "Open Folder" mode, but then you'll have to customize
-launch configuration for the game executable (and tests), and there may be other yet undiscovered
-side effects.
-
-### Terminal
-
-To start the game, run
-
-- `.\Release\cataclysm-bn-tiles.exe`
-
-To execute tests, run
-
-- `.\Release\cata_test-tiles.exe`
-
-### Visual Studio (Option 1, Recommended)
-
-Close Visual Studio, then navigate to `out\build\<preset>\` and open `CataclysmBN.sln`. Set
-`cataclysm-bn-tiles` as Startup Project (can be done with right click from Solution Explorer), and
-you'll be able to run and debug the game executable without additional issues. It will already be
-preconfigured to look for the data files in the top project directory.
-
-To run tests, switch the Startup Project to `cata_test-tiles`.
-
-### Visual Studio (Option 2)
-
-Due to how Visual Studio handles CMake projects, it's impossible to specify the working directory
-for the executable while VS is in the "Open Folder" mode. This StackOverflow answer explains it
-nicely: https://stackoverflow.com/a/62309569 Fortunately, VS allows customizing exe launch options
-on individual basis.
-
-Open solution explorer and switch it into CMake Targets mode if you haven't already (can be done
-with a right click). There, right click on the `cataclysm-bn-tiles` target ->
-`Add Debug Configuration`. Visual Studio will open launch configurations file for this project, with
-new configuration for the `cataclysm-bn-tiles` target. Add the following line:
+Check that `VCPKG_ROOT` is set (or that VS's bundled vcpkg is available).
+Open a VS Developer Command Prompt and run:
 
 ```
-"currentDir": "${workspaceRoot}",
+echo %VCPKG_ROOT%
+echo %VCPKG_INSTALLATION_ROOT%
 ```
 
-to the config and save the file.
+At least one should point to a directory containing `vcpkg.exe`. If
+neither is set, run `setup.ps1` — it locates the VS-bundled vcpkg
+automatically.
 
-The final result should look something like this:
+### VS shows an `x64-Debug` configuration or the ncurses error appears
 
-```json
-{
-  "version": "0.2.1",
-  "defaults": {},
-  "configurations": [
-    {
-      "currentDir": "${workspaceRoot}",
-      "type": "default",
-      "project": "CMakeLists.txt",
-      "projectTarget": "cataclysm-bn-tiles.exe (<PATH_TO_SOURCE_FOLDER>\\Debug\\cataclysm-bn-tiles.exe)",
-      "name": "cataclysm-bn-tiles.exe (<PATH_TO_SOURCE_FOLDER>\\Debug\\cataclysm-bn-tiles.exe)"
-    }
-  ]
-}
+VS is not using `CMakeSettings.json`. Go to
+**Tools → Options → CMake → General** and set the preset integration
+to **"Use CMakeSettings.json (Legacy)"** or **"Never use CMake Presets"**.
+Then do a full reset (see below).
+
+### Configure succeeds but build fails with missing headers/libs
+
+The VS environment (INCLUDE, LIB, PATH) may not have been captured
+correctly. Try:
+
+1. Delete `CMakeUserPresets.json` from the project root.
+2. Delete the relevant `out\build\` subdirectory entirely.
+3. Run `setup.ps1` again to regenerate both.
+
+### Game launches but immediately crashes / can't find data
+
+`launch.vs.json` at the project root sets the working directory to the
+project root for F5 launches. If the file is missing or VS is not reading
+it, the game may not find `./data/`.
+
+If you are launching the `.exe` directly from File Explorer or a terminal,
+make sure to run it from the project root directory:
+
+```powershell
+# Correct — run from the project root
+.\out\build\windows-tiles-sounds-x64-msvc-relwithdebinfo\src\cataclysm-bn-tiles.exe
+
+# Wrong — game can't find ./data/
+cd out\build\windows-tiles-sounds-x64-msvc-relwithdebinfo\src
+.\cataclysm-bn-tiles.exe
 ```
 
-Now, you should be able to run and debug the game executable from inside Visual Studio.
+### "VsDevCmd.bat not found" error during configure
 
-If you'd like to run tests, repeat this process for the `cata_test-tiles` target.
+`VsDevCmd.bat` is inside your VS installation. If this error appears, VS
+may be installed in a non-standard location. Set the `DevEnvDir`
+environment variable to the path of your VS `Common7\IDE` directory before
+running cmake:
+
+```powershell
+$env:DevEnvDir = "D:\VisualStudio\Common7\IDE\"
+cmake --preset windows-tiles-sounds-x64-msvc
+```
+
+### Builds are very slow
+
+ccache is detected and used automatically if it is installed and on
+`PATH`. Install it from [ccache.dev](https://ccache.dev/) to dramatically
+speed up incremental builds after `git clean` or branch switches.
+
+### How to fully reset the build environment
+
+If things are broken and you want a clean slate:
+
+```powershell
+# Delete VS's cached project state (stale configurations, IntelliSense DB)
+Remove-Item -Recurse -Force .vs
+
+# Delete all build output directories
+Remove-Item -Recurse -Force out\build
+
+# Delete the generated user presets (will be regenerated on next configure)
+Remove-Item -Force CMakeUserPresets.json
+
+# Re-run setup for terminal builds (VS will reconfigure itself on next open)
+.\setup.ps1
+```
+
+### CMakeUserPresets.json shows "already exists" on reconfigure
+
+This is intentional. The file is only generated on first configure to
+avoid overwriting your customisations. If you want to reset it to the
+default generated content, delete it and run `setup.ps1`.

@@ -294,6 +294,24 @@
     ]
   },
   {
+    "id": "harvest_bionics_boss_def",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "group": "bionic_salvage_junk_mil", "prob": 25 }, { "group": "bionics_op2_def", "prob": 75 } ]
+  },
+  {
+    "id": "harvest_bionics_boss_off",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "group": "bionic_salvage_junk_mil", "prob": 25 }, { "group": "bionics_op2_off", "prob": 75 } ]
+  },
+  {
+    "id": "harvest_bionics_boss_utl",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [ { "group": "bionic_salvage_junk_mil", "prob": 25 }, { "group": "bionics_op2_utl", "prob": 75 } ]
+  },
+  {
     "id": "harvest_bionics_sci",
     "type": "item_group",
     "subtype": "distribution",

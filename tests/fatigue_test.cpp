@@ -22,7 +22,7 @@ static void update_body_for( Character &dude, time_duration time )
         return;
     }
     for( time_point now = start; now < end; now += 5_minutes ) {
-        dude.update_body( now, now + 5_minutes );
+        dude.update_body( 5_minutes );
     }
 }
 

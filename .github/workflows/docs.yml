@@ -31,23 +31,26 @@ jobs:
           sparse-checkout: |
             docs
 
-      - name: Download Lua reference/annotations from latest main build
+      - name: Download Lua reference/annotations from experimental release
         working-directory: .
         id: download-lua-docs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          run_id=$(gh run list \
-            --workflow=experimental-release.yml \
-            --branch=main \
-            --status=completed \
-            --limit=20 \
-            --json conclusion,databaseId \
-            --jq '.[] | select(.conclusion != "cancelled") | .databaseId' \
-            | head -1)
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            run_id="${{ github.event.workflow_run.id }}"
+          else
+            run_id=$(gh run list \
+              --workflow=experimental-release.yml \
+              --branch=main \
+              --status=success \
+              --limit=20 \
+              --json databaseId \
+              --jq '.[0].databaseId')
+          fi
 
           if [ -z "$run_id" ]; then
-            echo "::warning::No experimental release run found for branch main, skipping lua docs"
+            echo "::warning::No successful experimental release run found for branch main, skipping lua docs"
             echo "downloaded=false" >> $GITHUB_OUTPUT
             exit 0
           fi

@@ -195,6 +195,11 @@ void Creature::reset()
     reset_stats();
 }
 
+void Creature::erase()
+{
+    debugmsg( "Creature::erase() called on '%s', which is not an npc or monster.", get_name() );
+}
+
 void Creature::bleed() const
 {
     const field_type_id &blood_type = bloodType();
@@ -1159,7 +1164,7 @@ void Creature::deal_projectile_attack( Creature *source, item *source_weapon,
         add_effect( effect_stunned, 1_turns * rng( stun_strength / 2, stun_strength ) );
     }
 
-    if( u_see_this ) {
+    if( u_see_this && !attack.suppress_damage_message ) {
         if( severity == 0 ) {
             if( source != nullptr ) {
                 add_msg( source->is_player() ? _( "You miss!" ) : _( "The shot misses!" ) );
@@ -1789,6 +1794,10 @@ std::string Creature::get_value( const std::string &key ) const
 {
     auto it = values.find( key );
     return ( it == values.end() ) ? "" : it->second;
+}
+auto Creature::get_values_map() const -> const std::unordered_map<std::string, std::string> &
+{
+    return values;
 }
 
 void Creature::mod_pain( int npain )
@@ -2534,7 +2543,17 @@ effects_map Creature::get_all_effects() const
     return effects_without_removed;
 }
 
+tripoint_abs_ms Creature::abs_pos() const
+{
+    return bub_to_abs( bub_pos() );
+}
+
 bool Creature::is_loaded() const
 {
-    return get_map().inbounds( pos() );
+    return get_map().get_submap_at( tripoint_bub_ms( pos() ) ) != nullptr;
+}
+
+bool Creature::is_simulated() const
+{
+    return get_map().is_position_simulated( pos() );
 }

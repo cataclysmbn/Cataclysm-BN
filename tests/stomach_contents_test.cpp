@@ -215,7 +215,7 @@ TEST_CASE( "One day of waiting at full calories eats up about bmr of stored calo
     reset_time();
     clear_stomach( dummy );
     int kcal_before = dummy.get_stored_kcal();
-    dummy.update_body( calendar::turn, calendar::turn + 1_days );
+    dummy.update_body( 1_days );
     int kcal_after = dummy.get_stored_kcal();
     CHECK( kcal_before == kcal_after + dummy.bmr() );
 }
@@ -234,7 +234,7 @@ TEST_CASE( "Stomach calories become stored calories after less than 1 day", "[st
     constexpr time_point start = time_point::from_turn( 0 );
     constexpr time_point end = start + test_time;
     for( time_point now = start; now < end; now += 30_minutes ) {
-        dummy.update_body( now, now + 30_minutes );
+        dummy.update_body( 30_minutes );
     }
 
     int kcal_after = dummy.get_stored_kcal();

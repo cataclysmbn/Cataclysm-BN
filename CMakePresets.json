@@ -201,17 +201,79 @@
       }
     },
     {
-      "name": "osx-arm-dist",
-      "inherits": ["osx-arm-slim"],
+      "name": "osx-dist-base",
+      "hidden": true,
       "binaryDir": "${sourceDir}/build",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CATA_CCACHE": "ON",
+        "CMAKE_C_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "ccache",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_FIND_FRAMEWORK": "FIRST",
+        "USE_HOME_DIR": "ON",
+        "USE_PREFIX_DATA_DIR": "OFF",
+        "LANGUAGES": "all",
+        "BACKTRACE": "ON",
+        "JSON_FORMAT": "ON",
+        "TESTS": "OFF",
+        "LUA_DOCS_ON_BUILD": "OFF",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "osx-curses-x64-dist",
+      "inherits": ["osx-dist-base"],
+      "displayName": "macOS x64 Distribution (Curses, Languages)",
+      "description": "For creating portable macOS x64 distribution packages with curses.",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "CURSES": "ON",
+        "TILES": "OFF",
+        "SOUND": "OFF"
+      }
+    },
+    {
+      "name": "osx-tiles-x64-dist",
+      "inherits": ["osx-dist-base"],
+      "displayName": "macOS x64 Distribution (Tiles, Sounds, Languages)",
+      "description": "For creating portable macOS x64 distribution packages with tiles and sound.",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "x86_64",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "ON"
+      }
+    },
+    {
+      "name": "osx-curses-arm-dist",
+      "inherits": ["osx-dist-base"],
+      "displayName": "macOS ARM Distribution (Curses, Languages)",
+      "description": "For creating portable macOS ARM distribution packages with curses.",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CURSES": "ON",
+        "TILES": "OFF",
+        "SOUND": "OFF"
+      }
+    },
+    {
+      "name": "osx-tiles-arm-dist",
+      "inherits": ["osx-dist-base"],
       "displayName": "macOS ARM Distribution (Tiles, Sounds, Languages)",
       "description": "For creating portable macOS ARM distribution packages with tiles and sound.",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "LANGUAGES": "all",
-        "BACKTRACE": "ON",
-        "JSON_FORMAT": "ON"
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CURSES": "OFF",
+        "TILES": "ON",
+        "SOUND": "ON"
       }
+    },
+    {
+      "name": "osx-arm-dist",
+      "inherits": ["osx-tiles-arm-dist"],
+      "displayName": "macOS ARM Distribution (Tiles, Sounds, Languages)",
+      "description": "For creating portable macOS ARM distribution packages with tiles and sound."
     },
     {
       "name": "lint",
@@ -283,10 +345,25 @@
   ],
   "buildPresets": [
     {
-      "name": "windows-msvc-build",
+      "name": "windows-msvc-debug",
       "configurePreset": "windows-tiles-sounds-x64-msvc",
+      "configuration": "Debug",
       "targets": ["cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations"],
-      "description": "Build for Windows with tiles and sounds using MSVC."
+      "description": "Debug build for Windows with tiles and sounds using MSVC."
+    },
+    {
+      "name": "windows-msvc-release",
+      "configurePreset": "windows-tiles-sounds-x64-msvc",
+      "configuration": "Release",
+      "targets": ["cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations"],
+      "description": "Release build for Windows with tiles and sounds using MSVC."
+    },
+    {
+      "name": "windows-msvc-relwithdebinfo",
+      "configurePreset": "windows-tiles-sounds-x64-msvc",
+      "configuration": "RelWithDebInfo",
+      "targets": ["cataclysm-bn-tiles", "cata_test-tiles", "json_formatter", "translations"],
+      "description": "Release build with debug symbols for Windows with tiles and sounds using MSVC."
     },
     {
       "name": "linux-curses",
@@ -331,10 +408,34 @@
       "description": "Build for curses distribution."
     },
     {
+      "name": "osx-curses-x64-dist",
+      "configurePreset": "osx-curses-x64-dist",
+      "targets": ["dmgdist"],
+      "description": "Build a macOS x64 curses DMG."
+    },
+    {
+      "name": "osx-tiles-x64-dist",
+      "configurePreset": "osx-tiles-x64-dist",
+      "targets": ["dmgdist"],
+      "description": "Build a macOS x64 tiles DMG."
+    },
+    {
+      "name": "osx-curses-arm-dist",
+      "configurePreset": "osx-curses-arm-dist",
+      "targets": ["dmgdist"],
+      "description": "Build a macOS ARM curses DMG."
+    },
+    {
+      "name": "osx-tiles-arm-dist",
+      "configurePreset": "osx-tiles-arm-dist",
+      "targets": ["dmgdist"],
+      "description": "Build a macOS ARM tiles DMG."
+    },
+    {
       "name": "osx-arm-dist",
       "configurePreset": "osx-arm-dist",
-      "targets": ["cataclysm-bn-tiles", "json_formatter", "translations"],
-      "description": "Build for macOS ARM tiles distribution."
+      "targets": ["dmgdist"],
+      "description": "Build a macOS ARM tiles DMG."
     },
     {
       "name": "lint",

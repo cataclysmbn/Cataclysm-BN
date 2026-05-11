@@ -1500,6 +1500,7 @@
     "description": "A rag soaked in antiseptic.  Useful for light wounds, probably won't help with deep bites.",
     "price": "250 cent",
     "price_postapoc": "50 cent",
+    "category": "drugs",
     "flags": [ "NO_INGEST" ],
     "use_action": {
       "type": "heal",

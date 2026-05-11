@@ -18,7 +18,8 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_small_metal", 3 ] ]
       }
     },
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "default_color": "#622625"
   },
   {
     "abstract": "clothboard",
@@ -71,7 +72,8 @@
     "item": "aluminium_sheet",
     "proportional": { "durability": 0.75 },
     "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
-    "damage_reduction": { "all": 20 }
+    "damage_reduction": { "all": 20 },
+    "default_color": "#622625"
   },
   {
     "abstract": "aluminum_halfboard",
@@ -81,7 +83,8 @@
     "item": "aluminium_sheet",
     "proportional": { "durability": 0.75 },
     "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
-    "damage_reduction": { "all": 20 }
+    "damage_reduction": { "all": 20 },
+    "default_color": "#622625"
   },
   {
     "abstract": "aluminum_stowboard",
@@ -91,7 +94,8 @@
     "item": "aluminium_sheet",
     "proportional": { "durability": 0.75 },
     "breaks_into": [ { "item": "material_aluminium_ingot", "count": [ 2, 4 ] } ],
-    "damage_reduction": { "all": 20 }
+    "damage_reduction": { "all": 20 },
+    "default_color": "#622625"
   },
   {
     "abstract": "carbon_board",
@@ -112,7 +116,8 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_carbon", 3 ] ]
       }
     },
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "default_color": "#622625"
   },
   {
     "abstract": "carbon_halfboard",
@@ -123,7 +128,8 @@
     "proportional": { "durability": 0.8 },
     "extend": { "flags": [ "HALF_BOARD" ] },
     "delete": { "flags": [ "OPAQUE", "FULL_BOARD" ] },
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "default_color": "#622625"
   },
   {
     "abstract": "carbon_stowboard",
@@ -143,7 +149,8 @@
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_repair_carbon", 3 ] ] }
     },
     "flags": [ "OBSTACLE", "OPAQUE", "CARGO", "COVERED", "FULL_BOARD", "NO_ROOF_NEEDED", "LOCKABLE_CARGO" ],
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "default_color": "#622625"
   },
   {
     "abstract": "stowboard",
@@ -163,7 +170,8 @@
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
     "flags": [ "OBSTACLE", "OPAQUE", "CARGO", "COVERED", "FULL_BOARD", "NO_ROOF_NEEDED", "LOCKABLE_CARGO" ],
-    "damage_reduction": { "all": 28 }
+    "damage_reduction": { "all": 28 },
+    "default_color": "#622625"
   },
   {
     "abstract": "hdstowboard",
@@ -175,7 +183,8 @@
     "broken_color": "dark_gray",
     "proportional": { "durability": 4.15, "size": 0.76 },
     "flags": [ "OBSTACLE", "OPAQUE", "CARGO", "COVERED", "FULL_BOARD", "NO_ROOF_NEEDED", "LOCKABLE_CARGO" ],
-    "damage_reduction": { "all": 72, "cut": 80, "stab": 80 }
+    "damage_reduction": { "all": 72, "cut": 80, "stab": 80 },
+    "default_color": "#3f4535"
   },
   {
     "abstract": "hdboard",
@@ -193,7 +202,8 @@
       "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
     "flags": [ "OPAQUE", "OBSTACLE", "FULL_BOARD", "NO_ROOF_NEEDED" ],
-    "damage_reduction": { "all": 75, "cut": 80, "stab": 80 }
+    "damage_reduction": { "all": 75, "cut": 80, "stab": 80 },
+    "default_color": "#3f4535"
   },
   {
     "abstract": "hdhalfboard",

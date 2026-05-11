@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <chrono>
 #include <ctime>
 #include <functional>
@@ -9,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <shared_mutex>
 #include <string>
@@ -33,6 +35,7 @@
 #include "pimpl.h"
 #include "point.h"
 #include "submap_load_manager.h"
+#include "zone_draw_options.h"
 #include "type_id.h"
 #include "location_vector.h"
 
@@ -61,6 +64,12 @@ extern std::unique_ptr<game> g;
 
 extern const int savegame_version;
 extern int savegame_loading_version;
+// Monotonically increasing counter; bumped whenever NPC faction membership or active NPC list
+// changes so each NPC can lazily invalidate its cached friends list.
+extern std::atomic<uint32_t> g_npc_friends_dirty_version;
+// Bumped once per npcmove() pass; monsters use it to know when their cached generic-NPC
+// attitude is stale.
+extern uint32_t g_npcmove_attitude_epoch;
 
 class input_context;
 
@@ -126,6 +135,12 @@ using item_filter = std::function<bool ( const item & )>;
 enum peek_act : int {
     PA_BLIND_THROW
     // obvious future additional value is PA_BLIND_FIRE
+};
+
+enum look_around_mode : int {
+    LA_MODE_DEFAULT, // -+ FOV Range
+    LA_MODE_2D, // Same layer as origin
+    LA_MODE_3D // 3D, Ignore FOV Setting
 };
 
 struct look_around_result {
@@ -384,50 +399,77 @@ class game : public submap_load_listener
         friend class Creature_range;
 
         template<typename T>
-        class non_dead_range
+        class non_dead_range : public std::ranges::view_interface<non_dead_range<T>>
         {
             public:
-                std::vector<weak_ptr_fast<T>> items;
+                std::shared_ptr<std::vector<weak_ptr_fast<T>>> items;
+                non_dead_range() : items( std::make_shared<std::vector<weak_ptr_fast<T>>>() ) {}
 
                 class iterator
                 {
                     private:
-                        bool valid();
-                    public:
-                        std::vector<weak_ptr_fast<T>> &items;
+                        std::shared_ptr<std::vector<weak_ptr_fast<T>>> data_ref;
                         typename std::vector<weak_ptr_fast<T>>::iterator iter;
+
+                        auto valid() -> bool;
+
+                    public:
+                        using value_type = T;
+                        using difference_type = std::ptrdiff_t;
+                        using pointer = T *;
+                        using reference = T &;
+                        using iterator_category = std::forward_iterator_tag;
+                        using iterator_concept = std::forward_iterator_tag;
+
                         shared_ptr_fast<T> current;
 
-                        iterator( std::vector<weak_ptr_fast<T>> &i,
-                                  const typename std::vector<weak_ptr_fast<T>>::iterator t ) : items( i ), iter( t ) {
-                            while( iter != items.end() && !valid() ) {
-                                ++iter;
+                        iterator() = default;
+
+                        iterator( std::shared_ptr<std::vector<weak_ptr_fast<T>>> ref,
+                                  typename std::vector<weak_ptr_fast<T>>::iterator t )
+                            : data_ref( std::move( ref ) ), iter( t ) {
+                            if( data_ref ) {
+                                while( iter != data_ref->end() && !valid() ) {
+                                    ++iter;
+                                }
                             }
                         }
+
                         iterator( const iterator & ) = default;
                         iterator &operator=( const iterator & ) = default;
 
-                        bool operator==( const iterator &rhs ) const {
+                        auto operator==( const iterator &rhs ) const -> bool {
                             return iter == rhs.iter;
                         }
-                        bool operator!=( const iterator &rhs ) const {
-                            return !operator==( rhs );
-                        }
-                        iterator &operator++() {
+
+                        auto operator++() -> iterator& { // *NOPAD*
+                            if( !data_ref ) { return *this; }
+
                             do {
                                 ++iter;
-                            } while( iter != items.end() && !valid() );
+                            } while( iter != data_ref->end() && !valid() );
                             return *this;
                         }
-                        T &operator*() const {
+
+                        auto operator++( int ) -> iterator {
+                            auto tmp = *this;
+                            ++( *this );
+                            return tmp;
+                        }
+
+                        auto operator*() const -> reference {
                             return *current;
                         }
                 };
-                iterator begin() {
-                    return iterator( items, items.begin() );
+
+                auto begin() -> iterator {
+                    if( !items ) { return end(); }
+                    return iterator( items, items->begin() );
                 }
-                iterator end() {
-                    return iterator( items, items.end() );
+
+                auto end() -> iterator {
+                    if( !items ) { return iterator(); }
+                    return iterator( items, items->end() );
                 }
         };
 
@@ -465,6 +507,11 @@ class game : public submap_load_listener
         monster_range all_monsters();
         /// Same as @ref all_creatures but iterators only over npcs.
         npc_range all_npcs();
+        /// Direct non-allocating view of the active NPC list. Only use when no NPCs will be
+        /// added or removed during iteration and dead entries are handled by the caller.
+        const std::list<shared_ptr_fast<npc>> &raw_npcs() const {
+            return active_npc;
+        }
 
         /**
          * Returns all creatures matching a predicate. Only living ( not dead ) creatures
@@ -519,6 +566,30 @@ class game : public submap_load_listener
         /** Makes any nearby NPCs on the overmap active. */
         void load_npcs();
     private:
+        /** Resizes the reality bubble to an explicit target size.
+         *  Safe to call mid-session: despawns out-of-range entities, flushes the
+         *  background streamer, rebuilds map grid and all dependent caches.
+         */
+        void resize_reality_bubble_to( int new_size );
+
+        /** Resizes the reality bubble to match the current REALITY_BUBBLE_SIZE option.
+         *  Also clears in_activity_bubble_ so the normal size takes effect immediately.
+         *  Called by on_options_changed() when the user changes REALITY_BUBBLE_SIZE.
+         */
+        void resize_reality_bubble();
+
+        /** Called each turn to shrink/restore the bubble based on active performance modes.
+         *  ACTIVITY_MOBILE_BUBBLE_SIZE / ACTIVITY_IDLE_BUBBLE_SIZE: shrinks while the player has a
+         *  long activity whose bubble_size_effect is "mobile" or "idle" respectively.
+         *  Entry requires activity moves >= ACTIVITY_BUBBLE_GRACE minutes.
+         *  UNDERGROUND_BUBBLE_SIZE: shrinks while underground (z < 0) with a floor above (enclosed).
+         *  VEHICLE_BUBBLE_SIZE: shrinks while actively driving or mounted.
+         *  COMBAT_BUBBLE_SIZE: shrinks while hostile creatures are visible within safe-mode range.
+         *  Underground, vehicle, and combat use turn-based hysteresis (DYNAMIC_BUBBLE_GRACE turns
+         *  to enter, immediate exit). The target is min() of all applicable sizes.
+         */
+        void update_performance_bubble();
+
         /** Unloads all NPCs.
          *
          * If you call this you must later call load_npcs, lest caches get
@@ -530,6 +601,12 @@ class game : public submap_load_listener
     public:
         /** Unloads, then loads the NPCs */
         void reload_npcs();
+        /** Immediately removes NPC with the given id from active_npc. */
+        void erase_npc( character_id id );
+        /** True while npcmove() or sleep_skip_npc_process() is iterating active_npc. */
+        bool is_processing_npcs() const {
+            return processing_npcs_;
+        }
         /** Add follower id to set of followers. */
         void add_npc_follower( const character_id &id );
         /** Remove follower id from follower set. */
@@ -546,6 +623,10 @@ class game : public submap_load_listener
         /** Tick all active power-portal links: equalise power between linked grids,
          *  charge upkeep, and pause links that cannot sustain their upkeep cost. */
         void tick_portal_links();
+        /** Check all pocket dimension items in the player's inventory; close expired ones. */
+        void tick_temporary_pocket_dimensions();
+        /** Draw power from linked portals into vehicle batteries for vp_portal_tap parts. */
+        void tick_vehicle_portal_taps();
         /** Picks and spawns a random fish from the remaining fish list when a fish is caught. */
         void catch_a_monster( monster *fish, const tripoint &pos, Character *who,
                               const time_duration &catch_duration );
@@ -591,10 +672,11 @@ class game : public submap_load_listener
         /** Checks whether or not there is a zone of particular type nearby */
         bool check_near_zone( const zone_type_id &type, const tripoint &where ) const;
         bool is_zones_manager_open() const;
+        bool is_zone_submap_grid_overlay_enabled() const;
         void zones_manager();
 
         // Look at nearby terrain ';', or select zone points
-        std::optional<tripoint> look_around( bool force_3d = false );
+        std::optional<tripoint> look_around( look_around_mode mode = LA_MODE_DEFAULT );
         /**
          * @brief
          *
@@ -610,7 +692,8 @@ class game : public submap_load_listener
          */
         look_around_result look_around( bool show_window, tripoint &center,
                                         const tripoint &start_point, bool has_first_point, bool select_zone, bool peeking,
-                                        bool is_moving_zone = false, const tripoint &end_point = tripoint_zero, bool force_3d = false );
+                                        bool is_moving_zone = false, const tripoint &end_point = tripoint_zero,
+                                        look_around_mode mode = LA_MODE_DEFAULT );
 
         // Shared method to print "look around" info
         void pre_print_all_tile_info( const tripoint &lp, const catacurses::window &w_info,
@@ -718,7 +801,7 @@ class game : public submap_load_listener
         void draw_line( const tripoint &p, const std::vector<tripoint> &points );
         void draw_weather( const weather_printable &wPrint );
         void draw_sct();
-        void draw_zones( const tripoint &start, const tripoint &end, const tripoint &offset );
+        void draw_zones( const zone_draw_options &options );
         // In curses mode, draw critter (if visible!) on its current position into w_terrain.
         // @param center the center of view, same as when calling map::draw
         void draw_critter( const Creature &critter, const tripoint &center );
@@ -841,9 +924,10 @@ class game : public submap_load_listener
         void examine( const tripoint &p ); // Examine nearby terrain  'e'
         void examine();
 
-        void pickup(); // Pickup nearby items 'g', min 0
+        void pickup(); // Pick up items from one nearby tile 'g', min 0
+        void pickup_all(); // Pick up items from all nearby tiles ',', min 0
         void pickup( const tripoint &p );
-        void pickup_feet(); // Pick items at player position ',', min 1
+        void pickup_feet(); // Pick items at player position, min 1
 
         void drop(); // Drop an item  'd'
         void drop_in_direction(); // Drop w/ direction  'D'
@@ -973,6 +1057,7 @@ class game : public submap_load_listener
         void display_lighting(); // Displays lighting conditions heat map
         void display_radiation(); // Displays radiation map
         void display_transparency(); // Displays transparency map
+        void display_outside(); // Displays outside/sheltered/indoors overlay
         void display_tiles_no_vfx(); // Disables tileset visual effects
 
         // prints the IRL time in ms of the last full in-game hour
@@ -1121,10 +1206,14 @@ class game : public submap_load_listener
         bool npcs_dirty = false;
         /** Has anything died in this turn and needs to be cleaned up? */
         bool critter_died = false;
+        /** True while npcmove()/sleep_skip_npc_process() is iterating active_npc. */
+        bool processing_npcs_ = false;
         /** Is this the first redraw since waiting (sleeping or activity) started */
         bool first_redraw_since_waiting_started = true;
         /** Is Zone manager open or not - changes graphics of some zone tiles */
         bool zones_manager_open = false;
+        /** Zone manager toggle for submap grid overlay (only active while the UI is open) */
+        bool zone_submap_grid_overlay = false;
 
         std::unique_ptr<special_game> gamemode;
 
@@ -1175,8 +1264,20 @@ class game : public submap_load_listener
         // accessing partially-loaded map data. Reset to false at the start of the next turn.
         bool swapping_dimensions = false;
     private:
+        /// Sets both current_dimension_id_ and g_active_dimension_id to @p dim_id.
+        /// Always use this instead of assigning the two fields separately.
+        void set_active_dimension_id( const std::string &dim_id );
+
+        /// Sequenced critical section of a dimension switch: drain all background
+        /// work, release load handles, flush the desired set, update the active
+        /// dimension ID, and clear the old dimension's distribution-grid tracker.
+        /// Must only be called from travel_to_dimension() after swapping_dimensions
+        /// is set and before bind_dimension().
+        void activate_dimension_state( const std::string &new_dim_id,
+                                       const std::string &old_dim_id );
+
         /// Dimension ID the player is currently in.  "" = overworld (primary).
-        /// Updated by travel_to_dimension(); also written to g_active_dimension_id.
+        /// Always updated via set_active_dimension_id().
         std::string current_dimension_id_;
 
         /// Metadata for all dimensions that currently have at least one submap loaded.
@@ -1196,6 +1297,19 @@ class game : public submap_load_listener
         // Controlled by LAZY_BORDER cached option.
         load_request_handle lazy_border_handle_ = 0;
 
+        // True while the bubble is temporarily shrunk for an ongoing long activity.
+        // Entry requires >= ACTIVITY_BUBBLE_GRACE minutes remaining; once set, stays true
+        // until the activity ends regardless of remaining time.
+        // Cleared by resize_reality_bubble() so an explicit option change always wins.
+        bool in_activity_bubble_ = false;
+
+        // Consecutive turns each dynamic condition has been continuously met.
+        // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately
+        // when the condition is no longer met (no exit hysteresis).
+        int underground_bubble_turns_ = 0;
+        int vehicle_bubble_turns_ = 0;
+        int combat_bubble_turns_ = 0;
+
         // Turns between world_tick() passes.  1 = every turn (default).
         // Read from REALITY_BUBBLE_TICK_INTERVAL in start_game() / load().
         int world_tick_interval_ = 1;
@@ -1205,10 +1319,13 @@ class game : public submap_load_listener
         // Default 5 matches REALITY_BUBBLE_SIZE=2 (original 11×11 grid).
         int reality_bubble_radius_ = 5;
 
-        // The most recent submap-coordinate shift applied by update_map().
-        // Used by submap_stream speculative loading to pre-request the edge
-        // row that would be needed if the player keeps moving in the same direction.
-        tripoint last_move_delta_;
+        // True during the update_map() shift window: abs_sub has been updated by
+        // m.shift() but creature local positions have not yet been adjusted by
+        // shift_monsters().  despawn_monster() skips recomputing pos_abs in this
+        // window because the pre-shift stamp is already correct and getabs() would
+        // return a value displaced by 1 submap in the shift direction.
+        bool shift_in_progress_ = false;
+
     private:
         location_vector<item> fake_items;
     public:
@@ -1232,5 +1349,3 @@ namespace cata_event_dispatch
 // @param p The point the avatar is moving to on map m
 void avatar_moves( const avatar &u, const map &m, const tripoint &p );
 } // namespace cata_event_dispatch
-
-

@@ -50,8 +50,12 @@ void PATH_INFO::init_base_path( std::string path )
 // And points the user directory to it for android
 void PATH_INFO::init_user_dir( std::string dir )
 {
-    JNIEnv *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
-    jobject activity = static_cast<jobject>( SDL_GetAndroidActivity() );
+    if( get_options().android_get_default_setting( "Use Legacy Storage", false ) ) {
+        user_dir_value = as_norm_dir( dir );
+        return;
+    }
+    auto *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    auto activity = static_cast<jobject>( SDL_GetAndroidActivity() );
 
     jclass clazz = env->GetObjectClass( activity );
 

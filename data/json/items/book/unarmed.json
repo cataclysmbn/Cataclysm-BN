@@ -31,5 +31,22 @@
     "max_level": 3,
     "intelligence": 3,
     "time": "15 m"
+  },
+  {
+    "id": "textbook_brawl",
+    "type": "BOOK",
+    "copy-from": "base_book",
+    "name": { "str": "TC 7-21.4 (CUI) Special Forces Unarmed Combat Techniques" },
+    "description": "A large military manual describing advanced techniques and practices for unarmed combat. Requires some experience to understand.",
+    "weight": "800 g",
+    "volume": "500 ml",
+    "price": "85 USD",
+    "price_postapoc": "5 USD",
+    "color": "blue",
+    "skill": "unarmed",
+    "required_level": 3,
+    "max_level": 6,
+    "intelligence": 9,
+    "time": "28 m"
   }
 ]

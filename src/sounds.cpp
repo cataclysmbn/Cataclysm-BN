@@ -349,7 +349,7 @@ void sounds::process_sounds()
             // TODO: fix point types
             const point_abs_sm abs_sm( ms_to_sm_copy( abs_ms ) );
             const tripoint_abs_sm target( abs_sm, source.z );
-            ACTIVE_OVERMAP_BUFFER.signal_hordes( target, sig_power );
+            get_overmapbuffer( get_map().get_bound_dimension() ).signal_hordes( target, sig_power );
         }
         // Alert all monsters (that can hear) to the sound.
         for( monster &critter : g->all_monsters() ) {
@@ -1232,12 +1232,7 @@ void sfx::do_danger_music()
         return;
     }
     audio_muted = false;
-    int hostiles = 0;
-    for( auto &critter : player_character.get_visible_creatures( 40 ) ) {
-        if( player_character.attitude_to( *critter ) == Attitude::A_HOSTILE ) {
-            hostiles++;
-        }
-    }
+    const int hostiles = player_character.get_mon_visible().combat_hostile_count;
     if( hostiles == prev_hostiles ) {
         return;
     }

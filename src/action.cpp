@@ -23,6 +23,7 @@
 #include "iexamine.h"
 #include "input.h"
 #include "item.h"
+#include "item_functions.h"
 #include "lua_action_menu.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -141,6 +142,8 @@ std::string action_ident( action_id act )
             return "advinv";
         case ACTION_PICKUP:
             return "pickup";
+        case ACTION_PICKUP_ALL:
+            return "pickup_all";
         case ACTION_PICKUP_FEET:
             return "pickup_feet";
         case ACTION_GRAB:
@@ -193,6 +196,8 @@ std::string action_ident( action_id act )
             return "reload_wielded";
         case ACTION_UNLOAD:
             return "unload";
+        case ACTION_UNLOAD_ALL:
+            return "unload_all";
         case ACTION_MEND:
             return "mend";
         case ACTION_THROW:
@@ -203,6 +208,8 @@ std::string action_ident( action_id act )
             return "fire_burst";
         case ACTION_CAST_SPELL:
             return "cast_spell";
+        case ACTION_CAST_LAST_SPELL:
+            return "cast_last_spell";
         case ACTION_SELECT_FIRE_MODE:
             return "select_fire_mode";
         case ACTION_SELECT_DEFAULT_AMMO:
@@ -299,6 +306,8 @@ std::string action_ident( action_id act )
             return "debug_lighting";
         case ACTION_DISPLAY_RADIATION:
             return "debug_radiation";
+        case ACTION_DISPLAY_OUTSIDE:
+            return "debug_outside";
         case ACTION_DISPLAY_SUBMAP_GRID:
             return "debug_submap_grid";
         case ACTION_TOGGLE_ZONE_OVERLAY:
@@ -429,6 +438,7 @@ bool can_action_change_worldstate( const action_id act )
         case ACTION_DISPLAY_LIGHTING:
         case ACTION_DISPLAY_RADIATION:
         case ACTION_DISPLAY_TRANSPARENCY:
+        case ACTION_DISPLAY_OUTSIDE:
         case ACTION_DISPLAY_SUBMAP_GRID:
         case ACTION_TOGGLE_ZONE_OVERLAY:
         case ACTION_ZOOM_OUT:
@@ -586,13 +596,15 @@ bool can_butcher_at( const tripoint &p )
     for( item *&items_it : items ) {
         if( items_it->is_corpse() ) {
             if( factor != INT_MIN  || factorD != INT_MIN ) {
-                has_corpse = true;
+                return true;
             }
         } else if( crafting::can_disassemble( you, *items_it, crafting_inv ).success() ) {
-            has_item = true;
+            return true;
+        } else if( item_funcs::can_be_unloaded( *items_it ) ) {
+            return true;
         }
     }
-    return has_corpse || has_item;
+    return false;
 }
 
 bool can_move_vertical_at( const tripoint &p, int movez )
@@ -679,6 +691,7 @@ bool can_interact_at( action_id action, const tripoint &p )
         case ACTION_EXAMINE:
             return can_examine_at( p );
         case ACTION_PICKUP:
+        case ACTION_PICKUP_ALL:
         case ACTION_PICKUP_FEET:
             return can_pickup_at( p );
         default:
@@ -926,7 +939,7 @@ action_id handle_action_menu()
             register_actions( {
                 ACTION_DROP, ACTION_COMPARE, ACTION_ORGANIZE, ACTION_USE,
                 ACTION_WEAR, ACTION_TAKE_OFF, ACTION_EAT, ACTION_OPEN_CONSUME,
-                ACTION_READ, ACTION_WIELD, ACTION_UNLOAD
+                ACTION_READ, ACTION_WIELD, ACTION_UNLOAD, ACTION_UNLOAD_ALL
             } );
             register_lua_action_entries( category_id );
         } else if( category_id == "debug" ) {
@@ -945,6 +958,7 @@ action_id handle_action_menu()
                 ACTION_TOGGLE_PANEL_ADM, ACTION_DISPLAY_SCENT, ACTION_DISPLAY_SCENT_TYPE,
                 ACTION_DISPLAY_TEMPERATURE, ACTION_DISPLAY_VEHICLE_AI, ACTION_DISPLAY_VISIBILITY,
                 ACTION_DISPLAY_LIGHTING, ACTION_DISPLAY_TRANSPARENCY, ACTION_DISPLAY_RADIATION,
+                ACTION_DISPLAY_OUTSIDE,
                 ACTION_DISPLAY_SUBMAP_GRID, ACTION_TOGGLE_ZONE_OVERLAY, ACTION_TOGGLE_DEBUG_MODE
             } );
             register_lua_action_entries( category_id );
@@ -952,14 +966,15 @@ action_id handle_action_menu()
             register_actions( {
                 ACTION_EXAMINE, ACTION_SMASH, ACTION_MOVE_DOWN, ACTION_MOVE_UP,
                 ACTION_OPEN, ACTION_CLOSE, ACTION_CHAT, ACTION_PICKUP,
-                ACTION_PICKUP_FEET, ACTION_GRAB, ACTION_HAUL, ACTION_BUTCHER, ACTION_LOOT,
+                ACTION_PICKUP_ALL, ACTION_PICKUP_FEET, ACTION_GRAB, ACTION_HAUL, ACTION_BUTCHER, ACTION_LOOT,
             } );
             register_lua_action_entries( category_id );
         } else if( category_id == "combat" ) {
             register_actions( {
                 ACTION_CYCLE_MOVE, ACTION_RESET_MOVE, ACTION_TOGGLE_RUN, ACTION_TOGGLE_CROUCH,
                 ACTION_OPEN_MOVEMENT, ACTION_FIRE, ACTION_RELOAD_ITEM, ACTION_RELOAD_WEAPON,
-                ACTION_RELOAD_WIELDED, ACTION_CAST_SPELL, ACTION_SELECT_FIRE_MODE,
+                ACTION_RELOAD_WIELDED, ACTION_CAST_SPELL, ACTION_CAST_LAST_SPELL,
+                ACTION_SELECT_FIRE_MODE,
                 ACTION_SELECT_DEFAULT_AMMO, ACTION_THROW, ACTION_FIRE_BURST, ACTION_PICK_STYLE,
                 ACTION_TOGGLE_AUTO_TRAVEL_MODE, ACTION_TOGGLE_SAFEMODE, ACTION_TOGGLE_AUTOSAFE,
                 ACTION_IGNORE_ENEMY, ACTION_TOGGLE_AUTO_FEATURES, ACTION_TOGGLE_AUTO_PULP_BUTCHER,
@@ -1160,5 +1175,62 @@ std::optional<tripoint> choose_adjacent_highlight(
         g->add_draw_callback( hilite_cb );
     }
 
-    return choose_adjacent( message, allow_vertical );
+    const auto selection = choose_adjacent( message, allow_vertical );
+    if( selection.has_value() && std::ranges::contains( valid, selection.value() ) ) {
+        return selection;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::pair<tripoint, tripoint>> choose_area( const std::string &message,
+        const tripoint &_start_pos, bool allow_vertical )
+{
+
+    auto &u = g->u;
+    map &m = get_map();
+    ui_adaptor ui;
+
+    on_out_of_scope invalidate_current_ui( [&]() { ui.mark_resize(); } );
+    ui.mark_resize();
+
+    static_popup popup;
+    popup.on_top( true );
+    popup.message( "%s (%s)", message, _( "Select first point." ) );
+
+    tripoint center = _start_pos == tripoint_zero ? ( u.pos() + u.view_offset ) : _start_pos;
+
+    const look_around_mode mode = allow_vertical ? LA_MODE_DEFAULT : LA_MODE_2D;
+    const auto [p0, _] = g->look_around( false, center, center, false, true, false, false,
+                                         tripoint_zero, mode );
+    if( p0 ) {
+        auto highlight = make_shared_fast<game::draw_callback_t>( [&]() {
+            zone_draw_options opt;
+            opt.start = p0.value();
+            g->draw_zones( opt );
+        } );
+        g->add_draw_callback( highlight );
+
+        popup.message( "%s (%s)", message, _( "Select second point." ) );
+        const auto [p1, _] = g->look_around( false, center, p0.value(), true, true, false, false,
+                                             tripoint_zero, mode );
+        if( p1 ) {
+            auto first =
+                tripoint(
+                    std::min( p0->x, p1->x ),
+                    std::min( p0->y, p1->y ),
+                    std::min( p0->z, p1->z )
+                );
+            auto second =
+                tripoint(
+                    std::max( p0->x, p1->x ),
+                    std::max( p0->y, p1->y ),
+                    std::max( p0->z, p1->z )
+                );
+            return std::pair( first, second );
+        }
+    }
+
+    return std::nullopt;
+
 }

@@ -25,6 +25,7 @@
 #include "pimpl.h"
 #include "player_helpers.h"
 #include "point.h"
+#include "reality_bubble_helpers.h"
 #include "state_helpers.h"
 #include "text_snippets.h"
 #include "type_id.h"
@@ -150,8 +151,7 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
         const int five_min_ticks = 2;
         on_load_test( on_load_npc, 0_turns, 5_minutes * five_min_ticks );
         for( time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns ) {
-            iterated_npc.update_body( calendar::turn_zero + turn,
-                                      calendar::turn_zero + turn + 1_turns );
+            iterated_npc.update_body( 1_turns );
         }
 
         const int margin = 2;
@@ -171,8 +171,7 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
         const auto five_min_ticks = 6_hours / 5_minutes;
         on_load_test( on_load_npc, 0_turns, 5_minutes * five_min_ticks );
         for( time_duration turn = 0_turns; turn < 5_minutes * five_min_ticks; turn += 1_turns ) {
-            iterated_npc.update_body( calendar::turn_zero + turn,
-                                      calendar::turn_zero + turn + 1_turns );
+            iterated_npc.update_body( 1_turns );
         }
 
         const int margin = 10;
@@ -183,6 +182,14 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
 
         test_needs( on_load_npc, hunger, thirst, fatigue );
     }
+}
+
+TEST_CASE( "npc_reality_bubble_resize_preserves_zlevel", "[.]" )
+{
+    CHECK( reality_bubble::local_square_from_global( tripoint( 60, 61, 1 ),
+            tripoint( 12, 12, 1 ) ) == tripoint( 48, 49, 1 ) );
+    CHECK( reality_bubble::local_square_from_global( tripoint( 60, 61, -1 ),
+            tripoint( 12, 12, -1 ) ) == tripoint( 48, 49, -1 ) );
 }
 
 TEST_CASE( "snippet-tag-test" )

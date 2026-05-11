@@ -10,6 +10,7 @@
     "id": "CC_WEAPON",
     "recipe_subcategories": [
       "CSC_ALL",
+      "CSC_WEAPON_NESTED",
       "CSC_WEAPON_BASHING",
       "CSC_WEAPON_CUTTING",
       "CSC_WEAPON_PIERCING",
@@ -25,6 +26,7 @@
     "id": "CC_AMMO",
     "recipe_subcategories": [
       "CSC_ALL",
+      "CSC_AMMO_NESTED",
       "CSC_AMMO_PISTOL",
       "CSC_AMMO_RIFLE",
       "CSC_AMMO_SHOT",
@@ -39,6 +41,7 @@
     "id": "CC_FOOD",
     "recipe_subcategories": [
       "CSC_ALL",
+      "CSC_FOOD_NESTED",
       "CSC_FOOD_DRINKS",
       "CSC_FOOD_DRY",
       "CSC_FOOD_MEAT",
@@ -54,13 +57,22 @@
   {
     "type": "recipe_category",
     "id": "CC_CHEM",
-    "recipe_subcategories": [ "CSC_ALL", "CSC_CHEM_DRUGS", "CSC_CHEM_FUEL", "CSC_CHEM_MUTAGEN", "CSC_CHEM_CHEMICALS", "CSC_CHEM_OTHER" ]
+    "recipe_subcategories": [
+      "CSC_ALL",
+      "CSC_CHEM_NESTED",
+      "CSC_CHEM_DRUGS",
+      "CSC_CHEM_FUEL",
+      "CSC_CHEM_MUTAGEN",
+      "CSC_CHEM_CHEMICALS",
+      "CSC_CHEM_OTHER"
+    ]
   },
   {
     "type": "recipe_category",
     "id": "CC_ELECTRONIC",
     "recipe_subcategories": [
       "CSC_ALL",
+      "CSC_ELECTRONIC_NESTED",
       "CSC_ELECTRONIC_CBMS",
       "CSC_ELECTRONIC_TOOLS",
       "CSC_ELECTRONIC_PARTS",
@@ -74,6 +86,7 @@
     "id": "CC_ARMOR",
     "recipe_subcategories": [
       "CSC_ALL",
+      "CSC_ARMOR_NESTED",
       "CSC_ARMOR_STORAGE",
       "CSC_ARMOR_SUIT",
       "CSC_ARMOR_HEAD",
@@ -91,6 +104,7 @@
     "id": "CC_OTHER",
     "recipe_subcategories": [
       "CSC_ALL",
+      "CSC_OTHER_NESTED",
       "CSC_OTHER_TOOLS",
       "CSC_OTHER_MEDICAL",
       "CSC_OTHER_CONTAINERS",

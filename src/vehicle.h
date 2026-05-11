@@ -34,6 +34,7 @@ class npc;
 class player;
 class vehicle;
 struct vehicle_part;
+class mapbuffer;
 class vehicle_cursor;
 class vehicle_part_range;
 class vpart_info;
@@ -460,14 +461,24 @@ class vehicle
         }
 
         /**
-         * Find a possibly off-map vehicle. If necessary, loads up its submap through
-         * the global MAPBUFFER and pulls it from there. For this reason, you should only
-         * give it the coordinates of the origin tile of a target vehicle.
-         * @param where Location of the other vehicle's origin tile.
+         * Find a possibly off-map vehicle. If necessary, loads up its submap and pulls
+         * it from there. For this reason, you should only give it the coordinates of the
+         * origin tile of a target vehicle.
+         *
+         * The overload without @p mbuf uses the currently bound map's dimension and is
+         * only correct when that dimension matches the target vehicle's dimension.
+         * Prefer the mapbuffer overload when the caller has explicit dimension context.
+         *
+         * @param where  Location of the other vehicle's origin tile (absolute ms coords).
+         * @param mbuf   Mapbuffer for the dimension that owns the target vehicle.
          */
         static vehicle *find_vehicle( const tripoint &where );
+        static vehicle *find_vehicle( const tripoint &where, mapbuffer &mbuf );
         static vehicle *find_vehicle( const tripoint_abs_ms &where ) {
             return find_vehicle( where.raw() );
+        }
+        static vehicle *find_vehicle( const tripoint_abs_ms &where, mapbuffer &mbuf ) {
+            return find_vehicle( where.raw(), mbuf );
         }
 
         vehicle( const vproto_id &type_id, int init_veh_fuel = -1, int init_veh_status = -1,
@@ -807,11 +818,18 @@ class vehicle
         void coord_translate_reverse( units::angle dir, point pivot, const tripoint &p,
                                       point &q ) const;
 
-        tripoint mount_to_tripoint( point mount ) const;
-        tripoint mount_to_tripoint( point mount, point offset ) const;
+        tripoint_bub_ms mount_to_bubble( point mount ) const;
+        tripoint_bub_ms mount_to_bubble( point mount, point offset ) const;
 
         //Translate tile coordinates into mount coordinates
-        point tripoint_to_mount( const tripoint &p ) const;
+        point bubble_to_mount( const tripoint_bub_ms &p ) const;
+
+        tripoint_abs_ms mount_to_abs( const tripoint_mnt_veh &mount ) const;
+        tripoint_abs_ms mount_to_abs( const tripoint_mnt_veh &mount,
+                                      const tripoint_rel_veh &offset ) const {
+            return mount_to_abs( mount + offset );
+        }
+        tripoint_mnt_veh abs_to_mount( const tripoint_abs_ms &abs ) const;
 
         // Seek a vehicle part which obstructs tile with given coordinates relative to vehicle position
         int part_at( point dp ) const;
@@ -1481,9 +1499,11 @@ class vehicle
         void play_music();
         void play_chimes();
         void operate_planter();
+        std::string brake_hold_toggle_string() const;
         std::string tracking_toggle_string();
         void autopilot_patrol_check();
         void toggle_autopilot();
+        void toggle_brake_hold();
         void enable_patrol();
         void toggle_tracking();
         //scoop operation,pickups, battery drain, etc.
@@ -1639,6 +1659,8 @@ class vehicle
         std::vector<int> rail_wheelcache;  // List of rail wheels
         std::vector<int> steering;         // List of STEERABLE parts
         std::vector<int> droppers;         // List of droppers
+        std::vector<int> tanks;            // List of FLUIDTANKs
+        std::vector<int> converters;       // List of coverters
         // List of parts that will not be on a vehicle very often, or which only one will be present
         std::vector<int> speciality;
         std::vector<int> floating;         // List of parts that provide buoyancy to boats
@@ -1750,7 +1772,7 @@ class vehicle
         // ID of the dimension this vehicle belongs to.  Empty string = primary dimension.
         // Set when the vehicle is loaded from a submap (map::loadn / on_submap_loaded).
         // Persisted across saves so cross-dimension processing survives reload.
-        std::string dimension_id_;
+        std::string dimension_id_ = "";  // empty = primary dimension
         auto get_dimension() const -> const std::string & { // *NOPAD*
             return dimension_id_;
         }
@@ -1783,6 +1805,11 @@ class vehicle
 
 
     private:
+        tripoint_rel_ms rotate_to_world( units::angle dir, const tripoint_mnt_veh &pivot,
+                                         const tripoint_mnt_veh &p ) const;
+        tripoint_mnt_veh rotate_to_local( units::angle dir, const tripoint_mnt_veh &pivot,
+                                          const tripoint_rel_ms &p ) const;
+
         bool no_refresh = false;
 
         // if true, pivot_cache needs to be recalculated
@@ -1813,12 +1840,15 @@ class vehicle
         // vehicle being driven by player/npc automatically
         bool is_autodriving = false;
         bool is_following = false;
+        int follow_distance = 0;
         bool is_patrolling = false;
         // TODO: change these to a bitset + enum?
         // cruise control on/off
         bool cruise_on = true;
         // at least one engine is on, of any type
         bool engine_on = false;
+        // parked braking drag on/off
+        bool brake_hold = true;
         // vehicle tracking on/off
         bool tracking_on = false;
         // vehicle has no key

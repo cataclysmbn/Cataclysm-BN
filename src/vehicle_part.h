@@ -6,8 +6,10 @@
 #include <set>
 
 #include "character_id.h"
+#include "coordinates.h"
 #include "item.h"
 #include "item_group.h"
+#include "hsv_color.h"
 #include "point.h"
 #include "visitable.h"
 #include "location_ptr.h"
@@ -139,13 +141,13 @@ struct vehicle_part {
         /** Try to set fault returning false if specified fault cannot occur with this item */
         bool fault_set( const fault_id &f );
 
-        /** Get wheel diameter times wheel width (inches^2) or return 0 if part is not wheel */
+        /** Get wheel diameter times wheel width (millimeters^2) or return 0 if part is not wheel */
         int wheel_area() const;
 
-        /** Get wheel diameter (inches) or return 0 if part is not wheel */
+        /** Get wheel diameter (millimeters) or return 0 if part is not wheel */
         int wheel_diameter() const;
 
-        /** Get wheel width (inches) or return 0 if part is not wheel */
+        /** Get wheel width (millimeters) or return 0 if part is not wheel */
         int wheel_width() const;
 
         /**
@@ -279,6 +281,7 @@ struct vehicle_part {
         std::pair<tripoint, tripoint> target = { tripoint_min, tripoint_min };
 
     private:
+        RGBColorPair part_color_ {};
 
         /** Copies static (i.e. non-item) properties from another part */
         void copy_static_from( const vehicle_part &source );
@@ -302,6 +305,11 @@ struct vehicle_part {
          */
         character_id crew_id;
     public:
+
+        // POWER_DRAW_LINKED_PORTAL: portal tap link state (persisted per-part instance).
+        std::string portal_tap_dim_id;
+        tripoint_abs_ms portal_tap_pos;
+        bool portal_tap_linked = false;
         /** Get part definition common to all parts of this type */
         const vpart_info &info() const;
 
@@ -335,6 +343,9 @@ struct vehicle_part {
          * this part.
          */
         std::vector<detached_ptr<item>> pieces_for_broken_part() const;
-};
 
+        RGBColorPair get_color( bool ignore_default = false ) const;
+        void set_color( const RGBColorPair &color ) { set_color( color.bg, color.fg ); }
+        void set_color( const RGBColor &bg, const RGBColor &fg );
+};
 

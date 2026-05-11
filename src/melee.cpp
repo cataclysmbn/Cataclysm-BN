@@ -52,6 +52,7 @@
 #include "mtype.h"
 #include "mutation.h"
 #include "npc.h"
+#include "options.h"
 #include "output.h"
 #include "player.h"
 #include "pldata.h"
@@ -78,6 +79,23 @@ static const itype_id itype_rag( "rag" );
 static const matec_id tec_none( "tec_none" );
 static const matec_id WBLOCK_1( "WBLOCK_1" );
 static const matec_id WBLOCK_2( "WBLOCK_2" );
+
+namespace
+{
+
+auto with_cross_z_melee_cost( const int base_cost, const tripoint &source,
+                              const tripoint &target ) -> int
+{
+    if( std::abs( source.z - target.z ) < 1 ) {
+        return base_cost;
+    }
+
+    const auto modifier = get_option<float>( "CROSS_Z_LEVEL_MELEE_DIFFICULTY_MODIFIER" );
+    return static_cast<int>( std::floor( base_cost * modifier ) );
+}
+
+} // namespace
+
 static const matec_id WBLOCK_3( "WBLOCK_3" );
 
 static const skill_id skill_stabbing( "stabbing" );
@@ -97,6 +115,7 @@ static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_heavysnare( "heavysnare" );
 static const efftype_id effect_hit_by_player( "hit_by_player" );
 static const efftype_id effect_lightsnare( "lightsnare" );
+static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_narcosis( "narcosis" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_stunned( "stunned" );
@@ -503,7 +522,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         return;
     }
 
-    int move_cost = attack_cost( cur_weapon );
+    int move_cost = with_cross_z_melee_cost( attack_cost( cur_weapon ), pos(), t.pos() );
 
     if( !attack_hit ) {
         // Lua imelee on_miss callback
@@ -565,9 +584,6 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         if( critical_hit ) {
             melee::melee_stats.actual_crit_count += 1;
         }
-        damage_instance d;
-        melee::roll_all_damage( *this, critical_hit, d, false, cur_weapon, attack );
-
         const bool has_force_technique = force_technique;
 
         // Pick one or more special attacks
@@ -580,6 +596,17 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             technique_id = tec_none;
         }
 
+        const ma_technique &technique = technique_id.obj();
+        const bool use_weapon = !technique.force_unarmed;
+
+        damage_instance d;
+        melee::roll_all_damage( *this, critical_hit, d, false,
+                                use_weapon ? cur_weapon : null_item_reference(), attack );
+
+        // Don't kick if using a spear
+        if( !use_weapon && reach_attacking ) {
+            technique_id = tec_none;
+        }
         // if you have two broken arms you aren't doing any martial arts
         // and your hits are not going to hurt very much
         if( get_working_arm_count() < 1 ) {
@@ -587,7 +614,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             d.mult_damage( 0.1 );
         }
         // polearms and pikes (but not spears) do less damage to adjacent targets
-        if( cur_weapon.reach_range( *this ) > 1 && !reach_attacking &&
+        if( use_weapon && cur_weapon.reach_range( *this ) > 1 && !reach_attacking &&
             cur_weapon.has_flag( flag_POLEARM ) ) {
             d.mult_damage( 0.7 );
         }
@@ -596,8 +623,6 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             d.mult_damage( 0.5 + ( static_cast<float>( get_stamina() ) / static_cast<float>
                                    ( get_stamina_max() ) * 2.0f ) );
         }
-
-        const ma_technique &technique = technique_id.obj();
 
         // Handles effects as well; not done in melee_affect_*
         if( technique.id != tec_none ) {
@@ -615,17 +640,20 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             if( allow_special ) {
                 perform_special_attacks( t, dealt_special_dam );
             }
-            t.deal_melee_hit( this, &cur_weapon, hit_spread, critical_hit, d, dealt_dam );
+            t.deal_melee_hit( this, use_weapon ? &cur_weapon : &null_item_reference(), hit_spread, critical_hit,
+                              d, dealt_dam );
 
-            // Lua imelee on_hit callback
-            if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
-                imelee_cb->call_on_hit( *this, t, cur_weapon, dealt_dam );
+            if( use_weapon ) {
+                // Lua imelee on_hit callback
+                if( const auto *imelee_cb = cur_weapon.type->imelee_callbacks ) {
+                    imelee_cb->call_on_hit( *this, t, cur_weapon, dealt_dam );
+                }
             }
 
             if( dealt_special_dam.type_damage( DT_CUT ) > 0 ||
                 dealt_special_dam.type_damage( DT_STAB ) > 0 ||
-                ( cur_weapon.is_null() && ( dealt_dam.type_damage( DT_CUT ) > 0 ||
-                                            dealt_dam.type_damage( DT_STAB ) > 0 ) ) ) {
+                ( ( cur_weapon.is_null() || !use_weapon ) && ( dealt_dam.type_damage( DT_CUT ) > 0 ||
+                        dealt_dam.type_damage( DT_STAB ) > 0 ) ) ) {
                 if( has_trait( trait_POISONOUS ) ) {
                     add_msg_if_player( m_good, _( "You poison %s!" ), t.disp_name() );
                     t.add_effect( effect_poison, 6_turns );
@@ -654,7 +682,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
 
             // Practice melee and relevant weapon skill (if any) except when using CQB bionic
             if( !has_active_bionic( bio_cqb ) ) {
-                melee_train( *this, 5, 10, cur_weapon );
+                melee_train( *this, 5, 10, use_weapon ? cur_weapon : null_item_reference() );
             }
 
             if( dam >= 5 && has_artifact_with( AEP_SAP_LIFE ) ) {
@@ -690,7 +718,8 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         }
     }
 
-    const int mod_sta = -get_melee_stamina_cost( cur_weapon );
+    const int mod_sta = -with_cross_z_melee_cost( get_melee_stamina_cost( cur_weapon ), pos(),
+                        t.pos() );
     mod_stamina( std::min( -50, mod_sta ) );
     add_msg( m_debug, "Stamina burn: %d", std::min( -50, mod_sta ) );
     mod_moves( -move_cost );
@@ -729,7 +758,7 @@ void Character::reach_attack( const tripoint &p )
     // Max out recoil
     recoil = MAX_RECOIL;
 
-    int move_cost = attack_cost( primary_weapon() );
+    int move_cost = with_cross_z_melee_cost( attack_cost( primary_weapon() ), pos(), p );
     int skill = std::min( 10, get_skill_level( skill_stabbing ) );
     int t = 0;
     std::vector<tripoint> path = line_to( pos(), p, t, 0 );
@@ -1321,15 +1350,20 @@ matec_id Character::pick_technique( Creature &t, const item &weap,
             continue;
         }
 
+        const auto m = dynamic_cast<const monster *>( &t );
         // don't apply disarming techniques to someone without a weapon
         // TODO: these are the stat requirements for tec_disarm
         // dice(   dex_cur +    get_skill_level("unarmed"),  8) >
         // dice(p->dex_cur + p->get_skill_level("melee"),   10))
-        if( tec.disarms && !t.has_weapon() ) {
+        if( tec.disarms && ( ( m == nullptr && !t.has_weapon() ) || ( m != nullptr &&
+                             !m->type->monster_weapon ) ||
+                             t.has_effect( effect_monster_disarmed ) ) ) {
             continue;
         }
 
-        if( ( tec.take_weapon && ( has_weapon() || !t.has_weapon() ) ) ) {
+        if( ( tec.take_weapon && ( ( has_weapon() ) || ( ( m == nullptr && !t.has_weapon() ) ||
+                                   ( m != nullptr &&
+                                     !m->type->monster_weapon ) || t.has_effect( effect_monster_disarmed ) ) ) ) ) {
             continue;
         }
 
@@ -1607,28 +1641,71 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     player *p = dynamic_cast<player *>( &t );
+    auto m = dynamic_cast<monster *>( &t );
 
     if( technique.take_weapon && !has_weapon() && p != nullptr && p->is_armed() ) {
-        if( p->is_player() ) {
-            add_msg_if_npc( _( "<npcname> disarms you and takes your weapon!" ) );
-        } else {
-            add_msg_player_or_npc( _( "You disarm %s and take their weapon!" ),
-                                   _( "<npcname> disarms %s and takes their weapon!" ),
-                                   p->name );
-        }
+        if( rng( get_skill_level( skill_melee ) / 2,
+                 get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
 
-        wield( p->remove_primary_weapon() );
+            if( p->is_player() ) {
+                add_msg_if_npc( m_bad, _( "<npcname> disarms you and takes your weapon!" ) );
+            } else {
+                add_msg_player_or_npc( m_good, _( "You disarm %s and take their weapon!" ),
+                                       _( "<npcname> disarms %s and takes their weapon!" ),
+                                       p->name );
+            }
+
+            wield( p->remove_primary_weapon() );
+        } else {
+            if( p->is_player() ) {
+                add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
+            } else {
+                add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
+                                       _( "<npcname> fails to disarms %s!" ),
+                                       p->name );
+            }
+        }
     }
 
     if( technique.disarms && p != nullptr && p->is_armed() ) {
-        g->m.add_item_or_charges( p->pos(), p->remove_primary_weapon() );
-        if( p->is_player() ) {
-            add_msg_if_npc( _( "<npcname> disarms you!" ) );
+        if( rng( get_skill_level( skill_melee ) / 2,
+                 get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
+            g->m.add_item_or_charges( p->pos(), p->remove_primary_weapon() );
+            if( p->is_player() ) {
+                add_msg_if_npc( m_bad, _( "<npcname> disarms you!" ) );
+            } else {
+                add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
+                                       _( "<npcname> disarms %s!" ),
+                                       p->name );
+            }
         } else {
-            add_msg_player_or_npc( _( "You disarm %s!" ),
-                                   _( "<npcname> disarms %s!" ),
-                                   p->name );
+            if( p->is_player() ) {
+                add_msg_if_npc( m_warning, _( "<npcname> tries to disarms you but fails!" ) );
+            } else {
+                add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
+                                       _( "<npcname> fails to disarms %s!" ),
+                                       p->name );
+            }
         }
+    }
+
+    // No wielding it because monster_weapon might be a collection
+    if( ( technique.disarms || technique.take_weapon ) && m != nullptr && m->type->monster_weapon &&
+        !t.has_effect( effect_monster_disarmed ) ) {
+        if( rng( get_skill_level( skill_melee ) / 2,
+                 get_skill_level( skill_melee ) ) >= m->type->melee_skill ) {
+
+            m->drop_monster_weapon();
+            add_msg_player_or_npc( m_good, _( "You disarm %s!" ),
+                                   _( "<npcname> disarms %s!" ),
+                                   m->disp_name() );
+            t.add_effect( effect_monster_disarmed, 1_turns );
+        } else {
+            add_msg_player_or_npc( m_bad, _( "You fail to disarm %s!" ),
+                                   _( "<npcname> fails to disarms %s!" ),
+                                   m->disp_name() );
+        }
+
     }
 
     //AOE attacks, feel free to skip over this lump

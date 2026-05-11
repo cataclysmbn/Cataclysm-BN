@@ -868,7 +868,7 @@
     "time": "3 m",
     "reversible": true,
     "decomp_learn": 0,
-    "flags": [ "BLIND_HARD" ],
+    "flags": [ "BLIND_NEARLY_IMPOSSIBLE" ],
     "book_learn": [ [ "adv_chemistry", 1 ], [ "textbook_chemistry", 1 ], [ "reference_cooking", 1 ] ],
     "components": [ [ [ "cable", 10 ], [ "wire", 1 ] ], [ [ "hotplate", 1 ] ], [ [ "chemistry_set_basic", 1 ] ] ]
   },
@@ -1432,6 +1432,21 @@
   },
   {
     "type": "recipe",
+    "result": "shovel",
+    "id_suffix": "handle_swap",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "//": "This method involves hammering a chisel into the wooden shaft of a short shovel until the shovel's head can be pried off - then mounting it on a cut and sanded-to-shape long handle.",
+    "difficulty": 1,
+    "time": "15 m",
+    "autolearn": true,
+    "byproducts": [ [ "splinter", 7 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CHISEL", "level": 1 } ],
+    "components": [ [ [ "shovel_short", 1 ] ], [ [ "wood_structural", 1, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
     "result": "shovel_short",
     "category": "CC_OTHER",
     "subcategory": "CSC_OTHER_TOOLS",
@@ -1533,6 +1548,21 @@
     "book_learn": [ [ "manual_fabrication", 3 ], [ "textbook_fabrication", 4 ] ],
     "using": [ [ "blacksmithing_intermediate", 32 ], [ "steel_standard", 8 ] ],
     "components": [ [ [ "wood_structural_small", 1, "LIST" ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "hammer_sledge",
+    "id_suffix": "handle_swap",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_TOOLS",
+    "skill_used": "fabrication",
+    "//": "This method involves hammering a chisel into the wooden shaft of a short sledgehammer until the hammer's head can be pried off - then mounting it on a cut and sanded-to-shape long handle.",
+    "difficulty": 1,
+    "time": "15 m",
+    "autolearn": true,
+    "byproducts": [ [ "splinter", 7 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "CHISEL", "level": 1 } ],
+    "components": [ [ [ "hammer_sledge_short", 1 ] ], [ [ "wood_structural_small", 1, "LIST" ] ] ]
   },
   {
     "type": "recipe",
@@ -3119,8 +3149,7 @@
       [ [ "rag", 1 ] ],
       [ [ "stick", 1 ], [ "2x4", 1 ], [ "pool_cue", 1 ], [ "torch_done", 1 ] ],
       [ [ "flammable_liquid", 100, "LIST" ], [ "disinfectant_makeshift", 4 ], [ "pitch_wood", 4 ] ]
-    ],
-    "flags": [ "BLIND_HARD" ]
+    ]
   },
   {
     "result": "dog_whistle_wood",

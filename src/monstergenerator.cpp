@@ -197,12 +197,17 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_PROJECTILE_RESISTANT_2: return "PROJECTILE_RESISTANT_2";
         case MF_PROJECTILE_RESISTANT_3: return "PROJECTILE_RESISTANT_3";
         case MF_PROJECTILE_RESISTANT_4: return "PROJECTILE_RESISTANT_4";
-         case MF_VOLATILE: return "VOLATILE";
-         case MF_CANT_CLONE: return "CANT_CLONE";
-         case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
-         case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
-         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
-         // *INDENT-ON*
+        case MF_VOLATILE: return "VOLATILE";
+        case MF_CANT_CLONE: return "CANT_CLONE";
+        case MF_MOUNTABLE_STAIRS: return "MOUNTABLE_STAIRS";
+        case MF_MOUNTABLE_LADDER: return "MOUNTABLE_LADDER";
+        case MF_MOUNTABLE_OBSTACLES: return "MOUNTABLE_OBSTACLES";
+        case MF_MOUNTABLE_DOORS: return "MOUNTABLE_DOORS";
+        case MF_MOUNTABLE_LEDGE: return "MOUNTABLE_LEDGE";        
+        case MF_FACTION_MEMORY: return "FACTION_MEMORY";
+        case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
+        case MF_CANT_TRAIN: return "CANT_TRAIN";
+        // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
     }
@@ -795,6 +800,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     assign( jo, "vision_day", vision_day, strict, 0 );
     assign( jo, "vision_night", vision_night, strict, 0 );
+    optional( jo, was_loaded, "preferred_z", preferred_z );
 
     optional( jo, was_loaded, "regenerates", regenerates, 0 );
     optional( jo, was_loaded, "regenerates_in_dark", regenerates_in_dark, false );
@@ -855,6 +861,10 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         melee_damage.add_damage( DT_CUT, bonus_cut );
     }
 
+    if( jo.has_member( "monster_weapon" ) ) {
+        monster_weapon = item_group::load_item_group( jo.get_member( "monster_weapon" ),
+                         "distribution" );
+    }
     if( jo.has_member( "death_drops" ) ) {
         death_drops = item_group::load_item_group( jo.get_member( "death_drops" ),
                       "distribution" );
@@ -1344,6 +1354,8 @@ mtype_special_attack MonsterGenerator::create_actor( const JsonObject &obj,
         new_attack = std::make_unique<gun_actor>();
     } else if( attack_type == "spell" ) {
         new_attack = std::make_unique<mon_spellcasting_actor>();
+    } else if( attack_type == "deployer" ) {
+        new_attack = std::make_unique<deployer_actor>();
     } else {
         obj.throw_error( "unknown monster attack", "attack_type" );
     }
@@ -1543,6 +1555,10 @@ void MonsterGenerator::check_monster_definitions() const
         if( !mon.mech_battery.is_empty() && !mon.mech_battery.is_valid() ) {
             debugmsg( "monster %s has unknown mech_battery: %s", mon.id.c_str(),
                       mon.mech_battery.c_str() );
+        }
+        if( mon.monster_weapon && !item_group::group_is_defined( mon.monster_weapon ) ) {
+            debugmsg( "monster %s has unknown monster weapon item group: %s", mon.id.c_str(),
+                      mon.monster_weapon.c_str() );
         }
         for( const scenttype_id &s_id : mon.scents_tracked ) {
             if( !s_id.is_empty() && !s_id.is_valid() ) {

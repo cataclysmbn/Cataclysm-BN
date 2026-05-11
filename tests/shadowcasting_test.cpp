@@ -377,7 +377,7 @@ static void shadowcasting_3d_2d( const int iterations )
     static float seen_squares_control[MAPSIZE * SEEX][MAPSIZE * SEEY];
     static float seen_squares_experiment[MAPSIZE * SEEX][MAPSIZE * SEEY];
     static float transparency_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
-    static bool floor_cache[MAPSIZE * SEEX][MAPSIZE *
+    static char floor_cache[MAPSIZE * SEEX][MAPSIZE *
                                             SEEY]; // zero-initialized once; never written by algorithms.
     static diagonal_blocks blocked_cache[MAPSIZE * SEEX][MAPSIZE * SEEY];
 
@@ -411,7 +411,7 @@ static void shadowcasting_3d_2d( const int iterations )
     // Build cache_grid_ref wrappers so cast_zlight can index into the flat C arrays.
     array_of_grids_of<float>                 seen_caches;
     array_of_grids_of<const float>           transparency_caches;
-    array_of_grids_of<const bool>            floor_caches;
+    array_of_grids_of<const char>            floor_caches;
     array_of_grids_of<const diagonal_blocks> blocked_caches;
     for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
         const int zi = z + OVERMAP_DEPTH;

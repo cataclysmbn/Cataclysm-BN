@@ -16,7 +16,7 @@ end
 
 local voltmeter = {}
 
----@type fun(who: Character, item: Item, pos: Tripoint): integer
+---@type fun(params: ItemUseParams): integer
 voltmeter.menu = function(params)
   local who = params.user
   local item = params.item
@@ -32,7 +32,7 @@ voltmeter.menu = function(params)
 end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): string
-voltmeter.get_grid_charge_info = function(who, item, pos)
+voltmeter.get_grid_charge_info = function(_who, _item, pos)
   local pos_abs = gapi.get_map():get_abs_ms(pos)
   local grid = gapi.get_distribution_grid_tracker():grid_at(pos_abs)
   local amt = grid:get_resource()
@@ -51,9 +51,10 @@ voltmeter.get_grid_charge_info = function(who, item, pos)
 end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): string
-voltmeter.get_grid_connections_info = function(who, item, pos)
+voltmeter.get_grid_connections_info = function(_who, _item, pos)
   local pos_abs_ms = gapi.get_map():get_abs_ms(pos)
   local pos_abs, _ = coords.ms_to_omt(pos_abs_ms)
+  ---@cast pos_abs Tripoint
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs)
 
   local six_dirs = gapi.six_cardinal_directions()
@@ -83,6 +84,7 @@ end
 voltmeter.modify_grid_connections = function(who, item, pos)
   local pos_abs_ms = gapi.get_map():get_abs_ms(pos)
   local pos_abs, _ = coords.ms_to_omt(pos_abs_ms)
+  ---@cast pos_abs Tripoint
   local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs)
 
   local six_dirs = gapi.six_cardinal_directions()
@@ -110,7 +112,8 @@ voltmeter.modify_grid_connections = function(who, item, pos)
     local enabled = new_z >= -10 and new_z <= 10
 
     menu:add(i - 1, string.format(format_str, name))
-    if not enabled then menu.entries[i].enable = false end
+    local entry = menu.entries[i]
+    if entry and not enabled then entry.enable = false end
   end
 
   local choice = menu:query()
@@ -118,7 +121,8 @@ voltmeter.modify_grid_connections = function(who, item, pos)
 
   local idx = choice + 1
   local delta = six_dirs[idx]
-  local destination_pos_abs = pos_abs + delta
+  if not delta then return 0 end
+  local destination_pos_abs = Tripoint.new(pos_abs.x + delta.x, pos_abs.y + delta.y, pos_abs.z + delta.z)
 
   if connection_present[idx] then
     -- Remove connection
@@ -181,6 +185,7 @@ voltmeter.modify_grid_connections = function(who, item, pos)
       return 0
     end
 
+    ---@type any
     local reqs = requirement_base * cost_mult
     local crafting_inv = who:crafting_inventory()
 

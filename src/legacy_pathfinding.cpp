@@ -15,8 +15,10 @@
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "debug.h"
+#include "game_constants.h"
 #include "map.h"
 #include "mapdata.h"
+#include "options.h"
 #include "submap.h"
 #include "trap.h"
 #include "veh_type.h"
@@ -246,12 +248,16 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
         }
     }
 
+    // Apply the global distance cap from settings.  min() naturally handles both the normal case
+    // (monster has an explicit max_dist already smaller than the cap) and the unlimited case
+    // (max_dist == INT_MAX from mods that remove the per-monster limit).
+    const int dist_cap = get_option<int>( "PATHFINDING_MAX_DIST" );
     // If expected path length is greater than max distance, allow only line path, like above
-    if( rl_dist( f, t ) > settings.max_dist ) {
+    if( rl_dist( f, t ) > std::min( settings.max_dist, dist_cap ) ) {
         return ret;
     }
 
-    int max_length = settings.max_length;
+    int max_length = std::min( settings.max_length, dist_cap * 5 );
     int bash = settings.bash_strength;
     int climb_cost = settings.climb_cost;
     bool doors = settings.allow_open_doors;
@@ -259,7 +265,9 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
     bool roughavoid = settings.avoid_rough_terrain;
     bool sharpavoid = settings.avoid_sharp;
 
-    const int pad = 16;  // Should be much bigger - low value makes pathfinders dumb!
+    // Search-area inflation: at least 16 tiles, scaled with bubble radius so pathfinders
+    // can route around obstacles near the bubble boundary at large bubble sizes.
+    const int pad = std::max( 16, 4 * g_half_mapsize );
     int minx = std::min( f.x, t.x ) - pad;
     int miny = std::min( f.y, t.y ) - pad;
     // TODO: Make this way bigger
@@ -334,14 +342,17 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
 
             int part = -1;
             const vehicle *veh = veh_at_internal( p, part );
+            // TODO: migrate pathfinding positions to abs so these conversions can use abs_to_mount
             if( cur_veh &&
-                !cur_veh->allowed_move( cur_veh->tripoint_to_mount( cur ), cur_veh->tripoint_to_mount( p ) ) ) {
+                !cur_veh->allowed_move( cur_veh->bubble_to_mount( tripoint_bub_ms( cur ) ),
+                                        cur_veh->bubble_to_mount( tripoint_bub_ms( p ) ) ) ) {
                 //Trying to squeeze through a vehicle hole, skip this movement but don't close the tile as other paths may lead to it
                 continue;
             }
 
             if( veh && veh != cur_veh &&
-                !veh->allowed_move( veh->tripoint_to_mount( cur ), veh->tripoint_to_mount( p ) ) ) {
+                !veh->allowed_move( veh->bubble_to_mount( tripoint_bub_ms( cur ) ),
+                                    veh->bubble_to_mount( tripoint_bub_ms( p ) ) ) ) {
                 //Same as above but moving into rather than out of a vehicle
                 continue;
             }
@@ -360,7 +371,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
                     continue;
                 }
 
-                const maptile &tile = maptile_at_internal( p );
+                const maptile &tile = maptile_at_internal( tripoint_bub_ms( p ) );
                 const auto &terrain = tile.get_ter_t();
                 const auto &furniture = tile.get_furn_t();
 
@@ -483,7 +494,7 @@ std::vector<tripoint> map::route( const tripoint &f, const tripoint &t,
             continue;
         }
 
-        const maptile &parent_tile = maptile_at_internal( cur );
+        const maptile &parent_tile = maptile_at_internal( tripoint_bub_ms( cur ) );
         const auto &parent_terrain = parent_tile.get_ter_t();
         if( settings.allow_climb_stairs && cur.z > minz && parent_terrain.has_flag( TFLAG_GOES_DOWN ) ) {
             tripoint dest( cur.xy(), cur.z - 1 );

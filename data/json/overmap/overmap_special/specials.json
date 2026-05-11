@@ -709,7 +709,7 @@
   },
   {
     "type": "overmap_special",
-    "id": "FEMA Camp",
+    "id": "Military Camp",
     "overmaps": [
       { "point": [ 0, 0, 0 ], "overmap": "fema_north" },
       { "point": [ 1, 0, 0 ], "overmap": "fema_entrance_north" },
@@ -723,10 +723,10 @@
     ],
     "connections": [ { "point": [ 1, -1, 0 ], "from": [ 1, 0, 0 ], "connection": "local_road" } ],
     "locations": [ "wilderness" ],
-    "city_distance": [ 5, 20 ],
+    "city_distance": [ 5, -1 ],
     "city_sizes": [ 4, -1 ],
-    "occurrences": [ 0, 3 ],
-    "flags": [ "CLASSIC" ]
+    "occurrences": [ 0, 5 ],
+    "flags": [ "CLASSIC", "MILITARY", "ELECTRIC_GRID" ]
   },
   {
     "type": "overmap_special",
@@ -2444,7 +2444,7 @@
     "locations": [ "land" ],
     "city_distance": [ 0, 10 ],
     "city_sizes": [ 6, -1 ],
-    "occurrences": [ 85, 100 ],
+    "occurrences": [ 40, 100 ],
     "flags": [ "UNIQUE", "CLASSIC", "ELECTRIC_GRID" ]
   },
   {
@@ -2492,7 +2492,7 @@
     "locations": [ "land" ],
     "city_distance": [ 0, 10 ],
     "city_sizes": [ 6, -1 ],
-    "occurrences": [ 75, 100 ],
+    "occurrences": [ 35, 100 ],
     "flags": [ "UNIQUE", "CLASSIC", "ELECTRIC_GRID" ]
   },
   {
@@ -2538,7 +2538,7 @@
     ],
     "locations": [ "wilderness" ],
     "city_distance": [ 15, 50 ],
-    "occurrences": [ 60, 100 ],
+    "occurrences": [ 30, 100 ],
     "flags": [ "UNIQUE", "CLASSIC", "ELECTRIC_GRID" ]
   },
   {
@@ -2584,7 +2584,7 @@
     ],
     "locations": [ "wilderness" ],
     "city_distance": [ 15, 50 ],
-    "occurrences": [ 35, 100 ],
+    "occurrences": [ 18, 100 ],
     "flags": [ "UNIQUE", "CLASSIC", "ELECTRIC_GRID" ]
   },
   {
@@ -2658,7 +2658,11 @@
   {
     "type": "overmap_special",
     "id": "tree farm",
-    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "TreeFarm_1a_north" }, { "point": [ 1, 0, 0 ], "overmap": "TreeFarm_1b_north" } ],
+    "overmaps": [
+      { "point": [ 0, 0, 0 ], "overmap": "TreeFarm_1a_north" },
+      { "point": [ 0, 0, 1 ], "overmap": "TreeFarm_1a_roof_north" },
+      { "point": [ 1, 0, 0 ], "overmap": "TreeFarm_1b_north" }
+    ],
     "connections": [ { "point": [ 0, -1, 0 ], "connection": "local_road" } ],
     "locations": [ "forest" ],
     "city_distance": [ 5, 40 ],
@@ -3391,6 +3395,7 @@
       { "point": [ 1, 0, 0 ], "overmap": "ws_regional_dump_1_0_north" },
       { "point": [ 2, 0, 0 ], "overmap": "ws_regional_dump_2_0_north" },
       { "point": [ 3, 0, 0 ], "overmap": "ws_regional_dump_3_0_north" },
+      { "point": [ 3, 0, 1 ], "overmap": "ws_regional_dump_3_0_1_roof_north" },
       { "point": [ 0, 1, 0 ], "overmap": "ws_regional_dump_0_1_north" },
       { "point": [ 1, 1, 0 ], "overmap": "ws_regional_dump_1_1_north" },
       { "point": [ 2, 1, 0 ], "overmap": "ws_regional_dump_2_1_north" },
@@ -6184,7 +6189,7 @@
     "city_distance": [ 5, 60 ],
     "city_sizes": [ 4, -1 ],
     "occurrences": [ 50, 100 ],
-    "flags": [ "CLASSIC", "WILDERNESS", "ELECTRIC_GRID", "ELECTRIC_GRID", "GLOBALLY_UNIQUE" ]
+    "flags": [ "CLASSIC", "WILDERNESS", "ELECTRIC_GRID", "GLOBALLY_UNIQUE" ]
   },
   {
     "type": "overmap_special",
@@ -6530,5 +6535,27 @@
     "city_sizes": [ 3, 20 ],
     "occurrences": [ 0, 10 ],
     "flags": [ "CLASSIC", "ELECTRIC_GRID", "MAN_MADE" ]
+  },
+  {
+    "type": "overmap_special",
+    "id": "o_lightindustry",
+    "overmaps": [
+      { "point": [ 1, 0, 0 ], "overmap": "s_lightindustry_road_0_south" },
+      { "point": [ 0, 0, 0 ], "overmap": "s_lightindustry_road_1_south" },
+      { "point": [ 1, -1, 0 ], "overmap": "s_lightindustry_00_south" },
+      { "point": [ 1, -1, 1 ], "overmap": "s_lightindustry_00_roof_south" },
+      { "point": [ 0, -1, 0 ], "overmap": "s_lightindustry_01_south" },
+      { "point": [ 0, -1, 1 ], "overmap": "s_lightindustry_01_roof_south" },
+      { "point": [ 1, 1, 0 ], "overmap": "s_lightindustry_10_south" },
+      { "point": [ 1, 1, 1 ], "overmap": "s_lightindustry_10_roof_south" },
+      { "point": [ 0, 1, 0 ], "overmap": "s_lightindustry_11_south" },
+      { "point": [ 0, 1, 1 ], "overmap": "s_lightindustry_11_roof_south" }
+    ],
+    "connections": [ { "point": [ -1, 0, 0 ], "connection": "local_road", "from": [ 0, 0, 0 ] } ],
+    "locations": [ "wilderness" ],
+    "city_distance": [ 1, 40 ],
+    "city_sizes": [ 4, -1 ],
+    "occurrences": [ 0, 8 ],
+    "flags": [ "CLASSIC", "MAN_MADE" ]
   }
 ]

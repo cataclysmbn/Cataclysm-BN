@@ -17,6 +17,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <stack>
 #include <stdexcept>
@@ -51,9 +52,12 @@
 #include "overmap_location.h"
 #include "overmap_label.h"
 #include "overmap_label_note.h"
+#include "note_label_utils.h"
 #include "overmap_special.h"
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
+#include "regional_settings.h"
+#include "mongroup.h"
 #include "path_info.h"
 #include "point.h"
 #include "rng.h"
@@ -103,6 +107,7 @@ static Uint64 lastupdate = 0;
 static uint32_t interval = 25;
 static bool needupdate = false;
 static bool need_invalidate_framebuffers = false;
+static bool clear_display_buffer_before_redraw = false;
 static const std::string empty_string;
 
 palette_array windowsPalette;
@@ -795,6 +800,23 @@ static point draw_string( Font &font,
     return p;
 }
 
+void draw_sdl_text_outlined( const sdl_text_outline_options &opts )
+{
+    if( !font || !renderer || opts.text.empty() ) { return; }
+
+    const auto outline_thickness = std::max( 0, opts.outline_thickness );
+    for( auto y = -outline_thickness; y <= outline_thickness; ++y ) {
+        for( auto x = -outline_thickness; x <= outline_thickness; ++x ) {
+            if( x != 0 || y != 0 ) {
+                draw_string( *font, renderer, geometry, opts.text, opts.pos_pixel + point( x, y ),
+                             static_cast<unsigned char>( opts.outline_color ) );
+            }
+        }
+    }
+    draw_string( *font, renderer, geometry, opts.text, opts.pos_pixel,
+                 static_cast<unsigned char>( opts.text_color ) );
+}
+
 void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bool blink )
 {
     if( !g ) {
@@ -876,6 +898,15 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         return false;
     };
 
+    // Cache display_oter substitution strings for the active region.
+    const regional_settings &active_region_settings = ACTIVE_OVERMAP_BUFFER.get_settings(
+                center_abs_omt );
+    const bool om_has_display_oter = !active_region_settings.display_oter.is_empty();
+    const std::string om_default_oter_str = active_region_settings.default_oter.str();
+    const std::string om_display_oter_str = om_has_display_oter
+                                            ? active_region_settings.display_oter.str()
+                                            : std::string{};
+
     for( int row = min_row; row < max_row; row++ ) {
         for( int col = min_col; col < max_col; col++ ) {
             const tripoint_abs_omt omp = corner_NW + point( col, row );
@@ -899,6 +930,9 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
             if( id.empty() ) {
                 if( see ) {
                     id = get_omt_id_rotation_and_subtile( omp, rotation, subtile );
+                    if( om_has_display_oter && id == om_default_oter_str ) {
+                        id = om_display_oter_str;
+                    }
                 } else {
                     id = "unknown_terrain";
                 }
@@ -947,45 +981,79 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                 if( blink && uistate.overmap_debug_mongroup ) {
                     const std::vector<mongroup *> mgroups = ACTIVE_OVERMAP_BUFFER.monsters_at( omp );
                     if( !mgroups.empty() ) {
-                        auto mgroup_iter = mgroups.begin();
-                        std::advance( mgroup_iter, rng( 0, mgroups.size() - 1 ) );
-                        const tile_search_params tile {( *mgroup_iter )->type->defaultMonster.str(), C_NONE, empty_string, 0, 0};
-                        draw_from_id_string( tile, omp.raw(), std::nullopt,
-                                             std::nullopt, lit_level::LIT, false, 0, false );
-                    }
-                }
-                const int horde_size = ACTIVE_OVERMAP_BUFFER.get_horde_size( omp );
-                if( showhordes && los && horde_size >= HORDE_VISIBILITY_SIZE ) {
-                    // a little bit of hardcoded fallbacks for hordes
-                    std::string horde_id;
-                    if( find_tile_with_season( id ) ) {
-                        horde_id = string_format( "overmap_horde_%d", horde_size );
-                    } else {
-                        switch( horde_size ) {
-                            case HORDE_VISIBILITY_SIZE:
-                                horde_id = "mon_zombie";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 1:
-                                horde_id = "mon_zombie_tough";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 2:
-                                horde_id = "mon_zombie_brute";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 3:
-                                horde_id = "mon_zombie_hulk";
-                                break;
-                            case HORDE_VISIBILITY_SIZE + 4:
-                                horde_id = "mon_zombie_necro";
-                                break;
-                            default:
-                                horde_id = "mon_zombie_master";
-                                break;
+                        const auto horde_it = std::ranges::find_if( mgroups, []( const mongroup * mgp ) {
+                            return mgp != nullptr && mgp->horde;
+                        } );
+                        const mongroup *chosen = horde_it != mgroups.end() ? *horde_it : mgroups.front();
+                        if( chosen != nullptr ) {
+                            const tile_search_params tile { chosen->type->defaultMonster.str(), C_NONE, empty_string, 0, 0 };
+                            draw_from_id_string( tile, omp.raw(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
                         }
                     }
-                    const tile_search_params tile { horde_id, C_NONE, empty_string, 0, 0};
-                    draw_from_id_string(
-                        tile, omp.raw(), std::nullopt, std::nullopt,
-                        lit_level::LIT, false, 0, false );
+                }
+                const auto fallback_horde_id = [&]( const tripoint_abs_omt & pos ) -> std::string {
+                    const auto groups = ACTIVE_OVERMAP_BUFFER.monsters_at( pos );
+                    const auto horde_it = std::ranges::find_if( groups, []( const mongroup * mgp )
+                    {
+                        return mgp != nullptr && mgp->horde && mgp->type.is_valid();
+                    } );
+                    if( horde_it == groups.end() )
+                    {
+                        return "mon_zombie";
+                    }
+
+                    const mongroup *mgp = *horde_it;
+                    const MonsterGroup &group = mgp->type.obj();
+                    const auto default_id = group.defaultMonster.is_valid()
+                    ? group.defaultMonster.str()
+                    : std::string( "mon_zombie" );
+                    if( group.monsters.empty() )
+                    {
+                        return default_id;
+                    }
+
+                    const auto best_entry = std::ranges::max_element( group.monsters, []( const auto & lhs,
+                            const auto & rhs )
+                    {
+                        return lhs.frequency < rhs.frequency;
+                    } );
+                    if( best_entry == group.monsters.end() )
+                    {
+                        return default_id;
+                    }
+                    return best_entry->name.is_valid() ? best_entry->name.str() : default_id;
+                };
+
+                const int horde_size = ACTIVE_OVERMAP_BUFFER.get_horde_size( omp );
+                if( showhordes && los && horde_size >= HORDE_VISIBILITY_SIZE ) {
+                    // Prefer overmap horde sprites; fall back to a zombie monster sprite if missing.
+                    const int clamped_size = std::clamp( horde_size, 1, 90 );
+                    const std::string horde_id = string_format( "overmap_horde_%d", clamped_size );
+                    if( find_tile_with_season( horde_id ) ) {
+                        const tile_search_params tile { horde_id, C_NONE, empty_string, 0, 0 };
+                        draw_from_id_string(
+                            tile, omp.raw(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
+                    } else {
+                        auto fallback_id = fallback_horde_id( omp );
+                        if( !find_tile_with_season( fallback_id ) ) {
+                            const auto groups = ACTIVE_OVERMAP_BUFFER.monsters_at( omp );
+                            const auto horde_it = std::ranges::find_if( groups, []( const mongroup * mgp ) {
+                                return mgp != nullptr && mgp->horde && mgp->type.is_valid();
+                            } );
+                            if( horde_it != groups.end() && ( *horde_it ) != nullptr ) {
+                                const MonsterGroup &group = ( *horde_it )->type.obj();
+                                if( group.defaultMonster.is_valid() ) {
+                                    fallback_id = group.defaultMonster.str();
+                                }
+                            }
+                            if( !find_tile_with_season( fallback_id ) ) {
+                                fallback_id = "mon_zombie";
+                            }
+                        }
+                        const tile_search_params tile { fallback_id, C_NONE, empty_string, 0, 0 };
+                        draw_from_id_string(
+                            tile, omp.raw(), std::nullopt, std::nullopt, lit_level::LIT, false, 0, false );
+                    }
                 }
             }
 
@@ -1224,7 +1292,11 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
                         note_text );
             const size_t pos = std::get<2>( note_info );
             if( pos != std::string::npos ) {
-                notes_window_text.emplace_back( std::get<1>( note_info ), note_text.substr( pos ) );
+                const auto display_note_text =
+                    note_label_utils::strip_label_commands( note_text.substr( pos ) );
+                if( !display_note_text.empty() ) {
+                    notes_window_text.emplace_back( std::get<1>( note_info ), display_note_text );
+                }
             }
             if( ACTIVE_OVERMAP_BUFFER.is_marked_dangerous( center_abs_omt ) ) {
                 notes_window_text.emplace_back( c_red, _( "DANGEROUS AREA!" ) );
@@ -1528,6 +1600,12 @@ static bool draw_window( Font_Ptr &font, const catacurses::window &w )
 
 void cata_cursesport::curses_drawwindow( const catacurses::window &w )
 {
+    if( clear_display_buffer_before_redraw ) {
+        clear_display_buffer_before_redraw = false;
+        SetRenderTarget( renderer, display_buffer );
+        ClearScreen();
+    }
+
     if( scaling_factor > 1 ) {
         SDL_SetRenderLogicalPresentation( renderer.get(), WindowWidth / scaling_factor,
                                           WindowHeight / scaling_factor, SDL_LOGICAL_PRESENTATION_STRETCH );
@@ -3980,6 +4058,43 @@ window_dimensions get_window_dimensions( point pos, point size )
     return get_window_dimensions( {}, pos, size );
 }
 
+auto get_sdl_display_buffer_size() -> point
+{
+    if( !display_buffer ) { return point_zero; }
+
+    auto width = 0;
+    auto height = 0;
+    if( SDL_QueryTexture( display_buffer.get(), nullptr, nullptr, &width, &height ) != 0 ) {
+        return point_zero;
+    }
+    return point( width, height );
+}
+
+auto get_sdl_window_size() -> point
+{
+    return point( std::max( 1, WindowWidth / scaling_factor ),
+                  std::max( 1, WindowHeight / scaling_factor ) );
+}
+
+auto get_sdl_font_size() -> point
+{
+    return point( fontwidth, fontheight );
+}
+
+void clear_sdl_display_buffer()
+{
+    if( !renderer || !display_buffer ) { return; }
+
+    SetRenderTarget( renderer, display_buffer );
+    ClearScreen();
+}
+
+void clear_sdl_display_buffer_before_redraw()
+{
+    clear_display_buffer_before_redraw = true;
+    reinitialize_framebuffer( true );
+}
+
 std::optional<tripoint> input_context::get_coordinates( const catacurses::window &capture_win_ )
 {
     if( !coordinate_input_received ) {
@@ -4111,16 +4226,15 @@ bool is_draw_tiles_mode()
 bool save_screenshot( const std::string &file_path )
 {
     // SDL3: SDL_RenderReadPixels returns a new SDL_Surface* owned by caller.
-    SDL_Surface *readback = SDL_RenderReadPixels( renderer.get(), nullptr );
+    auto readback = SDL_Surface_Ptr( SDL_RenderReadPixels( renderer.get(), nullptr ) );
     if( printErrorIf( !readback, "save_screenshot: cannot read data from SDL_Renderer." ) ) {
         return false;
     }
 
     // Save screenshot as PNG file
-    const bool ok = !printErrorIf( !IMG_SavePNG( readback, file_path.c_str() ),
+    const bool ok = !printErrorIf( !IMG_SavePNG( readback.get(), file_path.c_str() ),
                                    std::string( "save_screenshot: cannot save screenshot file: " +
                                            file_path ).c_str() );
-    SDL_DestroySurface( readback );
     return ok;
 }
 

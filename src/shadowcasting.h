@@ -154,6 +154,11 @@ struct cache_grid_ref {
 template<typename T>
 using array_of_grids_of = std::array<cache_grid_ref<T>, OVERMAP_LAYERS>;
 
+// ── Z-level physical scale ────────────────────────────────────────────────────
+// One z-level corresponds to ~1.8 horizontal tiles in height.
+// Used by cast_zlight and the 3D LoS DDA check in build_seen_cache.
+inline constexpr float Z_LEVEL_SCALE = 1.8f;
+
 // ── Built-in Beer-Lambert sight / model functions ─────────────────────────────
 // Inlined here so both shadowcasting.cpp and lightmap.cpp can use them without
 // a separate translation-unit dependency.
@@ -246,7 +251,7 @@ void castLightOctants_q(
 void cast_zlight(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
-    const array_of_grids_of<const bool> &floor_caches,
+    const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
     const tripoint &origin, int offset_distance, float numerator,
     const light_model &model );

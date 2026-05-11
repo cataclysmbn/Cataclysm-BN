@@ -3,8 +3,8 @@
   "version-string": "experimental",
   "dependencies": [
     "sdl3",
-    { "name": "sdl3-image", "features": [ "png", "jpeg" ] },
-    "sdl3-mixer",
+    { "name": "sdl3-image", "features": [ "png", "jpeg", "webp" ] },
+    { "name": "sdl3-mixer", "features": [ "libflac", "libvorbis", "libxmp", "mpg123", "wavpack" ] },
     "sdl3-ttf",
     "sqlite3",
     "zlib"

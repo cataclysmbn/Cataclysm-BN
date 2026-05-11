@@ -14,6 +14,7 @@
       [ "flashbang", 30 ],
       [ "goggles_ir", 10 ],
       [ "goggles_nv", 10 ],
+      [ "army_powered_earmuffs", 10 ],
       [ "helmet_lobster", 5 ],
       [ "helmet_riot", 5 ],
       [ "holo_sight", 20 ],
@@ -36,6 +37,27 @@
       [ "shield_riot", 20 ],
       [ "shield_ballistic", 5 ],
       [ "shield_ballistic_large", 5 ]
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "gear_labsecurity",
+    "subtype": "collection",
+    "//": "Used for the prisoner containment guard gear lockers",
+    "items": [
+      { "group": "cop_weapons", "prob": 40 },
+      [ "helmet_riot", 40 ],
+      [ "armor_riot", 40 ],
+      [ "heavy_flashlight", 30 ],
+      [ "baton", 30 ],
+      [ "two_way_radio", 20 ],
+      [ "tazer", 30 ],
+      [ "tacvest", 30 ],
+      [ "holster", 30 ],
+      [ "kevlar", 40 ],
+      [ "mask_gas", 20 ],
+      [ "shield_riot", 20 ],
+      [ "dragonskin", 5 ]
     ]
   },
   {

@@ -111,6 +111,41 @@ TEST_CASE( "eternal seasons", "[weather]" )
     }
 }
 
+TEST_CASE( "water temperatures track season temperatures", "[weather]" )
+{
+    auto generator = weather_generator();
+    auto &season_stats = generator.season_stats;
+    season_stats[SPRING].average_temperature = 10_c;
+    season_stats[SUMMER].average_temperature = 40_c;
+    season_stats[AUTUMN].average_temperature = 10_c;
+    season_stats[WINTER].average_temperature = -20_c;
+    generator.temperature_daily_amplitude = 0_c;
+    generator.temperature_noise_amplitude = 0_c;
+
+    const auto current_time = calendar::turn_zero + calendar::season_length() / 2;
+    const auto spring_calendar = calendar_config( calendar::turn_zero, calendar::turn_zero, SPRING,
+                                 true );
+    const auto summer_calendar = calendar_config( calendar::turn_zero, calendar::turn_zero, SUMMER,
+                                 true );
+    const auto winter_calendar = calendar_config( calendar::turn_zero, calendar::turn_zero, WINTER,
+                                 true );
+
+    const auto spring_water_temperature = generator.get_water_temperature( tripoint_abs_ms(),
+                                          current_time,
+                                          spring_calendar, 0 );
+    const auto summer_water_temperature = generator.get_water_temperature( tripoint_abs_ms(),
+                                          current_time,
+                                          summer_calendar, 0 );
+    const auto winter_water_temperature = generator.get_water_temperature( tripoint_abs_ms(),
+                                          current_time,
+                                          winter_calendar, 0 );
+
+    CHECK( winter_water_temperature == 0_c );
+    CHECK( spring_water_temperature > winter_water_temperature );
+    CHECK( summer_water_temperature > spring_water_temperature );
+    CHECK( summer_water_temperature == 30_c );
+}
+
 TEST_CASE( "weather realism", "[.]" )
 // Check our simulated weather against numbers from real data
 // from a few years in a few locations in New England. The numbers

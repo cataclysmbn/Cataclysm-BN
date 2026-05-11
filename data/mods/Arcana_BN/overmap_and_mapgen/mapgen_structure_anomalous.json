@@ -1,0 +1,329 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "arcana_field_anomalous_buffer" ],
+    "weight": 250,
+    "object": {
+      "fill_ter": "t_region_groundcover",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "palettes": [ "arcana_palette" ],
+      "set": [
+        { "point": "terrain", "id": "t_region_groundcover_barren", "x": [ 0, 23 ], "y": [ 0, 23 ], "repeat": [ 100, 300 ] },
+        { "point": "terrain", "id": "t_platform_resin", "x": [ 3, 20 ], "y": [ 3, 20 ], "repeat": [ 5, 50 ] },
+        { "point": "trap", "id": "tr_archon_hallu_trap", "x": [ 3, 20 ], "y": [ 3, 20 ], "repeat": [ 1, 2 ] },
+        { "point": "terrain", "id": "t_wall_resin", "x": [ 1, 2 ], "y": [ 1, 2 ], "repeat": [ 0, 1 ] },
+        { "point": "terrain", "id": "t_wall_resin", "x": [ 21, 22 ], "y": [ 1, 2 ], "repeat": [ 0, 1 ] },
+        { "point": "terrain", "id": "t_wall_resin", "x": [ 1, 2 ], "y": [ 21, 22 ], "repeat": [ 0, 1 ] },
+        { "point": "terrain", "id": "t_wall_resin", "x": [ 21, 22 ], "y": [ 21, 22 ], "repeat": [ 0, 1 ] }
+      ],
+      "place_monsters": [ { "monster": "GROUP_ARCHON_RESURGENCE", "x": [ 0, 23 ], "y": [ 0, 23 ], "density": 0.01 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "arcana_structure_anomalous_entrance" ],
+    "weight": 250,
+    "object": {
+      "fill_ter": "t_region_groundcover_barren",
+      "rows": [
+        "4444               000  ",
+        "444     000        0a0  ",
+        "44      0a0        000  ",
+        "4       000             ",
+        "                      00",
+        "                     003",
+        "             00000000333",
+        "        0000003333333333",
+        " 000   00333333222222222",
+        " 0a0   03328558211111111",
+        " 000   03221111111111111",
+        "       03811111111122222",
+        "       03511111122221111",
+        "      003511111111111I66",
+        "      033811111111I66666",
+        "      03221111111666F666",
+        "      0321112111I66666..",
+        "      0321112116666.....",
+        "000   03211121I666......",
+        "0a0   03211221666....==5",
+        "000   032112116F6...==..",
+        "     00321121I666..==...",
+        "    003321121666...=....",
+        "    033321121666...5...>"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "terrain": {
+        "1": "t_floor_resin",
+        "2": "t_wall_resin",
+        "3": "t_platform_resin",
+        "4": "t_region_groundcover",
+        "5": "t_resin_hole_c",
+        "6": [ "t_rock_floor", "t_floor_resin" ],
+        "8": "t_wall_resin_cage",
+        "0": [ "t_region_groundcover_barren", "t_platform_resin" ],
+        "F": [ "t_rock_floor", "t_floor_resin" ],
+        "a": "t_platform_resin"
+      },
+      "mapping": { "a": { "items": [ { "item": "cult_sacrifice", "chance": 100 } ] } },
+      "furniture": { "8": "f_null", "F": "f_alien_tendril" },
+      "place_monsters": [ { "monster": "GROUP_ARCHON_RESURGENCE", "x": [ 0, 23 ], "y": [ 0, 23 ], "density": 0.05 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "arcana_structure_anomalous_surface" ],
+    "weight": 250,
+    "object": {
+      "fill_ter": "t_region_groundcover_barren",
+      "rows": [
+        "4444                    ",
+        "444                a    ",
+        "44       a              ",
+        "4                       ",
+        "                      00",
+        "                    0003",
+        "             00000000333",
+        "        0000003333333333",
+        "       00333333222222222",
+        "  a    03328888211111111",
+        "       03221111111111111",
+        "       03211111111122222",
+        "       03811111122221111",
+        "      003811111111111I66",
+        "      033811111111I66666",
+        "      03221111111666F666",
+        "      0321112211I66666..",
+        "      0321112116666.....",
+        "      03211121I666......",
+        "      03211221666....==5",
+        "      032112116F6...==..",
+        " a   00321121I666..==...",
+        "    003321121666...=....",
+        "    033321121666...5...>"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "terrain": {
+        "1": "t_floor_resin",
+        "2": "t_wall_resin",
+        "3": "t_platform_resin",
+        "4": "t_region_groundcover",
+        "5": "t_resin_hole_c",
+        "6": [ "t_rock_floor", "t_floor_resin" ],
+        "8": "t_wall_resin_cage",
+        "0": [ "t_region_groundcover_barren", "t_platform_resin" ],
+        "F": [ "t_rock_floor", "t_floor_resin" ],
+        "a": "t_platform_resin"
+      },
+      "furniture": { "8": "f_null", "F": "f_alien_tendril" },
+      "mapping": { "a": { "items": [ { "item": "cult_sacrifice", "chance": 100 } ] } },
+      "place_monsters": [ { "monster": "GROUP_ARCHON_RESURGENCE", "x": [ 0, 23 ], "y": [ 0, 23 ], "density": 0.1 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "arcana_structure_anomalous_underground" ],
+    "weight": 250,
+    "object": {
+      "fill_ter": "t_rock",
+      "rows": [
+        "                        ",
+        " =======================",
+        " =F222222=222F=333333335",
+        " =2222222=2222=3333F3335",
+        " =22===55===22=33333333=",
+        " =22=333333=22=55=======",
+        " =22=333333522222222.222",
+        " =22=339333522222222.222",
+        " =22=333333=--------=55=",
+        " =22=333333522222F22.222",
+        " =22=333333522222222.222",
+        " =55========|||||5||||||",
+        " =333333=22|111111|1111|",
+        " =333933522|1|||||||||1|",
+        " =333333522|1|11|1111|11",
+        " =333333=22|1||1|1||1|1|",
+        " =55=====22|11|111|1111|",
+        " =222222-22||1||1||1||||",
+        " =F22222-F2||11111|1111|",
+        "======..=..|||1|1111||1|",
+        "=3333522-22|111|1|1||=5=",
+        "=3933522-22|1|||1|||==.=",
+        "=3333=--=22|111|11115...",
+        "=3333=F2-22|||.|||||==.<"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "set": [
+        { "point": "trap", "id": "tr_archon_map_regen_underground_1", "x": 14, "y": 23 },
+        { "line": "trap", "id": "tr_archon_map_regen_hall_1", "x": 6, "x2": 7, "y": 19, "y2": 19 },
+        { "line": "trap", "id": "tr_archon_map_regen_hall_1", "x": 9, "x2": 10, "y": 19, "y2": 19 },
+        { "line": "trap", "id": "tr_archon_map_regen_hall_2", "x": 20, "x2": 20, "y": 6, "y2": 7 },
+        { "line": "trap", "id": "tr_archon_map_regen_hall_2", "x": 20, "x2": 20, "y": 9, "y2": 10 }
+      ],
+      "terrain": {
+        "|": [ [ "t_rock_smooth", 5 ], [ "t_wall_resin", 4 ], "t_wall_resin_cage" ],
+        "-": [ [ "t_rock_smooth", 4 ], "t_wall_resin" ],
+        "1": [ [ "t_rock_floor", 2 ], "t_floor_resin" ],
+        "2": [ [ "t_rock_floor", 9 ], "t_floor_resin" ],
+        "3": [ [ "t_moss_underground", 4 ], "t_floor_resin" ],
+        "5": "t_resin_hole_c",
+        "9": [ "t_rock_floor", "t_floor_resin" ],
+        "F": [ "t_rock_floor", "t_floor_resin" ]
+      },
+      "furniture": { "8": "f_null", "9": [ "f_alien_tendril", "f_alien_zapper_altered" ], "F": "f_alien_tendril" },
+      "traps": {
+        "1": [ [ "tr_null", 90 ], [ "tr_archon_hallu_trap", 10 ] ],
+        "2": [ [ "tr_null", 80 ], [ "tr_archon_shadow_trap", 10 ], [ "tr_archon_hallu_trap", 10 ] ],
+        "3": [ [ "tr_null", 70 ], [ "tr_archon_shadow_trap", 10 ], [ "tr_archon_hallu_trap", 10 ], [ "tr_archon_chill_trap", 10 ] ]
+      },
+      "place_loot": [
+        { "item": "bone_human", "x": [ 2, 3 ], "y": [ 22, 23 ], "chance": 50, "repeat": 10 },
+        { "group": "mon_zombie_survivor_elite_death_drops", "x": [ 2, 3 ], "y": [ 22, 23 ] }
+      ],
+      "place_monsters": [
+        { "monster": "GROUP_ARCHON_RESURGENCE", "x": [ 0, 11 ], "y": [ 0, 11 ], "density": 0.1 },
+        { "monster": "GROUP_ARCHON_RESURGENCE", "x": [ 12, 23 ], "y": [ 0, 11 ], "density": 0.1 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "arcana_structure_anomalous_finale" ],
+    "weight": 250,
+    "object": {
+      "fill_ter": "t_rock",
+      "rows": [
+        "                       =",
+        "  $$$$$$$$$$$$$$$$     =",
+        " $$..............$$    =",
+        " $..I.I.I.I.I.I...$$$$ =",
+        " $.............rrr$9.$$=",
+        " $..rrrrrrrrrrrrrr#..a$=",
+        " $..rrrrrrrrrrrrrr#..a$=",
+        " $.............rrr$9.$$=",
+        " $..I.I.I.I.I.I...$$$$ =",
+        " $...............$$=====",
+        " $..$$$$$$$$$$$$$$===2F=",
+        " $$..+..$ =========.522=",
+        "  $$$$..$ =.52222=..====",
+        "======55===.=22225.==---",
+        "=F25222222=.=22F2====-11",
+        "====2222225.=2222=----1|",
+        "=2F=22F222===5====-1111|",
+        "=22=222222=...=----1||||",
+        "=55========5===-1||1111|",
+        "=....5222222=---1|11||1|",
+        "======222222=-11111||=5=",
+        "=....5222F22=-1|1|||==.=",
+        "=....5222222=-1|11115...",
+        "=..==========-.|||||==.<"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "set": [
+        { "point": "trap", "id": "tr_archon_map_regen_underground_2", "x": 14, "y": 23 },
+        { "point": "trap", "id": "tr_archon_map_regen_finale", "x": 4, "y": 11 }
+      ],
+      "terrain": {
+        "|": [ [ "t_rock_smooth", 7 ], [ "t_wall_resin", 2 ], "t_wall_resin_cage" ],
+        "-": [ [ "t_rock_smooth", 9 ], "t_wall_resin" ],
+        "#": "t_rock_archon_barricade",
+        "$": "t_rock_archon_vault",
+        "1": [ [ "t_rock_floor", 4 ], "t_floor_resin" ],
+        "2": [ [ "t_rock_floor", 10 ], [ "t_moss_underground", 3 ], "t_floor_resin", "t_swater_sh" ],
+        "5": "t_resin_hole_c",
+        "F": "t_rock_floor",
+        "9": "t_archon_pedestral_backup"
+      },
+      "furniture": { "F": "f_alien_tendril", "9": "f_null" },
+      "traps": {
+        "1": [ [ "tr_null", 85 ], [ "tr_archon_shadow_trap", 5 ], [ "tr_archon_hallu_trap", 10 ] ],
+        "2": [ [ "tr_null", 80 ], [ "tr_archon_shadow_trap", 10 ], [ "tr_archon_hallu_trap", 10 ] ]
+      },
+      "place_loot": [
+        { "item": "silver_glyph", "x": [ 7, 8 ], "y": [ 20, 21 ] },
+        { "group": "summoner_casualties", "x": [ 7, 8 ], "y": [ 20, 21 ] },
+        { "item": "silver_glyph", "x": [ 7, 8 ], "y": [ 15, 16 ] },
+        { "group": "summoner_casualties", "x": [ 7, 8 ], "y": [ 15, 16 ] },
+        { "item": "silver_glyph", "x": [ 14, 15 ], "y": 13 },
+        { "group": "summoner_casualties", "x": [ 14, 15 ], "y": 13 },
+        { "item": "silver_glyph", "x": 1, "y": 16, "chance": 50 },
+        { "group": "summoner_casualties", "x": 1, "y": 16, "chance": 50 },
+        { "item": "silver_glyph", "x": 2, "y": 14, "chance": 50 },
+        { "group": "summoner_casualties", "x": 2, "y": 14, "chance": 50 },
+        { "item": "silver_glyph", "x": 22, "y": 11, "chance": 50 },
+        { "group": "summoner_casualties", "x": 22, "y": 11, "chance": 50 }
+      ],
+      "place_monsters": [
+        { "monster": "GROUP_ARCHON_RESURGENCE", "x": [ 0, 12 ], "y": [ 0, 12 ], "density": 0.1 },
+        { "monster": "GROUP_ARCHON_RESURGENCE", "x": [ 13, 23 ], "y": [ 0, 12 ], "density": 0.1 }
+      ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "arcana_structure_anomalous_roof" ],
+    "weight": 250,
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "               888888888",
+        "          88888844444444",
+        "         884444444444444",
+        "         844444444444444",
+        "         844444444444444",
+        "         844444444444444",
+        "         844444444444444",
+        "        8844444444444444",
+        "        8444444444444444",
+        "        8444444444444444",
+        "        8444444444444444",
+        "        8444444444444444",
+        "        8444444444444444",
+        "        8444444444444444",
+        "        8444444444444444",
+        "        8444444444444444"
+      ],
+      "palettes": [ "arcana_palette" ],
+      "terrain": { "4": "t_resin_roof", "8": "t_wall_resin_cage" },
+      "furniture": { "8": "f_null" }
+    }
+  }
+]

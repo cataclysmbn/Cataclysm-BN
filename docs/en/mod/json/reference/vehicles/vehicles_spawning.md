@@ -16,11 +16,12 @@ Vehicle prototypes do not currently accept copy-from
     "o#o",                                 // Or with palette to be a way to define parts
     "o#o"                                  // Partial definition with palette is also fine
 ],
-"blueprint_origin": { "x": 10, "y": 3 }    // Used by palettes to locate the offset
+"blueprint_origin": { "x": 10, "y": 3 },   // Used by palettes to locate the offset
 "palette": {                               // Palette used by blueprint to set parts on a tile
   "O": [ "airship_balloon_external" ]      // Can only be an array not one string
   "J": [ { "part": "tank", "fuel": "gasoline" }, "battery_car" ], // All part types supported
-}
+},
+"color_palette": "car_standard",           // Vehicle Color Palette used by this car
 "parts": [                                 // Parts list
     { "x": 0, "y": 0, "part": "frame" },   // Part definition, positive x direction is up,
     { "x": 0, "y": 0, "part": "seat" },    // positive y is to the right
@@ -121,4 +122,21 @@ Multiple lines of items may share the same X and Y values.
   "fuel" : -1, // The fuel of the new vehicles.
   "status" : 1  // The status of the new vehicles.
 } } ]
+```
+
+## Vehicle Color Palette
+
+```json
+"type": "vehicle_color_palette",
+"id": "car_standard",                                      // Unique ID
+"palette": [
+  {
+    "fuzzy_ids": [ "board", "windshield", "door", "roo" ], // List of fuzzily matched ids for tinting the below selected color
+    "colors": [
+      { "color": "White aluminium", "weight": 8 },         // Color & Weight, This uses named color
+      { "color": "#622625", "weight": 8 },                 // It can also be a hex code
+      { "color": "Grey", "weight": 8 },                    // Or a fuzzy matched named color
+    ]
+  }
+]
 ```

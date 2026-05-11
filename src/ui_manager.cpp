@@ -442,15 +442,20 @@ void ui_adaptor::screen_resized()
     redraw();
 }
 
-background_pane::background_pane()
+background_pane::background_pane( background_redraw_cb_t redraw_cb ) :
+    ui( ui_adaptor::disable_uis_below{} )
 {
-    ui.on_screen_resize( []( ui_adaptor & ui ) {
-        ui.position_from_window( catacurses::stdscr );
-    } );
+    ui.on_screen_resize( []( ui_adaptor & ui ) { ui.position_from_window( catacurses::stdscr ); } );
     ui.position_from_window( catacurses::stdscr );
-    ui.on_redraw( []( const ui_adaptor & ) {
+    ui.on_redraw( [redraw_cb = std::move( redraw_cb )]( const ui_adaptor & ) {
         catacurses::erase();
         wnoutrefresh( catacurses::stdscr );
+
+        // SDL-only background draws must happen after stdscr is written, otherwise
+        // the curses refresh immediately paints over the custom background.
+        if( redraw_cb ) {
+            redraw_cb();
+        }
     } );
 }
 

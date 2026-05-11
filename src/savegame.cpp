@@ -13,7 +13,9 @@
 
 #include "achievement.h"
 #include "avatar.h"
+#include "calendar.h"
 #include "cata_io.h"
+#include "coordinates.h"
 #include "coordinate_conversions.h"
 #include "creature_tracker.h"
 #include "debug.h"
@@ -96,13 +98,13 @@ void game::serialize( std::ostream &fout )
     json.member( "mostseen", mostseen );
     json.member( "show_zone_overlay", show_zone_overlay );
     // current map coordinates
-    tripoint pos_sm = m.get_abs_sub();
-    const point pos_om = sm_to_om_remain( pos_sm.x, pos_sm.y );
-    json.member( "levx", pos_sm.x );
-    json.member( "levy", pos_sm.y );
-    json.member( "levz", pos_sm.z );
-    json.member( "om_x", pos_om.x );
-    json.member( "om_y", pos_om.y );
+    auto pos_sm = m.get_abs_sub();
+    const auto pos_decomp = project_remain<coords::om>( pos_sm );
+    json.member( "levx", pos_decomp.remainder.x() );
+    json.member( "levy", pos_decomp.remainder.y() );
+    json.member( "levz", pos_sm.z() );
+    json.member( "om_x", pos_decomp.quotient.x() );
+    json.member( "om_y", pos_decomp.quotient.y() );
 
     // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
     json.member( "current_dimension_id", current_dimension_id_ );
@@ -144,7 +146,6 @@ void game::serialize( std::ostream &fout )
         json.member( "origin_pos_x", info.origin_pos.x() );
         json.member( "origin_pos_y", info.origin_pos.y() );
         json.member( "origin_pos_z", info.origin_pos.z() );
-        json.member( "parent_dimension_id", info.parent_dimension_id );
         if( info.bounds ) {
             json.member( "bounds" );
             json.start_object();
@@ -266,7 +267,7 @@ void game::unserialize( std::istream &fin )
                 }
             }
         }
-        g_active_dimension_id = current_dimension_id_;
+        set_active_dimension_id( current_dimension_id_ );
         data.read( "kept_pocket_dimension_id", kept_pocket_dimension_id_ );
 
         // Restore all dimension metadata.  The current dimension is also included
@@ -286,7 +287,6 @@ void game::unserialize( std::istream &fin )
                 dim_data.read( "origin_pos_y", oy );
                 dim_data.read( "origin_pos_z", oz );
                 info.origin_pos = tripoint_abs_sm( ox, oy, oz );
-                dim_data.read( "parent_dimension_id", info.parent_dimension_id );
                 if( dim_data.has_object( "bounds" ) ) {
                     JsonObject bounds_obj = dim_data.get_object( "bounds" );
                     dimension_bounds bounds;
@@ -308,6 +308,14 @@ void game::unserialize( std::istream &fin )
             }
         }
 
+        // Set the calendar's active world type now that loaded_dimensions_ is populated.
+        {
+            auto it = loaded_dimensions_.find( current_dimension_id_ );
+            if( it != loaded_dimensions_.end() ) {
+                calendar::set_active_world_type( it->second.world_type.str() );
+            }
+        }
+
         // Load dimension bounds BEFORE load_map so loadn() can generate
         // boundary submaps for out-of-bounds areas
         if( data.has_object( "dimension_bounds" ) ) {
@@ -325,7 +333,7 @@ void game::unserialize( std::istream &fin )
             bounds.boundary_overmap_terrain = oter_str_id(
                                                   bounds_obj.get_string( "boundary_overmap_terrain" ) );
             m.set_dimension_bounds( bounds );
-            ACTIVE_OVERMAP_BUFFER.set_dimension_bounds( bounds );
+            get_overmapbuffer( current_dimension_id_ ).set_dimension_bounds( bounds );
         }
 
         load_map(
@@ -753,6 +761,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
             jsin.skip_value();
         }
     }
+    sync_mapgen_args_init_flags();
 }
 
 static void unserialize_array_from_compacted_sequence( JsonIn &jsin, bool ( &array )[OMAPX][OMAPY] )
@@ -1354,7 +1363,7 @@ void game::unserialize_master( std::istream &fin )
             } else if( name == "seed" ) {
                 jsin.read( seed );
             } else if( name == "placed_unique_specials" ) {
-                ACTIVE_OVERMAP_BUFFER.deserialize_placed_unique_specials( jsin );
+                get_overmapbuffer( current_dimension_id_ ).deserialize_placed_unique_specials( jsin );
             } else if( name == "weather" ) {
                 JsonObject w = jsin.get_object();
                 w.read( "lightning", get_weather().lightning_active );
@@ -1388,7 +1397,7 @@ void game::unserialize_dimension_data( std::istream &fin )
             std::string name = jsin.get_member_name();
             if( name == "region_type" ) {
                 // Load the region type for this dimension
-                jsin.read( ACTIVE_OVERMAP_BUFFER.current_region_type );
+                jsin.read( get_overmapbuffer( current_dimension_id_ ).current_region_type );
             } else {
                 // Skip unknown members for forward/backward compatibility
                 // (e.g., DDA's "overmapbuffer", "weather", "placed_unique_specials")
@@ -1423,7 +1432,7 @@ void game::serialize_master( std::ostream &fout )
         mission::serialize_all( json );
 
         json.member( "placed_unique_specials" );
-        ACTIVE_OVERMAP_BUFFER.serialize_placed_unique_specials( json );
+        get_overmapbuffer( current_dimension_id_ ).serialize_placed_unique_specials( json );
 
         json.member( "factions", *faction_manager_ptr );
         json.member( "seed", seed );
@@ -1449,7 +1458,7 @@ void game::serialize_dimension_data( std::ostream &fout )
 
         // Save the region type for this dimension
         // This allows different dimensions to have different regional settings
-        json.member( "region_type", ACTIVE_OVERMAP_BUFFER.current_region_type );
+        json.member( "region_type", get_overmapbuffer( current_dimension_id_ ).current_region_type );
 
         // Note: BN doesn't use DDA's global_state or weather_manager
         // Those are stored differently in BN's architecture

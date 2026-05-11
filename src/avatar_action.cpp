@@ -813,6 +813,12 @@ void avatar_action::fire_wielded_weapon( avatar &you )
                          ( aim_activity_actor::use_wielded() ), false );
 }
 
+void avatar_action::fire_ranged_gear( avatar &you, item *gun )
+{
+    you.assign_activity( std::make_unique<player_activity>( aim_activity_actor::use_gear( gun ) ),
+                         false );
+}
+
 void avatar_action::fire_ranged_mutation( avatar &you, detached_ptr<item> &&fake_gun )
 {
     you.assign_activity( std::make_unique<player_activity>( aim_activity_actor::use_mutation(
@@ -1383,4 +1389,34 @@ void avatar_action::unload( avatar &you )
         return;
     }
     avatar_funcs::unload_item( you, *loc );
+}
+
+void avatar_action::unload_all( avatar &you, bool inv )
+{
+    bool unloaded = false;
+    if( inv ) {
+        auto items = you.all_items();
+        for( item *it : items ) {
+            if( item_funcs::can_be_unloaded( *it ) ) {
+                if( !avatar_funcs::unload_item( you, *it ) ) {
+                    break;
+                }
+                unloaded = true;
+            }
+        }
+    } else {
+        auto items = get_map().i_at( you.pos() );
+        for( item *it : items ) {
+            if( item_funcs::can_be_unloaded( *it ) ) {
+                if( !avatar_funcs::unload_item( you, *it ) ) {
+                    break;
+                }
+                unloaded = true;
+            }
+        }
+    }
+
+    if( !unloaded ) {
+        add_msg( _( "You have nothing to unload." ) );
+    }
 }

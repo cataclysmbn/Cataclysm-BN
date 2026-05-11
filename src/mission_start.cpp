@@ -53,7 +53,8 @@ void mission_start::standard( mission * )
 
 void mission_start::place_dog( mission *miss )
 {
-    const tripoint_abs_omt house = mission_util::random_house_in_closest_city();
+    const tripoint_abs_omt house = mission_util::random_house_in_closest_city( get_overmapbuffer(
+                                       miss->get_dimension() ) );
     npc *dev = g->find_npc( miss->npc_id );
     if( dev == nullptr ) {
         debugmsg( "Couldn't find NPC!  %d", miss->npc_id.get_value() );
@@ -63,26 +64,25 @@ void mission_start::place_dog( mission *miss )
     add_msg( _( "%s gave you a dog whistle." ), dev->name );
 
     miss->target = house;
-    ACTIVE_OVERMAP_BUFFER.reveal( house, 6 );
+    get_overmapbuffer( miss->get_dimension() ).reveal( house, 6 );
 
     tinymap doghouse;
     doghouse.load( project_to<coords::sm>( house ), false );
     doghouse.add_spawn( mon_dog, 1, { SEEX, SEEY, house.z() }, true, -1, miss->uid );
-    doghouse.save();
 }
 
 void mission_start::place_zombie_mom( mission *miss )
 {
-    const tripoint_abs_omt house = mission_util::random_house_in_closest_city();
+    const tripoint_abs_omt house = mission_util::random_house_in_closest_city( get_overmapbuffer(
+                                       miss->get_dimension() ) );
 
     miss->target = house;
-    ACTIVE_OVERMAP_BUFFER.reveal( house, 6 );
+    get_overmapbuffer( miss->get_dimension() ).reveal( house, 6 );
 
     tinymap zomhouse;
     zomhouse.load( project_to<coords::sm>( house ), false );
     zomhouse.add_spawn( mon_zombie, 1, { SEEX, SEEY, house.z() }, false, -1, miss->uid,
                         Name::get( nameIsFemaleName | nameIsGivenName ) );
-    zomhouse.save();
 }
 
 void mission_start::kill_horde_master( mission *miss )
@@ -106,10 +106,11 @@ void mission_start::kill_horde_master( mission *miss )
     find_params.search_layers = { 0, 0 };
 
     const tripoint_abs_omt center = p->global_omt_location();
-    tripoint_abs_omt site = ACTIVE_OVERMAP_BUFFER.find_closest( center, find_params );
+    tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest( center,
+                            find_params );
 
     miss->target = site;
-    ACTIVE_OVERMAP_BUFFER.reveal( site, 6 );
+    get_overmapbuffer( miss->get_dimension() ).reveal( site, 6 );
     tinymap tile;
     tile.load( project_to<coords::sm>( site ), false );
     tile.add_spawn( mon_zombie_master, 1, { SEEX, SEEY, site.z() }, false, -1, miss->uid,
@@ -125,23 +126,23 @@ void mission_start::kill_horde_master( mission *miss )
     }
     tile.add_spawn( mon_zombie_necro, 2, { SEEX, SEEY, site.z() } );
     tile.add_spawn( mon_zombie_hulk, 1, { SEEX, SEEY, site.z() } );
-    tile.save();
 }
 
-void mission_start::kill_nemesis( mission * )
+void mission_start::kill_nemesis( mission *miss )
 {
     const tripoint_abs_omt center = get_player_character().global_omt_location();
+    auto &omb = get_overmapbuffer( miss->get_dimension() );
     omt_find_params params{};
     params.types.emplace_back( "field", ot_match_type::type );
     params.search_range = { 0, rng( 40, 80 ) };
     params.search_layers = omt_find_above_ground_layer;
 
-    const tripoint_abs_omt site = ACTIVE_OVERMAP_BUFFER.find_random( center, params );
+    const tripoint_abs_omt site = omb.find_random( center, params );
     if( site == overmap::invalid_tripoint ) {
         return;
     }
 
-    ACTIVE_OVERMAP_BUFFER.add_nemesis( site );
+    omb.add_nemesis( site );
 }
 
 /*
@@ -199,7 +200,7 @@ static tripoint find_potential_computer_point( const tinymap &compmap )
     }
     // if there's no possible location, then we have to overwrite an existing console...
     const tripoint fallback( rng( rng_x_min, rng_x_max ), rng( rng_y_min, rng_y_max ),
-                             compmap.get_abs_sub().z );
+                             compmap.get_abs_sub().z() );
     return random_entry( *used, fallback );
 }
 
@@ -228,23 +229,24 @@ void mission_start::place_npc_software( mission *miss )
 
     tripoint_abs_omt place;
     if( type == "house" ) {
-        place = mission_util::random_house_in_closest_city();
+        place = mission_util::random_house_in_closest_city( get_overmapbuffer( miss->get_dimension() ) );
     } else {
         omt_find_params find_params{};
         find_params.types.emplace_back( "s_pharm", ot_match_type::type );
         find_params.search_range = { 0, 0 };
         find_params.search_layers = { 0, 0 };
 
-        place = ACTIVE_OVERMAP_BUFFER.find_closest( dev->global_omt_location(), find_params );
+        place = get_overmapbuffer( miss->get_dimension() ).find_closest( dev->global_omt_location(),
+                find_params );
     }
     miss->target = place;
-    ACTIVE_OVERMAP_BUFFER.reveal( place, 6 );
+    get_overmapbuffer( miss->get_dimension() ).reveal( place, 6 );
 
     tinymap compmap;
     compmap.load( project_to<coords::sm>( place ), false );
     tripoint comppoint;
 
-    oter_id oter = ACTIVE_OVERMAP_BUFFER.ter( place );
+    oter_id oter = get_overmapbuffer( miss->get_dimension() ).ter( place );
     if( is_ot_match( "house", oter, ot_match_type::prefix ) ||
         is_ot_match( "s_pharm", oter, ot_match_type::type ) || oter == "" ) {
         comppoint = find_potential_computer_point( compmap );
@@ -255,14 +257,14 @@ void mission_start::place_npc_software( mission *miss )
                         dev->name ), 0 );
     tmpcomp->set_mission( miss->get_id() );
     tmpcomp->add_option( _( "Download Software" ), COMPACT_DOWNLOAD_SOFTWARE, 0 );
-    compmap.save();
 }
 
 void mission_start::place_priest_diary( mission *miss )
 {
-    const tripoint_abs_omt place = mission_util::random_house_in_closest_city();
+    const tripoint_abs_omt place = mission_util::random_house_in_closest_city( get_overmapbuffer(
+                                       miss->get_dimension() ) );
     miss->target = place;
-    ACTIVE_OVERMAP_BUFFER.reveal( place, 2 );
+    get_overmapbuffer( miss->get_dimension() ).reveal( place, 2 );
     tinymap compmap;
     compmap.load( project_to<coords::sm>( place ), false );
 
@@ -276,7 +278,6 @@ void mission_start::place_priest_diary( mission *miss )
     const tripoint fallback( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), place.z() );
     const tripoint comppoint = random_entry( valid, fallback );
     compmap.spawn_item( comppoint, "priest_diary" );
-    compmap.save();
 }
 
 void mission_start::place_deposit_box( mission *miss )
@@ -295,7 +296,8 @@ void mission_start::place_deposit_box( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = { 0, 0 };
 
-    tripoint_abs_omt site = ACTIVE_OVERMAP_BUFFER.find_closest( p->global_omt_location(), find_params );
+    tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest(
+                                p->global_omt_location(), find_params );
 
     if( site == overmap::invalid_tripoint ) {
         site = p->global_omt_location();
@@ -303,7 +305,7 @@ void mission_start::place_deposit_box( mission *miss )
     }
 
     miss->target = site;
-    ACTIVE_OVERMAP_BUFFER.reveal( site, 2 );
+    get_overmapbuffer( miss->get_dimension() ).reveal( site, 2 );
 
     tinymap compmap;
     compmap.load( project_to<coords::sm>( site ), false );
@@ -321,7 +323,6 @@ void mission_start::place_deposit_box( mission *miss )
     const tripoint fallback( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), site.z() );
     const tripoint comppoint = random_entry( valid, fallback );
     compmap.spawn_item( comppoint, "safe_box" );
-    compmap.save();
 }
 
 void mission_start::find_safety( mission *miss )
@@ -350,7 +351,7 @@ void mission_start::find_safety( mission *miss )
                         check.x() += radius;
                         break;
                 }
-                if( ACTIVE_OVERMAP_BUFFER.is_safe( check ) ) {
+                if( get_overmapbuffer( miss->get_dimension() ).is_safe( check ) ) {
                     miss->target = check;
                     return;
                 }
@@ -386,7 +387,6 @@ void mission_start::ranch_nurse_1( mission *miss )
     bay.draw_square_furn( f_rack, point( 16, 9 ), point( 17, 9 ) );
     bay.spawn_item( point( 16, 9 ), "bandages", rng( 1, 3 ) );
     bay.spawn_item( point( 17, 9 ), "aspirin", rng( 1, 2 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_2( mission *miss )
@@ -399,7 +399,6 @@ void mission_start::ranch_nurse_2( mission *miss )
     bay.draw_square_furn( f_counter, point( 3, 7 ), point( 5, 7 ) );
     bay.draw_square_furn( f_rack, point( 8, 4 ), point( 8, 5 ) );
     bay.spawn_item( point( 8, 4 ), "manual_first_aid" );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_3( mission *miss )
@@ -412,13 +411,11 @@ void mission_start::ranch_nurse_3( mission *miss )
     bay.draw_square_ter( t_dirt, point( 2, 16 ), point( 9, 23 ) );
     bay.draw_square_ter( t_dirt, point( 13, 16 ), point( 20, 23 ) );
     bay.draw_square_ter( t_dirt, point( 10, 17 ), point( 12, 23 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
     bay.draw_square_ter( t_dirt, point( 2, 0 ), point( 20, 2 ) );
     bay.draw_square_ter( t_dirt, point( 10, 3 ), point( 12, 4 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_4( mission *miss )
@@ -436,7 +433,6 @@ void mission_start::ranch_nurse_4( mission *miss )
     bay.draw_square_ter( t_dirt, point( 10, 18 ), point( 12, 23 ) );
     bay.ter_set( point( 9, 19 ), t_door_frame );
     bay.ter_set( point( 13, 19 ), t_door_frame );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -447,7 +443,6 @@ void mission_start::ranch_nurse_4( mission *miss )
     bay.draw_square_ter( t_dirt, point( 14, 0 ), point( 17, 2 ) );
     bay.ter_set( point( 9, 1 ), t_door_frame );
     bay.ter_set( point( 13, 1 ), t_door_frame );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_5( mission *miss )
@@ -463,13 +458,11 @@ void mission_start::ranch_nurse_5( mission *miss )
     bay.ter_set( point( 20, 18 ), t_window_frame );
     bay.ter_set( point( 20, 21 ), t_window_frame );
     bay.ter_set( point( 11, 17 ), t_window_frame );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
     bay.translate( t_wall_half, t_wall_wood );
     bay.draw_square_ter( t_dirt, point( 10, 0 ), point( 12, 4 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_6( mission *miss )
@@ -484,7 +477,6 @@ void mission_start::ranch_nurse_6( mission *miss )
     bay.draw_square_ter( t_dirtfloor, point( 3, 17 ), point( 8, 22 ) );
     bay.draw_square_ter( t_dirtfloor, point( 14, 17 ), point( 19, 22 ) );
     bay.draw_square_ter( t_dirtfloor, point( 10, 18 ), point( 12, 23 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -492,7 +484,6 @@ void mission_start::ranch_nurse_6( mission *miss )
     bay.draw_square_ter( t_dirtfloor, point( 5, 0 ), point( 8, 2 ) );
     bay.draw_square_ter( t_dirtfloor, point( 10, 0 ), point( 12, 4 ) );
     bay.draw_square_ter( t_dirtfloor, point( 14, 0 ), point( 17, 2 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_7( mission *miss )
@@ -503,14 +494,12 @@ void mission_start::ranch_nurse_7( mission *miss )
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
     bay.translate( t_dirtfloor, t_floor );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
     bay.translate( t_dirtfloor, t_floor );
     bay.draw_square_ter( t_floor, point( 10, 5 ), point( 12, 5 ) );
     bay.draw_square_furn( f_rack, point( 17, 0 ), point( 17, 2 ) );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_8( mission *miss )
@@ -528,7 +517,6 @@ void mission_start::ranch_nurse_8( mission *miss )
     bay.draw_square_furn( f_makeshift_bed, point( 7, 17 ), point( 7, 18 ) );
     bay.draw_square_furn( f_makeshift_bed, point( 15, 17 ), point( 15, 18 ) );
     bay.draw_square_furn( f_makeshift_bed, point( 18, 17 ), point( 18, 18 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -537,7 +525,6 @@ void mission_start::ranch_nurse_8( mission *miss )
                      calendar::start_of_cataclysm );
     bay.place_items( item_group_id( "surgery" ), 75, point( 15, 4 ), point( 18, 4 ), true,
                      calendar::start_of_cataclysm );
-    bay.save();
 }
 
 void mission_start::ranch_nurse_9( mission *miss )
@@ -556,7 +543,6 @@ void mission_start::ranch_nurse_9( mission *miss )
     bay.furn_set( point( 14, 17 ), f_dresser );
     bay.furn_set( point( 19, 17 ), f_dresser );
     bay.place_npc( point( 16, 19 ), string_id<npc_template>( "ranch_doctor" ) );
-    bay.save();
 
     mission_util::target_om_ter_random( "ranch_camp_59", 1, miss, false, RANCH_SIZE );
 }
@@ -570,7 +556,6 @@ void mission_start::ranch_scavenger_1( mission *miss )
     bay.draw_square_ter( t_chainfence, point( 15, 13 ), point( 15, 22 ) );
     bay.draw_square_ter( t_chainfence, point( 16, 13 ), point( 23, 13 ) );
     bay.draw_square_ter( t_chainfence, point( 16, 22 ), point( 23, 22 ) );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -579,7 +564,6 @@ void mission_start::ranch_scavenger_1( mission *miss )
     bay.draw_square_ter( t_chainfence, point( 0, 22 ), point( 7, 22 ) );
     bay.draw_square_ter( t_dirt, point( 2, 22 ), point( 3, 22 ) );
     bay.spawn_item( point( 7, 19 ), "30gal_drum" );
-    bay.save();
 }
 
 void mission_start::ranch_scavenger_2( mission *miss )
@@ -592,7 +576,6 @@ void mission_start::ranch_scavenger_2( mission *miss )
     bay.draw_square_ter( t_wall_half, point( 18, 19 ), point( 21, 22 ) );
     bay.draw_square_ter( t_dirt, point( 19, 20 ), point( 20, 21 ) );
     bay.ter_set( point( 19, 19 ), t_door_frame );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -600,7 +583,6 @@ void mission_start::ranch_scavenger_2( mission *miss )
                      calendar::start_of_cataclysm );
     bay.draw_square_ter( t_chaingate_l, point( 2, 22 ), point( 3, 22 ) );
     bay.spawn_item( point( 7, 20 ), "30gal_drum" );
-    bay.save();
 }
 
 void mission_start::ranch_scavenger_3( mission *miss )
@@ -618,7 +600,6 @@ void mission_start::ranch_scavenger_3( mission *miss )
     bay.furn_set( point( 23, 17 ), furn_str_id( "f_arcade_machine" ) );
     bay.ter_set( point( 23, 16 ), ter_str_id( "t_machinery_light" ) );
     bay.furn_set( point( 20, 21 ), f_woodstove );
-    bay.save();
 
     site = mission_util::target_om_ter_random( "ranch_camp_49", 1, miss, false, RANCH_SIZE );
     bay.load( project_to<coords::sm>( site ), false );
@@ -629,7 +610,6 @@ void mission_start::ranch_scavenger_3( mission *miss )
     bay.furn_set( point( 1, 15 ), f_fridge );
     bay.spawn_item( point( 2, 15 ), "hdframe" );
     bay.furn_set( point( 3, 15 ), f_washer );
-    bay.save();
 }
 
 void mission_start::place_book( mission * )
@@ -657,16 +637,17 @@ void mission_start::reveal_refugee_center( mission *miss )
     find_params.search_range = { 0, 3 };
     find_params.search_layers = { 0, 0 };
 
-    const tripoint_abs_omt source_road = ACTIVE_OVERMAP_BUFFER.find_closest(
+    const tripoint_abs_omt source_road = get_overmapbuffer( miss->get_dimension() ).find_closest(
             get_player_character().global_omt_location(), find_params );
-    const tripoint_abs_omt dest_road = ACTIVE_OVERMAP_BUFFER.find_closest( *target_pos, find_params );
+    const tripoint_abs_omt dest_road = get_overmapbuffer( miss->get_dimension() ).find_closest(
+                                           *target_pos, find_params );
 
     omt_route_params params;
     params.radius = 1;
     params.road_only = true;
     params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
 
-    if( ACTIVE_OVERMAP_BUFFER.reveal_route( source_road, dest_road, params ) ) {
+    if( get_overmapbuffer( miss->get_dimension() ).reveal_route( source_road, dest_road, params ) ) {
         add_msg( _( "You mark the refugee center and the road that leads to it…" ) );
     } else {
         add_msg( _( "You mark the refugee center, but you have no idea how to get there by road…" ) );
@@ -694,8 +675,6 @@ void static create_lab_consoles(
         tmpcomp->add_failure( COMPFAIL_ALARM );
         tmpcomp->add_failure( COMPFAIL_DAMAGE );
         tmpcomp->add_failure( COMPFAIL_MANHACKS );
-
-        compmap.save();
     }
 }
 
@@ -711,14 +690,16 @@ void mission_start::create_lab_console( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = std::nullopt;
 
-    const tripoint_abs_omt place = ACTIVE_OVERMAP_BUFFER.find_closest( loc, find_params );
+    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc,
+                                   find_params );
 
     create_lab_consoles( miss, place, "lab", 2, translate_marker( "Workstation" ),
                          translate_marker( "Download Memory Contents" ) );
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }
 
 void mission_start::create_hidden_lab_console( mission *miss )
@@ -736,7 +717,8 @@ void mission_start::create_hidden_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }
 
 void mission_start::create_ice_lab_console( mission *miss )
@@ -751,14 +733,16 @@ void mission_start::create_ice_lab_console( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = std::nullopt;
 
-    const tripoint_abs_omt place = ACTIVE_OVERMAP_BUFFER.find_closest( loc, find_params );
+    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc,
+                                   find_params );
 
     create_lab_consoles( miss, place, "ice_lab", 3, translate_marker( "Durable Storage Archive" ),
                          translate_marker( "Download Archives" ) );
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }
 
 void mission_start::reveal_lab_train_depot( mission *miss )
@@ -773,7 +757,8 @@ void mission_start::reveal_lab_train_depot( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = std::nullopt;
 
-    const tripoint_abs_omt place = ACTIVE_OVERMAP_BUFFER.find_closest( loc, find_params );
+    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc,
+                                   find_params );
 
     tinymap compmap;
     compmap.load( project_to<coords::sm>( place ), false );
@@ -795,9 +780,8 @@ void mission_start::reveal_lab_train_depot( mission *miss )
     tmpcomp->set_mission( miss->get_id() );
     tmpcomp->add_option( _( "Download Routing Software" ), COMPACT_DOWNLOAD_SOFTWARE, 0 );
 
-    compmap.save();
-
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target, ACTIVE_OVERMAP_BUFFER );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
 }

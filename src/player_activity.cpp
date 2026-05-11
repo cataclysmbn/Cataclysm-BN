@@ -170,7 +170,7 @@ std::vector<npc *> player_activity::get_assistants( const Character &who, unsign
             return false;
         }
         // NPCs can help craft if awake, taking orders, within pickup range and have clear path
-        bool ok = guy.is_npc() && !guy.in_sleep_state() && guy.is_obeying( who ) &&
+        bool ok = guy.is_npc() && &guy != &who && !guy.in_sleep_state() && guy.is_obeying( who ) &&
                   guy.activity->id() != ACT_ASSIST &&
                   rl_dist( guy.pos(), who.pos() ) < PICKUP_RANGE &&
                   get_map().clear_path( who.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
@@ -207,7 +207,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
 
     // Horrid copypaste warning! TODO: Functions
     const recipe &rec = craft->get_making();
-    const tripoint bench_pos = act.coords.front();
+    const tripoint bench_pos = get_map().getlocal( act.coords.front() );
     // Ugly
     const auto bench_t = bench_type( act.values[craft_bench_type_idx] );
 
@@ -315,7 +315,8 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += string_format( _( "  - Processing %s out of %s\n" ), actor->progress.get_index(),
                                                     actor->progress.get_total_tasks() );
                     progress_desc += string_format( _( "  - Estimated time: %s\n" ),
-                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() / speed.total_moves() ) ) );
+                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() /
+                                                            speed.moves_per_turn() ) ) );
                     progress_desc += " - Current: ";
                 }
                 progress_desc += string_format( "%.1f%%\n",
@@ -326,7 +327,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                 }
                 progress_desc += string_format( _( "Time left: %s\n" ),
                                                 to_string( time_duration::from_turns( actor->progress.front().moves_left /
-                                                        speed.total_moves() ) ) );
+                                                        speed.moves_per_turn() ) ) );
             }
         } else {
             if( !targets.empty() && targets.front().is_accessible() ) {
@@ -338,7 +339,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
             }
             if( moves_left > 0 ) {
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( moves_left / speed.total_moves() ) ) );
+                                                to_string( time_duration::from_turns( moves_left / speed.moves_per_turn() ) ) );
             }
             if( moves_total <= 0 && moves_left <= 0 ) {
                 progress_desc = "";
@@ -507,7 +508,7 @@ void player_activity::do_turn( player &p )
                 calc_moves( p );
             }
 
-            int moves_total = speed.total_moves();
+            int moves_total = speed.moves_per_turn();
 
             //fancy new system
             if( actor ) {
@@ -669,7 +670,7 @@ bool player_activity::can_resume_with( const player_activity &other, const Chara
             return false;
         }
         for( int foo : other.values ) {
-            if( std::ranges::find( values, foo ) == values.end() ) {
+            if( !std::ranges::contains( values, foo ) ) {
                 return false;
             }
         }

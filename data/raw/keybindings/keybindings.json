@@ -265,6 +265,20 @@
   },
   {
     "type": "keybinding",
+    "id": "WEAR",
+    "category": "PICKUP",
+    "name": "Wear selected item",
+    "bindings": [ { "input_method": "keyboard", "key": "W" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "WIELD",
+    "category": "PICKUP",
+    "name": "Wield selected item",
+    "bindings": [ { "input_method": "keyboard", "key": "w" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "EXAMINE",
     "category": "INVENTORY",
     "name": "Examine item",
@@ -634,6 +648,13 @@
     "category": "CRAFTING",
     "name": "Toggle recipes to be shown in favorite tab",
     "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "ASSIGN_NPC_CRAFT",
+    "category": "CRAFTING",
+    "name": "Assign nearest NPC to craft",
+    "bindings": [ { "input_method": "keyboard", "key": "N" } ]
   },
   {
     "type": "keybinding",
@@ -1757,10 +1778,17 @@
   },
   {
     "type": "keybinding",
-    "name": "Pick up Nearby Item(s)",
+    "name": "Pick up items from one nearby tile",
     "category": "DEFAULTMODE",
     "id": "pickup",
     "bindings": [ { "input_method": "keyboard", "key": "g" } ]
+  },
+  {
+    "type": "keybinding",
+    "name": "Pick up items from all nearby tiles",
+    "category": "DEFAULTMODE",
+    "id": "pickup_all",
+    "bindings": [ { "input_method": "keyboard", "key": "," } ]
   },
   {
     "type": "keybinding",
@@ -1938,6 +1966,12 @@
     "category": "DEFAULTMODE",
     "id": "unload",
     "bindings": [ { "input_method": "keyboard", "key": "U" } ]
+  },
+  {
+    "type": "keybinding",
+    "name": "Unload All Items",
+    "category": "DEFAULTMODE",
+    "id": "unload_all"
   },
   {
     "type": "keybinding",
@@ -2504,6 +2538,13 @@
     "name": "Spellcasting",
     "category": "DEFAULTMODE",
     "bindings": [ { "input_method": "keyboard", "key": "]" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "cast_last_spell",
+    "name": "Cast Last Spell",
+    "category": "DEFAULTMODE",
+    "bindings": [  ]
   },
   {
     "type": "keybinding",

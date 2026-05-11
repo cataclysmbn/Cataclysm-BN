@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <set>
 #include <vector>
@@ -11,6 +12,7 @@
 #include "type_id.h"
 #include "point.h"
 #include "state_helpers.h"
+#include "veh_type.h"
 
 TEST_CASE( "vehicle_split_section" )
 {
@@ -83,4 +85,34 @@ TEST_CASE( "vehicle_split_section" )
         }
         break;
     }
+}
+
+TEST_CASE( "split vehicle keeps selected structure part at origin" )
+{
+    clear_all_state();
+    auto &here = get_map();
+    const auto vehicle_origin = tripoint( 10, 10, 0 );
+    auto *veh_ptr = here.add_vehicle( vproto_id( "none" ), vehicle_origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    const auto anchor_frame = veh_ptr->install_part( point_zero, vpart_id( "frame_vertical" ), true );
+    REQUIRE( anchor_frame >= 0 );
+    const auto split_mount = point( 5, 0 );
+    const auto split_frame = veh_ptr->install_part( split_mount, vpart_id( "frame_vertical" ), true );
+    REQUIRE( split_frame >= 0 );
+    const auto split_seat = veh_ptr->install_part( split_mount, vpart_id( "seat" ), true );
+    REQUIRE( split_seat >= 0 );
+    const auto original_split_pos = veh_ptr->global_part_pos3( split_frame );
+
+    REQUIRE( veh_ptr->split_vehicles( { { split_frame, split_seat } } ) );
+    const auto vehs = here.get_vehicles();
+    REQUIRE( vehs.size() == 2 );
+    const auto split_vehicle = std::ranges::find_if( vehs, [veh_ptr]( const auto & veh ) { return veh.v != veh_ptr; } );
+    REQUIRE( split_vehicle != vehs.end() );
+    const auto *new_vehicle = split_vehicle->v;
+
+    const auto origin_parts = new_vehicle->parts_at_relative( point_zero, true );
+    REQUIRE( !origin_parts.empty() );
+    CHECK( std::ranges::any_of( origin_parts, [new_vehicle]( const auto part_index ) { return new_vehicle->part_info( part_index ).location == "structure"; } ) );
+    CHECK( new_vehicle->global_part_pos3( origin_parts.front() ) == original_split_pos );
 }

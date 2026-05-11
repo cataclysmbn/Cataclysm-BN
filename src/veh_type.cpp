@@ -11,12 +11,14 @@
 
 #include "ammo.h"
 #include "assign.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "character_functions.h"
 #include "color.h"
 #include "debug.h"
 #include "flag.h"
 #include "game_constants.h"
+#include "hsv_color.h"
 #include "init.h"
 #include "item.h"
 #include "item_group.h"
@@ -35,8 +37,10 @@
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
+#include "vehicle_palette.h"
 #include "vehicle_part.h"
 #include "vehicle_group.h"
+#include "weighted_list.h"
 
 class npc;
 
@@ -110,6 +114,7 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "ROOF", VPFLAG_ROOF },
     { "BALLOON", VPFLAG_BALLOON },
     { "WING", VPFLAG_WING },
+    { "POWERED_BY_ENGINE", VPFLAG_POWERED_BY_ENGINE },
     { "PROPELLER", VPFLAG_PROPELLER },
     { "EXTENDABLE", VPFLAG_EXTENDABLE },
     { "NOCOLLIDE", VPFLAG_NOCOLLIDE },
@@ -381,6 +386,23 @@ void vpart_info::load_crafter( std::optional<vpslot_crafter> &craftptr, const Js
     assert( craftptr );
 }
 
+void vpart_info::load_converter( std::optional<vpslot_converter> &convertptr, const JsonObject &jo )
+{
+    vpslot_converter convert_info{};
+    if( convertptr ) {
+        convert_info = *convertptr;
+    }
+    JsonObject converter = jo.get_object( "converter" );
+    assign( converter, "input", convert_info.input );
+    assign( converter, "input_step", convert_info.input_step );
+    assign( converter, "output", convert_info.output );
+    assign( converter, "output_step", convert_info.output_step );
+    assign( converter, "max_steps", convert_info.max_steps );
+    assign( converter, "charge_cost", convert_info.charge_cost );
+    convertptr = convert_info;
+    assert( convertptr );
+}
+
 /**
  * Reads in a vehicle part from a JsonObject.
  */
@@ -435,11 +457,13 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
     assign( jo, "comfort", def.comfort );
     assign( jo, "floor_bedding_warmth", def.floor_bedding_warmth );
     assign( jo, "bonus_fire_warmth_feet", def.bonus_fire_warmth_feet );
+    assign( jo, "default_color", def.default_color );
 
     if( jo.has_member( "transform_terrain" ) ) {
         JsonObject jttd = jo.get_object( "transform_terrain" );
         for( const std::string pre_flag : jttd.get_array( "pre_flags" ) ) {
             def.transform_terrain.pre_flags.emplace( pre_flag );
+
         }
         def.transform_terrain.diggable = jttd.get_bool( "diggable", false );
         def.transform_terrain.post_terrain = jttd.get_string( "post_terrain", "t_null" );
@@ -528,12 +552,18 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
         load_wing( def.wing_info, jo );
     }
 
+    if( def.has_flag( "CONVERTER" ) ) {
+        load_converter( def.converter_info, jo );
+    }
+
     if( def.has_flag( "WORKBENCH" ) ) {
         load_workbench( def.workbench_info, jo );
     }
+
     if( def.has_flag( "CRAFTER" ) ) {
         load_crafter( def.crafter_info, jo );
     }
+
     // Dummy
     // TODO: Implement
     jo.get_string_array( "categories" );
@@ -715,7 +745,7 @@ void vpart_info::check()
         const itype &base_item_type = *part.item;
         // Fuel type errors are serious and need fixing now
         if( !part.fuel_type.is_valid() ) {
-            debugmsg( "vehicle part %s uses undefined fuel %s", part.id.c_str(), part.item.c_str() );
+            debugmsg( "vehicle part %s uses undefined fuel %s", part.id.c_str(), part.fuel_type.c_str() );
             part.fuel_type = itype_id::NULL_ID();
         } else if( part.fuel_type && !part.fuel_type->fuel &&
                    ( !base_item_type.container || !base_item_type.container->watertight ) ) {
@@ -1035,10 +1065,31 @@ int vpart_info::propeller_diameter() const
 {
     return has_flag( VPFLAG_PROPELLER ) ? propeller_info->propeller_diameter : 0;
 }
+
+int vpart_info::get_max_conversions() const
+{
+    return has_flag( "CONVERTER" ) ? converter_info->max_steps : 0;
+}
+int vpart_info::get_conversion_charges() const
+{
+    return has_flag( "CONVERTER" ) ? converter_info->charge_cost : 0;
+}
+const std::pair<itype_id, int> vpart_info::get_conversion_input() const
+{
+    return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->input,
+            converter_info->input_step ) : std::make_pair( itype_id::NULL_ID(), 0 );
+}
+const std::pair<itype_id, int> vpart_info::get_conversion_output() const
+{
+    return has_flag( "CONVERTER" ) ? std::make_pair( converter_info->output,
+            converter_info->output_step ) : std::make_pair( itype_id::NULL_ID(), 0 );
+}
+
 const std::vector<itype_id> vpart_info::craftertools() const
 {
     return crafter_info->fake_parts;
 }
+
 const std::optional<vpslot_workbench> &vpart_info::get_workbench_info() const
 {
     return workbench_info;
@@ -1127,6 +1178,10 @@ void vehicle_prototype::load( const JsonObject &jo )
 
     if( jo.has_member( "flags" ) ) {
         vproto.flags = jo.get_tags<flag_id>( "flags" );
+    }
+
+    if( jo.has_member( "color_palette" ) ) {
+        vproto.color_palette = vpalette_id( jo.get_string( "color_palette" ) );
     }
 
     if( jo.has_member( "blueprint" ) ) {
@@ -1256,6 +1311,12 @@ void vehicle_prototype::finalize()
 
         blueprint.suspend_refresh();
         for( auto &pt : proto.parts ) {
+            if( proto.color_palette.is_valid() && !proto.color_match.contains( pt.part.str() ) ) {
+                int index = proto.color_palette->fuzzy_to_index( pt.part );
+                if( index != -1 ) {
+                    proto.color_match[pt.part.str()] = index;
+                }
+            }
             const itype *base = &*pt.part->item;
 
             if( !pt.part.is_valid() ) {

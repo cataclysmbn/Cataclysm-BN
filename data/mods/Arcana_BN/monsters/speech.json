@@ -1,0 +1,302 @@
+[
+  {
+    "type": "speech",
+    "speaker": "mon_archon",
+    "sound": "\"This body will not suffice, no…\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_archon",
+    "sound": "\"This body may die, but I am eternal.\"",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_archon",
+    "sound": "\"You shall be enlightened in death.\"",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade" ],
+    "sound": "\"Interloper, you defile this place.\"",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_seraphic_shade",
+    "sound": "\"I can see you.  Faint, weak mortal soul.\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_seraphic_shade",
+    "sound": "\"The gods of your world will not answer your prayers…\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_seraphic_shade",
+    "sound": "\"Your masters have sent you to your death!\"",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_seraphic_shade",
+    "sound": "\"I will send your reanimated husk crawling back to those who sent you.\"",
+    "volume": 60
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_archon",
+    "sound": "\"Give yourself in service to me…\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade" ],
+    "sound": "\"Yours is just one of a thousand worlds destined to burn.\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade" ],
+    "sound": "\"You will pay for your insolence!\"",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade" ],
+    "sound": "\"Open your eyes, mortal.\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade" ],
+    "sound": "\"Cast aside the veil, and behold the truth.\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade" ],
+    "sound": "\"Cast aside…cast aside…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_archon",
+    "sound": "\"Submit…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade" ],
+    "sound": "\"Soon, I will claim what is rightfully mine.\"",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_archon", "mon_seraphic_shade", "mon_feral_keeper" ],
+    "sound": "chanting in an unearthly language!",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_mi_go_slaver", "mon_mi_go_myrmidon", "mon_feral_magehunter" ],
+    "sound": "\"Ecce, sanguinem magum!\"",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_mi_go_slaver", "mon_mi_go_myrmidon", "mon_feral_magehunter" ],
+    "sound": "\"Impium profligatum!\"",
+    "volume": 40
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_mi_go_slaver", "mon_mi_go_myrmidon", "mon_feral_magehunter" ],
+    "sound": "\"Subire mortem tuam…\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_mi_go", "mon_mi_go_slaver", "mon_mi_go_myrmidon", "mon_feral_magehunter" ],
+    "sound": "\"…sub malleo deorum!\"",
+    "volume": 50
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_summoned",
+    "sound": "a faint, indistinct whisper.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_summoned",
+    "sound": "quiet, otherworldly humming.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_summoned",
+    "sound": "a soft buzzing noise.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_summoned",
+    "sound": "an almost inaudible flap of wings.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_summoned",
+    "sound": "\"Interloper…\"",
+    "volume": 4
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_snake_summoned",
+    "sound": "a faint, indistinct murmur.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_snake_summoned",
+    "sound": "quiet, otherworldly voices.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_snake_summoned",
+    "sound": "a faint hissing noise.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_snake_summoned",
+    "sound": "an almost inaudible scraping sound.",
+    "volume": 3
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_shadow_snake_summoned",
+    "sound": "\"Cast aside…\"",
+    "volume": 4
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_seraphic_shade_fake",
+    "sound": "\"Cast aside…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_seraphic_shade_fake",
+    "sound": "\"Interloper…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_seraphic_shade_fake", "mon_feral_summoner" ],
+    "sound": "\"Nerhes ashon, varath…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_seraphic_shade_fake", "mon_feral_summoner" ],
+    "sound": "\"Vathalos, arovesk…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_summoner",
+    "sound": "\"Neherit, otira atvess…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_summoner",
+    "sound": "\"Tvakaros, ievona karoh…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_summoner", "mon_feral_magehunter", "mon_feral_keeper", "mon_feral_sanguinist" ],
+    "sound": "\"Get out of my head!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_summoner", "mon_feral_magehunter", "mon_feral_keeper", "mon_feral_sanguinist" ],
+    "sound": "\"Why are they always watching?\"",
+    "volume": 25
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_summoner", "mon_feral_sanguinist" ],
+    "sound": "\"Shadows, reflections of shadows…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_magehunter",
+    "sound": "\"Why have the gods forsaken us?\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_keeper",
+    "sound": "\"Shrouded King, guard and guide me…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_keeper",
+    "sound": "\"Betrayed us, He betrayed us, left us to die!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_keeper",
+    "sound": "\"Let this be a necessary wound in The Veil…\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_sanguinist",
+    "sound": "\"Can I ever repay them, for their sacrifice?\"",
+    "volume": 20
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_sanguinist",
+    "sound": "\"Outlast, adapt, survive… hunger…\"",
+    "volume": 15
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_sanguinist",
+    "sound": "\"Let the blood flow and empower those who have earned it.\"",
+    "volume": 25
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_sanguinist",
+    "sound": "\"It's not enough, I need more!  More blood, more fuel for the pyre!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": "mon_feral_sanguinist",
+    "sound": "\"We were all weak, we were all the undeserving, it was all for nothing!\"",
+    "volume": 30
+  },
+  {
+    "type": "speech",
+    "speaker": [ "mon_feral_summoner", "mon_feral_magehunter", "mon_feral_keeper", "mon_feral_sanguinist" ],
+    "sound": "incoherent, terrified raving!",
+    "volume": 30
+  }
+]

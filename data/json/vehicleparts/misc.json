@@ -95,5 +95,25 @@
     ],
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 4, 8 ] } ],
     "damage_reduction": { "all": 12, "stab": 4, "cut": 4 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "NBC_seal",
+    "name": { "str": "NBC seal" },
+    "description": "Nuclear, Biological, Chemical seals for this part.  Installing this on a tile will protect people seated there from toxic gas and radiation.",
+    "symbol": "0",
+    "color": "white",
+    "broken_symbol": "x",
+    "broken_color": "light_gray",
+    "damage_modifier": 50,
+    "durability": 120,
+    "item": "NBC_seal",
+    "location": "anywhere",
+    "flags": [ "NOFIELDS", "SHOCK_IMMUNE", "ON_ROOF" ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 0 ] ], "time": "15 m", "qualities": [ { "id": "CUT", "level": 1 } ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "15 m", "using": [ [ "adhesive", 1 ], [ "tire_repair", 1 ] ] }
+    }
   }
 ]

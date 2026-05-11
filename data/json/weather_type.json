@@ -245,13 +245,16 @@
         "effect_id_str": "acid_burn_pain_light",
         "effect_intensity": 0,
         "precipitation_name": "acidic drizzle",
-        "ignore_armor": false,
         "effect_msg": "The acidic drizzle burns, but is mostly harmless for now...",
         "effect_msg_frequency": 3,
         "effect_msg_blocked_frequency": 32,
         "message_type": 3,
-        "clothing_protection": 2,
-        "umbrella_protection": 1
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.01, "color": "c_light_green", "glyph": ".", "tile": "weather_acid_drop" },
@@ -282,13 +285,16 @@
         "effect_id_str": "acid_burn_pain",
         "effect_intensity": 0,
         "precipitation_name": "acid rain",
-        "ignore_armor": false,
         "effect_msg": "The acid rain burns your skin!",
         "effect_msg_frequency": 1,
         "effect_msg_blocked_frequency": 32,
         "message_type": 1,
-        "clothing_protection": 2,
-        "umbrella_protection": 1
+        "protection_data": [
+          { "check": "RAIN_PROTECT", "odds": 1 },
+          { "check": "RAINPROOF", "odds": 1 },
+          { "check": "ACIDPROOF", "odds": 1 },
+          { "check": "DEFAULT", "odds": 2 }
+        ]
       }
     ],
     "animation": { "factor": 0.02, "color": "c_light_green", "glyph": ",", "tile": "weather_acid_drop" },

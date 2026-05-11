@@ -149,7 +149,7 @@
     "bashing": 5,
     "cutting": 3,
     "to_hit": -3,
-    "qualities": [ [ "BUTCHER", -50 ] ],
+    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -50 ] ],
     "category": "rocks"
   },
   {
@@ -226,5 +226,20 @@
     "description": "A mattress made of wool.  It is quite soft and comfortable.",
     "material": [ "wool" ],
     "use_action": { "type": "deploy_furn", "furn_type": "f_wool_mattress" }
+  },
+  {
+    "id": "radiant_core",
+    "type": "GENERIC",
+    "category": "spare_parts",
+    "name": { "str": "radiant core" },
+    "description": "This thorny organic orb, taken from the heart of a mutated triffid, glows with radiant light.  A skilled smith could probably turn this into a powerful weapon.",
+    "weight": "70 g",
+    "volume": "250 ml",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "material": [ "veggy" ],
+    "symbol": ",",
+    "color": "yellow",
+    "flags": [ "NO_SALVAGE", "LIGHT_300", "TRADER_AVOID" ]
   }
 ]

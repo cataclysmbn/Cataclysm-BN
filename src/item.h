@@ -29,6 +29,7 @@
 #include "units.h"
 #include "value_ptr.h"
 #include "visitable.h"
+#include "data_vars.h"
 
 class Character;
 class JsonIn;
@@ -110,6 +111,14 @@ static const std::string p2_name = "p2";
 static const std::string source_p1_name = "source_" + p1_name;
 static const std::string source_p2_name = "source_" + p2_name;
 static const tripoint_abs_ms tripoint_abs_ms_min( tripoint_min );
+
+static const std::string TINT_COLOR_VAR_NAME( "tint_color" );
+static const std::string TINT_COLOR_FG_VAR_NAME( "tint_color_fg" );
+static const std::string TINT_COLOR_BG_VAR_NAME( "tint_color_bg" );
+static const std::string TINT_MODE_VAR_NAME( "tint_blend_mode" );
+static const std::string TINT_SATURATION_VAR_NAME( "tint_saturation" );
+static const std::string TINT_CONTRAST_VAR_NAME( "tint_contrast" );
+static const std::string TINT_BRIGHTNESS_VAR_NAME( "tint_brightness" );
 
 /**
  *  Value and metadata for one property of an item
@@ -1486,6 +1495,13 @@ class item : public location_visitable<item>, public game_object<item>
          */
         void on_damage( int qty, damage_type dt );
 
+        /**
+         * Callback after an item is placed on the map, for any reason
+         * @param m The Map
+         * @param p Where in the map
+         */
+        void on_map_placement( const map &m, const tripoint &p );
+
         std::vector<trait_id> mutations_from_wearing( const Character &guy ) const;
 
         /**
@@ -1530,25 +1546,65 @@ class item : public location_visitable<item>, public game_object<item>
          * </code>
          */
         /*@{*/
-        void set_var( const std::string &name, int value );
-        void set_var( const std::string &name, long long value );
+
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        T get_var( const std::string &name, const T &default_value, const Conv &conv = {} ) const {
+            return item_vars_.get<T, Conv>( name, default_value, conv );
+        }
+
+        template<typename T, typename Conv = data_vars::type_converter_t<T>>
+        void set_var( const std::string &name, const T &value, const Conv &conv = {} ) {
+            item_vars_.set<T>( name, value, conv );
+        }
+
+        std::string get_var( const std::string &name, const char *default_value ) const {
+            return item_vars_.get( name, default_value );
+        }
+
+        std::string get_var( const std::string &name, const std::string &default_value ) const {
+            return item_vars_.get( name, default_value );
+        }
+
+        std::string get_var( const std::string &name ) const {
+            return item_vars_.get( name, "" );
+        }
+
+        void set_var( const std::string &name, const char *value ) {
+            item_vars_.set( name, value );
+        };
+
+        void set_var( const std::string &name, const std::string &value ) {
+            item_vars_.set( name, value );
+        };
+
+        /*
+        void set_var( const std::string &name, int value ) { item_vars_.set<int>( name,  value ); };
+        void set_var( const std::string &name, long long value ) { item_vars_.set<long long>( name,  value ); };
         // Acceptable to use long as part of overload set
         // NOLINTNEXTLINE(cata-no-long)
-        void set_var( const std::string &name, long value );
-        void set_var( const std::string &name, double value );
-        double get_var( const std::string &name, double default_value ) const;
-        void set_var( const std::string &name, const tripoint &value );
-        tripoint get_var( const std::string &name, const tripoint &default_value ) const;
-        void set_var( const std::string &name, const std::string &value );
-        std::string get_var( const std::string &name, const std::string &default_value ) const;
-        /** Get the variable, if it does not exists, returns an empty string. */
-        std::string get_var( const std::string &name ) const;
-        /** Whether the variable is defined at all. */
-        bool has_var( const std::string &name ) const;
-        /** Erase the value of the given variable. */
-        void erase_var( const std::string &name );
-        /** Removes all item variables. */
-        void clear_vars();
+        //void set_var( const std::string &name, long value ) { item_vars_.set<long>( name, value ); };
+        void set_var( const std::string &name, double value ) { item_vars_.set<double>( name, value ); };
+        void set_var( const std::string &name, const tripoint &value ) { item_vars_.set<tripoint>( name, value ); };
+        void set_var( const std::string &name, const std::string &value ) { item_vars_.set( name, value ); };
+
+        double get_var( const std::string &name, double default_value ) const { return item_vars_.get<double>( name, default_value ); }
+        tripoint get_var( const std::string &name, const tripoint &default_value ) const { return item_vars_.get<tripoint>( name, default_value ); }
+        std::string get_var( const std::string &name, const std::string &default_value ) const { return item_vars_.get( name, default_value ); }
+        std::string get_var( const std::string &name ) const { return item_vars_.get( name, "" ); }
+        */
+
+        auto has_var( const std::string &name ) const -> bool { return item_vars_.contains( name ); }
+        auto erase_var( const std::string &name ) -> void { item_vars_.erase( name ); }
+        auto clear_vars() -> void { item_vars_.clear(); }
+
+        // TODO in follow-up PR:
+        // remove internal usage of get_var / set_var internally
+        // mark as [[deprecated]]
+        // completely remove in a future update
+
+        auto item_vars() -> data_vars::data_set & { return item_vars_; } // *NOPAD*
+        auto item_vars() const -> const data_vars::data_set & { return item_vars_; } // *NOPAD*
+
         /** Adds child items to the contents of this one. */
         void add_item_with_id( const itype_id &itype, int count = 1 );
         /** Checks if this item contains an item with itype. */
@@ -2321,6 +2377,10 @@ class item : public location_visitable<item>, public game_object<item>
             return_world_type;      // World type of the return dimension (may be null for overworld)
             tripoint_abs_omt return_point;        // Where to place player on exit
 
+            // Temporary pocket lifetime: set by iuse_pocket_dimension from JSON "lifetime_hours".
+            std::optional<time_point> last_player_exit;  // nullopt = player is inside
+            std::optional<time_duration> lifetime;       // nullopt = permanent
+
             void serialize( JsonOut &jsout ) const;
             void deserialize( JsonIn &jsin );
 
@@ -2478,7 +2538,7 @@ class item : public location_visitable<item>, public game_object<item>
     private:
         location_vector<item> components;
         const itype *curammo = nullptr;
-        std::map<std::string, std::string> item_vars;
+        data_vars::data_set item_vars_ = {};
         const mtype *corpse = nullptr;
         std::string corpse_name;       // Name of the late lamented
         std::set<matec_id> techniques; // item specific techniques
@@ -2760,5 +2820,4 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-
 

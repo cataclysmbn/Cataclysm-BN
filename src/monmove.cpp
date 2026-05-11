@@ -821,12 +821,26 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
 
     } else if( target != nullptr ) {
 
-        tripoint dest = target->pos();
-        auto att_to_target = attitude_to( *target );
+        const auto dest = target->pos();
+        const auto att_to_target = attitude_to( *target );
         if( att_to_target == Attitude::A_HOSTILE && !fleeing ) {
             local_goal = dest;
         } else if( fleeing ) {
-            local_goal = tripoint( posx() * 2 - dest.x, posy() * 2 - dest.y, posz() );
+            const auto current_pos = pos();
+            const auto away = current_pos - dest;
+            auto flee_goal = current_pos + tripoint( away.x, away.y, 0 );
+            if( flies() ) {
+                if( const auto preferred_z = type->preferred_z ) {
+                    flee_goal.z = *preferred_z;
+                } else if( away.z != 0 ) {
+                    flee_goal.z = current_pos.z + away.z;
+                } else {
+                    flee_goal.z = current_pos.z + 1;
+                }
+            } else {
+                flee_goal.z = current_pos.z;
+            }
+            local_goal = flee_goal;
         }
         if( angers_hostile_weak && att_to_target != Attitude::A_FRIENDLY ) {
             int hp_per = target->hp_percentage();
@@ -943,6 +957,10 @@ void monster::apply_plan( const monster_plan_t &plan )
 static float get_stagger_adjust( const tripoint &source, const tripoint &destination,
                                  const tripoint &next_step )
 {
+    if( source.z != next_step.z ) {
+        return 1.0f;
+    }
+
     // TODO: push this down into rl_dist
     const float initial_dist =
         trigdist ? trig_dist( source, destination ) : rl_dist( source, destination );
@@ -1836,11 +1854,22 @@ int monster::calc_movecost( const tripoint &f, const tripoint &t ) const
 
     const int source_cost = g->m.move_cost( f );
     const int dest_cost = g->m.move_cost( t );
-    // Digging and flying monsters ignore terrain cost
-    if( flies() || ( digging() && g->m.ter( t )->is_diggable() ) ) {
+    // Flying monsters ignore terrain cost, but have increased cost for moving up and decreased cost for moving down.
+    if( flies() ) {
+        if( f.z == t.z ) {
+            movecost = 100;
+        } else if( t.z < f.z ) {
+            // Moving down -> .75x faster
+            movecost = 75;
+        } else {
+            // Moving up -> 4x slower
+            movecost = 400;
+        }
+    } else if( digging() && g->m.ter( t )->is_diggable() ) {
+        // Digging monsters ignore terrain cost when moving into diggable terrain, but not when moving out of it.
         movecost = 100;
-        // Swimming monsters move super fast in water
     } else if( swims() ) {
+        // Swimming monsters move super fast in water
         if( g->m.has_flag( "SWIMMABLE", f ) ) {
             movecost += 25;
         } else {
@@ -2048,8 +2077,16 @@ bool monster::attack_at( const tripoint &p )
     if( has_flag( MF_PACIFIST ) ) {
         return false;
     }
-    if( p.z != posz() && !get_map().valid_move( pos(), p, false, true, false ) ) {
-        return false;
+    if( p.z != posz() ) {
+        auto &here = get_map();
+        const auto upper_z = std::max( p.z, posz() );
+        const auto vehicle_floor_between =
+            here.veh_at( tripoint( pos().xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value() ||
+            here.veh_at( tripoint( p.xy(), upper_z ) ).part_with_feature( "BOARDABLE", true ).has_value();
+
+        if( here.floor_between( pos(), p ) || vehicle_floor_between ) {
+            return false;
+        }
     }
 
     if( p == g->u.pos() ) {

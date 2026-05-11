@@ -272,6 +272,7 @@ void cata::detail::reg_technique( sol::state &lua )
         luna::set( ut,  "block_counter", &ma_technique::block_counter );
         luna::set( ut,  "miss_recovery", &ma_technique::miss_recovery );
         luna::set( ut,  "grab_break", &ma_technique::grab_break );
+        luna::set( ut,  "force_unarmed", &ma_technique::force_unarmed );
 
     }
 }
@@ -490,20 +491,23 @@ static const auto lowercase = []( std::string t )
     return t;
 };
 
-namespace Name
+namespace
 {
-std::string string_search( sol::variadic_args va )
+
+auto string_search( sol::variadic_args va ) -> std::string
 {
-    nameFlags flags = static_cast<nameFlags>( 0 );
+    auto flags = static_cast<nameFlags>( 0 );
     // Only 9 flags exist, so cap
-    for( int i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
+    for( auto i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
         if( !va[i].is<std::string>() ) { continue; }
-        auto in = lowercase( va.get<std::string>( i ) );
-        flags = flags | usage_flag( in ) | gender_flag( in );
+        const auto in = lowercase( va.get<std::string>( i ) );
+        flags = flags | Name::usage_flag( in ) | Name::gender_flag( in );
     }
-    return get( flags );
+    return Name::get( flags );
 }
-}
+
+} // namespace
+
 void cata::detail::reg_names( sol::state &lua )
 {
     luna::userlib lib = luna::begin_lib( lua, "ch_names" );
@@ -524,7 +528,7 @@ void cata::detail::reg_names( sol::state &lua )
     DOC( "Generates a single name using any combination of search flags." );
     luna::set_fx( lib, "pick", []( sol::variadic_args va ) -> std::string {
         if( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
-        return Name::string_search( va );
+        return string_search( va );
     } );
 
     luna::finalize_lib( lib );
@@ -583,6 +587,13 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `npc` (NPC): The NPC being interacted with  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_npc_interaction", []( const sol::table & ) {} );
+
+    DOC( "Called when the player tries to interact with a monster.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `monster` (Monster): The monster being interacted with  " );
+    DOC( "Return false to prevent monster interaction actions from running.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_try_monster_interaction", []( const sol::table & ) {} );
 
     DOC( "Called just before the dialogue window opens and the first topic is chosen.  " );
     DOC( "The hook receives a table with keys:  " );
@@ -700,6 +711,22 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `character` (Character)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_reset_stats", []( const sol::table & ) {} );
+
+    DOC( "Called when a skill is confirmed on the character display (`@`) skill tab.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC( "* `skill` (SkillId)  " );
+    DOC( "Set `params.results.handled = true` to prevent the default training toggle.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_display_skill_action", []( const sol::table & ) {} );
+
+    DOC( "Called when drawing skill info on the character display (`@`) skill tab.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC( "* `skill` (SkillId)  " );
+    DOC( "Set `params.results.text` to append text below the regular skill description.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_display_skill_info", []( const sol::table & ) {} );
 
     DOC( "Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  " );
     DOC( "The hook receives a table with keys:  " );
@@ -857,8 +884,8 @@ void cata::detail::reg_time_types( sol::state &lua )
         luna::set_fx( ut, "is_day", &is_day );
         luna::set_fx( ut, "is_dusk", &is_dusk );
         luna::set_fx( ut, "is_dawn", &is_dawn );
-        luna::set_fx( ut, "sunrise", &sunrise );
-        luna::set_fx( ut, "sunset", &sunset );
+        luna::set_fx( ut, "sunrise", []( const time_point & tp ) { return sunrise( tp ); } );
+        luna::set_fx( ut, "sunset", []( const time_point & tp ) { return sunset( tp ); } );
         luna::set_fx( ut, "moon_phase", &get_moon_phase );
         luna::set_fx( ut, "season", []( const time_point & tp ) { return calendar::name_season( season_of_year( tp ) ); } );
 
@@ -981,6 +1008,8 @@ void cata::reg_all_bindings( sol::state &lua )
     reg_mission_type( lua );
     reg_recipe( lua );
     reg_coords_library( lua );
+    reg_monster_type_ids( lua );
+    reg_monster_groups( lua );
     reg_overmap( lua );
     reg_constants( lua );
     reg_hooks_examples( lua );

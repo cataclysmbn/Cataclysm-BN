@@ -535,7 +535,8 @@
       { "group": "nested_M24", "prob": 15 },
       { "group": "nested_m27iar", "prob": 5 },
       { "group": "nested_m4a1", "prob": 45 },
-      { "group": "nested_sig552", "prob": 10 }
+      { "group": "nested_sig552", "prob": 10 },
+      { "group": "nested_m7", "prob": 15 }
     ]
   },
   {
@@ -556,7 +557,8 @@
       { "group": "everyday_M24", "prob": 15 },
       { "group": "everyday_m27iar", "prob": 5 },
       { "group": "everyday_m4a1", "prob": 45 },
-      { "group": "everyday_sig552", "prob": 10 }
+      { "group": "everyday_sig552", "prob": 10 },
+      { "group": "everyday_m7", "prob": 15 }
     ]
   },
   {
@@ -584,7 +586,9 @@
       { "group": "nested_scar_l", "prob": 50 },
       { "group": "nested_scar_h", "prob": 50 },
       { "group": "nested_m110a1", "prob": 50 },
-      { "group": "nested_acr_300blk", "prob": 15 }
+      { "group": "nested_acr_300blk", "prob": 15 },
+      { "group": "nested_m7", "prob": 15 },
+      { "group": "nested_m250", "prob": 10 }
     ]
   },
   {
@@ -612,7 +616,9 @@
       { "group": "everyday_scar_l", "prob": 50 },
       { "group": "everyday_scar_h", "prob": 50 },
       { "group": "everyday_m110a1", "prob": 50 },
-      { "group": "everyday_acr_300blk", "prob": 15 }
+      { "group": "everyday_acr_300blk", "prob": 15 },
+      { "group": "everyday_m7", "prob": 15 },
+      { "group": "everyday_m250", "prob": 10 }
     ]
   },
   {
@@ -663,12 +669,14 @@
       { "group": "nested_m110a1", "prob": 10 },
       { "group": "nested_needlegun", "prob": 10 },
       { "group": "nested_needlepistol", "prob": 10 },
+      { "group": "nested_dp-12", "prob": 10 },
       { "group": "nested_ksg-25", "prob": 10 },
       { "group": "nested_tavor_12", "prob": 10 },
       { "group": "nested_SPAS_12", "prob": 10 },
       { "group": "nested_rm120c", "prob": 10 },
       { "group": "nested_rm228", "prob": 10 },
-      { "group": "nested_deagle_44", "prob": 10 }
+      { "group": "nested_deagle_44", "prob": 10 },
+      { "group": "nested_m7", "prob": 10 }
     ]
   },
   {
@@ -699,7 +707,8 @@
       { "group": "nested_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "nested_longrifle_flintlock", "prob": 90 },
       { "group": "nested_rifle_flintlock", "prob": 90 },
-      { "group": "nested_steyr_aug", "prob": 40 }
+      { "group": "nested_steyr_aug", "prob": 40 },
+      { "group": "nested_m7", "prob": 20 }
     ]
   },
   {
@@ -718,7 +727,8 @@
       { "group": "everyday_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "everyday_longrifle_flintlock", "prob": 90 },
       { "group": "everyday_rifle_flintlock", "prob": 90 },
-      { "group": "everyday_steyr_aug", "prob": 40 }
+      { "group": "everyday_steyr_aug", "prob": 40 },
+      { "group": "everyday_m7", "prob": 20 }
     ]
   },
   {
@@ -857,6 +867,7 @@
     "id": "guns_shotgun_obscure",
     "//": "Imported or otherwise very obscure shotguns.",
     "items": [
+      { "group": "nested_dp-12", "prob": 10 },
       { "group": "nested_ksg-25", "prob": 15 },
       { "group": "nested_saiga_12", "prob": 25 },
       { "group": "nested_bp_12", "prob": 15 },
@@ -870,6 +881,7 @@
     "id": "carried_guns_shotgun_obscure",
     "//": "Imported or otherwise very obscure shotguns. Actually has a decent chance of having mags instead of loose ammo.",
     "items": [
+      { "group": "everyday_dp-12", "prob": 10 },
       { "group": "everyday_ksg-25", "prob": 15 },
       { "group": "everyday_saiga_12", "prob": 25 },
       { "group": "everyday_bp_12", "prob": 15 },
@@ -935,7 +947,8 @@
     "items": [
       { "group": "guns_launcher_flame", "prob": 20 },
       { "group": "guns_launcher_grenade", "prob": 70 },
-      { "group": "guns_launcher_rocket", "prob": 30 }
+      { "group": "guns_launcher_rocket", "prob": 30 },
+      { "group": "guns_launcher_heavy", "prob": 20 }
     ]
   },
   {

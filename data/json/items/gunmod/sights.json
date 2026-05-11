@@ -85,7 +85,7 @@
       [ "SPRAY_GUNS" ]
     ],
     "sight_dispersion": 13,
-    "aim_speed": 6,
+    "aim_speed": 9,
     "flags": [ "DISABLE_SIGHTS" ]
   },
   {
@@ -145,7 +145,7 @@
     "id": "red_dot_sight",
     "type": "GUNMOD",
     "name": { "str": "red dot sight" },
-    "description": "Adds a red dot optic to the top of your gun, replacing the iron sights.  Increases accuracy and weight.",
+    "description": "Adds a red dot optic to the top of your gun, replacing the iron sights.  Provides a balance of improved accuracy and faster target acquisition.",
     "weight": "300 g",
     "volume": "250 ml",
     "integral_volume": "0 ml",
@@ -170,8 +170,8 @@
       [ "FLAMETHROWERS" ],
       [ "SPRAY_GUNS" ]
     ],
-    "sight_dispersion": 23,
-    "aim_speed": 6,
+    "sight_dispersion": 26,
+    "aim_speed": 9,
     "flags": [ "DISABLE_SIGHTS" ]
   },
   {
@@ -248,7 +248,7 @@
     ],
     "install_time": "30 m",
     "sight_dispersion": 8,
-    "aim_speed": 2,
+    "aim_speed": 6,
     "flags": [ "DISABLE_SIGHTS", "ZOOM" ]
   },
   {

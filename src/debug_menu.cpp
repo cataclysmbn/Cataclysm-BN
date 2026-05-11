@@ -44,6 +44,7 @@
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "thread_pool.h"
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -173,6 +174,8 @@ enum debug_menu_index {
     DEBUG_TRAIT_GROUP,
     DEBUG_SHOW_MSG,
     DEBUG_CRASH_GAME,
+    DEBUG_SHOW_WORKER_MSG,
+    DEBUG_CRASH_WORKER,
     DEBUG_RELOAD_TRANSLATIONS,
     DEBUG_MAP_EXTRA,
     DEBUG_DISPLAY_NPC_PATH,
@@ -193,6 +196,7 @@ enum debug_menu_index {
     DEBUG_DISPLAY_LIGHTING,
     DEBUG_DISPLAY_RADIATION,
     DEBUG_DISPLAY_TRANSPARENCY,
+    DEBUG_DISPLAY_OUTSIDE,
     DEBUG_DISPLAY_SUBMAP_GRID,
     DEBUG_TEST_MAP_EXTRA_DISTRIBUTION,
     DEBUG_VEHICLE_BATTERY_CHARGE,
@@ -246,6 +250,7 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_VISIBILITY, true, 'v', _( "Toggle display visibility" ) ) },
             { uilist_entry( DEBUG_DISPLAY_LIGHTING, true, 'l', _( "Toggle display lighting" ) ) },
             { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_OUTSIDE, true, 'O', _( "Toggle display outside/sheltered/indoors" ) ) },
             { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
 #if defined(TILES)
@@ -260,6 +265,8 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_TRAIT_GROUP, true, 't', _( "Test trait group" ) ) },
             { uilist_entry( DEBUG_SHOW_MSG, true, 'd', _( "Show debug message" ) ) },
             { uilist_entry( DEBUG_CRASH_GAME, true, 'C', _( "Crash game (test crash handling)" ) ) },
+            { uilist_entry( DEBUG_SHOW_WORKER_MSG, true, 0, _( "Show debug message (worker thread)" ) ) },
+            { uilist_entry( DEBUG_CRASH_WORKER, true, 0, _( "Crash worker thread (test crash handling)" ) ) },
             { uilist_entry( DEBUG_RELOAD_TRANSLATIONS, true, 'L', _( "Reload translations" ) ) },
             { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ) },
             { uilist_entry( DEBUG_PRINT_FACTION_INFO, true, 'f', _( "Print faction info to console" ) ) },
@@ -419,7 +426,7 @@ static int debug_menu_uilist( bool display_all_entries = true )
 
 void teleport_short()
 {
-    const std::optional<tripoint> where = g->look_around( true );
+    const std::optional<tripoint> where = g->look_around( LA_MODE_3D );
     if( !where || *where == g->u.pos() ) {
         return;
     }
@@ -511,7 +518,7 @@ void spawn_nested_mapgen()
     nest_menu.query();
     const int nest_choice = nest_menu.ret;
     if( nest_choice >= 0 && nest_choice < static_cast<int>( nest_str.size() ) ) {
-        const std::optional<tripoint> where = g->look_around( true );
+        const std::optional<tripoint> where = g->look_around( LA_MODE_3D );
         if( !where ) {
             return;
         }
@@ -532,7 +539,6 @@ void spawn_nested_mapgen()
             return;
         }
         ( *ptr )->nest( md, local_ms.xy() );
-        target_map.save();
         g->load_npcs();
         here.invalidate_map_cache( g->get_levz() );
     }
@@ -575,7 +581,7 @@ static void control_npc_menu()
     uilist charmenu;
     int charnum = 0;
     for( const auto &elem : g->get_follower_list() ) {
-        shared_ptr_fast<npc> follower = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> follower = get_overmapbuffer( get_avatar().get_dimension() ).find_npc( elem );
         if( follower ) {
             followers.emplace_back( follower );
             charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
@@ -612,7 +618,7 @@ void character_edit_menu( Character &c )
         if( np->has_destination() ) {
             data << string_format(
                      _( "Destination: %s %s" ), np->goal.to_string(),
-                     ACTIVE_OVERMAP_BUFFER.ter( np->goal )->get_name() ) << '\n';
+                     get_overmapbuffer( np->get_dimension() ).ter( np->goal )->get_name() ) << '\n';
         } else {
             data << _( "No destination." ) << '\n';
         }
@@ -1095,7 +1101,7 @@ void character_edit_menu( Character &c )
             mission_debug::edit( p );
             break;
         case edit_character::tele: {
-            if( const std::optional<tripoint> newpos = g->look_around( true ) ) {
+            if( const std::optional<tripoint> newpos = g->look_around( LA_MODE_3D ) ) {
                 p.setpos( *newpos );
                 if( p.is_player() ) {
                     if( p.is_mounted() ) {
@@ -1486,7 +1492,7 @@ static std::optional<tripoint_range<tripoint>> select_area()
 
     tripoint initial_pos = g->u.pos();
     const look_around_result first = g->look_around( false, initial_pos, initial_pos,
-                                     false, true, false, false, tripoint_zero, true );
+                                     false, true, false, false, tripoint_zero, LA_MODE_3D );
 
     if( !first.position ) {
         return std::nullopt;
@@ -1494,7 +1500,7 @@ static std::optional<tripoint_range<tripoint>> select_area()
 
     popup.message( "%s", _( "Select second point." ) );
     const look_around_result second = g->look_around( false, initial_pos, *first.position,
-                                      true, true, false, false, tripoint_zero, true );
+                                      true, true, false, false, tripoint_zero, LA_MODE_3D );
 
     if( !second.position ) {
         return std::nullopt;
@@ -1544,7 +1550,7 @@ void debug()
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
             temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.pos() + point( -4, -4 ) );
-            ACTIVE_OVERMAP_BUFFER.insert_npc( temp );
+            get_overmapbuffer( get_avatar().get_dimension() ).insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
             temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->global_omt_location(),
@@ -1595,7 +1601,7 @@ void debug()
             popup_top(
                 s.c_str(),
                 u.posx(), g->u.posy(), g->get_levx(), g->get_levy(),
-                ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() )->get_name(),
+                get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.global_omt_location() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
                 _( "NPCs are NOT going to spawn." ),
@@ -1735,7 +1741,7 @@ void debug()
             break;
 
         case DEBUG_SPAWN_ARTIFACT:
-            if( const std::optional<tripoint> center = g->look_around( true ) ) {
+            if( const std::optional<tripoint> center = g->look_around( LA_MODE_3D ) ) {
                 artifact_natural_property prop = static_cast<artifact_natural_property>( rng( ARTPROP_NULL + 1,
                                                  ARTPROP_MAX - 1 ) );
                 m.create_anomaly( *center, prop );
@@ -1818,7 +1824,7 @@ void debug()
         break;
 
         case DEBUG_GEN_SOUND: {
-            const std::optional<tripoint> where = g->look_around( true );
+            const std::optional<tripoint> where = g->look_around( LA_MODE_3D );
             if( !where ) {
                 return;
             }
@@ -1960,6 +1966,9 @@ void debug()
             break;
         case DEBUG_DISPLAY_TRANSPARENCY:
             g->display_toggle_overlay( ACTION_DISPLAY_TRANSPARENCY );
+            break;
+        case DEBUG_DISPLAY_OUTSIDE:
+            g->display_toggle_overlay( ACTION_DISPLAY_OUTSIDE );
             break;
         case DEBUG_DISPLAY_SUBMAP_GRID:
             g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
@@ -2106,6 +2115,17 @@ void debug()
         case DEBUG_CRASH_GAME:
             raise( SIGSEGV );
             break;
+        case DEBUG_SHOW_WORKER_MSG:
+            get_thread_pool().submit_returning( []() {
+                debugmsg( "Test debugmsg from worker thread" );
+            } ).get();
+            drain_worker_thread_debugmsgs();
+            break;
+        case DEBUG_CRASH_WORKER:
+            get_thread_pool().submit( []() {
+                raise( SIGSEGV );
+            } );
+            break;
         case DEBUG_RELOAD_TRANSLATIONS:
             l10n_data::reload_catalogues();
             break;
@@ -2124,7 +2144,7 @@ void debug()
                     tinymap mx_map;
                     // TODO: fix point types
                     mx_map.load( where_sm.raw(), false );
-                    MapExtras::apply_function( mx_str[mx_choice], mx_map, where_sm.raw() );
+                    MapExtras::apply_function( mx_str[mx_choice], mx_map, where_sm );
                     g->load_npcs();
                     m.invalidate_map_cache( g->get_levz() );
                 }

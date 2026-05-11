@@ -121,7 +121,7 @@ Install dependencies via [Homebrew](https://brew.sh/):
 
 ```sh
 brew install cmake ninja ccache sdl2 sdl2_image sdl2_ttf sdl2_mixer \
-  freetype gettext sqlite pkg-config
+  freetype gettext sqlite pkg-config ncurses flac
 ```
 
 > [!NOTE]
@@ -139,11 +139,15 @@ This places executables into `out/build/osx-arm-slim/`.
 
 #### Creating a macOS Distribution
 
+The macOS distribution presets build a DMG with the `dmgdist` target. `dmgbuild` must be available on `PATH`. Tiles builds also package SDL2 frameworks from `~/Library/Frameworks` or `/Library/Frameworks`.
+
 ```sh
-cmake --preset osx-arm-dist
-cmake --build --preset osx-arm-dist
-cmake --install build --prefix cataclysmbn-osx-tiles
+python3 -m pip install dmgbuild biplist
+cmake --preset osx-tiles-arm-dist
+cmake --build --preset osx-tiles-arm-dist
 ```
+
+Use `osx-curses-arm-dist`, `osx-tiles-arm-dist`, `osx-curses-x64-dist`, or `osx-tiles-x64-dist` for the desired architecture and UI.
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -445,6 +449,59 @@ Compile localization files for specified languages. Example:
 Note that language files are only compiled automatically when building the `RELEASE` build type. For
 other build types, you need to add the `translations_compile` target to the `make` command, for
 example `make all translations_compile`.
+
+### Building with Translations Locally
+
+Starting in 2026, translation files (`.po` files) are no longer kept in the repository. CI pulls them from Transifex, stores them in workflow artifacts, and uses them to build release packages.
+
+For local builds, use one of the following:
+
+#### Option 1: Build Without Translations (Fastest)
+
+If you are not working on translations, disable them:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=none
+cmake --build --preset linux-full
+```
+
+#### Option 2: Pull Translations from Transifex
+
+If you need to test translations locally and have Transifex access:
+
+1. Install the Transifex CLI:
+
+```sh
+curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+```
+
+2. Pull the translation files:
+
+```sh
+tx pull --force --all
+```
+
+3. Build with translations enabled:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=all
+cmake --build --preset linux-full
+```
+
+#### Option 3: Download the `translations` Workflow Artifact
+
+If you do not have Transifex access, use the artifact produced by the translation workflow:
+
+1. Open a recent successful workflow run in [Actions](https://github.com/cataclysmbn/Cataclysm-BN/actions)
+2. Download the `translations` artifact
+3. Extract `lang/po` and `src/lang_stats.inc` into your local checkout
+4. Build normally with `-DLANGUAGES=all`
+
+> [!NOTE]
+> Most code changes do not need translations. Use `-DLANGUAGES=none` unless you are testing localized output.
+
+> [!NOTE]
+> Release archives only include compiled `lang/mo` files for packaged builds. They do not contain the `lang/po` sources required to rebuild translations locally.
 
 - DYNAMIC_LINKING=`<boolean>`
 

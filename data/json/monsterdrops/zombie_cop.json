@@ -18,6 +18,13 @@
       { "group": "clothing_glasses", "prob": 5 },
       { "group": "clothing_watch", "prob": 5 },
       {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 1, 4 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 1, 4 ] }
+        ],
+        "prob": 15
+      },
+      {
         "collection": [ { "item": "badge_deputy", "prob": 20 }, { "item": "badge_detective", "prob": 20 } ],
         "prob": 10
       },
@@ -138,6 +145,13 @@
       { "group": "clothing_glasses", "prob": 5 },
       { "group": "clothing_watch", "prob": 10 },
       { "item": "badge_swat", "prob": 10 },
+      {
+        "distribution": [
+          { "item": "powered_earmuffs", "prob": 75, "damage": [ 1, 4 ] },
+          { "item": "army_powered_earmuffs", "prob": 25, "damage": [ 1, 4 ] }
+        ],
+        "prob": 15
+      },
       { "item": "cash_card", "charges-min": 0, "charges-max": 50000, "prob": 50 },
       {
         "distribution": [

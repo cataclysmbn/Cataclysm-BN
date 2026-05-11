@@ -37,8 +37,4 @@ struct dimension_info {
     /// This is the player's position in the parent immediately before entering this
     /// dimension.  For the overworld (dimension_id == "") this is meaningless (zeroed).
     tripoint_abs_sm origin_pos;
-
-    /// The dimension_id of the dimension from which this one was entered.
-    /// Empty string = entered from the overworld.
-    std::string parent_dimension_id;
 };

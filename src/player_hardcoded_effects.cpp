@@ -628,7 +628,7 @@ void Character::hardcoded_effects( effect &it )
                 if( has_psy_protection( *this, 4 ) ) {
                     add_msg_if_player( m_bad, _( "You feel something probing your mind, but it is rebuffed!" ) );
                 } else {
-                    add_msg_if_player( m_bad, _( "A terrifying image in the back out your mind paralyzes you." ) );
+                    add_msg_if_player( m_bad, _( "A terrifying image in the back of your mind paralyzes you." ) );
                     add_effect( effect_fearparalyze, 5_turns );
                     moves -= 4 * get_speed();
                 }

@@ -2005,78 +2005,27 @@ static void draw_compass( avatar &, const catacurses::window &w )
     wnoutrefresh( w );
 }
 
-// Forward declarations
-std::string direction_to_enemy_improved( const tripoint &enemy_pos, const tripoint &player_pos );
-void check( const char *msg, std::function < auto( const tripoint &,
-            const tripoint & ) -> std::string > fn );
-
-// Improved direction function
-std::string direction_to_enemy_improved( const tripoint &enemy_pos, const tripoint &player_pos )
-{
-    // Constants based on cos(22.5°) / sin(22.5°) approximation
-    constexpr int x0 = 80782;
-    constexpr int y0 = 33461;
-
-    struct wedge_range {
-        const char *direction;
-        int x0, y0;
-        int x1, y1;
-    };
-
-    constexpr std::array<wedge_range, 8> wedges = {{
-            { "N",  -y0, -x0,   y0, -x0 },
-            { "NE",  y0, -x0,   x0, -y0 },
-            { "E",   x0, -y0,   x0,  y0 },
-            { "SE",  x0,  y0,   y0,  x0 },
-            { "S",   y0,  x0,  -y0,  x0 },
-            { "SW", -y0,  x0,  -x0,  y0 },
-            { "W",  -x0,  y0,  -x0, -y0 },
-            { "NW", -x0, -y0, -y0, -x0 }
-        }
-    };
-
-    auto between = []( int cx, int cy, const wedge_range & wr ) {
-        auto side_of_sign = []( int ax, int ay, int bx, int by ) {
-            int dot = ax * by - ay * bx;
-            return ( dot > 0 ) - ( dot < 0 );
-        };
-
-        int dot_ab = side_of_sign( wr.x0, wr.y0, wr.x1, wr.y1 );
-        int dot_ac = side_of_sign( wr.x0, wr.y0, cx, cy );
-        int dot_cb = side_of_sign( cx, cy, wr.x1, wr.y1 );
-
-        return ( dot_ab == dot_ac ) && ( dot_ab == dot_cb );
-    };
-
-    const int dx = enemy_pos.x - player_pos.x;
-    const int dy = enemy_pos.y - player_pos.y;
-
-    for( const auto &wr : wedges ) {
-        if( between( dx, dy, wr ) ) {
-            return wr.direction;
-        }
-    }
-    return "--";
-}
-
 
 static void draw_simple_compass( avatar &u, const catacurses::window &w )
 {
     werase( w );
 
-    const auto &visible_creatures = u.get_visible_creatures( 200 );
-    std::map<std::string, int> direction_count;
-    const tripoint player_pos = u.pos();
-
-    for( const auto &creature : visible_creatures ) {
-        const tripoint enemy_pos = creature->pos();
-        std::string direction = direction_to_enemy_improved( enemy_pos, player_pos );
-        direction_count[direction]++;
-    }
+    // Use the cached per-direction counts from mon_info_update() rather than
+    // rebuilding a creature vector every frame.  Indices: 0=N 1=NE 2=E 3=SE
+    // 4=S 5=SW 6=W 7=NW 8=local; matches direction_from() octant ordering.
+    static constexpr std::array<const char *, 9> dir_labels = {
+        "N", "NE", "E", "SE", "S", "SW", "W", "NW", "--"
+    };
+    const auto &counts = u.get_mon_visible().visible_count_by_dir;
 
     std::string enemies_text;
-    for( const auto &entry : direction_count ) {
-        enemies_text += entry.first + "(" + std::to_string( entry.second ) + ") ";
+    for( int i = 0; i < 9; ++i ) {
+        if( counts[i] > 0 ) {
+            enemies_text += dir_labels[i];
+            enemies_text += '(';
+            enemies_text += std::to_string( counts[i] );
+            enemies_text += ") ";
+        }
     }
 
     mvwprintz( w, point( 0, 0 ), c_white, enemies_text );

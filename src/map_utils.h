@@ -12,3 +12,7 @@ using location_subrange =
 ///        return the items in the vehicle's cargo.
 /// @return An item range at the given position.
 auto get_items_at( const tripoint &loc ) -> location_subrange;
+
+/// Take down deployed furniture and drop its item form.
+auto take_down_deployed_furniture( const tripoint &furniture_pos,
+                                   const tripoint &drop_pos ) -> void;

@@ -14,11 +14,13 @@
 #include "color.h"
 #include "damage.h"
 #include "point.h"
+#include "hsv_color.h"
 #include "requirements.h"
 #include "string_id.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
+#include "weighted_list.h"
 
 class player;
 class JsonObject;
@@ -83,6 +85,7 @@ enum vpart_bitflags : int {
     VPFLAG_NOFIELDS,
     VPFLAG_DROPPER,
     VPFLAG_LADDER,
+    VPFLAG_POWERED_BY_ENGINE,
 
     NUM_VPFLAGS
 };
@@ -108,7 +111,6 @@ struct vpslot_engine {
     std::vector<std::string> exclusions;
     std::vector<itype_id> fuel_opts;
 };
-
 struct vpslot_wheel {
     float rolling_resistance = 1.0f;
     int contact_area = 1;
@@ -133,6 +135,15 @@ struct vpslot_balloon {
 
 struct vpslot_ladder {
     int length = 0;
+};
+
+struct vpslot_converter {
+    itype_id input = itype_id::NULL_ID();
+    int input_step = 0;
+    itype_id output = itype_id::NULL_ID();
+    int output_step = 0;
+    int max_steps = 0;
+    int charge_cost = 0;
 };
 
 struct vpslot_workbench {
@@ -170,6 +181,7 @@ class vpart_info
         std::optional<vpslot_wing> wing_info;
         std::optional<vpslot_balloon> balloon_info;
         std::optional<vpslot_ladder> ladder_info;
+        std::optional<vpslot_converter> converter_info;
         std::optional<vpslot_workbench> workbench_info;
         std::optional<vpslot_crafter> crafter_info;
 
@@ -191,6 +203,7 @@ class vpart_info
         nc_color color = c_light_gray;
         nc_color color_broken = c_light_gray;
 
+        RGBColorPair default_color = {};
         /**
          * Symbol of part which will be translated as follows:
          * y, u, n, b to NW, NE, SE, SW lines correspondingly
@@ -345,6 +358,10 @@ class vpart_info
         int propeller_diameter() const;
         float balloon_height() const;
         int ladder_length() const;
+        const std::pair<itype_id, int> get_conversion_input() const;
+        const std::pair<itype_id, int> get_conversion_output() const;
+        int get_max_conversions() const;
+        int get_conversion_charges() const;
         const std::vector<itype_id> craftertools() const;
         /**
          * Getter for optional workbench info
@@ -392,6 +409,7 @@ class vpart_info
         static void load_ladder( std::optional<vpslot_ladder> &ladptr, const JsonObject &jo );
         static void load_propeller( std::optional<vpslot_propeller> &proptr, const JsonObject &jo );
         static void load_crafter( std::optional<vpslot_crafter> &craftptr, const JsonObject &jo );
+        static void load_converter( std::optional<vpslot_converter> &convertptr, const JsonObject &jo );
         static void load( const JsonObject &jo, const std::string &src );
         static void finalize();
         static void check();
@@ -439,6 +457,10 @@ struct vehicle_prototype {
     std::vector<vehicle_item_spawn> item_spawns;
     std::set<flag_id> flags;
 
+    std::map<std::string, int> color_match;
+
+    vpalette_id color_palette;
+
     std::unique_ptr<vehicle> blueprint;
 
     static void load( const JsonObject &jo );
@@ -447,5 +469,3 @@ struct vehicle_prototype {
 
     static std::vector<vproto_id> get_all();
 };
-
-

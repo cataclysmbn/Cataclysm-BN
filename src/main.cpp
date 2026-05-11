@@ -257,6 +257,7 @@ int main( int argc, char *argv[] )
                     "Checks the BN json files",
                     section_default,
                     [&verifyexit]( int, const char ** ) -> int {
+                        test_mode = true;
                         verifyexit = true;
                         return 0;
                     }

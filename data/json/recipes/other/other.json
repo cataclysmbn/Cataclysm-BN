@@ -393,6 +393,20 @@
     ]
   },
   {
+    "result": "spray_paint",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "cooking",
+    "difficulty": 2,
+    "time": "1 m",
+    "charges": 1,
+    "autolearn": true,
+    "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ],
+    "batch_time_factors": [ 75, 1 ],
+    "components": [ [ [ "r_paint", 1 ], [ "b_paint", 1 ], [ "w_paint", 1 ], [ "p_paint", 1 ], [ "g_paint", 1 ], [ "y_paint", 1 ] ] ]
+  },
+  {
     "result": "oxyacetylene",
     "type": "recipe",
     "category": "CC_OTHER",
@@ -499,7 +513,6 @@
     "type": "recipe",
     "result": "freezer",
     "copy-from": "fridge",
-    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 }, { "id": "SAW_M", "level": 1 } ],
     "components": [
       [ [ "sheet_metal", 6 ] ],
       [ [ "sheet_metal_small", 4 ] ],
@@ -512,6 +525,29 @@
       [ [ "thermostat", 1 ] ],
       [ [ "light_bulb", 1 ] ],
       [ [ "motor_tiny", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "freezer_industrial",
+    "copy-from": "fridge",
+    "decomp_learn": 6,
+    "book_learn": [ [ "textbook_mechanics", 6 ], [ "manual_mechanics", 6 ], [ "textbook_fabrication", 6 ] ],
+    "using": [ [ "soldering_standard", 50 ], [ "welding_standard", 100 ] ],
+    "difficulty": 6,
+    "skills_required": [ [ "electronics", 2 ], [ "mechanics", 2 ] ],
+    "components": [
+      [ [ "sheet_metal", 36 ] ],
+      [ [ "sheet_metal_small", 10 ] ],
+      [ [ "steel_chunk", 10 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "hose", 1 ] ],
+      [ [ "condensor_coil", 2 ] ],
+      [ [ "evaporator_coil", 2 ] ],
+      [ [ "refrigerant_tank", 2 ] ],
+      [ [ "thermostat", 1 ] ],
+      [ [ "light_bulb", 1 ] ],
+      [ [ "motor_tiny", 2 ] ]
     ]
   },
   {
@@ -533,7 +569,7 @@
       [ [ "steel_chunk", 3 ] ],
       [ [ "cable", 3 ] ],
       [ [ "hose", 1 ] ],
-      [ [ "reinforced_glass_pane", 1 ] ],
+      [ [ "reinforced_glass_sheet", 1 ] ],
       [ [ "condensor_coil", 1 ] ],
       [ [ "evaporator_coil", 1 ] ],
       [ [ "refrigerant_tank", 1 ] ],
@@ -553,7 +589,7 @@
       [ [ "steel_chunk", 3 ] ],
       [ [ "cable", 3 ] ],
       [ [ "hose", 1 ] ],
-      [ [ "reinforced_glass_pane", 1 ] ],
+      [ [ "reinforced_glass_sheet", 1 ] ],
       [ [ "condensor_coil", 1 ] ],
       [ [ "evaporator_coil", 1 ] ],
       [ [ "refrigerant_tank", 1 ] ],
@@ -581,6 +617,32 @@
       [ [ "element", 4 ] ],
       [ [ "cable", 5 ] ],
       [ [ "pilot_light", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
+    "result": "plut_generator_item",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "electronics",
+    "skills_required": [ [ "mechanics", 7 ], [ "fabrication", 5 ] ],
+    "difficulty": 8,
+    "time": "10 h",
+    "book_learn": [ [ "recipe_lab_elec", 8 ], [ "recipe_mil_augs", 8 ], [ "textbook_robots", 8 ] ],
+    "using": [ [ "advanced_electronics_high_voltage", 1 ], [ "welding_standard", 28 ], [ "soldering_standard", 80 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 2 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M", "level": 2 } ],
+    "components": [
+      [ [ "minireactor", 1 ] ],
+      [ [ "RAM", 8 ] ],
+      [ [ "cable", 16 ] ],
+      [ [ "small_lcd_screen", 4 ] ],
+      [ [ "large_lcd_screen", 1 ] ],
+      [ [ "e_scrap", 24 ] ],
+      [ [ "circuit", 10 ] ],
+      [ [ "power_supply", 8 ] ],
+      [ [ "amplifier", 6 ] ],
+      [ [ "plut_cell", 8 ] ],
+      [ [ "scrap", 16 ] ]
     ]
   },
   {

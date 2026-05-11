@@ -48,7 +48,7 @@ Here are the commands for some of the most popular distro families:
 
 ### Launchers
 
-The primary supported launcher is [Catapult](https://github.com/qrrk/Catapult), which can handle both BN and DDA (it defaults to DDA, so be sure to change it in the top menu!)
+We do not support any launchers, none of them are maintained by any members of the development team and the vast majority of them do not keep up with our stable release cadence.
 
 ### Third Party Mods
 
@@ -133,15 +133,27 @@ you wish to assign to that action.
 
 #### There is no music (or sound) in the game. How can I add it?
 
-Third-party launchers, such as [Catapult](https://github.com/qrrk/Catapult), allow you to install sound packs (and mods) from the launcher menu. You can also do it manually. To add a sound pack, download and unzip it to `<Game Folder>\data\sound\`, select it from the settings, and then restart the game. The recommended one is [Otopack](https://github.com/NarandBD/Otopack-BN-Mk-2).
+See where to place 3rd party mods, but replace mods/ with sounds/, this is the folder you will put it into
+
+Find a soundpack such as the recommended one [Otopack](https://github.com/NarandBD/Otopack-BN-Mk-2).
+
+Unzip the zip into the noted folder
+
+Then finally select it from the settings, and then restart the game.
 
 #### Where should I put 3rd-party mods?
 
-Where you put the third party mods depends on whether you installed manually or with Catapult. No matter which you do, 3rd party mods do **not** go in data/mods. That folder should be reserved for in-repo mods only, especially given Catapult will automatically delete the contents of that folder!
+If not in the List of common directories or it fails to work:
 
-For a manual installation, you should use the player-mods folder (if it is not present, you are either using an older version and should manually create a folder in the base cataclysm folder yourself or you are using XDG or Home directories on a supported platform)
+First boot up the game, select help, click 6 ( resolved game directories )
 
-For Catapult, you would put them in bn/userdata/mods (creating the folder if it's not already there) inside your catapult installation. For example, it might look like Catapult/bn/userdata/mods.
+Place mods in the folder after "user mods: "
+
+Otherwise:
+
+For Windows users it is wherever your game folder is ( same level as the EXE ) /mods
+
+For Android users using the non-legacy storage, the user mods folder is `Documents/Cataclysm-BN/mods`
 
 For Linux users using the XDG directories (but NOT the flatpak): The user mods directory should be in `~/.local/share/cataclysm-bn/mods` (`~/.local/share/cataclysm-bn` is the user directory in general)
 
@@ -151,9 +163,9 @@ For flatpak users, the user mods folder is `~/.var/app/org.cataclysmbn.Cataclysm
 
 Assuming you've managed your mods appropriately, the correct update process is to delete the old data folder (alongside the gfx folder if you want to be extra safe) and _then_ overwrite the contents of the old BN folder with the new BN download. Deleting the old data folder is specifically necessary due to the fact that simply overwriting the old folder will **not** account for updates which delete files, as may happen with the obsoletion folder for example.
 
-Don't delete your saves folder, memorial, graveyard, etc.!
+Don't delete any of the userdata folders!
 
-Alternatively, you can always use the Catapult launcher and let it handle updating. It has a good track record of correctly updating the vanilla game.
+Userdata folders are found by selecting help from the launch menu and clicking 6 ( resolved game directory )
 
 #### I've found a bug. What should I do?
 

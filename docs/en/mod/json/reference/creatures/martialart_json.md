@@ -41,6 +41,7 @@
 "name" : "phasing strike",  // In-game name displayed
 "unarmed_allowed" : true,   // Can an unarmed character use this technique
 "unarmed_weapons_allowed" : true,    // Does this technique require the character to be actually unarmed or does it allow unarmed weapons
+"force_unarmed" : true,   // Techniques with this will not take weapon damage into account, e.g. kicks/throws
 "weapon_categories_allowed" : [ "BLADES", "KNIVES" ], // Restrict technique to only these categories of weapons. If omitted, all weapon categories are allowed. Empty hands are always allowed if unarmed_allowed is true.
 "melee_allowed" : true,     // Means that ANY melee weapon can be used, NOT just the martial art's weapons
 "skill_requirements": [ { "name": "melee", "level": 3 } ],     // Skills and their minimum levels required to use this technique. Can be any skill.

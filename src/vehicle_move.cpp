@@ -43,9 +43,6 @@
 #include "veh_type.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
-
-#define dbg(x) DebugLogFL((x),DC::Map)
-
 static const itype_id fuel_type_muscle( "muscle" );
 static const itype_id fuel_type_animal( "animal" );
 static const itype_id fuel_type_battery( "battery" );
@@ -1387,7 +1384,6 @@ float get_collision_factor( const float delta_v )
 
 vehicle *vehicle::act_on_map()
 {
-    const tripoint pt = global_pos3();
     map &here = get_map();
     // Note: no inbounds() guard here.  Vehicles outside the reality bubble are
     // valid for loaded submaps.  A vehicle driving into an unloaded submap will naturally
@@ -1586,10 +1582,10 @@ void vehicle::shift_zlevel()
     int z_shift = 0;
     if( center == -1 ) {
         //no center part, fall back to slower terrain check
-        auto global_center = mount_to_tripoint( point_zero );
-        if( here.has_flag( TFLAG_RAMP_DOWN, global_center ) ) {
+        auto global_center = mount_to_bubble( point_zero );
+        if( here.has_flag( TFLAG_RAMP_DOWN, global_center.raw() ) ) {
             z_shift = -1;
-        } else if( here.has_flag( TFLAG_RAMP_UP, global_center ) ) {
+        } else if( here.has_flag( TFLAG_RAMP_UP, global_center.raw() ) ) {
             z_shift = 1;
         }
     } else {

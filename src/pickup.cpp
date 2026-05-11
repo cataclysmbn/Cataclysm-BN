@@ -1,6 +1,7 @@
 #include "pickup.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <functional>
 #include <list>
@@ -8,6 +9,7 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <utility>
 #include <vector>
@@ -151,6 +153,15 @@ enum pickup_answer : int {
     NUM_ANSWERS
 };
 
+struct pick_one_up_options {
+    pickup::pick_drop_selection &selection;
+    bool &got_water;
+    bool &offered_swap;
+    pickup_map &map_pickup;
+    bool autopickup = false;
+    std::optional<pickup_answer> preferred_option;
+};
+
 static pickup_answer handle_problematic_pickup( const item &it, bool &offered_swap,
         bool has_children, const std::string &explain )
 {
@@ -241,10 +252,12 @@ bool pickup::query_thief()
 }
 
 // Returns false if pickup caused a prompt and the player selected to cancel pickup
-static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water,
-                         bool &offered_swap,
-                         pickup_map &map_pickup, bool autopickup )
+static auto pick_one_up( const pick_one_up_options &opts ) -> bool
 {
+    auto &selection = opts.selection;
+    auto &got_water = opts.got_water;
+    auto &offered_swap = opts.offered_swap;
+    auto &map_pickup = opts.map_pickup;
     player &u = get_avatar();
     int moves_taken = 100;
     bool picked_up = false;
@@ -292,7 +305,9 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
     auto with_det = [&]( detached_ptr<item> &&newloc ) {
 
         // Ammo can sometimes be picked up into containers
-        newloc = u.i_add_to_container( std::move( newloc ), false );
+        if( !opts.preferred_option ) {
+            newloc = u.i_add_to_container( std::move( newloc ), false );
+        }
 
         if( !newloc || ( newloc->count_by_charges() && newloc->charges == 0 ) ) {
             // We've picked up everything into containers, skip the options part
@@ -300,8 +315,10 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
             option = NUM_ANSWERS;
         } else if( newloc->made_of( LIQUID ) ) {
             got_water = true;
+        } else if( opts.preferred_option ) {
+            option = *opts.preferred_option;
         } else if( !u.can_pick_weight( newloc->weight() + children_weight, false ) ) {
-            if( !autopickup ) {
+            if( !opts.autopickup ) {
                 const std::string &explain = string_format( _( "The %s is too heavy!" ),
                                              newloc->display_name() );
                 option = handle_problematic_pickup( *newloc, offered_swap, !children.empty(), explain );
@@ -310,7 +327,7 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
                 option = CANCEL;
             }
         } else if( newloc->is_bucket() && !newloc->is_container_empty() ) {
-            if( !autopickup ) {
+            if( !opts.autopickup ) {
                 const std::string &explain = string_format( _( "Can't stash %s while it's not empty" ),
                                              newloc->display_name() );
                 option = handle_problematic_pickup( *newloc, offered_swap, !children.empty(), explain );
@@ -319,7 +336,7 @@ static bool pick_one_up( pickup::pick_drop_selection &selection, bool &got_water
                 option = CANCEL;
             }
         } else if( !u.can_pick_volume( newloc->volume() + children_volume ) ) {
-            if( !autopickup ) {
+            if( !opts.autopickup ) {
                 const std::string &explain = string_format( _( "Not enough capacity to stash %s" ),
                                              newloc->display_name() );
                 option = handle_problematic_pickup( *newloc, offered_swap, !children.empty(), explain );
@@ -450,7 +467,12 @@ bool do_pickup( std::vector<pick_drop_selection> &targets, bool autopickup )
         }
 
         // TODO: This invocation is very ugly, should get a proper structure or something
-        problem = !pick_one_up( current_target, got_water, offered_swap, map_pickup, autopickup );
+        problem = !pick_one_up( pick_one_up_options{ .selection = current_target,
+                                .got_water = got_water,
+                                .offered_swap = offered_swap,
+                                .map_pickup = map_pickup,
+                                .autopickup = autopickup,
+                                .preferred_option = std::nullopt } );
     }
 
     if( !map_pickup.empty() ) {
@@ -592,118 +614,38 @@ std::vector<std::list<item_stack::iterator>> flatten( const std::vector<stacked_
 
 } // namespace pickup
 
-// Pick up items at (pos).
-void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
+namespace
 {
-    int cargo_part = -1;
 
-    const optional_vpart_position vp = g->m.veh_at( p );
-    vehicle *const veh = veh_pointer_or_null( vp );
-    bool from_vehicle = false;
+auto append_item_iterators( item_stack &stack, std::vector<item_stack::iterator> &items ) -> void
+{
+    // The pickup UI needs stable item_stack iterators so selected items can be detached later.
+    std::ranges::for_each( std::views::iota( stack.begin(), stack.end() ), [&]( const auto iter ) {
+        items.emplace_back( iter );
+    } );
+}
 
-    if( min != -1 ) {
-        if( veh != nullptr && get_items_from == prompt ) {
-            const std::optional<vpart_reference> carg = vp.part_with_feature( "CARGO", false );
-            const bool veh_has_items = carg && !veh->get_items( carg->part_index() ).empty();
-            const bool map_has_items = g->m.has_items( p );
-            if( veh_has_items && map_has_items ) {
-                uilist amenu( _( "Get items from where?" ), { _( "Get items from vehicle cargo" ), _( "Get items on the ground" ) } );
-                if( amenu.ret == UILIST_CANCEL ) {
-                    return;
-                }
-                get_items_from = static_cast<from_where>( amenu.ret );
-            } else if( veh_has_items ) {
-                get_items_from = from_cargo;
-            }
-        }
-        if( get_items_from == from_cargo ) {
-            const std::optional<vpart_reference> carg = vp.part_with_feature( "CARGO", false );
-            cargo_part = carg ? carg->part_index() : -1;
-            from_vehicle = cargo_part >= 0;
-        } else {
-            // Nothing to change, default is to pick from ground anyway.
-            if( g->m.has_flag( "SEALED", p ) ) {
-                return;
-            }
-        }
-    }
-
-    if( !from_vehicle ) {
-        bool isEmpty = ( g->m.i_at( p ).empty() );
-
-        // Hide the pickup window if this is a toilet and there's nothing here
-        // but non-frozen water.
-        if( ( !isEmpty ) && g->m.furn( p ) == f_toilet ) {
-            isEmpty = true;
-            for( const item * const &maybe_water : g->m.i_at( p ) ) {
-                if( maybe_water->typeId() != itype_id( "water" ) ) {
-                    isEmpty = false;
-                    break;
-                }
-            }
-        }
-
-        if( isEmpty && ( min != -1 || !get_option<bool>( "AUTO_PICKUP_ADJACENT" ) ) ) {
-            return;
-        }
-    }
-
-    // which items are we grabbing?
-    std::vector<item_stack::iterator> here;
-    if( from_vehicle ) {
-        vehicle_stack vehitems = veh->get_items( cargo_part );
-        for( item_stack::iterator it = vehitems.begin(); it != vehitems.end(); ++it ) {
-            here.push_back( it );
-        }
-    } else {
-        map_stack mapitems = g->m.i_at( p );
-        for( item_stack::iterator it = mapitems.begin(); it != mapitems.end(); ++it ) {
-            here.push_back( it );
-        }
-    }
-
-    if( min == -1 ) {
-        // Recursively pick up adjacent items if that option is on.
-        if( get_option<bool>( "AUTO_PICKUP_ADJACENT" ) && g->u.pos() == p ) {
-            //Autopickup adjacent
-            direction adjacentDir[8] = {direction::NORTH, direction::NORTHEAST, direction::EAST, direction::SOUTHEAST, direction::SOUTH, direction::SOUTHWEST, direction::WEST, direction::NORTHWEST};
-            for( auto &elem : adjacentDir ) {
-
-                tripoint apos = tripoint( displace_XY( elem ), 0 );
-                apos += p;
-
-                pick_up( apos, min );
-            }
-        }
-
-        // Bail out if this square cannot be auto-picked-up
-        if( g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), p ) ) {
-            return;
-        } else if( g->m.has_flag( "SEALED", p ) ) {
-            return;
-        }
+auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const int min,
+                         const std::optional<tripoint> &starting_pos ) -> void
+{
+    if( here.empty() ) {
+        return;
     }
 
     // Not many items, just grab them
     if( static_cast<int>( here.size() ) <= min && min != -1 ) {
-        if( from_vehicle ) {
-            g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
-            std::vector<pickup::pick_drop_selection> { { *here.front(), std::nullopt, {} } },
-            std::nullopt ) ) );
-        } else {
-            g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
-            std::vector<pickup::pick_drop_selection> { { *here.front(), std::nullopt, {} } },
-            g->u.pos() ) ) );
-        }
+        g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>(
+        std::vector<pickup::pick_drop_selection> { { *here.front(), std::nullopt, {} } },
+        starting_pos ) ) );
         return;
     }
 
-    const std::vector<stacked_items> &stacked_here_new = stack_for_pickup_ui( here );
+    const auto stacked_here_new = pickup::stack_for_pickup_ui( here );
     // To avoid having to rewrite things.
     // TODO: Remove flattening
-    const std::vector<std::list<item_stack::iterator>> &stacked_here = flatten( stacked_here_new );
-    std::vector<pickup_count> getitem( stacked_here.size() );
-    std::vector<std::optional<size_t>> parents = calculate_parents( stacked_here );
+    const auto stacked_here = pickup::flatten( stacked_here_new );
+    auto getitem = std::vector<pickup_count>( stacked_here.size() );
+    const auto parents = pickup::calculate_parents( stacked_here );
     for( size_t i = 0; i < getitem.size(); i++ ) {
         getitem[i].parent = parents[i];
         if( parents[i] ) {
@@ -792,6 +734,8 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
         ctxt.register_action( "ANY_INPUT" );
         ctxt.register_action( "HELP_KEYBINDINGS" );
         ctxt.register_action( "FILTER" );
+        ctxt.register_action( "WEAR", to_translation( "Wear" ) );
+        ctxt.register_action( "WIELD", to_translation( "Wield" ) );
 #if defined(__ANDROID__)
         ctxt.allow_text_entry = true; // allow user to specify pickup amount
 #endif
@@ -1036,6 +980,49 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
                 if( !popup.canceled() ) {
                     filter_changed = true;
                 }
+            } else if( selected >= 0 && selected < static_cast<int>( matches.size() ) &&
+                       ( action == "WEAR" || action == "WIELD" ) ) {
+                const auto true_idx = matches[selected];
+                const auto &selected_item = **stacked_here[true_idx].front();
+                const auto preferred_option = action == "WEAR" ? WEAR : WIELD;
+                const auto can_handle = preferred_option == WEAR ? g->u.can_wear( selected_item ) :
+                                        g->u.can_wield( selected_item );
+                if( !can_handle.success() ) {
+                    add_msg( m_info, "%s", can_handle.c_str() );
+                } else {
+                    auto direct_locations = std::vector<item *> {};
+                    auto direct_quantities = std::vector<int> {};
+                    direct_locations.push_back( *stacked_here[true_idx].front() );
+                    direct_quantities.push_back( 0 );
+                    for( const auto child_index : getitem[true_idx].children ) {
+                        direct_locations.push_back( *stacked_here[child_index].front() );
+                        direct_quantities.push_back( 0 );
+                    }
+
+                    auto direct_targets = pickup::optimize_pickup( direct_locations, direct_quantities );
+                    if( !direct_targets.empty() ) {
+                        auto direct_got_water = false;
+                        auto direct_offered_swap = false;
+                        auto direct_map_pickup = pickup_map{};
+                        auto direct_target = direct_targets.front();
+                        const auto handled = pick_one_up( pick_one_up_options{ .selection = direct_target,
+                                                          .got_water = direct_got_water,
+                                                          .offered_swap = direct_offered_swap,
+                                                          .map_pickup = direct_map_pickup,
+                                                          .autopickup = false,
+                                                          .preferred_option = preferred_option } );
+                        if( !direct_map_pickup.empty() ) {
+                            show_pickup_message( direct_map_pickup );
+                        }
+                        if( direct_got_water ) {
+                            add_msg( m_info, _( "You can't pick up a liquid!" ) );
+                        }
+                        if( handled ) {
+                            g->reenter_fullscreen();
+                            return;
+                        }
+                    }
+                }
             } else if( action == "ANY_INPUT" && raw_input_char == '`' ) {
                 std::string ext = string_input_popup()
                                   .title( _( "Enter 2 letters (case sensitive):" ) )
@@ -1234,13 +1221,154 @@ void pickup::pick_up( const tripoint &p, int min, from_where get_items_from )
     std::vector<pickup::pick_drop_selection> targets = pickup::optimize_pickup( locations, quantities );
     g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
                           ( targets,
-                            g->u.pos() ) ) );
+                            starting_pos ) ) );
     if( min == -1 ) {
         // Auto pickup will need to auto resume since there can be several of them on the stack.
         g->u.activity->auto_resume = true;
     }
 
     g->reenter_fullscreen();
+}
+
+} // namespace
+
+// Pick up items at (pos).
+auto pickup::pick_up( const tripoint &p, int min, from_where get_items_from ) -> void
+{
+    auto cargo_part = -1;
+
+    const auto vp = g->m.veh_at( p );
+    auto *const veh = veh_pointer_or_null( vp );
+    auto from_vehicle = false;
+
+    if( min != -1 ) {
+        if( veh != nullptr && get_items_from == prompt ) {
+            const auto carg = vp.part_with_feature( "CARGO", false );
+            const auto veh_has_items = carg && !veh->get_items( carg->part_index() ).empty();
+            const auto map_has_items = g->m.has_items( p );
+            if( veh_has_items && map_has_items ) {
+                auto amenu = uilist( _( "Get items from where?" ), { _( "Get items from vehicle cargo" ),
+                                     _( "Get items on the ground" )
+                                                                   } );
+                if( amenu.ret == UILIST_CANCEL ) {
+                    return;
+                }
+                get_items_from = static_cast<from_where>( amenu.ret );
+            } else if( veh_has_items ) {
+                get_items_from = from_cargo;
+            }
+        }
+        if( get_items_from == from_cargo ) {
+            const auto carg = vp.part_with_feature( "CARGO", false );
+            cargo_part = carg ? carg->part_index() : -1;
+            from_vehicle = cargo_part >= 0;
+        } else {
+            // Nothing to change, default is to pick from ground anyway.
+            if( g->m.has_flag( "SEALED", p ) ) {
+                return;
+            }
+        }
+    }
+
+    if( !from_vehicle ) {
+        auto isEmpty = ( g->m.i_at( p ).empty() );
+
+        // Hide the pickup window if this is a toilet and there's nothing here
+        // but non-frozen water.
+        if( ( !isEmpty ) && g->m.furn( p ) == f_toilet ) {
+            isEmpty = true;
+            for( const auto *const maybe_water : g->m.i_at( p ) ) {
+                if( maybe_water->typeId() != itype_id( "water" ) ) {
+                    isEmpty = false;
+                    break;
+                }
+            }
+        }
+
+        if( isEmpty && ( min != -1 || !get_option<bool>( "AUTO_PICKUP_ADJACENT" ) ) ) {
+            return;
+        }
+    }
+
+    // which items are we grabbing?
+    auto here = std::vector<item_stack::iterator> {};
+    if( from_vehicle ) {
+        auto vehitems = veh->get_items( cargo_part );
+        append_item_iterators( vehitems, here );
+    } else {
+        auto mapitems = g->m.i_at( p );
+        append_item_iterators( mapitems, here );
+    }
+
+    if( min == -1 ) {
+        // Recursively pick up adjacent items if that option is on.
+        if( get_option<bool>( "AUTO_PICKUP_ADJACENT" ) && g->u.pos() == p ) {
+            //Autopickup adjacent
+            const auto adjacentDir = std::array{ direction::NORTH, direction::NORTHEAST,
+                                                 direction::EAST, direction::SOUTHEAST, direction::SOUTH,
+                                                 direction::SOUTHWEST, direction::WEST, direction::NORTHWEST };
+            for( const auto elem : adjacentDir ) {
+
+                auto apos = tripoint( displace_XY( elem ), 0 );
+                apos += p;
+
+                pick_up( apos, min );
+            }
+        }
+
+        // Bail out if this square cannot be auto-picked-up
+        if( g->check_zone( zone_type_id( "NO_AUTO_PICKUP" ), p ) ) {
+            return;
+        } else if( g->m.has_flag( "SEALED", p ) ) {
+            return;
+        }
+    }
+
+    const auto starting_pos = from_vehicle ? std::nullopt : std::make_optional( g->u.pos() );
+    pick_up_from_items( here, min, starting_pos );
+}
+
+auto pickup::nearby_items_for_pickup( const tripoint &center ) -> nearby_pickup_items
+{
+    auto result = nearby_pickup_items{};
+    auto &here = get_map();
+    for( const tripoint &pos : here.points_in_radius( center, 1 ) ) {
+        if( here.obstructed_by_vehicle_rotation( center, pos ) ) {
+            continue;
+        }
+
+        if( !here.has_flag( "SEALED", pos ) ) {
+            auto mapitems = here.i_at( pos );
+            if( !mapitems.empty() ) {
+                result.has_ground_items = true;
+                append_item_iterators( mapitems, result.items );
+            }
+        }
+
+        const auto vp = here.veh_at( pos );
+        if( !vp ) {
+            continue;
+        }
+        const auto carg = vp.part_with_feature( "CARGO", false );
+        if( !carg ) {
+            continue;
+        }
+        auto vehitems = carg->vehicle().get_items( carg->part_index() );
+        append_item_iterators( vehitems, result.items );
+    }
+    return result;
+}
+
+auto pickup::pick_up_all_nearby() -> void
+{
+    const auto nearby = nearby_items_for_pickup( g->u.pos() );
+    if( nearby.items.empty() ) {
+        add_msg( _( "There is nothing to pick up nearby." ) );
+        return;
+    }
+
+    const auto starting_pos = nearby.has_ground_items ? std::make_optional( g->u.pos() ) : std::nullopt;
+    pick_up_from_items( nearby.items, 0, starting_pos );
 }
 
 //helper function for Pickup::pick_up
@@ -1273,10 +1401,10 @@ static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
     if( !get_option<bool>( "AUTO_NOTES_DROPPED_FAVORITES" ) ) {
         return;
     }
-    if( !ACTIVE_OVERMAP_BUFFER.has_note( note_pos ) ) {
+    if( !get_overmapbuffer( get_avatar().get_dimension() ).has_note( note_pos ) ) {
         return;
     }
-    const std::string note_text = ACTIVE_OVERMAP_BUFFER.note( note_pos );
+    const std::string note_text = get_overmapbuffer( get_avatar().get_dimension() ).note( note_pos );
     std::vector<std::string> tokens = string_split( note_text, ';' );
     std::vector<std::string> kept;
     kept.reserve( tokens.size() );
@@ -1296,7 +1424,7 @@ static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
         return;
     }
     if( kept.empty() || ( kept.size() == 1 && kept.front().starts_with( "SPRITE:" ) ) ) {
-        ACTIVE_OVERMAP_BUFFER.delete_note( note_pos );
+        get_overmapbuffer( get_avatar().get_dimension() ).delete_note( note_pos );
         return;
     }
     std::string updated = kept.front();
@@ -1304,7 +1432,7 @@ static void maybe_remove_favorite_drop_note( const tripoint_abs_omt &note_pos,
         updated += "; ";
         updated += kept[i];
     }
-    ACTIVE_OVERMAP_BUFFER.add_note( note_pos, updated );
+    get_overmapbuffer( get_avatar().get_dimension() ).add_note( note_pos, updated );
 }
 
 detached_ptr<item> pickup::handle_spillable_contents( Character &c, detached_ptr<item> &&it,
