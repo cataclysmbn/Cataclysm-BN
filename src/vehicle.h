@@ -119,6 +119,14 @@ struct veh_collision {
 
     veh_collision() = default;
 };
+
+struct vehicle_part_collision_options {
+    int part = 0;
+    tripoint_bub_ms pos;
+    bool just_detect = false;
+    bool bash_floor = false;
+    bool vertical = false;
+};
 //TODO!: location stuffs here
 class vehicle_stack : public item_stack
 {
@@ -1277,8 +1285,7 @@ class vehicle
 
         // Handle given part collision with vehicle, monster/NPC/player or terrain obstacle
         // Returns collision, which has type, impulse, part, & target.
-        veh_collision part_collision( int part, const tripoint_bub_ms &p,
-                                      bool just_detect, bool bash_floor );
+        auto part_collision( const vehicle_part_collision_options &options ) -> veh_collision;
 
         // Process the trap beneath
         void handle_trap( const tripoint_bub_ms &p, int part );

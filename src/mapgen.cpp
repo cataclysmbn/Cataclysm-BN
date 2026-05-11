@@ -6467,12 +6467,13 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
     vehicle *placed_vehicle = placed_vehicle_up.get();
 
     if( placed_vehicle != nullptr ) {
-        submap *place_on_submap = get_submap_at_grid( proj.quotient_tripoint );
+        const auto placed_vehicle_sm = abs_to_bub( placed_vehicle->abs_sm_pos );
+        auto *place_on_submap = get_submap_at_grid( placed_vehicle_sm );
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
-        invalidate_max_populated_zlev( p.z() );
+        invalidate_max_populated_zlev( placed_vehicle_sm.z() );
 
-        auto &ch = get_cache( p.z() );
+        auto &ch = get_cache( placed_vehicle_sm.z() );
         ch.vehicle_list.insert( placed_vehicle );
         add_vehicle_to_cache( placed_vehicle );
         loaded_vehicles.insert( placed_vehicle );
@@ -6552,9 +6553,6 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
             wreckage->sm_ms_pos = other_veh->sm_ms_pos;
             wreckage->abs_sm_pos = other_veh->abs_sm_pos;
 
-            //Where are we on the global scale?
-            const tripoint_bub_ms bubble_pos = wreckage->bub_ms_location();
-
             // We must remove the vehicle from the map before we move away its parts
             std::unique_ptr<vehicle> old_veh = detach_vehicle( other_veh );
             if( old_veh == nullptr ) {
@@ -6562,12 +6560,12 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
             }
 
             for( const vpart_reference &vpr : veh->get_all_parts() ) {
-                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->bub_part_location( vpr.part() ) );
+                const auto part_pos = wreckage->bubble_to_mount( veh->bub_part_location( vpr.part() ) );
                 wreckage->install_part( part_pos, std::move( vpr.part() ) );
             }
 
             for( const vpart_reference &vpr : old_veh->get_all_parts() ) {
-                const tripoint_mnt_veh part_pos = veh->bubble_to_mount( veh->bub_part_location( vpr.part() ) );
+                const auto part_pos = wreckage->bubble_to_mount( old_veh->bub_part_location( vpr.part() ) );
                 wreckage->install_part( part_pos, vehicle_part{vpr.part(), &*wreckage} );
             }
 

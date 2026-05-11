@@ -30,7 +30,7 @@ struct nearby_pickup_items {
  */
 auto do_pickup( std::vector<pick_drop_selection> &targets, bool autopickup ) -> bool;
 auto query_thief() -> bool;
-auto nearby_items_for_pickup( const tripoint &center ) -> nearby_pickup_items;
+auto nearby_items_for_pickup( const tripoint_bub_ms &center ) -> nearby_pickup_items;
 
 enum from_where : int {
     from_cargo = 0,

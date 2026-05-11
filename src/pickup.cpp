@@ -1232,7 +1232,7 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
 } // namespace
 
 // Pick up items at (pos).
-auto pickup::pick_up( const tripoint &p, int min, from_where get_items_from ) -> void
+auto pickup::pick_up( const tripoint_bub_ms &p, int min, from_where get_items_from ) -> void
 {
     auto cargo_part = -1;
 
@@ -1301,17 +1301,13 @@ auto pickup::pick_up( const tripoint &p, int min, from_where get_items_from ) ->
 
     if( min == -1 ) {
         // Recursively pick up adjacent items if that option is on.
-        if( get_option<bool>( "AUTO_PICKUP_ADJACENT" ) && g->u.pos() == p ) {
+        if( get_option<bool>( "AUTO_PICKUP_ADJACENT" ) && g->u.bub_pos() == p ) {
             //Autopickup adjacent
             const auto adjacentDir = std::array{ direction::NORTH, direction::NORTHEAST,
                                                  direction::EAST, direction::SOUTHEAST, direction::SOUTH,
                                                  direction::SOUTHWEST, direction::WEST, direction::NORTHWEST };
             for( const auto elem : adjacentDir ) {
-
-                auto apos = tripoint( displace_XY( elem ), 0 );
-                apos += p;
-
-                pick_up( apos, min );
+                pick_up( p + displace_XY( elem ), min );
             }
         }
 
@@ -1323,15 +1319,15 @@ auto pickup::pick_up( const tripoint &p, int min, from_where get_items_from ) ->
         }
     }
 
-    const auto starting_pos = from_vehicle ? std::nullopt : std::make_optional( g->u.pos() );
+    const auto starting_pos = from_vehicle ? std::nullopt : std::make_optional( g->u.bub_pos() );
     pick_up_from_items( here, min, starting_pos );
 }
 
-auto pickup::nearby_items_for_pickup( const tripoint &center ) -> nearby_pickup_items
+auto pickup::nearby_items_for_pickup( const tripoint_bub_ms &center ) -> nearby_pickup_items
 {
     auto result = nearby_pickup_items{};
     auto &here = get_map();
-    for( const tripoint &pos : here.points_in_radius( center, 1 ) ) {
+    for( const tripoint_bub_ms &pos : here.points_in_radius( center, 1 ) ) {
         if( here.obstructed_by_vehicle_rotation( center, pos ) ) {
             continue;
         }
@@ -1360,13 +1356,13 @@ auto pickup::nearby_items_for_pickup( const tripoint &center ) -> nearby_pickup_
 
 auto pickup::pick_up_all_nearby() -> void
 {
-    const auto nearby = nearby_items_for_pickup( g->u.pos() );
+    const auto nearby = nearby_items_for_pickup( g->u.bub_pos() );
     if( nearby.items.empty() ) {
         add_msg( _( "There is nothing to pick up nearby." ) );
         return;
     }
 
-    const auto starting_pos = nearby.has_ground_items ? std::make_optional( g->u.pos() ) : std::nullopt;
+    const auto starting_pos = nearby.has_ground_items ? std::make_optional( g->u.bub_pos() ) : std::nullopt;
     pick_up_from_items( nearby.items, 0, starting_pos );
 }
 

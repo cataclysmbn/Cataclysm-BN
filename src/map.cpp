@@ -1847,13 +1847,13 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     }
 
     // Capture the old footprint in submap grid coordinates BEFORE parts are
-    // updated by advance_precalc_mounts.  precalc[0] holds local offsets from
-    // the vehicle reference point; the part's global tile position is src+offset.
+    // updated by advance_precalc_mounts.
     tripoint_bub_sm veh_sm_min = { INT_MAX, INT_MAX, INT_MAX };
     tripoint_bub_sm veh_sm_max = { INT_MIN, INT_MIN, INT_MIN };
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
-        const auto p = project_to<coords::sm>( base + prt.precalc[0] );
+        const auto p = project_to<coords::sm>( base + tripoint_rel_ms(
+                prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
         veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
         veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
         veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
@@ -1871,14 +1871,19 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     veh.shed_loose_parts();
 
     // Clear overlay map memory (vpart only) for every tile the vehicle is vacating.
-    // precalc[0] still holds the OLD offsets here (before advance_precalc_mounts),
-    // so src + precalc[0] gives the authoritative absolute tile positions being left.
+    // precalc[0] and z_terrain[0] still hold the OLD offsets here (before
+    // advance_precalc_mounts), so this gives the authoritative absolute tile
+    // positions being left.
     // Terrain memory is preserved so the ground beneath doesn't go black.
     {
         avatar &you = get_avatar();
         for( const vpart_reference &vpr : veh.get_all_parts() ) {
             if( !vpr.part().removed ) {
-                you.clear_memorized_overlay( src + vpr.part().precalc[0] );
+                const auto &part = vpr.part();
+                const auto part_offset = tripoint_rel_ms(
+                                             part.precalc[0],
+                                             part.mount.z() + part.z_terrain[0] );
+                you.clear_memorized_overlay( src + part_offset );
             }
         }
     }
@@ -7994,6 +7999,7 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
 
     for( auto &prt : veh.get_all_parts() ) {
         prt.part().z_terrain[0] -= z_shift;
+        prt.part().z_terrain[1] -= z_shift;
     }
 
     auto src_submap_veh_it = src_submap->vehicles.begin() + our_i;

@@ -2290,7 +2290,7 @@ void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Characte
     craft_item->detach();
     if( is_long && rec ) {
         if( who.making_would_work( rec->ident(), batch_size ) ) {
-            who.last_craft->execute( location );
+            who.last_craft->execute( get_map().abs_to_bub( location ) );
         }
     }
 }

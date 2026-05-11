@@ -414,7 +414,7 @@ void iexamine::nanofab( player &p, const tripoint_bub_ms &examp )
 /**
  * UI FOR LAB_FINALE SUPERALLOY FORGE.
  */
-void iexamine::nanoforge( player &p, const tripoint &examp )
+void iexamine::nanoforge( player &p, const tripoint_bub_ms &examp )
 {
     if( !query_yn(
             _( "Use the superalloy forge? Requires 1 sheet metal and 5 nanomaterial canisters." ) ) ) {
@@ -423,7 +423,7 @@ void iexamine::nanoforge( player &p, const tripoint &examp )
     }
 
     bool table_exists = false;
-    tripoint spawn_point;
+    tripoint_bub_ms spawn_point;
     map &here = get_map();
     for( const auto &valid_location : here.points_in_radius( examp, 1 ) ) {
         if( here.ter( valid_location ) == ter_str_id( "t_nanoforge_body" ) ) {

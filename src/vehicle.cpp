@@ -2752,7 +2752,8 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
             if( !split_mounts.empty() ) {
                 new_mount = split_mounts[ new_part ];
             } else {
-                new_mount = mnt_offset;
+                new_mount = ( cur_mount - mnt_offset )
+                            .reinterpret_as<tripoint_mnt_veh>();
             }
 
             player *passenger = nullptr;
