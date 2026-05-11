@@ -4065,7 +4065,7 @@ auto get_sdl_display_buffer_size() -> point
     auto width = 0.0f;
     auto height = 0.0f;
 
-    if( !SDL_GetTextureSize(display_buffer.get(), &width, &height) ) {
+    if( !SDL_GetTextureSize( display_buffer.get(), &width, &height ) ) {
         return point_zero;
     }
     return point( width, height );

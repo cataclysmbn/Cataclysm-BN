@@ -329,7 +329,7 @@ struct sdl_render_state_guard {
     SDL_RendererLogicalPresentation present;
 
     explicit sdl_render_state_guard( const SDL_Renderer_Ptr &renderer ) : renderer( renderer ) {
-        SDL_RenderGetLogicalSize( renderer.get(), &logical_size.x, &logical_size.y,  &present);
+        SDL_RenderGetLogicalSize( renderer.get(), &logical_size.x, &logical_size.y,  &present );
         SDL_RenderGetScale( renderer.get(), &scale_x, &scale_y );
         SDL_RenderGetViewport( renderer.get(), &viewport );
         if( SDL_RenderIsClipEnabled( renderer.get() ) ) {
@@ -391,7 +391,7 @@ auto loading_image_splash::draw_current_loading_image() -> bool
             const auto render_state_guard = sdl_render_state_guard( renderer );
             clear_sdl_display_buffer();
             SDL_FRect fRect{};
-            SDL_RectToFRect(&*rect, &fRect);
+            SDL_RectToFRect( &*rect, &fRect );
             RenderCopy( renderer, cache->texture, nullptr, &fRect );
             draw_loading_image_author_if_present( this->selection_state->current_author );
             return true;
