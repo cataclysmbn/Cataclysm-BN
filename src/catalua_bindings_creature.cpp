@@ -353,7 +353,9 @@ void cata::detail::reg_monster( sol::state &lua )
         SET_FX_T( wander_to, void( const tripoint & p, int f ) );
         DOC( "Set the monster's active movement goal. Unlike wander_to, this puts the monster "
              "in active-chase mode so it will bash through obstacles (windows, doors) to reach "
-             "the target. Use the monster's absolute ms position as p." );
+             "the target." );
+        DOC( "Params: p (tripoint) - absolute ms position to move toward." );
+        DOC( "Returns: void." );
         luna::set_fx( ut, "set_goal", []( monster & m, const tripoint & p ) -> void {
             m.set_goal( p );
         } );
@@ -589,7 +591,8 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( global_sm_location, tripoint() const );
 
-        DOC( "Get the player's location in absolute overmap-tile (OMT) coordinates." );
+        DOC( "Get the character's location in absolute overmap-tile (OMT) coordinates." );
+        DOC( "Returns: tripoint - OMT coordinates." );
         luna::set_fx( ut, "global_omt_location", []( const Character & c ) -> tripoint {
             return c.global_omt_location().raw();
         } );
