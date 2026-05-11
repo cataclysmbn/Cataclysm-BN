@@ -372,6 +372,7 @@ if (TILES)
         if(NOT SDL3_ttf_FOUND)
             message("Installing SDL3_ttf from Source")
             set(SDLTTF_INSTALL ON)
+            set(SDLTTF_PLUTOSVG OFF)
             # Install via FetchContent
             FetchContent_Declare(
                     SDL3_TTF
