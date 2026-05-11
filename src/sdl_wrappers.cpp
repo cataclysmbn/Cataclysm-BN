@@ -27,7 +27,7 @@ auto printImgErrorIf( const bool condition, const char *const message ) -> bool
     if( !condition ) {
         return false;
     }
-    dbg( DL::Error ) << message << ": " << IMG_GetError();
+    dbg( DL::Error ) << message << ": " << SDL_GetError();
     return true;
 }
 
