@@ -48,7 +48,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
             cmake gettext ninja-build mold jq \
-            libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev \
             sqlite3 libsqlite3-dev zlib1g-dev
 
           VERSION=20
@@ -58,6 +57,17 @@ jobs:
           for bin in clang clang++ clang-format clang-tidy run-clang-tidy llvm-config; do
             sudo update-alternatives --install /usr/bin/$bin $bin /usr/bin/$bin-$VERSION 200
           done
+
+      - name: Install SDL3
+        run: |
+          sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel dependencies
+        run: |
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2

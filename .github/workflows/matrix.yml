@@ -83,10 +83,18 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
 
-      - name: install SDL3 dependencies (ubuntu)
-        if: ${{ env.SKIP == 'false' && matrix.tiles == 1 }}
+      - name: Install SDL3 (ubuntu)
+        if: ${{ env.SKIP == 'false' }}
         run: |
-          sudo apt-get install libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+          sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel Dependencies (ubuntu)
+        if: ${{ env.SKIP == 'false' }}
+        run: |
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev
 
       # problem matchers are only ran on GCC to reduce error spam
       - name: add problem matcher
