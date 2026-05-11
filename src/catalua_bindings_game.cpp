@@ -281,6 +281,30 @@ void cata::detail::reg_game_api( sol::state &lua )
         return out;
     } );
 
+    {
+        DOC( "Current weather state" );
+        sol::usertype<weather_manager> ut = luna::new_usertype<weather_manager>(
+                lua, luna::no_bases, luna::no_constructor );
+        DOC( "Current active weather type ID string" );
+        luna::set_fx( ut, "get_weather_id", []( const weather_manager & w ) -> std::string {
+            return w.weather_id.str();
+        } );
+        DOC( "True if the weather is currently forced by an override" );
+        luna::set_fx( ut, "is_overridden", []( const weather_manager & w ) -> bool {
+            return static_cast<bool>( w.weather_override );
+        } );
+        DOC( "True if the override persists across update_weather cycles" );
+        luna::set( ut, "override_permanent", sol::readonly( &weather_manager::weather_override_permanent ) );
+        DOC( "Current temperature in degrees Celsius" );
+        luna::set_fx( ut, "get_temperature", []( const weather_manager & w ) -> int {
+            return units::to_celsius( w.temperature );
+        } );
+        DOC( "Current wind speed" );
+        luna::set( ut, "windspeed", sol::readonly( &weather_manager::windspeed ) );
+        DOC( "True if lightning is currently active" );
+        luna::set( ut, "lightning_active", sol::readonly( &weather_manager::lightning_active ) );
+    }
+
     DOC( "Force the current weather to the given weather type ID string, overriding the weather generator. Pass true as second argument to make it permanent (survives update_weather cycles without re-applying)." );
     luna::set_fx( lib, "set_weather_override", []( const std::string & id, sol::optional<bool> permanent ) -> void {
         weather_manager &w = get_weather();
@@ -293,6 +317,11 @@ void cata::detail::reg_game_api( sol::state &lua )
         weather_manager &w = get_weather();
         w.weather_override = weather_type_id::NULL_ID();
         w.weather_override_permanent = false;
+    } );
+
+    DOC( "Get the current weather manager object." );
+    luna::set_fx( lib, "get_weather_manager", []() -> weather_manager & {
+        return get_weather();
     } );
 
     DOC( "Get the global overmap buffer" );
