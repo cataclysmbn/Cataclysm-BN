@@ -5,6 +5,7 @@
 #include "mission.h"
 #include "type_id.h"
 #include "concepts_utility.h"
+#include "weather.h"
 
 enum Attitude : int;
 enum body_part : int;
@@ -198,6 +199,7 @@ LUNA_VAL( npc_opinion, "NpcOpinion" );
 LUNA_VAL( npc_personality, "NpcPersonality" );
 LUNA_VAL( omt_find_params, "OmtFindParams" );
 LUNA_VAL( overmapbuffer, "OvermapBuffer" );
+LUNA_VAL( weather_manager, "WeatherManager" );
 LUNA_VAL( player, "Player" );
 LUNA_VAL( point, "Point" );
 LUNA_VAL( string_input_popup, "PopupInputStr" );
