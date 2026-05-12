@@ -27,11 +27,11 @@ void register_point( sol::state &lua )
                               );
 
     DOC( "Gets x" );
-    luna::set_fx( ut, "x", []( Point pt ) -> int& { return pt.x(); } );
+    luna::set_fx( ut, "x", []( Point pt ) -> int & { return pt.x(); } );
     DOC( "Sets x" );
     luna::set_fx( ut, "set_x", []( Point pt, int x ) { pt.x() = x; } );
     DOC( "Gets y" );
-    luna::set_fx( ut, "y", []( Point pt ) -> int& { return pt.y(); } );
+    luna::set_fx( ut, "y", []( Point pt ) -> int & { return pt.y(); } );
     DOC( "Sets y" );
     luna::set_fx( ut, "set_y", []( Point pt, int y ) { pt.y() = y; } );
 
