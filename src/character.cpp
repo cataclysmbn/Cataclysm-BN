@@ -2547,7 +2547,7 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
                                _( "This %s is too big to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
         } else if( size_matters && !supertinymouse && ( to_wear.has_flag( flag_UNDERSIZE ) ||
-                                        to_wear.has_flag( flag_resized_small ) ) ) {
+                   to_wear.has_flag( flag_resized_small ) ) ) {
             add_msg_if_player( m_warning,
                                _( "This %s is too small to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
