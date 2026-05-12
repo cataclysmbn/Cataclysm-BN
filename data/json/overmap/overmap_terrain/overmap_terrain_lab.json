@@ -510,7 +510,7 @@
       "lab_2x2_MUT_tier_2_SW",
       "lab_2x2_MUT_tier_2_SE"
     ],
-    "name": "Lab Research Zone",
+    "name": "lab research zone",
     "sym": "L",
     "color": "light_blue",
     "see_cost": 5,
@@ -519,7 +519,7 @@
   {
     "type": "overmap_terrain",
     "id": [ "lab_CORE_2x1_1UP", "lab_CORE_2x1_2UP", "lab_CORE_2x1_1DN", "lab_CORE_2x1_2DN" ],
-    "name": "Lab Recreation Zone",
+    "name": "lab recreation zone",
     "sym": "X",
     "color": "white",
     "see_cost": 5,
@@ -535,7 +535,7 @@
       "lab_security_z-5",
       "lab_security_z-6_final_flr"
     ],
-    "name": "Lab Security Zone",
+    "name": "lab security zone",
     "sym": "S",
     "//": "6 underground levels for a modular security tower.",
     "color": "yellow",
@@ -561,7 +561,7 @@
       "lab_2x2_cargo_SW",
       "lab_2x2_cargo_SE"
     ],
-    "name": "Lab Cargo Zone",
+    "name": "lab cargo zone",
     "sym": "C",
     "color": "white",
     "see_cost": 5,
@@ -586,7 +586,7 @@
       "lab_1x1x2_RES_8_apartments_upper",
       "lab_1x1x2_RES_8_apartments_lower"
     ],
-    "name": "Lab Residential Zone",
+    "name": "lab residential zone",
     "sym": "R",
     "color": "green",
     "see_cost": 5,
@@ -609,7 +609,7 @@
       "lab_security_z0N",
       "lab_security_z0S"
     ],
-    "name": "Trans-Coast Logistics",
+    "name": "trans-coast logistics",
     "sym": "F",
     "//": "Front/Fake company entrance for a lab. Includes main and auxiliary entrances including the start of the security tower.",
     "color": "light_gray",
@@ -620,7 +620,7 @@
   {
     "type": "overmap_terrain",
     "id": [ "full_basic_lab_roof", "lab_security_z0S_roof", "lab_security_z0N_roof" ],
-    "name": "Trans-Coast Logistics Roof",
+    "name": "trans-coast logistics roof",
     "sym": "F",
     "color": "light_gray",
     "see_cost": 5,
@@ -629,7 +629,7 @@
   {
     "type": "overmap_terrain",
     "id": [ "lab_health_z-2_A", "lab_health_z-2_B", "lab_health_z-3_A" ],
-    "name": "Lab Health Clinic",
+    "name": "lab health clinic",
     "sym": "M",
     "color": "red",
     "see_cost": 5,
@@ -639,7 +639,7 @@
   {
     "type": "overmap_terrain",
     "id": [ "lab_health_z-3_B" ],
-    "name": "Lab Health Clinic",
+    "name": "lab health clinic",
     "sym": "M",
     "color": "red",
     "see_cost": 5,
@@ -648,7 +648,7 @@
   {
     "type": "overmap_terrain",
     "id": [ "lab_maintenance_z-2&3_B", "lab_maintenance_z-2&3_A" ],
-    "name": "Lab Maintenance Zone",
+    "name": "lab maintenance zone",
     "sym": "M",
     "color": "cyan",
     "see_cost": 5,
