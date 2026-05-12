@@ -536,5 +536,5 @@
       { "item": "canister_empty", "prob": 40, "count": [ 1, 6 ] },
       { "item": "jar_3l_glass_sealed", "prob": 5, "count": [ 1, 3 ] }
     ]
-  },
+  }
 ]
