@@ -45,10 +45,12 @@
         "N": "t_thconc_floor",
         "A": "t_thconc_floor",
         "Á": "t_thconc_floor",
+        "U": "t_thconc_floor",
         "$": "t_privacy_fence",
         "€": "t_privacy_fencegate_c",
         "0": { "param": "linoleum_color_kitchen", "fallback": "t_linoleum_white" },
-        "w": "t_floor"
+        "w": "t_floor",
+        "6": "t_floor"
       },
       "furniture": { "0": "f_stool", "Ĵ": "f_counter" },
       "place_loot": [ { "item": "stereo", "x": 31, "y": 14, "chance": 65 }, { "item": "television", "x": 31, "y": 14, "chance": 100 } ],
