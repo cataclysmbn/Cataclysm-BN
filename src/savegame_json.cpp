@@ -2288,7 +2288,7 @@ void dimension_info::serialize( JsonOut &jsout ) const
 
 void dimension_info::deserialize( JsonIn &jsin )
 {
-    JsonObject obj = jsin.get_object();
+    auto obj = jsin.get_object();
     obj.allow_omitted_members();
     obj.read( "dimension_id", dimension_id );
     obj.read( "world_type", world_type );
@@ -2319,23 +2319,23 @@ void pocket_dimension_data::serialize( JsonOut &jsout ) const
 
 void pocket_dimension_data::deserialize( JsonIn &jsin )
 {
-    JsonObject obj = jsin.get_object();
+    auto obj = jsin.get_object();
     obj.allow_omitted_members();
 
-    // New format: dimension_id is the primary key.
-    // Legacy compat: reconstruct dimension_id from dimension_type + instance_id.
-    if( obj.has_member( "dimension_id" ) ) {
+    // Current format stores explicit return dimension data.
+    // Legacy compat reconstructs it from return_dimension + return_instance_id.
+    if( obj.has_member( "return_dimension_id" ) || obj.has_member( "return_world_type" ) ) {
         obj.read( "return_dimension_id", return_dimension_id );
         obj.read( "return_world_type", return_world_type );
     } else {
         // Old format: reconstruct dimension_id and return_dimension_id
-        world_type_id old_dim_type;
-        std::string old_instance_id;
+        auto old_dim_type = world_type_id{};
+        auto old_instance_id = std::string{};
         obj.read( "dimension_type", old_dim_type );
         obj.read( "instance_id", old_instance_id );
         // Old return fields
-        world_type_id old_return_dim;
-        std::string old_return_instance;
+        auto old_return_dim = world_type_id{};
+        auto old_return_instance = std::string{};
         obj.read( "return_dimension", old_return_dim );
         obj.read( "return_instance_id", old_return_instance );
         return_world_type = old_return_dim;
@@ -2660,9 +2660,13 @@ void item::io( Archive &archive )
     static const cata::value_ptr<relic> null_relic_ptr = nullptr;
     archive.io( "relic_data", relic_data, null_relic_ptr );
 
-    dimension_info dim;
-    if( archive.read( "pocket_dim", dim ) ) {
-        pocket_dim = dim;
+    if constexpr( Archive::is_input::value ) {
+        auto dim = dimension_info{};
+        if( archive.read( "pocket_dim", dim ) ) {
+            pocket_dim = dim;
+        }
+    } else if( pocket_dim.has_value() ) {
+        archive.io( "pocket_dim", *pocket_dim );
     }
 
     archive.io( "drop_token", drop_token, decltype( drop_token )() );

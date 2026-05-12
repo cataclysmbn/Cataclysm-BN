@@ -2,6 +2,7 @@
 
 #include <map>
 #include <memory>
+#include <string>
 
 #include "coordinates.h"
 #include "sdl_wrappers.h"
@@ -54,7 +55,7 @@ class pixel_minimap
         void process_cache( const tripoint_bub_ms &center );
 
         void flush_cache_updates();
-        void update_cache_at( const tripoint_abs_sm &pos );
+        void update_cache_at( const tripoint_bub_sm &pos );
         void prepare_cache_for_updates( const tripoint_bub_ms &center );
         void clear_unused_cache();
 
@@ -75,6 +76,7 @@ class pixel_minimap
 
         //track the previous viewing area to determine if the minimap cache needs to be cleared
         tripoint_abs_sm cached_center_sm;
+        std::string cached_dimension_id;
         // track presence of animated beacons to determine whether the minimap needs to be animated
         bool cached_has_animated_beacons = true;
 
@@ -92,5 +94,4 @@ class pixel_minimap
 
         std::map<tripoint_abs_sm, submap_cache> cache;
 };
-
 

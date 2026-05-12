@@ -15433,10 +15433,10 @@ void game::tick_temporary_pocket_dimensions()
     // Visit all pocket dimension items in the player's possession.
     // If a pocket has expired (last_player_exit + lifetime < now), close it.
     u.visit_items( [&]( item * it ) {
-        if( !it->pocket_dim.has_value() ) {
-            VisitResponse::NEXT;
+        if( !it->pocket_dim.has_value() || !it->pocket_dim->pocket_info.has_value() ) {
+            return VisitResponse::NEXT;
         }
-        pocket_dimension_data &pd = *it->pocket_dim->pocket_info;
+        auto &pd = *it->pocket_dim->pocket_info;
         if( !pd.lifetime.has_value() || !pd.last_player_exit.has_value() ) {
             return VisitResponse::NEXT;
         }

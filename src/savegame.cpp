@@ -125,13 +125,13 @@ void game::serialize( std::ostream &fout )
     json.member( "loaded_dimensions" );
     json.start_array();
     std::ranges::for_each( loaded_dimensions_, [&]( const auto & kv ) {
-        const dimension_info &info = kv.second;
+        const auto &info = kv.second;
         json.start_object();
         json.member( "dimension_id", info.dimension_id );
         json.member( "world_type", info.world_type.str() );
         json.member( "display_name", info.display_name );
         if( info.pocket_info ) {
-            json.member( "pocket_info", pocket_info );
+            json.member( "pocket_info", *info.pocket_info );
         }
         json.end_object();
     } );
@@ -250,16 +250,18 @@ void game::unserialize( std::istream &fin )
         loaded_dimensions_.clear();
         if( data.has_array( "loaded_dimensions" ) ) {
             for( JsonObject dim_data : data.get_array( "loaded_dimensions" ) ) {
-                dimension_info info;
+                auto info = dimension_info{};
                 dim_data.read( "dimension_id", info.dimension_id );
-                std::string wt_str;
+                auto wt_str = std::string{};
                 dim_data.read( "world_type", wt_str );
                 info.world_type = world_type_id( wt_str );
                 dim_data.read( "display_name", info.display_name );
-                if( dim_data.has_object( "bounds" ) ) {
-                    pocket_dimension_data pocket_data{};
-                    JsonObject bounds_obj = dim_data.get_object( "bounds" );
-                    dimension_bounds bounds;
+                if( dim_data.has_object( "pocket_info" ) ) {
+                    dim_data.read( "pocket_info", info.pocket_info );
+                } else if( dim_data.has_object( "bounds" ) ) {
+                    auto pocket_data = pocket_dimension_data{};
+                    auto bounds_obj = dim_data.get_object( "bounds" );
+                    auto bounds = dimension_bounds{};
                     bounds.min_bound = tripoint_abs_sm(
                                            bounds_obj.get_int( "min_x" ),
                                            bounds_obj.get_int( "min_y" ),
