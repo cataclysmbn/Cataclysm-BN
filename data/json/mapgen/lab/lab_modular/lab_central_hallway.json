@@ -200,9 +200,7 @@
       "computers": {
         "¢": {
           "name": "Laboratory Train Controls",
-          "options": [
-            { "name": "Request Subway Train", "action": "disconnect", "security": 0 }
-          ]
+          "options": [ { "name": "Request Subway Train", "action": "disconnect", "security": 0 } ]
         }
       }
     }
