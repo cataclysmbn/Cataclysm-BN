@@ -617,7 +617,7 @@ if (UNIX AND TILES AND DYNAMIC_LINKING)
     set_target_properties(
             cataclysm-bn-tiles
             PROPERTIES
-            INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>, @executable_path/lib:@executable_path/lib64, \$ORIGIN/lib:\$ORIGIN/lib64>"
+            INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>"
     )
 endif()
 
