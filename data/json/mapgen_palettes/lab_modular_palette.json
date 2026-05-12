@@ -62,6 +62,9 @@
       "♣": "t_ramp_up_low"
     },
     "furniture": {
+      "ä": "f_olight_base",
+      "ê": "f_olight_base",
+      "ë": "f_olight_base",
       "a": "f_sample_freezer",
       "b": "f_scan_bed",
       "c": "f_lab_bench",
@@ -113,7 +116,7 @@
     },
     "items": {
       "Y": [ { "item": "trash", "chance": 20, "repeat": [ 1, 3 ] } ],
-      "P": [ { "item": "file_room", "chance": 100, "repeat": [ 3, 4 ] }, { "item": "mut_lab", "chance": 10 } ],
+      "P": [ { "item": "file_room", "chance": 100, "repeat": [ 3, 4 ] }, { "item": "id_science", "chance": 10 } ],
       "8": [
         { "item": "SUS_hair_drawer", "chance": 10 },
         { "item": "SUS_bathroom_cabinet", "chance": 20 },
@@ -168,6 +171,7 @@
       "f": [
         { "item": "dishes_dining", "chance": 30 },
         { "item": "tea_dishes", "chance": 10, "repeat": [ 1, 2 ] },
+        { "item": "baked_goods", "chance": 5 },
         { "item": "groce_condiment", "chance": 10, "repeat": [ 1, 2 ] },
         { "item": "dining", "chance": 10 }
       ],
@@ -379,6 +383,7 @@
       "d": [ { "item": "tools_science", "chance": 50, "repeat": [ 1, 2 ] } ],
       "f": [
         { "item": "tools_science", "chance": 30 },
+        { "item": "baked_goods", "chance": 1 },
         { "item": "SUS_office_desk", "chance": 10, "repeat": [ 1, 2 ] },
         { "item": "office_supplies", "chance": 10 }
       ],
@@ -401,7 +406,11 @@
         { "item": "supplies_reagents_lab", "chance": 30 },
         { "item": "chem_lab", "chance": 40, "repeat": [ 1, 2 ] }
       ],
-      "r": [ { "item": "office_mess", "chance": 5 }, { "item": "office_supplies", "chance": 25 } ],
+      "r": [
+        { "item": "office_mess", "chance": 5 },
+        { "item": "office_supplies", "chance": 25 },
+        { "item": "SUS_office_filing_cabinet", "chance": 10 }
+      ],
       "s": [ { "item": "consumer_electronics", "chance": 10 } ],
       "w": [
         { "item": "chem_lab", "chance": 20 },
@@ -435,10 +444,10 @@
         { "item": "tools_science", "chance": 10, "repeat": [ 1, 2 ] },
         { "item": "cleaning", "chance": 10, "repeat": [ 1, 2 ] }
       ],
-      "P": [ { "item": "office_paper", "chance": 100 } ],
+      "P": [ { "item": "office_paper", "chance": 100 }, { "item": "SUS_office_filing_cabinet", "chance": 50 } ],
       "R": [
         { "item": "lab_bookshelves", "chance": 30, "repeat": [ 1, 2 ] },
-        { "item": "textbooks", "chance": 20 },
+        { "item": "books_bank_vault", "chance": 20 },
         { "item": "books_bank_vault", "chance": 15 }
       ],
       "S": [ { "item": "cleaning", "chance": 80 }, { "item": "SUS_bathroom_medicine", "chance": 60 } ],
@@ -495,6 +504,7 @@
       "d": [ { "item": "tools_science", "chance": 70, "repeat": [ 1, 2 ] } ],
       "f": [
         { "item": "tools_science", "chance": 30 },
+        { "item": "baked_goods", "chance": 1 },
         { "item": "SUS_office_desk", "chance": 10, "repeat": [ 1, 2 ] },
         { "item": "office_supplies", "chance": 10 }
       ],
@@ -514,7 +524,11 @@
         { "item": "supplies_reagents_lab", "chance": 30 },
         { "item": "chem_lab", "chance": 40, "repeat": [ 1, 2 ] }
       ],
-      "r": [ { "item": "office_mess", "chance": 5 }, { "item": "office_supplies", "chance": 25 } ],
+      "r": [
+        { "item": "office_mess", "chance": 5 },
+        { "item": "office_supplies", "chance": 25 },
+        { "item": "SUS_office_filing_cabinet", "chance": 10 }
+      ],
       "s": [ { "item": "consumer_electronics", "chance": 10 } ],
       "w": [
         { "item": "chem_lab", "chance": 20 },
