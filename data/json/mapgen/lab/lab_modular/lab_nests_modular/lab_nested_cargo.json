@@ -15,7 +15,7 @@
         "     "
       ],
       "palettes": [ "lab_common_palette" ],
-      "furniture": { "^": [ [ "f_vent_pipe", 30 ], [ "f_vent_pipe", 30 ] ] },
+      "terrain": { "^": [ [ "t_grate_indoor", 30 ], [ "t_grate_indoor", 30 ] ] },
       "place_nested": [ { "chunks": [ [ "null", 50 ], [ "surface_sub_f_crate", 50 ] ], "x": [ 0, 4 ], "y": [ 0, 4 ], "repeat": [ 2, 10 ] } ]
     }
   },
@@ -35,7 +35,7 @@
         "     "
       ],
       "palettes": [ "lab_common_palette" ],
-      "furniture": { "^": [ [ "f_vent_pipe", 30 ], [ "f_vent_pipe", 30 ] ] },
+      "terrain": { "^": [ [ "t_grate_indoor", 30 ], [ "t_grate_indoor", 30 ] ] },
       "place_nested": [ { "chunks": [ [ "null", 50 ], [ "surface_sub_f_crate", 50 ] ], "x": [ 0, 4 ], "y": [ 0, 4 ], "repeat": [ 2, 10 ] } ]
     }
   },
