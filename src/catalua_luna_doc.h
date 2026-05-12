@@ -1,5 +1,6 @@
 #pragma once
 
+#include "coordinates.h"
 #include "calendar.h"
 #include "catalua_luna.h"
 #include "mission.h"
@@ -313,3 +314,54 @@ LUNA_VAL( islot_ammo, "IslotAmmo" );
 LUNA_VAL( islot_artifact, "IslotArtifact" );
 LUNA_VAL( islot_milling, "IslotMilling" );
 LUNA_VAL( islot_seed, "IslotSeed" );
+
+// All the coords
+// Points
+
+// Submap
+LUNA_VAL( point_rel_sm, "PointRelSm" );
+LUNA_VAL( point_bub_sm, "PointBubSm" );
+LUNA_VAL( point_omt_sm, "PointOmtSm" );
+LUNA_VAL( point_om_sm, "PointOmSm" );
+LUNA_VAL( point_abs_sm, "PointAbsSm" );
+
+// Map Square
+LUNA_VAL( point_rel_ms, "PointRelMs" );
+LUNA_VAL( point_bub_ms, "PointBubMs" );
+LUNA_VAL( point_sm_ms, "PointSmMs" );
+LUNA_VAL( point_omt_ms, "PointOmtMs" );
+LUNA_VAL( point_abs_ms, "PointAbsMs" );
+
+// Overmap Terrain
+LUNA_VAL( point_rel_omt, "PointRelOmt" );
+LUNA_VAL( point_om_omt, "PointOmOmt" );
+LUNA_VAL( point_abs_omt, "PointAbsOmt" );
+
+// Overmap
+LUNA_VAL( point_rel_om, "PointRelOm" );
+LUNA_VAL( point_abs_om, "PointAbsOm" );
+
+// Tripoints
+
+// Submap
+LUNA_VAL( tripoint_rel_sm, "TripointRelSm" );
+LUNA_VAL( tripoint_bub_sm, "TripointBubSm" );
+LUNA_VAL( tripoint_omt_sm, "TripointOmtSm" );
+LUNA_VAL( tripoint_om_sm, "TripointOmSm" );
+LUNA_VAL( tripoint_abs_sm, "TripointAbsSm" );
+
+// Map Square
+LUNA_VAL( tripoint_rel_ms, "TripointRelMs" );
+LUNA_VAL( tripoint_bub_ms, "TripointBubMs" );
+LUNA_VAL( tripoint_sm_ms, "TripointSmMs" );
+LUNA_VAL( tripoint_omt_ms, "TripointOmtMs" );
+LUNA_VAL( tripoint_abs_ms, "TripointAbsMs" );
+
+// Overmap Terrain
+LUNA_VAL( tripoint_rel_omt, "TripointRelOmt" );
+LUNA_VAL( tripoint_om_omt, "TripointOmOmt" );
+LUNA_VAL( tripoint_abs_omt, "TripointAbsOmt" );
+
+// Overmap
+LUNA_VAL( tripoint_rel_om, "TripointRelOm" );
+LUNA_VAL( tripoint_abs_om, "TripointAbsOm" );
