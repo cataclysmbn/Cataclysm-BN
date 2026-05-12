@@ -1,0 +1,377 @@
+[
+  {
+    "method": "json",
+    "om_terrain": "lab_1x1_RES_8_bedrooms_maintenance",
+    "type": "mapgen",
+    "weight": 200,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "||||||||||||||||||||||||",
+        "|@@___D|________|D___@@|",
+        "|s_èh__+___jj___+_h_è_s|",
+        "|T__IIy|__%%%%__|YII__T|",
+        "||||||||__%!!%__||||||||",
+        "|@@___D|_h%!!%h_|D___@@|",
+        "|s_èh__+_f%!!%f_+_h_è_s|",
+        "|T__IIy|èh%!!%hè|YII__T|",
+        "||||||||__%!!%__||||||||",
+        "|@@___D|_h%!!%h_|D___@@|",
+        "|s_èh__+_f%!!%f_+_h_è_s|",
+        "|T__IIy|_h%!!%h_|YII__T|",
+        "||||||||__%!!%__||||||||",
+        "|@@___D|__%!!%__|D___@@|",
+        "|s_èh__+__%!!%__+_h_è_s|",
+        "|T__IIy|è_%!!%_è|YII__T|",
+        "||||||||__%%%%__||||||||",
+        "|t|t|8S|________|@@I__D|",
+        "|+|+|,,|__|>>|__|@@_è_d|",
+        "|,,,,,,|__||||__|___||||",
+        "|,,,ê,,+__|UU|__+___|8t|",
+        "|+|+|,,|__+,,+__|_h_+,ê|",
+        "|9|9|8S|__|UU|__|IIy|S9|",
+        "|||||||||||±||||||||||||"
+      ],
+      "palettes": [ "lab_common_palette", "lab_residential_palette", "standard_domestic_lino_bathroom" ],
+      "place_loot": [ { "item": "id_science", "x": 22, "y": 17, "chance": 50 } ],
+      "place_monsters": [ { "monster": "GROUP_LAB_FEMA", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.2 } ],
+      "place_monster": [
+        {
+          "monster": [ "mon_feral_human_pipe", "mon_feral_human_crowbar" ],
+          "x": 19,
+          "y": 19,
+          "chance": 100,
+          "pack_size": [ 3, 5 ]
+        }
+      ],
+      "terrain": { "!": "t_open_air_rooved", "U": "t_linoleum_gray" }
+    }
+  },
+  {
+    "method": "json",
+    "om_terrain": "lab_1x1_RES_8_bedrooms_security",
+    "type": "mapgen",
+    "weight": 200,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "||||||||||||||||||||||||",
+        "|@@;;;L|;;;;;;;;|L;;;@@|",
+        "|≠;èh;;+;;;jj;;;+;h;è;≠|",
+        "|T;;IIy|;;%%%%;;|YII;;T|",
+        "||||||||;;%!!%;;||||||||",
+        "|@@;;;L|;h%!!%h;|L;;;@@|",
+        "|≠;èh;;+;f%!!%f;+;h;è;≠|",
+        "|T;;IIy|;h%!!%h;|YII;;T|",
+        "||||||||è;%!!%;è||||||||",
+        "|@@;;;L|;h%!!%h;|L;;;@@|",
+        "|≠;èh;;+;f%!!%f;+;h;è;≠|",
+        "|T;;IIy|;h%!!%h;|YII;;T|",
+        "||||||||;;%!!%;;||||||||",
+        "|@@;;;L|;;%!!%;;|L;;;@@|",
+        "|≠;èh;;+;;%!!%;;+;h;è;≠|",
+        "|T;;IIy|;;%!!%;;|YII;;T|",
+        "||||||||è;%%%%;è||||||||",
+        "|t|t|8S|;;;;;;;;|@@I;;L|",
+        "|+|+|,,|;;|>>|;;|@@;;;≠|",
+        "|,,,ê,,|;;||||;;|;;;||||",
+        "|,,,,,,+;;|UU|;;+;è;|8t|",
+        "|+|+|,,|;;+,,+;;|;h;+,ê|",
+        "|9|9|8S|;;|UU|;;|IIy|S9|",
+        "|||||||||||±||||||||||||"
+      ],
+      "place_monsters": [ { "monster": "GROUP_LAB_SECURITY", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.2 } ],
+      "place_loot": [ { "item": "id_science", "x": 22, "y": 17, "chance": 100 } ],
+      "place_monster": [
+        {
+          "monster": [ "mon_feral_labsecurity_flashlight", "mon_feral_labsecurity_9mm" ],
+          "x": 19,
+          "y": 19,
+          "chance": 100,
+          "pack_size": [ 3, 5 ]
+        }
+      ],
+      "palettes": [ "lab_common_palette", "lab_security_palette", "standard_domestic_lino_bathroom" ],
+      "terrain": { "!": "t_open_air_rooved", "U": "t_linoleum_gray" },
+      "items": {
+        "f": { "item": "snacks", "chance": 5 },
+        "I": [ { "item": "SUS_desks_bedroom_unisex", "chance": 5 }, { "item": "office", "chance": 25 } ],
+        "U": { "item": "cleaning", "chance": 30 },
+        "≠": [
+          { "item": "prison_weapons", "chance": 30 },
+          { "item": "swat_gear", "chance": 5 },
+          { "item": "prison_armor", "chance": 20 }
+        ],
+        "L": [ { "item": "SUS_dresser_mens", "chance": 50 }, { "item": "SUS_dresser_womens", "chance": 50 } ]
+      }
+    }
+  },
+  {
+    "method": "json",
+    "om_terrain": [ "lab_1x1_RES_8_commons_SEC" ],
+    "type": "mapgen",
+    "weight": 200,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "|||||||||||++|||||||||||",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿè__!!__è_!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "||||JJJ____!!____!!!!!!|",
+        "|y____JA___!!____!!!!!!|",
+        "|3____JAè__!!__è_!!!!!!|",
+        "|4_è__JA___!!____!!!!!!|",
+        "|O____J_A__!!____!!!!!!|",
+        "|2_________!!___||||||||",
+        "|157F3____!!!!__|ÿÿÿÿÿÿ|",
+        "||||||_||_!!!!__|ÿÿÿÿÿÿ|",
+        "|_|6____+è!!!!è_|ÿÿÿÿÿÿ|",
+        "|_|JJJ66|_!!!!__+ÿÿÿÿÿÿ|",
+        "|||||||||__!!___|ÿÿÿÿÿÿ|",
+        "|_________|<<|__|ÿÿÿÿÿÿ|",
+        "|_____||+|||||__||||||||",
+        "|__è__|___|UU+__+YS,,+t|",
+        "|_____|_è_|,,||||,,ê,|||",
+        "|_____|___|UU|__|YS,,+t|",
+        "|||||||||||±||||||||||||"
+      ],
+      "parameters": {
+        "carpet_type": {
+          "type": "ter_str_id",
+          "scope": "omt",
+          "default": {
+            "distribution": [
+              [ "t_carpet_yellow", 2 ],
+              [ "t_carpet_green", 2 ],
+              [ "t_carpet_purple", 1 ],
+              [ "t_carpet_red", 1 ],
+              [ "t_thconc_floor", 2 ]
+            ]
+          }
+        },
+        "floor_type": {
+          "type": "ter_str_id",
+          "scope": "omt",
+          "default": {
+            "distribution": [
+              [ "t_carpet_yellow", 2 ],
+              [ "t_carpet_green", 2 ],
+              [ "t_carpet_purple", 1 ],
+              [ "t_carpet_red", 1 ],
+              [ "t_floor", 1 ],
+              [ "t_thconc_floor", 2 ]
+            ]
+          }
+        }
+      },
+      "palettes": [ "lab_common_palette", "lab_residential_palette", "standard_domestic_lino_bathroom" ],
+      "terrain": {
+        "U": "t_linoleum_gray",
+        "Y": "t_linoleum_gray",
+        "!": { "param": "carpet_type", "fallback": "t_carpet_yellow" },
+        "ÿ": { "param": "floor_type", "fallback": "t_thconc_floor" }
+      },
+      "place_monsters": [ { "monster": "GROUP_LAB_SECURITY", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.2 } ],
+      "place_monster": [
+        { "monster": "mon_flashbang_hack", "x": 1, "y": 15, "chance": 100 },
+        { "monster": "mon_manhack", "x": 1, "y": 16, "chance": 100 },
+        { "monster": "mon_flashbang_hack", "x": 14, "y": 22, "chance": 100 },
+        { "monster": "mon_gasbomb_hack", "x": 15, "y": 22, "chance": 100 }
+      ],
+      "place_nested": [
+        {
+          "chunks": [
+            [ "diningroom_6x6_E_W_1", 20 ],
+            [ "diningroom_6x6_E_W_2", 20 ],
+            [ "diningroom_6x6_N_S_2", 20 ],
+            [ "diningroom_6x6_N_S_1B", 20 ],
+            [ "diningroom_6x6_N_S_1A", 20 ]
+          ],
+          "x": 2,
+          "y": 1
+        },
+        {
+          "chunks": [
+            [ "bonus_room_3x3_1", 20 ],
+            [ "bonus_room_3x3_3", 20 ],
+            [ "bonus_room_3x3_E_5", 20 ],
+            [ "bonus_room_3x3_E_6", 20 ],
+            [ "bonus_room_3x3_W_6", 20 ],
+            [ "bonus_room_3x3_E_8", 20 ],
+            [ "bonus_room_3x3_S_8", 20 ],
+            [ "bonus_room_3x3_W_8", 20 ],
+            [ "bonus_room_3x3_S_6", 20 ]
+          ],
+          "x": 7,
+          "y": 20
+        },
+        { "chunks": [ [ "lab_residential_6x6_W", 100 ] ], "x": 17, "y": 6 },
+        { "chunks": [ [ "lab_residential_6x6_W", 100 ] ], "x": 17, "y": 13 },
+        {
+          "chunks": [
+            [ "livingroom_5x5_N_2", 30 ],
+            [ "livingroom_5x5_S_2", 20 ],
+            [ "livingroom_5x5_W_2", 30 ],
+            [ "5x5_pool", 10 ],
+            [ "5x5_gym_S", 20 ],
+            [ "5x5_dojo", 20 ],
+            [ "5x5_gym_W", 20 ]
+          ],
+          "x": 1,
+          "y": 18
+        },
+        {
+          "chunks": [
+            [ "livingroom_5x5_N_1", 10 ],
+            [ "livingroom_5x5_S_1", 10 ],
+            [ "livingroom_5x5_W_1", 10 ],
+            [ "livingroom_5x5_N_2", 10 ],
+            [ "livingroom_5x5_S_2", 10 ],
+            [ "livingroom_5x5_E_2", 10 ],
+            [ "livingroom_5x5_W_2", 10 ]
+          ],
+          "x": 18,
+          "y": 1
+        }
+      ]
+    }
+  },
+  {
+    "method": "json",
+    "om_terrain": [ "lab_1x1_RES_8_commons_MAINT" ],
+    "type": "mapgen",
+    "weight": 200,
+    "object": {
+      "fill_ter": "t_thconc_floor",
+      "rows": [
+        "|||||||||||++|||||||||||",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿè__!!__è_!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "|_ÿÿÿÿÿÿ___!!____!!!!!!|",
+        "||||JJJ____!!____!!!!!!|",
+        "|y____JA___!!____!!!!!!|",
+        "|3____JAè__!!__è_!!!!!!|",
+        "|4__è_JA___!!____!!!!!!|",
+        "|O____J_A__!!____!!!!!!|",
+        "|2_________!!___||||||||",
+        "|157F3____!!!!__|ÿÿÿÿÿÿ|",
+        "||||||_||_!!!!__|ÿÿÿÿÿÿ|",
+        "|_|6____+è!!!!è_|ÿÿÿÿÿÿ|",
+        "|_|JJJ66|_!!!!__+ÿÿÿÿÿÿ|",
+        "|||||||||__!!___|ÿÿÿÿÿÿ|",
+        "|_________|<<|__|ÿÿÿÿÿÿ|",
+        "|_____||+|||||__||||||||",
+        "|__è__|___|UU+__+YS,,+t|",
+        "|_____|_è_|,,||||,,ê,|||",
+        "|_____|___|UU|__|YS,,+t|",
+        "|||||||||||±||||||||||||"
+      ],
+      "parameters": {
+        "carpet_type": {
+          "type": "ter_str_id",
+          "scope": "omt",
+          "default": {
+            "distribution": [
+              [ "t_carpet_yellow", 2 ],
+              [ "t_carpet_green", 2 ],
+              [ "t_carpet_purple", 1 ],
+              [ "t_carpet_red", 1 ],
+              [ "t_thconc_floor", 2 ]
+            ]
+          }
+        },
+        "floor_type": {
+          "type": "ter_str_id",
+          "scope": "omt",
+          "default": {
+            "distribution": [
+              [ "t_carpet_yellow", 2 ],
+              [ "t_carpet_green", 2 ],
+              [ "t_carpet_purple", 1 ],
+              [ "t_carpet_red", 1 ],
+              [ "t_floor", 1 ],
+              [ "t_thconc_floor", 2 ]
+            ]
+          }
+        }
+      },
+      "palettes": [ "lab_common_palette", "lab_residential_palette", "standard_domestic_lino_bathroom" ],
+      "terrain": {
+        "U": "t_linoleum_gray",
+        "Y": "t_linoleum_gray",
+        "!": { "param": "carpet_type", "fallback": "t_carpet_yellow" },
+        "ÿ": { "param": "floor_type", "fallback": "t_thconc_floor" }
+      },
+      "place_monsters": [ { "monster": "GROUP_LAB_FEMA", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.2 } ],
+      "place_monster": [
+        { "monster": "mon_flashbang_hack", "x": 1, "y": 15, "chance": 100 },
+        { "monster": "mon_manhack", "x": 1, "y": 16, "chance": 100 },
+        { "monster": "mon_flashbang_hack", "x": 14, "y": 22, "chance": 100 },
+        { "monster": "mon_gasbomb_hack", "x": 15, "y": 22, "chance": 100 }
+      ],
+      "place_nested": [
+        {
+          "chunks": [
+            [ "diningroom_6x6_E_W_1", 20 ],
+            [ "diningroom_6x6_E_W_2", 20 ],
+            [ "diningroom_6x6_N_S_2", 20 ],
+            [ "diningroom_6x6_N_S_1B", 20 ],
+            [ "diningroom_6x6_N_S_1A", 20 ]
+          ],
+          "x": 2,
+          "y": 1
+        },
+        {
+          "chunks": [
+            [ "bonus_room_3x3_1", 20 ],
+            [ "bonus_room_3x3_3", 20 ],
+            [ "bonus_room_3x3_E_5", 20 ],
+            [ "bonus_room_3x3_E_6", 20 ],
+            [ "bonus_room_3x3_W_6", 20 ],
+            [ "bonus_room_3x3_E_8", 20 ],
+            [ "bonus_room_3x3_S_8", 20 ],
+            [ "bonus_room_3x3_W_8", 20 ],
+            [ "bonus_room_3x3_S_6", 20 ]
+          ],
+          "x": 7,
+          "y": 20
+        },
+        { "chunks": [ [ "lab_residential_6x6_W", 100 ] ], "x": 17, "y": 6 },
+        { "chunks": [ [ "lab_residential_6x6_W", 100 ] ], "x": 17, "y": 13 },
+        {
+          "chunks": [
+            [ "livingroom_5x5_N_2", 30 ],
+            [ "livingroom_5x5_S_2", 20 ],
+            [ "livingroom_5x5_W_2", 30 ],
+            [ "5x5_pool", 10 ],
+            [ "5x5_gym_S", 20 ],
+            [ "5x5_dojo", 20 ],
+            [ "5x5_gym_W", 20 ]
+          ],
+          "x": 1,
+          "y": 18
+        },
+        {
+          "chunks": [
+            [ "livingroom_5x5_N_1", 10 ],
+            [ "livingroom_5x5_S_1", 10 ],
+            [ "livingroom_5x5_W_1", 10 ],
+            [ "livingroom_5x5_N_2", 10 ],
+            [ "livingroom_5x5_S_2", 10 ],
+            [ "livingroom_5x5_E_2", 10 ],
+            [ "livingroom_5x5_W_2", 10 ]
+          ],
+          "x": 18,
+          "y": 1
+        }
+      ]
+    }
+  }
+]
