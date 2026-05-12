@@ -1337,7 +1337,7 @@ item::sizing item::get_sizing( const Character &who ) const
     }
     bool to_ignore = true;
     for( const armor_portion_data &piece : armor_data->data ) {
-        if( piece.encumber != 0 ) {
+        if( piece.encumber != 0 || piece.max_encumber != 0 ) {
             to_ignore = false;
         }
     }
