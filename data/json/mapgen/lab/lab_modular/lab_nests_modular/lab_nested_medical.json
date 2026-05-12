@@ -357,9 +357,7 @@
         { "item": "stash_food", "x": [ 0, 5 ], "y": [ 4, 5 ], "chance": 100, "repeat": [ 1, 4 ] },
         { "item": "recipe_alpha", "x": 2, "y": 2, "chance": 100 }
       ],
-      "place_monster": [
-        { "monster": "mon_mutant_evolved", "x": [ 0, 5 ], "y": [ 0, 5 ], "repeat": [ 6, 8 ] }
-      ]
+      "place_monster": [ { "monster": "mon_mutant_evolved", "x": [ 0, 5 ], "y": [ 0, 5 ], "repeat": [ 6, 8 ] } ]
     }
   }
 ]
