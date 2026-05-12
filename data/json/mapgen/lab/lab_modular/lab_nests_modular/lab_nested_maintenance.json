@@ -190,7 +190,6 @@
         "|;;;|",
         "|||||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "place_loot": [
         { "item": "cheese_hard", "x": 2, "y": [ 1, 3 ], "chance": 100 },
@@ -214,7 +213,6 @@
         "|;;;|",
         "|||||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "place_loot": [
         { "item": "recipe_elfa", "x": 2, "y": [ 1, 3 ], "chance": 100 },
@@ -238,7 +236,6 @@
         "|;;;|",
         "|||||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "place_loot": [
         { "item": "record_patient", "x": 2, "y": [ 1, 3 ], "chance": 100 },
@@ -262,7 +259,6 @@
         "|;;;|",
         "|||||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "place_loot": [
         { "group": "toxic_waste", "x": [ 1, 3 ], "y": [ 1, 3 ], "repeat": 3, "chance": 100 },
@@ -284,7 +280,6 @@
         "|;;;|",
         "|||||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "place_monster": [ { "monster": "mon_sewer_rat", "x": [ 1, 3 ], "y": [ 1, 3 ], "repeat": [ 2, 4 ], "chance": 100 } ]
     }
@@ -303,7 +298,6 @@
         "|;;;|",
         "||;||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "place_monster": [ { "monster": "mon_black_rat", "x": [ 1, 3 ], "y": [ 1, 3 ], "repeat": [ 2, 4 ], "chance": 100 } ]
     }
@@ -322,7 +316,6 @@
         "|;;;|",
         "||;||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "place_monster": [ { "monster": "mon_sewer_snake", "x": [ 1, 3 ], "y": [ 1, 3 ], "repeat": [ 2, 4 ], "chance": 100 } ]
     }
@@ -341,7 +334,6 @@
         "|;;;|",
         "||;||"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "terrain": { "Æ": "t_thconc_floor" },
       "place_loot": [
@@ -368,7 +360,6 @@
         " XXXX ",
         "      "
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },
@@ -386,7 +377,6 @@
         "  NN ",
         "   h "
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },
@@ -404,7 +394,6 @@
         "Y j L",
         "L   L"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },
@@ -422,7 +411,6 @@
         "^ƨƨƨ^",
         "^^^^^"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },
@@ -440,7 +428,6 @@
         " 0ƨƨ ",
         "00   "
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },
@@ -458,7 +445,6 @@
         "  A  ",
         "⁵⁵   "
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },
@@ -476,7 +462,6 @@
         ";~~~;",
         ";ƧƧƧ;"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ],
       "terrain": { "~": "t_sewage", "Ƨ": "t_thconc_floor" },
       "furniture": { "Ƨ": "f_barricade_road" }
@@ -496,7 +481,6 @@
         " WWW ",
         "     "
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },
@@ -515,7 +499,6 @@
         "⁵  Ø ⁵",
         "⁵⁵  ⁵⁵"
       ],
-       
       "palettes": [ "lab_common_palette", "lab_maintenance_palette" ]
     }
   },

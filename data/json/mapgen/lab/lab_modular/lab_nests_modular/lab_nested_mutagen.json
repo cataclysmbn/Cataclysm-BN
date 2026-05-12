@@ -487,10 +487,7 @@
         "Æ": "f_alien_pod_resin"
       },
       "item": {
-        "ŏ": [
-          { "item": "blood", "chance": 100 },
-          { "item": "corpse_half_beheaded", "chance": 100 }
-        ],
+        "ŏ": [ { "item": "blood", "chance": 100 }, { "item": "corpse_half_beheaded", "chance": 100 } ],
         "ō": { "item": "blood", "chance": 100, "repeat": [ 2, 5 ] }
       },
       "computers": {
@@ -1205,10 +1202,7 @@
         "www"
       ],
       "palettes": [ "lab_common_palette" ],
-      "items": {
-        "m": [ { "item": "chem_lab", "chance": 30 } ],
-        "w": [ { "item": "chem_lab", "chance": 30 } ]
-      }
+      "items": { "m": [ { "item": "chem_lab", "chance": 30 } ], "w": [ { "item": "chem_lab", "chance": 30 } ] }
     }
   },
   {

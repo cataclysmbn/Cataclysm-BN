@@ -103,12 +103,7 @@
         "|||+||+|||||||||||||ƶ==|"
       ],
       "palettes": [ "lab_common_palette", "lab_security_palette" ],
-      "terrain": {
-        "ɜ": "t_thconc_floor",
-        "¥": "t_card_science",
-        "ƶ": "t_card_science",
-        "i": "t_thconc_floor"
-      },
+      "terrain": { "ɜ": "t_thconc_floor", "¥": "t_card_science", "ƶ": "t_card_science", "i": "t_thconc_floor" },
       "place_loot": [
         { "item": "id_science", "x": 13, "y": 21, "chance": 10 },
         { "item": "id_science", "x": 13, "y": 2, "chance": 10 },

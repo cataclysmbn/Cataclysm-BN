@@ -226,12 +226,7 @@
         "եե...:.ErE.R|;;;|;;;;;;|"
       ],
       "palettes": [ "lab_common_palette", "lab_residential_palette", "standard_domestic_lino_bathroom" ],
-      "terrain": {
-        "¥": "t_card_science",
-        "ƶ": "t_card_science",
-        "H": "t_carpet_yellow",
-        "l": "t_carpet_yellow"
-      },
+      "terrain": { "¥": "t_card_science", "ƶ": "t_card_science", "H": "t_carpet_yellow", "l": "t_carpet_yellow" },
       "place_traps": [ { "trap": "tr_light_on_res_8_NE", "x": [ 13, 15 ], "y": [ 1, 23 ] } ],
       "place_nested": [
         { "chunks": [ "lab_17x17_shop_2" ], "x": 17, "y": 0 },

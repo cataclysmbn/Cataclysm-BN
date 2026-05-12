@@ -261,7 +261,17 @@
     "id": "lab_maintenance_palette",
     "//": "for maintenance areas of labs.",
     "liquids": { "ɜ": { "liquid": "water_clean", "amount": [ 0, 100 ] } },
-    "terrain": { ";": "t_thconc_floor", "1": "t_elevator_control_off", "2": "t_elevator", "7": "t_sewage_pump", "0": "t_sewage_pipe", "6": "t_machinery_heavy", "W": "t_generator_broken", "Ö": "t_machinery_light", "₸": "t_machinery_electronic" },
+    "terrain": {
+      ";": "t_thconc_floor",
+      "1": "t_elevator_control_off",
+      "2": "t_elevator",
+      "7": "t_sewage_pump",
+      "0": "t_sewage_pipe",
+      "6": "t_machinery_heavy",
+      "W": "t_generator_broken",
+      "Ö": "t_machinery_light",
+      "₸": "t_machinery_electronic"
+    },
     "furniture": {
       "ƃ": "f_warehouse_shelf",
       "Z": "f_control_station",
@@ -339,10 +349,7 @@
     "id": "lab_mutagen_palette",
     "//": "for mutagen research areas of labs.",
     "palettes": [ "lab_common_palette" ],
-    "terrain": {
-      "W": "t_generator_broken",
-      "₸": "t_machinery_electronic"
-    },
+    "terrain": { "W": "t_generator_broken", "₸": "t_machinery_electronic" },
     "furniture": {
       "Z": "f_control_station",
       "1": "f_CTscan",
@@ -394,10 +401,7 @@
         { "item": "supplies_reagents_lab", "chance": 30 },
         { "item": "chem_lab", "chance": 40, "repeat": [ 1, 2 ] }
       ],
-      "r": [
-        { "item": "office_mess", "chance": 5 },
-        { "item": "office_supplies", "chance": 25 }
-      ],
+      "r": [ { "item": "office_mess", "chance": 5 }, { "item": "office_supplies", "chance": 25 } ],
       "s": [ { "item": "consumer_electronics", "chance": 10 } ],
       "w": [
         { "item": "chem_lab", "chance": 20 },
@@ -510,10 +514,7 @@
         { "item": "supplies_reagents_lab", "chance": 30 },
         { "item": "chem_lab", "chance": 40, "repeat": [ 1, 2 ] }
       ],
-      "r": [
-        { "item": "office_mess", "chance": 5 },
-        { "item": "office_supplies", "chance": 25 }
-      ],
+      "r": [ { "item": "office_mess", "chance": 5 }, { "item": "office_supplies", "chance": 25 } ],
       "s": [ { "item": "consumer_electronics", "chance": 10 } ],
       "w": [
         { "item": "chem_lab", "chance": 20 },
@@ -580,10 +581,7 @@
     "id": "lab_vent_palette",
     "//": "Adds a vent to the grate from the common palette.  Vent will be either cold or hot, but the same for the entire lab",
     "parameters": {
-      "lab_vent_type": {
-        "type": "furn_str_id",
-        "default": { "distribution": [ [ "f_vent_pipe", 2 ], [ "f_vent_pipe", 1 ] ] }
-      }
+      "lab_vent_type": { "type": "furn_str_id", "default": { "distribution": [ [ "f_vent_pipe", 2 ], [ "f_vent_pipe", 1 ] ] } }
     },
     "furniture": { "^": { "param": "lab_vent_type", "fallback": "f_vent_pipe" } }
   }

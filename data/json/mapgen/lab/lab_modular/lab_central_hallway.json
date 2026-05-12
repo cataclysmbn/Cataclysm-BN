@@ -77,13 +77,7 @@
         "|Aɱ...|;;``;;|U|;;|`ɱ`y`"
       ],
       "palettes": [ "lab_common_palette", "lab_security_palette" ],
-      "terrain": {
-        "h": "t_metal_floor",
-        "i": "t_linoleum_white",
-        "¥": "t_card_science",
-        "r": "t_metal_floor",
-        "y": "t_metal_floor"
-      },
+      "terrain": { "h": "t_metal_floor", "i": "t_linoleum_white", "¥": "t_card_science", "r": "t_metal_floor", "y": "t_metal_floor" },
       "place_nested": [
         { "chunks": [ [ "null", 10 ], [ "lab_recreational_3x3_open", 90 ] ], "x": 1, "y": 6 },
         { "chunks": [ [ "null", 10 ], [ "lab_recreational_3x3_open", 90 ] ], "x": 5, "y": 6 },
@@ -252,14 +246,7 @@
       "place_vehicles": [
         { "vehicle": "miniature_train_loco", "x": 4, "y": 1, "chance": 30, "status": 0, "rotation": 270 },
         { "vehicle": "miniature_train_loco", "x": 4, "y": 7, "chance": 30, "status": 0, "rotation": 90 },
-        {
-          "vehicle": "miniature_train_loco",
-          "x": 19,
-          "y": 1,
-          "chance": 100,
-          "status": 0,
-          "rotation": 270
-        },
+        { "vehicle": "miniature_train_loco", "x": 19, "y": 1, "chance": 100, "status": 0, "rotation": 270 },
         { "vehicle": "miniature_train_loco", "x": 19, "y": 7, "chance": 30, "status": 0, "rotation": 90 }
       ],
       "terrain": {

@@ -159,13 +159,7 @@
         "|||||???||||||||||||||||"
       ],
       "palettes": [ "lab_common_palette", "lab_residential_palette", "standard_domestic_lino_bathroom" ],
-      "terrain": {
-        "L": "t_linoleum_gray",
-        "U": "t_thconc_floor",
-        "Q": "t_thconc_floor",
-        "Г": "t_ladder_down",
-        "¥": "t_card_science"
-      },
+      "terrain": { "L": "t_linoleum_gray", "U": "t_thconc_floor", "Q": "t_thconc_floor", "Г": "t_ladder_down", "¥": "t_card_science" },
       "place_nested": [
         { "chunks": [ [ "lab_cargo_5x5", 100 ] ], "x": 1, "y": 1 },
         { "chunks": [ [ "lab_cargo_5x5", 100 ] ], "x": 2, "y": 7 }

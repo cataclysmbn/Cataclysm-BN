@@ -218,9 +218,7 @@
     "type": "mapgen",
     "update_mapgen_id": "light_on_res_8_SW_2",
     "method": "json",
-    "object": {
-      "place_terrain": [ { "ter": "t_thconc_floor_olight", "x": 9, "y": 3 } ]
-    }
+    "object": { "place_terrain": [ { "ter": "t_thconc_floor_olight", "x": 9, "y": 3 } ] }
   },
   {
     "method": "json",
@@ -309,8 +307,6 @@
     "type": "mapgen",
     "update_mapgen_id": "light_on_res_8_SW_2",
     "method": "json",
-    "object": {
-      "place_terrain": [ { "ter": "t_thconc_floor_olight", "x": 14, "y": 3 } ]
-    }
+    "object": { "place_terrain": [ { "ter": "t_thconc_floor_olight", "x": 14, "y": 3 } ] }
   }
 ]
