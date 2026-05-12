@@ -51,7 +51,7 @@ env:
   CMAKE_BUILD_DIR: out/build/windows-tiles-sounds-x64-msvc-tests
 
 jobs:
-  build_cataclysm:
+  build_catatclysm:
     name: Build
     runs-on: windows-latest
     if: github.event.pull_request.draft == false

@@ -212,7 +212,6 @@ jobs:
         id: runvcpkg
         with:
           vcpkgDirectory: "${{ github.workspace }}/../b/vcpkg"
-          vcpkgGitCommitId: "a8f78d257ade3c2e7999c1129a6d29971ae32006"
 
       - name: Integrate vcpkg
         if: runner.os == 'Windows'
@@ -375,7 +374,6 @@ jobs:
         if: runner.os == 'Windows'
         env:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
-          VCPKG_ROOT: "${{ github.workspace }}/../b/vcpkg"
         run: |
           cmake -G Ninja `
             -S "${{ github.workspace }}" `
