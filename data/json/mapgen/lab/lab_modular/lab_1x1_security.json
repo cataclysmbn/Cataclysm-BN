@@ -468,7 +468,7 @@
         { "monster": "mon_manhack", "x": 18, "y": 19, "chance": 100 },
         { "monster": "mon_skitterbot", "x": 21, "y": 19, "chance": 100 },
         { "monster": "mon_skitterbot", "x": 22, "y": 19, "chance": 100 },
-        { "monster": "mon_feral_pa_boss", "x": [ 1, 10 ], "y": 11, "chance": 100 }
+        { "monster": "mon_feral_blackops_boss_bioop", "x": [ 1, 10 ], "y": 11, "chance": 100 }
       ],
       "place_nested": [
         { "chunks": [ [ "12x12_obstacle_course_N", 100 ] ], "x": 1, "y": 1 },
@@ -521,6 +521,7 @@
       "place_monster": [ { "monster": [ "mon_mech_recon", "mon_mech_combat" ], "x": 15, "y": [ 15, 16 ], "chance": 85 } ],
       "items": {
         "q": { "item": "guns_milspec", "chance": 40, "repeat": [ 1, 2 ] },
+        "Q": { "item": "nested_rm51_assault_rifle", "chance": 80 },
         "V": { "item": "adv_UPS_off", "chance": 100, "repeat": [ 1, 2 ] },
         "r": { "item": "tools_gunsmith", "chance": 10 },
         "N": [ { "item": "tools_gunsmith", "chance": 100 }, { "item": "mechanics", "chance": 50 } ],
