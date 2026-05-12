@@ -38,7 +38,6 @@ constexpr auto hook_names = std::array
     "on_npc_try_move",
     "on_monster_try_move",
     "on_character_try_move",
-    "on_hour_passed",
     "on_mapgen_postprocess",
     "on_explosion_start",
     "on_creature_spawn",

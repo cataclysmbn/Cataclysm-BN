@@ -575,13 +575,6 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_weather_updated", []( const sol::table & ) {} );
 
-    DOC( "Called once at the top of every in-game hour, including during sleep/waiting." );
-    DOC( "The hook receives a table with keys:" );
-    DOC( "* `turn` (TimePoint): Current turn (top of the new hour)" );
-    DOC( "* `hour` (int): Hour of day (0-23)" );
-    DOC_PARAMS( "params" );
-    luna::set_fx( lib, "on_hour_passed", []( const sol::table & ) {} );
-
     DOC( "Called when the player tries to interact with an NPC.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `npc` (NPC): The NPC being interacted with  " );
