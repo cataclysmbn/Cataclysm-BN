@@ -74,6 +74,11 @@ void register_point( sol::state &lua )
                 return coords::project_to<coords::ms>( a );
             } );
         }
+        if constexpr( Scale != coords::scale::vehicle ) {
+            luna::set_fx( ut, "to_veh", []( const Point & a ) {
+                return coords::project_to<coords::veh>( a );
+            } );
+        }
         if constexpr( Scale != coords::scale::submap ) {
             luna::set_fx( ut, "to_sm", []( const Point & a ) {
                 return coords::project_to<coords::sm>( a );
@@ -84,9 +89,19 @@ void register_point( sol::state &lua )
                 return coords::project_to<coords::omt>( a );
             } );
         }
+        if constexpr( Scale != coords::scale::segment ) {
+            luna::set_fx( ut, "to_seg", []( const Point & a ) {
+                return coords::project_to<coords::seg>( a );
+            } );
+        }
         if constexpr( Scale != coords::scale::overmap ) {
             luna::set_fx( ut, "to_om", []( const Point & a ) {
                 return coords::project_to<coords::om>( a );
+            } );
+        }
+        if constexpr( Scale != coords::scale::mem_map_region ) {
+            luna::set_fx( ut, "to_mmr", []( const Point & a ) {
+                return coords::project_to<coords::mmr>( a );
             } );
         }
     }
@@ -155,12 +170,18 @@ void register_tripoint( sol::state &lua )
     // Point + point
     DOC( "Adds point and raw point" );
     luna::set_fx( ut, sol::meta_function::addition, []( const Point & a, const point & b ) { return a + b; } );
+    // Point + tripoint
+    DOC( "Adds point and raw tripoint" );
+    luna::set_fx( ut, sol::meta_function::addition, []( const Point & a, const tripoint & b ) { return a + b; } );
     // Point - RelPoint
     DOC( "Subtracts point and relative point" );
     luna::set_fx( ut, sol::meta_function::subtraction, []( const Point & a, const RelPoint & b ) { return a - b; } );
     // Point - point
     DOC( "Subtracts point and raw point" );
     luna::set_fx( ut, sol::meta_function::subtraction, []( const Point & a, const point & b ) { return a + b; } );
+    // Point - tripoint
+    DOC( "Subtracts point and raw point" );
+    luna::set_fx( ut, sol::meta_function::subtraction, []( const Point & a, const tripoint & b ) { return a + b; } );
 
     reg_serde_functions( ut );
 
@@ -173,6 +194,11 @@ void register_tripoint( sol::state &lua )
                 return coords::project_to<coords::ms>( a );
             } );
         }
+        if constexpr( Scale != coords::scale::vehicle ) {
+            luna::set_fx( ut, "to_veh", []( const Point & a ) {
+                return coords::project_to<coords::veh>( a );
+            } );
+        }
         if constexpr( Scale != coords::scale::submap ) {
             luna::set_fx( ut, "to_sm", []( const Point & a ) {
                 return coords::project_to<coords::sm>( a );
@@ -183,9 +209,19 @@ void register_tripoint( sol::state &lua )
                 return coords::project_to<coords::omt>( a );
             } );
         }
+        if constexpr( Scale != coords::scale::segment ) {
+            luna::set_fx( ut, "to_seg", []( const Point & a ) {
+                return coords::project_to<coords::seg>( a );
+            } );
+        }
         if constexpr( Scale != coords::scale::overmap ) {
             luna::set_fx( ut, "to_om", []( const Point & a ) {
                 return coords::project_to<coords::om>( a );
+            } );
+        }
+        if constexpr( Scale != coords::scale::mem_map_region ) {
+            luna::set_fx( ut, "to_mmr", []( const Point & a ) {
+                return coords::project_to<coords::mmr>( a );
             } );
         }
     }
@@ -203,54 +239,70 @@ void register_tripoint( sol::state &lua )
 void cata::detail::reg_point_tripoint( sol::state &lua )
 {
     // Points
-
-    // Submap
-    register_point<coords::origin::relative, coords::sm>( lua );
     register_point<coords::origin::bubble, coords::sm>( lua );
-    register_point<coords::origin::overmap_terrain, coords::sm>( lua );
-    register_point<coords::origin::overmap, coords::sm>( lua );
-    register_point<coords::origin::abs, coords::sm>( lua );
-
-    // Map Square
-    register_point<coords::origin::relative, coords::ms>( lua );
     register_point<coords::origin::bubble, coords::ms>( lua );
-    register_point<coords::origin::submap, coords::ms>( lua );
-    register_point<coords::origin::overmap_terrain, coords::ms>( lua ); // Do I even need you?
+    register_point<coords::origin::relative, coords::ms>( lua );
     register_point<coords::origin::abs, coords::ms>( lua );
-
-    // Overmap Terrain
+    register_point<coords::origin::submap, coords::ms>( lua );
+    register_point<coords::origin::overmap_terrain, coords::ms>( lua );
+    register_point<coords::origin::mem_map_region, coords::ms>( lua );
+    register_point<coords::origin::segment, coords::ms>( lua );
+    register_point<coords::origin::overmap, coords::ms>( lua );
+    register_point<coords::origin::relative, coords::veh>( lua );
+    register_point<coords::origin::vehicle, coords::veh>( lua );
+    register_point<coords::origin::relative, coords::sm>( lua );
+    register_point<coords::origin::abs, coords::sm>( lua );
+    register_point<coords::origin::overmap_terrain, coords::sm>( lua );
+    register_point<coords::origin::mem_map_region, coords::sm>( lua );
+    register_point<coords::origin::segment, coords::sm>( lua );
+    register_point<coords::origin::overmap, coords::sm>( lua );
     register_point<coords::origin::relative, coords::omt>( lua );
-    register_point<coords::origin::overmap, coords::omt>( lua );
     register_point<coords::origin::abs, coords::omt>( lua );
-
-    // Overmap
+    register_point<coords::origin::overmap, coords::omt>( lua );
+    register_point<coords::origin::segment, coords::omt>( lua );
+    register_point<coords::origin::mem_map_region, coords::omt>( lua );
+    register_point<coords::origin::relative, coords::mmr>( lua );
+    register_point<coords::origin::abs, coords::mmr>( lua );
+    register_point<coords::origin::segment, coords::mmr>( lua );
+    register_point<coords::origin::overmap, coords::mmr>( lua );
+    register_point<coords::origin::relative, coords::seg>( lua );
+    register_point<coords::origin::abs, coords::seg>( lua );
+    register_point<coords::origin::overmap, coords::seg>( lua );
     register_point<coords::origin::relative, coords::om>( lua );
     register_point<coords::origin::abs, coords::om>( lua );
 
-    // Tripoints
-
-    // Submap
-    register_tripoint<coords::origin::relative, coords::sm>( lua );
-    register_tripoint<coords::origin::bubble, coords::sm>( lua );
-    register_tripoint<coords::origin::overmap_terrain, coords::sm>( lua );
-    register_tripoint<coords::origin::overmap, coords::sm>( lua );
-    register_tripoint<coords::origin::abs, coords::sm>( lua );
-
-    // Map Square
-    register_tripoint<coords::origin::relative, coords::ms>( lua );
-    register_tripoint<coords::origin::bubble, coords::ms>( lua );
-    register_tripoint<coords::origin::submap, coords::ms>( lua );
-    register_tripoint<coords::origin::overmap_terrain, coords::ms>( lua ); // Do I even need you?
-    register_tripoint<coords::origin::abs, coords::ms>( lua );
-
-    // Overmap Terrain
-    register_tripoint<coords::origin::relative, coords::omt>( lua );
-    register_tripoint<coords::origin::overmap, coords::omt>( lua );
-    register_tripoint<coords::origin::abs, coords::omt>( lua );
-
-    // Overmap
-    register_tripoint<coords::origin::relative, coords::om>( lua );
-    register_tripoint<coords::origin::abs, coords::om>( lua );
+    //Tripoints
+    register_point<coords::origin::bubble, coords::sm>( lua );
+    register_point<coords::origin::bubble, coords::ms>( lua );
+    register_point<coords::origin::relative, coords::ms>( lua );
+    register_point<coords::origin::abs, coords::ms>( lua );
+    register_point<coords::origin::submap, coords::ms>( lua );
+    register_point<coords::origin::overmap_terrain, coords::ms>( lua );
+    register_point<coords::origin::mem_map_region, coords::ms>( lua );
+    register_point<coords::origin::segment, coords::ms>( lua );
+    register_point<coords::origin::overmap, coords::ms>( lua );
+    register_point<coords::origin::relative, coords::veh>( lua );
+    register_point<coords::origin::vehicle, coords::veh>( lua );
+    register_point<coords::origin::relative, coords::sm>( lua );
+    register_point<coords::origin::abs, coords::sm>( lua );
+    register_point<coords::origin::overmap_terrain, coords::sm>( lua );
+    register_point<coords::origin::mem_map_region, coords::sm>( lua );
+    register_point<coords::origin::segment, coords::sm>( lua );
+    register_point<coords::origin::overmap, coords::sm>( lua );
+    register_point<coords::origin::relative, coords::omt>( lua );
+    register_point<coords::origin::abs, coords::omt>( lua );
+    register_point<coords::origin::overmap, coords::omt>( lua );
+    register_point<coords::origin::segment, coords::omt>( lua );
+    register_point<coords::origin::mem_map_region, coords::omt>( lua );
+    register_point<coords::origin::relative, coords::mmr>( lua );
+    register_point<coords::origin::abs, coords::mmr>( lua );
+    register_point<coords::origin::segment, coords::mmr>( lua );
+    register_point<coords::origin::overmap, coords::mmr>( lua );
+    register_point<coords::origin::relative, coords::seg>( lua );
+    register_point<coords::origin::abs, coords::seg>( lua );
+    register_point<coords::origin::overmap, coords::seg>( lua );
+    register_point<coords::origin::relative, coords::om>( lua );
+    register_point<coords::origin::abs, coords::om>( lua );
 
     // Register 'point' class to be used in Lua
     {

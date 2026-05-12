@@ -83,9 +83,7 @@ struct npc_opinion;
 struct npc_personality;
 struct omt_find_params;
 struct oter_t;
-struct point;
 struct species_type;
-struct tripoint;
 struct trap;
 struct MonsterGroup;
 struct uilist_entry;
@@ -315,53 +313,70 @@ LUNA_VAL( islot_artifact, "IslotArtifact" );
 LUNA_VAL( islot_milling, "IslotMilling" );
 LUNA_VAL( islot_seed, "IslotSeed" );
 
-// All the coords
+// All the coords as seen in coordinates.h
+
 // Points
-
-// Submap
-LUNA_VAL( point_rel_sm, "PointRelSm" );
 LUNA_VAL( point_bub_sm, "PointBubSm" );
-LUNA_VAL( point_omt_sm, "PointOmtSm" );
-LUNA_VAL( point_om_sm, "PointOmSm" );
-LUNA_VAL( point_abs_sm, "PointAbsSm" );
-
-// Map Square
-LUNA_VAL( point_rel_ms, "PointRelMs" );
 LUNA_VAL( point_bub_ms, "PointBubMs" );
+LUNA_VAL( point_rel_ms, "PointRelMs" );
+LUNA_VAL( point_abs_ms, "PointAbsMs" );
 LUNA_VAL( point_sm_ms, "PointSmMs" );
 LUNA_VAL( point_omt_ms, "PointOmtMs" );
-LUNA_VAL( point_abs_ms, "PointAbsMs" );
-
-// Overmap Terrain
+LUNA_VAL( point_mmr_ms, "PointMmrMs" );
+LUNA_VAL( point_seg_ms, "PointSegMs" );
+LUNA_VAL( point_om_ms, "PointOmMs" );
+LUNA_VAL( point_rel_veh, "PointRelVeh" );
+LUNA_VAL( point_mnt_veh, "PointMntVeh" );
+LUNA_VAL( point_rel_sm, "PointRelSm" );
+LUNA_VAL( point_abs_sm, "PointAbsSm" );
+LUNA_VAL( point_omt_sm, "PointOmtSm" );
+LUNA_VAL( point_mmr_sm, "PointMmrSm" );
+LUNA_VAL( point_seg_sm, "PointSegSm" );
+LUNA_VAL( point_om_sm, "PointOmSm" );
 LUNA_VAL( point_rel_omt, "PointRelOmt" );
-LUNA_VAL( point_om_omt, "PointOmOmt" );
 LUNA_VAL( point_abs_omt, "PointAbsOmt" );
-
-// Overmap
+LUNA_VAL( point_om_omt, "PointOmOmt" );
+LUNA_VAL( point_seg_omt, "PointSegOmt" );
+LUNA_VAL( point_mmr_omt, "PointMmrOmt" );
+LUNA_VAL( point_rel_mmr, "PointRelMmr" );
+LUNA_VAL( point_abs_mmr, "PointAbsMmr" );
+LUNA_VAL( point_seg_mmr, "PointSegMmr" );
+LUNA_VAL( point_om_mmr, "PointOmMmr" );
+LUNA_VAL( point_rel_seg, "PointRelSeg" );
+LUNA_VAL( point_abs_seg, "PointAbsSeg" );
+LUNA_VAL( point_om_seg, "PointOmSeg" );
 LUNA_VAL( point_rel_om, "PointRelOm" );
 LUNA_VAL( point_abs_om, "PointAbsOm" );
 
 // Tripoints
-
-// Submap
-LUNA_VAL( tripoint_rel_sm, "TripointRelSm" );
 LUNA_VAL( tripoint_bub_sm, "TripointBubSm" );
-LUNA_VAL( tripoint_omt_sm, "TripointOmtSm" );
-LUNA_VAL( tripoint_om_sm, "TripointOmSm" );
-LUNA_VAL( tripoint_abs_sm, "TripointAbsSm" );
-
-// Map Square
-LUNA_VAL( tripoint_rel_ms, "TripointRelMs" );
 LUNA_VAL( tripoint_bub_ms, "TripointBubMs" );
+LUNA_VAL( tripoint_rel_ms, "TripointRelMs" );
+LUNA_VAL( tripoint_abs_ms, "TripointAbsMs" );
 LUNA_VAL( tripoint_sm_ms, "TripointSmMs" );
 LUNA_VAL( tripoint_omt_ms, "TripointOmtMs" );
-LUNA_VAL( tripoint_abs_ms, "TripointAbsMs" );
-
-// Overmap Terrain
+LUNA_VAL( tripoint_mmr_ms, "TripointMmrMs" );
+LUNA_VAL( tripoint_seg_ms, "TripointSegMs" );
+LUNA_VAL( tripoint_om_ms, "TripointOmMs" );
+LUNA_VAL( tripoint_rel_veh, "TripointRelVeh" );
+LUNA_VAL( tripoint_mnt_veh, "TripointMntVeh" );
+LUNA_VAL( tripoint_rel_sm, "TripointRelSm" );
+LUNA_VAL( tripoint_abs_sm, "TripointAbsSm" );
+LUNA_VAL( tripoint_omt_sm, "TripointOmtSm" );
+LUNA_VAL( tripoint_mmr_sm, "TripointMmrSm" );
+LUNA_VAL( tripoint_seg_sm, "TripointSegSm" );
+LUNA_VAL( tripoint_om_sm, "TripointOmSm" );
 LUNA_VAL( tripoint_rel_omt, "TripointRelOmt" );
-LUNA_VAL( tripoint_om_omt, "TripointOmOmt" );
 LUNA_VAL( tripoint_abs_omt, "TripointAbsOmt" );
-
-// Overmap
+LUNA_VAL( tripoint_om_omt, "TripointOmOmt" );
+LUNA_VAL( tripoint_seg_omt, "TripointSegOmt" );
+LUNA_VAL( tripoint_mmr_omt, "TripointMmrOmt" );
+LUNA_VAL( tripoint_rel_mmr, "TripointRelMmr" );
+LUNA_VAL( tripoint_abs_mmr, "TripointAbsMmr" );
+LUNA_VAL( tripoint_seg_mmr, "TripointSegMmr" );
+LUNA_VAL( tripoint_om_mmr, "TripointOmMmr" );
+LUNA_VAL( tripoint_rel_seg, "TripointRelSeg" );
+LUNA_VAL( tripoint_abs_seg, "TripointAbsSeg" );
+LUNA_VAL( tripoint_om_seg, "TripointOmSeg" );
 LUNA_VAL( tripoint_rel_om, "TripointRelOm" );
 LUNA_VAL( tripoint_abs_om, "TripointAbsOm" );
