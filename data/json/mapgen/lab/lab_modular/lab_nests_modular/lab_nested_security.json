@@ -247,7 +247,11 @@
       },
       "place_monster": [ { "monster": "mon_zombie_labsecurity", "x": 3, "y": 4, "chance": 20, "pack_size": [ 1, 2 ] } ],
       "place_loot": [ { "item": "large_repairkit", "x": 1, "y": 3, "chance": 90 } ],
-      "items": { "Q": { "item": "cop_armory", "chance": 70 }, "∞": { "item": "ammo_cop", "chance": 40, "repeat": [ 0, 2 ] } }
+      "items": {
+        "J": { "item": "gunmod_common", "chance": 70, "repeat": [ 0, 2 ] },
+        "Q": { "item": "cop_armory", "chance": 70 },
+        "∞": { "item": "ammo_cop", "chance": 40, "repeat": [ 0, 2 ] }
+      }
     }
   },
   {
@@ -278,7 +282,11 @@
       },
       "place_monster": [ { "monster": "mon_zombie_labsecurity", "x": 3, "y": 4, "chance": 20, "pack_size": [ 1, 2 ] } ],
       "place_loot": [ { "item": "large_repairkit", "x": 4, "y": 3, "chance": 90 } ],
-      "items": { "Q": { "item": "cop_armory", "chance": 70 }, "∞": { "item": "ammo_cop", "chance": 70, "repeat": [ 2, 4 ] } }
+      "items": {
+        "J": { "item": "gunmod_common", "chance": 70, "repeat": [ 0, 2 ] },
+        "Q": { "item": "cop_armory", "chance": 70 },
+        "∞": { "item": "ammo_cop", "chance": 70, "repeat": [ 2, 4 ] }
+      }
     }
   },
   {
@@ -340,7 +348,8 @@
         "w   PP"
       ],
       "palettes": [ "lab_common_palette", "lab_security_palette" ],
-      "place_loot": [ { "item": "camera_pro", "x": 1, "y": 3, "chance": 100 } ]
+      "place_loot": [ { "item": "camera_pro", "x": 1, "y": 3, "chance": 100 } ],
+      "items": { "w": [ { "item": "id_science", "chance": 50 } ] }
     }
   },
   {
@@ -360,7 +369,8 @@
         "pp   w"
       ],
       "palettes": [ "lab_common_palette", "lab_security_palette" ],
-      "place_loot": [ { "item": "camera_pro", "x": 1, "y": 2, "chance": 100 } ]
+      "place_loot": [ { "item": "camera_pro", "x": 1, "y": 2, "chance": 100 } ],
+      "items": { "w": [ { "item": "id_science", "chance": 50 } ] }
     }
   },
   {
@@ -380,7 +390,8 @@
         "w   PP"
       ],
       "palettes": [ "lab_common_palette", "lab_security_palette" ],
-      "place_loot": [ { "item": "camera_pro", "x": 1, "y": 3, "chance": 100 } ]
+      "place_loot": [ { "item": "camera_pro", "x": 1, "y": 3, "chance": 100 } ],
+      "items": { "w": [ { "item": "id_science", "chance": 50 } ] }
     }
   },
   {
@@ -908,7 +919,7 @@
         "||    |       "
       ],
       "palettes": [ "lab_common_palette" ],
-      "furniture": { "6": "f_vent_pipe" },
+      "terrain": { "6": "t_grate_indoor" },
       "place_monster": [
         {
           "monster": [ "mon_gasbomb_hack", "mon_manhack", "mon_skitterbot", "mon_skitterbot", "mon_flashbang_hack" ],
@@ -982,7 +993,7 @@
         "    ||        "
       ],
       "palettes": [ "lab_common_palette" ],
-      "furniture": { "6": "f_vent_pipe" },
+      "terrain": { "6": "t_grate_indoor" },
       "place_monster": [
         {
           "monster": [ "mon_gasbomb_hack", "mon_manhack", "mon_skitterbot", "mon_skitterbot", "mon_flashbang_hack" ],
@@ -1158,7 +1169,8 @@
       "mapgensize": [ 1, 1 ],
       "place_loot": [
         { "item": "power_armor_light", "x": 0, "y": 0, "chance": 100 },
-        { "item": "power_armor_helmet_light", "x": 0, "y": 0, "chance": 100 }
+        { "item": "power_armor_helmet_light", "x": 0, "y": 0, "chance": 100 },
+        { "item": "power_armor_frame", "x": 0, "y": 0, "chance": 100 }
       ]
     }
   },
@@ -1167,6 +1179,12 @@
     "method": "json",
     "weight": 600,
     "nested_mapgen_id": "power_armor_roulette",
-    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "monster": "mon_zombie_armored", "x": 0, "y": 0 } ] }
+    "object": { "mapgensize": [ 1, 1 ],
+    "place_monster": [ { "monster": "mon_zombie_armored", "x": 0, "y": 0 } ], 
+    "place_loot": [
+        { "item": "power_armor_light", "x": 0, "y": 0, "chance": 100 },
+        { "item": "power_armor_helmet_light", "x": 0, "y": 0, "chance": 100 },
+        { "item": "power_armor_frame", "x": 0, "y": 0, "chance": 100 }
+      ] }
   }
 ]
