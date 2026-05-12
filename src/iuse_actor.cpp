@@ -7327,7 +7327,7 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
         pocket_data.bounds.boundary_terrain = *boundary_terrain;
     } else {
         pocket_data.bounds.boundary_terrain = pocket_type.obj().boundary_terrain.value_or(
-                                                  ter_str_id( "t_pd_border" ) );
+                ter_str_id( "t_pd_border" ) );
     }
     pocket_data.bounds.boundary_overmap_terrain = oter_str_id( "pd_border" );
 

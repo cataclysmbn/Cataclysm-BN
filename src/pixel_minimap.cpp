@@ -475,7 +475,7 @@ void pixel_minimap::render_cache( const tripoint_bub_ms &center )
     const auto sm_center = project_to<coords::sm>( here.bub_to_abs( center ) );
 
     const auto sm_offset = tripoint_rel_sm( view_tiles_count.x / SEEX / 2,
-                           view_tiles_count.y / SEEY / 2, 0 );
+                                            view_tiles_count.y / SEEY / 2, 0 );
 
     const auto center_remainder = project_remain<coords::sm>( center ).remainder;
     const auto ms_offset = point_rel_ms( view_tiles_count.x / 2 - sm_offset.x() * SEEX -
