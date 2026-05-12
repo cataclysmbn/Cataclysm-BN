@@ -1624,8 +1624,8 @@ bool vehicle::check_on_ramp( int idir, const tripoint_rel_ms &offset ) const
     const tripoint_bub_ms origin = bub_ms_location();
     for( auto &prt : get_all_parts() ) {
         const vehicle_part &p = prt.part();
-        const tripoint_bub_ms part_point = origin + offset +p.precalc[idir] +
-              tripoint_rel_ms( 0, 0, p.mount.z() + p.z_terrain[idir] );
+        const tripoint_bub_ms part_point = origin + offset + p.precalc[idir] +
+                                           tripoint_rel_ms( 0, 0, p.mount.z() + p.z_terrain[idir] );
         if( g->m.has_flag( TFLAG_RAMP_UP, part_point ) ||
             g->m.has_flag( TFLAG_RAMP_DOWN, part_point ) ) {
             return true;
@@ -1654,7 +1654,7 @@ void vehicle::adjust_zlevel( int idir, const tripoint_rel_ms &offset )
     auto new_center = base;
     new_center.z() += ramp_z_delta_at( m, new_center );
 
-    auto z_cache = std::map<point_rel_ms, int>{};
+    auto z_cache = std::map<point_rel_ms, int> {};
     std::ranges::for_each( parts, [&]( vehicle_part & part ) {
         if( part.removed ) {
             return;

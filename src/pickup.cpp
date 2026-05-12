@@ -1362,7 +1362,8 @@ auto pickup::pick_up_all_nearby() -> void
         return;
     }
 
-    const auto starting_pos = nearby.has_ground_items ? std::make_optional( g->u.bub_pos() ) : std::nullopt;
+    const auto starting_pos = nearby.has_ground_items ? std::make_optional(
+                                  g->u.bub_pos() ) : std::nullopt;
     pick_up_from_items( nearby.items, 0, starting_pos );
 }
 
