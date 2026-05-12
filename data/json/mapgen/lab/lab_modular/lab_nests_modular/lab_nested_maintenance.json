@@ -154,7 +154,8 @@
         "I": [
           { "item": "SUS_tailoring_tool_drawer", "chance": 60, "repeat": [ 0, 1 ] },
           { "item": "tailorbooks", "chance": 60, "repeat": [ 0, 1 ] }
-        ]
+        ],
+        "w": [ { "item": "SUS_tailoring_materials", "chance": 70, "repeat": [ 1, 3 ] } ]
       }
     }
   },
