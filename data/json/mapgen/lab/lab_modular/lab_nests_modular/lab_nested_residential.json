@@ -23,7 +23,7 @@
         "F1O32     E R"
       ],
       "palettes": [ "lab_common_palette", "lab_residential_palette" ],
-      "terrain": { "h": "t_carpet_yellow" },
+      "terrain": { "h": "t_carpet_yellow", "f": "t_carpet_yellow" },
       "place_loot": [ { "item": "television", "x": 12, "y": 10, "chance": 40 }, { "item": "stereo", "x": 12, "y": 9, "chance": 40 } ]
     }
   },
