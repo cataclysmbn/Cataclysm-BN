@@ -7123,8 +7123,7 @@ void vehicle::remove_remote_part( int part_num )
             active_tiles::furn_at<vehicle_connector_tile>( parts[part_num].target.second );
         if( connector != nullptr ) {
             auto &vehs = connector->connected_vehicles;
-            auto iter = std::find( vehs.begin(), vehs.end(),
-                                   g->m.bub_to_abs( bub_ms_location() ) );
+            const auto iter = std::ranges::find( vehs, abs_ms_location() );
             if( iter != vehs.end() ) {
                 vehs.erase( iter );
             }
@@ -7135,7 +7134,7 @@ void vehicle::remove_remote_part( int part_num )
 
     // If the target vehicle is still there, ask it to remove its part
     if( veh != nullptr ) {
-        const auto local_abs = g->m.bub_to_abs( bub_part_location( part_num ) );
+        const auto local_abs = abs_part_location( part_num );
 
         for( size_t j = 0; j < veh->loose_parts.size(); j++ ) {
             int remote_partnum = veh->loose_parts[j];

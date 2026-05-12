@@ -85,7 +85,7 @@ static inline void test_grid_veh( distribution_grid &grid, vehicle &veh, battery
     }
 }
 
-static void connect_grid_vehicle( map &m, vehicle &veh, vehicle_connector_tile &connector,
+static void connect_grid_vehicle( vehicle &veh, vehicle_connector_tile &connector,
                                   const tripoint_abs_ms &connector_abs_pos )
 {
     const tripoint_mnt_veh cable_part_pos;
@@ -95,7 +95,7 @@ static void connect_grid_vehicle( map &m, vehicle &veh, vehicle_connector_tile &
     source_part.target.second = connector_abs_pos;
     source_part.set_flag( vehicle_part::targets_grid );
     connector.connected_vehicles.clear();
-    connector.connected_vehicles.emplace_back( m.bub_to_abs( veh.bub_ms_location() ) );
+    connector.connected_vehicles.emplace_back( veh.abs_ms_location() );
     int part_index = veh.install_part( cable_part_pos, std::move( source_part ) );
 
     REQUIRE( part_index >= 0 );
@@ -138,7 +138,7 @@ static grid_setup set_up_grid( map &m )
     REQUIRE( grid_connector );
     REQUIRE( battery );
 
-    connect_grid_vehicle( m, *veh, *grid_connector, connector_abs_pos );
+    connect_grid_vehicle( *veh, *grid_connector, connector_abs_pos );
 
     distribution_grid &grid = get_distribution_grid_tracker().grid_at( connector_abs_pos );
     REQUIRE( !grid.empty() );

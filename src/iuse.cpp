@@ -8310,18 +8310,15 @@ int iuse::cable_attach( player *who, item *cable, bool, const tripoint_bub_ms & 
 
             vehicle *v = nullptr;
             optional_vpart_position vp( std::nullopt );
-            tripoint_abs_ms v_global;
             tripoint_abs_ms connector;
 
             if( v1 ) {
                 v = v1;
                 vp = vp1;
-                v_global = data->con1.point;
                 connector = data->con2.point;
             } else if( v2 ) {
                 v = v2;
                 vp = vp2;
-                v_global = data->con2.point;
                 connector = data->con1.point;
             } else {
                 debugmsg( "Something went wrong with cable connection" );
@@ -8346,7 +8343,7 @@ int iuse::cable_attach( player *who, item *cable, bool, const tripoint_bub_ms & 
             if( who && who->has_item( *cable ) ) {
                 who->add_msg_if_player( m_good, _( "You connect the %s to the electric grid." ),
                                         v->name );
-                grid_connector->connected_vehicles.emplace_back( g->m.bub_to_abs( v->bub_ms_location() ) );
+                grid_connector->connected_vehicles.emplace_back( v->abs_ms_location() );
                 v->install_part( vcoords, std::move( v_part ) );
             }
             return 1;    // Let the cable be destroyed.
