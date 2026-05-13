@@ -574,6 +574,88 @@ if (RELEASE)
     endif()
 endif()
 
+if (APPLE AND RELEASE AND (TILES OR CURSES))
+    if (TILES)
+        set(CATA_OSX_GAME_TARGET cataclysm-bn-tiles)
+    else()
+        set(CATA_OSX_GAME_TARGET cataclysm-bn)
+    endif()
+
+    set(CATA_OSX_APP_DIR "${CMAKE_SOURCE_DIR}/Cataclysm.app")
+    set(CATA_OSX_CONTENTS_DIR "${CATA_OSX_APP_DIR}/Contents")
+    set(CATA_OSX_RESOURCES_DIR "${CATA_OSX_CONTENTS_DIR}/Resources")
+    set(CATA_OSX_DATA_DIR "${CATA_OSX_RESOURCES_DIR}/data")
+    set(CATA_OSX_FRAMEWORKS_DIR "" CACHE PATH "Directory containing macOS SDL2 frameworks for app packaging.")
+    if (NOT CATA_OSX_FRAMEWORKS_DIR)
+        if (EXISTS "$ENV{HOME}/Library/Frameworks/SDL2.framework")
+            set(CATA_OSX_FRAMEWORKS_DIR "$ENV{HOME}/Library/Frameworks")
+        elseif (EXISTS "/Library/Frameworks/SDL2.framework")
+            set(CATA_OSX_FRAMEWORKS_DIR "/Library/Frameworks")
+        endif()
+    endif()
+
+    set(CATA_OSX_COPY_RESOURCE_COMMANDS)
+    if (TILES)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/gfx" "${CATA_OSX_RESOURCES_DIR}/gfx")
+    endif()
+    if (SOUND)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/sound" "${CATA_OSX_DATA_DIR}/sound")
+    endif()
+
+    set(CATA_OSX_COPY_FRAMEWORK_COMMANDS)
+    if (TILES AND CATA_OSX_FRAMEWORKS_DIR)
+        set(CATA_OSX_FRAMEWORK_NAMES SDL2 SDL2_image SDL2_ttf)
+        if (SOUND)
+            list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL2_mixer)
+        endif()
+        foreach (CATA_OSX_FRAMEWORK_NAME ${CATA_OSX_FRAMEWORK_NAMES})
+            list(APPEND CATA_OSX_COPY_FRAMEWORK_COMMANDS
+                COMMAND ${CMAKE_COMMAND} -E copy_directory
+                    "${CATA_OSX_FRAMEWORKS_DIR}/${CATA_OSX_FRAMEWORK_NAME}.framework"
+                    "${CATA_OSX_RESOURCES_DIR}/${CATA_OSX_FRAMEWORK_NAME}.framework")
+        endforeach()
+    endif()
+
+    add_custom_target(osx-app
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${CATA_OSX_APP_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_CONTENTS_DIR}/MacOS"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_RESOURCES_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_DATA_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/build-data/osx/Info.plist" "${CATA_OSX_CONTENTS_DIR}/Info.plist"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/build-data/osx/Cataclysm.sh" "${CATA_OSX_CONTENTS_DIR}/MacOS/Cataclysm.sh"
+        COMMAND chmod +x "${CATA_OSX_CONTENTS_DIR}/MacOS/Cataclysm.sh"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${CATA_OSX_GAME_TARGET}>" "${CATA_OSX_RESOURCES_DIR}/$<TARGET_FILE_NAME:${CATA_OSX_GAME_TARGET}>"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/build-data/osx/AppIcon.icns" "${CATA_OSX_RESOURCES_DIR}/AppIcon.icns"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/font" "${CATA_OSX_DATA_DIR}/font"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/json" "${CATA_OSX_DATA_DIR}/json"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/mods" "${CATA_OSX_DATA_DIR}/mods"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/names" "${CATA_OSX_DATA_DIR}/names"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/raw" "${CATA_OSX_DATA_DIR}/raw"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/motd" "${CATA_OSX_DATA_DIR}/motd"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/credits" "${CATA_OSX_DATA_DIR}/credits"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/title" "${CATA_OSX_DATA_DIR}/title"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/help" "${CATA_OSX_DATA_DIR}/help"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/lua" "${CATA_OSX_DATA_DIR}/lua"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/lang/mo" "${CATA_OSX_RESOURCES_DIR}/lang/mo"
+        ${CATA_OSX_COPY_RESOURCE_COMMANDS}
+        ${CATA_OSX_COPY_FRAMEWORK_COMMANDS}
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS ${CATA_OSX_GAME_TARGET} translations)
+
+    if (GIT_VERSION)
+        set(CATA_OSX_DMG_VERSION "${GIT_VERSION}")
+    else()
+        set(CATA_OSX_DMG_VERSION unknown)
+    endif()
+    add_custom_target(dmgdist
+        COMMAND plutil -convert binary1 "${CATA_OSX_APP_DIR}/Contents/Info.plist"
+        COMMAND dmgbuild -s build-data/osx/dmgsettings.py "Cataclysm BN" "CataclysmBN-${CATA_OSX_DMG_VERSION}.dmg"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS osx-app)
+endif()
+
 configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
         "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"

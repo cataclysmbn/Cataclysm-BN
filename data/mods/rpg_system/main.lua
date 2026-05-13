@@ -1,7 +1,58 @@
 gdebug.log_info("RPG System: Main")
 
+---@class RpgMutationsModule
+---@field Mutation { new: fun(config: RpgMutationConfig): Mutation }
+---@field MUTATIONS table<string, Mutation?>
+---@field ALL_CLASS_IDS MutationBranchId[]
+---@field ALL_TRAIT_IDS MutationBranchId[]
+---@field BASE_CLASS_IDS MutationBranchId[]
+---@field PRESTIGE_CLASS_IDS MutationBranchId[]
+---@field STAT_BONUS_IDS MutationBranchId[]
+---@field PERIODIC_BONUS_IDS MutationBranchId[]
+---@field KILL_MONSTER_BONUS_IDS MutationBranchId[]
+---@field register_mutation fun(mutation: Mutation)
+
+---@class RpgMainMenuItem
+---@field text string
+---@field action string
+
+---@class RpgClassOption
+---@field text string
+---@field desc string
+---@field id MutationBranchId?
+---@field mutation Mutation?
+---@field remove_first MutationBranchId?
+---@field can_select boolean
+---@field index integer
+---@field action string?
+
+---@class RpgTraitOption
+---@field id MutationBranchId?
+---@field name string
+---@field desc string
+---@field can_select boolean
+---@field index integer
+---@field action string?
+
+---@class RpgStatOption
+---@field name string
+---@field desc string
+---@field stat string
+
+---@class RpgHelpOption
+---@field name string
+---@field desc string
+---@field action string
+
+---@class RpgScalingOption
+---@field name string
+---@field desc string
+---@field value integer?
+
+---@type ModRpgSystem
 local mod = game.mod_runtime[game.current_mod]
 local storage = game.mod_storage[game.current_mod]
+---@type RpgMutationsModule
 local mutations = require("rpg_mutations")
 local Mutation = mutations.Mutation
 local MUTATIONS = mutations.MUTATIONS
@@ -28,7 +79,7 @@ local function color_info(text) return color_text(text, "light_cyan") end
 local function color_highlight(text) return color_text(text, "white") end
 
 local function create_progress_bar(current, max, width)
-  width = width or 20
+  width = math.floor(width or 20)
   local filled = math.floor((current / max) * width)
   local empty = width - filled
   local bar = color_good(string.rep("█", filled)) .. color_text(string.rep("░", empty), "dark_gray")
@@ -72,13 +123,14 @@ local LEVELS_PER_TRAIT_SLOT = 5
 -- Function to register a new mutation with the RPG system (can be called by other mods)
 -- config: table with mutation properties (id, type, symbol, requirements, stat_bonuses, etc.)
 -- See rpg_mutations.lua Mutation class for full structure
+---@param config RpgMutationConfig?
 mod.add_mutation = function(config)
   if not config or not config.id then
     gdebug.log_error("RPG System: add_mutation called without valid config or id")
     return false
   end
 
-  if MUTATIONS[config.id] then
+  if MUTATIONS[config.id] ~= nil then
     -- If it's already there, just ignore.
     return false
   end
@@ -366,13 +418,20 @@ local function apply_kill_monster_bonuses(player, monster_hp)
   for _, mutation_id in ipairs(KILL_MONSTER_BONUS_IDS) do
     if player:has_trait(mutation_id) then
       local mutation = MUTATIONS[mutation_id:str()]
+      if not mutation then
+        goto continue_kill_bonus
+      end
       local bonuses = mutation.kill_monster_bonuses
+      if not bonuses then
+        goto continue_kill_bonus
+      end
 
       if bonuses.heal_percent then
         local heal_amount = math.max(1, math.floor(monster_hp * (bonuses.heal_percent * level * level_scaling / 100)))
         player:healall(heal_amount)
       end
     end
+    ::continue_kill_bonus::
   end
 end
 
@@ -444,7 +503,13 @@ mod.on_character_reset_stats = function(params)
   for _, mutation_id in ipairs(STAT_BONUS_IDS) do
     if character:has_trait(mutation_id) then
       local mutation = MUTATIONS[mutation_id:str()]
+      if not mutation then
+        goto continue_stat_bonus
+      end
       local bonuses = mutation.stat_bonuses
+      if not bonuses then
+        goto continue_stat_bonus
+      end
 
       if bonuses.str then character:mod_str_bonus(math.floor(level * bonuses.str * level_scaling)) end
       if bonuses.dex then character:mod_dex_bonus(math.floor(level * bonuses.dex * level_scaling)) end
@@ -452,6 +517,7 @@ mod.on_character_reset_stats = function(params)
       if bonuses.per then character:mod_per_bonus(math.floor(level * bonuses.per * level_scaling)) end
       if bonuses.speed then character:mod_speed_bonus(math.floor(level * bonuses.speed * level_scaling)) end
     end
+    ::continue_stat_bonus::
   end
 end
 
@@ -468,7 +534,13 @@ mod.on_every_5_minutes = function()
   for _, mutation_id in ipairs(PERIODIC_BONUS_IDS) do
     if player:has_trait(mutation_id) then
       local mutation = MUTATIONS[mutation_id:str()]
+      if not mutation then
+        goto continue_periodic_bonus
+      end
       local bonuses = mutation.periodic_bonuses
+      if not bonuses then
+        goto continue_periodic_bonus
+      end
 
       if bonuses.fatigue then player:mod_fatigue(math.floor(level * bonuses.fatigue * level_scaling)) end
       if bonuses.stamina then player:mod_stamina(math.floor(level * bonuses.stamina * level_scaling)) end
@@ -482,6 +554,7 @@ mod.on_every_5_minutes = function()
         player:mod_power_level(power_regen)
       end
     end
+    ::continue_periodic_bonus::
   end
 end
 
@@ -687,6 +760,7 @@ mod.open_rpg_menu = function(params)
 
     ui:text(info_text)
 
+    ---@type RpgMainMenuItem[]
     local menu_items = {}
     table.insert(menu_items, { text = gettext("Manage Class"), action = "class" })
 
@@ -718,9 +792,11 @@ mod.open_rpg_menu = function(params)
     local choice_index = ui:query()
 
     if choice_index > 0 and choice_index <= #menu_items then
+      ---@type RpgMainMenuItem?
       local chosen = menu_items[choice_index]
-
-      if chosen.action == "class" then
+      if not chosen then
+        keep_open = false
+      elseif chosen.action == "class" then
         mod.manage_class_menu(player)
       elseif chosen.action == "stats" then
         mod.assign_stats_menu(player)
@@ -746,12 +822,16 @@ mod.manage_class_menu = function(player)
   ui:title(gettext("=== Select Class ==="))
   ui:desc_enabled(true)
 
+  ---@type RpgClassOption[]
   local options = {}
   local index = 1
 
   -- Show base classes if player doesn't have a class
   if not has_class(player) then
-    for id, mutation in pairs(MUTATIONS) do
+    for _id, mutation in pairs(MUTATIONS) do
+      if not mutation then
+        goto continue_base_class
+      end
       if mutation.type == "class" and not mutation.is_prestige then
         local mutation_id = mutation:get_mutation_id()
         local class_obj = mutation_id:obj()
@@ -776,40 +856,51 @@ mod.manage_class_menu = function(player)
         })
         index = index + 1
       end
+      ::continue_base_class::
     end
   end
 
   -- Show prestige classes if player has the appropriate base class
-  for id, mutation in pairs(MUTATIONS) do
+  for _id, mutation in pairs(MUTATIONS) do
+    if not mutation then
+      goto continue_prestige_class
+    end
     if mutation.type == "class" and mutation.is_prestige then
-      local base_class_id = MUTATIONS[mutation.base_class]:get_mutation_id()
-      if player:has_trait(base_class_id) then
-        local mutation_id = mutation:get_mutation_id()
-        local class_obj = mutation_id:obj()
-        local can_select, unmet = check_requirements(player, mutation, level)
-
-        local display_text
-        if can_select then
-          display_text = color_good(mutation.symbol .. " [" .. class_obj:name() .. "]")
-            .. color_text(" (Prestige)", "yellow")
-        else
-          display_text = color_text(mutation.symbol .. " [" .. class_obj:name() .. "]", "dark_gray")
-            .. " - "
-            .. format_requirements_list(unmet, true)
+      if mutation.base_class then
+        local base_mutation = MUTATIONS[mutation.base_class]
+        if not base_mutation then
+          goto continue_prestige_class
         end
+        local base_class_id = base_mutation:get_mutation_id()
+        if player:has_trait(base_class_id) then
+          local mutation_id = mutation:get_mutation_id()
+          local class_obj = mutation_id:obj()
+          local can_select, unmet = check_requirements(player, mutation, level)
 
-        table.insert(options, {
-          text = display_text,
-          desc = class_obj:desc(),
-          id = mutation_id,
-          mutation = mutation,
-          remove_first = base_class_id,
-          can_select = can_select,
-          index = index,
-        })
-        index = index + 1
+          local display_text
+          if can_select then
+            display_text = color_good(mutation.symbol .. " [" .. class_obj:name() .. "]")
+              .. color_text(" (Prestige)", "yellow")
+          else
+            display_text = color_text(mutation.symbol .. " [" .. class_obj:name() .. "]", "dark_gray")
+              .. " - "
+              .. format_requirements_list(unmet, true)
+          end
+
+          table.insert(options, {
+            text = display_text,
+            desc = class_obj:desc(),
+            id = mutation_id,
+            mutation = mutation,
+            remove_first = base_class_id,
+            can_select = can_select,
+            index = index,
+          })
+          index = index + 1
+        end
       end
     end
+    ::continue_prestige_class::
   end
 
   -- Show abandon option if player has a class
@@ -843,7 +934,9 @@ mod.manage_class_menu = function(player)
   local choice_index = ui:query()
 
   if choice_index > 0 and choice_index <= #options then
+    ---@type RpgClassOption?
     local chosen = options[choice_index]
+    if not chosen then return end
 
     if not chosen.can_select then
       gapi.add_msg(MsgType.warning, color_warning(gettext("You don't meet the requirements for this class.")))
@@ -887,11 +980,15 @@ mod.manage_traits_menu = function(player)
   ui:title(string.format(gettext("=== Select Trait (%d/%d) ==="), num_traits, max_traits))
   ui:desc_enabled(true)
 
+  ---@type RpgTraitOption[]
   local traits = {}
   local index = 1
 
   -- Loop through all trait mutations
-  for id, mutation in pairs(MUTATIONS) do
+  for _id, mutation in pairs(MUTATIONS) do
+    if not mutation then
+      goto continue_trait
+    end
     if mutation.type == "trait" then
       local trait_id = mutation:get_mutation_id()
       local already_has = player:has_trait(trait_id)
@@ -925,6 +1022,7 @@ mod.manage_traits_menu = function(player)
       })
       index = index + 1
     end
+    ::continue_trait::
   end
 
   -- Reset Traits option
@@ -966,10 +1064,12 @@ mod.manage_traits_menu = function(player)
   local choice_index = ui:query()
 
   if choice_index > 0 and choice_index <= #traits then
+    ---@type RpgTraitOption?
     local chosen = traits[choice_index]
+    if not chosen then return end
 
     if not chosen.can_select then
-      if chosen.id and player:has_trait(chosen.id) then
+      if chosen.id ~= nil and player:has_trait(chosen.id) then
         gapi.add_msg(MsgType.warning, color_warning(gettext("You already have this trait.")))
       else
         gapi.add_msg(MsgType.warning, color_warning(gettext("You don't meet the requirements for this trait.")))
@@ -1021,6 +1121,7 @@ mod.assign_stats_menu = function(player)
   local int_val = player:get_int()
   local per_val = player:get_per()
 
+  ---@type RpgStatOption[]
   local options = {
     {
       name = string.format(gettext("Strength (Current: %d)"), str_val),
@@ -1064,11 +1165,13 @@ mod.assign_stats_menu = function(player)
   local choice_index = ui:query()
 
   if choice_index > 0 and choice_index <= #options then
+    ---@type RpgStatOption?
     local chosen = options[choice_index]
+    if not chosen then return end
 
     if chosen.stat == "BACK" then
       return
-    elseif chosen.stat then
+    else
       local key = "rpg_assigned_" .. chosen.stat:lower()
       local current = get_char_value(player, key, 0)
       set_char_value(player, key, current + 1)
@@ -1085,6 +1188,7 @@ mod.show_help_menu = function(player)
   ui:title(gettext("=== [System] Information ==="))
   ui:desc_enabled(true)
 
+  ---@type RpgHelpOption[]
   local options = {
     {
       name = gettext("About the System"),
@@ -1110,7 +1214,9 @@ mod.show_help_menu = function(player)
   local choice_index = ui:query()
 
   if choice_index > 0 and choice_index <= #options then
+    ---@type RpgHelpOption?
     local chosen = options[choice_index]
+    if not chosen then return end
 
     if chosen.action == "back" then
       return
@@ -1190,6 +1296,7 @@ mod.adjust_level_scaling = function(player)
 
   ui:text(info_text)
 
+  ---@type RpgScalingOption[]
   local options = {
     {
       name = gettext("0% (Disable scaling)"),
@@ -1222,7 +1329,9 @@ mod.adjust_level_scaling = function(player)
   local choice_index = ui:query()
 
   if choice_index > 0 and choice_index <= #options then
+    ---@type RpgScalingOption?
     local chosen = options[choice_index]
+    if not chosen then return end
 
     if chosen.value ~= nil then
       set_char_value(player, "rpg_level_scaling", chosen.value)

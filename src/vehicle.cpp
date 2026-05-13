@@ -2653,7 +2653,7 @@ bool vehicle::find_and_split_vehicles( int exclude )
         bool success = split_vehicles( all_vehicles );
         if( success ) {
             // update the active cache
-            shift_parts( point_zero );
+            g->m.reset_vehicle_cache();
             return true;
         }
     }
@@ -2710,11 +2710,10 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
         if( new_vehicle == nullptr ) {
             // make sure the split_part0 is a legal 0,0 part
             if( split_parts.size() > 1 ) {
-                for( size_t sp = 0; sp < split_parts.size(); sp++ ) {
-                    int p = split_parts[ sp ];
+                for( const auto p : split_parts ) {
                     if( part_info( p ).location == part_location_structure &&
                         !part_info( p ).has_flag( "PROTRUSION" ) ) {
-                        split_part0 = sp;
+                        split_part0 = p;
                         break;
                     }
                 }

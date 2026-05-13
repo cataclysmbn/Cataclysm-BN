@@ -59,6 +59,7 @@
       [ "|X={" ],
       [ "o-=o" ]
     ],
+    "color_palette": "construction_standard",
     "parts": [
       {
         "x": 0,
@@ -101,6 +102,7 @@
     "type": "vehicle",
     "name": "Portable Generator",
     "blueprint": [ [ "o-" ] ],
+    "color_palette": "construction_standard",
     "parts": [
       {
         "x": 1,
@@ -137,6 +139,7 @@
       [ "B='H'B" ],
       [ "B--+'B" ]
     ],
+    "color_palette": "construction_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", "roller_drum" ] },
       { "x": -1, "y": 1, "parts": [ "frame_horizontal", "windshield", "roof" ] },
@@ -195,6 +198,7 @@
       [ "o#o-" ],
       [ "o|o-" ]
     ],
+    "color_palette": "construction_standard",
     "parts": [
       { "x": -1, "y": 1, "parts": [ "frame_se", "halfboard_se", "wheel_mount_light_steerable", "wheel_small" ] },
       { "x": 1, "y": 0, "parts": [ "frame_nw", "halfboard_nw", "wheel_mount_light_steerable", "wheel_small" ] },
@@ -224,6 +228,7 @@
       [ "|X==&" ],
       [ "o-=o " ]
     ],
+    "color_palette": "construction_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "hdframe_cross", "seat", "floodlight", "horn_big", "seatbelt", "dashboard", "controls" ] },
       { "x": 0, "y": -1, "parts": [ "hdframe_nw", "wheel_mount_medium", "wheel_wide_or" ] },
@@ -257,6 +262,7 @@
     "id": "roadheader_mining",
     "type": "vehicle",
     "name": "Mining Roadheader",
+    "color_palette": "construction_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "hdframe_cross", "seat", "controls", "seatbelt", "dashboard", "vehicle_alarm", "hdroof" ] },
       { "x": -1, "y": 0, "parts": [ "hdframe_cross", "aisle_vertical", "hdroof" ] },

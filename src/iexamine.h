@@ -31,6 +31,7 @@ void toilet( player &p, const tripoint &examp );
 auto fluid_grid_fixture( player &p, const tripoint &examp ) -> void;
 void elevator( player &p, const tripoint &examp );
 void nanofab( player &p, const tripoint &examp );
+void nanoforge( player &p, const tripoint &examp );
 void toggle_lights( player &p, const tripoint &examp );
 void controls_gate( player &p, const tripoint &examp );
 void cardreader( player &p, const tripoint &examp );

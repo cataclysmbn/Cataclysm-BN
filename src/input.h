@@ -184,8 +184,9 @@ struct input_event {
  * A set of attributes for an action
  */
 struct action_attributes {
-    action_attributes() : is_user_created( false ) {}
+    action_attributes() : is_user_created( false ), is_deleted( false ) {}
     bool is_user_created;
+    bool is_deleted;
     translation name;
     std::vector<input_event> input_events;
 };

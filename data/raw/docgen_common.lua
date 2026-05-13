@@ -19,8 +19,9 @@ function string_concat_matches(str, pat, sep, op)
   if str == nil or str == "" then return "" end
   local tbl = {}
   for match in string.gmatch(str, pat) do
-    if op then match = op(match) end
-    if match and match ~= "" then table.insert(tbl, match) end
+    local mapped_match = match
+    if op then mapped_match = op(match) end
+    if mapped_match and mapped_match ~= "" then table.insert(tbl, mapped_match) end
   end
   return table.concat(tbl, sep)
 end

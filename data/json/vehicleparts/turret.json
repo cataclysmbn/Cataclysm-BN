@@ -379,6 +379,19 @@
     "requirements": { "install": { "skills": [ [ "mechanics", 4 ], [ "rifle", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 2 ] ] } }
   },
   {
+    "id": "mounted_m250",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "mounted M250" },
+    "item": "m250",
+    "folded_volume": "3 L",
+    "color": "cyan",
+    "broken_color": "cyan",
+    "looks_like": "mounted_m240",
+    "breaks_into": [ { "item": "scrap", "count": 28 }, { "item": "steel_chunk", "count": 12 }, { "item": "steel_lump", "count": 7 } ],
+    "requirements": { "install": { "skills": [ [ "mechanics", 4 ], [ "rifle", 2 ] ] }, "removal": { "skills": [ [ "mechanics", 2 ] ] } }
+  },
+  {
     "id": "mounted_mk19",
     "copy-from": "turret",
     "type": "vehicle_part",

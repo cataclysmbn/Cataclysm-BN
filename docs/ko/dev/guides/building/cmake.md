@@ -382,6 +382,59 @@ curses 버전을 빌드합니다.
 
 언어 파일은 `RELEASE` 빌드 유형을 빌드할 때만 자동으로 컴파일됩니다. 다른 빌드 유형의 경우 `make` 명령에 `translations_compile` 대상을 추가해야 합니다 (예: `make all translations_compile`).
 
+### 로컬에서 번역 포함 빌드하기
+
+2026년부터 번역 파일(`.po` 파일)은 더 이상 저장소에 포함되지 않습니다. CI가 Transifex에서 이를 가져와 워크플로 아티팩트로 저장하고 릴리스 패키지 빌드에 사용합니다.
+
+로컬 빌드에서는 다음 방법 중 하나를 사용하세요:
+
+#### 옵션 1: 번역 없이 빌드하기 (가장 빠름)
+
+번역 작업을 하지 않는다면 비활성화하세요:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=none
+cmake --build --preset linux-full
+```
+
+#### 옵션 2: Transifex에서 번역 가져오기
+
+로컬에서 번역을 테스트해야 하고 Transifex 접근 권한이 있다면:
+
+1. Transifex CLI를 설치합니다:
+
+```sh
+curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+```
+
+2. 번역 파일을 가져옵니다:
+
+```sh
+tx pull --force --all
+```
+
+3. 번역을 활성화한 상태로 빌드합니다:
+
+```sh
+cmake --preset linux-full -DLANGUAGES=all
+cmake --build --preset linux-full
+```
+
+#### 옵션 3: `translations` 워크플로 아티팩트 다운로드
+
+Transifex 접근 권한이 없다면 번역 워크플로에서 생성한 아티팩트를 사용하세요:
+
+1. [Actions](https://github.com/cataclysmbn/Cataclysm-BN/actions)에서 최근에 성공한 워크플로 실행을 엽니다
+2. `translations` 아티팩트를 다운로드합니다
+3. `lang/po`와 `src/lang_stats.inc`를 로컬 체크아웃에 압축 해제합니다
+4. `-DLANGUAGES=all`로 평소처럼 빌드합니다
+
+> [!NOTE]
+> 대부분의 코드 변경은 번역이 필요하지 않습니다. 현지화된 출력을 테스트하는 경우가 아니라면 `-DLANGUAGES=none`을 사용하세요.
+
+> [!NOTE]
+> 릴리스 아카이브에는 패키지 빌드에 쓰이는 컴파일된 `lang/mo` 파일만 포함됩니다. 로컬에서 번역을 다시 빌드하는 데 필요한 `lang/po` 소스는 포함되지 않습니다.
+
 - DYNAMIC_LINKING=`<boolean>`
 
 동적 링킹을 사용합니다. 또는 정적을 사용하여 MinGW 의존성을 제거합니다.

@@ -381,7 +381,7 @@ bool detail::RGBColorConverter::operator()( const std::string &str,
 bool detail::RGBColorConverter::operator()( const RGBColor &col,
         std::string &str ) const
 {
-    str = string_format( "#%x%x%x%x", col.r, col.g, col.b, col.a );
+    str = string_format( "#%02x%02x%02x%02x", col.r, col.g, col.b, col.a );
     return true;
 }
 

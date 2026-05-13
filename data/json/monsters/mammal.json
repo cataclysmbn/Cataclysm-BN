@@ -298,7 +298,8 @@
       "KEENNOSE",
       "BLEED"
     ],
-    "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." }
+    "petfood": { "food": [ "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s squeals happily at you." },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.25, "dodge_mult": 1.1, "max_level": 3 }
   },
   {
     "id": "mon_bobcat",
@@ -401,6 +402,7 @@
       "feed": "The %s seems to like you!  Or maybe it just tolerates your presence better.  It's hard to tell with felines.",
       "pet": "The %s sofly purrs as you pet it.  It demands more."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.15, "dodge_mult": 1.25, "max_level": 2 },
     "flags": [
       "SEES",
       "HEARS",
@@ -760,6 +762,7 @@
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
     "special_attacks": [ [ "EAT_CROP", 4800 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.15, "dodge_mult": 1.05, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "PET_MOUNTABLE", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW", "MILKABLE" ]
   },
   {
@@ -797,6 +800,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.15, "dodge_mult": 1.2, "max_level": 3 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CANPLAY", "PATH_AVOID_DANGER_1", "WARM", "HIT_AND_RUN", "KEENNOSE", "BLEED" ]
   },
   {
@@ -905,7 +909,8 @@
       "food": [ "CATTLEFOOD" ],
       "feed": "The %s seems to like you!",
       "pet": "The %s kicks its leg happily as you scratch it."
-    }
+    },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.1, "dodge_mult": 1.2, "max_level": 2 }
   },
   {
     "id": "mon_dog",
@@ -946,6 +951,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.15, "dodge_mult": 1.15, "max_level": 3 },
     "special_attacks": [ [ "EAT_FOOD", 100 ], [ "PARROT_AT_DANGER", 0 ] ],
     "flags": [
       "ANIMAL",
@@ -1005,6 +1011,7 @@
     "harvest": "mammal_small_leather",
     "reproduction": { "baby_monster": "mon_dog_bull_pup", "baby_count": 7, "baby_timer": 300 },
     "//": "7 puppies and 300-320 days per-litter for size medium canines",
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.2, "dodge_mult": 1.1, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1079,6 +1086,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.25, "dodge_mult": 1.15, "max_level": 4 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1154,6 +1162,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1231,6 +1240,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.25, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CLIMBS",
@@ -1302,7 +1312,8 @@
     "fear_triggers": [ "HURT" ],
     "special_attacks": [ [ "LUNGE", 5 ] ],
     "reproduction": { "baby_monster": "mon_dog_boxer_pup", "baby_count": 4, "baby_timer": 270 },
-    "//": "1-4 puppies & 270 days per-litter for size small canines"
+    "//": "1-4 puppies & 270 days per-litter for size small canines",
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.25, "dodge_mult": 1.15, "max_level": 4 }
   },
   {
     "id": "mon_dog_boxer_pup",
@@ -1382,6 +1393,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1455,6 +1467,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1531,6 +1544,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 5 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1609,6 +1623,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.15, "dodge_mult": 1.1, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1688,6 +1703,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.25, "melee_mult": 1.2, "dodge_mult": 1.15, "max_level": 4 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -1764,6 +1780,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.15, "dodge_mult": 1.2, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CLIMBS",
@@ -2000,7 +2017,18 @@
     "reproduction": { "baby_monster": "mon_horse_foal", "baby_count": 1, "baby_timer": 360 },
     "baby_flags": [ "SPRING", "SUMMER", "AUTUMN" ],
     "special_attacks": [ [ "EAT_CROP", 7200 ] ],
-    "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "petfood": {
+      "food": [ "CATTLEFOOD" ],
+      "feed": "The %s seems to like you! It lets you pat its head and seems friendly.",
+      "pet": "The %s nuzzles you affectionately."
+    },
+    "pet_training": {
+      "hp_mult": 1.2,
+      "melee_mult": 1.15,
+      "dodge_mult": 1.15,
+      "max_level": 3,
+      "level_flags": [ { "level": 1, "flags": [ "COMBAT_MOUNT" ] } ]
+    },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PET_WONT_FOLLOW", "PET_MOUNTABLE", "PATH_AVOID_DANGER_1", "WARM" ]
   },
   {
@@ -2289,6 +2317,7 @@
     "death_function": [ "NORMAL" ],
     "special_attacks": [ [ "EAT_FOOD", 2400 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.15, "dodge_mult": 1.1, "max_level": 2 },
     "flags": [
       "SEES",
       "HEARS",
@@ -2328,6 +2357,7 @@
     "fear_triggers": [ "SOUND", "PLAYER_CLOSE" ],
     "death_function": [ "NORMAL" ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "pet_training": { "hp_mult": 1.05, "melee_mult": 1.05, "dodge_mult": 1.2, "max_level": 1 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "CANPLAY", "PET_WONT_FOLLOW", "WARM" ]
   },
   {
@@ -2358,7 +2388,8 @@
     "anger_triggers": [ "FRIEND_ATTACKED", "HURT" ],
     "death_function": [ "NORMAL" ],
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "CLIMBS", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ],
-    "petfood": { "food": [ "CATFOOD", "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s looks at you lovingly." }
+    "petfood": { "food": [ "CATFOOD", "DOGFOOD" ], "feed": "The %s seems to like you!", "pet": "The %s looks at you lovingly." },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.1, "dodge_mult": 1.15, "max_level": 2 }
   },
   {
     "id": "mon_rat_king",
@@ -2481,6 +2512,7 @@
     "death_function": [ "NORMAL" ],
     "special_attacks": [ [ "EAT_CROP", 14400 ] ],
     "petfood": { "food": [ "CATTLEFOOD" ], "feed": "The %s seems to like you! It lets you pat its head and seems friendly." },
+    "pet_training": { "hp_mult": 1.15, "melee_mult": 1.05, "dodge_mult": 1.05, "max_level": 2 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "SHEARABLE", "PATH_AVOID_DANGER_1", "WARM", "PET_WONT_FOLLOW", "MILKABLE" ]
   },
   {
@@ -2594,6 +2626,13 @@
     "anger_triggers": [ "STALK", "FRIEND_ATTACKED", "FRIEND_DIED", "PLAYER_WEAK", "PLAYER_CLOSE" ],
     "placate_triggers": [ "MEAT" ],
     "death_function": [ "NORMAL" ],
+    "petfood": {
+      "food": [ "DOGFOOD" ],
+      "feed": "The %s eyes you warily, then cautiously accepts the food.",
+      "pet": "The %s allows you to touch it, watching you intently.",
+      "tamer_traits": [ [ "THRESH_LUPINE" ] ]
+    },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.2, "dodge_mult": 1.2, "max_level": 5, "min_skill": 5 },
     "flags": [ "SEES", "HEARS", "SMELLS", "ANIMAL", "PATH_AVOID_DANGER_1", "WARM", "KEENNOSE", "BLEED" ]
   }
 ]

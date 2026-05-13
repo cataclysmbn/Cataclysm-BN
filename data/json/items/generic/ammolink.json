@@ -46,5 +46,14 @@
     "weight": "10 g",
     "volume": "10 ml",
     "use_action": { "type": "ammobelt", "belt": "belt50" }
+  },
+  {
+    "id": "ammolink277",
+    "copy-from": "ammolink",
+    "type": "GENERIC",
+    "name": { "str": "6.8x51mm 'Fury' ammo belt linkage" },
+    "weight": "4 g",
+    "volume": "4 ml",
+    "use_action": { "type": "ammobelt", "belt": "belt277" }
   }
 ]
