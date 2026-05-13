@@ -425,5 +425,18 @@
     "max_range": 15,
     "min_aoe": 100,
     "max_aoe": 100
-  }
+  },
+  {
+    "id": "spell_mutant_alpha",
+    "type": "SPELL",
+    "name": { "str": "Mesmerized pull" },
+    "description": "Applies pull",
+    "valid_targets": [ "hostile" ],
+    "flags": [ "SILENT", "NO_FAIL", "NO_EXPLOSION_VFX" ],
+    "min_range": 0,
+    "max_range": 15,
+    "min_damage": -10,
+    "max_damage": -10,
+    "effect": "directed_push"
+  },
 ]
