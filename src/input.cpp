@@ -1463,7 +1463,8 @@ bool gamepad_available()
     return false;
 }
 
-std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window &capture_win )
+std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
+        &capture_win )
 {
     if( !coordinate_input_received ) {
         return std::nullopt;
