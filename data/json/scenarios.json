@@ -1127,7 +1127,7 @@
       "LARGE"
     ],
     "bionics": [ "bio_ethanol", "bio_fuel_cell_hydrogen", "bio_magnet", "bio_infrared", "bio_leukocyte", "bio_underwater_propellers" ],
-    "allowed_locs": [ "sloc_lab_medical" ],
+    "allowed_locs": [ "sloc_lab_concourse_area" ],
     "flags": [ "CHALLENGE", "LONE_START" ]
   }
 ]
