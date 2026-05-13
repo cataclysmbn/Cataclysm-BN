@@ -27,7 +27,9 @@
           { "id": "t_nanoforge_body", "fg": 19 },
           { "id": "m250", "fg": 20 },
           { "id": "overlay_wielded_m250", "fg": 21 },
-          { "id": "mon_mutant_alpha", "fg": 22 }
+          { "id": [ "makeshift_headwrap", "overlay_wielded_makeshift_headwrap" ], "fg": 22 },
+          { "id": "overlay_worn_makeshift_headwrap", "fg": 23 },
+          { "id": "mon_mutant_alpha", "fg": 24 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
