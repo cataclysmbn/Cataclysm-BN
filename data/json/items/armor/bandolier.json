@@ -22,7 +22,7 @@
       "ammo": [ "32", "38", "357mag", "357sig", "380", "40", "10mm", "44", "45", "45colt", "9mm" ],
       "draw_cost": 20
     },
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "FANCY" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "FANCY", "VARSIZE" ]
   },
   {
     "id": "bandolier_rifle",
@@ -47,7 +47,7 @@
       "ammo": [ "22", "223", "300blk", "5x50", "3006", "308", "300", "762", "762R", "8x40mm", "4570", "50" ],
       "draw_cost": 20
     },
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "bandolier_shotgun",
@@ -67,7 +67,7 @@
     "encumbrance": 2,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 25, "ammo": [ "410shot", "shot", "20x66mm", "signal_flare" ], "draw_cost": 25 },
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "torso_bandolier_shotgun",
@@ -87,7 +87,7 @@
     "encumbrance": 3,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 50, "ammo": [ "410shot", "shot", "20x66mm", "signal_flare" ], "draw_cost": 35 },
-    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED" ]
+    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "VARSIZE" ]
   },
   {
     "id": "flintlock_pouch",
@@ -112,7 +112,7 @@
       "ammo": [ "flintlock", "flintlockshot", "36paper", "44paper", "blunderbuss", "shotcanister", "shotpaper" ],
       "draw_cost": 20
     },
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "bandolier_wrist",
@@ -138,7 +138,7 @@
       "draw_cost": 20
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS", "VARSIZE" ]
   },
   {
     "id": "grenade_pouch",
@@ -158,7 +158,7 @@
     "encumbrance": 4,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 6, "ammo": [ "40x46mm", "40x53mm" ], "draw_cost": 20 },
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "stone_pouch",
@@ -179,7 +179,7 @@
     "encumbrance": 4,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 20, "ammo": [ "rock" ], "draw_cost": 20 },
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "grenadebandolier",
@@ -209,7 +209,7 @@
       "flags": [ "GRENADE" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "bandolier_grenade",
@@ -229,7 +229,7 @@
     "encumbrance": 1,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 12, "ammo": [ "40x46mm", "40x53mm" ], "draw_cost": 20 },
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "bandolier_knife",
@@ -259,6 +259,6 @@
       "draw_cost": 50,
       "flags": [ "SHEATH_KNIFE" ]
     },
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "OVERSIZE", "VARSIZE" ]
   }
 ]

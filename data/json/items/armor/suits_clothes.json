@@ -69,7 +69,7 @@
     "material_thickness": 5,
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "OUTER" ],
+    "flags": [ "OUTER", "VARSIZE" ],
     "qualities": [ [ "SLEEP_AID", 4 ] ]
   },
   {
@@ -102,7 +102,8 @@
     "looks_like": "jumpsuit",
     "name": { "str": "Hub 01 jumpsuit" },
     "description": "A brown jumpsuit worn by the staff of Hub 01.",
-    "color": "brown"
+    "color": "brown",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "subsuit_xl",
@@ -169,7 +170,7 @@
     "material_thickness": 7,
     "environmental_protection": 2,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "OUTER" ],
+    "flags": [ "OUTER", "VARSIZE" ],
     "qualities": [ [ "SLEEP_AID", 4 ] ]
   },
   {

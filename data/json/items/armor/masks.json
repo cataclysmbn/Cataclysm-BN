@@ -37,7 +37,7 @@
     "encumbrance": 40,
     "warmth": 65,
     "material_thickness": 3,
-    "flags": [ "OVERSIZE", "OUTER" ]
+    "flags": [ "OVERSIZE", "OUTER", "VARSIZE" ]
   },
   {
     "id": "bandana",
@@ -59,7 +59,7 @@
     "warmth": 5,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "OVERSIZE" ],
+    "flags": [ "OVERSIZE", "VARSIZE" ],
     "use_action": {
       "menu_text": "Cover head",
       "type": "transform",
@@ -81,7 +81,8 @@
       "type": "transform",
       "target": "bandana",
       "msg": "You adjust the %s to cover your mouth."
-    }
+    },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "bondage_mask",
@@ -146,7 +147,8 @@
     "encumbrance": 10,
     "warmth": 10,
     "material_thickness": 2,
-    "valid_mods": [ "resized_large", "resized_small" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "mask_bal",
@@ -295,6 +297,6 @@
     "warmth": 10,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "OVERSIZE", "HELMET_COMPAT" ]
+    "flags": [ "OVERSIZE", "HELMET_COMPAT", "VARSIZE" ]
   }
 ]

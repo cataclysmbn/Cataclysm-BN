@@ -52,7 +52,7 @@
       "max_volume": "3 L",
       "flags": [ "SHEATH_SWORD" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "bootsheath",
@@ -81,7 +81,7 @@
       "draw_cost": 150,
       "flags": [ "SHEATH_KNIFE" ]
     },
-    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "ALLOWS_HOOVES" ]
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "ALLOWS_HOOVES", "VARSIZE" ]
   },
   {
     "id": "wristsheath",
@@ -110,7 +110,7 @@
       "draw_cost": 50,
       "flags": [ "SHEATH_KNIFE" ]
     },
-    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY" ]
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "bscabbard",
@@ -140,7 +140,7 @@
       "draw_cost": 150,
       "flags": [ "SHEATH_SWORD" ]
     },
-    "flags": [ "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "BELTED", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "scabbard",
@@ -169,7 +169,7 @@
       "max_volume": "2750 ml",
       "flags": [ "SHEATH_SWORD" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "sheath",
@@ -196,7 +196,7 @@
       "draw_cost": 80,
       "flags": [ "SHEATH_KNIFE" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "sheath_birchbark",
@@ -235,6 +235,6 @@
       "draw_cost": 150,
       "flags": [ "SHEATH_SPEAR", "SHEATH_AXE" ]
     },
-    "flags": [ "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY" ]
+    "flags": [ "BELTED", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "VARSIZE" ]
   }
 ]

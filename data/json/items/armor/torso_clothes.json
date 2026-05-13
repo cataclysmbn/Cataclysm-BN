@@ -21,7 +21,7 @@
     "material_thickness": 3,
     "environmental_protection": 1,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "POCKETS", "OUTER", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ]
+    "flags": [ "POCKETS", "OUTER", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "blazer",
@@ -617,7 +617,8 @@
         "text": "A short-sleeved cotton shirt with the text \"chown -R us ~your/base\" printed on the front."
       }
     ],
-    "extend": { "flags": "SNIPPET_NEEDS_LITERACY" }
+    "extend": { "flags": "SNIPPET_NEEDS_LITERACY" },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "tshirt_tour",
@@ -663,7 +664,8 @@
         "id": "mil_punk",
         "text": "A short-sleeved cotton shirt with an AK-47 on the front.  It is held up by a clenched fist around its forestock, the fingers covered in crude looking tattoos."
       }
-    ]
+    ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "hoodie_drugrug",
@@ -696,7 +698,8 @@
         "id": "desert_dream",
         "text": "Tan and teal stripes dance across the weave of this soft, oversized hoodie.  Looks perfect for stargazing in the desert."
       }
-    ]
+    ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "vest_leather",

@@ -18,7 +18,7 @@
     "warmth": 20,
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "SKINTIGHT" ]
+    "flags": [ "SKINTIGHT", "VARSIZE" ]
   },
   {
     "id": "army_top",
@@ -246,7 +246,7 @@
     "coverage": 25,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "chestwrap_fur",
@@ -266,7 +266,7 @@
     "encumbrance": 5,
     "warmth": 20,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "chestwrap_leather",
@@ -286,7 +286,7 @@
     "encumbrance": 5,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "chestwrap_wool",
@@ -306,7 +306,7 @@
     "encumbrance": 5,
     "warmth": 15,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "corset",
@@ -351,7 +351,7 @@
     "warmth": 20,
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "SKINTIGHT" ]
+    "flags": [ "SKINTIGHT", "VARSIZE" ]
   },
   {
     "id": "leg_warmers_f",

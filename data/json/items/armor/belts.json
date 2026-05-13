@@ -55,7 +55,8 @@
     "type": "ARMOR",
     "name": { "str": "black belt" },
     "description": "A belt worn by martial arts practitioners, advertising a master.",
-    "color": "dark_gray"
+    "color": "dark_gray",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "judo_belt_blue",
@@ -63,7 +64,8 @@
     "type": "ARMOR",
     "name": { "str": "blue belt" },
     "description": "A belt worn by martial arts practitioners, advertising a strong intermediate.",
-    "color": "blue"
+    "color": "blue",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "judo_belt_brown",
@@ -71,7 +73,8 @@
     "type": "ARMOR",
     "name": { "str": "brown belt" },
     "description": "A belt worn by martial arts practitioners, advertising a near-master.",
-    "color": "brown"
+    "color": "brown",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "judo_belt_green",
@@ -79,7 +82,8 @@
     "type": "ARMOR",
     "name": { "str": "green belt" },
     "description": "A belt worn by martial arts practitioners, advertising an intermediate.",
-    "color": "green"
+    "color": "green",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "judo_belt_orange",
@@ -87,7 +91,8 @@
     "type": "ARMOR",
     "name": { "str": "orange belt" },
     "description": "A belt worn by martial arts practitioners, advertising a fresh intermediate.",
-    "color": "light_red"
+    "color": "light_red",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "judo_belt_white",
@@ -95,7 +100,8 @@
     "type": "ARMOR",
     "name": { "str": "white belt" },
     "description": "A belt worn by martial arts practitioners, advertising a novice.",
-    "color": "white"
+    "color": "white",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "judo_belt_yellow",
@@ -103,7 +109,8 @@
     "type": "ARMOR",
     "name": { "str": "yellow belt" },
     "description": "A belt worn by martial arts practitioners, advertising a moderate novice.",
-    "color": "yellow"
+    "color": "yellow",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "leather_belt",
@@ -130,7 +137,7 @@
       "flags": [ "BELT_CLIP" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "obi_gi",
@@ -145,7 +152,8 @@
     "to_hit": -1,
     "material": [ "cotton" ],
     "symbol": "[",
-    "color": "dark_gray"
+    "color": "dark_gray",
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "police_belt",
@@ -205,7 +213,7 @@
       "max_weight": "2500 g",
       "flags": [ "BELT_CLIP", "SHEATH_KNIFE", "SHEATH_SWORD" ]
     },
-    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "COMPACT", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "COMPACT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "tool_belt",
@@ -238,7 +246,7 @@
       "flags": [ "BELT_CLIP", "SHEATH_KNIFE" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "webbing_belt",

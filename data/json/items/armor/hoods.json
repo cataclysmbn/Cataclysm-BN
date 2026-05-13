@@ -105,7 +105,7 @@
     "warmth": 10,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "WATERPROOF", "OUTER", "OVERSIZE", "HELMET_COMPAT" ]
+    "flags": [ "WATERPROOF", "OUTER", "OVERSIZE", "HELMET_COMPAT", "VARSIZE" ]
   },
   {
     "id": "hood_survivor",

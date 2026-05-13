@@ -115,7 +115,7 @@
     "material": [ "cotton" ],
     "symbol": "[",
     "color": "dark_gray",
-    "flags": [ "FANCY" ]
+    "flags": [ "FANCY", "VARSIZE" ]
   },
   {
     "id": "sleeping_bag_roll",
@@ -206,7 +206,7 @@
     "material": [ "cotton" ],
     "symbol": "[",
     "color": "black",
-    "flags": [ "FANCY" ]
+    "flags": [ "FANCY", "VARSIZE" ]
   },
   {
     "id": "tie_clipon",
@@ -234,7 +234,7 @@
     "material": [ "cotton" ],
     "symbol": "[",
     "color": "green",
-    "flags": [ "FANCY" ]
+    "flags": [ "FANCY", "VARSIZE" ]
   },
   {
     "id": "veil_wedding",
@@ -256,7 +256,7 @@
     "encumbrance": 5,
     "material_thickness": 1,
     "environmental_protection": 1,
-    "flags": [ "SUPER_FANCY", "OUTER", "OVERSIZE", "ALLOWS_MUZZLE" ]
+    "flags": [ "SUPER_FANCY", "OUTER", "OVERSIZE", "ALLOWS_MUZZLE", "VARSIZE" ]
   },
   {
     "id": "tarp",

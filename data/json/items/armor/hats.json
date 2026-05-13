@@ -142,7 +142,7 @@
     "encumbrance": 10,
     "warmth": 4,
     "material_thickness": 1,
-    "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ],
+    "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS", "VARSIZE" ],
     "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
@@ -188,7 +188,7 @@
     "material_thickness": 1,
     "environmental_protection": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
+    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS", "VARSIZE" ]
   },
   {
     "id": "hat_chef",
@@ -210,7 +210,8 @@
     "warmth": 5,
     "material_thickness": 2,
     "environmental_protection": 1,
-    "valid_mods": [ "resized_large", "resized_small" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "hat_cotton",
@@ -249,7 +250,8 @@
     "encumbrance": 10,
     "warmth": 70,
     "material_thickness": 3,
-    "valid_mods": [ "resized_large", "resized_small" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "hat_faux_fur",
@@ -260,7 +262,7 @@
     "description": "A stylish hat made of faux fur.  Like real fur, but without the suffering, if the tag is to be believed.  Very warm.",
     "material": [ "faux_fur", "cotton" ],
     "covers": [ "head" ],
-    "flags": [ "FANCY" ],
+    "flags": [ "FANCY", "VARSIZE" ],
     "warmth": 60
   },
   {
@@ -274,7 +276,7 @@
     "volume": "1500 ml",
     "price": "100 USD",
     "color": "black",
-    "flags": [ "FANCY" ]
+    "flags": [ "FANCY", "VARSIZE" ]
   },
   {
     "id": "hat_hard",
@@ -422,7 +424,7 @@
     "material_thickness": 2,
     "environmental_protection": 4,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "FANCY", "OUTER", "SUN_GLASSES" ]
+    "flags": [ "FANCY", "OUTER", "SUN_GLASSES", "VARSIZE" ]
   },
   {
     "id": "kippah",
@@ -443,7 +445,7 @@
     "warmth": 3,
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
+    "flags": [ "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS", "VARSIZE" ]
   },
   {
     "id": "kufi",
@@ -466,7 +468,7 @@
     "material_thickness": 1,
     "environmental_protection": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
+    "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS", "VARSIZE" ]
   },
   {
     "id": "maid_hat",
@@ -532,7 +534,7 @@
     "material_thickness": 1,
     "environmental_protection": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
+    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS", "VARSIZE" ]
   },
   {
     "id": "straw_hat",
@@ -636,7 +638,7 @@
     "encumbrance": 5,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "hat_golf",
@@ -660,6 +662,6 @@
     "material_thickness": 1,
     "environmental_protection": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS" ]
+    "flags": [ "SUN_GLASSES", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HORNS", "VARSIZE" ]
   }
 ]

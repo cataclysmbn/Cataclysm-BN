@@ -216,7 +216,7 @@
     "warmth": 25,
     "material_thickness": 3,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "STURDY", "ALLOWS_WINGS" ]
+    "flags": [ "STURDY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "jacket_leather_mod",
@@ -400,7 +400,7 @@
     "coverage": 65,
     "warmth": 5,
     "material_thickness": 3,
-    "flags": [ "SKINTIGHT", "ALLOWS_WINGS" ]
+    "flags": [ "SKINTIGHT", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "plastron_plastic",

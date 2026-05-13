@@ -23,7 +23,7 @@
       "draw_cost": 150,
       "skills": [ "smg", "shotgun", "rifle", "launcher" ]
     },
-    "flags": [ "BELTED", "COMPACT", "OVERSIZE" ]
+    "flags": [ "BELTED", "COMPACT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "bootstrap",
@@ -42,7 +42,7 @@
     "coverage": 5,
     "encumbrance": 2,
     "material_thickness": 1,
-    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ],
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "VARSIZE" ],
     "use_action": {
       "type": "holster",
       "max_volume": "500 ml",
@@ -79,7 +79,7 @@
       "skills": [ "pistol" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY" ]
+    "flags": [ "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "bow_sling",
@@ -98,7 +98,7 @@
     "coverage": 5,
     "encumbrance": 4,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "WAIST", "COMPACT" ],
+    "flags": [ "OVERSIZE", "WAIST", "COMPACT", "VARSIZE" ],
     "use_action": { "type": "holster", "max_volume": "10 L", "min_volume": "500 ml", "skills": [ "archery" ] }
   },
   {
@@ -125,7 +125,7 @@
       "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "sholster",
@@ -142,7 +142,8 @@
       "draw_cost": 80,
       "skills": [ "pistol" ],
       "flags": [ "HOLSTER_PISTOL" ]
-    }
+    },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "bholster",
@@ -167,7 +168,7 @@
       "flags": [ "HOLSTER_PISTOL" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "SKINTIGHT", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "shoulder_holster",
@@ -180,7 +181,7 @@
     "price": "100 USD",
     "price_postapoc": "8 USD",
     "covers": [ "arm_either" ],
-    "flags": [ "BELTED", "COMPACT", "OVERSIZE" ]
+    "flags": [ "BELTED", "COMPACT", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "survivor_vest",
@@ -212,7 +213,7 @@
       "skills": [ "smg", "shotgun", "rifle", "launcher", "pistol" ]
     },
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "WAIST", "COMPACT", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "baldric_holster",
@@ -241,7 +242,7 @@
       "flags": [ "HOLSTER_PISTOL" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "COMPACT", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "COMPACT", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "XL_holster",
@@ -267,6 +268,6 @@
       "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   }
 ]

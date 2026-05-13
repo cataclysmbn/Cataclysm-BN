@@ -21,7 +21,7 @@
     "warmth": 6,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "backpack_hiking",
@@ -54,7 +54,7 @@
       "draw_cost": 150,
       "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD" ]
     },
-    "flags": [ "BELTED", "WATERPROOF", "ONLY_ONE", "OVERSIZE" ]
+    "flags": [ "BELTED", "WATERPROOF", "ONLY_ONE", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "backpack_giant",
@@ -79,7 +79,7 @@
     "warmth": 5,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "ALLOWS_TAIL_SNAKE", "ALLOWS_TAIL", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "ALLOWS_TAIL_SNAKE", "ALLOWS_TAIL", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "backpack_leather",
@@ -103,7 +103,7 @@
     "warmth": 9,
     "material_thickness": 3,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "backpack_tactical_large",
@@ -126,7 +126,7 @@
     "storage": "65 L",
     "warmth": 10,
     "material_thickness": 2,
-    "flags": [ "BELTED", "WATERPROOF", "ONLY_ONE", "OVERSIZE" ]
+    "flags": [ "BELTED", "WATERPROOF", "ONLY_ONE", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "basket_laundry",
@@ -171,7 +171,7 @@
     "storage": "80 L",
     "warmth": 10,
     "material_thickness": 2,
-    "flags": [ "BELTED", "WATERPROOF", "ONLY_ONE", "OVERSIZE" ]
+    "flags": [ "BELTED", "WATERPROOF", "ONLY_ONE", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "bindle",
@@ -287,7 +287,7 @@
     "max_encumbrance": 20,
     "storage": "24 L",
     "warmth": 5,
-    "flags": [ "BELTED", "OVERSIZE", "STURDY" ]
+    "flags": [ "BELTED", "OVERSIZE", "STURDY", "VARSIZE" ]
   },
   {
     "id": "dive_bag",
@@ -311,7 +311,7 @@
     "storage": "12 L",
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "duffelbag",
@@ -335,7 +335,7 @@
     "warmth": 10,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "dump_pouch",
@@ -359,7 +359,7 @@
     "storage": "3 L",
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "fanny",
@@ -382,7 +382,7 @@
     "storage": "3 L",
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "WAIST", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "golf_bag",
@@ -406,7 +406,7 @@
     "storage": "18 L",
     "warmth": 5,
     "material_thickness": 3,
-    "flags": [ "BELTED", "OVERSIZE" ],
+    "flags": [ "BELTED", "OVERSIZE", "VARSIZE" ],
     "use_action": {
       "type": "holster",
       "holster_prompt": "Sheath golf club",
@@ -513,7 +513,7 @@
     "max_encumbrance": 6,
     "storage": "3 L",
     "material_thickness": 1,
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "legrig",
@@ -534,7 +534,7 @@
     "storage": "3 L",
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "makeshift_knapsack",
@@ -558,7 +558,7 @@
     "warmth": 5,
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "makeshift_sling",
@@ -582,7 +582,7 @@
     "storage": "10 L",
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "BELTED", "WATER_FRIENDLY" ]
+    "flags": [ "OVERSIZE", "BELTED", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "mbag",
@@ -609,7 +609,7 @@
     "storage": "6 L",
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "molle_pack",
@@ -634,7 +634,7 @@
     "warmth": 10,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS" ],
+    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ],
     "use_action": {
       "type": "holster",
       "holster_prompt": "Stow gear",
@@ -669,7 +669,7 @@
     "properties": [ [ "creature_size_capacity", "SMALL" ] ],
     "use_action": "CAPTURE_MONSTER_ACT",
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATERPROOF", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "WATERPROOF", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "plastic_shopping_bag",
@@ -715,7 +715,7 @@
     "storage": "5 L",
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "FANCY", "BELTED", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "FANCY", "BELTED", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "ragpouch",
@@ -737,7 +737,7 @@
     "max_encumbrance": 4,
     "storage": "2 L",
     "material_thickness": 1,
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "rucksack",
@@ -762,7 +762,7 @@
     "warmth": 8,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "runner_bag",
@@ -815,7 +815,7 @@
     "warmth": 2,
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "straw_basket",
@@ -931,7 +931,7 @@
       "draw_cost": 120,
       "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD" ]
     },
-    "flags": [ "ONLY_ONE", "WATER_FRIENDLY", "STURDY", "BELTED", "OVERSIZE" ]
+    "flags": [ "ONLY_ONE", "WATER_FRIENDLY", "STURDY", "BELTED", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "survivor_duffel_bag",
@@ -953,7 +953,7 @@
     "max_encumbrance": 28,
     "storage": "38 L",
     "material_thickness": 2,
-    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "survivor_pack",
@@ -976,7 +976,7 @@
     "storage": "16 L",
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "survivor_rucksack",
@@ -998,7 +998,7 @@
     "max_encumbrance": 19,
     "storage": "25 L",
     "material_thickness": 2,
-    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "OVERSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "OVERSIZE", "VARSIZE" ]
   },
   {
     "id": "survivor_runner_pack",
@@ -1021,7 +1021,7 @@
     "storage": "8 L",
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "STURDY", "BELTED", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "swag_bag",
@@ -1042,7 +1042,7 @@
     "encumbrance": 100,
     "storage": "15 L",
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "BELTED", "RESTRICT_HANDS", "WATER_FRIENDLY" ]
+    "flags": [ "OVERSIZE", "BELTED", "RESTRICT_HANDS", "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "travelpack",
@@ -1066,7 +1066,7 @@
     "warmth": 8,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "WATERPROOF", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "WATERPROOF", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "vest",

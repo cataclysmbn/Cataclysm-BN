@@ -404,7 +404,7 @@
     "warmth": 20,
     "material_thickness": 2,
     "environmental_protection": 1,
-    "flags": [ "OUTER", "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "OUTER", "OVERSIZE", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "jacket_army",
@@ -473,7 +473,7 @@
     "warmth": 25,
     "material_thickness": 1,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "POCKETS", "HOOD", "OUTER", "WATERPROOF", "RAINPROOF", "COLLAR", "ALLOWS_WINGS" ]
+    "flags": [ "POCKETS", "HOOD", "OUTER", "WATERPROOF", "RAINPROOF", "COLLAR", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "jacket_flannel",
@@ -1290,7 +1290,7 @@
     "encumbrance": 5,
     "warmth": 15,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "OVERSIZE", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "tux",

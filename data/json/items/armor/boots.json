@@ -471,7 +471,8 @@
       "multi": 2,
       "skills": [ "pistol" ]
     },
-    "extend": { "flags": [ "FANCY" ] }
+    "extend": { "flags": [ "FANCY" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "boots_winter",
@@ -713,7 +714,7 @@
     "coverage": 65,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "VARSIZE" ]
   },
   {
     "id": "footrags_fur",
@@ -733,7 +734,7 @@
     "encumbrance": 4,
     "warmth": 20,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "VARSIZE" ]
   },
   {
     "id": "footrags_leather",
@@ -753,7 +754,7 @@
     "encumbrance": 3,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "VARSIZE" ]
   },
   {
     "id": "footrags_wool",
@@ -773,7 +774,7 @@
     "encumbrance": 2,
     "warmth": 15,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "VARSIZE" ]
   },
   {
     "id": "geta",
@@ -1375,7 +1376,8 @@
     "material": [ "wool" ],
     "color": "blue",
     "encumbrance": 7,
-    "warmth": 40
+    "warmth": 40,
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "stockings_tent_legs",
@@ -1406,7 +1408,8 @@
     "proportional": { "weight": 2, "volume": 2, "encumbrance": 2, "warmth": 2, "material_thickness": 2 },
     "coverage": 90,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
-    "extend": { "flags": [ "ALLOWS_TAIL_SNAKE" ] }
+    "extend": { "flags": [ "ALLOWS_TAIL_SNAKE" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "stockings_snake_tail_fur",
@@ -1416,7 +1419,8 @@
     "description": "An oversized leg warmer made of fur.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
     "material": [ "fur" ],
     "proportional": { "weight": 2, "volume": 2, "encumbrance": 2, "warmth": 2.5 },
-    "extend": { "flags": [ "WATERPROOF" ] }
+    "extend": { "flags": [ "WATERPROOF" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "stockings_snake_tail_leather",
@@ -1426,7 +1430,8 @@
     "description": "An oversized leg warmer made of leather.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
     "material": [ "leather" ],
     "proportional": { "weight": 1.5, "volume": 1.5, "encumbrance": 1.5, "warmth": 1.5 },
-    "extend": { "flags": [ "WATERPROOF" ] }
+    "extend": { "flags": [ "WATERPROOF" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "stockings_snake_tail_wool",
@@ -1435,7 +1440,8 @@
     "name": { "str": "wool tail warmer" },
     "description": "An oversized leg warmer made of wool.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
     "material": [ "wool" ],
-    "proportional": { "weight": 1.25, "volume": 1.25, "encumbrance": 1.25, "warmth": 2 }
+    "proportional": { "weight": 1.25, "volume": 1.25, "encumbrance": 1.25, "warmth": 2 },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "tabi_dress",
@@ -1504,7 +1510,8 @@
     "looks_like": "socks",
     "warmth": 15,
     "material_thickness": 2,
-    "encumbrance": 3
+    "encumbrance": 3,
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "carbon_boots",

@@ -145,7 +145,7 @@
     "material_thickness": 3,
     "environmental_protection": 1,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "STURDY" ]
+    "flags": [ "STURDY", "VARSIZE" ]
   },
   {
     "id": "gauntlet_fencing_l",
@@ -168,7 +168,7 @@
     "material_thickness": 3,
     "environmental_protection": 1,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
-    "flags": [ "STURDY" ]
+    "flags": [ "STURDY", "VARSIZE" ]
   },
   {
     "id": "gauntlets_larmor",
@@ -306,7 +306,8 @@
     "encumbrance": 30,
     "warmth": 70,
     "material_thickness": 3,
-    "valid_mods": [ "resized_large", "resized_small" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_fur_fingerless",
@@ -321,7 +322,8 @@
     "coverage": 50,
     "warmth": 28,
     "encumbrance": 20,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] }
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_hsurvivor",
@@ -419,7 +421,7 @@
     "warmth": 20,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY" ]
+    "flags": [ "WATER_FRIENDLY", "VARSIZE" ]
   },
   {
     "id": "gloves_light_fingerless",
@@ -434,7 +436,8 @@
     "coverage": 50,
     "warmth": 8,
     "encumbrance": 0,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] }
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_liner",
@@ -470,7 +473,8 @@
     "encumbrance": 5,
     "warmth": 45,
     "material_thickness": 2,
-    "delete": { "flags": [ "WATER_FRIENDLY" ] }
+    "delete": { "flags": [ "WATER_FRIENDLY" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_lsurvivor",
@@ -660,7 +664,8 @@
     "encumbrance": 40,
     "warmth": 70,
     "material_thickness": 4,
-    "valid_mods": [ "resized_large", "resized_small" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_wool",
@@ -696,7 +701,8 @@
     "coverage": 50,
     "warmth": 24,
     "encumbrance": 7,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] }
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] },
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_work",
@@ -762,7 +768,7 @@
     "coverage": 50,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE", "COMPACT", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "COMPACT", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "gloves_wraps_fur",
@@ -783,7 +789,7 @@
     "encumbrance": 4,
     "warmth": 20,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "OVERSIZE", "COMPACT", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "OVERSIZE", "COMPACT", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "gloves_wraps_leather",
@@ -804,7 +810,7 @@
     "encumbrance": 3,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "gloves_wraps_wool",
@@ -825,7 +831,7 @@
     "encumbrance": 2,
     "warmth": 15,
     "material_thickness": 1,
-    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "gloves_wsurvivor",
@@ -889,7 +895,7 @@
     "encumbrance": 30,
     "warmth": 70,
     "material_thickness": 4,
-    "flags": [ "OVERSIZE", "OUTER" ]
+    "flags": [ "OVERSIZE", "OUTER", "VARSIZE" ]
   },
   {
     "id": "nomex_gloves",
@@ -972,7 +978,8 @@
     "encumbrance": 20,
     "warmth": 50,
     "material_thickness": 4,
-    "valid_mods": [ "resized_large", "resized_small" ]
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "VARSIZE" ]
   },
   {
     "id": "gloves_golf",

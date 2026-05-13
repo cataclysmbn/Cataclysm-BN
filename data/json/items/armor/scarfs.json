@@ -18,7 +18,7 @@
     "encumbrance": 20,
     "warmth": 40,
     "material_thickness": 3,
-    "flags": [ "OVERSIZE", "HOOD", "FANCY", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "HOOD", "FANCY", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "headscarf",
@@ -40,7 +40,7 @@
     "encumbrance": 4,
     "warmth": 7,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "keffiyeh",
@@ -62,7 +62,7 @@
     "warmth": 30,
     "material_thickness": 2,
     "environmental_protection": 2,
-    "flags": [ "OVERSIZE", "HOOD", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "HOOD", "ALLOWS_NATURAL_ATTACKS", "VARSIZE" ]
   },
   {
     "id": "marloss_scarf",
@@ -72,6 +72,7 @@
     "name": { "str": "cyan scarf" },
     "description": "A simple cloth scarf worn by Marloss Voices.  Wherever the Voices go, long sought peace soon follows, for better or for worse.",
     "color": "cyan",
-    "covers": [ "mouth" ]
+    "covers": [ "mouth" ],
+    "flags": [ "VARSIZE" ]
   }
 ]

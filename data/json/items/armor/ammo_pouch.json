@@ -64,7 +64,7 @@
       ],
       "draw_cost": 35
     },
-    "flags": [ "WAIST", "OVERSIZE", "WATER_FRIENDLY", "COMPACT" ]
+    "flags": [ "WAIST", "OVERSIZE", "WATER_FRIENDLY", "COMPACT", "VARSIZE" ]
   },
   {
     "id": "ammo_satchel",
@@ -96,7 +96,7 @@
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "chestpouch",
@@ -127,7 +127,7 @@
       "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "chestrig",
@@ -158,7 +158,7 @@
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "COMPACT", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "javelin_bag",
@@ -188,7 +188,7 @@
       "draw_cost": 30,
       "flags": [ "JAVELIN" ]
     },
-    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT" ]
+    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT", "VARSIZE" ]
   },
   {
     "id": "legpouch",
@@ -217,7 +217,7 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
     },
-    "flags": [ "WATER_FRIENDLY", "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "COMPACT" ]
+    "flags": [ "WATER_FRIENDLY", "BELTED", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "ALLOWS_HOOVES", "COMPACT", "VARSIZE" ]
   },
   {
     "id": "legpouch_large",
@@ -248,7 +248,7 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
     },
-    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "mag_satchel_leg",
@@ -266,7 +266,7 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER" ]
     },
-    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT" ]
+    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT", "VARSIZE" ]
   },
   {
     "id": "modularvest",
@@ -429,7 +429,7 @@
     "encumbrance": 3,
     "material_thickness": 1,
     "use_action": { "type": "bandolier", "capacity": 20, "ammo": [ "arrow", "bolt" ], "draw_cost": 20 },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "quiver_birchbark",
@@ -549,7 +549,7 @@
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "SPEEDLOADER" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS" ]
+    "flags": [ "WATER_FRIENDLY", "WAIST", "COMPACT", "ALLOWS_WINGS", "VARSIZE" ]
   },
   {
     "id": "xlkevlar",
@@ -649,6 +649,6 @@
       ],
       "draw_cost": 35
     },
-    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   }
 ]

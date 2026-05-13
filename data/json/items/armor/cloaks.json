@@ -65,7 +65,7 @@
     "encumbrance": 4,
     "warmth": 10,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "BELTED" ]
+    "flags": [ "OVERSIZE", "BELTED", "VARSIZE" ]
   },
   {
     "id": "cloak",
@@ -87,7 +87,7 @@
     "warmth": 30,
     "material_thickness": 2,
     "environmental_protection": 3,
-    "flags": [ "OVERSIZE", "HOOD", "OUTER", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "OVERSIZE", "HOOD", "OUTER", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "cloak_fur",
@@ -109,7 +109,7 @@
     "warmth": 60,
     "material_thickness": 2,
     "environmental_protection": 3,
-    "flags": [ "OVERSIZE", "HOOD", "OUTER", "WATERPROOF", "RAINPROOF", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "OVERSIZE", "HOOD", "OUTER", "WATERPROOF", "RAINPROOF", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "cloak_leather",
@@ -131,7 +131,7 @@
     "warmth": 40,
     "material_thickness": 2,
     "environmental_protection": 3,
-    "flags": [ "OVERSIZE", "HOOD", "OUTER", "WATERPROOF", "RAINPROOF", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "OVERSIZE", "HOOD", "OUTER", "WATERPROOF", "RAINPROOF", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "cloak_wool",
@@ -153,7 +153,7 @@
     "warmth": 50,
     "material_thickness": 2,
     "environmental_protection": 3,
-    "flags": [ "OVERSIZE", "HOOD", "OUTER", "ALLOWS_TAIL_SNAKE" ]
+    "flags": [ "OVERSIZE", "HOOD", "OUTER", "ALLOWS_TAIL_SNAKE", "VARSIZE" ]
   },
   {
     "id": "jedi_cloak",
@@ -176,7 +176,7 @@
     "warmth": 50,
     "material_thickness": 2,
     "environmental_protection": 5,
-    "flags": [ "OVERSIZE", "OUTER", "HELMET_COMPAT", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES" ]
+    "flags": [ "OVERSIZE", "OUTER", "HELMET_COMPAT", "ALLOWS_TAIL_SNAKE", "ALLOWS_HOOVES", "VARSIZE" ]
   },
   {
     "id": "optical_cloak",
@@ -270,7 +270,7 @@
     "warmth": 50,
     "material_thickness": 3,
     "environmental_protection": 1,
-    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_TAIL_SNAKE" ],
+    "flags": [ "OVERSIZE", "OUTER", "ALLOWS_TAIL_SNAKE", "VARSIZE" ],
     "qualities": [ [ "SLEEP_AID", 4 ] ]
   }
 ]
