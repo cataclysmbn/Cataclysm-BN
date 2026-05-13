@@ -438,5 +438,5 @@
     "min_damage": -10,
     "max_damage": -10,
     "effect": "directed_push"
-  },
+  }
 ]
