@@ -165,7 +165,7 @@ TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
 TEST_CASE( "moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]" )
 {
     clear_all_state();
-    const auto origin = tripoint( 60, 60, 0 );
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
 
     auto *veh_ptr = get_map().add_vehicle( vproto_id( "plane_small" ), origin, 0_degrees, 0, 0 );
     REQUIRE( veh_ptr != nullptr );
