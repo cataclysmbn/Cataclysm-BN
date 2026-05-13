@@ -93,7 +93,7 @@ jobs:
         uses: lukka/run-vcpkg@main
         id: runvcpkg
         with:
-          vcpkgDirectory: "${{ github.workspace }}/../b/vcpkg"
+          vcpkgDirectory: "${{ runner.workspace }}/b/vcpkg"
 
       - name: Integrate vcpkg
         run: |
@@ -114,7 +114,7 @@ jobs:
             msvc-cmake-windows-tiles-sounds-x64-msvc-${{ github.ref_name }}
             msvc-cmake-windows-tiles-sounds-x64-msvc-main
             msvc-cmake-windows-tiles-sounds-x64-msvc-
-          max-size: 1G
+          max-size: 500M
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -123,7 +123,6 @@ jobs:
           echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
           echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
           echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
-          echo "CCACHE_COMPILERCHECK=content" >> $env:GITHUB_ENV
 
       # build-scripts/windows-tiles-sounds-x64-msvc.cmake (CMAKE_PROJECT_INCLUDE_BEFORE)
       # bootstraps the MSVC toolchain via VsDevCmd.bat if not already in a VS environment,

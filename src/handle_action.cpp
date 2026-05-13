@@ -96,6 +96,7 @@
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+#include "vehicle_wait.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "weather.h"
@@ -917,9 +918,10 @@ static void wait()
     player &u = g->u;
     bool setting_alarm = false;
     map &here = get_map();
+    const auto player_vehicle = here.veh_at( u.bub_pos() );
 
-    if( u.controlling_vehicle && ( here.veh_at( u.bub_pos() )->vehicle().velocity ||
-                                   here.veh_at( u.bub_pos() )->vehicle().cruise_velocity ) && u.bub_pos().z() < 4 ) {
+    if( u.controlling_vehicle && player_vehicle &&
+        vehicle_wait::is_wait_blocked_by_movement( player_vehicle->vehicle() ) ) {
         popup( _( "You can't pass time while controlling a moving vehicle." ) );
         return;
     }
@@ -961,7 +963,8 @@ static void wait()
             as_m.addentry( 12, true, 'w', _( "Wait until you catch your breath" ) );
             durations.emplace( 12, 15_minutes ); // to hide it from showing
         }
-        if( u.controlling_vehicle && u.bub_pos().z() > 3 ) {
+        if( u.controlling_vehicle && player_vehicle &&
+            vehicle_wait::should_offer_flying_wait_durations( player_vehicle->vehicle() ) ) {
             add_menu_item( 14, 'x', "", 10_seconds );
             add_menu_item( 15, 'y', "", 30_seconds );
             add_menu_item( 16, 'z', "", 1_minutes );

@@ -2517,6 +2517,7 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
 
     const bool was_deaf = is_deaf();
     const bool supertinymouse = get_size() == creature_size::tiny;
+    const bool size_matters = to_wear.get_sizing( *this ) != item::sizing::ignore;
     last_item = to_wear.typeId();
 
 
@@ -2541,13 +2542,13 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
         if( !was_deaf && is_deaf() ) {
             add_msg_if_player( m_info, _( "You're deafened!" ) );
         }
-        if( supertinymouse && !to_wear.has_flag( flag_UNDERSIZE ) &&
+        if( size_matters && supertinymouse && !to_wear.has_flag( flag_UNDERSIZE ) &&
             !to_wear.has_flag( flag_resized_small ) ) {
             add_msg_if_player( m_warning,
                                _( "This %s is too big to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
-        } else if( !supertinymouse && ( to_wear.has_flag( flag_UNDERSIZE ) ||
-                                        to_wear.has_flag( flag_resized_small ) ) ) {
+        } else if( size_matters && !supertinymouse && ( to_wear.has_flag( flag_UNDERSIZE ) ||
+                   to_wear.has_flag( flag_resized_small ) ) ) {
             add_msg_if_player( m_warning,
                                _( "This %s is too small to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
