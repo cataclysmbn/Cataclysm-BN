@@ -338,10 +338,10 @@
       ],
       "terrain": { "¥": "t_card_science", "ƶ": "t_card_science" },
       "place_signs": [
-        { "signage": "<color_white_red>Badges Mandatory Beyond This Point.</color>", "x": 10, "y": 10 },
-        { "signage": "<color_white_red>Badges Mandatory Beyond This Point.</color>", "x": 10, "y": 13 },
-        { "signage": "<color_white_red>Badges Mandatory Beyond This Point.</color>", "x": 13, "y": 10 },
-        { "signage": "<color_white_red>Badges Mandatory Beyond This Point.</color>", "x": 13, "y": 13 }
+        { "signage": "<color_white_red>High Security Zone Beyond This Point.</color>", "x": 10, "y": 10 },
+        { "signage": "<color_white_red>High Security Zone Beyond This Point.</color>", "x": 10, "y": 13 },
+        { "signage": "<color_white_red>High Security Zone Beyond This Point.</color>", "x": 13, "y": 10 },
+        { "signage": "<color_white_red>High Security Zone Beyond This Point.</color>", "x": 13, "y": 13 }
       ],
       "place_monsters": [ { "monster": "GROUP_LAB_SECURITY", "x": [ 1, 22 ], "y": [ 1, 22 ], "density": 0.1 } ],
       "place_monster": [
