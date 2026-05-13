@@ -90,6 +90,22 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_npc_avatar_name == "nil" );
 }
 
+TEST_CASE( "lua_typed_coords_projection", "[lua]" )
+{
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "typed_coords_projection_test.lua" );
+
+    CHECK( test_data.get<std::string>( "to_omt" ) == "TripointAbsOmt(1,1,2)" );
+    CHECK( test_data.get<std::string>( "remain_quotient" ) == "TripointAbsOm(1,0,-1)" );
+    CHECK( test_data.get<std::string>( "remain_remainder" ) == "PointOmSm(1,2)" );
+    CHECK( test_data.get<std::string>( "combined" ) == "TripointAbsSm(361,2,-1)" );
+    CHECK( test_data.get<int>( "distance" ) == 3 );
+}
+
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
 {
     sol::state lua = make_lua_state();
