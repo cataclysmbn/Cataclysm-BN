@@ -595,15 +595,15 @@
             "rotates": true,
             "multitile": true,
             "fg": 144,
-            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 595 } ], "fg": 145 } ],
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 595 } ], "fg": 143 } ],
             "masks": [ { "type": "tint", "fg": 594 } ]
           },
           {
             "id": "vp_hdhalfboard_horizontal_2",
             "rotates": true,
             "multitile": true,
-            "fg": 146,
-            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 597 } ], "fg": 147 } ],
+            "fg": 145,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 597 } ], "fg": 146 } ],
             "masks": [ { "type": "tint", "fg": 596 } ]
           },
           {
@@ -666,8 +666,8 @@
             "id": "vp_hdhalfboard_vertical_2",
             "rotates": true,
             "multitile": true,
-            "fg": 162,
-            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 613 } ], "fg": 163 } ],
+            "fg": 161,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": 613 } ], "fg": 162 } ],
             "masks": [ { "type": "tint", "fg": 612 } ]
           },
           {
