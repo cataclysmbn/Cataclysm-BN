@@ -583,6 +583,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             }
         }
 
+        // If the target's in a vehicle and we're at a different height, hit the vehicle instead, unless you're firing down into a roof-less vehicle.
+        const bool z_level_vehicle = here.veh_at( tp ) && ( source.z < tp.z || ( source.z > tp.z &&
+                                     here.veh_at( tp )->part_with_feature( "ROOF", true ) ) );
+
         // Penalize damage and/or range on overpenetration.
         auto apply_overpenetration_penalty = [&]( bool modify_damage ) {
             traj_len *= overpenetration_modifier;
@@ -594,7 +598,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             }
         };
 
-        if( critter != nullptr && cur_missed_by < 1.0 ) {
+        if( critter != nullptr && cur_missed_by < 1.0 && !z_level_vehicle ) {
             if( in_veh != nullptr && veh_pointer_or_null( here.veh_at( tp ) ) == in_veh &&
                 critter->is_player() ) {
                 // Turret either was aimed by the player (who is now ducking) and shoots from above
@@ -623,6 +627,11 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
                 has_momentum = proj.impact.total_damage() > 0 && is_bullet;
 
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );
+                // Force embed based on damage after overpenetration penalties
+                if( thrown_item && rng( 1, 100 ) > proj.impact.total_damage() ) {
+                    has_momentum = false;
+                    apply_overpenetration_penalty( 0.0 );
+                }
             } else {
                 attack.missed_by = aim.missed_by;
             }
