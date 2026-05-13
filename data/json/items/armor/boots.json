@@ -58,7 +58,8 @@
     "color": "dark_gray",
     "covers": [ "feet" ],
     "encumbrance": 16,
-    "flags": [ "VARSIZE", "WATERPROOF" ]
+    "flags": [ "WATERPROOF" ],
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "boots_bunker",
@@ -471,8 +472,7 @@
       "multi": 2,
       "skills": [ "pistol" ]
     },
-    "extend": { "flags": [ "FANCY" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "FANCY", "VARSIZE" ] }
   },
   {
     "id": "boots_winter",
@@ -1377,7 +1377,7 @@
     "color": "blue",
     "encumbrance": 7,
     "warmth": 40,
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "stockings_tent_legs",
@@ -1408,8 +1408,7 @@
     "proportional": { "weight": 2, "volume": 2, "encumbrance": 2, "warmth": 2, "material_thickness": 2 },
     "coverage": 90,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
-    "extend": { "flags": [ "ALLOWS_TAIL_SNAKE" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "ALLOWS_TAIL_SNAKE", "VARSIZE" ] }
   },
   {
     "id": "stockings_snake_tail_fur",
@@ -1419,8 +1418,7 @@
     "description": "An oversized leg warmer made of fur.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
     "material": [ "fur" ],
     "proportional": { "weight": 2, "volume": 2, "encumbrance": 2, "warmth": 2.5 },
-    "extend": { "flags": [ "WATERPROOF" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "WATERPROOF", "VARSIZE" ] }
   },
   {
     "id": "stockings_snake_tail_leather",
@@ -1430,8 +1428,7 @@
     "description": "An oversized leg warmer made of leather.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
     "material": [ "leather" ],
     "proportional": { "weight": 1.5, "volume": 1.5, "encumbrance": 1.5, "warmth": 1.5 },
-    "extend": { "flags": [ "WATERPROOF" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "WATERPROOF", "VARSIZE" ] }
   },
   {
     "id": "stockings_snake_tail_wool",
@@ -1441,7 +1438,7 @@
     "description": "An oversized leg warmer made of wool.  Clearly designed for legless mutants, or an awkward tube skirt for more normal survivors.",
     "material": [ "wool" ],
     "proportional": { "weight": 1.25, "volume": 1.25, "encumbrance": 1.25, "warmth": 2 },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "tabi_dress",
@@ -1511,7 +1508,7 @@
     "warmth": 15,
     "material_thickness": 2,
     "encumbrance": 3,
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "carbon_boots",

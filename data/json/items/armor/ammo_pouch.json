@@ -266,7 +266,8 @@
       "draw_cost": 40,
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "MAG_BELT", "SPEEDLOADER" ]
     },
-    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT", "VARSIZE" ]
+    "flags": [ "WATER_FRIENDLY", "OVERSIZE", "BELTED", "COMPACT" ],
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "modularvest",

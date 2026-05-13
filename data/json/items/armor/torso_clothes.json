@@ -368,7 +368,8 @@
         "text": "A t-shirt with the Debian logo on it, underneath it says \"The Universal Operating System\""
       }
     ],
-    "flags": [ "VARSIZE", "SNIPPET_NEEDS_LITERACY" ]
+    "flags": [ "SNIPPET_NEEDS_LITERACY" ],
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "longshirt",
@@ -617,8 +618,7 @@
         "text": "A short-sleeved cotton shirt with the text \"chown -R us ~your/base\" printed on the front."
       }
     ],
-    "extend": { "flags": "SNIPPET_NEEDS_LITERACY" },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "SNIPPET_NEEDS_LITERACY", "VARSIZE" ] }
   },
   {
     "id": "tshirt_tour",
@@ -665,7 +665,7 @@
         "text": "A short-sleeved cotton shirt with an AK-47 on the front.  It is held up by a clenched fist around its forestock, the fingers covered in crude looking tattoos."
       }
     ],
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "hoodie_drugrug",
@@ -699,7 +699,7 @@
         "text": "Tan and teal stripes dance across the weave of this soft, oversized hoodie.  Looks perfect for stargazing in the desert."
       }
     ],
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "vest_leather",

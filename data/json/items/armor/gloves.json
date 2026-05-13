@@ -322,8 +322,7 @@
     "coverage": 50,
     "warmth": 28,
     "encumbrance": 20,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS", "VARSIZE" ] }
   },
   {
     "id": "gloves_hsurvivor",
@@ -436,8 +435,7 @@
     "coverage": 50,
     "warmth": 8,
     "encumbrance": 0,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS", "VARSIZE" ] }
   },
   {
     "id": "gloves_liner",
@@ -474,7 +472,7 @@
     "warmth": 45,
     "material_thickness": 2,
     "delete": { "flags": [ "WATER_FRIENDLY" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "gloves_lsurvivor",
@@ -701,8 +699,7 @@
     "coverage": 50,
     "warmth": 24,
     "encumbrance": 7,
-    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS" ] },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "ALLOWS_NATURAL_ATTACKS", "ALLOWS_CLAWS", "VARSIZE" ] }
   },
   {
     "id": "gloves_work",

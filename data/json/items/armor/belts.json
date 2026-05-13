@@ -56,7 +56,7 @@
     "name": { "str": "black belt" },
     "description": "A belt worn by martial arts practitioners, advertising a master.",
     "color": "dark_gray",
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "judo_belt_blue",
@@ -65,7 +65,7 @@
     "name": { "str": "blue belt" },
     "description": "A belt worn by martial arts practitioners, advertising a strong intermediate.",
     "color": "blue",
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "judo_belt_brown",
@@ -74,7 +74,7 @@
     "name": { "str": "brown belt" },
     "description": "A belt worn by martial arts practitioners, advertising a near-master.",
     "color": "brown",
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "judo_belt_green",
@@ -83,7 +83,7 @@
     "name": { "str": "green belt" },
     "description": "A belt worn by martial arts practitioners, advertising an intermediate.",
     "color": "green",
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "judo_belt_orange",
@@ -92,7 +92,7 @@
     "name": { "str": "orange belt" },
     "description": "A belt worn by martial arts practitioners, advertising a fresh intermediate.",
     "color": "light_red",
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "judo_belt_white",
@@ -101,7 +101,7 @@
     "name": { "str": "white belt" },
     "description": "A belt worn by martial arts practitioners, advertising a novice.",
     "color": "white",
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "judo_belt_yellow",
@@ -110,7 +110,7 @@
     "name": { "str": "yellow belt" },
     "description": "A belt worn by martial arts practitioners, advertising a moderate novice.",
     "color": "yellow",
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "leather_belt",

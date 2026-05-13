@@ -378,7 +378,7 @@
     "looks_like": "skirt",
     "encumbrance": 7,
     "warmth": 8,
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "copy-from": "skirt_armor",

@@ -442,7 +442,7 @@
     "material": [ "faux_fur", "cotton" ],
     "covers": [ "legs" ],
     "warmth": 70,
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "pants_leather",

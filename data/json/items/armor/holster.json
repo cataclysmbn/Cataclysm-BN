@@ -143,7 +143,7 @@
       "skills": [ "pistol" ],
       "flags": [ "HOLSTER_PISTOL" ]
     },
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "bholster",
@@ -168,7 +168,8 @@
       "flags": [ "HOLSTER_PISTOL" ]
     },
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "SKINTIGHT", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS", "VARSIZE" ]
+    "flags": [ "SKINTIGHT", "COMPACT", "WATER_FRIENDLY", "ALLOWS_WINGS" ],
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "shoulder_holster",
@@ -181,7 +182,8 @@
     "price": "100 USD",
     "price_postapoc": "8 USD",
     "covers": [ "arm_either" ],
-    "flags": [ "BELTED", "COMPACT", "OVERSIZE", "VARSIZE" ]
+    "flags": [ "BELTED", "COMPACT", "OVERSIZE" ],
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "survivor_vest",

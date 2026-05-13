@@ -40,7 +40,8 @@
     "encumbrance": 12,
     "warmth": 15,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
-    "flags": [ "VARSIZE", "STURDY" ]
+    "flags": [ "STURDY" ],
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "armor_lamellar_plated",

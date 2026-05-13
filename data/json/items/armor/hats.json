@@ -262,8 +262,9 @@
     "description": "A stylish hat made of faux fur.  Like real fur, but without the suffering, if the tag is to be believed.  Very warm.",
     "material": [ "faux_fur", "cotton" ],
     "covers": [ "head" ],
-    "flags": [ "FANCY", "VARSIZE" ],
-    "warmth": 60
+    "flags": [ "FANCY" ],
+    "warmth": 60,
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "bearskin_hat",
@@ -276,7 +277,8 @@
     "volume": "1500 ml",
     "price": "100 USD",
     "color": "black",
-    "flags": [ "FANCY", "VARSIZE" ]
+    "flags": [ "FANCY" ],
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "hat_hard",

@@ -73,6 +73,6 @@
     "description": "A simple cloth scarf worn by Marloss Voices.  Wherever the Voices go, long sought peace soon follows, for better or for worse.",
     "color": "cyan",
     "covers": [ "mouth" ],
-    "flags": [ "VARSIZE" ]
+    "extend": { "flags": [ "VARSIZE" ] }
   }
 ]

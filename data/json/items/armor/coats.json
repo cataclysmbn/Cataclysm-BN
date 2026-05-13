@@ -80,8 +80,9 @@
     "material": [ "faux_fur", "cotton" ],
     "color": "pink",
     "covers": [ "torso", "arms" ],
-    "flags": [ "VARSIZE", "POCKETS", "OUTER", "SUPER_FANCY", "ALLOWS_WINGS" ],
-    "warmth": 70
+    "flags": [ "POCKETS", "OUTER", "SUPER_FANCY", "ALLOWS_WINGS" ],
+    "warmth": 70,
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "coat_fur_sf",
@@ -256,8 +257,9 @@
     "description": "A thick faux fur duster, falling below your knees.  Has many pockets for storing things.",
     "material": [ "faux_fur", "cotton" ],
     "covers": [ "torso", "arms", "legs" ],
-    "flags": [ "VARSIZE", "POCKETS", "OUTER", "FANCY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ],
-    "warmth": 40
+    "flags": [ "POCKETS", "OUTER", "FANCY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ],
+    "warmth": 40,
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "duster_leather",
@@ -925,8 +927,9 @@
     "description": "A thick, sleeveless faux fur duster, falling below your knees.  Has many pockets for storing things.",
     "material": [ "faux_fur", "cotton" ],
     "covers": [ "torso", "legs" ],
-    "flags": [ "VARSIZE", "POCKETS", "OUTER", "FANCY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ],
-    "warmth": 40
+    "flags": [ "POCKETS", "OUTER", "FANCY", "ALLOWS_TAIL_SNAKE", "ALLOWS_WINGS" ],
+    "warmth": 40,
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "sleeveless_duster_leather",
@@ -1047,8 +1050,9 @@
     "description": "A thick faux fur trenchcoat without sleeves.  Has plenty of storage space, and looks pretty good.",
     "material": [ "faux_fur", "cotton" ],
     "covers": [ "torso" ],
-    "flags": [ "VARSIZE", "POCKETS", "OUTER", "FANCY", "ALLOWS_WINGS" ],
-    "warmth": 40
+    "flags": [ "POCKETS", "OUTER", "FANCY", "ALLOWS_WINGS" ],
+    "warmth": 40,
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "sleeveless_trenchcoat_leather",
@@ -1200,8 +1204,9 @@
     "description": "A thick faux fur trenchcoat, lined with pockets.  Great for storage, and makes you the talk of the town.",
     "material": [ "faux_fur", "cotton" ],
     "covers": [ "torso", "arms" ],
-    "flags": [ "VARSIZE", "POCKETS", "OUTER", "FANCY", "ALLOWS_WINGS" ],
-    "warmth": 40
+    "flags": [ "POCKETS", "OUTER", "FANCY", "ALLOWS_WINGS" ],
+    "warmth": 40,
+    "extend": { "flags": [ "VARSIZE" ] }
   },
   {
     "id": "trenchcoat_leather",
