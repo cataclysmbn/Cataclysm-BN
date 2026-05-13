@@ -4769,7 +4769,7 @@ void map::shoot( const tripoint &origin, const tripoint &p, projectile &proj, co
             const int roof = vp->vehicle().roof_at_part( vp->part_index() );
             dam = vp->vehicle().damage( roof, dam, inc ? DT_HEAT : DT_STAB, hit_items, false );
         } else {
-        dam = vp->vehicle().damage( vp->part_index(), dam, inc ? DT_HEAT : DT_STAB, hit_items );
+            dam = vp->vehicle().damage( vp->part_index(), dam, inc ? DT_HEAT : DT_STAB, hit_items );
         }
     }
 
@@ -7933,6 +7933,8 @@ void map::load( const tripoint &w, const bool update_vehicle, const bool pump_ev
         }
     }
     reset_vehicle_cache( );
+
+    charge_removal_blacklist::split_deferred();
 }
 
 void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool pump_events )

@@ -15,8 +15,7 @@
     "category": "scrap_metal",
     "price": "60 USD",
     "price_postapoc": "1 USD",
-    "qualities": [ [ "COOK", 1 ] ],
-    "stackable": true
+    "qualities": [ [ "COOK", 1 ] ]
   },
   {
     "type": "GENERIC",
@@ -49,7 +48,6 @@
     "category": "veh_parts",
     "price": "180 USD",
     "price_postapoc": "2 USD",
-    "stackable": true
   },
   {
     "type": "GENERIC",
