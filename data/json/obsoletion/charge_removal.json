@@ -109,7 +109,17 @@
       "crude_firestarter",
       "electric_lighter",
       "sheet_metal",
-      "sheet_carbon"
+      "sheet_carbon",
+      "rope_6",
+      "rope_30",
+      "rope_6_plastic",
+      "rope_30_plastic",
+      "vine_6",
+      "vine_30",
+      "rope_makeshift_6",
+      "rope_makeshift_30",
+      "seatbelt",
+      "pipe"
     ]
   }
 ]

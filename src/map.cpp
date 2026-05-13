@@ -4765,7 +4765,6 @@ void map::shoot( const tripoint &origin, const tripoint &p, projectile &proj, co
                       proj.impact.type_damage( DT_BULLET ) > 0;
     if( const optional_vpart_position vp = veh_at( p ) ) {
         if( origin.z > p.z && vp->part_with_feature( "ROOF", true ) ) {
-            add_msg( _( "Roof hit triggered." ) );
             const int roof = vp->vehicle().roof_at_part( vp->part_index() );
             dam = vp->vehicle().damage( roof, dam, inc ? DT_HEAT : DT_STAB, hit_items, false );
         } else {
