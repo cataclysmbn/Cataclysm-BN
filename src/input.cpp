@@ -1463,7 +1463,7 @@ bool gamepad_available()
     return false;
 }
 
-std::optional<tripoint> input_context::get_coordinates( const catacurses::window &capture_win )
+std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window &capture_win )
 {
     if( !coordinate_input_received ) {
         return std::nullopt;
@@ -1476,13 +1476,13 @@ std::optional<tripoint> input_context::get_coordinates( const catacurses::window
         return std::nullopt;
     }
 
-    point view_offset;
+    point_bub_ms view_offset;
     if( capture_win == g->w_terrain ) {
         view_offset = g->ter_view_p.xy();
     }
 
-    const point p = view_offset - ( view_size / 2 - coordinate );
-    return tripoint( p, g->get_levz() );
+    const point_bub_ms p = view_offset - ( view_size / 2 - coordinate );
+    return tripoint_bub_ms( p, g->get_levz() );
 }
 #endif
 

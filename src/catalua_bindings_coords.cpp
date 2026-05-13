@@ -13,6 +13,9 @@
 #include <stdexcept>
 #include <string>
 #include <tuple>
+#include <type_traits>
+#include <utility>
+#include <variant>
 
 namespace
 {
@@ -24,22 +27,6 @@ struct is_registered_coord_t : std::false_type {};
 
 template<coords::scale>
 struct has_remainder_origin_t : std::false_type {};
-
-template<typename T>
-struct is_typed_coord_t : std::false_type {};
-template<typename T>
-struct is_raw_coord_t : std::false_type {};
-
-template<coords::origin O, coords::scale S>
-struct is_typed_coord_t<coords::coord_point<point, O, S>> : std::true_type {};
-
-template<coords::origin O, coords::scale S>
-struct is_typed_coord_t<coords::coord_point<tripoint, O, S>> : std::true_type {};
-
-template<>
-struct is_raw_coord_t<point> : std::true_type {};
-template<>
-struct is_raw_coord_t<tripoint> : std::true_type {};
 
 }
 
@@ -89,86 +76,71 @@ inline constexpr bool is_registered_coord_v = detail::is_registered_coord_t<Orig
 template<coords::scale Scale>
 inline constexpr bool has_remainder_origin_v = detail::has_remainder_origin_t<Scale>::value;
 
-template<typename T>
-inline constexpr bool is_raw_coord_v = detail::is_raw_coord_t<T>::value;
-
-template<typename T>
-inline constexpr bool is_typed_coord_v = detail::is_typed_coord_t<T>::value;
-
 template<coords::scale SourceScale, coords::scale ResultScale>
 inline constexpr bool exact_scale_conversion_v =
     coords::map_squares_per( SourceScale ) > coords::map_squares_per( ResultScale ) ?
     coords::map_squares_per( SourceScale ) % coords::map_squares_per( ResultScale ) == 0 :
     coords::map_squares_per( ResultScale ) % coords::map_squares_per( SourceScale ) == 0;
 
-using coord_variant = std::variant <
-                      point_bub_sm, tripoint_bub_sm,
-                      point_bub_ms, tripoint_bub_ms,
-                      point_rel_ms, tripoint_rel_ms,
-                      point_abs_ms, tripoint_abs_ms,
-                      point_sm_ms, tripoint_sm_ms,
-                      point_omt_ms, tripoint_omt_ms,
-                      point_mmr_ms, tripoint_mmr_ms,
-                      point_seg_ms, tripoint_seg_ms,
-                      point_om_ms, tripoint_om_ms,
-                      point_rel_veh, tripoint_rel_veh,
-                      point_mnt_veh, tripoint_mnt_veh,
-                      point_rel_sm, tripoint_rel_sm,
-                      point_abs_sm, tripoint_abs_sm,
-                      point_omt_sm, tripoint_omt_sm,
-                      point_mmr_sm, tripoint_mmr_sm,
-                      point_seg_sm, tripoint_seg_sm,
-                      point_om_sm, tripoint_om_sm,
-                      point_rel_omt, tripoint_rel_omt,
-                      point_abs_omt, tripoint_abs_omt,
-                      point_om_omt, tripoint_om_omt,
-                      point_seg_omt, tripoint_seg_omt,
-                      point_mmr_omt, tripoint_mmr_omt,
-                      point_rel_mmr, tripoint_rel_mmr,
-                      point_abs_mmr, tripoint_abs_mmr,
-                      point_seg_mmr, tripoint_seg_mmr,
-                      point_om_mmr, tripoint_om_mmr,
-                      point_rel_seg, tripoint_rel_seg,
-                      point_abs_seg, tripoint_abs_seg,
-                      point_om_seg, tripoint_om_seg,
-                      point_rel_om, tripoint_rel_om,
-                      point_abs_om, tripoint_abs_om
-                      >;
+template<typename... Types>
+struct type_list {};
 
-using dist_variant = std::variant <
-                     point, tripoint,
-                     point_bub_sm, tripoint_bub_sm,
-                     point_bub_ms, tripoint_bub_ms,
-                     point_rel_ms, tripoint_rel_ms,
-                     point_abs_ms, tripoint_abs_ms,
-                     point_sm_ms, tripoint_sm_ms,
-                     point_omt_ms, tripoint_omt_ms,
-                     point_mmr_ms, tripoint_mmr_ms,
-                     point_seg_ms, tripoint_seg_ms,
-                     point_om_ms, tripoint_om_ms,
-                     point_rel_veh, tripoint_rel_veh,
-                     point_mnt_veh, tripoint_mnt_veh,
-                     point_rel_sm, tripoint_rel_sm,
-                     point_abs_sm, tripoint_abs_sm,
-                     point_omt_sm, tripoint_omt_sm,
-                     point_mmr_sm, tripoint_mmr_sm,
-                     point_seg_sm, tripoint_seg_sm,
-                     point_om_sm, tripoint_om_sm,
-                     point_rel_omt, tripoint_rel_omt,
-                     point_abs_omt, tripoint_abs_omt,
-                     point_om_omt, tripoint_om_omt,
-                     point_seg_omt, tripoint_seg_omt,
-                     point_mmr_omt, tripoint_mmr_omt,
-                     point_rel_mmr, tripoint_rel_mmr,
-                     point_abs_mmr, tripoint_abs_mmr,
-                     point_seg_mmr, tripoint_seg_mmr,
-                     point_om_mmr, tripoint_om_mmr,
-                     point_rel_seg, tripoint_rel_seg,
-                     point_abs_seg, tripoint_abs_seg,
-                     point_om_seg, tripoint_om_seg,
-                     point_rel_om, tripoint_rel_om,
-                     point_abs_om, tripoint_abs_om
-                     >;
+template<typename TypeList>
+struct as_variant;
+
+template<typename... Types>
+struct as_variant<type_list<Types...>> {
+    using type = std::variant<Types...>;
+};
+
+template<typename TypeList>
+using as_variant_t = typename as_variant<TypeList>::type;
+
+using coord_types = type_list <
+                    point_bub_sm, tripoint_bub_sm,
+                    point_bub_ms, tripoint_bub_ms,
+                    point_rel_ms, tripoint_rel_ms,
+                    point_abs_ms, tripoint_abs_ms,
+                    point_sm_ms, tripoint_sm_ms,
+                    point_omt_ms, tripoint_omt_ms,
+                    point_mmr_ms, tripoint_mmr_ms,
+                    point_seg_ms, tripoint_seg_ms,
+                    point_om_ms, tripoint_om_ms,
+                    point_rel_veh, tripoint_rel_veh,
+                    point_mnt_veh, tripoint_mnt_veh,
+                    point_rel_sm, tripoint_rel_sm,
+                    point_abs_sm, tripoint_abs_sm,
+                    point_omt_sm, tripoint_omt_sm,
+                    point_mmr_sm, tripoint_mmr_sm,
+                    point_seg_sm, tripoint_seg_sm,
+                    point_om_sm, tripoint_om_sm,
+                    point_rel_omt, tripoint_rel_omt,
+                    point_abs_omt, tripoint_abs_omt,
+                    point_om_omt, tripoint_om_omt,
+                    point_seg_omt, tripoint_seg_omt,
+                    point_mmr_omt, tripoint_mmr_omt,
+                    point_rel_mmr, tripoint_rel_mmr,
+                    point_abs_mmr, tripoint_abs_mmr,
+                    point_seg_mmr, tripoint_seg_mmr,
+                    point_om_mmr, tripoint_om_mmr,
+                    point_rel_seg, tripoint_rel_seg,
+                    point_abs_seg, tripoint_abs_seg,
+                    point_om_seg, tripoint_om_seg,
+                    point_rel_om, tripoint_rel_om,
+                    point_abs_om, tripoint_abs_om
+                    >;
+
+using coord_variant = as_variant_t<coord_types>;
+
+template<typename TypeList>
+struct with_raw_coord_types;
+
+template<typename... Types>
+struct with_raw_coord_types<type_list<Types...>> {
+    using type = type_list<point, tripoint, Types...>;
+};
+
+using distance_coord_types = typename with_raw_coord_types<coord_types>::type;
 
 template<typename Coord, coords::scale ResultScale>
 inline constexpr bool can_project_to_v =
@@ -185,37 +157,109 @@ inline constexpr bool can_project_remain_v =
     is_registered_coord_v<Coord::origin_tag, ResultScale> &&
     is_registered_coord_v<coords::origin_from_scale( ResultScale ), Coord::scale_tag>;
 
-template<typename Coarse, typename Fine>
-consteval auto can_project_combine() -> bool
+template<typename Coord>
+consteval auto can_project_combine_any() -> bool
 {
-    if constexpr( !has_remainder_origin_v<Coarse::scale_tag> ) {
-        return false;
-    } else if constexpr( coords::map_squares_per( Coarse::scale_tag ) <=
-                         coords::map_squares_per( Fine::scale_tag ) ) {
-        return false;
-    } else if constexpr( coords::map_squares_per( Coarse::scale_tag ) %
-                         coords::map_squares_per( Fine::scale_tag ) != 0 ) {
-        return false;
-    } else if constexpr( coords::origin_from_scale( Coarse::scale_tag ) != Fine::origin_tag ) {
-        return false;
-    } else if constexpr( Coarse::dimension == 3 && Fine::dimension == 3 ) {
-        return false;
-    } else {
-        return is_registered_coord_v<Coarse::origin_tag, Fine::scale_tag>;
+    return has_remainder_origin_v<Coord::scale_tag>;
+}
+
+struct lua_coord_value {
+    coords::origin origin;
+    coords::scale scale;
+    point xy;
+    int z;
+    bool is_tripoint;
+};
+
+auto has_remainder_origin( const coords::scale scale ) -> bool
+{
+    switch( scale ) {
+        case coords::sm:
+        case coords::omt:
+        case coords::mmr:
+        case coords::seg:
+        case coords::om:
+            return true;
+        default:
+            return false;
     }
 }
 
-template<typename Coord, typename VarType = coord_variant>
-consteval auto can_project_combine_any() -> bool
+auto is_registered_coord( const coords::origin, const coords::scale,
+                          type_list<> ) -> bool
 {
-    constexpr auto n = std::variant_size_v<VarType>;
-    constexpr auto s = std::make_index_sequence<n> {};
+    return false;
+}
 
-    const auto f = []<std::size_t ... N>( std::index_sequence<N ...> ) {
-        return ( can_project_combine<Coord, std::variant_alternative_t<N, VarType>>() || ... );
-    };
+template<typename Coord, typename... Rest>
+auto is_registered_coord( const coords::origin origin, const coords::scale scale,
+                          type_list<Coord, Rest...> ) -> bool
+{
+    if( Coord::origin_tag == origin && Coord::scale_tag == scale ) {
+        return true;
+    }
+    return is_registered_coord( origin, scale, type_list<Rest...> {} );
+}
 
-    return f( s );
+auto lua_coord_from_object( const sol::object &, type_list<> ) -> std::optional<lua_coord_value>
+{
+    return std::nullopt;
+}
+
+template<typename Coord, typename... Rest>
+auto lua_coord_from_object( const sol::object &obj,
+                            type_list<Coord, Rest...> ) -> std::optional<lua_coord_value>
+{
+    if( obj.is<Coord>() ) {
+        const auto coord = obj.as<Coord>();
+        if constexpr( Coord::dimension == 3 ) {
+            return lua_coord_value{ Coord::origin_tag, Coord::scale_tag, coord.raw().xy(),
+                                    coord.z(), true };
+        } else {
+            return lua_coord_value{ Coord::origin_tag, Coord::scale_tag, coord.raw(), 0,
+                                    false };
+        }
+    }
+    return lua_coord_from_object( obj, type_list<Rest...> {} );
+}
+
+auto can_project_combine( const lua_coord_value &coarse, const lua_coord_value &fine ) -> bool
+{
+    if( !has_remainder_origin( coarse.scale ) ) {
+        return false;
+    }
+
+    const auto coarse_scale = coords::map_squares_per( coarse.scale );
+    const auto fine_scale = coords::map_squares_per( fine.scale );
+    return coarse_scale > fine_scale &&
+           coarse_scale % fine_scale == 0 &&
+           coords::origin_from_scale( coarse.scale ) == fine.origin &&
+           !( coarse.is_tripoint && fine.is_tripoint ) &&
+           is_registered_coord( coarse.origin, fine.scale, coord_types {} );
+}
+
+auto make_coord_object( const coords::origin, const coords::scale, const bool,
+                        const point &, const int, sol::this_state,
+                        type_list<> ) -> sol::object
+{
+    return sol::nil;
+}
+
+template<typename Coord, typename... Rest>
+auto make_coord_object( const coords::origin origin, const coords::scale scale,
+                        const bool is_tripoint, const point &xy, const int z,
+                        sol::this_state lua_state, type_list<Coord, Rest...> ) -> sol::object
+{
+    const auto dimension_matches = ( Coord::dimension == 3 ) == is_tripoint;
+    if( Coord::origin_tag == origin && Coord::scale_tag == scale && dimension_matches ) {
+        if constexpr( Coord::dimension == 3 ) {
+            return sol::make_object( lua_state, Coord( tripoint( xy, z ) ) );
+        } else {
+            return sol::make_object( lua_state, Coord( xy ) );
+        }
+    }
+    return make_coord_object( origin, scale, is_tripoint, xy, z, lua_state,
+                              type_list<Rest...> {} );
 }
 
 template<typename Coord, coords::scale ResultScale>
@@ -277,29 +321,32 @@ auto lua_project_remain_to( const sol::object &val, const std::string &result_sc
 auto lua_project_combine( const sol::object &coarse, const sol::object &fine,
                           sol::this_state lua_state ) -> sol::object
 {
-    const auto vCoarse = coarse.as<std::optional<coord_variant>>();
+    const auto vCoarse = lua_coord_from_object( coarse, coord_types {} );
     if( !vCoarse.has_value() ) {
         debugmsg( "project_combine expected a typed coordinate as its first argument" );
         return sol::nil;
     }
-    const auto vFine = fine.as<std::optional<coord_variant>>();
+    const auto vFine = lua_coord_from_object( fine, coord_types {} );
     if( !vFine.has_value() ) {
         debugmsg( "project_combine expected a typed coordinate as its second argument" );
         return sol::nil;
     }
 
-    const auto visitor = [&]<typename TCoarse, typename TFine>( const TCoarse & c,
-    const TFine & f ) -> sol::object {
-        if constexpr( can_project_combine<TCoarse, TFine>() )
-        {
-            const auto &v = coords::project_combine( c, f );
-            return sol::make_object( lua_state, v );
-        }
+    const auto &coarse_value = vCoarse.value();
+    const auto &fine_value = vFine.value();
+    if( !can_project_combine( coarse_value, fine_value ) ) {
         debugmsg( "cannot project_combine the selected coordinates" );
         return sol::nil;
-    };
+    }
 
-    return std::visit( visitor, vCoarse.value(), vFine.value() );
+    const auto scale_up = coords::map_squares_per( coarse_value.scale ) /
+                          coords::map_squares_per( fine_value.scale );
+    const auto xy = multiply_xy( coarse_value.xy, scale_up ) + fine_value.xy;
+    const auto is_tripoint = coarse_value.is_tripoint || fine_value.is_tripoint;
+    const auto z = coarse_value.is_tripoint ? coarse_value.z : fine_value.z;
+
+    return make_coord_object( coarse_value.origin, fine_value.scale, is_tripoint, xy, z,
+                              lua_state, coord_types {} );
 }
 
 struct rl_dist_fn {
@@ -324,30 +371,36 @@ struct square_dist_fn {
 };
 
 template<typename DistFn>
-auto lua_distance( const sol::object &_lhs, const sol::object &_rhs,
-                   sol::this_state L ) -> sol::object
+auto lua_distance_impl( const sol::object &, const sol::object &,
+                        sol::this_state, type_list<> ) -> sol::object
 {
-    const auto vLhs = _lhs.as<std::optional<dist_variant>>();
-    const auto vRhs = _rhs.as<std::optional<dist_variant>>();
-    if( !vLhs.has_value() || !vRhs.has_value() ) {
-        debugmsg( "distance functions need 2 matching point/coordinate types" );
-        return sol::nil;
-    }
+    debugmsg( "distance functions need 2 matching point/coordinate types" );
+    return sol::nil;
+}
 
-    const auto visitor = [&]<typename TLeft, typename TRight>( const TLeft & lhs,
-    const TRight & rhs ) -> sol::object {
-        if constexpr( !std::is_same_v<TLeft, TRight> )
-        {
+template<typename DistFn, typename Coord, typename... Rest>
+auto lua_distance_impl( const sol::object &lhs, const sol::object &rhs,
+                        sol::this_state L, type_list<Coord, Rest...> ) -> sol::object
+{
+    const auto lhs_is_coord = lhs.is<Coord>();
+    const auto rhs_is_coord = rhs.is<Coord>();
+    if( lhs_is_coord || rhs_is_coord ) {
+        if( !lhs_is_coord || !rhs_is_coord ) {
             debugmsg( "distance functions need matching point/coordinate types" );
             return sol::nil;
-        } else
-        {
-            const auto r = DistFn{}( lhs, rhs );
-            return sol::make_object( L, r );
         }
-    };
+        const auto r = DistFn{}( lhs.as<Coord>(), rhs.as<Coord>() );
+        return sol::make_object( L, r );
+    }
 
-    return std::visit( visitor, vLhs.value(), vRhs.value() );
+    return lua_distance_impl<DistFn>( lhs, rhs, L, type_list<Rest...> {} );
+}
+
+template<typename DistFn>
+auto lua_distance( const sol::object &lhs, const sol::object &rhs,
+                   sol::this_state L ) -> sol::object
+{
+    return lua_distance_impl<DistFn>( lhs, rhs, L, distance_coord_types {} );
 }
 
 template<coords::scale ResultScale, typename Coord>
