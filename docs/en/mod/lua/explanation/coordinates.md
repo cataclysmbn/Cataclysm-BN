@@ -16,17 +16,17 @@ subtracted from a typed coordinate.
 
 The **origin** of a coordinate describes the reference frame it was measured from.
 
-| Origin string | Meaning |
-|---|---|
-| `"rel"` | Dimensionless offset. Can be added to any coordinate at the same scale. |
-| `"abs"` | Absolute game-world position. The only globally stable origin. |
-| `"bub"` | Relative to the corner of the current reality bubble (the loaded map region). |
-| `"mnt"` | Local vehicle (mount) space, including rotation. Used with the `veh` scale. |
-| `"sm"` | Relative to the corner of a specific submap. |
-| `"omt"` | Relative to the corner of a specific overmap terrain tile. |
-| `"mmr"` | Relative to the corner of a memory-map region. |
-| `"seg"` | Relative to the corner of a segment. |
-| `"om"` | Relative to the corner of a specific overmap. |
+| Origin string | Meaning                                                                       |
+| ------------- | ----------------------------------------------------------------------------- |
+| `"rel"`       | Dimensionless offset. Can be added to any coordinate at the same scale.       |
+| `"abs"`       | Absolute game-world position. The only globally stable origin.                |
+| `"bub"`       | Relative to the corner of the current reality bubble (the loaded map region). |
+| `"mnt"`       | Local vehicle (mount) space, including rotation. Used with the `veh` scale.   |
+| `"sm"`        | Relative to the corner of a specific submap.                                  |
+| `"omt"`       | Relative to the corner of a specific overmap terrain tile.                    |
+| `"mmr"`       | Relative to the corner of a memory-map region.                                |
+| `"seg"`       | Relative to the corner of a segment.                                          |
+| `"om"`        | Relative to the corner of a specific overmap.                                 |
 
 The `"rel"` origin is special: it acts as a typed displacement value. Subtracting two matching
 absolute coordinates produces a `"rel"` result; adding a `"rel"` coordinate to a non-relative one
@@ -38,15 +38,15 @@ produces the same non-relative origin back.
 
 The **scale** of a coordinate describes the unit size of each step.
 
-| Scale string | Abbreviation | Size |
-|---|---|---|
-| `"map_square"` | `ms` | 1 game tile |
-| `"vehicle"` | `veh` | Vehicle-local tile |
-| `"submap"` | `sm` | 12 × 12 map squares |
-| `"overmap_terrain"` | `omt` | 2 submaps (24 × 24 map squares) |
-| `"mem_map_region"` | `mmr` | `MM_REG_SIZE` submaps |
-| `"segment"` | `seg` | `SEG_SIZE` overmap terrain tiles |
-| `"overmap"` | `om` | `OMAPX` overmap terrain tiles |
+| Scale string        | Abbreviation | Size                             |
+| ------------------- | ------------ | -------------------------------- |
+| `"map_square"`      | `ms`         | 1 game tile                      |
+| `"vehicle"`         | `veh`        | Vehicle-local tile               |
+| `"submap"`          | `sm`         | 12 × 12 map squares              |
+| `"overmap_terrain"` | `omt`        | 2 submaps (24 × 24 map squares)  |
+| `"mem_map_region"`  | `mmr`        | `MM_REG_SIZE` submaps            |
+| `"segment"`         | `seg`        | `SEG_SIZE` overmap terrain tiles |
+| `"overmap"`         | `om`         | `OMAPX` overmap terrain tiles    |
 
 The abbreviated form (`ms`, `sm`, `omt`, etc.) is used in all factory function names and in the
 string arguments accepted by the projection functions.
@@ -126,6 +126,7 @@ Components can be mutated with `set_x`, `set_y`, `set_z`.
 ### Addition
 
 A typed coordinate can be added to:
+
 - A raw `Point` or raw `Tripoint`; the result keeps the original origin and scale
 - A `"rel"` typed coordinate **at the same scale**; same result type
 - Another `"rel"` typed coordinate plus the operand is non-relative: the non-relative origin wins
@@ -188,7 +189,7 @@ Convenience shorthand methods exist for every target scale: `:to_ms()`, `:to_sm(
 
 ### project_remain: split into quotient and remainder
 
-When you need to know both *which coarser tile* a fine coordinate falls in **and** where *within*
+When you need to know both _which coarser tile_ a fine coordinate falls in **and** where _within_
 that tile it sits, use `project_remain`. It returns two values:
 
 ```lua
@@ -278,17 +279,17 @@ producing wrong map coordinates.
 
 Not every origin is meaningful at every scale. The supported combinations are:
 
-| Origin | Valid scales |
-|---|---|
-| `rel` | all scales |
-| `abs` | `ms`, `sm`, `omt`, `mmr`, `seg`, `om` |
-| `bub` | `ms`, `sm` |
-| `mnt` | `veh` only |
-| `sm` | `ms` only |
-| `omt` | `ms`, `sm` |
-| `mmr` | `ms`, `sm`, `omt` |
-| `seg` | `ms`, `sm`, `omt`, `mmr` |
-| `om` | `ms`, `sm`, `omt`, `mmr`, `seg` |
+| Origin | Valid scales                          |
+| ------ | ------------------------------------- |
+| `rel`  | all scales                            |
+| `abs`  | `ms`, `sm`, `omt`, `mmr`, `seg`, `om` |
+| `bub`  | `ms`, `sm`                            |
+| `mnt`  | `veh` only                            |
+| `sm`   | `ms` only                             |
+| `omt`  | `ms`, `sm`                            |
+| `mmr`  | `ms`, `sm`, `omt`                     |
+| `seg`  | `ms`, `sm`, `omt`, `mmr`              |
+| `om`   | `ms`, `sm`, `omt`, `mmr`, `seg`       |
 
 Constructing an unsupported combination throws a runtime error with a message identifying the
 invalid type name.
@@ -297,19 +298,19 @@ invalid type name.
 
 ## Quick-reference: coords library API
 
-| Function | Description |
-|---|---|
-| `coords.tripoint(origin, scale, x, y, z)` | Generic typed tripoint constructor |
-| `coords.point(origin, scale, x, y)` | Generic typed point constructor |
-| `coords.tripoint_<o>_<s>(x, y, z)` | Typed tripoint factory (e.g. `coords.tripoint_abs_ms`) |
-| `coords.point_<o>_<s>(x, y)` | Typed point factory |
-| `coords.project_remain(coord, scale)` | Split coordinate into quotient + remainder |
-| `coords.project_remain_sm/omt/mmr/seg/om(coord)` | Shorthand project_remain variants |
-| `coords.project_combine(coarse, fine)` | Reconstruct fine coordinate from split pair |
-| `coords.rl_dist(a, b)` | Rectilinear (Manhattan/Chebyshev) distance |
-| `coords.trig_dist(a, b)` | Euclidean distance |
-| `coords.square_dist(a, b)` | Square (Chebyshev) distance |
-| `coords.submap_tiles()` | Array of all `PointSmMs` offsets within one submap |
-| `coords.tinymap_tiles()` | Array of all `PointBubMs` offsets within the tinymap |
-| `coords.overmap_terrain_tiles()` | Array of all `PointOmtMs` offsets within one OMT |
-| `coords.overmap_tiles()` | Array of all `PointOmMs` offsets within one overmap |
+| Function                                         | Description                                            |
+| ------------------------------------------------ | ------------------------------------------------------ |
+| `coords.tripoint(origin, scale, x, y, z)`        | Generic typed tripoint constructor                     |
+| `coords.point(origin, scale, x, y)`              | Generic typed point constructor                        |
+| `coords.tripoint_<o>_<s>(x, y, z)`               | Typed tripoint factory (e.g. `coords.tripoint_abs_ms`) |
+| `coords.point_<o>_<s>(x, y)`                     | Typed point factory                                    |
+| `coords.project_remain(coord, scale)`            | Split coordinate into quotient + remainder             |
+| `coords.project_remain_sm/omt/mmr/seg/om(coord)` | Shorthand project_remain variants                      |
+| `coords.project_combine(coarse, fine)`           | Reconstruct fine coordinate from split pair            |
+| `coords.rl_dist(a, b)`                           | Rectilinear (Manhattan/Chebyshev) distance             |
+| `coords.trig_dist(a, b)`                         | Euclidean distance                                     |
+| `coords.square_dist(a, b)`                       | Square (Chebyshev) distance                            |
+| `coords.submap_tiles()`                          | Array of all `PointSmMs` offsets within one submap     |
+| `coords.tinymap_tiles()`                         | Array of all `PointBubMs` offsets within the tinymap   |
+| `coords.overmap_terrain_tiles()`                 | Array of all `PointOmtMs` offsets within one OMT       |
+| `coords.overmap_tiles()`                         | Array of all `PointOmMs` offsets within one overmap    |
