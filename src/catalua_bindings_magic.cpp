@@ -143,7 +143,7 @@ void cata::detail::reg_spell_fake( sol::state &lua )
         DOC( "Static function: Creates and immediately casts a SimpleSpell, then returns the new spell for potential reuse. If the given tripoint is the player's location, the spell will be locked to the player. (This does not necessarily cause friendly fire!) If an integer is specified, the spell will be cast at that level." );
         luna::set_fx( ut, "prompt_cast",
                       []( spell_id spid,
-                          tripoint_bub_ms & target,
+                          const tripoint_bub_ms & target,
                           sol::optional<int> level ) -> fake_spell
         {
             // This will be our return value, as well as the spell we cast.

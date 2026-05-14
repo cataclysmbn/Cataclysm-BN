@@ -2,6 +2,7 @@
 
 #include "coordinates.h"
 #include "calendar.h"
+#include "catalua_coord.h"
 #include "catalua_luna.h"
 #include "mission.h"
 #include "type_id.h"

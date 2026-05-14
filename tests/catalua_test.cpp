@@ -100,6 +100,7 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
     run_lua_test_script( lua, "typed_coords_projection_test.lua" );
 
     CHECK( test_data.get<std::string>( "to_omt" ) == "TripointAbsOmt(1,1,2)" );
+    CHECK( test_data.get<std::string>( "named_to_omt" ) == "TripointAbsOmt(1,1,2)" );
     CHECK( test_data.get<std::string>( "remain_quotient" ) == "TripointAbsOm(1,0,-1)" );
     CHECK( test_data.get<std::string>( "remain_remainder" ) == "PointOmSm(1,2)" );
     CHECK( test_data.get<std::string>( "combined" ) == "TripointAbsSm(361,2,-1)" );

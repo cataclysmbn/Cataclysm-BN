@@ -51,7 +51,7 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     DOC( "Fills the ground with default terrain." );
     luna::set_fx( ut, "fill_groundcover", []( mapgendata & dat ) { dat.fill_groundcover(); } );
     DOC( "Generates Nested Mapgen" );
-    luna::set_fx( ut, "nest", [&]( mapgendata & dat, std::string nested, point_rel_ms & pos ) {
+    luna::set_fx( ut, "nest", [&]( mapgendata & dat, std::string nested, const point_rel_ms & pos ) {
         call_mapgen_function( nested, dat, true, pos );
     } );
     DOC( "Generates Normal Mapgen" );
