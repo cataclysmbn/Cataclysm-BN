@@ -7207,8 +7207,17 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
                 const bool selfie = std::ranges::contains( character_vec, p );
 
                 if( selfie ) {
+                    auto name = photo.name;
 
-                    p->add_msg_if_player( _( "You took a selfie." ) );
+                    if ( photo.name == colorize( p->name, c_light_blue ) ) {
+                        p->add_msg_if_player( _( "You took a selfie." ) );
+                    } else {
+                        size_t index = name.find( p->name );
+                        if( index != std::string::npos ) {
+                            name.replace( index, p->name.length(), _( "Yourself" ) );
+                        }
+                        p->add_msg_if_player( _( "You took a selfie with %1$s." ), name );
+                    }
                 } else {
                     if( p->is_blind() ) {
                         p->add_msg_if_player( _( "You took a photo of %s." ), photo.name );
