@@ -2238,43 +2238,9 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     if( five_percent_steps > 0 ) {
         who.craft_skill_gain( *craft_item, five_percent_steps );
 
-        if( !tools_prepaid ) {
-            inventory map_inv;
-            map_inv.form_from_map( who.pos(), PICKUP_RANGE, &who );
-            for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
-                if( tool_sel.comp.count <= 0 ) {
-                    continue;
-                }
-                const int full_cost = tool_sel.comp.count * batch_size;
-                const int step_cost = crafting::charges_for_continuing( full_cost ) * five_percent_steps;
-                const itype_id &type = tool_sel.comp.type;
-                bool has_enough = false;
-                switch( tool_sel.use_from ) {
-                    case usage_from::player:
-                        has_enough = who.has_charges( type, step_cost );
-                        break;
-                    case usage_from::map:
-                        has_enough = map_inv.has_charges( type, step_cost );
-                        break;
-                    case usage_from::both:
-                        has_enough = who.charges_of( type ) + map_inv.charges_of( type ) >= step_cost;
-                        break;
-                    default:
-                        has_enough = true;
-                        break;
-                }
-                if( !has_enough ) {
-                    who.add_msg_player_or_npc( m_bad,
-                                               _( "You have insufficient %s charges and have to stop crafting." ),
-                                               _( "<npcname> has insufficient %s charges and has to stop crafting." ),
-                                               item::nname( type ) );
-                    act.set_to_null();
-                    return;
-                }
-                comp_selection<tool_comp> to_consume = tool_sel;
-                to_consume.comp.count = step_cost;
-                who.consume_tools( to_consume, 1 );
-            }
+        if( !tools_prepaid && !who.craft_consume_tools( *craft_item, five_percent_steps, false ) ) {
+            act.set_to_null();
+            return;
         }
     }
 
