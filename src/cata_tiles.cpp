@@ -3076,10 +3076,10 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
     std::vector<tile_render_info> &draw_points = *draw_points_cache;
     int min_z = OVERMAP_HEIGHT;
-    draw_points.clear();
 
     for( int row = min_row; row < max_row; row ++ ) {
-        // draw_points accumulates across all rows; rendering happens after the loop
+
+        draw_points.clear();
         for( int col = min_col; col < max_col; col ++ ) {
             int temp_x;
             int temp_y;
@@ -3392,18 +3392,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             }
         }
 
-    }
-
-    // Sort globally by (z, y): all z=0 tiles render before z=1 tiles across every row,
-    // so tall z=0 sprites (e.g. tree canopies) never overdraw z=1 entities at adjacent
-    // tiles. Within the same z-level, y-ascending order (north before south) preserves
-    // the intended "tree canopy over player to the north" effect at equal z.
-    auto compare_z_y = []( const tile_render_info & a, const tile_render_info & b ) -> bool {
-        if( a.pos.z != b.pos.z )
-        {
-            return a.pos.z < b.pos.z;
-        }
-        return a.pos.y < b.pos.y;
+    auto compare_z = [&]( tile_render_info a, tile_render_info b ) -> bool {
+        return ( a.pos.z < b.pos.z );
     };
 
     const std::array<decltype( &cata_tiles::draw_furniture ), 3> base_drawing_layers = {{
@@ -3423,67 +3413,18 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
         }
     };
 
-    std::ranges::stable_sort( draw_points, compare_z_y );
-
-    for( int z = min_z; z <= center.z; z++ ) {
+    std::ranges::stable_sort( draw_points, compare_z );
         for( tile_render_info &p : draw_points ) {
-            if( p.pos.z > z ) {
-                break;
-            }
-            if( p.pos.z == z ) {
-                draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
-
-                for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
-                    ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
-                }
-            }
-            const auto &ch = here.access_cache( z );
-
-            for( const zlevel_layer &f : zlevel_drawing_layers ) {
-                if( here.inbounds( p.pos ) && z != p.pos.z ) {
-                    const auto z_ll = ch.inbounds( {p.pos.x, p.pos.y} )
-                                      ? ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )]
-                                      : lit_level::BLANK;
-                    if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
-                        // When the player is looking down from above (z_drop > 0), a BLANK
-                        // visibility at the cross-z level means the surface is part of a vehicle
-                        // body that the 3D FOV can't see through — but the surface itself should
-                        // still render as a visible floor/roof from above (z_drop > 0).
-                        // Only hide the tile when the player is at the same z-level (z_drop == 0)
-                        // and truly can't see it, which is the "enclosed interior" case.
-                        const int z_drop_here = center.z - z;
-                        const bool ( invis )[5] = {z_ll == lit_level::BLANK &&z_drop_here == 0,
-                                                   false, false, false, false
-                                                  };
-                        ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, z_drop_here );
-                    }
-                } else {
-                    ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
-                }
-            }
-        }
-    }
-
-    for( tile_render_info &p : draw_points ) {
-        for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
-            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
-        }
-    }
-
-    // Draw zone overlays over all other stuff
-    for( const tile_render_info &p : draw_points ) {
+        draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - p.pos.z );
         if( p.pos.z == center.z ) {
             const point screen_tl = player_to_screen( p.pos.xy() );
             const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
-
             const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
                                           ( has_custom_selected_zone
                                             ? zone_point_lookup.contains( p.pos )
                                             : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
                                                 p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
-
             bool selected_drawn = false;
-
             if( show_zones_overlay ) {
                 for( const zone_render_data &zone : zones_to_draw ) {
                     if( !zone.tiles.contains( p.pos.xy() ) ) {
@@ -3509,6 +3450,39 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                     .alpha = 128,
                     .draw_label = false
                 } );
+            }
+        }
+    }
+
+    for( int z = min_z; z <= center.z; z++ ) {
+        for( tile_render_info &p : draw_points ) {
+            if( p.pos.z > z ) {
+                break;
+            }
+            if( p.pos.z == z ) {
+                for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
+                    ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - p.pos.z );
+                }
+            }
+            const auto &ch = here.access_cache( z );
+            for( const zlevel_layer &f : zlevel_drawing_layers ) {
+                if( here.inbounds( p.pos ) && z != p.pos.z ) {
+                    const auto z_ll = ch.inbounds( {p.pos.x, p.pos.y} )
+                                      ? ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )]
+                                      : lit_level::BLANK;
+                    if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
+                        const bool ( invis )[5] = {false, false, false, false, false};
+                        ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z - z );
+                    }
+                } else {
+                    ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
+                }
+            }
+        }
+    }
+    for( tile_render_info &p : draw_points ) {
+        for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
+            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
             }
         }
     }
