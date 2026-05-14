@@ -5169,7 +5169,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
 
         if (cm.use_base_material) {
             for ( auto &mat : mod.made_of() ) {
-                if (mat.obj().repaired_with() != itype_id::NULL_ID()) {
+                if (materials.contains(mat) && mat.obj().repaired_with() != itype_id::NULL_ID()) {
                     item_string = mat.obj().repaired_with();
                     break;
                 }
@@ -5244,7 +5244,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
 
         if (obj.use_base_material) {
             for ( auto &mat : mod.made_of() ) {
-                if (mat.obj().repaired_with() != itype_id::NULL_ID()) {
+                if (materials.contains(mat) && mat.obj().repaired_with() != itype_id::NULL_ID()) {
                     item_string = mat.obj().repaired_with();
                     break;
                 }
@@ -5339,7 +5339,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
 
     if (clothing_mods[choice].obj().use_base_material) {
         for ( auto &mat : mod.made_of() ) {
-            if (mat.obj().repaired_with() != itype_id::NULL_ID()) {
+            if (materials.contains(mat) && mat.obj().repaired_with() != itype_id::NULL_ID()) {
                 item_string = mat.obj().repaired_with();
                 break;
             }
