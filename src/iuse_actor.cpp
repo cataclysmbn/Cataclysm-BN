@@ -5167,9 +5167,9 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     for( auto cm : clothing_mods::get_all() ) {
         auto item_string = cm.item_string;
 
-        if (cm.use_base_material) {
-            for ( auto &mat : mod.made_of() ) {
-                if (materials.contains(mat) && mat.obj().repaired_with() != itype_id::NULL_ID()) {
+        if( cm.use_base_material ) {
+            for( auto &mat : mod.made_of() ) {
+                if( materials.contains( mat ) && mat.obj().repaired_with() != itype_id::NULL_ID() ) {
                     item_string = mat.obj().repaired_with();
                     break;
                 }
@@ -5242,9 +5242,9 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
                                      mod.has_flag( flag_resized_small );
         auto item_string = obj.item_string;
 
-        if (obj.use_base_material) {
-            for ( auto &mat : mod.made_of() ) {
-                if (materials.contains(mat) && mat.obj().repaired_with() != itype_id::NULL_ID()) {
+        if( obj.use_base_material ) {
+            for( auto &mat : mod.made_of() ) {
+                if( materials.contains( mat ) && mat.obj().repaired_with() != itype_id::NULL_ID() ) {
                     item_string = mat.obj().repaired_with();
                     break;
                 }
@@ -5337,9 +5337,9 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
 
     auto item_string = clothing_mods[choice].obj().item_string;
 
-    if (clothing_mods[choice].obj().use_base_material) {
-        for ( auto &mat : mod.made_of() ) {
-            if (materials.contains(mat) && mat.obj().repaired_with() != itype_id::NULL_ID()) {
+    if( clothing_mods[choice].obj().use_base_material ) {
+        for( auto &mat : mod.made_of() ) {
+            if( materials.contains( mat ) && mat.obj().repaired_with() != itype_id::NULL_ID() ) {
                 item_string = mat.obj().repaired_with();
                 break;
             }
