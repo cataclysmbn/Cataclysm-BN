@@ -120,6 +120,7 @@
     "implement_prompt": "Resize to fit abnormally large mutated anatomy",
     "destroy_prompt": "Undo resizing for mutated anatomy",
     "restricted": true,
+    "use_base_material": true,
     "mod_value": [ { "type": "encumbrance", "value": 10, "proportion": [ "coverage" ] } ]
   },
   {
@@ -130,6 +131,7 @@
     "implement_prompt": "Resize to fit abnormally small mutants",
     "destroy_prompt": "Undo resizing for small mutants",
     "restricted": true,
+    "use_base_material": true,
     "mod_value": [ { "type": "encumbrance", "value": 10, "proportion": [ "coverage" ] } ]
   },
   {
