@@ -1569,7 +1569,7 @@ class repair_inventory_preset: public inventory_selector_preset
         }
 
         bool is_shown( const item *loc ) const override {
-            return loc->made_of_any( actor->materials ) && !loc->count_by_charges() && !loc->is_firearm() &&
+            return loc->made_of_any( actor->materials ) && loc->damage() > -1 && !loc->is_firearm() &&
                    &*loc != main_tool;
         }
 
