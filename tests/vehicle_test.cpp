@@ -63,6 +63,7 @@ auto make_horde_vehicle_spawn_fixture( const horde_vehicle_spawn_options &option
     auto &here = get_map();
     auto &you = get_avatar();
     const auto target_submap = tripoint_bub_sm( here.getmapsize() / 2, here.getmapsize() / 2, 0 );
+    const auto target_submap_abs = here.bub_to_abs( target_submap );
     const auto target_submap_origin = project_to<coords::ms>( target_submap );
     const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
     const auto vehicle_origin = target_submap_origin + tripoint( SEEX / 2, SEEY / 2, 0 );
@@ -71,11 +72,17 @@ auto make_horde_vehicle_spawn_fixture( const horde_vehicle_spawn_options &option
     const auto veh = here.add_vehicle( vproto_id( "car" ), vehicle_origin, 0_degrees, 0, 0 );
     REQUIRE( veh != nullptr );
 
-    auto group = mongroup( horde_spawn_test_group, tripoint_abs_sm::zero(), 1, 0 );
-    group.abs_pos = here.bub_to_abs( tripoint_bub_sm( target_submap ) );
+    auto group = mongroup( horde_spawn_test_group, target_submap_abs, 1, 0 );
     group.horde = true;
     group.interest = 10;
     group.monsters.emplace_back( horde_spawn_test_monster );
+
+    ACTIVE_OVERMAP_BUFFER.get( project_remain<coords::om>( target_submap_abs ).quotient );
+    auto target_groups = ACTIVE_OVERMAP_BUFFER.groups_at( target_submap_abs );
+    std::ranges::for_each( target_groups, []( mongroup *const target_group ) {
+        target_group->clear();
+    } );
+    ACTIVE_OVERMAP_BUFFER.discard_monster_map( target_submap_abs );
 
     const auto horde = ACTIVE_OVERMAP_BUFFER.create_horde( group );
     REQUIRE( horde != nullptr );
