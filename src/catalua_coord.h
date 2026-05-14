@@ -56,7 +56,7 @@ auto coord_from_lua( lua_State *L, const int index,
     } else {
         auto raw = tripoint{};
         if( read_tripoint_coord_from_lua( { .L = L, .index = index, .origin = Coord::origin_tag,
-                                           .scale = Coord::scale_tag, .out = &raw } ) ) {
+                                            .scale = Coord::scale_tag, .out = &raw } ) ) {
             tracking.use( 1 );
             return Coord( raw );
         }
