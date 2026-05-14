@@ -119,19 +119,19 @@ void craft_command::execute( const tripoint &new_loc )
         }
     }
 
-    if( need_selections ) {
-        if( !crafter->can_make( rec, batch_size ) ) {
-            if( crafter->can_start_craft( rec, recipe_filter_flags::none, batch_size ) ) {
-                if( !query_yn( _( "You don't have enough charges to complete the %s.\n"
-                                  "Start crafting anyway?" ), rec->result_name() ) ) {
-                    return;
-                }
-            } else {
-                debugmsg( "Tried to start craft without sufficient charges" );
+    if( !crafter->can_make( rec, batch_size ) ) {
+        if( crafter->can_start_craft( rec, recipe_filter_flags::none, batch_size ) ) {
+            if( !query_yn( _( "You don't have enough charges to complete the %s.\n"
+                              "Start crafting anyway?" ), rec->result_name() ) ) {
                 return;
             }
+        } else {
+            debugmsg( "Tried to start craft without sufficient charges" );
+            return;
         }
+    }
 
+    if( need_selections ) {
         flags = recipe_filter_flags::no_rotten;
 
         if( !crafter->can_start_craft( rec, flags, batch_size ) ) {
