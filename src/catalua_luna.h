@@ -624,9 +624,9 @@ void set_prop(
     Setter &&set
 )
 {
-    using std_function_type = decltype(std::function{std::forward<Getter>(get)});
+    using std_function_type = decltype( std::function{std::forward<Getter>( get )} );
     using Value = std_function_type::result_type;
-    ut[ key ] = sol::property(std::forward<Getter>(get), std::forward<Setter>(set));
+    ut[ key ] = sol::property( std::forward<Getter>( get ), std::forward<Setter>( set ) );
     detail::doc_member_fake<Value, Class>( ut, key );
 }
 
@@ -638,9 +638,9 @@ void set_prop(
     Getter &&get
 )
 {
-    using std_function_type = decltype(std::function{std::forward<Getter>(get)});
+    using std_function_type = decltype( std::function{std::forward<Getter>( get )} );
     using Value = std_function_type::result_type;
-    ut[ key ] = sol::property(std::forward<Getter>(get));
+    ut[ key ] = sol::property( std::forward<Getter>( get ) );
     detail::doc_member_fake<Value, Class>( ut, key );
 }
 

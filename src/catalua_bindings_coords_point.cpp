@@ -22,10 +22,10 @@ auto bind_point_axis_properties( sol::usertype<lua_point_coord> &ut ) -> void
     };
 
     std::ranges::for_each( axes, [&ut]( const point_coord_axis & axis ) {
-        luna::set_prop(ut, axis.name,
-            [member = axis.member]( const lua_point_coord & coord ) { return coord.raw.*member; },
-            [member = axis.member]( lua_point_coord & coord, const int value ) { coord.raw.*member = value; }
-        );
+        luna::set_prop( ut, axis.name,
+        [member = axis.member]( const lua_point_coord & coord ) { return coord.raw.*member; },
+        [member = axis.member]( lua_point_coord & coord, const int value ) { coord.raw.*member = value; }
+                      );
     } );
 }
 
