@@ -5,7 +5,6 @@
 #include "point.h"
 
 #include <optional>
-#include <type_traits>
 
 namespace cata::detail::lua_coords
 {
@@ -22,62 +21,57 @@ struct lua_tripoint_coord {
     coords::scale scale;
 };
 
-template<typename Coord>
-auto coord_from_raw_point( lua_State *L, const int index,
-                           sol::stack::record &tracking ) -> std::optional<Coord>
-{
-    if constexpr( Coord::dimension == 2 ) {
-        if( sol::stack::check<point>( L, index, &sol::no_panic ) ) {
-            tracking.use( 1 );
-            return Coord( sol::stack::get<point>( L, index ) );
-        }
-    } else {
-        if( sol::stack::check<tripoint>( L, index, &sol::no_panic ) ) {
-            tracking.use( 1 );
-            return Coord( sol::stack::get<tripoint>( L, index ) );
-        }
-    }
-    return std::nullopt;
-}
+struct point_coord_lua_read_options {
+    lua_State *L;
+    int index;
+    coords::origin origin;
+    coords::scale scale;
+    point *out;
+};
 
-template<typename Coord>
-auto coord_from_lua_coord( lua_State *L, const int index,
-                           sol::stack::record &tracking ) -> std::optional<Coord>
-{
-    if constexpr( Coord::dimension == 2 ) {
-        if( sol::stack::check<lua_point_coord>( L, index, &sol::no_panic ) ) {
-            const auto coord = sol::stack::get<lua_point_coord>( L, index );
-            if( coord.origin == Coord::origin_tag && coord.scale == Coord::scale_tag ) {
-                tracking.use( 1 );
-                return Coord( coord.raw );
-            }
-        }
-    } else {
-        if( sol::stack::check<lua_tripoint_coord>( L, index, &sol::no_panic ) ) {
-            const auto coord = sol::stack::get<lua_tripoint_coord>( L, index );
-            if( coord.origin == Coord::origin_tag && coord.scale == Coord::scale_tag ) {
-                tracking.use( 1 );
-                return Coord( coord.raw );
-            }
-        }
-    }
-    return std::nullopt;
-}
+struct tripoint_coord_lua_read_options {
+    lua_State *L;
+    int index;
+    coords::origin origin;
+    coords::scale scale;
+    tripoint *out;
+};
+
+auto read_point_coord_from_lua( const point_coord_lua_read_options &options ) -> bool;
+auto read_tripoint_coord_from_lua( const tripoint_coord_lua_read_options &options ) -> bool;
+auto push_raw_point( lua_State *L, const point &raw ) -> int;
+auto push_raw_tripoint( lua_State *L, const tripoint &raw ) -> int;
 
 template<typename Coord>
 auto coord_from_lua( lua_State *L, const int index,
                      sol::stack::record &tracking ) -> std::optional<Coord>
 {
-    if( const auto coord = coord_from_lua_coord<Coord>( L, index, tracking ) ) {
-        return coord;
+    if constexpr( Coord::dimension == 2 ) {
+        auto raw = point{};
+        if( read_point_coord_from_lua( { .L = L, .index = index, .origin = Coord::origin_tag,
+                                         .scale = Coord::scale_tag, .out = &raw } ) ) {
+            tracking.use( 1 );
+            return Coord( raw );
+        }
+    } else {
+        auto raw = tripoint{};
+        if( read_tripoint_coord_from_lua( { .L = L, .index = index, .origin = Coord::origin_tag,
+                                           .scale = Coord::scale_tag, .out = &raw } ) ) {
+            tracking.use( 1 );
+            return Coord( raw );
+        }
     }
-    return coord_from_raw_point<Coord>( L, index, tracking );
+    return std::nullopt;
 }
 
 template<typename Coord>
 auto push_raw_coord( lua_State *L, const Coord &coord ) -> int
 {
-    return sol::stack::push( L, coord.raw() );
+    if constexpr( Coord::dimension == 2 ) {
+        return push_raw_point( L, coord.raw() );
+    } else {
+        return push_raw_tripoint( L, coord.raw() );
+    }
 }
 
 } // namespace cata::detail::lua_coords

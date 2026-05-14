@@ -1,5 +1,7 @@
 #include "catalua_bindings.h"
 #include "catalua_bindings_coords_common.h"
+#include "line.h"
+#include "string_formatter.h"
 
 #include <algorithm>
 #include <array>
@@ -7,6 +9,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <vector>
 
 namespace cata::detail::lua_coords
 {
