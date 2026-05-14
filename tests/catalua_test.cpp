@@ -105,6 +105,11 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
     CHECK( test_data.get<std::string>( "remain_remainder" ) == "PointOmSm(1,2)" );
     CHECK( test_data.get<std::string>( "combined" ) == "TripointAbsSm(361,2,-1)" );
     CHECK( test_data.get<int>( "distance" ) == 3 );
+
+    // Validate project_remain_omt example from the typed-coordinates documentation.
+    CHECK( test_data.get<std::string>( "doc_remain_omt_quotient" ) == "TripointAbsOmt(1,1,2)" );
+    CHECK( test_data.get<std::string>( "doc_remain_omt_remainder" ) == "PointOmtMs(1,2)" );
+    CHECK( test_data.get<std::string>( "doc_remain_omt_combined" ) == "TripointAbsMs(25,26,2)" );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
