@@ -683,7 +683,7 @@ mongroup *overmapbuffer::create_horde( const mongroup &group )
 
     auto groups_range = om.zg.equal_range( proj.remainder_tripoint );
     auto match = std::ranges::find_if( std::ranges::subrange( groups_range.first, groups_range.second ),
-    [&]( const auto &entry ) {
+    [&]( const auto & entry ) {
         const mongroup &stored = entry.second;
         return !stored.empty() && stored.abs_pos == copy.abs_pos && stored.type == copy.type &&
                stored.horde == copy.horde;

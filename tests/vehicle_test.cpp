@@ -79,7 +79,7 @@ auto make_horde_vehicle_spawn_fixture( const horde_vehicle_spawn_options &option
 
     ACTIVE_OVERMAP_BUFFER.get( project_remain<coords::om>( target_submap_abs ).quotient );
     auto target_groups = ACTIVE_OVERMAP_BUFFER.groups_at( target_submap_abs );
-    std::ranges::for_each( target_groups, []( mongroup *const target_group ) {
+    std::ranges::for_each( target_groups, []( mongroup * const target_group ) {
         target_group->clear();
     } );
     ACTIVE_OVERMAP_BUFFER.discard_monster_map( target_submap_abs );

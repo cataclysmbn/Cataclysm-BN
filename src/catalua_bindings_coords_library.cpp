@@ -408,7 +408,7 @@ auto bind_named_coord_constructors( sol::state_view lua ) -> void
 template<typename Range, typename Maker>
 auto make_point_coord_vector( Range &&range, Maker maker ) -> std::vector<lua_point_coord>
 {
-    auto result = std::vector<lua_point_coord>{};
+    auto result = std::vector<lua_point_coord> {};
     std::ranges::transform( range, std::back_inserter( result ), maker );
     return result;
 }
@@ -461,7 +461,7 @@ auto cata::detail::reg_coords_library( sol::state &lua ) -> void
         return lua_coords::make_tripoint_coord( origin, scale, raw );
     },
     []( const std::string & origin, const std::string & scale, const int x, const int y,
-    const int z ) {
+        const int z ) {
         return lua_coords::make_tripoint_coord( origin, scale, tripoint( x, y, z ) );
     } ) );
     lua_coords::bind_coord_factories( lib );

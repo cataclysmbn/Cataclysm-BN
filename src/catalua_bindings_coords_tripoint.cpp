@@ -225,8 +225,10 @@ auto reg_raw_tripoint( sol::state &lua ) -> void
     reg_serde_functions( ut );
 
     luna::set_fx( ut, sol::meta_function::to_string, &tripoint::to_string );
-    luna::set_fx( ut, sol::meta_function::equal_to, []( const tripoint & a, const tripoint & b ) -> bool { return a == b; } );
-    luna::set_fx( ut, sol::meta_function::less_than, []( const tripoint & a, const tripoint & b ) -> bool { return a < b; } );
+    luna::set_fx( ut, sol::meta_function::equal_to, []( const tripoint & a,
+                  const tripoint & b ) -> bool { return a == b; } );
+    luna::set_fx( ut, sol::meta_function::less_than, []( const tripoint & a,
+                  const tripoint & b ) -> bool { return a < b; } );
 
     luna::set_fx( ut, sol::meta_function::addition, sol::overload(
                       sol::resolve< tripoint( const tripoint & ) const > ( &tripoint::operator+ ),
