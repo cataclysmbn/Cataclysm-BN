@@ -344,6 +344,13 @@ auto expand_nested_recipes( std::vector<const recipe *> &out_current,
                                          opts.crafter, *nested_rec, availability_cache, opts.nested_can_craft_cache,
                                          opts.visiting_nested, opts.available_recipes, opts.show_unavailable );
         }
+        // When not showing unavailable recipes, drop leaf children the player
+        // doesn't know. Nested children are kept so we can still descend into
+        // categories whose own descendants are known.
+        if( !opts.show_unavailable && !nested_rec->is_nested() &&
+            !opts.available_recipes.contains( *nested_rec ) ) {
+            return;
+        }
         children.push_back( nested_rec );
     } );
 
