@@ -7,19 +7,17 @@
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "White aluminium", "weight": 8 },
-          { "color": "Silver Maple Green", "weight": 8 },
-          { "color": "North Grey", "weight": 8 },
+          { "color": "Silver grey", "weight": 8 },
+          { "color": "Grey aluminum", "weight": 8 },
           { "color": "Ink Black", "weight": 8 },
-          { "color": "Silver Thistle Beige", "weight": 8 },
-          { "color": "Iris Blue", "weight": 12 },
+          { "color": "Beige", "weight": 8 },
+          { "color": "Blue lilac", "weight": 12 },
           { "color": "Cataclysm Red", "weight": 20 },
-          { "color": "Coral Orange", "weight": 4 },
-          { "color": "Topaz Yellow", "weight": 2 },
-          { "color": "Hedgehog Cactus Yellow Green", "weight": 2 },
-          { "color": "Forest Green", "weight": 2 },
-          { "color": "Brilliant Green", "weight": 2 },
-          { "color": "Crystal Pink", "weight": 4 },
-          { "color": "Ruby Violet", "weight": 4 }
+          { "color": "Orange brown", "weight": 4 },
+          { "color": "Yellow orange", "weight": 4 },
+          { "color": "Green grey", "weight": 4 },
+          { "color": "Telemagenta", "weight": 4 },
+          { "color": "Traffic Purple", "weight": 4 }
         ]
       }
     ]
