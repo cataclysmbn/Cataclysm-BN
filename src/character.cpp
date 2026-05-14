@@ -7279,6 +7279,12 @@ float Character::active_light() const
 
 bool Character::sees_with_specials( const Creature &critter ) const
 {
+    // Special senses bypass horizontal walls only — they do not cross z-levels.
+    // Cross-z visibility (transparent floors, ledges, etc.) is handled by normal LOS.
+    if( posz() != critter.posz() ) {
+        return false;
+    }
+
     // electroreceptors grants vision of robots and electric monsters through walls
     if( ( has_trait( trait_ELECTRORECEPTORS ) || has_active_bionic( bio_electrosense ) ) &&
         ( critter.in_species( ROBOT ) || critter.has_flag( MF_ELECTRIC ) ) ) {
@@ -11658,9 +11664,13 @@ bool Character::sees( const tripoint &t, bool, int ) const
 bool Character::sees( const Creature &critter ) const
 {
     // This handles only the player/npc specific stuff (monsters don't have traits or bionics).
+    // ANTENNAE and bio_ground_sonar bypass horizontal walls but not solid floors or ceilings.
     const int dist = rl_dist( pos(), critter.pos() );
-    if( dist <= 5 && ( has_active_mutation( trait_ANTENNAE ) ||
-                       ( has_active_bionic( bio_ground_sonar ) && !critter.has_flag( MF_FLIES ) ) ) ) {
+    // ANTENNAE and bio_ground_sonar bypass horizontal walls only — they do not cross z-levels.
+    // Cross-z visibility (transparent floors, ledges, etc.) is handled by normal LOS.
+    if( posz() == critter.posz() && dist <= 5 &&
+        ( has_active_mutation( trait_ANTENNAE ) ||
+          ( has_active_bionic( bio_ground_sonar ) && !critter.has_flag( MF_FLIES ) ) ) ) {
         return true;
     }
 

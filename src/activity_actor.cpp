@@ -2237,6 +2237,11 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
 
     if( five_percent_steps > 0 ) {
         who.craft_skill_gain( *craft_item, five_percent_steps );
+
+        if( !tools_prepaid && !who.craft_consume_tools( *craft_item, five_percent_steps, false ) ) {
+            act.set_to_null();
+            return;
+        }
     }
 
     // Keep the progress_counter in sync so the UI shows correct values
