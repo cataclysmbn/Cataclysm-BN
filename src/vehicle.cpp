@@ -67,6 +67,7 @@
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_input_popup.h"
 #include "submap.h"
 #include "translations.h"
 #include "units_utility.h"
@@ -4863,7 +4864,7 @@ double vehicle::total_lift( const bool fuelled, const bool safe, const bool idea
     }
 }
 
-int vehicle::get_takeoff_speed() const
+int vehicle::get_takeoff_speed( std::string speed_type ) const
 {
     const int needed_force = to_newton( total_mass() ) - thrust_of_rotorcraft( true, false, true ) -
                              total_balloon_lift();
@@ -4874,10 +4875,15 @@ int vehicle::get_takeoff_speed() const
         // m^2 area is always 1
         return acc + ( 0.5 * liftcoff );
     } );
+    if( liftwithoutspeed < 1 ) {
+        return 0;
+    }
     const double needed_met_sec_squared = needed_force / liftwithoutspeed;
     const double needed_met_sec = std::sqrt( needed_met_sec_squared );
     const double needed_km_hour = needed_met_sec / 1000 * 3600;
-    std::string speed_type = get_option<std::string>( "USE_METRIC_SPEEDS" );
+    if( speed_type == "default" ) {
+        speed_type = get_option<std::string>( "USE_METRIC_SPEEDS" );
+    }
     if( speed_type == "km/h" ) {
         return ceil( needed_km_hour );
     } else if( speed_type == "mph" ) {
@@ -8348,4 +8354,33 @@ void vehicle::item_dropper_drop_all( )
     }
 
     item_dropper_drop( ret, false );
+}
+void vehicle::set_cruise_control_speed()
+{
+    const auto requested_min_autodrive_speed = string_input_popup()
+            .title( _( "Minumum Speed in tiles per tick? ( 6 km/hr and 4 mph per )" ) )
+            .text( std::to_string( min_autodrive_speed ) )
+            .only_digits( true )
+            .max_length( 3 )
+            .query_int();
+    min_autodrive_speed = requested_min_autodrive_speed > 0 ? requested_min_autodrive_speed :
+                          min_autodrive_speed;
+    const auto requested_max_autodrive_speed = string_input_popup()
+            .title( _( "Maxumum Speed in tiles per tick? ( 6 km/hr and 4 mph per )" ) )
+            .text( std::to_string( max_autodrive_speed ) )
+            .only_digits( true )
+            .max_length( 3 )
+            .query_int();
+    max_autodrive_speed = requested_max_autodrive_speed > 0 ? requested_max_autodrive_speed :
+                          max_autodrive_speed;
+    if( max_autodrive_speed < min_autodrive_speed ) {
+        max_autodrive_speed = min_autodrive_speed;
+    }
+    const auto takeoff = get_takeoff_speed( "t/t" );
+    if( takeoff > 0 && takeoff > min_autodrive_speed * 0.8 ) {
+        popup( "Warning: Minimum speed is less than safe flight speed" );
+    }
+    if( takeoff > 0 && takeoff > max_autodrive_speed * 0.5 ) {
+        popup( "Warning: Maximum speed is less then safe flight speed" );
+    }
 }

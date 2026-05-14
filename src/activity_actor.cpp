@@ -2159,6 +2159,39 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
                                             base_total * ( 1.0 - craft_counter / 10'000'000.0 ) ) );
         activity_actor::progress.emplace( name, base_total, remaining );
     }
+
+    item *craft_item = find_in_progress_craft( who );
+    if( craft_item ) {
+        refresh_speed( act, who, *craft_item );
+    }
+}
+
+void craft_activity_actor::refresh_speed( player_activity &act, const Character &who,
+        const item &craft_item, std::optional<bench_location> bench ) const
+{
+    const bench_location resolved_bench = bench ? *bench : find_best_bench( who, craft_item );
+    const recipe &making = *rec;
+    const float tools_mult = crafting_tools_speed_multiplier( who, making );
+    act.speed.light        = lighting_crafting_speed_multiplier( who, making );
+    act.speed.bench_factor = workbench_crafting_speed_multiplier( craft_item, resolved_bench );
+    act.speed.morale       = morale_crafting_speed_multiplier( who, making );
+    act.speed.tools        = tools_mult;
+    act.speed.player_speed = who.get_speed() / 100.0f;
+    const int assistants   = who.available_assistant_count( making );
+    if( assistants > 0 ) {
+        const double base_no_assist   = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
+        const double base_with_assist = std::max( 1, making.batch_time( batch_size, 1.0f, assistants ) );
+        act.speed.assist = static_cast<float>( base_no_assist / base_with_assist );
+    } else {
+        act.speed.assist = 1.0f;
+    }
+    // Mutation and game-option multipliers have no dedicated speed field; fold them
+    // into skills so act.speed.total() matches the actual crafting rate.
+    const float mutation_mult = who.mutation_value( "crafting_speed_modifier" );
+    const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                ? 9999.0f
+                                : 100.0f / static_cast<float>( get_option<int>( "CRAFTING_SPEED_MULT" ) );
+    act.speed.skills = mutation_mult * game_opt_mult;
 }
 
 void craft_activity_actor::start( player_activity &act, Character &who )
@@ -2208,8 +2241,8 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
 
     const recipe &making = *rec;
     const bench_location bench = find_best_bench( who, *craft_item );
-    const float tools_mult = crafting_tools_speed_multiplier( who, making );
-    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, bench, tools_mult );
+    refresh_speed( act, who, *craft_item, bench );
+    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, bench, act.speed.tools );
     const int assistants = who.available_assistant_count( making );
 
     if( crafting_speed <= 0.0f ) {
@@ -2239,6 +2272,11 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
 
     if( five_percent_steps > 0 ) {
         who.craft_skill_gain( *craft_item, five_percent_steps );
+
+        if( !tools_prepaid && !who.craft_consume_tools( *craft_item, five_percent_steps, false ) ) {
+            act.set_to_null();
+            return;
+        }
     }
 
     // Keep the progress_counter in sync so the UI shows correct values

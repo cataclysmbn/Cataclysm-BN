@@ -3053,7 +3053,7 @@ static void CheckMessages()
                         int x = g->u.bub_pos().x() + dx;
                         int y = g->u.bub_pos().y() + dy;
                         int z = g->u.bub_pos().z();
-                        const tripoint pos( x, y, z );
+                        const tripoint_bub_ms pos( x, y, z );
 
                         // Check if we're near a vehicle, if so, vehicle controls should be top.
                         {

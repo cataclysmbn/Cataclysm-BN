@@ -8717,10 +8717,6 @@ int iuse::craft( player *p, item *it, bool, const tripoint_bub_ms &pos )
         return 0;
     }
 
-    if( it->get_var( "craft_tools_fully_prepaid", 0 ) == 0 ) {
-        it->set_var( "craft_tools_fully_prepaid", 1 );
-    }
-
     bench_location best_bench = find_best_bench( *p, *it );
     p->add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),

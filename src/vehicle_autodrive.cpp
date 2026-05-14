@@ -789,7 +789,7 @@ void vehicle::autodrive_controller::compute_goal_zone()
 void vehicle::autodrive_controller::precompute_data()
 {
 
-    const int MAX_SPEED_TPS = get_option<int>( "MAX_AUTODRIVE_SPEED" );
+    const int MAX_SPEED_TPS = driven_veh.max_autodrive_speed;
     const tripoint_abs_omt current_omt = project_to<coords::omt>( driven_veh.abs_ms_location() );
     const tripoint_abs_omt next_omt = driver.omt_path.back();
     const tripoint_abs_omt next_next_omt = driver.omt_path.size() >= 2 ?
@@ -1078,14 +1078,14 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( orie
 
 void vehicle::autodrive_controller::reduce_speed()
 {
-    const int MIN_SPEED_TPS = get_option<int>( "MIN_AUTODRIVE_SPEED" );
+    const int MIN_SPEED_TPS = driven_veh.min_autodrive_speed;
     data.max_speed_tps = MIN_SPEED_TPS;
 }
 
 std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step()
 {
     precompute_data();
-    const int MIN_SPEED_TPS = get_option<int>( "MIN_AUTODRIVE_SPEED" );
+    const int MIN_SPEED_TPS = driven_veh.min_autodrive_speed;
     const tripoint_abs_ms veh_pos = driven_veh.abs_ms_location();
     while( !data.path.empty() && data.path.back().pos != veh_pos ) {
         data.path.pop_back();
@@ -1222,11 +1222,6 @@ autodrive_result vehicle::do_autodrive( Character &driver )
     }
     active_autodrive_controller->check_safe_speed();
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step();
-    if( has_part( VPFLAG_WING ) && is_flying_in_air() ) {
-        driver.add_msg_if_player( _( "Autodrive is not good enough for flying planes." ) );
-        stop_autodriving( false );
-        return autodrive_result::abort;
-    }
     if( !next_step ) {
         // message handles pathfinding failure either due to obstacles or inability to see
         driver.add_msg_if_player( _( "Can't see a path forward." ) );
