@@ -616,6 +616,34 @@ void set(
     detail::doc_member<Class>( member_dt, sol::types<Value>() );
 }
 
+template<typename Class, typename Key, typename Getter, typename Setter>
+void set_prop(
+    sol::usertype<Class> &ut,
+    Key &&key,
+    Getter &&get,
+    Setter &&set
+)
+{
+    using std_function_type = decltype(std::function{std::forward<Getter>(get)});
+    using Value = std_function_type::result_type;
+    ut[ key ] = sol::property(std::forward<Getter>(get), std::forward<Setter>(set));
+    detail::doc_member_fake<Value, Class>( ut, key );
+}
+
+
+template<typename Class, typename Key, typename Getter>
+void set_prop(
+    sol::usertype<Class> &ut,
+    Key &&key,
+    Getter &&get
+)
+{
+    using std_function_type = decltype(std::function{std::forward<Getter>(get)});
+    using Value = std_function_type::result_type;
+    ut[ key ] = sol::property(std::forward<Getter>(get));
+    detail::doc_member_fake<Value, Class>( ut, key );
+}
+
 template<typename E>
 struct userenum {
     sol::table t;
