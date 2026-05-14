@@ -5164,20 +5164,22 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     const inventory &crafting_inv = p.crafting_inventory();
     //zz
     // Go through all discovered repair items and see if we have any of them available
-    for( auto &cm : clothing_mods::get_all() ) {
-        if (cm.use_base_material && mod.get_base_material() != material_id::NULL_ID().obj()) {
-            auto material = mod.get_base_material().repaired_with();
-            has_enough[material] =
-                item::count_by_charges( material )
-                ? crafting_inv.has_charges( material, items_needed )
-                : crafting_inv.has_amount( material, items_needed );
-            
-        } else {
-            has_enough[cm.item_string] =
-                item::count_by_charges( cm.item_string )
-                ? crafting_inv.has_charges( cm.item_string, items_needed )
-                : crafting_inv.has_amount( cm.item_string, items_needed );
+    for( auto cm : clothing_mods::get_all() ) {
+        auto item_string = cm.item_string;
+
+        if (cm.use_base_material) {
+            for ( auto &mat : mod.made_of() ) {
+                if (mat.obj().repaired_with() != itype_id::NULL_ID()) {
+                    item_string = mat.obj().repaired_with();
+                    break;
+                }
+            }
         }
+
+        has_enough[item_string] =
+            item::count_by_charges( item_string )
+            ? crafting_inv.has_charges( item_string, items_needed )
+            : crafting_inv.has_amount( item_string, items_needed );
     }
 
     int mod_count = 0;
@@ -5240,8 +5242,13 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
                                      mod.has_flag( flag_resized_small );
         auto item_string = obj.item_string;
 
-        if (obj.use_base_material && mod.get_base_material() != material_id::NULL_ID().obj()) {
-            item_string = mod.get_base_material().repaired_with();
+        if (obj.use_base_material) {
+            for ( auto &mat : mod.made_of() ) {
+                if (mat.obj().repaired_with() != itype_id::NULL_ID()) {
+                    item_string = mat.obj().repaired_with();
+                    break;
+                }
+            }
         }
 
         if( !mod.has_own_flag( obj.flag ) ) {
@@ -5328,11 +5335,18 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
 
     std::vector<item_comp> comps;
 
-    if (clothing_mods[choice].obj().use_base_material && mod.get_base_material() != material_id::NULL_ID().obj()) {
-        comps.emplace_back( mod.get_base_material().repaired_with(), items_needed );
-    } else {
-        comps.emplace_back( clothing_mods[choice].obj().item_string, items_needed );
+    auto item_string = clothing_mods[choice].obj().item_string;
+
+    if (clothing_mods[choice].obj().use_base_material) {
+        for ( auto &mat : mod.made_of() ) {
+            if (mat.obj().repaired_with() != itype_id::NULL_ID()) {
+                item_string = mat.obj().repaired_with();
+                break;
+            }
+        }
     }
+
+    comps.emplace_back( item_string, items_needed );
 
     // TODO: this may take up to 2 minutes, and so should start an activity instead
     p.moves -= to_moves<int>( 30_seconds * character_funcs::fine_detail_vision_mod( p ) );
