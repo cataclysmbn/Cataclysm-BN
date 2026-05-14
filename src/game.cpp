@@ -11410,7 +11410,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
                 if( mons->has_flag( MF_LOUDMOVES ) ) {
                     volume += 6;
                 }
-                sounds::sound( dest_loc, volume, sounds::sound_t::movement, mons->type->get_footsteps(), false,
+                sounds::sound( dest_loc, volume, sounds::sound_t::movement, mons->type->get_footsteps(), true,
                                "none", "none" );
             } else {
                 sounds::sound( dest_loc, volume, sounds::sound_t::movement, _( "footsteps" ), true,
