@@ -152,18 +152,47 @@ auto reg_lua_tripoint_coord( sol::state &lua ) -> void
                   luna::no_constructor
               );
 
-    DOC( "Gets x" );
-    luna::set_fx( ut, "x", []( const lua_tripoint_coord & pt ) -> int { return pt.raw.x; } );
-    DOC( "Sets x" );
-    luna::set_fx( ut, "set_x", []( lua_tripoint_coord & pt, const int x ) -> void { pt.raw.x = x; } );
-    DOC( "Gets y" );
-    luna::set_fx( ut, "y", []( const lua_tripoint_coord & pt ) -> int { return pt.raw.y; } );
-    DOC( "Sets y" );
-    luna::set_fx( ut, "set_y", []( lua_tripoint_coord & pt, const int y ) -> void { pt.raw.y = y; } );
-    DOC( "Gets z" );
-    luna::set_fx( ut, "z", []( const lua_tripoint_coord & pt ) -> int { return pt.raw.z; } );
-    DOC( "Sets z" );
-    luna::set_fx( ut, "set_z", []( lua_tripoint_coord & pt, const int z ) -> void { pt.raw.z = z; } );
+    luna::detail::doc_member_fake<int>( ut, "x" );
+    luna::detail::doc_member_fake<int>( ut, "y" );
+    luna::detail::doc_member_fake<int>( ut, "z" );
+
+    luna::set_fx( ut, sol::meta_function::index, []( const lua_tripoint_coord & pt,
+    const sol::object & k, sol::this_state L ) -> sol::object {
+        const auto key = k.as<std::optional<std::string>>();
+        if( key.has_value() )
+        {
+            const auto &ss = key.value();
+            if( ss == "x" ) {
+                return sol::make_object( L, pt.raw.x );
+            }
+            if( ss == "y" ) {
+                return sol::make_object( L, pt.raw.y );
+            }
+            if( ss == "z" ) {
+                return sol::make_object( L, pt.raw.z );
+            }
+        }
+        return sol::nil;
+    } );
+    luna::set_fx( ut, sol::meta_function::new_index, []( lua_tripoint_coord & pt, const sol::object & k,
+    const sol::object & v, sol::this_state L ) -> void {
+        const auto key = k.as<std::optional<std::string>>();
+        const auto val = v.as<std::optional<int>>();
+        if( key.has_value() && val.has_value() )
+        {
+            const auto &ss = key.value();
+            if( ss == "x" ) {
+                pt.raw.x = val.value();
+            }
+            if( ss == "y" ) {
+                pt.raw.y = val.value();
+            }
+            if( ss == "z" ) {
+                pt.raw.z = val.value();
+            }
+        }
+    } );
+
     luna::set_fx( ut, "xy", []( const lua_tripoint_coord & pt ) {
         return make_point_coord( pt.origin, pt.scale, pt.raw.xy() );
     } );

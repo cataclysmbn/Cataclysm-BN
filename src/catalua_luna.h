@@ -485,6 +485,18 @@ sol::table make_type_member_doctable( sol::table type_dt, const Key &key )
     return member_dt;
 }
 
+template<typename Value, typename Class, typename Key>
+auto doc_member_fake( sol::usertype<Class> &ut, Key &&key )
+{
+    sol::state_view lua( ut.lua_state() );
+    sol::table type_dt = detail::get_type_doctable<Class>( lua );
+    sol::table member_dt = detail::make_type_member_doctable( type_dt, key );
+
+    member_dt[KEY_MEMBER_TYPE] = MEMBER_IS_VAR;
+    add_comment( member_dt, KEY_MEMBER_COMMENT );
+    member_dt[KEY_MEMBER_VARIABLE_TYPE] = doc_type<Value>();
+}
+
 } // namespace detail
 
 template<typename Class, typename ConstructorScheme, typename Bases>
