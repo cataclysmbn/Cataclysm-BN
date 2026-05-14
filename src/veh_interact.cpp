@@ -456,7 +456,13 @@ void veh_interact::do_main_loop()
         const std::string action = main_context.handle_input();
         msg.reset();
         if( const std::optional<tripoint_rel_ms> vec = main_context.get_direction( action ) ) {
-            move_cursor( vec->reinterpret_as<tripoint_rel_veh>() );
+            // get_direction returns a map-space direction. Invert the vehicle's facing rotation
+            // so the cursor moves in map-space directions (north=up) for any vehicle facing.
+            // Zero pivot gives pure rotation without the pivot-anchor translation offset.
+            tripoint_mnt_veh vehicle_delta;
+            veh->coord_translate_reverse( veh->pivot_rotation[0], tripoint_mnt_veh::zero(), *vec,
+                                          vehicle_delta );
+            move_cursor( vehicle_delta.reinterpret_as<tripoint_rel_veh>() );
         } else if( action == "QUIT" ) {
             finish = true;
         } else if( action == "INSTALL" ) {
@@ -2254,7 +2260,7 @@ void veh_interact::move_cursor( tripoint_rel_veh d, int dstart_at )
     }
 
     // Update the current active component index to the new position.
-    cpart = part_at( tripoint_bub_ms::zero() );
+    cpart = veh->part_displayed_at( vehicle_cursor );
     const auto vehp = veh->mount_to_bubble( vehicle_cursor );
     const bool has_critter = g->critter_at( vehp );
     bool obstruct = here.impassable_ter_furn( vehp );

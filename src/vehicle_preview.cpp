@@ -255,8 +255,10 @@ void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh curso
             continue;
         }
 
-        // Convert to pixel position (centered in window)
-        const point pixel_pos = center_px + point( cursor.x() * tile_w, cursor.y() * tile_h );
+        // coord_translate maps vehicle mount space through vehicle facing to map/screen space.
+        // Map x = screen right (east), map y = screen down (south): standard north-up orientation.
+        const auto q = veh.coord_translate( part.mount - cursor.raw() ).xy();
+        const point pixel_pos = center_px + point( q.x() * tile_w, q.y() * tile_h );
 
         // Get part rendering info
         char part_mod = 0;
@@ -268,9 +270,10 @@ void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh curso
         // Always display parts facing north (270 degrees, since 0 = east)
         draw_vpart_at_pixel( vp_id, pixel_pos, part_mod, 270_degrees, bg_color, fg_color );
 
-        // Check if this part should be highlighted
+        // The part whose translated offset is zero is the one at the cursor; highlight it or any
+        // explicitly selected part.
         const bool is_highlighted = ( part_idx == highlight_part ) ||
-                                    ( part.mount == cursor ); // Cursor position
+                                    ( q == point_rel_ms::zero() );
         if( is_highlighted ) {
             highlight_positions.push_back( pixel_pos );
         }
