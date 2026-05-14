@@ -5162,7 +5162,6 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     std::map< itype_id, bool > has_enough;
     const int items_needed = mod.volume() / 750_ml + 1;
     const inventory &crafting_inv = p.crafting_inventory();
-    //zz
     // Go through all discovered repair items and see if we have any of them available
     for( auto cm : clothing_mods::get_all() ) {
         auto item_string = cm.item_string;
