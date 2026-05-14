@@ -7209,7 +7209,7 @@ int iuse::camera( player *p, item *it, bool, const tripoint & )
                 if( selfie ) {
                     auto name = photo.name;
 
-                    if ( photo.name == colorize( p->name, c_light_blue ) ) {
+                    if( name == colorize( p->name, c_light_blue ) ) {
                         p->add_msg_if_player( _( "You took a selfie." ) );
                     } else {
                         size_t index = name.find( p->name );
