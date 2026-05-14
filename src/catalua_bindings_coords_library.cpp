@@ -97,7 +97,8 @@ auto lua_project_tripoint_to( const lua_tripoint_coord &coord,
 }
 
 auto lua_project_point_remain_to( const lua_point_coord &coord,
-                                  const std::string &result_scale ) -> std::tuple<std::optional<lua_point_coord>, std::optional<lua_point_coord>>
+                                  const std::string &result_scale ) ->
+std::tuple<std::optional<lua_point_coord>, std::optional<lua_point_coord>>
 {
     const auto parsed_scale = parsed_scale_or_debug( result_scale );
     if( !parsed_scale ) {
@@ -119,7 +120,8 @@ auto lua_project_point_remain_to( const lua_point_coord &coord,
 }
 
 auto lua_project_tripoint_remain_to( const lua_tripoint_coord &coord,
-                                     const std::string &result_scale ) -> std::tuple<std::optional<lua_tripoint_coord>, std::optional<lua_point_coord>>
+                                     const std::string &result_scale ) ->
+std::tuple<std::optional<lua_tripoint_coord>, std::optional<lua_point_coord>>
 {
     const auto parsed_scale = parsed_scale_or_debug( result_scale );
     if( !parsed_scale ) {
@@ -145,7 +147,7 @@ auto lua_project_remain_to( const sol::object &val,
 {
     if( val.is<lua_point_coord>() ) {
         const auto [coarse, remainder] = lua_project_point_remain_to( val.as<lua_point_coord>(),
-                                           result_scale );
+                                         result_scale );
         if( !coarse || !remainder ) {
             return std::make_tuple( lua_coord_result{ sol::nil }, std::optional<lua_point_coord>() );
         }
@@ -153,7 +155,7 @@ auto lua_project_remain_to( const sol::object &val,
     }
     if( val.is<lua_tripoint_coord>() ) {
         const auto [coarse, remainder] = lua_project_tripoint_remain_to( val.as<lua_tripoint_coord>(),
-                                           result_scale );
+                                         result_scale );
         if( !coarse || !remainder ) {
             return std::make_tuple( lua_coord_result{ sol::nil }, std::optional<lua_point_coord>() );
         }
