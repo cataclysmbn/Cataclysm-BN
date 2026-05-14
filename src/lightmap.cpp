@@ -669,10 +669,13 @@ void map::generate_lightmap_worker( const int zlev )
                         if( !outside_cache[map_cache.idx( p.x, p.y )] || ( !top_floor &&
                                 has_floor_above( map_cache.idx( p.x, p.y ) ) ) ) {
                             // Apply light sources for external/internal divide.
-                            // Skip outdoor tiles (outside_cache=true) unless they have a ceiling;
+                            // Skip outdoor tiles (outside_cache=true) unless they have a ceiling above
                             // without this guard every z=10 tile (all outside) enters the loop.
-                            // A neighbour qualifies as an outdoor source only if it's in a genuine
-                            // open-sky area (not an isolated 1-tile skylight hole).
+                            // A neighbour is an outdoor light source if it has no floor above it
+                            // and is part of a genuine outdoor area (not an isolated skylight hole).
+                            // An isolated skylight has no adjacent open-sky neighbours, so we
+                            // require at least one cardinal neighbour of `nb` (other than p) that
+                            // also has no floor above.
                             for( int i = 0; i < 4; ++i ) {
                                 const point neighbour = p.xy() + point( dir_x[i], dir_y[i] );
                                 if( neighbour.x < 0 || neighbour.y < 0 ||
