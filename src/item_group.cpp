@@ -239,7 +239,9 @@ detached_ptr<item> Item_modifier::modify( detached_ptr<item> &&new_item ) const
         return std::move( new_item );
     }
 
+    if( !new_item->type->ammo && !new_item->type->comestible ) {
     new_item->set_damage( rng( damage.first, damage.second ) * itype::damage_scale );
+    }
     // no need for dirt if it's a bow
     if( new_item->is_gun() && !new_item->has_flag( flag_PRIMITIVE_RANGED_WEAPON ) &&
         !new_item->has_flag( flag_NON_FOULING ) ) {
