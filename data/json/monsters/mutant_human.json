@@ -160,5 +160,45 @@
     },
     "death_function": [ "NORMAL" ],
     "flags": [ "SEES", "HEARS", "WARM", "BASHES", "GROUP_BASH", "HUMAN" ]
+  },
+  {
+    "id": "mon_mutant_alpha",
+    "type": "MONSTER",
+    "name": { "str": "alpha mutant" },
+    "description": "A tall human wearing a yellow jumpsuit with toned muscles and perfect skin.  They seem to radiate a sense of perfection, and just being in their presence makes you feel inferior.",
+    "default_faction": "factionless",
+    "bodytype": "human",
+    "species": [ "MUTANT" ],
+    "volume": "62500 ml",
+    "weight": "81500 g",
+    "hp": 140,
+    "speed": 100,
+    "attack_cost": 95,
+    "material": [ "flesh" ],
+    "symbol": "M",
+    "color": "white",
+    "aggression": 20,
+    "morale": 100,
+    "melee_skill": 7,
+    "melee_dice": 5,
+    "melee_dice_sides": 10,
+    "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
+    "special_attacks": [
+      {
+        "type": "spell",
+        "spell_data": { "id": "spell_mutant_alpha" },
+        "cooldown": 20,
+        "monster_message": "The mutant stares straight into your eyes, and you can't help but feel drawn towards it..."
+      }
+    ],
+    "dodge": 6,
+    "vision_day": 30,
+    "vision_night": 10,
+    "harvest": "mutant_alpha",
+    "death_drops": "mon_mutant_alpha_boss_death_drops",
+    "regenerates": 1,
+    "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -1 }, { "effect": "corroding", "base_mod": -1 } ],
+    "death_function": [ "NORMAL" ],
+    "flags": [ "SEES", "HEARS", "SMELLS", "KEENNOSE", "WARM", "BLEED", "BASHES", "HUMAN", "PATH_AVOID_DANGER_2", "GUILT" ]
   }
 ]
