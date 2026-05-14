@@ -832,6 +832,11 @@ void vehicle::use_controls( const tripoint &pos )
         refresh();
     } );
 
+    options.emplace_back( _( "Adjust vehicle autodrive speed" ) );
+    actions.emplace_back( [&] {
+        set_cruise_control_speed();
+    } );
+
     options.emplace_back( brake_hold_toggle_string(), 'b' );
     actions.emplace_back( [&] {
         toggle_brake_hold();
