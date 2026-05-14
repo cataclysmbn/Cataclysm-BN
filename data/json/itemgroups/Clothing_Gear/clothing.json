@@ -300,12 +300,7 @@
     "id": "clothing_soldier_shirt",
     "type": "item_group",
     "subtype": "distribution",
-    "entries": [
-      { "item": "tshirt", "prob": 75 },
-      { "item": "army_top", "prob": 15 },
-      { "item": "tank_top", "prob": 10 },
-      { "item": "alohashirt", "prob": 5 }
-    ]
+    "entries": [ { "item": "tshirt", "prob": 75 }, { "item": "army_top", "prob": 15 }, { "item": "tank_top", "prob": 10 } ]
   },
   {
     "id": "clothing_outdoor_pants",
