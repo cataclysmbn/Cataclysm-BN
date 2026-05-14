@@ -47,6 +47,7 @@
     "material_thickness": 7,
     "environmental_protection": 6,
     "qualities": [ [ "GLARE", 2 ] ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATERPROOF", "STURDY", "SUN_GLASSES" ]
   },
   {
@@ -265,6 +266,7 @@
       "need_worn": true,
       "active": true
     },
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
   },
   {
@@ -321,6 +323,7 @@
       "need_worn": true,
       "active": true
     },
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
   },
   {
@@ -377,6 +380,7 @@
       "active": true
     },
     "qualities": [ [ "GLARE", 1 ] ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
   },
   {
@@ -423,6 +427,7 @@
     "encumbrance": 5,
     "storage": "40 L",
     "material_thickness": 10,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
   },
   {
@@ -445,6 +450,7 @@
     "encumbrance": 0,
     "storage": "40 L",
     "material_thickness": 10,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
   },
   {
@@ -471,6 +477,7 @@
       "flags": [ "SHEATH_SWORD", "SHEATH_AXE", "SHEATH_SPEAR" ],
       "skills": [ "smg", "shotgun", "rifle", "launcher" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "BELTED", "ONLY_ONE" ]
   },
   {
@@ -496,6 +503,7 @@
       "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP" ],
       "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "WAIST" ]
   },
   {
@@ -526,6 +534,7 @@
       "draw_cost": 80,
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "MAG_BELT" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "WAIST" ]
   },
   {
