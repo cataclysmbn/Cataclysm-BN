@@ -1,7 +1,40 @@
 #include "catalua_bindings_coords_common.h"
 
+#include <algorithm>
+#include <array>
+
 namespace cata::detail::lua_coords
 {
+
+namespace
+{
+
+struct tripoint_coord_axis {
+    const char *name;
+    int tripoint::*member;
+};
+
+auto bind_tripoint_axis_properties( sol::usertype<lua_tripoint_coord> &ut ) -> void
+{
+    const auto axes = std::array{
+        tripoint_coord_axis{ "x", &tripoint::x },
+        tripoint_coord_axis{ "y", &tripoint::y },
+        tripoint_coord_axis{ "z", &tripoint::z },
+    };
+
+    std::ranges::for_each( axes, [&ut]( const tripoint_coord_axis & axis ) {
+        ut[axis.name] = sol::property(
+        [member = axis.member]( const lua_tripoint_coord & coord ) {
+            return coord.raw.*member;
+        },
+        [member = axis.member]( lua_tripoint_coord & coord, const int value ) {
+            coord.raw.*member = value;
+        } );
+        luna::detail::doc_member_fake<int>( ut, axis.name );
+    } );
+}
+
+} // namespace
 
 auto lua_tripoint_add( const lua_tripoint_coord &lhs, const sol::object &rhs,
                        sol::this_state lua_state ) -> sol::object
@@ -94,104 +127,79 @@ auto lua_tripoint_less_than( const lua_tripoint_coord &lhs,
 
 auto bind_tripoint_projection_methods( sol::usertype<lua_tripoint_coord> &ut ) -> void
 {
+    DOC( "Projects this coordinate to another scale, preserving its origin and tripoint dimension. Returns nil if the conversion is not valid." );
+    DOC_PARAMS( "scale" );
     luna::set_fx( ut, "to", &lua_project_tripoint_to );
-    luna::set_fx( ut, "to_ms", []( const lua_tripoint_coord & coord, sol::this_state L ) {
-        return lua_project_tripoint_to( coord, "ms", L );
+    DOC( "Shortcut for `to(\"ms\")`." );
+    luna::set_fx( ut, "to_ms", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_to( coord, "ms" );
     } );
-    luna::set_fx( ut, "to_veh", []( const lua_tripoint_coord & coord, sol::this_state L ) {
-        return lua_project_tripoint_to( coord, "veh", L );
+    DOC( "Shortcut for `to(\"veh\")`." );
+    luna::set_fx( ut, "to_veh", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_to( coord, "veh" );
     } );
-    luna::set_fx( ut, "to_sm", []( const lua_tripoint_coord & coord, sol::this_state L ) {
-        return lua_project_tripoint_to( coord, "sm", L );
+    DOC( "Shortcut for `to(\"sm\")`." );
+    luna::set_fx( ut, "to_sm", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_to( coord, "sm" );
     } );
-    luna::set_fx( ut, "to_omt", []( const lua_tripoint_coord & coord, sol::this_state L ) {
-        return lua_project_tripoint_to( coord, "omt", L );
+    DOC( "Shortcut for `to(\"omt\")`." );
+    luna::set_fx( ut, "to_omt", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_to( coord, "omt" );
     } );
-    luna::set_fx( ut, "to_mmr", []( const lua_tripoint_coord & coord, sol::this_state L ) {
-        return lua_project_tripoint_to( coord, "mmr", L );
+    DOC( "Shortcut for `to(\"mmr\")`." );
+    luna::set_fx( ut, "to_mmr", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_to( coord, "mmr" );
     } );
-    luna::set_fx( ut, "to_seg", []( const lua_tripoint_coord & coord, sol::this_state L ) {
-        return lua_project_tripoint_to( coord, "seg", L );
+    DOC( "Shortcut for `to(\"seg\")`." );
+    luna::set_fx( ut, "to_seg", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_to( coord, "seg" );
     } );
-    luna::set_fx( ut, "to_om", []( const lua_tripoint_coord & coord, sol::this_state L ) {
-        return lua_project_tripoint_to( coord, "om", L );
+    DOC( "Shortcut for `to(\"om\")`." );
+    luna::set_fx( ut, "to_om", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_to( coord, "om" );
     } );
 
+    DOC( "Splits this tripoint into a coarse TripointCoord at the requested scale and a PointCoord remainder at this tripoint's original scale. The z value stays on the coarse tripoint. Returns nil, nil if the split is not valid." );
+    DOC_PARAMS( "scale" );
     luna::set_fx( ut, "project_remain", &lua_project_tripoint_remain_to );
-    luna::set_fx( ut, "project_remain_sm", []( const lua_tripoint_coord & coord,
-    sol::this_state L ) {
-        return lua_project_tripoint_remain_to( coord, "sm", L );
+    DOC( "Shortcut for `project_remain(\"sm\")`." );
+    luna::set_fx( ut, "project_remain_sm", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_remain_to( coord, "sm" );
     } );
-    luna::set_fx( ut, "project_remain_omt", []( const lua_tripoint_coord & coord,
-    sol::this_state L ) {
-        return lua_project_tripoint_remain_to( coord, "omt", L );
+    DOC( "Shortcut for `project_remain(\"omt\")`." );
+    luna::set_fx( ut, "project_remain_omt", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_remain_to( coord, "omt" );
     } );
-    luna::set_fx( ut, "project_remain_mmr", []( const lua_tripoint_coord & coord,
-    sol::this_state L ) {
-        return lua_project_tripoint_remain_to( coord, "mmr", L );
+    DOC( "Shortcut for `project_remain(\"mmr\")`." );
+    luna::set_fx( ut, "project_remain_mmr", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_remain_to( coord, "mmr" );
     } );
-    luna::set_fx( ut, "project_remain_seg", []( const lua_tripoint_coord & coord,
-    sol::this_state L ) {
-        return lua_project_tripoint_remain_to( coord, "seg", L );
+    DOC( "Shortcut for `project_remain(\"seg\")`." );
+    luna::set_fx( ut, "project_remain_seg", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_remain_to( coord, "seg" );
     } );
-    luna::set_fx( ut, "project_remain_om", []( const lua_tripoint_coord & coord,
-    sol::this_state L ) {
-        return lua_project_tripoint_remain_to( coord, "om", L );
+    DOC( "Shortcut for `project_remain(\"om\")`." );
+    luna::set_fx( ut, "project_remain_om", []( const lua_tripoint_coord & coord ) {
+        return lua_project_tripoint_remain_to( coord, "om" );
     } );
+    DOC( "Combines this coarse tripoint with a remainder from project_remain. Returns TripointCoord, or nil if the pair is incompatible." );
+    DOC_PARAMS( "fine" );
     luna::set_fx( ut, "project_combine", []( const lua_tripoint_coord & coord, const sol::object & fine,
     sol::this_state L ) {
-        return lua_project_combine( sol::make_object( L, coord ), fine, L );
+        return lua_project_combine( sol::make_object( L, coord ), fine );
     } );
 }
 
 auto reg_lua_tripoint_coord( sol::state &lua ) -> void
 {
+    DOC( "A typed three-dimensional coordinate. Its origin and scale describe how to interpret x, y, and z, and coordinate operations only combine compatible coordinate spaces." );
     auto ut = luna::new_usertype<lua_tripoint_coord>(
                   lua,
                   luna::no_bases,
                   luna::no_constructor
               );
 
-    luna::detail::doc_member_fake<int>( ut, "x" );
-    luna::detail::doc_member_fake<int>( ut, "y" );
-    luna::detail::doc_member_fake<int>( ut, "z" );
-
-    luna::set_fx( ut, sol::meta_function::index, []( const lua_tripoint_coord & pt,
-    const sol::object & k, sol::this_state L ) -> sol::object {
-        const auto key = k.as<std::optional<std::string>>();
-        if( key.has_value() )
-        {
-            const auto &ss = key.value();
-            if( ss == "x" ) {
-                return sol::make_object( L, pt.raw.x );
-            }
-            if( ss == "y" ) {
-                return sol::make_object( L, pt.raw.y );
-            }
-            if( ss == "z" ) {
-                return sol::make_object( L, pt.raw.z );
-            }
-        }
-        return sol::nil;
-    } );
-    luna::set_fx( ut, sol::meta_function::new_index, []( lua_tripoint_coord & pt, const sol::object & k,
-    const sol::object & v, sol::this_state L ) -> void {
-        const auto key = k.as<std::optional<std::string>>();
-        const auto val = v.as<std::optional<int>>();
-        if( key.has_value() && val.has_value() )
-        {
-            const auto &ss = key.value();
-            if( ss == "x" ) {
-                pt.raw.x = val.value();
-            }
-            if( ss == "y" ) {
-                pt.raw.y = val.value();
-            }
-            if( ss == "z" ) {
-                pt.raw.z = val.value();
-            }
-        }
-    } );
+    bind_tripoint_axis_properties( ut );
 
     luna::set_fx( ut, "xy", []( const lua_tripoint_coord & pt ) {
         return make_point_coord( pt.origin, pt.scale, pt.raw.xy() );
@@ -206,17 +214,23 @@ auto reg_lua_tripoint_coord( sol::state &lua ) -> void
 
     bind_tripoint_projection_methods( ut );
 
-    luna::set_fx( ut, "rl_dist", []( const lua_tripoint_coord & lhs, const sol::object & rhs,
-    sol::this_state L ) {
-        return lua_rl_dist( sol::make_object( L, lhs ), rhs, L );
+    DOC( "Rectilinear distance to another TripointCoord with matching origin and scale. Returns nil if the argument is incompatible." );
+    DOC_PARAMS( "other" );
+    luna::set_fx( ut, "rl_dist", []( const lua_tripoint_coord & lhs,
+    const lua_tripoint_coord & rhs ) {
+        return lua_tripoint_coord_rl_dist( lhs, rhs );
     } );
-    luna::set_fx( ut, "trig_dist", []( const lua_tripoint_coord & lhs, const sol::object & rhs,
-    sol::this_state L ) {
-        return lua_trig_dist( sol::make_object( L, lhs ), rhs, L );
+    DOC( "Euclidean distance to another TripointCoord with matching origin and scale. Returns nil if the argument is incompatible." );
+    DOC_PARAMS( "other" );
+    luna::set_fx( ut, "trig_dist", []( const lua_tripoint_coord & lhs,
+    const lua_tripoint_coord & rhs ) {
+        return lua_tripoint_coord_trig_dist( lhs, rhs );
     } );
-    luna::set_fx( ut, "square_dist", []( const lua_tripoint_coord & lhs, const sol::object & rhs,
-    sol::this_state L ) {
-        return lua_square_dist( sol::make_object( L, lhs ), rhs, L );
+    DOC( "Chebyshev distance to another TripointCoord with matching origin and scale. Returns nil if the argument is incompatible." );
+    DOC_PARAMS( "other" );
+    luna::set_fx( ut, "square_dist", []( const lua_tripoint_coord & lhs,
+    const lua_tripoint_coord & rhs ) {
+        return lua_tripoint_coord_square_dist( lhs, rhs );
     } );
 
     luna::set_fx( ut, sol::meta_function::to_string, &tripoint_to_string );

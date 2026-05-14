@@ -76,9 +76,6 @@ auto push_raw_coord( lua_State *L, const Coord &coord ) -> int
 
 } // namespace cata::detail::lua_coords
 
-LUNA_VAL( cata::detail::lua_coords::lua_point_coord, "PointCoord" );
-LUNA_VAL( cata::detail::lua_coords::lua_tripoint_coord, "TripointCoord" );
-
 namespace coords
 {
 

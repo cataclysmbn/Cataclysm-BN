@@ -7,6 +7,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "catalua_readonly.h"
@@ -153,6 +154,38 @@ std::string doc_type()
 {
     return doc_typename<std::remove_cvref_t<Val>> {}();
 }
+
+template<typename Ref>
+struct doc_typename<sol::basic_object<Ref>> {
+    std::string operator()() const {
+        return "any";
+    }
+};
+
+template<>
+struct doc_typename<sol::nil_t> {
+    std::string operator()() const {
+        return "nil";
+    }
+};
+
+template<typename ...Args>
+struct doc_typename<std::variant<Args...>> {
+    std::string operator()() const {
+        std::string ret = "Variant( ";
+        bool is_first = true;
+        ( [&]() {
+            if( is_first ) {
+                is_first = false;
+            } else {
+                ret += ", ";
+            }
+            ret += doc_type<Args>();
+        }
+        (), ... );
+        return ret + " )";
+    }
+};
 
 template<typename T, typename U>
 struct doc_typename<std::pair<T, U>> {
@@ -748,5 +781,3 @@ inline void doc_params( const Ts &... args )
 }
 
 } // namespace luna
-
-

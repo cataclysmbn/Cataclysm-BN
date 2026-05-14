@@ -601,11 +601,8 @@ on_npc_loaded = {}
 
       for _, item in
         ipairs(sort_by(formatted, function(a, b)
-          local a_priority = field_sort_order(a.member)
-          local b_priority = field_sort_order(b.member)
-
-          if a_priority ~= b_priority then return a_priority < b_priority end
-          if a.member.name ~= b.member.name then return a.member.name < b.member.name end
+          if field_sort_less(a.member, b.member) then return true end
+          if field_sort_less(b.member, a.member) then return false end
           return a.value < b.value
         end))
       do

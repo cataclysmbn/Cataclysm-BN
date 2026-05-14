@@ -11,27 +11,36 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <variant>
 
 namespace cata::detail::lua_coords
 {
 
-auto lua_project_point_to( const lua_point_coord &coord, const std::string &result_scale,
-                           sol::this_state lua_state ) -> sol::object;
-auto lua_project_tripoint_to( const lua_tripoint_coord &coord, const std::string &result_scale,
-                              sol::this_state lua_state ) -> sol::object;
-auto lua_project_point_remain_to( const lua_point_coord &coord, const std::string &result_scale,
-                                  sol::this_state lua_state ) -> std::tuple<sol::object, sol::object>;
+using lua_coord_result = std::variant<sol::nil_t, lua_point_coord, lua_tripoint_coord>;
+
+auto lua_project_point_to( const lua_point_coord &coord,
+                           const std::string &result_scale ) -> std::optional<lua_point_coord>;
+auto lua_project_tripoint_to( const lua_tripoint_coord &coord,
+                              const std::string &result_scale ) -> std::optional<lua_tripoint_coord>;
+auto lua_project_point_remain_to( const lua_point_coord &coord,
+                                  const std::string &result_scale ) -> std::tuple<std::optional<lua_point_coord>, std::optional<lua_point_coord>>;
 auto lua_project_tripoint_remain_to( const lua_tripoint_coord &coord,
-                                     const std::string &result_scale,
-                                     sol::this_state lua_state ) -> std::tuple<sol::object, sol::object>;
-auto lua_project_combine( const sol::object &coarse, const sol::object &fine,
-                          sol::this_state lua_state ) -> sol::object;
-auto lua_rl_dist( const sol::object &lhs, const sol::object &rhs,
-                  sol::this_state lua_state ) -> sol::object;
-auto lua_trig_dist( const sol::object &lhs, const sol::object &rhs,
-                    sol::this_state lua_state ) -> sol::object;
-auto lua_square_dist( const sol::object &lhs, const sol::object &rhs,
-                      sol::this_state lua_state ) -> sol::object;
+                                     const std::string &result_scale ) -> std::tuple<std::optional<lua_tripoint_coord>, std::optional<lua_point_coord>>;
+auto lua_project_remain_to( const sol::object &val,
+                            const std::string &result_scale ) -> std::tuple<lua_coord_result, std::optional<lua_point_coord>>;
+auto lua_project_combine( const sol::object &coarse, const sol::object &fine ) -> lua_coord_result;
+auto lua_point_coord_rl_dist( const lua_point_coord &lhs,
+                              const lua_point_coord &rhs ) -> std::optional<int>;
+auto lua_point_coord_trig_dist( const lua_point_coord &lhs,
+                                const lua_point_coord &rhs ) -> std::optional<double>;
+auto lua_point_coord_square_dist( const lua_point_coord &lhs,
+                                  const lua_point_coord &rhs ) -> std::optional<int>;
+auto lua_tripoint_coord_rl_dist( const lua_tripoint_coord &lhs,
+                                 const lua_tripoint_coord &rhs ) -> std::optional<int>;
+auto lua_tripoint_coord_trig_dist( const lua_tripoint_coord &lhs,
+                                   const lua_tripoint_coord &rhs ) -> std::optional<double>;
+auto lua_tripoint_coord_square_dist( const lua_tripoint_coord &lhs,
+                                     const lua_tripoint_coord &rhs ) -> std::optional<int>;
 
 struct project_combine_check {
     coords::origin coarse_origin;

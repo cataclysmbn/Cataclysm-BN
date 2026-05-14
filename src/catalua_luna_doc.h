@@ -314,6 +314,10 @@ LUNA_VAL( islot_artifact, "IslotArtifact" );
 LUNA_VAL( islot_milling, "IslotMilling" );
 LUNA_VAL( islot_seed, "IslotSeed" );
 
+// Runtime Lua coordinate proxy types
+LUNA_VAL( cata::detail::lua_coords::lua_point_coord, "PointCoord" );
+LUNA_VAL( cata::detail::lua_coords::lua_tripoint_coord, "TripointCoord" );
+
 // All the coords as seen in coordinates.h
 
 // Points
