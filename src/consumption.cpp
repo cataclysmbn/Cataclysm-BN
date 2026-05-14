@@ -1105,9 +1105,9 @@ void Character::modify_morale( item &food, int nutr )
 
     if( food.has_flag( flag_HIDDEN_HALLU ) ) {
         if( has_trait( trait_SPIRITUAL ) ) {
-            add_morale( MORALE_FOOD_GOOD, 36, 72, 2_hours, 1_hours, false );
+            add_morale( MORALE_FEELING_GOOD, 36, 72, 2_hours, 1_hours, false );
         } else {
-            add_morale( MORALE_FOOD_GOOD, 18, 36, 1_hours, 30_minutes, false );
+            add_morale( MORALE_FEELING_GOOD, 18, 36, 1_hours, 30_minutes, false );
         }
     }
 

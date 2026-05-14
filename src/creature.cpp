@@ -427,7 +427,8 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
         if( range_mod > 0 ) {
             range = std::min( range, range_mod );
         }
-        if( is_avatar ) {
+        if( is_avatar && bub_pos().z() == t.z() ) {
+            // Only use seen_cache when on the same z-level
             // Special case monster -> player visibility, forcing it to be symmetric with player vision.
             const auto player_visibility_factor = g->u.visibility() / 100.0f;
             const auto adj_range = static_cast<int>( std::floor( range * player_visibility_factor ) );
