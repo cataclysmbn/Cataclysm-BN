@@ -177,6 +177,8 @@ class craft_activity_actor final : public activity_actor
     private:
         item *find_in_progress_craft( Character &who ) const;
         void do_complete_craft( player_activity &act, Character &who );
+        void refresh_speed( player_activity &act, const Character &who, const item &craft_item,
+                            std::optional<bench_location> bench = std::nullopt ) const;
 
 };
 
