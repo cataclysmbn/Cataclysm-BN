@@ -8384,7 +8384,7 @@ void vehicle::set_cruise_control_speed()
     }
     const auto takeoff = get_takeoff_speed( "t/t" );
     if( takeoff > 0 && takeoff > min_autodrive_speed * 0.8 ) {
-        popup( "Warning: Minimum speed is less than safe flight speed );
+        popup( "Warning: Minimum speed is less than safe flight speed" );
     }
     if( takeoff > 0 && takeoff > max_autodrive_speed * 0.5 ) {
         popup( "Warning: Maximum speed is less then safe flight speed" );
