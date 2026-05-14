@@ -7094,20 +7094,12 @@ bool item::mod_damage( int qty, damage_type dt )
 {
     bool destroy = false;
 
-    if( count_by_charges() ) {
-        charges -= std::min( type->stack_size * qty / itype::damage_scale, charges );
-        destroy |= charges == 0;
-    }
-
     if( qty > 0 ) {
         on_damage( qty, dt );
     }
 
-    if( !count_by_charges() ) {
-        destroy |= damage_ + qty > max_damage();
-
-        damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
-    }
+    destroy |= damage_ + qty > max_damage();
+    damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
 
     if( destroy && type->iequippable_callbacks ) {
         type->iequippable_callbacks->call_on_break( get_avatar(), *this );

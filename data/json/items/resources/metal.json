@@ -16,7 +16,8 @@
     "volume": "500 ml",
     "bashing": 12,
     "price": "75 USD",
-    "price_postapoc": "10 cent"
+    "price_postapoc": "10 cent",
+    "stackable": true
   },
   {
     "type": "GENERIC",

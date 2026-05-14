@@ -51,12 +51,12 @@ itype::~itype() = default;
 
 int itype::damage_min() const
 {
-    return count_by_charges() ? 0 : damage_min_;
+    return damage_min_;
 }
 
 int itype::damage_max() const
 {
-    return count_by_charges() ? 0 : damage_max_;
+    return damage_max_;
 }
 
 std::string itype::get_item_type_string() const

@@ -80,7 +80,6 @@
   {
     "id": "rope_6",
     "copy-from": "string_36",
-    "stackable": false,
     "type": "GENERIC",
     "name": { "str": "short rope" },
     "description": "A 6-foot (or about 180 cm) long piece of rope.  Too small to be of much use.",
