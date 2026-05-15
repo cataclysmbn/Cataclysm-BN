@@ -13551,7 +13551,7 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
             if( rl_dist( bub_pos, dest ) <= best &&
                 ( ( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, dest ) ) ||
                   ( ( movez.z() == 1 && ( mp.has_flag( TFLAG_GOES_DOWN, dest ) &&
-                                      !mp.has_flag( TFLAG_DEEP_WATER, dest ) ) ) ||
+                                          !mp.has_flag( TFLAG_DEEP_WATER, dest ) ) ) ||
                     mp.ter( dest ) == t_manhole_cover )   ||
                   ( ( movez.z() == 2 || movez.z() == -2 ) && mp.ter( dest ) == t_elevator ) ) ) {
                 stairs.emplace( dest );
