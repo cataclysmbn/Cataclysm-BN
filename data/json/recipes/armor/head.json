@@ -13,6 +13,18 @@
     "components": [ [ [ "rag", 4 ] ] ]
   },
   {
+    "result": "makeshift_headwrap",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "survival",
+    "time": "48 s",
+    "reversible": true,
+    "autolearn": true,
+    "components": [ [ [ "sheet", 1 ], [ "blanket", 1 ], [ "electric_blanket", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
     "result": "helmet_liner",
     "type": "recipe",
     "category": "CC_ARMOR",

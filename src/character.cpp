@@ -2516,6 +2516,7 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
 
     const bool was_deaf = is_deaf();
     const bool supertinymouse = get_size() == creature_size::tiny;
+    const bool size_matters = to_wear.get_sizing( *this ) != item::sizing::ignore;
     last_item = to_wear.typeId();
 
 
@@ -2540,13 +2541,13 @@ detached_ptr<item> Character::wear_item( detached_ptr<item> &&wear,
         if( !was_deaf && is_deaf() ) {
             add_msg_if_player( m_info, _( "You're deafened!" ) );
         }
-        if( supertinymouse && !to_wear.has_flag( flag_UNDERSIZE ) &&
+        if( size_matters && supertinymouse && !to_wear.has_flag( flag_UNDERSIZE ) &&
             !to_wear.has_flag( flag_resized_small ) ) {
             add_msg_if_player( m_warning,
                                _( "This %s is too big to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
-        } else if( !supertinymouse && ( to_wear.has_flag( flag_UNDERSIZE ) ||
-                                        to_wear.has_flag( flag_resized_small ) ) ) {
+        } else if( size_matters && !supertinymouse && ( to_wear.has_flag( flag_UNDERSIZE ) ||
+                   to_wear.has_flag( flag_resized_small ) ) ) {
             add_msg_if_player( m_warning,
                                _( "This %s is too small to wear comfortably!  Maybe it could be refitted." ),
                                to_wear.tname() );
@@ -7278,6 +7279,11 @@ float Character::active_light() const
 
 bool Character::sees_with_specials( const Creature &critter ) const
 {
+    // Prevent seeing through floors across z-levels
+    if( posz() != critter.posz() ) {
+        return false;
+    }
+
     // electroreceptors grants vision of robots and electric monsters through walls
     if( ( has_trait( trait_ELECTRORECEPTORS ) || has_active_bionic( bio_electrosense ) ) &&
         ( critter.in_species( ROBOT ) || critter.has_flag( MF_ELECTRIC ) ) ) {
@@ -11658,8 +11664,9 @@ bool Character::sees( const Creature &critter ) const
 {
     // This handles only the player/npc specific stuff (monsters don't have traits or bionics).
     const int dist = rl_dist( pos(), critter.pos() );
-    if( dist <= 5 && ( has_active_mutation( trait_ANTENNAE ) ||
-                       ( has_active_bionic( bio_ground_sonar ) && !critter.has_flag( MF_FLIES ) ) ) ) {
+    if( posz() == critter.posz() && dist <= 5 &&
+        ( has_active_mutation( trait_ANTENNAE ) ||
+          ( has_active_bionic( bio_ground_sonar ) && !critter.has_flag( MF_FLIES ) ) ) ) {
         return true;
     }
 

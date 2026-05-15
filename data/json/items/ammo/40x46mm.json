@@ -140,5 +140,23 @@
     "proportional": { "recoil": 1.2 },
     "casing": "40x46mm_m199_casing",
     "extend": { "effects": [ "SHOT" ] }
+  },
+  {
+    "id": "40x46mm_makeshift_he",
+    "copy-from": "40x46mm_m433",
+    "type": "AMMO",
+    "name": { "str": "improvised 40x46mm HE" },
+    "description": "A high velocity 40x46mm HEDP grenade, loaded with a homemade explosive round.  Packs quite a punch, though less effective against armor than proper HEDP.",
+    "proportional": { "price_postapoc": 0.8, "damage": { "damage_type": "bullet", "amount": 0.6, "armor_penetration": 0.4 } },
+    "extend": { "effects": [ "EXPLOSIVE" ] },
+    "delete": { "effects": [ "FRAG" ] }
+  },
+  {
+    "id": "40x46mm_makeshift_he_m199",
+    "copy-from": "40x46mm_makeshift_he",
+    "type": "AMMO",
+    "name": { "str": "improvised 40x46mm HE" },
+    "description": "A low velocity 40x46mm grenade, with a homemade high explosive round, loaded into the M199 casing used by M576 buckshot shells.  No less effective than any other improvised explosive 40x46mm round.",
+    "casing": "40x46mm_m199_casing"
   }
 ]

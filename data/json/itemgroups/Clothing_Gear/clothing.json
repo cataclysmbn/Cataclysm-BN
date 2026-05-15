@@ -357,6 +357,7 @@
               { "item": "longshirt", "prob": 80 },
               { "item": "polo_shirt", "prob": 50 },
               { "item": "tshirt", "prob": 80 },
+              { "item": "alohashirt", "prob": 10 },
               { "item": "linuxtshirt", "prob": 10 },
               { "item": "tshirt_tour", "prob": 10 }
             ]
@@ -1117,7 +1118,7 @@
     "type": "item_group",
     "id": "shirts_summer_unisex",
     "subtype": "distribution",
-    "entries": [ { "item": "tshirt", "prob": 5 }, { "item": "tank_top", "prob": 5 } ]
+    "entries": [ { "item": "tshirt", "prob": 5 }, { "item": "tank_top", "prob": 5 }, { "item": "alohashirt", "prob": 5 } ]
   },
   {
     "type": "item_group",
@@ -1253,6 +1254,7 @@
       [ "veil_wedding", 1 ],
       [ "dress_wedding", 1 ],
       [ "tshirt", 80 ],
+      [ "alohashirt", 10 ],
       [ "longshirt", 70 ],
       [ "polo_shirt", 65 ],
       [ "dress_shirt", 60 ],
@@ -1406,6 +1408,7 @@
     "id": "shirts",
     "items": [
       [ "tshirt", 80 ],
+      [ "alohashirt", 20 ],
       [ "longshirt", 80 ],
       [ "polo_shirt", 65 ],
       [ "dress_shirt", 60 ],
@@ -1736,6 +1739,7 @@
       { "item": "skirt", "prob": 75 },
       { "item": "skirt_leather", "prob": 5 },
       { "item": "tshirt", "prob": 70 },
+      { "item": "alohashirt", "prob": 15 },
       { "item": "longshirt", "prob": 80 },
       { "item": "polo_shirt", "prob": 65 },
       { "item": "dress_shirt", "prob": 60 },
@@ -2918,6 +2922,7 @@
       { "item": "sweatshirt", "prob": 50 },
       { "item": "tank_top", "prob": 30 },
       { "item": "tshirt", "prob": 80 },
+      { "item": "alohashirt", "prob": 15 },
       { "item": "tshirt_text", "prob": 50 },
       { "item": "tunic", "prob": 10 },
       { "item": "waistcoat", "prob": 10 },

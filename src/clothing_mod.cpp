@@ -71,6 +71,7 @@ void clothing_mod::load( const JsonObject &jo, const std::string & )
     mandatory( jo, was_loaded, "implement_prompt", implement_prompt );
     mandatory( jo, was_loaded, "destroy_prompt", destroy_prompt );
     optional( jo, was_loaded, "restricted", restricted, false );
+    optional( jo, was_loaded, "use_base_material", use_base_material, false );
 
     for( const JsonObject mv_jo : jo.get_array( "mod_value" ) ) {
         mod_value mv;
