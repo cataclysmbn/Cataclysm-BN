@@ -6974,6 +6974,8 @@ static std::vector<std::string> describe_character(Character *guy)
     } );
     if( !worn_str.empty() ) {
         result.push_back( pronoun + " " + _( "is wearing: " ) + worn_str );
+    } else {
+        result.push_back( pronoun + " " + _( "is not wearing anything." ) );
     }
     const int visibility_cap = 0;
     const auto trait_str = guy->visible_mutations( visibility_cap );
