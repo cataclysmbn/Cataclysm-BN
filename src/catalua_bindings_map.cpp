@@ -1,6 +1,5 @@
 #include "calendar.h"
 #include "catalua_bindings.h"
-#include "catalua_bindings_coords_common.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
@@ -55,12 +54,6 @@ struct replace_vehicle_request {
     std::optional<bool> locked = std::nullopt;
     std::optional<bool> has_keys = std::nullopt;
 };
-
-auto lua_tripoint_coord( const coords::origin origin, const coords::scale scale,
-                         const tripoint &raw )
-{
-    return cata::detail::lua_coords::make_tripoint_coord( origin, scale, raw );
-}
 
 auto parse_replace_vehicle_options( const sol::table &opts,
                                     const units::angle default_orientation ) -> std::optional<replace_vehicle_options>
@@ -310,30 +303,30 @@ void cata::detail::reg_map( sol::state &lua )
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
         DOC( "[Deprecated] Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", []( const map & m, const tripoint_bub_ms & pos ) {
-            return lua_tripoint_coord( coords::origin::abs, coords::ms, m.bub_to_abs( pos ).raw() );
+        luna::set_fx( ut, "get_abs_ms", []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+            return m.bub_to_abs( pos );
         } );
         DOC( "Convert local bubble coordinates to absolute coordinates. Raw Tripoint arguments are treated as local map-square coordinates." );
         luna::set_fx( ut, "bub_to_abs",
                       sol::overload(
-        []( const map & m, const tripoint_bub_ms & pos ) {
-            return lua_tripoint_coord( coords::origin::abs, coords::ms, m.bub_to_abs( pos ).raw() );
+        []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+            return m.bub_to_abs( pos );
         },
-        []( const map & m, const tripoint_bub_sm & pos ) {
-            return lua_tripoint_coord( coords::origin::abs, coords::sm, m.bub_to_abs( pos ).raw() );
+        []( const map & m, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
+            return m.bub_to_abs( pos );
         } ) );
         DOC( "[Deprecated] Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "get_local_ms", []( const map & m, const tripoint_abs_ms & pos ) {
-            return lua_tripoint_coord( coords::origin::bubble, coords::ms, m.abs_to_bub( pos ).raw() );
+        luna::set_fx( ut, "get_local_ms", []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
+            return m.abs_to_bub( pos );
         } );
         DOC( "Convert absolute coordinates to local bubble coordinates. Raw Tripoint arguments are treated as absolute map-square coordinates." );
         luna::set_fx( ut, "abs_to_bub",
                       sol::overload(
-        []( const map & m, const tripoint_abs_ms & pos ) {
-            return lua_tripoint_coord( coords::origin::bubble, coords::ms, m.abs_to_bub( pos ).raw() );
+        []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
+            return m.abs_to_bub( pos );
         },
-        []( const map & m, const tripoint_abs_sm & pos ) {
-            return lua_tripoint_coord( coords::origin::bubble, coords::sm, m.abs_to_bub( pos ).raw() );
+        []( const map & m, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
+            return m.abs_to_bub( pos );
         } ) );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
@@ -631,18 +624,18 @@ void cata::detail::reg_distribution_grid( sol::state &lua )
         DOC( "Get grid at absolute map square position" );
         luna::set_fx( ut, "grid_at",
                       sol::overload(
-                          []( distribution_grid_tracker & tr, const tripoint & p ) -> distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); }, // *NOPAD*
-                          []( const distribution_grid_tracker & tr, const tripoint & p ) -> const distribution_grid& { return tr.grid_at( tripoint_abs_ms( p ) ); } // *NOPAD*
+                          []( distribution_grid_tracker & tr, const tripoint_abs_ms & p ) -> distribution_grid& { return tr.grid_at( p ); }, // *NOPAD*
+                          []( const distribution_grid_tracker & tr, const tripoint_abs_ms & p ) -> const distribution_grid& { return tr.grid_at( p ); } // *NOPAD*
                       ) );
         DOC( "Get unique identifier for grid at given overmap tile (for debug purposes, returns 0 if no grid)" );
         luna::set_fx( ut, "debug_grid_id",
-                      []( const distribution_grid_tracker & tr, const tripoint & omt_pos ) -> std::uintptr_t { return tr.debug_grid_id( tripoint_abs_omt( omt_pos ) ); } );
+                      []( const distribution_grid_tracker & tr, const tripoint_abs_omt & omt_pos ) -> std::uintptr_t { return tr.debug_grid_id( omt_pos ); } );
         DOC( "Update all grids to the given time point" );
         luna::set_fx( ut, "update", &distribution_grid_tracker::update );
         DOC( "Notify tracker that a tile at the given position has changed" );
         luna::set_fx( ut, "on_changed",
-        []( distribution_grid_tracker & tr, const tripoint & p ) {
-            tr.on_changed( tripoint_abs_ms( p ) );
+        []( distribution_grid_tracker & tr, const tripoint_abs_ms & p ) {
+            tr.on_changed( p );
         } );
         DOC( "Notify tracker that game options have changed" );
         luna::set_fx( ut, "on_options_changed", &distribution_grid_tracker::on_options_changed );

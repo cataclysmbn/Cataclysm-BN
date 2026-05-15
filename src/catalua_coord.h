@@ -65,12 +65,16 @@ auto coord_from_lua( lua_State *L, const int index,
 }
 
 template<typename Coord>
-auto push_raw_coord( lua_State *L, const Coord &coord ) -> int
+auto push_coord( lua_State *L, const Coord &coord ) -> int
 {
     if constexpr( Coord::dimension == 2 ) {
-        return push_raw_point( L, coord.raw() );
+        return sol::stack::push( L, lua_point_coord{
+            coord.raw(), Coord::origin_tag, Coord::scale_tag
+        } );
     } else {
-        return push_raw_tripoint( L, coord.raw() );
+        return sol::stack::push( L, lua_tripoint_coord{
+            coord.raw(), Coord::origin_tag, Coord::scale_tag
+        } );
     }
 }
 
@@ -129,7 +133,7 @@ template<typename Point, origin Origin, scale Scale>
 auto sol_lua_push( sol::types<coord_point<Point, Origin, Scale>>, lua_State *L,
                    const coord_point<Point, Origin, Scale> &coord ) -> int
 {
-    return cata::detail::lua_coords::push_raw_coord( L, coord );
+    return cata::detail::lua_coords::push_coord( L, coord );
 }
 
 } // namespace coords

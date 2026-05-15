@@ -13,7 +13,7 @@
 namespace
 {
 
-auto lua_bub_ms_pos( const tripoint_bub_ms &pos )
+auto lua_bub_ms_pos( const tripoint_bub_ms &pos ) -> cata::detail::lua_coords::lua_tripoint_coord
 {
     return cata::detail::lua_coords::make_tripoint_coord(
                coords::origin::bubble, coords::ms, pos.raw() );
