@@ -358,15 +358,14 @@ xxxx..xxxx  new_feature -> new_feature
 
 ## 단위 테스트
 
-`tests/` 경로에 단위 테스트가 있습니다. 게임 소스를 변경한 후에는 반드시 테스트를 실행해야 합니다.
-`make` 명령을 실행하면 `tests/cata_test` 실행 파일이 생성됩니다. 이 파일은 일반적인 실행 파일처럼
-실행할 수 있습니다. `make check` 명령으로도 실행할 수 있습니다. 아무 인자 없이 실행하면 전체
-테스트를 실행합니다. `--help` 인자를 사용하면 실행 옵션을 볼 수 있습니다.
+`tests/` 경로에 단위 테스트가 있습니다. 게임 소스를 변경한 후에는 반드시 테스트를 실행해야 합니다. CMake는 선택한 빌드 프리셋의 `tests/` 디렉터리에 테스트 실행 파일을 빌드합니다. 아무 인자 없이 실행하면 전체 테스트를 실행합니다. `--help` 인자를 사용하면 실행 옵션을 볼 수 있습니다.
 
 ```sh
-$ make
+$ cmake --preset linux-slim
+... configuration details ...
+$ cmake --build --preset linux-slim --target cata_test-tiles
 ... compilation details ...
-$ tests/cata_test
+$ ./out/build/linux-slim/tests/cata_test-tiles
 Starting the actual test at Fri Nov  9 04:37:03 2018
 ===============================================================================
 All tests passed (1324684 assertions in 94 test cases)
@@ -374,7 +373,7 @@ Ended test at Fri Nov  9 04:37:45 2018
 The test took 41.772 seconds
 ```
 
-습관적으로 `make YOUR BUILD OPTIONS && make check` 명령을 실행하는 것을 추천합니다.
+선택한 프리셋의 CMake 빌드와 테스트 명령을 습관적으로 실행하는 것을 추천합니다.
 
 ## 게임 내에서 테스트하기, 테스트 환경, 디버그 메뉴
 

@@ -179,8 +179,7 @@ This should get your environment set up to build console and tiles version of wi
 ### CMake Build
 
 CMake has separate configuration and build steps. Configuration is done using CMake itself, and the
-actual build is done using either `make` (for Makefiles generator) or build-system agnostic
-`cmake --build .` .
+actual build is done using build-system agnostic `cmake --build .`.
 
 There are two ways to build CataclysmBN with CMake: inside the source tree or outside of it.
 Out-of-source builds have the advantage that you can have multiple builds with different options
