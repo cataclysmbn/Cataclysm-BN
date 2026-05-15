@@ -564,7 +564,7 @@ static auto assign_completed_craft_activity( Character &you, const recipe &recip
         item *target = nullptr ) -> void
 {
     auto actor = std::make_unique<craft_activity_actor>( &recipe_to_make, 1, 10'000'000,
-                 you.pos(), std::vector<comp_selection<item_comp>> {},
+                 you.abs_pos(), std::vector<comp_selection<item_comp>> {},
                  std::vector<comp_selection<tool_comp>> {}, true, false );
     auto act = std::make_unique<player_activity>( std::move( actor ) );
     if( target != nullptr ) {
@@ -593,8 +593,8 @@ TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting
 
     SECTION( "targeted map craft wins over inventory craft with the same recipe" ) {
         you.i_add( make_food_craft( sandwich_recipe, false ) );
-        here.add_item( you.pos(), make_food_craft( sandwich_recipe, true ) );
-        auto &target_craft = here.i_at( you.pos() ).only_item();
+        here.add_item( you.bub_pos(), make_food_craft( sandwich_recipe, true ) );
+        auto &target_craft = here.i_at( you.bub_pos() ).only_item();
         target_craft.set_counter( 10'000'000 );
 
         assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
@@ -606,13 +606,13 @@ TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting
         CHECK( !has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
         CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 51 );
         CHECK( in_progress_crafts( you ).size() == 1 );
-        CHECK( here.i_at( you.pos() ).empty() );
+        CHECK( here.i_at( you.bub_pos() ).empty() );
     }
 
     SECTION( "targeted inventory craft is preserved when a map craft has the same recipe" ) {
         auto &target_craft = you.i_add( make_food_craft( sandwich_recipe, false ) );
         target_craft.set_counter( 10'000'000 );
-        here.add_item( you.pos(), make_food_craft( sandwich_recipe, true ) );
+        here.add_item( you.bub_pos(), make_food_craft( sandwich_recipe, true ) );
 
         assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
         finish_craft_activity( you );
@@ -623,8 +623,8 @@ TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting
         CHECK( !has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
         CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 101 );
         CHECK( in_progress_crafts( you ).empty() );
-        REQUIRE( here.i_at( you.pos() ).size() == 1 );
-        CHECK( here.i_at( you.pos() ).only_item().is_craft() );
+        REQUIRE( here.i_at( you.bub_pos() ).size() == 1 );
+        CHECK( here.i_at( you.bub_pos() ).only_item().is_craft() );
     }
 
     SECTION( "missing target falls back to an available matching craft" ) {
