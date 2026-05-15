@@ -43,6 +43,7 @@
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "math_defines.h"
+#include "melee.h"
 #include "messages.h"
 #include "monster.h"
 #include "mtype.h"
@@ -653,6 +654,7 @@ static float rate_critter( const Creature &c )
 
 void avatar_action::autoattack( avatar &you, map &m )
 {
+    const melee::technique_prompt_suppression_guard suppress_technique_prompt;
     int reach = you.primary_weapon().reach_range( you );
     std::vector<Creature *> critters = ranged::targetable_creatures( you, reach );
     critters.erase( std::remove_if( critters.begin(), critters.end(), []( const Creature * c ) {

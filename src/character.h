@@ -674,6 +674,16 @@ class Character : public Creature, public location_visitable<Character>
         /** Returns a random valid technique */
         matec_id pick_technique( Creature &t, const item &weap,
                                  bool crit, bool dodge_counter, bool block_counter );
+        struct technique_query_options {
+            Creature &target;
+            const item &weapon;
+            bool critical_hit = false;
+            bool dodge_counter = false;
+            bool block_counter = false;
+            bool use_weighting = true;
+        };
+        /** Returns all valid techniques for the current combat context */
+        std::vector<matec_id> get_valid_techniques( const technique_query_options &options );
         void perform_technique( const ma_technique &technique, Creature &t, damage_instance &di,
                                 int &move_cost );
 

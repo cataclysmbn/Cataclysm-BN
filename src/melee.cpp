@@ -59,9 +59,13 @@
 #include "point.h"
 #include "projectile.h"
 #include "rng.h"
+#include "skill.h"
+#include "ui.h"
+#include "ui_manager.h"
 #include "sounds.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
@@ -79,31 +83,7 @@ static const itype_id itype_rag( "rag" );
 static const matec_id tec_none( "tec_none" );
 static const matec_id WBLOCK_1( "WBLOCK_1" );
 static const matec_id WBLOCK_2( "WBLOCK_2" );
-
-namespace
-{
-
-auto with_cross_z_melee_cost( const int base_cost, const tripoint_bub_ms &source,
-                              const tripoint_bub_ms &target ) -> int
-{
-    if( std::abs( source.z() - target.z() ) < 1 ) {
-        return base_cost;
-    }
-
-    const auto modifier = get_option<float>( "CROSS_Z_LEVEL_MELEE_DIFFICULTY_MODIFIER" );
-    return static_cast<int>( std::floor( base_cost * modifier ) );
-}
-
-} // namespace
-
-static const matec_id WBLOCK_3( "WBLOCK_3" );
-
-static const skill_id skill_stabbing( "stabbing" );
-static const skill_id skill_cutting( "cutting" );
-static const skill_id skill_unarmed( "unarmed" );
-static const skill_id skill_bashing( "bashing" );
-static const skill_id skill_melee( "melee" );
-
+static const efftype_id effect_amigara( "amigara" );
 static const efftype_id effect_badpoison( "badpoison" );
 static const efftype_id effect_beartrap( "beartrap" );
 static const efftype_id effect_bouldering( "bouldering" );
@@ -119,7 +99,6 @@ static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_narcosis( "narcosis" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_stunned( "stunned" );
-
 static const trait_id trait_ARM_TENTACLES( "ARM_TENTACLES" );
 static const trait_id trait_ARM_TENTACLES_4( "ARM_TENTACLES_4" );
 static const trait_id trait_ARM_TENTACLES_8( "ARM_TENTACLES_8" );
@@ -134,13 +113,690 @@ static const trait_id trait_POISONOUS( "POISONOUS" );
 static const trait_id trait_PROF_SKATER( "PROF_SKATER" );
 static const trait_id trait_VINES2( "VINES2" );
 static const trait_id trait_VINES3( "VINES3" );
-
 static const trait_flag_str_id trait_flag_NEED_ACTIVE_TO_MELEE( "NEED_ACTIVE_TO_MELEE" );
 static const trait_flag_str_id trait_flag_UNARMED_BONUS( "UNARMED_BONUS" );
-
-static const efftype_id effect_amigara( "amigara" );
-
 static const species_id HUMAN( "HUMAN" );
+
+namespace
+{
+
+thread_local int technique_prompt_suppression_depth = 0;
+
+static const matec_id WBLOCK_3( "WBLOCK_3" );
+static const skill_id skill_stabbing( "stabbing" );
+static const skill_id skill_cutting( "cutting" );
+static const skill_id skill_unarmed( "unarmed" );
+static const skill_id skill_bashing( "bashing" );
+static const skill_id skill_melee( "melee" );
+
+auto with_cross_z_melee_cost( const int base_cost, const tripoint_bub_ms &source,
+                              const tripoint_bub_ms &target ) -> int
+{
+    if( std::abs( source.z() - target.z() ) < 1 ) {
+        return base_cost;
+    }
+
+    const auto modifier = get_option<float>( "CROSS_Z_LEVEL_MELEE_DIFFICULTY_MODIFIER" );
+    return static_cast<int>( std::floor( base_cost * modifier ) );
+}
+
+} // namespace
+
+auto Character::get_valid_techniques( const technique_query_options &options ) -> std::vector<matec_id>
+{
+    const auto all = martial_arts_data->get_all_techniques( options.weapon );
+    auto possible = std::vector<matec_id>();
+
+    const bool downed = options.target.has_effect( effect_downed );
+    const bool stunned = options.target.has_effect( effect_stunned );
+    const bool wall_adjacent = g->m.is_wall_adjacent( bub_pos() );
+    const auto monster_target = dynamic_cast<const monster *>( &options.target );
+
+    for( const matec_id &tec_id : all ) {
+        const ma_technique &tec = tec_id.obj();
+
+        if( tec.dummy || tec.defensive ) {
+            continue;
+        }
+        if( tec.wall_adjacent && !wall_adjacent ) {
+            continue;
+        }
+        if( options.dodge_counter != tec.dodge_counter ) {
+            continue;
+        }
+        if( options.block_counter != tec.block_counter ) {
+            continue;
+        }
+        if( !tec.crit_ok && ( options.critical_hit != tec.crit_tec ) ) {
+            continue;
+        }
+        if( downed && tec.down_dur > 0 ) {
+            continue;
+        }
+        if( !downed && tec.downed_target ) {
+            continue;
+        }
+        if( !stunned && tec.stunned_target ) {
+            continue;
+        }
+        if( tec.disarms && ( ( monster_target == nullptr && !options.target.has_weapon() ) ||
+                             ( monster_target != nullptr && !monster_target->type->monster_weapon ) ||
+                             options.target.has_effect( effect_monster_disarmed ) ) ) {
+            continue;
+        }
+        if( tec.take_weapon && ( has_weapon() ||
+                                 ( ( monster_target == nullptr && !options.target.has_weapon() ) ||
+                                   ( monster_target != nullptr &&
+                                     !monster_target->type->monster_weapon ) ||
+                                   options.target.has_effect( effect_monster_disarmed ) ) ) ) {
+            continue;
+        }
+        if( tec.human_target && !options.target.in_species( HUMAN ) ) {
+            continue;
+        }
+        if( !tec.aoe.empty() && !valid_aoe_technique( options.target, tec ) ) {
+            continue;
+        }
+        if( options.use_weighting && tec.weighting < 0 &&
+            !one_in( std::abs( tec.weighting ) ) ) {
+            continue;
+        }
+        if( tec.is_valid_character( *this ) ) {
+            possible.push_back( tec.id );
+            if( options.use_weighting && tec.weighting > 1 ) {
+                for( int i = 1; i < tec.weighting; ++i ) {
+                    possible.push_back( tec.id );
+                }
+            }
+        }
+    }
+
+    return possible;
+}
+
+namespace
+{
+
+struct technique_prompt_result {
+    enum class mode_t {
+        automatic,
+        normal_attack,
+        technique,
+        canceled,
+    };
+
+    bool canceled = false;
+    mode_t mode = mode_t::automatic;
+    std::optional<matec_id> technique;
+};
+
+struct technique_menu_entry {
+    std::string name;
+    matec_id technique;
+    bool enabled = false;
+    enum class source_group_t {
+        weapon,
+        shared,
+        martial_art,
+    } source_group = source_group_t::martial_art;
+    std::string requirements;
+    std::string why_unavailable;
+    std::string description;
+};
+
+auto technique_source_header( const technique_menu_entry::source_group_t source_group ) -> std::string
+{
+    switch( source_group ) {
+        case technique_menu_entry::source_group_t::weapon:
+            return _( "Weapon techniques" );
+        case technique_menu_entry::source_group_t::shared:
+            return _( "Weapon + martial art techniques" );
+        case technique_menu_entry::source_group_t::martial_art:
+            return _( "Martial art techniques" );
+    }
+
+    return {};
+}
+
+auto aoe_technique_is_valid( Character &self, Creature &target, const ma_technique &technique ) -> bool
+{
+    if( technique.aoe.empty() ) {
+        return false;
+    }
+
+    std::array<int, 9> offset_a = { {0, -1, -1, 1, 0, -1, 1, 1, 0 } };
+    std::array<int, 9> offset_b = { {-1, -1, 0, -1, 0, 1, 0, 1, 1 } };
+    const int dy = std::clamp( target.bub_pos().y() - self.bub_pos().y(), -1, 1 );
+    const int dx = std::clamp( target.bub_pos().x() - self.bub_pos().x(), -1, 1 );
+    const int lookup = dy + 1 + 3 * ( dx + 1 );
+
+    const auto has_enemy = []( const Creature *critter ) {
+        if( const auto *mon = dynamic_cast<const monster *>( critter ) ) {
+            return mon->friendly == 0;
+        }
+        if( const auto *n = dynamic_cast<const npc *>( critter ) ) {
+            return n->is_enemy();
+        }
+        return false;
+    };
+
+    if( technique.aoe == "wide" ) {
+        const auto left = self.bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
+        const auto right = self.bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_a[lookup], 0 );
+        return has_enemy( g->critter_at<monster>( left ) ) || has_enemy( g->critter_at<npc>( left ) ) ||
+               has_enemy( g->critter_at<monster>( right ) ) || has_enemy( g->critter_at<npc>( right ) );
+    }
+
+    if( technique.aoe == "impale" ) {
+        const auto left = target.bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
+        const auto target_pos = target.bub_pos() + ( target.bub_pos() - self.bub_pos() );
+        const auto right = target.bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_b[lookup], 0 );
+        return has_enemy( g->critter_at<monster>( left ) ) || has_enemy( g->critter_at<npc>( left ) ) ||
+               has_enemy( g->critter_at<monster>( target_pos ) ) ||
+               has_enemy( g->critter_at<npc>( target_pos ) ) ||
+               has_enemy( g->critter_at<monster>( right ) ) ||
+               has_enemy( g->critter_at<npc>( right ) );
+    }
+
+    if( technique.aoe == "spin" ) {
+        auto targets = 0;
+        for( const auto &tmp : g->m.points_in_radius( self.bub_pos(), 1 ) ) {
+            if( tmp == target.bub_pos() ) {
+                continue;
+            }
+            if( has_enemy( g->critter_at<monster>( tmp ) ) || has_enemy( g->critter_at<npc>( tmp ) ) ) {
+                ++targets;
+            }
+        }
+        return targets >= 2;
+    }
+
+    return false;
+}
+
+auto technique_aoe_reason( Character &self, Creature &target, const ma_technique &technique ) -> std::string
+{
+    if( technique.aoe.empty() ) {
+        return {};
+    }
+
+    std::array<int, 9> offset_a = { {0, -1, -1, 1, 0, -1, 1, 1, 0 } };
+    std::array<int, 9> offset_b = { {-1, -1, 0, -1, 0, 1, 0, 1, 1 } };
+    const int dy = std::clamp( target.bub_pos().y() - self.bub_pos().y(), -1, 1 );
+    const int dx = std::clamp( target.bub_pos().x() - self.bub_pos().x(), -1, 1 );
+    const int lookup = dy + 1 + 3 * ( dx + 1 );
+
+    const auto has_enemy = []( const Creature *critter ) {
+        if( const auto *mon = dynamic_cast<const monster *>( critter ) ) {
+            return mon->friendly == 0;
+        }
+        if( const auto *n = dynamic_cast<const npc *>( critter ) ) {
+            return n->is_enemy();
+        }
+        return false;
+    };
+
+    if( technique.aoe == "wide" ) {
+        const auto left = self.bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
+        const auto right = self.bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_a[lookup], 0 );
+        if( has_enemy( g->critter_at<monster>( left ) ) || has_enemy( g->critter_at<npc>( left ) ) ||
+            has_enemy( g->critter_at<monster>( right ) ) || has_enemy( g->critter_at<npc>( right ) ) ) {
+            return {};
+        }
+        return _( "needs another adjacent enemy" );
+    }
+
+    if( technique.aoe == "impale" ) {
+        const auto left = target.bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
+        const auto target_pos = target.bub_pos() + ( target.bub_pos() - self.bub_pos() );
+        const auto right = target.bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_b[lookup], 0 );
+        if( has_enemy( g->critter_at<monster>( left ) ) || has_enemy( g->critter_at<npc>( left ) ) ||
+            has_enemy( g->critter_at<monster>( target_pos ) ) ||
+            has_enemy( g->critter_at<npc>( target_pos ) ) ||
+            has_enemy( g->critter_at<monster>( right ) ) ||
+            has_enemy( g->critter_at<npc>( right ) ) ) {
+            return {};
+        }
+        return _( "needs a target behind the enemy" );
+    }
+
+    if( technique.aoe == "spin" ) {
+        auto targets = 0;
+        for( const auto &tmp : g->m.points_in_radius( self.bub_pos(), 1 ) ) {
+            if( tmp == target.bub_pos() ) {
+                continue;
+            }
+            if( has_enemy( g->critter_at<monster>( tmp ) ) || has_enemy( g->critter_at<npc>( tmp ) ) ) {
+                ++targets;
+            }
+        }
+        if( targets >= 2 ) {
+            return {};
+        }
+        return _( "needs at least two adjacent enemies" );
+    }
+
+    return _( "needs a valid target layout" );
+}
+
+auto technique_requirement_summary( const ma_technique &technique ) -> std::string
+{
+    auto summary = std::string();
+
+    if( technique.reqs.unarmed_allowed && technique.reqs.melee_allowed ) {
+        summary = _( "armed or unarmed" );
+    } else if( technique.reqs.unarmed_allowed ) {
+        summary = _( "unarmed only" );
+    } else if( technique.reqs.melee_allowed ) {
+        summary = _( "weapon only" );
+    }
+
+    if( technique.reqs.wall_adjacent ) {
+        if( !summary.empty() ) {
+            summary += ", ";
+        }
+        summary += _( "near wall" );
+    }
+
+    if( technique.crit_tec ) {
+        if( !summary.empty() ) {
+            summary += ", ";
+        }
+        summary += _( "crit only" );
+    }
+
+    if( !technique.reqs.min_skill.empty() ) {
+        for( const auto &req : technique.reqs.min_skill ) {
+            if( !summary.empty() ) {
+                summary += ", ";
+            }
+            summary += string_format( _( "%s %d+" ), req.first->name(), req.second );
+        }
+    }
+
+    if( summary.empty() ) {
+        summary = _( "no extra requirements" );
+    }
+
+    return summary;
+}
+
+auto technique_unavailable_reason( Character &self, Creature &target,
+                                   const Character::technique_query_options &options,
+                                   const ma_technique &tec ) -> std::string
+{
+    const bool downed = target.has_effect( effect_downed );
+    const bool stunned = target.has_effect( effect_stunned );
+    const bool wall_adjacent = g->m.is_wall_adjacent( self.bub_pos() );
+    const auto monster_target = dynamic_cast<const monster *>( &target );
+
+    if( tec.dummy ) {
+        return _( "internal" );
+    }
+
+    if( tec.defensive ) {
+        return _( "defensive only" );
+    }
+
+    if( tec.wall_adjacent && !wall_adjacent ) {
+        return _( "needs to be near a wall" );
+    }
+
+    if( options.dodge_counter != tec.dodge_counter ) {
+        return tec.dodge_counter ? _( "dodge counter only" ) :
+               _( "not on dodge counters" );
+    }
+
+    if( options.block_counter != tec.block_counter ) {
+        return tec.block_counter ? _( "block counter only" ) :
+               _( "not on block counters" );
+    }
+
+    if( !tec.crit_ok && ( options.critical_hit != tec.crit_tec ) ) {
+        return tec.crit_tec ? _( "crit only" ) :
+               options.critical_hit ? _( "not on crits" ) : _( "normal hit only" );
+    }
+
+    if( downed && tec.down_dur > 0 ) {
+        return _( "target already downed" );
+    }
+
+    if( !downed && tec.downed_target ) {
+        return _( "needs a downed target" );
+    }
+
+    if( !stunned && tec.stunned_target ) {
+        return _( "needs a stunned target" );
+    }
+
+    if( tec.disarms && ( ( monster_target == nullptr && !target.has_weapon() ) ||
+                         ( monster_target != nullptr && !monster_target->type->monster_weapon ) ||
+                         target.has_effect( effect_monster_disarmed ) ) ) {
+        return _( "no weapon to disarm" );
+    }
+
+    if( tec.take_weapon && ( self.has_weapon() ||
+                             ( ( monster_target == nullptr && !target.has_weapon() ) ||
+                               ( monster_target != nullptr &&
+                                 !monster_target->type->monster_weapon ) ||
+                               target.has_effect( effect_monster_disarmed ) ) ) ) {
+        return _( "needs a valid weapon" );
+    }
+
+    if( tec.human_target && !target.in_species( HUMAN ) ) {
+        return _( "human target only" );
+    }
+
+    if( self.is_armed() && !tec.reqs.melee_allowed && tec.reqs.unarmed_allowed ) {
+        return _( "unarmed only" );
+    }
+
+    if( !self.is_armed() && !tec.reqs.unarmed_allowed && tec.reqs.melee_allowed ) {
+        return _( "requires a weapon" );
+    }
+
+    if( !tec.aoe.empty() && !aoe_technique_is_valid( self, target, tec ) ) {
+        return technique_aoe_reason( self, target, tec );
+    }
+
+    if( !tec.is_valid_character( self ) ) {
+        if( !tec.reqs.req_buffs.empty() ) {
+            return _( "missing required buff" );
+        }
+
+        if( !tec.reqs.mutations_required.empty() ) {
+            return _( "missing required mutation" );
+        }
+
+        if( !tec.reqs.weapon_categories_allowed.empty() ) {
+            return _( "wrong weapon category" );
+        }
+
+        if( !tec.reqs.min_skill.empty() ) {
+            const auto &req = tec.reqs.min_skill.front();
+            return string_format( _( "%s %d+" ), req.first->name(), req.second );
+        }
+
+        if( tec.reqs.strictly_unarmed && self.is_armed() ) {
+            return _( "unarmed only" );
+        }
+
+        if( tec.reqs.melee_allowed && !self.is_armed() ) {
+            return _( "requires a weapon" );
+        }
+
+        return _( "requirements not met" );
+    }
+
+    return {};
+}
+
+auto show_technique_reference_popup( const std::string &text ) -> void
+{
+    auto window = catacurses::window();
+    auto selected = 0;
+    auto text_lines = 0;
+    auto content_height = 0;
+    auto content_width = 0;
+
+    ui_adaptor ui;
+    ui.on_screen_resize( [&]( ui_adaptor &ui ) {
+        window = new_centered_win( FULL_SCREEN_HEIGHT, FULL_SCREEN_WIDTH );
+        content_height = getmaxy( window ) - 2;
+        content_width = getmaxx( window ) - 4;
+        text_lines = static_cast<int>( foldstring( text, content_width ).size() );
+        selected = std::clamp( selected, 0, std::max( 0, text_lines - content_height ) );
+        ui.position_from_window( window );
+    } );
+    ui.mark_resize();
+
+    input_context ict( "MARTIAL_ARTS" );
+    ict.register_action( "UP" );
+    ict.register_action( "DOWN" );
+    ict.register_action( "PAGE_UP" );
+    ict.register_action( "PAGE_DOWN" );
+    ict.register_action( "QUIT" );
+    ict.register_action( "HELP_KEYBINDINGS" );
+
+    ui.on_redraw( [&]( const ui_adaptor & ) {
+        werase( window );
+        draw_border( window, BORDER_COLOR, _( " Technique Reference " ) );
+        fold_and_print_from( window, point( 2, 1 ), content_width, selected, c_light_gray, text );
+        draw_scrollbar( window, selected, content_height, text_lines, point_south, BORDER_COLOR,
+                        true );
+        wnoutrefresh( window );
+    } );
+
+    while( true ) {
+        ui_manager::redraw();
+        const auto action = ict.handle_input();
+
+        if( action == "QUIT" ) {
+            break;
+        }
+        if( action == "HELP_KEYBINDINGS" ) {
+            continue;
+        }
+        if( action == "UP" ) {
+            --selected;
+        } else if( action == "DOWN" ) {
+            ++selected;
+        } else if( action == "PAGE_UP" ) {
+            selected -= content_height;
+        } else if( action == "PAGE_DOWN" ) {
+            selected += content_height;
+        }
+
+        selected = std::clamp( selected, 0, std::max( 0, text_lines - content_height ) );
+    }
+}
+
+class technique_help_callback : public uilist_callback
+{
+    public:
+        explicit technique_help_callback( std::string text ) : reference_text( std::move( text ) ) {}
+
+        bool key( const input_context &ctxt, const input_event &event, int,
+                  uilist * ) override
+        {
+            if( ctxt.input_to_action( event ) == "HELP_KEYBINDINGS" ||
+                event.get_first_input() == KEY_F( 1 ) ) {
+                show_technique_reference_popup( reference_text );
+                return true;
+            }
+            return false;
+        }
+
+    private:
+        std::string reference_text;
+};
+
+auto choose_melee_technique( Character &self, Creature &target, const item &weapon,
+                             const bool critical_hit ) -> technique_prompt_result
+{
+    const auto all_techniques = self.martial_arts_data->get_all_techniques( weapon );
+    const auto weapon_techniques = weapon.get_techniques();
+    std::set<matec_id> unique_techniques( all_techniques.begin(), all_techniques.end() );
+
+    auto menu_entries = std::vector<technique_menu_entry>();
+    auto entry_index_by_name = std::map<std::string, size_t>();
+    const Character::technique_query_options options = {
+        .target = target,
+        .weapon = weapon,
+        .critical_hit = critical_hit,
+        .use_weighting = false,
+    };
+
+    for( const matec_id &tec_id : unique_techniques ) {
+        const ma_technique &technique = tec_id.obj();
+        if( technique.name.empty() ) {
+            continue;
+        }
+
+        const auto source_count = std::ranges::count( all_techniques, tec_id );
+        const auto from_weapon = weapon_techniques.contains( tec_id );
+        const auto from_martial_art = source_count > 1 || !from_weapon;
+        const auto source_group = from_weapon && from_martial_art
+                                      ? technique_menu_entry::source_group_t::shared
+                                  : from_weapon
+                                      ? technique_menu_entry::source_group_t::weapon
+                                      : technique_menu_entry::source_group_t::martial_art;
+        const auto reason = technique_unavailable_reason( self, target, options, technique );
+        const auto iter = entry_index_by_name.find( technique.name );
+        if( iter == entry_index_by_name.end() ) {
+            entry_index_by_name.emplace( technique.name, menu_entries.size() );
+            menu_entries.push_back( technique_menu_entry{
+                .name = technique.name,
+                .technique = tec_id,
+                .enabled = reason.empty(),
+                .source_group = source_group,
+                .requirements = technique_requirement_summary( technique ),
+                .why_unavailable = reason,
+                .description = replace_colors( technique.get_description() ),
+            } );
+            continue;
+        }
+
+        auto &entry = menu_entries[iter->second];
+        entry.source_group = entry.source_group == technique_menu_entry::source_group_t::shared ||
+                             source_group == entry.source_group
+                                 ? entry.source_group
+                                 : technique_menu_entry::source_group_t::shared;
+        if( reason.empty() ) {
+            entry.technique = tec_id;
+            entry.enabled = true;
+            entry.requirements = technique_requirement_summary( technique );
+            entry.why_unavailable.clear();
+            entry.description = replace_colors( technique.get_description() );
+        } else if( !entry.enabled && entry.why_unavailable.empty() ) {
+            entry.why_unavailable = reason;
+        }
+    }
+
+    if( menu_entries.empty() ) {
+        return {};
+    }
+
+    std::ranges::sort( menu_entries, []( const technique_menu_entry &lhs,
+                                         const technique_menu_entry &rhs ) {
+        const auto source_rank = []( const technique_menu_entry::source_group_t source ) {
+            switch( source ) {
+                case technique_menu_entry::source_group_t::weapon:
+                    return 0;
+                case technique_menu_entry::source_group_t::shared:
+                    return 1;
+                case technique_menu_entry::source_group_t::martial_art:
+                    return 2;
+            }
+            return 3;
+        };
+
+        if( source_rank( lhs.source_group ) != source_rank( rhs.source_group ) ) {
+            return source_rank( lhs.source_group ) < source_rank( rhs.source_group );
+        }
+        if( lhs.enabled != rhs.enabled ) {
+            return lhs.enabled > rhs.enabled;
+        }
+        return lhs.name < rhs.name;
+    } );
+
+    auto technique_reference_text = string_format( _( "<header>Active martial art:</header> %s\n" ),
+                                                   self.martial_arts_data->selected_style_name( self ) );
+    for( const auto &entry : menu_entries ) {
+        technique_reference_text += string_format( _( "<header>Source:</header> %s\n" ),
+                                                   technique_source_header( entry.source_group ) );
+        technique_reference_text += string_format( _( "<header>Technique:</header> <bold>%s</bold>\n" ),
+                                                   entry.name );
+        technique_reference_text += entry.description + "\n";
+        if( !entry.enabled && !entry.why_unavailable.empty() ) {
+            technique_reference_text += string_format( _( "<bad>Unavailable:</bad> %s\n" ),
+                                                       entry.why_unavailable );
+        }
+        technique_reference_text += "--\n";
+    }
+    const auto reference_text = replace_colors( technique_reference_text );
+
+    auto help_cb = technique_help_callback( reference_text );
+
+    uilist menu;
+    menu.desc_enabled = true;
+    const auto weapon_name = self.is_armed() ? weapon.tname() : _( "unarmed attack" );
+    menu.text = string_format( _( "Attack %s with %s (%s)" ),
+                               target.disp_name(), weapon_name,
+                               self.martial_arts_data->selected_style_name( self ) );
+    menu.addentry( -3, false, -1, "" );
+    {
+        auto &header_entry = menu.entries.back();
+        header_entry.force_color = true;
+        header_entry.text_color = c_yellow;
+        header_entry.extratxt = mvwzstr{ .left = 0, .color = c_yellow,
+                                         .txt = _( "Generic techniques" ) };
+    }
+    menu.addentry_desc( -2, true, 'n', _( "Basic attack" ),
+                        _( "Use a basic attack with no technique." ) );
+    menu.addentry_desc( -1, true, 'a', _( "Automatic" ),
+                        _( "Let the game pick the best available technique." ) );
+
+    auto current_source_group = std::optional<technique_menu_entry::source_group_t>();
+    for( size_t index = 0; index < menu_entries.size(); ++index ) {
+        const auto &entry = menu_entries[index];
+        if( !current_source_group || *current_source_group != entry.source_group ) {
+            current_source_group = entry.source_group;
+            menu.addentry( -10 - static_cast<int>( entry.source_group ), false, -1, "" );
+            auto &header_entry = menu.entries.back();
+            header_entry.force_color = true;
+            header_entry.text_color = c_yellow;
+            header_entry.extratxt = mvwzstr{ .left = 0, .color = c_yellow,
+                                             .txt = technique_source_header( entry.source_group ) };
+        }
+        if( entry.enabled ) {
+            menu.addentry_desc( static_cast<int>( index ), true, MENU_AUTOASSIGN, entry.name,
+                                entry.description );
+            menu.entries.back().ctxt = entry.requirements;
+        } else {
+            menu.addentry_col( static_cast<int>( index ), false, MENU_AUTOASSIGN, entry.name,
+                               entry.why_unavailable,
+                               entry.description );
+        }
+    }
+    menu.callback = &help_cb;
+
+    menu.selected = 2;
+    menu.query();
+    if( menu.ret == UILIST_CANCEL ) {
+        return { .canceled = true, .mode = technique_prompt_result::mode_t::canceled,
+                 .technique = std::nullopt };
+    }
+
+    if( menu.ret == -2 ) {
+        return { .mode = technique_prompt_result::mode_t::normal_attack,
+                 .technique = std::nullopt };
+    }
+
+    if( menu.ret == -1 ) {
+        return { .mode = technique_prompt_result::mode_t::automatic, .technique = std::nullopt };
+    }
+
+    return { .mode = technique_prompt_result::mode_t::technique,
+             .technique = menu_entries[menu.ret].technique };
+}
+
+} // namespace
+
+auto melee::is_technique_prompt_suppressed() -> bool
+{
+    return technique_prompt_suppression_depth > 0;
+}
+
+melee::technique_prompt_suppression_guard::technique_prompt_suppression_guard()
+{
+    ++technique_prompt_suppression_depth;
+}
+
+melee::technique_prompt_suppression_guard::~technique_prompt_suppression_guard()
+{
+    --technique_prompt_suppression_depth;
+}
 
 void player_hit_message( Character *attacker, const std::string &message,
                          Creature &t, int dam, bool crit = false );
@@ -589,7 +1245,23 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         // Pick one or more special attacks
         matec_id technique_id;
         if( allow_special && !has_force_technique ) {
-            technique_id = pick_technique( t, cur_weapon, critical_hit, false, false );
+            if( is_player() && !is_auto_moving() &&
+                !melee::is_technique_prompt_suppressed() ) {
+                const auto selected_technique =
+                    choose_melee_technique( *this, t, cur_weapon, critical_hit );
+                if( selected_technique.canceled ) {
+                    return;
+                }
+                if( selected_technique.mode == technique_prompt_result::mode_t::normal_attack ) {
+                    technique_id = tec_none;
+                } else if( selected_technique.technique ) {
+                    technique_id = *selected_technique.technique;
+                } else {
+                    technique_id = pick_technique( t, cur_weapon, critical_hit, false, false );
+                }
+            } else {
+                technique_id = pick_technique( t, cur_weapon, critical_hit, false, false );
+            }
         } else if( has_force_technique ) {
             technique_id = *force_technique;
         } else {
@@ -827,7 +1499,7 @@ void Character::reach_attack( const tripoint_bub_ms &p )
     }
 
     reach_attacking = true;
-    melee_attack( *critter, false, &force_technique, false );
+    melee_attack( *critter, true, &force_technique, false );
     reach_attacking = false;
 }
 
@@ -1291,109 +1963,14 @@ void melee::roll_non_physical_damage( const Character &c, bool crit, damage_inst
 matec_id Character::pick_technique( Creature &t, const item &weap,
                                     bool crit, bool dodge_counter, bool block_counter )
 {
-
-    const std::vector<matec_id> all = martial_arts_data->get_all_techniques( weap );
-
-    std::vector<matec_id> possible;
-
-    bool downed = t.has_effect( effect_downed );
-    bool stunned = t.has_effect( effect_stunned );
-    bool wall_adjacent = g->m.is_wall_adjacent( bub_pos() );
-
-    // first add non-aoe tecs
-    for( const matec_id &tec_id : all ) {
-        const ma_technique &tec = tec_id.obj();
-
-        // ignore "dummy" techniques like WBLOCK_1
-        if( tec.dummy ) {
-            continue;
-        }
-
-        // skip defensive techniques
-        if( tec.defensive ) {
-            continue;
-        }
-
-        // skip wall adjacent techniques if not next to a wall
-        if( tec.wall_adjacent && !wall_adjacent ) {
-            continue;
-        }
-
-        // skip dodge counter techniques
-        if( dodge_counter != tec.dodge_counter ) {
-            continue;
-        }
-
-        // skip block counter techniques
-        if( block_counter != tec.block_counter ) {
-            continue;
-        }
-
-        // if critical then select only from critical tecs
-        // but allow the technique if its crit ok
-        if( !tec.crit_ok && ( crit != tec.crit_tec ) ) {
-            continue;
-        }
-
-        // don't apply downing techniques to someone who's already downed
-        if( downed && tec.down_dur > 0 ) {
-            continue;
-        }
-
-        // don't apply "downed only" techniques to someone who's not downed
-        if( !downed && tec.downed_target ) {
-            continue;
-        }
-
-        // don't apply "stunned only" techniques to someone who's not stunned
-        if( !stunned && tec.stunned_target ) {
-            continue;
-        }
-
-        const auto m = dynamic_cast<const monster *>( &t );
-        // don't apply disarming techniques to someone without a weapon
-        // TODO: these are the stat requirements for tec_disarm
-        // dice(   dex_cur +    get_skill_level("unarmed"),  8) >
-        // dice(p->dex_cur + p->get_skill_level("melee"),   10))
-        if( tec.disarms && ( ( m == nullptr && !t.has_weapon() ) || ( m != nullptr &&
-                             !m->type->monster_weapon ) ||
-                             t.has_effect( effect_monster_disarmed ) ) ) {
-            continue;
-        }
-
-        if( ( tec.take_weapon && ( ( has_weapon() ) || ( ( m == nullptr && !t.has_weapon() ) ||
-                                   ( m != nullptr &&
-                                     !m->type->monster_weapon ) || t.has_effect( effect_monster_disarmed ) ) ) ) ) {
-            continue;
-        }
-
-        // Don't apply humanoid-only techniques to non-humanoids
-        if( tec.human_target && !t.in_species( HUMAN ) ) {
-            continue;
-        }
-        // if aoe, check if there are valid targets
-        if( !tec.aoe.empty() && !valid_aoe_technique( t, tec ) ) {
-            continue;
-        }
-
-        // If we have negative weighting then roll to see if it's valid this time
-        if( tec.weighting < 0 && !one_in( std::abs( tec.weighting ) ) ) {
-            continue;
-        }
-
-        if( tec.is_valid_character( *this ) ) {
-            possible.push_back( tec.id );
-
-            //add weighted options into the list extra times, to increase their chance of being selected
-            if( tec.weighting > 1 ) {
-                for( int i = 1; i < tec.weighting; i++ ) {
-                    possible.push_back( tec.id );
-                }
-            }
-        }
-    }
-
-    return random_entry( possible, tec_none );
+    return random_entry( get_valid_techniques( {
+                             .target = t,
+                             .weapon = weap,
+                             .critical_hit = crit,
+                             .dodge_counter = dodge_counter,
+                             .block_counter = block_counter,
+                         } ),
+                         tec_none );
 }
 
 bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique )
@@ -1422,8 +1999,8 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
     if( technique.aoe == "wide" ) {
         //check if either (or both) of the squares next to our target contain a possible victim
         //offsets are a pre-computed matrix allowing us to quickly lookup adjacent squares
-        auto left = bub_pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
-        auto right = bub_pos() + tripoint( offset_b[lookup], -offset_a[lookup], 0 );
+        auto left = bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
+        auto right = bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_a[lookup], 0 );
 
         monster *const mon_l = g->critter_at<monster>( left );
         if( mon_l && mon_l->friendly == 0 ) {

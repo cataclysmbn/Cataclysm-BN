@@ -14,6 +14,8 @@
 #include "monster.h"
 #include "npc.h"
 #include "player.h"
+#include "point.h"
+#include "state_helpers.h"
 #include "type_id.h"
 
 static float brute_probability( monster &attacker, Creature &target, const size_t iters )
@@ -119,6 +121,18 @@ TEST_CASE( "Character attacking a zombie", "[.melee]" )
         INFO( full_attack_details( dude ) );
         check_near( prob, 0.975f, 0.025f );
     }
+}
+
+TEST_CASE( "melee technique prompt suppression guard", "[melee]" )
+{
+    clear_all_state();
+
+    CHECK( !melee::is_technique_prompt_suppressed() );
+    {
+        const melee::technique_prompt_suppression_guard suppress_technique_prompt;
+        CHECK( melee::is_technique_prompt_suppressed() );
+    }
+    CHECK( !melee::is_technique_prompt_suppressed() );
 }
 
 TEST_CASE( "Character attacking a manhack", "[.melee]" )
