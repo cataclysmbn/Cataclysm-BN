@@ -12731,7 +12731,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         }
 
         if( m.impassable( dest ) || !dest_is_air ) {
-            if( !can_noclip ) {
+            if( !can_noclip ) { //zz
                 for( const trait_id &tid : mutations ) {
                     const auto &mdata = tid.obj();
                     if( mdata.flags.contains( trait_flag_MUTATION_FLIGHT ) ) {
@@ -12740,6 +12740,11 @@ void game::vertical_move( int movez, bool force, bool peeking )
                 }
                 add_msg( m_info, _( "There is something above blocking your way." ) );
                 return;
+            } else {
+                if( dest.z > OVERMAP_HEIGHT ) {
+                    add_msg( m_info, _( "Tried to move outside of zlevel world bounds." ) );
+                    return;
+                }
             }
         }
 
@@ -12771,14 +12776,20 @@ void game::vertical_move( int movez, bool force, bool peeking )
             return;
         }
 
-        if( ( m.impassable( dest ) || !standing_on_air ) && !can_noclip ) {
-            add_msg( m_info, _( "You can't go down here!" ) );
-            if( !m.has_flag( "GOES_UP", u.pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "down" );
+        if( m.impassable( dest ) || !standing_on_air  ) {
+            if( !can_noclip ) {
+                add_msg( m_info, _( "You can't go down here!" ) );
+                if( !m.has_flag( "GOES_UP", u.pos() ) ) {
+                    suggest_auto_walk_to_stairs( u, m, "down" );
+                }
+                return;
+            } else {
+                if( dest.z < -OVERMAP_DEPTH ) {
+                    add_msg( m_info, _( "Tried to move outside of zlevel world bounds." ) );
+                    return;
+                }
             }
-            return;
         }
-
     }
 
     if( force ) {
