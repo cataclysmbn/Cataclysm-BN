@@ -15,6 +15,7 @@
 #include <ranges>
 #include <set>
 #include <sstream>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -390,6 +391,7 @@ struct extended_photo_def : public JsonDeserializer, public JsonSerializer {
     }
 };
 
+static std::vector<std::string> describe_character(Character *guy);
 static void item_save_monsters( player &p, item &it, const std::vector<monster *> &monster_vec,
                                 int photo_quality );
 static bool show_photo_selection( player &p, item &it, const std::string &var_name );
@@ -6652,7 +6654,7 @@ static object_names_collection enumerate_objects_around_point( const tripoint &p
             }
         }
 
-        const char *transl_str = pgettext( "someone stands/sits *on* something", " on a %s." );
+        const char *transl_str = pgettext( "someone stands/sits *on* something", " on %s." );
         if( !description_part_on_figure.empty() ) {
             ret_obj.figure_text = string_format( transl_str, description_part_on_figure );
         } else {
@@ -6732,11 +6734,11 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
                     continue; // do not include hallucinations
                 }
                 if( guy->movement_mode_is( CMM_CROUCH ) ) {
-                    pose = _( "sits" );
+                    pose = _( "is sitting" );
                 } else {
-                    pose = _( "stands" );
+                    pose = _( "is standing" );
                 }
-                const std::vector<std::string> vec = guy->short_description_parts();
+                const std::vector<std::string> vec = describe_character(guy);
                 figure_appearance = join( vec, "\n\n" );
                 figure_name = guy->name;
                 pronoun_sex = guy->male ? _( "He" ) : _( "She" );
@@ -6746,7 +6748,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
                 if( mon->is_hallucination() || mon->type->in_species( HALLUCINATION ) ) {
                     continue; // do not include hallucinations
                 }
-                pose = _( "stands" );
+                pose = _( "is standing" );
                 figure_appearance = "\"" + mon->type->get_description() + "\"";
                 figure_name = mon->name();
                 pronoun_sex = pgettext( "Pronoun", "It" );
@@ -6886,7 +6888,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
     }
     if( !obj_coll.terrain.empty() ) {
         std::string obj_list = enumerate_as_string( obj_coll.terrain.begin(), obj_coll.terrain.end(),
-                               format_object_pair_article );
+                               format_object_pair_no_article );
         photo_text += "\n\n" + string_format( vgettext( "There is %s in the background.",
                                               "There are %s in the background.", num_of( obj_coll.terrain ) ),
                                               obj_list );
@@ -6915,21 +6917,37 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
 
     if( g->get_levz() >= 0 && need_store_weather ) {
         photo_text += "\n\n";
+
+        int hour = hour_of_day<int>( calendar::turn );
+        std::string time_string;
+
         if( is_dawn( calendar::turn ) ) {
-            photo_text += _( "It is <color_yellow>sunrise</color>. " );
+            time_string = _( "<color_yellow>sunrise</color>" );
         } else if( is_dusk( calendar::turn ) ) {
-            photo_text += _( "It is <color_light_red>sunset</color>. " );
+            time_string = _( "<color_magenta>sunset</color>" );
         } else if( is_night( calendar::turn ) ) {
-            photo_text += _( "It is <color_dark_gray>night</color>. " );
+            if (hour == 0) {
+                time_string = _( "<color_dark_gray>midnight</color>" );
+            } else {
+                time_string = _( "<color_gray>night</color>" );
+            }
         } else {
-            photo_text += _( "It is day. " );
+            if (hour < 12) {
+                time_string = _( "<color_cyan>morning</color>" );
+            } else if (hour > 12) {
+                time_string = _( "<color_light_red>afternoon</color>" );
+            } else {
+                time_string = _( "<color_light_blue>midday</color>" );
+            }
         }
+
+        photo_text += string_format( _( "It is %s. " ), time_string );
         photo_text += string_format( _( "The weather is %s." ), colorize( get_weather().weather_id->name,
                                      get_weather().weather_id->color ) );
     }
 
     for( const auto &figure : description_figures_appearance ) {
-        photo_text += "\n\n" + string_format( _( "%s appearance:" ),
+        photo_text += "\n\n" + string_format( _( "%s's appearance:" ),
                                               colorize( figure.first, c_light_blue ) ) + "\n" + figure.second;
     }
 
@@ -6939,6 +6957,30 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
     photo.description = photo_text;
 
     return photo;
+}
+
+static std::vector<std::string> describe_character(Character *guy)
+{
+    std::vector<std::string> result;
+    std::string pronoun = guy->male ? _( "He" ) : _( "She" );
+
+    if( guy->is_armed() ) {
+        result.push_back( pronoun + " " + _( "is wielding a " ) + guy->primary_weapon().tname() + ".");
+    }
+
+    const std::string worn_str = enumerate_as_string( guy->worn.begin(), guy->worn.end(),
+    []( const item * const & it ) {
+        return it->tname();
+    } );
+    if( !worn_str.empty() ) {
+        result.push_back( pronoun + " " + _( "is wearing: " ) + worn_str );
+    }
+    const int visibility_cap = 0;
+    const auto trait_str = guy->visible_mutations( visibility_cap );
+    if( !trait_str.empty() ) {
+        result.push_back( _( "Traits: " ) + trait_str );
+    }
+    return result;
 }
 
 static void item_save_monsters( player &p, item &it, const std::vector<monster *> &monster_vec,
@@ -7065,7 +7107,30 @@ static bool show_photo_selection( player &p, item &it, const std::string &var_na
         if( choice < 0 ) {
             break;
         }
-        popup( "%s", descriptions[choice].c_str() );
+        auto desc = descriptions[choice];
+
+        //calc window size
+        //more or less the same logic as popups
+        const auto new_win = [&desc]() {
+
+            auto folded_msg = foldstring( desc, FULL_SCREEN_WIDTH - 1 * 2 );
+            int msg_width = 0;
+            int msg_height = folded_msg.size();
+
+            for( const auto &line : folded_msg ) {
+                msg_width = std::max( msg_width, utf8_width( line, true ) );
+            }
+
+            const int win_width = std::min( TERMX, msg_width + 1 * 2 );
+            const int win_height = std::min( TERMY, msg_height + 1 * 2 );
+            const int win_x = ( TERMX - win_width ) / 2;
+            const int win_y = ( TERMY - win_height ) / 2;
+
+
+            return catacurses::newwin( win_height, win_width, point( win_x, win_y ) );
+        };
+
+        scrollable_text( new_win, "", desc.c_str() );
 
     } while( true );
     return true;

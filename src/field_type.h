@@ -30,6 +30,7 @@ enum body_part : int;
 enum class description_affix : int {
     DESCRIPTION_AFFIX_IN,
     DESCRIPTION_AFFIX_COVERED_IN,
+    DESCRIPTION_AFFIX_COVERED_IN_A,
     DESCRIPTION_AFFIX_ON,
     DESCRIPTION_AFFIX_UNDER,
     DESCRIPTION_AFFIX_ILLUMINTED_BY,
@@ -49,6 +50,7 @@ struct hash<description_affix> {
 static const std::unordered_map<description_affix, std::string> description_affixes = {
     { description_affix::DESCRIPTION_AFFIX_IN, translate_marker( " in %s" ) },
     { description_affix::DESCRIPTION_AFFIX_COVERED_IN, translate_marker( " covered in %s" ) },
+    { description_affix::DESCRIPTION_AFFIX_COVERED_IN_A, translate_marker( " covered in a %s" ) },
     { description_affix::DESCRIPTION_AFFIX_ON, translate_marker( " on %s" ) },
     { description_affix::DESCRIPTION_AFFIX_UNDER, translate_marker( " under %s" ) },
     { description_affix::DESCRIPTION_AFFIX_ILLUMINTED_BY, translate_marker( " in %s" ) },
