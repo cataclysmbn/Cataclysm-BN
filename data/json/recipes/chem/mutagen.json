@@ -702,10 +702,7 @@
     "batch_time_factors": [ 80, 4 ],
     "book_learn": [ [ "recipe_medicalmut", 9 ] ],
     "using": [ [ "mutagen_production_standard", 25 ] ],
-    "components": [
-      [ [ "mutagen", 1 ] ],
-      [ [ "medical_sample", 1 ] ]
-    ],
+    "components": [ [ [ "mutagen", 1 ] ], [ [ "medical_sample", 1 ] ] ],
     "flags": [ "SECRET" ]
   },
   {

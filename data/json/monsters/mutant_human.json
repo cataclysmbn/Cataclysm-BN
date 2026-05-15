@@ -239,7 +239,19 @@
     "regenerates": 10,
     "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -1 } ],
     "death_function": [ "NORMAL", "ACID" ],
-    "flags": [ "SEES", "HEARS", "SMELLS", "KEENNOSE", "WARM", "BLEED", "BASHES", "HUMAN", "PATH_AVOID_DANGER_2", "ACIDPROOF", "ACID_BLOOD" ]
+    "flags": [
+      "SEES",
+      "HEARS",
+      "SMELLS",
+      "KEENNOSE",
+      "WARM",
+      "BLEED",
+      "BASHES",
+      "HUMAN",
+      "PATH_AVOID_DANGER_2",
+      "ACIDPROOF",
+      "ACID_BLOOD"
+    ]
   },
   {
     "id": "mon_mutant_medical_summon",
@@ -262,12 +274,7 @@
     "melee_skill": 4,
     "melee_dice": 1,
     "melee_dice_sides": 1,
-    "melee_damage": [
-    {
-      "damage_type": "dark",
-      "amount": 1
-    }
-    ],
+    "melee_damage": [ { "damage_type": "dark", "amount": 1 } ],
     "special_attacks": [
       {
         "type": "spell",
@@ -304,12 +311,7 @@
     "melee_skill": 4,
     "melee_dice": 1,
     "melee_dice_sides": 1,
-    "melee_damage": [
-    {
-      "damage_type": "dark",
-      "amount": 1
-    }
-    ],
+    "melee_damage": [ { "damage_type": "dark", "amount": 1 } ],
     "special_attacks": [
       {
         "type": "spell",
