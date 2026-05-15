@@ -12776,7 +12776,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
             return;
         }
 
-        if( m.impassable( dest ) || !standing_on_air  ) {
+        if( m.impassable( dest ) || !standing_on_air ) {
             if( !can_noclip ) {
                 add_msg( m_info, _( "You can't go down here!" ) );
                 if( !m.has_flag( "GOES_UP", u.pos() ) ) {
