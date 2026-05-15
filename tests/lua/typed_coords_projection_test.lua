@@ -28,14 +28,10 @@ test_data["doc_remain_omt_combined"] = tostring(doc_combined)
 
 test_data["typed_param"] = accept_abs_omt(coords.tripoint_abs_omt(1, 2, 3))
 
-local raw_param_ok = pcall(function()
-  return accept_abs_omt(Tripoint.new(1, 2, 3))
-end)
+local raw_param_ok = pcall(function() return accept_abs_omt(Tripoint.new(1, 2, 3)) end)
 test_data["raw_param_ok"] = raw_param_ok
 
-local wrong_coord_ok = pcall(function()
-  return accept_abs_omt(coords.tripoint_abs_ms(24, 48, 0))
-end)
+local wrong_coord_ok = pcall(function() return accept_abs_omt(coords.tripoint_abs_ms(24, 48, 0)) end)
 test_data["wrong_coord_ok"] = wrong_coord_ok
 
 local raw_abs_omt = Tripoint.new(1, 2, 3):reinterpret_as("abs", "omt")

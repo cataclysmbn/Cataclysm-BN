@@ -103,7 +103,7 @@ using enable_lua_coord_point_t = std::enable_if_t<lua_coord_can_read_v<Coord>, i
 
 template<typename Coord, typename Handler, enable_lua_coord_point_t<Coord> = 0>
 auto sol_lua_check( sol::types<Coord>, lua_State *L,
-                    const int index, Handler &&handler,
+                    const int index, Handler && handler,
                     sol::stack::record &tracking ) -> bool
 {
     using Value = lua_coord_value_t<Coord>;
@@ -134,7 +134,7 @@ auto sol_lua_get( sol::types<Coord>, lua_State *L, const int index,
 
 template<typename Coord, typename Handler, enable_lua_coord_point_t<Coord> = 0>
 auto sol_lua_check_get( sol::types<Coord>, lua_State *L,
-                        const int index, Handler &&handler,
+                        const int index, Handler && handler,
                         sol::stack::record &tracking ) -> sol::optional<lua_coord_value_t<Coord>>
 {
     using Value = lua_coord_value_t<Coord>;
