@@ -35,7 +35,7 @@ jobs:
       - env: { DEBIAN_FRONTEND: noninteractive }
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends astyle cmake ninja-build gettext ccache
+          sudo apt-get install -y --no-install-recommends astyle clang-format cmake ninja-build gettext ccache
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }
@@ -50,7 +50,7 @@ jobs:
         run: cmake --preset lint
 
       - name: format C++ files
-        run: cmake --build build --target astyle
+        run: cmake --build build --target format
 
       - name: format Markdown and TypeScript files
         run: deno fmt

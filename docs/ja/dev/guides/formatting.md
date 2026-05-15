@@ -6,13 +6,13 @@ title: Formatting & Linting
 
 ## クイックリファレンス
 
-| ファイル形式    | ツール         | コマンド                                           |
-| --------------- | -------------- | -------------------------------------------------- |
-| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target astyle`              |
-| JSON            | json_formatter | `cmake --build build --target style-json-parallel` |
-| Markdown        | deno fmt       | `deno fmt`                                         |
-| TypeScript      | deno fmt       | `deno fmt`                                         |
-| Lua             | dprint         | `deno task dprint fmt`                             |
+| ファイル形式    | ツール              | コマンド                                           |
+| --------------- | ------------------- | -------------------------------------------------- |
+| C++ (`.cpp/.h`) | astyle/clang-format | `cmake --build build --target format`              |
+| JSON            | json_formatter      | `cmake --build build --target style-json-parallel` |
+| Markdown        | deno fmt            | `deno fmt`                                         |
+| TypeScript      | deno fmt            | `deno fmt`                                         |
+| Lua             | dprint              | `deno task dprint fmt`                             |
 
 ## 自動フォーマット
 
@@ -26,17 +26,17 @@ title: Formatting & Linting
 
 ## C++ のフォーマット
 
-C++ ファイルは [astyle](http://astyle.sourceforge.net/)を使用してフォーマットします。
+トップレベルの C++ ファイルは [astyle](http://astyle.sourceforge.net/)を使用してフォーマットします。ソースのサブディレクトリにある C++ ファイルは [clang-format](https://clang.llvm.org/docs/ClangFormat.html)を使用してフォーマットします。
 
 ```sh
-# astyle のインストール (Ubuntu/Debian)
-sudo apt install astyle
+# フォーマッタのインストール (Ubuntu/Debian)
+sudo apt install astyle clang-format
 
-# astyle のインストール (Fedora)
-sudo dnf install astyle
+# フォーマッタのインストール (Fedora)
+sudo dnf install astyle clang-tools-extra
 
-# astyle のインストール (macOS)
-brew install astyle
+# フォーマッタのインストール (macOS)
+brew install astyle clang-format
 ```
 
 ### CMake を使用する場合
@@ -46,10 +46,10 @@ brew install astyle
 cmake --preset lint
 
 # すべてのC++ファイルをフォーマット
-cmake --build build --target astyle
+cmake --build build --target format
 ```
 
-スタイルの設定は、リポジトリのルートにある `.astylerc` に記述されています。
+スタイルの設定は、リポジトリのルートにある `.astylerc` と `.clang-format` に記述されています。
 
 ## JSON のフォーマット
 
@@ -120,7 +120,7 @@ tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*
 cmake --preset lint
 
 # すべてのコードをフォーマット
-cmake --build build --target astyle           # C++
+cmake --build build --target format           # C++
 cmake --build build --target style-json-parallel  # JSON
 deno fmt                                       # Markdown/TypeScript
 deno task dprint fmt                           # Lua
@@ -170,16 +170,17 @@ cmake --preset lint
 cmake --build build --target json_formatter
 ```
 
-### "astyle target not found"
+### "format target not found"
 
-`astyle` がインストールされており、PATH が通っているか確認してください:
+`astyle` と `clang-format` がインストールされており、PATH が通っているか確認してください:
 
 ```sh
-# astyle が利用可能か確認
+# フォーマッタが利用可能か確認
 which astyle
+which clang-format
 
 # インストールされていない場合 (Ubuntu/Debian)
-sudo apt install astyle
+sudo apt install astyle clang-format
 ```
 
 その後、CMake を再構成します:
@@ -188,10 +189,11 @@ sudo apt install astyle
 cmake --preset lint
 ```
 
-### astyle の実行結果が異なる
+### C++ フォーマッタの実行結果が異なる
 
-リポジトリのルートにある`.astylerc` を使用しているか確認してください:
+リポジトリのルートにあるフォーマッタ設定を使用しているか確認してください:
 
 ```sh
 astyle --options=.astylerc src/*.cpp
+clang-format -i src/utils/*.cpp src/utils/*.h
 ```

@@ -6,13 +6,13 @@ Cataclysm: Bright Nights에서 코드를 포맷하고 린트하는 방법을 설
 
 ## 빠른 참조
 
-| 파일 타입       | 도구           | 명령어                                             |
-| --------------- | -------------- | -------------------------------------------------- |
-| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target astyle`              |
-| JSON            | json_formatter | `cmake --build build --target style-json-parallel` |
-| Markdown        | deno fmt       | `deno fmt`                                         |
-| TypeScript      | deno fmt       | `deno fmt`                                         |
-| Lua             | dprint         | `deno task dprint fmt`                             |
+| 파일 타입       | 도구                | 명령어                                             |
+| --------------- | ------------------- | -------------------------------------------------- |
+| C++ (`.cpp/.h`) | astyle/clang-format | `cmake --build build --target format`              |
+| JSON            | json_formatter      | `cmake --build build --target style-json-parallel` |
+| Markdown        | deno fmt            | `deno fmt`                                         |
+| TypeScript      | deno fmt            | `deno fmt`                                         |
+| Lua             | dprint              | `deno task dprint fmt`                             |
 
 ## 자동 포매팅
 
@@ -26,17 +26,17 @@ Cataclysm: Bright Nights에서 코드를 포맷하고 린트하는 방법을 설
 
 ## C++ 포매팅
 
-C++ 파일은 [astyle](http://astyle.sourceforge.net/)로 포맷됩니다.
+최상위 C++ 파일은 [astyle](http://astyle.sourceforge.net/)로 포맷됩니다. 소스 하위 디렉터리의 C++ 파일은 [clang-format](https://clang.llvm.org/docs/ClangFormat.html)으로 포맷됩니다.
 
 ```sh
-# astyle 설치 (Ubuntu/Debian)
-sudo apt install astyle
+# 포매터 설치 (Ubuntu/Debian)
+sudo apt install astyle clang-format
 
-# astyle 설치 (Fedora)
-sudo dnf install astyle
+# 포매터 설치 (Fedora)
+sudo dnf install astyle clang-tools-extra
 
-# astyle 설치 (macOS)
-brew install astyle
+# 포매터 설치 (macOS)
+brew install astyle clang-format
 ```
 
 ### CMake 사용
@@ -46,10 +46,10 @@ brew install astyle
 cmake --preset lint
 
 # 모든 C++ 파일 포맷
-cmake --build build --target astyle
+cmake --build build --target format
 ```
 
-스타일 설정은 저장소 루트의 `.astylerc`에 있습니다.
+스타일 설정은 저장소 루트의 `.astylerc`와 `.clang-format`에 있습니다.
 
 ## JSON 포매팅
 
@@ -119,7 +119,7 @@ tools/dialogue_validator.py data/json/npcs/* data/json/npcs/*/* data/json/npcs/*
 cmake --preset lint
 
 # 모든 코드 포맷
-cmake --build build --target astyle           # C++
+cmake --build build --target format           # C++
 cmake --build build --target style-json-parallel  # JSON
 deno fmt                                       # Markdown/TypeScript
 deno task dprint fmt                           # Lua
@@ -167,16 +167,17 @@ cmake --preset lint
 cmake --build build --target json_formatter
 ```
 
-### "astyle target not found"
+### "format target not found"
 
-`astyle`이 설치되어 있고 PATH에 있는지 확인하세요:
+`astyle`과 `clang-format`이 설치되어 있고 PATH에 있는지 확인하세요:
 
 ```sh
-# astyle이 사용 가능한지 확인
+# 포매터가 사용 가능한지 확인
 which astyle
+which clang-format
 
 # 없으면 설치 (Ubuntu/Debian)
-sudo apt install astyle
+sudo apt install astyle clang-format
 ```
 
 그런 다음 CMake를 재구성:
@@ -185,10 +186,11 @@ sudo apt install astyle
 cmake --preset lint
 ```
 
-### astyle이 다른 결과를 생성
+### C++ 포매터가 다른 결과를 생성
 
-저장소 루트의 `.astylerc`를 사용하고 있는지 확인하세요:
+저장소 루트의 포매터 설정을 사용하는지 확인하세요:
 
 ```sh
 astyle --options=.astylerc src/*.cpp
+clang-format -i src/utils/*.cpp src/utils/*.h
 ```
