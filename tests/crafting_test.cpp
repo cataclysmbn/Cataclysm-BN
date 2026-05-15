@@ -535,38 +535,38 @@ static int resume_craft()
 static auto make_food_craft( const recipe &recipe_to_make,
                              const bool with_pine_nuts ) -> detached_ptr<item>
 {
-    auto components = std::vector<detached_ptr<item>>{};
+    auto components = std::vector<detached_ptr<item>> {};
     if( with_pine_nuts ) {
         components.push_back( item::spawn( "pine_nuts", calendar::turn, 1 ) );
     } else {
         components.push_back( item::spawn( "meat_smoked" ) );
     }
-    return item::spawn( &recipe_to_make, 1, std::move( components ), std::vector<item_comp>{} );
+    return item::spawn( &recipe_to_make, 1, std::move( components ), std::vector<item_comp> {} );
 }
 
 static auto has_component( const item &crafted, const itype_id &type ) -> bool
 {
     const auto components = crafted.get_components().as_vector();
     return std::ranges::any_of( components,
-    [&type]( const item *component ) { return component->typeId() == type; } );
+    [&type]( const item * component ) { return component->typeId() == type; } );
 }
 
 static auto finished_sandwiches( Character &you ) -> std::vector<item *>
 {
-    return you.items_with( []( const item &it ) { return it.typeId() == itype_id( "sandwich_pb" ); } );
+    return you.items_with( []( const item & it ) { return it.typeId() == itype_id( "sandwich_pb" ); } );
 }
 
 static auto in_progress_crafts( Character &you ) -> std::vector<item *>
 {
-    return you.items_with( []( const item &it ) { return it.is_craft(); } );
+    return you.items_with( []( const item & it ) { return it.is_craft(); } );
 }
 
 static auto assign_completed_craft_activity( Character &you, const recipe &recipe_to_make,
         item *target = nullptr ) -> void
 {
     auto actor = std::make_unique<craft_activity_actor>( &recipe_to_make, 1, 10'000'000,
-                 you.pos(), std::vector<comp_selection<item_comp>>{},
-                 std::vector<comp_selection<tool_comp>>{}, true, false );
+                 you.pos(), std::vector<comp_selection<item_comp>> {},
+                 std::vector<comp_selection<tool_comp>> {}, true, false );
     auto act = std::make_unique<player_activity>( std::move( actor ) );
     if( target != nullptr ) {
         act->targets.emplace_back( *target );

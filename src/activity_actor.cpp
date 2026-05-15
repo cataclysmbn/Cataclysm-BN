@@ -2072,7 +2072,8 @@ craft_activity_actor::craft_activity_actor(
     is_valid( rec != nullptr )
 {}
 
-auto craft_activity_actor::find_in_progress_craft( const player_activity &act, Character &who ) const -> item * // *NOPAD*
+auto craft_activity_actor::find_in_progress_craft( const player_activity &act,
+        Character &who ) const -> item * // *NOPAD*
 {
     if( !act.targets.empty() && act.targets.front() && act.targets.front()->is_craft() &&
         &act.targets.front()->get_making() == rec ) {

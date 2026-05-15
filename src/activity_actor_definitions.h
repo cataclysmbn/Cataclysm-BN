@@ -175,7 +175,8 @@ class craft_activity_actor final : public activity_actor
         static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
 
     private:
-        auto find_in_progress_craft( const player_activity &act, Character &who ) const -> item *; // *NOPAD*
+        auto find_in_progress_craft( const player_activity &act,
+                                     Character &who ) const -> item *; // *NOPAD*
         void do_complete_craft( player_activity &act, Character &who );
         void refresh_speed( player_activity &act, const Character &who, const item &craft_item,
                             std::optional<bench_location> bench = std::nullopt ) const;
