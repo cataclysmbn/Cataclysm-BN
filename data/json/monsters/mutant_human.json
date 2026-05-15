@@ -236,7 +236,7 @@
     "vision_night": 10,
     "harvest": "mutant_medical",
     "death_drops": "mon_mutant_medical_boss_death_drops",
-    "regenerates": 5,
+    "regenerates": 10,
     "regeneration_modifiers": [ { "effect": "onfire", "base_mod": -1 } ],
     "death_function": [ "NORMAL", "ACID" ],
     "flags": [ "SEES", "HEARS", "SMELLS", "KEENNOSE", "WARM", "BLEED", "BASHES", "HUMAN", "PATH_AVOID_DANGER_2", "ACIDPROOF", "ACID_BLOOD" ]
@@ -269,7 +269,12 @@
     }
     ],
     "special_attacks": [
-      [ "PARROT_AT_DANGER", 10 ]
+      {
+        "type": "spell",
+        "spell_data": { "id": "spell_mutant_medical_summon" },
+        "cooldown": 5,
+        "monster_message": "The figure vanishes and reappears!"
+      }
     ],
     "dodge": 0,
     "vision_day": 30,
@@ -306,7 +311,12 @@
     }
     ],
     "special_attacks": [
-      [ "PARROT_AT_DANGER", 10 ]
+      {
+        "type": "spell",
+        "spell_data": { "id": "spell_mutant_medical_summon" },
+        "cooldown": 20,
+        "monster_message": "The figure vanishes and reappears!"
+      }
     ],
     "dodge": 0,
     "vision_day": 30,
