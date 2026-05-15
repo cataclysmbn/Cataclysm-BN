@@ -198,7 +198,7 @@ class game : public submap_load_listener
         void setup( bool load_world_modfiles = true );
         /** Saving and loading functions. */
         void serialize( std::ostream &fout ); // for save
-        void unserialize( std::istream &fin ); // for load
+        auto unserialize( std::istream &fin ) -> bool; // for load
         void unserialize_dimension_data( std::istream &fin ); // for load
         void unserialize_master( std::istream &fin ); // for load
 
@@ -857,6 +857,7 @@ class game : public submap_load_listener
 
         /** Attempt to load first valid save (if any) in world */
         bool load( const std::string &world );
+        bool load( const save_t &name ); // Load a player-specific save file
 
         /** Returns true if the menu handled stuff and player shouldn't do anything else */
         bool npc_menu( npc &who, const bool &force = false );
@@ -868,7 +869,6 @@ class game : public submap_load_listener
         void on_move_effects();
     private:
         // Game-start procedures
-        bool load( const save_t &name ); // Load a player-specific save file
         void load_master(); // Load the master data file, with factions &c
 #if defined(__ANDROID__)
         void load_shortcuts( std::istream &fin );
@@ -1197,6 +1197,7 @@ class game : public submap_load_listener
         int next_mission_id = 0;
         std::set<character_id> follower_ids; // Keep track of follower NPC IDs
         int moves_since_last_save = 0;
+        bool saving_blocked_by_failed_load = false;
         time_t last_save_timestamp;
         mutable std::array<float, OVERMAP_LAYERS> latest_lightlevels;
         // remoteveh() cache

@@ -209,7 +209,7 @@ static void chkversion( std::istream &fin )
 /*
  * Parse an open .sav file.
  */
-void game::unserialize( std::istream &fin )
+auto game::unserialize( std::istream &fin ) -> bool
 {
     chkversion( fin );
     int tmpturn = 0;
@@ -397,8 +397,9 @@ void game::unserialize( std::istream &fin )
 
     } catch( const JsonError &jsonerr ) {
         debugmsg( "Bad save json\n%s", jsonerr.c_str() );
-        return;
+        return false;
     }
+    return true;
 }
 
 // scent_map::deserialize() moved to scent_map.cpp
