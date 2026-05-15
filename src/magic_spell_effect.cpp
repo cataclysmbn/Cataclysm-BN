@@ -1176,7 +1176,7 @@ void spell_effect::map_area( const spell &sp, Creature &caster, const tripoint_b
         // revealing the map only makes sense for the avatar
         return;
     }
-    const tripoint_abs_omt center = you->global_omt_location();
+    const tripoint_abs_omt center = you->abs_omt_pos();
     get_overmapbuffer( you->get_dimension() ).reveal( center.xy(), sp.aoe(), center.z() );
 }
 

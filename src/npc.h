@@ -777,16 +777,9 @@ class npc : public player
         void set_fac( const faction_id &id );
         faction *get_faction() const override;
         faction_id get_fac_id() const;
-        /**
-         * Set @ref submap_coords and @ref pos.
-         * @param m global submap coordinates.
-         */
+        /** Teleport the NPC to a random tile within the given absolute submap. */
         void spawn_at_sm( const tripoint_abs_sm &p );
-        /**
-         * As spawn_at, but also sets position within the submap.
-         * Note: final submap may differ from submap_offset if @ref square has
-         * x/y values outside [0, SEEX-1]/[0, SEEY-1] range.
-         */
+        /** Place the NPC at an exact absolute position (submap + within-submap tile). */
         void spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square );
         /**
          * Places the NPC on the @ref map. This update its
@@ -1223,7 +1216,7 @@ class npc : public player
          * Do not use when placing a NPC in mapgen.
          */
         void setpos( const tripoint_bub_ms &pos ) override;
-        void onswapsetpos( const tripoint_bub_ms &pos );
+        void setpos( const tripoint_abs_ms &pos ) override;
         void travel_overmap( const tripoint_abs_sm &pos );
         npc_attitude get_attitude() const;
         void set_attitude( npc_attitude new_attitude );
@@ -1253,15 +1246,6 @@ class npc : public player
         npc_attitude attitude = NPCATT_NULL; // What we want to do to the player
         npc_attitude previous_attitude = NPCATT_NULL;
         bool known_to_u = false; // Does the player know this NPC?
-        /**
-         * Global submap coordinates of the submap containing the npc.
-         * Use global_*_location to get the global position.
-         * You should not change submap_coords directly, use pos instead,
-         * @ref shift will update submap_coords and move the npc to a different
-         * overmap if needed.
-         * submap_coords defines the overmap the npc is stored on.
-         */
-        point_abs_sm submap_coords;
         // Type of complaint->last time we complained about this type
         std::map<std::string, time_point> complaints;
 
@@ -1271,24 +1255,6 @@ class npc : public player
         bool suppress_activity_complete_message = false;
         std::string activity_failure_message;
     public:
-        /**
-         * Global position, expressed in map square coordinate system
-         * (the most detailed coordinate system), used by the @ref map.
-         *
-         * The (global) position of an NPC is always:
-         * point(
-         *     submap_coords.x * SEEX + bub_pos().x() % SEEX,
-         *     submap_coords.y * SEEY + bub_pos().y() % SEEY,
-         *     pos.z)
-         * (Expressed in map squares, the system that @ref map uses.)
-         * Any of om, map, pos can be in any range.
-         * For active NPCs pos would be in the valid range required by
-         * the map. But pos, map, and om can be changed without the NPC
-         * actual moving as long as the position stays the same:
-         * pos() += SEEX; submap_coords.x -= 1;
-         * This does not change the global position of the NPC.
-         */
-        tripoint_abs_ms global_square_location() const override;
         std::optional<tripoint_bub_ms> last_player_seen_pos; // Where we last saw the player
         // Player orders a friendly NPC to move to this position
         std::optional<tripoint_abs_ms> goto_to_this_pos;

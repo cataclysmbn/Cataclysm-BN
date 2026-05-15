@@ -424,6 +424,10 @@ Character::Character() :
     next_climate_control_check( calendar::before_time_starts ),
     last_climate_control_ret( false )
 {
+    if( g != nullptr ) {
+        position = get_map().bub_to_abs( tripoint_bub_ms::zero() );
+    }
+
     str_max = 0;
     dex_max = 0;
     per_max = 0;
@@ -824,9 +828,24 @@ std::string Character::skin_name() const
     return _( "armor" );
 }
 
-const tripoint_bub_ms &Character::bub_pos() const
+tripoint_bub_ms Character::bub_pos() const
+{
+    return get_map().abs_to_bub( position );
+}
+
+tripoint_abs_ms Character::abs_pos() const
 {
     return position;
+}
+
+auto Character::setpos( const tripoint_bub_ms &p ) -> void
+{
+    position = get_map().bub_to_abs( p );
+}
+
+auto Character::setpos( const tripoint_abs_ms &p ) -> void
+{
+    position = p;
 }
 
 int Character::sight_range( int light_level ) const
@@ -868,7 +887,7 @@ auto Character::unimpaired_range() const -> int
 
 bool Character::overmap_los( const tripoint_abs_omt &omt, int sight_points )
 {
-    const tripoint_abs_omt ompos = global_omt_location();
+    const tripoint_abs_omt ompos = abs_omt_pos();
     const point_rel_omt offset = omt.xy() - ompos.xy();
     if( offset.x() < -sight_points || offset.x() > sight_points ||
         offset.y() < -sight_points || offset.y() > sight_points ) {
@@ -4306,11 +4325,11 @@ void Character::do_skill_rust( const time_duration &duration )
     // For NPC catch-up: check once whether any same-faction ally is in an
     // adjacent overmap tile (any z-level). Only evaluated if is_npc().
     const bool has_ally = [&]() -> bool {
-        const tripoint_abs_omt self_omt = global_omt_location();
+        const tripoint_abs_omt self_omt = abs_omt_pos();
         return !g->get_npcs_if( [this, &self_omt]( const npc & other )
         {
             return other.is_ally( *this ) &&
-            rl_dist( other.global_omt_location().xy(), self_omt.xy() ) <= 1;
+            rl_dist( other.abs_omt_pos().xy(), self_omt.xy() ) <= 1;
         } ).empty();
     }();
 
@@ -6019,7 +6038,7 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
     if( vp ) {
         vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
     }
-    const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( global_omt_location() );
+    const oter_id &cur_om_ter = get_overmapbuffer( get_dimension() ).ter( abs_omt_pos() );
     bool sheltered = weather::is_sheltered( m, bub_pos() );
     double total_windpower = get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                              abs_pos(),
@@ -7166,17 +7185,12 @@ bool Character::made_of_any( const std::set<material_id> &ms ) const
     } );
 }
 
-tripoint_abs_ms Character::global_square_location() const
-{
-    return abs_pos();
-}
-
-tripoint_abs_sm Character::global_sm_location() const
+tripoint_abs_sm Character::abs_sm_pos() const
 {
     return project_to<coords::sm>( abs_pos() );
 }
 
-tripoint_abs_omt Character::global_omt_location() const
+tripoint_abs_omt Character::abs_omt_pos() const
 {
     return project_to<coords::omt>( abs_pos() );
 }
@@ -8642,7 +8656,7 @@ void Character::shout( std::string msg, bool order )
 
 void Character::signal_nemesis()
 {
-    const tripoint_abs_omt ompos = global_omt_location();
+    const tripoint_abs_omt ompos = abs_omt_pos();
     const tripoint_abs_sm smpos = project_to<coords::sm>( ompos );
     get_overmapbuffer( get_dimension() ).signal_nemesis( smpos );
 }
@@ -10078,7 +10092,7 @@ void Character::apply_persistent_morale()
     }
     // Nomads get a morale penalty if they stay near the same overmap tiles too long.
     if( has_trait( trait_NOMAD ) || has_trait( trait_NOMAD2 ) || has_trait( trait_NOMAD3 ) ) {
-        const tripoint_abs_omt ompos = global_omt_location();
+        const tripoint_abs_omt ompos = abs_omt_pos();
         float total_time = 0;
         // Check how long we've stayed in any overmap tile within 5 of us.
         const int max_dist = 5;
@@ -10298,7 +10312,7 @@ bool Character::has_activity( const std::vector<activity_id> &types ) const
 void Character::cancel_activity()
 {
     activity->canceled( *this );
-    if( has_activity( ACT_MOVE_ITEMS ) && is_hauling() && !has_haulable_items( position ) ) {
+    if( has_activity( ACT_MOVE_ITEMS ) && is_hauling() && !has_haulable_items( bub_pos() ) ) {
         stop_hauling();
     }
     if( has_activity( ACT_TRY_SLEEP ) ) {
@@ -11722,7 +11736,7 @@ bool Character::has_destination() const
 bool Character::has_destination_activity() const
 {
     return !get_destination_activity().is_null() && destination_point &&
-           position == get_map().abs_to_bub( tripoint_abs_ms( *destination_point ) );
+           abs_pos() == *destination_point;
 }
 
 void Character::start_destination_activity()

@@ -179,7 +179,7 @@ class teleporter_callback : public uilist_callback
                 overmap_ui::draw_overmap_chunk( menu->window, player_character, index_pairs[entnum],
                                                 point( start_x + 1, 1 ),
                                                 29, 21 );
-                int dist = rl_dist( player_character.global_omt_location(), index_pairs[entnum] );
+                int dist = rl_dist( player_character.abs_omt_pos(), index_pairs[entnum] );
                 mvwprintz( menu->window, point( start_x + 2, 1 ), c_white,
                            string_format( _( "Distance: %d %s" ), dist,
                                           index_pairs[entnum].to_string() ) );

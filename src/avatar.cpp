@@ -191,7 +191,6 @@ void avatar::control_npc( npc &np )
         np.remove_effect( effect_hot_speed, bp.id() );
     }
 
-    np.onswapsetpos( np.bub_pos() );
     // the avatar character is no longer a follower NPC
     g->remove_npc_follower( getID() );
     // the previous avatar character is now a follower (unless they're dead)

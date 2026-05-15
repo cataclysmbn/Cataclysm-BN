@@ -78,11 +78,11 @@ maptile_soa<sx, sy>::maptile_soa( const tripoint_abs_sm &position )
 submap::submap( const tripoint_abs_sm &position ) : maptile_soa<SEEX, SEEY>( position )
 {
     pos = position;
-    std::uninitialized_fill_n( &ter[0][0], elements, t_null );
-    std::uninitialized_fill_n( &frn[0][0], elements, f_null );
-    std::uninitialized_fill_n( &lum[0][0], elements, 0 );
-    std::uninitialized_fill_n( &trp[0][0], elements, tr_null );
-    std::uninitialized_fill_n( &rad[0][0], elements, 0 );
+    std::fill_n( &ter[0][0], elements, t_null );
+    std::fill_n( &frn[0][0], elements, f_null );
+    std::fill_n( &lum[0][0], elements, 0 );
+    std::fill_n( &trp[0][0], elements, tr_null );
+    std::fill_n( &rad[0][0], elements, 0 );
 
     is_uniform = false;
 }

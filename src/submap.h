@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -108,7 +109,7 @@ class submap : maptile_soa<SEEX, SEEY>
         }
 
         void set_all_traps( const trap_id &trap ) {
-            std::uninitialized_fill_n( &trp[0][0], elements, trap );
+            std::fill_n( &trp[0][0], elements, trap );
             trap_cache.clear();
         }
 
@@ -128,7 +129,7 @@ class submap : maptile_soa<SEEX, SEEY>
         }
 
         void set_all_furn( const furn_id &furn ) {
-            std::uninitialized_fill_n( &frn[0][0], elements, furn );
+            std::fill_n( &frn[0][0], elements, furn );
             emitter_cache = std::nullopt;
             if( furn != f_null ) {
                 return;
@@ -147,7 +148,7 @@ class submap : maptile_soa<SEEX, SEEY>
         }
 
         void set_all_ter( const ter_id &terr ) {
-            std::uninitialized_fill_n( &ter[0][0], elements, terr );
+            std::fill_n( &ter[0][0], elements, terr );
         }
 
         int get_radiation( const point_sm_ms &p ) const {
@@ -437,4 +438,3 @@ struct maptile {
             return **std::prev( sm->get_items( pos() ).cend() );
         }
 };
-

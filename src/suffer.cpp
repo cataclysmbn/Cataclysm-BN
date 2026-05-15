@@ -1540,7 +1540,7 @@ void Character::suffer()
     }
 
     const auto dim = get_dimension();
-    const auto &effects = get_overmapbuffer( dim ).get_settings( global_omt_location() ).region_effects;
+    const auto &effects = get_overmapbuffer( dim ).get_settings( abs_omt_pos() ).region_effects;
     for( const auto& [type, effect_list] : effects ) {
         switch( type ) {
             case region_effect_type::generic:

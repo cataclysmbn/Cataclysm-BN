@@ -468,12 +468,12 @@ void teleport_overmap( bool specific_coordinates )
             return;
         }
         const auto offset = tripoint_rel_omt( OMAPX * dir_->x(), OMAPY * dir_->y(), dir_->z() );
-        where = g->u.global_omt_location() + offset;
+        where = g->u.abs_omt_pos() + offset;
     }
 
     g->place_player_overmap( where );
 
-    const tripoint_abs_om new_pos = project_to<coords::om>( g->u.global_omt_location() );
+    const tripoint_abs_om new_pos = project_to<coords::om>( g->u.abs_omt_pos() );
     add_msg( _( "You teleport to overmap %s." ), new_pos.to_string() );
 }
 
@@ -1555,7 +1555,7 @@ void debug()
             get_overmapbuffer( get_avatar().get_dimension() ).insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
-            temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->global_omt_location(),
+            temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->abs_omt_pos(),
                                    temp->getID() ) );
             std::string new_fac_id = "solo_";
             new_fac_id += temp->name;
@@ -1603,13 +1603,13 @@ void debug()
             popup_top(
                 s.c_str(),
                 u.bub_pos().x(), g->u.bub_pos().y(), g->get_levx(), g->get_levy(),
-                get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.global_omt_location() )->get_name(),
+                get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.abs_omt_pos() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
                 _( "NPCs are NOT going to spawn." ),
                 g->num_creatures() );
             for( const npc &guy : g->all_npcs() ) {
-                auto t = guy.global_sm_location();
+                auto t = guy.abs_sm_pos();
                 add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
                          t.y(), guy.bub_pos().x(), guy.bub_pos().y() );
             }

@@ -58,7 +58,7 @@ void timed_event::actualize()
             break;
 
         case TIMED_EVENT_ROBOT_ATTACK: {
-            const auto u_pos = g->u.global_sm_location();
+            const auto u_pos = g->u.abs_sm_pos();
             if( rl_dist( u_pos, map_point ) <= 4 ) {
                 const mtype_id &robot_type = one_in( 2 ) ? mon_copbot : mon_riotbot;
 
@@ -324,7 +324,7 @@ void timed_event_manager::process()
 void timed_event_manager::add( const timed_event_type type, const time_point &when,
                                const int faction_id )
 {
-    add( type, when, faction_id, g->u.global_sm_location() );
+    add( type, when, faction_id, g->u.abs_sm_pos() );
 }
 
 void timed_event_manager::add( const timed_event_type type, const time_point &when,

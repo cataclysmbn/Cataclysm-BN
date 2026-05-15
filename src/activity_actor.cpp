@@ -918,7 +918,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                            "alarm" );
             if( examp.z() > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                     who.global_sm_location() );
+                                     who.abs_sm_pos() );
             }
             break;
         case HACK_NOTHING:
@@ -1623,7 +1623,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
                            true, "environment", "alarm" );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                     who.global_sm_location() );
+                                     who.abs_sm_pos() );
             }
         } else if( veh && veh->vehicle().has_security_working() ) {
             veh->vehicle().is_alarm_on = true;

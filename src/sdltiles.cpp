@@ -909,7 +909,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
     const int max_row = s.y;
     int height_3d = 0;
     avatar &you = get_avatar();
-    const tripoint_abs_omt avatar_pos = you.global_omt_location();
+    const tripoint_abs_omt avatar_pos = you.abs_omt_pos();
     const tripoint_abs_omt corner_NW = center_abs_omt - point( max_col / 2, max_row / 2 );
     const tripoint_abs_omt corner_SE = corner_NW + point( max_col - 1, max_row - 1 );
     const inclusive_cuboid<tripoint_abs_omt> overmap_area( corner_NW, corner_SE );
@@ -1197,7 +1197,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
     // draw nearby seen npcs
     for( const shared_ptr_fast<npc> &guy : npcs_near_player ) {
-        const tripoint_abs_omt &guy_loc = guy->global_omt_location();
+        const tripoint_abs_omt &guy_loc = guy->abs_omt_pos();
         if( guy_loc.z() == center_abs_omt.z() && ( has_debug_vision ||
                 ACTIVE_OVERMAP_BUFFER.seen( guy_loc ) ) ) {
             draw_entity_with_overlays( *guy, global_omt_to_draw_position( guy_loc ), lit_level::LIT,
@@ -1205,7 +1205,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
         }
     }
 
-    if( you.global_omt_location().z() == center_abs_omt.z() ) {
+    if( you.abs_omt_pos().z() == center_abs_omt.z() ) {
         draw_entity_with_overlays( you, global_omt_to_draw_position( avatar_pos ),
                                    lit_level::LIT, height_3d );
     }
@@ -1359,7 +1359,7 @@ void cata_tiles::draw_om( point dest, const tripoint_abs_omt &center_abs_omt, bo
 
     if( has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen( center_abs_omt ) ) {
         for( const auto &npc : npcs_near_player ) {
-            if( !npc->marked_for_death && npc->global_omt_location() == center_abs_omt ) {
+            if( !npc->marked_for_death && npc->abs_omt_pos() == center_abs_omt ) {
                 notes_window_text.emplace_back( npc->basic_symbol_color(), npc->name );
             }
         }

@@ -87,6 +87,7 @@ class pixel_minimap
         SDL_Texture_Ptr main_tex;
 
         std::unique_ptr<pixel_minimap_projector> projector;
+        int built_mapsize = 0;
 
         //the minimap texture pool which is used to reduce new texture allocation spam
         class shared_texture_pool;
@@ -94,4 +95,3 @@ class pixel_minimap
 
         std::map<tripoint_abs_sm, submap_cache> cache;
 };
-

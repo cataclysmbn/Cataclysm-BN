@@ -933,7 +933,7 @@ bool game::start_game()
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
     // Start the overmap with out immediate neighborhood visible, this needs to be after place_player
-    get_overmapbuffer( current_dimension_id_ ).reveal( u.global_omt_location().xy(),
+    get_overmapbuffer( current_dimension_id_ ).reveal( u.abs_omt_pos().xy(),
             get_option<int>( "DISTANCE_INITIAL_VISIBILITY" ), 0 );
 
     u.moves = 0;
@@ -1187,7 +1187,7 @@ void game::load_npcs()
             continue;
         }
 
-        const auto sm_loc = temp->global_sm_location();
+        const auto sm_loc = temp->abs_sm_pos();
         // NPCs who are out of bounds before placement would be pushed into bounds
         // This can cause NPCs to teleport around, so we don't want that
         if( sm_loc.x() < get_levx() || sm_loc.x() >= get_levx() + g_mapsize ||
@@ -1286,11 +1286,10 @@ void game::on_submap_loaded( const tripoint_abs_sm &/*pos*/, const std::string &
 
 void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*dim_id*/ )
 {
-    // Deactivate any NPCs whose authoritative submap position matches the evicted submap.
-    // npc::global_square_location() uses submap_coords directly (not get_map()), so
-    // ms_to_sm_copy() of that result is context-independent and safe to call here.
+    // Deactivate any NPCs whose absolute position falls in the evicted submap.
+    // abs_pos() returns position directly (no map lookup), so this is safe to call here.
     auto in_evicted = [&pos]( const shared_ptr_fast<npc> &n ) {
-        const auto sm = project_to<coords::sm>( n->global_square_location() );
+        const auto sm = project_to<coords::sm>( n->abs_pos() );
         return sm.x() == pos.x() && sm.y() == pos.y() && sm.z() == pos.z();
     };
     std::ranges::for_each( active_npc | std::views::filter( in_evicted ),
@@ -1352,7 +1351,7 @@ void game::create_starting_npcs()
     tmp->toggle_trait( trait_id( "NPC_STARTING_NPC" ) );
     tmp->set_fac( faction_id( "no_faction" ) );
     //One random starting NPC mission
-    tmp->add_new_mission( mission::reserve_random( ORIGIN_OPENER_NPC, tmp->global_omt_location(),
+    tmp->add_new_mission( mission::reserve_random( ORIGIN_OPENER_NPC, tmp->abs_omt_pos(),
                           tmp->getID() ) );
     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {
         params["creature"] = tmp.get();
@@ -1982,7 +1981,7 @@ bool game::do_turn()
     if( !u.has_active_bionic( bionic_id( "bio_scent_mask" ) ) &&
         !u.has_trait( trait_id( "DEBUG_NOSCENT" ) ) ) {
         scent.set( u.bub_pos(), u.scent, u.get_type_of_scent() );
-        get_overmapbuffer( current_dimension_id_ ).set_scent( u.global_omt_location(),  u.scent );
+        get_overmapbuffer( current_dimension_id_ ).set_scent( u.abs_omt_pos(),  u.scent );
     }
     scent.update( u.bub_pos(), m );
 
@@ -3328,7 +3327,7 @@ void game::reset_npc_dispositions()
         npc_to_add->op_of_u.owed = 0;
         npc_to_add->set_fac( faction_id( "no_faction" ) );
         npc_to_add->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC,
-                                     npc_to_add->global_omt_location(),
+                                     npc_to_add->abs_omt_pos(),
                                      npc_to_add->getID() ) );
 
     }
@@ -3558,12 +3557,12 @@ void game::display_faction_epilogues()
 
 struct npc_dist_to_player {
     const tripoint_abs_omt ppos;
-    npc_dist_to_player() : ppos( get_player_character().global_omt_location() ) { }
+    npc_dist_to_player() : ppos( get_player_character().abs_omt_pos() ) { }
     // Operator overload required to leverage sort API.
     bool operator()( const shared_ptr_fast<npc> &a,
                      const shared_ptr_fast<npc> &b ) const {
-        const tripoint_abs_omt apos = a->global_omt_location();
-        const tripoint_abs_omt bpos = b->global_omt_location();
+        const tripoint_abs_omt apos = a->abs_omt_pos();
+        const tripoint_abs_omt bpos = b->abs_omt_pos();
         return square_dist( ppos.xy(), apos.xy() ) <
                square_dist( ppos.xy(), bpos.xy() );
     }
@@ -3571,7 +3570,7 @@ struct npc_dist_to_player {
 
 void game::disp_NPCs()
 {
-    const tripoint_abs_omt ppos = u.global_omt_location();
+    const tripoint_abs_omt ppos = u.abs_omt_pos();
     const auto &lpos = u.bub_pos();
     std::vector<shared_ptr_fast<npc>> npcs = get_overmapbuffer(
                                        current_dimension_id_ ).get_npcs_near_player( 100 );
@@ -3593,7 +3592,7 @@ void game::disp_NPCs()
         mvwprintz( w, point( 0, 1 ), c_white, _( "Your local position: %s" ), lpos.to_string() );
         size_t i;
         for( i = 0; i < 20 && i < npcs.size(); i++ ) {
-            const tripoint_abs_omt apos = npcs[i]->global_omt_location();
+            const tripoint_abs_omt apos = npcs[i]->abs_omt_pos();
             mvwprintz( w, point( 0, i + 3 ), c_white, "%s: %s", npcs[i]->name,
                        apos.to_string() );
         }
@@ -4069,7 +4068,7 @@ void game::draw_minimap()
     werase( w_minimap );
     draw_border( w_minimap );
 
-    const tripoint_abs_omt curs = u.global_omt_location();
+    const tripoint_abs_omt curs = u.abs_omt_pos();
     const point_abs_omt curs2( curs.xy() );
     const tripoint_abs_omt targ = u.get_active_mission_target();
     bool drew_mission = targ == overmap::invalid_tripoint;
@@ -5541,15 +5540,15 @@ void game::overmap_npc_move()
     }
     for( auto &elem : travelling_npcs ) {
         if( elem->has_omt_destination() ) {
-            if( !elem->omt_path.empty() && rl_dist( elem->omt_path.back(), elem->global_omt_location() ) > 2 ) {
+            if( !elem->omt_path.empty() && rl_dist( elem->omt_path.back(), elem->abs_omt_pos() ) > 2 ) {
                 //recalculate path, we got distracted doing something else probably
                 elem->omt_path.clear();
             }
             if( elem->omt_path.empty() ) {
-                const tripoint_abs_omt &from = elem->global_omt_location();
+                const tripoint_abs_omt &from = elem->abs_omt_pos();
                 const tripoint_abs_omt &to = elem->goal;
                 elem->omt_path = get_overmapbuffer( elem->get_dimension() ).get_travel_path(
-                                     elem->global_omt_location(), elem->goal,
+                                     elem->abs_omt_pos(), elem->goal,
                                      overmap_path_params::for_npc() );
                 if( elem->omt_path.empty() ) {
                     add_msg( m_debug, "%s couldn't find overmap path from %s to %s",
@@ -5558,7 +5557,7 @@ void game::overmap_npc_move()
                     elem->mission = NPC_MISSION_NULL;
                 }
             } else {
-                if( elem->omt_path.back() == elem->global_omt_location() ) {
+                if( elem->omt_path.back() == elem->abs_omt_pos() ) {
                     elem->omt_path.pop_back();
                 }
                 // TODO: fix point types
@@ -8342,7 +8341,7 @@ void game::zones_manager()
 
             } else if( action == "SHOW_ZONE_ON_MAP" ) {
                 //show zone position on overmap;
-                tripoint_abs_omt player_overmap_position = u.global_omt_location();
+                tripoint_abs_omt player_overmap_position = u.abs_omt_pos();
                 // TODO: fix point types
                 tripoint_abs_omt zone_overmap( project_to<coords::omt>
                                                ( zones[active_index].get().get_center_point() ) );
@@ -11857,12 +11856,13 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
         project_to<coords::sm>( om_dest ).raw() + point( -g_half_mapsize, -g_half_mapsize ) );
     const tripoint_bub_ms player_pos( u.bub_pos().xy(), map_sm_pos.z() );
     load_map( map_sm_pos );
-    load_npcs();
     m.spawn_monsters( true ); // Static monsters
-    update_overmap_seen();
     // update weather now as it could be different on the new location
     get_weather().nextweather = calendar::turn;
     place_player( player_pos );
+    update_overmap_seen();
+    // load_npcs() scans around the player's absolute position, updated by place_player().
+    load_npcs();
 }
 
 bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
@@ -12236,7 +12236,7 @@ void game::resize_reality_bubble_to( int new_size )
     {
         auto out_of_range = std::ranges::stable_partition( active_npc,
         [&]( const shared_ptr_fast<npc> &n ) {
-            const auto npc_sm = project_to<coords::sm>( n->global_square_location() );
+            const auto npc_sm = project_to<coords::sm>( n->abs_pos() );
             if( !m.has_zlevels() && npc_sm.z() != get_levz() ) {
                 return false;  // wrong z-level — evict
             }
@@ -12278,16 +12278,10 @@ void game::resize_reality_bubble_to( int new_size )
     // rebuilds distribution_grid_tracker and fluid_grid.
     load_map( new_abs_sub, /*pump_events=*/false );
 
-    // Re-anchor surviving NPCs to the new map origin.
-    // We use onswapsetpos() rather than place_on_map() because place_on_map() calls
-    // setpos() + is_empty(): since the NPC is already in active_npc, critter_at()
-    // finds it at its own newly-set position and reports the tile occupied, which
-    // triggers the collision-avoidance nudge and shifts the NPC by 1 tile.
-    // onswapsetpos() bypasses that loop and directly fixes position + submap_coords.
+    // NPC positions are stored as absolute coordinates and do not need re-anchoring
+    // when the bubble shifts. Clear paths since local-coordinate routes are now stale.
     {
-        std::ranges::for_each( active_npc, [&]( const auto & n ) {
-            n->onswapsetpos( abs_to_bub( n->global_square_location() ) );
-            // Same as monsters above: local-coordinate paths are now stale.
+        std::ranges::for_each( active_npc, []( const auto & n ) {
             n->path.clear();
         } );
     }
@@ -13749,7 +13743,7 @@ void game::vertical_notes( int z_before, int z_after )
     // Figure out where we know there are up/down connectors
     // Fill in all the tiles we know about (e.g. subway stations)
     static const int REVEAL_RADIUS = 40;
-    for( const tripoint_abs_omt &p : points_in_radius( u.global_omt_location(), REVEAL_RADIUS ) ) {
+    for( const tripoint_abs_omt &p : points_in_radius( u.abs_omt_pos(), REVEAL_RADIUS ) ) {
         const tripoint_abs_omt cursp_before( p.xy(), z_before );
         const tripoint_abs_omt cursp_after( p.xy(), z_after );
 
@@ -13929,7 +13923,7 @@ point_rel_sm game::update_map( int &x, int &y )
 
 void game::update_overmap_seen()
 {
-    const tripoint_abs_omt ompos = u.global_omt_location();
+    const tripoint_abs_omt ompos = u.abs_omt_pos();
     const int dist = u.overmap_sight_range( light_level( u.bub_pos().z() ) );
     const int dist_squared = dist * dist;
     // We can always see where we're standing
@@ -14284,7 +14278,7 @@ void game::perhaps_add_random_npc()
         }
         // Shouldn't be larger than search radius or it might get swarmy at the edges
         static constexpr int radius_spawn_range = npc_overmap::density_search_radius;
-        const tripoint_abs_omt u_omt = u.global_omt_location();
+        const tripoint_abs_omt u_omt = u.abs_omt_pos();
         spawn_point = u_omt + point( rng( -radius_spawn_range, radius_spawn_range ),
                                      rng( -radius_spawn_range, radius_spawn_range ) );
         spawn_point.z() = 0;
@@ -14312,7 +14306,7 @@ void game::perhaps_add_random_npc()
     tmp->form_opinion( u );
     tmp->mission = NPC_MISSION_NULL;
     tmp->long_term_goal_action();
-    tmp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, tmp->global_omt_location(),
+    tmp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, tmp->abs_omt_pos(),
                           tmp->getID() ) );
     dbg( DL::Debug ) << "Spawning a random NPC at " << spawn_point;
     cata::run_hooks( "on_creature_spawn", [&]( sol::table & params ) {

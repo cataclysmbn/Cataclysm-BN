@@ -3380,7 +3380,7 @@ bool mattack::photograph( monster *z )
     const SpeechBubble &speech = get_speech( z->type->id.str() );
     sounds::sound( z->bub_pos(), speech.volume, sounds::sound_t::alert, speech.text.translated() );
     g->timed_events.add( TIMED_EVENT_ROBOT_ATTACK, calendar::turn + rng( 15_turns, 30_turns ), 0,
-                         g->u.global_sm_location() );
+                         g->u.abs_sm_pos() );
 
     return true;
 }

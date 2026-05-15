@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -141,8 +142,8 @@ SDL_Color get_critter_color( Creature *critter, int flicker, int mixture )
 class pixel_minimap::shared_texture_pool
 {
     public:
-        shared_texture_pool( const std::function<SDL_Texture_Ptr()> &generator ) {
-            const size_t pool_size = static_cast<size_t>( g_mapsize + 1 ) * ( g_mapsize + 1 );
+        shared_texture_pool( const std::function<SDL_Texture_Ptr()> &generator, const int mapsize ) {
+            const size_t pool_size = static_cast<size_t>( mapsize + 1 ) * ( mapsize + 1 );
 
             texture_pool.reserve( pool_size );
             inactive_index.reserve( pool_size );
@@ -155,6 +156,7 @@ class pixel_minimap::shared_texture_pool
 
         //reserves a texture from the inactive group and returns tracking info
         SDL_Texture_Ptr request_tex( size_t &index ) {
+            index = invalid_texture_index;
             if( inactive_index.empty() ) {
                 debugmsg( "Ran out of available textures in the pool." );
                 //shouldn't be happening, but minimap will just be default color instead of crashing
@@ -168,11 +170,15 @@ class pixel_minimap::shared_texture_pool
         //releases the provided texture back into the inactive pool to be used again
         //called automatically in the submap cache destructor
         void release_tex( size_t index, SDL_Texture_Ptr &&ptr ) {
+            if( index == invalid_texture_index || index >= texture_pool.size() || !ptr ) {
+                return;
+            }
             inactive_index.push_back( index );
             texture_pool[index] = std::move( ptr );
         }
 
     private:
+        static constexpr auto invalid_texture_index = std::numeric_limits<size_t>::max();
         std::vector<SDL_Texture_Ptr> texture_pool;
         std::vector<size_t> inactive_index;
 };
@@ -276,6 +282,10 @@ void pixel_minimap::flush_cache_updates()
         if( mcp.second.update_list.empty() ) {
             return;
         }
+        if( !mcp.second.chunk_tex ) {
+            mcp.second.update_list.clear();
+            return;
+        }
 
         SetRenderTarget( renderer, mcp.second.chunk_tex );
 
@@ -374,13 +384,14 @@ pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint_abs_sm 
 
 void pixel_minimap::process_cache( const tripoint_bub_ms &center )
 {
+    const auto current_mapsize = get_map().getmapsize();
     // Refresh the tile count to match the current runtime map size.
-    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
+    total_tiles_count = { ( current_mapsize - 2 ) *SEEX, ( current_mapsize - 2 ) *SEEY };
 
     prepare_cache_for_updates( center );
 
-    for( int y = 0; y < g_mapsize; ++y ) {
-        for( int x = 0; x < g_mapsize; ++x ) {
+    for( int y = 0; y < current_mapsize; ++y ) {
+        for( int x = 0; x < current_mapsize; ++x ) {
             update_cache_at( tripoint_bub_sm( x, y, center.z() ) );
         }
     }
@@ -391,8 +402,9 @@ void pixel_minimap::process_cache( const tripoint_bub_ms &center )
 
 void pixel_minimap::set_screen_rect( const SDL_Rect &screen_rect )
 {
+    const auto current_mapsize = get_map().getmapsize();
     if( this->screen_rect == screen_rect && main_tex && tex_pool && projector
-        && built_view_tiles_count == view_tiles_count ) {
+        && built_view_tiles_count == view_tiles_count && built_mapsize == current_mapsize ) {
         return;
     }
 
@@ -441,8 +453,9 @@ void pixel_minimap::set_screen_rect( const SDL_Rect &screen_rect )
         return result;
     };
 
-    tex_pool = std::make_unique<shared_texture_pool>( chunk_texture_generator );
+    tex_pool = std::make_unique<shared_texture_pool>( chunk_texture_generator, current_mapsize );
     built_view_tiles_count = view_tiles_count;
+    built_mapsize = current_mapsize;
 }
 
 void pixel_minimap::reset()
@@ -451,6 +464,7 @@ void pixel_minimap::reset()
     cache.clear();
     main_tex.reset();
     tex_pool.reset();
+    built_mapsize = 0;
 }
 
 void pixel_minimap::render( const tripoint_bub_ms &center )
@@ -485,6 +499,10 @@ void pixel_minimap::render_cache( const tripoint_bub_ms &center )
 
     std::ranges::for_each( cache, [&]( const auto & elem ) {
         if( !elem.second.touched ) {
+            return;
+        }
+
+        if( !elem.second.chunk_tex ) {
             return;
         }
 
@@ -577,7 +595,8 @@ void pixel_minimap::draw( const SDL_Rect &screen_rect, const tripoint_bub_ms &ce
 
     // Update the tile count from the current runtime bubble size BEFORE set_screen_rect
     // so the projector is always built with the correct grid dimensions.
-    total_tiles_count = { ( g_mapsize - 2 ) *SEEX, ( g_mapsize - 2 ) *SEEY };
+    const auto current_mapsize = get_map().getmapsize();
+    total_tiles_count = { ( current_mapsize - 2 ) *SEEX, ( current_mapsize - 2 ) *SEEY };
 
     // view_tiles_count is the geographic tile grid the projector and renderer use.
     // Large bubble: clip to screen/2 (tile_size >= 2); small bubble: screen/3 (tile_size >= 3).

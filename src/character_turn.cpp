@@ -307,7 +307,7 @@ void Character::process_turn()
     if( !is_npc() && ( has_trait( trait_NOMAD ) || has_trait( trait_NOMAD2 ) ||
                        has_trait( trait_NOMAD3 ) ) &&
         !has_effect( effect_sleep ) && !has_effect( effect_narcosis ) ) {
-        const tripoint_abs_omt ompos = global_omt_location();
+        const tripoint_abs_omt ompos = abs_omt_pos();
         const point_abs_omt pos = ompos.xy();
         if( !overmap_time.contains( pos ) ) {
             overmap_time[pos] = 1_turns;
@@ -317,7 +317,7 @@ void Character::process_turn()
     }
     // Decay time spent in other overmap tiles.
     if( !is_npc() && calendar::once_every( 1_hours ) ) {
-        const tripoint_abs_omt ompos = global_omt_location();
+        const tripoint_abs_omt ompos = abs_omt_pos();
         const time_point now = calendar::turn;
         time_duration decay_time = 0_days;
         if( has_trait( trait_NOMAD ) ) {

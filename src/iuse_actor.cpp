@@ -1661,7 +1661,7 @@ void reveal_map_actor::show_revealed( player &p, item &item, const tripoint_abs_
         return;
     }
 
-    const tripoint_abs_omt plrPos = p.global_omt_location();
+    const tripoint_abs_omt plrPos = p.abs_omt_pos();
     auto eqRange = mm.equal_range( otypes[ui.ret] );
 
     // TODO: Cluster tripoints to collapse direct neighbor tiles (helipads, etc)?
@@ -1722,7 +1722,7 @@ int reveal_map_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         return 0;
     }
 
-    const tripoint_abs_omt plrPos = p.global_omt_location();
+    const tripoint_abs_omt plrPos = p.abs_omt_pos();
     const tripoint_abs_omt mapPos( it.get_var( "reveal_map_center_omt", plrPos.raw() ) );
 
     if( it.already_used_by_player( p ) ) {
@@ -4935,7 +4935,7 @@ void gps_device_actor::info( const item &, std::vector<iteminfo> &dump ) const
 int gps_device_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) const
 {
     float charges_built_up = 1.0;
-    const tripoint_abs_omt center = p.global_omt_location();
+    const tripoint_abs_omt center = p.abs_omt_pos();
 
     std::string query = string_input_popup()
                         .title( _( "Search for location:" ) )
@@ -5038,7 +5038,7 @@ int gps_device_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
         return charges_built_up;
     }
 
-    const tripoint_abs_omt plr_pos = p.global_omt_location();
+    const tripoint_abs_omt plr_pos = p.abs_omt_pos();
     auto range = grouped.equal_range( name_list[ui.ret] );
     const int count = std::distance( range.first, range.second );
     if( count == 0 ) {
@@ -6392,11 +6392,11 @@ int iuse_prospect_pick::use( player &p, item &it, bool t,
     params.popup = make_shared_fast<throbber_popup>( _( "Please wait…" ) );
     params.seen = false;
 
-    const point_abs_om origin_om_pos = project_to<coords::om>( p.global_omt_location().xy() );
+    const point_abs_om origin_om_pos = project_to<coords::om>( p.abs_omt_pos().xy() );
 
     // Generate a Square fitting the requested map radius
-    const point_abs_omt omt_bb_min = p.global_omt_location().xy() - point_rel_omt{ range, range };
-    const point_abs_omt omt_bb_max = p.global_omt_location().xy() + point_rel_omt{ range, range };
+    const point_abs_omt omt_bb_min = p.abs_omt_pos().xy() - point_rel_omt{ range, range };
+    const point_abs_omt omt_bb_max = p.abs_omt_pos().xy() + point_rel_omt{ range, range };
 
     // OM Corners of bounding box
     const point_abs_om om_bb_min = project_to<coords::om>( omt_bb_min );
@@ -6417,7 +6417,7 @@ int iuse_prospect_pick::use( player &p, item &it, bool t,
         get_overmapbuffer( p.get_dimension() ).generate( to_gen );
     }
 
-    const auto places = get_overmapbuffer( p.get_dimension() ).find_all( p.global_omt_location(),
+    const auto places = get_overmapbuffer( p.get_dimension() ).find_all( p.abs_omt_pos(),
                         params );
     for( auto &place : places ) {
         get_overmapbuffer( p.get_dimension() ).reveal( place, 0 );

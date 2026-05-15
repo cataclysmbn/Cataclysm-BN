@@ -1135,7 +1135,7 @@ void weather_manager::update_weather()
     }
 
     const weather_generator &weather_gen = get_cur_weather_gen();
-    w = weather_gen.get_weather( g->u.global_square_location(), calendar::turn, g->get_seed() );
+    w = weather_gen.get_weather( g->u.abs_pos(), calendar::turn, g->get_seed() );
     weather_type_id old_weather = weather_id;
     weather_id = weather_override ? weather_override : weather_gen.get_weather_conditions( w );
     if( !g->u.has_artifact_with( AEP_BAD_WEATHER ) ) {
@@ -1168,7 +1168,7 @@ void weather_manager::update_weather()
     }
 
     water_temperature = weather_gen.get_water_temperature(
-                            tripoint_abs_ms( g->u.global_square_location() ),
+                            tripoint_abs_ms( g->u.abs_pos() ),
                             calendar::turn, calendar::config, g->get_seed() ) ;
 
     // Only call on_weather_changed if old_weather was a valid weather type (not initial state)

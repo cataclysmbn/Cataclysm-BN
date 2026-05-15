@@ -3142,7 +3142,7 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
             waypoint = midpoint( project_bounds<coords::ms>( next_omt ) );
         } else {
             // otherwise target the middle of the edge nearest to our current location
-            const auto cur_omt_mid = midpoint( project_bounds<coords::ms>( p->global_omt_location() ) );
+            const auto cur_omt_mid = midpoint( project_bounds<coords::ms>( p->abs_omt_pos() ) );
             waypoint = clamp( cur_omt_mid, project_bounds<coords::ms>( next_omt ) );
         }
         map &here = get_map();
@@ -4521,7 +4521,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
     // Breadth-first search forest tiles until one reveals new overmap tiles.
     std::queue<tripoint_abs_omt> q;
     std::unordered_set<tripoint_abs_omt> seen;
-    tripoint_abs_omt loc = p->global_omt_location();
+    tripoint_abs_omt loc = p->abs_omt_pos();
     q.push( loc );
     seen.insert( loc );
     const std::function<bool( const oter_id & )> filter = []( const oter_id & ter ) {

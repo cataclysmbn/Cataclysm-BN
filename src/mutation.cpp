@@ -621,7 +621,7 @@ void Character::activate_mutation( const trait_id &mut )
         return;
     } else if( mut == trait_TREE_COMMUNION ) {
         tdata.powered = false;
-        if( !get_overmapbuffer( get_dimension() ).ter( global_omt_location() ).obj().is_wooded() ) {
+        if( !get_overmapbuffer( get_dimension() ).ter( abs_omt_pos() ).obj().is_wooded() ) {
             add_msg_if_player( m_info, _( "You can only do that in a wooded area." ) );
             return;
         }

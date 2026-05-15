@@ -344,7 +344,7 @@ void monster::setpos( const tripoint_bub_ms &p )
     }
 }
 
-const tripoint_bub_ms &monster::bub_pos() const
+tripoint_bub_ms monster::bub_pos() const
 {
     return position;
 }

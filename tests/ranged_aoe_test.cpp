@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <optional>
+#include <queue>
+#include <set>
 #include <vector>
 
 #include "ballistics.h"
@@ -33,7 +35,7 @@ static auto fire_shell_at_target( const itype_id &ammo_id,
     clear_all_state();
     rng_set_engine_seed( seed );
     REQUIRE( get_map().has_zlevels() );
-    get_player_character().setpos( {60, 60, -2} );
+    get_player_character().setpos( tripoint_bub_ms{ 60, 60, -2 } );
 
     const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
@@ -85,6 +87,41 @@ static auto fire_shells_at_target( const itype_id &ammo_id,
     return total_damage;
 }
 
+static auto reachable_shape_points_no_obstacle( const shape &s,
+        const map &here ) -> std::set<tripoint_bub_ms>
+{
+    const auto origin = tripoint_bub_ms( s.get_origin() );
+    auto queue = std::queue<tripoint_bub_ms>();
+    auto reachable = std::set<tripoint_bub_ms>();
+
+    const auto try_enqueue = [&s, &here, &queue, &reachable]( const tripoint_bub_ms &from,
+    const tripoint_bub_ms &candidate ) {
+        if( reachable.contains( candidate ) || s.distance_at( candidate.raw() ) >= 0.0 ||
+            here.obstructed_by_vehicle_rotation( from, candidate ) ) {
+            return;
+        }
+        reachable.insert( candidate );
+        queue.push( candidate );
+    };
+
+    std::ranges::for_each( here.points_in_radius( origin, 1 ), [&try_enqueue,
+    &origin]( const tripoint_bub_ms & child ) {
+        try_enqueue( origin, child );
+    } );
+
+    while( !queue.empty() ) {
+        const auto p = queue.front();
+        queue.pop();
+        std::ranges::for_each( here.points_in_radius( p, 1 ), [&try_enqueue,
+        &p]( const tripoint_bub_ms & child ) {
+            try_enqueue( p, child );
+        } );
+    }
+
+    reachable.erase( origin );
+    return reachable;
+}
+
 static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
         const tripoint_bub_ms &origin, const tripoint_bub_ms &end )
 {
@@ -93,31 +130,36 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
     p.impact = damage_instance();
     p.impact.add_damage( DT_STAB, 10 );
     auto cov = ranged::expected_coverage( *s, get_map(), 200 );
+    const auto reachable_shape_points = reachable_shape_points_no_obstacle( *s, get_map() );
 
-    map &here = get_map();
     inclusive_cuboid<tripoint> bb = s->bounding_box();
     REQUIRE( bb.p_min != bb.p_max );
-    inclusive_cuboid<tripoint> expanded_bb( bb.p_min - point( 5, 5 ), bb.p_max + point( 5, 5 ) );
-    bool had_any = false;
+    const auto origin_coverage = cov.contains( origin ) ? cov.at( origin ) : 0.0;
+    CAPTURE( origin );
+    CAPTURE( end );
+    CAPTURE( cov.size() );
+    CAPTURE( reachable_shape_points.size() );
     CHECK( s->distance_at( rl_vec3d( origin ) ) > 0.0 );
-    CHECK( cov[origin] <= 0.0 );
-    for( const tripoint_bub_ms &p : here.points_in_rectangle( tripoint_bub_ms( expanded_bb.p_min ),
-            tripoint_bub_ms( expanded_bb.p_max ) ) ) {
-        double signed_distance = s->distance_at( p.raw() );
-        bool distance_on_shape_is_negative = signed_distance < 0.0;
-        bool point_is_covered = cov.contains( p ) && cov.at( p ) > 0.0;
-        bool in_bounding_box = bb.contains( p.raw() );
+    CHECK( origin_coverage <= 0.0 );
+
+    std::ranges::for_each( cov, [&bb, &reachable_shape_points,
+    &s]( const std::pair<const tripoint_bub_ms, double> &entry ) {
+        const auto &p = entry.first;
+        const auto coverage = entry.second;
+        const auto signed_distance = s->distance_at( p.raw() );
         CAPTURE( p );
         CAPTURE( signed_distance );
-        CAPTURE( cov[p] );
-        CHECK( distance_on_shape_is_negative == point_is_covered );
-        had_any |= distance_on_shape_is_negative;
-        if( point_is_covered ) {
-            CHECK( in_bounding_box );
-        }
-    }
+        CAPTURE( coverage );
+        CHECK( coverage > 0.0 );
+        CHECK( reachable_shape_points.contains( p ) );
+        CHECK( signed_distance < 0.0 );
+        CHECK( bb.contains( p.raw() ) );
+    } );
 
-    CHECK( had_any );
+    std::ranges::for_each( reachable_shape_points, [&cov]( const tripoint_bub_ms &p ) {
+        CAPTURE( p );
+        CHECK( cov.contains( p ) );
+    } );
 }
 
 TEST_CASE( "expected shape coverage mass test", "[shape]" )

@@ -449,7 +449,8 @@ class Character : public Creature, public location_visitable<Character>
         float dodge_roll() override;
         float get_melee() const override;
 
-        const tripoint_bub_ms &bub_pos() const override;
+        tripoint_bub_ms bub_pos() const override;
+        tripoint_abs_ms abs_pos() const override;
         /** Returns the player's sight range */
         int sight_range( int light_level ) const override;
         /** Returns the player maximum vision range factoring in mutations, diseases, and other effects */
@@ -873,23 +874,16 @@ class Character : public Creature, public location_visitable<Character>
         bool made_of( const material_id &m ) const override;
         bool made_of_any( const std::set<material_id> &ms ) const override;
 
-        void setpos( const tripoint_bub_ms &p ) override {
-            position = p;
-        }
-
-        /**
-         * Global position, expressed in map square coordinate system
-         * (the most detailed coordinate system), used by the @ref map.
-         */
-        virtual tripoint_abs_ms global_square_location() const;
+        void setpos( const tripoint_bub_ms &p ) override;
+        void setpos( const tripoint_abs_ms &p ) override;
         /**
         * Returns the location of the player in global submap coordinates.
         */
-        tripoint_abs_sm global_sm_location() const;
+        tripoint_abs_sm abs_sm_pos() const;
         /**
         * Returns the location of the player in global overmap terrain coordinates.
         */
-        tripoint_abs_omt global_omt_location() const;
+        tripoint_abs_omt abs_omt_pos() const;
 
     private:
         /** Retrieves a stat mod of a mutation. */
@@ -2295,8 +2289,8 @@ class Character : public Creature, public location_visitable<Character>
     protected:
         Character();
 
-        // The player's position on the local map.
-        tripoint_bub_ms position;
+        // Absolute world position. bub_pos() is derived from this at call time.
+        tripoint_abs_ms position;
 
         /** Bonuses to stats, calculated each turn */
         int str_bonus = 0;

@@ -31,7 +31,7 @@ struct vehicle_preview_window {
         /**
          * Display the vehicle with tiles.
          * @param veh The vehicle to display
-         * @param cursor Offset Cursor position
+         * @param cursor Vehicle-local mount cursor position
          * @param highlight_part Index of the part to highlight, or -1 for none
          */
         void display( const vehicle &veh, tripoint_mnt_veh cursor, int highlight_part );

@@ -704,7 +704,7 @@ static tripoint_abs_omt show_notes_manager( const tripoint_abs_omt &origin )
     tripoint_abs_omt selected = origin;
     sort_mode_t sort_mode = sort_mode_t::name;
 
-    const tripoint_abs_omt p_player = g->u.global_omt_location();
+    const tripoint_abs_omt p_player = g->u.abs_omt_pos();
 
     bool quit = false;
     while( !quit ) {
@@ -1006,7 +1006,7 @@ static void draw_ascii( ui_adaptor &ui,
                 continue;
             }
 
-            const tripoint_abs_omt pos = np->global_omt_location();
+            const tripoint_abs_omt pos = np->abs_omt_pos();
             if( has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen( pos ) ) {
                 auto iter = npc_color.find( pos );
                 nc_color np_color = np->basic_symbol_color();
@@ -1052,7 +1052,7 @@ static void draw_ascii( ui_adaptor &ui,
             if( np->bub_pos().z() != center.z() ) {
                 continue;
             }
-            const tripoint_abs_omt pos = np->global_omt_location();
+            const tripoint_abs_omt pos = np->abs_omt_pos();
             auto iter = npc_color.find( pos );
             nc_color np_color = np->basic_symbol_color();
             if( iter == npc_color.end() ) {
@@ -1067,7 +1067,7 @@ static void draw_ascii( ui_adaptor &ui,
         }
     }
 
-    tripoint_abs_omt pl_pos = get_player_character().global_omt_location();
+    tripoint_abs_omt pl_pos = get_player_character().abs_omt_pos();
 
     for( int i = 0; i < om_map_width; ++i ) {
         for( int j = 0; j < om_map_height; ++j ) {
@@ -1327,7 +1327,7 @@ static void draw_ascii( ui_adaptor &ui,
 
     if( has_debug_vision || ACTIVE_OVERMAP_BUFFER.seen( center ) ) {
         for( const auto &npc : npcs_near_player ) {
-            if( !npc->marked_for_death && npc->global_omt_location() == center ) {
+            if( !npc->marked_for_death && npc->abs_omt_pos() == center ) {
                 corner_text.emplace_back( npc->basic_symbol_color(), npc->name );
             }
         }
@@ -2049,7 +2049,7 @@ static std::vector<tripoint_abs_omt> get_overmap_path_to( const tripoint_abs_omt
     }
     const Character &player_character = get_player_character();
     map &here = get_map();
-    const tripoint_abs_omt player_omt_pos = player_character.global_omt_location();
+    const tripoint_abs_omt player_omt_pos = player_character.abs_omt_pos();
     overmap_path_params params;
     vehicle *player_veh = nullptr;
     if( driving ) {
@@ -2359,14 +2359,14 @@ static tripoint_abs_omt display( const tripoint_abs_omt &orig,
 
 void ui::omap::display()
 {
-    overmap_ui::display( get_player_character().global_omt_location(), overmap_ui::draw_data_t() );
+    overmap_ui::display( get_player_character().abs_omt_pos(), overmap_ui::draw_data_t() );
 }
 
 void ui::omap::display_hordes()
 {
     overmap_ui::draw_data_t data;
     uistate.overmap_debug_mongroup = true;
-    overmap_ui::display( get_player_character().global_omt_location(), data );
+    overmap_ui::display( get_player_character().abs_omt_pos(), data );
     uistate.overmap_debug_mongroup = false;
 }
 
@@ -2374,7 +2374,7 @@ void ui::omap::display_weather()
 {
     overmap_ui::draw_data_t data;
     uistate.overmap_debug_weather = true;
-    tripoint_abs_omt pos = get_player_character().global_omt_location();
+    tripoint_abs_omt pos = get_player_character().abs_omt_pos();
     pos.z() = 10;
     overmap_ui::display( pos, data );
     uistate.overmap_debug_weather = false;
@@ -2384,7 +2384,7 @@ void ui::omap::display_visible_weather()
 {
     overmap_ui::draw_data_t data;
     uistate.overmap_visible_weather = true;
-    tripoint_abs_omt pos = get_player_character().global_omt_location();
+    tripoint_abs_omt pos = get_player_character().abs_omt_pos();
     pos.z() = 10;
     overmap_ui::display( pos, data );
     uistate.overmap_visible_weather = false;
@@ -2394,21 +2394,21 @@ void ui::omap::display_scents()
 {
     overmap_ui::draw_data_t data;
     data.debug_scent = true;
-    overmap_ui::display( get_player_character().global_omt_location(), data );
+    overmap_ui::display( get_player_character().abs_omt_pos(), data );
 }
 
 void ui::omap::display_distribution_grids()
 {
     overmap_ui::draw_data_t data;
     data.debug_grids = true;
-    overmap_ui::display( g->u.global_omt_location(), data );
+    overmap_ui::display( g->u.abs_omt_pos(), data );
 }
 
 void ui::omap::display_editor()
 {
     overmap_ui::draw_data_t data;
     data.debug_editor = true;
-    overmap_ui::display( get_player_character().global_omt_location(), data );
+    overmap_ui::display( get_player_character().abs_omt_pos(), data );
 }
 
 void ui::omap::display_zones( const tripoint_abs_omt &center, const tripoint_abs_omt &select,
@@ -2422,7 +2422,7 @@ void ui::omap::display_zones( const tripoint_abs_omt &center, const tripoint_abs
 
 tripoint_abs_omt ui::omap::choose_point()
 {
-    return overmap_ui::display( get_player_character().global_omt_location() );
+    return overmap_ui::display( get_player_character().abs_omt_pos() );
 }
 
 tripoint_abs_omt ui::omap::choose_point( const tripoint_abs_omt &origin )
@@ -2432,7 +2432,7 @@ tripoint_abs_omt ui::omap::choose_point( const tripoint_abs_omt &origin )
 
 tripoint_abs_omt ui::omap::choose_point( int z )
 {
-    tripoint_abs_omt loc = get_player_character().global_omt_location();
+    tripoint_abs_omt loc = get_player_character().abs_omt_pos();
     loc.z() = z;
     return overmap_ui::display( loc );
 }

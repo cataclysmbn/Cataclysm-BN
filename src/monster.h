@@ -640,7 +640,7 @@ class monster : public Creature, public location_visitable<monster>
         int fish_population = 1;
 
         void setpos( const tripoint_bub_ms &p ) override;
-        const tripoint_bub_ms &bub_pos() const override;
+        tripoint_bub_ms bub_pos() const override;
 
         short ignoring;
 

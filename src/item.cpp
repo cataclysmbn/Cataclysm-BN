@@ -5399,7 +5399,7 @@ std::string item::display_name( unsigned int quantity ) const
     if( is_map() && calendar::turn != calendar::turn_zero ) {
         // TODO: fix point types
         tripoint map_pos_omt =
-            get_var( "reveal_map_center_omt", you.global_omt_location().raw() );
+            get_var( "reveal_map_center_omt", you.abs_omt_pos().raw() );
         tripoint_abs_sm map_pos =
             project_to<coords::sm>( tripoint_abs_omt( map_pos_omt ) );
         const city *c = get_overmapbuffer( you.get_dimension() ).closest_city( map_pos ).city;

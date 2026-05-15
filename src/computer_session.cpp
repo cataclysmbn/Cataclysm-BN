@@ -517,7 +517,7 @@ void computer_session::action_maps()
 {
     Character &player_character = get_player_character();
     player_character.moves -= 30;
-    const tripoint_abs_omt center = player_character.global_omt_location();
+    const tripoint_abs_omt center = player_character.abs_omt_pos();
     get_overmapbuffer( get_map().get_bound_dimension() ).reveal( center.xy(), 40, 0 );
     query_any(
         _( "Surface map data downloaded.  Local anomalous-access error logged.  Press any key…" ) );
@@ -529,7 +529,7 @@ void computer_session::action_map_sewer()
 {
     Character &player_character = get_player_character();
     player_character.moves -= 30;
-    const tripoint_abs_omt center = player_character.global_omt_location();
+    const tripoint_abs_omt center = player_character.abs_omt_pos();
     for( int i = -60; i <= 60; i++ ) {
         for( int j = -60; j <= 60; j++ ) {
             point offset( i, j );
@@ -548,7 +548,7 @@ void computer_session::action_map_subway()
 {
     Character &player_character = get_player_character();
     player_character.moves -= 30;
-    const tripoint_abs_omt center = player_character.global_omt_location();
+    const tripoint_abs_omt center = player_character.abs_omt_pos();
     for( int i = -60; i <= 60; i++ ) {
         for( int j = -60; j <= 60; j++ ) {
             point offset( i, j );
@@ -1316,7 +1316,7 @@ void computer_session::failure_alarm()
                    "alarm" );
     if( g->get_levz() > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                             g->u.global_sm_location() );
+                             g->u.abs_sm_pos() );
     }
 }
 
@@ -1505,9 +1505,9 @@ void computer_session::action_emerg_ref_center()
                    "\n"
                    "IF YOU WOULD LIKE TO SPEAK WITH SOMEONE IN PERSON OR WOULD LIKE\n"
                    "TO WRITE US A LETTER PLEASE SEND IT TO…\n" ),
-                rl_dist( player_character.global_omt_location(), mission_target ),
+                rl_dist( player_character.abs_omt_pos(), mission_target ),
                 direction_name_short(
-                    direction_from( player_character.global_omt_location(), mission_target ) ) );
+                    direction_from( player_character.abs_omt_pos(), mission_target ) ) );
 
     query_any( _( "Press any key to continue…" ) );
     reset_terminal();

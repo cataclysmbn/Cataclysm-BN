@@ -313,11 +313,11 @@ void talk_function::goto_location( npc &p )
         return;
     }
     if( index == 1 ) {
-        destination = g->u.global_omt_location();
+        destination = g->u.abs_omt_pos();
     }
     p.goal = destination;
     p.omt_path = get_overmapbuffer( p.get_dimension() ).get_travel_path(
-                     p.global_omt_location(), p.goal, overmap_path_params::for_npc() );
+                     p.abs_omt_pos(), p.goal, overmap_path_params::for_npc() );
     if( destination == tripoint_abs_omt() || destination == overmap::invalid_tripoint ||
         p.omt_path.empty() ) {
         p.goal = npc::no_goal_point;
@@ -618,7 +618,7 @@ void talk_function::buy_10_logs( npc &p )
 
     std::vector<tripoint_abs_omt> places = get_overmapbuffer(
             get_player_character().get_dimension() ).find_all(
-                    get_player_character().global_omt_location(), find_params );
+                    get_player_character().abs_omt_pos(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -650,7 +650,7 @@ void talk_function::buy_100_logs( npc &p )
 
     std::vector<tripoint_abs_omt> places =
         get_overmapbuffer( get_player_character().get_dimension() ).find_all(
-            get_player_character().global_omt_location(), find_params );
+            get_player_character().abs_omt_pos(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;

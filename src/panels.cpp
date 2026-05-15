@@ -518,7 +518,7 @@ void overmap_ui::draw_overmap_chunk( const catacurses::window &w_minimap, const 
 
 static void draw_minimap( const avatar &u, const catacurses::window &w_minimap )
 {
-    const tripoint_abs_omt curs = u.global_omt_location();
+    const tripoint_abs_omt curs = u.abs_omt_pos();
     overmap_ui::draw_overmap_chunk( w_minimap, u, curs, point( -1, -1 ), 7, 7 );
 }
 
@@ -1523,8 +1523,8 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
 {
     werase( w );
     // display location
-    const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
-    tripoint_abs_omt coord = u.global_omt_location();
+    const oter_id &cur_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
+    tripoint_abs_omt coord = u.abs_omt_pos();
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Place: " ) );
     wprintz( w, c_white, utf8_truncate( cur_ter->get_name(), getmaxx( w ) - 13 ) );
@@ -1536,7 +1536,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
         std::tie( abs_coord, rel_coord ) = project_remain<coords::om>( coord );
         wprintz( w, c_white, string_format( "%d'%d, %d'%d, %d", abs_coord.x(), rel_coord.x(), abs_coord.y(),
                                             rel_coord.y(),
-                                            u.global_omt_location().z() ) );
+                                            u.abs_omt_pos().z() ) );
     } else {
         wprintz( w, c_white, string_format( "%d, %d, %d", coord.x(), coord.y(), coord.z() ) );
     }
@@ -1573,7 +1573,7 @@ static void draw_loc_labels( const avatar &u, const catacurses::window &w, bool 
     }
     if( minimap ) {
         const int offset = getmaxx( w ) - 6;
-        const tripoint_abs_omt curs = u.global_omt_location();
+        const tripoint_abs_omt curs = u.abs_omt_pos();
         overmap_ui::draw_overmap_chunk( w, u, curs, point( offset, -1 ), 5, 5 );
     }
     wnoutrefresh( w );
@@ -1739,7 +1739,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
     mvwprintz( w, point( 8, 1 ), c_light_gray, "%s", u.martial_arts_data->selected_style_name( u ) );
     // location
     mvwprintz( w, point( 8, 2 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
-                   u.global_omt_location() )->get_name(), getmaxx( w ) - 8 ) );
+                   u.abs_omt_pos() )->get_name(), getmaxx( w ) - 8 ) );
     // weather
     const weather_manager &weather = get_weather();
     if( g->get_levz() < 0 ) {
@@ -1753,7 +1753,7 @@ static void draw_env_compact( avatar &u, const catacurses::window &w )
                 character_funcs::fine_detail_vision_mod( get_avatar() ) );
     mvwprintz( w, point( 8, 4 ), ll.second, ll.first );
     // wind
-    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                                             u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
     mvwprintz( w, point( 8, 5 ), get_wind_color( windpower ),
@@ -1774,7 +1774,7 @@ static void render_wind( avatar &u, const catacurses::window &w, const std::stri
     mvwprintz( w, point_zero, c_light_gray,
                //~ translation should not exceed 5 console cells
                string_format( formatstr, left_justify( _( "Wind" ), 5 ) ) );
-    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( u.abs_omt_pos() );
     const weather_manager &weather = get_weather();
     double windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                                             u.abs_pos(), weather.winddirection, g->is_sheltered( u.bub_pos() ) );
@@ -2188,7 +2188,7 @@ static void draw_location_classic( const avatar &u, const catacurses::window &w 
 
     mvwprintz( w, point_zero, c_light_gray, _( "Location:" ) );
     mvwprintz( w, point( 10, 0 ), c_white, utf8_truncate( ACTIVE_OVERMAP_BUFFER.ter(
-                   u.global_omt_location() )->get_name(), getmaxx( w ) - 13 ) );
+                   u.abs_omt_pos() )->get_name(), getmaxx( w ) - 13 ) );
 
     wnoutrefresh( w );
 }

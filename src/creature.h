@@ -10,6 +10,7 @@
 
 #include "anatomy.h"
 #include "bodypart.h"
+#include "coordinates.h"
 #include "pimpl.h"
 #include "string_formatter.h"
 #include "translations.h"
@@ -37,10 +38,8 @@ class field;
 class field_entry;
 class JsonObject;
 class JsonOut;
-struct tripoint;
 class time_duration;
 class player;
-struct point;
 
 enum damage_type : int;
 enum m_flag : int;
@@ -490,10 +489,11 @@ class Creature
          */
         void check_dead_state();
 
-        virtual const tripoint_bub_ms &bub_pos() const = 0;
-        tripoint_abs_ms abs_pos() const;
+        virtual tripoint_bub_ms bub_pos() const = 0;
+        virtual tripoint_abs_ms abs_pos() const;
 
         virtual void setpos( const tripoint_bub_ms &pos ) = 0;
+        virtual void setpos( const tripoint_abs_ms &pos );
 
         bool is_loaded() const;
         virtual bool is_simulated() const;

@@ -151,8 +151,7 @@ npc::npc()
     , cbm_fake_active( new fake_item_location( ) )
     , cbm_fake_toggled( new fake_item_location( ) )
 {
-    submap_coords = point_abs_sm( point_zero );
-    position = tripoint_bub_ms( -1, -1, 500 );
+    position = tripoint_abs_ms::zero();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
     wanted_item_pos = tripoint_bub_ms::min();
@@ -193,9 +192,9 @@ standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
-    position = ( pos == tripoint_bub_ms( tripoint_min ) )
-               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
-               : pos;
+    position = ( pos == tripoint_bub_ms::min() )
+               ? get_map().bub_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
+               : get_map().bub_to_abs( pos );
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -748,10 +747,14 @@ void npc::set_known_to_u( bool known )
 
 void npc::setpos( const tripoint_bub_ms &pos )
 {
-    position = pos;
-    const point_abs_om pos_om_old( project_to<coords::om>( submap_coords ) );
-    submap_coords = g->m.bub_to_abs( project_to<coords::sm>( pos ) ).xy();
-    const point_abs_om pos_om_new( project_to<coords::om>( submap_coords ) );
+    setpos( get_map().bub_to_abs( pos ) );
+}
+
+void npc::setpos( const tripoint_abs_ms &new_pos )
+{
+    const point_abs_om pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
+    const point_abs_om pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
+    Character::setpos( new_pos );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
         overmap &om_old = dim_ob.get( pos_om_old );
@@ -766,21 +769,14 @@ void npc::setpos( const tripoint_bub_ms &pos )
     }
 }
 
-void npc::onswapsetpos( const tripoint_bub_ms &pos )
-{
-    position = pos;
-    submap_coords = project_to<coords::sm>( g->m.bub_to_abs( pos ).xy() );
-}
-
 void npc::travel_overmap( const tripoint_abs_sm &pos )
 {
-    // TODO: fix point types
-    const auto pos_om_old( project_to<coords::om>( submap_coords ) );
+    const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     spawn_at_sm( pos );
-    const auto pos_om_new( project_to<coords::om>( submap_coords ) );
-    if( global_omt_location() == goal ) {
+    if( abs_omt_pos() == goal ) {
         reach_omt_destination();
     }
+    const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
         overmap &om_old = dim_ob.get( pos_om_old );
@@ -788,8 +784,6 @@ void npc::travel_overmap( const tripoint_abs_sm &pos )
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
-            // Don't move the npc pointer around to avoid having two overmaps
-            // with the same npc pointer
             debugmsg( "could not find npc %s on its old overmap", name );
         }
     }
@@ -802,41 +796,29 @@ void npc::spawn_at_sm( const tripoint_abs_sm &p )
 
 void npc::spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square )
 {
-    submap_coords = submap_offset;
-    position = project_combine( g->m.abs_to_bub( submap_offset ), square );
-}
-
-tripoint_abs_ms npc::global_square_location() const
-{
-    return project_combine( submap_coords, project_remain<coords::sm>( bub_pos() ).remainder_tripoint );
+    // position is tripoint_abs_ms; combine submap origin with within-submap offset directly.
+    position = project_combine( submap_offset, square );
 }
 
 void npc::place_on_map()
 {
-    // The global absolute position (in map squares) of the npc is *always*
-    // "submap_coords.x * SEEX + bub_pos().x() % SEEX" (analog for y).
-    // Use get_map() rather than g->m directly so that this function works
-    // correctly when called under a scoped_map_context (e.g. for out-of-bubble
-    // loaded regions whose tinymap is temporarily the active map).
-    const auto map_origin = get_map().get_abs_sub();
-    const auto dm( get_map().abs_to_bub( submap_coords ) );
-    const auto offset = project_remain<coords::sm>( bub_pos() ).remainder_tripoint;
-    // value of "submap_coords.x * SEEX + bub_pos().x()" is unchanged
-    setpos( project_combine( dm, offset ) );
+    // position is the authoritative absolute position; bub_pos() derives from it.
+    // Find an empty tile near the NPC's intended location.
+    const tripoint_bub_ms initial = bub_pos();
 
-    if( g->is_empty( bub_pos() ) || is_mounted() ) {
+    if( g->is_empty( initial ) || is_mounted() ) {
         return;
     }
 
-    for( const tripoint_bub_ms &p : closest_points_first( bub_pos(), SEEX + 1 ) ) {
+    for( const tripoint_bub_ms &p : closest_points_first( initial, SEEX + 1 ) ) {
         if( g->is_empty( p ) ) {
             setpos( p );
             return;
         }
     }
 
-    debugmsg( "Failed to place NPC in a valid location near (%d,%d,%d)", bub_pos().x(), bub_pos().y(),
-              bub_pos().z() );
+    debugmsg( "Failed to place NPC in a valid location near (%d,%d,%d)", initial.x(), initial.y(),
+              initial.z() );
 }
 
 skill_id npc::best_skill() const
@@ -2636,8 +2618,8 @@ void npc::shift( point_rel_sm s )
 {
     const auto shift = project_to<coords::ms>( s );
 
-    setpos( bub_pos() - shift );
-
+    // position is absolute and doesn't need adjustment when the bubble shifts.
+    // Bubble-space cached fields still need offsetting.
     maybe_shift( wanted_item_pos, point_rel_ms( -shift.x(), -shift.y() ) );
     maybe_shift( last_player_seen_pos, point_rel_ms( -shift.x(), -shift.y() ) );
     maybe_shift( pulp_location, point_rel_ms( -shift.x(), -shift.y() ) );
@@ -2769,7 +2751,7 @@ void npc::die( Creature *nkiller )
 bool npc::is_simulated() const
 {
     return submap_loader.is_simulated( get_dimension(),
-                                       tripoint_abs_sm( global_sm_location() ) );
+                                       tripoint_abs_sm( abs_sm_pos() ) );
 }
 
 void npc::erase()
@@ -3441,7 +3423,7 @@ std::string npc::get_epilogue() const
 
 void npc::set_companion_mission( npc &p, const std::string &mission_id )
 {
-    const tripoint_abs_omt omt_pos = p.global_omt_location();
+    const tripoint_abs_omt omt_pos = p.abs_omt_pos();
     set_companion_mission( omt_pos, p.companion_mission_role_id, mission_id );
 }
 

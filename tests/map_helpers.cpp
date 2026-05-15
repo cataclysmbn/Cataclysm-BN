@@ -2,7 +2,9 @@
 
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <cassert>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <utility>
@@ -21,6 +23,7 @@
 #include "mapdata.h"
 #include "npc.h"
 #include "overmapbuffer.h"
+#include "submap.h"
 #include "type_id.h"
 
 // Remove all vehicles from the map
@@ -73,17 +76,41 @@ void clear_npcs()
 
 void clear_fields( const int zlevel )
 {
-    const int mapsize = g->m.getmapsize() * SEEX;
+    map &here = get_map();
+    const int mapsize = here.getmapsize();
     for( int x = 0; x < mapsize; ++x ) {
         for( int y = 0; y < mapsize; ++y ) {
-            const tripoint_bub_ms p( x, y, zlevel );
-            std::vector<field_type_id> fields;
-            for( auto &pr : g->m.field_at( p ) ) {
-                fields.push_back( pr.second.get_field_type() );
+            const tripoint_bub_sm grid_pos( x, y, zlevel );
+            submap *const sm = here.get_submap_at_grid( grid_pos );
+            if( sm == nullptr || sm->field_count == 0 ) {
+                continue;
             }
-            for( field_type_id f : fields ) {
-                g->m.remove_field( p, f );
+
+            const auto clear_field_at = [&]( const point_sm_ms & local ) {
+                const tripoint_bub_ms p = project_combine( grid_pos, local );
+                field &field_at_pos = sm->get_field( local );
+                if( field_at_pos.field_count() == 0 ) {
+                    return;
+                }
+
+                std::vector<field_type_id> fields;
+                std::ranges::transform( field_at_pos, std::back_inserter( fields ),
+                []( const std::pair<const field_type_id, field_entry> &pr ) {
+                    return pr.second.get_field_type();
+                } );
+
+                std::ranges::for_each( fields, [&]( const field_type_id & f ) {
+                    here.remove_field( p, f );
+                } );
+            };
+
+            const auto field_positions = sm->field_cache;
+            std::ranges::for_each( field_positions, clear_field_at );
+            if( sm->field_count != 0 ) {
+                std::ranges::for_each( submap_tiles(), clear_field_at );
+                sm->field_count = 0;
             }
+            sm->field_cache.clear();
         }
     }
 }
@@ -129,7 +156,7 @@ void clear_map()
 void put_player_underground()
 {
     // Make sure the player doesn't block the path of the monster being tested.
-    g->u.setpos( { 0, 0, -2 } );
+    g->u.setpos( tripoint_bub_ms{ 0, 0, -2 } );
 }
 
 monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start )

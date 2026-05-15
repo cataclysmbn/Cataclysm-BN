@@ -279,7 +279,7 @@ static void guarantee_neutral_weather( const player &p, weather_manager &weather
     REQUIRE( !get_map().veh_at( p.bub_pos() ) );
 
     const w_point &wp = weather.get_precise();
-    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( p.global_omt_location() );
+    const oter_id &cur_om_ter = ACTIVE_OVERMAP_BUFFER.ter( p.abs_omt_pos() );
     bool sheltered = g->is_sheltered( p.bub_pos() );
     double total_windpower = get_local_windpower( weather.windspeed, cur_om_ter,
                              p.abs_pos(),
@@ -553,9 +553,10 @@ TEST_CASE( "player_move_through_vehicle_holes" )
     clear_all_state();
     player &dummy = get_avatar();
 
-    const tripoint_bub_ms &pos = dummy.bub_pos();
+    const auto pos = dummy.bub_pos();
 
     get_map().add_vehicle( vproto_id( "apc" ), pos + tripoint_rel_ms( 2, -1, 0 ), -45_degrees, 0, 0 );
+    get_map().build_map_cache( pos.z() );
 
     REQUIRE( get_avatar().bub_pos() == pos );
 

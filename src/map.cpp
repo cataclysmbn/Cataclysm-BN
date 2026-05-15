@@ -7541,6 +7541,10 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
                                  const tripoint_bub_ms &f,
                                  int range, const int cost_min, const int cost_max ) const
 {
+    if( range < 0 || !inbounds( f ) ) {
+        return;
+    }
+
     struct pq_item {
         int dist;
         int ndx;
@@ -7571,6 +7575,9 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
         auto origin_relative = tp - f;
         origin_relative += origin_offset;
         int ndx = origin_relative.x() + origin_relative.y() * grid_dim;
+        if( ndx < 0 || ndx >= static_cast<int>( t_grid.size() ) ) {
+            continue;
+        }
         t_grid[ ndx ] = initial_visit_distance;
     }
 
@@ -7608,6 +7615,9 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
         const pq_item item = pq.top();
         pq.pop();
 
+        if( item.ndx < 0 || item.ndx >= static_cast<int>( t_grid.size() ) ) {
+            continue;
+        }
         if( t_grid[ item.ndx ] == initial_visit_distance ) {
             t_grid[ item.ndx ] = item.dist;
             if( item.dist + 1 < range ) {
@@ -10309,18 +10319,26 @@ tripoint_range<tripoint_bub_ms> map::points_in_rectangle( const tripoint_bub_ms 
     const tripoint_bub_ms max( std::min( SEEX * my_MAPSIZE - 1, std::max( from.x(), to.x() ) ),
                                std::min( SEEX * my_MAPSIZE - 1, std::max( from.y(), to.y() ) ), std::min( OVERMAP_HEIGHT,
                                        std::max( from.z(), to.z() ) ) );
+    if( min.x() > max.x() || min.y() > max.y() || min.z() > max.z() ) {
+        return tripoint_range<tripoint_bub_ms>( tripoint_bub_ms::zero(), tripoint_bub_ms( 0, 0, -1 ) );
+    }
     return tripoint_range<tripoint_bub_ms>( min, max );
 }
 
 tripoint_range<tripoint_bub_ms> map::points_in_radius( const tripoint_bub_ms &center, size_t radius,
         size_t radiusz ) const
 {
-    const tripoint_bub_ms min( std::max<int>( 0, center.x() - radius ), std::max<int>( 0,
-                               center.y() - radius ),
-                               clamp<int>( center.z() - radiusz, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
-    const tripoint_bub_ms max( std::min<int>( SEEX * my_MAPSIZE - 1, center.x() + radius ),
-                               std::min<int>( SEEX * my_MAPSIZE - 1, center.y() + radius ), clamp<int>( center.z() + radiusz,
+    const auto xy_radius = static_cast<int>( radius );
+    const auto z_radius = static_cast<int>( radiusz );
+    const tripoint_bub_ms min( std::max( 0, center.x() - xy_radius ), std::max( 0,
+                               center.y() - xy_radius ),
+                               clamp( center.z() - z_radius, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
+    const tripoint_bub_ms max( std::min( SEEX * my_MAPSIZE - 1, center.x() + xy_radius ),
+                               std::min( SEEX * my_MAPSIZE - 1, center.y() + xy_radius ), clamp( center.z() + z_radius,
                                        -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
+    if( min.x() > max.x() || min.y() > max.y() || min.z() > max.z() ) {
+        return tripoint_range<tripoint_bub_ms>( tripoint_bub_ms::zero(), tripoint_bub_ms( 0, 0, -1 ) );
+    }
     return tripoint_range<tripoint_bub_ms>( min, max );
 }
 

@@ -2079,7 +2079,7 @@ int iuse::directional_antenna( player *p, item *it, bool, const tripoint_bub_ms 
     }
     // Report direction.
     // TODO: fix point types
-    const tripoint_abs_sm player_pos( p->global_sm_location() );
+    const tripoint_abs_sm player_pos( p->abs_sm_pos() );
     direction angle = direction_from( player_pos.xy(), tref.abs_sm_pos );
     add_msg( _( "The signal seems strongest to the %s." ), direction_name( angle ) );
     return it->type->charges_to_use();
@@ -2437,7 +2437,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
                            "alarm" );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                     p->global_sm_location() );
+                                     p->abs_sm_pos() );
             }
         }
     } else {
@@ -2464,7 +2464,7 @@ int iuse::crowbar( player *p, item *it, bool, const tripoint_bub_ms &pos )
                                    "alarm" );
                     if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                             p->global_sm_location() );
+                                             p->abs_sm_pos() );
                     }
                 }
                 return it->type->charges_to_use();
@@ -4784,7 +4784,7 @@ int iuse::artifact( player *p, item *it, bool, const tripoint_bub_ms & )
                 break;
 
             case AEA_MAP: {
-                const tripoint_abs_omt center = p->global_omt_location();
+                const tripoint_abs_omt center = p->abs_omt_pos();
                 const bool new_map = get_overmapbuffer( p->get_dimension() ).reveal( center.xy(), 20, center.z() );
                 if( new_map ) {
                     p->add_msg_if_player( m_warning, _( "You have a vision of the surrounding area…" ) );
@@ -8456,7 +8456,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint_bub_ms & )
         if( optional_vpart_position vp = g->m.veh_at( p->bub_pos() ) ) {
             vehwindspeed = std::lround( cmps_to_mps( std::abs( vp->vehicle().velocity ) ) * 2.23694 );
         }
-        const oter_id &cur_om_ter = get_overmapbuffer( p->get_dimension() ).ter( p->global_omt_location() );
+        const oter_id &cur_om_ter = get_overmapbuffer( p->get_dimension() ).ter( p->abs_omt_pos() );
         /* windpower defined in internal velocity units (=.01 mph) */
         const double windpower = 100 * get_local_windpower( weather.windspeed + vehwindspeed, cur_om_ter,
                                  p->abs_pos(), weather.winddirection, g->is_sheltered( p->bub_pos() ) );

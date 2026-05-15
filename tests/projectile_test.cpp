@@ -46,7 +46,7 @@ TEST_CASE( "projectiles_through_obstacles", "[projectile]" )
 {
     clear_all_state();
     // Move the player out of the way of the test area
-    get_avatar().setpos( { 2, 2, 0 } );
+    get_avatar().setpos( tripoint_bub_ms{ 2, 2, 0 } );
 
     map &here = get_map();
     // Ensure that a projectile fired from a gun can pass through a wall

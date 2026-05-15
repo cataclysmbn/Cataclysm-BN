@@ -783,8 +783,8 @@ void npc::regen_ai_cache()
                     has_effect( effect_npc_player_looking ) ) {
                     continue;
                 }
-                if( global_omt_location() != player_character.global_omt_location() ) {
-                    goal = player_character.global_omt_location();
+                if( abs_omt_pos() != player_character.abs_omt_pos() ) {
+                    goal = player_character.abs_omt_pos();
                 }
                 set_attitude( NPCATT_TALK );
                 break;
@@ -1011,9 +1011,9 @@ void npc::move()
             // if we're in a vehicle, stay in the vehicle
             if( in_vehicle ) {
                 action = npc_pause;
-                goal = global_omt_location();
+                goal = abs_omt_pos();
             } else {
-                action = goal == global_omt_location() ?  npc_pause : npc_goto_destination;
+                action = goal == abs_omt_pos() ?  npc_pause : npc_goto_destination;
             }
         } else if( has_new_items ) {
             scan_new_items();
@@ -4275,7 +4275,7 @@ void npc::reach_omt_destination()
             set_mission( NPC_MISSION_GUARD );
             if( !needs.empty() && needs[0] == need_safety ) {
                 // we found our base.
-                base_location = global_omt_location();
+                base_location = abs_omt_pos();
             }
         }
         return;
@@ -4287,7 +4287,7 @@ void npc::reach_omt_destination()
         return;
     }
     // If we are guarding, remember our position in case we get forcibly moved
-    goal = global_omt_location();
+    goal = abs_omt_pos();
     if( guard_pos == abs_pos() ) {
         // This is the specific point
         return;
@@ -4329,7 +4329,7 @@ void npc::set_omt_destination()
         return;
     }
 
-    tripoint_abs_omt surface_omt_loc = global_omt_location();
+    tripoint_abs_omt surface_omt_loc = abs_omt_pos();
     // We need that, otherwise find_closest won't work properly
     surface_omt_loc.z() = 0;
 
@@ -4416,7 +4416,7 @@ void npc::go_to_omt_destination()
         reach_omt_destination();
         return;
     }
-    const tripoint_abs_omt omt_pos = global_omt_location();
+    const tripoint_abs_omt omt_pos = abs_omt_pos();
     if( goal == omt_pos ) {
         // We're at our desired map square!  Pause to keep the NPC infinite loop counter happy
         move_pause();
@@ -4471,7 +4471,7 @@ void npc::go_to_omt_destination()
 
 void npc::guard_current_pos()
 {
-    goal = global_omt_location();
+    goal = abs_omt_pos();
     guard_pos = get_map().bub_to_abs( bub_pos() );
 }
 

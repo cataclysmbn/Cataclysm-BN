@@ -104,7 +104,7 @@ void mission_start::kill_horde_master( mission *miss )
     find_params.search_range = { 0, 0 };
     find_params.search_layers = { 0, 0 };
 
-    const tripoint_abs_omt center = p->global_omt_location();
+    const tripoint_abs_omt center = p->abs_omt_pos();
     tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest( center,
                             find_params );
 
@@ -129,7 +129,7 @@ void mission_start::kill_horde_master( mission *miss )
 
 void mission_start::kill_nemesis( mission *miss )
 {
-    const tripoint_abs_omt center = get_player_character().global_omt_location();
+    const tripoint_abs_omt center = get_player_character().abs_omt_pos();
     auto &omb = get_overmapbuffer( miss->get_dimension() );
     omt_find_params params{};
     params.types.emplace_back( "field", ot_match_type::type );
@@ -236,7 +236,7 @@ void mission_start::place_npc_software( mission *miss )
         find_params.search_range = { 0, 0 };
         find_params.search_layers = { 0, 0 };
 
-        place = get_overmapbuffer( miss->get_dimension() ).find_closest( dev->global_omt_location(),
+        place = get_overmapbuffer( miss->get_dimension() ).find_closest( dev->abs_omt_pos(),
                 find_params );
     }
     miss->target = place;
@@ -297,10 +297,10 @@ void mission_start::place_deposit_box( mission *miss )
     find_params.search_layers = { 0, 0 };
 
     tripoint_abs_omt site = get_overmapbuffer( miss->get_dimension() ).find_closest(
-                                p->global_omt_location(), find_params );
+                                p->abs_omt_pos(), find_params );
 
     if( site == overmap::invalid_tripoint ) {
-        site = p->global_omt_location();
+        site = p->abs_omt_pos();
         debugmsg( "Couldn't find a place for deposit box" );
     }
 
@@ -327,7 +327,7 @@ void mission_start::place_deposit_box( mission *miss )
 
 void mission_start::find_safety( mission *miss )
 {
-    const tripoint_abs_omt place = get_player_character().global_omt_location();
+    const tripoint_abs_omt place = get_player_character().abs_omt_pos();
     for( int radius = 0; radius <= 20; radius++ ) {
         for( int dist = 0 - radius; dist <= radius; dist++ ) {
             int offset = rng( 0, 3 ); // Randomizes the direction we check first
@@ -642,7 +642,7 @@ void mission_start::reveal_refugee_center( mission *miss )
     find_params.search_layers = { 0, 0 };
 
     const tripoint_abs_omt source_road = get_overmapbuffer( miss->get_dimension() ).find_closest(
-            get_player_character().global_omt_location(), find_params );
+            get_player_character().abs_omt_pos(), find_params );
     const tripoint_abs_omt dest_road = get_overmapbuffer( miss->get_dimension() ).find_closest(
                                            *target_pos, find_params );
 
@@ -686,7 +686,7 @@ void mission_start::create_lab_console( mission *miss )
 {
     Character &player_character = get_player_character();
     // Pick a lab that has spaces on z = -1: e.g., in hidden labs.
-    tripoint_abs_omt loc = player_character.global_omt_location();
+    tripoint_abs_omt loc = player_character.abs_omt_pos();
     loc.z() = -1;
 
     omt_find_params find_params{};
@@ -702,7 +702,7 @@ void mission_start::create_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target,
+    mission_util::reveal_road( player_character.abs_omt_pos(), target,
                                get_overmapbuffer( miss->get_dimension() ) );
 }
 
@@ -710,7 +710,7 @@ void mission_start::create_hidden_lab_console( mission *miss )
 {
     Character &player_character = get_player_character();
     // Pick a hidden lab entrance.
-    tripoint_abs_omt loc = player_character.global_omt_location();
+    tripoint_abs_omt loc = player_character.abs_omt_pos();
     loc.z() = -1;
     tripoint_abs_omt place =
         mission_util::target_om_ter_random( "basement_hidden_lab_stairs", -1, miss, false, 0, loc );
@@ -721,7 +721,7 @@ void mission_start::create_hidden_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target,
+    mission_util::reveal_road( player_character.abs_omt_pos(), target,
                                get_overmapbuffer( miss->get_dimension() ) );
 }
 
@@ -729,7 +729,7 @@ void mission_start::create_ice_lab_console( mission *miss )
 {
     Character &player_character = get_player_character();
     // Pick an ice lab with spaces on z = -4.
-    tripoint_abs_omt loc = player_character.global_omt_location();
+    tripoint_abs_omt loc = player_character.abs_omt_pos();
     loc.z() = -4;
 
     omt_find_params find_params{};
@@ -745,7 +745,7 @@ void mission_start::create_ice_lab_console( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target,
+    mission_util::reveal_road( player_character.abs_omt_pos(), target,
                                get_overmapbuffer( miss->get_dimension() ) );
 }
 
@@ -753,7 +753,7 @@ void mission_start::reveal_lab_train_depot( mission *miss )
 {
     Character &player_character = get_player_character();
     // Find and prepare lab location.
-    tripoint_abs_omt loc = player_character.global_omt_location();
+    tripoint_abs_omt loc = player_character.abs_omt_pos();
     loc.z() = -4;  // tunnels are at z = -4
 
     omt_find_params find_params{};
@@ -786,6 +786,6 @@ void mission_start::reveal_lab_train_depot( mission *miss )
 
     // Target the lab entrance.
     const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
-    mission_util::reveal_road( player_character.global_omt_location(), target,
+    mission_util::reveal_road( player_character.abs_omt_pos(), target,
                                get_overmapbuffer( miss->get_dimension() ) );
 }

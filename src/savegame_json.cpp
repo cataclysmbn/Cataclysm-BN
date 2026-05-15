@@ -459,12 +459,19 @@ void Character::load( const JsonObject &data )
     data.allow_omitted_members();
     Creature::load( data );
 
-    if( !data.read( "posx", position.x() ) ) {  // uh-oh.
-        debugmsg( "BAD PLAYER/NPC JSON: no 'posx'?" );
-    }
-    data.read( "posy", position.y() );
-    if( !data.read( "posz", position.z() ) && g != nullptr ) {
-        position.z() = g->get_levz();
+    if( !data.read( "abs_pos", position ) ) {
+        // Legacy: posx/posy/posz were bubble-space at save time.
+        // The map is always restored to the same abs_sub before characters load,
+        // so bub_to_abs conversion here recovers the correct absolute position.
+        tripoint_bub_ms legacy_bub;
+        if( !data.read( "posx", legacy_bub.x() ) ) {
+            debugmsg( "BAD PLAYER/NPC JSON: no 'abs_pos' or 'posx'?" );
+        }
+        data.read( "posy", legacy_bub.y() );
+        if( !data.read( "posz", legacy_bub.z() ) && g != nullptr ) {
+            legacy_bub.z() = g->get_levz();
+        }
+        position = get_map().bub_to_abs( legacy_bub );
     }
     // stats
     data.read( "str_cur", str_cur );
@@ -822,10 +829,8 @@ void Character::store( JsonOut &json ) const
     Creature::store( json );
 
     // assumes already in Character object
-    // positional data
-    json.member( "posx", position.x() );
-    json.member( "posy", position.y() );
-    json.member( "posz", position.z() );
+    // positional data — stored as absolute map-square coordinates
+    json.member( "abs_pos", position );
 
     // stat
     json.member( "str_cur", str_cur );
@@ -1608,25 +1613,31 @@ void npc::load( const JsonObject &data )
     }
     data.read( "known_to_u", known_to_u );
     data.read( "personality", personality );
-    if( !data.read( "submap_coords", submap_coords ) ) {
-        // Old submap coordinates are for the point (0, 0, 0) on local map
-        // New ones are for submap that contains pos
-        point old_coords;
-        data.read( "mapx", old_coords.x );
-        data.read( "mapy", old_coords.y );
-        int o = 0;
-        if( data.read( "omx", o ) ) {
-            old_coords.x += o * OMAPX * 2;
-        }
-        if( data.read( "omy", o ) ) {
-            old_coords.y += o * OMAPY * 2;
-        }
-        submap_coords = point_abs_sm( old_coords + point( bub_pos().x() / SEEX,
-                                      bub_pos().y() / SEEY ) );
-    }
+    if( !data.has_member( "abs_pos" ) ) {
+        // Legacy NPC saves stored submap_coords + separate z-level.
+        auto offset = project_remain<coords::sm>( bub_pos().reinterpret_as<tripoint_rel_ms>() );
 
-    if( !data.read( "mapz", position.z() ) ) {
-        data.read( "omz", position.z() ); // omz/mapz got moved to position.z
+        if( !data.read( "mapz", offset.remainder_tripoint.z() ) ) {
+            data.read( "omz", offset.remainder_tripoint.z() );
+        }
+
+        point_abs_sm sm_coords;
+        if( !data.read( "submap_coords", sm_coords ) ) {
+            // Oldest format: submap coords encoded as omx/omy/mapx/mapy
+            point_abs_sm old_coords;
+            data.read( "mapx", old_coords.x() );
+            data.read( "mapy", old_coords.y() );
+            int o = 0;
+            if( data.read( "omx", o ) ) {
+                old_coords.x() += o * OMAPX * 2;
+            }
+            if( data.read( "omy", o ) ) {
+                old_coords.y() += o * OMAPY * 2;
+            }
+            sm_coords = old_coords + offset.quotient;
+        }
+
+        position = project_combine( sm_coords, offset.remainder_tripoint );
     }
 
     if( data.has_member( "plx" ) ) {
@@ -1827,8 +1838,6 @@ void npc::store( JsonOut &json ) const
     json.member( "myclass", myclass.str() );
     json.member( "known_to_u", known_to_u );
     json.member( "personality", personality );
-
-    json.member( "submap_coords", submap_coords );
 
     json.member( "last_player_seen_pos", last_player_seen_pos );
 

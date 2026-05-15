@@ -456,13 +456,9 @@ void veh_interact::do_main_loop()
         const std::string action = main_context.handle_input();
         msg.reset();
         if( const std::optional<tripoint_rel_ms> vec = main_context.get_direction( action ) ) {
-            // get_direction returns a map-space direction. Invert the vehicle's facing rotation
-            // so the cursor moves in map-space directions (north=up) for any vehicle facing.
-            // Zero pivot gives pure rotation without the pivot-anchor translation offset.
-            tripoint_mnt_veh vehicle_delta;
-            veh->coord_translate_reverse( veh->pivot_rotation[0], tripoint_mnt_veh::zero(), *vec,
-                                          vehicle_delta );
-            move_cursor( vehicle_delta.reinterpret_as<tripoint_rel_veh>() );
+            const point_rel_veh vehicle_delta =
+                vec->xy().rotate( 1 ).reinterpret_as<point_rel_veh>();
+            move_cursor( tripoint_rel_veh( vehicle_delta, vec->z() ) );
         } else if( action == "QUIT" ) {
             finish = true;
         } else if( action == "INSTALL" ) {
@@ -2397,8 +2393,8 @@ void veh_interact::display_veh()
         mvwprintz( w_disp, point( 0, 2 ), c_dark_gray, "Cur   %d,%d", vehicle_cursor.x(),
                    vehicle_cursor.y() );
 
-        const point_rel_ms com_s = veh->coord_translate( com - vehicle_cursor.raw() ).xy() + h_size;
-        const point_rel_ms pivot_s = veh->coord_translate( pivot - vehicle_cursor.raw() ).xy() + h_size;
+        const auto com_s = ( com - vehicle_cursor ).xy().rotate( 3 ) + h_size;
+        const auto pivot_s = ( pivot - vehicle_cursor ).xy().rotate( 3 ) + h_size;
 
         for( int x = 0; x < getmaxx( w_disp ); ++x ) {
             if( x <= com_s.x() ) {
@@ -2437,9 +2433,9 @@ void veh_interact::display_veh()
         int sym = veh->part_sym( p );
         nc_color col = veh->part_color( p );
 
-        const auto q = veh->coord_translate( veh->part( p ).mount - vehicle_cursor.raw() ).xy();
+        const auto q = ( veh->part( p ).mount - vehicle_cursor ).xy().rotate( 3 );
 
-        if( q == point_rel_ms::zero() ) {
+        if( q == point_rel_veh::zero() ) {
             col = hilite( col );
             cpart = p;
         }
@@ -2489,8 +2485,6 @@ void veh_interact::display_veh_tiles()
     werase( w_disp );
     wnoutrefresh( w_disp );
 
-    // Draw the vehicle with tiles
-    // vehicle_cursor is the cursor offset (negative), so we pass it directly
     tile_preview->display( *veh, vehicle_cursor, cpart );
 }
 #endif // TILES
