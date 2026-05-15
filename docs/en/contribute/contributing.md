@@ -271,6 +271,21 @@ for it, and will prevent anything that isn't completely ready from being merged 
 It is not required to solve or reference an open issue to file a PR, however, if you do so, you need
 to explain the problem your PR is solving in full detail.
 
+### AI-assisted pull requests
+
+If AI coding assistants contributed to a PR, the PR description must disclose the use of AI.
+
+Each commit that was written, generated, or substantively revised with AI assistance must include an
+`Assisted-by:` trailer in the Linux kernel format described in
+[AI Coding Assistants](https://docs.kernel.org/process/coding-assistants.html) and
+[Submitting patches](https://docs.kernel.org/process/submitting-patches.html#using-assisted-by).
+
+Example:
+
+```text
+Assisted-by: Claude:claude-3-opus coccinelle sparse
+```
+
 ### Closing issues using keywords
 
 One more thing: when marking your PR as closing, fixing, or resolving issues, please include this
