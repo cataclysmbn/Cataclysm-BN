@@ -2549,6 +2549,8 @@ bool map::ter_set( const tripoint &p, const ter_id &new_terrain )
     tripoint above( p.xy(), p.z + 1 );
     // Make sure that if we supported something and no longer do so, it falls down
     support_dirty( above );
+ 
+    invalidate_lightmap_caches();
 
     return true;
 }
@@ -5027,7 +5029,6 @@ bool map::open_door(
     if( vp ) {
         return open_door_veh( who, vp, p, inside );
     }
-
     return false;
 }
 
