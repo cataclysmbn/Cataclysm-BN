@@ -1,6 +1,7 @@
 #include "calendar.h"
 #include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
+#include "catalua_coord.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
@@ -307,7 +308,7 @@ void cata::detail::reg_map( sol::state &lua )
         const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
             return m.bub_to_abs( pos );
         } );
-        DOC( "Convert local bubble coordinates to absolute coordinates. Raw Tripoint arguments are treated as local map-square coordinates." );
+        DOC( "Convert local bubble coordinates to absolute coordinates." );
         luna::set_fx( ut, "bub_to_abs",
                       sol::overload(
         []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
@@ -321,7 +322,7 @@ void cata::detail::reg_map( sol::state &lua )
         const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
             return m.abs_to_bub( pos );
         } );
-        DOC( "Convert absolute coordinates to local bubble coordinates. Raw Tripoint arguments are treated as absolute map-square coordinates." );
+        DOC( "Convert absolute coordinates to local bubble coordinates." );
         luna::set_fx( ut, "abs_to_bub",
                       sol::overload(
         []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {

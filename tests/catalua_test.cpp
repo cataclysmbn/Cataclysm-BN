@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_serde.h"
@@ -96,6 +97,9 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
 
     auto test_data = lua.create_table();
     lua.globals()["test_data"] = test_data;
+    lua["accept_abs_omt"] = []( const tripoint_abs_omt & p ) {
+        return p.to_string();
+    };
 
     run_lua_test_script( lua, "typed_coords_projection_test.lua" );
 
@@ -110,6 +114,14 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
     CHECK( test_data.get<std::string>( "doc_remain_omt_quotient" ) == "TripointAbsOmt(1,1,2)" );
     CHECK( test_data.get<std::string>( "doc_remain_omt_remainder" ) == "PointOmtMs(1,2)" );
     CHECK( test_data.get<std::string>( "doc_remain_omt_combined" ) == "TripointAbsMs(25,26,2)" );
+
+    CHECK( test_data.get<std::string>( "typed_param" ) == "(1,2,3)" );
+    CHECK_FALSE( test_data.get<bool>( "raw_param_ok" ) );
+    CHECK_FALSE( test_data.get<bool>( "wrong_coord_ok" ) );
+    CHECK( test_data.get<std::string>( "raw_reinterpreted" ) == "TripointAbsOmt(1,2,3)" );
+    CHECK( test_data.get<std::string>( "raw_reinterpreted_param" ) == "(1,2,3)" );
+    CHECK( test_data.get<std::string>( "typed_reinterpreted" ) == "TripointAbsOmt(1,2,3)" );
+    CHECK( test_data.get<std::string>( "raw_delta_arithmetic" ) == "TripointAbsSm(364,2,-1)" );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )

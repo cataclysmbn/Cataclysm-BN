@@ -9,6 +9,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace cata::detail::lua_coords
@@ -94,6 +95,26 @@ auto lua_project_tripoint_to( const lua_tripoint_coord &coord,
         return std::nullopt;
     }
     return projected;
+}
+
+auto lua_project_to( const sol::object &val, const std::string &result_scale ) -> lua_coord_result
+{
+    if( val.is<lua_point_coord>() ) {
+        const auto projected = lua_project_point_to( val.as<lua_point_coord>(), result_scale );
+        if( !projected ) {
+            return sol::nil;
+        }
+        return *projected;
+    }
+    if( val.is<lua_tripoint_coord>() ) {
+        const auto projected = lua_project_tripoint_to( val.as<lua_tripoint_coord>(), result_scale );
+        if( !projected ) {
+            return sol::nil;
+        }
+        return *projected;
+    }
+    debugmsg( "project_to expected a PointCoord or TripointCoord" );
+    return sol::nil;
 }
 
 auto lua_project_point_remain_to( const lua_point_coord &coord,
@@ -504,6 +525,45 @@ auto cata::detail::reg_coords_library( sol::state &lua ) -> void
         return lua_coords::make_tripoint_coord( origin, scale, tripoint( x, y, z ) );
     } ) );
     lua_coords::bind_coord_factories( lib );
+
+    DOC( "Projects a PointCoord or TripointCoord to another scale, preserving its origin and point dimension. Returns nil if the conversion is not valid." );
+    DOC_PARAMS( "coord", "scale" );
+    luna::set_fx( lib, "project_to", &lua_coords::lua_project_to );
+    DOC( "Shortcut for `project_to(coord, \"ms\")`." );
+    DOC_PARAMS( "coord" );
+    luna::set_fx( lib, "project_to_ms", []( const sol::object & val ) {
+        return lua_coords::lua_project_to( val, "ms" );
+    } );
+    DOC( "Shortcut for `project_to(coord, \"veh\")`." );
+    DOC_PARAMS( "coord" );
+    luna::set_fx( lib, "project_to_veh", []( const sol::object & val ) {
+        return lua_coords::lua_project_to( val, "veh" );
+    } );
+    DOC( "Shortcut for `project_to(coord, \"sm\")`." );
+    DOC_PARAMS( "coord" );
+    luna::set_fx( lib, "project_to_sm", []( const sol::object & val ) {
+        return lua_coords::lua_project_to( val, "sm" );
+    } );
+    DOC( "Shortcut for `project_to(coord, \"omt\")`." );
+    DOC_PARAMS( "coord" );
+    luna::set_fx( lib, "project_to_omt", []( const sol::object & val ) {
+        return lua_coords::lua_project_to( val, "omt" );
+    } );
+    DOC( "Shortcut for `project_to(coord, \"mmr\")`." );
+    DOC_PARAMS( "coord" );
+    luna::set_fx( lib, "project_to_mmr", []( const sol::object & val ) {
+        return lua_coords::lua_project_to( val, "mmr" );
+    } );
+    DOC( "Shortcut for `project_to(coord, \"seg\")`." );
+    DOC_PARAMS( "coord" );
+    luna::set_fx( lib, "project_to_seg", []( const sol::object & val ) {
+        return lua_coords::lua_project_to( val, "seg" );
+    } );
+    DOC( "Shortcut for `project_to(coord, \"om\")`." );
+    DOC_PARAMS( "coord" );
+    luna::set_fx( lib, "project_to_om", []( const sol::object & val ) {
+        return lua_coords::lua_project_to( val, "om" );
+    } );
 
     DOC( "Splits a PointCoord or TripointCoord into a coarser coordinate plus a remainder. Point input returns PointCoord, PointCoord; tripoint input returns TripointCoord, PointCoord. Returns nil, nil if the split is not valid." );
     DOC_PARAMS( "coord", "scale" );

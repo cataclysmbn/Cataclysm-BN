@@ -5,6 +5,7 @@
 #include "point.h"
 
 #include <optional>
+#include <type_traits>
 
 namespace cata::detail::lua_coords
 {
@@ -83,49 +84,67 @@ auto push_coord( lua_State *L, const Coord &coord ) -> int
 namespace coords
 {
 
-template<typename Point, origin Origin, scale Scale, typename Handler>
-auto sol_lua_check( sol::types<coord_point<Point, Origin, Scale>>, lua_State *L,
+template<typename T>
+struct is_lua_coord_point : std::false_type {};
+
+template<typename Point, origin Origin, scale Scale>
+struct is_lua_coord_point<coord_point<Point, Origin, Scale>> : std::true_type {};
+
+template<typename Coord>
+using lua_coord_value_t = std::remove_cvref_t<Coord>;
+
+template<typename Coord>
+inline constexpr bool lua_coord_can_read_v =
+    is_lua_coord_point<lua_coord_value_t<Coord>>::value &&
+    ( !std::is_lvalue_reference_v<Coord> || std::is_const_v<std::remove_reference_t<Coord>> );
+
+template<typename Coord>
+using enable_lua_coord_point_t = std::enable_if_t<lua_coord_can_read_v<Coord>, int>;
+
+template<typename Coord, typename Handler, enable_lua_coord_point_t<Coord> = 0>
+auto sol_lua_check( sol::types<Coord>, lua_State *L,
                     const int index, Handler &&handler,
                     sol::stack::record &tracking ) -> bool
 {
-    using Coord = coord_point<Point, Origin, Scale>;
+    using Value = lua_coord_value_t<Coord>;
     auto local_tracking = sol::stack::record{};
-    if( cata::detail::lua_coords::coord_from_lua<Coord>( L, index, local_tracking ) ) {
+    if( cata::detail::lua_coords::coord_from_lua<Value>( L, index,
+            local_tracking ) ) {
         tracking.use( 1 );
         return true;
     }
     tracking.use( 1 );
     handler( L, index, sol::type::userdata, sol::type_of( L, index ),
-             "expected raw point/tripoint or matching PointCoord/TripointCoord" );
+             "expected matching PointCoord/TripointCoord" );
     return false;
 }
 
-template<typename Point, origin Origin, scale Scale>
-auto sol_lua_get( sol::types<coord_point<Point, Origin, Scale>>, lua_State *L, const int index,
-                  sol::stack::record &tracking ) -> coord_point<Point, Origin, Scale>
+template<typename Coord, enable_lua_coord_point_t<Coord> = 0>
+auto sol_lua_get( sol::types<Coord>, lua_State *L, const int index,
+                  sol::stack::record &tracking ) -> lua_coord_value_t<Coord>
 {
-    using Coord = coord_point<Point, Origin, Scale>;
-    if( const auto coord = cata::detail::lua_coords::coord_from_lua<Coord>( L, index,
+    using Value = lua_coord_value_t<Coord>;
+    if( const auto coord = cata::detail::lua_coords::coord_from_lua<Value>( L, index,
                            tracking ) ) {
         return *coord;
     }
     tracking.use( 1 );
-    return Coord();
+    return Value();
 }
 
-template<typename Point, origin Origin, scale Scale, typename Handler>
-auto sol_lua_check_get( sol::types<coord_point<Point, Origin, Scale>>, lua_State *L,
+template<typename Coord, typename Handler, enable_lua_coord_point_t<Coord> = 0>
+auto sol_lua_check_get( sol::types<Coord>, lua_State *L,
                         const int index, Handler &&handler,
-                        sol::stack::record &tracking ) -> sol::optional<coord_point<Point, Origin, Scale>>
+                        sol::stack::record &tracking ) -> sol::optional<lua_coord_value_t<Coord>>
 {
-    using Coord = coord_point<Point, Origin, Scale>;
-    if( const auto coord = cata::detail::lua_coords::coord_from_lua<Coord>( L, index,
+    using Value = lua_coord_value_t<Coord>;
+    if( const auto coord = cata::detail::lua_coords::coord_from_lua<Value>( L, index,
                            tracking ) ) {
         return *coord;
     }
     tracking.use( 1 );
     handler( L, index, sol::type::userdata, sol::type_of( L, index ),
-             "expected raw point/tripoint or matching PointCoord/TripointCoord" );
+             "expected matching PointCoord/TripointCoord" );
     return sol::nullopt;
 }
 

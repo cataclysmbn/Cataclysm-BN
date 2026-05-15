@@ -35,14 +35,6 @@ auto bind_tripoint_axis_properties( sol::usertype<lua_tripoint_coord> &ut ) -> v
 auto lua_tripoint_add( const lua_tripoint_coord &lhs, const sol::object &rhs,
                        sol::this_state lua_state ) -> sol::object
 {
-    if( rhs.is<point>() ) {
-        return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                 lhs.raw + rhs.as<point>() ) );
-    }
-    if( rhs.is<tripoint>() ) {
-        return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                 lhs.raw + rhs.as<tripoint>() ) );
-    }
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
@@ -61,21 +53,13 @@ auto lua_tripoint_add( const lua_tripoint_coord &lhs, const sol::object &rhs,
                                      lhs.raw + other.raw ) );
         }
     }
-    debugmsg( "TripointCoord addition expects a raw Point, raw Tripoint, or a relative coordinate at the same scale" );
+    debugmsg( "TripointCoord addition expects a relative coordinate at the same scale" );
     return sol::nil;
 }
 
 auto lua_tripoint_subtract( const lua_tripoint_coord &lhs, const sol::object &rhs,
                             sol::this_state lua_state ) -> sol::object
 {
-    if( rhs.is<point>() ) {
-        return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                 lhs.raw - rhs.as<point>() ) );
-    }
-    if( rhs.is<tripoint>() ) {
-        return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                 lhs.raw - rhs.as<tripoint>() ) );
-    }
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
@@ -94,7 +78,7 @@ auto lua_tripoint_subtract( const lua_tripoint_coord &lhs, const sol::object &rh
                                      lhs.scale, lhs.raw - other.raw ) );
         }
     }
-    debugmsg( "TripointCoord subtraction expects a raw Point, raw Tripoint, a relative coordinate at the same scale, or a matching TripointCoord" );
+    debugmsg( "TripointCoord subtraction expects a relative coordinate at the same scale, or a matching TripointCoord" );
     return sol::nil;
 }
 
@@ -113,6 +97,18 @@ auto lua_tripoint_rotate( const lua_tripoint_coord &coord, const int turns,
                           const point &dim ) -> lua_tripoint_coord
 {
     return make_tripoint_coord( coord.origin, coord.scale, coord.raw.rotate_2d( turns, dim ) );
+}
+
+auto lua_tripoint_reinterpret_as( const lua_tripoint_coord &coord, const std::string &origin,
+                                  const std::string &scale ) -> lua_tripoint_coord
+{
+    return make_tripoint_coord( origin, scale, coord.raw );
+}
+
+auto raw_tripoint_reinterpret_as( const tripoint &raw, const std::string &origin,
+                                  const std::string &scale ) -> lua_tripoint_coord
+{
+    return make_tripoint_coord( origin, scale, raw );
 }
 
 auto lua_tripoint_less_than( const lua_tripoint_coord &lhs,
@@ -207,6 +203,9 @@ auto reg_lua_tripoint_coord( sol::state &lua ) -> void
     } );
     luna::set_fx( ut, "raw", []( const lua_tripoint_coord & pt ) { return pt.raw; } );
     luna::set_fx( ut, "rotate_2d", &lua_tripoint_rotate );
+    DOC( "Reinterpret this coordinate as another tripoint coordinate kind without changing x, y, or z." );
+    DOC_PARAMS( "origin", "scale" );
+    luna::set_fx( ut, "reinterpret_as", &lua_tripoint_reinterpret_as );
 
     bind_tripoint_projection_methods( ut );
 
@@ -260,6 +259,9 @@ auto reg_raw_tripoint( sol::state &lua ) -> void
     luna::set_fx( ut, "abs", &tripoint::abs );
     luna::set_fx( ut, "xy", &tripoint::xy );
     luna::set_fx( ut, "rotate_2d", &tripoint::rotate_2d );
+    DOC( "Reinterpret this raw tripoint as a typed tripoint coordinate without changing x, y, or z." );
+    DOC_PARAMS( "origin", "scale" );
+    luna::set_fx( ut, "reinterpret_as", &raw_tripoint_reinterpret_as );
 
     reg_serde_functions( ut );
 

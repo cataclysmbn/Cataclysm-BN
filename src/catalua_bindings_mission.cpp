@@ -1,6 +1,7 @@
 #include <string>
 
 #include "catalua_bindings.h"
+#include "catalua_coord.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"

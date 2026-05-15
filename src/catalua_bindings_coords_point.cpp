@@ -34,10 +34,6 @@ auto bind_point_axis_properties( sol::usertype<lua_point_coord> &ut ) -> void
 auto lua_point_add( const lua_point_coord &lhs, const sol::object &rhs,
                     sol::this_state lua_state ) -> sol::object
 {
-    if( rhs.is<point>() ) {
-        return sol::make_object( lua_state, make_point_coord( lhs.origin, lhs.scale,
-                                 lhs.raw + rhs.as<point>() ) );
-    }
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
@@ -49,17 +45,13 @@ auto lua_point_add( const lua_point_coord &lhs, const sol::object &rhs,
                                      lhs.raw + other.raw ) );
         }
     }
-    debugmsg( "PointCoord addition expects a raw Point or a relative PointCoord at the same scale" );
+    debugmsg( "PointCoord addition expects a relative PointCoord at the same scale" );
     return sol::nil;
 }
 
 auto lua_point_subtract( const lua_point_coord &lhs, const sol::object &rhs,
                          sol::this_state lua_state ) -> sol::object
 {
-    if( rhs.is<point>() ) {
-        return sol::make_object( lua_state, make_point_coord( lhs.origin, lhs.scale,
-                                 lhs.raw - rhs.as<point>() ) );
-    }
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
@@ -71,7 +63,7 @@ auto lua_point_subtract( const lua_point_coord &lhs, const sol::object &rhs,
                                      lhs.scale, lhs.raw - other.raw ) );
         }
     }
-    debugmsg( "PointCoord subtraction expects a raw Point, a relative PointCoord at the same scale, or a matching PointCoord" );
+    debugmsg( "PointCoord subtraction expects a relative PointCoord at the same scale, or a matching PointCoord" );
     return sol::nil;
 }
 
@@ -89,6 +81,18 @@ auto lua_point_rotate( const lua_point_coord &coord, const int turns,
                        const point &dim ) -> lua_point_coord
 {
     return make_point_coord( coord.origin, coord.scale, coord.raw.rotate( turns, dim ) );
+}
+
+auto lua_point_reinterpret_as( const lua_point_coord &coord, const std::string &origin,
+                               const std::string &scale ) -> lua_point_coord
+{
+    return make_point_coord( origin, scale, coord.raw );
+}
+
+auto raw_point_reinterpret_as( const point &raw, const std::string &origin,
+                               const std::string &scale ) -> lua_point_coord
+{
+    return make_point_coord( origin, scale, raw );
 }
 
 auto lua_point_less_than( const lua_point_coord &lhs, const lua_point_coord &rhs ) -> bool
@@ -179,6 +183,9 @@ auto reg_lua_point_coord( sol::state &lua ) -> void
     } );
     luna::set_fx( ut, "raw", []( const lua_point_coord & pt ) { return pt.raw; } );
     luna::set_fx( ut, "rotate", &lua_point_rotate );
+    DOC( "Reinterpret this coordinate as another point coordinate kind without changing x or y." );
+    DOC_PARAMS( "origin", "scale" );
+    luna::set_fx( ut, "reinterpret_as", &lua_point_reinterpret_as );
 
     bind_point_projection_methods( ut );
 
@@ -229,6 +236,9 @@ auto reg_raw_point( sol::state &lua ) -> void
 
     luna::set_fx( ut, "abs", &point::abs );
     luna::set_fx( ut, "rotate", &point::rotate );
+    DOC( "Reinterpret this raw point as a typed point coordinate without changing x or y." );
+    DOC_PARAMS( "origin", "scale" );
+    luna::set_fx( ut, "reinterpret_as", &raw_point_reinterpret_as );
 
     reg_serde_functions( ut );
 
