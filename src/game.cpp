@@ -13528,35 +13528,34 @@ void game::start_hauling( const tripoint_bub_ms &pos )
 
 std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bool peeking )
 {
-    const int movez = z_after - get_levz();
-    const bool going_down_1 = movez == -1;
-    const bool going_up_1 = movez == 1;
+    const auto bub_pos = mp.abs_to_bub( u.abs_pos() );
+    const auto movez = tripoint_rel_ms( 0, 0, z_after - get_levz() );
     // If there are stairs on the same x and y as we currently are, use those
-    if( going_down_1 && mp.has_flag( TFLAG_GOES_UP, u.bub_pos() + tripoint_below ) ) {
-        return u.bub_pos() + tripoint_below;
+    if( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, bub_pos + movez ) ) {
+        return bub_pos + movez;
     }
-    if( going_up_1 && mp.has_flag( TFLAG_GOES_DOWN, u.bub_pos() + tripoint_above ) &&
-        !mp.has_flag( TFLAG_DEEP_WATER, u.bub_pos() + tripoint_below ) ) {
-        return u.bub_pos() + tripoint_above;
+    if( movez.z() == 1 && mp.has_flag( TFLAG_GOES_DOWN, bub_pos + movez ) &&
+        !mp.has_flag( TFLAG_DEEP_WATER, bub_pos + movez ) ) {
+        return bub_pos + movez;
     }
     // We did not find stairs directly above or below, so search the map for them
     // This was named as though overmap, but that'd be *absurd* so I made this omt.
-    const auto omt_start = project_to<coords::omt>( m.bub_to_abs( u.bub_pos() ) );
+    const auto omt_start = project_to<coords::omt>( u.abs_pos() );
 
     // Try to find the stairs.
     std::optional<tripoint_bub_ms> stairs;
     int best = INT_MAX;
     if( !stairs.has_value() ) {
         for( const auto &rel : overmap_terrain_tiles() ) {
-            const auto dest = abs_to_bub( project_combine( omt_start, rel ) );
-            if( rl_dist( u.bub_pos(), dest ) <= best &&
-                ( ( going_down_1 && mp.has_flag( TFLAG_GOES_UP, dest ) ) ||
-                  ( ( going_up_1 && ( mp.has_flag( TFLAG_GOES_DOWN, dest ) &&
+            const auto dest = mp.abs_to_bub( project_combine( omt_start, rel ) ) + movez;
+            if( rl_dist( bub_pos, dest ) <= best &&
+                ( ( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, dest ) ) ||
+                  ( ( movez.z() == 1 && ( mp.has_flag( TFLAG_GOES_DOWN, dest ) &&
                                       !mp.has_flag( TFLAG_DEEP_WATER, dest ) ) ) ||
                     mp.ter( dest ) == t_manhole_cover )   ||
-                  ( ( movez == 2 || movez == -2 ) && mp.ter( dest ) == t_elevator ) ) ) {
+                  ( ( movez.z() == 2 || movez.z() == -2 ) && mp.ter( dest ) == t_elevator ) ) ) {
                 stairs.emplace( dest );
-                best = rl_dist( u.bub_pos(), dest );
+                best = rl_dist( bub_pos, dest );
             }
         }
     }
@@ -13592,7 +13591,8 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
         bool &rope_ladder,
         bool peeking )
 {
-    const int movez = z_after - u.bub_pos().z();
+    const auto bub_pos = mp.abs_to_bub( u.abs_pos() );
+    const int movez = z_after - bub_pos.z();
 
     // Try to find the stairs.
     std::optional<tripoint_bub_ms> stairs = find_stairs( mp, z_after, peeking );
@@ -13604,7 +13604,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
 
     // No stairs found! Try to make some
     rope_ladder = false;
-    stairs.emplace( u.bub_pos() );
+    stairs.emplace( bub_pos );
     stairs->z() = z_after;
 
     if( mp.ter( *stairs ) == t_lava ) {
@@ -13786,7 +13786,6 @@ point_rel_sm game::update_map( Character &who )
     int x = who.bub_pos().x();
     int y = who.bub_pos().y();
     return update_map( x, y );
-    who.setpos( tripoint_bub_ms( x, y, who.bub_pos().z() ) );
 }
 
 point_rel_sm game::update_map( int &x, int &y )

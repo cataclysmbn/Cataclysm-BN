@@ -660,8 +660,6 @@ class game : public submap_load_listener
         void add_artifact_messages( const std::vector<art_effect_passive> &effects );
         void add_artifact_dreams( );
 
-        static tripoint_bub_ms find_closest_stair( const tripoint_bub_ms &near_this,
-                const ter_bitflags stair_type );
         std::optional<tripoint_bub_ms> find_local_stairs_leading_to( map &mp, const int z_after );
         void suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
 
