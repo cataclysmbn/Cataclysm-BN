@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "activity_actor_definitions.h"
 #include "avatar.h"
 #include "avatar_functions.h"
 #include "calendar.h"
@@ -529,6 +530,117 @@ static int resume_craft()
         you.activity->do_turn( you );
     }
     return turns;
+}
+
+static auto make_food_craft( const recipe &recipe_to_make,
+                             const bool with_pine_nuts ) -> detached_ptr<item>
+{
+    auto components = std::vector<detached_ptr<item>>{};
+    if( with_pine_nuts ) {
+        components.push_back( item::spawn( "pine_nuts", calendar::turn, 1 ) );
+    } else {
+        components.push_back( item::spawn( "meat_smoked" ) );
+    }
+    return item::spawn( &recipe_to_make, 1, std::move( components ), std::vector<item_comp>{} );
+}
+
+static auto has_component( const item &crafted, const itype_id &type ) -> bool
+{
+    const auto components = crafted.get_components().as_vector();
+    return std::ranges::any_of( components,
+    [&type]( const item *component ) { return component->typeId() == type; } );
+}
+
+static auto finished_sandwiches( Character &you ) -> std::vector<item *>
+{
+    return you.items_with( []( const item &it ) { return it.typeId() == itype_id( "sandwich_pb" ); } );
+}
+
+static auto in_progress_crafts( Character &you ) -> std::vector<item *>
+{
+    return you.items_with( []( const item &it ) { return it.is_craft(); } );
+}
+
+static auto assign_completed_craft_activity( Character &you, const recipe &recipe_to_make,
+        item *target = nullptr ) -> void
+{
+    auto actor = std::make_unique<craft_activity_actor>( &recipe_to_make, 1, 10'000'000,
+                 you.pos(), std::vector<comp_selection<item_comp>>{},
+                 std::vector<comp_selection<tool_comp>>{}, true, false );
+    auto act = std::make_unique<player_activity>( std::move( actor ) );
+    if( target != nullptr ) {
+        act->targets.emplace_back( *target );
+    }
+    you.assign_activity( std::move( act ) );
+}
+
+static auto finish_craft_activity( avatar &you ) -> void
+{
+    REQUIRE( you.activity->id() == activity_id( "ACT_CRAFT" ) );
+    you.set_moves( 100 );
+    you.activity->do_turn( you );
+    REQUIRE( you.activity->id() == activity_id::NULL_ID() );
+}
+
+TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting][food]" )
+{
+    clear_all_state();
+    clear_map();
+    clear_avatar();
+
+    auto &you = get_avatar();
+    auto &here = get_map();
+    const auto &sandwich_recipe = recipe_id( "sandwich_pb" ).obj();
+
+    SECTION( "targeted map craft wins over inventory craft with the same recipe" ) {
+        you.i_add( make_food_craft( sandwich_recipe, false ) );
+        here.add_item( you.pos(), make_food_craft( sandwich_recipe, true ) );
+        auto &target_craft = here.i_at( you.pos() ).only_item();
+        target_craft.set_counter( 10'000'000 );
+
+        assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
+        finish_craft_activity( you );
+
+        const auto sandwiches = finished_sandwiches( you );
+        REQUIRE( sandwiches.size() == 1 );
+        CHECK( has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
+        CHECK( !has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
+        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 51 );
+        CHECK( in_progress_crafts( you ).size() == 1 );
+        CHECK( here.i_at( you.pos() ).empty() );
+    }
+
+    SECTION( "targeted inventory craft is preserved when a map craft has the same recipe" ) {
+        auto &target_craft = you.i_add( make_food_craft( sandwich_recipe, false ) );
+        target_craft.set_counter( 10'000'000 );
+        here.add_item( you.pos(), make_food_craft( sandwich_recipe, true ) );
+
+        assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
+        finish_craft_activity( you );
+
+        const auto sandwiches = finished_sandwiches( you );
+        REQUIRE( sandwiches.size() == 1 );
+        CHECK( has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
+        CHECK( !has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
+        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 101 );
+        CHECK( in_progress_crafts( you ).empty() );
+        REQUIRE( here.i_at( you.pos() ).size() == 1 );
+        CHECK( here.i_at( you.pos() ).only_item().is_craft() );
+    }
+
+    SECTION( "missing target falls back to an available matching craft" ) {
+        auto &fallback_craft = you.i_add( make_food_craft( sandwich_recipe, true ) );
+        fallback_craft.set_counter( 10'000'000 );
+
+        assign_completed_craft_activity( you, sandwich_recipe );
+        finish_craft_activity( you );
+
+        const auto sandwiches = finished_sandwiches( you );
+        REQUIRE( sandwiches.size() == 1 );
+        CHECK( has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
+        CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 51 );
+        CHECK( in_progress_crafts( you ).empty() );
+    }
 }
 
 static void verify_inventory( const std::vector<std::string> &has,

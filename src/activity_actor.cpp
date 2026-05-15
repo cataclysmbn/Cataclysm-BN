@@ -2072,8 +2072,13 @@ craft_activity_actor::craft_activity_actor(
     is_valid( rec != nullptr )
 {}
 
-item *craft_activity_actor::find_in_progress_craft( Character &who ) const
+auto craft_activity_actor::find_in_progress_craft( const player_activity &act, Character &who ) const -> item * // *NOPAD*
 {
+    if( !act.targets.empty() && act.targets.front() && act.targets.front()->is_craft() &&
+        &act.targets.front()->get_making() == rec ) {
+        return &*act.targets.front();
+    }
+
     item *result = nullptr;
     who.visit_items( [&]( item * it ) {
         if( it->is_craft() && &it->get_making() == rec ) {
@@ -2110,7 +2115,7 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
     // Catch-up: apply time elapsed while NPC was outside the reality bubble.
     // last_turn_nr >= 0 means start() already ran in a previous session.
     if( last_turn_nr >= 0 && current_turn > last_turn_nr ) {
-        item *craft_item = find_in_progress_craft( who );
+        item *craft_item = find_in_progress_craft( act, who );
         if( craft_item ) {
             const int elapsed_turns = current_turn - last_turn_nr;
             const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
@@ -2150,7 +2155,7 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
 
     // Re-build progress counter after deserialization if catch-up didn't already do it
     if( activity_actor::progress.empty() ) {
-        item *craft_item = find_in_progress_craft( who );
+        item *craft_item = find_in_progress_craft( act, who );
         const std::string name = craft_item ? craft_item->tname() : rec->result_name();
         const int base_total = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
         const int remaining = std::max( 1, static_cast<int>(
@@ -2158,7 +2163,7 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
         activity_actor::progress.emplace( name, base_total, remaining );
     }
 
-    item *craft_item = find_in_progress_craft( who );
+    item *craft_item = find_in_progress_craft( act, who );
     if( craft_item ) {
         refresh_speed( act, who, *craft_item );
     }
@@ -2199,7 +2204,7 @@ void craft_activity_actor::start( player_activity &act, Character &who )
         return;
     }
 
-    item *craft_item = find_in_progress_craft( who );
+    item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         who.add_msg_player_or_npc(
             _( "You lost your in progress %s and had to stop crafting." ),
@@ -2225,7 +2230,7 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
         return;
     }
 
-    item *craft_item = find_in_progress_craft( who );
+    item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         who.add_msg_player_or_npc(
             _( "You no longer have the in progress craft in your possession.  "
@@ -2314,9 +2319,9 @@ void craft_activity_actor::finish( player_activity &act, Character &who )
     do_complete_craft( act, who );
 }
 
-void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Character &who )
+void craft_activity_actor::do_complete_craft( player_activity &act, Character &who )
 {
-    item *craft_item = find_in_progress_craft( who );
+    item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         debugmsg( "craft_activity_actor::do_complete_craft: no craft item found for %s",
                   rec ? rec->result_name() : "unknown" );
