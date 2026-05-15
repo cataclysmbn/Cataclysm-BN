@@ -1102,7 +1102,7 @@ void map::vehmove()
     // neighbours reachable but not in the set get on_map=false as before.
     std::set<vehicle *> all_veh_ptrs;
     std::ranges::for_each( vehicle_list, [&]( const wrapped_vehicle & w ) {
-        if (loaded_vehicles.contains(w.v)) {
+        if( loaded_vehicles.contains( w.v ) ) {
             all_veh_ptrs.insert( w.v );
         }
     } );
