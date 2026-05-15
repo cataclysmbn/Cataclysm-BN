@@ -303,7 +303,8 @@ void cata::detail::reg_map( sol::state &lua )
         sol::usertype<map> ut = luna::new_usertype<map>( lua, luna::no_bases, luna::no_constructor );
 
         DOC( "[Deprecated] Convert local ms -> absolute ms" );
-        luna::set_fx( ut, "get_abs_ms", []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
+        luna::set_fx( ut, "get_abs_ms", []( const map & m,
+        const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
             return m.bub_to_abs( pos );
         } );
         DOC( "Convert local bubble coordinates to absolute coordinates. Raw Tripoint arguments are treated as local map-square coordinates." );
@@ -316,7 +317,8 @@ void cata::detail::reg_map( sol::state &lua )
             return m.bub_to_abs( pos );
         } ) );
         DOC( "[Deprecated] Convert absolute ms -> local ms" );
-        luna::set_fx( ut, "get_local_ms", []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
+        luna::set_fx( ut, "get_local_ms", []( const map & m,
+        const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
             return m.abs_to_bub( pos );
         } );
         DOC( "Convert absolute coordinates to local bubble coordinates. Raw Tripoint arguments are treated as absolute map-square coordinates." );
