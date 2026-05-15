@@ -569,9 +569,7 @@
   },
   {
     "type": "overmap_terrain",
-    "id": [
-      "underground_lab_cargo_stationA_sub_station"
-    ],
+    "id": [ "underground_lab_cargo_stationA_sub_station" ],
     "name": "subway station?",
     "sym": "S",
     "looks_like": "microlab_sub_station",
