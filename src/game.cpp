@@ -12731,7 +12731,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         }
 
         if( m.impassable( dest ) || !dest_is_air ) {
-            if( !can_noclip ) { //zz
+            if( !can_noclip ) {
                 for( const trait_id &tid : mutations ) {
                     const auto &mdata = tid.obj();
                     if( mdata.flags.contains( trait_flag_MUTATION_FLIGHT ) ) {
