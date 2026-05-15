@@ -2173,9 +2173,7 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
 void craft_activity_actor::refresh_speed( player_activity &act, const Character &who,
         const item &craft_item, std::optional<bench_location> bench ) const
 {
-    const bench_location resolved_bench = bench ? *bench
-                                         : cached_bench ? *cached_bench
-                                         : find_best_bench( who, craft_item );
+    const bench_location resolved_bench = bench ? *bench : find_best_bench( who, craft_item );
     const recipe &making = *rec;
     const float tools_mult = cached_tools_mult != 0.0f ? cached_tools_mult
                              : crafting_tools_speed_multiplier( who, making );
@@ -2218,7 +2216,6 @@ void craft_activity_actor::start( player_activity &act, Character &who )
         return;
     }
 
-    cached_bench = find_best_bench( who, *craft_item );
     cached_tools_mult = crafting_tools_speed_multiplier( who, *rec );
     craft_counter = craft_item->get_counter();
     last_turn_nr = to_turn<int>( calendar::turn );  // mark fresh start so calc_all_moves skips catch-up
@@ -2249,14 +2246,12 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     }
 
     const recipe &making = *rec;
-    if( !cached_bench ) {
-        cached_bench = find_best_bench( who, *craft_item );
-    }
     if( cached_tools_mult == 0.0f ) {
         cached_tools_mult = crafting_tools_speed_multiplier( who, making );
     }
-    refresh_speed( act, who, *craft_item, cached_bench );
-    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, *cached_bench, act.speed.tools );
+    const bench_location bench = find_best_bench( who, *craft_item );
+    refresh_speed( act, who, *craft_item, bench );
+    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, bench, act.speed.tools );
     const int assistants = who.available_assistant_count( making );
 
     if( crafting_speed <= 0.0f ) {
