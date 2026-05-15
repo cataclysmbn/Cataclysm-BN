@@ -1426,6 +1426,7 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint &dp, const tileray &fac
         inp_mngr.pump_events();
         ui_manager::redraw_invalidated();
         refresh_display();
+        invalidate_lightmap_caches();
     }
     return &veh;
 }
