@@ -548,7 +548,6 @@
     "id": [
       "lab_2x1_CORE_-1W",
       "lab_2x1_CORE_-1E",
-      "underground_lab_cargo_stationA",
       "underground_lab_cargo_stationB",
       "underground_lab_central_-5E",
       "underground_lab_central_-5W",
@@ -564,6 +563,19 @@
     "name": "lab cargo zone",
     "sym": "C",
     "color": "white",
+    "see_cost": 5,
+    "spawns": { "group": "GROUP_VANILLA", "population": [ 3, 15 ], "chance": 70 },
+    "flags": [ "RISK_HIGH" ]
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [
+      "underground_lab_cargo_stationA"
+    ],
+    "name": "subway station?",
+    "sym": "S",
+    "looks_like": "microlab_sub_station",
+    "color": "light_blue",
     "see_cost": 5,
     "spawns": { "group": "GROUP_VANILLA", "population": [ 3, 15 ], "chance": 70 },
     "flags": [ "RISK_HIGH" ]
