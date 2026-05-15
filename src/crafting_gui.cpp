@@ -249,7 +249,7 @@ auto ensure_availability( Character &crafter,
                           bool show_unavailable ) -> availability & // *NOPAD*
 {
     if( !availability_cache.contains( rec ) ) {
-        const auto known = !show_unavailable || available_recipes.contains( *rec );
+        const auto known = available_recipes.contains( *rec );
         availability_cache.emplace( rec, availability( crafter, rec, 1, known ) );
     }
     return availability_cache.at( rec );
@@ -313,7 +313,7 @@ auto expand_nested_recipes( std::vector<const recipe *> &out_current,
 {
     auto &availability_cache = opts.availability_cache;
     if( !availability_cache.contains( recp ) ) {
-        const auto known = !opts.show_unavailable || opts.available_recipes.contains( *recp );
+        const auto known = opts.available_recipes.contains( *recp );
         availability_cache.emplace( recp, availability( opts.crafter, recp, 1, known ) );
     }
 
@@ -335,7 +335,7 @@ auto expand_nested_recipes( std::vector<const recipe *> &out_current,
     std::ranges::for_each( recp->nested_category_data, [&]( const recipe_id & nested_id ) {
         const auto *nested_rec = &nested_id.obj();
         if( !availability_cache.contains( nested_rec ) ) {
-            const auto known = !opts.show_unavailable || opts.available_recipes.contains( *nested_rec );
+            const auto known = opts.available_recipes.contains( *nested_rec );
             availability_cache.emplace( nested_rec, availability( opts.crafter, nested_rec, 1, known ) );
         }
         if( nested_rec->is_nested() ) {
@@ -343,6 +343,13 @@ auto expand_nested_recipes( std::vector<const recipe *> &out_current,
             nested_avail.can_craft = update_nested_can_craft(
                                          opts.crafter, *nested_rec, availability_cache, opts.nested_can_craft_cache,
                                          opts.visiting_nested, opts.available_recipes, opts.show_unavailable );
+        }
+        // When not showing unavailable recipes, drop leaf children the player
+        // doesn't know. Nested children are kept so we can still descend into
+        // categories whose own descendants are known.
+        if( !opts.show_unavailable && !nested_rec->is_nested() &&
+            !opts.available_recipes.contains( *nested_rec ) ) {
+            return;
         }
         children.push_back( nested_rec );
     } );
@@ -1050,7 +1057,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 for( int i = 1; i <= 50; i++ ) {
                     current.push_back( chosen );
                     available.emplace_back( crafter, chosen, i,
-                                            !show_unavailable || available_recipes.contains( *chosen ) );
+                                            available_recipes.contains( *chosen ) );
                 }
             } else {
                 std::vector<const recipe *> picking;
@@ -1180,7 +1187,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 for( const recipe *e : current ) {
                     if( !availability_cache.contains( e ) ) {
                         availability_cache.emplace( e, availability( crafter, e, 1,
-                                                    !show_unavailable || available_recipes.contains( *e ) ) );
+                                                    available_recipes.contains( *e ) ) );
                     }
                 }
 

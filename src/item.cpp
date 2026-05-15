@@ -1337,7 +1337,7 @@ item::sizing item::get_sizing( const Character &who ) const
     }
     bool to_ignore = true;
     for( const armor_portion_data &piece : armor_data->data ) {
-        if( piece.encumber != 0 ) {
+        if( piece.encumber != 0 || piece.max_encumber != 0 ) {
             to_ignore = false;
         }
     }
@@ -4729,15 +4729,19 @@ void item::on_wear( Character &who )
             int lhs = 0;
             int rhs = 0;
             set_side( side::LEFT );
-            const char_encumbrance_data left_enc = who.get_encumbrance( *this );
+            const char_encumbrance_data left_enc = who.get_encumbrance();
             for( const bodypart_id &bp : all_bps ) {
-                lhs += left_enc.elems.at( bp.id() ).encumbrance;
+                if( get_covered_body_parts().test( bp.id() ) ) {
+                    lhs += left_enc.elems.at( bp.id() ).encumbrance;
+                }
             }
 
             set_side( side::RIGHT );
-            const char_encumbrance_data right_enc = who.get_encumbrance( *this );
+            const char_encumbrance_data right_enc = who.get_encumbrance();
             for( const bodypart_id &bp : all_bps ) {
-                rhs += right_enc.elems.at( bp.id() ).encumbrance;
+                if( get_covered_body_parts().test( bp.id() ) ) {
+                    rhs += right_enc.elems.at( bp.id() ).encumbrance;
+                }
             }
 
             set_side( lhs <= rhs ? side::LEFT : side::RIGHT );

@@ -2733,14 +2733,6 @@ void options_manager::add_options_debug()
 
     add_empty_line();
 
-    add( "MIN_AUTODRIVE_SPEED", debug, translate_marker( "Minimum auto-drive speed" ),
-         translate_marker( "Set the minimum speed for the auto-drive feature.  In tiles/s.  Default is 1 (6 km/h or 4 mph)." ),
-         1, 100, 1 );
-
-    add( "MAX_AUTODRIVE_SPEED", debug, translate_marker( "Maximum auto-drive speed" ),
-         translate_marker( "Set the maximum speed for the auto-drive feature.  In tiles/s.  Default is 9 (57 km/h or 36 mph)." ),
-         1, 100, 9 );
-
     add( "LIMITED_BAYONETS", debug, translate_marker( "New bayonet system" ),
          translate_marker( "If true, bayonets replace weapon attack instead of adding to it.  WIP feature, weakens bayonets heavily at the moment." ),
          false );

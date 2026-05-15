@@ -23,6 +23,7 @@
 #include "type_id.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
+#include "vehicle_wait.h"
 #include "vpart_position.h"
 #include "veh_type.h"
 
@@ -158,6 +159,23 @@ TEST_CASE( "taking_control_of_vehicle_without_engine", "[vehicle]" )
     CHECK( player_character.controlling_vehicle );
     CHECK_FALSE( veh_ptr->engine_on );
     CHECK( !player_character.activity );
+}
+
+TEST_CASE( "moving_flying_vehicle_can_use_wait_menu", "[vehicle][wait]" )
+{
+    clear_all_state();
+    const auto origin = tripoint( 60, 60, 0 );
+
+    auto *veh_ptr = get_map().add_vehicle( vproto_id( "plane_small" ), origin, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    veh_ptr->velocity = 100;
+    CHECK( vehicle_wait::is_wait_blocked_by_movement( *veh_ptr ) );
+    CHECK_FALSE( vehicle_wait::should_offer_flying_wait_durations( *veh_ptr ) );
+
+    veh_ptr->set_flying( true );
+    CHECK_FALSE( vehicle_wait::is_wait_blocked_by_movement( *veh_ptr ) );
+    CHECK( vehicle_wait::should_offer_flying_wait_durations( *veh_ptr ) );
 }
 
 TEST_CASE( "horde_spawns_skip_owned_vehicle_tiles", "[horde][vehicle][monster]" )

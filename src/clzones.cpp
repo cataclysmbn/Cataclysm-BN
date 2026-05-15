@@ -527,7 +527,7 @@ plot_options::query_seed_result plot_options::query_seed()
     std::vector<seed_tuple> seed_entries = iexamine::get_seed_entries( seed_inv );
     seed_entries.emplace( seed_entries.begin(), itype_id( "null" ), _( "No seed" ), 0 );
 
-    int seed_index = iexamine::query_seed( seed_entries );
+    int seed_index = iexamine::query_seed( seed_entries, 0 );
 
     if( seed_index > 0 && seed_index < static_cast<int>( seed_entries.size() ) ) {
         const auto &seed_entry = seed_entries[seed_index];

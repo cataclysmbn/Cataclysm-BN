@@ -20,6 +20,26 @@
     "flags": [ "VARSIZE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ]
   },
   {
+    "id": "makeshift_headwrap",
+    "type": "ARMOR",
+    "name": { "str": "makeshift headwrap" },
+    "description": "A bulky covering for your head made from a wrapped blanket.  Very warm, but very encumbering.",
+    "weight": "1123 g",
+    "volume": "3 L",
+    "price": "55 USD",
+    "price_postapoc": "50 cent",
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "looks_like": "mask_ski",
+    "color": "dark_gray",
+    "covers": [ "head", "mouth" ],
+    "coverage": 100,
+    "encumbrance": 40,
+    "warmth": 65,
+    "material_thickness": 3,
+    "flags": [ "OVERSIZE", "OUTER" ]
+  },
+  {
     "id": "bandana",
     "type": "ARMOR",
     "name": { "str": "bandana" },

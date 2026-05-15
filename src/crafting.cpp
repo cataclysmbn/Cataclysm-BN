@@ -815,7 +815,9 @@ item *Character::start_craft( craft_command &command, const tripoint & )
                      craft_in_world->get_var( "craft_tools_fully_prepaid", 0 ) == 1,
                      command.is_long()
                  );
-    assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+    auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
+    craft_activity->targets.emplace_back( craft_in_world );
+    assign_activity( std::move( craft_activity ) );
 
     add_msg_player_or_npc(
         pgettext( "in progress craft", "You start working on the %s." ),

@@ -425,5 +425,63 @@
     "max_range": 15,
     "min_aoe": 100,
     "max_aoe": 100
+  },
+  {
+    "id": "spell_mutant_alpha",
+    "type": "SPELL",
+    "name": { "str": "Mesmerized pull" },
+    "description": "Applies pull",
+    "valid_targets": [ "hostile" ],
+    "flags": [ "SILENT", "NO_FAIL", "NO_EXPLOSION_VFX" ],
+    "min_range": 0,
+    "max_range": 15,
+    "min_damage": -10,
+    "max_damage": -10,
+    "effect": "directed_push"
+  },
+  {
+    "type": "SPELL",
+    "id": "spell_mutant_medical",
+    "name": "Summon medical nightmare",
+    "description": "Summon medical nightmare.",
+    "flags": [ "NO_EXPLOSION_VFX", "HOSTILE_SUMMON" ],
+    "valid_targets": [ "ground", "self" ],
+    "min_damage": 2,
+    "max_damage": 3,
+    "min_aoe": 4,
+    "max_aoe": 6,
+    "min_duration": 10000,
+    "max_duration": 10000,
+    "effect": "summon",
+    "effect_str": "mon_mutant_medical_summon",
+    "extra_effects": [ { "id": "spell_mutant_medical_hostile" } ]
+  },
+  {
+    "type": "SPELL",
+    "id": "spell_mutant_medical_hostile",
+    "name": "Summon medical nightmare",
+    "description": "Summon medical nightmare.",
+    "flags": [ "NO_EXPLOSION_VFX", "HOSTILE_SUMMON" ],
+    "valid_targets": [ "ground", "self" ],
+    "min_damage": 2,
+    "max_damage": 3,
+    "min_aoe": 4,
+    "max_aoe": 6,
+    "min_duration": 10000,
+    "max_duration": 10000,
+    "effect": "summon",
+    "effect_str": "mon_mutant_medical_summon_hostile"
+  },
+  {
+    "type": "SPELL",
+    "id": "spell_mutant_medical_summon",
+    "name": "nightmare teleport",
+    "description": "teleport short distance.",
+    "message": "",
+    "effect": "teleport_random",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
+    "min_range": 2,
+    "max_range": 3
   }
 ]
