@@ -16,5 +16,11 @@
     "subtype": "collection",
     "id": "mon_mutant_alpha_boss_death_drops",
     "entries": [ { "item": "subsuit_xl" }, { "item": "recipe_alpha" } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_mutant_medical_boss_death_drops",
+    "entries": [ { "item": "subsuit_xl", "damage": [ 3, 4 ] }, { "item": "recipe_medicalmut" } ]
   }
 ]
