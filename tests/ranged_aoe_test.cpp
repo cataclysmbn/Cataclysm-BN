@@ -94,8 +94,8 @@ static auto reachable_shape_points_no_obstacle( const shape &s,
     auto queue = std::queue<tripoint_bub_ms>();
     auto reachable = std::set<tripoint_bub_ms>();
 
-    const auto try_enqueue = [&s, &here, &queue, &reachable]( const tripoint_bub_ms &from,
-    const tripoint_bub_ms &candidate ) {
+    const auto try_enqueue = [&s, &here, &queue, &reachable]( const tripoint_bub_ms & from,
+    const tripoint_bub_ms & candidate ) {
         if( reachable.contains( candidate ) || s.distance_at( candidate.raw() ) >= 0.0 ||
             here.obstructed_by_vehicle_rotation( from, candidate ) ) {
             return;
@@ -143,7 +143,7 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
     CHECK( origin_coverage <= 0.0 );
 
     std::ranges::for_each( cov, [&bb, &reachable_shape_points,
-    &s]( const std::pair<const tripoint_bub_ms, double> &entry ) {
+         &s]( const std::pair<const tripoint_bub_ms, double> &entry ) {
         const auto &p = entry.first;
         const auto coverage = entry.second;
         const auto signed_distance = s->distance_at( p.raw() );
@@ -156,7 +156,7 @@ static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
         CHECK( bb.contains( p.raw() ) );
     } );
 
-    std::ranges::for_each( reachable_shape_points, [&cov]( const tripoint_bub_ms &p ) {
+    std::ranges::for_each( reachable_shape_points, [&cov]( const tripoint_bub_ms & p ) {
         CAPTURE( p );
         CHECK( cov.contains( p ) );
     } );

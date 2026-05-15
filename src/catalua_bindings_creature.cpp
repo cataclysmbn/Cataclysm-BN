@@ -119,7 +119,7 @@ void cata::detail::reg_creature( sol::state &lua )
         SET_FX_T( is_immune_effect, bool( const efftype_id & ) const );
         SET_FX_T( is_immune_damage, bool( damage_type ) const );
 
-        SET_FX_N_T( bub_pos, "get_pos_ms", tripoint_bub_ms () const );
+        SET_FX_N_T( bub_pos, "get_pos_ms", tripoint_bub_ms() const );
 
         SET_FX_N_T( setpos, "set_pos_ms", void( const tripoint_bub_ms & ) );
 
@@ -580,7 +580,7 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( healall, void( int dam ) );
 
         // Legacy Lua API aliases — scripts using these names still work.
-        luna::set_fx( ut, "global_square_location", []( const Character &c ) { return c.abs_pos(); } );
+        luna::set_fx( ut, "global_square_location", []( const Character & c ) { return c.abs_pos(); } );
         SET_FX_N_T( abs_sm_pos, "global_sm_location", tripoint_abs_sm() const );
 
         SET_FX_T( has_mabuff, bool( const mabuff_id & ) const );
