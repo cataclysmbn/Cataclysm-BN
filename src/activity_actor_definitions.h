@@ -127,6 +127,8 @@ class craft_activity_actor final : public activity_actor
         bool is_long = false;
         bool is_valid = false;
         int last_turn_nr = -1;  // turn# when last do_turn ran; -1 = never set
+        float cached_tools_mult = 0.0f;   // 0 = not yet computed; set once in start()
+        std::optional<bench_location> cached_bench;
 
         bool can_resume_with_internal( const activity_actor &other, const Character & ) const override {
             const auto &c_actor = static_cast<const craft_activity_actor &>( other );
