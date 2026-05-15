@@ -595,6 +595,7 @@ void map::generate_lightmap_worker( const int zlev )
     ZoneScoped;
     auto &map_cache = get_cache( zlev );
     auto &lm = map_cache.lm;
+    auto &outside_cache = map_cache.outside_cache;
     auto &prev_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH, OVERMAP_DEPTH ) ).floor_cache;
     auto &prev_vehicle_floor_cache = get_cache( clamp( zlev + 1, -OVERMAP_DEPTH,
                                      OVERMAP_DEPTH ) ).vehicle_floor_cache;
@@ -667,8 +668,11 @@ void map::generate_lightmap_worker( const int zlev )
                         auto has_floor_above = [&]( int idx ) {
                             return prev_floor_cache[idx] || prev_vehicle_floor_cache[idx];
                         };
-                        if( top_floor || has_floor_above( map_cache.idx( p.x(), p.y() ) ) ) {
-                            // App.y() light sources for external/internal divide.
+                        if( !outside_cache[map_cache.idx( p.x(), p.y() )] || ( !top_floor &&
+                                has_floor_above( map_cache.idx( p.x(), p.y() ) ) ) ) {
+                            // Apply light sources for external/internal divide.
+                            // Skip outdoor tiles (outside_cache=true) unless they have a ceiling above
+                            // without this guard every z=10 tile (all outside) enters the loop.
                             // A neighbour is an outdoor light source if it has no floor above it
                             // and is part of a genuine outdoor area (not an isolated skylight hole).
                             // An isolated skylight has no adjacent open-sky neighbours, so we
