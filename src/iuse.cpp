@@ -391,7 +391,7 @@ struct extended_photo_def : public JsonDeserializer, public JsonSerializer {
     }
 };
 
-static std::vector<std::string> describe_character(Character *guy);
+static std::vector<std::string> describe_character( Character *guy );
 static void item_save_monsters( player &p, item &it, const std::vector<monster *> &monster_vec,
                                 int photo_quality );
 static bool show_photo_selection( player &p, item &it, const std::string &var_name );
@@ -6738,7 +6738,7 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
                 } else {
                     pose = _( "is standing" );
                 }
-                const std::vector<std::string> vec = describe_character(guy);
+                const std::vector<std::string> vec = describe_character( guy );
                 figure_appearance = join( vec, "\n\n" );
                 figure_name = guy->name;
                 pronoun_sex = guy->male ? _( "He" ) : _( "She" );
@@ -6926,15 +6926,15 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
         } else if( is_dusk( calendar::turn ) ) {
             time_string = _( "<color_magenta>sunset</color>" );
         } else if( is_night( calendar::turn ) ) {
-            if (hour == 0) {
+            if( hour == 0 ) {
                 time_string = _( "<color_dark_gray>midnight</color>" );
             } else {
                 time_string = _( "<color_gray>night</color>" );
             }
         } else {
-            if (hour < 12) {
+            if( hour < 12 ) {
                 time_string = _( "<color_cyan>morning</color>" );
-            } else if (hour > 12) {
+            } else if( hour > 12 ) {
                 time_string = _( "<color_light_red>afternoon</color>" );
             } else {
                 time_string = _( "<color_light_blue>midday</color>" );
@@ -6959,13 +6959,13 @@ static extended_photo_def photo_def_for_camera_point( const tripoint &aim_point,
     return photo;
 }
 
-static std::vector<std::string> describe_character(Character *guy)
+static std::vector<std::string> describe_character( Character *guy )
 {
     std::vector<std::string> result;
     std::string pronoun = guy->male ? _( "He" ) : _( "She" );
 
     if( guy->is_armed() ) {
-        result.push_back( pronoun + " " + _( "is wielding a " ) + guy->primary_weapon().tname() + ".");
+        result.push_back( pronoun + " " + _( "is wielding a " ) + guy->primary_weapon().tname() + "." );
     }
 
     const std::string worn_str = enumerate_as_string( guy->worn.begin(), guy->worn.end(),
