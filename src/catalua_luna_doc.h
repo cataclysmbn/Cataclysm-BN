@@ -14,6 +14,7 @@ enum character_movemode : int;
 enum class add_type : int;
 enum color_id : int;
 enum damage_type : int;
+enum class direction : unsigned;
 enum game_message_type : int;
 enum m_flag : int;
 enum creature_size : int;
@@ -273,6 +274,7 @@ LUNA_ENUM( Attitude, "Attitude" )
 LUNA_ENUM( body_part, "BodyPart" )
 LUNA_ENUM( character_movemode, "CharacterMoveMode" )
 LUNA_ENUM( damage_type, "DamageType" )
+LUNA_ENUM( direction, "Direction" )
 LUNA_ENUM( game_message_type, "MsgType" )
 LUNA_ENUM( mf_attitude, "MonsterFactionAttitude" )
 LUNA_ENUM( m_flag, "MonsterFlag" )

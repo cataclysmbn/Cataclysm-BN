@@ -5,7 +5,10 @@
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include <algorithm>
 #include <ranges>
+#include <stdexcept>
+#include <vector>
 
 #include "avatar.h"
 #include "distribution_grid.h"
@@ -34,6 +37,22 @@ void add_msg_lua( game_message_type t, sol::variadic_args va )
     add_msg( t, msg );
 }
 
+auto direction_from_relative_delta( const cata::detail::lua_coords::lua_tripoint_coord &delta ) -> direction
+{
+    if( delta.origin != coords::origin::relative ) {
+        throw std::runtime_error( "direction_from expects a relative TripointCoord delta" );
+    }
+    return direction_from( delta.raw );
+}
+
+auto overmap_terrain_cardinal_directions() -> std::vector<tripoint_rel_omt>
+{
+    return std::vector<tripoint_rel_omt>{
+        tripoint_rel_omt::north(), tripoint_rel_omt::south(), tripoint_rel_omt::east(),
+        tripoint_rel_omt::west(), tripoint_rel_omt::above(), tripoint_rel_omt::below()
+    };
+}
+
 } // namespace
 
 void cata::detail::reg_game_api( sol::state &lua )
@@ -49,7 +68,7 @@ void cata::detail::reg_game_api( sol::state &lua )
     add_msg_lua, []( sol::variadic_args va ) { add_msg_lua( game_message_type::m_neutral, va ); }
                   ) );
     DOC( "Teleports player to absolute coordinate in overmap" );
-    luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( tripoint_abs_omt( p ) ); } );
+    luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
@@ -285,19 +304,14 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "Get the global overmap buffer" );
     luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return get_active_overmapbuffer(); } );
 
-    DOC( "Get direction from a tripoint delta" );
-    luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta ); } );
+    DOC( "Get direction from a relative tripoint coordinate delta." );
+    luna::set_fx( lib, "direction_from", &direction_from_relative_delta );
 
     DOC( "Get direction name from direction enum" );
     luna::set_fx( lib, "direction_name", []( direction dir ) -> std::string { return direction_name( dir ); } );
 
-    DOC( "Get the six cardinal directions (N, S, E, W, Up, Down)" );
-    luna::set_fx( lib, "six_cardinal_directions", []() -> std::vector<tripoint> {
-        return std::vector<tripoint>{
-            tripoint_north, tripoint_south, tripoint_east,
-            tripoint_west, tripoint_above, tripoint_below
-        };
-    } );
+    DOC( "Get the six cardinal overmap-terrain direction offsets (N, S, E, W, Up, Down)." );
+    luna::set_fx( lib, "six_cardinal_directions", &overmap_terrain_cardinal_directions );
 
     luna::finalize_lib( lib );
 }

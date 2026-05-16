@@ -18,6 +18,7 @@
 #include "calendar.h"
 #include "bionics.h"
 #include "cata_utility.h"
+#include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "creature_tracker.h"
@@ -2156,8 +2157,8 @@ bool monster::move_to( const tripoint_bub_ms &p, bool force, bool step_on_critte
                                   "on_monster_try_move",
     [ &, this]( sol::table & params ) {
         params["monster"] = this;
-        params["from"] = bub_pos();
-        params["to"] = p;
+        params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
+        params["to"] = cata::detail::lua_coords::to_lua( p );
         params["force"] = force;
     } );
     const auto can_move = hook_results.get_or( "allowed", true );

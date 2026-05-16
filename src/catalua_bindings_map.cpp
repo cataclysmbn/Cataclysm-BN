@@ -25,7 +25,9 @@
 #include "units_angle.h"
 #include "vehicle.h"
 
+#include <algorithm>
 #include <cmath>
+#include <iterator>
 
 LUNA_VAL( wrapped_vehicle, "WrappedVehicle" )
 
@@ -412,13 +414,10 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Returns all points within a radius from the center point. `radiusz` defaults to 0." );
         luna::set_fx( ut, "points_in_radius", []( const map & m, const tripoint_bub_ms & center,
-        int radius, sol::optional<int> radiusz ) -> std::vector<lua_coords::lua_tripoint_coord> {
-            std::vector<lua_coords::lua_tripoint_coord> points;
-            for( const auto pt : m.points_in_radius( center, radius, radiusz.value_or( 0 ) ) )
-            {
-                points.push_back( cata::detail::lua_coords::make_tripoint_coord( coords::origin::bubble,
-                                  coords::scale::map_square, pt.raw() ) );
-            }
+        int radius, sol::optional<int> radiusz ) -> std::vector<tripoint_bub_ms> {
+            auto points = std::vector<tripoint_bub_ms>{};
+            std::ranges::copy( m.points_in_radius( center, radius, radiusz.value_or( 0 ) ),
+                               std::back_inserter( points ) );
             return points;
         } );
 

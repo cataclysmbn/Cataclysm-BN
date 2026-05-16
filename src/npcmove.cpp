@@ -17,6 +17,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "cata_algo.h"
+#include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "character.h"
@@ -2450,8 +2451,8 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
                                   "on_npc_try_move",
     [ &, this]( sol::table & params ) {
         params["npc"] = this;
-        params["from"] = bub_pos();
-        params["to"] = p;
+        params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
+        params["to"] = cata::detail::lua_coords::to_lua( p );
         params["movement_mode"] = get_movement_mode();
         params["via_ramp"] = false;
         if( is_mounted() ) {
@@ -2466,8 +2467,8 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
                                        "on_character_try_move",
     [ &, this]( sol::table & params ) {
         params["char"] = static_cast<Character *>( this );
-        params["from"] = bub_pos();
-        params["to"] = p;
+        params["from"] = cata::detail::lua_coords::to_lua( bub_pos() );
+        params["to"] = cata::detail::lua_coords::to_lua( p );
         params["movement_mode"] = get_movement_mode();
         params["via_ramp"] = false;
         if( is_mounted() ) {

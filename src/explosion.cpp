@@ -23,6 +23,7 @@
 #include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_coord.h"
 #include "cata_utility.h"
 #include "cata_algo.h"
 #include "color.h"
@@ -1556,7 +1557,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
     auto &shr = ex.fragment;
 
     cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
-        params["pos"] = p;
+        params["pos"] = cata::detail::lua_coords::to_lua( p );
         params["damage"] = ex.damage;
         params["radius"] = static_cast<int>( ex.radius );
         params["fire"] = ex.fire;

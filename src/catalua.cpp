@@ -16,6 +16,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "avatar.h"
 #include "bionics.h"
 #include "catalua_console.h"
+#include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_icallback_actor.h"
