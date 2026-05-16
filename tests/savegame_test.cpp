@@ -17,7 +17,11 @@ namespace fs = std::filesystem;
 TEST_CASE( "failed save load blocks saving over the broken save", "[save][load]" )
 {
     clear_all_state();
-    const auto cleanup = on_out_of_scope( []() { clear_all_state(); } );
+    g->clear_failed_load_save_block();
+    const auto cleanup = on_out_of_scope( []() {
+        clear_all_state();
+        g->clear_failed_load_save_block();
+    } );
 
     const auto fixture_path = fs::path( "tests/data/save/broken_load_save/#QnJva2VuU2F2ZQ==.sav" );
     const auto world_path = fs::path( g->get_active_world()->info->folder_path() );

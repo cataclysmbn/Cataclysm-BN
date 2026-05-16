@@ -3145,6 +3145,14 @@ bool game::load( const save_t &name )
 
     using namespace std::placeholders;
 
+    saving_blocked_by_failed_load = true;
+    auto save_json_valid = false;
+    const auto validate_save = [&]( std::istream & fin ) { save_json_valid = validate_save_json( fin ); };
+    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, validate_save ) ||
+        !save_json_valid ) {
+        return false;
+    }
+
     // Now load up the master game data; factions (and more?)
     load_master();
     u = avatar();
@@ -3166,7 +3174,6 @@ bool game::load( const save_t &name )
         lazy_border_handle_ = 0;
     }
     fire_loader.clear( submap_loader );
-    saving_blocked_by_failed_load = true;
     auto unserialized = false;
     const auto load_save = [&]( std::istream & fin ) { unserialized = unserialize( fin ); };
     if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, load_save ) ||
