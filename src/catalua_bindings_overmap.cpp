@@ -34,15 +34,20 @@ void cata::detail::reg_overmap( sol::state &lua )
 
         DOC( "Get all overmap tiles belonging to the electric grid at the given position" );
         luna::set_fx( ut, "electric_grid_at",
-        []( overmapbuffer & buf, const tripoint_abs_omt & p ) -> std::vector<tripoint_abs_omt> {
-            const auto points = buf.electric_grid_at( p );
-            return std::vector<tripoint_abs_omt>( points.begin(), points.end() );
+                      []( overmapbuffer & buf, const tripoint_abs_omt & p ) ->
+        std::vector<cata::detail::lua_coords::lua_tripoint_coord> {
+            return buf.electric_grid_at( p ) |
+            std::views::transform( []( const auto pt ) { return cata::detail::lua_coords::to_lua( pt ); } ) |
+            std::ranges::to<std::vector>();
         } );
 
         DOC( "Get all electric grid connections from the given position" );
         luna::set_fx( ut, "electric_grid_connectivity_at",
-        []( overmapbuffer & buf, const tripoint_abs_omt & p ) -> std::vector<tripoint_rel_omt> {
-            return buf.electric_grid_connectivity_at( p );
+                      []( overmapbuffer & buf, const tripoint_abs_omt & p ) ->
+        std::vector<cata::detail::lua_coords::lua_tripoint_coord> {
+            return buf.electric_grid_connectivity_at( p ) |
+            std::views::transform( []( const auto pt ) { return cata::detail::lua_coords::to_lua( pt ); } ) |
+            std::ranges::to<std::vector>();
         } );
 
         DOC( "Add an electric grid connection between two positions" );
