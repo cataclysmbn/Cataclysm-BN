@@ -10,9 +10,33 @@
 - **구성 파일** - 게임 엔티티를 타일에 매핑하는 JSON 파일
 - **메타데이터** - 타일 크기, 이름, 호환성에 대한 정보
 
+## TypeScript 타일셋 도구
+
+일반적인 타일셋 합성/분해 작업에는 `scripts/tileset.ts`를 사용합니다. 이 도구는 [PR #8151](https://github.com/cataclysmbn/Cataclysm-BN/pull/8151)에서 기존 Python compose 작업 흐름을 대체하기 위해 추가되었습니다.
+
+```sh
+# 개별 스프라이트 파일과 tile_entry를 tile_config.json 및 타일시트 PNG로 합성합니다.
+deno run -A scripts/tileset.ts --pack gfx/Retrodays
+
+# 합성 결과를 다른 디렉터리에 씁니다.
+deno run -A scripts/tileset.ts --pack gfx/Retrodays /tmp/Retrodays-composed
+
+# 기존 합성된 타일셋을 개별 스프라이트 파일과 tile_entry로 분해합니다.
+deno run -A scripts/tileset.ts --unpack gfx/ChestHole16Tileset
+```
+
+자주 쓰는 옵션:
+
+- `--format-json`: 생성된 `tile_config.json`을 정리된 형식으로 씁니다.
+- `--only-json`: 타일시트 PNG를 쓰지 않고 `tile_config.json`만 다시 만듭니다.
+- `--use-all`: 참조되지 않은 PNG도 파일명을 ID로 사용해 포함합니다.
+- `--palette`, `--palette-copies`: 8-bit 팔레트 출력을 만듭니다.
+
+작은 예제나 브라우저에서 빠르게 확인할 작업은 [타일셋 웹 도구](/dev/reference/tileset_web_tool/)를 사용할 수 있습니다.
+
 ## 타일셋 구조
 
-일반적인 타일셋 디렉토리 구조:
+일반적인 타일셋 디렉터리 구조:
 
 ```
 gfx/
