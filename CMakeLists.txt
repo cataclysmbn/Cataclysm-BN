@@ -9,7 +9,8 @@ if (NOT VCPKG_MANIFEST_MODE)
             ${CMAKE_SOURCE_DIR}/CMakeModules/Find)
 endif()
 
-include(AstyleFormatSource)
+
+include(FormatSource)
 include(FetchContent)
 
 set(CMAKE_TLS_VERIFY ON)
