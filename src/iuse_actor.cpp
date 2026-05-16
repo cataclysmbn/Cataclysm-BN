@@ -5134,7 +5134,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     };
     // note: if !p.is_npc() then p is avatar.
     item *loc = game_menus::inv::titled_filter_menu(
-                    filter, *p.as_avatar(), _( "Enhance which clothing?" ) );
+                    filter, *p.as_avatar(), _( "Enhance which clothing?" ), "", 1 );
     if( !loc ) {
         p.add_msg_if_player( m_info, _( "You do not have that item!" ) );
         return 0;
