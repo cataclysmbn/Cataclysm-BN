@@ -26,7 +26,7 @@ namespace
 auto electric_grid_at_vector( overmapbuffer &buf,
                               const tripoint_abs_omt &p ) -> std::vector<tripoint_abs_omt>
 {
-    auto points = std::vector<tripoint_abs_omt>{};
+    auto points = std::vector<tripoint_abs_omt> {};
     std::ranges::copy( buf.electric_grid_at( p ), std::back_inserter( points ) );
     return points;
 }

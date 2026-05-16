@@ -37,7 +37,8 @@ void add_msg_lua( game_message_type t, sol::variadic_args va )
     add_msg( t, msg );
 }
 
-auto direction_from_relative_delta( const cata::detail::lua_coords::lua_tripoint_coord &delta ) -> direction
+auto direction_from_relative_delta( const cata::detail::lua_coords::lua_tripoint_coord &delta ) ->
+direction
 {
     if( delta.origin != coords::origin::relative ) {
         throw std::runtime_error( "direction_from expects a relative TripointCoord delta" );
@@ -47,7 +48,7 @@ auto direction_from_relative_delta( const cata::detail::lua_coords::lua_tripoint
 
 auto overmap_terrain_cardinal_directions() -> std::vector<tripoint_rel_omt>
 {
-    return std::vector<tripoint_rel_omt>{
+    return std::vector<tripoint_rel_omt> {
         tripoint_rel_omt::north(), tripoint_rel_omt::south(), tripoint_rel_omt::east(),
         tripoint_rel_omt::west(), tripoint_rel_omt::above(), tripoint_rel_omt::below()
     };
