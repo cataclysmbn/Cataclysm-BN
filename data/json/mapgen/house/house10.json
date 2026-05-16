@@ -7,13 +7,13 @@
     "object": {
       "fill_ter": "t_floor",
       "rows": [
-        "............--..........",
-        "............--..........",
-        "....%%..%%.p--..........",
-        "..##oo##oo##--..........",
-        "..#       y#--..........",
-        "..o  hffh  o-------.....",
-        "..o  hffh  #-------%%^..",
+        "............``..........",
+        "............``..........",
+        "....%%..%%.p``..........",
+        "..##oo##oo##``..........",
+        "..#       y#``..........",
+        "..o  hffh  o```````.....",
+        "..o  hffh  #```````%%^..",
         "..#  hffh  #**###ooo##..",
         "..#y          L|Ih  d#..",
         "..#||| |||||   |I  @@o..",
@@ -27,13 +27,13 @@
         ".%...o6     C|   ET y#..",
         ".....#6 42O37|       o..",
         ".....##*#ooo##  @@   o..",
-        "...%.--------# s@@d R#..",
-        ".....--------##o###o##..",
+        "...%.````````# s@@d R#..",
+        ".....````````##o###o##..",
         "........................",
         "........................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": { "#": "t_adobe_brick_wall", "%": [ "t_region_shrub", "t_region_shrub_fruit", "t_region_shrub_decorative" ] },
+      "palettes": [ "standard_domestic_palette", "standard_domestic_landscaping_palette" ],
+      "terrain": { "#": "t_adobe_brick_wall" },
       "place_loot": [
         { "group": "guns_pistol_common", "x": [ 20, 20 ], "y": [ 8, 8 ], "chance": 4, "ammo": 90, "magazine": 100 },
         { "group": "guns_pistol_common", "x": [ 18, 18 ], "y": [ 20, 20 ], "chance": 3, "ammo": 90, "magazine": 100 }
