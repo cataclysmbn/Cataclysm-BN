@@ -1,4 +1,4 @@
-name: General build matrix
+name: linux
 
 on:
   push:
@@ -40,7 +40,7 @@ jobs:
       max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
       matrix:
         include:
-          - title: GCC, Ubuntu, Curses, CMake
+          - title: gcc, curses
             preset: ci-curses
             os: ubuntu-latest
             tiles: 0
@@ -49,7 +49,7 @@ jobs:
             ccache_key: linux-gcc-curses
             always-run: true
 
-          - title: GCC, Ubuntu, Tiles, Sound, CMake, Languages
+          - title: gcc, tiles, i18n
             preset: ci-tiles
             os: ubuntu-latest
             tiles: 1
