@@ -40,6 +40,13 @@ if(ASTYLE_EXECUTABLE)
     )
     list(FILTER ASTYLE_SOURCES EXCLUDE REGEX "/src/[^/]+/.*")
 
+    # AStyle 3.6.13 crashes while parsing these tests, so leave them out of the
+    # aggregate formatter target until upstream AStyle can handle them.
+    list(REMOVE_ITEM ASTYLE_SOURCES
+        "${CMAKE_SOURCE_DIR}/tests/iteminfo_test.cpp"
+        "${CMAKE_SOURCE_DIR}/tests/json_test.cpp"
+    )
+
     if(ASTYLE_SOURCES)
         add_custom_target(astyle
             COMMAND ${ASTYLE_EXECUTABLE} --options=${ASTYLE_OPTIONS_FILE} -n ${ASTYLE_SOURCES}
