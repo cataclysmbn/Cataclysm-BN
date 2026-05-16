@@ -156,10 +156,10 @@ mod.iuse_function_anchor = function(params)
   local pos = params.pos
   local a = { "teleporter_anchor_deployed" }
 
-  local player_abs_pos = gapi.get_map():get_abs_ms(pos)
+  local player_abs_pos = gapi.get_map():bub_to_abs(pos)
   --print(player_abs_pos)
 
-  local player_map_pos = gapi.get_map():get_local_ms(player_abs_pos)
+  local player_map_pos = gapi.get_map():abs_to_bub(player_abs_pos)
   --print(player_map_pos)
   local player_omt = coords.ms_to_omt(player_abs_pos)
 
@@ -204,13 +204,13 @@ mod.iuse_function_station = function(params)
   local item = params.item
   local pos = params.pos
   local a = { "teleporter_station_deployed" }
-  local player_abs_pos = gapi.get_map():get_abs_ms(pos)
+  local player_abs_pos = gapi.get_map():bub_to_abs(pos)
   --print(player_abs_pos)
 
-  local player_map_pos = gapi.get_map():get_local_ms(player_abs_pos)
+  local player_map_pos = gapi.get_map():abs_to_bub(player_abs_pos)
   --print(player_map_pos)
 
-  local player_omt = coords.ms_to_omt(player_abs_pos)
+  local player_omt = player_abs_pos:to_omt()
   --print(player_omt)
 
   local no_furn = gapi.get_map():get_furn_at(player_map_pos)
@@ -276,8 +276,8 @@ mod.do_station_charge = function(choose, grid, power_available, chosen_station_l
 end
 
 mod.charge_stations_from_grid = function(pos)
-  local abs_pos = gapi.get_map():get_abs_ms(pos)
-  local abs_omt = coords.ms_to_omt(abs_pos)
+  local abs_pos = gapi.get_map():bub_to_abs(pos)
+  local abs_omt = abs_pos:to_omt()
   local grid = gapi.get_distribution_grid_tracker():grid_at(abs_pos)
   local power_available = grid:get_resource(true)
   local chosen_station_list = {}
@@ -334,8 +334,8 @@ mod.teleport_to_target = function(who, anchor, distance, teleporter_list_key, pi
 end
 
 mod.pick_teleporter = function(who, eidx, pos)
-  local abs_pos = gapi.get_map():get_abs_ms(pos)
-  local abs_omt = coords.ms_to_omt(abs_pos)
+  local abs_pos = gapi.get_map():bub_to_abs(pos)
+  local abs_omt = abs_pos:to_omt()
   local anchor = mod.anchor_list[eidx]
   if not anchor then return 0 end
   local distance = coords.rl_dist(abs_omt, anchor)
@@ -381,8 +381,8 @@ end
 
 mod.pick_teleport_destination = function(who, pos)
   local ui_teleport = UiList.new()
-  local abs_pos = gapi.get_map():get_abs_ms(pos)
-  local abs_omt = coords.ms_to_omt(abs_pos)
+  local abs_pos = gapi.get_map():bub_to_abs(pos)
+  local abs_omt = abs_pos:to_omt()
   ui_teleport:title(locale.gettext("Select teleportation target"))
 
   for i in pairs(mod.anchor_list) do
