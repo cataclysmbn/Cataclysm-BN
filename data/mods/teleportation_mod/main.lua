@@ -44,7 +44,7 @@ end
 -- LOADING
 
 mod.load_saved_anchors = function()
-  if mod.count_table(storage.anchor_omt) == 0 then
+  if next(storage.anchor_omt) == nil then
     print("Data not loaded - no anchors are placed.")
   else
     for i in pairs(storage.anchor_omt) do
@@ -55,7 +55,7 @@ mod.load_saved_anchors = function()
 end
 
 mod.load_saved_station_charge = function()
-  if mod.count_table(storage.station_charge) == 0 then
+  if next(storage.station_charge) == nil then
     print("Data not loaded - no stations are placed. (charge)")
   else
     for i in pairs(storage.station_charge) do
@@ -67,7 +67,7 @@ mod.load_saved_station_charge = function()
 end
 
 mod.load_saved_station_placement_time = function()
-  if mod.count_table(storage.station_placement_time) == 0 then
+  if next(storage.station_placement_time) == nil then
     print("Data not loaded - no stations are placed. (time)")
   else
     for i in pairs(storage.station_placement_time) do
@@ -78,7 +78,7 @@ mod.load_saved_station_placement_time = function()
 end
 
 mod.load_saved_station_pos = function()
-  if mod.count_table(storage.station_pos) == 0 then
+  if next(storage.station_pos) == nil then
     print("Data not loaded - no stations are placed. (pos)")
   else
     for i in pairs(storage.station_pos) do
@@ -164,9 +164,9 @@ mod.iuse_function_anchor = function(params)
   local player_omt = coords.ms_to_omt(player_abs_pos)
 
   local no_furn = gapi.get_map():get_furn_at(player_map_pos)
-  b = tostring(no_furn)
+  local b = tostring(no_furn)
   --print(b)
-  anchor_omt = tostring(player_omt)
+  local anchor_omt = tostring(player_omt)
 
   if b == "FurnIntId[0][f_null]" then
     --print (FurnId.new("teleporter_anchor_deployed"):int_id())
@@ -186,7 +186,7 @@ end
 mod.add_station_to_list = function(pos)
   local num = #mod.station_list + 1
   --print(num)
-  local turn = gapi.current_turn()
+  local turn = gapi.current_turn():to_turn()
   local charge = 0
 
   mod.station_list[num] = {}
@@ -214,9 +214,9 @@ mod.iuse_function_station = function(params)
   --print(player_omt)
 
   local no_furn = gapi.get_map():get_furn_at(player_map_pos)
-  b = tostring(no_furn)
+  local b = tostring(no_furn)
   --print(b)
-  station_omt = tostring(player_omt)
+  local station_omt = tostring(player_omt)
 
   if b == "FurnIntId[0][f_null]" then
     gapi.get_map():set_furn_at(player_map_pos, FurnId.new(a[1]):int_id())
@@ -232,12 +232,11 @@ end
 
 mod.update_station_charge = function()
   -- go through station list, compare times, change charge depending on time passed
-  if mod.count_table(mod.station_list) > 0 then
+  if next(mod.station_list) ~= nil then
     for i in pairs(mod.station_list) do
       local station_time = mod.station_list[i][1]
-      local current_time = gapi.current_turn()
-      local time_difference_TimeDuration = TimePoint.__sub(current_time, station_time)
-      local time_difference = TimeDuration.to_seconds(time_difference_TimeDuration)
+      local current_time = gapi.current_turn():to_turn()
+      local time_difference = current_time - station_time
       --print (time_difference)
       if time_difference > 60 then
         local added_charge = time_difference * charge_multiplier / 3600
@@ -251,7 +250,7 @@ mod.update_station_charge = function()
 end
 
 mod.do_station_charge = function(choose, grid, power_available, chosen_station_list)
-  local available_units = (tonumber(power_available) / power_charge_kj_multiplier)
+  local available_units = ((tonumber(power_available) or 0) / power_charge_kj_multiplier)
   --print(available_units)
   if available_units < 1 then
     gapi.add_msg(locale.gettext("Power too low for charging."))
@@ -279,7 +278,7 @@ end
 mod.charge_stations_from_grid = function(pos)
   local abs_pos = gapi.get_map():get_abs_ms(pos)
   local abs_omt = coords.ms_to_omt(abs_pos)
-  local grid = gapi.get_distribution_grid_tracker():get_grid_at_abs_ms(abs_pos)
+  local grid = gapi.get_distribution_grid_tracker():grid_at(abs_pos)
   local power_available = grid:get_resource(true)
   local chosen_station_list = {}
 
@@ -338,6 +337,7 @@ mod.pick_teleporter = function(who, eidx, pos)
   local abs_pos = gapi.get_map():get_abs_ms(pos)
   local abs_omt = coords.ms_to_omt(abs_pos)
   local anchor = mod.anchor_list[eidx]
+  if not anchor then return 0 end
   local distance = coords.rl_dist(abs_omt, anchor)
   local teleporter_list_key = {}
   local ui_pick_teleporter = UiList.new()
@@ -380,7 +380,6 @@ mod.pick_teleporter = function(who, eidx, pos)
 end
 
 mod.pick_teleport_destination = function(who, pos)
-  local pos = pos
   local ui_teleport = UiList.new()
   local abs_pos = gapi.get_map():get_abs_ms(pos)
   local abs_omt = coords.ms_to_omt(abs_pos)
@@ -388,9 +387,13 @@ mod.pick_teleport_destination = function(who, pos)
 
   for i in pairs(mod.anchor_list) do
     local anchor = mod.anchor_list[i]
+    if not anchor then
+      goto continue_pick_anchor
+    end
     local distance = coords.rl_dist(abs_omt, anchor)
     local a = "Coordinates: " .. tostring(mod.anchor_list[i]) .. "  Distance: " .. tostring(distance)
     ui_teleport:add(i, a)
+    ::continue_pick_anchor::
   end
 
   local eidx = ui_teleport:query()
@@ -406,12 +409,13 @@ mod.get_anchor_distance = function(pos, i)
   local abs_pos = gapi.get_map():get_abs_ms(pos)
   local abs_omt = coords.ms_to_omt(abs_pos)
   local anchor = mod.anchor_list[i]
+  if not anchor then return 0 end
   local distance = coords.rl_dist(abs_omt, anchor)
   return distance
 end
 
 mod.create_network_message = function(pos)
-  b = [[Stations:
+  local b = [[Stations:
 ]]
   for i in pairs(mod.station_list) do
     local a = "Station: " .. tostring(i)

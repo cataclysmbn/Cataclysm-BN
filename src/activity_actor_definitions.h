@@ -124,8 +124,10 @@ class craft_activity_actor final : public activity_actor
         std::vector<comp_selection<tool_comp>> tool_selections;
 
         bool tools_prepaid = false;
+        bool is_long = false;
         bool is_valid = false;
         int last_turn_nr = -1;  // turn# when last do_turn ran; -1 = never set
+        float cached_tools_mult = 0.0f;   // 0 = not yet computed; set once in start()
 
         bool can_resume_with_internal( const activity_actor &other, const Character & ) const override {
             const auto &c_actor = static_cast<const craft_activity_actor &>( other );
@@ -147,7 +149,8 @@ class craft_activity_actor final : public activity_actor
             const tripoint &location = tripoint_zero,
             std::vector<comp_selection<item_comp>> item_selections = {},
             std::vector<comp_selection<tool_comp>> tool_selections = {},
-            bool tools_prepaid = false
+            bool tools_prepaid = false,
+            bool is_long = false
         );
 
         activity_id get_type() const override {
@@ -166,12 +169,18 @@ class craft_activity_actor final : public activity_actor
         const tripoint &get_location() const { return location; }
         bool are_tools_prepaid() const { return tools_prepaid; }
 
+        act_progress_message get_progress_message( const player_activity &act,
+                const Character &who ) const override;
+
         void serialize( JsonOut &jsout ) const override;
         static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
 
     private:
-        item *find_in_progress_craft( Character &who ) const;
+        auto find_in_progress_craft( const player_activity &act,
+                                     Character &who ) const -> item *; // *NOPAD*
         void do_complete_craft( player_activity &act, Character &who );
+        void refresh_speed( player_activity &act, const Character &who, const item &craft_item,
+                            std::optional<bench_location> bench = std::nullopt ) const;
 
 };
 

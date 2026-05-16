@@ -23,7 +23,17 @@
           { "id": "277_fmj", "fg": 15 },
           { "id": "277_hybrid", "fg": 16 },
           { "id": "m7", "fg": 17 },
-          { "id": "overlay_wielded_m7", "fg": 18 }
+          { "id": "overlay_wielded_m7", "fg": 18 },
+          { "id": "t_nanoforge_body", "fg": 19 },
+          { "id": "m250", "fg": 20 },
+          { "id": "overlay_wielded_m250", "fg": 21 },
+          { "id": [ "makeshift_headwrap", "overlay_wielded_makeshift_headwrap" ], "fg": 22 },
+          { "id": "overlay_worn_makeshift_headwrap", "fg": 23 },
+          { "id": "mon_mutant_alpha", "fg": 24 },
+          { "id": [ "alohashirt", "overlay_wielded_alohashirt" ], "fg": 25 },
+          { "id": "overlay_worn_alohashirt", "fg": 26 },
+          { "id": "mon_mutant_medical", "fg": 27 },
+          { "id": [ "mon_mutant_medical_summon", "mon_mutant_medical_summon_hostile" ], "fg": 28 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

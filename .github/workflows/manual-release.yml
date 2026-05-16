@@ -41,8 +41,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  build-translations:
+    uses: ./.github/workflows/build-translations.yml
+    secrets:
+      TX_TOKEN: ${{ secrets.TX_TOKEN }}
+
   builds:
-    needs: release
+    needs: [release, build-translations]
     uses: ./.github/workflows/build.yml
     with:
       version-label: "v${{ inputs.major }}.${{ inputs.minor }}.${{ inputs.patch }}"

@@ -17,6 +17,7 @@
 #include "character_functions.h"
 #include "construction.h"
 #include "construction_partial.h"
+#include "craft_command.h"
 #include "crafting.h"
 #include "debug.h"
 #include "enums.h"
@@ -2060,17 +2061,25 @@ craft_activity_actor::craft_activity_actor(
     const tripoint &location,
     std::vector<comp_selection<item_comp>> item_selections,
     std::vector<comp_selection<tool_comp>> tool_selections,
-    bool tools_prepaid
+    bool tools_prepaid,
+    bool is_long
 ) : rec( rec ), batch_size( batch_size ), craft_counter( craft_counter ),
     location( location ),
     item_selections( std::move( item_selections ) ),
     tool_selections( std::move( tool_selections ) ),
     tools_prepaid( tools_prepaid ),
+    is_long( is_long ),
     is_valid( rec != nullptr )
 {}
 
-item *craft_activity_actor::find_in_progress_craft( Character &who ) const
+auto craft_activity_actor::find_in_progress_craft( const player_activity &act,
+        Character &who ) const -> item * // *NOPAD*
 {
+    if( !act.targets.empty() && act.targets.front() && act.targets.front()->is_craft() &&
+        &act.targets.front()->get_making() == rec ) {
+        return &*act.targets.front();
+    }
+
     item *result = nullptr;
     who.visit_items( [&]( item * it ) {
         if( it->is_craft() && &it->get_making() == rec ) {
@@ -2107,7 +2116,7 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
     // Catch-up: apply time elapsed while NPC was outside the reality bubble.
     // last_turn_nr >= 0 means start() already ran in a previous session.
     if( last_turn_nr >= 0 && current_turn > last_turn_nr ) {
-        item *craft_item = find_in_progress_craft( who );
+        item *craft_item = find_in_progress_craft( act, who );
         if( craft_item ) {
             const int elapsed_turns = current_turn - last_turn_nr;
             const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
@@ -2147,13 +2156,47 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
 
     // Re-build progress counter after deserialization if catch-up didn't already do it
     if( activity_actor::progress.empty() ) {
-        item *craft_item = find_in_progress_craft( who );
+        item *craft_item = find_in_progress_craft( act, who );
         const std::string name = craft_item ? craft_item->tname() : rec->result_name();
         const int base_total = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
         const int remaining = std::max( 1, static_cast<int>(
                                             base_total * ( 1.0 - craft_counter / 10'000'000.0 ) ) );
         activity_actor::progress.emplace( name, base_total, remaining );
     }
+
+    item *craft_item = find_in_progress_craft( act, who );
+    if( craft_item ) {
+        refresh_speed( act, who, *craft_item );
+    }
+}
+
+void craft_activity_actor::refresh_speed( player_activity &act, const Character &who,
+        const item &craft_item, std::optional<bench_location> bench ) const
+{
+    const bench_location resolved_bench = bench ? *bench : find_best_bench( who, craft_item );
+    const recipe &making = *rec;
+    const float tools_mult = cached_tools_mult != 0.0f ? cached_tools_mult
+                             : crafting_tools_speed_multiplier( who, making );
+    act.speed.light        = lighting_crafting_speed_multiplier( who, making );
+    act.speed.bench_factor = workbench_crafting_speed_multiplier( craft_item, resolved_bench );
+    act.speed.morale       = morale_crafting_speed_multiplier( who, making );
+    act.speed.tools        = tools_mult;
+    act.speed.player_speed = who.get_speed() / 100.0f;
+    const int assistants   = who.available_assistant_count( making );
+    if( assistants > 0 ) {
+        const double base_no_assist   = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
+        const double base_with_assist = std::max( 1, making.batch_time( batch_size, 1.0f, assistants ) );
+        act.speed.assist = static_cast<float>( base_no_assist / base_with_assist );
+    } else {
+        act.speed.assist = 1.0f;
+    }
+    // Mutation and game-option multipliers have no dedicated speed field; fold them
+    // into skills so act.speed.total() matches the actual crafting rate.
+    const float mutation_mult = who.mutation_value( "crafting_speed_modifier" );
+    const float game_opt_mult = get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                ? 9999.0f
+                                : 100.0f / static_cast<float>( get_option<int>( "CRAFTING_SPEED_MULT" ) );
+    act.speed.skills = mutation_mult * game_opt_mult;
 }
 
 void craft_activity_actor::start( player_activity &act, Character &who )
@@ -2163,7 +2206,7 @@ void craft_activity_actor::start( player_activity &act, Character &who )
         return;
     }
 
-    item *craft_item = find_in_progress_craft( who );
+    item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         who.add_msg_player_or_npc(
             _( "You lost your in progress %s and had to stop crafting." ),
@@ -2173,6 +2216,7 @@ void craft_activity_actor::start( player_activity &act, Character &who )
         return;
     }
 
+    cached_tools_mult = crafting_tools_speed_multiplier( who, *rec );
     craft_counter = craft_item->get_counter();
     last_turn_nr = to_turn<int>( calendar::turn );  // mark fresh start so calc_all_moves skips catch-up
     const int base_total = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
@@ -2189,7 +2233,7 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
         return;
     }
 
-    item *craft_item = find_in_progress_craft( who );
+    item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         who.add_msg_player_or_npc(
             _( "You no longer have the in progress craft in your possession.  "
@@ -2202,9 +2246,12 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     }
 
     const recipe &making = *rec;
+    if( cached_tools_mult == 0.0f ) {
+        cached_tools_mult = crafting_tools_speed_multiplier( who, making );
+    }
     const bench_location bench = find_best_bench( who, *craft_item );
-    const float tools_mult = crafting_tools_speed_multiplier( who, making );
-    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, bench, tools_mult );
+    refresh_speed( act, who, *craft_item, bench );
+    const float crafting_speed = crafting_speed_multiplier( who, *craft_item, bench, act.speed.tools );
     const int assistants = who.available_assistant_count( making );
 
     if( crafting_speed <= 0.0f ) {
@@ -2234,6 +2281,11 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
 
     if( five_percent_steps > 0 ) {
         who.craft_skill_gain( *craft_item, five_percent_steps );
+
+        if( !tools_prepaid && !who.craft_consume_tools( *craft_item, five_percent_steps, false ) ) {
+            act.set_to_null();
+            return;
+        }
     }
 
     // Keep the progress_counter in sync so the UI shows correct values
@@ -2273,9 +2325,9 @@ void craft_activity_actor::finish( player_activity &act, Character &who )
     do_complete_craft( act, who );
 }
 
-void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Character &who )
+void craft_activity_actor::do_complete_craft( player_activity &act, Character &who )
 {
-    item *craft_item = find_in_progress_craft( who );
+    item *craft_item = find_in_progress_craft( act, who );
     if( !craft_item ) {
         debugmsg( "craft_activity_actor::do_complete_craft: no craft item found for %s",
                   rec ? rec->result_name() : "unknown" );
@@ -2283,6 +2335,59 @@ void craft_activity_actor::do_complete_craft( player_activity &/*act*/, Characte
     }
     ::complete_craft( who, *craft_item );
     craft_item->detach();
+    if( is_long && rec ) {
+        if( who.making_would_work( rec->ident(), batch_size ) ) {
+            who.last_craft->execute( location );
+        }
+    }
+}
+
+act_progress_message craft_activity_actor::get_progress_message(
+    const player_activity &act, const Character &who ) const
+{
+    if( !rec || !is_valid ) {
+        return act_progress_message::make_empty();
+    }
+
+    const int assistants = who.available_assistant_count( *rec );
+    const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
+    const double remaining_pct = 1.0 - craft_counter / 10'000'000.0;
+    const float total_mult = act.speed.total();
+    const int remaining_turns = static_cast<int>( remaining_pct * base_total_moves / 100 /
+                                std::max( 0.01f, total_mult ) );
+
+    const std::string time_desc = string_format( _( "Time left: %s" ),
+                                  to_string( time_duration::from_turns( remaining_turns ) ) );
+
+    const auto fmt_spd = [&]( float level, const std::string & name ) -> std::string {
+        const int pct = static_cast<int>( level * 100 );
+        if( pct == 100 )
+        {
+            return "";
+        }
+        nc_color col = pct > 100 ? c_green : c_red;
+        return string_format( " - %s: %s\n", name,
+                              colorize( std::to_string( pct ) + '%', col ) );
+    };
+
+    std::string mults_desc = _( "Crafting speed multipliers:\n" );
+    const int total_pct = static_cast<int>( total_mult * 100 );
+    nc_color total_col = total_pct > 100 ? c_green : c_red;
+    mults_desc += string_format( " - %s: %s\n", _( "Total" ),
+                                 colorize( std::to_string( total_pct ) + '%', total_col ) );
+    mults_desc += fmt_spd( act.speed.player_speed, _( "Speed" ) );
+    mults_desc += fmt_spd( act.speed.light, _( "Light" ) );
+    mults_desc += fmt_spd( act.speed.bench_factor, _( "Workbench" ) );
+    mults_desc += fmt_spd( act.speed.morale, _( "Morale" ) );
+    mults_desc += fmt_spd( act.speed.tools, _( "Tools" ) );
+    if( assistants > 0 ) {
+        mults_desc += fmt_spd( act.speed.assist, _( "Assistants" ) );
+    }
+
+    return act_progress_message::make_full(
+               string_format( _( "%s: %s\n\n%s\n\n%s" ),
+                              act.get_verb().translated(), rec->result_name(),
+                              time_desc, mults_desc ) );
 }
 
 void craft_activity_actor::serialize( JsonOut &jsout ) const
@@ -2296,6 +2401,7 @@ void craft_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "item_selections", item_selections );
     jsout.member( "tool_selections", tool_selections );
     jsout.member( "tools_prepaid", tools_prepaid );
+    jsout.member( "is_long", is_long );
     jsout.member( "last_turn_nr", last_turn_nr );
     jsout.end_object();
 }
@@ -2321,6 +2427,7 @@ std::unique_ptr<activity_actor> craft_activity_actor::deserialize( JsonIn &jsin 
     data.read( "item_selections", actor->item_selections );
     data.read( "tool_selections", actor->tool_selections );
     data.read( "tools_prepaid", actor->tools_prepaid );
+    data.read( "is_long", actor->is_long );
     data.read( "last_turn_nr", actor->last_turn_nr );
 
     return actor;

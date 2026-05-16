@@ -52,6 +52,7 @@
 #include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
+#include "cached_options.h"
 #include "catacharset.h"
 #include "character.h"
 #include "character_display.h"
@@ -108,7 +109,7 @@
 #include "item.h"
 #include "item_category.h"
 #include "item_contents.h"
-#include "item_functions.h";
+#include "item_functions.h"
 #include "item_stack.h"
 #include "itype.h"
 #include "iuse.h"
@@ -603,6 +604,7 @@ void game::setup( bool load_world_modfiles )
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
     new_game = true;
+    saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
     bVMonsterLookFire = true;
 
@@ -838,6 +840,7 @@ bool game::start_game()
 
     seed = rng_bits();
     new_game = true;
+    saving_blocked_by_failed_load = false;
     start_calendar();
     get_weather().nextweather = calendar::turn;
     safe_mode = ( get_option<bool>( "SAFEMODE" ) ? SAFE_MODE_ON : SAFE_MODE_OFF );
@@ -2674,6 +2677,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "examine" );
     ctxt.register_action( "advinv" );
     ctxt.register_action( "pickup" );
+    ctxt.register_action( "pickup_all" );
     ctxt.register_action( "pickup_feet" );
     ctxt.register_action( "grab" );
     ctxt.register_action( "haul" );
@@ -3118,7 +3122,9 @@ bool game::load( const std::string &world )
     try {
         world_generator->set_active_world( wptr );
         g->setup();
-        g->load( wptr->world_saves.front() );
+        if( !g->load( wptr->world_saves.front() ) ) {
+            return false;
+        }
     } catch( const std::exception &err ) {
         debugmsg( "cannot load world '%s': %s", world, err.what() );
         return false;
@@ -3129,11 +3135,23 @@ bool game::load( const std::string &world )
 
 bool game::load( const save_t &name )
 {
-    background_pane background;
-    static_popup popup;
-    popup.message( "%s", _( "Please wait…\nLoading the save…" ) );
+    auto background = std::unique_ptr<background_pane>();
+    auto popup = std::unique_ptr<static_popup>();
+    if( !test_mode ) {
+        background = std::make_unique<background_pane>();
+        popup = std::make_unique<static_popup>();
+        popup->message( "%s", _( "Please wait…\nLoading the save…" ) );
+    }
 
     using namespace std::placeholders;
+
+    saving_blocked_by_failed_load = true;
+    auto save_json_valid = false;
+    const auto validate_save = [&]( std::istream & fin ) { save_json_valid = validate_save_json( fin ); };
+    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, validate_save ) ||
+        !save_json_valid ) {
+        return false;
+    }
 
     // Now load up the master game data; factions (and more?)
     load_master();
@@ -3156,8 +3174,10 @@ bool game::load( const save_t &name )
         lazy_border_handle_ = 0;
     }
     fire_loader.clear( submap_loader );
-    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION,
-            std::bind( &game::unserialize, this, _1 ) ) ) {
+    auto unserialized = false;
+    const auto load_save = [&]( std::istream & fin ) { unserialized = unserialize( fin ); };
+    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, load_save ) ||
+        !unserialized ) {
         return false;
     }
 
@@ -3303,6 +3323,7 @@ bool game::load( const save_t &name )
     m.update_visibility_cache( get_levz() );
     m.invalidate_map_cache( get_levz() );
 
+    saving_blocked_by_failed_load = false;
     return true;
 }
 
@@ -3442,6 +3463,9 @@ bool game::save( bool quitting )
 {
     world *world = get_active_world();
     if( !world ) {
+        return false;
+    }
+    if( saving_blocked_by_failed_load ) {
         return false;
     }
 
@@ -7348,6 +7372,11 @@ void game::pickup()
         return;
     }
     pickup( *examp_ );
+}
+
+void game::pickup_all()
+{
+    pickup::pick_up_all_nearby();
 }
 
 void game::pickup( const tripoint &p )
@@ -11404,7 +11433,7 @@ bool game::walk_move( const tripoint &dest_loc, const bool via_ramp )
                 if( mons->has_flag( MF_LOUDMOVES ) ) {
                     volume += 6;
                 }
-                sounds::sound( dest_loc, volume, sounds::sound_t::movement, mons->type->get_footsteps(), false,
+                sounds::sound( dest_loc, volume, sounds::sound_t::movement, mons->type->get_footsteps(), true,
                                "none", "none" );
             } else {
                 sounds::sound( dest_loc, volume, sounds::sound_t::movement, _( "footsteps" ), true,
@@ -12734,6 +12763,11 @@ void game::vertical_move( int movez, bool force, bool peeking )
                 }
                 add_msg( m_info, _( "There is something above blocking your way." ) );
                 return;
+            } else {
+                if( dest.z > OVERMAP_HEIGHT ) {
+                    add_msg( m_info, _( "Tried to move outside of zlevel world bounds." ) );
+                    return;
+                }
             }
         }
 
@@ -12765,14 +12799,20 @@ void game::vertical_move( int movez, bool force, bool peeking )
             return;
         }
 
-        if( ( m.impassable( dest ) || !standing_on_air ) && !can_noclip ) {
-            add_msg( m_info, _( "You can't go down here!" ) );
-            if( !m.has_flag( "GOES_UP", u.pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "down" );
+        if( m.impassable( dest ) || !standing_on_air ) {
+            if( !can_noclip ) {
+                add_msg( m_info, _( "You can't go down here!" ) );
+                if( !m.has_flag( "GOES_UP", u.pos() ) ) {
+                    suggest_auto_walk_to_stairs( u, m, "down" );
+                }
+                return;
+            } else {
+                if( dest.z < -OVERMAP_DEPTH ) {
+                    add_msg( m_info, _( "Tried to move outside of zlevel world bounds." ) );
+                    return;
+                }
             }
-            return;
         }
-
     }
 
     if( force ) {

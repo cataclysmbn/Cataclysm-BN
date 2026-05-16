@@ -5137,7 +5137,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     };
     // note: if !p.is_npc() then p is avatar.
     item *loc = game_menus::inv::titled_filter_menu(
-                    filter, *p.as_avatar(), _( "Enhance which clothing?" ) );
+                    filter, *p.as_avatar(), _( "Enhance which clothing?" ), "", 1 );
     if( !loc ) {
         p.add_msg_if_player( m_info, _( "You do not have that item!" ) );
         return 0;
@@ -5166,11 +5166,22 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
     const int items_needed = mod.volume() / 750_ml + 1;
     const inventory &crafting_inv = p.crafting_inventory();
     // Go through all discovered repair items and see if we have any of them available
-    for( auto &cm : clothing_mods::get_all() ) {
-        has_enough[cm.item_string] =
-            item::count_by_charges( cm.item_string )
-            ? crafting_inv.has_charges( cm.item_string, items_needed )
-            : crafting_inv.has_amount( cm.item_string, items_needed );
+    for( auto cm : clothing_mods::get_all() ) {
+        auto item_string = cm.item_string;
+
+        if( cm.use_base_material ) {
+            for( auto &mat : mod.made_of() ) {
+                if( materials.contains( mat ) && mat.obj().repaired_with() != itype_id::NULL_ID() ) {
+                    item_string = mat.obj().repaired_with();
+                    break;
+                }
+            }
+        }
+
+        has_enough[item_string] =
+            item::count_by_charges( item_string )
+            ? crafting_inv.has_charges( item_string, items_needed )
+            : crafting_inv.has_amount( item_string, items_needed );
     }
 
     int mod_count = 0;
@@ -5188,11 +5199,9 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
 
     if( mod.has_flag( flag_VARSIZE ) && !mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_large" );
-        valid_mods.push_back( "resized_large_metal" );
     }
     if( !mod.has_flag( flag_UNDERSIZE ) && mod.has_flag( flag_OVERSIZE ) ) {
         valid_mods.push_back( "resized_small" );
-        valid_mods.push_back( "resized_small_metal" );
     }
 
     const auto get_compare_color = [&]( const int before, const int after,
@@ -5233,6 +5242,17 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
         };
         const bool already_resized = mod.has_flag( flag_resized_large ) ||
                                      mod.has_flag( flag_resized_small );
+        auto item_string = obj.item_string;
+
+        if( obj.use_base_material ) {
+            for( auto &mat : mod.made_of() ) {
+                if( materials.contains( mat ) && mat.obj().repaired_with() != itype_id::NULL_ID() ) {
+                    item_string = mat.obj().repaired_with();
+                    break;
+                }
+            }
+        }
+
         if( !mod.has_own_flag( obj.flag ) ) {
             // Mod not already present, check if modification is possible
             if( obj.restricted &&
@@ -5250,10 +5270,10 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
                 //~ %1$s: modification desc, %2$d: number of charges needed
                 prompt = string_format( _( "Can't %1$s (need %2$d charges loaded)" ),
                                         tolower( obj.implement_prompt ), thread_needed );
-            } else if( !has_enough[obj.item_string] ) {
+            } else if( !has_enough[item_string] ) {
                 //~ %1$s: modification desc, %2$d: number of items needed, %3$s: items needed
                 prompt = string_format( _( "Can't %1$s (need %2$d %3$s)" ), tolower( obj.implement_prompt ),
-                                        items_needed, item::nname( obj.item_string, items_needed ) );
+                                        items_needed, item::nname( item_string, items_needed ) );
             } else {
                 // Modification is possible unless we're wearing it and doing so would make it not fit
                 if( p.is_worn( mod ) && !p.can_wear( temp_item ).success() ) {
@@ -5262,7 +5282,7 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
                     enab = true;
                     //~ %1$s: modification desc, %2$d: number of items needed, %3$s: items needed, %4$s: number of charges needed
                     prompt = string_format( _( "%1$s (%2$d %3$s and %4$d charges)" ), tolower( obj.implement_prompt ),
-                                            items_needed, item::nname( obj.item_string, items_needed ), thread_needed );
+                                            items_needed, item::nname( item_string, items_needed ), thread_needed );
                 }
             }
 
@@ -5315,11 +5335,21 @@ int sew_advanced_actor::use( player &p, item &it, bool, const tripoint & ) const
         return 0;
     }
 
-    // Get the id of the material used
-    const auto &repair_item = clothing_mods[choice].obj().item_string;
-
     std::vector<item_comp> comps;
-    comps.emplace_back( repair_item, items_needed );
+
+    auto item_string = clothing_mods[choice].obj().item_string;
+
+    if( clothing_mods[choice].obj().use_base_material ) {
+        for( auto &mat : mod.made_of() ) {
+            if( materials.contains( mat ) && mat.obj().repaired_with() != itype_id::NULL_ID() ) {
+                item_string = mat.obj().repaired_with();
+                break;
+            }
+        }
+    }
+
+    comps.emplace_back( item_string, items_needed );
+
     // TODO: this may take up to 2 minutes, and so should start an activity instead
     p.moves -= to_moves<int>( 30_seconds * character_funcs::fine_detail_vision_mod( p ) );
     p.practice( used_skill, items_needed * 3 + 3 );

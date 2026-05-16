@@ -72,5 +72,15 @@
     "damage": { "damage_type": "bullet", "amount": 104, "armor_penetration": 46 },
     "proportional": { "recoil": 1.4 },
     "casing": "40x53mm_m169_casing"
+  },
+  {
+    "id": "40x53mm_makeshift_he",
+    "copy-from": "40x53mm_m430a1",
+    "type": "AMMO",
+    "name": { "str": "improvised 40x53mm HE" },
+    "description": "A high velocity 40x53mm HEDP grenade, loaded with a homemade explosive round.  Packs quite a punch, though less effective against armor than proper HEDP.",
+    "proportional": { "price_postapoc": 0.8, "damage": { "damage_type": "bullet", "amount": 0.6, "armor_penetration": 0.4 } },
+    "extend": { "effects": [ "EXPLOSIVE" ] },
+    "delete": { "effects": [ "FRAG" ] }
   }
 ]

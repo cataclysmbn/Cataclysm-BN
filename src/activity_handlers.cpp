@@ -195,6 +195,7 @@ static const efftype_id effect_sheared( "sheared" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_under_op( "under_operation" );
+static const efftype_id effect_well_fed( "well_fed" );
 
 static const fault_id fault_bionic_nonsterile( "fault_bionic_nonsterile" );
 
@@ -4220,16 +4221,33 @@ void activity_handlers::play_with_pet_finish( player_activity *act, player *p )
 
 void activity_handlers::train_pet_finish( player_activity *act, player *p )
 {
+    auto mon = act->monsters[0].lock();
+    if( mon && mon->type->pet_training &&
+        p->get_skill_level( skill_survival ) < mon->type->pet_training->min_skill ) {
+        p->add_msg_if_player( m_bad,
+                              _( "You lack the skill to train %s effectively." ),
+                              act->str_values[0] );
+        act->set_to_null();
+        return;
+    }
+    mon->remove_effect( effect_well_fed );
     if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
-        auto mon = act->monsters[0].lock();
-        if( mon ) {
-            mon->monster_flags.insert( MF_COMBAT_MOUNT );
+        if( mon && mon->type->pet_training ) {
+            mon->training_level = std::min( mon->training_level + 1, mon->type->pet_training->max_level );
+            for( const auto &lf : mon->type->pet_training->level_flags ) {
+                if( lf.level == mon->training_level ) {
+                    for( const m_flag f : lf.flags ) {
+                        mon->monster_flags.insert( f );
+                    }
+                }
+            }
             p->add_msg_if_player( m_good,
-                                  _( "Training your %s has finally succeeded, they should be less skittish in combat now." ),
-                                  act->str_values[0] );
+                                  _( "Training your %s has paid off!  They are now at training level %d/%d." ),
+                                  act->str_values[0], mon->training_level,
+                                  mon->type->pet_training->max_level );
         }
     } else {
-        p->add_msg_if_player( m_good,
+        p->add_msg_if_player( m_neutral,
                               _( "Training your %s takes time, it seems they are making a bit of progress at least." ),
                               act->str_values[0] );
     }

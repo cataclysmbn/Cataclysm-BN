@@ -18,6 +18,7 @@
 #include "item.h"
 #include "item_contents.h"
 #include "itype.h"
+#include "mutation.h"
 #include "newcharacter.h"
 #include "pldata.h"
 #include "profession.h"
@@ -100,6 +101,31 @@ struct less<failure> {
 // TODO: According to profiling (interrupt, backtrace, wait a few seconds, repeat) with a sample
 // size of 20, 70% of the time is due to the call to Character::set_mutation in try_set_traits.
 // When the mutation stuff isn't commented out, the test takes 110 minutes (not a typo)!
+
+TEST_CASE( "skin_tone_is_mandatory_with_default", "[new_character][traits]" )
+{
+    clear_all_state();
+
+    const auto skin_tone = std::string( "skin_tone" );
+    const auto skin_lighter = trait_id( "SKIN_LIGHTER" );
+
+    CHECK( mutation_type_exists( skin_tone ) );
+    CHECK( mutation_type_is_mandatory( skin_tone ) );
+    CHECK( mutation_type_swaps_on_conflict( skin_tone ) );
+    CHECK( mutation_type_random_chance( skin_tone ) == 0 );
+
+    const auto defaults = get_default_mutations_for_types();
+    CHECK( std::ranges::any_of( defaults, [&]( const auto & default_mutation ) {
+        return default_mutation.type_id == skin_tone && default_mutation.trait == skin_lighter;
+    } ) );
+
+    auto ch = get_sanitized_player();
+    ch.clear_mutations();
+    newcharacter::add_default_mutation_type_traits( ch );
+
+    CHECK( ch.has_base_trait( skin_lighter ) );
+    CHECK( ch.has_trait( skin_lighter ) );
+}
 
 TEST_CASE( "starting_items", "[slow]" )
 {

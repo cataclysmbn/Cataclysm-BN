@@ -61,7 +61,7 @@
   },
   {
     "type": "vehicle_color_palette",
-    "id": "military_standard",
+    "id": "military_boat",
     "palette": [
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof" ],
@@ -93,7 +93,7 @@
   },
   {
     "type": "vehicle_color_palette",
-    "id": "fighter_standard",
+    "id": "military_fighter",
     "palette": [
       {
         "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof" ],

@@ -21,5 +21,40 @@
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "magazines": [ [ "277", [ "ar10mag_20rd" ] ] ],
     "magazine_well": "250 ml"
+  },
+  {
+    "id": "m250",
+    "copy-from": "mg_base",
+    "type": "GUN",
+    "name": { "str": "M250" },
+    "description": "The M250 is a light machine gun once meant to replace the M249 SAW.  Despite its powerful cartridge and advanced optics, the M250 suffered from several flaws as a result of the extremely high-pressure round it used along with poor quality control, and as a result was relegated to special forces armories and reserves after the development of Rivtech's caseless designs.",
+    "weight": "6000 g",
+    "volume": "3 L",
+    "barrel_volume": "225 ml",
+    "price": "10000 USD",
+    "price_postapoc": "90 USD",
+    "material": [ "steel", "plastic" ],
+    "color": "dark_gray",
+    "ammo": "277",
+    "dispersion": 200,
+    "durability": 5,
+    "min_cycle_recoil": 2700,
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "default_mods": [ "rifle_scope", "suppressor", "bipod", "pistol_grip" ],
+    "valid_mod_locations": [
+      [ "accessories", 4 ],
+      [ "barrel", 1 ],
+      [ "bore", 1 ],
+      [ "brass catcher", 1 ],
+      [ "grip", 1 ],
+      [ "mechanism", 4 ],
+      [ "muzzle", 1 ],
+      [ "rail", 1 ],
+      [ "sights", 1 ],
+      [ "sling", 1 ],
+      [ "stock", 1 ],
+      [ "underbarrel", 1 ]
+    ],
+    "magazines": [ [ "277", [ "belt277" ] ] ]
   }
 ]
