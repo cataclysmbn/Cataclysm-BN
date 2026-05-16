@@ -103,7 +103,15 @@ local function apply_penalty(who, morale_id, penalty)
     return
   end
 
-  who:add_morale(morale_id, -magnitude, -magnitude, TimeDuration.from_minutes(20), TimeDuration.from_minutes(20), true, nil)
+  who:add_morale(
+    morale_id,
+    -magnitude,
+    -magnitude,
+    TimeDuration.from_minutes(20),
+    TimeDuration.from_minutes(20),
+    true,
+    nil
+  )
 end
 
 ---@param who Character
