@@ -82,10 +82,7 @@ void cata::detail::reg_creature( sol::state &lua )
 
         SET_FX_T( attitude_to, Attitude( const Creature & ) const );
 
-        luna::set_fx( ut, "sees", sol::overload(
-                          sol::resolve<bool( const Creature & ) const>( &Creature::sees ),
-        []( const Creature & cr, const tripoint_bub_ms & t ) -> bool { return cr.sees( t ); }
-                      ) );
+        luna::set_fx( ut, "sees", []( const Creature & cr, const tripoint_bub_ms & t ) -> bool { return cr.sees( t ); } );
 
         SET_FX_T( sight_range, int( int ) const );
 

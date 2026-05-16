@@ -48,6 +48,7 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_bindings_coords_common.h"
 #include "cata_cartesian_product.h"
 #include "cata_utility.h"
 #include "catalua_hooks.h"
@@ -11213,8 +11214,10 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
                                   "on_player_try_move",
     [ &, this]( sol::table & params ) {
         params["player"] = &u;
-        params["from"] = u.bub_pos();
-        params["to"] = dest_loc;
+        params["from"] = cata::detail::lua_coords::make_tripoint_coord( coords::origin::bubble, coords::ms,
+                         u.bub_pos().raw() );
+        params["to"] = cata::detail::lua_coords::make_tripoint_coord( coords::origin::bubble, coords::ms,
+                       dest_loc.raw() );
         params["movement_mode"] = u.get_movement_mode();
         params["via_ramp"] = via_ramp;
         if( u.is_mounted() ) {
@@ -11229,8 +11232,10 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
                                        "on_character_try_move",
     [ &, this]( sol::table & params ) {
         params["char"] = static_cast<Character *>( &u );
-        params["from"] = u.bub_pos();
-        params["to"] = dest_loc;
+        params["from"] = cata::detail::lua_coords::make_tripoint_coord( coords::origin::bubble, coords::ms,
+                         u.bub_pos().raw() );
+        params["to"] = cata::detail::lua_coords::make_tripoint_coord( coords::origin::bubble, coords::ms,
+                       dest_loc.raw() );
         params["movement_mode"] = u.get_movement_mode();
         params["via_ramp"] = via_ramp;
         if( u.is_mounted() ) {

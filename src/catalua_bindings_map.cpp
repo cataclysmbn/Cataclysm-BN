@@ -1,10 +1,12 @@
 #include "calendar.h"
 #include "catalua_bindings.h"
 #include "catalua_bindings_utils.h"
+#include "catalua_bindings_coords_common.h"
 #include "catalua_coord.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include "coordinates.h"
 #include "enums.h"
 #include "game.h"
 #include "artifact_enum_traits.h"
@@ -15,6 +17,7 @@
 #include "map_iterator.h"
 #include "npc.h"
 #include "overmap.h"
+#include "sounds.h"
 #include "trap.h"
 #include "detached_ptr.h"
 #include "veh_type.h"
@@ -335,7 +338,7 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );
         DOC( "In map squares" );
         luna::set_fx( ut, "get_map_size", []( const map & m ) -> int { return m.getmapsize() * SEEX; } );
-        luna::set_fx( ut, "ambient_light_at", &map::ambient_light_at );
+        luna::set_fx( ut, "ambient_light_at", []( map & m, tripoint_bub_ms p ) { return m.ambient_light_at( p ); } );
 
         DOC( "Forcibly places an npc using a template at a position on the map. Returns the npc." );
         luna::set_fx( ut, "place_npc", []( map & m, point_bub_ms p, std::string id_str ) -> npc * {
@@ -409,11 +412,12 @@ void cata::detail::reg_map( sol::state &lua )
 
         DOC( "Returns all points within a radius from the center point. `radiusz` defaults to 0." );
         luna::set_fx( ut, "points_in_radius", []( const map & m, const tripoint_bub_ms & center,
-        int radius, sol::optional<int> radiusz ) -> std::vector<tripoint_bub_ms> {
-            std::vector<tripoint_bub_ms> points;
+        int radius, sol::optional<int> radiusz ) -> std::vector<lua_coords::lua_tripoint_coord> {
+            std::vector<lua_coords::lua_tripoint_coord> points;
             for( const auto pt : m.points_in_radius( center, radius, radiusz.value_or( 0 ) ) )
             {
-                points.push_back( pt );
+                points.push_back( cata::detail::lua_coords::make_tripoint_coord( coords::origin::bubble,
+                                  coords::scale::map_square, pt.raw() ) );
             }
             return points;
         } );
