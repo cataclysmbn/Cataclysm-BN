@@ -9,7 +9,7 @@ if (NOT VCPKG_MANIFEST_MODE)
             ${CMAKE_SOURCE_DIR}/CMakeModules/Find)
 endif()
 
-include(AstyleFormatSource)
+include(FormatSource)
 
 set(CMAKE_TLS_VERIFY ON)
 
@@ -135,6 +135,9 @@ include(CheckCXXCompilerFlag)
 
 find_package(PkgConfig)
 find_package(SQLite3)
+if (NOT TARGET SQLite3::SQLite3 AND TARGET SQLite::SQLite3)
+    add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+endif ()
 find_package(ZLIB)
 if (NOT DYNAMIC_LINKING)
     if(NOT MSVC)

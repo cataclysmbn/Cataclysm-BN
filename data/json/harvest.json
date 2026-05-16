@@ -1147,6 +1147,34 @@
     ]
   },
   {
+    "id": "mutant_alpha",
+    "type": "harvest",
+    "entries": [
+      { "drop": "blood", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "human_flesh", "type": "flesh", "mass_ratio": 0.2 },
+      { "drop": "hstomach", "type": "offal", "mass_ratio": 0.1 },
+      { "drop": "human_fat", "type": "flesh", "mass_ratio": 0.1 },
+      { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
+      { "drop": "bone_human", "type": "bone", "mass_ratio": 0.15 },
+      { "drop": "raw_hleather", "type": "skin", "mass_ratio": 0.03 },
+      { "drop": "alpha_sample", "type": "offal", "mass_ratio": 0.02 }
+    ]
+  },
+  {
+    "id": "mutant_medical",
+    "type": "harvest",
+    "entries": [
+      { "drop": "blood", "type": "blood", "mass_ratio": 0.1 },
+      { "drop": "human_flesh", "type": "flesh", "mass_ratio": 0.2 },
+      { "drop": "hstomach", "type": "offal", "mass_ratio": 0.1 },
+      { "drop": "human_fat", "type": "flesh", "mass_ratio": 0.1 },
+      { "drop": "sinew", "type": "bone", "mass_ratio": 0.001 },
+      { "drop": "bone_human", "type": "bone", "mass_ratio": 0.15 },
+      { "drop": "raw_hleather", "type": "skin", "mass_ratio": 0.03 },
+      { "drop": "medical_sample", "type": "offal", "mass_ratio": 0.02 }
+    ]
+  },
+  {
     "id": "gozu",
     "type": "harvest",
     "entries": [

@@ -1279,7 +1279,7 @@
           "glass"
         ],
         "skill": "fabrication",
-        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large_metal", "resized_small_metal" ]
+        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ]
       }
     ],
     "flags": [ "ALLOWS_REMOTE_USE" ],

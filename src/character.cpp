@@ -7279,6 +7279,11 @@ float Character::active_light() const
 
 bool Character::sees_with_specials( const Creature &critter ) const
 {
+    // Prevent seeing through floors across z-levels
+    if( posz() != critter.posz() ) {
+        return false;
+    }
+
     // electroreceptors grants vision of robots and electric monsters through walls
     if( ( has_trait( trait_ELECTRORECEPTORS ) || has_active_bionic( bio_electrosense ) ) &&
         ( critter.in_species( ROBOT ) || critter.has_flag( MF_ELECTRIC ) ) ) {
@@ -7422,6 +7427,13 @@ std::string Character::extended_description() const
     }
 
     ss += "--\n";
+
+    std::vector<std::string> apperance_desc = get_apperance_description();
+    if( !apperance_desc.empty() ) {
+        ss += ( _( "Apperance: " ) + enumerate_as_string( apperance_desc ) );
+        ss += "\n";
+    }
+
     ss += _( "Wielding:" ) + std::string( " " );
     if( primary_weapon().is_null() ) {
         ss += _( "Nothing" );
@@ -7436,6 +7448,39 @@ std::string Character::extended_description() const
     } );
 
     return replace_colors( ss );
+}
+
+
+std::vector<std::string> Character::get_apperance_description() const
+{
+    std::map<std::string, trait_id> apperance_muts;
+    std::vector<std::string> valid_apperance_categories = {"hair_style", "hair_color", "eye_color", "skin_tone"};
+
+    for( const trait_id &mutation : get_mutations() ) {
+        for( std::string cat : valid_apperance_categories )  {
+            auto mut_obj = mutation.obj();
+            if( mut_obj.types.contains( cat ) ) {
+                apperance_muts[cat] = mutation;
+            }
+        }
+    }
+
+    std::vector<std::string> apperance_desc;
+
+    if( apperance_muts.count( "hair_style" ) && apperance_muts.count( "hair_color" ) ) {
+        apperance_desc.push_back( apperance_muts["hair_color"].obj().apperance_desc() + " " +
+                                  apperance_muts["hair_style"].obj().apperance_desc() + _( " hair" ) );
+    }
+
+    if( apperance_muts.count( "eye_color" ) ) {
+        apperance_desc.push_back( apperance_muts["eye_color"].obj().apperance_desc() + _( " eyes" ) );
+    }
+
+    if( apperance_muts.count( "skin_tone" ) ) {
+        apperance_desc.push_back( apperance_muts["skin_tone"].obj().apperance_desc() + _( " skin" ) );
+    }
+
+    return apperance_desc;
 }
 
 social_modifiers Character::get_mutation_social_mods() const
@@ -11659,8 +11704,9 @@ bool Character::sees( const Creature &critter ) const
 {
     // This handles only the player/npc specific stuff (monsters don't have traits or bionics).
     const int dist = rl_dist( pos(), critter.pos() );
-    if( dist <= 5 && ( has_active_mutation( trait_ANTENNAE ) ||
-                       ( has_active_bionic( bio_ground_sonar ) && !critter.has_flag( MF_FLIES ) ) ) ) {
+    if( posz() == critter.posz() && dist <= 5 &&
+        ( has_active_mutation( trait_ANTENNAE ) ||
+          ( has_active_bionic( bio_ground_sonar ) && !critter.has_flag( MF_FLIES ) ) ) ) {
         return true;
     }
 

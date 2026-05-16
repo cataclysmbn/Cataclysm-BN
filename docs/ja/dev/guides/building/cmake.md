@@ -142,7 +142,7 @@ pacman -S mingw-w64-x86_64-toolchain msys/git \
 
 ### CMake によるビルド
 
-CMake には、設定 (Configuration) とビルド (Build) のステップが分かれています。設定は CMake 自体を使用して行い、実際のビルドは `make` (Makefile ジェネレータの場合) またはビルドシステムに依存しない
+CMake には、設定 (Configuration) とビルド (Build) のステップが分かれています。設定は CMake 自体を使用して行い、実際のビルドはビルドシステムに依存しない
 `cmake --build .` を使用して行います。
 
 CMake で『Cataclysm-BN』をビルドする方法には、ソースツリーの内部で行う方法と外部で行う方法の2つがあります。ソースツリー外ビルド（Out-of-source builds）には、1つのソースディレクトリから異なるオプションで複数のビルドを作成できるという利点があります。
