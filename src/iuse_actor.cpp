@@ -7827,7 +7827,7 @@ struct veh_part_painter {
         return string_format( _( "%s's %s" ), vp->vehicle().name, vp->part().name( false ) );
     }
 
-    constexpr std::array<value_type, 1> enumerate( const tripoint &p ) const {
+    auto enumerate( const tripoint &p ) const -> std::array<value_type, 1> {
         const auto vp = get_map().veh_at( p );
         if constexpr( Roof ) {
             const auto roof_part = [&]() -> std::optional<vpart_reference> {
@@ -7899,7 +7899,7 @@ struct ter_furn_painter {
         }
     }
 
-    static constexpr std::array<tripoint, 1> enumerate( const tripoint &p ) {
+    static auto enumerate( const tripoint &p ) -> std::array<tripoint, 1>  {
         return {p};
     }
 
