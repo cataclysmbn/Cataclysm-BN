@@ -300,10 +300,11 @@ struct mutation_branch {
     private:
         translation raw_name;
         translation raw_desc;
+        translation raw_apperance_desc;
     public:
         std::string name() const;
         std::string desc() const;
-
+        std::string apperance_desc() const;
         /**
          * Returns the color to display the mutation name with.
          */

@@ -6964,8 +6964,40 @@ static std::vector<std::string> describe_character( Character *guy )
     std::vector<std::string> result;
     std::string pronoun = guy->male ? _( "He" ) : _( "She" );
 
+    std::map<std::string, trait_id> apperance_muts;
+    const std::vector<std::string> valid_apperance_categories = {"hair_style", "hair_color", "eye_color", "skin_tone"};
+
+    for (const trait_id &mutation : guy->get_mutations() ) {
+        for (std::string cat : valid_apperance_categories)  {
+            auto mut_obj = mutation.obj();
+            if (mut_obj.types.contains( cat )) {
+                apperance_muts[cat] = mutation;
+            }
+        }
+    }
+
+    if( !apperance_muts.empty() ) {
+        std::vector<std::string> apperance_desc;
+
+        if( apperance_muts.count("hair_style") && apperance_muts.count("hair_color") ) {
+            apperance_desc.push_back( apperance_muts["hair_color"].obj().apperance_desc() + " " + apperance_muts["hair_style"].obj().apperance_desc() + _( " hair" ) );
+        }
+
+        if( apperance_muts.count("eye_color") ) {
+            apperance_desc.push_back( apperance_muts["eye_color"].obj().apperance_desc() + _( " eyes" ) );
+        }
+
+        if( apperance_muts.count("skin_tone") ) {
+            apperance_desc.push_back( apperance_muts["skin_tone"].obj().apperance_desc() + _( " skin" ) );
+        }
+
+        if( !apperance_desc.empty() ) {
+            result.push_back( pronoun +_( " has " ) + enumerate_as_string( apperance_desc ) + ".");
+        }
+    }
+
     if( guy->is_armed() ) {
-        result.push_back( pronoun + " " + _( "is wielding a " ) + guy->primary_weapon().tname() + "." );
+        result.push_back( pronoun + _( " is wielding a " ) + guy->primary_weapon().tname() + "." );
     }
 
     const std::string worn_str = enumerate_as_string( guy->worn.begin(), guy->worn.end(),
@@ -6973,7 +7005,7 @@ static std::vector<std::string> describe_character( Character *guy )
         return it->tname();
     } );
     if( !worn_str.empty() ) {
-        result.push_back( pronoun + " " + _( "is wearing: " ) + worn_str );
+        result.push_back( pronoun + " " + _( "is wearing: " ) + worn_str + "."  );
     } else {
         result.push_back( pronoun + " " + _( "is not wearing anything." ) );
     }
