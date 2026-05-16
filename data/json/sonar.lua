@@ -31,7 +31,7 @@ sonar.register = function(mod)
   ---@type fun(params: ItemUseParams): integer
   mod.sonar_scan = function(params)
     local who = params.user
-    local pos = TripointBubMs.new(params.pos.x, params.pos.y, params.pos.z)
+    local pos = params.pos
     local item = params.item
     if pos == nil and who then pos = who:get_pos_ms() end
     if pos == nil then return 0 end
