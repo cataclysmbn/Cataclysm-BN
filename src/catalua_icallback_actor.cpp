@@ -1,7 +1,7 @@
 #include "catalua_icallback_actor.h"
 
 #include "bionics.h"
-#include "catalua_bindings_coords_common.h"
+#include "catalua_coord.h"
 #include "catalua_impl.h"
 #include "character.h"
 #include "creature.h"
@@ -9,17 +9,6 @@
 #include "debug.h"
 #include "item.h"
 #include "player.h"
-
-namespace
-{
-
-auto lua_bub_ms_pos( const tripoint_bub_ms &pos ) -> cata::detail::lua_coords::lua_tripoint_coord
-{
-    return cata::detail::lua_coords::make_tripoint_coord(
-               coords::origin::bubble, coords::ms, pos.raw() );
-}
-
-} // namespace
 
 // --- lua_iuse_actor ---
 
@@ -48,7 +37,7 @@ int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint_bub_m
         auto params = lua.create_table();
         params["user"] = who.as_character();
         params["item"] = &itm;
-        params["pos"] = lua_bub_ms_pos( pos );
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = use_func( params );
         check_func_result( res );
         int ret = res;
@@ -67,7 +56,7 @@ ret_val<bool> lua_iuse_actor::can_use( const Character &who, const item &item, b
         auto params = lua.create_table();
         params["user"] = who.as_character();
         params["item"] = &item;
-        params["pos"] = lua_bub_ms_pos( pos );
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = can_use_func( params );
         check_func_result( res );
         const bool ret = res;
@@ -354,7 +343,7 @@ int lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint_bub
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &it;
-        params["pos"] = lua_bub_ms_pos( pos );
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = on_tick_func( params );
         check_func_result( res );
         int ret = res;
@@ -392,7 +381,7 @@ bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint_bu
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &it;
-        params["pos"] = lua_bub_ms_pos( pos );
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = on_drop_func( params );
         check_func_result( res );
         bool ret = res;
@@ -519,7 +508,7 @@ bool lua_iranged_actor::call_on_fire( Character &who, item &gun,
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &gun;
-        params["target_pos"] = lua_bub_ms_pos( target );
+        params["target_pos"] = cata::detail::lua_coords::to_lua( target );
         params["shots"] = shots;
         sol::protected_function_result res = on_fire_func( params );
         check_func_result( res );

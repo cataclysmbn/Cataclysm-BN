@@ -124,6 +124,31 @@ TEST_CASE( "lua_typed_coords_projection", "[lua]" )
     CHECK( test_data.get<std::string>( "raw_delta_arithmetic" ) == "TripointAbsSm(364,2,-1)" );
 }
 
+TEST_CASE( "lua_coord_cpp_helpers", "[lua]" )
+{
+    auto lua = make_lua_state();
+    const auto cpp_pos = tripoint_abs_omt( 1, 2, 3 );
+    const auto lua_pos = cata::detail::lua_coords::to_lua( cpp_pos );
+
+    CHECK( lua_pos.raw == cpp_pos.raw() );
+    CHECK( lua_pos.origin == coords::origin::abs );
+    CHECK( lua_pos.scale == coords::scale::overmap_terrain );
+
+    const auto round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>( lua_pos );
+    REQUIRE( round_trip );
+    CHECK( *round_trip == cpp_pos );
+
+    const auto lua_obj = sol::make_object( lua, lua_pos );
+    const auto object_round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>( lua_obj );
+    REQUIRE( object_round_trip );
+    CHECK( *object_round_trip == cpp_pos );
+
+    CHECK_FALSE( cata::detail::lua_coords::as_cpp<tripoint_bub_ms>( lua_pos ) );
+    CHECK( cata::detail::lua_coords::expect_cpp<tripoint_abs_omt>( lua_pos ) == cpp_pos );
+    CHECK_THROWS_AS( cata::detail::lua_coords::expect_cpp<tripoint_bub_ms>( lua_pos ),
+                     std::runtime_error );
+}
+
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
 {
     sol::state lua = make_lua_state();

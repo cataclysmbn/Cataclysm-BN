@@ -5,6 +5,7 @@
 #include "point.h"
 
 #include <optional>
+#include <stdexcept>
 #include <type_traits>
 
 namespace cata::detail::lua_coords
@@ -44,6 +45,76 @@ auto push_raw_point( lua_State *L, const point &raw ) -> int;
 auto push_raw_tripoint( lua_State *L, const tripoint &raw ) -> int;
 
 template<typename Coord>
+concept cpp_coord_point = coords::IsCoordPoint<std::remove_cvref_t<Coord>>;
+
+template<typename Coord>
+using cpp_coord_value_t = std::remove_cvref_t<Coord>;
+
+template<typename Coord>
+using lua_coord_for_t = std::conditional_t<cpp_coord_value_t<Coord>::dimension == 2,
+      lua_point_coord, lua_tripoint_coord>;
+
+template<cpp_coord_point Coord>
+auto to_lua( const Coord &coord ) -> lua_coord_for_t<Coord>
+{
+    using Value = cpp_coord_value_t<Coord>;
+    if constexpr( Value::dimension == 2 ) {
+        return lua_point_coord{ coord.raw(), Value::origin_tag, Value::scale_tag };
+    } else {
+        return lua_tripoint_coord{ coord.raw(), Value::origin_tag, Value::scale_tag };
+    }
+}
+
+template<cpp_coord_point Coord>
+auto as_cpp( const lua_point_coord &coord ) -> std::optional<cpp_coord_value_t<Coord>>
+{
+    using Value = cpp_coord_value_t<Coord>;
+    if constexpr( Value::dimension == 2 ) {
+        if( coord.origin == Value::origin_tag && coord.scale == Value::scale_tag ) {
+            return Value( coord.raw );
+        }
+    }
+    return std::nullopt;
+}
+
+template<cpp_coord_point Coord>
+auto as_cpp( const lua_tripoint_coord &coord ) -> std::optional<cpp_coord_value_t<Coord>>
+{
+    using Value = cpp_coord_value_t<Coord>;
+    if constexpr( Value::dimension == 3 ) {
+        if( coord.origin == Value::origin_tag && coord.scale == Value::scale_tag ) {
+            return Value( coord.raw );
+        }
+    }
+    return std::nullopt;
+}
+
+template<cpp_coord_point Coord>
+auto as_cpp( const sol::object &obj ) -> std::optional<cpp_coord_value_t<Coord>>
+{
+    using Value = cpp_coord_value_t<Coord>;
+    if constexpr( Value::dimension == 2 ) {
+        if( obj.is<lua_point_coord>() ) {
+            return as_cpp<Value>( obj.as<lua_point_coord>() );
+        }
+    } else {
+        if( obj.is<lua_tripoint_coord>() ) {
+            return as_cpp<Value>( obj.as<lua_tripoint_coord>() );
+        }
+    }
+    return std::nullopt;
+}
+
+template<cpp_coord_point Coord, typename LuaCoord>
+auto expect_cpp( const LuaCoord &coord ) -> cpp_coord_value_t<Coord>
+{
+    if( const auto result = as_cpp<Coord>( coord ) ) {
+        return *result;
+    }
+    throw std::runtime_error( "Lua coordinate kind does not match requested C++ coordinate type" );
+}
+
+template<typename Coord>
 auto coord_from_lua( lua_State *L, const int index,
                      sol::stack::record &tracking ) -> std::optional<Coord>
 {
@@ -68,15 +139,7 @@ auto coord_from_lua( lua_State *L, const int index,
 template<typename Coord>
 auto push_coord( lua_State *L, const Coord &coord ) -> int
 {
-    if constexpr( Coord::dimension == 2 ) {
-        return sol::stack::push( L, lua_point_coord{
-            coord.raw(), Coord::origin_tag, Coord::scale_tag
-        } );
-    } else {
-        return sol::stack::push( L, lua_tripoint_coord{
-            coord.raw(), Coord::origin_tag, Coord::scale_tag
-        } );
-    }
+    return sol::stack::push( L, to_lua( coord ) );
 }
 
 } // namespace cata::detail::lua_coords
