@@ -6976,24 +6976,9 @@ static std::vector<std::string> describe_character( Character *guy )
         }
     }
 
-    if( !apperance_muts.empty() ) {
-        std::vector<std::string> apperance_desc;
-
-        if( apperance_muts.count("hair_style") && apperance_muts.count("hair_color") ) {
-            apperance_desc.push_back( apperance_muts["hair_color"].obj().apperance_desc() + " " + apperance_muts["hair_style"].obj().apperance_desc() + _( " hair" ) );
-        }
-
-        if( apperance_muts.count("eye_color") ) {
-            apperance_desc.push_back( apperance_muts["eye_color"].obj().apperance_desc() + _( " eyes" ) );
-        }
-
-        if( apperance_muts.count("skin_tone") ) {
-            apperance_desc.push_back( apperance_muts["skin_tone"].obj().apperance_desc() + _( " skin" ) );
-        }
-
-        if( !apperance_desc.empty() ) {
-            result.push_back( pronoun +_( " has " ) + enumerate_as_string( apperance_desc ) + ".");
-        }
+    std::vector<std::string> apperance_desc = guy->get_apperance_description();
+    if( !apperance_desc.empty() ) {
+        result.push_back( pronoun +_( " has " ) + enumerate_as_string( apperance_desc ) + ".");
     }
 
     if( guy->is_armed() ) {

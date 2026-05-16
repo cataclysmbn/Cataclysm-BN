@@ -7428,6 +7428,31 @@ std::string Character::extended_description() const
 
     ss += "--\n";
 
+    std::vector<std::string> apperance_desc = get_apperance_description();
+    if( !apperance_desc.empty() ) {
+        ss += ( _( "Apperance: " ) + enumerate_as_string( apperance_desc ) );
+        ss += "\n";
+    }
+
+    ss += _( "Wielding:" ) + std::string( " " );
+    if( primary_weapon().is_null() ) {
+        ss += _( "Nothing" );
+    } else {
+        ss += primary_weapon().tname();
+    }
+
+    ss += "\n";
+    ss += _( "Wearing:" ) + std::string( " " );
+    ss += enumerate_as_string( worn.begin(), worn.end(), []( const item * const & it ) {
+        return it->tname();
+    } );
+
+    return replace_colors( ss );
+}
+
+
+std::vector<std::string> Character::get_apperance_description() const
+{
     std::map<std::string, trait_id> apperance_muts;
     std::vector<std::string> valid_apperance_categories = {"hair_style", "hair_color", "eye_color", "skin_tone"};
 
@@ -7454,25 +7479,7 @@ std::string Character::extended_description() const
         apperance_desc.push_back( apperance_muts["skin_tone"].obj().apperance_desc() + _( " skin" ) );
     }
 
-    if( !apperance_desc.empty() ) {
-        ss += ( _( "Apperance: " ) + enumerate_as_string( apperance_desc )   );
-        ss += "\n";
-    }
-
-    ss += _( "Wielding:" ) + std::string( " " );
-    if( primary_weapon().is_null() ) {
-        ss += _( "Nothing" );
-    } else {
-        ss += primary_weapon().tname();
-    }
-
-    ss += "\n";
-    ss += _( "Wearing:" ) + std::string( " " );
-    ss += enumerate_as_string( worn.begin(), worn.end(), []( const item * const & it ) {
-        return it->tname();
-    } );
-
-    return replace_colors( ss );
+    return apperance_desc;
 }
 
 social_modifiers Character::get_mutation_social_mods() const
