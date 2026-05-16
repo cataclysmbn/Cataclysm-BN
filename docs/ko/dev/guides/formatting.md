@@ -144,6 +144,33 @@ CI 파이프라인은 이러한 검사를 자동으로 실행합니다:
 - **C++**: [C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) (astyle 통합 포함)
 - **Deno**: [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno) (Markdown/TypeScript용)
 
+### Visual Studio
+
+PowerShell에서 포매터를 한 번 설치합니다. LLVM은 `clang-format`과 `clang-tidy`를 제공합니다.
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
+scoop install llvm astyle
+clang-format --version
+clang-tidy --version
+astyle --version
+```
+
+Scoop을 이미 설치했다면 `scoop install llvm astyle`만 실행하세요. 버전 확인 명령을 찾지 못하면 PowerShell과
+Visual Studio를 닫았다가 다시 열어 `PATH`를 다시 읽게 하세요.
+
+도구를 설치한 뒤:
+
+1. 저장소 폴더를 Visual Studio에서 CMake 프로젝트로 엽니다.
+2. CMake를 구성합니다. 포매터를 설치하기 전에 Visual Studio가 프로젝트를 이미 구성했다면 CMake 캐시를 재구성합니다.
+3. **View > Other Windows > CMake Targets View**를 엽니다.
+4. 커밋하기 전에 `format` 타겟을 빌드합니다.
+
+Visual Studio의 일반 **Format Document** 명령은 이 타겟을 실행하지 않습니다. 저장소 스타일을 적용하려면
+`format` 타겟을 사용하세요. 이 타겟은 top-level C++ 파일에는 `astyle`을, `src/` 하위 디렉터리의 C++ 파일에는
+`clang-format`을 실행합니다.
+
 ### Vim/Neovim
 
 설정에 추가:
