@@ -9017,7 +9017,9 @@ int iuse::craft( player *p, item *it, bool, const tripoint_bub_ms & )
                          it->get_cached_tool_selections(),
                          it->get_var( "craft_tools_fully_prepaid", 0 ) == 1
                      );
-        p->assign_activity( std::make_unique<player_activity>( std::move( actor ) ) );
+        auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
+        craft_activity->targets.emplace_back( it );
+        p->assign_activity( std::move( craft_activity ) );
     }
 
     return 0;
