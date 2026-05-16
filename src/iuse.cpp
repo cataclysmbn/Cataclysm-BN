@@ -6964,18 +6964,6 @@ static std::vector<std::string> describe_character( Character *guy )
     std::vector<std::string> result;
     std::string pronoun = guy->male ? _( "He" ) : _( "She" );
 
-    std::map<std::string, trait_id> apperance_muts;
-    const std::vector<std::string> valid_apperance_categories = {"hair_style", "hair_color", "eye_color", "skin_tone"};
-
-    for( const trait_id &mutation : guy->get_mutations() ) {
-        for( std::string cat : valid_apperance_categories )  {
-            auto mut_obj = mutation.obj();
-            if( mut_obj.types.contains( cat ) ) {
-                apperance_muts[cat] = mutation;
-            }
-        }
-    }
-
     std::vector<std::string> apperance_desc = guy->get_apperance_description();
     if( !apperance_desc.empty() ) {
         result.push_back( pronoun + _( " has " ) + enumerate_as_string( apperance_desc ) + "." );
