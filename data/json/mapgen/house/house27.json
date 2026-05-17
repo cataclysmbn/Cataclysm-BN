@@ -26,29 +26,14 @@
         ".........```o  R|+|||||#",
         ".........```+  R|  y  D#",
         "...[.....```#|+||     b#",
-        "............#t-Q|      o",
-        "............o--B| @@  d#",
+        "............#t¨Q|      o",
+        "............o¨¨B| @@  d#",
         "....[...[...#S8B|I@@I T#",
         "............############",
         "........................",
         "........................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": {
-        "%": [ "t_region_shrub", "t_region_shrub_fruit", "t_region_shrub_decorative" ],
-        "[": [ [ "t_region_tree_fruit", 2 ], [ "t_region_tree_nut", 2 ], "t_region_tree_shade" ],
-        "!": "t_region_groundcover_urban",
-        "`": "t_concrete",
-        "]": "t_wall_glass",
-        "-": "t_linoleum_white",
-        "Q": "t_linoleum_white",
-        "8": "t_linoleum_white",
-        "B": "t_linoleum_white",
-        "S": "t_linoleum_white",
-        "9": "t_linoleum_white",
-        "t": "t_linoleum_white"
-      },
-      "furniture": { "!": "f_region_flower" }
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ]
     }
   },
   {
