@@ -584,6 +584,38 @@ bool is_ot_match( const std::string &name, const oter_id &oter,
     }
 }
 
+namespace
+{
+
+auto read_see_cost( const JsonObject &jo, unsigned char &see_cost, const bool strict ) -> void
+{
+    if( !jo.has_string( "see_cost" ) ) {
+        assign( jo, "see_cost", see_cost, strict );
+        return;
+    }
+
+    const auto value = jo.get_string( "see_cost" );
+    if( value == "all_clear" || value == "none" ) {
+        see_cost = 0;
+    } else if( value == "low" ) {
+        see_cost = 1;
+    } else if( value == "medium" ) {
+        see_cost = 2;
+    } else if( value == "spaced_high" ) {
+        see_cost = 4;
+    } else if( value == "high" ) {
+        see_cost = 5;
+    } else if( value == "full_high" ) {
+        see_cost = 10;
+    } else if( value == "opaque" ) {
+        see_cost = 255;
+    } else {
+        jo.throw_error( "Unknown see_cost", "see_cost" );
+    }
+}
+
+} // namespace
+
 /*
  * load mapgen functions from an overmap_terrain json entry
  * suffix is for roads/subways/etc which have "_straight", "_curved", "_tee", "_four_way" function mappings
@@ -619,7 +651,7 @@ void oter_type_t::load( const JsonObject &jo, const std::string &src )
     }
 
     assign( jo, "name", name, strict );
-    assign( jo, "see_cost", see_cost, strict );
+    read_see_cost( jo, see_cost, strict );
     assign( jo, "travel_cost", travel_cost, strict );
     assign( jo, "extras", extras, strict );
     assign( jo, "mondensity", mondensity, strict );

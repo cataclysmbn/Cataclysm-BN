@@ -287,6 +287,12 @@ extern t_regional_settings_map region_settings_map;
 
 void check_regional_settings();
 
+auto load_compat_weather_generator( const JsonObject &jo ) -> void;
+auto load_compat_map_extra_collection( const JsonObject &jo ) -> void;
+auto load_compat_region_settings_map_extras( const JsonObject &jo ) -> void;
+auto load_compat_region_terrain_furniture( const JsonObject &jo ) -> void;
+auto load_compat_region_settings_terrain_furniture( const JsonObject &jo ) -> void;
+auto load_compat_region_settings_forest_mapgen( const JsonObject &jo ) -> void;
 void load_region_settings( const JsonObject &jo );
 void reset_region_settings();
 void load_region_overlay( const JsonObject &jo );
