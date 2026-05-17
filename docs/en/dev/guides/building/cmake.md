@@ -57,8 +57,6 @@ libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
 ```
 
-The Linux presets use `llvm-ar` and `llvm-ranlib` for static libraries, so the matching `llvm-20` package is required alongside `clang-20` on Ubuntu.
-
 - For Fedora-based distros:
 
 ```sh
@@ -67,8 +65,6 @@ SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
 ```
-
-On Fedora, the same presets require the `llvm` package because it provides `llvm-ar` and `llvm-ranlib`.
 
 #### Verifying Compiler Version
 
