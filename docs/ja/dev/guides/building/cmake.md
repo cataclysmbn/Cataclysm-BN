@@ -50,11 +50,13 @@ cd Cataclysm-BN
 - Ubuntu ベースのディストリビューション (24.04 以降):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo apt install git cmake ninja-build mold g++-14 clang-20 llvm-20 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
 ```
+
+Linux 用プリセットは静的ライブラリの作成に `llvm-ar` と `llvm-ranlib` を使用するため、Ubuntu では `clang-20` とあわせて対応する `llvm-20` パッケージが必要です.
 
 - Fedora ベースのディストリビューション:
 
@@ -112,6 +114,13 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > ```sh
 > sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
 > sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+> ```
+>
+> Ubuntu で `llvm-ar-20` と `llvm-ranlib-20` のようなバージョン付き LLVM binutils だけがインストールされる場合は、これらの名前も登録してください:
+>
+> ```sh
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-20 100
 > ```
 
 ### Windows Subsystem for Linux (WSL)
