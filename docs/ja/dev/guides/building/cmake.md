@@ -56,16 +56,18 @@ libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
 ```
 
-Linux 用プリセットは静的ライブラリの作成に `llvm-ar` と `llvm-ranlib` を使用するため、Ubuntu では `clang-20` とあわせて対応する `llvm-20` パッケージが必要です.
+Linux 用プリセットは静的ライブラリの作成に `llvm-ar` と `llvm-ranlib` を使用するため、Ubuntu では `clang-20` とあわせて対応する `llvm-20` パッケージが必要です。
 
 - Fedora ベースのディストリビューション:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
 ```
+
+Fedora でも同じプリセットが `llvm-ar` と `llvm-ranlib` を必要とするため、これらを提供する `llvm` パッケージが必要です。
 
 #### コンパイラバージョンの確認
 

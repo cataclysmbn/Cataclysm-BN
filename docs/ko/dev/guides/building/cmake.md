@@ -60,11 +60,13 @@ Linux 프리셋은 정적 라이브러리를 만들 때 `llvm-ar`와 `llvm-ranli
 - Fedora 기반 배포판:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
 ```
+
+Fedora에서도 같은 프리셋이 `llvm-ar`와 `llvm-ranlib`를 필요로 하므로, 이를 제공하는 `llvm` 패키지가 필요합니다.
 
 #### 컴파일러 버전 확인
 

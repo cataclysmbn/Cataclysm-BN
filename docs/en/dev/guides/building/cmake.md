@@ -62,11 +62,13 @@ The Linux presets use `llvm-ar` and `llvm-ranlib` for static libraries, so the m
 - For Fedora-based distros:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
 ```
+
+On Fedora, the same presets require the `llvm` package because it provides `llvm-ar` and `llvm-ranlib`.
 
 #### Verifying Compiler Version
 
