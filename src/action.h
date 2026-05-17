@@ -496,6 +496,12 @@ std::optional<tripoint_bub_ms> choose_adjacent_highlight( const std::string &mes
         const std::string &failure_message, const std::function<bool( const tripoint_bub_ms & )> &allowed,
         bool allow_vertical = false );
 
+std::optional<tripoint_bub_ms> choose_adjacent_uilist( const std::string &message,
+        const std::string &failure_message,
+        const std::function < auto( const tripoint_bub_ms & ) -> bool > &allowed,
+        const std::function < auto( const tripoint_bub_ms & ) -> std::optional<std::string >> &text,
+        bool allow_vertical = false );
+
 std::optional<std::pair<tripoint_bub_ms, tripoint_bub_ms>> choose_area( const std::string &message,
         const tripoint_bub_ms &start_pos, bool allow_vertical = false );
 

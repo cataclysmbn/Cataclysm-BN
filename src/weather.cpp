@@ -347,7 +347,6 @@ double trap::funnel_turns_per_charge( double rain_depth_mm_per_hour ) const
 static void fill_water_collectors( int mmPerHour, bool acid )
 {
     ZoneScopedN( "fill_water_collectors" );
-    const auto abs_sub = g->m.get_abs_sub();
     auto &mbuf = MAPBUFFER_REGISTRY.get( g->m.get_bound_dimension() );
     std::ranges::for_each( g->m.get_funnel_locations(), [&]( const
     std::pair<tripoint_abs_sm, point_sm_ms> &entry ) {

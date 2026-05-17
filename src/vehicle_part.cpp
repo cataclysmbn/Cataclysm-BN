@@ -35,6 +35,8 @@ static const itype_id fuel_type_none( "null" );
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_muscle( "muscle" );
 
+static const flag_id flag_NO_PAINT( "NO_PAINT" );
+
 /*-----------------------------------------------------------------------------
  *                              VEHICLE_PART
  *-----------------------------------------------------------------------------*/
@@ -737,6 +739,10 @@ void vehicle_part::set_color( const RGBColor &bg, const RGBColor &fg )
         .bg = bg,
         .fg = fg
     };
+
+    if( base->type->has_flag( flag_NO_PAINT ) ) {
+        return;
+    }
 
     auto &vars = base->item_vars();
     if( bg == fg ) {

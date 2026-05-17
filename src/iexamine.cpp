@@ -449,8 +449,6 @@ void iexamine::nanoforge( player &p, const tripoint_bub_ms &examp )
         return;
     }
 
-    int item_count = 1;
-
     detached_ptr<item> new_item = item::spawn( itype_id( chosen_recipe ), calendar::turn );
 
     auto qty = 1;

@@ -22,7 +22,7 @@
         "...`.%#     + ybD#$$;$$$",
         "$$$;$%o hfh |||||#..`..$",
         "$..`.%o hfh  |QBB#..`..$",
-        "$..`.%#      +---o..`..$",
+        "$..`.%#      +¨¨¨o..`..$",
         "$..`..#5    Y|t8S#..`..$",
         "$..`..#O    7#####..`..$",
         "$..`..o4    6#^jj%..`..$",
@@ -33,25 +33,8 @@
         "$......................$",
         "$$$$$$$$$$$$$$$$$$$$$$$$"
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": {
-        "%": [ "t_region_shrub", "t_region_shrub_fruit", "t_region_shrub_decorative" ],
-        "[": [ [ "t_region_tree_fruit", 2 ], [ "t_region_tree_nut", 2 ], "t_region_tree_shade" ],
-        "!": "t_region_groundcover_urban",
-        "`": "t_concrete",
-        "$": "t_privacy_fence",
-        ";": "t_privacy_fencegate_c",
-        ")": "t_wall_glass",
-        "]": "t_door_glass_c",
-        "-": "t_linoleum_white",
-        "Q": "t_linoleum_white",
-        "8": "t_linoleum_white",
-        "B": "t_linoleum_white",
-        "S": "t_linoleum_white",
-        "9": "t_linoleum_white",
-        "t": "t_linoleum_white"
-      },
-      "furniture": { "!": "f_region_flower" }
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
+      "terrain": { "$": "t_privacy_fence", ";": "t_privacy_fencegate_c" }
     }
   },
   {

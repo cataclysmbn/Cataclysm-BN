@@ -245,8 +245,7 @@ auto list_nested( const list_nested_options &opts ) -> std::string
 auto ensure_availability( Character &crafter,
                           const recipe *rec,
                           std::unordered_map<const recipe *, availability> &availability_cache,
-                          const recipe_subset &available_recipes,
-                          bool show_unavailable ) -> availability & // *NOPAD*
+                          const recipe_subset &available_recipes ) -> availability & // *NOPAD*
 {
     if( !availability_cache.contains( rec ) ) {
         const auto known = available_recipes.contains( *rec );
@@ -280,8 +279,7 @@ auto update_nested_can_craft( Character &crafter,
     const recipe_id & nested_id ) {
         const auto *nested_rec = &nested_id.obj();
         auto &nested_avail = ensure_availability( crafter, nested_rec, availability_cache,
-                             available_recipes,
-                             show_unavailable );
+                             available_recipes );
         if( nested_rec->is_nested() ) {
             nested_avail.can_craft = update_nested_can_craft( crafter, *nested_rec, availability_cache,
                                      nested_can_craft_cache, visiting, available_recipes, show_unavailable );
