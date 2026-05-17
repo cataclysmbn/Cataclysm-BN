@@ -22,7 +22,7 @@
  *
  * Constraints (must not be violated by submitted work):
  *  - No worker thread may call any Lua API (Lua 5.3 is not reentrant).
- *  - No worker thread may call any SDL rendering API (SDL2 renderer is single-threaded).
+ *  - No worker thread may call any SDL rendering API (SDL renderer is single-threaded).
  *
  * Threading boundaries for game systems:
  *

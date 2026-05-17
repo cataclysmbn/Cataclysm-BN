@@ -49,7 +49,7 @@ cd Cataclysm-BN
 - Ubuntu 기반 배포판 (24.04 이상):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo apt install git cmake ninja-build mold g++-14 clang-20 llvm-20 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -58,7 +58,7 @@ gettext libflac++-dev libsqlite3-dev zlib1g-dev
 - Fedora 기반 배포판:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
@@ -111,6 +111,13 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > ```sh
 > sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
 > sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+> ```
+>
+> Ubuntu가 `llvm-ar-20`, `llvm-ranlib-20`처럼 버전이 붙은 LLVM binutils 이름만 설치하는 경우에는 이 이름도 등록하세요:
+>
+> ```sh
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-20 100
 > ```
 
 ### Windows Subsystem for Linux (WSL)

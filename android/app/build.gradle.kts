@@ -12,12 +12,8 @@ tasks.withType<JavaCompile>().configureEach {
     //options.compilerArgs.add("-Xlint:deprecation")
 }
 
-val buildAsLibrary = project.hasProperty("BUILD_AS_LIBRARY")
-val buildAsApplication = !buildAsLibrary
-if (buildAsApplication) {
-    apply(plugin = "com.android.application")
-} else {
-    apply(plugin = "com.android.library")
+plugins {
+    id("com.android.application")
 }
 
 val localProperties = Properties()
@@ -170,10 +166,8 @@ fun BaseExtension.configureCommonAndroid() {
         targetSdkVersion(overrideTargetSdkVersion)
         versionCode = (System.getenv("UPSTREAM_BUILD_NUMBER") ?: "1").toInt()
         versionName = versionHeaderFile.readText().split('"')[1]
-        if (buildAsApplication) {
-            applicationId = "com.cataclysmbnteam.cataclysmbn"
-            setProperty("archivesBaseName", "cataclysmbn-$versionName")
-        }
+        applicationId = "com.cataclysmbnteam.cataclysmbn"
+        setProperty("archivesBaseName", "cataclysmbn-$versionName")
         resValue("string", "app_name", "Cataclysm BN")
 
         externalNativeBuild {
@@ -217,9 +211,7 @@ fun BaseExtension.configureCommonAndroid() {
         }
         create("experimental") {
             dimension = "version"
-            if (buildAsApplication) {
-                applicationIdSuffix = ".experimental"
-            }
+            applicationIdSuffix = ".experimental"
             resValue("string", "app_name", "Cataclysm BN (experimental)")
         }
     }

@@ -57,7 +57,7 @@
 #include "vehicle_selector.h"
 
 #if defined(__ANDROID__)
-#   include <SDL_keyboard.h>
+#   include <SDL3/SDL.h>
 #endif
 
 static const activity_id ACT_ADV_INVENTORY( "ACT_ADV_INVENTORY" );

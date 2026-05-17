@@ -139,11 +139,11 @@ function Get-RequiredPackages($CacheVars) {
     # Linker
     if ("$($CacheVars['LINKER'])" -match "mold") { $pkgs += "mold" }
 
-    # SDL2 or ncurses
+    # SDL3 or ncurses
     $hasTiles = "$($CacheVars['TILES'])" -match "^(ON|True|1)$"
     if ($hasTiles) {
-        $pkgs += @("libsdl2-dev", "libsdl2-image-dev", "libsdl2-mixer-dev",
-                   "libsdl2-ttf-dev", "libfreetype-dev")
+        $pkgs += @("libsdl3-dev", "libsdl3-image-dev", "libsdl3-mixer-dev",
+                   "libsdl3-ttf-dev", "libfreetype-dev")
     } else {
         $pkgs += "libncurses-dev"
     }
@@ -444,7 +444,7 @@ if ($IsWin) {
         exit 1
     }
 
-    # vcpkg provides SDL2 and all other Windows dependencies.
+    # vcpkg provides SDL3 and all other Windows dependencies.
     # MSVC.cmake only activates vcpkg integration when VCPKG_ROOT is set.
     $detectedVcpkg = Find-Vcpkg
     if ($detectedVcpkg) {
@@ -453,7 +453,7 @@ if ($IsWin) {
     } else {
         Write-Host ""
         Write-Error @"
-vcpkg not found. Windows dependencies (SDL2, etc.) are provided by vcpkg.
+vcpkg not found. Windows dependencies (SDL3, etc.) are provided by vcpkg.
 To fix, do ONE of the following:
   1. Set the VCPKG_ROOT environment variable to your vcpkg installation path.
   2. Run 'vcpkg integrate install' so Visual Studio and this script can find it.

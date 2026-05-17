@@ -51,7 +51,7 @@ Obtain packages specified above with your system package manager.
 - For Ubuntu-based distros (24.04 onwards):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo apt install git cmake ninja-build mold g++-14 clang-20 llvm-20 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -60,7 +60,7 @@ gettext libflac++-dev libsqlite3-dev zlib1g-dev
 - For Fedora-based distros:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
@@ -113,6 +113,14 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > ```sh
 > sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
 > sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
+> ```
+>
+> If Ubuntu only installs versioned LLVM binutils such as `llvm-ar-20` and
+> `llvm-ranlib-20`, register those names too:
+>
+> ```sh
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-20 100
 > ```
 
 ### macOS Environment
