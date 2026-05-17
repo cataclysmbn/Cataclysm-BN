@@ -202,7 +202,7 @@ jobs:
             windows-${{ matrix.artifact }}-${{ github.ref_name }}
             windows-${{ matrix.artifact }}-main
             windows-${{ matrix.artifact }}-
-          max-size: 500M
+          max-size: 1G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -212,6 +212,7 @@ jobs:
           echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
           echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
           echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
+          echo "CCACHE_COMPILERCHECK=content" >> $env:GITHUB_ENV
 
       # Linux setup
       - name: Install dependencies (Linux)
