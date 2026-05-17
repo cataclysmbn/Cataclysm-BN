@@ -129,6 +129,17 @@
     "autonote": true
   },
   {
+    "id": "mx_aircraft",
+    "type": "map_extra",
+    "name": "Aircraft Crash",
+    "looks_like": "propeller_metal",
+    "description": "An aircraft crashed here.",
+    "generator": { "generator_method": "map_extra_function", "generator_id": "mx_aircraft" },
+    "sym": "X",
+    "color": "light_blue",
+    "autonote": true
+  },
+  {
     "id": "mx_science",
     "type": "map_extra",
     "name": "Scientists",
