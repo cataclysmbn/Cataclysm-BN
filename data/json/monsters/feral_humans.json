@@ -996,7 +996,7 @@
     "vision_night": 20,
     "path_settings": { "max_dist": 40, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "emit_fields": [ { "emit_id": "emit_shadow_field_darkfield", "delay": "1 s" } ],
-    "starting_ammo": { "8mm_caseless": 25, "bot_flashbang_hack": 100 },
+    "starting_ammo": { "8mm_caseless": 25, "bot_EMP_hack": 100 },
     "monster_weapon": "mon_feral_blackops_boss_technician_monster_weapon",
     "special_attacks": [
       [ "PARROT_AT_DANGER", 0 ],
@@ -1005,7 +1005,7 @@
       [ "BIO_OP_TAKEDOWN", 10 ],
       {
         "type": "gun",
-        "cooldown": 40,
+        "cooldown": 30,
         "move_cost": 180,
         "gun_type": "rm103a_pistol",
         "ammo_type": "8mm_caseless",
