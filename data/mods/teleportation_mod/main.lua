@@ -161,7 +161,7 @@ mod.iuse_function_anchor = function(params)
 
   local player_map_pos = gapi.get_map():abs_to_bub(player_abs_pos)
   --print(player_map_pos)
-  local player_omt = coords.ms_to_omt(player_abs_pos)
+  local player_omt = player_abs_pos:to_omt()
 
   local no_furn = gapi.get_map():get_furn_at(player_map_pos)
   local b = tostring(no_furn)
@@ -338,7 +338,7 @@ mod.pick_teleporter = function(who, eidx, pos)
   local abs_omt = abs_pos:to_omt()
   local anchor = mod.anchor_list[eidx]
   if not anchor then return 0 end
-  local distance = coords.rl_dist(abs_omt, anchor)
+  local distance = abs_omt:rl_dist(anchor)
   local teleporter_list_key = {}
   local ui_pick_teleporter = UiList.new()
   ui_pick_teleporter:title(locale.gettext("Use which station?"))
@@ -390,7 +390,7 @@ mod.pick_teleport_destination = function(who, pos)
     if not anchor then
       goto continue_pick_anchor
     end
-    local distance = coords.rl_dist(abs_omt, anchor)
+    local distance = abs_omt:rl_dist(anchor)
     local a = "Coordinates: " .. tostring(mod.anchor_list[i]) .. "  Distance: " .. tostring(distance)
     ui_teleport:add(i, a)
     ::continue_pick_anchor::
@@ -406,11 +406,11 @@ mod.pick_teleport_destination = function(who, pos)
 end
 
 mod.get_anchor_distance = function(pos, i)
-  local abs_pos = gapi.get_map():get_abs_ms(pos)
-  local abs_omt = coords.ms_to_omt(abs_pos)
+  local abs_pos = gapi.get_map():bub_to_abs(pos)
+  local abs_omt = abs_pos:to_omt()
   local anchor = mod.anchor_list[i]
   if not anchor then return 0 end
-  local distance = coords.rl_dist(abs_omt, anchor)
+  local distance = abs_omt:rl_dist(anchor)
   return distance
 end
 
@@ -554,8 +554,8 @@ mod.scan_omt_remove_furn = function(abs_omt, ftype)
     --print(furniture_name)
   end
   local x, y = 0, 0
-  local scantile = Point.new(x, y)
-  local scansquare = coords.omt_to_ms(abs_omt, scantile)
+  local scantile = PointOmtMs.new(x, y)
+  local scansquare = abs_omt:project_combine(scantile)
   local mapsize = const.OMT_MS_SIZE
   local furn_at_tile = ""
 
@@ -563,9 +563,9 @@ mod.scan_omt_remove_furn = function(abs_omt, ftype)
     for j = 1, const.OMT_MS_SIZE do
       x = i - 1
       y = j - 1
-      scantile = Point.new(x, y)
-      scansquare = coords.omt_to_ms(abs_omt, scantile)
-      local xyz = gapi.get_map():get_local_ms(scansquare)
+      scantile = PointOmtMs.new(x, y)
+      scansquare = abs_omt:project_combine(scantile)
+      local xyz = gapi.get_map():abs_to_bub(scansquare)
       furn_at_tile = tostring(gapi.get_map():get_furn_at(xyz))
       --print(tostring(xyz) .. tostring(furn_at_tile))
       --gapi.get_map():set_furn_at( xyz, FurnId.new("f_fridge"):int_id() )
@@ -596,8 +596,8 @@ mod.update_station_table = function()
 end
 
 mod.remove_placed_furniture = function(pos)
-  local abs_pos = gapi.get_map():get_abs_ms(pos)
-  local abs_omt = coords.ms_to_omt(abs_pos)
+  local abs_pos = gapi.get_map():bub_to_abs(pos)
+  local abs_omt = abs_pos:to_omt()
   local ui_remove_furn = UiList.new()
   ui_remove_furn:title(locale.gettext("Remove station or anchor?"))
   ui_remove_furn:add(1, locale.gettext("Station"))
