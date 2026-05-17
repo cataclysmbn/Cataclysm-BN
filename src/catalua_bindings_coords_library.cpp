@@ -46,15 +46,23 @@ auto parsed_scale_or_debug( const std::string &result_scale ) -> std::optional<c
     return parsed;
 }
 
+auto coord_from_lua_coord( const lua_point_coord &coord ) -> lua_coord_value
+{
+    return lua_coord_value{ coord.origin, coord.scale, coord.raw, 0, false };
+}
+
+auto coord_from_lua_coord( const lua_tripoint_coord &coord ) -> lua_coord_value
+{
+    return lua_coord_value{ coord.origin, coord.scale, coord.raw.xy(), coord.raw.z, true };
+}
+
 auto coord_from_object( const sol::object &obj ) -> std::optional<lua_coord_value>
 {
     if( obj.is<lua_point_coord>() ) {
-        const auto coord = obj.as<lua_point_coord>();
-        return lua_coord_value{ coord.origin, coord.scale, coord.raw, 0, false };
+        return coord_from_lua_coord( obj.as<lua_point_coord>() );
     }
     if( obj.is<lua_tripoint_coord>() ) {
-        const auto coord = obj.as<lua_tripoint_coord>();
-        return lua_coord_value{ coord.origin, coord.scale, coord.raw.xy(), coord.raw.z, true };
+        return coord_from_lua_coord( obj.as<lua_tripoint_coord>() );
     }
     return std::nullopt;
 }
@@ -186,43 +194,63 @@ auto lua_project_remain_to( const sol::object &val,
     return std::make_tuple( lua_coord_result{ sol::nil }, std::optional<lua_point_coord>() );
 }
 
-auto lua_project_combine( const sol::object &coarse, const sol::object &fine ) -> lua_coord_result
+auto lua_project_combine_impl( const lua_coord_value &coarse_coord,
+                               const std::optional<lua_coord_value> &fine_coord ) -> lua_coord_result
 {
-    const auto coarse_coord = coord_from_object( coarse );
-    const auto fine_coord = coord_from_object( fine );
-    if( !coarse_coord || !fine_coord ) {
+    if( !fine_coord ) {
         debugmsg( "project_combine expected PointCoord or TripointCoord arguments" );
         return sol::nil;
     }
 
     const auto can_combine = can_project_combine( project_combine_check{
-        coarse_coord->origin,
-        coarse_coord->scale,
+        coarse_coord.origin,
+        coarse_coord.scale,
         fine_coord->origin,
         fine_coord->scale,
-        coarse_coord->is_tripoint,
+        coarse_coord.is_tripoint,
         fine_coord->is_tripoint
     } );
     if( !can_combine ) {
         debugmsg( "Cannot project_combine %s%s with %s%s",
-                  origin_type_name( coarse_coord->origin ), scale_type_name( coarse_coord->scale ),
+                  origin_type_name( coarse_coord.origin ), scale_type_name( coarse_coord.scale ),
                   origin_type_name( fine_coord->origin ), scale_type_name( fine_coord->scale ) );
         return sol::nil;
     }
 
-    const auto refined_coarse = project_xy( coarse_coord->xy, coarse_coord->scale,
+    const auto refined_coarse = project_xy( coarse_coord.xy, coarse_coord.scale,
                                             fine_coord->scale );
     const auto result_xy = refined_coarse + fine_coord->xy;
-    if( coarse_coord->is_tripoint ) {
-        return make_coord_result( lua_coord_value{ coarse_coord->origin, fine_coord->scale,
-                                  result_xy, coarse_coord->z, true } );
+    if( coarse_coord.is_tripoint ) {
+        return make_coord_result( lua_coord_value{ coarse_coord.origin, fine_coord->scale,
+                                  result_xy, coarse_coord.z, true } );
     }
     if( fine_coord->is_tripoint ) {
-        return make_coord_result( lua_coord_value{ coarse_coord->origin, fine_coord->scale,
+        return make_coord_result( lua_coord_value{ coarse_coord.origin, fine_coord->scale,
                                   result_xy, fine_coord->z, true } );
     }
-    return make_coord_result( lua_coord_value{ coarse_coord->origin, fine_coord->scale,
+    return make_coord_result( lua_coord_value{ coarse_coord.origin, fine_coord->scale,
                               result_xy, 0, false } );
+}
+
+auto lua_project_combine( const sol::object &coarse, const sol::object &fine ) -> lua_coord_result
+{
+    const auto coarse_coord = coord_from_object( coarse );
+    if( !coarse_coord ) {
+        debugmsg( "project_combine expected PointCoord or TripointCoord arguments" );
+        return sol::nil;
+    }
+    return lua_project_combine_impl( *coarse_coord, coord_from_object( fine ) );
+}
+
+auto lua_project_combine( const lua_point_coord &coarse, const sol::object &fine ) -> lua_coord_result
+{
+    return lua_project_combine_impl( coord_from_lua_coord( coarse ), coord_from_object( fine ) );
+}
+
+auto lua_project_combine( const lua_tripoint_coord &coarse,
+                          const sol::object &fine ) -> lua_coord_result
+{
+    return lua_project_combine_impl( coord_from_lua_coord( coarse ), coord_from_object( fine ) );
 }
 
 template<typename Result>
@@ -595,7 +623,9 @@ auto cata::detail::reg_coords_library( sol::state &lua ) -> void
     } );
     DOC( "Combines a coarse coordinate with a remainder from project_remain. Returns PointCoord or TripointCoord depending on the inputs, or nil if the pair is incompatible." );
     DOC_PARAMS( "coarse", "fine" );
-    luna::set_fx( lib, "project_combine", &lua_coords::lua_project_combine );
+    luna::set_fx( lib, "project_combine",
+                  sol::resolve<lua_coords::lua_coord_result( const sol::object &, const sol::object & )>
+                  ( &lua_coords::lua_project_combine ) );
     DOC( "Rectilinear distance between two raw coordinates, or between two typed coordinates with matching origin and scale. Returns nil if the typed coordinates are incompatible." );
     DOC_PARAMS( "lhs", "rhs" );
     luna::set_fx( lib, "rl_dist", sol::overload(

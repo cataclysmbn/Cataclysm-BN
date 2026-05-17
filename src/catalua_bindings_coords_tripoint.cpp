@@ -32,65 +32,58 @@ auto bind_tripoint_axis_properties( sol::usertype<lua_tripoint_coord> &ut ) -> v
 
 } // namespace
 
-auto lua_tripoint_add( const lua_tripoint_coord &lhs, const sol::object &rhs,
-                       sol::this_state lua_state ) -> sol::object
+auto lua_tripoint_add( const lua_tripoint_coord &lhs,
+                       const sol::object &rhs ) -> std::optional<lua_tripoint_coord>
 {
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                     lhs.raw + other.raw ) );
+            return make_tripoint_coord( lhs.origin, lhs.scale, lhs.raw + other.raw );
         }
     }
     if( rhs.is<lua_tripoint_coord>() ) {
         const auto other = rhs.as<lua_tripoint_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                     lhs.raw + other.raw ) );
+            return make_tripoint_coord( lhs.origin, lhs.scale, lhs.raw + other.raw );
         }
         if( lhs.scale == other.scale && lhs.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_tripoint_coord( other.origin, other.scale,
-                                     lhs.raw + other.raw ) );
+            return make_tripoint_coord( other.origin, other.scale, lhs.raw + other.raw );
         }
     }
     debugmsg( "TripointCoord addition expects a relative coordinate at the same scale" );
-    return sol::nil;
+    return std::nullopt;
 }
 
-auto lua_tripoint_subtract( const lua_tripoint_coord &lhs, const sol::object &rhs,
-                            sol::this_state lua_state ) -> sol::object
+auto lua_tripoint_subtract( const lua_tripoint_coord &lhs,
+                            const sol::object &rhs ) -> std::optional<lua_tripoint_coord>
 {
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                     lhs.raw - other.raw ) );
+            return make_tripoint_coord( lhs.origin, lhs.scale, lhs.raw - other.raw );
         }
     }
     if( rhs.is<lua_tripoint_coord>() ) {
         const auto other = rhs.as<lua_tripoint_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                     lhs.raw - other.raw ) );
+            return make_tripoint_coord( lhs.origin, lhs.scale, lhs.raw - other.raw );
         }
         if( same_coord_kind( lhs, other ) && lhs.origin != coords::origin::relative ) {
-            return sol::make_object( lua_state, make_tripoint_coord( coords::origin::relative,
-                                     lhs.scale, lhs.raw - other.raw ) );
+            return make_tripoint_coord( coords::origin::relative, lhs.scale, lhs.raw - other.raw );
         }
     }
     debugmsg( "TripointCoord subtraction expects a relative coordinate at the same scale, or a matching TripointCoord" );
-    return sol::nil;
+    return std::nullopt;
 }
 
-auto lua_tripoint_multiply( const lua_tripoint_coord &lhs, const int rhs,
-                            sol::this_state lua_state ) -> sol::object
+auto lua_tripoint_multiply( const lua_tripoint_coord &lhs,
+                            const int rhs ) -> std::optional<lua_tripoint_coord>
 {
     if( lhs.origin == coords::origin::relative ) {
-        return sol::make_object( lua_state, make_tripoint_coord( lhs.origin, lhs.scale,
-                                 lhs.raw * rhs ) );
+        return make_tripoint_coord( lhs.origin, lhs.scale, lhs.raw * rhs );
     }
     debugmsg( "TripointCoord multiplication is only valid for relative coordinates" );
-    return sol::nil;
+    return std::nullopt;
 }
 
 auto lua_tripoint_rotate( const lua_tripoint_coord &coord, const int turns,
@@ -176,10 +169,9 @@ auto bind_tripoint_projection_methods( sol::usertype<lua_tripoint_coord> &ut ) -
     } );
     DOC( "Combines this coarse tripoint with a remainder from project_remain. Returns TripointCoord, or nil if the pair is incompatible." );
     DOC_PARAMS( "fine" );
-    luna::set_fx( ut, "project_combine", []( const lua_tripoint_coord & coord, const sol::object & fine,
-    sol::this_state L ) {
-        return lua_project_combine( sol::make_object( L, coord ), fine );
-    } );
+    luna::set_fx( ut, "project_combine",
+                  sol::resolve<lua_coord_result( const lua_tripoint_coord &, const sol::object & )>
+                  ( &lua_project_combine ) );
 }
 
 auto reg_lua_tripoint_coord( sol::state &lua ) -> void

@@ -31,50 +31,46 @@ auto bind_point_axis_properties( sol::usertype<lua_point_coord> &ut ) -> void
 
 } // namespace
 
-auto lua_point_add( const lua_point_coord &lhs, const sol::object &rhs,
-                    sol::this_state lua_state ) -> sol::object
+auto lua_point_add( const lua_point_coord &lhs,
+                    const sol::object &rhs ) -> std::optional<lua_point_coord>
 {
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_point_coord( lhs.origin, lhs.scale,
-                                     lhs.raw + other.raw ) );
+            return make_point_coord( lhs.origin, lhs.scale, lhs.raw + other.raw );
         }
         if( lhs.scale == other.scale && lhs.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_point_coord( other.origin, other.scale,
-                                     lhs.raw + other.raw ) );
+            return make_point_coord( other.origin, other.scale, lhs.raw + other.raw );
         }
     }
     debugmsg( "PointCoord addition expects a relative PointCoord at the same scale" );
-    return sol::nil;
+    return std::nullopt;
 }
 
-auto lua_point_subtract( const lua_point_coord &lhs, const sol::object &rhs,
-                         sol::this_state lua_state ) -> sol::object
+auto lua_point_subtract( const lua_point_coord &lhs,
+                         const sol::object &rhs ) -> std::optional<lua_point_coord>
 {
     if( rhs.is<lua_point_coord>() ) {
         const auto other = rhs.as<lua_point_coord>();
         if( lhs.scale == other.scale && other.origin == coords::origin::relative ) {
-            return sol::make_object( lua_state, make_point_coord( lhs.origin, lhs.scale,
-                                     lhs.raw - other.raw ) );
+            return make_point_coord( lhs.origin, lhs.scale, lhs.raw - other.raw );
         }
         if( same_coord_kind( lhs, other ) && lhs.origin != coords::origin::relative ) {
-            return sol::make_object( lua_state, make_point_coord( coords::origin::relative,
-                                     lhs.scale, lhs.raw - other.raw ) );
+            return make_point_coord( coords::origin::relative, lhs.scale, lhs.raw - other.raw );
         }
     }
     debugmsg( "PointCoord subtraction expects a relative PointCoord at the same scale, or a matching PointCoord" );
-    return sol::nil;
+    return std::nullopt;
 }
 
-auto lua_point_multiply( const lua_point_coord &lhs, const int rhs,
-                         sol::this_state lua_state ) -> sol::object
+auto lua_point_multiply( const lua_point_coord &lhs,
+                         const int rhs ) -> std::optional<lua_point_coord>
 {
     if( lhs.origin == coords::origin::relative ) {
-        return sol::make_object( lua_state, make_point_coord( lhs.origin, lhs.scale, lhs.raw * rhs ) );
+        return make_point_coord( lhs.origin, lhs.scale, lhs.raw * rhs );
     }
     debugmsg( "PointCoord multiplication is only valid for relative coordinates" );
-    return sol::nil;
+    return std::nullopt;
 }
 
 auto lua_point_rotate( const lua_point_coord &coord, const int turns,
@@ -159,10 +155,9 @@ auto bind_point_projection_methods( sol::usertype<lua_point_coord> &ut ) -> void
     } );
     DOC( "Combines this coarse point with a remainder from project_remain. Returns PointCoord or TripointCoord depending on the inputs, or nil if the pair is incompatible." );
     DOC_PARAMS( "fine" );
-    luna::set_fx( ut, "project_combine", []( const lua_point_coord & coord, const sol::object & fine,
-    sol::this_state L ) {
-        return lua_project_combine( sol::make_object( L, coord ), fine );
-    } );
+    luna::set_fx( ut, "project_combine",
+                  sol::resolve<lua_coord_result( const lua_point_coord &, const sol::object & )>
+                  ( &lua_project_combine ) );
 }
 
 auto reg_lua_point_coord( sol::state &lua ) -> void

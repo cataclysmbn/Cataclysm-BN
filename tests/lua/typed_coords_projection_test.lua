@@ -21,10 +21,12 @@ test_data["distance"] = coords.rl_dist(abs_sm, combined + coords.point_rel_sm(3,
 local doc_ms = coords.tripoint_abs_ms(25, 26, 2)
 local doc_quotient, doc_remainder = doc_ms:project_remain_omt()
 local doc_combined = coords.project_combine(doc_quotient, doc_remainder)
+local doc_method_combined = doc_quotient:project_combine(doc_remainder)
 
 test_data["doc_remain_omt_quotient"] = tostring(doc_quotient)
 test_data["doc_remain_omt_remainder"] = tostring(doc_remainder)
 test_data["doc_remain_omt_combined"] = tostring(doc_combined)
+test_data["doc_remain_omt_method_combined"] = tostring(doc_method_combined)
 
 test_data["typed_param"] = accept_abs_omt(coords.tripoint_abs_omt(1, 2, 3))
 

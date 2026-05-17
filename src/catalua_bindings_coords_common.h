@@ -31,6 +31,9 @@ std::tuple<std::optional<lua_tripoint_coord>, std::optional<lua_point_coord>>;
 auto lua_project_remain_to( const sol::object &val,
                             const std::string &result_scale ) -> std::tuple<lua_coord_result, std::optional<lua_point_coord>>;
 auto lua_project_combine( const sol::object &coarse, const sol::object &fine ) -> lua_coord_result;
+auto lua_project_combine( const lua_point_coord &coarse, const sol::object &fine ) -> lua_coord_result;
+auto lua_project_combine( const lua_tripoint_coord &coarse,
+                          const sol::object &fine ) -> lua_coord_result;
 auto lua_point_coord_rl_dist( const lua_point_coord &lhs,
                               const lua_point_coord &rhs ) -> std::optional<int>;
 auto lua_point_coord_trig_dist( const lua_point_coord &lhs,
