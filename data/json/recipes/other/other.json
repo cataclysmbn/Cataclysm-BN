@@ -400,7 +400,7 @@
     "skill_used": "cooking",
     "difficulty": 2,
     "time": "1 m",
-    "charges": 5,
+    "charges": 20,
     "autolearn": true,
     "qualities": [ { "id": "PRESSURIZATION", "level": 1 } ],
     "batch_time_factors": [ 75, 1 ],
