@@ -271,6 +271,21 @@ for it, and will prevent anything that isn't completely ready from being merged 
 It is not required to solve or reference an open issue to file a PR, however, if you do so, you need
 to explain the problem your PR is solving in full detail.
 
+### AI-assisted pull requests
+
+If AI coding assistants contributed to a PR, the PR description must disclose the use of AI.
+
+Each commit that was written, generated, or substantively revised with AI assistance must include an
+`Assisted-by:` trailer in the Linux kernel format described in
+[AI Coding Assistants](https://docs.kernel.org/process/coding-assistants.html) and
+[Submitting patches](https://docs.kernel.org/process/submitting-patches.html#using-assisted-by).
+
+Example:
+
+```text
+Assisted-by: Claude:claude-3-opus coccinelle sparse
+```
+
 ### Closing issues using keywords
 
 One more thing: when marking your PR as closing, fixing, or resolving issues, please include this
@@ -371,16 +386,17 @@ xxxx..xxxx  new_feature -> new_feature
 
 ## Unit tests
 
-There is a suite of tests built into the source tree at tests/ You should run the test suite after
-ANY change to the game source. An ordinary invocation of `make` will build the test executable at
-tests/cata_test, and it can be invoked like any ordinary executable, or via `make check`. With no
-arguments it will run the entire test suite. With `--help` it will print a number of invocation
-options you can use to adjust its operation.
+There is a suite of tests built into the source tree at tests/. You should run the test suite after
+ANY change to the game source. CMake builds the test executable under the selected build preset's
+`tests/` directory. With no arguments it will run the entire test suite. With `--help` it will print
+a number of invocation options you can use to adjust its operation.
 
 ```sh
-$ make
+$ cmake --preset linux-slim
+... configuration details ...
+$ cmake --build --preset linux-slim --target cata_test-tiles
 ... compilation details ...
-$ tests/cata_test
+$ ./out/build/linux-slim/tests/cata_test-tiles
 Starting the actual test at Fri Nov  9 04:37:03 2018
 ===============================================================================
 All tests passed (1324684 assertions in 94 test cases)
@@ -388,7 +404,7 @@ Ended test at Fri Nov  9 04:37:45 2018
 The test took 41.772 seconds
 ```
 
-I recommend habitually invoking make like `make YOUR BUILD OPTIONS && make check`.
+I recommend habitually invoking CMake build and test commands for your selected preset.
 
 ## In-game testing, test environment and the debug menu
 

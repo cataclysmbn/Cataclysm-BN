@@ -295,10 +295,10 @@ void game_menus::inv::common( avatar &you )
 }
 
 item *game_menus::inv::titled_filter_menu( const item_filter &filter, avatar &you,
-        const std::string &title, const std::string &none_message )
+        const std::string &title, const std::string &none_message, int radius )
 {
     return inv_internal( you, inventory_filter_preset( filter ),
-                         title, -1, none_message );
+                         title, radius, none_message );
 }
 
 item *game_menus::inv::titled_menu( avatar &you, const std::string &title,

@@ -29,7 +29,7 @@ item *titled_menu( avatar &you, const std::string &title,
                    const std::string &none_message = "" );
 // item selector for items in @you's inventory with a filter
 item *titled_filter_menu( const item_filter &filter, avatar &you,
-                          const std::string &title, const std::string &none_message = "" );
+                          const std::string &title, const std::string &none_message = "", int radius = -1 );
 
 /**
 * @name Customized inventory menus

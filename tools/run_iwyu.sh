@@ -43,12 +43,12 @@ function run_clang_tidy {
 # First IWYU pass
 run_iwyu 1
 # Make sure we didn't break the build
-make -j "$jobs"
+cmake --build build --parallel "$jobs"
 # Clean up old-style headers that might have been added
 run_clang_tidy
 # Second IWYU pass
 run_iwyu 2
 # Tidy up
-make astyle
+cmake --build build --target astyle --parallel "$jobs"
 # Make sure we didn't break the build
-make -j "$jobs"
+cmake --build build --parallel "$jobs"

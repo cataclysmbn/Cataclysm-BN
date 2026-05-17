@@ -53,6 +53,7 @@
 #include "cata_utility.h"
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
+#include "cached_options.h"
 #include "catacharset.h"
 #include "character.h"
 #include "character_display.h"
@@ -602,6 +603,7 @@ void game::setup( bool load_world_modfiles )
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
     new_game = true;
+    saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
     bVMonsterLookFire = true;
 
@@ -830,6 +832,7 @@ bool game::start_game()
 
     seed = rng_bits();
     new_game = true;
+    saving_blocked_by_failed_load = false;
     start_calendar();
     get_weather().nextweather = calendar::turn;
     safe_mode = ( get_option<bool>( "SAFEMODE" ) ? SAFE_MODE_ON : SAFE_MODE_OFF );
@@ -3121,7 +3124,9 @@ bool game::load( const std::string &world )
     try {
         world_generator->set_active_world( wptr );
         g->setup();
-        g->load( wptr->world_saves.front() );
+        if( !g->load( wptr->world_saves.front() ) ) {
+            return false;
+        }
     } catch( const std::exception &err ) {
         debugmsg( "cannot load world '%s': %s", world, err.what() );
         return false;
@@ -3132,11 +3137,23 @@ bool game::load( const std::string &world )
 
 bool game::load( const save_t &name )
 {
-    background_pane background;
-    static_popup popup;
-    popup.message( "%s", _( "Please wait…\nLoading the save…" ) );
+    auto background = std::unique_ptr<background_pane>();
+    auto popup = std::unique_ptr<static_popup>();
+    if( !test_mode ) {
+        background = std::make_unique<background_pane>();
+        popup = std::make_unique<static_popup>();
+        popup->message( "%s", _( "Please wait…\nLoading the save…" ) );
+    }
 
     using namespace std::placeholders;
+
+    saving_blocked_by_failed_load = true;
+    auto save_json_valid = false;
+    const auto validate_save = [&]( std::istream & fin ) { save_json_valid = validate_save_json( fin ); };
+    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, validate_save ) ||
+        !save_json_valid ) {
+        return false;
+    }
 
     // Now load up the master game data; factions (and more?)
     load_master();
@@ -3159,8 +3176,10 @@ bool game::load( const save_t &name )
         lazy_border_handle_ = 0;
     }
     fire_loader.clear( submap_loader );
-    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION,
-            std::bind( &game::unserialize, this, _1 ) ) ) {
+    auto unserialized = false;
+    const auto load_save = [&]( std::istream & fin ) { unserialized = unserialize( fin ); };
+    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, load_save ) ||
+        !unserialized ) {
         return false;
     }
 
@@ -3305,6 +3324,7 @@ bool game::load( const save_t &name )
     m.update_visibility_cache( get_levz() );
     m.invalidate_map_cache( get_levz() );
 
+    saving_blocked_by_failed_load = false;
     return true;
 }
 
@@ -3444,6 +3464,9 @@ bool game::save( bool quitting )
 {
     world *world = get_active_world();
     if( !world ) {
+        return false;
+    }
+    if( saving_blocked_by_failed_load ) {
         return false;
     }
 

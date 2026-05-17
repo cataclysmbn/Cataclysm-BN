@@ -653,5 +653,11 @@
     "id": "sloc_office_tower",
     "name": "Office Tower",
     "terrain": [ "loffice_tower_5" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_lab_concourse_area",
+    "name": "Cargo area Trans-Coast Logistics",
+    "terrain": [ { "om_terrain": "lab_CORE_2x1_1DN", "om_terrain_match_type": "TYPE" } ]
   }
 ]
