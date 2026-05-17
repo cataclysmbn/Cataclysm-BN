@@ -707,7 +707,7 @@ TEST_CASE( "placed_monsters_inherit_bound_dimension" )
     CHECK( mon->get_dimension() == test_dim );
 }
 
-TEST_CASE( "start_location_prepare_map_uses_active_dimension", "[map][dimension]" )
+TEST_CASE( "start_location_prepare_map_uses_active_dimension", "[map][dimension][.]" )
 {
     clear_all_state();
     const auto cleanup = on_out_of_scope( []() {

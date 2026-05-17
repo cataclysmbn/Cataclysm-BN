@@ -94,6 +94,24 @@ auto get_default_weather_generator() -> weather_generator
     return weather_generator {};
 }
 
+auto consume_bool_if_present( const JsonObject &jo, const std::string &member ) -> void
+{
+    if( jo.has_bool( member ) ) {
+        ( void )jo.get_bool( member );
+    }
+}
+
+auto disable_lakes( regional_settings &region ) -> void
+{
+    region.overmap_lake.noise_threshold_lake = 0.0;
+}
+
+auto disable_forests( regional_settings &region ) -> void
+{
+    region.overmap_forest.noise_threshold_forest = 0.0;
+    region.overmap_forest.noise_threshold_forest_thick = 0.0;
+}
+
 auto make_legacy_default_oter( const oter_str_id &surface_oter ) ->
 std::array<oter_str_id, OVERMAP_LAYERS>
 {
@@ -736,12 +754,8 @@ void load_region_settings( const JsonObject &jo )
         load_overmap_feature_flag_settings( jo, new_region.overmap_feature_flag, strict, false );
     }
 
-    if( jo.has_bool( "place_roads" ) ) {
-        new_region.place_roads = jo.get_bool( "place_roads" );
-    }
-    if( jo.has_bool( "neighbor_connections" ) ) {
-        new_region.neighbor_connections = jo.get_bool( "neighbor_connections" );
-    }
+    consume_bool_if_present( jo, "place_roads" );
+    consume_bool_if_present( jo, "neighbor_connections" );
 
     if( jo.has_member( "rivers" ) && jo.has_null( "rivers" ) ) {
         new_region.river_scale = 0.0;
@@ -756,7 +770,7 @@ void load_region_settings( const JsonObject &jo )
         disable_forests( new_region );
     }
     if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
-        new_region.place_forest_trails = false;
+        new_region.forest_trail.chance = 0;
     }
     if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
         // BN has no ravines settings block here.
@@ -820,12 +834,8 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
 {
     read_default_oter( jo, region.default_oter );
     jo.read( "river_scale", region.river_scale );
-    if( jo.has_bool( "place_roads" ) ) {
-        region.place_roads = jo.get_bool( "place_roads" );
-    }
-    if( jo.has_bool( "neighbor_connections" ) ) {
-        region.neighbor_connections = jo.get_bool( "neighbor_connections" );
-    }
+    consume_bool_if_present( jo, "place_roads" );
+    consume_bool_if_present( jo, "neighbor_connections" );
     if( jo.has_member( "rivers" ) && jo.has_null( "rivers" ) ) {
         region.river_scale = 0.0;
     }
@@ -839,7 +849,7 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
         disable_forests( region );
     }
     if( jo.has_member( "forest_trails" ) && jo.has_null( "forest_trails" ) ) {
-        region.place_forest_trails = false;
+        region.forest_trail.chance = 0;
     }
     if( jo.has_member( "ravines" ) && jo.has_null( "ravines" ) ) {
         // BN has no ravines settings block here.
