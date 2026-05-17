@@ -385,6 +385,7 @@
         "chance": 20,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 8,
           "mx_science": 20,
           "mx_collegekids": 25,
@@ -413,6 +414,7 @@
         "chance": 20,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 8,
           "mx_science": 20,
           "mx_collegekids": 25,
@@ -442,6 +444,7 @@
         "chance": 20,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 8,
           "mx_science": 20,
           "mx_collegekids": 25,
@@ -470,6 +473,7 @@
         "chance": 6,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 2,
           "mx_science": 1,
           "mx_collegekids": 3,
@@ -495,6 +499,7 @@
         "chance": 75,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 25,
           "mx_science": 40,
           "mx_collegekids": 50,
