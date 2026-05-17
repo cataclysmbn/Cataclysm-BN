@@ -121,7 +121,7 @@
     "type": "item_group",
     "id": "military_accessories_muzzle",
     "subtype": "distribution",
-    "//": "Standard military tactical accessories mounted on rifles",
+    "//": "Standard military muzzle accessories mounted on rifles",
     "entries": [ { "item": "muzzle_brake", "prob": 70 }, { "item": "suppressor", "prob": 30 } ]
   },
   {
