@@ -589,8 +589,6 @@ bool can_butcher_at( const tripoint &p )
     const int factor = you.max_quality( qual_BUTCHER );
     const int factorD = you.max_quality( qual_CUT_FINE );
     map_stack items = get_map().i_at( p );
-    bool has_item = false;
-    bool has_corpse = false;
 
     const inventory &crafting_inv = you.crafting_inventory();
     for( item *&items_it : items ) {
@@ -1188,7 +1186,6 @@ std::optional<std::pair<tripoint, tripoint>> choose_area( const std::string &mes
 {
 
     auto &u = g->u;
-    map &m = get_map();
     ui_adaptor ui;
 
     on_out_of_scope invalidate_current_ui( [&]() { ui.mark_resize(); } );
