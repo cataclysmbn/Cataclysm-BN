@@ -122,10 +122,7 @@
     "id": "military_accessories_muzzle",
     "subtype": "distribution",
     "//": "Standard military tactical accessories mounted on rifles",
-    "entries": [
-      { "item": "muzzle_brake", "prob": 70 },
-      { "item": "suppressor", "prob": 30 }
-    ]
+    "entries": [ { "item": "muzzle_brake", "prob": 70 }, { "item": "suppressor", "prob": 30 } ]
   },
   {
     "type": "item_group",
