@@ -23,8 +23,8 @@ void serialize_lua_table_internal( const sol::table &t, JsonOut &jsout,
 namespace
 {
 
-constexpr auto point_coord_kind = std::string_view{ "PointCoord" };
-constexpr auto tripoint_coord_kind = std::string_view{ "TripointCoord" };
+constexpr auto point_coord_kind = std::string_view { "PointCoord" };
+constexpr auto tripoint_coord_kind = std::string_view { "TripointCoord" };
 
 auto serialize_lua_coord_kind( const std::string_view kind, JsonOut &jsout ) -> void
 {
@@ -37,7 +37,8 @@ auto serialize_lua_point_coord_data( const detail::lua_coords::lua_point_coord &
                                      JsonOut &jsout ) -> void
 {
     jsout.start_object();
-    jsout.member_as_string( "origin", std::string( detail::lua_coords::origin_lua_name( coord.origin ) ) );
+    jsout.member_as_string( "origin",
+                            std::string( detail::lua_coords::origin_lua_name( coord.origin ) ) );
     jsout.member_as_string( "scale", std::string( detail::lua_coords::scale_lua_name( coord.scale ) ) );
     jsout.member( "raw" );
     coord.raw.serialize( jsout );
@@ -48,7 +49,8 @@ auto serialize_lua_tripoint_coord_data( const detail::lua_coords::lua_tripoint_c
                                         JsonOut &jsout ) -> void
 {
     jsout.start_object();
-    jsout.member_as_string( "origin", std::string( detail::lua_coords::origin_lua_name( coord.origin ) ) );
+    jsout.member_as_string( "origin",
+                            std::string( detail::lua_coords::origin_lua_name( coord.origin ) ) );
     jsout.member_as_string( "scale", std::string( detail::lua_coords::scale_lua_name( coord.scale ) ) );
     jsout.member( "raw" );
     coord.raw.serialize( jsout );

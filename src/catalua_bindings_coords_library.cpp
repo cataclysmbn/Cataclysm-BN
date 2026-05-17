@@ -242,7 +242,8 @@ auto lua_project_combine( const sol::object &coarse, const sol::object &fine ) -
     return lua_project_combine_impl( *coarse_coord, coord_from_object( fine ) );
 }
 
-auto lua_project_combine( const lua_point_coord &coarse, const sol::object &fine ) -> lua_coord_result
+auto lua_project_combine( const lua_point_coord &coarse,
+                          const sol::object &fine ) -> lua_coord_result
 {
     return lua_project_combine_impl( coord_from_lua_coord( coarse ), coord_from_object( fine ) );
 }

@@ -7934,7 +7934,8 @@ struct ter_furn_painter {
         return color_from_vars( *get_vars( p ) );
     }
 
-    static bool set_color( const tripoint_bub_ms &p, const RGBColorPair &col, const paint_layer layer ) {
+    static bool set_color( const tripoint_bub_ms &p, const RGBColorPair &col,
+                           const paint_layer layer ) {
         color_to_vars( *get_vars( p ), col, layer );
         return true;
     }
@@ -8204,7 +8205,8 @@ auto iuse_paint_stuff_config::use( player &, item &it, bool, const tripoint_bub_
     }
 } // namespace
 
-auto iuse_paint_stuff::use( player &who, item &it, const bool b, const tripoint_bub_ms &pos ) const -> int
+auto iuse_paint_stuff::use( player &who, item &it, const bool b,
+                            const tripoint_bub_ms &pos ) const -> int
 {
     auto &here = get_map();
 
