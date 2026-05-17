@@ -2,7 +2,7 @@ name: PR Artifact Publisher
 
 on:
   workflow_run:
-    workflows: [other]
+    workflows: [matrix]
     types: [completed]
 
 permissions:
