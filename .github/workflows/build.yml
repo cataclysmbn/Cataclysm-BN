@@ -13,6 +13,11 @@ on:
         required: false
         type: string
         default: release
+      artifact-label:
+        description: "Suffix for uploaded workflow artifact names"
+        required: false
+        type: string
+        default: ""
       matrix-json:
         description: "Build matrix include entries as JSON"
         required: false
@@ -56,6 +61,11 @@ on:
         default: true
       upload-to-release:
         description: "Upload to GitHub release"
+        required: false
+        type: boolean
+        default: false
+      upload-artifacts:
+        description: "Upload packaged build files as workflow artifacts"
         required: false
         type: boolean
         default: false
@@ -202,7 +212,7 @@ jobs:
             windows-${{ matrix.artifact }}-${{ github.ref_name }}
             windows-${{ matrix.artifact }}-main
             windows-${{ matrix.artifact }}-
-          max-size: 500M
+          max-size: 1G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -212,6 +222,7 @@ jobs:
           echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
           echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
           echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
+          echo "CCACHE_COMPILERCHECK=content" >> $env:GITHUB_ENV
 
       # Linux setup
       - name: Install dependencies (Linux)
@@ -341,8 +352,9 @@ jobs:
           echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
 
       - name: Create distribution package (Linux)
-        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
+          mkdir -p lang/mo
           cmake --install build --prefix cataclysmbn-${{ inputs.version-label }}
           tar -czvf cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.tar.gz \
             cataclysmbn-${{ inputs.version-label }}
@@ -394,23 +406,19 @@ jobs:
             --config Release `
             --target $targets
 
-      - name: Run tests (windows msvc)
-        if: runner.os == 'Windows' && inputs.run-tests
-        run: |
-          & "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe" --rng-seed time
-
       - name: Create distribution package (windows msvc)
-        if: runner.os == 'Windows' && inputs.package-artifacts
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
+          New-Item -ItemType Directory -Force lang/mo
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix cataclysmbn-${{ inputs.version-label }} --config Release
           Compress-Archive -Force -Path cataclysmbn-${{ inputs.version-label }}/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
       - name: Locate PDB (windows msvc)
-        if: runner.os == 'Windows' && inputs.package-artifacts
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object -ExpandProperty FullName
 
       - name: Archive PDB (windows msvc)
-        if: runner.os == 'Windows' && inputs.package-artifacts
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
           Compress-Archive -Force `
             -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb" `
@@ -424,7 +432,7 @@ jobs:
           buildPreset: ${{ matrix.preset }}
 
       - name: Rename distribution package (macOS)
-        if: runner.os == 'macOS' && inputs.package-artifacts
+        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       # Android builds
@@ -496,6 +504,19 @@ jobs:
           fi
 
       # Upload artifacts
+      - name: Upload packaged build artifact
+        if: inputs.upload-artifacts && matrix.upload-artifact == true
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
+          path: cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+          if-no-files-found: error
+
+      - name: Run tests (windows msvc)
+        if: runner.os == 'Windows' && inputs.run-tests
+        run: |
+          & "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe" --rng-seed time
+
       - name: Upload to release
         if: inputs.upload-to-release
         run: |

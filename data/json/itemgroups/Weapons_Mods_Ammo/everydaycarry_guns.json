@@ -1061,6 +1061,18 @@
     ]
   },
   {
+    "id": "everyday_m4a1_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack.  Military standard attachments variant",
+    "subtype": "collection",
+    "entries": [
+      { "item": "m4a1", "ammo-group": "on_hand_223", "charges": [ 0, 30 ], "contents-group": "military_accessories_standard" },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_m1918",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1126,6 +1138,23 @@
     ]
   },
   {
+    "id": "everyday_h&k416a5_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack.  Military standard attachments variant",
+    "subtype": "collection",
+    "entries": [
+      {
+        "item": "h&k416a5",
+        "ammo-group": "on_hand_223",
+        "charges": [ 0, 30 ],
+        "contents-group": "military_accessories_standard"
+      },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
     "id": "everyday_m27iar",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
@@ -1160,6 +1189,23 @@
         "ammo-group": "on_hand_223",
         "charges": [ 0, 30 ],
         "contents-group": "military_accessories_grenadier"
+      },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_stanag_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_223", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_m27iar_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack.  Military standard attachments variant",
+    "subtype": "collection",
+    "entries": [
+      {
+        "item": "m27iar",
+        "ammo-group": "on_hand_223",
+        "charges": [ 0, 30 ],
+        "contents-group": "military_accessories_standard"
       },
       { "group": "nested_stanag_mag", "charges-min": 0, "prob": 80 },
       { "group": "nested_stanag_mag", "charges-min": 0, "prob": 50 },
@@ -1321,6 +1367,23 @@
         "ammo-group": "on_hand_308",
         "charges": [ 0, 20 ],
         "contents-group": "military_accessories_grenadier"
+      },
+      { "group": "nested_scar_h_mag", "charges-min": 0, "prob": 80 },
+      { "group": "nested_scar_h_mag", "charges-min": 0, "prob": 50 },
+      { "group": "on_hand_308", "prob": 25, "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+    ]
+  },
+  {
+    "id": "everyday_scar_h_military",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack.  Military standard attachments variant",
+    "subtype": "collection",
+    "entries": [
+      {
+        "item": "scar_h",
+        "ammo-group": "on_hand_308",
+        "charges": [ 0, 20 ],
+        "contents-group": "military_accessories_standard"
       },
       { "group": "nested_scar_h_mag", "charges-min": 0, "prob": 80 },
       { "group": "nested_scar_h_mag", "charges-min": 0, "prob": 50 },

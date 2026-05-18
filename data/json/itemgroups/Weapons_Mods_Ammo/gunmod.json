@@ -49,6 +49,11 @@
       [ "g36_stanag_adapter", 40 ],
       [ "aug_nato_conversion", 40 ],
       [ "breacher_grip", 10 ],
+      [ "acog_scope", 70 ],
+      [ "holo_sight", 70 ],
+      [ "rifle_scope", 60 ],
+      [ "suppressor", 40 ],
+      [ "suppressor_compact", 30 ],
       { "group": "auto_sears", "prob": 40 }
     ]
   },
@@ -76,6 +81,48 @@
       { "item": "m203", "ammo-item": "40x46mm_m433", "prob": 75, "charges": 1 },
       { "item": "m320_mod", "ammo-item": "40x46mm_m433", "prob": 25, "charges": 1 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_standard",
+    "subtype": "collection",
+    "//": "Standard attachments for military rifles.",
+    "entries": [
+      { "group": "military_accessories_sight", "prob": 100 },
+      { "group": "military_accessories_tactical", "prob": 100 },
+      { "group": "military_accessories_muzzle", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_sight",
+    "subtype": "distribution",
+    "//": "Standard military sights mounted on rifles",
+    "entries": [
+      { "item": "red_dot_sight", "prob": 10 },
+      { "item": "holo_sight", "prob": 40 },
+      { "item": "acog_scope", "prob": 40 },
+      { "item": "rifle_scope", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_tactical",
+    "subtype": "distribution",
+    "//": "Standard military tactical accessories mounted on rifles",
+    "entries": [
+      { "item": "offset_sights", "prob": 25 },
+      { "item": "rail_laser_sight", "prob": 25 },
+      { "item": "grip", "prob": 20 },
+      { "item": "sword_bayonet", "prob": 30 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "military_accessories_muzzle",
+    "subtype": "distribution",
+    "//": "Standard military muzzle accessories mounted on rifles",
+    "entries": [ { "item": "muzzle_brake", "prob": 70 }, { "item": "suppressor", "prob": 30 } ]
   },
   {
     "type": "item_group",

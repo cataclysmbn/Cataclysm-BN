@@ -613,7 +613,7 @@ static SDL_Surface_Ptr apply_color_filter_blit_copy(
     SDL_Surface_Ptr dst = create_surface_32( src->w, src->h );
     assert( dst );
     throwErrorIf(
-        SDL_BlitSurface( src.get(), nullptr, dst.get(), nullptr ) != 0,
+        !SDL_BlitSurface( src.get(), nullptr, dst.get(), nullptr ),
         "SDL_BlitSurface failed"
     );
 
@@ -1853,7 +1853,7 @@ void tileset_loader::load_tileset( const std::string &img_path, const bool pump_
             smaller_surf = ::create_surface_32( w, h );
             assert( smaller_surf );
             const SDL_Rect inp{ sub_rect.x, sub_rect.y, w, h };
-            throwErrorIf( SDL_BlitSurface( tile_atlas.get(), &inp, smaller_surf.get(), nullptr ) != 0,
+            throwErrorIf( !SDL_BlitSurface( tile_atlas.get(), &inp, smaller_surf.get(), nullptr ),
                           "SDL_BlitSurface failed" );
         }
         const SDL_Surface_Ptr &surf_to_use = smaller_surf ? smaller_surf : tile_atlas;
@@ -2131,11 +2131,14 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     for( const JsonObject &curr_info : config.get_array( "tile_info" ) ) {
         ts.tile_height = curr_info.get_int( "height" );
         ts.tile_width = curr_info.get_int( "width" );
-        ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
+        //ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
+        ts.zlevel_height = 0;
         tile_iso = curr_info.get_bool( "iso", false );
         ts.tile_pixelscale = curr_info.get_float( "pixelscale", 1.0f );
-        ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
-        ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
+        //ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
+        //ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
+        ts.prevent_occlusion_min_dist = -1.0f;
+        ts.prevent_occlusion_max_dist = 0.0f;
     }
 
     if( precheck ) {

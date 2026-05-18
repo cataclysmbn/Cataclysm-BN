@@ -26,22 +26,14 @@
         ".#TRIR | ||||| |RRb  #..",
         ".#E    + +U|U+ +    d#..",
         ".oy   E|+|||||+|   @@o..",
-        ".od   b|S$B|B$S|E  @@o..",
-        ".#    s|t$B|B$t|T   d#..",
+        ".od   b|S¨B|B¨S|E  @@o..",
+        ".#    s|t¨B|B¨t|T   d#..",
         "^# @@  |||||||||  h  #^.",
         ".#d@@s +Dz|g|zD+ III #..",
         ".##oo######*######oo##.."
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": {
-        "#": "t_adobe_brick_wall",
-        "p": "t_sidewalk",
-        "X": "t_sidewalk",
-        "B": "t_linoleum_gray",
-        "S": "t_linoleum_gray",
-        "$": "t_linoleum_gray",
-        "t": "t_linoleum_gray"
-      },
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
+      "terrain": { "#": "t_adobe_brick_wall", "p": "t_sidewalk", "X": "t_sidewalk" },
       "place_loot": [ { "item": "television", "x": 4, "y": 2, "chance": 70 }, { "item": "television", "x": 15, "y": 7, "chance": 70 } ],
       "place_monsters": [ { "monster": "GROUP_ZOMBIE", "x": [ 2, 21 ], "y": [ 2, 21 ], "chance": 8 } ]
     }
