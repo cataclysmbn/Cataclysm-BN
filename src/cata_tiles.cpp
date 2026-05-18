@@ -1563,6 +1563,37 @@ texture_result tileset::get_or_default( const int sprite_index,
             }
         }
 
+        switch( type ) {
+            case tileset_fx_type::enhanced_overexposed: {
+                tint_config vfx_tint;
+                if( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) == "custom" ) {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_COLOR" ) ) };
+                } else {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) ) };
+                }
+                vfx_tint.blend_mode = tint_blend_mode::tint;
+                vfx_tint.brightness = 1.25f;
+                apply_surf_blend_effect( st_surf, vfx_tint, false, st_sub_rect_vfx, st_sub_rect_tinted, {} );
+                break;
+            }
+            case tileset_fx_type::enhanced_night: {
+                tint_config vfx_tint;
+                if( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) == "custom" ) {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_COLOR" ) ) };
+                } else {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) ) };
+                }
+                vfx_tint.blend_mode = tint_blend_mode::tint;
+                vfx_tint.brightness = 0.75f;
+                apply_surf_blend_effect( st_surf, vfx_tint, false, st_sub_rect_vfx, st_sub_rect_tinted, {} );
+                break;
+            }
+            default: {
+                apply_color_filter( st_surf, st_sub_rect_vfx, st_surf, st_sub_rect_tinted, vfx_func );
+                break;
+            }
+        }
+
         // Apply UV warp if specified
         SDL_Rect final_src_rect = st_sub_rect_vfx;
         int final_w = spr_w;
