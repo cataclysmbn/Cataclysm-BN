@@ -525,7 +525,15 @@
       },
       "build": {
         "chance": 90,
-        "extras": { "mx_military": 5, "mx_survivor": 2, "mx_science": 12, "mx_collegekids": 15, "mx_portal": 5, "mx_crater": 60, "mx_portal_in": 1 }
+        "extras": {
+          "mx_military": 5,
+          "mx_survivor": 2,
+          "mx_science": 12,
+          "mx_collegekids": 15,
+          "mx_portal": 5,
+          "mx_crater": 60,
+          "mx_portal_in": 1
+        }
       },
       "subway": {
         "chance": 75,
