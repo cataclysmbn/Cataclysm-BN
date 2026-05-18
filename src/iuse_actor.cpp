@@ -7611,7 +7611,7 @@ concept is_painter =
     requires(
         const T &painter,
         const U &thing,
-        const tripoint &where,
+        const tripoint_bub_ms &where,
         const RGBColorPair &color,
         const iuse_paint_stuff_config::paint_layer layer )
 {
