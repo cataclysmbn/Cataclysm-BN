@@ -1557,13 +1557,6 @@ texture_result tileset::get_or_default( const int sprite_index,
                 apply_surf_blend_effect( st_surf, vfx_tint, false, st_sub_rect_vfx, st_sub_rect_tinted, {} );
                 break;
             }
-            default: {
-                apply_color_filter( st_surf, st_sub_rect_vfx, st_surf, st_sub_rect_tinted, vfx_func );
-                break;
-            }
-        }
-
-        switch( type ) {
             case tileset_fx_type::enhanced_overexposed: {
                 tint_config vfx_tint;
                 if( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) == "custom" ) {
