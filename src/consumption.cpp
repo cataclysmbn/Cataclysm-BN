@@ -99,6 +99,7 @@ static const trait_id trait_M_IMMUNE( "M_IMMUNE" );
 static const trait_id trait_MANDIBLES( "MANDIBLES" );
 static const trait_id trait_MEATARIAN( "MEATARIAN" );
 static const trait_id trait_MOUTH_TENTACLES( "MOUTH_TENTACLES" );
+static const trait_id trait_NO_THIRST( "NO_THIRST" );
 static const trait_id trait_PARAIMMUNE( "PARAIMMUNE" );
 static const trait_id trait_POISRESIST( "POISRESIST" );
 static const trait_id trait_PROBOSCIS( "PROBOSCIS" );
@@ -1265,7 +1266,7 @@ bool Character::consume_effects( item &food )
     mod_thirst( -contained_food.type->comestible->quench );
 
 
-    if( ( excess_kcal > 0 || excess_quench > 0 ) && !food.has_flag( flag_NO_BLOAT ) &&
+    if( ( excess_kcal > 0 || ( excess_quench > 0 && !has_trait( trait_NO_THIRST ) ) ) && !food.has_flag( flag_NO_BLOAT ) &&
         !has_trait( trait_GOURMAND ) ) {
         add_effect( effect_bloated, 5_minutes );
     }
