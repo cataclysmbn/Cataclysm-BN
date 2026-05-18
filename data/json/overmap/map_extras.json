@@ -118,6 +118,17 @@
     "autonote": true
   },
   {
+    "id": "mx_survivor",
+    "type": "map_extra",
+    "name": { "ctxt": "map extra", "str": "Dead Survivors" },
+    "looks_like": "mon_zombie_survivor_elite",
+    "description": "Several corpses of survivors are here.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_survivor" },
+    "sym": "s",
+    "color": "light_red",
+    "autonote": true
+  },
+  {
     "id": "mx_helicopter",
     "type": "map_extra",
     "name": "Helicopter Crash",
@@ -414,6 +425,17 @@
     "looks_like": "e_handcuffs",
     "description": "A prison bus.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_prison_bus" }
+  },
+  {
+    "id": "mx_surrounded_vehicle",
+    "type": "map_extra",
+    "name": "Surrounded Vehicle",
+    "looks_like": "wheel_armor",
+    "description": "A vehicle surrounded by zombies.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_surrounded_vehicle" },
+    "sym": "S",
+    "color": "light_red",
+    "autonote": true
   },
   {
     "id": "mx_mass_grave",
