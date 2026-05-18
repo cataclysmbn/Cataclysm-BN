@@ -231,7 +231,7 @@ bool turret_data::can_reload() const
     if( !veh || !part || part->info().has_flag( "USE_TANKS" ) ) {
         return false;
     }
-    if( !part->base->magazine_integral() ) {
+    if( part->base->magazine_default() ) {
         // always allow changing of magazines
         return true;
     }
