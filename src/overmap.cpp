@@ -936,6 +936,8 @@ void overmap_terrains::finalize()
                   "cataclysm pending.  And not the fun kind." );
     }
 
+    finalize_compat_region_settings();
+
     for( auto &elem : region_settings_map ) {
         elem.second.finalize();
     }
