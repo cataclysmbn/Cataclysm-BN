@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "action.h"
 #include "avatar.h"
 #include "coordinates.h"
 #include "enums.h"
@@ -10,6 +11,8 @@
 #include "game_constants.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "point.h"
+#include "player_activity.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -47,6 +50,51 @@ TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
     // broken active item cache.
     g->place_player( tripoint_bub_ms::zero() );
     CHECK( get_map().check_submap_active_item_consistency().empty() );
+}
+
+TEST_CASE( "auto_stair_travel_finds_remembered_stairs", "[map][stair][autotravel]" )
+{
+    clear_all_state();
+    g->u.clear_map_memory();
+
+    const auto origin = tripoint( 60, 60, 0 );
+    const auto remembered_stairs = origin + tripoint_east * 5;
+    auto &here = get_map();
+
+    g->u.setpos( origin );
+    here.ter_set( remembered_stairs, ter_id( "t_floor" ) );
+    g->u.memorize_terrain_tile( here.getabs( remembered_stairs ), "t_stairs_up", 0, 0 );
+
+    const auto found_stairs = g->find_local_stairs_leading_to( here, origin.z + 1 );
+
+    REQUIRE( found_stairs );
+    CHECK( *found_stairs == remembered_stairs );
+}
+
+TEST_CASE( "auto_stair_travel_route_continues_with_vertical_move", "[map][stair][autotravel]" )
+{
+    clear_all_state();
+
+    const auto origin = tripoint( 60, 60, 0 );
+    const auto stairs = origin + tripoint_east;
+    auto &you = g->u;
+    auto &here = get_map();
+
+    you.setpos( origin );
+    here.ter_set( stairs, ter_id( "t_stairs_up" ) );
+
+    auto route = here.route( you.pos(), stairs, you.get_legacy_pathfinding_settings(),
+                             you.get_legacy_path_avoid() );
+    REQUIRE( !route.empty() );
+    route.emplace_back( stairs.xy(), origin.z + 1 );
+    you.set_destination( route );
+
+    CHECK( you.get_next_auto_move_direction() ==
+           get_movement_action_from_delta( stairs - origin, iso_rotate::yes ) );
+
+    you.setpos( stairs );
+    CHECK( you.get_next_auto_move_direction() == ACTION_MOVE_UP );
+    you.clear_destination();
 }
 
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )

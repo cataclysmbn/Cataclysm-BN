@@ -127,6 +127,7 @@
 #include "map_functions.h"
 #include "map_item_stack.h"
 #include "map_iterator.h"
+#include "map_memory.h"
 #include "map_selector.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -787,6 +788,40 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
     }
 }
 
+namespace
+{
+
+auto memorized_terrain_has_stair_flag( const memorized_terrain_tile &memory,
+                                       const bool going_up, const bool going_down ) -> bool
+{
+    if( memory.tile.empty() ) {
+        return false;
+    }
+
+    const auto terrain = ter_str_id( memory.tile );
+    if( !terrain.is_valid() ) {
+        return false;
+    }
+
+    const auto &terrain_obj = terrain.obj();
+    return ( going_up && ( terrain_obj.has_flag( TFLAG_GOES_UP ) ||
+                           terrain_obj.has_flag( TFLAG_ELEVATOR ) ) ) ||
+           ( going_down && ( terrain_obj.has_flag( TFLAG_GOES_DOWN ) ||
+                             terrain_obj.has_flag( TFLAG_ELEVATOR ) ) );
+}
+
+auto avatar_remembers_stairs_at( const avatar &you, map &mp, const tripoint &candidate,
+                                 const bool going_up, const bool going_down ) -> bool
+{
+    const auto abs_candidate = mp.getabs( candidate );
+    return memorized_terrain_has_stair_flag( you.get_terrain_tile( abs_candidate ), going_up,
+            going_down ) ||
+           memorized_terrain_has_stair_flag( you.get_memorized_tile( abs_candidate ), going_up,
+                                             going_down );
+}
+
+} // namespace
+
 std::optional<tripoint_bub_ms> game::find_local_stairs_leading_to( map &mp, const int z_after )
 {
     const int movez = z_after - get_levz();
@@ -795,10 +830,12 @@ std::optional<tripoint_bub_ms> game::find_local_stairs_leading_to( map &mp, cons
 
     //i tried 40, 80, and 100 here and got the same result almost every time? works for our purposes though
     for( const tripoint_bub_ms &candidate : closest_points_first( u.bub_pos(), 80 ) ) {
-        if( ( going_up && ( mp.has_flag( TFLAG_GOES_UP, candidate ) ||
-                            mp.has_flag( TFLAG_ELEVATOR, candidate ) ) ) ||
-            ( going_down && ( mp.has_flag( TFLAG_GOES_DOWN, candidate ) ||
-                              mp.has_flag( TFLAG_ELEVATOR, candidate ) ) ) ) {
+        const bool is_stairs = ( going_up && ( mp.has_flag( TFLAG_GOES_UP, candidate ) ||
+                                               mp.has_flag( TFLAG_ELEVATOR, candidate ) ) ) ||
+                               ( going_down && ( mp.has_flag( TFLAG_GOES_DOWN, candidate ) ||
+                                                 mp.has_flag( TFLAG_ELEVATOR, candidate ) ) );
+        if( ( is_stairs && u.sees( candidate ) ) ||
+            avatar_remembers_stairs_at( u, mp, candidate, going_up, going_down ) ) {
             return candidate;
         }
     }
@@ -817,13 +854,13 @@ void game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string 
     const int z_after = direction == "up" ? u.bub_pos().z() + 1 : u.bub_pos().z() - 1;
     std::optional<tripoint_bub_ms> stair_pos = find_local_stairs_leading_to( m, z_after );
 
-    if( !stair_pos || !u.sees( *stair_pos ) ) {
+    if( !stair_pos ) {
         return;
     }
 
     auto route = m.route( u.bub_pos(), *stair_pos, u.get_legacy_pathfinding_settings(),
                           u.get_legacy_path_avoid() );
-    if( route.size() <= 1 ) {
+    if( route.empty() ) {
         return;
     }
 
@@ -835,7 +872,7 @@ void game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string 
         dir_text = direction == "up" ? " (up)" : " (down)";
     }
     if( query_yn( "Walk to %s%s?", m.ter( *stair_pos ).obj().name(), dir_text ) ) {
-        route.pop_back();
+        route.emplace_back( stair_pos->xy(), z_after );
         u.set_destination( route, u.remove_activity() );
         u.activity = std::make_unique<player_activity>();
     }
@@ -13204,6 +13241,11 @@ static std::optional<tripoint_bub_ms> find_empty_spot_nearby( const tripoint_bub
 
 void game::vertical_move( int movez, bool force, bool peeking )
 {
+    if( u.is_auto_moving() && !check_safe_mode_allowed() ) {
+        u.clear_destination();
+        return;
+    }
+
     if( u.is_mounted() ) {
         auto mons = u.mounted_creature.get();
         if( mons->has_flag( MF_RIDEABLE_MECH ) ) {
