@@ -3800,23 +3800,18 @@ void mm_submap::serialize( JsonOut &jsout ) const
         jsout.end_array();
     };
 
-    for( size_t y = 0; y < SEEY; y++ ) {
-        for( size_t x = 0; x < SEEX; x++ ) {
-            point_sm_ms p( x, y );
-            const mm_elem elem = { tile( p ), terrain_tile( p ), symbol( p ) };
-            if( x == 0 && y == 0 ) {
-                last = elem;
-                continue;
-            }
-            if( last == elem ) {
-                num_same += 1;
-                continue;
-            }
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+        const mm_elem elem = { tile( p ), terrain_tile( p ), symbol( p ) };
+        if( p.x() == 0 && p.y() == 0 ) {
+            last = elem;
+        } else if( last == elem ) {
+            num_same += 1;
+        } else {
             write_seq();
             num_same = 1;
             last = elem;
         }
-    }
+    } );
     write_seq();
 
     jsout.end_array();
@@ -3831,46 +3826,43 @@ void mm_submap::deserialize( JsonIn &jsin )
     mm_elem elem;
     size_t remaining = 0;
 
-    for( size_t y = 0; y < SEEY; y++ ) {
-        for( size_t x = 0; x < SEEX; x++ ) {
-            if( remaining > 0 ) {
-                remaining -= 1;
-            } else {
-                jsin.start_array();
-                elem.tile.tile = jsin.get_string();
-                elem.tile.subtile = jsin.get_int();
-                elem.tile.rotation = jsin.get_int();
-                elem.symbol = jsin.get_int();
-                elem.terrain = mm_submap::default_tile;
-                if( jsin.test_string() ) {
-                    // New format: optional terrain tile fields follow symbol.
-                    elem.terrain.tile = jsin.get_string();
-                    elem.terrain.subtile = jsin.get_int();
-                    elem.terrain.rotation = jsin.get_int();
-                } else if( elem.tile.tile.starts_with( "t_" ) ) {
-                    // Migration: old saves stored terrain in the overlay slot.
-                    // Move it to the terrain slot where draw_terrain now expects it.
-                    elem.terrain = elem.tile;
-                    elem.tile = mm_submap::default_tile;
-                }
-                if( jsin.test_int() ) {
-                    remaining = jsin.get_int() - 1;
-                }
-                jsin.end_array();
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+        if( remaining > 0 ) {
+            remaining -= 1;
+        } else {
+            jsin.start_array();
+            elem.tile.tile = jsin.get_string();
+            elem.tile.subtile = jsin.get_int();
+            elem.tile.rotation = jsin.get_int();
+            elem.symbol = jsin.get_int();
+            elem.terrain = mm_submap::default_tile;
+            if( jsin.test_string() ) {
+                // New format: optional terrain tile fields follow symbol.
+                elem.terrain.tile = jsin.get_string();
+                elem.terrain.subtile = jsin.get_int();
+                elem.terrain.rotation = jsin.get_int();
+            } else if( elem.tile.tile.starts_with( "t_" ) ) {
+                // Migration: old saves stored terrain in the overlay slot.
+                // Move it to the terrain slot where draw_terrain now expects it.
+                elem.terrain = elem.tile;
+                elem.tile = mm_submap::default_tile;
             }
-            point_sm_ms p( x, y );
-            // Try to avoid assigning to save up on memory
-            if( elem.tile != mm_submap::default_tile ) {
-                set_tile( p, elem.tile );
+            if( jsin.test_int() ) {
+                remaining = jsin.get_int() - 1;
             }
-            if( elem.terrain != mm_submap::default_tile ) {
-                set_terrain_tile( p, elem.terrain );
-            }
-            if( elem.symbol != mm_submap::default_symbol ) {
-                set_symbol( p, elem.symbol );
-            }
+            jsin.end_array();
         }
-    }
+        // Try to avoid assigning to save up on memory
+        if( elem.tile != mm_submap::default_tile ) {
+            set_tile( p, elem.tile );
+        }
+        if( elem.terrain != mm_submap::default_tile ) {
+            set_terrain_tile( p, elem.terrain );
+        }
+        if( elem.symbol != mm_submap::default_symbol ) {
+            set_symbol( p, elem.symbol );
+        }
+    } );
     jsin.end_array();
 }
 
@@ -4220,31 +4212,28 @@ void submap::store( JsonOut &jsout ) const
     jsout.start_array();
     std::string last_id;
     int num_same = 1;
-    for( int j = 0; j < SEEY; j++ ) {
-        // NOLINTNEXTLINE(modernize-loop-convert)
-        for( int i = 0; i < SEEX; i++ ) {
-            const std::string this_id = ter[i][j].obj().id.str();
-            if( !last_id.empty() ) {
-                if( this_id == last_id ) {
-                    num_same++;
-                } else {
-                    if( num_same == 1 ) {
-                        // if there's only one element don't write as an array
-                        jsout.write( last_id );
-                    } else {
-                        jsout.start_array();
-                        jsout.write( last_id );
-                        jsout.write( num_same );
-                        jsout.end_array();
-                        num_same = 1;
-                    }
-                    last_id = this_id;
-                }
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+        const std::string this_id = ter[sm_ms.x()][sm_ms.y()].obj().id.str();
+        if( !last_id.empty() ) {
+            if( this_id == last_id ) {
+                num_same++;
             } else {
+                if( num_same == 1 ) {
+                    // if there's only one element don't write as an array
+                    jsout.write( last_id );
+                } else {
+                    jsout.start_array();
+                    jsout.write( last_id );
+                    jsout.write( num_same );
+                    jsout.end_array();
+                    num_same = 1;
+                }
                 last_id = this_id;
             }
+        } else {
+            last_id = this_id;
         }
-    }
+    } );
     // Because of the RLE scheme we have to do one last pass
     if( num_same == 1 ) {
         jsout.write( last_id );
@@ -4262,23 +4251,20 @@ void submap::store( JsonOut &jsout ) const
     jsout.start_array();
     int lastrad = -1;
     int count = 0;
-    for( int j = 0; j < SEEY; j++ ) {
-        for( int i = 0; i < SEEX; i++ ) {
-            const point_sm_ms p( i, j );
-            // Save radiation, re-examine this because it doesn't look like it works right
-            int r = get_radiation( p );
-            if( r == lastrad ) {
-                count++;
-            } else {
-                if( count ) {
-                    jsout.write( count );
-                }
-                jsout.write( r );
-                lastrad = r;
-                count = 1;
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+        // Save radiation, re-examine this because it doesn't look like it works right
+        int r = get_radiation( p );
+        if( r == lastrad ) {
+            count++;
+        } else {
+            if( count ) {
+                jsout.write( count );
             }
+            jsout.write( r );
+            lastrad = r;
+            count = 1;
         }
-    }
+    } );
     jsout.write( count );
     jsout.end_array();
 
@@ -4313,72 +4299,61 @@ void submap::store( JsonOut &jsout ) const
 
     jsout.member( "furniture" );
     jsout.start_array();
-    for( int j = 0; j < SEEY; j++ ) {
-        for( int i = 0; i < SEEX; i++ ) {
-            const point_sm_ms p( i, j );
-            // Save furniture
-            if( get_furn( p ) ) {
-                jsout.start_array();
-                jsout.write( p.x() );
-                jsout.write( p.y() );
-                jsout.write( get_furn( p ).obj().id );
-                jsout.end_array();
-            }
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+        // Save furniture
+        if( get_furn( p ) ) {
+            jsout.start_array();
+            jsout.write( p.x() );
+            jsout.write( p.y() );
+            jsout.write( get_furn( p ).obj().id );
+            jsout.end_array();
         }
-    }
+    } );
     jsout.end_array();
 
     jsout.member( "items" );
     jsout.start_array();
-    for( int j = 0; j < SEEY; j++ ) {
-        for( int i = 0; i < SEEX; i++ ) {
-            if( itm[i][j].empty() ) {
-                continue;
-            }
-            jsout.write( i );
-            jsout.write( j );
-            jsout.write( itm[i][j] );
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+        if( !itm[sm_ms.x()][sm_ms.y()].empty() ) {
+            jsout.write( sm_ms.x() );
+            jsout.write( sm_ms.y() );
+            jsout.write( itm[sm_ms.x()][sm_ms.y()] );
         }
-    }
+    } );
     jsout.end_array();
 
     jsout.member( "traps" );
     jsout.start_array();
-    for( int j = 0; j < SEEY; j++ ) {
-        for( int i = 0; i < SEEX; i++ ) {
-            const point_sm_ms p( i, j );
-            // Save traps
-            if( get_trap( p ) ) {
-                jsout.start_array();
-                jsout.write( p.x() );
-                jsout.write( p.y() );
-                // TODO: jsout should support writing an id like jsout.write( trap_id )
-                jsout.write( get_trap( p ).id().str() );
-                jsout.end_array();
-            }
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+        // Save traps
+        if( get_trap( p ) ) {
+            jsout.start_array();
+            jsout.write( p.x() );
+            jsout.write( p.y() );
+            // TODO: jsout should support writing an id like jsout.write( trap_id )
+            jsout.write( get_trap( p ).id().str() );
+            jsout.end_array();
         }
-    }
+    } );
     jsout.end_array();
 
     jsout.member( "fields" );
     jsout.start_array();
-    for( int j = 0; j < SEEY; j++ ) {
-        for( int i = 0; i < SEEX; i++ ) {
-            // Save fields
-            if( fld[i][j].field_count() > 0 ) {
-                jsout.write( i );
-                jsout.write( j );
-                jsout.start_array();
-                for( auto &elem : fld[i][j] ) {
-                    const field_entry &cur = elem.second;
-                    jsout.write( cur.get_field_type().id() );
-                    jsout.write( cur.get_field_intensity() );
-                    jsout.write( cur.get_field_age() );
-                }
-                jsout.end_array();
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+        // Save fields
+        if( fld[sm_ms.x()][sm_ms.y()].field_count() > 0 ) {
+            jsout.write( sm_ms.x() );
+            jsout.write( sm_ms.y() );
+            jsout.start_array();
+            for( auto &elem : fld[sm_ms.x()][sm_ms.y()] ) {
+                const field_entry &cur = elem.second;
+                jsout.write( cur.get_field_type().id() );
+                jsout.write( cur.get_field_intensity() );
+                jsout.write( cur.get_field_age() );
             }
+            jsout.end_array();
         }
-    }
+    } );
     jsout.end_array();
 
     // Write out as array of arrays of single entries
@@ -4504,26 +4479,23 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
         // terrain is encoded using simple RLE
         int remaining = 0;
         int_id<ter_t> iid;
-        for( int j = 0; j < SEEY; j++ ) {
-            // NOLINTNEXTLINE(modernize-loop-convert)
-            for( int i = 0; i < SEEX; i++ ) {
-                if( !remaining ) {
-                    if( jsin.test_string() ) {
-                        iid = ter_str_id( jsin.get_string() ).id();
-                    } else if( jsin.test_array() ) {
-                        jsin.start_array();
-                        iid = ter_str_id( jsin.get_string() ).id();
-                        remaining = jsin.get_int() - 1;
-                        jsin.end_array();
-                    } else {
-                        debugmsg( "Mapbuffer terrain data is corrupt, expected string or array." );
-                    }
+        std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+            if( !remaining ) {
+                if( jsin.test_string() ) {
+                    iid = ter_str_id( jsin.get_string() ).id();
+                } else if( jsin.test_array() ) {
+                    jsin.start_array();
+                    iid = ter_str_id( jsin.get_string() ).id();
+                    remaining = jsin.get_int() - 1;
+                    jsin.end_array();
                 } else {
-                    --remaining;
+                    debugmsg( "Mapbuffer terrain data is corrupt, expected string or array." );
                 }
-                ter[i][j] = iid;
+            } else {
+                --remaining;
             }
-        }
+            ter[sm_ms.x()][sm_ms.y()] = iid;
+        } );
         if( remaining ) {
             debugmsg( "Mapbuffer terrain data is corrupt, tile data remaining." );
         }

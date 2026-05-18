@@ -208,16 +208,14 @@ static void temp_remove_open_air( const shared_ptr_fast<mm_submap> &sm )
     if( sm->is_empty() ) {
         return;
     }
-    for( int x = 0; x < SEEX; x++ ) {
-        for( int y = 0; y < SEEY; y++ ) {
-            const memorized_terrain_tile &t = sm->tile( {x, y} );
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+        const memorized_terrain_tile &t = sm->tile( sm_ms );
 
-            if( !t.tile.empty() && ( t.tile == "t_open_air" || t.tile == "t_open_air_rooved" ||
-                                     t.tile == "t_open_air_rooved_outside" ) ) {
-                sm->set_tile( {x, y}, mm_submap::default_tile );
-            }
+        if( !t.tile.empty() && ( t.tile == "t_open_air" || t.tile == "t_open_air_rooved" ||
+                                    t.tile == "t_open_air_rooved_outside" ) ) {
+            sm->set_tile( sm_ms, mm_submap::default_tile );
         }
-    }
+    } );
 
 }
 

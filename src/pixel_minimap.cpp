@@ -295,14 +295,12 @@ void pixel_minimap::flush_cache_updates()
             SetRenderDrawColor( renderer, 0x00, 0x00, 0x00, 0x00 );
             RenderClear( renderer );
 
-            for( int y = 0; y < SEEY; ++y ) {
-                for( int x = 0; x < SEEX; ++x ) {
-                    const auto tile_pos = projector->get_tile_pos( { x, y }, { SEEX, SEEY } );
-                    const auto tile_size = projector->get_tile_size();
+            std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+                const auto tile_pos = projector->get_tile_pos( p.raw(), { SEEX, SEEY } );
+                const auto tile_size = projector->get_tile_size();
 
-                    geometry->rect( renderer, tile_pos, tile_size.x, tile_size.y, SDL_Color() );
-                }
-            }
+                geometry->rect( renderer, tile_pos, tile_size.x, tile_size.y, SDL_Color() );
+            } );
         }
 
         std::ranges::for_each( mcp.second.update_list, [&]( const auto p ) {
@@ -329,45 +327,41 @@ void pixel_minimap::update_cache_at( const tripoint_bub_sm &pos )
     const bool env_goggle = get_avatar().get_vision_modes()[ENV_GOGGLES];
 
     auto &cache_item = get_cache_at( here.bub_to_abs( pos ) );
-    const auto ms_pos = project_to<coords::ms>( pos );
 
     cache_item.touched = true;
+    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+        const auto ms_pos = project_combine( pos, sm_ms );
+        const auto lighting = access_cache.visibility_cache[access_cache.idx( ms_pos.x(), ms_pos.y() )];
 
-    for( int y = 0; y < SEEY; ++y ) {
-        for( int x = 0; x < SEEX; ++x ) {
-            const auto p = ms_pos + tripoint_rel_ms( x, y, 0 );
-            const auto lighting = access_cache.visibility_cache[access_cache.idx( p.x(), p.y() )];
+        SDL_Color color;
 
-            SDL_Color color;
+        if( lighting == lit_level::BLANK || lighting == lit_level::DARK ) {
+            // TODO: Map memory?
+            color = { 0x00, 0x00, 0x00, 0xFF };
+        } else {
+            color = get_map_color_at( ms_pos );
 
-            if( lighting == lit_level::BLANK || lighting == lit_level::DARK ) {
-                // TODO: Map memory?
-                color = { 0x00, 0x00, 0x00, 0xFF };
-            } else {
-                color = get_map_color_at( p );
-
-                //color terrain according to lighting conditions
-                if( nv_goggle || env_goggle ) {
-                    if( lighting == lit_level::LOW ) {
-                        color = color_pixel_nightvision( color );
-                    } else if( lighting != lit_level::DARK && lighting != lit_level::BLANK ) {
-                        color = color_pixel_overexposed( color );
-                    }
-                } else if( lighting == lit_level::LOW ) {
-                    color = color_pixel_grayscale( color );
+            //color terrain according to lighting conditions
+            if( nv_goggle || env_goggle ) {
+                if( lighting == lit_level::LOW ) {
+                    color = color_pixel_nightvision( color );
+                } else if( lighting != lit_level::DARK && lighting != lit_level::BLANK ) {
+                    color = color_pixel_overexposed( color );
                 }
-
-                color = adjust_color_brightness( color, settings.brightness );
+            } else if( lighting == lit_level::LOW ) {
+                color = color_pixel_grayscale( color );
             }
 
-            auto &current_color = cache_item.color_at( { x, y } );
-
-            if( current_color != color ) {
-                current_color = color;
-                cache_item.update_list.emplace_back( x, y );
-            }
+            color = adjust_color_brightness( color, settings.brightness );
         }
-    }
+
+        auto &current_color = cache_item.color_at( sm_ms );
+
+        if( current_color != color ) {
+            current_color = color;
+            cache_item.update_list.emplace_back( sm_ms );
+        }
+    } );
 }
 
 pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint_abs_sm &abs_sm_pos )
@@ -508,7 +502,7 @@ void pixel_minimap::render_cache( const tripoint_bub_ms &center )
             return;
         }
 
-        const auto rel_pos = elem.first - sm_center;
+        const tripoint_rel_sm rel_pos = elem.first - sm_center;
 
         if( std::abs( rel_pos.x() ) > sm_offset.x() + 1 ||
             std::abs( rel_pos.y() ) > sm_offset.y() + 1 ||

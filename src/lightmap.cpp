@@ -118,8 +118,9 @@ bool map::build_transparency_cache( const int zlev )
     // own submap's terrain data, so the smx loop is embarrassingly parallel.
     const auto process_smx = [&]( int smx ) {
         for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            auto *cur_submap = get_submap_at_grid( tripoint_bub_sm{smx, smy, zlev} );
-            const auto sm_offset = project_to<coords::ms>( point_bub_sm( smx, smy ) );
+            const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
+            auto *cur_submap = get_submap_at_grid( sm_pos );
+            const auto sm_offset = project_to<coords::ms>( sm_pos );
 
             if( cur_submap == nullptr ) {
                 // Null slots occur at bounded-dimension edges.
@@ -653,112 +654,109 @@ void map::generate_lightmap_worker( const int zlev )
         auto process_smx = [&]( int smx ) {
             auto &local = smx_accs[smx];
             for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                const auto cur_submap = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
+                const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
+                const auto cur_submap = get_submap_at_grid( sm_pos );
                 if( cur_submap == nullptr ) {
                     continue;
                 }
-                for( int sx = 0; sx < SEEX; ++sx ) {
-                    for( int sy = 0; sy < SEEY; ++sy ) {
-                        const int x = sx + smx * SEEX;
-                        const int y = sy + smy * SEEY;
-                        const tripoint_bub_ms p( x, y, zlev );
-                        // Project light into any openings into buildings.
-                        // Check both terrain floor_cache and vehicle_floor_cache since vehicle
-                        // roofs are no longer written into floor_cache.
-                        auto has_floor_above = [&]( int idx ) {
-                            return prev_floor_cache[idx] || prev_vehicle_floor_cache[idx];
-                        };
-                        if( !outside_cache[map_cache.idx( p.x(), p.y() )] || ( !top_floor &&
-                                has_floor_above( map_cache.idx( p.x(), p.y() ) ) ) ) {
-                            // Apply light sources for external/internal divide.
-                            // Skip outdoor tiles (outside_cache=true) unless they have a ceiling above
-                            // without this guard every z=10 tile (all outside) enters the loop.
-                            // A neighbour is an outdoor light source if it has no floor above it
-                            // and is part of a genuine outdoor area (not an isolated skylight hole).
-                            // An isolated skylight has no adjacent open-sky neighbours, so we
-                            // require at least one cardinal neighbour of `nb` (other than p) that
-                            // also has no floor above.
-                            for( int i = 0; i < 4; ++i ) {
-                                const auto neighbour = p.xy() + point( dir_x[i], dir_y[i] );
-                                if( neighbour.x() < 0 || neighbour.y() < 0 ||
-                                    neighbour.x() >= map_cache.cache_x || neighbour.y() >= map_cache.cache_y ) {
-                                    continue;
-                                }
-                                if( !( top_floor || !has_floor_above( map_cache.idx( neighbour.x(), neighbour.y() ) ) ) ) {
-                                    continue;
-                                }
-                                const bool nb_has_open_sky_neighbour = std::ranges::any_of(
-                                std::views::iota( 0, 4 ), [&]( int j ) {
-                                    const auto cn = neighbour + point( dir_x[j], dir_y[j] );
-                                    return cn != p.xy() &&
-                                           cn.x() >= 0 && cn.y() >= 0 &&
-                                           cn.x() < map_cache.cache_x && cn.y() < map_cache.cache_y &&
-                                           !has_floor_above( map_cache.idx( cn.x(), cn.y() ) );
-                                } );
-                                if( !nb_has_open_sky_neighbour ) {
-                                    continue;
-                                }
-                                const float source_light =
-                                    std::min( natural_light, lm[map_cache.idx( neighbour.x(), neighbour.y() )].max() );
-                                if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
-                                    update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, quadrant::default_ );
-                                    // apply_directional_light writes to arbitrary lm positions — defer.
-                                    local.dir_lights.push_back( { p, dir_d[i], source_light } );
-                                } else {
-                                    update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, dir_quadrants[i][0] );
-                                    update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, dir_quadrants[i][1] );
-                                }
+                std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+                    const auto p = project_combine( sm_pos, sm_ms );
+                    // Project light into any openings into buildings.
+                    // Check both terrain floor_cache and vehicle_floor_cache since vehicle
+                    // roofs are no longer written into floor_cache.
+                    auto has_floor_above = [&]( int idx ) {
+                        return prev_floor_cache[idx] || prev_vehicle_floor_cache[idx];
+                    };
+                    if( !outside_cache[map_cache.idx( p.x(), p.y() )] || ( !top_floor &&
+                            has_floor_above( map_cache.idx( p.x(), p.y() ) ) ) ) {
+                        // Apply light sources for external/internal divide.
+                        // Skip outdoor tiles (outside_cache=true) unless they have a ceiling above
+                        // without this guard every z=10 tile (all outside) enters the loop.
+                        // A neighbour is an outdoor light source if it has no floor above it
+                        // and is part of a genuine outdoor area (not an isolated skylight hole).
+                        // An isolated skylight has no adjacent open-sky neighbours, so we
+                        // require at least one cardinal neighbour of `nb` (other than p) that
+                        // also has no floor above.
+                        for( int i = 0; i < 4; ++i ) {
+                            const auto neighbour = p.xy() + point( dir_x[i], dir_y[i] );
+                            if( neighbour.x() < 0 || neighbour.y() < 0 ||
+                                neighbour.x() >= map_cache.cache_x || neighbour.y() >= map_cache.cache_y ) {
+                                continue;
+                            }
+                            if( !( top_floor || !has_floor_above( map_cache.idx( neighbour.x(), neighbour.y() ) ) ) ) {
+                                continue;
+                            }
+                            const bool nb_has_open_sky_neighbour = std::ranges::any_of(
+                            std::views::iota( 0, 4 ), [&]( int j ) {
+                                const auto cn = neighbour + point( dir_x[j], dir_y[j] );
+                                return cn != p.xy() &&
+                                        cn.x() >= 0 && cn.y() >= 0 &&
+                                        cn.x() < map_cache.cache_x && cn.y() < map_cache.cache_y &&
+                                        !has_floor_above( map_cache.idx( cn.x(), cn.y() ) );
+                            } );
+                            if( !nb_has_open_sky_neighbour ) {
+                                continue;
+                            }
+                            const float source_light =
+                                std::min( natural_light, lm[map_cache.idx( neighbour.x(), neighbour.y() )].max() );
+                            if( light_transparency( p ) > LIGHT_TRANSPARENCY_SOLID ) {
+                                update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, quadrant::default_ );
+                                // apply_directional_light writes to arbitrary lm positions — defer.
+                                local.dir_lights.push_back( { p, dir_d[i], source_light } );
+                            } else {
+                                update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, dir_quadrants[i][0] );
+                                update_light_quadrants( lm[map_cache.idx( p.x(), p.y() )], source_light, dir_quadrants[i][1] );
                             }
                         }
-
-                        if( cur_submap->get_lum( { sx, sy } ) && has_items( p ) ) {
-                            // Inline add_light_from_items to split arc (deferred) from point (safe).
-                            auto items = i_at( p );
-                            for( auto itm_it = items.begin(); itm_it != items.end(); ++itm_it ) {
-                                float ilum = 0.0f;
-                                units::angle iwidth = 0_degrees;
-                                units::angle idir = 0_degrees;
-                                if( ( *itm_it )->getlight( ilum, iwidth, idir ) ) {
-                                    if( iwidth > 0_degrees ) {
-                                        // apply_light_arc writes to arbitrary lm positions — defer.
-                                        local.arc_lights.push_back( { p, idir, ilum, iwidth } );
-                                    } else {
-                                        add_light_source( p, ilum );
-                                    }
-                                }
-                            }
-                        }
-
-                        const ter_id terrain = cur_submap->get_ter( { sx, sy } );
-                        if( terrain->light_emitted > 0 ) {
-                            add_light_source( p, terrain->light_emitted );
-                        }
-                        const furn_id furniture = cur_submap->get_furn( {sx, sy } );
-                        if( furniture->light_emitted > 0 ) {
-                            add_light_source( p, furniture->light_emitted );
-                        }
-
-                        std::ranges::for_each( cur_submap->get_field( { sx, sy } ), [&]( auto & fld ) {
-                            if( !fld.first.is_valid() ) {
-                                debugmsg( "generate_lightmap: invalid field type id %d at "
-                                          "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
-                                          fld.first.to_i(), smx, smy, zlev, sx, sy,
-                                          cur_submap->field_count,
-                                          static_cast<int>( cur_submap->is_uniform ) );
-                                return;
-                            }
-                            const auto *cur = &fld.second;
-                            const int light_emitted = cur->light_emitted();
-                            if( light_emitted > 0 ) {
-                                add_light_source( p, light_emitted );
-                            }
-                            const float light_override = cur->local_light_override();
-                            if( light_override >= 0.0 ) {
-                                local.lm_override.emplace_back( p, light_override );
-                            }
-                        } );
                     }
-                }
+
+                    if( cur_submap->get_lum( sm_ms ) && has_items( p ) ) {
+                        // Inline add_light_from_items to split arc (deferred) from point (safe).
+                        auto items = i_at( p );
+                        for( auto itm_it = items.begin(); itm_it != items.end(); ++itm_it ) {
+                            float ilum = 0.0f;
+                            units::angle iwidth = 0_degrees;
+                            units::angle idir = 0_degrees;
+                            if( ( *itm_it )->getlight( ilum, iwidth, idir ) ) {
+                                if( iwidth > 0_degrees ) {
+                                    // apply_light_arc writes to arbitrary lm positions — defer.
+                                    local.arc_lights.push_back( { p, idir, ilum, iwidth } );
+                                } else {
+                                    add_light_source( p, ilum );
+                                }
+                            }
+                        }
+                    }
+
+                    const ter_id terrain = cur_submap->get_ter( sm_ms );
+                    if( terrain->light_emitted > 0 ) {
+                        add_light_source( p, terrain->light_emitted );
+                    }
+                    const furn_id furniture = cur_submap->get_furn( sm_ms );
+                    if( furniture->light_emitted > 0 ) {
+                        add_light_source( p, furniture->light_emitted );
+                    }
+
+                    std::ranges::for_each( cur_submap->get_field( sm_ms ), [&]( auto & fld ) {
+                        if( !fld.first.is_valid() ) {
+                            debugmsg( "generate_lightmap: invalid field type id %d at "
+                                        "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
+                                        fld.first.to_i(), smx, smy, zlev, sm_ms.x(), sm_ms.y(),
+                                        cur_submap->field_count,
+                                        static_cast<int>( cur_submap->is_uniform ) );
+                            return;
+                        }
+                        const auto *cur = &fld.second;
+                        const int light_emitted = cur->light_emitted();
+                        if( light_emitted > 0 ) {
+                            add_light_source( p, light_emitted );
+                        }
+                        const float light_override = cur->local_light_override();
+                        if( light_override >= 0.0 ) {
+                            local.lm_override.emplace_back( p, light_override );
+                        }
+                    } );
+                } );
             }
         };
 
