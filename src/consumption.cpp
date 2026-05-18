@@ -1266,7 +1266,8 @@ bool Character::consume_effects( item &food )
     mod_thirst( -contained_food.type->comestible->quench );
 
 
-    if( ( excess_kcal > 0 || ( excess_quench > 0 && !has_trait( trait_NO_THIRST ) ) ) && !food.has_flag( flag_NO_BLOAT ) &&
+    if( ( excess_kcal > 0 || ( excess_quench > 0 && !has_trait( trait_NO_THIRST ) ) ) &&
+        !food.has_flag( flag_NO_BLOAT ) &&
         !has_trait( trait_GOURMAND ) ) {
         add_effect( effect_bloated, 5_minutes );
     }
