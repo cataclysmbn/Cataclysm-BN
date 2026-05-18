@@ -66,6 +66,24 @@
 
 class player;
 
+namespace
+{
+
+auto manual_combat_mode = false;
+
+auto melee_attack_from_movement( avatar &you, Creature &target ) -> void
+{
+    if( manual_combat_mode ) {
+        you.melee_attack( target, true );
+        return;
+    }
+
+    const melee::technique_prompt_suppression_guard suppress_technique_prompt;
+    you.melee_attack( target, true );
+}
+
+} // namespace
+
 static const efftype_id effect_amigara( "amigara" );
 static const efftype_id effect_glowing( "glowing" );
 static const efftype_id effect_harnessed( "harnessed" );
@@ -302,7 +320,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                 return false;
             }
 
-            you.melee_attack( critter, true );
+            melee_attack_from_movement( you, critter );
             if( critter.is_hallucination() ) {
                 critter.die( &you );
             }
@@ -330,7 +348,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             return false;
         }
 
-        you.melee_attack( np, true );
+        melee_attack_from_movement( you, np );
         np.make_angry();
         return false;
     }
@@ -652,11 +670,24 @@ static float rate_critter( const Creature &c )
     return m->type->difficulty;
 }
 
-void avatar_action::autoattack( avatar &you, map &m )
+static auto is_manual_attack_target( avatar &you, const Creature &critter ) -> bool
 {
-    const melee::technique_prompt_suppression_guard suppress_technique_prompt;
-    int reach = you.primary_weapon().reach_range( you );
-    std::vector<Creature *> critters = ranged::targetable_creatures( you, reach );
+    if( const auto *const mon = dynamic_cast<const monster *>( &critter ) ) {
+        const auto att = mon->attitude( &you );
+        return mon->friendly == 0 && !mon->has_effect( effect_pet ) && att != MATT_FRIEND;
+    }
+
+    if( const auto *const target_npc = dynamic_cast<const npc *>( &critter ) ) {
+        return target_npc->is_enemy();
+    }
+
+    return false;
+}
+
+static auto attack_best_hostile( avatar &you, map &m ) -> void
+{
+    const auto reach = you.primary_weapon().reach_range( you );
+    auto critters = ranged::targetable_creatures( you, reach );
     critters.erase( std::remove_if( critters.begin(), critters.end(), []( const Creature * c ) {
         if( !c->is_npc() ) {
             return false;
@@ -678,11 +709,63 @@ void avatar_action::autoattack( avatar &you, map &m )
 
     const auto diff = best.bub_pos() - you.bub_pos();
     if( std::abs( diff.x() ) <= 1 && std::abs( diff.y() ) <= 1 && diff.z() == 0 ) {
-        move( you, m, tripoint_rel_ms( diff.xy(), 0 ) );
+        avatar_action::move( you, m, tripoint_rel_ms( diff.xy(), 0 ) );
         return;
     }
 
     you.reach_attack( best.bub_pos() );
+}
+
+static auto prompt_manual_attack_target( avatar &you ) -> void
+{
+    const auto target = choose_adjacent_highlight(
+                            _( "Attack where?" ),
+                            _( "No hostile creature nearby." ),
+                            [&you]( const tripoint & pos ) {
+        const auto *const critter = g->critter_at( pos );
+        return critter != nullptr && is_manual_attack_target( you, *critter );
+    } );
+
+    if( !target ) {
+        return;
+    }
+
+    if( g->critter_at( *target ) == nullptr ) {
+        add_msg( m_info, _( "There is no creature there to attack." ) );
+        return;
+    }
+
+    if( monster *const critter = g->critter_at<monster>( *target, true ) ) {
+        you.melee_attack( *critter, true );
+        if( critter->is_hallucination() ) {
+            critter->die( &you );
+        }
+        g->draw_hit_mon( *target, *critter, critter->is_dead() );
+        return;
+    }
+
+    if( npc *const target_npc = g->critter_at<npc>( *target ) ) {
+        you.melee_attack( *target_npc, true );
+        target_npc->make_angry();
+    }
+}
+
+auto avatar_action::autoattack( avatar &you, map &m ) -> void
+{
+    const melee::technique_prompt_suppression_guard suppress_technique_prompt;
+    attack_best_hostile( you, m );
+}
+
+auto avatar_action::manual_attack( avatar &you, map & ) -> void
+{
+    prompt_manual_attack_target( you );
+}
+
+auto avatar_action::toggle_manual_combat_mode() -> void
+{
+    manual_combat_mode = !manual_combat_mode;
+    add_msg( m_info, manual_combat_mode ? _( "Manual combat mode ON!" ) :
+             _( "Manual combat mode OFF!" ) );
 }
 
 bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weapon )

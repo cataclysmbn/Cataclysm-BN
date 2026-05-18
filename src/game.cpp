@@ -2754,6 +2754,8 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "safemode" );
     ctxt.register_action( "autosafe" );
     ctxt.register_action( "autoattack" );
+    ctxt.register_action( "manual_attack" );
+    ctxt.register_action( "toggle_manual_combat_mode" );
     ctxt.register_action( "ignore_enemy" );
     ctxt.register_action( "whitelist_enemy" );
     ctxt.register_action( "save" );

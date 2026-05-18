@@ -349,6 +349,10 @@ std::string action_ident( action_id act )
             return "SEC_SELECT";
         case ACTION_AUTOATTACK:
             return "autoattack";
+        case ACTION_MANUAL_ATTACK:
+            return "manual_attack";
+        case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
+            return "toggle_manual_combat_mode";
         case ACTION_MAIN_MENU:
             return "main_menu";
         case ACTION_DIARY:

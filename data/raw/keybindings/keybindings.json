@@ -2470,6 +2470,20 @@
   },
   {
     "type": "keybinding",
+    "name": "Manual attack",
+    "category": "DEFAULTMODE",
+    "id": "manual_attack",
+    "bindings": [ { "input_method": "keyboard", "key": "BACKTAB" } ]
+  },
+  {
+    "type": "keybinding",
+    "name": "Toggle manual combat mode",
+    "category": "DEFAULTMODE",
+    "id": "toggle_manual_combat_mode",
+    "bindings": []
+  },
+  {
+    "type": "keybinding",
     "name": "Main Menu",
     "category": "DEFAULTMODE",
     "id": "main_menu",

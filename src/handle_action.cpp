@@ -2858,6 +2858,14 @@ bool game::handle_action()
                 avatar_action::autoattack( u, m );
                 break;
 
+            case ACTION_MANUAL_ATTACK:
+                avatar_action::manual_attack( u, m );
+                break;
+
+            case ACTION_TOGGLE_MANUAL_COMBAT_MODE:
+                avatar_action::toggle_manual_combat_mode();
+                break;
+
             default:
                 break;
         }

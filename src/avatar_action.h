@@ -36,7 +36,9 @@ bool ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest );
 /** Handles swimming by the player. Called by avatar_action::move(). */
 void swim( map &m, avatar &you, const tripoint_bub_ms &p );
 
-void autoattack( avatar &you, map &m );
+auto autoattack( avatar &you, map &m ) -> void;
+auto manual_attack( avatar &you, map &m ) -> void;
+auto toggle_manual_combat_mode() -> void;
 
 void mend( avatar &you, item *loc );
 
@@ -111,4 +113,3 @@ void plthrow( avatar &you, item *loc,
 // Use item; also tries E,R,W  'a'
 void use_item( avatar &you, item *loc = nullptr );
 } // namespace avatar_action
-
