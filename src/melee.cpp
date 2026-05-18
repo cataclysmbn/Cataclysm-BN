@@ -142,6 +142,21 @@ auto with_cross_z_melee_cost( const int base_cost, const tripoint_bub_ms &source
     return static_cast<int>( std::floor( base_cost * modifier ) );
 }
 
+auto technique_move_cost( const Character &self, const Creature &target, const item &weapon,
+                          const ma_technique &technique ) -> int
+{
+    auto move_cost = with_cross_z_melee_cost( self.attack_cost( weapon ), self.pos(), target.pos() );
+    move_cost *= technique.move_cost_multiplier( self );
+    move_cost += technique.move_cost_penalty( self );
+    return move_cost;
+}
+
+auto technique_is_too_slow( const Character &self, const Creature &target, const item &weapon,
+                            const ma_technique &technique ) -> bool
+{
+    return self.get_moves() + self.get_speed() < technique_move_cost( self, target, weapon, technique );
+}
+
 } // namespace
 
 auto Character::get_valid_techniques( const technique_query_options &options ) ->
@@ -202,6 +217,9 @@ std::vector<matec_id>
         }
         if( options.use_weighting && tec.weighting < 0 &&
             !one_in( std::abs( tec.weighting ) ) ) {
+            continue;
+        }
+        if( technique_is_too_slow( *this, options.target, options.weapon, tec ) ) {
             continue;
         }
         if( tec.is_valid_character( *this ) ) {
@@ -503,6 +521,10 @@ auto technique_unavailable_reason( Character &self, Creature &target,
 
     if( !tec.aoe.empty() && !aoe_technique_is_valid( self, target, tec ) ) {
         return technique_aoe_reason( self, target, tec );
+    }
+
+    if( technique_is_too_slow( self, target, options.weapon, tec ) ) {
+        return _( "too slow right now" );
     }
 
     if( !tec.is_valid_character( self ) ) {

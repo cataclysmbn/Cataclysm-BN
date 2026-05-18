@@ -91,6 +91,8 @@ static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_feral_killed_recently( "feral_killed_recently" );
 static const efftype_id effect_formication( "formication" );
 static const efftype_id effect_glowy_led( "glowy_led" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_hallu( "hallu" );
 static const efftype_id effect_iodine( "iodine" );
 static const efftype_id effect_masked_scent( "masked_scent" );
@@ -151,8 +153,10 @@ static const trait_id trait_SHELL2( "SHELL2" );
 static const trait_id trait_SHOUT1( "SHOUT1" );
 static const trait_id trait_SHOUT2( "SHOUT2" );
 static const trait_id trait_SHOUT3( "SHOUT3" );
+static const trait_id trait_SLIMESPAWNER( "SLIMESPAWNER" );
 static const trait_id trait_SORES( "SORES" );
 static const trait_id trait_SUNBURN( "SUNBURN" );
+static const trait_id trait_TRANSPIRATION( "TRANSPIRATION" );
 static const trait_id trait_TROGLO( "TROGLO" );
 static const trait_id trait_TROGLO2( "TROGLO2" );
 static const trait_id trait_TROGLO3( "TROGLO3" );
@@ -269,6 +273,82 @@ void Character::suffer_while_underwater()
         mod_thirst( -1 );
     }
 }
+
+namespace
+{
+
+auto grabbing_strength_from( const Creature &grabber ) -> int
+{
+    if( const monster *const mon = grabber.as_monster() ) {
+        return mon->get_grab_strength();
+    }
+    return std::max( 1, grabber.get_effect_int( effect_grabbing ) );
+}
+
+auto adjacent_grabbing_strength( Character &you ) -> int
+{
+    auto crowd = 0;
+    for( const tripoint &p : g->m.points_in_radius( you.pos(), 1, 0 ) ) {
+        const Creature *const grabber = g->critter_at<Creature>( p );
+        if( grabber != nullptr && grabber != &you && grabber->has_effect( effect_grabbing ) ) {
+            crowd += grabbing_strength_from( *grabber );
+        }
+    }
+    return crowd;
+}
+
+auto crowd_crush_resist_chance( Character &you ) -> int
+{
+    auto chance = 5;
+    if( you.has_effect( effect_downed ) && !you.has_trait( trait_SLIMESPAWNER ) ) {
+        chance -= 4;
+    }
+    if( you.has_trait( trait_TRANSPIRATION ) || you.has_trait( trait_SLIMESPAWNER ) ) {
+        chance += 4;
+    }
+    if( you.has_active_mutation( trait_SHELL2 ) ) {
+        chance += 20;
+    }
+    return std::clamp( chance, 0, 95 );
+}
+
+auto suffer_while_grabbed( Character &you ) -> void
+{
+    const auto size_score = static_cast<int>( you.get_size() ) + 1;
+    const auto crush_grabs_required = std::max( 2, size_score - 1 );
+    const auto crowd = adjacent_grabbing_strength( you );
+    if( crowd < crush_grabs_required ) {
+        return;
+    }
+
+    if( you.oxygen <= 0 ) {
+        you.oxygen = 30 + 2 * you.get_str();
+    }
+
+    if( crowd == crush_grabs_required &&
+        x_in_y( crowd_crush_resist_chance( you ), 100 ) ) {
+        return;
+    }
+
+    if( crowd == crush_grabs_required ) {
+        you.oxygen -= rng( 0, 1 );
+    } else if( crowd <= crush_grabs_required * 2 ) {
+        you.oxygen -= rng( 1, 2 );
+    } else {
+        you.oxygen -= rng( 2, 4 );
+    }
+
+    if( you.oxygen <= 5 ) {
+        you.add_msg_if_player( m_bad, _( "You're being crushed!" ) );
+        you.apply_damage( nullptr, bodypart_id( "torso" ), rng( 1, 4 ) );
+    } else if( you.oxygen <= 15 ) {
+        you.add_msg_if_player( m_bad, _( "You're being crushed!" ) );
+    } else if( you.oxygen <= 25 ) {
+        you.add_msg_if_player( m_bad, _( "You're having difficulty breathing!" ) );
+    }
+}
+
+} // namespace
 
 void Character::suffer_from_addictions()
 {
@@ -1603,6 +1683,9 @@ void Character::suffer()
 
     if( is_underwater() ) {
         suffer_while_underwater();
+    }
+    if( has_effect( effect_grabbed ) ) {
+        suffer_while_grabbed( *this );
     }
 
     suffer_from_addictions();

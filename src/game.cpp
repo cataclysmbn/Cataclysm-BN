@@ -358,6 +358,17 @@ auto can_drag_grabbed_creature( const avatar &you, const Creature &target ) -> b
     return size_delta <= 0 || x_in_y( you.get_str(), std::max( you.get_str() + size_delta * 4, 1 ) );
 }
 
+auto can_recover_from_fling( Creature &critter ) -> bool
+{
+    if( monster *const mon = critter.as_monster() ) {
+        return mon->flies();
+    }
+    if( Character *const ch = critter.as_character() ) {
+        return character_funcs::can_fly( *ch );
+    }
+    return false;
+}
+
 } // namespace
 
 static const bionic_id bio_remote( "bio_remote" );
@@ -12910,6 +12921,10 @@ void game::fling_creature( Creature *c, const units::angle &dir, float flvel, bo
             ui_manager::redraw_invalidated();
             refresh_display();
         }
+    }
+
+    if( can_recover_from_fling( *c ) ) {
+        return;
     }
 
     // Fall down to the ground - always on the last reached tile

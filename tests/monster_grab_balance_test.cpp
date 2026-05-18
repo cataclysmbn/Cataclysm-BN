@@ -132,3 +132,26 @@ TEST_CASE( "Manually grabbed monster cannot walk away", "[player][melee][grab]" 
     CHECK_FALSE( zed.move_to( monster_destination ) );
     CHECK( zed.pos() == monster_start );
 }
+
+TEST_CASE( "Crowd crush drains breath while grabbed", "[player][melee][grab]" )
+{
+    clear_all_state();
+    avatar &dummy = g->u;
+    clear_character( dummy );
+
+    const efftype_id effect_grabbed( "grabbed" );
+    const efftype_id effect_grabbing( "grabbing" );
+    const tripoint avatar_start = dummy.pos();
+
+    dummy.add_effect( effect_grabbed, 1_days, body_part_torso );
+    dummy.oxygen = 30;
+
+    for( const tripoint &offset : { tripoint_north, tripoint_south, tripoint_east } ) {
+        monster &zed = spawn_test_monster( "debug_mon", avatar_start + offset );
+        zed.add_effect( effect_grabbing, 1_days );
+    }
+
+    dummy.suffer();
+
+    CHECK( dummy.oxygen < 30 );
+}

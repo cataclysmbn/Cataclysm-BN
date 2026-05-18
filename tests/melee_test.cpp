@@ -175,6 +175,40 @@ TEST_CASE( "manual technique queries include counter techniques", "[melee]" )
     CHECK( dude.pick_technique( target, dude.used_weapon(), false, false, true ) == counter );
 }
 
+TEST_CASE( "manual technique queries require enough moves", "[melee]" )
+{
+    clear_all_state();
+
+    auto target = monster( mtype_id( "mon_zombie" ) );
+    auto dude = standard_npc( "TestCharacter", dude_pos, {}, 5, 8, 8, 8, 8 );
+    const auto style_brawling = matype_id( "style_brawling" );
+    const auto defensive = matec_id( "tec_brawl_feint_melee" );
+
+    dude.martial_arts_data->add_martialart( style_brawling );
+    dude.martial_arts_data->set_style( style_brawling );
+    dude.set_primary_weapon( item::spawn( "2x4" ) );
+
+    const auto ready_techniques = dude.get_valid_techniques( {
+        .target = target,
+        .weapon = dude.primary_weapon(),
+        .use_weighting = false,
+        .allow_counter_techniques = true,
+        .allow_defensive_techniques = true,
+    } );
+    CHECK( std::ranges::find( ready_techniques, defensive ) != ready_techniques.end() );
+
+    dude.moves = -dude.get_speed();
+
+    const auto spent_techniques = dude.get_valid_techniques( {
+        .target = target,
+        .weapon = dude.primary_weapon(),
+        .use_weighting = false,
+        .allow_counter_techniques = true,
+        .allow_defensive_techniques = true,
+    } );
+    CHECK( std::ranges::find( spent_techniques, defensive ) == spent_techniques.end() );
+}
+
 TEST_CASE( "Character attacking a manhack", "[.melee]" )
 {
     monster manhack( mtype_id( "mon_manhack" ) );

@@ -23,6 +23,7 @@
 #include "character_martial_arts.h"
 #include "character_turn.h"
 #include "creature.h"
+#include "creature_throw.h"
 #include "cursesdef.h"
 #include "debug.h"
 #include "enums.h"
@@ -199,7 +200,7 @@ auto throw_grabbed_creature( avatar &you ) -> bool
     target->remove_effect( effect_grabbed );
     you.remove_effect( effect_grabbing );
     you.mod_moves( -100 );
-    you.mod_stamina( -std::max( 100, static_cast<int>( throwforce * 4.0f ) ) );
+    you.mod_stamina( -creature_throw::grabbed_stamina_cost( throwforce ) );
 
     if( npc *const guy = target->as_npc(); guy != nullptr && throwforce > 24.0f ) {
         guy->make_angry();

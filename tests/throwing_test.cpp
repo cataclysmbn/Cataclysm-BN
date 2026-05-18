@@ -11,6 +11,7 @@
 #include "ballistics.h"
 #include "calendar.h"
 #include "coordinates.h"
+#include "creature_throw.h"
 #include "damage.h"
 #include "dispersion.h"
 #include "game.h"
@@ -18,6 +19,7 @@
 #include "inventory.h"
 #include "item.h"
 #include "line.h"
+#include "map.h"
 #include "map_helpers.h"
 #include "material.h"
 #include "monster.h"
@@ -37,6 +39,47 @@ TEST_CASE( "throwing distance test", "[throwing], [balance]" )
     item &grenade = *item::spawn_temporary( "grenade" );
     CHECK( thrower.throw_range( grenade ) >= 30 );
     CHECK( thrower.throw_range( grenade ) <= 35 );
+}
+
+TEST_CASE( "grabbed creature throw stamina cost is bounded", "[throwing], [balance]" )
+{
+    CHECK( creature_throw::grabbed_stamina_cost( 1.0f ) == creature_throw::min_stamina_cost );
+    CHECK( creature_throw::grabbed_stamina_cost( 1000.0f ) == creature_throw::max_stamina_cost );
+}
+
+TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]" )
+{
+    clear_all_state();
+    clear_map();
+
+    map &here = g->m;
+    const tripoint start = g->u.pos() + tripoint_east;
+    const tripoint landing = start + tripoint_east;
+    const trap_str_id beartrap( "tr_beartrap" );
+    const efftype_id effect_beartrap( "beartrap" );
+
+    here.ter_set( start, ter_id( "t_floor" ) );
+    here.ter_set( landing, ter_id( "t_floor" ) );
+    here.trap_set( landing, beartrap );
+
+    SECTION( "non-flying creatures land on traps" ) {
+        monster &zombie = spawn_test_monster( "mon_zombie", start );
+
+        g->fling_creature( &zombie, coord_to_angle( start, landing ), 10.0f );
+
+        CHECK( zombie.pos() == landing );
+        CHECK( zombie.has_effect( effect_beartrap ) );
+    }
+
+    SECTION( "flying creatures recover before landing" ) {
+        monster &bat = spawn_test_monster( "mon_bat", start );
+        REQUIRE( bat.flies() );
+
+        g->fling_creature( &bat, coord_to_angle( start, landing ), 10.0f );
+
+        CHECK( bat.pos() == landing );
+        CHECK_FALSE( bat.has_effect( effect_beartrap ) );
+    }
 }
 
 struct throw_test_data {
