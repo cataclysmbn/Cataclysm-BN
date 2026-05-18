@@ -531,13 +531,15 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
             m.ter( bub_pos )->is_diggable() ) {
             m.ter_set( bub_pos, t_dirtmound );
         } else {
-            if( bub_pos.x() >= c.x() - dice( 1, 5 ) && bub_pos.x() <= c.x() + dice( 1, 5 ) && bub_pos.y() >= c.y() - dice( 1, 5 ) &&
+            if( bub_pos.x() >= c.x() - dice( 1, 5 ) && bub_pos.x() <= c.x() + dice( 1, 5 ) &&
+                bub_pos.y() >= c.y() - dice( 1, 5 ) &&
                 bub_pos.y() <= c.y() + dice( 1, 5 ) ) {
                 if( one_in( 7 ) && m.ter( bub_pos )->is_diggable() ) {
                     m.ter_set( bub_pos, t_dirtmound );
                 }
             }
-            if( bub_pos.x() >= c.x() - dice( 1, 6 ) && bub_pos.x() <= c.x() + dice( 1, 6 ) && bub_pos.y() >= c.y() - dice( 1, 6 ) &&
+            if( bub_pos.x() >= c.x() - dice( 1, 6 ) && bub_pos.x() <= c.x() + dice( 1, 6 ) &&
+                bub_pos.y() >= c.y() - dice( 1, 6 ) &&
                 bub_pos.y() <= c.y() + dice( 1, 6 ) ) {
                 if( !one_in( 5 ) ) {
                     m.make_rubble( bub_pos, f_wreckage );
@@ -552,7 +554,7 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
                 }
 
             } else if( one_in( 4 + ( std::abs( bub_pos.x() - c.x() ) + ( std::abs( bub_pos.y() -
-                                        c.y() ) ) ) ) ) { // 1 in 10 chance of being wreckage anyway
+                                     c.y() ) ) ) ) ) { // 1 in 10 chance of being wreckage anyway
                 m.make_rubble( bub_pos, f_wreckage );
                 if( !one_in( 3 ) ) {
                     if( m.ter( bub_pos )->is_diggable() ) {
@@ -637,7 +639,7 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
             case 5:
                 // 2/3rds clown car
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
-                    const auto pos =vp.pos();
+                    const auto pos = vp.pos();
                     // Spawn pilots in seats with controls.
                     if( controls_at( wreckage, pos ) ) {
                         m.add_spawn( mon_zombie_military_pilot, 1, pos );
@@ -680,11 +682,13 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
                 break;
         }
         if( !one_in( 4 ) ) {
-            wreckage->smash( m, 0.8f, 1.2f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5, 0 ), 6 + dice( 1,
-                             10 ) );
+            wreckage->smash( m, 0.8f, 1.2f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5, 0 ),
+                             6 + dice( 1,
+                                       10 ) );
         } else {
-            wreckage->smash( m, 0.1f, 0.9f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5, 0 ), 6 + dice( 1,
-                             10 ) );
+            wreckage->smash( m, 0.1f, 0.9f, 1.0f, tripoint_rel_ms( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5, 0 ),
+                             6 + dice( 1,
+                                       10 ) );
         }
     }
 

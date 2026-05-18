@@ -9399,7 +9399,7 @@ void map::build_outside_cache( const int zlev )
             std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
                 const auto ms_pos = project_combine( sm_pos, sm_ms );
                 ch.outside_cache[static_cast<size_t>( ch.idx( ms_pos.x(), ms_pos.y() ) )] =
-                                                      cur_submap->outside_cache[sm_ms.x()][sm_ms.y()];
+                    cur_submap->outside_cache[sm_ms.x()][sm_ms.y()];
             } );
         }
     };

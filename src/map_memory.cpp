@@ -212,7 +212,7 @@ static void temp_remove_open_air( const shared_ptr_fast<mm_submap> &sm )
         const memorized_terrain_tile &t = sm->tile( sm_ms );
 
         if( !t.tile.empty() && ( t.tile == "t_open_air" || t.tile == "t_open_air_rooved" ||
-                                    t.tile == "t_open_air_rooved_outside" ) ) {
+                                 t.tile == "t_open_air_rooved_outside" ) ) {
             sm->set_tile( sm_ms, mm_submap::default_tile );
         }
     } );

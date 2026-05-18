@@ -690,9 +690,9 @@ void map::generate_lightmap_worker( const int zlev )
                             std::views::iota( 0, 4 ), [&]( int j ) {
                                 const auto cn = neighbour + point( dir_x[j], dir_y[j] );
                                 return cn != p.xy() &&
-                                        cn.x() >= 0 && cn.y() >= 0 &&
-                                        cn.x() < map_cache.cache_x && cn.y() < map_cache.cache_y &&
-                                        !has_floor_above( map_cache.idx( cn.x(), cn.y() ) );
+                                       cn.x() >= 0 && cn.y() >= 0 &&
+                                       cn.x() < map_cache.cache_x && cn.y() < map_cache.cache_y &&
+                                       !has_floor_above( map_cache.idx( cn.x(), cn.y() ) );
                             } );
                             if( !nb_has_open_sky_neighbour ) {
                                 continue;
@@ -740,10 +740,10 @@ void map::generate_lightmap_worker( const int zlev )
                     std::ranges::for_each( cur_submap->get_field( sm_ms ), [&]( auto & fld ) {
                         if( !fld.first.is_valid() ) {
                             debugmsg( "generate_lightmap: invalid field type id %d at "
-                                        "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
-                                        fld.first.to_i(), smx, smy, zlev, sm_ms.x(), sm_ms.y(),
-                                        cur_submap->field_count,
-                                        static_cast<int>( cur_submap->is_uniform ) );
+                                      "grid(%d,%d,%d) tile(%d,%d) field_count=%d is_uniform=%d",
+                                      fld.first.to_i(), smx, smy, zlev, sm_ms.x(), sm_ms.y(),
+                                      cur_submap->field_count,
+                                      static_cast<int>( cur_submap->is_uniform ) );
                             return;
                         }
                         const auto *cur = &fld.second;
