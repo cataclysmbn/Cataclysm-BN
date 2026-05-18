@@ -17,6 +17,7 @@
 #include "weighted_list.h"
 
 class JsonObject;
+class mapgendata;
 
 class building_bin
 {
@@ -208,6 +209,7 @@ struct map_extras {
 
     map_extras() : chance( 0 ) {}
     map_extras( const unsigned int embellished ) : chance( embellished ) {}
+    auto filtered_by( const mapgendata &dat ) const -> map_extras;
 };
 
 struct region_terrain_and_furniture_settings {

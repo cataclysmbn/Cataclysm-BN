@@ -189,13 +189,13 @@ auto mapgen_constructor::generate( const tripoint_abs_omt &omt_pos, const time_p
         const auto &region_extras = omap.get_settings( omt_pos ).region_extras;
         const auto extra_it = region_extras.find( terrain_type->get_extras() );
         if( extra_it != region_extras.end() ) {
-            const map_extras &ex = extra_it->second;
+            const auto ex = extra_it->second.filtered_by( dat );
             if( ex.chance > 0 && one_in( ex.chance ) ) {
-                const std::string *extra = ex.values.pick();
+                const auto *extra = ex.values.pick();
                 if( extra == nullptr ) {
                     debugmsg( "failed to pick extra for type %s", terrain_type->get_extras() );
                 } else {
-                    MapExtras::apply_function( *( ex.values.pick() ), *this, omt_pos );
+                    MapExtras::apply_function( *extra, *this, omt_pos );
                 }
             }
         }

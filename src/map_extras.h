@@ -16,6 +16,7 @@
 
 class JsonObject;
 class mapgen_constructor;
+class mapgendata;
 template<typename T> struct enum_traits;
 template<typename T> class generic_factory;
 
@@ -60,6 +61,7 @@ class map_extra
         // Used by generic_factory
         bool was_loaded = false;
         void load( const JsonObject &jo, const std::string &src );
+        auto is_valid_for( const mapgendata &md ) const -> bool;
         void check() const;
     private:
         translation _name;

@@ -49,6 +49,7 @@
 #include "point_float.h"
 #include "regional_settings.h"
 #include "rng.h"
+#include "sets_intersect.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "text_snippets.h"
@@ -3138,6 +3139,38 @@ void map_extra::load( const JsonObject &jo, const std::string & )
 }
 
 extern std::map<std::string, update_mapgen_function_json_list> update_mapgen;
+
+auto map_extra::is_valid_for( const mapgendata &md ) const -> bool
+{
+    if( min_max_zlevel && ( md.zlevel() < min_max_zlevel->first ||
+                            md.zlevel() > min_max_zlevel->second ) ) {
+        return false;
+    }
+    if( !md.region.overmap_feature_flag.blacklist.empty() &&
+        cata::sets_intersect( md.region.overmap_feature_flag.blacklist, flags ) ) {
+        return false;
+    }
+    if( !md.region.overmap_feature_flag.whitelist.empty() &&
+        !cata::sets_intersect( md.region.overmap_feature_flag.whitelist, flags ) ) {
+        return false;
+    }
+    return true;
+}
+
+auto map_extras::filtered_by( const mapgendata &dat ) const -> map_extras
+{
+    auto result = map_extras { chance };
+    for( const auto &extra : values ) {
+        const auto extra_id = string_id<map_extra>( extra.obj );
+        if( extra_id.is_valid() && extra_id.obj().is_valid_for( dat ) ) {
+            result.values.add( extra.obj, extra.weight );
+        }
+    }
+    if( !values.empty() && result.values.empty() ) {
+        result.chance = 0;
+    }
+    return result;
+}
 
 void map_extra::check() const
 {
