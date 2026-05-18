@@ -61,7 +61,7 @@ mod.on_character_death_hook = function()
   local anchor_pos = mod.pick_teleport_destination(who)
   if anchor_pos ~= nil then
     local player_abs = gapi.get_map():bub_to_abs(who:get_pos_ms())
-    local distance = math.abs(coords.rl_dist(player_abs, anchor_pos))
+    local distance = math.abs(player_abs:rl_dist(anchor_pos))
     ---@cast distance integer
     who:drop_inv(math.ceil(distance / 50))
     gapi.add_msg("Respawning Player at " .. tostring(anchor_pos))
@@ -118,7 +118,7 @@ mod.pick_teleport_destination = function(who)
 
   for idx, anchor_abs_ms in pairs(mod.anchor_list) do
     gapi.add_msg("Anchor found at " .. tostring(anchor_abs_ms))
-    local distance = coords.rl_dist(player_abs, anchor_abs_ms)
+    local distance = player_abs:rl_dist(anchor_abs_ms)
     ---@cast distance integer
     gapi.add_msg("Distance: " .. tostring(distance))
     if distance < min_dist then

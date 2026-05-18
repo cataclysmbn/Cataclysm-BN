@@ -35,13 +35,13 @@ mod.remote_wireless_range = 24
 mod.remote_wireless_range_z = 2
 
 -- Get abs omt of remote's base
-mod.get_remote_base_omt = function(item) return item:get_var_tri(mod.var_base, Tripoint.new(0, 0, 0)) end
+mod.get_remote_base_omt = function(item) return item:get_var_tri(mod.var_base, TripointAbsOmt.new(0, 0, 0)) end
 
 -- Get abs ms of remote's base
 ---@type fun(item: Item): Tripoint
 mod.get_remote_base_abs_ms = function(item)
   local p_omt = mod.get_remote_base_omt(item)
-  return coords.omt_to_ms(p_omt) + Point.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
+  return p_omt:to_ms() + PointRelMs.new(const.OMT_MS_SIZE // 2, const.OMT_MS_SIZE // 2)
 end
 
 -- Set remote's base abs omt
@@ -57,7 +57,7 @@ mod.on_mapgen_postprocess_hook = function(params)
   local item_id = mod.item_id
   for y = 0, mapsize - 1 do
     for x = 0, mapsize - 1 do
-      local p = Tripoint.new(x, y, 0)
+      local p = TripointBubMs.new(x, y, 0)
       -- TODO: Check whether using has_items_at() gives a speedup in Lua.
       --       In C++, it's supposed to be faster then !i_at( p ).empty()
       if map:has_items_at(p) then
@@ -131,10 +131,10 @@ mod.get_neighbours_at = function(opts, block, p)
   end
 end
 mod.get_neighbours = function(opts, block, p)
-  mod.get_neighbours_at(opts, block, p + Tripoint.new(1, 0, 0))
-  mod.get_neighbours_at(opts, block, p + Tripoint.new(-1, 0, 0))
-  mod.get_neighbours_at(opts, block, p + Tripoint.new(0, 1, 0))
-  mod.get_neighbours_at(opts, block, p + Tripoint.new(0, -1, 0))
+  mod.get_neighbours_at(opts, block, p + TripointRelMs.new(1, 0, 0))
+  mod.get_neighbours_at(opts, block, p + TripointRelMs.new(-1, 0, 0))
+  mod.get_neighbours_at(opts, block, p + TripointRelMs.new(0, 1, 0))
+  mod.get_neighbours_at(opts, block, p + TripointRelMs.new(0, -1, 0))
 end
 
 -- Helper func to check whether value is in array
@@ -171,11 +171,11 @@ mod.build_target_list = function(map, pos_omt)
   local act_tiles = {}
   local tlist = mod.get_transform_list()
   local to_close_list, to_open_list = mod.cache_transforms(tlist)
-  local p_zero = map:get_local_ms(coords.omt_to_ms(pos_omt))
+  local p_zero = map:abs_to_bub(pos_omt:to_omt())
   local iter_max = const.OMT_MS_SIZE - 1
   for y = 0, iter_max do
     for x = 0, iter_max do
-      local p = p_zero + Tripoint.new(x, y, 0)
+      local p = p_zero + TripointRelMs.new(x, y, 0)
       local t = map:get_ter_at(p):str_id()
 
       local idx_found = to_close_list[t:str()]
@@ -300,7 +300,7 @@ mod.iuse_function = function(params)
   local _who = params.user
   local item = params.item
   local pos = params.pos
-  local user_pos = gapi.get_map():get_abs_ms(pos)
+  local user_pos = gapi.get_map():bub_to_abs(pos)
 
   -- Uncomment this so on activation the remote reconfigures itself to work in user's omt
   --[[
@@ -319,7 +319,7 @@ mod.iuse_function = function(params)
   -- it's tucked away into a hoouse wall or something.
   if
     math.abs(user_pos.z - base_pos.z) > mod.remote_wireless_range_z
-    or coords.rl_dist(user_pos, base_pos) > mod.remote_wireless_range
+    or user_pos:rl_dist(base_pos) > mod.remote_wireless_range
   then
     mod.show_no_signal_error()
     return 0
