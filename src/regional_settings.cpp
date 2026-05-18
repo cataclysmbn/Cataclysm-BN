@@ -176,6 +176,13 @@ auto load_compat_weather_generator( const JsonObject &jo ) -> void
     jo.read( "base_wind", result.base_wind );
     jo.read( "base_wind_distrib_peaks", result.base_wind_distrib_peaks );
     jo.read( "base_wind_season_variation", result.base_wind_season_variation );
+    if( jo.has_array( "weather_types" ) ) {
+        result.weather_types.clear();
+        jo.read( "weather_types", result.weather_types );
+    }
+    if( result.weather_types.empty() ) {
+        jo.throw_error( "weather_generator requires weather_types or a copy-from/default weather with weather_types" );
+    }
     if( jo.has_array( "weather_black_list" ) ) {
         ( void )jo.get_array( "weather_black_list" );
     }
