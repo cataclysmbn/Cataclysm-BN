@@ -1,7 +1,6 @@
 #include "mongroup.h"
 
 #include <algorithm>
-#include <optional>
 #include <ranges>
 #include <utility>
 
@@ -29,6 +28,20 @@ MonsterGroupManager::t_string_set MonsterGroupManager::monster_whitelist;
 MonsterGroupManager::t_string_set MonsterGroupManager::monster_categories_blacklist;
 MonsterGroupManager::t_string_set MonsterGroupManager::monster_categories_whitelist;
 bool monster_whitelist_is_exclusive = false;
+
+namespace
+{
+
+auto monster_frequency_total( const FreqDef &monsters ) -> int
+{
+    auto total = 0;
+    for( const auto &entry : monsters ) {
+        total += entry.frequency;
+    }
+    return total;
+}
+
+} // namespace
 
 /** @relates string_id */
 template<>
@@ -400,7 +413,6 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
         g.defaultMonster = mtype_id( jo.get_string( "default" ) );
     }
     g.is_animal = jo.get_bool( "is_animal", false );
-    auto inferred_default = std::optional<mtype_id> {};
     if( jo.has_array( "monsters" ) ) {
         for( JsonObject mon : jo.get_array( "monsters" ) ) {
             const bool has_group = mon.has_string( "group" );
@@ -428,8 +440,12 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
                 if( monsterGroupMap.contains( group_id ) ) {
                     const auto &nested_group = monsterGroupMap[group_id];
                     const auto nested_total = std::max( nested_group.freq_total, 1 );
-                    if( nested_group.defaultMonster != mtype_id::NULL_ID() ) {
-                        const auto scaled_freq = std::max( 1, freq / nested_total );
+                    const auto inherited_frequency = std::max( freq, 1 );
+                    const auto nested_default_frequency = nested_group.freq_total - monster_frequency_total(
+                            nested_group.monsters );
+                    if( nested_group.defaultMonster != mtype_id::NULL_ID() && nested_default_frequency > 0 ) {
+                        const auto scaled_freq = std::max( 1,
+                                                           nested_default_frequency * inherited_frequency / nested_total );
                         auto new_mon_group = MonsterGroupEntry( nested_group.defaultMonster, scaled_freq, cost, pack_min,
                                                                 pack_max, starts, ends );
                         if( mon.has_member( "conditions" ) ) {
@@ -438,12 +454,9 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
                             }
                         }
                         g.monsters.push_back( new_mon_group );
-                        if( !inferred_default.has_value() ) {
-                            inferred_default = nested_group.defaultMonster;
-                        }
                     }
                     for( const auto &nested_entry : nested_group.monsters ) {
-                        const auto scaled_freq = std::max( 1, nested_entry.frequency * std::max( freq, 1 ) / nested_total );
+                        const auto scaled_freq = std::max( 1, nested_entry.frequency * inherited_frequency / nested_total );
                         auto new_mon_group = MonsterGroupEntry( nested_entry.name, scaled_freq, cost,
                                                                 pack_min, pack_max, starts, ends );
                         new_mon_group.conditions = nested_entry.conditions;
@@ -453,9 +466,6 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
                             }
                         }
                         g.monsters.push_back( new_mon_group );
-                        if( !inferred_default.has_value() ) {
-                            inferred_default = nested_entry.name;
-                        }
                     }
                 }
                 continue;
@@ -470,13 +480,7 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
             }
 
             g.monsters.push_back( new_mon_group );
-            if( !inferred_default.has_value() ) {
-                inferred_default = name;
-            }
         }
-    }
-    if( !has_default && !extending && inferred_default.has_value() ) {
-        g.defaultMonster = *inferred_default;
     }
     g.replace_monster_group = jo.get_bool( "replace_monster_group", false );
     g.new_monster_group = mongroup_id( jo.get_string( "new_monster_group_id",
@@ -486,13 +490,10 @@ void MonsterGroupManager::LoadMonsterGroup( const JsonObject &jo )
     assign( jo, "evolve_repeat", g.evolve_repeat, false, 0 );
     g.is_safe = jo.get_bool( "is_safe", false );
 
+    const auto has_freq_total = jo.has_int( "freq_total" );
     g.freq_total = jo.get_int( "freq_total", ( extending ? g.freq_total : 1000 ) );
-    if( jo.get_bool( "auto_total", false ) ) { //Fit the max size to the sum of all freqs
-        int total = 0;
-        for( MonsterGroupEntry &mon : g.monsters ) {
-            total += mon.frequency;
-        }
-        g.freq_total = total;
+    if( jo.get_bool( "auto_total", false ) || ( !has_default && !has_freq_total && !extending ) ) {
+        g.freq_total = monster_frequency_total( g.monsters );
     }
 
     monsterGroupMap[g.name] = g;
