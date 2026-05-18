@@ -143,7 +143,7 @@
     "id": "mx_aircraft",
     "type": "map_extra",
     "name": "Aircraft Crash",
-    "looks_like": "propeller_metal",
+    "looks_like": "jet_thruster",
     "description": "An aircraft crashed here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_aircraft" },
     "sym": "X",
