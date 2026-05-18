@@ -316,6 +316,7 @@ void pixel_minimap::update_cache_at( const tripoint &pos )
     auto sm_pos = tripoint_abs_sm( pos );
     const level_cache &access_cache = here.access_cache( sm_pos.z() );
     const bool nv_goggle = get_avatar().get_vision_modes()[NV_GOGGLES];
+    const bool env_goggle = get_avatar().get_vision_modes()[ENV_GOGGLES];
 
     submap_cache &cache_item = get_cache_at( here.get_abs_sub().raw() + sm_pos.raw() );
     const auto ms_pos = project_to<coords::ms>( sm_pos );
@@ -336,7 +337,7 @@ void pixel_minimap::update_cache_at( const tripoint &pos )
                 color = get_map_color_at( p.raw() );
 
                 //color terrain according to lighting conditions
-                if( nv_goggle ) {
+                if( nv_goggle || env_goggle ) {
                     if( lighting == lit_level::LOW ) {
                         color = color_pixel_nightvision( color );
                     } else if( lighting != lit_level::DARK && lighting != lit_level::BLANK ) {
