@@ -2119,7 +2119,8 @@ auto monster::load( const JsonObject &data,
     // This is relative to the monster so it isn't invalidated by map shifting.
     tripoint destination;
     data.read( "destination", destination );
-    const auto load_bub_pos = has_legacy_x && has_legacy_y ? legacy_bub_pos : get_map().abs_to_bub( pos_abs );
+    const auto load_bub_pos = has_legacy_x &&
+                              has_legacy_y ? legacy_bub_pos : get_map().abs_to_bub( pos_abs );
     goal = load_bub_pos + destination;
 
     upgrades = data.get_bool( "upgrades", type->upgrades );
