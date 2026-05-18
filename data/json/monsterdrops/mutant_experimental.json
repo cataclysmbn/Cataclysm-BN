@@ -22,5 +22,17 @@
     "subtype": "collection",
     "id": "mon_mutant_medical_boss_death_drops",
     "entries": [ { "item": "subsuit_xl", "damage": [ 3, 4 ] }, { "item": "recipe_medicalmut" } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_mutant_elfa_boss_death_drops",
+    "entries": [ { "item": "recipe_elfa" } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_mutant_elfa_boss_monster_weapon",
+    "subtype": "distribution",
+    "entries": [ { "item": "longbow", "prob": 100, "damage": 0 } ]
   }
 ]
