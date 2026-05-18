@@ -1988,6 +1988,46 @@ void inventory_multiselector::rearrange_columns( size_t client_width )
     selection_col->set_visibility( !is_overflown( client_width ) );
 }
 
+size_t inventory_multiselector::query_count(size_t count = 0)
+{
+    std::string count_str;
+    if (count == 0) {
+        count_str = "";
+    } else {
+        count_str = std::to_string(count);
+    }
+
+    spopup = std::make_unique<string_input_popup>();
+    spopup->max_length( 256 ).identifier( "inventory" )
+    .text( count_str );
+
+    shared_ptr_fast<ui_adaptor> current_ui = ui.lock();
+    if( current_ui ) {
+        current_ui->mark_resize();
+    }
+
+    do {
+        ui_manager::redraw();
+        spopup->query_string( /*loop=*/false );
+    } while( !spopup->confirmed() && !spopup->canceled() );
+
+    if( spopup->confirmed() ) {
+        count_str = spopup->text();
+        try {
+            count = std::stoull(count_str);
+        } catch (const std::exception& e) {
+            count = 0;
+        }
+
+        if( current_ui ) {
+            current_ui->mark_resize();
+        }
+    }
+
+    spopup.reset();
+    return count;
+}
+
 inventory_compare_selector::inventory_compare_selector( player &p ) :
     inventory_multiselector( p, default_preset, _( "ITEMS TO COMPARE" ) ) {}
 
@@ -2241,9 +2281,16 @@ drop_locations inventory_drop_selector::execute()
         const inventory_input input = get_input();
 
         if( input.ch >= '0' && input.ch <= '9' ) {
-            count = std::min( count, INT_MAX / 10 - 10 );
-            count *= 10;
-            count += input.ch - '0';
+            const auto selected( get_active_column().get_all_selected() );
+            
+            count = query_count(input.ch - '0');
+            count = std::min(count, max_chosen_count);
+
+            for( const auto &elem : selected ) {
+                set_chosen_count( *elem, count );
+            }
+
+            count = 0;
         } else if( input.entry != nullptr ) {
             select( input.entry->any_item() );
             if( count == 0 && input.entry->chosen_count == 0 ) {
@@ -2260,7 +2307,7 @@ drop_locations inventory_drop_selector::execute()
 
             const auto selected( get_active_column().get_entries( filter_to_nonfavorite_and_nonworn ) );
             process_selected( count, selected );
-        } else if( input.action == "RIGHT" ) {
+        } else if( input.action == "RIGHT") {
             const auto selected( get_active_column().get_all_selected() );
 
             // No amount entered, select all
