@@ -471,6 +471,19 @@
     "category": "chems"
   },
   {
+    "type": "GENERIC",
+    "id": "elfa_sample",
+    "name": "elf-a sample",
+    "weight": "100 g",
+    "color": "green",
+    "symbol": "~",
+    "description": "Natural communion extracted from an elf-a mutant.  Could be used by an experienced chemist to harness some of its power.",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "volume": "250 ml",
+    "category": "chems"
+  },
+  {
     "type": "AMMO",
     "id": "chem_aluminium_powder",
     "category": "chems",
