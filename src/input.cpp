@@ -386,6 +386,16 @@ void input_manager::init_keycode_mapping()
     add_keycode_pair( KEY_END,       translate_marker_context( "key name", "END" ) );
     add_keycode_pair( '\n',          translate_marker_context( "key name", "RETURN" ) );
     add_keycode_pair( KEY_DC,        translate_marker_context( "key name", "DELETE" ) );
+    add_keycode_pair( NUMPAD_1,      translate_marker_context( "key name", "NUMPAD_1" ) );
+    add_keycode_pair( NUMPAD_2,      translate_marker_context( "key name", "NUMPAD_2" ) );
+    add_keycode_pair( NUMPAD_3,      translate_marker_context( "key name", "NUMPAD_3" ) );
+    add_keycode_pair( NUMPAD_4,      translate_marker_context( "key name", "NUMPAD_4" ) );
+    add_keycode_pair( NUMPAD_5,      translate_marker_context( "key name", "NUMPAD_5" ) );
+    add_keycode_pair( NUMPAD_6,      translate_marker_context( "key name", "NUMPAD_6" ) );
+    add_keycode_pair( NUMPAD_7,      translate_marker_context( "key name", "NUMPAD_7" ) );
+    add_keycode_pair( NUMPAD_8,      translate_marker_context( "key name", "NUMPAD_8" ) );
+    add_keycode_pair( NUMPAD_9,      translate_marker_context( "key name", "NUMPAD_9" ) );
+
 
     for( int c = 0; IS_CTRL_CHAR( c ); c++ ) {
         // Some codes fall into this range but have more common names we'd prefer to use.
