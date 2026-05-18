@@ -540,8 +540,7 @@
           "mx_point_burned_ground": 5,
           "mx_casings": 30,
           "mx_looters": 10,
-          "mx_corpses": 30,
-          "mx_surrounded_vehicle": 3
+          "mx_corpses": 30
         }
       },
       "marloss": { "chance": 20, "extras": { "mx_marloss_pilgrimage": 100 } },
