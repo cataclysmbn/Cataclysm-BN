@@ -601,6 +601,22 @@
     ]
   },
   {
+    "id": "survivor_vehicles",
+    "type": "vehicle_group",
+    "//": "Various vehicles used by survivors for the surrounded vehicle map extra",
+    "vehicles": [
+      [ "military_cargo_truck", 40 ],
+      [ "armored_car", 50 ],
+      [ "humvee", 60 ],
+      [ "jltv", 40 ],
+      [ "whillys_mb", 80 ],
+      [ "pickup_technical", 100 ],
+      [ "tractor_bandit", 100 ],
+      [ "surv_rv", 75 ],
+      [ "surv_car", 180 ]
+    ]
+  },
+  {
     "type": "vehicle_group",
     "id": "junkyard_vehicles",
     "vehicles": [
@@ -1205,6 +1221,11 @@
       [ "tank_m60_patton", 25 ],
       [ "tank_m60_patton_mothballed", 25 ]
     ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "crashed_aircraft",
+    "vehicles": [ [ "plane_f35_lightning_wreckage", 150 ], [ "plane_f15e_eagle_wreckage", 100 ], [ "plane_av8_harrier_wreckage", 80 ] ]
   },
   {
     "type": "vehicle_group",

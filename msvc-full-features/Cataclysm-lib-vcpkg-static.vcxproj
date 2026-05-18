@@ -142,11 +142,11 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\*.h" Exclude ="..src\message.h" />
+    <ClInclude Include="..\src\**\*.h" Exclude="..\src\lua\**\*.h;..\src\sol\**\*.h;..\src\third-party\**\*.h;..\src\messages.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\*.cpp" Exclude="..\src\main.cpp;..\src\messages.cpp" />
+    <ClCompile Include="..\src\**\*.cpp" Exclude="..\src\lua\**\*.cpp;..\src\sol\**\*.cpp;..\src\third-party\**\*.cpp;..\src\main.cpp;..\src\messages.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

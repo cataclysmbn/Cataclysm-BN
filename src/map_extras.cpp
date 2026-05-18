@@ -521,6 +521,178 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
     return true;
 }
 
+static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
+{
+    point c{ rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ) };
+
+    for( int x = 0; x < SEEX * 2; x++ ) {
+        for( int y = 0; y < SEEY * 2; y++ ) {
+            if( m.veh_at( tripoint( x,  y, abs_sub.z() ) ) &&
+                m.ter( tripoint( x, y, abs_sub.z() ) )->is_diggable() ) {
+                m.ter_set( tripoint( x, y, abs_sub.z() ), t_dirtmound );
+            } else {
+                if( x >= c.x - dice( 1, 5 ) && x <= c.x + dice( 1, 5 ) && y >= c.y - dice( 1, 5 ) &&
+                    y <= c.y + dice( 1, 5 ) ) {
+                    if( one_in( 7 ) && m.ter( tripoint( x, y, abs_sub.z() ) )->is_diggable() ) {
+                        m.ter_set( tripoint( x, y, abs_sub.z() ), t_dirtmound );
+                    }
+                }
+                if( x >= c.x - dice( 1, 6 ) && x <= c.x + dice( 1, 6 ) && y >= c.y - dice( 1, 6 ) &&
+                    y <= c.y + dice( 1, 6 ) ) {
+                    if( !one_in( 5 ) ) {
+                        m.make_rubble( tripoint( x,  y, abs_sub.z() ), f_wreckage );
+                        if( m.ter( tripoint( x, y, abs_sub.z() ) )->is_diggable() ) {
+                            m.ter_set( tripoint( x, y, abs_sub.z() ), t_dirtmound );
+                        }
+                    } else if( m.is_bashable( point( x, y ) ) ) {
+                        m.destroy( tripoint( x,  y, abs_sub.z() ), true );
+                        if( m.ter( tripoint( x, y, abs_sub.z() ) )->is_diggable() ) {
+                            m.ter_set( tripoint( x, y, abs_sub.z() ), t_dirtmound );
+                        }
+                    }
+
+                } else if( one_in( 4 + ( std::abs( x - c.x ) + ( std::abs( y -
+                                         c.y ) ) ) ) ) { // 1 in 10 chance of being wreckage anyway
+                    m.make_rubble( tripoint( x,  y, abs_sub.z() ), f_wreckage );
+                    if( !one_in( 3 ) ) {
+                        if( m.ter( tripoint( x, y, abs_sub.z() ) )->is_diggable() ) {
+                            m.ter_set( tripoint( x, y, abs_sub.z() ), t_dirtmound );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    units::angle dir1 = random_direction();
+
+    auto crashed_hull = vgroup_id( "crashed_aircraft" )->pick();
+
+    // Create the vehicle so we can rotate it and calculate its bounding box, but don't place it on the map.
+    auto veh = std::make_unique<vehicle>( crashed_hull, rng( 1, 33 ), 1 );
+
+    veh->turn( dir1 );
+
+    // Get the bounding box, centered on mount(0,0)
+    bounding_box bbox = veh->get_bounding_box();
+    // Move the wreckage forward/backward half it's length so that it spawns more over the center of the debris area
+    int x_length = std::abs( bbox.p2.x - bbox.p1.x );
+    int y_length = std::abs( bbox.p2.y - bbox.p1.y );
+
+    // cont.
+    int x_offset = veh->dir_vec().x * x_length / 2;
+    int y_offset = veh->dir_vec().y * y_length / 2;
+
+    int x_min = std::abs( bbox.p1.x ) + 0;
+    int y_min = std::abs( bbox.p1.y ) + 0;
+
+    int x_max = SEEX * 2 - bbox.p2.x - 1;
+    int y_max = SEEY * 2 - bbox.p2.y - 1;
+
+    // Clamp x1 & y1 such that no parts of the vehicle extend over the border of the submap.
+    int x1 = clamp( c.x + x_offset, x_min, x_max );
+    int y1 = clamp( c.y + y_offset, y_min, y_max );
+
+    vehicle *wreckage = m.add_vehicle(
+                            crashed_hull, tripoint( x1, y1, abs_sub.z() ), dir1, rng( 1, 33 ), 1 );
+
+    const auto controls_at = []( vehicle * wreckage, const tripoint_abs_ms & pos ) {
+        return !wreckage->get_parts_at( pos.raw(), "CONTROLS", part_status_flag::any ).empty() ||
+               !wreckage->get_parts_at( pos.raw(), "CTRL_ELECTRONIC", part_status_flag::any ).empty();
+    };
+
+    if( wreckage != nullptr ) {
+        const int clowncar_factor = dice( 1, 8 );
+
+        switch( clowncar_factor ) {
+            case 1:
+            case 2:
+            case 3:
+                // Full clown car
+                for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
+                    const auto pos = tripoint_abs_ms( vp.pos() );
+                    // Spawn pilots in seats with controls.CTRL_ELECTRONIC
+                    if( controls_at( wreckage, pos ) ) {
+                        m.add_spawn( mon_zombie_military_pilot, 1, pos.raw() );
+                    } else {
+                        if( one_in( 5 ) ) {
+                            m.add_spawn( mon_zombie_bio_op, 1, pos.raw() );
+                        } else if( one_in( 5 ) ) {
+                            m.add_spawn( mon_zombie_scientist, 1, pos.raw() );
+                        } else {
+                            m.add_spawn( mon_zombie_soldier, 1, pos.raw() );
+                        }
+                    }
+
+                    // Delete the items that would have spawned here from a "corpse"
+                    for( auto sp : wreckage->parts_at_relative( vp.mount(), true ) ) {
+                        vehicle_stack here = wreckage->get_items( sp );
+
+                        for( auto iter = here.begin(); iter != here.end(); ) {
+                            iter = here.erase( iter );
+                        }
+                    }
+                }
+                break;
+            case 4:
+            case 5:
+                // 2/3rds clown car
+                for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
+                    const auto pos = tripoint_abs_ms( vp.pos() );
+                    // Spawn pilots in seats with controls.
+                    if( controls_at( wreckage, pos ) ) {
+                        m.add_spawn( mon_zombie_military_pilot, 1, pos.raw() );
+                    } else {
+                        if( !one_in( 3 ) ) {
+                            m.add_spawn( mon_zombie_soldier, 1, pos.raw() );
+                        }
+                    }
+
+                    // Delete the items that would have spawned here from a "corpse"
+                    for( auto sp : wreckage->parts_at_relative( vp.mount(), true ) ) {
+                        vehicle_stack here = wreckage->get_items( sp );
+
+                        for( auto iter = here.begin(); iter != here.end(); ) {
+                            iter = here.erase( iter );
+                        }
+                    }
+                }
+                break;
+            case 6:
+                // Just pilots
+                for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_CONTROLS ) ) {
+                    const tripoint pos = vp.pos();
+                    m.add_spawn( mon_zombie_military_pilot, 1, pos );
+
+                    // Delete the items that would have spawned here from a "corpse"
+                    for( auto sp : wreckage->parts_at_relative( vp.mount(), true ) ) {
+                        vehicle_stack here = wreckage->get_items( sp );
+
+                        for( auto iter = here.begin(); iter != here.end(); ) {
+                            iter = here.erase( iter );
+                        }
+                    }
+                }
+                break;
+            case 7:
+            // Empty clown car
+            case 8:
+                break;
+            default:
+                break;
+        }
+        if( !one_in( 4 ) ) {
+            wreckage->smash( m, 0.8f, 1.2f, 1.0f, point( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5 ), 6 + dice( 1,
+                             10 ) );
+        } else {
+            wreckage->smash( m, 0.1f, 0.9f, 1.0f, point( dice( 1, 8 ) - 5, dice( 1, 8 ) - 5 ), 6 + dice( 1,
+                             10 ) );
+        }
+    }
+
+    return true;
+}
+
 static bool mx_roadblock( map &m, const tripoint_abs_sm &abs_sub )
 {
     auto &omb = get_overmapbuffer( m.get_bound_dimension() );
@@ -2718,6 +2890,7 @@ FunctionMap builtin_functions = {
     { "mx_minefield", mx_minefield },
     { "mx_supplydrop", mx_supplydrop },
     { "mx_helicopter", mx_helicopter },
+    { "mx_aircraft", mx_aircraft },
     { "mx_portal", mx_portal },
     { "mx_portal_in", mx_portal_in },
     { "mx_house_spider", mx_house_spider },

@@ -253,7 +253,9 @@ enum class tileset_fx_type {
     none,
     shadow,
     night,
+    enhanced_night,
     overexposed,
+    enhanced_overexposed,
     underwater,
     underwater_dark,
     memory,
@@ -1198,6 +1200,7 @@ class cata_tiles
          * Allows usage of night vision tilesets during sprite rendering.
          */
         bool nv_goggles_activated = false;
+        bool env_goggles_activated = false;
 
         // Active warp hash for character rendering (0 if none)
         size_t active_warp_hash = TILESET_NO_WARP;
