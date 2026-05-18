@@ -2285,7 +2285,6 @@ drop_locations inventory_drop_selector::execute()
 
             count = query_count( input.ch - '0' );
             count = std::min( count, max_chosen_count );
-
             for( const auto &elem : selected ) {
                 set_chosen_count( *elem, count );
             }
