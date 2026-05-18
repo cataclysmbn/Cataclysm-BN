@@ -64,6 +64,18 @@ struct compat_region_settings_terrain_furniture {
     std::vector<std::string> ter_furn;
 };
 
+struct compat_forest_biome_component {
+    std::optional<std::string> copy_from;
+    forest_biome_component component;
+};
+
+struct compat_forest_biome_mapgen {
+    std::optional<std::string> copy_from;
+    std::vector<std::string> terrains;
+    std::vector<std::string> components;
+    forest_biome biome;
+};
+
 struct compat_region_settings_forest_mapgen {
     std::optional<std::string> copy_from;
     std::vector<std::string> biomes;
@@ -77,6 +89,10 @@ auto compat_region_terrain_furniture_defs = std::unordered_map<std::string,
      compat_region_terrain_furniture> {};
 auto compat_region_settings_terrain_furniture_defs = std::unordered_map<std::string,
      compat_region_settings_terrain_furniture> {};
+auto compat_forest_biome_component_defs = std::unordered_map<std::string,
+     compat_forest_biome_component> {};
+auto compat_forest_biome_mapgen_defs = std::unordered_map<std::string,
+     compat_forest_biome_mapgen> {};
 auto compat_region_settings_forest_mapgen_defs = std::unordered_map<std::string,
      compat_region_settings_forest_mapgen> {};
 
@@ -152,6 +168,65 @@ auto read_default_oter( const JsonObject &jo,
     return false;
 }
 
+auto read_unfinalized_weighted_strings( const JsonObject &jo, const std::string &member,
+                                        std::map<std::string, int> &values ) -> void
+{
+    if( !jo.has_member( member ) ) {
+        return;
+    }
+    values.clear();
+    if( jo.has_object( member ) ) {
+        for( const JsonMember entry : jo.get_object( member ) ) {
+            if( entry.is_comment() ) {
+                continue;
+            }
+            values[entry.name()] = entry.get_int();
+        }
+        return;
+    }
+    for( const JsonValue entry : jo.get_array( member ) ) {
+        if( entry.test_string() ) {
+            values[entry.get_string()] = 100;
+        } else if( entry.test_array() ) {
+            auto pair = entry.get_array();
+            values[pair.get_string( 0 )] = pair.get_int( 1 );
+        } else {
+            entry.throw_error( "expected string or [ id, weight ] pair" );
+        }
+    }
+}
+
+auto read_compat_forest_terrain_furniture( const JsonObject &jo, forest_biome &biome ) -> void
+{
+    if( !jo.has_object( "terrain_furniture" ) ) {
+        return;
+    }
+    biome.unfinalized_terrain_dependent_furniture.clear();
+    for( const JsonMember entry : jo.get_object( "terrain_furniture" ) ) {
+        if( entry.is_comment() ) {
+            continue;
+        }
+        auto terrain_furniture = entry.get_object();
+        auto &result = biome.unfinalized_terrain_dependent_furniture[entry.name()];
+        terrain_furniture.read( "chance", result.chance );
+        read_unfinalized_weighted_strings( terrain_furniture, "furniture", result.unfinalized_furniture );
+    }
+}
+
+auto resolve_compat_forest_biome( const compat_forest_biome_mapgen &compat_biome,
+                                  const JsonObject &jo ) -> forest_biome
+{
+    auto result = compat_biome.biome;
+    for( const auto &component_id : compat_biome.components ) {
+        const auto iter = compat_forest_biome_component_defs.find( component_id );
+        if( iter == compat_forest_biome_component_defs.end() ) {
+            jo.throw_error( string_format( "unknown forest_biome_feature '%s'", component_id ) );
+        }
+        result.unfinalized_biome_components[component_id] = iter->second.component;
+    }
+    return result;
+}
+
 } // namespace
 
 auto load_compat_weather_generator( const JsonObject &jo ) -> void
@@ -187,6 +262,55 @@ auto load_compat_weather_generator( const JsonObject &jo ) -> void
         ( void )jo.get_array( "weather_black_list" );
     }
     compat_weather_generators[id] = result;
+}
+
+auto load_compat_forest_biome_feature( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_forest_biome_component {};
+    if( jo.has_string( "copy-from" ) ) {
+        result.copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_forest_biome_component_defs.find( *result.copy_from );
+            iter != compat_forest_biome_component_defs.end() ) {
+            result = iter->second;
+        }
+    }
+    jo.read( "chance", result.component.chance );
+    jo.read( "sequence", result.component.sequence );
+    read_unfinalized_weighted_strings( jo, "types", result.component.unfinalized_types );
+    compat_forest_biome_component_defs[id] = result;
+}
+
+auto load_compat_forest_biome_mapgen( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    auto result = compat_forest_biome_mapgen {};
+    if( jo.has_string( "copy-from" ) ) {
+        result.copy_from = jo.get_string( "copy-from" );
+        if( const auto iter = compat_forest_biome_mapgen_defs.find( *result.copy_from );
+            iter != compat_forest_biome_mapgen_defs.end() ) {
+            result = iter->second;
+        }
+    }
+    if( jo.has_member( "terrains" ) ) {
+        result.terrains.clear();
+        for( const auto terrain : jo.get_tags<std::string>( "terrains" ) ) {
+            result.terrains.emplace_back( terrain );
+        }
+    }
+    if( jo.has_member( "components" ) ) {
+        result.components.clear();
+        for( const auto component : jo.get_tags<std::string>( "components" ) ) {
+            result.components.emplace_back( component );
+        }
+    }
+    jo.read( "sparseness_adjacency_factor", result.biome.sparseness_adjacency_factor );
+    jo.read( "item_group", result.biome.item_group );
+    jo.read( "item_group_chance", result.biome.item_group_chance );
+    jo.read( "item_spawn_iterations", result.biome.item_spawn_iterations );
+    read_unfinalized_weighted_strings( jo, "groundcover", result.biome.unfinalized_groundcover );
+    read_compat_forest_terrain_furniture( jo, result.biome );
+    compat_forest_biome_mapgen_defs[id] = result;
 }
 
 auto load_compat_map_extra_collection( const JsonObject &jo ) -> void
@@ -760,7 +884,21 @@ void load_region_settings( const JsonObject &jo )
     const auto strict_forest_mapgen = strict && !jo.has_string( "forest_composition" );
     load_forest_mapgen_settings( jo, new_region.forest_composition, strict_forest_mapgen, false );
     if( jo.has_string( "forest_composition" ) ) {
-        ( void )jo.get_string( "forest_composition" );
+        const auto forest_composition_id = jo.get_string( "forest_composition" );
+        if( const auto settings_iter = compat_region_settings_forest_mapgen_defs.find( forest_composition_id );
+            settings_iter != compat_region_settings_forest_mapgen_defs.end() ) {
+            new_region.forest_composition.unfinalized_biomes.clear();
+            for( const auto &biome_id : settings_iter->second.biomes ) {
+                const auto biome_iter = compat_forest_biome_mapgen_defs.find( biome_id );
+                if( biome_iter == compat_forest_biome_mapgen_defs.end() ) {
+                    jo.throw_error( string_format( "unknown forest_biome_mapgen '%s'", biome_id ) );
+                }
+                const auto biome = resolve_compat_forest_biome( biome_iter->second, jo );
+                for( const auto &terrain : biome_iter->second.terrains ) {
+                    new_region.forest_composition.unfinalized_biomes[terrain] = biome;
+                }
+            }
+        }
     }
 
     const auto strict_forest_trail = strict && !jo.has_member( "forest_trails" );
@@ -1014,6 +1152,8 @@ void reset_region_settings()
     compat_region_settings_map_extras_defs.clear();
     compat_region_terrain_furniture_defs.clear();
     compat_region_settings_terrain_furniture_defs.clear();
+    compat_forest_biome_component_defs.clear();
+    compat_forest_biome_mapgen_defs.clear();
     compat_region_settings_forest_mapgen_defs.clear();
 }
 

@@ -290,6 +290,8 @@ extern t_regional_settings_map region_settings_map;
 void check_regional_settings();
 
 auto load_compat_weather_generator( const JsonObject &jo ) -> void;
+auto load_compat_forest_biome_feature( const JsonObject &jo ) -> void;
+auto load_compat_forest_biome_mapgen( const JsonObject &jo ) -> void;
 auto load_compat_map_extra_collection( const JsonObject &jo ) -> void;
 auto load_compat_region_settings_map_extras( const JsonObject &jo ) -> void;
 auto load_compat_region_terrain_furniture( const JsonObject &jo ) -> void;

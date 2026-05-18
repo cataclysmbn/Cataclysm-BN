@@ -425,6 +425,8 @@ void DynamicDataLoader::initialize()
     add( "map_feature_description", &map_feature_descriptions::load_map_feature_descriptions );
 
     add( "weather_generator", &load_compat_weather_generator );
+    add( "forest_biome_feature", &load_compat_forest_biome_feature );
+    add( "forest_biome_mapgen", &load_compat_forest_biome_mapgen );
     add( "map_extra_collection", &load_compat_map_extra_collection );
     add( "region_settings_map_extras", &load_compat_region_settings_map_extras );
     add( "region_terrain_furniture", &load_compat_region_terrain_furniture );
