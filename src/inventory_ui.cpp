@@ -1988,13 +1988,13 @@ void inventory_multiselector::rearrange_columns( size_t client_width )
     selection_col->set_visibility( !is_overflown( client_width ) );
 }
 
-size_t inventory_multiselector::query_count(size_t count = 0)
+size_t inventory_multiselector::query_count( size_t count = 0 )
 {
     std::string count_str;
-    if (count == 0) {
+    if( count == 0 ) {
         count_str = "";
     } else {
-        count_str = std::to_string(count);
+        count_str = std::to_string( count );
     }
 
     spopup = std::make_unique<string_input_popup>();
@@ -2014,8 +2014,8 @@ size_t inventory_multiselector::query_count(size_t count = 0)
     if( spopup->confirmed() ) {
         count_str = spopup->text();
         try {
-            count = std::stoull(count_str);
-        } catch (const std::exception& e) {
+            count = std::stoull( count_str );
+        } catch( const std::exception &e ) {
             count = 0;
         }
 
@@ -2282,9 +2282,9 @@ drop_locations inventory_drop_selector::execute()
 
         if( input.ch >= '0' && input.ch <= '9' ) {
             const auto selected( get_active_column().get_all_selected() );
-            
-            count = query_count(input.ch - '0');
-            count = std::min(count, max_chosen_count);
+
+            count = query_count( input.ch - '0' );
+            count = std::min( count, max_chosen_count );
 
             for( const auto &elem : selected ) {
                 set_chosen_count( *elem, count );
@@ -2307,7 +2307,7 @@ drop_locations inventory_drop_selector::execute()
 
             const auto selected( get_active_column().get_entries( filter_to_nonfavorite_and_nonworn ) );
             process_selected( count, selected );
-        } else if( input.action == "RIGHT") {
+        } else if( input.action == "RIGHT" ) {
             const auto selected( get_active_column().get_all_selected() );
 
             // No amount entered, select all

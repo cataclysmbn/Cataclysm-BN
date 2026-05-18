@@ -672,7 +672,7 @@ class inventory_multiselector : public inventory_selector
                                  const std::string &selection_column_title = "" );
     protected:
         void rearrange_columns( size_t client_width ) override;
-        size_t query_count(size_t count);
+        size_t query_count( size_t count );
     private:
         std::unique_ptr<inventory_column> selection_col;
 };
@@ -701,7 +701,7 @@ class inventory_iuse_selector : public inventory_multiselector
                                  const inventory_selector_preset &preset = default_preset,
                                  const GetStats & = {} );
         std::vector<iuse_location> execute();
-        
+
     protected:
         stats get_raw_stats() const override;
         void set_chosen_count( inventory_entry &entry, size_t count );
