@@ -1911,15 +1911,12 @@ void overmapbuffer::spawn_monster( const tripoint_abs_sm &p )
     std::for_each( monster_bucket.first, monster_bucket.second,
     [&]( std::pair<const tripoint_om_sm, monster> &monster_entry ) {
         monster &this_monster = monster_entry.second;
-        const auto proj = project_remain<coords::sm>( this_monster.bub_pos() );
-        const auto ms = project_combine( p, proj.remainder );
+        const auto ms = this_monster.abs_pos();
         const map &here = get_map();
         const auto local = here.abs_to_bub( ms );
         assert( here.inbounds( local ) );
         monster *const placed = g->place_critter_at( make_shared_fast<monster>( this_monster ), local );
         if( placed ) {
-            // Keep pos_abs in sync with the placed local position.
-            placed->pos_abs = ms;
             placed->on_load();
         }
     } );
@@ -1939,8 +1936,7 @@ void overmapbuffer::discard_monster_map( const tripoint_abs_sm &p )
 
 void overmapbuffer::despawn_monster( const monster &critter )
 {
-    // pos_abs is stamped by game::despawn_monster() before this call, so no map context needed.
-    const tripoint_abs_sm abs_sm = project_to<coords::sm>( critter.pos_abs );
+    const tripoint_abs_sm abs_sm = project_to<coords::sm>( critter.abs_pos() );
     // Get the overmap coordinates and get the overmap, sm is now local to that overmap
     point_abs_om omp;
     tripoint_om_sm sm;
@@ -1948,7 +1944,7 @@ void overmapbuffer::despawn_monster( const monster &critter )
     overmap &om = get( omp );
     // Store the monster using coordinates local to the overmap.
     if( critter.is_nemesis() ) {
-        const tripoint_abs_omt abs_omt = project_to<coords::omt>( critter.pos_abs );
+        const tripoint_abs_omt abs_omt = project_to<coords::omt>( critter.abs_pos() );
         om.place_nemesis( abs_omt );
     } else {
         om.monster_map->insert( std::make_pair( sm, critter ) );

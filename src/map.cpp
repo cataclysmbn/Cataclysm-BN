@@ -8052,13 +8052,7 @@ void map::shift( const point_rel_sm &sp )
 
     set_abs_sub( abs + sp );
 
-    // if player is in vehicle, (s)he must be shifted with vehicle too
-    const auto sp_ms = project_to<coords::ms>( sp );
-    if( g->u.in_vehicle ) {
-        g->u.setpos( g->u.bub_pos() - sp_ms );
-    }
-
-    g->shift_destination_preview( -sp_ms );
+    g->shift_destination_preview( -project_to<coords::ms>( sp ) );
 
     vehicle *remoteveh = g->remoteveh();
 

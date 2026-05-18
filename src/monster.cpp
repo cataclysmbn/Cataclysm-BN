@@ -206,7 +206,7 @@ monster::monster() : corpse_components( new monster_component_item_location( thi
     battery_item( new monster_battery_item_location( this ) ),
     inv( new monster_item_location( this ) )
 {
-    position = tripoint_bub_ms( 20, 10, -500 ); // Some arbitrary number that will cause debugmsgs
+    pos_abs = tripoint_abs_ms( 20, 10, -500 ); // Some arbitrary number that will cause debugmsgs
     unset_dest();
     wandf = 0;
     hp = 60;
@@ -256,8 +256,7 @@ monster::monster( const mtype_id &id ) : monster()
 
 monster::monster( const mtype_id &id, const tripoint_bub_ms &p ) : monster( id )
 {
-    position = p;
-    unset_dest();
+    spawn( p );
 }
 
 monster::monster( const monster &source ) : Creature( source ),
@@ -303,7 +302,7 @@ monster::monster( const monster &source ) : Creature( source ),
     hp = source.hp;
     special_attacks = source.special_attacks;
     goal = source.goal;
-    position = source.position;
+    pos_abs = source.pos_abs;
     dead = source.dead;
     upgrades = source.upgrades;
     upgrade_time = source.upgrade_time;
@@ -326,15 +325,21 @@ monster::monster( const monster &source ) : Creature( source ),
 
 monster::~monster() = default;
 
-void monster::setpos( const tripoint_bub_ms &p )
+auto monster::setpos( const tripoint_bub_ms &p ) -> void
 {
-    if( p == bub_pos() ) {
+    setpos( get_map().bub_to_abs( p ) );
+}
+
+auto monster::setpos( const tripoint_abs_ms &p ) -> void
+{
+    if( p == pos_abs ) {
         return;
     }
 
-    bool wandering = is_wandering();
-    g->update_zombie_pos( *this, p );
-    position = p;
+    const auto new_bub_pos = get_map().abs_to_bub( p );
+    const auto wandering = is_wandering();
+    g->update_zombie_pos( *this, new_bub_pos );
+    pos_abs = p;
     if( has_effect( effect_ridden ) && mounted_player && mounted_player->bub_pos() != bub_pos() ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
@@ -346,7 +351,12 @@ void monster::setpos( const tripoint_bub_ms &p )
 
 tripoint_bub_ms monster::bub_pos() const
 {
-    return position;
+    return get_map().abs_to_bub( pos_abs );
+}
+
+auto monster::abs_pos() const -> tripoint_abs_ms
+{
+    return pos_abs;
 }
 
 void monster::poly( const mtype_id &id )
@@ -643,9 +653,9 @@ void monster::refill_udders()
     }
 }
 
-void monster::spawn( const tripoint_bub_ms &p )
+auto monster::spawn( const tripoint_bub_ms &p ) -> void
 {
-    position = p;
+    pos_abs = get_map().bub_to_abs( p );
     unset_dest();
 }
 
@@ -1250,12 +1260,11 @@ void monster::set_goal( const tripoint_bub_ms &p )
     goal = p;
 }
 
-void monster::shift( point_rel_sm sm_shift )
+auto monster::shift( point_rel_sm sm_shift ) -> void
 {
     const map &here = get_map();
 
     const auto ms_shift = project_to<coords::ms>( sm_shift );
-    position = position - ms_shift;
     if( wandf > 0 ) {
         wander_pos = wander_pos - ms_shift;
     }
@@ -1271,15 +1280,16 @@ void monster::shift( point_rel_sm sm_shift )
 
     // Shift our found paths too, but also validate them
     if( !this->path.empty() ) {
-        for( tripoint_bub_ms &p : path ) {
+        std::ranges::for_each( path, [ms_shift]( tripoint_bub_ms & p ) {
             p = p - ms_shift;
-
-            if( !here.inbounds( p ) ) {
-                // Path started going through OoB regions, so...
-                this->path.clear();
-                this->repath_requested = true;
-                break;
-            }
+        } );
+        const auto path_is_oob = std::ranges::any_of( path, [&]( const tripoint_bub_ms & p ) {
+            return !here.inbounds( p );
+        } );
+        if( path_is_oob ) {
+            // Path started going through OoB regions, so...
+            this->path.clear();
+            this->repath_requested = true;
         }
     }
 }

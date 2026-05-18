@@ -637,7 +637,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                 tripoint_om_sm monster_location;
                 monster new_monster;
                 monster_location.deserialize( jsin );
-                new_monster.deserialize( jsin );
+                new_monster.deserialize_from_overmap( jsin, pos(), monster_location );
                 monster_map->insert( std::make_pair( monster_location, std::move( new_monster ) ) );
             }
         } else if( name == "tracked_vehicles" ) {
@@ -1079,7 +1079,7 @@ void overmap::serialize( std::ostream &fout ) const
     json.start_array();
     for( auto &i : *monster_map ) {
         i.first.serialize( json );
-        i.second.serialize( json );
+        i.second.serialize_for_overmap( json );
     }
     json.end_array();
     fout << '\n';

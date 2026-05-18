@@ -30,7 +30,6 @@ class npc;
 class npc_template;
 class player;
 struct iteminfo;
-struct tripoint;
 
 enum body_part : int;
 class JsonObject;

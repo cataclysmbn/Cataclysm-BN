@@ -86,7 +86,6 @@
 #include "player_activity.h"
 #include "pldata.h"
 #include "popup.h"
-#include "point.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
@@ -7814,7 +7813,7 @@ struct veh_part_painter {
         return string_format( _( "%s's %s" ), vp->vehicle().name, vp->part().name( false ) );
     }
 
-    auto enumerate( const tripoint &p ) const -> std::array<value_type, 1> {
+    auto enumerate( const tripoint_bub_ms &p ) const -> std::array<value_type, 1> {
         const auto vp = get_map().veh_at( p );
         if constexpr( Roof ) {
             const auto roof_part = [&]() -> std::optional<vpart_reference> {
@@ -7867,10 +7866,10 @@ struct veh_part_painter {
 
 template<bool Furn>
 struct ter_furn_painter {
-    using value_type = tripoint;
+    using value_type = tripoint_bub_ms;
     using paint_layer = iuse_paint_stuff_config::paint_layer;
 
-    static data_vars::data_set *get_vars( const tripoint &p ) {
+    static data_vars::data_set *get_vars( const tripoint_bub_ms &p ) {
         if constexpr( Furn ) {
             return get_map().furn_vars( p );
         } else {
@@ -7886,11 +7885,11 @@ struct ter_furn_painter {
         }
     }
 
-    static auto enumerate( const tripoint &p ) -> std::array<tripoint, 1>  {
+    static auto enumerate( const tripoint_bub_ms &p ) -> std::array<tripoint_bub_ms, 1>  {
         return {p};
     }
 
-    static float get_cost( const tripoint &p ) {
+    static float get_cost( const tripoint_bub_ms &p ) {
         if( get_map().has_flag_ter_or_furn( "TINY", p ) ) {
             return 0.25f;
         }
@@ -7900,7 +7899,7 @@ struct ter_furn_painter {
         return 1;
     }
 
-    static bool can_paint( const tripoint &p ) {
+    static bool can_paint( const tripoint_bub_ms &p ) {
         const auto _vars = get_vars( p );
         if( _vars  == nullptr ) {
             return false;

@@ -1968,7 +1968,16 @@ void monster::deserialize( JsonIn &jsin )
     load( data );
 }
 
-void monster::load( const JsonObject &data )
+auto monster::deserialize_from_overmap( JsonIn &jsin, const point_abs_om &om_pos,
+                                        const tripoint_om_sm &submap_pos ) -> void
+{
+    JsonObject data = jsin.get_object();
+    data.allow_omitted_members();
+    load( data, legacy_position_context{ om_pos, submap_pos } );
+}
+
+auto monster::load( const JsonObject &data,
+                    const std::optional<legacy_position_context> &legacy_context ) -> void
 {
     Creature::load( data );
 
@@ -1978,17 +1987,43 @@ void monster::load( const JsonObject &data )
     type = &mtype_id( sidtmp ).obj();
 
     data.read( "unique_name", unique_name );
-    data.read( "posx", position.x() );
-    data.read( "posy", position.y() );
-    if( !data.read( "posz", position.z() ) ) {
-        position.z() = g->get_levz();
+
+    auto legacy_bub_pos = tripoint_bub_ms::zero();
+    const auto has_legacy_x = data.read( "posx", legacy_bub_pos.x() );
+    const auto has_legacy_y = data.read( "posy", legacy_bub_pos.y() );
+    if( !data.read( "posz", legacy_bub_pos.z() ) ) {
+        legacy_bub_pos.z() = g != nullptr ? g->get_levz() : 0;
+    }
+    auto stored_pos_abs = tripoint_abs_ms::zero();
+    if( data.read( "pos_abs", stored_pos_abs ) ) {
+        pos_abs = stored_pos_abs;
+    } else if( has_legacy_x && has_legacy_y ) {
+        if( legacy_context ) {
+            const auto abs_sm_pos = project_combine( legacy_context->om_pos, legacy_context->submap_pos );
+            const auto legacy_remainder = project_remain<coords::sm>( legacy_bub_pos );
+            pos_abs = project_combine( abs_sm_pos, legacy_remainder.remainder );
+        } else {
+            pos_abs = get_map().bub_to_abs( legacy_bub_pos );
+        }
     }
 
-    data.read( "wandf", wandf );
-    data.read( "wandx", wander_pos.x() );
-    data.read( "wandy", wander_pos.y() );
-    if( data.read( "wandz", wander_pos.z() ) ) {
-        wander_pos.z() = position.z();
+    wandf = 0;
+    wander_pos = get_map().abs_to_bub( pos_abs );
+    if( !legacy_context ) {
+        auto stored_wander_pos_abs = tripoint_abs_ms::zero();
+        if( data.read( "wander_pos_abs", stored_wander_pos_abs ) ) {
+            data.read( "wandf", wandf );
+            wander_pos = get_map().abs_to_bub( stored_wander_pos_abs );
+        } else {
+            const auto has_legacy_wander_x = data.read( "wandx", wander_pos.x() );
+            const auto has_legacy_wander_y = data.read( "wandy", wander_pos.y() );
+            if( has_legacy_wander_x && has_legacy_wander_y ) {
+                if( !data.read( "wandz", wander_pos.z() ) ) {
+                    wander_pos.z() = legacy_bub_pos.z();
+                }
+                data.read( "wandf", wandf );
+            }
+        }
     }
     if( data.has_object( "tied_item" ) ) {
         JsonIn *tied_item_json = data.get_raw( "tied_item" );
@@ -2084,7 +2119,8 @@ void monster::load( const JsonObject &data )
     // This is relative to the monster so it isn't invalidated by map shifting.
     tripoint destination;
     data.read( "destination", destination );
-    goal = bub_pos() + destination;
+    const auto load_bub_pos = has_legacy_x && has_legacy_y ? legacy_bub_pos : get_map().abs_to_bub( pos_abs );
+    goal = load_bub_pos + destination;
 
     upgrades = data.get_bool( "upgrades", type->upgrades );
     upgrade_time = data.get_int( "upgrade_time", -1 );
@@ -2123,7 +2159,6 @@ void monster::load( const JsonObject &data )
     if( !data.read( "last_updated", last_updated ) ) {
         last_updated = calendar::turn;
     }
-    data.read( "pos_abs", pos_abs );
     data.read( "dimension_id", dimension_id_ );
     data.read( "mounted_player_id", mounted_player_id );
     data.read( "path", path );
@@ -2138,22 +2173,27 @@ void monster::serialize( JsonOut &json ) const
     json.start_object();
     // This must be after the json object has been started, so any super class
     // puts their data into the same json object.
-    store( json );
+    store( json, true );
     json.end_object();
 }
 
-void monster::store( JsonOut &json ) const
+auto monster::serialize_for_overmap( JsonOut &json ) const -> void
+{
+    json.start_object();
+    store( json, false );
+    json.end_object();
+}
+
+auto monster::store( JsonOut &json, bool include_local_state ) const -> void
 {
     Creature::store( json );
     json.member( "typeid", type->id );
     json.member( "unique_name", unique_name );
-    json.member( "posx", position.x() );
-    json.member( "posy", position.y() );
-    json.member( "posz", position.z() );
-    json.member( "wandx", wander_pos.x() );
-    json.member( "wandy", wander_pos.y() );
-    json.member( "wandz", wander_pos.z() );
-    json.member( "wandf", wandf );
+    json.member( "pos_abs", pos_abs );
+    if( include_local_state ) {
+        json.member( "wander_pos_abs", get_map().bub_to_abs( wander_pos ) );
+        json.member( "wandf", wandf );
+    }
     json.member( "hp", hp );
     json.member( "special_attacks", special_attacks );
     json.member( "friendly", friendly );
@@ -2199,7 +2239,6 @@ void monster::store( JsonOut &json ) const
     json.member( "upgrades", upgrades );
     json.member( "upgrade_time", upgrade_time );
     json.member( "last_updated", last_updated );
-    json.member( "pos_abs", pos_abs );
     if( !dimension_id_.empty() ) {
         json.member( "dimension_id", dimension_id_ );
     }

@@ -1303,13 +1303,10 @@ void game::on_submap_unloaded( const tripoint_abs_sm &pos, const std::string &/*
     std::erase_if( active_npc, in_evicted );
 
     // Evict monsters whose absolute submap position matches the unloaded submap.
-    // Use critter.pos_abs (stamped before any shift by update_map) rather than
-    // recomputing via getabs(): during a map shift abs_sub is already updated when
-    // this fires, so getabs(local_pos) would produce a position displaced by 1 submap.
     // all_monsters() snapshots weak_ptrs at construction; despawn_monster() marks hp=0 so the
     // non_dead_range iterator skips evicted entries on subsequent steps, mirroring shift_monsters().
     for( monster &critter : all_monsters() ) {
-        const auto sm = project_to<coords::sm>( critter.pos_abs );
+        const auto sm = project_to<coords::sm>( critter.abs_pos() );
         if( sm == pos ) {
             despawn_monster( critter );
         }
@@ -12205,58 +12202,32 @@ void game::on_move_effects()
 
 void game::resize_reality_bubble_to( int new_size )
 {
-    // Capture player's absolute submap position and within-submap tile offset
-    // before any coordinate system changes.
-    const tripoint_abs_sm old_abs_sub = m.get_abs_sub();
-    const tripoint player_abs_sm(
-        old_abs_sub.x() + u.bub_pos().x() / SEEX,
-        old_abs_sub.y() + u.bub_pos().y() / SEEY,
-        old_abs_sub.z() );
-    const point player_within_sm( u.bub_pos().x() % SEEX, u.bub_pos().y() % SEEY );
+    // Capture player's absolute submap position before any coordinate system changes.
+    const auto player_abs_sm = project_to<coords::sm>( u.abs_pos() );
 
     // The grid origin shifts by (old_half - new_half) submaps when the bubble changes size.
     // Compute this before any globals change so we can use it for two purposes:
     //   1. Deciding which monsters are outside the new bubble (shrink-only despawn).
-    //   2. Translating surviving monster positions into the new local coordinate system.
-    const int old_half = static_cast<int>( g_half_mapsize );
-    const int new_half = new_size + 1;
+    //   2. Updating surviving monsters' local navigation state.
+    const auto old_half = static_cast<int>( g_half_mapsize );
+    const auto new_half = new_size + 1;
     // Positive when shrinking (old origin < new origin), negative when growing.
-    // Each monster's local position must be translated by this many submaps in X and Y
-    // so it lines up with the new grid origin.
-    const int grid_origin_delta_in_sm = old_half - new_half;
+    // Each monster's local navigation state must be translated by this many submaps
+    // in X and Y so it lines up with the new grid origin.
+    const auto grid_origin_delta_in_sm = old_half - new_half;
 
     // When shrinking, despawn monsters that fall outside the new bubble radius.
     if( grid_origin_delta_in_sm > 0 ) {
-        const tripoint player_sm_in_grid( u.bub_pos().x() / SEEX, u.bub_pos().y() / SEEY, get_levz() );
         for( monster &critter : all_monsters() ) {
-            const tripoint critter_sm( critter.bub_pos().x() / SEEX, critter.bub_pos().y() / SEEY,
-                                       critter.bub_pos().z() );
-            const auto diff = critter_sm - player_sm_in_grid;
-            if( std::abs( diff.x ) > new_half || std::abs( diff.y ) > new_half ) {
+            const auto critter_sm = project_to<coords::sm>( critter.abs_pos() );
+            const auto diff = critter_sm - player_abs_sm;
+            if( std::abs( diff.x() ) > new_half || std::abs( diff.y() ) > new_half ) {
                 despawn_monster( critter );
             }
         }
     }
 
-    // Adjust surviving monsters' local positions to the new coordinate origin.
-    // monster::shift(sm_delta) does: position -= sm_to_ms(sm_delta), which correctly
-    // translates positions regardless of shrink/grow direction.  The bounds check
-    // inside shift_monsters is not used here because the old grid bounds are larger
-    // than the new ones when shrinking, so all in-range survivors pass.
-    if( grid_origin_delta_in_sm != 0 ) {
-        for( monster &critter : all_monsters() ) {
-            critter.shift( { grid_origin_delta_in_sm, grid_origin_delta_in_sm } );
-            // Stale local-coordinate paths become invalid after the origin shift.
-            // Clear them so the monster replans on its next turn rather than
-            // pathing toward wrong tiles.
-            critter.clear_path();
-        }
-        critter_tracker->rebuild_cache();
-    }
-
-    // Selectively unload NPCs that fall outside the new bubble.  NPCs that stay
-    // within bounds are re-anchored after load_map() rebuilds abs_sub — this avoids
-    // the redundant on_unload()/on_load() cycle on every activity-bubble transition.
+    // Selectively unload NPCs that fall outside the new bubble.
     {
         auto out_of_range = std::ranges::stable_partition( active_npc,
         [&]( const shared_ptr_fast<npc> &n ) {
@@ -12288,19 +12259,27 @@ void game::resize_reality_bubble_to( int new_size )
     m.resize( g_mapsize );
     reality_bubble_radius_ = g_half_mapsize;
 
-    // Reposition the player in the new (possibly different-sized) coordinate space
-    // and compute the new top-left abs_sub so load_map centers on the player.
-    u.setpos( tripoint_bub_ms( g_half_mapsize_x + player_within_sm.x,
-                               g_half_mapsize_y + player_within_sm.y,
-                               get_levz() ) );
-    const tripoint_abs_sm new_abs_sub(
-        player_abs_sm.x - g_half_mapsize,
-        player_abs_sm.y - g_half_mapsize,
-        player_abs_sm.z );
+    // Compute the new top-left abs_sub so load_map centers on the player.
+    const auto new_abs_sub = tripoint_abs_sm(
+                                 player_abs_sm.x() - g_half_mapsize,
+                                 player_abs_sm.y() - g_half_mapsize,
+                                 player_abs_sm.z() );
 
     // Reload the map around the player; this fills grid[], recreates load handles,
     // rebuilds distribution_grid_tracker and fluid_grid.
     load_map( new_abs_sub, /*pump_events=*/false );
+
+    // Adjust surviving monsters' local navigation state to the new coordinate origin.
+    // Monster positions are absolute; only cached bubble-coordinate goals and paths
+    // need re-anchoring here. The tracker cache must be rebuilt after load_map()
+    // changes abs_sub, because monster::bub_pos() is derived from absolute position.
+    if( grid_origin_delta_in_sm != 0 ) {
+        for( monster &critter : all_monsters() ) {
+            critter.shift( { grid_origin_delta_in_sm, grid_origin_delta_in_sm } );
+            critter.clear_path();
+        }
+        critter_tracker->rebuild_cache();
+    }
 
     // NPC positions are stored as absolute coordinates and do not need re-anchoring
     // when the bubble shifts. Clear paths since local-coordinate routes are now stale.
@@ -13844,19 +13823,6 @@ point_rel_sm game::update_map( int &x, int &y )
         return point_rel_sm::zero();
     }
 
-    // Stamp absolute positions for all active monsters before abs_sub changes.
-    // on_submap_unloaded fires after m.shift() updates abs_sub but before
-    // shift_monsters() adjusts local positions; using getabs() in that window
-    // produces a position displaced by 1 submap in the shift direction.
-    // shift_in_progress_ tells despawn_monster() to trust pos_abs as-is.
-    shift_in_progress_ = true;
-    // non_dead_range's iterator lacks the typedefs required by std::ranges concepts,
-    // so std::ranges::for_each cannot be used here — range-for matches all other
-    // all_monsters() call sites in the codebase.
-    for( monster &critter : all_monsters() ) {
-        critter.pos_abs = tripoint_abs_ms( get_map().bub_to_abs( critter.bub_pos() ) );
-    }
-
     // this handles loading/unloading submaps that have scrolled on or off the viewport
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     inclusive_rectangle<point_rel_sm> size_1( point_rel_sm( -1, -1 ), point_rel_sm( 1, 1 ) );
@@ -13907,7 +13873,6 @@ point_rel_sm game::update_map( int &x, int &y )
 
     // Shift monsters
     shift_monsters( tripoint_rel_sm( shift, 0 ) );
-    shift_in_progress_ = false;
     const auto shift_ms = project_to<coords::ms>( shift );
     u.shift_destination( -shift_ms );
 
@@ -14220,14 +14185,6 @@ void game::update_stair_monsters()
 
 void game::despawn_monster( monster &critter )
 {
-    // During a map shift (shift_in_progress_), pos_abs was stamped by update_map()
-    // before abs_sub changed, so it is already correct.  Recomputing here would use
-    // the updated abs_sub with the not-yet-shifted local position and produce a value
-    // displaced by 1 submap in the shift direction.
-    // Outside of a shift, abs_sub and local position are consistent, so getabs() is correct.
-    if( !shift_in_progress_ ) {
-        critter.pos_abs = tripoint_abs_ms( get_map().bub_to_abs( critter.bub_pos() ) );
-    }
     if( !critter.is_hallucination() ) {
         // hallucinations aren't stored, they come and go as they like,
         get_overmapbuffer( critter.get_dimension() ).despawn_monster( critter );

@@ -135,7 +135,7 @@ class monster : public Creature, public location_visitable<monster>
         /// Immediatly spawn an offspring without mutating baby timer.
         void reproduce();
         void refill_udders();
-        void spawn( const tripoint_bub_ms &p );
+        auto spawn( const tripoint_bub_ms &p ) -> void;
         creature_size get_size() const override;
         units::mass get_weight() const override;
         units::mass weight_capacity() const override;
@@ -190,13 +190,16 @@ class monster : public Creature, public location_visitable<monster>
         bool avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const override;
 
         void serialize( JsonOut &json ) const;
+        auto serialize_for_overmap( JsonOut &json ) const -> void;
         void deserialize( JsonIn &jsin );
+        auto deserialize_from_overmap( JsonIn &jsin, const point_abs_om &om_pos,
+                                       const tripoint_om_sm &submap_pos ) -> void;
 
         tripoint_bub_ms move_target(); // Returns point at the end of the monster's current plans
         Creature *attack_target(); // Returns the creature at the end of plans (if hostile)
 
         // Movement
-        void shift( point_rel_sm sm_shift ); // Shifts the monster to the appropriate submap
+        auto shift( point_rel_sm sm_shift ) -> void; // Shifts local navigation state after a submap shift
         void set_goal( const tripoint_bub_ms &p );
         // Updates current pos AND our plans
         bool is_wandering() const; // Returns true if we have no plans
@@ -639,8 +642,10 @@ class monster : public Creature, public location_visitable<monster>
         // abstract for a fish monster representing a hidden stock of population in that area.
         int fish_population = 1;
 
-        void setpos( const tripoint_bub_ms &p ) override;
+        auto setpos( const tripoint_bub_ms &p ) -> void override;
+        auto setpos( const tripoint_abs_ms &p ) -> void override;
         tripoint_bub_ms bub_pos() const override;
+        auto abs_pos() const -> tripoint_abs_ms override;
 
         short ignoring;
 
@@ -668,11 +673,6 @@ class monster : public Creature, public location_visitable<monster>
         void init_from_item( const item &itm );
 
         time_point last_updated = calendar::turn_zero;
-        // Absolute map-square position, stamped by game::despawn_monster() immediately before
-        // removal from critter_tracker.  Authoritative while the monster is stored in
-        // overmap::monster_map; stale (or zero-initialised) for active critter_tracker monsters.
-        tripoint_abs_ms pos_abs;
-
         // ID of the dimension this monster belongs to.  Empty string = primary dimension.
         // Set when the monster is spawned or loaded from a non-primary dimension submap.
         // Persisted across saves so cross-dimension LOD assignment survives reload.
@@ -752,10 +752,16 @@ class monster : public Creature, public location_visitable<monster>
         location_vector<item> corpse_components; // Hack to make bionic corpses generate CBMs on death
 
     private:
+        struct legacy_position_context {
+            point_abs_om om_pos;
+            tripoint_om_sm submap_pos;
+        };
+
         int hp;
         std::map<std::string, mon_special_attack> special_attacks;
+        // Absolute map-square position for active and overmap-stored monsters.
+        tripoint_abs_ms pos_abs;
         tripoint_bub_ms goal;
-        tripoint_bub_ms position;
         bool dead;
         /** Legacy loading logic for monsters that are packing ammo. **/
         void normalize_ammo( int old_ammo );
@@ -785,10 +791,10 @@ class monster : public Creature, public location_visitable<monster>
         location_ptr<item, false> storage_item; // storage item for monster carrying items
         location_ptr<item, false> battery_item; // item to power mechs
         location_vector<item> inv; // Inventory
-        void store( JsonOut &json ) const;
-        void load( const JsonObject &data );
+        auto store( JsonOut &json, bool include_local_state ) const -> void;
+        auto load( const JsonObject &data,
+                   const std::optional<legacy_position_context> &legacy_context = std::nullopt ) -> void;
 
         /** Processes monster-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
 };
-
