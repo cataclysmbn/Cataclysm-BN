@@ -331,7 +331,7 @@
     "id": "mon_mutant_elfa_decoy",
     "type": "MONSTER",
     "name": { "str": "elf-a mutant" },
-    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  Nature seems to radiate from the being, who stares at you kindly with glowing green eyes.",
+    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  Nature radiates from the being, who stares at you kindly with glowing green eyes.",
     "default_faction": "factionless",
     "bodytype": "human",
     "species": [ "MUTANT" ],
@@ -346,8 +346,8 @@
     "aggression": 0,
     "morale": 100,
     "melee_skill": 7,
-    "melee_dice": 5,
-    "melee_dice_sides": 10,
+    "melee_dice": 0,
+    "melee_dice_sides": 0,
     "path_settings": { "max_dist": 0, "allow_open_doors": true, "avoid_traps": true, "avoid_sharp": true },
     "special_attacks": [
       {
@@ -372,7 +372,7 @@
     "id": "mon_mutant_elfa",
     "type": "MONSTER",
     "name": { "str": "elf-a mutant" },
-    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  The being who glares at you with nature's wrath.",
+    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  The being glares at you with nature's wrath.",
     "default_faction": "factionless",
     "bodytype": "human",
     "species": [ "MUTANT" ],
