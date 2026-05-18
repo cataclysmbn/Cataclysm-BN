@@ -121,6 +121,8 @@ namespace
 {
 
 thread_local int technique_prompt_suppression_depth = 0;
+constexpr auto technique_menu_basic_attack = -2;
+constexpr auto technique_menu_automatic = -4;
 
 static const matec_id WBLOCK_3( "WBLOCK_3" );
 static const skill_id skill_stabbing( "stabbing" );
@@ -142,7 +144,8 @@ auto with_cross_z_melee_cost( const int base_cost, const tripoint_bub_ms &source
 
 } // namespace
 
-auto Character::get_valid_techniques( const technique_query_options &options ) -> std::vector<matec_id>
+auto Character::get_valid_techniques( const technique_query_options &options ) ->
+std::vector<matec_id>
 {
     const auto all = martial_arts_data->get_all_techniques( options.weapon );
     auto possible = std::vector<matec_id>();
@@ -155,16 +158,16 @@ auto Character::get_valid_techniques( const technique_query_options &options ) -
     for( const matec_id &tec_id : all ) {
         const ma_technique &tec = tec_id.obj();
 
-        if( tec.dummy || tec.defensive ) {
+        if( tec.dummy || ( tec.defensive && !options.allow_defensive_techniques ) ) {
             continue;
         }
         if( tec.wall_adjacent && !wall_adjacent ) {
             continue;
         }
-        if( options.dodge_counter != tec.dodge_counter ) {
+        if( !options.allow_counter_techniques && options.dodge_counter != tec.dodge_counter ) {
             continue;
         }
-        if( options.block_counter != tec.block_counter ) {
+        if( !options.allow_counter_techniques && options.block_counter != tec.block_counter ) {
             continue;
         }
         if( !tec.crit_ok && ( options.critical_hit != tec.crit_tec ) ) {
@@ -244,7 +247,8 @@ struct technique_menu_entry {
     std::string description;
 };
 
-auto technique_source_header( const technique_menu_entry::source_group_t source_group ) -> std::string
+auto technique_source_header( const technique_menu_entry::source_group_t source_group ) ->
+std::string
 {
     switch( source_group ) {
         case technique_menu_entry::source_group_t::weapon:
@@ -258,7 +262,8 @@ auto technique_source_header( const technique_menu_entry::source_group_t source_
     return {};
 }
 
-auto aoe_technique_is_valid( Character &self, Creature &target, const ma_technique &technique ) -> bool
+auto aoe_technique_is_valid( Character &self, Creature &target,
+                             const ma_technique &technique ) -> bool
 {
     if( technique.aoe.empty() ) {
         return false;
@@ -270,7 +275,7 @@ auto aoe_technique_is_valid( Character &self, Creature &target, const ma_techniq
     const int dx = std::clamp( target.bub_pos().x() - self.bub_pos().x(), -1, 1 );
     const int lookup = dy + 1 + 3 * ( dx + 1 );
 
-    const auto has_enemy = []( const Creature *critter ) {
+    const auto has_enemy = []( const Creature * critter ) {
         if( const auto *mon = dynamic_cast<const monster *>( critter ) ) {
             return mon->friendly == 0;
         }
@@ -314,7 +319,8 @@ auto aoe_technique_is_valid( Character &self, Creature &target, const ma_techniq
     return false;
 }
 
-auto technique_aoe_reason( Character &self, Creature &target, const ma_technique &technique ) -> std::string
+auto technique_aoe_reason( Character &self, Creature &target,
+                           const ma_technique &technique ) -> std::string
 {
     if( technique.aoe.empty() ) {
         return {};
@@ -326,7 +332,7 @@ auto technique_aoe_reason( Character &self, Creature &target, const ma_technique
     const int dx = std::clamp( target.bub_pos().x() - self.bub_pos().x(), -1, 1 );
     const int lookup = dy + 1 + 3 * ( dx + 1 );
 
-    const auto has_enemy = []( const Creature *critter ) {
+    const auto has_enemy = []( const Creature * critter ) {
         if( const auto *mon = dynamic_cast<const monster *>( critter ) ) {
             return mon->friendly == 0;
         }
@@ -434,7 +440,7 @@ auto technique_unavailable_reason( Character &self, Creature &target,
         return _( "internal" );
     }
 
-    if( tec.defensive ) {
+    if( tec.defensive && !options.allow_defensive_techniques ) {
         return _( "defensive only" );
     }
 
@@ -442,12 +448,12 @@ auto technique_unavailable_reason( Character &self, Creature &target,
         return _( "needs to be near a wall" );
     }
 
-    if( options.dodge_counter != tec.dodge_counter ) {
+    if( !options.allow_counter_techniques && options.dodge_counter != tec.dodge_counter ) {
         return tec.dodge_counter ? _( "dodge counter only" ) :
                _( "not on dodge counters" );
     }
 
-    if( options.block_counter != tec.block_counter ) {
+    if( !options.allow_counter_techniques && options.block_counter != tec.block_counter ) {
         return tec.block_counter ? _( "block counter only" ) :
                _( "not on block counters" );
     }
@@ -540,7 +546,7 @@ auto show_technique_reference_popup( const std::string &text ) -> void
     auto content_width = 0;
 
     ui_adaptor ui;
-    ui.on_screen_resize( [&]( ui_adaptor &ui ) {
+    ui.on_screen_resize( [&]( ui_adaptor & ui ) {
         window = new_centered_win( FULL_SCREEN_HEIGHT, FULL_SCREEN_WIDTH );
         content_height = getmaxy( window ) - 2;
         content_width = getmaxx( window ) - 4;
@@ -597,8 +603,7 @@ class technique_help_callback : public uilist_callback
         explicit technique_help_callback( std::string text ) : reference_text( std::move( text ) ) {}
 
         bool key( const input_context &ctxt, const input_event &event, int,
-                  uilist * ) override
-        {
+                  uilist * ) override {
             if( ctxt.input_to_action( event ) == "HELP_KEYBINDINGS" ||
                 event.get_first_input() == KEY_F( 1 ) ) {
                 show_technique_reference_popup( reference_text );
@@ -625,11 +630,13 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         .weapon = weapon,
         .critical_hit = critical_hit,
         .use_weighting = false,
+        .allow_counter_techniques = true,
+        .allow_defensive_techniques = true,
     };
 
     for( const matec_id &tec_id : unique_techniques ) {
         const ma_technique &technique = tec_id.obj();
-        if( technique.name.empty() ) {
+        if( technique.name.empty() || technique.dummy ) {
             continue;
         }
 
@@ -637,10 +644,10 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         const auto from_weapon = weapon_techniques.contains( tec_id );
         const auto from_martial_art = source_count > 1 || !from_weapon;
         const auto source_group = from_weapon && from_martial_art
-                                      ? technique_menu_entry::source_group_t::shared
+                                  ? technique_menu_entry::source_group_t::shared
                                   : from_weapon
-                                      ? technique_menu_entry::source_group_t::weapon
-                                      : technique_menu_entry::source_group_t::martial_art;
+                                  ? technique_menu_entry::source_group_t::weapon
+                                  : technique_menu_entry::source_group_t::martial_art;
         const auto reason = technique_unavailable_reason( self, target, options, technique );
         const auto iter = entry_index_by_name.find( technique.name );
         if( iter == entry_index_by_name.end() ) {
@@ -660,8 +667,8 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         auto &entry = menu_entries[iter->second];
         entry.source_group = entry.source_group == technique_menu_entry::source_group_t::shared ||
                              source_group == entry.source_group
-                                 ? entry.source_group
-                                 : technique_menu_entry::source_group_t::shared;
+                             ? entry.source_group
+                             : technique_menu_entry::source_group_t::shared;
         if( reason.empty() ) {
             entry.technique = tec_id;
             entry.enabled = true;
@@ -677,8 +684,8 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         return {};
     }
 
-    std::ranges::sort( menu_entries, []( const technique_menu_entry &lhs,
-                                         const technique_menu_entry &rhs ) {
+    std::ranges::sort( menu_entries, []( const technique_menu_entry & lhs,
+    const technique_menu_entry & rhs ) {
         const auto source_rank = []( const technique_menu_entry::source_group_t source ) {
             switch( source ) {
                 case technique_menu_entry::source_group_t::weapon:
@@ -701,16 +708,16 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
     } );
 
     auto technique_reference_text = string_format( _( "<header>Active martial art:</header> %s\n" ),
-                                                   self.martial_arts_data->selected_style_name( self ) );
+                                    self.martial_arts_data->selected_style_name( self ) );
     for( const auto &entry : menu_entries ) {
         technique_reference_text += string_format( _( "<header>Source:</header> %s\n" ),
-                                                   technique_source_header( entry.source_group ) );
+                                    technique_source_header( entry.source_group ) );
         technique_reference_text += string_format( _( "<header>Technique:</header> <bold>%s</bold>\n" ),
-                                                   entry.name );
+                                    entry.name );
         technique_reference_text += entry.description + "\n";
         if( !entry.enabled && !entry.why_unavailable.empty() ) {
             technique_reference_text += string_format( _( "<bad>Unavailable:</bad> %s\n" ),
-                                                       entry.why_unavailable );
+                                        entry.why_unavailable );
         }
         technique_reference_text += "--\n";
     }
@@ -732,9 +739,9 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         header_entry.extratxt = mvwzstr{ .left = 0, .color = c_yellow,
                                          .txt = _( "Generic techniques" ) };
     }
-    menu.addentry_desc( -2, true, 'n', _( "Basic attack" ),
+    menu.addentry_desc( technique_menu_basic_attack, true, 'n', _( "Basic attack" ),
                         _( "Use a basic attack with no technique." ) );
-    menu.addentry_desc( -1, true, 'a', _( "Automatic" ),
+    menu.addentry_desc( technique_menu_automatic, true, 'a', _( "Automatic" ),
                         _( "Let the game pick the best available technique." ) );
 
     auto current_source_group = std::optional<technique_menu_entry::source_group_t>();
@@ -768,13 +775,18 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
                  .technique = std::nullopt };
     }
 
-    if( menu.ret == -2 ) {
+    if( menu.ret == technique_menu_basic_attack ) {
         return { .mode = technique_prompt_result::mode_t::normal_attack,
                  .technique = std::nullopt };
     }
 
-    if( menu.ret == -1 ) {
+    if( menu.ret == technique_menu_automatic ) {
         return { .mode = technique_prompt_result::mode_t::automatic, .technique = std::nullopt };
+    }
+
+    if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= menu_entries.size() ) {
+        return { .canceled = true, .mode = technique_prompt_result::mode_t::canceled,
+                 .technique = std::nullopt };
     }
 
     return { .mode = technique_prompt_result::mode_t::technique,
@@ -1964,13 +1976,13 @@ matec_id Character::pick_technique( Creature &t, const item &weap,
                                     bool crit, bool dodge_counter, bool block_counter )
 {
     return random_entry( get_valid_techniques( {
-                             .target = t,
-                             .weapon = weap,
-                             .critical_hit = crit,
-                             .dodge_counter = dodge_counter,
-                             .block_counter = block_counter,
-                         } ),
-                         tec_none );
+        .target = t,
+        .weapon = weap,
+        .critical_hit = crit,
+        .dodge_counter = dodge_counter,
+        .block_counter = block_counter,
+    } ),
+    tec_none );
 }
 
 bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique )
@@ -2606,7 +2618,7 @@ bool Character::block_hit( Creature *source, bodypart_id &bp_hit, damage_instanc
     martial_arts_data->ma_onblock_effects( *this );
 
     // Check if we have any block counters
-    matec_id tec = pick_technique( *source, shield, false, false, true );
+    matec_id tec = pick_technique( *source, used_weapon(), false, false, true );
 
     if( tec != tec_none && !is_dead_state() ) {
         if( get_stamina() < get_stamina_max() / 3 ) {

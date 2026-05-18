@@ -9341,7 +9341,7 @@ void Character::on_dodge( Creature *source, int difficulty )
 
     // For adjacent attackers check for techniques usable upon successful dodge
     if( source && square_dist( bub_pos(), source->bub_pos() ) == 1 ) {
-        matec_id tec = pick_technique( *source, primary_weapon(), false, true, false );
+        matec_id tec = pick_technique( *source, used_weapon(), false, true, false );
 
         if( tec != tec_none && !is_dead_state() ) {
             if( get_stamina() < get_stamina_max() / 3 ) {

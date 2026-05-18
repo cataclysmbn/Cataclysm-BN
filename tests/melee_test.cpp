@@ -1,9 +1,11 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <sstream>
 #include <string>
 
+#include "character_martial_arts.h"
 #include "creature.h"
 #include "coordinates.h"
 #include "game_constants.h"
@@ -133,6 +135,44 @@ TEST_CASE( "melee technique prompt suppression guard", "[melee]" )
         CHECK( melee::is_technique_prompt_suppressed() );
     }
     CHECK( !melee::is_technique_prompt_suppressed() );
+}
+
+TEST_CASE( "manual technique queries include counter techniques", "[melee]" )
+{
+    clear_all_state();
+
+    auto target = monster( mtype_id( "mon_zombie" ) );
+    auto dude = standard_npc( "TestCharacter", dude_pos, {}, 5, 8, 8, 8, 8 );
+    const auto style_brawling = matype_id( "style_brawling" );
+    const auto counter = matec_id( "tec_brawl_counter_melee" );
+    const auto defensive = matec_id( "tec_brawl_feint_melee" );
+
+    dude.martial_arts_data->add_martialart( style_brawling );
+    dude.martial_arts_data->set_style( style_brawling );
+    dude.set_primary_weapon( item::spawn( "2x4" ) );
+
+    const auto normal_attack_techniques = dude.get_valid_techniques( {
+        .target = target,
+        .weapon = dude.primary_weapon(),
+    } );
+    CHECK( std::ranges::find( normal_attack_techniques, counter ) ==
+           normal_attack_techniques.end() );
+    CHECK( std::ranges::find( normal_attack_techniques, defensive ) ==
+           normal_attack_techniques.end() );
+
+    const auto manual_attack_techniques = dude.get_valid_techniques( {
+        .target = target,
+        .weapon = dude.primary_weapon(),
+        .use_weighting = false,
+        .allow_counter_techniques = true,
+        .allow_defensive_techniques = true,
+    } );
+    CHECK( std::ranges::find( manual_attack_techniques, counter ) !=
+           manual_attack_techniques.end() );
+    CHECK( std::ranges::find( manual_attack_techniques, defensive ) !=
+           manual_attack_techniques.end() );
+
+    CHECK( dude.pick_technique( target, dude.used_weapon(), false, false, true ) == counter );
 }
 
 TEST_CASE( "Character attacking a manhack", "[.melee]" )

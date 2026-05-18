@@ -681,6 +681,8 @@ class Character : public Creature, public location_visitable<Character>
             bool dodge_counter = false;
             bool block_counter = false;
             bool use_weighting = true;
+            bool allow_counter_techniques = false;
+            bool allow_defensive_techniques = false;
         };
         /** Returns all valid techniques for the current combat context */
         std::vector<matec_id> get_valid_techniques( const technique_query_options &options );
