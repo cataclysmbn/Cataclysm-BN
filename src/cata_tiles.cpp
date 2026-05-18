@@ -303,6 +303,7 @@ cata_tiles::cata_tiles( const SDL_Renderer_Ptr &renderer, const GeometryRenderer
     do_draw_zones = false;
 
     nv_goggles_activated = false;
+    env_goggles_activated = false;
 
     on_options_changed();
 }
@@ -3078,6 +3079,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     //retrieve night vision goggle status once per draw
     auto vision_cache = g->u.get_vision_modes();
     nv_goggles_activated = vision_cache[NV_GOGGLES];
+    env_goggles_activated = vision_cache[ENV_GOGGLES];
 
     // check that the creature for which we'll draw the visibility map is still alive at that point
     if( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) && g->displaying_visibility_creature ) {
@@ -4326,6 +4328,10 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
         fx_type = ll == lit_level::LOW
                   ? tileset_fx_type::night
                   : tileset_fx_type::overexposed;
+    } else if( apply_visual_effects && env_goggles_activated ) {
+        fx_type = ll == lit_level::LOW
+                  ? tileset_fx_type::enhanced_night
+                  : tileset_fx_type::enhanced_overexposed;
     } else if( overlay_count > 0 && static_z_effect ) {
         fx_type = tileset_fx_type::z_overlay;
         effective_tint = {};
