@@ -313,6 +313,8 @@ static const efftype_id effect_drunk( "drunk" );
 static const efftype_id effect_evil( "evil" );
 static const efftype_id effect_feral_killed_recently( "feral_killed_recently" );
 static const efftype_id effect_flu( "flu" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_laserlocked( "laserlocked" );
 static const efftype_id effect_lying_down( "lying_down" );
@@ -328,6 +330,35 @@ static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id dashing_effect( "dashing" );
+
+namespace
+{
+
+auto avatar_grabbed_creature() -> Creature *
+{
+    avatar &you = get_avatar();
+    if( !you.has_effect( effect_grabbing ) ) {
+        return nullptr;
+    }
+
+    for( const auto &p : get_map().points_in_radius( you.bub_pos(), 1, 0 ) ) {
+        Creature *const target = g->critter_at<Creature>( p );
+        if( target != nullptr && target != &you && target->has_effect( effect_grabbed ) ) {
+            return target;
+        }
+    }
+
+    you.remove_effect( effect_grabbing );
+    return nullptr;
+}
+
+auto can_drag_grabbed_creature( const avatar &you, const Creature &target ) -> bool
+{
+    const auto size_delta = static_cast<int>( target.get_size() ) - static_cast<int>( you.get_size() );
+    return size_delta <= 0 || x_in_y( you.get_str(), std::max( you.get_str() + size_delta * 4, 1 ) );
+}
+
+} // namespace
 
 static const bionic_id bio_remote( "bio_remote" );
 static const bionic_id bio_probability_travel( "bio_probability_travel" );
@@ -11360,6 +11391,20 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         grabbed_vehicle = nullptr;
     }
 
+    Creature *const dragged_creature = avatar_grabbed_creature();
+    if( dragged_creature != nullptr ) {
+        if( dest_loc.z() != u.bub_pos().z() ) {
+            add_msg( m_warning, _( "You let go of %s." ), dragged_creature->disp_name() );
+            dragged_creature->remove_effect( effect_grabbed );
+            u.remove_effect( effect_grabbing );
+        } else if( !can_drag_grabbed_creature( u, *dragged_creature ) ) {
+            add_msg( m_warning, _( "You struggle to drag %s, but can't move them." ),
+                     dragged_creature->disp_name() );
+            u.moves -= 100;
+            return false;
+        }
+    }
+
     if( ( m.impassable( dest_loc ) && !character_funcs::can_noclip( u ) ) && !pushing &&
         !shifting_furniture ) {
         if( vp_there && u.mounted_creature && u.mounted_creature->has_flag( MF_RIDEABLE_MECH ) &&
@@ -11646,6 +11691,11 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     auto submap_shift = place_player( dest_loc, keep_grab );
     auto ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
+
+    if( dragged_creature != nullptr && dragged_creature->has_effect( effect_grabbed ) &&
+        dragged_creature->bub_pos() != oldpos && critter_at( oldpos ) == nullptr ) {
+        dragged_creature->setpos( oldpos );
+    }
 
     if( pulling && u.get_grab_type() == OBJECT_FURNITURE ) {
         const auto shifted_furn_pos = grabbed_furn_pos - ms_shift;

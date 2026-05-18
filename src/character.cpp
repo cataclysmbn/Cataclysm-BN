@@ -229,6 +229,19 @@ static const skill_id skill_throw( "throw" );
 static const species_id HUMAN( "HUMAN" );
 static const species_id ROBOT( "ROBOT" );
 
+namespace
+{
+
+auto grab_strength_from( const Creature &grabber ) -> int
+{
+    if( const monster *const mon = grabber.as_monster() ) {
+        return mon->get_grab_strength();
+    }
+    return std::max( 1, grabber.get_effect_int( effect_grabbing ) );
+}
+
+} // namespace
+
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ACIDPROOF( "ACIDPROOF" );
 static const trait_id trait_ADRENALINE( "ADRENALINE" );
@@ -1766,10 +1779,10 @@ bool static try_remove_grab( Character &c )
             }
         }
     } else {
-        for( auto &dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
-            const monster *const mon = g->critter_at<monster>( dest );
-            if( mon && mon->has_effect( effect_grabbing ) ) {
-                zed_number += mon->get_grab_strength();
+        for( auto&& dest : here.points_in_radius( c.pos(), 1, 0 ) ) { // *NOPAD*
+            const Creature *const grabber = g->critter_at<Creature>( dest );
+            if( grabber != nullptr && grabber != &c && grabber->has_effect( effect_grabbing ) ) {
+                zed_number += grab_strength_from( *grabber );
             }
         }
         if( zed_number == 0 ) {
@@ -1786,10 +1799,10 @@ bool static try_remove_grab( Character &c )
             c.add_msg_player_or_npc( m_good, _( "You break out of the grab!" ),
                                      _( "<npcname> breaks out of the grab!" ) );
             c.remove_effect( effect_grabbed );
-            for( auto &dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
-                monster *mon = g->critter_at<monster>( dest );
-                if( mon && mon->has_effect( effect_grabbing ) ) {
-                    mon->remove_effect( effect_grabbing );
+            for( auto&& dest : here.points_in_radius( c.pos(), 1, 0 ) ) { // *NOPAD*
+                Creature *const grabber = g->critter_at<Creature>( dest );
+                if( grabber != nullptr && grabber != &c && grabber->has_effect( effect_grabbing ) ) {
+                    grabber->remove_effect( effect_grabbing );
                 }
             }
         }

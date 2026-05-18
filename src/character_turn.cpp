@@ -84,6 +84,8 @@ static const efftype_id effect_depressants( "depressants" );
 static const efftype_id effect_dermatik( "dermatik" );
 static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_fungus( "fungus" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_happy( "happy" );
 static const efftype_id effect_irradiated( "irradiated" );
 static const efftype_id effect_masked_scent( "masked_scent" );
@@ -108,6 +110,22 @@ static const bionic_id bio_speed( "bio_speed" );
 
 static const itype_id itype_UPS( "UPS" );
 static const itype_id itype_battery( "battery" );
+
+namespace
+{
+
+auto character_has_adjacent_grabbed_target( const Character &who ) -> bool
+{
+    for( const tripoint &p : get_map().points_in_radius( who.pos(), 1, 0 ) ) {
+        const Creature *const target = g->critter_at<Creature>( p );
+        if( target != nullptr && target != &who && target->has_effect( effect_grabbed ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace
 
 void Character::recalc_speed_bonus()
 {
@@ -191,6 +209,10 @@ void Character::process_turn()
     }
 
     Creature::process_turn();
+
+    if( has_effect( effect_grabbing ) && !character_has_adjacent_grabbed_target( *this ) ) {
+        remove_effect( effect_grabbing );
+    }
 
     // If we're actively handling something we can't just drop it on the ground
     // in the middle of handling it

@@ -86,6 +86,8 @@ auto melee_attack_from_movement( avatar &you, Creature &target ) -> void
 
 static const efftype_id effect_amigara( "amigara" );
 static const efftype_id effect_glowing( "glowing" );
+static const efftype_id effect_grabbed( "grabbed" );
+static const efftype_id effect_grabbing( "grabbing" );
 static const efftype_id effect_harnessed( "harnessed" );
 static const efftype_id effect_hit_by_player( "hit_by_player" );
 static const efftype_id effect_onfire( "onfire" );
@@ -99,6 +101,8 @@ static const itype_id itype_swim_fins( "swim_fins" );
 static const itype_id itype_underbrush( "underbrush" );
 
 static const skill_id skill_swimming( "swimming" );
+static const skill_id skill_throw( "throw" );
+static const skill_id skill_unarmed( "unarmed" );
 
 static const trait_id trait_BRAWLER( "BRAWLER" );
 static const trait_id trait_GUNSHY( "GUNSHY" );
@@ -112,6 +116,103 @@ static const std::string flag_SWIMMABLE( "SWIMMABLE" );
 static const std::string flag_LADDER( "LADDER" );
 
 static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
+
+namespace
+{
+
+auto find_grabbed_creature( const avatar &you ) -> Creature *
+{
+    if( !you.has_effect( effect_grabbing ) ) {
+        return nullptr;
+    }
+
+    for( const tripoint &p : get_map().points_in_radius( you.pos(), 1 ) ) {
+        Creature *const target = g->critter_at<Creature>( p, true );
+        if( target != nullptr && target != &you && target->has_effect( effect_grabbed ) ) {
+            return target;
+        }
+    }
+
+    return nullptr;
+}
+
+auto throw_descriptor( const float throwforce ) -> std::string
+{
+    if( throwforce < 30.0f ) {
+        return _( "shove" );
+    } else if( throwforce < 40.0f ) {
+        return _( "throw" );
+    } else if( throwforce < 60.0f ) {
+        return _( "hurl" );
+    }
+    return _( "send flying" );
+}
+
+auto throw_grabbed_creature( avatar &you ) -> bool
+{
+    Creature *const target = find_grabbed_creature( you );
+    if( target == nullptr ) {
+        if( you.has_effect( effect_grabbing ) ) {
+            you.remove_effect( effect_grabbing );
+        }
+        return false;
+    }
+
+    const auto target_size = static_cast<int>( target->get_size() );
+    const auto avatar_size = static_cast<int>( you.get_size() );
+    const auto stamina_factor = std::max( 0.25f,
+                                         static_cast<float>( you.get_stamina() ) / you.get_stamina_max() );
+    auto throwforce = ( you.get_str() * ( 1.1f + stamina_factor ) +
+                        you.get_skill_level( skill_unarmed ) * 2 +
+                        you.get_skill_level( skill_throw ) / 4.0f +
+                        avatar_size - target_size ) * 2.0f;
+
+    if( get_map().has_flag( TFLAG_DEEP_WATER, target->pos() ) ) {
+        throwforce *= 0.25f;
+    }
+
+    const auto range = static_cast<int>( throwforce / 10.0f );
+    if( range < 1 ) {
+        add_msg( m_info, _( "You can't muster the strength to throw %s." ), target->disp_name() );
+        return true;
+    }
+    if( you.get_stamina() < you.get_stamina_max() / 10 ) {
+        add_msg( m_info, _( "You're too exhausted to throw %s." ), target->disp_name() );
+        return true;
+    }
+
+    const target_handler::trajectory trajectory = target_handler::mode_throw_creature( you, *target, range );
+    if( trajectory.empty() ) {
+        return true;
+    }
+
+    if( npc *const guy = target->as_npc();
+        guy != nullptr && !guy->is_enemy() && throwforce > 24.0f &&
+        !query_yn( _( "This will probably make %s angry.  Continue?" ), guy->disp_name() ) ) {
+        return true;
+    }
+
+    const auto distance = std::max( 1.0f, static_cast<float>( rl_dist( target->pos(), trajectory.back() ) ) );
+    throwforce *= distance;
+    const units::angle target_angle = coord_to_angle( target->pos(), trajectory.back() );
+
+    target->remove_effect( effect_grabbed );
+    you.remove_effect( effect_grabbing );
+    you.mod_moves( -100 );
+    you.mod_stamina( -std::max( 100, static_cast<int>( throwforce * 4.0f ) ) );
+
+    if( npc *const guy = target->as_npc(); guy != nullptr && throwforce > 24.0f ) {
+        guy->make_angry();
+    } else if( monster *const mon = target->as_monster(); mon != nullptr && mon->friendly == 0 ) {
+        mon->on_hit( &you, body_part_torso.id(), nullptr, false );
+    }
+
+    add_msg( _( "You %1$s %2$s!" ), throw_descriptor( throwforce ), target->disp_name() );
+    g->fling_creature( target, target_angle, throwforce );
+    return true;
+}
+
+} // namespace
 
 #define dbg(x) DebugLog((x), DC::SDL)
 
@@ -1049,6 +1150,10 @@ void avatar_action::plthrow( avatar &you, item *loc,
                 return;
             }
         }
+    }
+
+    if( loc == nullptr && !blind_throw_from_pos && throw_grabbed_creature( you ) ) {
+        return;
     }
 
     if( !loc ) {

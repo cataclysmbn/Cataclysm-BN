@@ -125,6 +125,22 @@ static const species_id PLANT( "PLANT" );
 static const species_id ROBOT( "ROBOT" );
 static const species_id ZOMBIE( "ZOMBIE" );
 
+namespace
+{
+
+auto adjacent_grabber_for( const monster &target ) -> Creature *
+{
+    for( const auto &p : get_map().points_in_radius( target.bub_pos(), 1, 0 ) ) {
+        Creature *const grabber = g->critter_at<Creature>( p );
+        if( grabber != nullptr && grabber != &target && grabber->has_effect( effect_grabbing ) ) {
+            return grabber;
+        }
+    }
+    return nullptr;
+}
+
+} // namespace
+
 static const trait_id trait_ANIMALDISCORD( "ANIMALDISCORD" );
 static const trait_id trait_ANIMALDISCORD2( "ANIMALDISCORD2" );
 static const trait_id trait_ANIMALEMPATH( "ANIMALEMPATH" );
@@ -2462,6 +2478,11 @@ bool monster::move_effects( bool )
         }
     }
     if( has_effect( effect_grabbed ) ) {
+        Creature *const grabber = adjacent_grabber_for( *this );
+        if( grabber == nullptr ) {
+            remove_effect( effect_grabbed );
+            return true;
+        }
         if( dice( type->melee_dice + type->melee_sides, 3 ) < get_effect_int( effect_grabbed ) ||
             !one_in( 4 ) ) {
             return false;
@@ -2470,6 +2491,7 @@ bool monster::move_effects( bool )
                 add_msg( _( "The %s breaks free from the grab!" ), name() );
             }
             remove_effect( effect_grabbed );
+            grabber->remove_effect( effect_grabbing );
         }
     }
     return true;
@@ -2863,11 +2885,16 @@ void monster::process_turn()
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
-        for( auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
-            const player *const p = g->critter_at<player>( dest );
-            if( p && p->has_effect( effect_grabbed ) ) {
+        auto found_grabbed_target = false;
+        for( const auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
+            const Creature *const target = g->critter_at<Creature>( dest );
+            if( target != nullptr && target != this && target->has_effect( effect_grabbed ) ) {
+                found_grabbed_target = true;
                 add_effect( effect_grabbing, 2_turns );
             }
+        }
+        if( !found_grabbed_target ) {
+            remove_effect( effect_grabbing );
         }
     }
     // We update electrical fields here since they act every turn.
@@ -3108,6 +3135,12 @@ void monster::die( Creature *nkiller )
                                       _( "The last enemy holding <npcname> collapses!" ) );
             p->remove_effect( effect_grabbed );
         }
+    }
+    if( has_effect( effect_grabbed ) ) {
+        if( Creature *const grabber = adjacent_grabber_for( *this ) ) {
+            grabber->remove_effect( effect_grabbing );
+        }
+        remove_effect( effect_grabbed );
     }
     if( !is_hallucination() ) {
         for( detached_ptr<item> &it : inv.clear() ) {
