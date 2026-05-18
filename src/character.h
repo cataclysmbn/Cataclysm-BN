@@ -101,6 +101,7 @@ using recipe_filter = std::function<bool( const recipe &r )>;
 enum vision_modes {
     DEBUG_NIGHTVISION,
     NV_GOGGLES,
+    ENV_GOGGLES,
     BIRD_EYE,
     URSINE_VISION,
     BOOMERED,
