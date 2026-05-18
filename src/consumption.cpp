@@ -790,7 +790,7 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
         ( ( food_kcal > 0 &&
             get_stored_kcal() + stomach.get_calories() + food_kcal
             > max_stored_kcal() ) ||
-          ( comest->quench > 0 && get_thirst() < comest->quench ) ) ) {
+          ( comest->quench > 0 && get_thirst() < comest->quench && !has_trait( trait_NO_THIRST ) ) ) ) {
         add_consequence( _( "You're full already and the excess food will be wasted." ),
                          edible_rating::too_full );
     }
