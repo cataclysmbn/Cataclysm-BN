@@ -3045,7 +3045,7 @@ void game::win_screen()
 void game::move_save_to_graveyard( const std::string &dirname )
 {
     const std::string save_dir           = get_active_world()->info->folder_path();
-    const std::string graveyard_dir      = PATH_INFO::graveyarddir() + "/";
+    const std::string graveyard_dir      = PATH_INFO::graveyarddir();
     const std::string graveyard_save_dir = graveyard_dir + dirname + "/";
     const std::string &prefix            = base64_encode( u.get_save_id() ) + ".";
 
@@ -3064,7 +3064,7 @@ void game::move_save_to_graveyard( const std::string &dirname )
 
     for( const auto &src_path : save_files ) {
         const std::string dst_path = graveyard_save_dir +
-                                     src_path.substr( src_path.rfind( '/' ), std::string::npos );
+                                     src_path.substr( src_path.rfind( '/' ) + 1, std::string::npos );
 
         if( rename_file( src_path, dst_path ) ) {
             continue;
