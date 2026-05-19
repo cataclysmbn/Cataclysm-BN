@@ -331,7 +331,7 @@
     "id": "mon_mutant_elfa_decoy",
     "type": "MONSTER",
     "name": { "str": "elf-a mutant" },
-    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  Nature seems to radiate from the being, who stares at you kindly with glowing green eyes.",
+    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  Nature radiates from the being, who stares at you kindly with glowing green eyes.",
     "default_faction": "elf-a",
     "bodytype": "human",
     "species": [ "MUTANT" ],
@@ -382,7 +382,7 @@
     "id": "mon_mutant_elfa",
     "type": "MONSTER",
     "name": { "str": "elf-a mutant" },
-    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  The being who glares at you with nature's wrath.",
+    "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  The being glares at you with nature's wrath.",
     "default_faction": "elf-a",
     "bodytype": "human",
     "species": [ "MUTANT" ],
@@ -411,7 +411,7 @@
         "type": "spell",
         "spell_data": { "id": "spell_mutant_elfa" },
         "cooldown": 10,
-        "monster_message": "The elf-a mutant vanishes into the nature around it, and an angry woodland creature appears from the woodwork!"
+        "monster_message": "The elf-a mutant vanishes into the nature around it, and an angry protector appears from the woodwork!"
       },
       {
         "type": "gun",
