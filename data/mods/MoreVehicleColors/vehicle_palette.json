@@ -357,7 +357,7 @@
         ]
       },
       {
-        "fuzzy_ids": [ "clothboard", "cloth_halfboard", "roof_cloth", "cargo_bag", "sail" ],
+        "fuzzy_ids": [ "clothboard", "cloth_halfboard", "roof_cloth", "cargo_bag" ],
         "colors": [
           { "color": "Steel Grey", "weight": 5 },
           { "color": "Light Grey", "weight": 5 },
