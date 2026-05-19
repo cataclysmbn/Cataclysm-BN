@@ -22,16 +22,16 @@ namespace
 auto find_translated_file( const fs::path &path, const std::string &extension,
                            const fs::path &fallback ) -> fs::path;
 
-auto motd_value = fs::path{};
-auto gfxdir_value = fs::path{};
-auto config_dir_value = fs::path{};
-auto user_dir_value = fs::path{};
-auto datadir_value = fs::path{};
-auto base_path_value = fs::path{};
-auto savedir_value = fs::path{};
-auto autopickup_value = fs::path{};
-auto options_value = fs::path{};
-auto memorialdir_value = fs::path{};
+auto motd_value = fs::path {};
+auto gfxdir_value = fs::path {};
+auto config_dir_value = fs::path {};
+auto user_dir_value = fs::path {};
+auto datadir_value = fs::path {};
+auto base_path_value = fs::path {};
+auto savedir_value = fs::path {};
+auto autopickup_value = fs::path {};
+auto options_value = fs::path {};
+auto memorialdir_value = fs::path {};
 
 auto env_path( const char *name ) -> fs::path
 {

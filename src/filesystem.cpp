@@ -189,7 +189,7 @@ auto remove_tree( const fs::path &path ) -> bool
     fs::remove_all( path, ec );
     if( ec ) {
         dbg( DL::Error ) << "remove_tree [" << path_text( path ) << "] failed with \"" << ec.message() <<
-                            "\".";
+                         "\".";
         return false;
     }
     return true;

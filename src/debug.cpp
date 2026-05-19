@@ -721,7 +721,7 @@ std::ostream &DebugFile::get_file()
 void DebugFile::init( DebugOutput output_mode, const std::string &filename )
 {
     std::shared_ptr<std::ostringstream> str_buffer = std::dynamic_pointer_cast<std::ostringstream>
-        ( file );
+            ( file );
 
     switch( output_mode ) {
         case DebugOutput::std_err:
@@ -748,8 +748,8 @@ void DebugFile::init( DebugOutput output_mode, const std::string &filename )
                 DebugLog( DL::Info, DC::Main ) << "Moving the previous log file to "
                                                << oldfile << " failed.\n"
                                                << "Check the file permissions.  This "
-                                                  "program will continue to use the "
-                                                  "previous log file.";
+                                               "program will continue to use the "
+                                               "previous log file.";
             }
         }
         break;
