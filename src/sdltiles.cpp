@@ -1955,7 +1955,7 @@ static void end_arrow_combo()
  */
 static int sdl_keysym_to_curses( const SDL_Keycode sym, const SDL_Keymod mod )
 {
-    if (sym >= SDLK_KP_1 && sym <= SDLK_KP_0) {
+    if( sym >= SDLK_KP_1 && sym <= SDLK_KP_0 ) {
         return 0;
     }
 
@@ -3273,8 +3273,8 @@ static void CheckMessages()
                 }
                 const int lc = sdl_keysym_to_curses( ev.key.key, ev.key.mod );
                 if( lc <= 0 ) {
-                    if (ev.key.key >= SDLK_KP_1 && ev.key.key <= SDLK_KP_0) {
-                        last_input = input_event(ev.key.key - SDLK_KP_1 + NUMPAD_1, input_event_t::keyboard);
+                    if( ev.key.key >= SDLK_KP_1 && ev.key.key <= SDLK_KP_0 ) {
+                        last_input = input_event( ev.key.key - SDLK_KP_1 + NUMPAD_1, input_event_t::keyboard );
                     } else {
                         // a key we don't know in curses and won't handle.
                         break;
