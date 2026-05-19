@@ -84,20 +84,6 @@ TEST_CASE( "is_pet returns true only when both friendly==-1 and effect_pet prese
     }
 }
 
-TEST_CASE( "make_pet clears the movement destination", "[pet][monster]" )
-{
-    clear_all_state();
-    monster &mon = spawn_test_monster( mon_dog.str(), mon_pos );
-
-    const tripoint far_away( 50, 50, 0 );
-    mon.set_dest( far_away );
-    REQUIRE( mon.move_target() == far_away );
-
-    mon.make_pet();
-
-    // unset_dest sets goal to current position
-    CHECK( mon.move_target() == mon.pos() );
-}
 
 TEST_CASE( "make_pet does not reset training_level", "[pet][monster][training]" )
 {

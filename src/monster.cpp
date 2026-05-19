@@ -3511,7 +3511,6 @@ void monster::make_ally( const monster &z )
 
 void monster::make_pet()
 {
-    unset_dest();
     friendly = -1;
     g->critter_tracker->update_faction( *this );
     add_effect( effect_pet, 1_turns );
