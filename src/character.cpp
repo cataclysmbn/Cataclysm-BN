@@ -2003,7 +2003,7 @@ void Character::recalc_sight_limits()
         best_bonus_nv = std::max( best_bonus_nv, 10.0f );
     }
     if( worn_with_flag( flag_GNVE_EFFECT ) ) {
-        vision_mode_cache.set( NV_GOGGLES );
+        vision_mode_cache.set( ENV_GOGGLES );
         best_bonus_nv = std::max( best_bonus_nv, 18.0f );
     }
     if( has_trait( trait_BIRD_EYE ) ) {
@@ -5166,7 +5166,7 @@ std::pair<std::string, nc_color> Character::get_hunger_description() const
     nc_color hunger_color = c_white;
     if( days_left >= days_max ) {
         hunger_string = _( "Engorged" );
-        hunger_color = c_green;
+        hunger_color = c_pink;
     } else if( days_max - days_left < 0.5f ) {
         hunger_string = _( "Sated" );
         hunger_color = c_green;

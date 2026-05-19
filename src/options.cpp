@@ -2001,6 +2001,21 @@ void options_manager::add_options_graphics()
 
     get_option( "NIGHT_VISION_COLOR" ).setPrerequisite( "NIGHT_VISION_DEFAULT_COLOR", "custom" );
 
+    add( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR", graphics,
+         translate_marker( "Enhanced Night Vision Default Colors" ),
+    translate_marker( "Choose from default night vision colors." ), {
+        { "#6cf5e7", translate_marker( "White Phosphor" ) },
+        { "#33e84e", translate_marker( "Green Phosphor" ) },
+        { "#888888", translate_marker( "Gray" ) },
+        { "custom", translate_marker( "Custom" ) }
+    }, "#6cf5e7" );
+
+    add( "ENHANCED_NIGHT_VISION_COLOR", graphics, translate_marker( "Enhanced Night Vision Color" ),
+         translate_marker( "Sets custom night vision color." ), "#6cf5e7", 60 );
+
+    get_option( "ENHANCED_NIGHT_VISION_COLOR" ).setPrerequisite( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR",
+            "custom" );
+
     add_empty_line();
 
     add( "TERMINAL_X", graphics, translate_marker( "Terminal width" ),
@@ -4075,10 +4090,14 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
 
             } else if( iter.first == "TILES" || iter.first == "USE_TILES" || iter.first == "STATICZEFFECT" ||
                        iter.first == "MEMORY_MAP_MODE" || iter.first == "OVERMAP_TILES" ||
-                       iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                       iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ||
+                       iter.first == "ENHANCED_NIGHT_VISION_COLOR" ||
+                       iter.first == "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) {
                 used_tiles_changed = true;
                 if( iter.first == "STATICZEFFECT" || iter.first == "MEMORY_MAP_MODE" ||
-                    iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ) {
+                    iter.first == "NIGHT_VISION_COLOR" || iter.first == "NIGHT_VISION_DEFAULT_COLOR" ||
+                    iter.first == "ENHANCED_NIGHT_VISION_COLOR" ||
+                    iter.first == "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) {
                     force_tile_change = true;
                 }
             } else if( iter.first == "USE_LANG" ) {

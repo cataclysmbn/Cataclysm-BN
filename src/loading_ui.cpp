@@ -455,7 +455,12 @@ loading_image_splash::loading_image_splash()
 }
 #endif
 
-loading_image_splash::~loading_image_splash() = default;
+loading_image_splash::~loading_image_splash()
+{
+#if defined( TILES )
+    clear_sdl_display_buffer_before_redraw();
+#endif
+}
 
 loading_ui::loading_ui( bool display )
 {

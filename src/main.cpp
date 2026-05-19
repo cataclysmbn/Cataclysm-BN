@@ -56,6 +56,7 @@ class ui_adaptor;
 
 #if defined(TILES)
 #   define SDL_MAIN_HANDLED
+#   include <SDL3/SDL_main.h>
 #   include "sdl_wrappers.h"
 #endif
 

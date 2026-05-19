@@ -2594,5 +2594,10 @@
     "id": "TRACKED",
     "type": "json_flag",
     "context": [ "vehicle_part" ]
+  },
+  {
+    "id": "NO_PAINT",
+    "type": "json_flag",
+    "context": [  ]
   }
 ]
