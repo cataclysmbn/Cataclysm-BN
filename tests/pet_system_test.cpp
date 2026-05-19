@@ -236,7 +236,7 @@ TEST_CASE( "train_pet_finish with null monster reference does not crash",
     player_activity act( ACT_TRAIN_PET );
     // Push an expired (default-constructed, never-assigned) weak_ptr so
     // lock() will return nullptr, exercising the null-guard we added.
-    act.monsters.push_back( weak_ptr_fast<monster>{} );
+    act.monsters.push_back( weak_ptr_fast<monster> {} );
     act.str_values.push_back( "test_pet" );
 
     // Must not crash and must set the activity to null.
