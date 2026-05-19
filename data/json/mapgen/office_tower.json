@@ -568,7 +568,11 @@
       ],
       "palettes": [ "office_palette" ],
       "place_nested": [
-        { "chunks": [ [ "roof_16x16_help", 3000 ], [ "null", 10 ] ], "x": [ 4, 8 ], "y": [ 30, 38 ] },
+        {
+          "chunks": [ [ "roof_16x16_help", 100 ], [ "roof_12x12_aircraft", 5 ], [ "null", 10 ] ],
+          "x": [ 4, 8 ],
+          "y": [ 30, 38 ]
+        },
         {
           "chunks": [
             [ "null", 20 ],

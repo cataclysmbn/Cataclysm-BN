@@ -1180,5 +1180,39 @@
       { "group": "guns_smg_common", "prob": 5 },
       { "group": "guns_rifle_common", "prob": 5 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_surplus",
+    "subtype": "distribution",
+    "entries": [
+      { "collection": [ { "item": "hi_power_9mm" }, { "group": "display_hi_power_9mm_mag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "m9" }, { "group": "display_m9_mag", "count": [ 1, 2 ] } ], "prob": 15 },
+      { "collection": [ { "item": "m1911" }, { "group": "display_m1911_mag", "count": [ 1, 2 ] } ], "prob": 20 },
+      { "collection": [ { "item": "tommygun" }, { "group": "display_tommygun_mag", "count": [ 1, 2 ] } ], "prob": 20 },
+      { "collection": [ { "item": "sten" }, { "item": "stenmag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "fn_fal" }, { "group": "display_fn_fal_mag", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "hk_g3" }, { "group": "display_hk_g3_mag", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "m1a" }, { "group": "display_m14_mag", "count": [ 1, 2 ] } ], "prob": 15 },
+      { "collection": [ { "item": "ar10" }, { "item": "ar10mag_20rd", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "ak47" }, { "group": "display_ak47_mag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "sks" }, { "item": "762x39_clip", "count": [ 1, 2 ], "prob": 50 } ], "prob": 10 },
+      { "collection": [ { "item": "mosin44" }, { "item": "762R_clip", "count": [ 1, 2 ], "prob": 50 } ], "prob": 10 },
+      {
+        "collection": [ { "item": "mosin91_30" }, { "item": "762R_clip", "count": [ 1, 2 ], "prob": 50 } ],
+        "prob": 10
+      },
+      { "collection": [ { "item": "garand" }, { "item": "garandclip", "count": [ 1, 2 ] } ], "prob": 20 },
+      { "collection": [ { "item": "m1903" }, { "item": "3006_clip", "count": [ 1, 2 ], "prob": 50 } ], "prob": 15 },
+      { "collection": [ { "item": "m1918" }, { "group": "display_m1918_mag", "count": [ 1, 2 ] } ], "prob": 15 },
+      { "item": "winchester_1897", "prob": 10 },
+      { "collection": [ { "item": "m60" }, { "item": "ammolink308", "count": [ 100, 200 ] } ], "prob": 10 },
+      { "collection": [ { "item": "m2browning" }, { "item": "ammolink50", "count": [ 100, 200 ] } ], "prob": 5 },
+      { "collection": [ { "item": "m1874_gatling" }, { "item": "gatlingdrum240", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "flamethrower" }, { "item": "pressurized_tank", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "item": "m79", "prob": 5 },
+      { "item": "RPG", "prob": 5 },
+      { "collection": [ { "item": "m202_flash" }, { "item": "m74_clip", "count": [ 1, 2 ] } ], "prob": 5 }
+    ]
   }
 ]

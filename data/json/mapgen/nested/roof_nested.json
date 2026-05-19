@@ -64,6 +64,15 @@
   {
     "type": "mapgen",
     "method": "json",
+    "nested_mapgen_id": "roof_12x12_aircraft",
+    "object": {
+      "mapgensize": [ 12, 12 ],
+      "place_vehicles": [ { "vehicle": "roof_small_aircraft", "x": 4, "y": 3, "chance": 100, "rotation": 270 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "nested_mapgen_id": "roof_16x16_help",
     "object": {
       "mapgensize": [ 16, 16 ],

@@ -34,7 +34,8 @@
           { "id": "overlay_worn_alohashirt", "fg": 26 },
           { "id": "mon_mutant_medical", "fg": 27, "bg": 30 },
           { "id": [ "mon_mutant_medical_summon", "mon_mutant_medical_summon_hostile" ], "fg": 28 },
-          { "id": [ "mon_mutant_elfa", "mon_mutant_elfa_decoy" ], "fg": 29, "bg": 30 }
+          { "id": "mon_mutant_elfa_decoy", "fg": 29, "bg": 30 },
+          { "id": "mon_mutant_elfa", "fg": 31, "bg": 30 }
         ],
         "sprite_width": 32,
         "sprite_height": 32
