@@ -551,7 +551,7 @@
         { "group": "GROUP_NECROPOLIS", "x": [ 49, 70 ], "y": [ 25, 46 ], "repeat": [ 1, 5 ] }
       ],
       "place_vehicles": [
-        { "vehicle": "fire_truck", "x": 15, "y": 8, "chance": 90, "rotation": 45 },
+        { "vehicle": "fire_station_vehicles", "x": 15, "y": 8, "chance": 90, "rotation": 45 },
         { "vehicle": "car", "x": 45, "y": 5, "chance": 100, "rotation": 45 }
       ]
     }
@@ -728,7 +728,7 @@
       ],
       "place_vehicles": [
         { "vehicle": "ambulance", "x": 65, "y": 15, "chance": 90, "rotation": 0 },
-        { "vehicle": "fire_truck", "x": 32, "y": 28, "chance": 90, "rotation": 270 }
+        { "vehicle": "fire_station_vehicles", "x": 32, "y": 28, "chance": 90, "rotation": 270 }
       ],
       "place_vendingmachines": [ { "item_group": "vending_drink", "x": 64, "y": 47 } ]
     }

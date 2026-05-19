@@ -5996,6 +5996,14 @@
   },
   {
     "type": "profession",
+    "id": "van_camper",
+    "copy-from": "rv_camper",
+    "name": "Van Camper",
+    "description": "You decided to hit the road and never look back, living in the back of a van.  Now instead of worrying about someone knocking on your window at night, you have to worry about zombies mistaking your ride for canned food.",
+    "vehicle": "camper_van"
+  },
+  {
+    "type": "profession",
     "id": "miner",
     "name": "Miner",
     "description": "You're a miner, not a minor!  Your jackhammer may be gassed up, but your canteen is dry, and you're on your last pair of batteries for your mining helmet…",

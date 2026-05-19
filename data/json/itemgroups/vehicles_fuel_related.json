@@ -116,5 +116,22 @@
     "type": "item_group",
     "subtype": "distribution",
     "entries": [ { "item": "diesel", "charges": [ 0, 50000 ], "container-item": "30gal_drum", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "hazmat_truck",
+    "items": [
+      { "group": "rad_gear", "prob": 25 },
+      [ "brush", 5 ],
+      [ "ph_meter", 5 ],
+      [ "shovel_short", 5 ],
+      [ "sm_extinguisher", 5 ],
+      [ "extinguisher", 5 ],
+      [ "material_sand", 15 ],
+      [ "charcoal", 10 ],
+      [ "30gal_drum", 20 ],
+      [ "55gal_drum", 20 ],
+      [ "bag_body_bag", 5 ]
+    ]
   }
 ]
