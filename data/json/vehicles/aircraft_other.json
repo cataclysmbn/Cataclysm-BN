@@ -190,7 +190,6 @@
       [ "     |   " ]
     ],
     "color_palette": "wooden_standard",
-    "//": "TODO: If someday we get support for layering multiple palettes on the same vehicle, add a second palette for the cloth parts.",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_light_cross", "seat_wood_light", "controls", "dashboard", "roof_cloth" ] },
       {

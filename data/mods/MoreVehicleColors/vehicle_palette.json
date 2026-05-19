@@ -354,6 +354,30 @@
           { "color": "Light Oak Brown", "weight": 5 },
           { "color": "Smoked Oak Brown", "weight": 5 }
         ]
+      },
+      {
+        "fuzzy_ids": [
+          "clothboard",
+          "cloth_halfboard",
+          "roof_cloth",
+          "cargo_bag",
+          "sail"
+        ],
+        "colors": [
+          { "color": "Steel Grey", "weight": 5 },
+          { "color": "Light Grey", "weight": 5 },
+          { "color": "Shadow White", "weight": 5 },
+          { "color": "Winter White", "weight": 5 },
+          { "color": "Dull Dusky Pink", "weight": 5 },
+          { "color": "Antique White", "weight": 5 },
+          { "color": "Nomad Grey", "weight": 5 },
+          { "color": "Natural White", "weight": 5 },
+          { "color": "Oilcloth Green", "weight": 5 },
+          { "color": "Linen Grey", "weight": 5 },
+          { "color": "Linen Blue", "weight": 5 },
+          { "color": "Cotton White", "weight": 5 },
+          { "color": "Vibrant Red", "weight": 5, "//": "Red Baron" }
+        ]
       }
     ]
   }
