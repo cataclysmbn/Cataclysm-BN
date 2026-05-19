@@ -332,7 +332,7 @@
     "type": "MONSTER",
     "name": { "str": "elf-a mutant" },
     "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  Nature seems to radiate from the being, who stares at you kindly with glowing green eyes.",
-    "default_faction": "factionless",
+    "default_faction": "elf-a",
     "bodytype": "human",
     "species": [ "MUTANT" ],
     "volume": "62500 ml",
@@ -354,7 +354,7 @@
         "type": "spell",
         "spell_data": { "id": "spell_mutant_elfa_decoy" },
         "cooldown": 5,
-        "monster_message": "A booming voice echoes through your mind: 'Why do you attack me? I only wish to live in communion with nature!'"
+        "monster_message": "A booming voice echoes through your mind: \"Why do you attack me? I only wish to live in communion with nature!\""
       }
     ],
     "dodge": 0,
@@ -383,7 +383,7 @@
     "type": "MONSTER",
     "name": { "str": "elf-a mutant" },
     "description": "A tall humanoid with striking green features, crowned by blooming roses which seem to blend in to their golden hair.  The being who glares at you with nature's wrath.",
-    "default_faction": "factionless",
+    "default_faction": "elf-a",
     "bodytype": "human",
     "species": [ "MUTANT" ],
     "volume": "62500 ml",
@@ -459,7 +459,7 @@
     "name": { "str": "woodland guardian" },
     "looks_like": "mon_bear",
     "description": "A large black bear charmed by the elf-a mutant.  A large omnivorous scavenger, it has powerful claws and jaws, and is an effective ambush hunter.  Most individuals are shy around humans, but this one seems fully aggressive under the spell of its master.",
-    "default_faction": "factionless",
+    "default_faction": "elf-a",
     "bodytype": "bear",
     "categories": [ "WILDLIFE" ],
     "species": [ "MAMMAL" ],
