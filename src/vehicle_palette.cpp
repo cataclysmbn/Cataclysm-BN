@@ -103,6 +103,6 @@ std::vector<RGBColor> VehiclePalette::pick_colors() const
 
 void VehiclePalette::reset()
 {
-    vgroups.clear();
+    vehicle_color_palettes.clear();
 }
 
