@@ -19,6 +19,7 @@
 
 static const activity_id ACT_TRAIN_PET( "ACT_TRAIN_PET" );
 
+static const efftype_id effect_ai_waiting( "ai_waiting" );
 static const efftype_id effect_pet( "pet" );
 static const efftype_id effect_well_fed( "well_fed" );
 
@@ -348,4 +349,28 @@ TEST_CASE( "training_level is preserved after re-feeding (make_pet called again)
 
     CHECK( mon.training_level == 2 );
     CHECK( mon.is_pet() );
+}
+
+TEST_CASE( "train_pet_finish removes effect_ai_waiting so pet is not stuck after training",
+           "[pet][monster][training][activity]" )
+{
+    clear_all_state();
+    monster &mon = spawn_test_monster( mon_dog.str(), mon_pos );
+    mon.make_pet();
+    mon.add_effect( effect_well_fed, 24_hours );
+    // Simulate what monexamine::train_pet does when the activity starts.
+    mon.add_effect( effect_ai_waiting, 60_minutes );
+    REQUIRE( mon.has_effect( effect_ai_waiting ) );
+
+    avatar &p = get_avatar();
+    put_player_underground();
+    REQUIRE( mon.type->pet_training.has_value() );
+    p.set_skill_level( skill_survival, mon.type->pet_training->min_skill );
+
+    player_activity act( ACT_TRAIN_PET );
+    act.monsters.push_back( g->shared_from( mon ) );
+    act.str_values.push_back( mon.get_name() );
+
+    activity_handlers::train_pet_finish( &act, &p );
+    CHECK_FALSE( mon.has_effect( effect_ai_waiting ) );
 }
