@@ -487,17 +487,15 @@
   {
     "type": "SPELL",
     "id": "spell_mutant_elfa_decoy",
-    "name": "Combat form",
-    "description": "Summon actual elfa mutant boss.",
-    "flags": [ "NO_EXPLOSION_VFX", "HOSTILE_SUMMON", "PERMANENT", "NO_FAIL", "SILENT" ],
-    "valid_targets": [ "ground", "self" ],
-    "min_damage": 1,
-    "max_damage": 1,
-    "min_aoe": 1,
-    "max_aoe": 1,
-    "effect": "summon",
-    "effect_str": "mon_mutant_elfa",
-    "extra_effects": [ { "id": "spawning_zombie_die", "hit_self": true } ]
+    "name": { "str": "Natures repulse" },
+    "description": "Applies push",
+    "valid_targets": [ "hostile" ],
+    "flags": [ "SILENT", "NO_FAIL", "NO_EXPLOSION_VFX" ],
+    "min_range": 0,
+    "max_range": 1,
+    "min_damage": 5,
+    "max_damage": 5,
+    "effect": "directed_push"
   },
   {
     "type": "SPELL",
