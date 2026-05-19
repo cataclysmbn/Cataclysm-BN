@@ -3507,7 +3507,7 @@ void map::decay_fields_and_scent( const time_duration &amount )
             }
 
             if( to_proc > 0 ) {
-                std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+                for( const auto sm_ms : submap_tiles() ) {
                     const auto ms_pos = project_combine( sm_pos, sm_ms );
 
                     field &fields = cur_submap->get_field( sm_ms );
@@ -3525,7 +3525,7 @@ void map::decay_fields_and_scent( const time_duration &amount )
                             }
                         }
                     }
-                } );
+                }
             }
 
             if( to_proc > 0 ) {
@@ -8835,7 +8835,7 @@ void map::actualize( const tripoint_bub_sm &grid )
     const bool do_funnels = ( grid.z() >= 0 );
 
     // check spoiled stuff, and fill up funnels while we're at it
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+    for( const auto p : submap_tiles() ) {
         const auto pnt = project_combine( grid, p );
         const auto &furn = this->furn( pnt ).obj();
         // plants contain a seed item which must not be removed under any circumstances
@@ -8857,7 +8857,7 @@ void map::actualize( const tripoint_bub_sm &grid )
         rad_scorch( pnt, time_since_last_actualize );
 
         decay_cosmetic_fields( pnt, time_since_last_actualize );
-    } );
+    }
 
     // the last time we touched the submap, is right now.
     tmpsub->last_touched = calendar::turn;
@@ -8890,7 +8890,7 @@ void map::add_roofs( const tripoint_bub_sm &grid )
         return;
     }
 
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+    for( const auto sm_ms : submap_tiles() ) {
         const ter_id ter_here = sub_here->get_ter( sm_ms );
         if( ter_here == t_open_air ) {
             if( !check_roof ) {
@@ -8904,7 +8904,7 @@ void map::add_roofs( const tripoint_bub_sm &grid )
                 }
             }
         }
-    } );
+    }
 }
 
 void map::copy_grid( const tripoint_bub_sm &to, const tripoint_bub_sm &from )
@@ -8967,7 +8967,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
         ignore_inside_checks = true;
     }
 
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+    for( const auto sm_ms : submap_tiles() ) {
         const auto fp = project_combine( gp, sm_ms );
         // If there is already a creature at this location, skip it
         if( ( g->critter_at( fp ) == nullptr ) &&
@@ -8981,7 +8981,7 @@ void map::spawn_monsters_submap_group( const tripoint_bub_sm &gp, mongroup &grou
             ( !horde_should_avoid_vehicle_tile( *this, fp, group ) ) ) {
             locations.push_back( fp );
         }
-    } );
+    }
 
     if( locations.empty() ) {
         // TODO: what now? there is no possible place to spawn monsters, most
@@ -9396,11 +9396,11 @@ void map::build_outside_cache( const int zlev )
             }
             cur_submap->rebuild_outside_cache( above, sm_pos );
 
-            std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+            for( const auto sm_ms : submap_tiles() ) {
                 const auto ms_pos = project_combine( sm_pos, sm_ms );
                 ch.outside_cache[static_cast<size_t>( ch.idx( ms_pos.x(), ms_pos.y() ) )] =
                     cur_submap->outside_cache[sm_ms.x()][sm_ms.y()];
-            } );
+            }
         }
     };
 
@@ -9431,15 +9431,15 @@ void map::build_obstacle_cache( const tripoint_bub_ms &start, const tripoint_bub
             const auto gridp = tripoint_bub_sm( smx, smy, start.z() );
             const auto cur_submap = get_submap_at_grid( gridp );
             if( cur_submap == nullptr ) {
-                std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+                for( const auto sm_ms : submap_tiles() ) {
                     const auto ms_pos = project_combine( gridp, sm_ms );
                     obstacle_cache[ms_pos.x() * cache_sy + ms_pos.y()] = 1000.0f;
-                } );
+                }
                 continue;
             }
 
             // TODO: Init indices to prevent iterating over unused submap sections.
-            std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+            for( const auto sm_ms : submap_tiles() ) {
                 int ter_move = cur_submap->get_ter( sm_ms ).obj().movecost;
                 int furn_move = cur_submap->get_furn( sm_ms ).obj().movecost;
                 const auto ms_pos = project_combine( gridp, sm_ms );
@@ -9448,7 +9448,7 @@ void map::build_obstacle_cache( const tripoint_bub_ms &start, const tripoint_bub
                 } else {
                     obstacle_cache[ms_pos.x() * cache_sy + ms_pos.y()] = 0.0f;
                 }
-            } );
+            }
         }
     }
     const auto start_sm = project_to<coords::sm>( start );
@@ -9518,11 +9518,11 @@ bool map::build_floor_cache( const int zlev )
                 }
             }
 
-            std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+            for( const auto sm_ms : submap_tiles() ) {
                 if( !cur_submap->floor_cache[sm_ms.x()][sm_ms.y()] ) {
                     floor_cache[ch.idx( sm_offset.x() + sm_ms.x(), sm_offset.y() + sm_ms.y() )] = false;
                 }
-            } );
+            }
         }
     }
 
@@ -9560,13 +9560,13 @@ void map::update_suspension_cache( const int &z )
                     continue;
                 }
 
-                std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+                for( const auto sm_ms : submap_tiles() ) {
                     const ter_t &terrain = cur_submap->get_ter( sm_ms ).obj();
                     if( terrain.has_flag( TFLAG_SUSPENDED ) ) {
                         auto loc = coords::project_combine( point_bub_sm( smx, smy ), sm_ms );
                         suspension_cache.emplace_back( bub_to_abs( loc ) );
                     }
-                } );
+                }
             }
         }
         ch.suspension_cache_initialized = true;

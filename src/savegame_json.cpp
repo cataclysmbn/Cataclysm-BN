@@ -3800,7 +3800,7 @@ void mm_submap::serialize( JsonOut &jsout ) const
         jsout.end_array();
     };
 
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+    for( const auto p : submap_tiles() ) {
         const mm_elem elem = { tile( p ), terrain_tile( p ), symbol( p ) };
         if( p.x() == 0 && p.y() == 0 ) {
             last = elem;
@@ -3811,7 +3811,7 @@ void mm_submap::serialize( JsonOut &jsout ) const
             num_same = 1;
             last = elem;
         }
-    } );
+    }
     write_seq();
 
     jsout.end_array();
@@ -3826,7 +3826,7 @@ void mm_submap::deserialize( JsonIn &jsin )
     mm_elem elem;
     size_t remaining = 0;
 
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+    for( const auto p : submap_tiles() ) {
         if( remaining > 0 ) {
             remaining -= 1;
         } else {
@@ -3862,7 +3862,7 @@ void mm_submap::deserialize( JsonIn &jsin )
         if( elem.symbol != mm_submap::default_symbol ) {
             set_symbol( p, elem.symbol );
         }
-    } );
+    }
     jsin.end_array();
 }
 
@@ -4212,7 +4212,7 @@ void submap::store( JsonOut &jsout ) const
     jsout.start_array();
     std::string last_id;
     int num_same = 1;
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+    for( const auto sm_ms : submap_tiles() ) {
         const std::string this_id = ter[sm_ms.x()][sm_ms.y()].obj().id.str();
         if( !last_id.empty() ) {
             if( this_id == last_id ) {
@@ -4233,7 +4233,7 @@ void submap::store( JsonOut &jsout ) const
         } else {
             last_id = this_id;
         }
-    } );
+    }
     // Because of the RLE scheme we have to do one last pass
     if( num_same == 1 ) {
         jsout.write( last_id );
@@ -4251,7 +4251,7 @@ void submap::store( JsonOut &jsout ) const
     jsout.start_array();
     int lastrad = -1;
     int count = 0;
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+    for( const auto p : submap_tiles() ) {
         // Save radiation, re-examine this because it doesn't look like it works right
         int r = get_radiation( p );
         if( r == lastrad ) {
@@ -4264,7 +4264,7 @@ void submap::store( JsonOut &jsout ) const
             lastrad = r;
             count = 1;
         }
-    } );
+    }
     jsout.write( count );
     jsout.end_array();
 
@@ -4299,7 +4299,7 @@ void submap::store( JsonOut &jsout ) const
 
     jsout.member( "furniture" );
     jsout.start_array();
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+    for( const auto p : submap_tiles() ) {
         // Save furniture
         if( get_furn( p ) ) {
             jsout.start_array();
@@ -4308,23 +4308,23 @@ void submap::store( JsonOut &jsout ) const
             jsout.write( get_furn( p ).obj().id );
             jsout.end_array();
         }
-    } );
+    }
     jsout.end_array();
 
     jsout.member( "items" );
     jsout.start_array();
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+    for( const auto sm_ms : submap_tiles() ) {
         if( !itm[sm_ms.x()][sm_ms.y()].empty() ) {
             jsout.write( sm_ms.x() );
             jsout.write( sm_ms.y() );
             jsout.write( itm[sm_ms.x()][sm_ms.y()] );
         }
-    } );
+    }
     jsout.end_array();
 
     jsout.member( "traps" );
     jsout.start_array();
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+    for( const auto p : submap_tiles() ) {
         // Save traps
         if( get_trap( p ) ) {
             jsout.start_array();
@@ -4334,12 +4334,12 @@ void submap::store( JsonOut &jsout ) const
             jsout.write( get_trap( p ).id().str() );
             jsout.end_array();
         }
-    } );
+    }
     jsout.end_array();
 
     jsout.member( "fields" );
     jsout.start_array();
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+    for( const auto sm_ms : submap_tiles() ) {
         // Save fields
         if( fld[sm_ms.x()][sm_ms.y()].field_count() > 0 ) {
             jsout.write( sm_ms.x() );
@@ -4353,7 +4353,7 @@ void submap::store( JsonOut &jsout ) const
             }
             jsout.end_array();
         }
-    } );
+    }
     jsout.end_array();
 
     // Write out as array of arrays of single entries
@@ -4479,7 +4479,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
         // terrain is encoded using simple RLE
         int remaining = 0;
         int_id<ter_t> iid;
-        std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+        for( const auto sm_ms : submap_tiles() ) {
             if( !remaining ) {
                 if( jsin.test_string() ) {
                     iid = ter_str_id( jsin.get_string() ).id();
@@ -4495,7 +4495,7 @@ void submap::load( JsonIn &jsin, const std::string &member_name, int version,
                 --remaining;
             }
             ter[sm_ms.x()][sm_ms.y()] = iid;
-        } );
+        }
         if( remaining ) {
             debugmsg( "Mapbuffer terrain data is corrupt, tile data remaining." );
         }

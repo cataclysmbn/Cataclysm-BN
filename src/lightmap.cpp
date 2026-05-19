@@ -659,7 +659,7 @@ void map::generate_lightmap_worker( const int zlev )
                 if( cur_submap == nullptr ) {
                     continue;
                 }
-                std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+                for( const auto sm_ms : submap_tiles() ) {
                     const auto p = project_combine( sm_pos, sm_ms );
                     // Project light into any openings into buildings.
                     // Check both terrain floor_cache and vehicle_floor_cache since vehicle
@@ -756,7 +756,7 @@ void map::generate_lightmap_worker( const int zlev )
                             local.lm_override.emplace_back( p, light_override );
                         }
                     } );
-                } );
+                }
             }
         };
 

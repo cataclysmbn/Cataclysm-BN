@@ -204,19 +204,17 @@ shared_ptr_fast<mm_submap> map_memory::find_submap( const tripoint_abs_sm &sm_po
 //FIXME: This is to fix old (mid 2022) saves. It can be removed at some point.
 static void temp_remove_open_air( const shared_ptr_fast<mm_submap> &sm )
 {
-
     if( sm->is_empty() ) {
         return;
     }
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+    for( const auto sm_ms : submap_tiles() ) {
         const memorized_terrain_tile &t = sm->tile( sm_ms );
 
         if( !t.tile.empty() && ( t.tile == "t_open_air" || t.tile == "t_open_air_rooved" ||
                                  t.tile == "t_open_air_rooved_outside" ) ) {
             sm->set_tile( sm_ms, mm_submap::default_tile );
         }
-    } );
-
+    }
 }
 
 shared_ptr_fast<mm_submap> map_memory::load_submap( const tripoint_abs_sm &sm_pos )

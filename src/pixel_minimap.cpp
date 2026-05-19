@@ -295,12 +295,12 @@ void pixel_minimap::flush_cache_updates()
             SetRenderDrawColor( renderer, 0x00, 0x00, 0x00, 0x00 );
             RenderClear( renderer );
 
-            std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) {
+            for( const auto p : submap_tiles() ) {
                 const auto tile_pos = projector->get_tile_pos( p.raw(), { SEEX, SEEY } );
                 const auto tile_size = projector->get_tile_size();
 
                 geometry->rect( renderer, tile_pos, tile_size.x, tile_size.y, SDL_Color() );
-            } );
+            }
         }
 
         std::ranges::for_each( mcp.second.update_list, [&]( const auto p ) {
@@ -329,7 +329,7 @@ void pixel_minimap::update_cache_at( const tripoint_bub_sm &pos )
     auto &cache_item = get_cache_at( here.bub_to_abs( pos ) );
 
     cache_item.touched = true;
-    std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms sm_ms ) {
+    for( const auto sm_ms : submap_tiles() ) {
         const auto ms_pos = project_combine( pos, sm_ms );
         const auto lighting = access_cache.visibility_cache[access_cache.idx( ms_pos.x(), ms_pos.y() )];
 
@@ -361,7 +361,7 @@ void pixel_minimap::update_cache_at( const tripoint_bub_sm &pos )
             current_color = color;
             cache_item.update_list.emplace_back( sm_ms );
         }
-    } );
+    }
 }
 
 pixel_minimap::submap_cache &pixel_minimap::get_cache_at( const tripoint_abs_sm &abs_sm_pos )
