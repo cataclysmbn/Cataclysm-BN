@@ -1824,5 +1824,17 @@
       { "distribution": [ { "item": "triffid_queen_flower", "prob": 50 }, { "item": "engraved_stone", "prob": 50 } ] },
       { "item": "essence", "count": [ 1, 3 ] }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_mutant_elfa_boss_death_drops",
+    "//": "Adds to existing group",
+    "entries": [
+      {
+        "distribution": [ { "item": "inflorescent_root", "prob": 50 }, { "item": "triffid_queen_flower", "prob": 50 } ],
+        "prob": 50
+      }
+    ]
   }
 ]

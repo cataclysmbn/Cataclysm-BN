@@ -691,6 +691,22 @@
   },
   {
     "type": "recipe",
+    "result": "mutagen_medical",
+    "id_suffix": "from_sample",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_MUTAGEN",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 2 ],
+    "difficulty": 9,
+    "time": "35 m",
+    "batch_time_factors": [ 80, 4 ],
+    "book_learn": [ [ "recipe_medicalmut", 9 ] ],
+    "using": [ [ "mutagen_production_standard", 25 ] ],
+    "components": [ [ [ "mutagen", 1 ] ], [ [ "medical_sample", 1 ] ] ],
+    "flags": [ "SECRET" ]
+  },
+  {
+    "type": "recipe",
     "result": "iv_mutagen_medical",
     "category": "CC_CHEM",
     "subcategory": "CSC_CHEM_MUTAGEN",
@@ -755,6 +771,21 @@
   },
   {
     "type": "recipe",
+    "result": "mutagen_alpha",
+    "id_suffix": "from_sample",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_MUTAGEN",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 2 ],
+    "difficulty": 9,
+    "time": "20 m",
+    "book_learn": [ [ "recipe_alpha", 9 ] ],
+    "using": [ [ "mutagen_production_standard", 50 ] ],
+    "components": [ [ [ "alpha_sample", 1 ] ], [ [ "purifier", 4 ], [ "iv_purifier", 2 ] ] ],
+    "flags": [ "SECRET" ]
+  },
+  {
+    "type": "recipe",
     "result": "iv_mutagen_alpha",
     "category": "CC_CHEM",
     "subcategory": "CSC_CHEM_MUTAGEN",
@@ -780,6 +811,21 @@
     "book_learn": [ [ "recipe_elfa", 10 ] ],
     "using": [ [ "mutagen_production_standard", 31 ] ],
     "components": [ [ [ "mutagen_slime", 2 ], [ "iv_mutagen_slime", 1 ] ], [ [ "mutagen_plant", 1 ] ], [ [ "mutagen_bird", 1 ] ] ],
+    "flags": [ "SECRET" ]
+  },
+  {
+    "type": "recipe",
+    "result": "mutagen_elfa",
+    "id_suffix": "from_sample",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_MUTAGEN",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 2 ],
+    "difficulty": 9,
+    "time": "12 m",
+    "book_learn": [ [ "recipe_elfa", 10 ] ],
+    "using": [ [ "mutagen_production_standard", 31 ] ],
+    "components": [ [ [ "elfa_sample", 1 ] ], [ [ "purifier", 1 ] ] ],
     "flags": [ "SECRET" ]
   },
   {

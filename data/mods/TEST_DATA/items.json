@@ -773,7 +773,7 @@
     "coverage": 100,
     "encumbrance": 10,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large_metal", "resized_small_metal" ],
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_EXO" ]
   },
   {
@@ -793,7 +793,7 @@
     "coverage": 100,
     "encumbrance": 10,
     "material_thickness": 1,
-    "valid_mods": [ "resized_large_metal", "resized_small_metal" ]
+    "valid_mods": [ "resized_large", "resized_small" ]
   },
   {
     "id": "test_override_armor",

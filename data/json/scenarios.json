@@ -1042,5 +1042,27 @@
     "missions": [ "MISSION_ONE_LAST_AUDIT" ],
     "professions": [ "irs", "lawyer", "politician" ],
     "flags": [ "LONE_START", "CITY_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "lab_cargo_staff_1",
+    "name": "Challenge - Trans-Coast Logistics Concourse",
+    "points": -6,
+    "description": "You were deemed an essential employee and required to stay behind during the facility's evacuation.  You'd better find a keycard before something finds you.",
+    "start_name": "Locked Lab",
+    "professions": [
+      "labtech",
+      "bionic_labtech",
+      "security",
+      "medic",
+      "bionic_installer",
+      "bio_medic",
+      "bionic_mentat",
+      "bionic_spy",
+      "military_saboteur",
+      "hacker"
+    ],
+    "allowed_locs": [ "sloc_lab_concourse_area" ],
+    "flags": [ "CHALLENGE", "LONE_START" ]
   }
 ]

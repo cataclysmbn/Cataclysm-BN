@@ -14,6 +14,7 @@
 #include <optional>
 #include <set>
 #include <stdexcept>
+#include <string_view>
 #include <tuple>
 #include <unordered_set>
 #include <ranges>
@@ -182,7 +183,10 @@ void draw_zone_overlay( const draw_zone_overlay_options &opt )
 
     SetRenderDrawBlendMode( opt.renderer, SDL_BLENDMODE_BLEND );
     SetRenderDrawColor( opt.renderer, color.r, color.g, color.b, color.a );
-    RenderFillRect( opt.renderer, &opt.rect );
+    {
+        const SDL_FRect frect{ float( opt.rect.x ), float( opt.rect.y ), float( opt.rect.w ), float( opt.rect.h ) };
+        RenderFillRect( opt.renderer, &frect );
+    }
 
     sdl_restore_render_state( opt.renderer.get(), state );
 
@@ -299,6 +303,7 @@ cata_tiles::cata_tiles( const SDL_Renderer_Ptr &renderer, const GeometryRenderer
     do_draw_zones = false;
 
     nv_goggles_activated = false;
+    env_goggles_activated = false;
 
     on_options_changed();
 }
@@ -609,7 +614,7 @@ static SDL_Surface_Ptr apply_color_filter_blit_copy(
     SDL_Surface_Ptr dst = create_surface_32( src->w, src->h );
     assert( dst );
     throwErrorIf(
-        SDL_BlitSurface( src.get(), nullptr, dst.get(), nullptr ) != 0,
+        !SDL_BlitSurface( src.get(), nullptr, dst.get(), nullptr ),
         "SDL_BlitSurface failed"
     );
 
@@ -1091,7 +1096,8 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
             this->offset + ( pos.x / sprite_width ) +
             ( pos.y / sprite_height ) * ( tile_atlas_width / sprite_width );
 
-        SDL_FillRect( st_surf, nullptr, SDL_MapRGBA( st_surf->format, 255, 255, 255, 0 ) );
+        SDL_FillSurfaceRect( st_surf, nullptr, SDL_MapRGBA( SDL_GetPixelFormatDetails( st_surf->format ),
+                             nullptr, 255, 255, 255, 0 ) );
         SDL_BlitSurface( surf.get(), &src_rect, st_surf, &st_sub_rect );
 
         const auto surf_hash = get_surface_hash( st_surf, nullptr );
@@ -1106,7 +1112,11 @@ bool tileset_loader::copy_surface_to_dynamic_atlas(
 
             SDL_UpdateTexture( st_tex, nullptr, st_surf->pixels, st_surf->pitch );
             SDL_SetRenderTarget( renderer.get(), atl_tex.first.get() );
-            SDL_RenderCopy( renderer.get(), st_tex, &st_sub_rect, &atl_tex.second );
+            {
+                const SDL_FRect fsrc{ float( st_sub_rect.x ), float( st_sub_rect.y ), float( st_sub_rect.w ), float( st_sub_rect.h ) };
+                const SDL_FRect fdst{ float( atl_tex.second.x ), float( atl_tex.second.y ), float( atl_tex.second.w ), float( atl_tex.second.h ) };
+                SDL_RenderTexture( renderer.get(), st_tex, &fsrc, &fdst );
+            }
         }
 
         const auto tex_key = tileset_lookup_key{ index, TILESET_NO_MASK, tileset_fx_type::none, TILESET_NO_COLOR, TILESET_NO_WARP, point_zero };
@@ -1506,7 +1516,14 @@ texture_result tileset::get_or_default( const int sprite_index,
             mask_tex->set_blend_mode( SDL_BLENDMODE_BLEND );
         }
 
-        SDL_RenderReadPixels( rp, nullptr, st_surf->format->format, st_surf->pixels, st_surf->pitch );
+        {
+            SDL_Surface *readback = SDL_RenderReadPixels( rp, nullptr );
+            if( readback ) {
+                SDL_SetSurfaceBlendMode( readback, SDL_BLENDMODE_NONE );
+                SDL_BlitSurface( readback, nullptr, st_surf, nullptr );
+                SDL_DestroySurface( readback );
+            }
+        }
 
         if( !tint.has_value() ) {
             apply_color_filter( st_surf, st_sub_rect_tinted, st_surf, st_sub_rect_source, color_pixel_copy );
@@ -1534,6 +1551,30 @@ texture_result tileset::get_or_default( const int sprite_index,
                     vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "NIGHT_VISION_COLOR" ) ) };
                 } else {
                     vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "NIGHT_VISION_DEFAULT_COLOR" ) ) };
+                }
+                vfx_tint.blend_mode = tint_blend_mode::tint;
+                vfx_tint.brightness = 0.75f;
+                apply_surf_blend_effect( st_surf, vfx_tint, false, st_sub_rect_vfx, st_sub_rect_tinted, {} );
+                break;
+            }
+            case tileset_fx_type::enhanced_overexposed: {
+                tint_config vfx_tint;
+                if( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) == "custom" ) {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_COLOR" ) ) };
+                } else {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) ) };
+                }
+                vfx_tint.blend_mode = tint_blend_mode::tint;
+                vfx_tint.brightness = 1.25f;
+                apply_surf_blend_effect( st_surf, vfx_tint, false, st_sub_rect_vfx, st_sub_rect_tinted, {} );
+                break;
+            }
+            case tileset_fx_type::enhanced_night: {
+                tint_config vfx_tint;
+                if( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) == "custom" ) {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_COLOR" ) ) };
+                } else {
+                    vfx_tint = tint_config{ RGBColor::try_parse( get_option<std::string>( "ENHANCED_NIGHT_VISION_DEFAULT_COLOR" ) ) };
                 }
                 vfx_tint.blend_mode = tint_blend_mode::tint;
                 vfx_tint.brightness = 0.75f;
@@ -1582,7 +1623,11 @@ texture_result tileset::get_or_default( const int sprite_index,
 
             SDL_UpdateTexture( st_tex, nullptr, st_surf->pixels, st_surf->pitch );
             SDL_SetRenderTarget( rp, atl_tex.first.get() );
-            SDL_RenderCopy( rp, st_tex, &st_sub_rect_final, &atl_tex.second );
+            {
+                const SDL_FRect fsrc{ float( st_sub_rect_final.x ), float( st_sub_rect_final.y ), float( st_sub_rect_final.w ), float( st_sub_rect_final.h ) };
+                const SDL_FRect fdst{ float( atl_tex.second.x ), float( atl_tex.second.y ), float( atl_tex.second.w ), float( atl_tex.second.h ) };
+                SDL_RenderTexture( rp, st_tex, &fsrc, &fdst );
+            }
         }
 
         sdl_restore_render_state( rp, state );
@@ -1736,63 +1781,72 @@ void tileset_loader::load_tileset( const std::string &img_path, const bool pump_
     tile_atlas_width = tile_atlas->w;
 
     if( R >= 0 && R <= 255 && G >= 0 && G <= 255 && B >= 0 && B <= 255 ) {
-        const Uint32 key = SDL_MapRGB( tile_atlas->format, 0, 0, 0 );
-        throwErrorIf( SDL_SetColorKey( tile_atlas.get(), SDL_TRUE, key ) != 0, "SDL_SetColorKey failed" );
-        throwErrorIf( SDL_SetSurfaceRLE( tile_atlas.get(), 1 ), "SDL_SetSurfaceRLE failed" );
+        const Uint32 key = SDL_MapRGB( SDL_GetPixelFormatDetails( tile_atlas->format ), nullptr, 0, 0, 0 );
+        throwErrorIf( !SDL_SetSurfaceColorKey( tile_atlas.get(), true, key ),
+                      "SDL_SetSurfaceColorKey failed" );
+        throwErrorIf( !SDL_SetSurfaceRLE( tile_atlas.get(), true ), "SDL_SetSurfaceRLE failed" );
     }
 
-    SDL_RendererInfo info;
-    throwErrorIf( SDL_GetRendererInfo( renderer.get(), &info ) != 0, "SDL_GetRendererInfo failed" );
+    const bool is_software_renderer =
+        ( std::string_view( SDL_GetRendererName( renderer.get() ) ) == "software" );
     // Software rendering stores textures as surfaces with run-length encoding, which makes extracting a part
     // in the middle of the texture slow. Therefore this "simulates" that the renderer only supports one tile
     // per texture. Each tile will go on its own texture object.
-    if( info.flags & SDL_RENDERER_SOFTWARE ) {
-        info.max_texture_width = sprite_width;
-        info.max_texture_height = sprite_height;
+    int max_texture_width;
+    int max_texture_height;
+    if( is_software_renderer ) {
+        max_texture_width = sprite_width;
+        max_texture_height = sprite_height;
+    } else {
+        const auto props = SDL_GetRendererProperties( renderer.get() );
+        const int max_tex = static_cast<int>(
+                                SDL_GetNumberProperty( props, SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER, 0 ) );
+        max_texture_width = max_tex;
+        max_texture_height = max_tex;
     }
     // for debugging only: force a very small maximal texture size, as to trigger
     // splitting the tile atlas.
 #if 0
     // +1 to check correct rounding
-    info.max_texture_width = sprite_width * 10 + 1;
-    info.max_texture_height = sprite_height * 20 + 1;
+    max_texture_width = sprite_width * 10 + 1;
+    max_texture_height = sprite_height * 20 + 1;
 #endif
 
     const int min_tile_xcount = 128;
     const int min_tile_ycount = min_tile_xcount * 2;
 
-    if( info.max_texture_width == 0 ) {
-        info.max_texture_width = sprite_width * min_tile_xcount;
+    if( max_texture_width == 0 ) {
+        max_texture_width = sprite_width * min_tile_xcount;
         dbg( DL::Info ) <<
-                        "SDL_RendererInfo max_texture_width was set to 0.  Changing it to " <<
-                        info.max_texture_width;
+                        "max_texture_width was set to 0.  Changing it to " <<
+                        max_texture_width;
     } else {
-        throwErrorIf( info.max_texture_width < sprite_width,
+        throwErrorIf( max_texture_width < sprite_width,
                       "Maximal texture width is smaller than tile width" );
     }
 
-    if( info.max_texture_height == 0 ) {
-        info.max_texture_height = sprite_height * min_tile_ycount;
+    if( max_texture_height == 0 ) {
+        max_texture_height = sprite_height * min_tile_ycount;
         dbg( DL::Info ) <<
-                        "SDL_RendererInfo max_texture_height was set to 0.  Changing it to "
-                        << info.max_texture_height;
+                        "max_texture_height was set to 0.  Changing it to "
+                        << max_texture_height;
     } else {
-        throwErrorIf( info.max_texture_height < sprite_height,
+        throwErrorIf( max_texture_height < sprite_height,
                       "Maximal texture height is smaller than tile height" );
     }
 
     // Number of tiles in each dimension that fits into a (maximal) SDL texture.
     // If the tile atlas contains more than that, we have to split it.
-    const int max_tile_xcount = info.max_texture_width / sprite_width;
-    const int max_tile_ycount = info.max_texture_height / sprite_height;
+    const int max_tile_xcount = max_texture_width / sprite_width;
+    const int max_tile_ycount = max_texture_height / sprite_height;
     // Range over the tile atlas, wherein each rectangle fits into the maximal
     // SDL texture size. In other words: a range over the parts into which the
     // tile atlas needs to be split.
     const rect_range<SDL_Rect> output_range(
         max_tile_xcount * sprite_width,
         max_tile_ycount * sprite_height,
-        point( divide_round_up( tile_atlas->w, info.max_texture_width ), divide_round_up( tile_atlas->h,
-                info.max_texture_height ) ) );
+        point( divide_round_up( tile_atlas->w, max_texture_width ), divide_round_up( tile_atlas->h,
+                max_texture_height ) ) );
 
     const int expected_tilecount = ( tile_atlas->w / sprite_width ) * ( tile_atlas->h / sprite_height );
 
@@ -1824,7 +1878,7 @@ void tileset_loader::load_tileset( const std::string &img_path, const bool pump_
             smaller_surf = ::create_surface_32( w, h );
             assert( smaller_surf );
             const SDL_Rect inp{ sub_rect.x, sub_rect.y, w, h };
-            throwErrorIf( SDL_BlitSurface( tile_atlas.get(), &inp, smaller_surf.get(), nullptr ) != 0,
+            throwErrorIf( !SDL_BlitSurface( tile_atlas.get(), &inp, smaller_surf.get(), nullptr ),
                           "SDL_BlitSurface failed" );
         }
         const SDL_Surface_Ptr &surf_to_use = smaller_surf ? smaller_surf : tile_atlas;
@@ -2102,11 +2156,14 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     for( const JsonObject &curr_info : config.get_array( "tile_info" ) ) {
         ts.tile_height = curr_info.get_int( "height" );
         ts.tile_width = curr_info.get_int( "width" );
-        ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
+        //ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
+        ts.zlevel_height = 0;
         tile_iso = curr_info.get_bool( "iso", false );
         ts.tile_pixelscale = curr_info.get_float( "pixelscale", 1.0f );
-        ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
-        ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
+        //ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
+        //ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
+        ts.prevent_occlusion_min_dist = -1.0f;
+        ts.prevent_occlusion_max_dist = 0.0f;
     }
 
     if( precheck ) {
@@ -2914,11 +2971,11 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     {
         //set clipping to prevent drawing over stuff we shouldn't
         SDL_Rect clipRect = {dest.x, dest.y, width, height};
-        printErrorIf( SDL_RenderSetClipRect( renderer.get(), &clipRect ) != 0,
-                      "SDL_RenderSetClipRect failed" );
+        printErrorIf( !SDL_SetRenderClipRect( renderer.get(), &clipRect ),
+                      "SDL_SetRenderClipRect failed" );
 
         //fill render area with black to prevent artifacts where no new pixels are drawn
-        geometry->rect( renderer, clipRect, SDL_Color{ 0, 0, 0, 255 } );
+        geometry->rect( renderer, point{ clipRect.x, clipRect.y }, clipRect.w, clipRect.h, SDL_Color{ 0, 0, 0, 255 } );
     }
 
     point s;
@@ -3046,6 +3103,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
     //retrieve night vision goggle status once per draw
     auto vision_cache = g->u.get_vision_modes();
     nv_goggles_activated = vision_cache[NV_GOGGLES];
+    env_goggles_activated = vision_cache[ENV_GOGGLES];
 
     // check that the creature for which we'll draw the visibility map is still alive at that point
     if( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) && g->displaying_visibility_creature ) {
@@ -3076,10 +3134,10 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
 
     std::vector<tile_render_info> &draw_points = *draw_points_cache;
     int min_z = OVERMAP_HEIGHT;
-    draw_points.clear();
 
     for( int row = min_row; row < max_row; row ++ ) {
-        // draw_points accumulates across all rows; rendering happens after the loop
+
+        draw_points.clear();
         for( int col = min_col; col < max_col; col ++ ) {
             int temp_x;
             int temp_y;
@@ -3392,123 +3450,97 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
             }
         }
 
-    }
+        auto compare_z = [&]( tile_render_info a, tile_render_info b ) -> bool {
+            return ( a.pos.z < b.pos.z );
+        };
 
-    // Sort globally by (z, y): all z=0 tiles render before z=1 tiles across every row,
-    // so tall z=0 sprites (e.g. tree canopies) never overdraw z=1 entities at adjacent
-    // tiles. Within the same z-level, y-ascending order (north before south) preserves
-    // the intended "tree canopy over player to the north" effect at equal z.
-    auto compare_z_y = []( const tile_render_info & a, const tile_render_info & b ) -> bool {
-        if( a.pos.z != b.pos.z )
-        {
-            return a.pos.z < b.pos.z;
-        }
-        return a.pos.y < b.pos.y;
-    };
+        const std::array<decltype( &cata_tiles::draw_furniture ), 3> base_drawing_layers = {{
+                &cata_tiles::draw_furniture, &cata_tiles::draw_graffiti, &cata_tiles::draw_trap
+            }
+        };
+        struct zlevel_layer {
+            bool hide_unseen;
+            decltype( &cata_tiles::draw_furniture ) function;
+        };
+        const std::array<zlevel_layer, 3> zlevel_drawing_layers = {{
+                {true, &cata_tiles::draw_field_or_item}, {false, &cata_tiles::draw_vpart}, {true, &cata_tiles::draw_critter_at}
+            }
+        };
+        const std::array<decltype( &cata_tiles::draw_furniture ), 2> final_drawing_layers = {{
+                &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
+            }
+        };
 
-    const std::array<decltype( &cata_tiles::draw_furniture ), 3> base_drawing_layers = {{
-            &cata_tiles::draw_furniture, &cata_tiles::draw_graffiti, &cata_tiles::draw_trap
-        }
-    };
-    struct zlevel_layer {
-        bool hide_unseen;
-        decltype( &cata_tiles::draw_furniture ) function;
-    };
-    const std::array<zlevel_layer, 3> zlevel_drawing_layers = {{
-            {true, &cata_tiles::draw_field_or_item}, {false, &cata_tiles::draw_vpart}, {true, &cata_tiles::draw_critter_at}
-        }
-    };
-    const std::array<decltype( &cata_tiles::draw_furniture ), 2> final_drawing_layers = {{
-            &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
-        }
-    };
-
-    std::ranges::stable_sort( draw_points, compare_z_y );
-
-    for( int z = min_z; z <= center.z; z++ ) {
+        std::ranges::stable_sort( draw_points, compare_z );
         for( tile_render_info &p : draw_points ) {
-            if( p.pos.z > z ) {
-                break;
-            }
-            if( p.pos.z == z ) {
-                draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
-
-                for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
-                    ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - z );
-                }
-            }
-            const auto &ch = here.access_cache( z );
-
-            for( const zlevel_layer &f : zlevel_drawing_layers ) {
-                if( here.inbounds( p.pos ) && z != p.pos.z ) {
-                    const auto z_ll = ch.inbounds( {p.pos.x, p.pos.y} )
-                                      ? ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )]
-                                      : lit_level::BLANK;
-                    if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
-                        // When the player is looking down from above (z_drop > 0), a BLANK
-                        // visibility at the cross-z level means the surface is part of a vehicle
-                        // body that the 3D FOV can't see through — but the surface itself should
-                        // still render as a visible floor/roof from above (z_drop > 0).
-                        // Only hide the tile when the player is at the same z-level (z_drop == 0)
-                        // and truly can't see it, which is the "enclosed interior" case.
-                        const int z_drop_here = center.z - z;
-                        const bool ( invis )[5] = {z_ll == lit_level::BLANK &&z_drop_here == 0,
-                                                   false, false, false, false
-                                                  };
-                        ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, z_drop_here );
+            draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z - p.pos.z );
+            if( p.pos.z == center.z ) {
+                const point screen_tl = player_to_screen( p.pos.xy() );
+                const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
+                const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
+                                              ( has_custom_selected_zone
+                                                ? zone_point_lookup.contains( p.pos )
+                                                : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
+                                                    p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
+                bool selected_drawn = false;
+                if( show_zones_overlay ) {
+                    for( const zone_render_data &zone : zones_to_draw ) {
+                        if( !zone.tiles.contains( p.pos.xy() ) ) {
+                            continue;
+                        }
+                        draw_zone_overlay( {
+                            .renderer = renderer,
+                            .rect = tile_rect,
+                            .color = zone.color,
+                            .overlay_strings = overlay_strings,
+                            .alpha = in_selected_zone ? 128 : 64,
+                            .draw_label = false
+                        } );
+                        selected_drawn = selected_drawn || in_selected_zone;
                     }
-                } else {
-                    ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
                 }
-            }
-        }
-    }
-
-    for( tile_render_info &p : draw_points ) {
-        for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
-            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
-        }
-    }
-
-    // Draw zone overlays over all other stuff
-    for( const tile_render_info &p : draw_points ) {
-        if( p.pos.z == center.z ) {
-            const point screen_tl = player_to_screen( p.pos.xy() );
-            const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
-
-            const bool in_selected_zone = has_selected_zone && p.pos.z == selected_z &&
-                                          ( has_custom_selected_zone
-                                            ? zone_point_lookup.contains( p.pos )
-                                            : ( p.pos.x >= selected_min.x && p.pos.x <= selected_max.x &&
-                                                p.pos.y >= selected_min.y && p.pos.y <= selected_max.y ) );
-
-            bool selected_drawn = false;
-
-            if( show_zones_overlay ) {
-                for( const zone_render_data &zone : zones_to_draw ) {
-                    if( !zone.tiles.contains( p.pos.xy() ) ) {
-                        continue;
-                    }
+                if( in_selected_zone && !selected_drawn ) {
                     draw_zone_overlay( {
                         .renderer = renderer,
                         .rect = tile_rect,
-                        .color = zone.color,
+                        .color = curses_color_to_SDL( c_light_green ),
                         .overlay_strings = overlay_strings,
-                        .alpha = in_selected_zone ? 128 : 64,
+                        .alpha = 128,
                         .draw_label = false
                     } );
-                    selected_drawn = selected_drawn || in_selected_zone;
                 }
             }
-            if( in_selected_zone && !selected_drawn ) {
-                draw_zone_overlay( {
-                    .renderer = renderer,
-                    .rect = tile_rect,
-                    .color = curses_color_to_SDL( c_light_green ),
-                    .overlay_strings = overlay_strings,
-                    .alpha = 128,
-                    .draw_label = false
-                } );
+        }
+
+        for( int z = min_z; z <= center.z; z++ ) {
+            for( tile_render_info &p : draw_points ) {
+                if( p.pos.z > z ) {
+                    break;
+                }
+                if( p.pos.z == z ) {
+                    for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
+                        ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z - p.pos.z );
+                    }
+                }
+                const auto &ch = here.access_cache( z );
+                for( const zlevel_layer &f : zlevel_drawing_layers ) {
+                    if( here.inbounds( p.pos ) && z != p.pos.z ) {
+                        const auto z_ll = ch.inbounds( {p.pos.x, p.pos.y} )
+                                          ? ch.visibility_cache[ch.idx( p.pos.x, p.pos.y )]
+                                          : lit_level::BLANK;
+                        if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
+                            const bool ( invis )[5] = {false, false, false, false, false};
+                            ( this->*( f.function ) )( {p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z - z );
+                        }
+                    } else {
+                        ( this->*( f.function ) )( {p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z - z );
+                    }
+                }
+            }
+        }
+        for( tile_render_info &p : draw_points ) {
+            for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
+                ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
             }
         }
     }
@@ -3782,8 +3814,8 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
         }
     }
 
-    printErrorIf( SDL_RenderSetClipRect( renderer.get(), nullptr ) != 0,
-                  "SDL_RenderSetClipRect failed" );
+    printErrorIf( !SDL_SetRenderClipRect( renderer.get(), nullptr ),
+                  "SDL_SetRenderClipRect failed" );
 }
 
 bool cata_tiles::terrain_requires_animation() const
@@ -4320,6 +4352,10 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
         fx_type = ll == lit_level::LOW
                   ? tileset_fx_type::night
                   : tileset_fx_type::overexposed;
+    } else if( apply_visual_effects && env_goggles_activated ) {
+        fx_type = ll == lit_level::LOW
+                  ? tileset_fx_type::enhanced_night
+                  : tileset_fx_type::enhanced_overexposed;
     } else if( overlay_count > 0 && static_z_effect ) {
         fx_type = tileset_fx_type::z_overlay;
         effective_tint = {};
@@ -4378,7 +4414,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
     destination.w = width * tile_width * tile.pixelscale / tileset_ptr->get_tile_width();
     destination.h = height * tile_height * tile.pixelscale / tileset_ptr->get_tile_height();
 
-    auto render = [&]( const int rotation, const SDL_RendererFlip flip ) {
+    auto render = [&]( const int rotation, const SDL_FlipMode flip ) {
         int ret = 0;
 
         // UV warping is now handled in get_or_default, so we just render normally
@@ -4420,7 +4456,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
                 // 180 degrees, implemented with flips instead of rotation
                 if( !tile_iso ) {
                     // never flip isometric tiles vertically
-                    ret = render( 0, static_cast<SDL_RendererFlip>( SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL ) );
+                    ret = render( 0, static_cast<SDL_FlipMode>( SDL_FLIP_HORIZONTAL | SDL_FLIP_VERTICAL ) );
                 } else {
                     ret = render( 0, SDL_FLIP_NONE );
                 }
@@ -4480,7 +4516,7 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point p,
         ret = render( 0, SDL_FLIP_NONE );
     }
 
-    printErrorIf( ret != 0, "SDL_RenderCopyEx() failed" );
+    printErrorIf( !ret, "SDL_RenderTextureRotated() failed" );
     // this reference passes all the way back up the call chain back to
     // cata_tiles::draw() std::vector<tile_render_info> draw_points[].height_3d
     // where we are accumulating the height of every sprite stacked up in a tile
@@ -4506,11 +4542,11 @@ bool cata_tiles::draw_tile_at( const tile_type &tile, point p,
 
 bool cata_tiles::draw_color_at( const SDL_Color &color, point pos, SDL_BlendMode blend_mode )
 {
-    SDL_Rect rect{
-        pos.x,
-        pos.y,
-        tile_width,
-        tile_height
+    SDL_FRect rect{
+        float( pos.x ),
+        float( pos.y ),
+        float( tile_width ),
+        float( tile_height )
     };
 
     SDL_BlendMode old_blend_mode;
@@ -4676,7 +4712,7 @@ bool cata_tiles::draw_block( const tripoint &p, SDL_Color color, int scale )
         rect.y += tile_height / 8;
     }
 
-    geometry->rect( renderer, rect,  color );
+    geometry->rect( renderer, point{ rect.x, rect.y }, rect.w, rect.h, color );
     return true;
 }
 
@@ -5867,8 +5903,9 @@ void tileset_loader::ensure_default_item_highlight()
 
     const SDL_Surface_Ptr surface = create_surface_32( ts.tile_width, ts.tile_height );
     assert( surface );
-    throwErrorIf( SDL_FillRect( surface.get(), nullptr, SDL_MapRGBA( surface->format, 0, 0, 127,
-                                highlight_alpha ) ) != 0, "SDL_FillRect failed" );
+    throwErrorIf( !SDL_FillSurfaceRect( surface.get(), nullptr,
+                                        SDL_MapRGBA( SDL_GetPixelFormatDetails( surface->format ), nullptr, 0, 0, 127,
+                                                highlight_alpha ) ), "SDL_FillSurfaceRect failed" );
 
     auto [tex, rect] = ts.tileset_atlas->allocate_sprite( ts.tile_width, ts.tile_height );
     SDL_UpdateTexture( tex.get(), &rect, surface->pixels, surface->pitch );
@@ -5889,8 +5926,9 @@ void tileset_loader::ensure_default_item_highlight()
 
     const SDL_Surface_Ptr surface = create_surface_32( ts.tile_width, ts.tile_height );
     assert( surface );
-    throwErrorIf( SDL_FillRect( surface.get(), nullptr, SDL_MapRGBA( surface->format, 0, 0, 127,
-                                highlight_alpha ) ) != 0, "SDL_FillRect failed" );
+    throwErrorIf( !SDL_FillSurfaceRect( surface.get(), nullptr,
+                                        SDL_MapRGBA( SDL_GetPixelFormatDetails( surface->format ), nullptr, 0, 0, 127,
+                                                highlight_alpha ) ), "SDL_FillSurfaceRect failed" );
     ts.tile_values.emplace_back( CreateTextureFromSurface( renderer, surface ), SDL_Rect{ 0, 0, ts.tile_width, ts.tile_height } );
     ts.tile_ids[ITEM_HIGHLIGHT].sprite.fg.add( std::vector<int>( {index} ), 1 );
 #endif
@@ -6810,19 +6848,20 @@ std::vector<options_manager::id_and_option> cata_tiles::build_renderer_list()
         { "opengles2", translate_marker( "opengles2" ) },
         { "software", translate_marker( "software" ) },
     };
-    int numRenderDrivers = SDL_GetNumRenderDrivers();
+    const int numRenderDrivers = SDL_GetNumRenderDrivers();
     DebugLog( DL::Info, DC::Main ) << "Number of render drivers on your system: " << numRenderDrivers;
     for( int ii = 0; ii < numRenderDrivers; ii++ ) {
-        SDL_RendererInfo ri;
-        SDL_GetRenderDriverInfo( ii, &ri );
-        DebugLog( DL::Info, DC::Main ) << "Render driver: " << ii << "/" << ri.name;
+        const char *name = SDL_GetRenderDriver( ii );
+        if( !name ) {
+            continue;
+        }
+        DebugLog( DL::Info, DC::Main ) << "Render driver: " << ii << "/" << name;
         // First default renderer name we will put first on the list. We can use it later as default value.
-        if( ri.name == default_renderer_names.front().first ) {
+        if( name == default_renderer_names.front().first ) {
             renderer_names.emplace( renderer_names.begin(), default_renderer_names.front() );
         } else {
-            renderer_names.emplace_back( ri.name, ri.name );
+            renderer_names.emplace_back( name, name );
         }
-
     }
 
     return renderer_names.empty() ? default_renderer_names : renderer_names;
@@ -6835,10 +6874,15 @@ std::vector<options_manager::id_and_option> cata_tiles::build_display_list()
         { "0", translate_marker( "Display 0" ) }
     };
 
-    int numdisplays = SDL_GetNumVideoDisplays();
+    int numdisplays = 0;
+    SDL_DisplayID *displays = SDL_GetDisplays( &numdisplays );
     display_names.reserve( numdisplays );
-    for( int i = 0 ; i < numdisplays ; i++ ) {
-        display_names.emplace_back( std::to_string( i ), std::string( SDL_GetDisplayName( i ) ) );
+    if( displays ) {
+        for( int i = 0; i < numdisplays; i++ ) {
+            const char *display_name = SDL_GetDisplayName( displays[i] );
+            display_names.emplace_back( std::to_string( i ), std::string( display_name ? display_name : "" ) );
+        }
+        SDL_free( displays );
     }
 
     return display_names.empty() ? default_display_names : display_names;

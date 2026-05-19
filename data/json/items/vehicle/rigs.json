@@ -53,5 +53,19 @@
     "type": "GENERIC",
     "name": { "str": "vehicle welding rig" },
     "description": "A welding rig made to run off a vehicle's storage battery.  It has a soldering iron attachment for delicate work, and a compartment to store your extra tools in."
+  },
+  {
+    "id": "3d_printer_basicrig",
+    "copy-from": "vehicle_rig",
+    "type": "GENERIC",
+    "name": { "str": "vehicle 3D printer" },
+    "description": "A 3D printer made to run off a vehicle's storage battery. Although it's not nearly as fancy as the experimental nanofabricators, this civilian-grade 3D printer can produce almost any item out of plastic, polymer, or carbon fiber…  so long as you can program it.  It's also useful for repairing items made out of plastic or carbon fiber."
+  },
+  {
+    "id": "3d_printer_advancedrig",
+    "copy-from": "vehicle_rig",
+    "type": "GENERIC",
+    "name": { "str": "vehicle advanced 3D printer" },
+    "description": "An advanced 3D printer made to run off a vehicle's storage battery. Recent advances in 3D printing technology have resulted in the ability to quickly and cheaply 3D print metals and alloys.  Such 3D printers are highly expensive, but sought out by collectors and preppers alike.  In addition to crafting, it can be used to repair polymer and metal items alike, or permeate fabric items with carbon fiber for added protection."
   }
 ]

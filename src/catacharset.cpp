@@ -13,8 +13,7 @@
 #include "mmsystem.h"
 #endif
 
-//copied from SDL2_ttf code
-//except type changed from unsigned to uint32_t
+//UTF-8 decode helper; type changed from unsigned to uint32_t
 uint32_t UTF8_getch( const char **src, int *srclen )
 {
     const unsigned char *p = *reinterpret_cast<const unsigned char **>( src );

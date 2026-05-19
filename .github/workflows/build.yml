@@ -8,8 +8,64 @@ on:
         description: "Version label for all builds"
         required: true
         type: string
+      mode:
+        description: "Build mode: release or ci"
+        required: false
+        type: string
+        default: release
+      artifact-label:
+        description: "Suffix for uploaded workflow artifact names"
+        required: false
+        type: string
+        default: ""
+      matrix-json:
+        description: "Build matrix include entries as JSON"
+        required: false
+        type: string
+        default: |
+          [
+            { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-latest", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
+            { "name": "Linux Tiles", "platform": "linux", "artifact": "linux-tiles-x64", "os": "ubuntu-latest", "tiles": true, "sound": true, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "Linux Curses", "platform": "linux", "artifact": "linux-curses-x64", "os": "ubuntu-latest", "tiles": false, "sound": false, "ext": "tar.gz", "content-type": "application/gzip" },
+            { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+            { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk" },
+            { "name": "Android Bundle", "platform": "android", "artifact": "android-bundle", "os": "ubuntu-latest", "android": "bundle", "tiles": true, "ext": "aab", "content-type": "application/aab" }
+          ]
+      download-translations:
+        description: "Download prebuilt translation artifact"
+        required: false
+        type: boolean
+        default: true
+      bundle-tilesets:
+        description: "Bundle external tilesets into tiles builds"
+        required: false
+        type: boolean
+        default: true
+      package-artifacts:
+        description: "Create release archives where separate packaging is needed"
+        required: false
+        type: boolean
+        default: true
+      run-tests:
+        description: "Build and run tests when supported by the selected platform"
+        required: false
+        type: boolean
+        default: false
+      android-localize:
+        description: "Build Android assets with localization"
+        required: false
+        type: boolean
+        default: true
       upload-to-release:
         description: "Upload to GitHub release"
+        required: false
+        type: boolean
+        default: false
+      upload-artifacts:
+        description: "Upload packaged build files as workflow artifacts"
         required: false
         type: boolean
         default: false
@@ -26,6 +82,7 @@ on:
       KEYSTORE_PROPERTIES:
         required: false
 
+# Keep release-compatible defaults here. CI callers can replace the matrix with inputs.matrix-json.
 env:
   ZSTD_CLEVEL: 17
   VCPKG_BINARY_SOURCES: "default"
@@ -33,91 +90,11 @@ env:
 
 jobs:
   builds:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Windows
-          - name: Windows Tiles x64 MSVC
-            artifact: windows-tiles-x64-msvc
-            os: windows-latest
-            arch: x64
-            tiles: true
-            sound: true
-            ext: zip
-            content-type: application/zip
-
-          # Linux
-          - name: Linux Tiles x64
-            artifact: linux-tiles-x64
-            os: ubuntu-latest
-            tiles: true
-            sound: true
-            ext: tar.gz
-            content-type: application/gzip
-
-          - name: Linux Curses x64
-            artifact: linux-curses-x64
-            os: ubuntu-latest
-            tiles: false
-            sound: false
-            ext: tar.gz
-            content-type: application/gzip
-
-          # macOS Intel
-          - name: macOS Curses x64
-            artifact: osx-curses-x64
-            os: macos-15-intel
-            preset: osx-curses-x64-dist
-            tiles: false
-            sound: false
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          - name: macOS Tiles x64
-            artifact: osx-tiles-x64
-            os: macos-15-intel
-            preset: osx-tiles-x64-dist
-            tiles: true
-            sound: true
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          # macOS ARM
-          - name: macOS Curses ARM
-            artifact: osx-curses-arm
-            os: macos-15
-            preset: osx-curses-arm-dist
-            tiles: false
-            sound: false
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          - name: macOS Tiles ARM
-            artifact: osx-tiles-arm
-            os: macos-15
-            preset: osx-tiles-arm-dist
-            tiles: true
-            sound: true
-            ext: dmg
-            content-type: application/x-apple-diskimage
-
-          # Android
-          - name: Android ARM64
-            artifact: android-x64
-            os: ubuntu-latest
-            android: arm64
-            tiles: true
-            ext: apk
-            content-type: application/apk
-
-          - name: Android Bundle
-            artifact: android-bundle
-            os: ubuntu-latest
-            android: bundle
-            tiles: true
-            ext: aab
-            content-type: application/aap
+        include: ${{ fromJSON(inputs.matrix-json) }}
 
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -125,6 +102,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download translation artifacts
+        if: inputs.download-translations
         uses: actions/download-artifact@v4
         with:
           name: translations
@@ -141,7 +119,7 @@ jobs:
           EOL
 
       - name: Bundle CDDA tilesets
-        if: matrix.tiles == true
+        if: matrix.tiles == true && inputs.bundle-tilesets
         env:
           GH_TOKEN: ${{ github.token }}
           CDDA_TILESETS_REPO: I-am-Erk/CDDA-Tilesets
@@ -184,6 +162,12 @@ jobs:
           EOF
 
       # Windows MSVC setup
+      - name: Setup MSVC environment
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Setup msys2 (windows msvc)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
@@ -192,19 +176,21 @@ jobs:
           install: gettext
 
       - name: Compile translations (windows msvc)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && inputs.download-translations
         shell: msys2 {0}
         run: lang/compile_mo.sh all
-
-      - name: Install MSBuild (windows msvc)
-        if: runner.os == 'Windows'
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
 
       - name: Install stable CMake
         if: runner.os == 'Windows'
         uses: lukka/get-cmake@v3.31.6
+
+      - name: Export GitHub Actions cache environment variables
+        if: runner.os == 'Windows'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable("ACTIONS_CACHE_URL", process.env.ACTIONS_CACHE_URL || "")
+            core.exportVariable("ACTIONS_RUNTIME_TOKEN", process.env.ACTIONS_RUNTIME_TOKEN || "")
 
       - name: Install vcpkg
         if: runner.os == 'Windows'
@@ -226,26 +212,44 @@ jobs:
             windows-${{ matrix.artifact }}-${{ github.ref_name }}
             windows-${{ matrix.artifact }}-main
             windows-${{ matrix.artifact }}-
-          max-size: 500M
+          max-size: 1G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
       - name: Configure ccache for MSVC
+        if: runner.os == 'Windows'
         run: |
           echo "CCACHE_BASEDIR=${{ github.workspace }}" >> $env:GITHUB_ENV
           echo "CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime,time_macros,pch_defines" >> $env:GITHUB_ENV
           echo "CCACHE_NOHASHDIR=1" >> $env:GITHUB_ENV
+          echo "CCACHE_COMPILERCHECK=content" >> $env:GITHUB_ENV
 
       # Linux setup
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
         run: |
           sudo apt-get update
-          sudo apt-get install gcc-14 libncursesw5-dev libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev \
-            libsdl2-mixer-dev libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev
+          sudo apt-get install gcc-14 libncursesw5-dev \
+            libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
+
+      #- name: Install SDL3 (Linux)
+      #  if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel Dependencies (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        run: |
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+            libfreetype-dev libharfbuzz-dev \
+            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
+            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
       - name: Setup ccache (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
@@ -261,19 +265,10 @@ jobs:
           save: ${{ github.event_name != 'pull_request' }}
 
       # macOS setup
-      - name: Install runtime dependencies (mac)
-        if: runner.os == 'macOS'
-        uses: BrettDong/setup-sdl2-frameworks@v1
-        with:
-          sdl2: 2.30.11
-          sdl2-ttf: 2.24.0
-          sdl2-image: 2.8.4
-          sdl2-mixer: 2.8.0
-
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja ncurses flac pkg-config
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja ncurses flac pkg-config
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
@@ -357,53 +352,73 @@ jobs:
           echo "- \`docs/en/mod/lua/reference/lua.md\`: $(wc -l < docs/en/mod/lua/reference/lua.md) lines" >> $GITHUB_STEP_SUMMARY
 
       - name: Create distribution package (Linux)
-        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
+          mkdir -p lang/mo
           cmake --install build --prefix cataclysmbn-${{ inputs.version-label }}
           tar -czvf cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.tar.gz \
             cataclysmbn-${{ inputs.version-label }}
 
-      - name: Configure and Build CBN (windows msvc)
+      - name: Configure CBN (windows msvc)
         if: runner.os == 'Windows'
         env:
           VCPKG_OVERLAY_TRIPLETS: ${{ github.workspace }}\.github\vcpkg_triplets
         run: |
+          $buildType = "Release"
+          $localize = "False"
+          $tests = "False"
+          $release = "ON"
+          if ("${{ inputs.download-translations }}" -eq "true") {
+            $localize = "True"
+          }
+          if ("${{ inputs.mode }}" -eq "ci") {
+            $buildType = "RelWithDebInfo"
+            $release = "OFF"
+          }
+          if ("${{ inputs.run-tests }}" -eq "true") {
+            $tests = "True"
+          }
           cmake -G Ninja `
             -S "${{ github.workspace }}" `
             -B "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
-            -DCMAKE_BUILD_TYPE=Release `
+            "-DCMAKE_BUILD_TYPE=$buildType" `
             -DCMAKE_PROJECT_INCLUDE_BEFORE="${{ github.workspace }}/build-scripts/windows-tiles-sounds-x64-msvc.cmake" `
             -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/build-scripts/MSVC.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows-static `
             -DDYNAMIC_LINKING=False `
             -DCURSES=False `
-            -DLOCALIZE=True `
+            "-DLOCALIZE=$localize" `
             -DTILES=True `
             -DSOUND=True `
-            -DTESTS=False `
-            -DRELEASE=ON `
+            "-DTESTS=$tests" `
+            "-DRELEASE=$release" `
             -DJSON_FORMAT=OFF `
             -DCMAKE_INSTALL_MESSAGE=NEVER
 
       - name: Build CBN (windows msvc)
         if: runner.os == 'Windows'
         run: |
+          $targets = @("cataclysm-bn-tiles")
+          if ("${{ inputs.run-tests }}" -eq "true") {
+            $targets += "cata_test-tiles"
+          }
           cmake --build "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" `
             --config Release `
-            --target cataclysm-bn-tiles
+            --target $targets
 
       - name: Create distribution package (windows msvc)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
+          New-Item -ItemType Directory -Force lang/mo
           cmake --install out/build/windows-tiles-sounds-x64-msvc --prefix cataclysmbn-${{ inputs.version-label }} --config Release
           Compress-Archive -Force -Path cataclysmbn-${{ inputs.version-label }}/* -DestinationPath cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.zip
 
       - name: Locate PDB (windows msvc)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: Get-ChildItem -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc" -Filter "*.pdb" -Recurse | Select-Object -ExpandProperty FullName
 
       - name: Archive PDB (windows msvc)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
           Compress-Archive -Force `
             -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb" `
@@ -417,7 +432,7 @@ jobs:
           buildPreset: ${{ matrix.preset }}
 
       - name: Rename distribution package (macOS)
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: mv CataclysmBN-*.dmg cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.dmg
 
       # Android builds
@@ -432,7 +447,7 @@ jobs:
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install gettext
+          sudo apt-get install cmake gettext ninja-build
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
@@ -464,6 +479,7 @@ jobs:
           else
             echo "::warning::Android signing secrets are unavailable; building unsigned release artifacts"
           fi
+          mkdir -p ../lang/mo
           chmod +x gradlew
 
           # Determine build variant based on version label
@@ -479,15 +495,28 @@ jobs:
 
           if [ ${{ matrix.android }} = arm64 ]
           then
-               ./gradlew -Pj=$(nproc) -Pabi_arm_32=false assemble${VARIANT}Release ${VERSION_ARG}
+               ./gradlew -Pj=$(nproc) -Pabi_arm_32=false -Plocalize=${{ inputs.android-localize }} assemble${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/apk/${VARIANT_LOWER}/release/*.apk ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.apk
           elif [ ${{ matrix.android }} = bundle ]
           then
-               ./gradlew -Pj=$(nproc) bundle${VARIANT}Release ${VERSION_ARG}
+               ./gradlew -Pj=$(nproc) -Plocalize=${{ inputs.android-localize }} bundle${VARIANT}Release ${VERSION_ARG}
                mv ./app/build/outputs/bundle/${VARIANT_LOWER}Release/*.aab ../cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.aab
           fi
 
       # Upload artifacts
+      - name: Upload packaged build artifact
+        if: inputs.upload-artifacts && matrix.upload-artifact == true
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
+          path: cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+          if-no-files-found: error
+
+      - name: Run tests (windows msvc)
+        if: runner.os == 'Windows' && inputs.run-tests
+        run: |
+          & "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/tests/cata_test-tiles.exe" --rng-seed time
+
       - name: Upload to release
         if: inputs.upload-to-release
         run: |

@@ -1878,5 +1878,10 @@
     "type": "construction_group",
     "id": "place_roulette",
     "name": "Place Roulette Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_bathtub",
+    "name": "Build Bathtub"
   }
 ]

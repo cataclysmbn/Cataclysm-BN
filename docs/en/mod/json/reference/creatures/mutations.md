@@ -23,6 +23,7 @@
 "initial_ma_styles": [ "style_crane" ], // (optional) A list of ids of martial art styles of which the player can choose one when starting a game.
 "mixed_effect": false, // Whether the trait has both positive and negative effects. This is purely declarative and is only used for the user interface. (default: false)
 "description": "Nothing gets you down!" // In-game description
+"apperance_description": "mowhawk" //only used for describing apperance mutations (i.e hair_color, hair_style, eye_color, skin_tone) in photos and extended descriptions 
 "starting_trait": true, // Can be selected at character creation (default: false)
 "valid": false,      // Can be mutated ingame (default: true)
 "purifiable": false, //Sets if the mutation be purified (default: true)

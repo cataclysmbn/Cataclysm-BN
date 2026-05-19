@@ -649,7 +649,7 @@
     "charges_per_use": 0,
     "ammo": "spray_paint",
     "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": false } ],
-    "flags": [ "WRITE_MESSAGE", "NO_UNLOAD" ]
+    "flags": [ "WRITE_MESSAGE", "NO_UNLOAD", "NO_PAINT" ]
   },
   {
     "id": "super_spray_can",
@@ -665,11 +665,8 @@
     "material": "aluminum",
     "symbol": ";",
     "color": "light_gray",
-    "initial_charges": 10,
-    "max_charges": 10,
-    "charges_per_use": 0,
     "use_action": [ { "type": "paint_stuff", "charge_cost": 1 }, { "type": "paint_stuff_cfg", "color_swap": true } ],
-    "flags": [ "WRITE_MESSAGE" ],
+    "flags": [ "WRITE_MESSAGE", "NO_PAINT" ],
     "ammo": "battery",
     "magazines": [
       [

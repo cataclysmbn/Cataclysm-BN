@@ -159,10 +159,23 @@
     "description": "A shotgun shell shooting a small explosive.  Damaging, but rather inaccurate and short ranged.  Banned in several states.",
     "price": "30 USD",
     "price_postapoc": "16 USD",
-    "//2": "currently can't be crafted",
     "count": 5,
     "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 10 },
     "extend": { "effects": [ "EXPLOSIVE", "NO_PENETRATE_OBSTACLES" ] }
+  },
+  {
+    "id": "bp_shot_he",
+    "copy-from": "shot_he",
+    "type": "AMMO",
+    "name": { "str": "explosive slug, black powder" },
+    "proportional": {
+      "price": 0.5,
+      "price_postapoc": 0.5,
+      "damage": { "damage_type": "bullet", "amount": 0.8 },
+      "recoil": 0.76,
+      "dispersion": 1.2
+    },
+    "extend": { "effects": [ "RECYCLED", "MUZZLE_SMOKE" ] }
   },
   {
     "id": "shot_scrap",

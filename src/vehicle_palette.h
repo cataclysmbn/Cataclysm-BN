@@ -27,6 +27,8 @@ class VehiclePalette
 
         static void load( const JsonObject &jo );
 
+        static void check();
+
         static void reset();
 
         int fuzzy_to_index( const vpart_id &id ) const;
