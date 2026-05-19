@@ -3057,6 +3057,10 @@ void game::move_save_to_graveyard( const std::string &dirname )
         debugmsg( "could not create graveyard path '%s'", graveyard_save_dir );
     }
 
+    // Close the player SQLite handle before moving files — on Windows, MoveFileExW
+    // fails (ERROR_SHARING_VIOLATION) if the file is open without FILE_SHARE_DELETE.
+    get_active_world()->release_player_db();
+
     const auto save_files = get_files_from_path( prefix, save_dir );
     if( save_files.empty() ) {
         debugmsg( "could not find save files in '%s'", save_dir );
@@ -3070,13 +3074,15 @@ void game::move_save_to_graveyard( const std::string &dirname )
             continue;
         }
 
-        debugmsg( "could not rename file '%s' to '%s'", src_path, dst_path );
-
-        if( remove_file( src_path ) ) {
+        // rename() fails across filesystems (EXDEV); fall back to copy then delete
+        if( copy_file( src_path, dst_path ) ) {
+            if( !remove_file( src_path ) ) {
+                debugmsg( "could not remove file '%s' after copying to graveyard", src_path );
+            }
             continue;
         }
 
-        debugmsg( "could not remove file '%s'", src_path );
+        debugmsg( "could not move file '%s' to graveyard '%s'", src_path, dst_path );
     }
 }
 

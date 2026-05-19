@@ -9,6 +9,7 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "path_info.h"
+#include "point.h"
 #include "world.h"
 
 static void write_dummy_file( const std::string &path )
@@ -118,5 +119,43 @@ TEST_CASE( "move_save_to_graveyard_creates_directories", "[graveyard]" )
     CHECK( dir_exist( dest_dir ) );
 
     remove_file( file1 );
+    remove_graveyard_subdir( graveyard_dir, dest_dir );
+}
+
+// Regression test: on Windows, MoveFileExW fails (ERROR_SHARING_VIOLATION) when
+// SQLite has the player db open without FILE_SHARE_DELETE.  The fix closes the
+// handle via release_player_db() before attempting any rename.  This test
+// reproduces the scenario by opening the player db through a normal write, then
+// immediately calling move_save_to_graveyard.
+TEST_CASE( "move_save_to_graveyard_with_open_player_db", "[graveyard]" )
+{
+    world *w = g->get_active_world();
+    // Player db only exists in V2 saves; assert rather than silently pass on V1.
+    REQUIRE( w->info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 );
+
+    const std::string save_dir      = w->info->folder_path() + "/";
+    const std::string prefix        = base64_encode( g->u.get_save_id() ) + ".";
+    const std::string graveyard_dir = PATH_INFO::graveyarddir();
+    const std::string dirname       = "test_open_db_" + get_pid_string();
+    const std::string dest_dir      = graveyard_dir + dirname + "/";
+
+    // Open the player SQLite db by writing map-memory data, mirroring what the
+    // game does during normal play before the character dies.
+    w->write_player_mm_quad( tripoint_zero, []( std::ostream & out ) {
+        out << "{}";
+    } );
+
+    const std::string sqlite_src = save_dir + prefix + "sqlite3";
+    REQUIRE( file_exist( sqlite_src ) );
+
+    remove_graveyard_subdir( graveyard_dir, dest_dir );
+    REQUIRE( !dir_exist( dest_dir ) );
+
+    g->move_save_to_graveyard( dirname );
+
+    // The sqlite3 file must be in the graveyard, not lost or left in save dir.
+    CHECK( file_exist( dest_dir + prefix + "sqlite3" ) );
+    CHECK( !file_exist( sqlite_src ) );
+
     remove_graveyard_subdir( graveyard_dir, dest_dir );
 }
