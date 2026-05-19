@@ -1546,6 +1546,13 @@ int iuse::petfood( player *p, item *it, bool, const tripoint & )
             }
         }
 
+        if( mon.is_pet() && mon.has_effect( effect_well_fed ) ) {
+            if( !query_yn( _( "The %s is already well-fed.  Feed it anyway?" ), mon.get_name() ) ) {
+                p->add_msg_if_player( _( "Never mind." ) );
+                return 0;
+            }
+        }
+
         p->add_msg_if_player( _( "You feed your %1$s to the %2$s." ), it->tname(), mon.get_name() );
 
         if( petfood.feed.empty() ) {
