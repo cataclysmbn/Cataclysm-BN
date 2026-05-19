@@ -32,7 +32,10 @@
   {
     "type": "item_group",
     "id": "mon_mutant_elfa_boss_monster_weapon",
-    "subtype": "distribution",
-    "entries": [ { "item": "longbow", "prob": 100, "damage": 0 } ]
+    "subtype": "collection",
+    "entries": [
+      { "item": "longbow", "prob": 100 },
+      { "item": "primitive_knife", "prob": 100 }
+    ]
   }
 ]
