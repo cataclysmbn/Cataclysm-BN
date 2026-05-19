@@ -285,9 +285,9 @@
     "name": { "str": "Spawning Zombie Die" },
     "description": "For zombies that are spawning something and die in the process.",
     "flags": [ "NO_EXPLOSION_VFX", "SILENT" ],
-    "min_damage": 1000,
-    "max_damage": 1000,
-    "damage_type": "dark",
+    "min_damage": 250,
+    "max_damage": 250,
+    "damage_type": "cut",
     "valid_targets": [ "hostile", "ally", "self", "ground" ],
     "effect": "target_attack"
   },
