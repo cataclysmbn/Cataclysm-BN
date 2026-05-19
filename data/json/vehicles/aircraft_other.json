@@ -189,6 +189,8 @@
       [ "     |   " ],
       [ "     |   " ]
     ],
+    "color_palette": "wooden_standard",
+    "//": "TODO: If someday we get support for layering multiple palettes on the same vehicle, add a second palette for the cloth parts.",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_light_cross", "seat_wood_light", "controls", "dashboard", "roof_cloth" ] },
       {
@@ -364,6 +366,7 @@
       "  OOOOOOOOOOOOOOOOOO  ",
       "    OOOOOOOOOOOOOO    "
     ],
+    "color_palette": "wooden_standard",
     "blueprint_origin": { "x": 13, "y": 5 },
     "palette": {
       "^": [ "frame_wood_cross", "seat_wood", "controls", "airship_balloon" ],
@@ -423,6 +426,7 @@
       " OO3-+-9OOO ",
       "  OOOOOOOO  "
     ],
+    "color_palette": "wooden_standard",
     "blueprint_origin": { "x": 6, "y": 2 },
     "palette": {
       "^": [ "frame_wood_cross", "seat_wood", "controls", "airship_balloon" ],
@@ -459,6 +463,7 @@
     "id": "aircanoe",
     "name": "aircanoe",
     "blueprint": [ [ "<OO>" ] ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "sail_large", "airship_balloon" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "wood box", "airship_balloon" ] },

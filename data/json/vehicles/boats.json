@@ -4,6 +4,7 @@
     "type": "vehicle",
     "name": "canoe",
     "blueprint": [ [ "<OO>" ] ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "boat_board" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board", "seat_wood_light" ] },
@@ -165,6 +166,7 @@
       [ "OO" ],
       [ "OO" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "hand_paddles", "raft_board" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_cross", "raft_board" ] },
@@ -283,6 +285,7 @@
       [ "|OO|" ],
       [ "\\--/" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "hand_paddles", "boat_board" ] },
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "seat_wood", "boat_board" ] },
@@ -318,6 +321,7 @@
       [ "||##==|______|| " ],
       [ " ||||||||++|||  " ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "windshield", "v_curtain", "boat_board" ] },
       { "x": -8, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
@@ -457,6 +461,7 @@
       [ "||##__|_____t||  " ],
       [ " ||||||||++|||   " ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "plating_wood", "boat_board" ] },
       { "x": -8, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },

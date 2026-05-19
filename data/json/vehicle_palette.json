@@ -287,5 +287,48 @@
         ]
       }
     ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "wooden_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [
+          "woodboard",
+          "woodhalfboard",
+          "boat_board",
+          "raft_board",
+          "wing_wood",
+          "windshield",
+          "wood box",
+          "travois",
+          "seat_wood",
+          "wooden_aisle",
+          "door_wood",
+          "roof_wood"
+        ],
+        "colors": [
+          { "color": "Green beige", "weight": 5 },
+          { "color": "Beige", "weight": 5 },
+          { "color": "Brown beige", "weight": 5 },
+          { "color": "Broom yellow", "weight": 5 },
+          { "color": "Brown red", "weight": 5 },
+          { "color": "Beige red", "weight": 5 },
+          { "color": "Olive grey", "weight": 5 },
+          { "color": "Beige grey", "weight": 5 },
+          { "color": "Khaki grey", "weight": 5 },
+          { "color": "Green brown", "weight": 5 },
+          { "color": "Ochre brown", "weight": 5 },
+          { "color": "Clay brown", "weight": 5 },
+          { "color": "Olive brown", "weight": 5 },
+          { "color": "Nut brown", "weight": 5 },
+          { "color": "Sepia brown", "weight": 5 },
+          { "color": "Chestnut brown", "weight": 5 },
+          { "color": "Mahogany brown", "weight": 5 },
+          { "color": "Chocolate brown", "weight": 5 },
+          { "color": "Beige brown", "weight": 5 }
+        ]
+      }
+    ]
   }
 ]

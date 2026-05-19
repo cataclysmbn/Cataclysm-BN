@@ -309,5 +309,52 @@
         ]
       }
     ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "wooden_standard",
+    "//": "Expands existing palette instead of overriding.",
+    "palette": [
+      {
+        "fuzzy_ids": [
+          "woodboard",
+          "woodhalfboard",
+          "boat_board",
+          "raft_board",
+          "wing_wood",
+          "windshield",
+          "wood box",
+          "travois",
+          "seat_wood",
+          "wooden_aisle",
+          "door_wood",
+          "roof_wood"
+        ],
+        "colors": [
+          { "color": "Cherry Black", "weight": 5 },
+          { "color": "Dark Mahogany", "weight": 5 },
+          { "color": "Wood-Black Red", "weight": 5 },
+          { "color": "Chestnut Red", "weight": 5 },
+          { "color": "Brown Magenta", "weight": 5 },
+          { "color": "Rust Brown", "weight": 5 },
+          { "color": "Old Mahogany", "weight": 5 },
+          { "color": "Deep Brown", "weight": 5 },
+          { "color": "Dark Red Brown", "weight": 5 },
+          { "color": "Rosewood Apricot", "weight": 5 },
+          { "color": "Laurel Nut Brown", "weight": 5 },
+          { "color": "Maple Red", "weight": 5 },
+          { "color": "Maple Beige", "weight": 5 },
+          { "color": "Tropical Wood Brown", "weight": 5 },
+          { "color": "Rosewood Brown", "weight": 5 },
+          { "color": "Teakwood Brown", "weight": 5 },
+          { "color": "Sandalwood Beige", "weight": 5 },
+          { "color": "Boxwood Yellow", "weight": 5 },
+          { "color": "Moor Oak Grey", "weight": 5 },
+          { "color": "Oak Brown", "weight": 5 },
+          { "color": "Light Oak Brown", "weight": 5 },
+          { "color": "Smoked Oak Brown", "weight": 5 }
+        ]
+      }
+    ]
   }
 ]
