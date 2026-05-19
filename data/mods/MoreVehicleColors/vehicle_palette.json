@@ -88,7 +88,7 @@
     "clear": true,
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "trunk_carbon_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "propeller", "windshield", "door", "roof", "trunk_flat", "trunk_carbon_flat", "hatch" ],
         "colors": [
           { "color": "Noble Grey", "weight": 20, "//": "Federal Standard 36176" },
           { "color": "Baby Blue", "weight": 10 },
@@ -106,7 +106,7 @@
     "clear": true,
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "Cataclysm Green", "weight": 20 },
           { "color": "Onyx Black", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
@@ -278,7 +278,7 @@
     "clear": true,
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "propeller", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "Prince Grey", "weight": 10 },
           { "color": "Ink Black", "weight": 5 },
@@ -298,7 +298,7 @@
     "clear": true,
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "propeller", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "White aluminium", "weight": 15 },
           { "color": "British Mauve", "weight": 10 },
@@ -306,6 +306,72 @@
           { "color": "Poster Yellow", "weight": 5 },
           { "color": "Golf Green", "weight": 5 },
           { "color": "Coronation Blue", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "wooden_standard",
+    "//": "Expands existing palette instead of overriding.",
+    "palette": [
+      {
+        "fuzzy_ids": [
+          "woodboard",
+          "woodhalfboard",
+          "boat_board",
+          "raft_board",
+          "wing_wood",
+          "propeller_wood",
+          "windshield",
+          "wood box",
+          "travois",
+          "seat_wood",
+          "wooden_aisle",
+          "door_wood",
+          "roof_wood"
+        ],
+        "colors": [
+          { "color": "Cherry Black", "weight": 5 },
+          { "color": "Dark Mahogany", "weight": 5 },
+          { "color": "Wood-Black Red", "weight": 5 },
+          { "color": "Chestnut Red", "weight": 5 },
+          { "color": "Brown Magenta", "weight": 5 },
+          { "color": "Rust Brown", "weight": 5 },
+          { "color": "Old Mahogany", "weight": 5 },
+          { "color": "Deep Brown", "weight": 5 },
+          { "color": "Dark Red Brown", "weight": 5 },
+          { "color": "Rosewood Apricot", "weight": 5 },
+          { "color": "Laurel Nut Brown", "weight": 5 },
+          { "color": "Maple Red", "weight": 5 },
+          { "color": "Maple Beige", "weight": 5 },
+          { "color": "Tropical Wood Brown", "weight": 5 },
+          { "color": "Rosewood Brown", "weight": 5 },
+          { "color": "Teakwood Brown", "weight": 5 },
+          { "color": "Sandalwood Beige", "weight": 5 },
+          { "color": "Boxwood Yellow", "weight": 5 },
+          { "color": "Moor Oak Grey", "weight": 5 },
+          { "color": "Oak Brown", "weight": 5 },
+          { "color": "Light Oak Brown", "weight": 5 },
+          { "color": "Smoked Oak Brown", "weight": 5 }
+        ]
+      },
+      {
+        "fuzzy_ids": [ "clothboard", "cloth_halfboard", "roof_cloth", "cargo_bag" ],
+        "colors": [
+          { "color": "Steel Grey", "weight": 5 },
+          { "color": "Light Grey", "weight": 5 },
+          { "color": "Shadow White", "weight": 5 },
+          { "color": "Winter White", "weight": 5 },
+          { "color": "Dull Dusky Pink", "weight": 5 },
+          { "color": "Antique White", "weight": 5 },
+          { "color": "Nomad Grey", "weight": 5 },
+          { "color": "Smoky White", "weight": 5 },
+          { "color": "Oilcloth Green", "weight": 5 },
+          { "color": "Linen Grey", "weight": 5 },
+          { "color": "Linen Blue", "weight": 5 },
+          { "color": "Cotton White", "weight": 5 },
+          { "color": "Vibrant Red", "weight": 5, "//": "Red Baron" }
         ]
       }
     ]

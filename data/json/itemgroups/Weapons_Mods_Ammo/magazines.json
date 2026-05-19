@@ -46,18 +46,27 @@
   {
     "type": "item_group",
     "id": "mags_surplus",
-    "//": "Obsolete military magazines no longer in common use.",
+    "//": "Obsolete military magazines no longer in common use.  Matches mags used in guns_surplus.",
     "items": [
-      [ "3006_clip", 5 ],
+      { "group": "display_hi_power_9mm_mag", "prob": 10 },
+      { "group": "display_m9_mag", "prob": 15 },
+      { "group": "display_m1911_mag", "prob": 20 },
+      { "group": "display_tommygun_mag", "prob": 20 },
+      [ "stenmag", 10 ],
+      { "group": "display_fn_fal_mag", "prob": 5 },
+      { "group": "display_hk_g3_mag", "prob": 5 },
+      { "group": "display_m14_mag", "prob": 15 },
+      [ "ar10mag_20rd", 10 ],
+      { "group": "display_ak47_mag", "prob": 10 },
+      [ "762x39_clip", 10 ],
+      [ "762R_clip", 20 ],
+      [ "garandclip", 20 ],
+      [ "3006_clip", 15 ],
+      { "group": "display_m1918_mag", "prob": 15 },
+      { "item": "ammolink308", "count": [ 100, 200 ], "prob": 10 },
+      { "item": "ammolink50", "count": [ 100, 200 ], "prob": 5 },
       [ "pressurized_tank", 5 ],
-      [ "falmag", 20 ],
-      [ "g3mag", 15 ],
-      [ "m14mag", 25 ],
-      [ "m1911mag", 15 ],
-      [ "m1918mag", 5 ],
-      [ "m9mag", 25 ],
-      [ "stenmag", 40 ],
-      [ "thompson_mag", 5 ]
+      [ "m74_clip", 5 ]
     ]
   },
   {

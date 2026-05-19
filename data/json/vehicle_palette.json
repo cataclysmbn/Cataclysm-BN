@@ -80,7 +80,7 @@
     "id": "military_fighter",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "trunk_carbon_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "propeller", "windshield", "door", "roof", "trunk_flat", "trunk_carbon_flat", "hatch" ],
         "colors": [
           { "color": "Telegrey 1", "weight": 20, "//": "Federal Standard 36176" },
           { "color": "Pastel turquoise", "weight": 10 },
@@ -97,7 +97,7 @@
     "id": "military_heli",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "Cataclysm Green", "weight": 20 },
           { "color": "Black grey", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
@@ -257,7 +257,7 @@
     "id": "aircraft_standard",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "propeller", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "Pigeon Blue", "weight": 10 },
           { "color": "Black grey", "weight": 5 },
@@ -276,7 +276,7 @@
     "id": "aircraft_commercial",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "propeller", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "White aluminium", "weight": 15 },
           { "color": "Gentian blue", "weight": 10 },
@@ -284,6 +284,68 @@
           { "color": "Lemon Yellow", "weight": 5 },
           { "color": "Turquoise Green", "weight": 5 },
           { "color": "Ultramarine Blue", "weight": 1 }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "wooden_standard",
+    "palette": [
+      {
+        "fuzzy_ids": [
+          "woodboard",
+          "woodhalfboard",
+          "boat_board",
+          "raft_board",
+          "wing_wood",
+          "propeller_wood",
+          "windshield",
+          "wood box",
+          "travois",
+          "seat_wood",
+          "wooden_aisle",
+          "door_wood",
+          "roof_wood"
+        ],
+        "colors": [
+          { "color": "Green beige", "weight": 5 },
+          { "color": "Beige", "weight": 5 },
+          { "color": "Brown beige", "weight": 5 },
+          { "color": "Broom yellow", "weight": 5 },
+          { "color": "Brown red", "weight": 5 },
+          { "color": "Beige red", "weight": 5 },
+          { "color": "Olive grey", "weight": 5 },
+          { "color": "Beige grey", "weight": 5 },
+          { "color": "Khaki grey", "weight": 5 },
+          { "color": "Green brown", "weight": 5 },
+          { "color": "Ochre brown", "weight": 5 },
+          { "color": "Clay brown", "weight": 5 },
+          { "color": "Olive brown", "weight": 5 },
+          { "color": "Nut brown", "weight": 5 },
+          { "color": "Sepia brown", "weight": 5 },
+          { "color": "Chestnut brown", "weight": 5 },
+          { "color": "Mahogany brown", "weight": 5 },
+          { "color": "Chocolate brown", "weight": 5 },
+          { "color": "Beige brown", "weight": 5 }
+        ]
+      },
+      {
+        "fuzzy_ids": [ "clothboard", "cloth_halfboard", "roof_cloth", "cargo_bag" ],
+        "colors": [
+          { "color": "Oyster white", "weight": 5 },
+          { "color": "Ivory", "weight": 5 },
+          { "color": "Light ivory", "weight": 5 },
+          { "color": "Grey beige", "weight": 5 },
+          { "color": "Grey blue", "weight": 5 },
+          { "color": "Silver grey", "weight": 5 },
+          { "color": "Beige grey", "weight": 5 },
+          { "color": "Black grey", "weight": 5 },
+          { "color": "Light grey", "weight": 5 },
+          { "color": "Cream", "weight": 5 },
+          { "color": "Grey white", "weight": 5 },
+          { "color": "Papyrus white", "weight": 5 },
+          { "color": "Flame red", "weight": 5, "//": "Red Baron" }
         ]
       }
     ]
