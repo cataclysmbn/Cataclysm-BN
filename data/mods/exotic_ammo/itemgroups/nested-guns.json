@@ -767,18 +767,12 @@
     "id": "display_ppsh_mag",
     "type": "item_group",
     "subtype": "distribution",
-    "entries": [
-      { "item": "ppshmag", "prob": 75 },
-      { "item": "ppshdrum", "prob": 25 }
-    ]
+    "entries": [ { "item": "ppshmag", "prob": 75 }, { "item": "ppshdrum", "prob": 25 } ]
   },
   {
     "id": "display_ak74_mag",
     "type": "item_group",
     "subtype": "distribution",
-    "entries": [
-      { "item": "ak74mag", "prob": 75 },
-      { "item": "rpk74mag", "prob": 25 }
-    ]
+    "entries": [ { "item": "ak74mag", "prob": 75 }, { "item": "rpk74mag", "prob": 25 } ]
   }
 ]
