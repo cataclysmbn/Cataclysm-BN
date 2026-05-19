@@ -354,7 +354,7 @@
         "type": "spell",
         "spell_data": { "id": "spell_mutant_elfa_decoy" },
         "cooldown": 5,
-        "monster_message": "A booming voice echoes through your mind: 'Why do you attack me? I only wish to live in communion with nature!'"
+        "monster_message": "A booming voice echoes through your mind: \"Why do you attack me? I only wish to live in communion with nature!\""
       }
     ],
     "dodge": 0,
