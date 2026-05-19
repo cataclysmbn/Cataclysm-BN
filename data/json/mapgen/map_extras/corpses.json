@@ -410,7 +410,7 @@
       "place_monster": [ { "monster": [ [ "mon_zombie_cop", 75 ], [ "mon_zombie_swat", 25 ] ], "chance": 100, "x": [ 0, 3 ], "y": [ 0, 3 ] } ]
     }
   },
-    {
+  {
     "type": "mapgen",
     "method": "json",
     "update_mapgen_id": "mx_crawler",
