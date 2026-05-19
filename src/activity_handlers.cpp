@@ -4230,6 +4230,10 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
         act->set_to_null();
         return;
     }
+    if( !mon ) {
+        act->set_to_null();
+        return;
+    }
     mon->remove_effect( effect_well_fed );
     if( 4 * p->get_skill_level( skill_survival ) >= rng( 0, 100 ) ) {
         if( mon && mon->type->pet_training ) {
