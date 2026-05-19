@@ -148,6 +148,7 @@ class RemovePartHandler
         virtual void set_floor_cache_dirty( int z ) = 0;
         virtual void removed( vehicle &veh, int part ) = 0;
         virtual void spawn_animal_from_part( item &base, const tripoint_bub_ms &loc ) = 0;
+        virtual auto part_location( const vehicle &veh, const int part ) const -> tripoint_bub_ms = 0;
 };
 
 class DefaultRemovePartHandler : public RemovePartHandler
@@ -199,6 +200,9 @@ class DefaultRemovePartHandler : public RemovePartHandler
         void spawn_animal_from_part( item &base, const tripoint_bub_ms &loc ) override {
             base.release_monster( loc, 1 );
         }
+        auto part_location( const vehicle &veh, const int part ) const -> tripoint_bub_ms override {
+            return veh.bub_part_location( part );
+        }
 };
 
 class MapgenRemovePartHandler : public RemovePartHandler
@@ -246,6 +250,9 @@ class MapgenRemovePartHandler : public RemovePartHandler
             // still containing the animal.
             // This should not happend during mapgen anyway.
             // TODO: *if* this actually happens: create a spawn point for the animal instead.
+        }
+        auto part_location( const vehicle &veh, const int part ) const -> tripoint_bub_ms override {
+            return m.abs_to_bub( veh.abs_part_location( part ) );
         }
 };
 
@@ -2300,7 +2307,7 @@ bool vehicle::remove_part( const int p, RemovePartHandler &handler )
         return false;
     }
 
-    const auto part_loc = bub_part_location( p );
+    const auto part_loc = handler.part_location( *this, p );
 
     // Unboard any entities standing on removed boardable parts
     if( part_flag( p, "BOARDABLE" ) && parts[p].has_flag( vehicle_part::passenger_flag ) ) {

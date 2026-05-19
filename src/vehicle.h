@@ -851,6 +851,7 @@ class vehicle
         // get symbol for map
         char part_sym( int p, bool exact = false ) const;
         vpart_id part_id_string( int p, bool roof, char &part_mod ) const;
+        auto part_display_direction( int p, bool roof = false ) const -> units::angle;
 
         // get color for map
         nc_color part_color( int p, bool exact = false ) const;

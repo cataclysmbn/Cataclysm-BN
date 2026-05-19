@@ -10,6 +10,7 @@
 #include "map.h"
 #include "output.h"
 #include "sdltiles.h"
+#include "units_utility.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -265,8 +266,9 @@ void vehicle_preview_window::display( const vehicle &veh, tripoint_mnt_veh curso
         // Get paint colors for this part (will return actual colors when painting is implemented)
         const auto [bg_color, fg_color] = veh_preview_adapter::get_part_colors( veh, part_idx );
 
-        // Always display parts facing north (270 degrees, since 0 = east)
-        draw_vpart_at_pixel( vp_id, pixel_pos, part_mod, 270_degrees, bg_color, fg_color );
+        const auto part_direction = normalize( 270_degrees + veh.part_display_direction( part_idx ) -
+                                               veh.face.dir() );
+        draw_vpart_at_pixel( vp_id, pixel_pos, part_mod, part_direction, bg_color, fg_color );
 
         const bool is_highlighted = ( part_idx == highlight_part ) ||
                                     ( q == point_rel_veh::zero() );

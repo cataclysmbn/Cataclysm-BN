@@ -2430,7 +2430,10 @@ void veh_interact::display_veh()
     std::vector<int> structural_parts = veh->all_standalone_parts();
     for( auto &structural_part : structural_parts ) {
         const int p = structural_part;
-        int sym = veh->part_sym( p );
+        const auto part_direction = normalize( 270_degrees + veh->part_display_direction( p ) -
+                                               veh->face.dir() );
+        const auto part_face = tileray( part_direction );
+        const auto sym = part_face.dir_symbol( veh->part_sym( p ) );
         nc_color col = veh->part_color( p );
 
         const auto q = ( veh->part( p ).mount - vehicle_cursor ).xy().rotate( 3 );
@@ -2461,7 +2464,13 @@ void veh_interact::display_veh()
         }
     }
     nc_color col = cpart >= 0 ? veh->part_color( cpart ) : c_black;
-    int sym = cpart >= 0 ? veh->part_sym( cpart ) : ' ';
+    auto sym = static_cast<int>( ' ' );
+    if( cpart >= 0 ) {
+        const auto part_direction = normalize( 270_degrees + veh->part_display_direction( cpart ) -
+                                               veh->face.dir() );
+        const auto part_face = tileray( part_direction );
+        sym = part_face.dir_symbol( veh->part_sym( cpart ) );
+    }
     mvwputch( w_disp, point( hw, hh ), obstruct ? red_background( col ) : hilite( col ),
               special_symbol( sym ) );
     wnoutrefresh( w_disp );

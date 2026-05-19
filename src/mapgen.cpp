@@ -81,6 +81,7 @@
 #include "translations.h"
 #include "trap.h"
 #include "type_id.h"
+#include "units_utility.h"
 #include "value_ptr.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -6514,44 +6515,33 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
         // Use abs_part_location + this map's abs_to_bub so that during mapgen
         // (where get_map() is the player map, not this tinymap) the position
         // checks reference the correct submap grid.
-        const auto p = abs_to_bub( veh->abs_part_location( *part ) );
+        const auto abs_pos = veh->abs_part_location( *part );
+        const auto bub_pos = abs_to_bub( abs_pos );
 
         //Don't spawn anything in water
-        if( has_flag_ter( TFLAG_DEEP_WATER, p ) && !can_float ) {
+        if( has_flag_ter( TFLAG_DEEP_WATER, bub_pos ) && !can_float ) {
             return nullptr;
         }
 
         // Don't spawn shopping carts on top of another vehicle or other obstacle.
         if( veh->type == vproto_id( "shopping_cart" ) ) {
-            if( veh_at( p ) || impassable( p ) ) {
+            if( veh_at( abs_pos ) || impassable( bub_pos ) ) {
                 return nullptr;
             }
         }
 
         //For other vehicles, simulate collisions with (non-shopping cart) stuff
-        vehicle *const other_veh = veh_pointer_or_null( veh_at( p ) );
+        vehicle *const other_veh = veh_pointer_or_null( veh_at( abs_pos ) );
         if( other_veh != nullptr && other_veh->type != vproto_id( "shopping_cart" ) ) {
             if( !merge_wrecks ) {
                 return nullptr;
             }
 
-            // Hard wreck-merging limit: 200 tiles
+            // Hard wreck-merging limit: 250 tiles
             // Merging is slow for big vehicles which lags the mapgen
-            if( frame_indices.size() + other_veh->all_standalone_parts().size() > 200 ) {
+            if( frame_indices.size() + other_veh->all_standalone_parts().size() > 250 ) {
                 return nullptr;
             }
-
-            /* There's a vehicle here, so let's fuse them together into wreckage and
-             * smash them up. It'll look like a nasty collision has occurred.
-             * Trying to do a local->global->local conversion would be a major
-             * headache, so instead, let's make another vehicle whose (0, 0) point
-             * is the (0, 0) of the existing vehicle, convert the coordinates of both
-             * vehicles into global coordinates, find the distance between them and
-             * p and then install them that way.
-             * Create a vehicle with type "null" so it starts out empty. */
-            auto wreckage = std::make_unique<vehicle>();
-            wreckage->sm_ms_pos = other_veh->sm_ms_pos;
-            wreckage->abs_sm_pos = other_veh->abs_sm_pos;
 
             // We must remove the vehicle from the map before we move away its parts
             std::unique_ptr<vehicle> old_veh = detach_vehicle( other_veh );
@@ -6559,21 +6549,19 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
                 return nullptr;
             }
 
-            for( const vpart_reference &vpr : veh->get_all_parts() ) {
-                const auto part_pos = wreckage->bubble_to_mount( veh->bub_part_location( vpr.part() ) );
-                wreckage->install_part( part_pos, std::move( vpr.part() ) );
-            }
-
             for( const vpart_reference &vpr : old_veh->get_all_parts() ) {
-                const auto part_pos = wreckage->bubble_to_mount( old_veh->bub_part_location( vpr.part() ) );
-                wreckage->install_part( part_pos, vehicle_part{vpr.part(), &*wreckage} );
+                const auto part_pos = veh->abs_to_mount( old_veh->abs_part_location( vpr.part() ) );
+                auto transferred_part = vehicle_part{ vpr.part(), &*veh };
+                transferred_part.direction = normalize( old_veh->face.dir() + transferred_part.direction -
+                                                        veh->face.dir() );
+                veh->install_part( part_pos, std::move( transferred_part ) );
             }
 
-            wreckage->name = _( "Wreckage" );
+            veh->name = _( "Wreckage" );
 
 
             // Try again with the wreckage
-            std::unique_ptr<vehicle> new_veh = add_vehicle_to_map( std::move( wreckage ), true );
+            std::unique_ptr<vehicle> new_veh = add_vehicle_to_map( std::move( veh ), true );
             if( new_veh != nullptr ) {
                 new_veh->smash( *this );
                 return new_veh;
@@ -6583,16 +6571,16 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
             add_vehicle_to_map( std::move( old_veh ), false );
             return nullptr;
 
-        } else if( impassable( p ) ) {
+        } else if( impassable( bub_pos ) ) {
             if( !merge_wrecks ) {
                 return nullptr;
             }
 
             // There's a wall or other obstacle here; destroy it
-            destroy( p, true );
+            destroy( bub_pos, true );
 
             // Some weird terrain, don't place the vehicle
-            if( impassable( p ) ) {
+            if( impassable( bub_pos ) ) {
                 return nullptr;
             }
 

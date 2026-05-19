@@ -5175,7 +5175,8 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
         }
         const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
         const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-        const int rotation = std::round( to_degrees( veh.face.dir() ) );
+        const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
+                veh_part, use_roof_variant ) ) ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
         // Always clear while moving — the check_seen_cache gate would miss residual
@@ -5244,7 +5245,8 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
             }
             const vpart_id &vp_id = veh.part_id_string( veh_part, use_roof_variant, part_mod );
             const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-            const int rotation = std::round( to_degrees( veh.face.dir() ) );
+            const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
+                    veh_part, use_roof_variant ) ) ) );
             const std::string vpname = "vp_" + vp_id.str();
             if( !veh.forward_velocity() ) {
                 get_avatar().memorize_tile( here.bub_to_abs( p ), vpname, subtile, rotation );
@@ -5286,7 +5288,8 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
         char part_mod = 0;
         const vpart_id &vp_id = veh->part( veh_part ).info().get_id();
         const int subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
-        const int rotation = std::round( to_degrees( veh->face.dir() ) );
+        const auto rotation = static_cast<int>( std::round( to_degrees( veh->part_display_direction(
+                veh_part ) ) ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
         if( here.check_seen_cache( p ) ) {
