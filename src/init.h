@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "catalua.h"
+#include "filesystem.h"
 #include "json.h"
 #include "memory_fast.h"
 #include "type_id.h"
@@ -137,7 +138,7 @@ class DynamicDataLoader
          * @throws std::exception on all kind of errors.
          */
         /*@{*/
-        void load_data_from_path( const std::string &path, const std::string &src, loading_ui &ui );
+        void load_data_from_path( const fs::path &path, const std::string &src, loading_ui &ui );
         /*@}*/
         /**
          * Deletes and unloads all the data previously loaded with

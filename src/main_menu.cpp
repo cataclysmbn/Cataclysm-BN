@@ -593,11 +593,9 @@ void main_menu::load_char_templates()
 {
     templates.clear();
 
-    for( std::string path : get_files_from_path( ".template", PATH_INFO::templatedir(), false,
+    for( const auto &path : get_files_from_path( ".template", PATH_INFO::templatedir(), false,
             true ) ) {
-        path.erase( path.find( ".template" ), std::string::npos );
-        path.erase( 0, path.find_last_of( "\\/" ) + 1 );
-        templates.push_back( path );
+        templates.push_back( path.stem().generic_string() );
     }
     std::sort( templates.begin(), templates.end(), localized_compare );
     std::reverse( templates.begin(), templates.end() );
@@ -918,7 +916,7 @@ bool main_menu::new_character_tab()
                               .query().action;
             if( res == "DELETE" &&
                 query_yn( _( "Are you sure you want to delete %s?" ), templates[opt_val] ) ) {
-                const auto path = PATH_INFO::templatedir() + templates[opt_val] + ".template";
+                const auto path = PATH_INFO::templatedir() / ( templates[opt_val] + ".template" );
                 if( !remove_file( path ) ) {
                     popup( _( "Sorry, something went wrong." ) );
                 } else {

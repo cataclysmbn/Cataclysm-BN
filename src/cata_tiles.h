@@ -12,6 +12,7 @@
 #include <variant>
 
 #include "animation.h"
+#include "filesystem.h"
 #include "enums.h"
 #include "hash_utils.h"
 #include "hsv_color.h"
@@ -138,7 +139,7 @@ class texture
             srcrect( rect ) { }
         texture( SDL_Texture_SharedPtr ptr, const SDL_Rect &rect ) : sdl_texture_ptr( ptr ),
             srcrect( { static_cast<float>( rect.x ), static_cast<float>( rect.y ),
-                     static_cast<float>( rect.w ), static_cast<float>( rect.h ) } ) { }
+            static_cast<float>( rect.w ), static_cast<float>( rect.h ) } ) { }
         texture() = default;
 
         /// Returns the width (first) and height (second) of the stored texture.
@@ -161,11 +162,11 @@ class texture
                              const SDL_Point *const center, const SDL_FlipMode flip ) const {
             const std::optional<SDL_FRect> fdst = dstrect
                                                   ? std::optional<SDL_FRect>( SDL_FRect{ float( dstrect->x ), float( dstrect->y ),
-                                                          float( dstrect->w ), float( dstrect->h ) } )
+                                                      float( dstrect->w ), float( dstrect->h ) } )
                                                   : std::nullopt;
             const std::optional<SDL_FPoint> fcenter = center
-                    ? std::optional<SDL_FPoint>( SDL_FPoint{ float( center->x ), float( center->y ) } )
-                    : std::nullopt;
+                ? std::optional<SDL_FPoint>( SDL_FPoint{ float( center->x ), float( center->y ) } )
+                : std::nullopt;
             return SDL_RenderTextureRotated( renderer.get(), sdl_texture_ptr.get(), &srcrect,
                                              fdst ? &fdst.value() : nullptr, angle,
                                              fcenter ? &fcenter.value() : nullptr, flip );
@@ -560,7 +561,7 @@ class tileset_loader
          *        executing if you set it to true.
          * @throw std::exception If the image can not be loaded.
          */
-        void load_tileset( const std::string &path, bool pump_events );
+        void load_tileset( const fs::path &path, bool pump_events );
         /**
          * Load tiles from json data.This expects a "tiles" array in
          * <B>config</B>. That array should contain all the tile definition that
@@ -584,8 +585,8 @@ class tileset_loader
          *        executing if you set it to true.
          * @throw std::exception On any error.
          */
-        void load_internal( const JsonObject &config, const std::string &tileset_root,
-                            const std::string &img_path, bool pump_events );
+        void load_internal( const JsonObject &config, const fs::path &tileset_root,
+                            const fs::path &img_path, bool pump_events );
     public:
         tileset_loader( tileset &ts, const SDL_Renderer_Ptr &r ) : ts( ts ), renderer( r ) {
         }

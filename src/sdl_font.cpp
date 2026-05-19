@@ -63,12 +63,12 @@ std::unique_ptr<Font> Font::load_font( SDL_Renderer_Ptr &renderer, SDL_PixelForm
             try {
                 return std::unique_ptr<Font>( std::make_unique<BitmapFont>( renderer, format, width, height,
                                               palette,
-                                              PATH_INFO::user_fontdir() + typeface ) );
+                                              ( PATH_INFO::user_fontdir() / typeface ).generic_string() ) );
             } catch( std::exception & ) {
                 try {
                     return std::unique_ptr<Font>( std::make_unique<BitmapFont>( renderer, format, width, height,
                                                   palette,
-                                                  PATH_INFO::fontdir() + typeface ) );
+                                                  ( PATH_INFO::fontdir() / typeface ).generic_string() ) );
                 } catch( std::exception &err ) {
                     dbg( DL::Error ) << "Failed to load font " << typeface << ": " << err.what();
                     // Continue to load as truetype font

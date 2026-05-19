@@ -159,8 +159,8 @@ void mod_manager::refresh_mod_list()
     add_mods( mod_management::load_mods_from( PATH_INFO::user_moddir() ) );
 
     std::optional<t_mod_list> default_list = mod_management::load_mod_list(
-                PATH_INFO::mods_user_default()
-            );
+            PATH_INFO::mods_user_default()
+        );
     if( !default_list ) {
         default_list = mod_management::load_mod_list( PATH_INFO::mods_dev_default() );
     }
@@ -348,7 +348,7 @@ void load_mod_info( const std::string &info_file_path, std::vector<MOD_INFORMATI
     }, true );
 }
 
-bool save_mod_list( const t_mod_list &list, const std::string &path )
+bool save_mod_list( const t_mod_list &list, const fs::path &path )
 {
     return write_to_file( path, [&]( std::ostream & fout ) {
         JsonOut json( fout, true ); // pretty-print
@@ -356,7 +356,7 @@ bool save_mod_list( const t_mod_list &list, const std::string &path )
     }, _( "list of default mods" ) );
 }
 
-std::optional<t_mod_list> load_mod_list( const std::string &path )
+std::optional<t_mod_list> load_mod_list( const fs::path &path )
 {
     t_mod_list res;
 
@@ -409,7 +409,7 @@ void mod_manager::add_mods( std::vector<MOD_INFORMATION> &&list )
 
     if( !replaced.empty() ) {
         DebugLog( DL::Info, DC::Main ) << "[Mod manager] Replaced " << replaced.size() <<
-                                       " mod(s) with user overrides.";
+                                          " mod(s) with user overrides.";
         std::string msg;
         for( const replacement &it : replaced ) {
             msg += string_format( "[%s] from \"%s\" with \"%s\"\n", it.id, it.path_old, it.path_new );
@@ -424,9 +424,9 @@ bool mod_manager::set_default_mods( const t_mod_list &mods )
     return mod_management::save_mod_list( mods, PATH_INFO::mods_user_default() );
 }
 
-std::string mod_manager::get_mods_list_file( WORLDINFO *world )
+fs::path mod_manager::get_mods_list_file( WORLDINFO *world )
 {
-    return world->folder_path() + "/mods.json";
+    return world->folder_path() / "mods.json";
 }
 
 void mod_manager::save_mods_list( WORLDINFO *world ) const
@@ -434,7 +434,7 @@ void mod_manager::save_mods_list( WORLDINFO *world ) const
     if( world == nullptr ) {
         return;
     }
-    const std::string path = get_mods_list_file( world );
+    const auto path = get_mods_list_file( world );
     if( world->active_mod_order.empty() ) {
         // If we were called from load_mods_list to prune the list,
         // and it's empty now, delete the file.

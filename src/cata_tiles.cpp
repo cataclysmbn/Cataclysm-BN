@@ -427,11 +427,11 @@ void cata_tiles::reinit()
     RenderClear( renderer );
 }
 
-static void get_tile_information( const std::string &config_path, std::string &json_path,
-                                  std::string &tileset_path )
+static void get_tile_information( const fs::path &config_path, fs::path &json_path,
+                                  fs::path &tileset_path )
 {
-    const std::string default_json = PATH_INFO::defaulttilejson();
-    const std::string default_tileset = PATH_INFO::defaulttilepng();
+    const auto default_json = PATH_INFO::defaulttilejson();
+    const auto default_tileset = PATH_INFO::defaulttilepng();
 
     // Get JSON and TILESET vars from config
     const auto reader = [&]( std::istream & fin ) {
@@ -446,10 +446,10 @@ static void get_tile_information( const std::string &config_path, std::string &j
                 getline( fin, sOption );
             } else if( sOption.find( "JSON" ) != std::string::npos ) {
                 fin >> json_path;
-                dbg( DL::Info ) << "JSON path set to [" << json_path << "].";
+                dbg( DL::Info ) << "JSON path set to [" << json_path.generic_string() << "].";
             } else if( sOption.find( "TILESET" ) != std::string::npos ) {
                 fin >> tileset_path;
-                dbg( DL::Info ) << "TILESET path set to [" << tileset_path << "].";
+                dbg( DL::Info ) << "TILESET path set to [" << tileset_path.generic_string() << "].";
             } else {
                 getline( fin, sOption );
             }
@@ -463,11 +463,11 @@ static void get_tile_information( const std::string &config_path, std::string &j
 
     if( json_path.empty() ) {
         json_path = default_json;
-        dbg( DL::Info ) << "JSON set to default [" << json_path << "].";
+        dbg( DL::Info ) << "JSON set to default [" << json_path.generic_string() << "].";
     }
     if( tileset_path.empty() ) {
         tileset_path = default_tileset;
-        dbg( DL::Info ) << "TILESET set to default [" << tileset_path << "].";
+        dbg( DL::Info ) << "TILESET set to default [" << tileset_path.generic_string() << "].";
     }
 }
 
@@ -1750,7 +1750,7 @@ bool tileset_loader::create_textures_from_tile_atlas( const SDL_Surface_Ptr &til
     for( tiles_pixel_color_entry &entry : tile_values_data ) {
         std::vector<texture> *tile_values = std::get<0>( entry );
         color_pixel_function_pointer color_pixel_function = get_color_pixel_function( std::get<1>
-                ( entry ) );
+            ( entry ) );
         bool success;
         if( !color_pixel_function ) {
             // TODO: Move it inside apply_color_filter.
@@ -1774,9 +1774,10 @@ static void extend_vector_by( std::vector<T> &vec, const size_t additional_size 
     vec.resize( vec.size() + additional_size );
 }
 
-void tileset_loader::load_tileset( const std::string &img_path, const bool pump_events )
+void tileset_loader::load_tileset( const fs::path &img_path, const bool pump_events )
 {
-    const SDL_Surface_Ptr tile_atlas = load_image( img_path.c_str() );
+    const auto img_path_string = img_path.generic_string();
+    const SDL_Surface_Ptr tile_atlas = load_image( img_path_string.c_str() );
     assert( tile_atlas );
     tile_atlas_width = tile_atlas->w;
 
@@ -1818,7 +1819,7 @@ void tileset_loader::load_tileset( const std::string &img_path, const bool pump_
     if( max_texture_width == 0 ) {
         max_texture_width = sprite_width * min_tile_xcount;
         dbg( DL::Info ) <<
-                        "max_texture_width was set to 0.  Changing it to " <<
+        "max_texture_width was set to 0.  Changing it to " <<
                         max_texture_width;
     } else {
         throwErrorIf( max_texture_width < sprite_width,
@@ -1828,7 +1829,7 @@ void tileset_loader::load_tileset( const std::string &img_path, const bool pump_
     if( max_texture_height == 0 ) {
         max_texture_height = sprite_height * min_tile_ycount;
         dbg( DL::Info ) <<
-                        "max_texture_height was set to 0.  Changing it to "
+        "max_texture_height was set to 0.  Changing it to "
                         << max_texture_height;
     } else {
         throwErrorIf( max_texture_height < sprite_height,
@@ -2118,16 +2119,15 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
 void tileset_loader::load( const std::string &tileset_id, const bool precheck,
                            const bool pump_events )
 {
-    std::string json_conf;
-    std::string tileset_path;
-    std::string tileset_root;
+    auto json_conf = fs::path{};
+    auto tileset_path = fs::path{};
+    auto tileset_root = fs::path{};
 
     const auto tset_iter = TILESETS.find( tileset_id );
     if( tset_iter != TILESETS.end() ) {
         tileset_root = tset_iter->second;
         dbg( DL::Info ) << '"' << tileset_id << '"' << " tileset: found config file path: " << tileset_root;
-        get_tile_information( tileset_root + '/' + PATH_INFO::tileset_conf(),
-                              json_conf, tileset_path );
+        get_tile_information( tileset_root / PATH_INFO::tileset_conf(), json_conf, tileset_path );
         dbg( DL::Info ) << "Current tileset is: " << tileset_id;
     } else {
         dbg( DL::Error ) << "Tileset \"" << tileset_id << "\" from options is invalid";
@@ -2135,14 +2135,15 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         tileset_path = PATH_INFO::defaulttilepng();
     }
 
-    std::string json_path = tileset_root + '/' + json_conf;
-    std::string img_path = tileset_root + '/' + tileset_path;
+    auto json_path = tileset_root / json_conf;
+    const auto img_path = tileset_root / tileset_path;
 
-    dbg( DL::Info ) << "Attempting to Load JSON file " << json_path;
-    std::ifstream config_file( json_path.c_str(), std::ifstream::in | std::ifstream::binary );
+    dbg( DL::Info ) << "Attempting to Load JSON file " << json_path.generic_string();
+    std::ifstream config_file( json_path, std::ifstream::in | std::ifstream::binary );
 
     if( !config_file.good() ) {
-        throw std::runtime_error( std::string( "Failed to open tile info json: " ) + json_path );
+        throw std::runtime_error( std::string( "Failed to open tile info json: " ) +
+                                  json_path.generic_string() );
     }
 
     JsonIn config_json( config_file );
@@ -2185,14 +2186,15 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         json_path = mts.get_full_path();
 
         if( !mts.is_compatible( tileset_id ) ) {
-            dbg( DL::Info ) << "Mod tileset in \"" << json_path << "\" is not compatible.";
+            dbg( DL::Info ) << "Mod tileset in \"" << json_path.generic_string() << "\" is not compatible.";
             continue;
         }
-        dbg( DL::Info ) << "Attempting to Load JSON file " << json_path;
-        std::ifstream mod_config_file( json_path.c_str(), std::ifstream::in | std::ifstream::binary );
+        dbg( DL::Info ) << "Attempting to Load JSON file " << json_path.generic_string();
+        std::ifstream mod_config_file( json_path, std::ifstream::in | std::ifstream::binary );
 
         if( !mod_config_file.good() ) {
-            throw std::runtime_error( std::string( "Failed to open tile info json: " ) + json_path );
+            throw std::runtime_error( std::string( "Failed to open tile info json: " ) +
+                                      json_path.generic_string() );
         }
 
         JsonIn mod_config_json( mod_config_file );
@@ -2255,15 +2257,15 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 #endif
 }
 
-void tileset_loader::load_internal( const JsonObject &config, const std::string &tileset_root,
-                                    const std::string &img_path, const bool pump_events )
+void tileset_loader::load_internal( const JsonObject &config, const fs::path &tileset_root,
+                                    const fs::path &img_path, const bool pump_events )
 {
     if( config.has_array( "tiles-new" ) ) {
         // new system, several entries
         // When loading multiple tileset images this defines where
         // the tiles from the most recently loaded image start from.
         for( const JsonObject &tile_part_def : config.get_array( "tiles-new" ) ) {
-            const std::string tileset_image_path = tileset_root + '/' + tile_part_def.get_string( "file" );
+            const auto tileset_image_path = tileset_root / tile_part_def.get_string( "file" );
             R = -1;
             G = -1;
             B = -1;
@@ -2329,7 +2331,7 @@ void tileset_loader::load_internal( const JsonObject &config, const std::string 
         R = -1;
         G = -1;
         B = -1;
-        dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path;
+        dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path.generic_string();
         load_tileset( img_path, pump_events );
         load_tilejson_from_file( config );
         offset = size;
@@ -2736,7 +2738,7 @@ void tileset_loader::load_tilejson_from_file( const JsonObject &config )
         }
     }
     dbg( DL::Info ) << "Tile Width: " << ts.tile_width << " Tile Height: " << ts.tile_height <<
-                    " Tile Definitions: " << ts.tile_ids.size();
+                       " Tile Definitions: " << ts.tile_ids.size();
 }
 
 /**
@@ -3382,7 +3384,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                         invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
                                            np.x < min_visible_x || np.x > max_visible_x ||
                                            would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
-                                                   cache ) );
+                                               cache ) );
                     }
 
                     if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
@@ -3639,7 +3641,7 @@ void cata_tiles::draw( point dest, const tripoint &center, int width, int height
                 invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
                                    np.x < min_visible_x || np.x > max_visible_x ||
                                    would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
-                                           cache ) );
+                                       cache ) );
             }
             //calling draw to memorize everything.
             //bypass cache check in case we learn something new about the terrain's connections
@@ -4057,7 +4059,7 @@ bool cata_tiles::draw_from_id_string(
     // Trying to search for tile type
     auto search_result = prevent_occlusion_transp && retract > 0 && tile.category != C_OVERMAP_TERRAIN
                          ? tile_type_search( tile_search_params{ tile.id + "_transparent", tile.category,
-                                 tile.subcategory, tile.subtile, tile.rota } )
+                             tile.subcategory, tile.subtile, tile.rota } )
                          : std::optional<tile_search_result> {};
     if( search_result == std::nullopt ) {
         search_result = tile_type_search( tile );
@@ -4874,7 +4876,7 @@ bool cata_tiles::draw_furniture( const tripoint &p, const lit_level ll, int &hei
             const auto furn = [&]( const tripoint & q, const bool invis ) -> furn_id {
                 const auto it = furniture_override.find( q );
                 return it != furniture_override.end() ? it->second :
-                ( !overridden || !invis ) ? here.furn( q ) : f_null;
+                                               ( !overridden || !invis ) ? here.furn( q ) : f_null;
             };
             const int neighborhood[4] = {
                 static_cast<int>( furn( p + point_south, invisible[1] ) ),
@@ -4969,7 +4971,7 @@ bool cata_tiles::draw_trap( const tripoint &p, const lit_level ll, int &height_3
             const auto tr_at = [&]( const tripoint & q, const bool invis ) -> trap_id {
                 const auto it = trap_override.find( q );
                 return it != trap_override.end() ? it->second :
-                ( !overridden || !invis ) ? here.tr_at( q ).loadid : tr_null;
+                                          ( !overridden || !invis ) ? here.tr_at( q ).loadid : tr_null;
             };
             const int neighborhood[4] = {
                 static_cast<int>( tr_at( p + point_south, invisible[1] ) ),
@@ -5043,7 +5045,7 @@ bool cata_tiles::draw_field_or_item( const tripoint &p, const lit_level ll, int 
         auto field_at = [&]( const tripoint & q, const bool invis ) -> field_type_id {
             const auto it = field_override.find( q );
             return it != field_override.end() ? it->second :
-            ( !fld_overridden || !invis ) ? here.field_at( q ).displayed_field_type() : fd_null;
+                                       ( !fld_overridden || !invis ) ? here.field_at( q ).displayed_field_type() : fd_null;
         };
         // for rotation information
         const int neighborhood[4] = {
@@ -6363,7 +6365,7 @@ void cata_tiles::draw_line()
     draw_from_id_string(
     {line_endpoint_id, C_NONE, empty_string, 0, 0},
     line_trajectory.back(), std::nullopt, std::nullopt,
-    lit_level::LIT, false, 0, false
+                   lit_level::LIT, false, 0, false
     );
 }
 void cata_tiles::draw_cursor()
@@ -6538,7 +6540,7 @@ void cata_tiles::get_terrain_orientation( const tripoint &p, int &rota, int &sub
     const auto ter = [&]( const tripoint & q, const bool invis ) -> ter_id {
         const auto override = ter_override.find( q );
         return override != ter_override.end() ? override->second :
-        ( !overridden || !invis ) ? here.ter( q ) : t_null;
+                                       ( !overridden || !invis ) ? here.ter( q ) : t_null;
     };
 
     // get terrain at x,y

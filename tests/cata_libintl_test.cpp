@@ -600,14 +600,14 @@ TEST_CASE( "mo_loading_failure", "[libintl][i18n]" )
 // Load all MO files for the base game to check for loading failures
 TEST_CASE( "load_all_base_game_mos", "[libintl][i18n]" )
 {
-    std::vector<std::string> mo_files = get_files_from_path( ".mo", "lang/mo", true, true );
+    const auto mo_files = get_files_from_path( ".mo", "lang/mo", true, true );
 
     if( mo_files.empty() ) {
         WARN( "Skipping (no MO files found)" );
         return;
     }
 
-    for( const std::string &file : mo_files ) {
+    for( const auto &file : mo_files ) {
         try {
             std::vector<trans_catalogue> list;
             list.push_back( trans_catalogue::load_from_file( file ) );

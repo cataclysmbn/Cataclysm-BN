@@ -6,6 +6,7 @@
 #include <functional>
 
 #include "cata_arena.h"
+#include "filesystem.h"
 
 #if defined (_WIN32) && !defined (_MSC_VER)
 namespace __gnu_cxx
@@ -41,7 +42,7 @@ struct cata_ofstream {
             return *this;
         }
 
-        cata_ofstream &open( const std::string &path );
+        auto open( const fs::path &path ) -> cata_ofstream &; // *NOPAD*
         bool is_open();
         bool fail();
         bool bad();
@@ -78,7 +79,7 @@ struct cata_ifstream {
             _mode = m;
             return *this;
         }
-        cata_ifstream &open( const std::string &path );
+        auto open( const fs::path &path ) -> cata_ifstream &; // *NOPAD*
         bool is_open();
         bool fail();
         bool bad();
@@ -114,8 +115,8 @@ using file_write_fn = const std::function<void( std::ostream & )> &;
  * @throw The void function throws when writing failes or when the @p writer throws.
  * The other function catches all exceptions and returns false.
  */
-bool write_to_file( const std::string &path, file_write_fn &writer,
-                    const char *fail_message = nullptr );
+auto write_to_file( const fs::path &path, file_write_fn &writer,
+                    const char *fail_message = nullptr ) -> bool;
 
 class JsonDeserializer;
 
@@ -139,10 +140,10 @@ class JsonDeserializer;
  * @return `true` is the file was read without any errors, `false` upon any error.
  */
 /**@{*/
-bool read_from_file( const std::string &path, file_read_fn reader,
-                     bool optional = false );
-bool read_from_file_json( const std::string &path, file_read_json_fn reader,
-                          bool optional = false );
+auto read_from_file( const fs::path &path, file_read_fn reader,
+                     bool optional = false ) -> bool;
+auto read_from_file_json( const fs::path &path, file_read_json_fn reader,
+                          bool optional = false ) -> bool;
 
 /**@}*/
 /**
@@ -164,13 +165,13 @@ class ofstream_wrapper
 {
     private:
         cata_ofstream file_stream;
-        std::string path;
-        std::string temp_path;
+        fs::path path;
+        fs::path temp_path;
 
         void open( cata_ios_mode mode );
 
     public:
-        ofstream_wrapper( const std::string &path, cata_ios_mode mode );
+        ofstream_wrapper( const fs::path &path, cata_ios_mode mode );
         ~ofstream_wrapper();
 
         std::ostream &stream() {

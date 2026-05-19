@@ -479,7 +479,7 @@ void DynamicDataLoader::initialize()
 #endif
 }
 
-void DynamicDataLoader::load_data_from_path( const std::string &path, const std::string &src,
+void DynamicDataLoader::load_data_from_path( const fs::path &path, const std::string &src,
         loading_ui &ui )
 {
     assert( !finalized && "Can't load additional data after finalization.  Must be unloaded first." );
@@ -490,9 +490,9 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
     // But not the other way round.
 
     // get a list of all files in the directory
-    str_vec files = get_files_from_path( ".json", path, true, true );
+    auto files = get_files_from_path( ".json", path, true, true );
     if( files.empty() ) {
-        std::ifstream tmp( path.c_str(), std::ios::in );
+        std::ifstream tmp( path, std::ios::in );
         if( tmp ) {
             // path is actually a file, don't checking the extension,
             // assume we want to load this file anyway
@@ -500,8 +500,7 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
         }
     }
     // iterate over each file
-    for( auto &files_i : files ) {
-        const std::string &file = files_i;
+    for( const auto &file : files ) {
         // open the file as a stream
         cata_ifstream infile = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( file ) );
         // and stuff it into ram
@@ -513,8 +512,8 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
         );
         try {
             // parse it
-            JsonIn jsin( iss, file );
-            load_all_from_json( jsin, src, ui, path, file );
+            JsonIn jsin( iss, file.generic_string() );
+            load_all_from_json( jsin, src, ui, path.generic_string(), file.generic_string() );
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
         }

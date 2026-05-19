@@ -543,8 +543,8 @@ bool avatar::create( character_type type, const std::string &tempname )
     auto nameExists = [&]( const std::string & name ) {
         return world_generator->active_world->info->save_exists( save_t::from_save_id( name ) ) &&
                !query_yn( _( "A save with the name '%s' already exists in this world.\n"
-                             "Saving will overwrite the already existing character.\n\n"
-                             "Continue anyways?" ), name );
+                      "Saving will overwrite the already existing character.\n\n"
+                      "Continue anyways?" ), name );
     };
     set_body();
     const bool allow_reroll = true;
@@ -1461,7 +1461,7 @@ tab_direction set_traits( avatar &u, points_left &points )
             // Look through the profession bionics, and see if any of them conflict with this trait
             std::vector<bionic_id> cbms_blocking_trait = bionics_cancelling_trait( u.prof->CBMs(), cur_trait );
             std::vector<bionic_id> cbms_blocking_trait2 = bionics_cancelling_trait( u.get_bionics(),
-                    cur_trait );
+                cur_trait );
             for( auto cbm : cbms_blocking_trait2 ) {
                 cbms_blocking_trait.push_back( cbm );
             }
@@ -2390,10 +2390,10 @@ tab_direction set_profession( avatar &u, points_left &points,
             std::string g_switch_msg = u.male ?
                                        //~ Gender switch message. 1s - change key name, 2s - profession name.
                                        _( "Press <color_light_green>%1$s</color> to switch "
-                                          "to <color_magenta>%2$s</color> (<color_pink>female</color>)." ) :
+               "to <color_magenta>%2$s</color> (<color_pink>female</color>)." ) :
                                        //~ Gender switch message. 1s - change key name, 2s - profession name.
                                        _( "Press <color_light_green>%1$s</color> to switch "
-                                          "to <color_magenta>%2$s</color> (<color_light_cyan>male</color>)." );
+               "to <color_magenta>%2$s</color> (<color_light_cyan>male</color>)." );
             fold_and_print( w_genderswap, point_zero, ( TERMX / 2 ), c_light_gray, g_switch_msg.c_str(),
                             ctxt.get_desc( "CHANGE_GENDER" ),
                             sorted_profs[cur_id]->gender_appropriate_name( !u.male ) );
@@ -3298,7 +3298,7 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
     select_location.text = _( "Select a starting location." );
     int offset = 1;
     const std::string random_start_location_text = string_format( RANDOM_START_LOC_TEXT_TEMPLATE,
-            g->scen->start_location_targets_count() );
+        g->scen->start_location_targets_count() );
     uilist_entry entry_random_start_location( RANDOM_START_LOC_ENTRY, true, -1,
             random_start_location_text );
     select_location.entries.emplace_back( entry_random_start_location );
@@ -3887,8 +3887,8 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
             switch( current_selector ) {
                 case char_creation::NAME: {
                     popup.title( _( "Enter name.  Cancel to delete all." ) )
-                    .text( you.name )
-                    .only_digits( false );
+                         .text( you.name )
+                         .only_digits( false );
                     you.name = popup.query_string();
                     no_name_entered = you.name.empty();
                     break;
@@ -3897,8 +3897,8 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                     const std::string title = string_format( _( "Enter age in years.  Minimum %d, maximum %d" ),
                                               min_allowed_age, max_allowed_age );
                     popup.title( title )
-                    .text( string_format( "%d", you.base_age() ) )
-                    .only_digits( true );
+                         .text( string_format( "%d", you.base_age() ) )
+                         .only_digits( true );
                     const int result = popup.query_int();
                     if( result != 0 ) {
                         you.set_base_age( clamp( result, min_allowed_age, max_allowed_age ) );
@@ -3907,8 +3907,8 @@ tab_direction set_description( avatar &you, const bool allow_reroll,
                 }
                 case char_creation::HEIGHT: {
                     popup.title( _( "Enter height in centimeters.  Minimum 145, maximum 200" ) )
-                    .text( string_format( "%d", you.base_height() ) )
-                    .only_digits( true );
+                         .text( string_format( "%d", you.base_height() ) )
+                         .only_digits( true );
                     const int result = popup.query_int();
                     if( result != 0 ) {
                         you.set_base_height( clamp( result, 145, 200 ) );
@@ -4124,7 +4124,7 @@ void avatar::character_to_template( const std::string &name )
 void avatar::save_template( const std::string &name, const points_left &points )
 {
     std::string name_san = ensure_valid_file_name( name );
-    write_to_file( PATH_INFO::templatedir() + name_san + ".template", [&]( std::ostream & fout ) {
+    write_to_file( PATH_INFO::templatedir() / ( name_san + ".template" ), [&]( std::ostream & fout ) {
         JsonOut jsout( fout, true );
 
         jsout.start_array();
@@ -4149,8 +4149,8 @@ void avatar::save_template( const std::string &name, const points_left &points )
 
 bool avatar::load_template( const std::string &template_name, points_left &points )
 {
-    return read_from_file_json( PATH_INFO::templatedir() + template_name +
-    ".template", [&]( JsonIn & jsin ) {
+    return read_from_file_json( PATH_INFO::templatedir() / ( template_name +
+    ".template" ), [&]( JsonIn & jsin ) {
 
         if( jsin.test_array() ) {
             // not a legacy template

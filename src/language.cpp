@@ -400,7 +400,8 @@ bool translations_exists_for_lang( const std::string &lang_id )
 
     std::vector<std::string> opts = get_lang_path_substring( lang_id );
     for( const std::string &s : opts ) {
-        std::string path = PATH_INFO::base_path() + "lang/mo/" + s + "/LC_MESSAGES/cataclysm-bn.mo";
+        const auto path = PATH_INFO::base_path() / "lang" / "mo" / s / "LC_MESSAGES" /
+                          "cataclysm-bn.mo";
         if( file_exist( path ) ) {
             return true;
         }
@@ -493,7 +494,7 @@ static void add_base_catalogue( std::vector<trans_catalogue> &list, const std::s
     // TODO: split source code strings from data strings
     //       and load data translations from separate file(s)
     add_cat_if_exists( list, lang_id,
-                       PATH_INFO::base_path() + "lang/mo/",
+                       ( PATH_INFO::base_path() / "lang" / "mo" ).generic_string() + "/",
                        "/LC_MESSAGES/cataclysm-bn.mo"
                      );
 }

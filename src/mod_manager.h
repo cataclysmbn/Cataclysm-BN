@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "filesystem.h"
 #include "pimpl.h"
 #include "ret_val.h"
 #include "type_id.h"
@@ -133,13 +134,13 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
  * Save mod list to file.
  * @returns true on success.
  */
-bool save_mod_list( const t_mod_list &list, const std::string &path );
+bool save_mod_list( const t_mod_list &list, const fs::path &path );
 
 /**
  * Load mod list from file.
  * @returns std::nullopt on error.
  */
-std::optional<t_mod_list> load_mod_list( const std::string &path );
+std::optional<t_mod_list> load_mod_list( const fs::path &path );
 
 /**
  * Get id of default core content pack.
@@ -196,7 +197,7 @@ class mod_manager
          * @returns path of a file in the world folder that contains
          * the list of mods that should be loaded for this world.
          */
-        static std::string get_mods_list_file( WORLDINFO *world );
+        static fs::path get_mods_list_file( WORLDINFO *world );
 
         /**
          * Add mods from given list to the pool.
