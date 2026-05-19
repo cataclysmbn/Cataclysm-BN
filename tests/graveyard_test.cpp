@@ -92,7 +92,6 @@ TEST_CASE( "move_save_to_graveyard_ignores_unrelated_files", "[graveyard]" )
     // Unrelated file must still exist in save dir
     CHECK( file_exist( unrelated ) );
 
-    // Cleanup
     remove_file( unrelated );
     remove_graveyard_subdir( graveyard_dir, dest_dir );
 }
@@ -118,7 +117,6 @@ TEST_CASE( "move_save_to_graveyard_creates_directories", "[graveyard]" )
     CHECK( dir_exist( graveyard_dir ) );
     CHECK( dir_exist( dest_dir ) );
 
-    // Cleanup
     remove_file( file1 );
     remove_graveyard_subdir( graveyard_dir, dest_dir );
 }
