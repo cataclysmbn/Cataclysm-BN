@@ -49,7 +49,7 @@ void startup_lua_test()
     sol::state lua = make_lua_state();
     const auto lua_startup_script = PATH_INFO::datadir() / "raw" / "on_game_start.lua";
     try {
-        run_lua_script( lua, lua_startup_script );
+        run_lua_script( lua, lua_startup_script.string() );
     } catch( std::runtime_error &e ) {
         debugmsg( "%s", e.what() );
     }
