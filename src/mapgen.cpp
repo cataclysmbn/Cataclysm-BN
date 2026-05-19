@@ -6551,7 +6551,7 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
 
             for( const vpart_reference &vpr : old_veh->get_all_parts() ) {
                 const auto part_pos = veh->abs_to_mount( old_veh->abs_part_location( vpr.part() ) );
-                auto transferred_part = vehicle_part{ vpr.part(), &*veh };
+                auto transferred_part = vehicle_part{ vpr.part(), & *veh };
                 transferred_part.direction = normalize( old_veh->face.dir() + transferred_part.direction -
                                                         veh->face.dir() );
                 veh->install_part( part_pos, std::move( transferred_part ) );
