@@ -1854,8 +1854,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     tripoint_bub_sm veh_sm_max = { INT_MIN, INT_MIN, INT_MIN };
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
-        const auto p = project_to<coords::sm>( base + tripoint_rel_ms(
-                prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
+        const auto p = abs_to_bub( project_to<coords::sm>( base + tripoint_rel_ms(
+                                      prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) ) );
         veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
         veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
         veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
