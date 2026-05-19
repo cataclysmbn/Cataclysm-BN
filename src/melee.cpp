@@ -115,7 +115,15 @@ static const trait_id trait_VINES2( "VINES2" );
 static const trait_id trait_VINES3( "VINES3" );
 static const trait_flag_str_id trait_flag_NEED_ACTIVE_TO_MELEE( "NEED_ACTIVE_TO_MELEE" );
 static const trait_flag_str_id trait_flag_UNARMED_BONUS( "UNARMED_BONUS" );
+static const flag_id json_flag_UNARMED_WEAPON( "UNARMED_WEAPON" );
 static const species_id HUMAN( "HUMAN" );
+static const auto skill_stabbing = skill_id( "stabbing" );
+static const auto skill_cutting = skill_id( "cutting" );
+static const auto skill_unarmed = skill_id( "unarmed" );
+static const auto skill_bashing = skill_id( "bashing" );
+static const auto skill_melee = skill_id( "melee" );
+
+static auto hardcoded_mutation_attack( const Character &u, const trait_id &id ) -> damage_instance;
 
 namespace
 {
@@ -259,7 +267,9 @@ struct technique_menu_entry {
         weapon,
         shared,
         martial_art,
+        mutation,
     } source_group = source_group_t::martial_art;
+    bool selectable = false;
     std::string requirements;
     std::string why_unavailable;
     std::string description;
@@ -275,6 +285,8 @@ std::string
             return _( "Weapon + martial art techniques" );
         case technique_menu_entry::source_group_t::martial_art:
             return _( "Martial art techniques" );
+        case technique_menu_entry::source_group_t::mutation:
+            return _( "Mutation attacks" );
     }
 
     return {};
@@ -403,6 +415,247 @@ auto technique_aoe_reason( Character &self, Creature &target,
     return _( "needs a valid target layout" );
 }
 
+auto mutation_attack_damage( const Character &self, const trait_id &id,
+                             const mut_attack &mut_atk ) -> damage_instance
+{
+    if( mut_atk.hardcoded_effect ) {
+        return hardcoded_mutation_attack( self, id );
+    }
+
+    auto damage = mut_atk.base_damage;
+    auto scaled = mut_atk.strength_damage;
+    scaled.mult_damage( std::min<float>( 15.0f, self.get_str() ), true );
+    damage.add( scaled );
+    return damage;
+}
+
+auto mutation_attack_damage_summary( const damage_instance &damage ) -> std::string
+{
+    auto damage_parts = std::vector<std::string>();
+    for( const auto &unit : damage.damage_units ) {
+        damage_parts.push_back( string_format( _( "%.1f %s" ), unit.amount, unit.get_name() ) );
+    }
+
+    if( damage_parts.empty() ) {
+        return _( "no damage" );
+    }
+
+    return enumerate_as_string( damage_parts );
+}
+
+auto mutation_attack_unavailable_reason( const Character &self, const mut_attack &mut_atk,
+        const body_part_set &usable_body_parts ) -> std::string
+{
+    if( mut_atk.bp != num_bp && !usable_body_parts.test( convert_bp( mut_atk.bp ) ) ) {
+        return string_format( _( "%s is covered" ), body_part_name( mut_atk.bp ) );
+    }
+
+    const auto blocker = std::ranges::find_if( mut_atk.blocker_mutations,
+    [&self]( const trait_id & mut ) { return self.has_trait( mut ); } );
+    if( blocker != mut_atk.blocker_mutations.end() ) {
+        return string_format( _( "blocked by %s" ), blocker->obj().name() );
+    }
+
+    const auto missing = std::ranges::find_if( mut_atk.required_mutations,
+    [&self]( const trait_id & mut ) { return !self.has_trait( mut ); } );
+    if( missing != mut_atk.required_mutations.end() ) {
+        return string_format( _( "requires %s" ), missing->obj().name() );
+    }
+
+    return {};
+}
+
+auto mutation_attack_chance_summary( const Character &self, const mut_attack &mut_atk ) ->
+std::string
+{
+    const auto proc_value = std::max( 0, self.get_dex() + self.get_skill_level( skill_unarmed ) );
+    if( proc_value >= mut_atk.chance ) {
+        return _( "always triggers when available" );
+    }
+
+    const auto percent = 100 * proc_value / mut_atk.chance;
+    return string_format( _( "%d%% trigger chance when available" ), percent );
+}
+
+struct mutation_attack_description_options {
+    const Character &self;
+    const Creature &target;
+    const trait_id &id;
+    const mut_attack &attack;
+};
+
+auto mutation_attack_description( const mutation_attack_description_options &options ) -> std::string
+{
+    auto attack_text = std::string();
+    if( options.self.is_player() ) {
+        attack_text = string_format( _( options.attack.attack_text_u ), options.target.disp_name() );
+    } else {
+        attack_text = string_format( _( options.attack.attack_text_npc ), options.self.disp_name(),
+                                     options.target.disp_name() );
+    }
+
+    const auto damage = mutation_attack_damage( options.self, options.id, options.attack );
+    return string_format( _( "%1$s\nDamage: %2$s" ), attack_text,
+                          mutation_attack_damage_summary( damage ) );
+}
+
+auto weapon_requirement_reason( const item &weapon, const ma_requirements &reqs ) -> std::string
+{
+    if( weapon.is_null() ) {
+        return {};
+    }
+
+    if( !reqs.req_flags.empty() ) {
+        auto missing_flags = std::vector<std::string>();
+        for( const flag_id &flag : reqs.req_flags ) {
+            if( !weapon.has_flag( flag ) ) {
+                missing_flags.push_back( flag.str() );
+            }
+        }
+        if( !missing_flags.empty() ) {
+            return string_format( _( "missing required weapon flag: %s" ),
+                                 enumerate_as_string( missing_flags ) );
+        }
+    }
+
+    if( !reqs.min_damage.empty() ) {
+        auto missing_damage = std::vector<std::string>();
+        for( const auto &req : reqs.min_damage ) {
+            if( weapon.damage_melee( req.first ) < req.second ) {
+                missing_damage.push_back( string_format( _( "%s %d+" ), name_by_dt( req.first ),
+                                                         req.second ) );
+            }
+        }
+        if( !missing_damage.empty() ) {
+            return string_format( _( "needs weapon damage: %s" ),
+                                 enumerate_as_string( missing_damage ) );
+        }
+    }
+
+    return {};
+}
+
+auto character_requirement_reason( const Character &self, const ma_technique &tec,
+                                   const item &weapon ) -> std::string
+{
+    const bool cqb = self.has_active_bionic( bio_cqb );
+    const bool is_armed = self.is_armed();
+    const bool unarmed_weapon = is_armed && self.primary_weapon().has_flag( json_flag_UNARMED_WEAPON );
+    const bool forced_unarmed = self.martial_arts_data->selected_force_unarmed();
+    const bool melee_style = self.martial_arts_data->selected_strictly_melee();
+    const bool style_weapon = self.martial_arts_data->selected_has_weapon( weapon.typeId() );
+    const bool all_weapons = self.martial_arts_data->selected_allow_melee();
+    const auto style_muts = self.martial_arts_data->selected_mutations();
+
+    const bool valid_unarmed = !melee_style && tec.reqs.unarmed_allowed &&
+                               ( !is_armed || ( unarmed_weapon && tec.reqs.unarmed_weapons_allowed ) );
+    const bool valid_melee = !tec.reqs.strictly_unarmed &&
+                             ( forced_unarmed ||
+                               ( tec.reqs.melee_allowed &&
+                                 weapon_requirement_reason( weapon, tec.reqs ).empty() &&
+                                 ( style_weapon || all_weapons ) ) );
+
+    if( !valid_unarmed && !valid_melee ) {
+        if( !is_armed && tec.reqs.melee_allowed && !tec.reqs.unarmed_allowed ) {
+            return _( "requires a weapon" );
+        }
+        if( is_armed && tec.reqs.unarmed_allowed && !tec.reqs.melee_allowed ) {
+            return _( "unarmed only" );
+        }
+        const auto weapon_reason = weapon_requirement_reason( weapon, tec.reqs );
+        if( !weapon_reason.empty() ) {
+            return weapon_reason;
+        }
+        if( tec.reqs.strictly_unarmed && is_armed ) {
+            return _( "unarmed only" );
+        }
+        if( tec.reqs.melee_allowed && !is_armed ) {
+            return _( "requires a weapon" );
+        }
+        return _( "needs an allowed weapon or unarmed state" );
+    }
+
+    if( !style_muts.empty() ) {
+        const auto has_style_mut = std::ranges::any_of( style_muts,
+        [&self]( const trait_id &mut ) {
+            return self.has_trait( mut );
+        } );
+        if( !has_style_mut ) {
+            auto required_mutations = std::vector<std::string>();
+            for( const trait_id &mut : style_muts ) {
+                required_mutations.push_back( mut->name() );
+            }
+            return string_format( _( "requires mutation: %s" ),
+                                 enumerate_as_string( required_mutations ) );
+        }
+    }
+
+    if( tec.reqs.wall_adjacent && !g->m.is_wall_adjacent( self.pos() ) ) {
+        return _( "needs to be near a wall" );
+    }
+
+    if( !tec.reqs.min_skill.empty() ) {
+        auto missing_skills = std::vector<std::string>();
+        for( const auto &req : tec.reqs.min_skill ) {
+            const auto current_skill = cqb ? 5 : self.get_skill_level( req.first );
+            if( current_skill < req.second ) {
+                missing_skills.push_back( string_format( _( "%s %d+ (have %d)" ),
+                                                        req.first->name(), req.second,
+                                                        current_skill ) );
+            }
+        }
+        if( !missing_skills.empty() ) {
+            return string_format( _( "missing skill requirement: %s" ),
+                                 enumerate_as_string( missing_skills ) );
+        }
+    }
+
+    if( !tec.reqs.weapon_categories_allowed.empty() && is_armed ) {
+        const auto matches_category = std::ranges::any_of( tec.reqs.weapon_categories_allowed,
+        [&weapon]( const weapon_category_id &cat ) {
+            return weapon.typeId()->weapon_category.contains( cat );
+        } );
+        if( !matches_category ) {
+            auto categories = std::vector<std::string>();
+            for( const weapon_category_id &cat : tec.reqs.weapon_categories_allowed ) {
+                categories.push_back( cat->name().translated() );
+            }
+            return string_format( _( "wrong weapon category: %s" ),
+                                 enumerate_as_string( categories ) );
+        }
+    }
+
+    if( !tec.reqs.mutations_required.empty() ) {
+        const auto has_required_mutation = std::ranges::any_of( tec.reqs.mutations_required,
+        [&self]( const trait_id &mut ) {
+            return self.has_trait( mut );
+        } );
+        if( !has_required_mutation ) {
+            auto required_mutations = std::vector<std::string>();
+            for( const trait_id &mut : tec.reqs.mutations_required ) {
+                required_mutations.push_back( mut->name() );
+            }
+            return string_format( _( "requires mutation: %s" ),
+                                 enumerate_as_string( required_mutations ) );
+        }
+    }
+
+    if( !tec.reqs.req_buffs.empty() ) {
+        auto missing_buffs = std::vector<std::string>();
+        for( const mabuff_id &buff_id : tec.reqs.req_buffs ) {
+            if( !self.has_mabuff( buff_id ) ) {
+                missing_buffs.push_back( buff_id->name );
+            }
+        }
+        if( !missing_buffs.empty() ) {
+            return string_format( _( "missing required buff: %s" ),
+                                 enumerate_as_string( missing_buffs ) );
+        }
+    }
+
+    return {};
+}
+
 auto technique_requirement_summary( const ma_technique &technique ) -> std::string
 {
     auto summary = std::string();
@@ -528,31 +781,10 @@ auto technique_unavailable_reason( Character &self, Creature &target,
     }
 
     if( !tec.is_valid_character( self ) ) {
-        if( !tec.reqs.req_buffs.empty() ) {
-            return _( "missing required buff" );
+        const auto reason = character_requirement_reason( self, tec, options.weapon );
+        if( !reason.empty() ) {
+            return reason;
         }
-
-        if( !tec.reqs.mutations_required.empty() ) {
-            return _( "missing required mutation" );
-        }
-
-        if( !tec.reqs.weapon_categories_allowed.empty() ) {
-            return _( "wrong weapon category" );
-        }
-
-        if( !tec.reqs.min_skill.empty() ) {
-            const auto &req = tec.reqs.min_skill.front();
-            return string_format( _( "%s %d+" ), req.first->name(), req.second );
-        }
-
-        if( tec.reqs.strictly_unarmed && self.is_armed() ) {
-            return _( "unarmed only" );
-        }
-
-        if( tec.reqs.melee_allowed && !self.is_armed() ) {
-            return _( "requires a weapon" );
-        }
-
         return _( "requirements not met" );
     }
 
@@ -679,6 +911,7 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
                 .technique = tec_id,
                 .enabled = reason.empty(),
                 .source_group = source_group,
+                .selectable = reason.empty(),
                 .requirements = technique_requirement_summary( technique ),
                 .why_unavailable = reason,
                 .description = replace_colors( technique.get_description() ),
@@ -694,12 +927,27 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         if( reason.empty() ) {
             entry.technique = tec_id;
             entry.enabled = true;
+            entry.selectable = true;
             entry.requirements = technique_requirement_summary( technique );
             entry.why_unavailable.clear();
             entry.description = replace_colors( technique.get_description() );
         } else if( !entry.enabled && entry.why_unavailable.empty() ) {
             entry.why_unavailable = reason;
         }
+    }
+
+    for( const auto &entry : melee::mutation_attack_prompt_entries( self, target ) ) {
+        menu_entries.push_back( technique_menu_entry{
+            .name = entry.name,
+            .technique = tec_none,
+            .enabled = entry.available,
+            .source_group = technique_menu_entry::source_group_t::mutation,
+            .selectable = false,
+            .requirements = entry.requirements,
+            .why_unavailable = entry.available ? _( "automatic extra attack" ) :
+                               entry.why_unavailable,
+            .description = replace_colors( entry.description ),
+        } );
     }
 
     if( menu_entries.empty() ) {
@@ -716,8 +964,10 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
                     return 1;
                 case technique_menu_entry::source_group_t::martial_art:
                     return 2;
+                case technique_menu_entry::source_group_t::mutation:
+                    return 3;
             }
-            return 3;
+            return 4;
         };
 
         if( source_rank( lhs.source_group ) != source_rank( rhs.source_group ) ) {
@@ -737,7 +987,10 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         technique_reference_text += string_format( _( "<header>Technique:</header> <bold>%s</bold>\n" ),
                                     entry.name );
         technique_reference_text += entry.description + "\n";
-        if( !entry.enabled && !entry.why_unavailable.empty() ) {
+        if( entry.enabled && !entry.selectable && !entry.why_unavailable.empty() ) {
+            technique_reference_text += string_format( _( "<header>Trigger:</header> %s\n" ),
+                                        entry.why_unavailable );
+        } else if( !entry.enabled && !entry.why_unavailable.empty() ) {
             technique_reference_text += string_format( _( "<bad>Unavailable:</bad> %s\n" ),
                                         entry.why_unavailable );
         }
@@ -778,10 +1031,14 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
             header_entry.extratxt = mvwzstr{ .left = 0, .color = c_yellow,
                                              .txt = technique_source_header( entry.source_group ) };
         }
-        if( entry.enabled ) {
+        if( entry.selectable ) {
             menu.addentry_desc( static_cast<int>( index ), true, MENU_AUTOASSIGN, entry.name,
                                 entry.description );
             menu.entries.back().ctxt = entry.requirements;
+        } else if( entry.enabled ) {
+            menu.addentry_col( static_cast<int>( index ), false, MENU_AUTOASSIGN, entry.name,
+                               entry.why_unavailable,
+                               entry.description );
         } else {
             menu.addentry_col( static_cast<int>( index ), false, MENU_AUTOASSIGN, entry.name,
                                entry.why_unavailable,
@@ -806,7 +1063,8 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         return { .mode = technique_prompt_result::mode_t::automatic, .technique = std::nullopt };
     }
 
-    if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= menu_entries.size() ) {
+    if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= menu_entries.size() ||
+        !menu_entries[menu.ret].selectable ) {
         return { .canceled = true, .mode = technique_prompt_result::mode_t::canceled,
                  .technique = std::nullopt };
     }
@@ -816,6 +1074,53 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
 }
 
 } // namespace
+
+auto melee::mutation_attack_prompt_entries( const Character &self, const Creature &target ) ->
+std::vector<mutation_attack_prompt_entry>
+{
+    const auto usable_body_parts = self.exclusive_flag_coverage( flag_ALLOWS_NATURAL_ATTACKS );
+    auto entries = std::vector<mutation_attack_prompt_entry>();
+
+    for( const trait_id &trait : self.get_mutations() ) {
+        const auto &branch = trait.obj();
+        for( const auto &mut_atk : branch.attacks_granted ) {
+            const auto damage = mutation_attack_damage( self, trait, mut_atk );
+            if( damage.total_damage() <= 0.0f ) {
+                continue;
+            }
+
+            const auto reason = mutation_attack_unavailable_reason( self, mut_atk,
+                                usable_body_parts );
+            auto requirements = mutation_attack_chance_summary( self, mut_atk );
+            if( mut_atk.bp != num_bp ) {
+                requirements += string_format( _( ", uses %s" ), body_part_name( mut_atk.bp ) );
+            }
+
+            entries.push_back( {
+                .name = branch.name(),
+                .requirements = requirements,
+                .why_unavailable = reason,
+                .description = mutation_attack_description( {
+                    .self = self,
+                    .target = target,
+                    .id = trait,
+                    .attack = mut_atk,
+                } ),
+                .available = reason.empty(),
+            } );
+        }
+    }
+
+    std::ranges::sort( entries, []( const mutation_attack_prompt_entry & lhs,
+    const mutation_attack_prompt_entry & rhs ) {
+        if( lhs.available != rhs.available ) {
+            return lhs.available > rhs.available;
+        }
+        return lhs.name < rhs.name;
+    } );
+
+    return entries;
+}
 
 auto melee::is_technique_prompt_suppressed() -> bool
 {
@@ -831,6 +1136,8 @@ melee::technique_prompt_suppression_guard::~technique_prompt_suppression_guard()
 {
     --technique_prompt_suppression_depth;
 }
+
+static const matec_id WBLOCK_3( "WBLOCK_3" );
 
 void player_hit_message( Character *attacker, const std::string &message,
                          Creature &t, int dam, bool crit = false );
@@ -2808,7 +3115,7 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
     return dump;
 }
 
-static damage_instance hardcoded_mutation_attack( const Character &u, const trait_id &id )
+static auto hardcoded_mutation_attack( const Character &u, const trait_id &id ) -> damage_instance
 {
     if( id == trait_BEAK_PECK ) {
         // method open to improvement, please feel free to suggest
@@ -2919,17 +3226,7 @@ std::vector<special_attack> Character::mutation_attacks( Creature &t ) const
                 tmp.text = string_format( _( mut_atk.attack_text_npc ), name, target );
             }
 
-            // Attack starts here
-            if( mut_atk.hardcoded_effect ) {
-                tmp.damage = hardcoded_mutation_attack( *this, pr );
-            } else {
-                damage_instance dam = mut_atk.base_damage;
-                damage_instance scaled = mut_atk.strength_damage;
-                scaled.mult_damage( std::min<float>( 15.0f, get_str() ), true );
-                dam.add( scaled );
-
-                tmp.damage = dam;
-            }
+            tmp.damage = mutation_attack_damage( *this, pr, mut_atk );
 
             if( tmp.damage.total_damage() > 0.0f ) {
                 ret.emplace_back( tmp );

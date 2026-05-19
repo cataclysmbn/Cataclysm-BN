@@ -209,6 +209,22 @@ TEST_CASE( "manual technique queries require enough moves", "[melee]" )
     CHECK( std::ranges::find( spent_techniques, defensive ) == spent_techniques.end() );
 }
 
+TEST_CASE( "manual technique prompt includes mutation attacks", "[melee]" )
+{
+    clear_all_state();
+
+    const auto fangs = trait_id( "FANGS" );
+    auto target = monster( mtype_id( "mon_zombie" ) );
+    auto dude = standard_npc( "TestCharacter", dude_pos, {}, 5, 8, 8, 8, 8 );
+
+    dude.set_mutation( fangs );
+
+    const auto mutation_attacks = melee::mutation_attack_prompt_entries( dude, target );
+    CHECK( std::ranges::any_of( mutation_attacks, [&fangs]( const auto & entry ) {
+        return entry.name == fangs.obj().name() && entry.available;
+    } ) );
+}
+
 TEST_CASE( "Character attacking a manhack", "[.melee]" )
 {
     monster manhack( mtype_id( "mon_manhack" ) );

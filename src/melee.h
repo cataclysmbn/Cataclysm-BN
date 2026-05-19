@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 class Character;
 class Creature;
 class monster;
@@ -41,6 +44,17 @@ extern melee_statistic_data melee_stats;
 float hit_chance( float acc );
 auto is_technique_prompt_suppressed() -> bool;
 
+struct mutation_attack_prompt_entry {
+    std::string name;
+    std::string requirements;
+    std::string why_unavailable;
+    std::string description;
+    bool available = false;
+};
+
+auto mutation_attack_prompt_entries( const Character &self, const Creature &target ) ->
+std::vector<mutation_attack_prompt_entry>;
+
 class technique_prompt_suppression_guard
 {
     public:
@@ -79,4 +93,3 @@ const attack_statblock &pick_attack( const Character &c, const item &weapon,
                                      const Character &target );
 
 } // namespace melee
-
