@@ -101,6 +101,7 @@ class world
         /**@{*/
         void start_save_tx();
         int64_t commit_save_tx();
+        void release_player_db();
         /**@}*/
 
         /*
