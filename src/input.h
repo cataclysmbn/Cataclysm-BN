@@ -85,6 +85,7 @@ static constexpr int NUMPAD_6 = 0x406;
 static constexpr int NUMPAD_7 = 0x407;
 static constexpr int NUMPAD_8 = 0x408;
 static constexpr int NUMPAD_9 = 0x409;
+static constexpr int NUMPAD_0 = 0x40a;
 
 
 bool is_mouse_enabled();

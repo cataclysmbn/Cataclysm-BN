@@ -386,6 +386,7 @@ void input_manager::init_keycode_mapping()
     add_keycode_pair( KEY_END,       translate_marker_context( "key name", "END" ) );
     add_keycode_pair( '\n',          translate_marker_context( "key name", "RETURN" ) );
     add_keycode_pair( KEY_DC,        translate_marker_context( "key name", "DELETE" ) );
+    add_keycode_pair( NUMPAD_0,      translate_marker_context( "key name", "NUMPAD_0" ) );
     add_keycode_pair( NUMPAD_1,      translate_marker_context( "key name", "NUMPAD_1" ) );
     add_keycode_pair( NUMPAD_2,      translate_marker_context( "key name", "NUMPAD_2" ) );
     add_keycode_pair( NUMPAD_3,      translate_marker_context( "key name", "NUMPAD_3" ) );

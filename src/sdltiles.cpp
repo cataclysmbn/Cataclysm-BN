@@ -1955,7 +1955,7 @@ static void end_arrow_combo()
  */
 static int sdl_keysym_to_curses( const SDL_Keycode sym, const SDL_Keymod mod )
 {
-    if (sym >= SDLK_KP_1 && sym <= SDLK_KP_9) {
+    if (sym >= SDLK_KP_1 && sym <= SDLK_KP_0) {
         return 0;
     }
 
@@ -3273,28 +3273,11 @@ static void CheckMessages()
                 }
                 const int lc = sdl_keysym_to_curses( ev.key.key, ev.key.mod );
                 if( lc <= 0 ) {
-                    // a key we don't know in curses and won't handle.
-                    switch (ev.key.key) {
-                        case SDLK_KP_1:
-                            last_input = input_event( NUMPAD_1, input_event_t::keyboard );
-                        case SDLK_KP_2:
-                            last_input = input_event( NUMPAD_2, input_event_t::keyboard );
-                        case SDLK_KP_3:
-                            last_input = input_event( NUMPAD_3, input_event_t::keyboard );
-                        case SDLK_KP_4:
-                            last_input = input_event( NUMPAD_4, input_event_t::keyboard );
-                        case SDLK_KP_5:
-                            last_input = input_event( NUMPAD_5, input_event_t::keyboard );
-                        case SDLK_KP_6:
-                            last_input = input_event( NUMPAD_6, input_event_t::keyboard );
-                        case SDLK_KP_7:
-                            last_input = input_event( NUMPAD_7, input_event_t::keyboard );
-                        case SDLK_KP_8:
-                            last_input = input_event( NUMPAD_8, input_event_t::keyboard );
-                        case SDLK_KP_9:
-                            last_input = input_event( NUMPAD_9, input_event_t::keyboard );
-                        default:
-                            break;
+                    if (ev.key.key >= SDLK_KP_1 && ev.key.key <= SDLK_KP_0) {
+                        last_input = input_event(ev.key.key - SDLK_KP_1 + NUMPAD_1, input_event_t::keyboard);
+                    } else {
+                        // a key we don't know in curses and won't handle.
+                        break;
                     }
                 } else if( add_alt_code( lc ) ) {
                     // key was handled
