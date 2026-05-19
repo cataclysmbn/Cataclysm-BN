@@ -80,7 +80,7 @@
     "id": "military_fighter",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "trunk_carbon_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "propeller", "windshield", "door", "roof", "trunk_flat", "trunk_carbon_flat", "hatch" ],
         "colors": [
           { "color": "Telegrey 1", "weight": 20, "//": "Federal Standard 36176" },
           { "color": "Pastel turquoise", "weight": 10 },
@@ -97,7 +97,7 @@
     "id": "military_heli",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "Cataclysm Green", "weight": 20 },
           { "color": "Black grey", "weight": 10, "//": "CARC Black (Federal Standard 37030)" },
@@ -257,7 +257,7 @@
     "id": "aircraft_standard",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "propeller", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "Pigeon Blue", "weight": 10 },
           { "color": "Black grey", "weight": 5 },
@@ -276,7 +276,7 @@
     "id": "aircraft_commercial",
     "palette": [
       {
-        "fuzzy_ids": [ "board", "wing", "windshield", "door", "roof", "trunk_flat", "hatch" ],
+        "fuzzy_ids": [ "board", "wing", "rotor", "propeller", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
           { "color": "White aluminium", "weight": 15 },
           { "color": "Gentian blue", "weight": 10 },
@@ -299,6 +299,7 @@
           "boat_board",
           "raft_board",
           "wing_wood",
+          "propeller_wood",
           "windshield",
           "wood box",
           "travois",
@@ -330,13 +331,7 @@
         ]
       },
       {
-        "fuzzy_ids": [
-          "clothboard",
-          "cloth_halfboard",
-          "roof_cloth",
-          "cargo_bag",
-          "sail"
-        ],
+        "fuzzy_ids": [ "clothboard", "cloth_halfboard", "roof_cloth", "cargo_bag", "sail" ],
         "colors": [
           { "color": "Oyster white", "weight": 5 },
           { "color": "Ivory", "weight": 5 },
