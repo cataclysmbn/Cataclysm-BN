@@ -821,6 +821,8 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     }
     level_cache &ch = get_cache( smz );
     invalidate_lightmap_caches();
+    m_solar.last_built_hour = -1;
+    set_seen_cache_dirty( smz );
     // Mark dirty only the submaps the vehicle actually occupies (union of old
     // and new footprint), rather than the entire z-level.
     for( int smx = sm_min.x(); smx <= sm_max.x(); ++smx ) {
@@ -858,6 +860,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     // Vehicles can extend through the floor; mark the level above as well.
     if( inbounds_z( smz + 1 ) ) {
         level_cache &ch_above = get_cache( smz + 1 );
+        set_seen_cache_dirty( smz + 1 );
         for( int smx = sm_min.x(); smx <= sm_max.x(); ++smx ) {
             for( int smy = sm_min.y(); smy <= sm_max.y(); ++smy ) {
                 if( smx < 0 || smy < 0 || smx >= my_MAPSIZE || smy >= my_MAPSIZE ) {
@@ -7990,6 +7993,18 @@ void map::shift_vehicle_z( vehicle &veh, int z_shift )
 {
     auto src = veh.abs_sm_pos;
     auto dst = src + tripoint_rel_sm( 0, 0, z_shift );
+    invalidate_lightmap_caches();
+    auto dirty_vertical_vehicle_caches = [this]( const int zlev ) {
+        if( !inbounds_z( zlev ) ) {
+            return;
+        }
+        invalidate_map_cache( zlev );
+    };
+    dirty_vertical_vehicle_caches( src.z() );
+    dirty_vertical_vehicle_caches( src.z() + 1 );
+    dirty_vertical_vehicle_caches( dst.z() );
+    dirty_vertical_vehicle_caches( dst.z() + 1 );
+
     submap *src_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( src );
     submap *dst_submap = MAPBUFFER_REGISTRY.get( bound_dimension_ ).lookup_submap_in_memory( dst );
 
