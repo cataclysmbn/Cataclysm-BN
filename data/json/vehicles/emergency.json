@@ -1033,7 +1033,7 @@
       { "x": -4, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "cargo_space" ] },
       { "x": -3, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_horizontal" ] },
       { "x": -2, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "trunk" ] },
-      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "board_horizontal" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_horizontal" ] },
       {
         "x": 0,
         "y": 0,
