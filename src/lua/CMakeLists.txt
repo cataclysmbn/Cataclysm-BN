@@ -14,3 +14,5 @@ set_target_properties(liblua PROPERTIES LINKER_LANGUAGE CXX)
 
 # Silence all errors. It's C code being compiled as C++, there're lots of them.
 target_compile_options(liblua PRIVATE -w)
+
+install(TARGETS liblua LIBRARY DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})

@@ -68,7 +68,7 @@ fi
 
 cmake --build build --parallel "$num_jobs"
 
-# For CI on macOS, patch the test binary so it can find SDL2 libraries.
+# For CI on macOS, patch the test binary so it can find SDL3 libraries.
 if [[ ! -z "$OS" && "$OS" = "macos-14" ]]
 then
     test_bin="build/tests/cata_test"

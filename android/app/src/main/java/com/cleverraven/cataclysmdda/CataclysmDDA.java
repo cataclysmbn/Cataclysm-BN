@@ -1,8 +1,10 @@
+// What does this reload
 package com.cleverraven.cataclysmdda;
 
 import org.libsdl.app.SDLActivity;
 
 import java.io.File;
+import android.content.pm.ActivityInfo;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.content.Context;
@@ -14,6 +16,9 @@ import android.content.res.Configuration;
 public class CataclysmDDA extends SDLActivity {
     private static final String TAG = "CDDA";
 
+    @Override public void setOrientationBis(int w, int h, boolean resizeable, String hint) {
+        mSingleton.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_USER_LANDSCAPE);
+    }
     public String getDocumentsDirectory() {
         File file = Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_DOCUMENTS

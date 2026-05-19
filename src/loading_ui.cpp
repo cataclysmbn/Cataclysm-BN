@@ -326,30 +326,31 @@ struct sdl_render_state_guard {
     float scale_y = 1.0f;
     SDL_Rect viewport = {};
     std::optional<SDL_Rect> clip_rect;
+    SDL_RendererLogicalPresentation present;
 
     explicit sdl_render_state_guard( const SDL_Renderer_Ptr &renderer ) : renderer( renderer ) {
-        SDL_RenderGetLogicalSize( renderer.get(), &logical_size.x, &logical_size.y );
-        SDL_RenderGetScale( renderer.get(), &scale_x, &scale_y );
-        SDL_RenderGetViewport( renderer.get(), &viewport );
-        if( SDL_RenderIsClipEnabled( renderer.get() ) ) {
+        SDL_GetRenderLogicalPresentation( renderer.get(), &logical_size.x, &logical_size.y,  &present );
+        SDL_GetRenderScale( renderer.get(), &scale_x, &scale_y );
+        SDL_GetRenderViewport( renderer.get(), &viewport );
+        if( SDL_RenderClipEnabled( renderer.get() ) ) {
             clip_rect.emplace();
-            SDL_RenderGetClipRect( renderer.get(), &*clip_rect );
+            SDL_GetRenderClipRect( renderer.get(), &*clip_rect );
         }
-        SDL_RenderSetClipRect( renderer.get(), nullptr );
-        SDL_RenderSetLogicalSize( renderer.get(), 0, 0 );
-        SDL_RenderSetScale( renderer.get(), 1.0f, 1.0f );
-        SDL_RenderSetViewport( renderer.get(), nullptr );
+        SDL_SetRenderClipRect( renderer.get(), nullptr );
+        SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+        SDL_SetRenderScale( renderer.get(), 1.0f, 1.0f );
+        SDL_SetRenderViewport( renderer.get(), nullptr );
     }
 
     ~sdl_render_state_guard() {
         if( logical_size.x > 0 && logical_size.y > 0 ) {
-            SDL_RenderSetLogicalSize( renderer.get(), logical_size.x, logical_size.y );
+            SDL_SetRenderLogicalPresentation( renderer.get(), logical_size.x, logical_size.y, present );
         } else {
-            SDL_RenderSetLogicalSize( renderer.get(), 0, 0 );
-            SDL_RenderSetScale( renderer.get(), scale_x, scale_y );
-            SDL_RenderSetViewport( renderer.get(), &viewport );
+            SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+            SDL_SetRenderScale( renderer.get(), scale_x, scale_y );
+            SDL_SetRenderViewport( renderer.get(), &viewport );
         }
-        SDL_RenderSetClipRect( renderer.get(), clip_rect ? &*clip_rect : nullptr );
+        SDL_SetRenderClipRect( renderer.get(), clip_rect ? &*clip_rect : nullptr );
     }
 };
 
@@ -389,7 +390,9 @@ auto loading_image_splash::draw_current_loading_image() -> bool
             const auto &renderer = get_sdl_renderer();
             const auto render_state_guard = sdl_render_state_guard( renderer );
             clear_sdl_display_buffer();
-            RenderCopy( renderer, cache->texture, nullptr, &*rect );
+            SDL_FRect fRect{};
+            SDL_RectToFRect( &*rect, &fRect );
+            RenderCopy( renderer, cache->texture, nullptr, &fRect );
             draw_loading_image_author_if_present( this->selection_state->current_author );
             return true;
         }
@@ -452,7 +455,12 @@ loading_image_splash::loading_image_splash()
 }
 #endif
 
-loading_image_splash::~loading_image_splash() = default;
+loading_image_splash::~loading_image_splash()
+{
+#if defined( TILES )
+    clear_sdl_display_buffer_before_redraw();
+#endif
+}
 
 loading_ui::loading_ui( bool display )
 {

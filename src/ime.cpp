@@ -116,7 +116,7 @@ void enable_ime()
 {
 #if defined( __ANDROID__ )
     if( get_option<bool>( "ANDROID_AUTO_KEYBOARD" ) ) {
-        SDL_StartTextInput();
+        SDL_StartTextInput( get_sdl_window().get() );
     }
 #elif defined( _WIN32 )
     imm.enable_ime();

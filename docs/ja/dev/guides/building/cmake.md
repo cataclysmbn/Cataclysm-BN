@@ -50,7 +50,7 @@ cd Cataclysm-BN
 - Ubuntu ベースのディストリビューション (24.04 以降):
 
 ```sh
-sudo apt install git cmake ninja-build mold g++-14 clang-20 ccache \
+sudo apt install git cmake ninja-build mold g++-14 clang-20 llvm-20 ccache \
 libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-mixer-dev \
 libfreetype-dev bzip2 zlib1g-dev libvorbis-dev libncurses-dev \
 gettext libflac++-dev libsqlite3-dev zlib1g-dev
@@ -59,7 +59,7 @@ gettext libflac++-dev libsqlite3-dev zlib1g-dev
 - Fedora ベースのディストリビューション:
 
 ```sh
-sudo dnf install git cmake ninja-build mold clang ccache \
+sudo dnf install git cmake ninja-build mold clang llvm ccache \
 SDL2-devel SDL2_image-devel SDL2_ttf-devel SDL2_mixer-devel \
 freetype glibc bzip2 zlib-ng libvorbis ncurses gettext flac-devel \
 sqlite-devel zlib-devel
@@ -113,6 +113,13 @@ Configuration file: /etc/clang/x86_64-redhat-linux-gnu-clang++.cfg
 > sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-20 100
 > sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-20 100
 > ```
+>
+> Ubuntu で `llvm-ar-20` と `llvm-ranlib-20` のようなバージョン付き LLVM binutils だけがインストールされる場合は、これらの名前も登録してください:
+>
+> ```sh
+> sudo update-alternatives --install /usr/bin/llvm-ar llvm-ar /usr/bin/llvm-ar-20 100
+> sudo update-alternatives --install /usr/bin/llvm-ranlib llvm-ranlib /usr/bin/llvm-ranlib-20 100
+> ```
 
 ### Windows Subsystem for Linux (WSL)
 
@@ -142,7 +149,7 @@ pacman -S mingw-w64-x86_64-toolchain msys/git \
 
 ### CMake によるビルド
 
-CMake には、設定 (Configuration) とビルド (Build) のステップが分かれています。設定は CMake 自体を使用して行い、実際のビルドは `make` (Makefile ジェネレータの場合) またはビルドシステムに依存しない
+CMake には、設定 (Configuration) とビルド (Build) のステップが分かれています。設定は CMake 自体を使用して行い、実際のビルドはビルドシステムに依存しない
 `cmake --build .` を使用して行います。
 
 CMake で『Cataclysm-BN』をビルドする方法には、ソースツリーの内部で行う方法と外部で行う方法の2つがあります。ソースツリー外ビルド（Out-of-source builds）には、1つのソースディレクトリから異なるオプションで複数のビルドを作成できるという利点があります。

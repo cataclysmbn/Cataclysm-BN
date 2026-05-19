@@ -236,6 +236,7 @@
       [ "oHo" ],
       [ "oHo" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },
@@ -265,6 +266,7 @@
       [ "oHo" ],
       [ "oHo" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },

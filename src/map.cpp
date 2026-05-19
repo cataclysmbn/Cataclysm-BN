@@ -901,7 +901,7 @@ void map::on_vehicle_moved( const point sm_min, const point sm_max, const int sm
         return;
     }
     level_cache &ch = get_cache( smz );
-
+    invalidate_lightmap_caches();
     // Mark dirty only the submaps the vehicle actually occupies (union of old
     // and new footprint), rather than the entire z-level.
     for( int smx = sm_min.x; smx <= sm_max.x; ++smx ) {
@@ -1102,7 +1102,9 @@ void map::vehmove()
     // neighbours reachable but not in the set get on_map=false as before.
     std::set<vehicle *> all_veh_ptrs;
     std::ranges::for_each( vehicle_list, [&]( const wrapped_vehicle & w ) {
-        all_veh_ptrs.insert( w.v );
+        if( loaded_vehicles.contains( w.v ) ) {
+            all_veh_ptrs.insert( w.v );
+        }
     } );
     std::map<vehicle *, bool> connected_vehicles;
     vehicle::enumerate_vehicles( connected_vehicles, all_veh_ptrs );

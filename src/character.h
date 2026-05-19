@@ -101,6 +101,7 @@ using recipe_filter = std::function<bool( const recipe &r )>;
 enum vision_modes {
     DEBUG_NIGHTVISION,
     NV_GOGGLES,
+    ENV_GOGGLES,
     BIRD_EYE,
     URSINE_VISION,
     BOOMERED,
@@ -1696,7 +1697,7 @@ class Character : public Creature, public location_visitable<Character>
         nc_color symbol_color() const override;
 
         std::string extended_description() const override;
-
+        std::vector<std::string> get_apperance_description() const;
         /** Returns a random name from NAMES_* */
         void pick_name( bool bUseDefault = false );
         /** Get the idents of all base traits. */

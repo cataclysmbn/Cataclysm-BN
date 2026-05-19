@@ -6,13 +6,13 @@ This guide explains how to format and lint code in Cataclysm: Bright Nights.
 
 ## Quick Reference
 
-| File Type       | Tool           | Command                                            |
-| --------------- | -------------- | -------------------------------------------------- |
-| C++ (`.cpp/.h`) | astyle         | `cmake --build build --target astyle`              |
-| JSON            | json_formatter | `cmake --build build --target style-json-parallel` |
-| Markdown        | deno fmt       | `deno fmt`                                         |
-| TypeScript      | deno fmt       | `deno fmt`                                         |
-| Lua             | dprint         | `deno task dprint fmt`                             |
+| File Type       | Tool                | Command                                            |
+| --------------- | ------------------- | -------------------------------------------------- |
+| C++ (`.cpp/.h`) | astyle/clang-format | `cmake --build build --target format`              |
+| JSON            | json_formatter      | `cmake --build build --target style-json-parallel` |
+| Markdown        | deno fmt            | `deno fmt`                                         |
+| TypeScript      | deno fmt            | `deno fmt`                                         |
+| Lua             | dprint              | `deno task dprint fmt`                             |
 
 ## Automated Formatting
 
@@ -27,17 +27,17 @@ style violations, a commit will be pushed to fix them.
 
 ## C++ Formatting
 
-C++ files are formatted with [astyle](http://astyle.sourceforge.net/).
+Top-level C++ files are formatted with [astyle](http://astyle.sourceforge.net/). C++ files in source subdirectories are formatted with [clang-format](https://clang.llvm.org/docs/ClangFormat.html).
 
 ```sh
-# Install astyle (Ubuntu/Debian)
-sudo apt install astyle
+# Install formatters (Ubuntu/Debian)
+sudo apt install astyle clang-format
 
-# Install astyle (Fedora)
-sudo dnf install astyle
+# Install formatters (Fedora)
+sudo dnf install astyle clang-tools-extra
 
-# Install astyle (macOS)
-brew install astyle
+# Install formatters (macOS)
+brew install astyle clang-format
 ```
 
 ### Using CMake
@@ -47,10 +47,10 @@ brew install astyle
 cmake --preset lint
 
 # Format all C++ files
-cmake --build build --target astyle
+cmake --build build --target format
 ```
 
-The style configuration is in `.astylerc` at the repository root.
+The style configurations are in `.astylerc` and `.clang-format` at the repository root.
 
 ## JSON Formatting
 
@@ -121,7 +121,7 @@ Before committing, run these checks:
 cmake --preset lint
 
 # Format all code
-cmake --build build --target astyle           # C++
+cmake --build build --target format           # C++
 cmake --build build --target style-json-parallel  # JSON
 deno fmt                                       # Markdown/TypeScript
 deno task dprint fmt                           # Lua
@@ -149,6 +149,34 @@ Install these extensions for automatic formatting:
 - **Deno**: [Deno](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno) for
   Markdown/TypeScript
 
+### Visual Studio
+
+Install the formatters once from PowerShell. LLVM provides `clang-format` and `clang-tidy`.
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+irm get.scoop.sh | iex
+scoop install llvm astyle
+clang-format --version
+clang-tidy --version
+astyle --version
+```
+
+If Scoop is already installed, run only `scoop install llvm astyle`. If any version command is not
+found, close and reopen PowerShell and Visual Studio so they reload `PATH`.
+
+After installing the tools:
+
+1. Open the repository folder in Visual Studio as a CMake project.
+2. Configure CMake. If Visual Studio already configured the project before installing the formatters,
+   reconfigure the CMake cache.
+3. Open **View > Other Windows > CMake Targets View**.
+4. Build the `format` target before committing.
+
+Visual Studio's normal **Format Document** command does not run this target. Use the `format` target
+for repository style: it runs `astyle` for top-level C++ files and `clang-format` for C++ files in
+`src/` subdirectories.
+
 ### Vim/Neovim
 
 Add to your config:
@@ -172,16 +200,17 @@ cmake --preset lint
 cmake --build build --target json_formatter
 ```
 
-### "astyle target not found"
+### "format target not found"
 
-Make sure `astyle` is installed and in your PATH:
+Make sure `astyle` and `clang-format` are installed and in your PATH:
 
 ```sh
-# Check if astyle is available
+# Check if formatters are available
 which astyle
+which clang-format
 
 # Install if missing (Ubuntu/Debian)
-sudo apt install astyle
+sudo apt install astyle clang-format
 ```
 
 Then reconfigure CMake:
@@ -190,10 +219,11 @@ Then reconfigure CMake:
 cmake --preset lint
 ```
 
-### astyle produces different results
+### C++ formatters produce different results
 
-Make sure you're using the `.astylerc` from the repository root:
+Make sure you're using the formatter configs from the repository root:
 
 ```sh
 astyle --options=.astylerc src/*.cpp
+clang-format -i src/utils/*.cpp src/utils/*.h
 ```

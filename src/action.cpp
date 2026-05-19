@@ -589,8 +589,6 @@ bool can_butcher_at( const tripoint &p )
     const int factor = you.max_quality( qual_BUTCHER );
     const int factorD = you.max_quality( qual_CUT_FINE );
     map_stack items = get_map().i_at( p );
-    bool has_item = false;
-    bool has_corpse = false;
 
     const inventory &crafting_inv = you.crafting_inventory();
     for( item *&items_it : items ) {
@@ -1183,12 +1181,99 @@ std::optional<tripoint> choose_adjacent_highlight(
     return std::nullopt;
 }
 
+std::optional<tripoint> choose_adjacent_uilist(
+    const std::string &message,
+    const std::string &failure_message,
+    const std::function < auto( const tripoint & ) -> bool > &allowed,
+    const std::function < auto( const tripoint & ) -> std::optional<std::string> > &name,
+    const bool allow_vertical )
+{
+    struct direction_entry {
+        std::string short_name;
+        std::string long_name;
+        int inv_key;
+
+        constexpr direction_entry( const std::string &s, const std::string &n, const int k ) noexcept
+            : short_name( s ), long_name( n ), inv_key( k ) {}
+    };
+
+    static const std::unordered_map<tripoint, direction_entry> DIR_NAMES = {
+        { tripoint_south_west, direction_entry( _( "SW" ), _( "South West" ), '1' )},
+        { tripoint_south, direction_entry( _( "S" ), _( "South" ), '2' )},
+        { tripoint_south_east, direction_entry( _( "SE" ), _( "South East" ), '3' )},
+        { tripoint_west, direction_entry( _( "W" ), _( "West" ), '4' )},
+        { tripoint_zero, direction_entry( _( "-" ), _( "Directly below you" ), '5' )},
+        { tripoint_east, direction_entry( _( "E" ), _( "East" ), '6' )},
+        { tripoint_north_west, direction_entry( _( "NW" ), _( "North West" ), '7' )},
+        { tripoint_north, direction_entry( _( "N" ), _( "North" ), '8' )},
+        { tripoint_north_east, direction_entry( _( "NE" ), _( "North East" ), '9' )},
+        { tripoint_above, direction_entry( _( "UP" ), _( "Above" ), '<' )},
+        { tripoint_below, direction_entry( _( "DN" ), _( "Below" ), '>' )},
+    };
+
+    std::vector<tripoint> valid;
+    const map &here = get_map();
+    const tripoint center = g->u.pos();
+    if( allowed ) {
+        for( const tripoint &pos : here.points_in_radius( center, 1, 0 ) ) {
+            if( !here.obstructed_by_vehicle_rotation( center, pos ) && allowed( pos ) ) {
+                valid.emplace_back( pos );
+            }
+        }
+        if( allow_vertical ) {
+            for( const tripoint &pos : { tripoint_above, tripoint_below } ) {
+                if( !here.obstructed_by_vehicle_rotation( center, pos ) && allowed( pos ) ) {
+                    valid.emplace_back( pos );
+                }
+            }
+        }
+    }
+
+
+    const bool auto_select = get_option<bool>( "AUTOSELECT_SINGLE_VALID_TARGET" );
+    if( auto_select ) {
+        if( valid.empty() ) {
+            add_msg( failure_message );
+            return std::nullopt;
+        }
+        if( valid.size() == 1 ) {
+            return valid.back();
+        }
+    }
+
+    uilist lst;
+    lst.title = message;
+    int i = 0;
+    for( const auto &pos : valid ) {
+        const auto ent = DIR_NAMES.at( pos - center );
+        std::string text;
+        if( name ) {
+            const auto x = name( pos );
+            if( x.has_value() ) {
+                text = string_format( "%s (%s)", x.value(), ent.short_name );
+            } else {
+                text = ent.long_name;
+            }
+        } else {
+            text = ent.long_name;
+        }
+        lst.addentry( i++, true, ent.inv_key, text );
+    }
+
+    lst.query();
+    if( lst.ret < 0 ) {
+        add_msg( failure_message );
+        return std::nullopt;
+    }
+
+    return valid.at( lst.ret );
+}
+
 std::optional<std::pair<tripoint, tripoint>> choose_area( const std::string &message,
         const tripoint &_start_pos, bool allow_vertical )
 {
 
     auto &u = g->u;
-    map &m = get_map();
     ui_adaptor ui;
 
     on_out_of_scope invalidate_current_ui( [&]() { ui.mark_resize(); } );

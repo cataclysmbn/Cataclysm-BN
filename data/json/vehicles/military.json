@@ -1253,6 +1253,7 @@
     "type": "vehicle",
     "name": "Scorpio ballista",
     "blueprint": [ [ "-U" ] ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "turret_mount_manual_wood", "mounted_launcher_ballista" ] },
       { "x": -1, "y": 0, "parts": [ "frame_wood_handle" ] }

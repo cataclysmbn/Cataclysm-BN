@@ -159,6 +159,8 @@ bool has_variant_sound( const std::string &id, const std::string &variant );
 void stop_sound_effect_fade( channel channel, int duration );
 void stop_sound_effect_timed( channel channel, int time );
 int set_channel_volume( channel channel, int volume );
+void set_channel_3d_position( channel channel, units::angle angle, int distance = 0 );
+int get_channel_volume( channel channel );
 void do_player_death_hurt( const player &target, bool death );
 void do_fatigue();
 // @param obst should be string id of obstacle terrain or vehicle part

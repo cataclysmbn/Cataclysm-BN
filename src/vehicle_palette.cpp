@@ -46,6 +46,10 @@ void VehiclePalette::load( const JsonObject &jo )
 {
     VehiclePalette &palette = vehicle_color_palettes[vpalette_id( jo.get_string( "id" ) )];
 
+    if( jo.has_bool( "clear" ) && jo.get_bool( "clear" ) ) {
+        palette.fuzzy_color_match.clear();
+        palette.colors.clear();
+    }
     palette.id = vpalette_id( jo.get_string( "id" ) );
     for( const JsonObject obj : jo.get_array( "palette" ) ) {
         for( const std::string &id : obj.get_string_array( "fuzzy_ids" ) ) {
@@ -59,6 +63,19 @@ void VehiclePalette::load( const JsonObject &jo )
     }
 }
 
+void VehiclePalette::check()
+{
+    for( auto palette : vehicle_color_palettes ) {
+        for( auto colorlist : palette.second.colors ) {
+            for( auto colorstr : colorlist ) {
+                std::optional<RGBColor> color = RGBColor::try_parse( colorstr.obj );
+                if( !color ) {
+                    debugmsg( "Invalid Color %s in Vehicle Palette %s", colorstr.obj, palette.first.str() );
+                }
+            }
+        }
+    }
+}
 int VehiclePalette::fuzzy_to_index( const vpart_id &id ) const
 {
     for( auto const &[ fuzzy, index ] : fuzzy_color_match ) {
@@ -86,6 +103,6 @@ std::vector<RGBColor> VehiclePalette::pick_colors() const
 
 void VehiclePalette::reset()
 {
-    vgroups.clear();
+    vehicle_color_palettes.clear();
 }
 

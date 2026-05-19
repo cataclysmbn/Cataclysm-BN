@@ -84,10 +84,10 @@
     "//": "Mainly the standard rifles that an Army/Marine rifleman, Army TL, or Marine assistant automatic rifleman would use, but allow a handful of Ranger and Delta Force rifles",
     "subtype": "distribution",
     "entries": [
-      { "group": "everyday_m4a1", "prob": 75, "charges": [ 0, 30 ] },
-      { "group": "everyday_m27iar", "prob": 10, "charges": [ 0, 30 ] },
-      { "group": "everyday_h&k416a5", "prob": 5, "charges": [ 0, 30 ] },
-      { "group": "everyday_scar_h", "prob": 5, "charges": [ 0, 30 ] },
+      { "group": "everyday_m4a1_military", "prob": 75, "charges": [ 0, 30 ] },
+      { "group": "everyday_m27iar_military", "prob": 10, "charges": [ 0, 30 ] },
+      { "group": "everyday_h&k416a5_military", "prob": 5, "charges": [ 0, 30 ] },
+      { "group": "everyday_scar_h_military", "prob": 5, "charges": [ 0, 30 ] },
       { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ] }
     ]
   },

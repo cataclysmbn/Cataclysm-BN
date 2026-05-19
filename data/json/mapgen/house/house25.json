@@ -24,7 +24,7 @@
         "..##+###+##         7_..",
         ".^#          #Y JJJ F#..",
         "..######+##  #########..",
-        "..#      %#     #QY8B#..",
+        "..#      $#     #QY8B#..",
         ".._@@     ##+## +   B#..",
         "..#@@EddDD#U q# #t8S8#..",
         "..##__#__######=######..",
@@ -32,9 +32,8 @@
         "...........```````......",
         "........................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_landscaping_palette" ],
       "terrain": {
-        "`": "t_concrete",
         "~": "t_carpet_yellow",
         "_": "t_window_boarded",
         "=": "t_door_metal_c_peep",
@@ -42,7 +41,7 @@
         ",": "t_thconc_floor",
         "#": "t_wall_log"
       },
-      "furniture": { "%": "f_safe_l" },
+      "furniture": { "$": "f_safe_l" },
       "place_items": [
         { "chance": 10, "item": "ammo_rifle_common", "x": 9, "y": 17 },
         { "chance": 20, "item": "camping", "x": 13, "y": 19 },
@@ -91,9 +90,8 @@
         "...........```````......",
         "........................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_landscaping_palette" ],
       "terrain": {
-        "`": "t_concrete",
         "~": "t_carpet_yellow",
         "_": "t_window_domestic_taped",
         "=": "t_door_b_peep",

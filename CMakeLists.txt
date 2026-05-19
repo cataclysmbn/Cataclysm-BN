@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 
+if (POLICY CMP0141)
+    cmake_policy(SET CMP0141 NEW)
+endif ()
+
 project(CataclysmBN C CXX)
 
 list(APPEND CMAKE_MODULE_PATH
@@ -9,7 +13,9 @@ if (NOT VCPKG_MANIFEST_MODE)
             ${CMAKE_SOURCE_DIR}/CMakeModules/Find)
 endif()
 
-include(AstyleFormatSource)
+
+include(FormatSource)
+include(FetchContent)
 
 set(CMAKE_TLS_VERIFY ON)
 
@@ -63,6 +69,7 @@ set(CATA_CHECK_CLANG_TIDY "" CACHE STRING "Path to check_clang_tidy.py for plugi
 set(GIT_BINARY "" CACHE STRING "Git binary name or path.")
 set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
+option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
 
 if (TESTS)
 include(CTest)
@@ -120,7 +127,7 @@ if ("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
     set(_OS_DARWIN_ 1)
     add_definitions(-DMACOSX)
     if (TILES)
-        add_definitions(-DOSX_SDL2_LIBS)
+        add_definitions(-DOSX_SDL3_LIBS)
     endif ()
 endif ()
 
@@ -132,6 +139,10 @@ include(CheckCXXCompilerFlag)
 #SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
 #SET(CMAKE_SHARED_LIBRARY_C_FLAGS "${CMAKE_SHARED_LIBRARY_C_FLAGS} -m32")
 #SET(CMAKE_SHARED_LIBRARY_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CXX_FLAGS} -m32")
+
+if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+    set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+endif ()
 
 find_package(PkgConfig)
 find_package(SQLite3)
@@ -241,6 +252,7 @@ message(STATUS "LANGUAGES                     : ${LANGUAGES}")
 if (LINKER)
     message(STATUS "LINKER                        : ${LINKER}")
 endif ()
+message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
 
 message(STATUS "See CMake compiling guide for details and more info --")
 
@@ -303,7 +315,6 @@ set(CMAKE_THREAD_PREFER_PTHREAD True)
 find_package(Threads REQUIRED)
 
 if (USE_TRACY)
-    include(FetchContent)
 
     if (NOT TRACY_VERSION)
         if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
@@ -334,42 +345,103 @@ endif ()
 # Check for build types and libraries
 if (TILES)
     # Find SDL, SDL_ttf & SDL_image for graphical install
-    message(STATUS "Searching for SDL2 library --")
+    message(STATUS "Searching for SDL3 library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
-        # ^^ Use sdl2-config.cmake provided by the system or VCPKG
-        find_package(SDL2)
-        if(NOT SDL2_FOUND)
-            # Use our CMakeModules/Find/FindSDL2.cmake
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3-config.cmake provided by the system or VCPKG
+            find_package(SDL3 CONFIG)
             set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
-            find_package(SDL2)
+        endif ()
+        if(NOT SDL3_FOUND)
+            message("Installing SDL3 from Source")
+            set(SDL_TEST_LIBRARY OFF)
+            SET(SDL_SHARED ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3
+                    URL https://github.com/libsdl-org/SDL/archive/refs/tags/release-3.4.8.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3")
         endif()
-        set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
     endif()
-    if (NOT (SDL2_FOUND OR TARGET SDL2::SDL2 OR TARGET SDL2::SDL2-static))
+    if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
-                "This project requires SDL2 to be installed to compile in graphical mode.  \
-                 Please install the SDL2 development libraries, \
+                "This project requires SDL3 to be installed to compile in graphical mode.  \
+                 Please install the SDL3 development libraries, \
                  or try compiling without -DTILES=1 for a text-only compilation. \
                  See CMake compiling guide for details and more info.")
     endif ()
 
-    message(STATUS "Searching for SDL2_TTF library --")
-    find_package(SDL2_ttf)
-    if (NOT (SDL2_TTF_FOUND OR TARGET SDL2::SDL2_ttf OR TARGET SDL2_ttf::SDL2_ttf-static))
+    message(STATUS "Searching for SDL3_ttf library --")
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_ttf-config.cmake provided by the system or VCPKG
+            find_package(SDL3_ttf CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
+        if(NOT SDL3_ttf_FOUND)
+            message("Installing SDL3_ttf from Source")
+            set(SDLTTF_PLUTOSVG OFF)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_TTF
+                    URL https://github.com/libsdl-org/SDL_ttf/archive/refs/tags/release-3.2.2.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_TTF)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_ttf-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_ttf")
+        endif()
+    endif()
+    if (NOT (SDL3_ttf_FOUND OR TARGET SDL3_ttf::SDL3_ttf OR TARGET SDL3_ttf::SDL3_ttf-static))
         message(FATAL_ERROR
-                "This project requires SDL2_ttf to be installed to compile in graphical mode. \
-                Please install the SDL2_ttf development libraries, \
+                "This project requires SDL3_ttf to be installed to compile in graphical mode. \
+                Please install the SDL3_ttf development libraries, \
                 or try compiling without -DTILES=1 for a text-only compilation. \
                 See CMake compiling guide for details and more info.")
     endif ()
 
-    message(STATUS "Searching for SDL2_image library --")
-    find_package(SDL2_image)
-    if (NOT (SDL2_IMAGE_FOUND OR TARGET SDL2::SDL2_image OR TARGET SDL2_image::SDL2_image-static))
+    message(STATUS "Searching for SDL3_image library --")
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_image-config.cmake provided by the system or VCPKG
+            find_package(SDL3_image CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
+        if(NOT SDL3_image_FOUND)
+            message("Installing SDL3_image from Source")
+            set(SDLIMAGE_JXL ON)
+            set(SDLIMAGE_PNG_LIBPNG ON)
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_IMAGE
+                    URL https://github.com/libsdl-org/SDL_image/archive/refs/tags/release-3.4.4.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_IMAGE)
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_image-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_image")
+        endif()
+    endif()
+    if (NOT (SDL3_image_FOUND OR TARGET SDL3_image::SDL3_image OR TARGET SDL3_image::SDL3_image-static))
         message(FATAL_ERROR
-                "This project requires SDL2_image to be installed to compile in graphical mode. \
-                 Please install the SDL2_image development libraries, \
+                "This project requires SDL3_image to be installed to compile in graphical mode. \
+                 Please install the SDL3_image development libraries, \
                  or try compiling without -DTILES=1 for a text-only compilation. \
                  See doc/COMPILING/COMPILING-CMAKE.md for details and more info.")
     endif ()
@@ -404,15 +476,36 @@ if (SOUND)
     endif ()
 
     # Sound requires SDL_mixer library
-    message(STATUS "Searching for SDL2_mixer library --")
-    find_package(SDL2_mixer)
-    if (NOT (SDL2_MIXER_FOUND OR TARGET SDL2_mixer::SDL2_mixer
-                              OR TARGET SDL2_mixer::SDL2_mixer-static))
+    message(STATUS "Searching for SDL3_mixer library --")
+    if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
+        if (NOT BUILD_SDL3)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
+            # ^^ Use sdl3_mixer-config.cmake provided by the system or VCPKG
+            find_package(SDL3_mixer CONFIG)
+            set(CMAKE_FIND_PACKAGE_PREFER_CONFIG OFF)
+        endif ()
+        if(NOT SDL3_mixer_FOUND)
+            message("Installing SDL3_mixer from Source")
+            # Install via FetchContent
+            FetchContent_Declare(
+                    SDL3_MIXER
+                    URL https://github.com/libsdl-org/SDL_mixer/archive/refs/tags/release-3.2.0.tar.gz
+                    EXCLUDE_FROM_ALL
+            )
+            FetchContent_MakeAvailable(SDL3_MIXER )
+            if (DYNAMIC_LINKING)
+                install(TARGETS SDL3_mixer-shared DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} )
+            endif ()
+        else()
+            message("Using system SDL3_mixer")
+        endif()
+    endif()
+    if (NOT (SDL3_mixer_FOUND OR TARGET SDL3_mixer::SDL3_mixer OR TARGET SDL3_mixer::SDL3_mixer-static))
         message(FATAL_ERROR
-                "You need the SDL2_mixer development library \
+                "You need the SDL3_mixer development library \
                     to be able to compile with sound enabled. \
                     See CMake compiling guide for details and more info.")
-    endif()
+    endif ()
 endif ()
 
 if (BACKTRACE)
@@ -528,6 +621,14 @@ endif ()
 add_subdirectory(src)
 add_subdirectory(data)
 
+if (UNIX AND TILES AND DYNAMIC_LINKING)
+    set_target_properties(
+            cataclysm-bn-tiles
+            PROPERTIES
+            INSTALL_RPATH "$<IF:$<BOOL:${APPLE}>,@executable_path/lib:@executable_path/lib64,\$ORIGIN/lib:\$ORIGIN/lib64>"
+    )
+endif()
+
 if(TESTS)
     add_subdirectory(tests)
 endif()
@@ -588,11 +689,11 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
     set(CATA_OSX_CONTENTS_DIR "${CATA_OSX_APP_DIR}/Contents")
     set(CATA_OSX_RESOURCES_DIR "${CATA_OSX_CONTENTS_DIR}/Resources")
     set(CATA_OSX_DATA_DIR "${CATA_OSX_RESOURCES_DIR}/data")
-    set(CATA_OSX_FRAMEWORKS_DIR "" CACHE PATH "Directory containing macOS SDL2 frameworks for app packaging.")
+    set(CATA_OSX_FRAMEWORKS_DIR "" CACHE PATH "Directory containing macOS SDL3 frameworks for app packaging.")
     if (NOT CATA_OSX_FRAMEWORKS_DIR)
-        if (EXISTS "$ENV{HOME}/Library/Frameworks/SDL2.framework")
+        if (EXISTS "$ENV{HOME}/Library/Frameworks/SDL3.framework")
             set(CATA_OSX_FRAMEWORKS_DIR "$ENV{HOME}/Library/Frameworks")
-        elseif (EXISTS "/Library/Frameworks/SDL2.framework")
+        elseif (EXISTS "/Library/Frameworks/SDL3.framework")
             set(CATA_OSX_FRAMEWORKS_DIR "/Library/Frameworks")
         endif()
     endif()
@@ -609,9 +710,9 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
 
     set(CATA_OSX_COPY_FRAMEWORK_COMMANDS)
     if (TILES AND CATA_OSX_FRAMEWORKS_DIR)
-        set(CATA_OSX_FRAMEWORK_NAMES SDL2 SDL2_image SDL2_ttf)
+        set(CATA_OSX_FRAMEWORK_NAMES SDL3 SDL3_image SDL3_ttf)
         if (SOUND)
-            list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL2_mixer)
+            list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL3_mixer)
         endif()
         foreach (CATA_OSX_FRAMEWORK_NAME ${CATA_OSX_FRAMEWORK_NAMES})
             list(APPEND CATA_OSX_COPY_FRAMEWORK_COMMANDS

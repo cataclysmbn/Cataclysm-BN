@@ -815,6 +815,21 @@
   },
   {
     "type": "recipe",
+    "result": "mutagen_elfa",
+    "id_suffix": "from_sample",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_MUTAGEN",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 2 ],
+    "difficulty": 9,
+    "time": "12 m",
+    "book_learn": [ [ "recipe_elfa", 10 ] ],
+    "using": [ [ "mutagen_production_standard", 31 ] ],
+    "components": [ [ [ "elfa_sample", 1 ] ], [ [ "purifier", 1 ] ] ],
+    "flags": [ "SECRET" ]
+  },
+  {
+    "type": "recipe",
     "result": "iv_mutagen_elfa",
     "category": "CC_CHEM",
     "subcategory": "CSC_CHEM_MUTAGEN",

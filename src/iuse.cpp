@@ -6964,8 +6964,13 @@ static std::vector<std::string> describe_character( Character *guy )
     std::vector<std::string> result;
     std::string pronoun = guy->male ? _( "He" ) : _( "She" );
 
+    std::vector<std::string> apperance_desc = guy->get_apperance_description();
+    if( !apperance_desc.empty() ) {
+        result.push_back( pronoun + _( " has " ) + enumerate_as_string( apperance_desc ) + "." );
+    }
+
     if( guy->is_armed() ) {
-        result.push_back( pronoun + " " + _( "is wielding a " ) + guy->primary_weapon().tname() + "." );
+        result.push_back( pronoun + _( " is wielding a " ) + guy->primary_weapon().tname() + "." );
     }
 
     const std::string worn_str = enumerate_as_string( guy->worn.begin(), guy->worn.end(),
@@ -6973,7 +6978,7 @@ static std::vector<std::string> describe_character( Character *guy )
         return it->tname();
     } );
     if( !worn_str.empty() ) {
-        result.push_back( pronoun + " " + _( "is wearing: " ) + worn_str );
+        result.push_back( pronoun + " " + _( "is wearing: " ) + worn_str + "." );
     } else {
         result.push_back( pronoun + " " + _( "is not wearing anything." ) );
     }
@@ -8756,7 +8761,7 @@ int iuse::strong_antibiotic( player *p, item *it, bool, const tripoint & )
     return it->type->charges_to_use();
 }
 
-int iuse::craft( player *p, item *it, bool, const tripoint &pos )
+int iuse::craft( player *p, item *it, bool, const tripoint & )
 {
     if( p->is_mounted() ) {
         p->add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );

@@ -13,7 +13,7 @@ class GeometryRenderer
         virtual ~GeometryRenderer() = default;
 
         /// Renders a SDL rectangle with given color.
-        virtual void rect( const SDL_Renderer_Ptr &renderer, const SDL_Rect &rect,
+        virtual void rect( const SDL_Renderer_Ptr &renderer, const SDL_FRect &rect,
                            const SDL_Color &color ) const = 0;
 
         /// Renders a point+width+height defined rectangle with given color.
@@ -34,7 +34,7 @@ using GeometryRenderer_Ptr = std::unique_ptr<GeometryRenderer>;
 class DefaultGeometryRenderer : public GeometryRenderer
 {
     public:
-        void rect( const SDL_Renderer_Ptr &renderer, const SDL_Rect &rect,
+        void rect( const SDL_Renderer_Ptr &renderer, const SDL_FRect &rect,
                    const SDL_Color &color ) const override;
 };
 
@@ -45,7 +45,7 @@ class ColorModulatedGeometryRenderer: public DefaultGeometryRenderer
     public:
         ColorModulatedGeometryRenderer( const SDL_Renderer_Ptr &renderer );
 
-        void rect( const SDL_Renderer_Ptr &renderer, const SDL_Rect &rect,
+        void rect( const SDL_Renderer_Ptr &renderer, const SDL_FRect &rect,
                    const SDL_Color &color ) const override;
     private:
         SDL_Texture_Ptr tex;
