@@ -204,6 +204,15 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "mags_mallninja_223",
+    "entries": [
+      { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 },
+      { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "sheltered_militia_1911",
     "entries": [
       { "item": "m1911mag", "ammo-item": "45_acp", "charges": 7 },
@@ -1438,10 +1447,11 @@
       { "level": 1, "name": "swimming" },
       { "level": 1, "name": "firstaid" },
       { "level": 2, "name": "gun" },
-      { "level": 1, "name": "rifle" },
+      { "level": 2, "name": "rifle" },
       { "level": 2, "name": "melee" },
       { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1487,7 +1497,8 @@
       { "level": 2, "name": "rifle" },
       { "level": 2, "name": "melee" },
       { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1532,11 +1543,12 @@
       { "level": 1, "name": "swimming" },
       { "level": 1, "name": "firstaid" },
       { "level": 2, "name": "gun" },
-      { "level": 1, "name": "rifle" },
-      { "level": 1, "name": "launcher" },
+      { "level": 2, "name": "rifle" },
+      { "level": 2, "name": "launcher" },
       { "level": 2, "name": "melee" },
       { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1580,10 +1592,11 @@
       { "level": 1, "name": "swimming" },
       { "level": 1, "name": "firstaid" },
       { "level": 3, "name": "gun" },
-      { "level": 2, "name": "rifle" },
+      { "level": 3, "name": "rifle" },
       { "level": 2, "name": "melee" },
       { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1638,8 +1651,9 @@
       { "level": 2, "name": "computer" },
       { "level": 2, "name": "traps" },
       { "level": 2, "name": "gun" },
-      { "level": 1, "name": "rifle" },
-      { "level": 1, "name": "dodge" }
+      { "level": 2, "name": "rifle" },
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1685,13 +1699,14 @@
     "traits": [ "PROF_MILITARY" ],
     "skills": [
       { "level": 2, "name": "swimming" },
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "smg" },
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "smg" },
       { "level": 3, "name": "survival" },
       { "level": 2, "name": "cutting" },
       { "level": 2, "name": "melee" },
       { "level": 2, "name": "dodge" },
-      { "level": 1, "name": "firstaid" }
+      { "level": 1, "name": "firstaid" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1733,14 +1748,15 @@
     "points": 5,
     "traits": [ "PROF_MILITARY", "PROF_SWIMMER" ],
     "skills": [
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "smg" },
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "smg" },
       { "level": 3, "name": "swimming" },
       { "level": 2, "name": "cutting" },
       { "level": 2, "name": "melee" },
       { "level": 2, "name": "dodge" },
       { "level": 1, "name": "firstaid" },
-      { "level": 1, "name": "survival" }
+      { "level": 1, "name": "survival" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1785,8 +1801,9 @@
       { "level": 1, "name": "firstaid" },
       { "level": 4, "name": "computer" },
       { "level": 3, "name": "gun" },
-      { "level": 2, "name": "pistol" },
-      { "level": 2, "name": "speech" }
+      { "level": 3, "name": "pistol" },
+      { "level": 2, "name": "speech" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1831,10 +1848,11 @@
       { "level": 1, "name": "swimming" },
       { "level": 1, "name": "firstaid" },
       { "level": 2, "name": "gun" },
-      { "level": 1, "name": "rifle" },
+      { "level": 2, "name": "rifle" },
       { "level": 2, "name": "melee" },
       { "level": 1, "name": "stabbing" },
-      { "level": 2, "name": "mechanics" }
+      { "level": 2, "name": "mechanics" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -1909,7 +1927,7 @@
       { "level": 2, "name": "electronics" },
       { "level": 2, "name": "computer" },
       { "level": 2, "name": "gun" },
-      { "level": 1, "name": "rifle" },
+      { "level": 2, "name": "rifle" },
       { "level": 1, "name": "dodge" }
     ],
     "items": {
@@ -1958,7 +1976,7 @@
       { "level": 2, "name": "electronics" },
       { "level": 2, "name": "computer" },
       { "level": 2, "name": "gun" },
-      { "level": 1, "name": "rifle" },
+      { "level": 2, "name": "rifle" },
       { "level": 1, "name": "dodge" }
     ],
     "items": {
@@ -3651,9 +3669,10 @@
       { "level": 1, "name": "firstaid" },
       { "level": 2, "name": "gun" },
       { "level": 2, "name": "melee" },
-      { "level": 1, "name": "rifle" },
+      { "level": 2, "name": "rifle" },
       { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -3711,11 +3730,12 @@
       { "level": 1, "name": "swimming" },
       { "level": 1, "name": "firstaid" },
       { "level": 5, "name": "gun" },
-      { "level": 4, "name": "rifle" },
+      { "level": 5, "name": "rifle" },
       { "level": 2, "name": "pistol" },
       { "level": 2, "name": "survival" },
       { "level": 1, "name": "cooking" },
-      { "level": 1, "name": "fabrication" }
+      { "level": 1, "name": "fabrication" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -3766,13 +3786,14 @@
     "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
     "skills": [
       { "level": 2, "name": "swimming" },
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "smg" },
+      { "level": 4, "name": "gun" },
+      { "level": 4, "name": "smg" },
       { "level": 3, "name": "survival" },
       { "level": 2, "name": "cutting" },
       { "level": 2, "name": "melee" },
       { "level": 2, "name": "dodge" },
-      { "level": 1, "name": "firstaid" }
+      { "level": 1, "name": "firstaid" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -5099,10 +5120,11 @@
       { "level": 1, "name": "swimming" },
       { "level": 4, "name": "survival" },
       { "level": 4, "name": "gun" },
-      { "level": 3, "name": "rifle" },
+      { "level": 4, "name": "rifle" },
       { "level": 2, "name": "melee" },
       { "level": 2, "name": "stabbing" },
-      { "level": 1, "name": "firstaid" }
+      { "level": 1, "name": "firstaid" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -6551,8 +6573,8 @@
       { "level": 1, "name": "swimming" },
       { "level": 1, "name": "firstaid" },
       { "level": 5, "name": "driving" },
-      { "level": 1, "name": "pistol" },
-      { "level": 1, "name": "launcher" },
+      { "level": 3, "name": "pistol" },
+      { "level": 3, "name": "launcher" },
       { "level": 3, "name": "mechanics" },
       { "level": 3, "name": "gun" }
     ],
@@ -6959,10 +6981,11 @@
       { "level": 1, "name": "swimming" },
       { "level": 1, "name": "firstaid" },
       { "level": 2, "name": "gun" },
-      { "level": 1, "name": "rifle" },
+      { "level": 2, "name": "rifle" },
       { "level": 2, "name": "melee" },
       { "level": 1, "name": "stabbing" },
-      { "level": 1, "name": "dodge" }
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
     ],
     "items": {
       "both": {
@@ -7475,13 +7498,12 @@
     "skills": [
       { "level": 1, "name": "swimming" },
       { "level": 6, "name": "speech" },
-      { "level": 3, "name": "gun" },
-      { "level": 3, "name": "rifle" },
-      { "level": 2, "name": "pistol" },
-      { "level": 2, "name": "melee" },
-      { "level": 2, "name": "stabbing" },
-      { "level": 1, "name": "firstaid" },
-      { "level": 1, "name": "throw" }
+      { "level": 1, "name": "gun" },
+      { "level": 1, "name": "rifle" },
+      { "level": 1, "name": "pistol" },
+      { "level": 1, "name": "melee" },
+      { "level": 1, "name": "stabbing" },
+      { "level": 1, "name": "firstaid" }
     ],
     "traits": [ "PROF_MILITARY" ],
     "items": {
@@ -7834,10 +7856,69 @@
       { "level": 3, "name": "cutting" },
       { "level": 4, "name": "melee" },
       { "level": 3, "name": "dodge" },
-      { "level": 3, "name": "firstaid" }
+      { "level": 3, "name": "firstaid" },
+      { "level": 3, "name": "throw" }
     ],
     "items": {
-      "both": { "items": [ "pants_army", "tshirt", "jacket_army", "socks", "boots_combat" ] },
+      "both": { "items": [ "pants_army", "tshirt", "jacket_army", "socks", "boots_combat", "wristwatch", "smart_phone" ] },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "mall_ninja",
+    "name": "Mall Ninja",
+    "description": "You knew the apocalypse was coming, and you bought all the high end weapons, armor, and gear the online forums said you would need to survive.  However, you never actually learned how to use any of it, and now that the Cataclysm is actually here, you're gonna have to figure it out quickly.",
+    "points": 8,
+    "items": {
+      "both": {
+        "items": [
+          "pants_army",
+          "tshirt",
+          "webbing_belt",
+          "jacket_army",
+          "gloves_tactical",
+          "mask_ski",
+          "tac_fullhelmet",
+          "socks",
+          "boots_combat",
+          "diving_watch",
+          "dragonskin",
+          "tacvest",
+          "goggles_nv",
+          "canteen",
+          "backpack_tactical_large"
+        ],
+        "entries": [
+          { "item": "premium_survival_kit" },
+          { "item": "mask_gas", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "army_powered_earmuffs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "halligan" },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "grenadebandolier", "contents-item": [ "smokebomb", "smokebomb" ] },
+          {
+            "item": "h&k416a5",
+            "ammo-item": "556_incendiary",
+            "charges": 30,
+            "contents-item": [
+              "shoulder_strap",
+              "holo_sight",
+              "grip",
+              "rail_laser_sight",
+              "adjustable_stock",
+              "offset_sights",
+              "suppressor",
+              "pistol_grip"
+            ]
+          },
+          { "item": "scabbard", "contents-item": "katana" },
+          { "group": "mags_mallninja_223" },
+          { "item": "knife_swissarmy" },
+          { "item": "mil_mess_kit" },
+          { "group": "MRE", "count": 5 }
+        ]
+      },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boxer_shorts" ]
     }
