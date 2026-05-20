@@ -29,11 +29,13 @@
           { "id": "overlay_wielded_m250", "fg": 21 },
           { "id": [ "makeshift_headwrap", "overlay_wielded_makeshift_headwrap" ], "fg": 22 },
           { "id": "overlay_worn_makeshift_headwrap", "fg": 23 },
-          { "id": "mon_mutant_alpha", "fg": 24 },
+          { "id": "mon_mutant_alpha", "fg": 24, "bg": 30 },
           { "id": [ "alohashirt", "overlay_wielded_alohashirt" ], "fg": 25 },
           { "id": "overlay_worn_alohashirt", "fg": 26 },
-          { "id": "mon_mutant_medical", "fg": 27 },
-          { "id": [ "mon_mutant_medical_summon", "mon_mutant_medical_summon_hostile" ], "fg": 28 }
+          { "id": "mon_mutant_medical", "fg": 27, "bg": 30 },
+          { "id": [ "mon_mutant_medical_summon", "mon_mutant_medical_summon_hostile" ], "fg": 28 },
+          { "id": "mon_mutant_elfa_decoy", "fg": 29, "bg": 30 },
+          { "id": "mon_mutant_elfa", "fg": 31, "bg": 30 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

@@ -189,6 +189,7 @@
       [ "     |   " ],
       [ "     |   " ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_light_cross", "seat_wood_light", "controls", "dashboard", "roof_cloth" ] },
       {
@@ -236,6 +237,99 @@
       { "x": -1, "y": 4, "parts": [ "lit_wing_wood_external_right" ] },
       { "x": -6, "y": -1, "parts": [ "wing_wood_external_left" ] },
       { "x": -6, "y": 1, "parts": [ "wing_wood_external_right" ] }
+    ],
+    "items": [
+      { "x": -1, "y": 0, "chance": 50, "items": [ "knit_scarf" ] },
+      { "x": -1, "y": 0, "chance": 50, "items": [ "gloves_leather" ] },
+      { "x": -1, "y": 0, "chance": 50, "items": [ "goggles_ski" ] },
+      { "x": -1, "y": 0, "chance": 25, "items": [ "ref_lighter" ] },
+      { "x": -1, "y": 0, "chance": 25, "items": [ "gasoline_lantern" ] },
+      { "x": -1, "y": 0, "chance": 10, "items": [ "sewing_kit" ] },
+      { "x": -1, "y": 0, "chance": 5, "items": [ "roadmap" ] }
+    ]
+  },
+  {
+    "id": "biplane_wood",
+    "type": "vehicle",
+    "name": "Wooden Biplane",
+    "blueprint": [
+      [ "     | |  " ],
+      [ "     | |  " ],
+      [ "     |-|  " ],
+      [ "|    | |  " ],
+      [ "|----=#'-X" ],
+      [ "|    | |  " ],
+      [ "     |-|  " ],
+      [ "     | |  " ],
+      [ "     | |  " ]
+    ],
+    "color_palette": "wooden_standard",
+    "parts": [
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_wood_light_cross", "seat_wood", "seatbelt", "controls", "dashboard", "roof_cloth" ]
+      },
+      {
+        "x": 1,
+        "y": 0,
+        "parts": [ "frame_wood_light_vertical", "windshield_horizontal_front", "wing_wood_horizontal" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "frame_wood_light_vertical", "wood box", "roof_cloth", "wing_wood_horizontal" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal" ] },
+      { "x": -1, "y": -1, "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal" ] },
+      {
+        "x": -2,
+        "y": 0,
+        "parts": [ "frame_wood_light_vertical", "cloth_halfboard_vertical", { "part": "tank", "fuel": "gasoline" } ]
+      },
+      { "x": -3, "y": 0, "parts": [ "frame_wood_light_vertical", "cloth_halfboard_vertical" ] },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [
+          "frame_wood_light_vertical",
+          "cloth_halfboard_horizontal_2",
+          "engine_1cyl_large",
+          "alternator_motorbike",
+          "battery_motorbike",
+          "motorcycle_headlight"
+        ]
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal", "wheel_mount_light", "wheel_small" ]
+      },
+      {
+        "x": 1,
+        "y": -1,
+        "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal", "wheel_mount_light", "wheel_small" ]
+      },
+      { "x": -4, "y": 0, "parts": [ "frame_wood_light_vertical", "cloth_halfboard_vertical" ] },
+      {
+        "x": -5,
+        "y": 0,
+        "parts": [ "frame_wood_light_vertical", "wheel_mount_light_steerable", "wheel_small", "cloth_halfboard_vertical" ]
+      },
+      { "x": -6, "y": 0, "part": "lit_wing_wood_external_horizontal" },
+      { "x": -6, "y": -1, "part": "wing_wood_external_left" },
+      { "x": -6, "y": 1, "part": "wing_wood_external_right" },
+      { "x": 1, "y": 2, "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal" ] },
+      { "x": -1, "y": -2, "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal" ] },
+      { "x": 1, "y": -2, "parts": [ "frame_wood_light_horizontal", "wing_wood_horizontal" ] },
+      { "x": 0, "y": -2, "part": "frame_wood_light_vertical_2" },
+      { "x": 0, "y": 2, "part": "frame_wood_light_vertical_2" },
+      { "x": 3, "y": 0, "part": "propeller_wood" },
+      { "x": -1, "y": 3, "part": "wing_wood_external_horizontal" },
+      { "x": 1, "y": 3, "part": "wing_wood_external_horizontal" },
+      { "x": 1, "y": 4, "part": "lit_wing_wood_external_right" },
+      { "x": -1, "y": 4, "part": "lit_wing_wood_external_right" },
+      { "x": -1, "y": -3, "part": "wing_wood_external_horizontal" },
+      { "x": 1, "y": -3, "part": "wing_wood_external_horizontal" },
+      { "x": -1, "y": -4, "part": "lit_wing_wood_external_left" },
+      { "x": 1, "y": -4, "part": "lit_wing_wood_external_left" }
     ],
     "items": [
       { "x": -1, "y": 0, "chance": 50, "items": [ "knit_scarf" ] },
@@ -364,6 +458,7 @@
       "  OOOOOOOOOOOOOOOOOO  ",
       "    OOOOOOOOOOOOOO    "
     ],
+    "color_palette": "wooden_standard",
     "blueprint_origin": { "x": 13, "y": 5 },
     "palette": {
       "^": [ "frame_wood_cross", "seat_wood", "controls", "airship_balloon" ],
@@ -423,6 +518,7 @@
       " OO3-+-9OOO ",
       "  OOOOOOOO  "
     ],
+    "color_palette": "wooden_standard",
     "blueprint_origin": { "x": 6, "y": 2 },
     "palette": {
       "^": [ "frame_wood_cross", "seat_wood", "controls", "airship_balloon" ],
@@ -459,6 +555,7 @@
     "id": "aircanoe",
     "name": "aircanoe",
     "blueprint": [ [ "<OO>" ] ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "sail_large", "airship_balloon" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "wood box", "airship_balloon" ] },

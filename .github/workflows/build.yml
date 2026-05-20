@@ -212,7 +212,7 @@ jobs:
             windows-${{ matrix.artifact }}-${{ github.ref_name }}
             windows-${{ matrix.artifact }}-main
             windows-${{ matrix.artifact }}-
-          max-size: 1G
+          max-size: 3G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
@@ -406,6 +406,20 @@ jobs:
             --config Release `
             --target $targets
 
+      - name: Verify ccache compatibility (windows msvc)
+        if: runner.os == 'Windows'
+        run: |
+          $stats = ccache -s -vv 2>&1
+          $stats
+          $cacheable = [int64](($stats | Select-String 'Cacheable calls:\s+(\d+)').Matches[0].Groups[1].Value)
+          $unsupported = [int64](($stats | Select-String 'Unsupported compiler option:\s+(\d+)').Matches[0].Groups[1].Value)
+          if ($cacheable -le 100) {
+            throw "ccache did not see enough cacheable MSVC compile calls"
+          }
+          if ($unsupported -ge $cacheable) {
+            throw "ccache saw more unsupported MSVC compiler options than cacheable calls"
+          }
+
       - name: Create distribution package (windows msvc)
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
@@ -420,9 +434,15 @@ jobs:
       - name: Archive PDB (windows msvc)
         if: runner.os == 'Windows' && inputs.package-artifacts && (!inputs.upload-artifacts || matrix.upload-artifact == true)
         run: |
-          Compress-Archive -Force `
-            -Path "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb" `
-            -DestinationPath "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
+          $pdb = "${{ github.workspace }}/out/build/windows-tiles-sounds-x64-msvc/src/cataclysm-bn-tiles.pdb"
+          $archive = "cbn-${{ matrix.artifact }}-${{ inputs.version-label }}-pdb.zip"
+          if (!(Test-Path $pdb)) {
+            throw "Missing Windows release PDB: $pdb"
+          }
+          Compress-Archive -Force -Path $pdb -DestinationPath $archive
+          if (!(Test-Path $archive)) {
+            throw "Missing Windows release PDB archive: $archive"
+          }
 
       - name: Configure and Build with CMake (macOS)
         if: runner.os == 'macOS'

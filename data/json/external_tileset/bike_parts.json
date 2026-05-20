@@ -1,0 +1,124 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/bike_parts.png",
+        "tiles": [
+          {
+            "id": "vp_saddle",
+            "rotates": true,
+            "fg": [ 4, 5, 6, 7 ],
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 64, 65, 66, 67 ] } ], "fg": [ 0, 1, 2, 3 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 68, 69, 70, 71 ] } ]
+          },
+          {
+            "id": "vp_saddle_pedal",
+            "fg": [ 4, 5, 6, 7 ],
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 64, 65, 66, 67 ] } ], "fg": [ 0, 1, 2, 3 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 68, 69, 70, 71 ] } ]
+          },
+          {
+            "id": "vp_saddle_motor",
+            "fg": [ 12, 13, 14, 15 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 72, 73, 74, 75 ] } ], "fg": [ 8, 9, 10, 11 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 76, 77, 78, 79 ] } ]
+          },
+          {
+            "id": "vp_saddle_scooter",
+            "fg": [ 20, 21, 22, 23 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 80, 81, 82, 83 ] } ], "fg": [ 16, 17, 18, 19 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 84, 85, 86, 87 ] } ]
+          },
+          {
+            "id": "vp_wheel_bicycle",
+            "fg": [ 28, 29, 30, 31 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 88, 89, 90, 91 ] } ], "fg": [ 24, 25, 26, 27 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 92, 93, 94, 95 ] } ]
+          },
+          {
+            "id": "vp_wheel_bicycle_or",
+            "fg": [ 28, 29, 30, 31 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 88, 89, 90, 91 ] } ], "fg": [ 24, 25, 26, 27 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 92, 93, 94, 95 ] } ]
+          },
+          {
+            "id": "vp_wheel_bicycle_steerable",
+            "fg": [ 28, 29, 30, 31 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 88, 89, 90, 91 ] } ], "fg": [ 24, 25, 26, 27 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 92, 93, 94, 95 ] } ]
+          },
+          {
+            "id": "vp_wheel_bicycle_or_rear",
+            "fg": [ 36, 37, 38, 39 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 96, 97, 98, 99 ] } ], "fg": [ 32, 33, 34, 35 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 100, 101, 102, 103 ] } ]
+          },
+          {
+            "id": "vp_wheel_bicycle_rear",
+            "fg": [ 36, 37, 38, 39 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 96, 97, 98, 99 ] } ], "fg": [ 32, 33, 34, 35 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 100, 101, 102, 103 ] } ]
+          },
+          {
+            "id": "vp_wheel_motorbike",
+            "fg": [ 44, 45, 46, 47 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 104, 105, 106, 107 ] } ], "fg": [ 40, 41, 42, 43 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 108, 109, 110, 111 ] } ]
+          },
+          {
+            "id": "vp_wheel_motorbike_or",
+            "fg": [ 44, 45, 46, 47 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 104, 105, 106, 107 ] } ], "fg": [ 40, 41, 42, 43 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 108, 109, 110, 111 ] } ]
+          },
+          {
+            "id": "vp_wheel_motorbike_rear",
+            "fg": [ 52, 53, 54, 55 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 112, 113, 114, 115 ] } ], "fg": [ 48, 49, 50, 51 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 116, 117, 118, 119 ] } ]
+          },
+          {
+            "id": "vp_wheel_motorbike_or_rear",
+            "fg": [ 52, 53, 54, 55 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 112, 113, 114, 115 ] } ], "fg": [ 48, 49, 50, 51 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 116, 117, 118, 119 ] } ]
+          },
+          {
+            "id": "vp_frame_handle",
+            "fg": [ 60, 61, 62, 63 ],
+            "rotates": true,
+            "multitile": true,
+            "additional_tiles": [ { "id": "broken", "masks": [ { "type": "tint", "fg": [ 120, 121, 122, 123 ] } ], "fg": [ 56, 57, 58, 59 ] } ],
+            "masks": [ { "type": "tint", "fg": [ 124, 125, 126, 127 ] } ]
+          }
+        ]
+      }
+    ]
+  }
+]

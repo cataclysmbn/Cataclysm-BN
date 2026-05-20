@@ -430,6 +430,7 @@
           "mx_spider": 200,
           "mx_nest_wasp": 100,
           "mx_jabberwock": 1,
+          "mx_elfa": 2,
           "mx_grove": 500,
           "mx_shrubbery": 500,
           "mx_clearcut": 125,
@@ -546,7 +547,15 @@
       "marloss": { "chance": 20, "extras": { "mx_marloss_pilgrimage": 100 } },
       "subway": {
         "chance": 75,
-        "extras": { "mx_military": 5, "mx_science": 12, "mx_collegekids": 15, "mx_portal": 7, "mx_portal_in": 3, "mx_casings": 30 }
+        "extras": {
+          "mx_military": 5,
+          "mx_science": 12,
+          "mx_collegekids": 15,
+          "mx_portal": 7,
+          "mx_portal_in": 3,
+          "mx_casings": 30,
+          "mx_crawler": 2
+        }
       },
       "research_facility_lot": {
         "chance": 3,

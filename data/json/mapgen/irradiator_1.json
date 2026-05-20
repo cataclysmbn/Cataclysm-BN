@@ -386,6 +386,7 @@
             [ "null", 5 ],
             [ "roof_4x4_survivor", 15 ],
             [ "roof_16x16_help", 25 ],
+            [ "roof_12x12_aircraft", 5 ],
             [ "roof_4x4_holdout", 5 ],
             [ "roof_6x6_utility", 45 ],
             [ "roof_5x5_coop", 5 ]

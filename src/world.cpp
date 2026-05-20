@@ -433,6 +433,15 @@ world::~world()
     }
 }
 
+void world::release_player_db()
+{
+    if( save_db ) {
+        sqlite3_close( save_db );
+        save_db = nullptr;
+        last_save_id.clear();
+    }
+}
+
 void world::start_save_tx()
 {
     if( save_tx_start_ts != 0 ) {

@@ -76,6 +76,18 @@ static constexpr int KEY_END        = 0x168;    /* End */
 static constexpr int LEGEND_HEIGHT = 11;
 static constexpr int BORDER_SPACE = 2;
 
+static constexpr int NUMPAD_1 = 0x401;
+static constexpr int NUMPAD_2 = 0x402;
+static constexpr int NUMPAD_3 = 0x403;
+static constexpr int NUMPAD_4 = 0x404;
+static constexpr int NUMPAD_5 = 0x405;
+static constexpr int NUMPAD_6 = 0x406;
+static constexpr int NUMPAD_7 = 0x407;
+static constexpr int NUMPAD_8 = 0x408;
+static constexpr int NUMPAD_9 = 0x409;
+static constexpr int NUMPAD_0 = 0x40a;
+
+
 bool is_mouse_enabled();
 std::string get_input_string_from_file( const std::string &fname = "input.txt" );
 

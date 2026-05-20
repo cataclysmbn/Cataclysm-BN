@@ -932,5 +932,18 @@
     "pre_furniture": "f_bathtub_money",
     "byproducts": [ { "item": "money_pile" } ],
     "post_furniture": "f_bathtub"
+  },
+  {
+    "type": "construction",
+    "id": "constr_bathtub",
+    "group": "build_bathtub",
+    "category": "FURN",
+    "required_skills": [ [ "fabrication", 3 ] ],
+    "using": [ [ "earthenware_firing", 120 ], [ "glazing", 2 ] ],
+    "time": "150 m",
+    "components": [ [ [ "water_faucet", 1 ] ], [ [ "cu_pipe", 1 ] ], [ [ "clay_lump", 40 ] ], [ [ "water", 10 ], [ "water_clean", 10 ] ] ],
+    "dark_craftable": true,
+    "pre_special": "check_empty",
+    "post_furniture": "f_bathtub"
   }
 ]

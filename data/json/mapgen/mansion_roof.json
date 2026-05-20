@@ -140,7 +140,10 @@
         "                        "
       ],
       "palettes": [ "roof_palette" ],
-      "terrain": { ".": "t_shingle_flat_roof" }
+      "terrain": { ".": "t_shingle_flat_roof" },
+      "place_nested": [
+        { "chunks": [ [ "roof_16x16_help", 10 ], [ "roof_12x12_aircraft", 10 ], [ "null", 20 ] ], "x": [ 6, 7 ], "y": [ 1, 2 ] }
+      ]
     }
   },
   {
@@ -212,7 +215,10 @@
         "                        "
       ],
       "palettes": [ "roof_palette" ],
-      "terrain": { ".": "t_shingle_flat_roof" }
+      "terrain": { ".": "t_shingle_flat_roof" },
+      "place_nested": [
+        { "chunks": [ [ "roof_16x16_help", 10 ], [ "roof_12x12_aircraft", 10 ], [ "null", 20 ] ], "x": [ 6, 7 ], "y": [ 1, 2 ] }
+      ]
     }
   },
   {
@@ -428,7 +434,10 @@
         "                        "
       ],
       "palettes": [ "roof_palette" ],
-      "terrain": { ".": "t_shingle_flat_roof" }
+      "terrain": { ".": "t_shingle_flat_roof" },
+      "place_nested": [
+        { "chunks": [ [ "roof_16x16_help", 10 ], [ "roof_12x12_aircraft", 10 ], [ "null", 20 ] ], "x": [ 6, 7 ], "y": [ 1, 2 ] }
+      ]
     }
   },
   {

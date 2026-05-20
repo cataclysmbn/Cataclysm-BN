@@ -121,6 +121,7 @@
       { "item": "hood_rain", "prob": 5 },
       { "item": "beret", "prob": 3 },
       { "item": "beret_wool", "prob": 2 },
+      { "item": "hat_boonie", "prob": 5 },
       { "item": "jacket_army", "prob": 5 },
       { "item": "winter_jacket_army", "prob": 5 },
       { "item": "coat_rain", "prob": 3 },

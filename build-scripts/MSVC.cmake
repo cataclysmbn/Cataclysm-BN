@@ -51,7 +51,7 @@ No need to force /TLBID:1 because is default
 #]=======================================================================]
 
 # Path has changed, so this configure run will find cl.exe
-set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)
+# CMP0141 is set before project() in CMakeLists.txt so this variable is honored.
 set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded")
 set(CMAKE_C_COMPILER   cl.exe)
 set(CMAKE_CXX_COMPILER ${CMAKE_C_COMPILER})

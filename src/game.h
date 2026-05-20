@@ -1038,6 +1038,7 @@ class game : public submap_load_listener
         void disp_NPCs();        // Currently for debug use.  Lists global NPCs.
 
         void list_missions();       // Listed current, completed and failed missions (mission_ui.cpp)
+        void move_save_to_graveyard( const std::string &dirname );
     private:
         void quickload();        // Loads the previously saved game if it exists
 
@@ -1076,7 +1077,6 @@ class game : public submap_load_listener
 
         Creature *is_hostile_within( int distance );
 
-        void move_save_to_graveyard( const std::string &dirname );
         bool save_player_data();
         bool save_uistate_data() const;
         // ########################## DATA ################################

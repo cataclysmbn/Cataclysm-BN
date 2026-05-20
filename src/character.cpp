@@ -5186,7 +5186,7 @@ std::pair<std::string, nc_color> Character::get_hunger_description() const
     nc_color hunger_color = c_white;
     if( days_left >= days_max ) {
         hunger_string = _( "Engorged" );
-        hunger_color = c_green;
+        hunger_color = c_pink;
     } else if( days_max - days_left < 0.5f ) {
         hunger_string = _( "Sated" );
         hunger_color = c_green;
