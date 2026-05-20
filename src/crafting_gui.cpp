@@ -518,7 +518,7 @@ static std::vector<std::string> recipe_info(
                           recp.has_flag( flag_BLIND_HARD ) ? _( "Awkward" ) :
                           recp.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ? _( "Very Hard" ) :
                           recp.has_flag( flag_BLIND_IMPOSSIBLE ) ? _( "Impossible" ) :
-                          _( "Reasonabe" ) );
+                          _( "Reasonable" ) );
 
     std::string nearby_string;
     const inventory &crafting_inv = crafter.crafting_inventory();
