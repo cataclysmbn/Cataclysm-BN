@@ -193,7 +193,6 @@
     "item": "software_lab_data",
     "start": "create_endgame_lab_console",
     "origins": [ "ORIGIN_SECONDARY" ],
-    "followup": "MISSION_SCIENCE_REP_7",
     "dialogue": {
       "describe": "We need help…",
       "offer": "The data you brought back from the train depot contained an anomaly.  A redacted stop in the train network, which the cargo manifests claim were the destination for all variety of strange goods. Scientific equipment, military-grade weapons, exotic materials...  Whatever this place is, it is likely of extremely high importance, and may have even served as a sort of hub for the other labs.  I need you to investigate this location, and see if there are any terminals from which you could download any useful information.",
