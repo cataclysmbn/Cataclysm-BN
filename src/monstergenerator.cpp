@@ -1061,6 +1061,24 @@ void mtype::load( const JsonObject &jo, const std::string &src )
 
     const auto flag_reader = enum_flags_reader<m_flag> { "monster flag" };
     optional( jo, was_loaded, "flags", flags, flag_reader );
+    if( jo.has_object( "extend" ) ) {
+        auto ext = jo.get_object( "extend" );
+        ext.allow_omitted_members();
+        if( ext.has_array( "flags" ) ) {
+            for( const auto flag : ext.get_array( "flags" ) ) {
+                flags.set( io::string_to_enum<m_flag>( flag.get_string() ) );
+            }
+        }
+    }
+    if( jo.has_object( "delete" ) ) {
+        auto del = jo.get_object( "delete" );
+        del.allow_omitted_members();
+        if( del.has_array( "flags" ) ) {
+            for( const auto flag : del.get_array( "flags" ) ) {
+                flags.clear( io::string_to_enum<m_flag>( flag.get_string() ) );
+            }
+        }
+    }
     // Can't calculate yet - we want all flags first
     optional( jo, was_loaded, "bash_skill", bash_skill, -1 );
 

@@ -107,7 +107,7 @@ void recipe::load( const JsonObject &jo, const std::string &src )
         }
     } else {
         jo.read( "result", result_, true );
-        ident_ = recipe_id( result_.str() );
+        ident_ = recipe_id( jo.get_string( "id", result_.str() ) );
     }
 
     if( jo.has_bool( "obsolete" ) ) {
