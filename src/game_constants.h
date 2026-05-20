@@ -118,10 +118,10 @@ static constexpr units::mass JACK_LIMIT = 8500_kilogram;
 static constexpr int MAX_AIM_COST = 10;
 
 // Maximum (effective) level for a skill.
-static constexpr int MAX_SKILL = 10;
+static constexpr int MAX_SKILL = 20;
 
 // Maximum (effective) level for a stat.
-static constexpr int MAX_STAT = 20;
+static constexpr int MAX_STAT = 2000000;
 
 // Maximum range at which ranged attacks can be executed.
 // Equals the compile-time maximum view distance; actual runtime cap uses g_max_view_distance.
