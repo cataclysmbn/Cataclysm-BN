@@ -1228,6 +1228,20 @@
     "components": [ [ [ "rag", 4 ] ], [ [ "pot", 1 ] ] ]
   },
   {
+    "result": "bucket_helmet",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "2 m",
+    "//": "Not reversible because you just banged a bunch of holes in it.",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "tools": [ [ [ "nail", -1 ], [ "spike", -1 ], [ "sharp_rock", -1 ], [ "rebar", -1 ], [ "spear_rebar", -1 ] ] ],
+    "components": [ [ [ "rag", 4 ] ], [ [ "bucket", 1 ] ] ]
+  },
+  {
     "result": "rebreather",
     "type": "recipe",
     "category": "CC_ARMOR",
