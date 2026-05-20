@@ -2156,14 +2156,14 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     for( const JsonObject &curr_info : config.get_array( "tile_info" ) ) {
         ts.tile_height = curr_info.get_int( "height" );
         ts.tile_width = curr_info.get_int( "width" );
-        //ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
-        ts.zlevel_height = 0;
+        ts.zlevel_height = curr_info.get_int( "zlevel_height", 0 );
+        zlevel_height = 0;
         tile_iso = curr_info.get_bool( "iso", false );
         ts.tile_pixelscale = curr_info.get_float( "pixelscale", 1.0f );
-        //ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
-        //ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
-        ts.prevent_occlusion_min_dist = -1.0f;
-        ts.prevent_occlusion_max_dist = 0.0f;
+        ts.prevent_occlusion_min_dist = curr_info.get_float( "retract_dist_min", -1.0f );
+        prevent_occlusion_min_dist = -1.0f;
+        ts.prevent_occlusion_max_dist = curr_info.get_float( "retract_dist_max", 0.0f );
+        prevent_occlusion_max_dist = 0.0f;
     }
 
     if( precheck ) {
