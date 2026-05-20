@@ -3074,7 +3074,7 @@ void game::move_save_to_graveyard( const std::string &dirname )
         }
 
         // rename() fails across filesystems (EXDEV); fall back to copy then delete
-        if( copy_file( src_path, dst_path ) ) {
+        if( ::copy_file( src_path, dst_path ) ) {
             if( !remove_file( src_path ) ) {
                 debugmsg( "could not remove file '%s' after copying to graveyard",
                           src_path.generic_string() );
@@ -3531,22 +3531,22 @@ std::vector<std::string> game::list_active_saves()
  */
 void game::write_memorial_file( const std::string &filename, std::string sLastWords )
 {
-    const std::string &memorial_dir = PATH_INFO::memorialdir();
-    const std::string &memorial_active_world_dir = memorial_dir +
-            world_generator->active_world->info->world_name + "/";
+    const auto memorial_dir = PATH_INFO::memorialdir();
+    const auto memorial_active_world_dir = memorial_dir /
+                                           world_generator->active_world->info->world_name;
 
     //Check if both dirs exist. Nested assure_dir_exist fails if the first dir of the nested dir does not exist.
     if( !assure_dir_exist( memorial_dir ) ) {
-        debugmsg( "Could not make '%s' directory", memorial_dir );
+        debugmsg( "Could not make '%s' directory", memorial_dir.generic_string() );
         return;
     }
 
     if( !assure_dir_exist( memorial_active_world_dir ) ) {
-        debugmsg( "Could not make '%s' directory", memorial_active_world_dir );
+        debugmsg( "Could not make '%s' directory", memorial_active_world_dir.generic_string() );
         return;
     }
 
-    std::string path = memorial_active_world_dir + filename + ".txt";
+    const auto path = memorial_active_world_dir / ( filename + ".txt" );
 
     write_to_file( path, [&]( std::ostream & fout ) {
         memorial().write( fout, sLastWords );

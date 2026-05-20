@@ -825,7 +825,7 @@ auto sfx::get_channel_volume( const channel channel ) -> int
 
 auto load_soundset() -> void
 {
-    const std::string default_path     = PATH_INFO::defaultsounddir();
+    const auto default_path             = PATH_INFO::defaultsounddir().generic_string();
     const std::string default_soundpack = "basic";
     std::string current_soundpack       = get_option<std::string>( "SOUNDPACKS" );
     std::string soundpack_path;

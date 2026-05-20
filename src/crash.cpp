@@ -70,9 +70,9 @@ extern "C" {
         // messages written just before the crash are on disk.
         flush_debug_log();
 
-        const std::string crash_log_file = PATH_INFO::crash();
+        const auto crash_log_file = PATH_INFO::crash().generic_string();
 #if defined(_WIN32)
-        const std::string minidump_file = crash_log_file + ".dmp";
+        const auto minidump_file = crash_log_file + ".dmp";
         dump_to( minidump_file.c_str() );
 #endif
         std::ostringstream log_text;

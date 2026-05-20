@@ -217,9 +217,9 @@ void distraction_manager_gui::load()
     }
 
     std::ifstream distr;
-    std::string file = PATH_INFO::distraction();
+    const auto file = PATH_INFO::distraction();
 
-    distr.open( file.c_str(), std::ifstream::in | std::ifstream::binary );
+    distr.open( file, std::ifstream::in | std::ifstream::binary );
 
     if( distr.good() ) {
         try {
