@@ -444,6 +444,7 @@ void map::build_sunlight_cache( int pzlev )
             std::fill( lm.begin(), lm.end(), four_quadrants( sky_level ) );
 
             const auto &this_floor_cache = map_cache.floor_cache;
+            const auto &this_vehicle_floor_cache = map_cache.vehicle_floor_cache;
             const auto &this_transparency_cache = map_cache.transparency_cache;
             fully_inside = true; // recalculate
 
@@ -454,11 +455,13 @@ void map::build_sunlight_cache( int pzlev )
                     // fully_outside stays true if tile is transparent and there is no floor
                     fully_outside = fully_outside &&
                                     this_transparency_cache[map_cache.idx( x, y )] >= LIGHT_TRANSPARENCY_OPEN_AIR
-                                    && !this_floor_cache[map_cache.idx( x, y )];
+                                    && !this_floor_cache[map_cache.idx( x, y )]
+                                    && !this_vehicle_floor_cache[map_cache.idx( x, y )];
                     // fully_inside stays true if tile is opaque OR there is floor
                     fully_inside = fully_inside &&
                                    ( this_transparency_cache[map_cache.idx( x, y )] <= LIGHT_TRANSPARENCY_SOLID ||
-                                     this_floor_cache[map_cache.idx( x, y )] );
+                                     this_floor_cache[map_cache.idx( x, y )] ||
+                                     this_vehicle_floor_cache[map_cache.idx( x, y )] );
                 }
             }
             continue;
@@ -543,7 +546,7 @@ void map::build_sunlight_cache( int pzlev )
                 std::views::iota( 0, map_cache.cache_x * map_cache.cache_y ),
             [&]( int i ) {
                 const auto idx = static_cast<size_t>( i );
-                if( solar_cache[idx] ) {
+                if( outside_cache[idx] && solar_cache[idx] ) {
                     lm[idx].fill( outside_light_level );
                     fully_inside = false;
                 }
