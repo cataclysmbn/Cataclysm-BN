@@ -1,15 +1,15 @@
 # Max length of a line is 78 characters; the following line is for reference
 # Longer lines will be automatically folded
 ##############################################################################
-<color_white>Project Manager:</color>
-<color_yellow>Coolthulhu</color>
+<color_white>Repository Owners:</color>
+<color_yellow>scarf005, RobbieNeko, chaosvolt, Oren Audeles</color>
 
 <color_white>Original creators:</color>
 <color_yellow>Whales, TheDarklingWolf, GlyphGryph</color> (<color_dark_gray>retired</color>)    
 <color_yellow>KevinGranade</color> (<color_dark_gray>from DDA fork</color>)
 
 <color_white>Special thanks to:</color>
-<color_yellow>Coolthulhu</color> - For re-starting the project.
+<color_yellow>Coolthulhu</color> - For re-starting the project. (<color_dark_gray>retired</color>)
 <color_yellow>Contributors</color> - For contributing to development.
 <color_yellow>Translators</color> - For translations.
 <color_yellow>Community</color> - For supporting us.

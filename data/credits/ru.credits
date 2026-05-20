@@ -1,15 +1,15 @@
 # Max length of a line is 78 characters; the following line is for reference
 # Longer lines will be automatically folded
 ##############################################################################
-<color_white>Менеджер проекта:</color>
-<color_yellow>Coolthulhu</color>
+<color_white>Владельцы репозитория:</color>
+<color_yellow>scarf005, RobbieNeko, chaosvolt, Oren Audeles</color>
 
 <color_white>Оригинальные создатели:</color>                                         
 <color_yellow>Whales, TheDarklingWolf, GlyphGryph</color> (<color_dark_gray>не активны</color>)                  
 <color_yellow>KevinGranade</color> (<color_dark_gray>из форка DDA</color>)
 
 <color_white>Особая благодарность:</color>
-<color_yellow>Coolthulhu</color> - За перезапуск проекта.
+<color_yellow>Coolthulhu</color> - За перезапуск проекта. (<color_dark_gray>не активен</color>)
 <color_yellow>Контрибюторам</color> - За вклад в разработку.
 <color_yellow>Переводчикам</color> - За вклад в перевод.
 <color_yellow>Коммюнити</color> - За поддержку.
