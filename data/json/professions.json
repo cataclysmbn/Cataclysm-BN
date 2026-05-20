@@ -7864,7 +7864,7 @@
           "syringe",
           "scalpel"
         ],
-        "entries": [ { "item": "shovel", "custom_flags": [ "auto_wield" ] } ]
+        "entries": [ { "item": "shovel", "custom-flags": [ "auto_wield" ] } ]
       },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
