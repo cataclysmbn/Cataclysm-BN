@@ -29,7 +29,7 @@ static const skill_id skill_survival( "survival" );
 
 // A position well away from the player's underground test location so
 // the monster's line-of-sight checks do not interfere with tests.
-static const tripoint mon_pos( 10, 10, 0 );
+static const tripoint_bub_ms mon_pos( 10, 10, 0 );
 
 // -----------------------------------------------------------------------
 // make_pet / is_pet
