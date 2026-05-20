@@ -86,19 +86,19 @@ auto cata::detail::reg_monster_groups( sol::state &lua ) -> void
             | std::ranges::to<std::vector<monster *>>();
         } );
 
-        DOC( "Get the group position in submap coordinates relative to its overmap." );
+        DOC( "Get the group position in absolute submap coordinates." );
         luna::set_fx( ut, "abs_pos", []( const UT_CLASS & group ) -> tripoint_abs_sm {
             return group.abs_pos;
         } );
-        DOC( "Set the group position in submap coordinates relative to its overmap." );
+        DOC( "Set the group position in absolute submap coordinates." );
         luna::set_fx( ut, "set_pos", []( UT_CLASS & group, const tripoint_abs_sm & pos ) -> void {
             group.abs_pos = pos;
         } );
-        DOC( "Get the current target in submap coordinates relative to the overmap." );
+        DOC( "Get the current target in absolute submap coordinates." );
         luna::set_fx( ut, "target", []( const UT_CLASS & group ) -> tripoint_abs_sm {
             return group.target;
         } );
-        DOC( "Set the current target in submap coordinates relative to the overmap." );
+        DOC( "Set the current target in absolute submap coordinates." );
         luna::set_fx( ut, "set_target", []( UT_CLASS & group, const tripoint_abs_sm & target ) -> void {
             group.target = target;
         } );

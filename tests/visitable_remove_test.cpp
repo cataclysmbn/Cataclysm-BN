@@ -74,7 +74,7 @@ TEST_CASE( "visitable_remove", "[visitable]" )
     };
 
     // Move to ground level to avoid weirdnesses around being underground.
-    p.setpos( p.bub_pos() + tripoint_rel_ms::above() );
+    p.setpos( tripoint_bub_ms( p.bub_pos().xy(), 0 ) );
     // move player randomly until we find a suitable position
     while( !suitable( p.bub_pos(), 1 ) ) {
         CHECK( !p.in_vehicle );

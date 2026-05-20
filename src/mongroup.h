@@ -116,7 +116,7 @@ struct mongroup {
     }
     mongroup( const std::string &ptype, const tripoint_abs_sm &ppos, unsigned int prad,
               unsigned int ppop,
-              tripoint ptarget, int pint, bool pdie, bool phorde, bool pdiff ) :
+              tripoint_abs_sm ptarget, int pint, bool pdie, bool phorde, bool pdiff ) :
         type( ptype ), abs_pos( ppos ), radius( prad ), population( ppop ), target( ptarget ),
         interest( pint ), dying( pdie ), horde( phorde ), diffuse( pdiff ) { }
     mongroup() = default;
@@ -124,13 +124,11 @@ struct mongroup {
     bool is_safe() const;
     bool empty() const;
     void clear();
-    void set_target( const point_om_sm &p ) {
-        target.x() = p.x();
-        target.y() = p.y();
+    auto set_target( const tripoint_abs_sm &p ) -> void {
+        target = p;
     }
-    void set_nemesis_target( const tripoint_abs_sm &p ) {
-        nemesis_target.x() = p.x();
-        nemesis_target.y() = p.y();
+    auto set_nemesis_target( const tripoint_abs_sm &p ) -> void {
+        nemesis_target = p;
     }
     void wander( const overmap & );
     void inc_interest( int inc ) {

@@ -1725,7 +1725,7 @@ int reveal_map_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     }
 
     const tripoint_abs_omt plrPos = p.abs_omt_pos();
-    const tripoint_abs_omt mapPos( it.get_var( "reveal_map_center_omt", plrPos.raw() ) );
+    const auto mapPos = it.get_var( "reveal_map_center_omt", plrPos );
 
     if( it.already_used_by_player( p ) ) {
         show_revealed( p, it, mapPos );
@@ -7559,8 +7559,8 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     if( linked_dim.empty() ) {
         wt_id = world_types::get_default();
     }
-    const auto dest_sm = tripoint_abs_sm(
-                             project_to<coords::sm>( linked_pos ).raw() - tripoint( g_half_mapsize, g_half_mapsize, 0 ) );
+    const auto dest_sm = project_to<coords::sm>( linked_pos ) -
+                         tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
     g->travel_to_dimension( linked_dim, wt_id, std::nullopt, dest_sm );
     p.setpos( get_map().abs_to_bub( linked_pos ) );
     g->update_map( p );

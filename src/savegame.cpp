@@ -438,10 +438,14 @@ void overmap::load_monster_groups( JsonIn &jsin )
         tripoint_abs_sm temp;
         while( !jsin.end_array() ) {
             temp.deserialize( jsin );
-            if( inbounds( project_to<coords::omt>( temp ) ) ) {
+            const auto proj = project_remain<coords::om>( temp );
+            if( proj.quotient == pos() ) {
                 new_group.abs_pos = temp;
-            } else { // Legacy support, for when pos was a local position, and the source of truth
+            } else if( inbounds( project_to<coords::omt>( temp ) ) ) {
+                // Legacy support, for when the stored position was local to this overmap.
                 new_group.abs_pos = project_combine( pos(), temp.reinterpret_as<tripoint_om_sm>() );
+            } else {
+                new_group.abs_pos = temp;
             }
             add_mon_group( new_group );
         }
@@ -971,14 +975,14 @@ void overmap::save_monster_groups( JsonOut &jout ) const
     jout.member( "monster_groups" );
     jout.start_array();
     // Bin groups by their fields, except positions and monsters
-    std::unordered_map<mongroup, std::list<tripoint_om_sm>, mongroup_hash, mongroup_bin_eq>
+    std::unordered_map<mongroup, std::list<tripoint_abs_sm>, mongroup_hash, mongroup_bin_eq>
     binned_groups;
     binned_groups.reserve( zg.size() );
     for( const auto &pos_group : zg ) {
         // Each group in bin adds only position
         // so that 100 identical groups are 1 group data and 100 tripoints
-        std::list<tripoint_om_sm> &positions = binned_groups[pos_group.second];
-        positions.emplace_back( pos_group.first );
+        auto &positions = binned_groups[pos_group.second];
+        positions.emplace_back( pos_group.second.abs_pos );
     }
 
     for( auto &group_bin : binned_groups ) {

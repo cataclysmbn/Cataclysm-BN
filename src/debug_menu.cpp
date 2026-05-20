@@ -530,15 +530,15 @@ void spawn_nested_mapgen()
 
         map target_map;
         target_map.load( abs_sub, true );
-        // TODO: fix point types
-        const auto local_ms = target_map.abs_to_bub( abs_ms );
+        const auto local_ms = project_remain<coords::omt>( abs_ms ).remainder;
         mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
                        get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();
         if( ptr == nullptr ) {
             return;
         }
-        ( *ptr )->nest( md, local_ms.xy().reinterpret_as<point_rel_ms>() );
+        const auto nested_offset = point_rel_ms( local_ms.x(), local_ms.y() );
+        ( *ptr )->nest( md, nested_offset );
         g->load_npcs();
         here.invalidate_map_cache( g->get_levz() );
     }

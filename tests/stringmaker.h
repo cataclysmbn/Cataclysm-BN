@@ -70,7 +70,7 @@ struct StringMaker<point> {
 template<>
 struct StringMaker<tripoint> {
     static std::string convert( const tripoint &p ) {
-        return string_format( "tripoint_bub_ms( %d, %d, %d )", p.x, p.y, p.z );
+        return string_format( "tripoint( %d, %d, %d )", p.x, p.y, p.z );
     }
 };
 

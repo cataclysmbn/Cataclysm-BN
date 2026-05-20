@@ -1278,9 +1278,12 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &s
     const int Z_LEVEL_DIST = 4;
 
     const int z_levels_affected = raw_blast_radius / Z_LEVEL_DIST;
+    const auto raw_blast_radius_ms = static_cast<int>( raw_blast_radius );
     const tripoint_range<tripoint_bub_ms> affected_block(
-        blast_center + tripoint( -raw_blast_radius, -raw_blast_radius, -z_levels_affected ),
-        blast_center + tripoint( raw_blast_radius, raw_blast_radius, z_levels_affected )
+        blast_center + tripoint_rel_ms( -raw_blast_radius_ms, -raw_blast_radius_ms,
+                                        -z_levels_affected ),
+        blast_center + tripoint_rel_ms( raw_blast_radius_ms, raw_blast_radius_ms,
+                                        z_levels_affected )
     );
 
     static std::vector<dist_point_pair> blast_map;

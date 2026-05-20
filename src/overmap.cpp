@@ -3703,12 +3703,17 @@ void mongroup::wander( const overmap &om )
         // TODO: somehow use the same algorithm that distributes zombie
         // density at world gen to spread the hordes over the actual
         // city, rather than the center city tile
-        target.x() = target_city->pos.x() * 2 + rng( -target_city->size * 2, target_city->size * 2 );
-        target.y() = target_city->pos.y() * 2 + rng( -target_city->size * 2, target_city->size * 2 );
+        const auto city_sm = project_to<coords::sm>( target_city->pos );
+        const auto local_target = tripoint_om_sm(
+                                      city_sm.x() + rng( -target_city->size * 2, target_city->size * 2 ),
+                                      city_sm.y() + rng( -target_city->size * 2, target_city->size * 2 ),
+                                      local_pos.z() );
+        target = project_combine( om.pos(), local_target );
         interest = 100;
     } else {
-        target.x() = local_pos.x() + rng( -10, 10 );
-        target.y() = local_pos.y() + rng( -10, 10 );
+        const auto local_target = tripoint_om_sm( local_pos.x() + rng( -10, 10 ),
+                                  local_pos.y() + rng( -10, 10 ), local_pos.z() );
+        target = project_combine( om.pos(), local_target );
         interest = 30;
     }
 }
@@ -3734,9 +3739,6 @@ void overmap::move_hordes()
         mg.dec_interest( 1 );
 
         if( ( mg.abs_pos.xy() == mg.target.xy() ) || mg.interest <= 15 ) {
-            const auto om_abs = pos();
-            const auto group_abs = mg.abs_pos.xy();
-            const auto target_abs = mg.target.xy();
             auto used_hook_target = false;
 
             if( auto *state = DynamicDataLoader::get_instance().lua.get() ) {
@@ -3762,12 +3764,8 @@ void overmap::move_hordes()
                         const auto hook_target = results.get<sol::optional<tripoint_abs_sm>>( "target" );
                         const auto hook_interest = results.get<sol::optional<int>>( "interest" );
                         if( hook_target.has_value() ) {
-                            const auto hook_abs_sm = *hook_target;
-                            auto target_om = project_remain<coords::om>( hook_abs_sm ).quotient;
-                            if( target_om == om_abs ) {
-                                mg.target = hook_abs_sm;
-                                used_hook_target = true;
-                            }
+                            mg.set_target( *hook_target );
+                            used_hook_target = true;
                         }
                         if( hook_interest.has_value() ) {
                             mg.set_interest( *hook_interest );
@@ -3802,22 +3800,22 @@ void overmap::move_hordes()
         // frequently. The average horde speed for regular Z's is around 100,
         // or one space per 5 minutes.
         if( one_in( movement_chance ) && rng( 0, 100 ) < mg.interest && rng( 0, 200 ) < mg.avg_speed() ) {
-            // TODO: Handle moving to adjacent overmaps.
-            if( local_pos.x() > mg.target.x() ) {
-                local_pos.x()--;
+            if( mg.abs_pos.x() > mg.target.x() ) {
+                mg.abs_pos.x()--;
             }
-            if( local_pos.x() < mg.target.x() ) {
-                local_pos.x()++;
+            if( mg.abs_pos.x() < mg.target.x() ) {
+                mg.abs_pos.x()++;
             }
-            if( local_pos.y() > mg.target.y() ) {
-                local_pos.y()--;
+            if( mg.abs_pos.y() > mg.target.y() ) {
+                mg.abs_pos.y()--;
             }
-            if( local_pos.y() < mg.target.y() ) {
-                local_pos.y()++;
+            if( mg.abs_pos.y() < mg.target.y() ) {
+                mg.abs_pos.y()++;
             }
 
             // Erase the group at it's old location, add the group with the new location
-            tmpzg.insert( std::pair<tripoint_om_sm, mongroup>( local_pos, mg ) );
+            const auto new_local_pos = project_remain<coords::om>( mg.abs_pos ).remainder_tripoint;
+            tmpzg.insert( std::pair<tripoint_om_sm, mongroup>( new_local_pos, mg ) );
             zg.erase( it++ );
         } else {
             ++it;
@@ -4000,14 +3998,14 @@ void overmap::signal_hordes( const tripoint_abs_sm &p, const int sig_power )
             const int targ_dist = rl_dist( p, mg.target );
             // TODO: Base this on targ_dist:dist ratio.
             if( targ_dist < 5 ) {  // If signal source already pursued by horde
-                auto new_target = project_remain<coords::om>( midpoint( mg.target, p ) ).remainder;
+                auto new_target = midpoint( mg.target, p );
                 mg.set_target( new_target );
                 const int min_inc_inter = 3; // Min interest increase to already targeted source
                 const int inc_roll = rng( min_inc_inter, calculated_inter );
                 mg.inc_interest( inc_roll );
                 add_msg( m_debug, "horde inc interest %d dist %d", inc_roll, dist );
             } else { // New signal source
-                mg.set_target( project_remain<coords::om>( p ).remainder );
+                mg.set_target( p );
                 mg.set_interest( min_capped_inter );
                 add_msg( m_debug, "horde set interest %d dist %d", min_capped_inter, dist );
             }
@@ -4017,17 +4015,12 @@ void overmap::signal_hordes( const tripoint_abs_sm &p, const int sig_power )
 
 void overmap::signal_nemesis( const tripoint_abs_sm &p_abs_sm )
 {
-    point_abs_om omp;
-    tripoint_om_sm local_sm;
-    std::tie( omp, local_sm ) = project_remain<coords::om>( p_abs_sm );
-    const point_om_sm pos_om = local_sm.xy();
-
     for( std::pair<const tripoint_om_sm, mongroup> &elem : zg ) {
         mongroup &mg = elem.second;
 
         if( mg.horde_behaviour == "nemesis" ) {
             // If the horde is a nemesis, we set its target directly on the player.
-            mg.set_target( pos_om );
+            mg.set_target( p_abs_sm );
             mg.set_nemesis_target( p_abs_sm );
         }
     }

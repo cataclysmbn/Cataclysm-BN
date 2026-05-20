@@ -13,6 +13,7 @@
 #include <queue>
 #include <future>
 #include <ranges>
+#include <vector>
 
 #include "avatar.h"
 #include "batch_turns.h"
@@ -213,7 +214,6 @@ void overmapbuffer::fix_mongroups( overmap &new_overmap )
             continue;
         }
         overmap &om = get( proj.quotient );
-        mg.abs_pos = project_combine( new_overmap.pos(), proj.remainder_tripoint );
         om.add_mon_group( mg );
         new_overmap.zg.erase( it++ );
     }
@@ -236,7 +236,6 @@ void overmapbuffer::fix_nemesis( overmap &new_overmap )
         }
 
         overmap &om = get( proj.quotient );
-        mg.abs_pos = project_combine( new_overmap.pos(), proj.remainder_tripoint );
         om.add_mon_group( mg );
         new_overmap.zg.erase( it++ );
         break;
@@ -636,9 +635,13 @@ void overmapbuffer::move_hordes()
     const auto radius = g_mapsize * 2;
     // TODO: fix point types
     const tripoint_abs_sm center( get_player_character().abs_sm_pos() );
-    for( auto &om : get_overmaps_near( center, radius ) ) {
+    auto overmaps = get_overmaps_near( center, radius );
+    std::ranges::for_each( overmaps, []( overmap * om ) {
         om->move_hordes();
-    }
+    } );
+    std::ranges::for_each( overmaps, [this]( overmap * om ) {
+        fix_mongroups( *om );
+    } );
 }
 
 void overmapbuffer::add_nemesis( const tripoint_abs_omt &p )
@@ -650,10 +653,18 @@ void overmapbuffer::add_nemesis( const tripoint_abs_omt &p )
 
 void overmapbuffer::move_nemesis()
 {
-    for( std::pair<const point_abs_om, std::unique_ptr<overmap>> &omp : overmaps ) {
-        omp.second->move_nemesis();
-        fix_nemesis( *omp.second );
-    }
+    auto overmap_ptrs = std::vector<overmap *>{};
+    overmap_ptrs.reserve( overmaps.size() );
+    std::ranges::transform( overmaps | std::views::values, std::back_inserter( overmap_ptrs ),
+    []( const std::unique_ptr<overmap> &om ) -> overmap * {
+        return om.get();
+    } );
+    std::ranges::for_each( overmap_ptrs, []( overmap * om ) {
+        om->move_nemesis();
+    } );
+    std::ranges::for_each( overmap_ptrs, [this]( overmap * om ) {
+        fix_nemesis( *om );
+    } );
 }
 
 void overmapbuffer::remove_nemesis()

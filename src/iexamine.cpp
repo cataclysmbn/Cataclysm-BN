@@ -7630,13 +7630,13 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
     switch( menu.ret ) {
         case 0: { // Attune keycard
             keycard->set_var( "portal_target_dim", local_dim );
-            keycard->set_var( "portal_target_pos", abs_pos.raw() );
+            keycard->set_var( "portal_target_pos", abs_pos );
             add_msg( m_info, _( "You attune the keycard to this power portal." ) );
             break;
         }
         case 1: { // Link using keycard
             const std::string target_dim = keycard->get_var( "portal_target_dim", std::string{} );
-            const tripoint_abs_ms target_pos( keycard->get_var( "portal_target_pos", tripoint_zero ) );
+            const auto target_pos = keycard->get_var( "portal_target_pos", tripoint_abs_ms::zero() );
             if( target_pos == abs_pos && target_dim == local_dim ) {
                 add_msg( m_bad, _( "You can't link a portal to itself." ) );
                 break;
@@ -7827,9 +7827,8 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
         wt_id = world_types::get_default();
     }
 
-    const auto target_sm = project_to<coords::sm>( pt->target_pos );
-    const auto dest_sm = tripoint_abs_sm( target_sm.raw() - tripoint( g_half_mapsize,
-                                          g_half_mapsize, 0 ) );
+    const auto dest_sm = project_to<coords::sm>( pt->target_pos ) -
+                         tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
 
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 
