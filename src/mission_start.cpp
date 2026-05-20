@@ -785,3 +785,27 @@ void mission_start::reveal_lab_train_depot( mission *miss )
     mission_util::reveal_road( player_character.global_omt_location(), target,
                                get_overmapbuffer( miss->get_dimension() ) );
 }
+
+void mission_start::create_endgame_lab_console( mission *miss )
+{
+    Character &player_character = get_player_character();
+    // Pick an central lab with spaces on z = -4.
+    tripoint_abs_omt loc = player_character.global_omt_location();
+    loc.z() = -2;
+
+    omt_find_params find_params{};
+    find_params.types.emplace_back( "central_lab", ot_match_type::type );
+    find_params.search_range = { 0, 0 };
+    find_params.search_layers = std::nullopt;
+
+    const tripoint_abs_omt place = get_overmapbuffer( miss->get_dimension() ).find_closest( loc,
+                                   find_params );
+
+    create_lab_consoles( miss, place, "central_lab", 3, translate_marker( "Central Archive" ),
+                         translate_marker( "Download Archives" ) );
+
+    // Target the lab entrance.
+    const tripoint_abs_omt target = mission_util::target_closest_lab_entrance( place, 2, miss );
+    mission_util::reveal_road( player_character.global_omt_location(), target,
+                               get_overmapbuffer( miss->get_dimension() ) );
+}
