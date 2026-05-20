@@ -10,6 +10,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "achievement.h"
 #include "avatar.h"
 #include "distribution_grid.h"
 #include "game.h"
@@ -22,6 +23,7 @@
 #include "overmapbuffer.h"
 #include "line.h"
 #include "lua_action_menu.h"
+#include "teleport.h"
 
 namespace
 {
@@ -68,6 +70,8 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "add_msg", sol::overload(
     add_msg_lua, []( sol::variadic_args va ) { add_msg_lua( game_message_type::m_neutral, va ); }
                   ) );
+    DOC( "Complete a manually awarded achievement by id." );
+    luna::set_fx( lib, "complete_achievement", []( const std::string &id ) -> void { g->complete_achievement( id ); } );
     DOC( "Teleports player to absolute coordinate in overmap" );
     luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
@@ -177,6 +181,11 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_monster_around", []( const mtype_id & id, const tripoint_bub_ms & p,
     const int radius ) { return g->place_critter_around( id, p, radius ); } );
     luna::set_fx( lib, "spawn_hallucination", []( const tripoint_bub_ms & p ) -> bool { return g->spawn_hallucination( p ); } );
+    DOC( "Teleports a creature randomly within the distance range. Returns whether teleportation succeeded." );
+    luna::set_fx( lib, "teleport_creature_random", []( Creature & cr, const sol::table & opts ) -> bool {
+        return teleport::teleport( cr, opts.get_or( "min_distance", 2 ), opts.get_or( "max_distance", 12 ),
+                                   opts.get_or( "safe", false ), false );
+    } );
     luna::set_fx( lib, "get_character_at",
                   []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> Character * { return g->critter_at<Character>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_npc_at",
