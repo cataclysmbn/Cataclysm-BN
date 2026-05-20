@@ -29,6 +29,7 @@
 #include "color.h"
 #include "construction.h"
 #include "construction_partial.h"
+#include "coordinates.h"
 #include "craft_command.h"
 #include "crafting.h"
 #include "crafting_quality.h"
@@ -2210,9 +2211,14 @@ void activity_handlers::vehicle_finish( player_activity *act, player *p )
 {
     map &here = get_map();
     //Grab this now, in case the vehicle gets shifted
-    const optional_vpart_position vp = here.veh_at( tripoint_abs_ms( act->values[0],
-                                       act->values[1],
-                                       act->values[7] ) );
+    const bool legacy = act->values.size() == 8;
+    tripoint_abs_ms pos;
+    if( legacy ) {
+        pos = tripoint_abs_ms( act->values[0], act->values[1], p->bub_pos().z() );
+    } else {
+        pos = tripoint_abs_ms( act->values[0], act->values[1], act->values[2] );
+    }
+    const optional_vpart_position vp = here.veh_at( pos );
     veh_interact::complete_vehicle( *p );
     // complete_vehicle set activity type to NULL if the vehicle
     // was completely dismantled, otherwise the vehicle still exist and
@@ -2232,7 +2238,6 @@ void activity_handlers::vehicle_finish( player_activity *act, player *p )
         } else {
             if( vp ) {
                 here.invalidate_map_cache( g->get_levz() );
-                const bool legacy = act->values.size() == 7;
                 tripoint_mnt_veh cursor_pos;
                 if( legacy ) {
                     cursor_pos = tripoint_mnt_veh( act->values[ 2 ], act->values[ 3 ], 0 );

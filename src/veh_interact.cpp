@@ -3204,7 +3204,7 @@ void veh_interact::complete_vehicle( Character &who )
         debugmsg( "Invalid activity ACT_VEHICLE values:%d", who.activity->values.size() );
         return;
     }
-    const bool legacy = who.activity->values.size() == 7;
+    const bool legacy = who.activity->values.size() == 8;
 
     map &here = get_map();
     tripoint_abs_ms abs_part_loc;
