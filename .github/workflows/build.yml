@@ -542,9 +542,10 @@ jobs:
         run: |
           if [ "${{ inputs.version-label }}" = "experimental" ]; then
             SHA_SHORT=$(git rev-parse --short HEAD)
-            TIMESTAMP=$(date "+%F %T")
+            COMMIT_SUBJECT=$(git log -1 --pretty=%s)
+            TIMESTAMP=$(date -u "+%F %T")
             gh release upload experimental --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
-            gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT on $TIMESTAMP"
+            gh release edit experimental --title "Experimental @ $TIMESTAMP ($SHA_SHORT)" --notes "Experimental build for commit $SHA_SHORT ($COMMIT_SUBJECT) on $TIMESTAMP"
           else
             gh release upload ${{ inputs.release-tag }} --clobber cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
           fi
