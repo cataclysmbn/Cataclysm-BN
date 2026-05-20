@@ -45,17 +45,12 @@
     "type": "item_group",
     "id": "NC_SCAVENGER_DOCMISSION_misc",
     "subtype": "collection",
-    "entries": [
-      { "group": "scavenger_medical_supplies", "prob": 100, "count": 5 }
-    ]
+    "entries": [ { "group": "scavenger_medical_supplies", "prob": 100, "count": 5 } ]
   },
   {
     "type": "item_group",
     "id": "scavenger_medical_supplies",
     "subtype": "distribution",
-    "entries": [
-      { "item": "microcentrifuge", "prob": 100 },
-      { "group": "tools_medical", "prob": 100 }
-    ]
+    "entries": [ { "item": "microcentrifuge", "prob": 100 }, { "group": "tools_medical", "prob": 100 } ]
   }
 ]

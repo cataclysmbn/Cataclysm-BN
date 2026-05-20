@@ -99,16 +99,12 @@
           "                        "
         ],
         "furniture": { "a": "f_crate_o" },
-        "place_npcs": [
-          { "class": "NPC_scavenger_docmission", "x": 15, "y": 7 }
-        ]
+        "place_npcs": [ { "class": "NPC_scavenger_docmission", "x": 15, "y": 7 } ]
       }
     },
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_SCIENCE_REP_2",
-    "end": {
-      "effect": { "u_buy_item": "1st_aid" }
-    },
+    "end": { "effect": { "u_buy_item": "1st_aid" } },
     "dialogue": {
       "describe": "It could be very informative to perform an analysis of zombie blood…",
       "offer": "We don't have the equipment for real analysis here so I'll need you to get some.  Critically, I'm missing a microcentrifuge with which I could perform an analysis of zombie blood.  I need you to procure a microcentrifuge and bring it to me.",
