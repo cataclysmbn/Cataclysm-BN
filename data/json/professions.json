@@ -204,6 +204,12 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "mags_mallninja_223",
+    "entries": [ { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 }, { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "sheltered_militia_1911",
     "entries": [
       { "item": "m1911mag", "ammo-item": "45_acp", "charges": 7 },
@@ -7838,6 +7844,54 @@
     ],
     "items": {
       "both": { "items": [ "pants_army", "tshirt", "jacket_army", "socks", "boots_combat" ] },
+      "male": [ "boxer_shorts" ],
+      "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "mall_ninja",
+    "name": "Mall Ninja",
+    "description": "You knew the apocalypse was coming, and you bought all the high end weapons, armor, and gear the online forums said you would need to survive.  However, you never actually learned how to use any of it, and now that the Cataclysm is actually here, you're gonna have to figure it out quickly.",
+    "points": 8,
+    "items": {
+      "both": {
+        "items": [
+          "pants_army",
+          "tshirt",
+          "jacket_army",
+          "gloves_tactical",
+          "mask_ski",
+          "tac_fullhelmet",
+          "socks",
+          "boots_combat",
+          "diving_watch",
+          "dragonskin",
+          "tacvest",
+          "goggles_nv",
+          "canteen",
+          "backpack_tactical_large"
+        ],
+        "entries": [
+          { "item": "premium_survival_kit" },
+          { "item": "mask_gas", "custom-flags": [ "no_auto_equip" ] }, 
+          { "item": "army_powered_earmuffs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "crowbar", "container-item": "webbing_belt" },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "grenadebandolier", "contents-item": [ "smokebomb", "smokebomb" ] },
+          {
+            "item": "h&k416a5",
+            "ammo-item": "556_incendiary",
+            "charges": 30,
+            "contents-item": [ "shoulder_strap", "holo_sight", "grip", "rail_laser_sight", "adjustable_stock", "offset_sights", "suppressor", "pistol_grip" ]
+          },
+          { "item": "scabbard", "contents-item": "katana" },
+          { "group": "mags_mallninja_223" },
+          { "item": "knife_swissarmy" },
+          { "item": "mil_mess_kit" },
+          { "group": "MRE", "count": 5 }
+        ]
+      },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boxer_shorts" ]
     }
