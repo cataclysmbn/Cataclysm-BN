@@ -7862,6 +7862,7 @@
         "items": [
           "pants_army",
           "tshirt",
+          "webbing_belt",
           "jacket_army",
           "gloves_tactical",
           "mask_ski",
@@ -7879,7 +7880,7 @@
           { "item": "premium_survival_kit" },
           { "item": "mask_gas", "custom-flags": [ "no_auto_equip" ] },
           { "item": "army_powered_earmuffs", "custom-flags": [ "no_auto_equip" ] },
-          { "item": "crowbar", "container-item": "webbing_belt" },
+          { "item": "halligan" },
           { "item": "knife_combat", "container-item": "sheath" },
           { "item": "grenadebandolier", "contents-item": [ "smokebomb", "smokebomb" ] },
           {
