@@ -653,7 +653,7 @@ void overmapbuffer::add_nemesis( const tripoint_abs_omt &p )
 
 void overmapbuffer::move_nemesis()
 {
-    auto overmap_ptrs = std::vector<overmap *>{};
+    auto overmap_ptrs = std::vector<overmap *> {};
     overmap_ptrs.reserve( overmaps.size() );
     std::ranges::transform( overmaps | std::views::values, std::back_inserter( overmap_ptrs ),
     []( const std::unique_ptr<overmap> &om ) -> overmap * {
