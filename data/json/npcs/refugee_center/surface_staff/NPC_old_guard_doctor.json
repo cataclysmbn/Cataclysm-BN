@@ -67,7 +67,7 @@
     "goal": "MGOAL_FIND_ITEM",
     "description": "Find a <color_light_blue>microcentrifuge</color>. The doctor knows of a <color_red>medical supply drop</color> where one could likely be found.",
     "difficulty": 2,
-    "value": 20000,
+    "value": 0,
     "item": "microcentrifuge",
     "start": {
       "assign_mission_target": { "om_terrain": "field", "reveal_radius": 1, "random": true, "search_range": 60 },
@@ -106,6 +106,9 @@
     },
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_SCIENCE_REP_2",
+    "end": {
+      "effect": { "u_buy_item": "1st_aid" }
+    },
     "dialogue": {
       "describe": "It could be very informative to perform an analysis of zombie blood…",
       "offer": "We don't have the equipment for real analysis here so I'll need you to get some.  Critically, I'm missing a microcentrifuge with which I could perform an analysis of zombie blood.  I need you to procure a microcentrifuge and bring it to me.",
@@ -113,7 +116,7 @@
       "rejected": "Are you sure?  The scientific value of that blood data could be priceless…",
       "advice": "The supply drop should be unguarded, but watch your back.",
       "inquire": "Well, do you have the microcentrifuge yet?",
-      "success": "Excellent!  This may be the key to removing the infection.",
+      "success": "Excellent!  This may be the key to removing the infection.  I don't have much to spare, but take this as thanks.",
       "success_lie": "Wait, this isn't a centrifuge!  Liar!",
       "failure": "What a shame, that equipment could have proved invaluable…"
     }
