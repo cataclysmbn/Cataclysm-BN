@@ -60,8 +60,10 @@ bool hum( const tripoint_bub_ms &p, Creature *c, item *i );
 bool shadow( const tripoint_bub_ms &p, Creature *c, item *i );
 bool map_regen( const tripoint_bub_ms &p, Creature *c, item *i );
 bool drain( const tripoint_bub_ms &p, Creature *c, item *i );
+auto lua( const tripoint_bub_ms &p, Creature *c, item *i ) -> bool;
 bool snake( const tripoint_bub_ms &p, Creature *c, item *i );
 bool cast_spell( const tripoint_bub_ms &p, Creature *critter, item * );
+
 } // namespace trapfunc
 
 struct vehicle_handle_trap_data {

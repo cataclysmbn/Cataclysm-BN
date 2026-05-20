@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "effect.h"
 #include "enums.h"
+#include "enum_conversions.h"
 #include "event_bus.h"
 #include "event.h"
 #include "explosion.h"
@@ -1915,7 +1916,15 @@ bool monster::is_immune_damage( const damage_type dt ) const
         case DT_BULLET:
             return false;
         default:
-            return true;
+            for( const auto &flag : damage_type_mon_immune_flags( dt ) ) {
+                try {
+                    if( has_flag( io::string_to_enum<m_flag>( flag ) ) ) {
+                        return true;
+                    }
+                } catch( const io::InvalidEnumString & ) {
+                }
+            }
+            return false;
     }
 }
 

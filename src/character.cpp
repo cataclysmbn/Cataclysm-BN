@@ -7119,7 +7119,13 @@ bool Character::is_immune_damage( const damage_type dt ) const
                    has_artifact_with( AEP_RESIST_ELECTRICITY ) ||
                    has_effect_with_flag( flag_EFFECT_ELECTRIC_IMMUNE );
         default:
-            return true;
+            for( const auto &flag : damage_type_immune_flags( dt ) ) {
+                const auto flag_id_value = flag_id( flag );
+                if( has_effect_with_flag( flag_id_value ) || worn_with_flag( flag_id_value ) ) {
+                    return true;
+                }
+            }
+            return false;
     }
 }
 

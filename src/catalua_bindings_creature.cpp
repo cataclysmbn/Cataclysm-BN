@@ -40,6 +40,7 @@
 #include "skill.h"
 #include "type_id.h"
 #include "trap.h"
+#include "vitamin.h"
 
 void cata::detail::reg_creature_family( sol::state &lua )
 {
@@ -469,6 +470,14 @@ void cata::detail::reg_character( sol::state &lua )
         SET_FX_T( mod_thirst, void( int ) );
         SET_FX_T( mod_fatigue, void( int ) );
         SET_FX_T( mod_sleep_deprivation, void( int ) );
+        luna::set_fx( ut, "vitamin_get", []( const UT_CLASS & charac, const vitamin_id & vit ) -> int {
+            return charac.vitamin_get( vit );
+        } );
+        luna::set_fx( ut, "vitamin_mod", []( UT_CLASS & charac, const sol::table & opts ) -> int {
+            return charac.vitamin_mod( opts.get<vitamin_id>( "vitamin" ), opts.get_or( "amount", 0 ),
+                                       opts.get_or( "capped", true ) );
+        } );
+        SET_FX_T( vitamin_set, bool( const vitamin_id &, int ) );
 
         SET_FX_T( set_stored_kcal, void( int ) );
         SET_FX_T( set_thirst, void( int ) );
@@ -863,6 +872,11 @@ void cata::detail::reg_character( sol::state &lua )
 
         DOC( "Gets all items" );
         SET_FX_T( all_items, std::vector<item *>( bool need_charges ) const );
+
+        DOC( "Consumes a quantity of items by id." );
+        luna::set_fx( ut, "use_amount", []( UT_CLASS & c, const itype_id & itype, const int count ) -> int {
+            return static_cast<int>( c.use_amount( itype, count ).size() );
+        } );
 
         DOC( "Filters items" );
         luna::set_fx( ut, "items_with", &Character::items_with );

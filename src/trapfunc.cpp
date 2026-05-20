@@ -9,6 +9,8 @@
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "creature.h"
 #include "damage.h"
@@ -1436,6 +1438,22 @@ bool trapfunc::drain( const tripoint_bub_ms &p, Creature *c, item * )
     return false;
 }
 
+auto trapfunc::lua( const tripoint_bub_ms &p, Creature *critter, item *trigger ) -> bool
+{
+    const auto &tr = g->m.tr_at( p );
+    if( tr.id.is_null() ) {
+        return false;
+    }
+    cata::run_hooks( "on_trap_triggered", [ & ]( auto & params ) {
+        params["trap_id"] = tr.id.str();
+        params["position"] = p;
+        params["creature"] = critter;
+        params["item"] = trigger;
+    } );
+    tr.trigger_aftermath( g->m, p );
+    return true;
+}
+
 bool trapfunc::cast_spell( const tripoint_bub_ms &p, Creature *critter, item * )
 {
     if( critter == nullptr ) {
@@ -1525,6 +1543,7 @@ const trap_function &trap_function_from_string( const std::string &function_name
             { "shadow", trapfunc::shadow },
             { "map_regen", trapfunc::map_regen },
             { "drain", trapfunc::drain },
+            { "lua", trapfunc::lua },
             { "spell", trapfunc::cast_spell },
             { "snake", trapfunc::snake }
         }

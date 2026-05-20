@@ -20,6 +20,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "effect.h"
+#include "enum_conversions.h"
 #include "enums.h"
 #include "event.h"
 #include "event_bus.h"
@@ -1210,6 +1211,15 @@ dealt_damage_instance Creature::deal_damage( Creature *source, bodypart_id bp,
         if( cur_damage > 0 ) {
             dealt_dams.dealt_dams[ it.type ] += cur_damage;
             total_damage += cur_damage;
+            cata::run_hooks( "on_creature_damaged", [ &, this]( auto & params ) {
+                params["source"] = source;
+                params["target"] = this;
+                params["bodypart"] = bp.id().str();
+                params["damage_type"] = io::enum_to_string( it.type );
+                params["damage"] = cur_damage;
+                params["weapon"] = source_weapon;
+                params["projectile"] = source_projectile;
+            } );
         }
     }
 

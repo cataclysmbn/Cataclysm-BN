@@ -22,6 +22,8 @@
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character.h"
 #include "character_functions.h"
 #include "character_martial_arts.h"
@@ -4650,8 +4652,20 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
 
     // no turning back now. it's all said and done.
     bool success = no_fail || rng_float( 0.0f, 1.0f ) >= spell_being_cast.spell_fail( *p );
+    const auto run_spell_finished_hooks = [&]() {
+        cata::run_hooks( "on_spell_cast_finished", [ & ]( auto & params ) {
+            params["caster"] = p;
+            params["target"] = target;
+            params["spell_id"] = spell_being_cast.id().str();
+            params["spell_class"] = spell_being_cast.spell_class().str();
+            params["success"] = success;
+            params["difficulty"] = spell_being_cast.get_difficulty();
+            params["level"] = spell_being_cast.get_level();
+        } );
+    };
     int exp_gained = spell_being_cast.casting_exp( *p );
     if( !success ) {
+        run_spell_finished_hooks();
         p->add_msg_if_player( game_message_params{ m_bad, gmf_bypass_cooldown },
                               _( "You lose your concentration!" ) );
         if( !spell_being_cast.is_max_level() && level_override == -1 ) {
@@ -4672,6 +4686,7 @@ void activity_handlers::spellcasting_finish( player_activity *act, player *p )
     p->add_msg_if_player( spell_being_cast.message(), spell_being_cast.name() );
 
     spell_being_cast.cast_all_effects( *p, target );
+    run_spell_finished_hooks();
 
     if( !no_mana ) {
         // pay the cost

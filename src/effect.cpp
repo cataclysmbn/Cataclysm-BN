@@ -1295,16 +1295,25 @@ void load_effect_type( const JsonObject &jo )
     }
     new_etype.speed_mod_name = jo.get_string( "speed_name", "" );
 
+    auto read_desc = []( const JsonValue & entry ) {
+        if( entry.test_string() ) {
+            return entry.get_string();
+        }
+        JsonObject desc = entry.get_object();
+        const auto ret = desc.get_string( "str" );
+        desc.allow_omitted_members();
+        return ret;
+    };
     if( jo.has_member( "desc" ) ) {
-        for( const std::string line : jo.get_array( "desc" ) ) {
-            new_etype.desc.push_back( line );
+        for( const JsonValue entry : jo.get_array( "desc" ) ) {
+            new_etype.desc.push_back( read_desc( entry ) );
         }
     } else {
         new_etype.desc.emplace_back( "" );
     }
     if( jo.has_member( "reduced_desc" ) ) {
-        for( const std::string line : jo.get_array( "reduced_desc" ) ) {
-            new_etype.reduced_desc.push_back( line );
+        for( const JsonValue entry : jo.get_array( "reduced_desc" ) ) {
+            new_etype.reduced_desc.push_back( read_desc( entry ) );
         }
     } else {
         new_etype.reduced_desc = new_etype.desc;
@@ -1329,8 +1338,22 @@ void load_effect_type( const JsonObject &jo )
     } else {
         new_etype.rating = e_neutral;
     }
-    new_etype.apply_message = jo.get_string( "apply_message", "" );
-    new_etype.remove_message = jo.get_string( "remove_message", "" );
+    auto read_effect_message = []( const JsonObject & obj, const std::string &member ) {
+        if( obj.has_string( member ) ) {
+            return obj.get_string( member );
+        }
+        if( obj.has_array( member ) ) {
+            for( const JsonArray entry : obj.get_array( member ) ) {
+                const auto message = entry.get_string( 0 );
+                if( !message.empty() ) {
+                    return message;
+                }
+            }
+        }
+        return std::string();
+    };
+    new_etype.apply_message = read_effect_message( jo, "apply_message" );
+    new_etype.remove_message = read_effect_message( jo, "remove_message" );
     new_etype.apply_memorial_log = jo.get_string( "apply_memorial_log", "" );
     new_etype.remove_memorial_log = jo.get_string( "remove_memorial_log", "" );
 

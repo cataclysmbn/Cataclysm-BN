@@ -7267,6 +7267,9 @@ int item::damage_resist( damage_type dt, bool to_self ) const
         case DT_BULLET:
             return bullet_resist( to_self );
         default:
+            if( damage_type_is_valid( dt ) ) {
+                return 0;
+            }
             debugmsg( "Invalid damage type: %d", dt );
     }
 

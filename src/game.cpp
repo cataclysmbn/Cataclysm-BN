@@ -3445,6 +3445,14 @@ kill_tracker &game::get_kill_tracker()
     return *kill_tracker_ptr;
 }
 
+auto game::complete_achievement( const std::string &id ) -> void
+{
+    const auto achievement_id = string_id<achievement>( id );
+    if( achievement_id.is_valid() ) {
+        achievements_tracker_ptr->report_achievement( &achievement_id.obj(), achievement_completion::completed );
+    }
+}
+
 memorial_logger &game::memorial()
 {
     return *memorial_logger_ptr;

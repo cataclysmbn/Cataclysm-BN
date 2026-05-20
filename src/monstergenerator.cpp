@@ -207,6 +207,28 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_FACTION_MEMORY: return "FACTION_MEMORY";
         case MF_COMBAT_MOUNT: return "COMBAT_MOUNT";
         case MF_CANT_TRAIN: return "CANT_TRAIN";
+        case MF_BIOLOGICALPROOF: return "BIOLOGICALPROOF";
+        case MF_BULLETPROOF: return "BULLETPROOF";
+        case MF_CAN_BE_CULLED: return "CAN_BE_CULLED";
+        case MF_CONVERSATION: return "CONVERSATION";
+        case MF_COPY_SUMMONER_LOOK: return "COPY_SUMMONER_LOOK";
+        case MF_CORNERED_FIGHTER: return "CORNERED_FIGHTER";
+        case MF_DRACULIN_IMMUNE: return "DRACULIN_IMMUNE";
+        case MF_EATS: return "EATS";
+        case MF_ENERVATE_IMMUNE: return "ENERVATE_IMMUNE";
+        case MF_GUILT_HUMAN: return "GUILT_HUMAN";
+        case MF_HAS_MIND: return "HAS_MIND";
+        case MF_HIVE_MIND: return "HIVE_MIND";
+        case MF_KEEP_DISTANCE: return "KEEP_DISTANCE";
+        case MF_MIND_SEEING: return "MIND_SEEING";
+        case MF_PHOTOKIN_MONSTER_IMMUNE: return "PHOTOKIN_MONSTER_IMMUNE";
+        case MF_SILENTMOVES: return "SILENTMOVES";
+        case MF_TEEP_IMMUNE: return "TEEP_IMMUNE";
+        case MF_TELEKIN_IMMUNE: return "TELEKIN_IMMUNE";
+        case MF_TELEPORT_IMMUNE: return "TELEPORT_IMMUNE";
+        case MF_ALL_SEEING: return "ALL_SEEING";
+        case MF_PATH_AVOID_DANGER: return "PATH_AVOID_DANGER";
+        case MF_WIELDED_WEAPON: return "WIELDED_WEAPON";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;

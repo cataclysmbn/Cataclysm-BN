@@ -21,6 +21,8 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
@@ -1248,6 +1250,12 @@ void complete_craft( Character &who, item &craft )
             }
         }
     }
+
+    cata::run_hooks( "on_craft_completed", [ & ]( auto & params ) {
+        params["character"] = &who;
+        params["recipe_id"] = making.ident().str();
+        params["batch_size"] = batch_size;
+    } );
 
     who.inv_restack( );
 }

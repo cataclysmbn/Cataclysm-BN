@@ -71,6 +71,7 @@ std::string enum_to_string<valid_target>( valid_target data )
         case valid_target::target_ground: return "ground";
         case valid_target::target_none: return "none";
         case valid_target::target_item: return "item";
+        case valid_target::target_vehicle: return "vehicle";
         case valid_target::target_fd_fire: return "fd_fire";
         case valid_target::target_fd_blood: return "fd_blood";
         case valid_target::_LAST: break;
@@ -88,6 +89,7 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::HOSTILE_50: return "HOSTILE_50";
         case spell_flag::SILENT: return "SILENT";
         case spell_flag::NO_EXPLOSION_VFX: return "NO_EXPLOSION_VFX";
+        case spell_flag::NO_EXPLOSION_SFX: return "NO_EXPLOSION_SFX";
         case spell_flag::LOUD: return "LOUD";
         case spell_flag::VERBAL: return "VERBAL";
         case spell_flag::SOMATIC: return "SOMATIC";
@@ -98,18 +100,33 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::CONCENTRATE: return "CONCENTRATE";
         case spell_flag::RANDOM_AOE: return "RANDOM_AOE";
         case spell_flag::RANDOM_DAMAGE: return "RANDOM_DAMAGE";
+        case spell_flag::IGNITE_FLAMMABLE: return "IGNITE_FLAMMABLE";
         case spell_flag::DIVIDE_DAMAGE: return "DIVIDE_DAMAGE";
+        case spell_flag::SPLIT_DAMAGE: return "SPLIT_DAMAGE";
         case spell_flag::RANDOM_DURATION: return "RANDOM_DURATION";
         case spell_flag::RANDOM_TARGET: return "RANDOM_TARGET";
+        case spell_flag::RANDOM_CRITTER: return "RANDOM_CRITTER";
         case spell_flag::MUTATE_THRESH: return "MUTATE_THRESH";
         case spell_flag::MUTATE_TRAIT: return "MUTATE_TRAIT";
         case spell_flag::PAIN_NORESIST: return "PAIN_NORESIST";
         case spell_flag::NO_FAIL: return "NO_FAIL";
         case spell_flag::WONDER: return "WONDER";
+        case spell_flag::EXTRA_EFFECTS_FIRST: return "EXTRA_EFFECTS_FIRST";
         case spell_flag::BRAWL: return "BRAWL";
         case spell_flag::DUPE_SOUND: return "DUPE_SOUND";
         case spell_flag::ADD_MELEE_DAM: return "ADD_MELEE_DAM";
         case spell_flag::PHYSICAL: return "PHYSICAL";
+        case spell_flag::PSIONIC: return "PSIONIC";
+        case spell_flag::NON_MAGICAL: return "NON_MAGICAL";
+        case spell_flag::PERCENTAGE_DAMAGE: return "PERCENTAGE_DAMAGE";
+        case spell_flag::TARGET_TELEPORT: return "TARGET_TELEPORT";
+        case spell_flag::TOUCH_REQUIRED: return "TOUCH_REQUIRED";
+        case spell_flag::NO_PROJECTILE: return "NO_PROJECTILE";
+        case spell_flag::CHARM_PET: return "CHARM_PET";
+        case spell_flag::RECHARM: return "RECHARM";
+        case spell_flag::SPAWN_GROUP: return "SPAWN_GROUP";
+        case spell_flag::SPAWN_WITH_DEATH_DROPS: return "SPAWN_WITH_DEATH_DROPS";
+        case spell_flag::MUST_HAVE_CLASS_TO_LEARN: return "MUST_HAVE_CLASS_TO_LEARN";
         case spell_flag::MOD_MELEE_MOVES: return "MOD_MELEE_MOVES";
         case spell_flag::MOD_MELEE_STAM: return "MOD_MELEE_STAM";
         case spell_flag::LAST: break;
@@ -247,6 +264,7 @@ void spell_type::load( const JsonObject &jo, const std::string & )
         { "mutate", spell_effect::mutate },
         { "bash", spell_effect::bash },
         { "dash", spell_effect::dash },
+        { "lua", spell_effect::lua },
         { "none", spell_effect::none }
     };
 

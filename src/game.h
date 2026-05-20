@@ -1109,6 +1109,7 @@ class game : public submap_load_listener
         event_bus &events();
         stats_tracker &stats();
         kill_tracker &get_kill_tracker();
+        auto complete_achievement( const std::string &id ) -> void;
         memorial_logger &memorial();
         spell_events &spell_events_subscriber();
 
