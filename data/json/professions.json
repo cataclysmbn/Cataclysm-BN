@@ -205,7 +205,10 @@
     "type": "item_group",
     "subtype": "collection",
     "id": "mags_mallninja_223",
-    "entries": [ { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 }, { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 } ]
+    "entries": [
+      { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 },
+      { "item": "stanag60drum", "ammo-item": "556_incendiary", "charges": 60 }
+    ]
   },
   {
     "type": "item_group",
@@ -7874,7 +7877,7 @@
         ],
         "entries": [
           { "item": "premium_survival_kit" },
-          { "item": "mask_gas", "custom-flags": [ "no_auto_equip" ] }, 
+          { "item": "mask_gas", "custom-flags": [ "no_auto_equip" ] },
           { "item": "army_powered_earmuffs", "custom-flags": [ "no_auto_equip" ] },
           { "item": "crowbar", "container-item": "webbing_belt" },
           { "item": "knife_combat", "container-item": "sheath" },
@@ -7883,7 +7886,16 @@
             "item": "h&k416a5",
             "ammo-item": "556_incendiary",
             "charges": 30,
-            "contents-item": [ "shoulder_strap", "holo_sight", "grip", "rail_laser_sight", "adjustable_stock", "offset_sights", "suppressor", "pistol_grip" ]
+            "contents-item": [
+              "shoulder_strap",
+              "holo_sight",
+              "grip",
+              "rail_laser_sight",
+              "adjustable_stock",
+              "offset_sights",
+              "suppressor",
+              "pistol_grip"
+            ]
           },
           { "item": "scabbard", "contents-item": "katana" },
           { "group": "mags_mallninja_223" },
