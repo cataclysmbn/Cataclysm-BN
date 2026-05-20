@@ -968,6 +968,14 @@ void avatar::do_read( item *loc )
             max_ex = std::max( min_ex, max_ex );
 
             skill_level.readBook( min_ex, max_ex, reading->level );
+            cata::run_hooks( "on_book_skill_read", [ & ]( auto & params ) {
+                params["learner"] = learner;
+                params["book"] = &book;
+                params["skill_id"] = skill.str();
+                params["min_experience"] = min_ex;
+                params["max_experience"] = max_ex;
+                params["book_level"] = reading->level;
+            } );
 
             std::string skill_name = skill.obj().name();
 

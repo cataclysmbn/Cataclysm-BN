@@ -39,6 +39,7 @@ constexpr auto hook_names = std::array
     "on_spell_cast_finished",
     "on_trap_triggered",
     "on_craft_completed",
+    "on_book_skill_read",
     "on_player_try_move",
     "on_npc_try_move",
     "on_monster_try_move",
