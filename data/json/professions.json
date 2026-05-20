@@ -7907,6 +7907,21 @@
       },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boxer_shorts" ]
+  },
+  {
+    "type": "profession",
+    "id": "mortician",
+    "name": "Mortician",
+    "description": "Before the Cataclysm, you used to embalm and bury bodies. Nowadays, there is no more room in hell, so you're putting them down instead.",
+    "points": 0,
+    "skills": [ { "level": 1, "name": "swimming" }, { "level": 1, "name": "firstaid" } ],
+    "items": {
+      "both": {
+        "items": [ "suit", "socks", "dress_shoes", "knit_scarf", "smart_phone", "wristwatch", "syringe", "scalpel" ],
+        "entries": [ { "item": "shovel", "custom-flags": [ "auto_wield" ] } ]
+      },
+      "male": [ "briefs" ],
+      "female": [ "bra", "panties" ]
     }
   }
 ]
