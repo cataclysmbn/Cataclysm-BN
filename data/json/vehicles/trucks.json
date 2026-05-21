@@ -527,12 +527,7 @@
       "F": [ "hdframe_cross", { "fuel": "beer", "part": "afs_mounted_external_tank" } ],
       "-": [ "hdframe_vertical" ],
       "|": [ "hdframe_horizontal" ],
-      "W": [
-        "hdframe_horizontal",
-        "wheel_mount_medium",
-        "wheel_wide",
-        { "fuel": "beer", "part": "afs_mounted_external_tank" }
-      ],
+      "W": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide", { "fuel": "beer", "part": "afs_mounted_external_tank" } ],
       "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
       "B": [ "hdframe_se" ],
       "Y": [ "hdframe_sw" ],
