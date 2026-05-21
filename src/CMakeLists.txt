@@ -129,6 +129,7 @@ if (TILES)
 
     # Tiles-specific setup
     target_compile_definitions(cataclysm-bn-tiles-common PUBLIC TILES)
+    target_compile_definitions(cataclysm-bn-tiles-common PUBLIC CATA_SDL)
     if (DYNAMIC_ATLAS)
         target_compile_definitions(cataclysm-bn-tiles-common PUBLIC DYNAMIC_ATLAS)
     endif()
@@ -184,6 +185,10 @@ if (TILES)
             VERBATIM
         )
     endif()
+
+    if (CATA_SHADERS)
+        add_dependencies(cataclysm-bn-tiles-common cata_shaders)
+    endif ()
 endif ()
 
 # Build curses version if requested
@@ -209,7 +214,19 @@ if (CURSES)
     # Curses-specific setup
     target_include_directories(cataclysm-bn-common PUBLIC ${CURSES_INCLUDE_DIR})
     target_link_libraries(cataclysm-bn-common PUBLIC ${CURSES_LIBRARIES})
+    if (CATA_SDL)
+        target_compile_definitions(cataclysm-bn-common PUBLIC CATA_SDL)
+        if (NOT DYNAMIC_LINKING)
+            target_link_libraries(cataclysm-bn-common PUBLIC SDL3::SDL3-static)
+        else()
+            target_link_libraries(cataclysm-bn-common PUBLIC SDL3::SDL3)
+        endif()
+    endif()
     target_link_libraries(cataclysm-bn PRIVATE cataclysm-bn-common)
+
+    if (CATA_SHADERS)
+        add_dependencies(cataclysm-bn-common cata_shaders)
+    endif ()
 
     if (RELEASE)
         install(TARGETS cataclysm-bn RUNTIME)

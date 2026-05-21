@@ -5,6 +5,7 @@
     "sdl3",
     { "name": "sdl3-image", "features": [ "png", "jpeg", "webp" ] },
     { "name": "sdl3-mixer", "features": [ "libflac", "libvorbis", "mpg123", "wavpack" ] },
+    "sdl3-shadercross",
     "sdl3-ttf",
     "sqlite3",
     "zlib"

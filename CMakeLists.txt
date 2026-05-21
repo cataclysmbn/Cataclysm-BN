@@ -73,6 +73,8 @@ set(GIT_BINARY "" CACHE STRING "Git binary name or path.")
 set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
 option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
+option(CATA_SDL "Link SDL3 core for GPU platform services (automatically enabled by TILES)." "OFF")
+set(CATA_SHADERS OFF)
 
 if (TESTS)
 include(CTest)
@@ -192,6 +194,7 @@ endif ()
 # Can't compile curses and tiles build's at same time
 if (TILES)
     set(CURSES OFF)
+    set(CATA_SDL ON)
 endif ()
 
 # Can't use both home and xdg directories
@@ -256,6 +259,8 @@ if (LINKER)
     message(STATUS "LINKER                        : ${LINKER}")
 endif ()
 message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
+message(STATUS "CATA_SDL                      : ${CATA_SDL}")
+message(STATUS "CATA_SHADERS                  : ${CATA_SHADERS}")
 
 message(STATUS "See CMake compiling guide for details and more info --")
 
@@ -346,8 +351,7 @@ if (USE_TRACY)
 endif ()
 
 # Check for build types and libraries
-if (TILES)
-    # Find SDL, SDL_ttf & SDL_image for graphical install
+if (CATA_SDL)
     message(STATUS "Searching for SDL3 library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
         if (NOT BUILD_SDL3)
@@ -376,12 +380,80 @@ if (TILES)
     endif()
     if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
-                "This project requires SDL3 to be installed to compile in graphical mode.  \
+                "This project requires SDL3 to be installed for SDL platform services. \
                  Please install the SDL3 development libraries, \
-                 or try compiling without -DTILES=1 for a text-only compilation. \
+                 or disable with -DCATA_SDL=OFF (or -DTILES=OFF for tile builds). \
                  See CMake compiling guide for details and more info.")
     endif ()
+    add_definitions(-DCATA_SDL)
 
+    # --- SDL_shadercross: HLSL shader compiler (build-time tool only, library not linked) ---
+    # Install via: vcpkg (sdl3-shadercross in msvc-full-features/vcpkg.json) or place shadercross on PATH.
+    # FetchContent is not viable — no release tags, project uses git submodules for DXC/SPIRV-Cross.
+    message(STATUS "Searching for shadercross (HLSL compiler) --")
+
+    find_program(SHADERCROSS_EXE
+        NAMES shadercross
+        HINTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/sdl3-shadercross")
+
+    if (SHADERCROSS_EXE)
+        set(CATA_SHADERS ON)
+        message(STATUS "shadercross: ${SHADERCROSS_EXE}")
+        file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/data/shaders")
+
+        file(GLOB_RECURSE CATA_HLSL_SOURCES "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
+        set(CATA_SHADER_OUTPUTS "")
+
+        foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
+            get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
+
+            if (SHADER_NAME MATCHES "_vertex$")
+                set(STAGE vertex)
+            elseif (SHADER_NAME MATCHES "_fragment$")
+                set(STAGE fragment)
+            else ()
+                set(STAGE compute)
+            endif ()
+
+            set(SPV_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
+            set(MSL_OUT  "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
+
+            add_custom_command(
+                OUTPUT "${SPV_OUT}"
+                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d spirv -t ${STAGE} -o "${SPV_OUT}"
+                DEPENDS "${HLSL_SRC}"
+                COMMENT "Compiling ${SHADER_NAME}.hlsl -> SPIR-V"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${SPV_OUT}")
+
+            add_custom_command(
+                OUTPUT "${MSL_OUT}"
+                COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d msl -t ${STAGE} -o "${MSL_OUT}"
+                DEPENDS "${HLSL_SRC}"
+                COMMENT "Compiling ${SHADER_NAME}.hlsl -> MSL"
+                VERBATIM)
+            list(APPEND CATA_SHADER_OUTPUTS "${MSL_OUT}")
+
+            if (WIN32)
+                set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
+                add_custom_command(
+                    OUTPUT "${DXIL_OUT}"
+                    COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxil -t ${STAGE} -o "${DXIL_OUT}"
+                    DEPENDS "${HLSL_SRC}"
+                    COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXIL"
+                    VERBATIM)
+                list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
+            endif ()
+        endforeach ()
+
+        add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
+    else ()
+        message(STATUS "shadercross not found — shaders will not be compiled (install sdl3-shadercross via vcpkg or place shadercross on PATH)")
+    endif ()
+endif ()
+
+if (TILES)
+    # Find SDL3_ttf & SDL3_image for tile rendering
     message(STATUS "Searching for SDL3_ttf library --")
     if (NOT CMAKE_FIND_PACKAGE_PREFER_CONFIG)
         if (NOT BUILD_SDL3)
@@ -470,10 +542,9 @@ if (CURSES)
 endif ()
 
 if (SOUND)
-    # You need TILES to be able to use SOUND
-    if (NOT TILES)
+    if (NOT CATA_SDL)
         message(FATAL_ERROR
-                "You must enable graphical support with -DTILES=1 \
+                "You must enable SDL core with -DCATA_SDL=1 (or -DTILES=1) \
                 to be able to enable sound support. \
                 See CMake compiling guide for details and more info.")
     endif ()

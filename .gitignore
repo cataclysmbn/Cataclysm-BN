@@ -21,6 +21,7 @@ test_user_dir*
 /config/
 /data/*.template
 /data/mods/user-default-mods.json
+/data/shaders/*
 /dep/
 /doxygen_doc/html/*
 /doxygen_doc/latex/*

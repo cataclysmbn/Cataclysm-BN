@@ -28,6 +28,7 @@
 #include "mapsharing.h"
 #include "output.h"
 #include "path_info.h"
+#include "preload_config.h"
 #include "point.h"
 #include "popup.h"
 #include "sdlsound.h"
@@ -2302,6 +2303,14 @@ void options_manager::add_options_graphics()
     "1", COPT_CURSES_HIDE );
 #endif
 
+#if defined(CATA_SDL)
+    add_empty_line();
+    add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
+         translate_marker( "Enables SDL_GPU hardware acceleration for compute passes (lighting, visibility).  Requires restart." ),
+    { { "auto", translate_marker( "Auto" ) }, { "off", translate_marker( "Off" ) }, { "force", translate_marker( "Force" ) } },
+    "auto" );
+#endif
+
 }
 
 void options_manager::add_options_performance()
@@ -4324,6 +4333,14 @@ void options_manager::cache_to_globals()
 #if defined(SDL_SOUND)
     sounds::sound_enabled = ::get_option<bool>( "SOUND_ENABLED" );
 #endif
+
+#if defined(CATA_SDL)
+    if( options.contains( "COMPUTE_ACCELERATION" ) ) {
+        preload_config::set_compute_accel(
+            preload_config::compute_accel_from_string(
+                ::get_option<std::string>( "COMPUTE_ACCELERATION" ) ) );
+    }
+#endif
 }
 
 bool options_manager::save()
@@ -4332,10 +4349,16 @@ bool options_manager::save()
     cache_to_globals();
     update_volumes();
 
-    return write_to_file( savefile, [&]( std::ostream & fout ) {
+    auto const ok = write_to_file( savefile, [&]( std::ostream & fout ) {
         JsonOut jout( fout, true );
         serialize( jout );
     }, _( "options" ) );
+
+#if defined(CATA_SDL)
+    preload_config::save();
+#endif
+
+    return ok;
 }
 
 void options_manager::load()

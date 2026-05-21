@@ -59,6 +59,10 @@ class ui_adaptor;
 #   include <SDL3/SDL_main.h>
 #   include "sdl_wrappers.h"
 #endif
+#if defined(CATA_SDL)
+#   include "compute/gpu_platform.h"
+#endif
+#include "preload_config.h"
 
 #if defined(__ANDROID__)
 #include <SDL3/SDL.h>
@@ -238,7 +242,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 15> first_pass_arguments = {{
+        const std::array<arg_handler, 16> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -445,6 +449,21 @@ int main( int argc, char *argv[] )
                         lua_types_output_path = params[0];
                         return 0;
                     }
+                },
+                {
+                    "--gpu-backend", "<driver>",
+                    "Override the SDL_GPU backend driver for diagnostics (vulkan / direct3d12 / metal / software).",
+                    nullptr,
+                    []( int num_args, const char **params ) -> int {
+                        if( num_args < 1 )
+                        {
+                            return -1;
+                        }
+#if defined(CATA_SDL)
+                        preload_config::set_gpu_backend_override( params[0] );
+#endif
+                        return 1;
+                    }
                 }
             }
         };
@@ -630,6 +649,8 @@ int main( int argc, char *argv[] )
         }
     }
 
+    preload_config::load();
+
     std::string current_path = std::filesystem::current_path().string();
 
     if( !dir_exist( PATH_INFO::datadir() ) ) {
@@ -733,6 +754,9 @@ int main( int argc, char *argv[] )
             DebugLog( DL::Error, DC::Main ) << "Error while initializing the interface: " << err.what();
             return 1;
         }
+#if defined(CATA_SDL)
+        cata_gpu::init();
+#endif
     }
 
 #if defined(TILES)
