@@ -121,6 +121,7 @@ deno task docs:gen
 - **MUST** run `msgfmt -f -c -o /tmp/ko.mo lang/po/ko.po` after touching Korean PO files and fix reported errors before PR.
 - **MUST** run `./tools/check_po_printf_format.py` after touching PO files and fix reported errors before PR.
 - Do not call PO/printf errors pre-existing to skip them when the task touches that locale or validation path.
+- Do not state CI failures are fixed until the latest remote CI check for the failing job succeeds; clearly separate local validation from pending CI.
 - If a mistake is found during the task, update AGENTS/skill immediately and fix the current branch before summarizing.
 
 ## WHEN translating docs
