@@ -1,5 +1,7 @@
 #pragma once
 
+#include "filesystem.h"
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -150,7 +152,7 @@ class trans_catalogue
          * Load translation catalogue from given MO file.
          * @throws std::runtime_error on failure.
          */
-        static trans_catalogue load_from_file( const std::string &file_path );
+        static trans_catalogue load_from_file( const fs::path &file_path );
         /**
          * Load translation catalogue from given MO file in memory.
          * @throws std::runtime_error on failure.
