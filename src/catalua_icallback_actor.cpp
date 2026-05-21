@@ -333,10 +333,10 @@ bool lua_istate_actor::has_on_tick() const
     return on_tick_func != sol::lua_nil;
 }
 
-int lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const
+auto lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const -> void
 {
     if( on_tick_func == sol::lua_nil ) {
-        return 0;
+        return;
     }
     try {
         sol::state_view lua( on_tick_func.lua_state() );
@@ -346,12 +346,9 @@ int lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint_bub
         params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = on_tick_func( params );
         check_func_result( res );
-        int ret = res;
-        return ret;
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run istate on_tick for '%s': %s", item_id, e.what() );
     }
-    return 0;
 }
 
 void lua_istate_actor::call_on_pickup( Character &who, item &it ) const
