@@ -62,6 +62,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
 - **MUST NOT** manually write an options/struct type at a call site when the function parameter type makes it inferable; use `{ .field = value }` instead of `options_type{ .field = value }`.
 - **SHOULD** search for existing solution because it's a large, legacy codebase.
+- **MUST** review every touched call site, container, initializer, assignment, and concatenation for type-boundary regressions after changing `fs::path`/`std::string` APIs; do not push one compiler-log fix without this sweep.
 
 ## Workflow
 
