@@ -500,7 +500,8 @@ static auto dim_prefix_path( const std::string &dim_id ) -> fs::path
            fs::path( "dimensions" ) / dim_id;
 }
 
-static auto get_omt_dirname( const std::string &dim_id, const tripoint_abs_omt &omt_addr ) -> fs::path
+static auto get_omt_dirname( const std::string &dim_id,
+                             const tripoint_abs_omt &omt_addr ) -> fs::path
 {
     const auto segment_addr = project_to<coords::seg>( omt_addr );
     return dim_prefix_path( dim_id ) / "maps" / string_format( "%d.%d.%d",
