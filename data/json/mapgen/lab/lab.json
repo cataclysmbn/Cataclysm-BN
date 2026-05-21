@@ -2,7 +2,19 @@
   {
     "type": "mapgen",
     "method": "lua",
-    "om_terrain": [ "lab", "lab_stairs", "lab_core", "lab_finale", "central_lab", "central_lab_stairs", "central_lab_core", "central_lab_finale", "tower_lab", "tower_lab_stairs", "tower_lab_finale" ],
+    "om_terrain": [
+      "lab",
+      "lab_stairs",
+      "lab_core",
+      "lab_finale",
+      "central_lab",
+      "central_lab_stairs",
+      "central_lab_core",
+      "central_lab_finale",
+      "tower_lab",
+      "tower_lab_stairs",
+      "tower_lab_finale"
+    ],
     "luamethod": "lab"
   },
   {
