@@ -13,7 +13,9 @@
       "central_lab_finale",
       "tower_lab",
       "tower_lab_stairs",
-      "tower_lab_finale"
+      "tower_lab_finale",
+      "ants_lab",
+      "ants_lab_stairs"
     ],
     "luamethod": "lab"
   },
