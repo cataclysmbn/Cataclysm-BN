@@ -8469,7 +8469,7 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
 
     // TODO: Make this `true`
     const bool allow_zlev_move = zlSwitch(
-                                     m.has_zlevels() && get_option<bool>( "FOV_3D" ),
+                                     m.has_zlevels(),
                                      false,
                                      true
                                  );
@@ -8570,10 +8570,8 @@ look_around_result game::look_around( bool show_window, tripoint_bub_ms &center,
 #endif // TILES
 
     const int old_levz = get_levz();
-    const int min_levz = zlSwitch( std::max( old_levz - fov_3d_z_range, -OVERMAP_DEPTH ),
-                                   old_levz,        -OVERMAP_DEPTH );
-    const int max_levz = zlSwitch( std::min( old_levz + fov_3d_z_range, OVERMAP_HEIGHT ), old_levz,
-                                   OVERMAP_HEIGHT );
+    const int min_levz = zlSwitch( -OVERMAP_DEPTH, old_levz, -OVERMAP_DEPTH );
+    const int max_levz = zlSwitch( OVERMAP_HEIGHT, old_levz, OVERMAP_HEIGHT );
 
     m.update_visibility_cache( old_levz );
     const visibility_variables &cache = m.get_visibility_variables_cache();
@@ -8846,11 +8844,10 @@ std::vector<map_item_stack> game::find_nearby_items( int iRadius )
         return ret;
     }
 
-    int range = fov_3d ? ( fov_3d_z_range * 2 ) + 1 : 1;
-    int center_z = u.bub_pos().z();
-
-    for( int i = 1; i <= range; i++ ) {
-        int z = i % 2 ? center_z - i / 2 : center_z + i / 2;
+    const auto process_z = [&]( const int z ) {
+        if( z < -OVERMAP_DEPTH || z > OVERMAP_HEIGHT ) {
+            return;
+        }
         for( auto &points_p_it : closest_points_first<tripoint_bub_ms>( {u.bub_pos().xy(), z}, iRadius ) ) {
             if( points_p_it.y() >= u.bub_pos().y() - iRadius && points_p_it.y() <= u.bub_pos().y() + iRadius &&
                 u.sees( points_p_it ) &&
@@ -8868,6 +8865,14 @@ std::vector<map_item_stack> game::find_nearby_items( int iRadius )
                     }
                 }
             }
+        }
+    };
+
+    const int center_z = u.bub_pos().z();
+    for( int dz = 0; dz <= OVERMAP_HEIGHT + OVERMAP_DEPTH; ++dz ) {
+        process_z( center_z - dz );
+        if( dz != 0 ) {
+            process_z( center_z + dz );
         }
     }
 

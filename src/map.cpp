@@ -118,6 +118,12 @@
 #include "weather.h"
 #include "weighted_list.h"
 
+#if defined( CATA_SDL )
+#include "compute/gpu_lighting.h"
+#include "compute/gpu_lm.h"
+#include "compute/gpu_platform.h"
+#endif
+
 struct ammo_effect;
 using ammo_effect_str_id = string_id<ammo_effect>;
 
@@ -821,7 +827,6 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     }
     level_cache &ch = get_cache( smz );
     invalidate_lightmap_caches();
-    m_solar.last_built_hour = -1;
     set_seen_cache_dirty( smz );
     // Mark dirty only the submaps the vehicle actually occupies (union of old
     // and new footprint), rather than the entire z-level.
@@ -6821,7 +6826,7 @@ void map::update_visibility_cache( const int zlev )
     {
         const level_cache &plr_ch = get_cache_ref( g->u.bub_pos().z() );
         visibility_variables_cache.vision_threshold = g->u.get_vision_threshold(
-                    plr_ch.lm[plr_ch.idx( g->u.bub_pos().x(), g->u.bub_pos().y() )].max() );
+                    plr_ch.lm[plr_ch.idx( g->u.bub_pos().x(), g->u.bub_pos().y() )] );
     }
 
     visibility_variables_cache.u_clairvoyance = g->u.clairvoyance();
@@ -6830,8 +6835,8 @@ void map::update_visibility_cache( const int zlev )
 
     auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 
-    int min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1, -OVERMAP_DEPTH ) : zlev );
-    int max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
+    int min_z = -OVERMAP_DEPTH;
+    int max_z = OVERMAP_HEIGHT;
 
     for( int z = min_z; z <= max_z; z++ ) {
 
@@ -7425,7 +7430,7 @@ bool map::sees( const tripoint_bub_ms &F, const tripoint_bub_ms &T, const int ra
     bool visible = true;
 
     // Ugly `if` for now
-    if( !fov_3d || F.z() == T.z() ) {
+    if( F.z() == T.z() ) {
 
         auto last_point = F.xy();
         // Please someone make bresenham work with typed points, I'm running out of willpower
@@ -7680,11 +7685,6 @@ void map::reachable_flood_steps( std::vector<tripoint_bub_ms> &reachable_pts,
 bool map::clear_path( const tripoint_bub_ms &f, const tripoint_bub_ms &t, const int range,
                       const int cost_min, const int cost_max ) const
 {
-    // Ugly `if` for now
-    if( !fov_3d && f.z() != t.z() ) {
-        return false;
-    }
-
     if( f.z() == t.z() ) {
         if( ( range >= 0 && range < rl_dist( f.xy(), t.xy() ) ) ||
             !inbounds( t ) ) {
@@ -8133,7 +8133,6 @@ void map::shift( const point_rel_sm &sp )
                 shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, sp );
                 shift_flat_cache( gc.outside_cache, gc.cache_x, gc.cache_y, sp );
                 shift_flat_cache( gc.sheltered_cache, gc.cache_x, gc.cache_y, sp );
-                shift_flat_cache( gc.angled_sunlight_cache, gc.cache_x, gc.cache_y, sp );
             }
             // Iterate in shift-direction order so copy_grid never reads an
             // already-overwritten source slot.  sp >= 0 → forward; sp < 0 → reverse.
@@ -8176,8 +8175,6 @@ void map::shift( const point_rel_sm &sp )
             } );
         }
     } // shift_grid_copy_load
-    // New edge submaps have stale solar cache data. Force a rebuild before the next draw.
-    m_solar.last_built_hour = -1;
     if( zlevels ) {
         ZoneScopedN( "shift_add_roofs" );
         //Go through the generated maps and fill in the roofs
@@ -9758,11 +9755,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // Floor caches are z-independent so they can run in any order.
         // They must complete before outside/sheltered caches which read floor[z+1].
         for( int z = minz; z <= maxz; ++z ) {
-            const bool affects_seen_cache = z == zlev || fov_3d;
-            if( build_floor_cache( z ) && affects_seen_cache ) {
+            if( build_floor_cache( z ) ) {
                 seen_cache_dirty = true;
             }
         }
+#if defined( CATA_SDL )
+        cata_gpu::upload_floor_caches( *this, minz, maxz );
+#endif
     }
 
     {
@@ -9849,6 +9848,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 do_vehicle_caching( z );
             }
         }
+#if defined( CATA_SDL )
+        cata_gpu::upload_vehicle_floor_caches( *this, minz, maxz );
+#endif
     }
 
     seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
@@ -9857,10 +9859,21 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
     }
     const tripoint_bub_ms &p = g->u.bub_pos();
-    if( seen_cache_dirty || m_last_seen_cache_origin != p ) {
+    const bool need_seen_rebuild = seen_cache_dirty || m_last_seen_cache_origin != p;
+#if defined( CATA_SDL )
+    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+#endif
+    if( need_seen_rebuild ) {
+#if defined( CATA_SDL )
+        if( gpu_device == nullptr ) {
+            debugmsg( "SDL_GPU lighting is required for 3D visibility, but no GPU device is available" );
+            return;
+        }
+#else
         build_seen_cache( p, zlev );
+#endif
         m_last_seen_cache_origin = p;
-        // seen_cache changed; any cached visibility derived from it is now stale.
+        // seen_cache changed (or will be updated by GPU pass); mark visibility stale.
         get_cache( zlev ).visibility_cache_dirty = true;
     }
     if( !skip_lightmap ) {
@@ -9881,6 +9894,61 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
                                        dirty_seen_cache_levels.end() );
 
+#if defined( CATA_SDL )
+        if( gpu_device != nullptr ) {
+            update_solar_params();
+            // GPU path: extend dirty_seen_cache_levels with the current z-level if the
+            // player-view seen cache also needs a rebuild (player moved or transparency
+            // changed), then run the full GPU lighting + seen-cache dispatch.
+            auto gpu_levels = dirty_seen_cache_levels;
+            if( need_seen_rebuild ) {
+                gpu_levels.push_back( zlev );
+                std::ranges::sort( gpu_levels );
+                gpu_levels.erase( std::ranges::unique( gpu_levels ).begin(),
+                                  gpu_levels.end() );
+            }
+            if( !gpu_levels.empty() ) {
+                for( const int z : gpu_levels ) {
+                    auto &c = get_cache( z );
+                    std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+                    std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                    std::ranges::fill( c.lm, 0.0f );
+                }
+                // Pre-warm vehicle list cache serially to avoid concurrent heap writes.
+                get_vehicles();
+                for( const int z : gpu_levels ) {
+                    generate_lightmap_worker( z, true );
+                }
+                const bool gpu_lighting_ok = cata_gpu::run_gpu_lighting( gpu_device, {
+                    .m            = this,
+                    .dirty_levels = &gpu_levels,
+                    .player_x     = p.x(),
+                    .player_y     = p.y(),
+                    .player_zlev  = zlev,
+                    .angled_sunlight_shadows = angled_sunlight_shadows,
+                    .direct_sunlight = m_solar.direct_active,
+                    .sun_dx_per_z = m_solar.dx_per_z,
+                    .sun_dy_per_z = m_solar.dy_per_z,
+                } );
+                if( !gpu_lighting_ok ) {
+                    debugmsg( "SDL_GPU lighting dispatch failed; see debug.log for details" );
+                    return;
+                }
+
+                std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
+                    get_cache( z ).lightmap_dirty = false;
+                    get_cache( z ).visibility_cache_dirty = true;
+                } );
+                if( need_seen_rebuild ) {
+                    get_cache( zlev ).visibility_cache_dirty = true;
+                }
+            }
+        } else {
+            if( !dirty_seen_cache_levels.empty() ) {
+                debugmsg( "SDL_GPU lighting is required for lightmap rebuild, but no GPU device is available" );
+                return;
+            }
+#endif
         if( !dirty_seen_cache_levels.empty() ) {
 
             if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
@@ -9893,7 +9961,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     auto &c = get_cache( z );
                     std::fill( c.sm.begin(), c.sm.end(), 0.0f );
                     std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
-                    std::fill( c.lm.begin(), c.lm.end(), four_quadrants( 0.0f ) );
+                    std::ranges::fill( c.lm, 0.0f );
                 }
                 // Build sunlight (all z-levels, top-to-bottom; serial).
                 build_sunlight_cache( zlev );
@@ -9943,6 +10011,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             } );
 
         } // end if( !dirty_seen_cache_levels.empty() )
+#if defined( CATA_SDL )
+        }
+#endif
     }
 }
 
@@ -10521,12 +10592,11 @@ level_cache::level_cache( int mx, int my )
       transparency_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
       outside_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
       floor_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
-      lm( static_cast<size_t>( mx * my ), four_quadrants( 0.0f ) ),
+      lm( static_cast<size_t>( mx * my ), 0.0f ),
       sm( static_cast<size_t>( mx * my ), 0.0f ),
       light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
       outside_cache( static_cast<size_t>( mx * my ), false ),
       sheltered_cache( static_cast<size_t>( mx * my ), false ),
-      angled_sunlight_cache( static_cast<size_t>( mx * my ), false ),
       floor_cache( static_cast<size_t>( mx * my ), false ),
       vehicle_floor_cache( static_cast<size_t>( mx * my ), '\0' ),
       transparency_cache( static_cast<size_t>( mx * my ), 0.0f ),
@@ -10612,7 +10682,6 @@ void map::invalidate_map_cache( const int zlev )
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
         m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
-        m_solar.last_built_hour  = -1;
     }
 }
 

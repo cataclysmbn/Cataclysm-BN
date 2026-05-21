@@ -1,5 +1,7 @@
 #if defined( CATA_SDL )
 #include "gpu_platform.h"
+#include "gpu_lighting.h"
+#include "gpu_lm.h"
 
 #include "debug.h"
 #include "path_info.h"
@@ -161,6 +163,8 @@ auto init() -> void
 auto shutdown() -> void
 {
     if( s_device != nullptr ) {
+        shutdown_lighting();
+        shutdown_lm();
         SDL_DestroyGPUDevice( s_device );
         s_device = nullptr;
     }

@@ -344,7 +344,7 @@ struct level_cache {
 
     // ---- 12 tile-coordinate arrays (size: cache_x * cache_y) ----
     // All indexed as: vec[x * cache_y + y]  (X-outer layout, matching old C-array [MAPSIZE_X][MAPSIZE_Y])
-    std::vector<four_quadrants>     lm;
+    std::vector<float>              lm;
     std::vector<float>              sm;
     // To prevent redundant ray casting into neighbors: precalculate bulk light source positions.
     // This is only valid for the duration of generate_lightmap
@@ -357,12 +357,6 @@ struct level_cache {
     // True when at least one tile within 3×3 above has overhead coverage (floor or sheltered
     // tile at z+1).  Distinct from outside_cache: a tile can be outside yet sheltered (overhang).
     std::vector<bool>               sheltered_cache;
-
-    // True when this tile has an unobstructed ray to the sun for the current in-game hour.
-    // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
-    // Consulted by build_sunlight_cache() to distinguish direct-sun tiles (full
-    // outside_light_level) from scatter-lit outdoor tiles (reduced ambient level).
-    std::vector<bool>               angled_sunlight_cache;
 
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
@@ -2040,11 +2034,9 @@ class map : public submap_load_listener
         // fills lm with sunlight. pzlev is current player's zlevel
         void build_sunlight_cache( int pzlev );
         // Recomputes sun direction and scatter factor from the current game time.
-        // Called once per in-game hour from build_sunlight_cache.
         void update_solar_params();
-        // Traces a parallel sun ray from each tile at zlev upward and writes
-        // angled_sunlight_cache.  Reads floor_cache across all z-levels above zlev.
-        void build_angled_sunlight_cache( int zlev );
+        // True when a tile has physical sky access along the current sunlight ray.
+        bool has_direct_sunlight_at( point_bub_ms p, int zlev ) const;
     public:
         // Rebuilds outside_caches for zlev top-down:
         // A tile is outside if any neighbour in the 3×3 at z+1
@@ -2066,7 +2058,11 @@ class map : public submap_load_listener
         // lights.  The function then processes only entities whose position z
         // matches zlev, avoiding cross-level cache writes for parallel safety.
         void generate_lightmap( int zlev );
-        void generate_lightmap_worker( int zlev );
+        // When gpu_collect_only is true, only populates light_source_buffer;
+        // skips all CPU shadowcasting (apply_light_source / apply_light_arc calls).
+        // Directional and arc lights are approximated as omnidirectional point
+        // sources via add_light_source so they appear in the GPU source list.
+        void generate_lightmap_worker( int zlev, bool gpu_collect_only = false );
         void build_seen_cache( const tripoint_bub_ms &origin, int target_z );
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.
@@ -2096,8 +2092,7 @@ class map : public submap_load_listener
         // forces a seen_cache rebuild regardless of whether the player moved.
         tripoint_bub_ms m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
 
-        // State for the directional sunlight system.  Rebuilt once per in-game hour by
-        // update_solar_params() and build_angled_sunlight_cache().
+        // State for the directional sunlight system.  Rebuilt by update_solar_params().
         struct solar_params {
             // Sun ray horizontal displacement per z-level.
             // Positive dx_per_z = east (+x); negative = west.
@@ -2107,8 +2102,6 @@ class map : public submap_load_listener
             float dy_per_z     = 0.f;
             // False at night; true for all daylight hours (day/night boundary only).
             bool  direct_active  = false;
-            // Game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
-            int   last_built_hour = -1;
         };
         solar_params m_solar;
 
@@ -2489,4 +2482,3 @@ class fake_map : public tinymap
                   int fake_map_z );
         ~fake_map() override;
 };
-

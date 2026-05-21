@@ -1210,7 +1210,7 @@ monster_action_t monster::decide_action() const
             bool can_z_move  = true;
             const bool is_z_move = candidate.z() != bub_pos().z();
             if( is_z_move ) {
-                bool can_z_attack = fov_3d;
+                bool can_z_attack = true;
                 if( !here.valid_move( bub_pos(), candidate, false, true, via_ramp ) ) {
                     can_z_move   = false;
                     can_z_attack = false;

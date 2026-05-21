@@ -758,7 +758,7 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                static_cast<int>( al.obstructed )
              );
     mvwprintw( w_info, point( 1, off++ ), _( "light_at: %s" ),
-               map_cache.lm[map_cache.idx( target.x(), target.y() )].to_string() );
+               std::to_string( map_cache.lm[map_cache.idx( target.x(), target.y() )] ) );
     mvwprintw( w_info, point( 1, off++ ), _( "apparent light: %.5f (%d)" ),
                al.apparent_light, apparent_light );
     std::string extras;

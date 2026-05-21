@@ -314,10 +314,6 @@ bool Creature::sees( const Creature &critter ) const
         return false;
     }
 
-    if( !fov_3d && !debug_mode && bub_pos().z() != critter.bub_pos().z() ) {
-        return false;
-    }
-
     // This check is ridiculously expensive so defer it to after everything else.
     auto visible = []( const Character * ch ) {
         return ch == nullptr || !ch->is_invisible();
@@ -383,10 +379,6 @@ bool Creature::sees( const Creature &critter ) const
 bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) const
 {
     ZoneScoped;
-    if( !fov_3d && bub_pos().z() != t.z() ) {
-        return false;
-    }
-
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.

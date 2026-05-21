@@ -3339,7 +3339,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
                 ll = ch.inbounds( {x, y} ) ? ch.visibility_cache[ch.idx( x, y )] : lit_level::BLANK;
                 const auto visibility = here.get_visibility( ll, cache );
-                if( ( fov_3d || z == center.z() ) && in_map_bounds ) {
+                if( in_map_bounds ) {
                     if( !would_apply_vision_effects( visibility ) ) {
                         if( here.ter( pos ) != t_open_air ) {
                             last_vis = z;
@@ -3422,23 +3422,9 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                 min_z = std::min( pos.z(), min_z );
                                 draw_points.emplace_back( pos, height_3d, ll, invisible );
                             } else if( last_vis != center.z() + 1 ) {
-                                if( in_map_bounds && z < center.z() - fov_3d_z_range ) {
-                                    // The floor is below the 3D FOV limit, but the loop only
-                                    // reaches here through a fully transparent column above.
-                                    // Treat it as seen-through-sky: render and memorize at the
-                                    // floor's actual position with surface lighting + depth tint.
-                                    here.set_memory_seen_cache_dirty( pos );
-                                    min_z = std::min( pos.z(), min_z );
-                                    //invisible[0] = true;
-                                    draw_points.emplace_back( pos, height_3d, lit_level::MEMORIZED, invisible );
-                                    //const ter_id &t = here.ter( pos );
-                                    //const auto tile = tile_search_params{ t.id().str(), C_TERRAIN, empty_string, 0, 0 };
-                                    //draw_from_id_string( tile, pos, std::nullopt, std::nullopt, lit_level::MEMORIZED, false, center.z - z, false );
-                                } else {
-                                    min_z = std::min( last_vis, min_z );
-                                    draw_points.emplace_back( tripoint_bub_ms( pos.xy(), last_vis ), height_3d,
-                                                              last_vis_ll, invisible );
-                                }
+                                min_z = std::min( last_vis, min_z );
+                                draw_points.emplace_back( tripoint_bub_ms( pos.xy(), last_vis ), height_3d,
+                                                          last_vis_ll, invisible );
                             } else if( had_visible_open_air && in_map_bounds ) {
                                 // No vehicle and no solid last_vis — placeholder so cross-z
                                 // sprite draws (player character above) still execute.
@@ -3622,11 +3608,9 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 const auto &_cur = here.access_cache( z );
                 const auto &_lower = here.access_cache( z - 1 );
                 if( low_overridden ? !low_override->second : ( here.dont_draw_lower_floor( {mem_x, mem_y, z} )
-                        || ( fov_3d && lighting != lit_level::BLANK &&
+                        || ( lighting != lit_level::BLANK &&
                              _lower.visibility_cache[_lower.idx( mem_x, mem_y )] == lit_level::BLANK ) ) ) {
-                    if( fov_3d ) {
-                        lighting = _cur.visibility_cache[_cur.idx( mem_x, mem_y )];
-                    }
+                    lighting = _cur.visibility_cache[_cur.idx( mem_x, mem_y )];
                     break;
                 }
             }
@@ -5052,7 +5036,7 @@ bool cata_tiles::draw_graffiti( const tripoint_bub_ms &p, const lit_level ll, in
 bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level ll, int &height_3d,
                                      const bool ( &invisible )[5], int z_drop )
 {
-    if( ( !fov_3d && z_drop > 0 ) || fov_3d_z_range < z_drop ) {
+    if( z_drop > OVERMAP_HEIGHT + OVERMAP_DEPTH ) {
         return false;
     }
     const auto fld_override = field_override.find( p );
@@ -5168,6 +5152,17 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
         // so search all parts at the position via part_with_feature.
         const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
         const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+        const auto roof_lit_level = [&]() {
+            if( !use_roof_variant || p.z() >= OVERMAP_HEIGHT ) {
+                return ll;
+            }
+            const auto &roof_cache = here.access_cache( p.z() + 1 );
+            if( !roof_cache.inbounds( p.xy() ) ) {
+                return ll;
+            }
+            const lit_level roof_ll = roof_cache.visibility_cache[roof_cache.idx( p.x(), p.y() )];
+            return roof_ll != lit_level::BLANK ? roof_ll : ll;
+        };
         if( use_roof_variant ) {
             auto res = get_vpart_color( vp, here, p, true );
             bgCol = res.first;
@@ -5196,7 +5191,7 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
             const tile_search_params tile = {vpname, C_VEHICLE_PART, empty_string, subtile, rotation};
             const bool ret = draw_from_id_string(
                                  tile, p, bgCol, fgCol,
-                                 ll, true, z_drop, false, height_3d );
+                                 roof_lit_level(), true, z_drop, false, height_3d );
             if( ret && draw_highlight ) {
                 draw_item_highlight( p );
             }
@@ -5308,9 +5303,6 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
 bool cata_tiles::draw_critter_at( const tripoint_bub_ms &p, lit_level ll, int &height_3d,
                                   const bool ( &invisible )[5], int z_drop )
 {
-    if( !fov_3d && z_drop > 0 ) {
-        return false;
-    }
     bool result;
     bool is_player;
     bool sees_player;

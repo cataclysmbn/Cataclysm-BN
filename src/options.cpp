@@ -2419,16 +2419,8 @@ void options_manager::add_options_performance()
     add_option_group( performance, Group( "fov_3d", to_translation( "3D Field of Vision" ),
                                           to_translation( "Configure three-dimensional visibility across z-levels." ) ),
     [&]( auto & page_id ) {
-        add( "FOV_3D", page_id, translate_marker( "3D field of vision" ),
-             translate_marker( "If false, vision is limited to current z-level. If true and the world is in z-level mode, the vision will extend beyond current z-level." ),
-             true
-           );
-        add( "FOV_3D_Z_RANGE", page_id, translate_marker( "Vertical range of 3D field of vision" ),
-             translate_marker( "How many levels up and down the experimental 3D field of vision reaches. (This many levels up, this many levels down.)  3D vision of the full height of the world can slow the game down a lot.  Seeing fewer Z-levels is faster." ),
-             0, OVERMAP_LAYERS, is_android ? 3 : 5
-           );
-        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "3D FoV shadow casting" ),
-             translate_marker( "When enabled, obstacles at other z-levels correctly cast 3D shadows. Requires 3D FoV. Significantly slower than disabled." ),
+        add( "FOV_3D_OCCLUSION", page_id, translate_marker( "Angled Sunlight Shadows" ),
+             translate_marker( "When enabled, direct sunlight follows the current sun angle and roofs or overhangs cast time-dependent shadows." ),
              false
            );
         add( "PREVENT_OCCLUSION", page_id, translate_marker( "Handle occlusion by high sprites" ),
@@ -2458,9 +2450,6 @@ void options_manager::add_options_performance()
              0.0, 60.0, 0.0, 0.1
            );
     } );
-
-    get_option( "FOV_3D_Z_RANGE" ).setPrerequisite( "FOV_3D" );
-    get_option( "FOV_3D_OCCLUSION" ).setPrerequisite( "FOV_3D" );
 
     add_empty_line();
 
@@ -4269,9 +4258,7 @@ void options_manager::cache_to_globals()
     log_from_top = ::get_option<std::string>( "LOG_FLOW" ) == "new_top";
     message_ttl = ::get_option<int>( "MESSAGE_TTL" );
     message_cooldown = ::get_option<int>( "MESSAGE_COOLDOWN" );
-    fov_3d = ::get_option<bool>( "FOV_3D" );
-    fov_3d_z_range = ::get_option<int>( "FOV_3D_Z_RANGE" );
-    fov_3d_occlusion = ::get_option<bool>( "FOV_3D_OCCLUSION" );
+    angled_sunlight_shadows = ::get_option<bool>( "FOV_3D_OCCLUSION" );
     const auto prevent_occlusion_option = ::get_option<std::string>( "PREVENT_OCCLUSION" );
     prevent_occlusion = prevent_occlusion_option == "off" ? 0 : prevent_occlusion_option == "on" ? 1 :
                         2;
