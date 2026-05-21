@@ -340,7 +340,7 @@
     "symbol": "/",
     "color": "dark_gray",
     "techniques": [ "WBLOCK_2" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 15 ], [ "REAPING", 1 ] ],
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", 15 ] ],
     "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NONCONDUCTIVE" ]
   },
   {
@@ -357,7 +357,7 @@
     "cutting": 16,
     "color": "light_gray",
     "techniques": [ "WBLOCK_1" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -27 ], [ "REAPING", 1 ] ],
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", -27 ] ],
     "flags": [ "SHEATH_SWORD" ]
   },
   {
@@ -795,7 +795,7 @@
     "price_postapoc": "25 USD",
     "weight": "525 g",
     "techniques": [ "WBLOCK_2", "RAPID" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 10 ], [ "REAPING", 1 ] ]
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", 10 ] ]
   },
   {
     "id": "sword_bayonet",
