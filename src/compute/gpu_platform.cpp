@@ -23,6 +23,8 @@ namespace cata_gpu
 namespace
 {
 
+SDL_GPUDevice *s_device = nullptr;
+
 auto shader_formats_to_string( SDL_GPUShaderFormat const formats ) -> std::string
 {
     using entry_t = std::pair<SDL_GPUShaderFormat, std::string_view>;
@@ -153,10 +155,21 @@ auto init() -> void
         probe_shader( device, fmt, ext );
     }
 
-    SDL_DestroyGPUDevice( device );
+    s_device = device;
 }
 
-auto shutdown() -> void {}
+auto shutdown() -> void
+{
+    if( s_device != nullptr ) {
+        SDL_DestroyGPUDevice( s_device );
+        s_device = nullptr;
+    }
+}
+
+auto get_device() -> SDL_GPUDevice *
+{
+    return s_device;
+}
 
 } // namespace cata_gpu
 #endif // defined( CATA_SDL )

@@ -74,6 +74,7 @@ set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
 option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
 option(CATA_SDL "Link SDL3 core for GPU platform services (automatically enabled by TILES)." "OFF")
+option(CATA_GPU_VERIFY "Enable GPU output verification against CPU reference via readback (development only, requires CATA_SDL)." "OFF")
 set(CATA_SHADERS OFF)
 
 if (TESTS)
@@ -261,6 +262,7 @@ endif ()
 message(STATUS "BUILD_SDL3                    : ${BUILD_SDL3}")
 message(STATUS "CATA_SDL                      : ${CATA_SDL}")
 message(STATUS "CATA_SHADERS                  : ${CATA_SHADERS}")
+message(STATUS "CATA_GPU_VERIFY               : ${CATA_GPU_VERIFY}")
 
 message(STATUS "See CMake compiling guide for details and more info --")
 
@@ -386,6 +388,7 @@ if (CATA_SDL)
                  See CMake compiling guide for details and more info.")
     endif ()
     add_definitions(-DCATA_SDL)
+    add_definitions(-DCATA_GPU_VERIFY)
 
     # --- SDL_shadercross: HLSL shader compiler (build-time tool only, library not linked) ---
     # Install via: vcpkg (sdl3-shadercross in msvc-full-features/vcpkg.json) or place shadercross on PATH.

@@ -50,6 +50,9 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "weather.h"
+#if defined( CATA_SDL ) && defined( CATA_GPU_VERIFY )
+#include "compute/gpu_transparency.h"
+#endif
 
 static const efftype_id effect_haslight( "haslight" );
 static const efftype_id effect_onfire( "onfire" );
@@ -179,6 +182,11 @@ bool map::build_transparency_cache( const int zlev )
     }
 
     map_cache.transparency_cache_dirty.reset();
+
+#if defined( CATA_SDL ) && defined( CATA_GPU_VERIFY )
+    cata_gpu::verify_transparency_against_cpu( *this, zlev,
+            get_weather().weather_id->sight_penalty );
+#endif
 
     return true;
 }
