@@ -295,6 +295,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
+          configurePresetAdditionalArgs: "['-DCATA_FORMAT_TARGETS=OFF']"
           buildPreset: ${{ matrix.tiles && 'dist-tiles' || 'dist-curses' }}
 
       - name: Setup Deno (Lua docs)
@@ -393,6 +394,7 @@ jobs:
             "-DTESTS=$tests" `
             "-DRELEASE=$release" `
             -DJSON_FORMAT=OFF `
+            -DCATA_FORMAT_TARGETS=OFF `
             -DCMAKE_INSTALL_MESSAGE=NEVER
 
       - name: Build CBN (windows msvc)
@@ -449,6 +451,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
+          configurePresetAdditionalArgs: "['-DCATA_FORMAT_TARGETS=OFF']"
           buildPreset: ${{ matrix.preset }}
 
       - name: Rename distribution package (macOS)

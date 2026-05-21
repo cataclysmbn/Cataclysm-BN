@@ -14,7 +14,10 @@ if (NOT VCPKG_MANIFEST_MODE)
 endif()
 
 
-include(FormatSource)
+option(CATA_FORMAT_TARGETS "Enable C++ formatting targets" ON)
+if (CATA_FORMAT_TARGETS)
+    include(FormatSource)
+endif ()
 include(FetchContent)
 
 set(CMAKE_TLS_VERIFY ON)
