@@ -36,9 +36,7 @@
     "id": "TALK_EXTERMINATOR_DO",
     "type": "talk_topic",
     "dynamic_line": "I hunt wasps.  I bet I've eliminated half the ones around here, but there's always more out there.",
-    "responses": [
-      { "text": "Interesting.", "topic": "TALK_EXTERMINATOR" }
-    ]
+    "responses": [ { "text": "Interesting.", "topic": "TALK_EXTERMINATOR" } ]
   },
   {
     "id": "TALK_EXTERMINATOR_SALE",
@@ -113,9 +111,7 @@
         "place_monsters": [ { "monster": "GROUP_WASP_NEST", "x": [ 0, 23 ], "y": [ 0, 23 ], "density": 0.6 } ]
       }
     },
-    "end": {
-      "effect": { "u_buy_item": "hazmat_suit" }
-    },
+    "end": { "effect": { "u_buy_item": "hazmat_suit" } },
     "origins": [ "ORIGIN_SECONDARY" ],
     "dialogue": {
       "describe": "I found something very disturbing...",

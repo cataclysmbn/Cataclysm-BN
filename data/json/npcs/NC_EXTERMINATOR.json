@@ -9,25 +9,19 @@
     "type": "item_group",
     "id": "NC_EXTERMINATOR_gloves",
     "subtype": "collection",
-    "entries": [
-      { "item": "beekeeping_gloves", "prob": 100 }
-    ]
+    "entries": [ { "item": "beekeeping_gloves", "prob": 100 } ]
   },
   {
     "type": "item_group",
     "id": "NC_EXTERMINATOR_coat",
     "subtype": "collection",
-    "entries": [
-      { "item": "beekeeping_suit", "prob": 100 }
-    ]
+    "entries": [ { "item": "beekeeping_suit", "prob": 100 } ]
   },
   {
     "type": "item_group",
     "id": "NC_EXTERMINATOR_hat",
     "subtype": "collection",
-    "entries": [
-      { "item": "beekeeping_hood", "prob": 100 }
-    ]
+    "entries": [ { "item": "beekeeping_hood", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -39,9 +33,7 @@
     "type": "item_group",
     "id": "NC_EXTERMINATOR_launcher",
     "subtype": "collection",
-    "entries": [
-      { "item": "flamethrower_simple", "prob": 100 }
-    ]
+    "entries": [ { "item": "flamethrower_simple", "prob": 100 } ]
   },
   {
     "type": "item_group",

@@ -1307,12 +1307,7 @@
     "melee_skill": 8,
     "melee_dice": 4,
     "melee_dice_sides": 5,
-    "melee_damage": [
-      {
-        "damage_type": "acid",
-        "amount": 6
-      }
-    ],
+    "melee_damage": [ { "damage_type": "acid", "amount": 6 } ],
     "special_attacks": [
       [ "ACID", 10 ],
       {
