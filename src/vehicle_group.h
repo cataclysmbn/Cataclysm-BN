@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "coordinates.h"
 #include "mapgen.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -18,7 +19,6 @@ class VehicleSpawn;
 class map;
 
 using vspawn_id = string_id<VehicleSpawn>;
-struct point;
 
 extern std::unordered_map<vgroup_id, VehicleGroup> vgroups;
 
@@ -65,7 +65,7 @@ struct VehicleLocation {
         return facings.pick();
     }
 
-    point pick_point() const;
+    point_bub_ms pick_point() const;
 
     jmapgen_int x;
     jmapgen_int y;

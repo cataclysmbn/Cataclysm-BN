@@ -36,17 +36,17 @@ sonar.register = function(mod)
     if pos == nil and who then pos = who:get_pos_ms() end
     if pos == nil then return 0 end
     local map = gapi.get_map()
-    local abs_ms = map:get_abs_ms(pos)
-    local center_omt = coords.ms_to_omt(abs_ms)
+    local abs_ms = map:bub_to_abs(pos)
+    local center_omt = abs_ms:to_omt()
     local radius = 7
     local depth_steps = 5
     local any_revealed = false
     local start_omt = center_omt
     if center_omt.z >= 0 and is_underwater_oter(overmapbuffer.ter(center_omt)) then
-      start_omt = Tripoint.new(center_omt.x, center_omt.y, center_omt.z - 1)
+      start_omt = TripointAbsOmt.new(center_omt.x, center_omt.y, center_omt.z - 1)
     end
     for depth_index = 0, depth_steps - 1 do
-      local scan_omt = Tripoint.new(start_omt.x, start_omt.y, start_omt.z - depth_index)
+      local scan_omt = TripointAbsOmt.new(start_omt.x, start_omt.y, start_omt.z - depth_index)
       if not is_underwater_oter(overmapbuffer.ter(scan_omt)) then break end
       if overmapbuffer.reveal(scan_omt, radius, is_underwater_oter) then any_revealed = true end
     end

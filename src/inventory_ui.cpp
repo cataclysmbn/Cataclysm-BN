@@ -1114,7 +1114,7 @@ static std::vector<std::list<item *>> restack_items( const std::vector<item *>::
 }
 
 const item_category *inventory_selector::naturalize_category( const item_category &category,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     const auto find_cat_by_id = [ this ]( const item_category_id & id ) {
         const auto iter = std::find_if( categories.begin(),
@@ -1124,10 +1124,10 @@ const item_category *inventory_selector::naturalize_category( const item_categor
         return iter != categories.end() ? &*iter : nullptr;
     };
 
-    const int dist = rl_dist( u.pos(), pos );
+    const int dist = rl_dist( u.bub_pos(), pos );
 
     if( dist != 0 ) {
-        const std::string suffix = direction_suffix( u.pos(), pos );
+        const std::string suffix = direction_suffix( u.bub_pos().raw(), pos.raw() );
         const item_category_id id = item_category_id( string_format( "%s_%s", category.get_id().c_str(),
                                     suffix.c_str() ) );
 
@@ -1225,7 +1225,7 @@ void inventory_selector::add_character_items( Character &character )
     }
 }
 
-void inventory_selector::add_map_items( const tripoint &target )
+void inventory_selector::add_map_items( const tripoint_bub_ms &target )
 {
     if( g->m.accessible_items( target ) ) {
         const auto items = g->m.i_at( target );
@@ -1238,7 +1238,7 @@ void inventory_selector::add_map_items( const tripoint &target )
     }
 }
 
-void inventory_selector::add_vehicle_items( const tripoint &target )
+void inventory_selector::add_vehicle_items( const tripoint_bub_ms &target )
 {
     const std::optional<vpart_reference> vp = g->m.veh_at( target ).part_with_feature( "CARGO", true );
     if( !vp ) {
@@ -1260,9 +1260,10 @@ void inventory_selector::add_vehicle_items( const tripoint &target )
 void inventory_selector::add_nearby_items( int radius )
 {
     if( radius >= 0 ) {
-        for( const tripoint &pos : closest_points_first( u.pos(), radius ) ) {
+        for( const tripoint_bub_ms &pos : closest_points_first( u.bub_pos(), radius ) ) {
             // can not reach this -> can not access its contents
-            if( u.pos() != pos && !g->m.clear_path( u.pos(), pos, rl_dist( u.pos(), pos ), 1, 100 ) ) {
+            if( u.bub_pos() != pos &&
+                !g->m.clear_path( u.bub_pos(), pos, rl_dist( u.bub_pos(), pos ), 1, 100 ) ) {
                 continue;
             }
             add_map_items( pos );

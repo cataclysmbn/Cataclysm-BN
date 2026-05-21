@@ -275,7 +275,7 @@ doc_gen_func.impl = function()
 ---@class ItemUseParams
 ---@field user Character
 ---@field item Item
----@field pos Tripoint
+---@field pos TripointBubMs
 
 ---@class ItemEquipCheckParams
 ---@field user Character
@@ -287,7 +287,7 @@ doc_gen_func.impl = function()
 ---@class ItemStateParams
 ---@field user Character
 ---@field item Item
----@field pos Tripoint
+---@field pos TripointBubMs
 
 ---@class ItemDurabilityChangeParams
 ---@field user Character
@@ -358,37 +358,35 @@ game = {}
 
 ---@class OnPlayerTryMoveParams
 ---@field player Avatar
----@field from Tripoint
----@field to Tripoint
+---@field from TripointBubMs
+---@field to TripointBubMs
 ---@field movement_mode CharacterMoveMode
 ---@field via_ramp boolean
----@field is_mounted boolean
+---@field mounted boolean
 ---@field mount Creature?
 on_player_try_move = {}
 
 ---@class OnNPCTryMoveParams
----@field npc NPC
----@field from Tripoint
----@field to Tripoint
+---@field npc Npc
+---@field from TripointBubMs
+---@field to TripointBubMs
 ---@field movement_mode CharacterMoveMode
 ---@field via_ramp boolean
----@field is_mounted boolean
+---@field mounted boolean
 ---@field mount Creature?
 on_npc_try_move = {}
 
 ---@class OnMonsterTryMoveParams
 ---@field monster Monster
----@field from Tripoint
----@field to Tripoint
----@field movement_mode CharacterMoveMode
----@field via_ramp boolean
+---@field from TripointBubMs
+---@field to TripointBubMs
 ---@field force boolean
 on_monster_try_move = {}
 
 ---@class OnCharacterTryMoveParams
 ---@field char Character
----@field from Tripoint
----@field to Tripoint
+---@field from TripointBubMs
+---@field to TripointBubMs
 ---@field movement_mode CharacterMoveMode
 ---@field via_ramp boolean
 ---@field mounted boolean
@@ -425,13 +423,13 @@ on_mon_effect = {}
 on_mon_death = {}
 
 ---@class OnCharacterDeathParams
----@field character Character
+---@field char Character
 ---@field killer Creature?
 on_character_death = {}
 
 ---@class OnShootParams
 ---@field shooter Character
----@field target_pos Tripoint
+---@field target_pos TripointBubMs
 ---@field shots integer
 ---@field gun Item
 ---@field ammo Item?
@@ -439,9 +437,9 @@ on_shoot = {}
 
 ---@class OnThrowParams
 ---@field thrower Character
----@field target_pos Tripoint
----@field throw_from_pos Tripoint
----@field item Item
+---@field target_pos TripointBubMs
+---@field throw_from_pos TripointBubMs
+---@field thrown Item
 on_throw = {}
 
 ---@class OnTryNPCInterationParams
@@ -502,12 +500,12 @@ on_creature_melee_attacked = {}
 
 ---@class OnMapgenPostprocessParams
 ---@field map Map
----@field omt Tripoint
+---@field omt TripointAbsOmt
 ---@field when TimePoint
 on_mapgen_postprocess = {}
 
 ---@class OnExplodeParams
----@field pos Tripoint
+---@field pos TripointBubMs
 ---@field damage integer
 ---@field radius integer
 ---@field fire boolean
@@ -601,11 +599,8 @@ on_npc_loaded = {}
 
       for _, item in
         ipairs(sort_by(formatted, function(a, b)
-          local a_priority = field_sort_order(a.member)
-          local b_priority = field_sort_order(b.member)
-
-          if a_priority ~= b_priority then return a_priority < b_priority end
-          if a.member.name ~= b.member.name then return a.member.name < b.member.name end
+          if field_sort_less(a.member, b.member) then return true end
+          if field_sort_less(b.member, a.member) then return false end
           return a.value < b.value
         end))
       do

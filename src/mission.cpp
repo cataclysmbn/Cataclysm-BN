@@ -274,7 +274,7 @@ void mission::set_target_to_mission_giver()
 {
     const auto giver = g->find_npc( npc_id );
     if( giver != nullptr ) {
-        target = giver->global_omt_location();
+        target = giver->abs_omt_pos();
     } else {
         target = overmap::invalid_tripoint;
     }
@@ -375,13 +375,13 @@ bool mission::is_complete( const character_id &_npc_id ) const
     auto &u = g->u;
     switch( type->goal ) {
         case MGOAL_GO_TO: {
-            const tripoint_abs_omt cur_pos = u.global_omt_location();
+            const tripoint_abs_omt cur_pos = u.abs_omt_pos();
             return ( rl_dist( cur_pos, target ) <= 1 );
         }
 
         case MGOAL_GO_TO_TYPE: {
             const auto cur_ter = get_overmapbuffer( get_avatar().get_dimension() ).ter(
-                                     g->u.global_omt_location() );
+                                     g->u.abs_omt_pos() );
             return is_ot_match( type->target_id.str(), cur_ter, ot_match_type::type );
         }
 

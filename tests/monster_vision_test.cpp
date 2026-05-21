@@ -13,7 +13,7 @@
 
 struct tripoint;
 
-static monster &spawn_and_clear( const tripoint &pos, bool set_floor )
+static monster &spawn_and_clear( const tripoint_bub_ms &pos, bool set_floor )
 {
     if( set_floor ) {
         get_map().set( pos, t_floor, f_null );
@@ -84,16 +84,16 @@ TEST_CASE( "monsters_dont_see_through_vehicle_holes", "[vision]" )
     clear_all_state();
     calendar::turn = midday;
     put_player_underground();
-    tripoint origin( 60, 60, 0 );
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );
     get_map().build_map_cache( 0 );
 
-    tripoint mon_origin = origin + tripoint( -2, 1, 0 );
+    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
 
     monster &inside = spawn_test_monster( "mon_zombie", mon_origin );
 
-    tripoint second_origin = mon_origin + tripoint_north_west;
+    auto second_origin = mon_origin + tripoint_north_west;
 
     monster &outside = spawn_test_monster( "mon_zombie", second_origin );
 

@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "coordinates.h"
 #include "item_stack.h"
 
 class item;
@@ -9,7 +10,6 @@ class Character;
 class JsonIn;
 class JsonOut;
 class map;
-struct tripoint;
 
 template<typename T>
 class detached_ptr;
@@ -30,7 +30,7 @@ struct nearby_pickup_items {
  */
 auto do_pickup( std::vector<pick_drop_selection> &targets, bool autopickup ) -> bool;
 auto query_thief() -> bool;
-auto nearby_items_for_pickup( const tripoint &center ) -> nearby_pickup_items;
+auto nearby_items_for_pickup( const tripoint_bub_ms &center ) -> nearby_pickup_items;
 
 enum from_where : int {
     from_cargo = 0,
@@ -39,7 +39,7 @@ enum from_where : int {
 };
 
 /** Pick up items; 'g' or ',' or via examine() */
-auto pick_up( const tripoint &p, int min, from_where get_items_from = prompt ) -> void;
+auto pick_up( const tripoint_bub_ms &p, int min, from_where get_items_from = prompt ) -> void;
 /** Pick up items from the player's tile and every adjacent tile. */
 auto pick_up_all_nearby() -> void;
 /** Determines the cost of moving an item by a character. */

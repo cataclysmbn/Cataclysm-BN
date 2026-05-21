@@ -1,15 +1,15 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
+#include <ranges>
+#include <vector>
+
+#include "coordinates.h"
 #include "map_iterator.h"
 #include "rect_range.h"
 #include "vpart_range.h"
 #include "vehicle.h"
 #include "vpart_position.h"
-#include "point.h"
-
-#include <algorithm>
-#include <ranges>
-#include <vector>
 
 namespace
 {
@@ -23,9 +23,9 @@ struct test_rect {
     auto operator<=>( const test_rect & ) const = default; // *NOPAD*
 };
 
-auto make_temp_tripoint_range() -> tripoint_range<tripoint>
+auto make_temp_tripoint_range() -> tripoint_range<tripoint_bub_ms>
 {
-    return tripoint_range<tripoint>( tripoint( 0, 0, 0 ), tripoint( 1, 1, 0 ) );
+    return tripoint_range<tripoint_bub_ms>( tripoint_bub_ms( 0, 0, 0 ), tripoint_bub_ms( 1, 1, 0 ) );
 }
 
 auto make_temp_rect_range( const int width, const int height,
@@ -44,16 +44,16 @@ TEST_CASE( "tripoint_range_iterator_safety", "[iterator][safety]" )
 
     // If the iterator held a pointer to the range, accessing it would be undefined behavior.
     // Since it stores range_min and range_max by value, this is safe.
-    REQUIRE( *it == tripoint( 0, 0, 0 ) );
+    REQUIRE( *it == tripoint_bub_ms( 0, 0, 0 ) );
 
     ++it;
-    REQUIRE( *it == tripoint( 1, 0, 0 ) );
+    REQUIRE( *it == tripoint_bub_ms( 1, 0, 0 ) );
 
     ++it;
-    REQUIRE( *it == tripoint( 0, 1, 0 ) );
+    REQUIRE( *it == tripoint_bub_ms( 0, 1, 0 ) );
 
     ++it;
-    REQUIRE( *it == tripoint( 1, 1, 0 ) );
+    REQUIRE( *it == tripoint_bub_ms( 1, 1, 0 ) );
 }
 
 TEST_CASE( "rect_range_iterator_safety_numeric", "[iterator][safety]" )
@@ -111,9 +111,9 @@ TEST_CASE( "vehicle_part_range_iterator_safety", "[iterator][safety]" )
     vehicle v;
 
     // Add parts to distinct locations to ensure successful installation.
-    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 2, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 2, 0, 0 ), vpart_id( "frame_vertical" ) );
 
     // Get an iterator from a temporary range object.
     // CRITICAL: This temporary object is destroyed at the end of this statement.
@@ -142,10 +142,10 @@ TEST_CASE( "vehicle_part_with_feature_range_iterator_safety", "[iterator][safety
     vehicle v;
 
     // Add parts with different features at distinct locations.
-    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) ); // structure
-    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );           // seat on structure
-    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) ); // structure
-    v.install_part( point( 1, 0 ), vpart_id( "seat" ) );           // seat on structure
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) ); // structure
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "seat" ) );           // seat on structure
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) ); // structure
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "seat" ) );           // seat on structure
 
     // Create a filtered range (temporary) and get iterators.
     // The range_type stores the feature filter by value in vehicle_part_iterator.
@@ -167,9 +167,9 @@ TEST_CASE( "vehicle_part_iterator_copy_semantics", "[iterator][safety]" )
 {
     vehicle v;
 
-    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 2, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 2, 0, 0 ), vpart_id( "frame_vertical" ) );
 
     auto range = v.get_all_parts();
     auto it1 = range.begin();
@@ -189,9 +189,9 @@ TEST_CASE( "vehicle_part_range_for_temporary_safety", "[iterator][safety]" )
 {
     vehicle v;
 
-    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 2, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 2, 0, 0 ), vpart_id( "frame_vertical" ) );
 
     std::vector<int> indices;
 
@@ -210,10 +210,10 @@ TEST_CASE( "vehicle_part_filtered_range_for_temporary_safety",
 {
     vehicle v;
 
-    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );
-    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 1, 0 ), vpart_id( "seat" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "seat" ) );
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "seat" ) );
 
     std::vector<int> indices;
     int count = 0;
@@ -236,7 +236,7 @@ TEST_CASE( "vehicle_part_range_empty_method", "[iterator][safety]" )
     // Empty vehicle should have empty range.
     REQUIRE( v.get_all_parts().empty() );
 
-    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
 
     // Non-empty vehicle should have non-empty range.
     REQUIRE_FALSE( v.get_all_parts().empty() );
@@ -245,7 +245,7 @@ TEST_CASE( "vehicle_part_range_empty_method", "[iterator][safety]" )
     REQUIRE( v.get_avail_parts( std::string( "SEAT" ) ).empty() );
 
     // Filtered range for existing feature should not be empty.
-    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "seat" ) );
     REQUIRE_FALSE( v.get_avail_parts( std::string( "SEAT" ) ).empty() );
 }
 
@@ -253,10 +253,10 @@ TEST_CASE( "vehicle_part_range_std_ranges_algorithms", "[iterator][safety][range
 {
     vehicle v;
 
-    v.install_part( point( 0, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 0, 0 ), vpart_id( "seat" ) );
-    v.install_part( point( 1, 0 ), vpart_id( "frame_vertical" ) );
-    v.install_part( point( 1, 0 ), vpart_id( "seat" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "seat" ) );
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "frame_vertical" ) );
+    v.install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "seat" ) );
 
     // Test std::ranges::distance on temporary range (borrowed_range)
     // This tests that enable_borrowed_range allows ranges algorithms on temporaries

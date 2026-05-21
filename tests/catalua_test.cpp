@@ -2,11 +2,13 @@
 
 #include "avatar.h"
 #include "catacharset.h"
+#include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_serde.h"
 #include "catalua_sol.h"
 #include "clzones.h"
+#include "coordinates.h"
 #include "debug.h"
 #include "faction.h"
 #include "fstream_utils.h"
@@ -14,7 +16,6 @@
 #include "map.h"
 #include "mapdata.h"
 #include "options.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "stringmaker.h"
@@ -88,6 +89,66 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_monster_avatar_name == "nil" );
     REQUIRE( lua_character_avatar_name == expected_name );
     REQUIRE( lua_npc_avatar_name == "nil" );
+}
+
+TEST_CASE( "lua_typed_coords_projection", "[lua]" )
+{
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+    lua["accept_abs_omt"] = []( const tripoint_abs_omt & p ) {
+        return p.to_string();
+    };
+
+    run_lua_test_script( lua, "typed_coords_projection_test.lua" );
+
+    CHECK( test_data.get<std::string>( "to_omt" ) == "TripointAbsOmt(1,1,2)" );
+    CHECK( test_data.get<std::string>( "named_to_omt" ) == "TripointAbsOmt(1,1,2)" );
+    CHECK( test_data.get<std::string>( "remain_quotient" ) == "TripointAbsOm(1,0,-1)" );
+    CHECK( test_data.get<std::string>( "remain_remainder" ) == "PointOmSm(1,2)" );
+    CHECK( test_data.get<std::string>( "combined" ) == "TripointAbsSm(361,2,-1)" );
+    CHECK( test_data.get<int>( "distance" ) == 3 );
+
+    // Validate project_remain_omt example from the typed-coordinates documentation.
+    CHECK( test_data.get<std::string>( "doc_remain_omt_quotient" ) == "TripointAbsOmt(1,1,2)" );
+    CHECK( test_data.get<std::string>( "doc_remain_omt_remainder" ) == "PointOmtMs(1,2)" );
+    CHECK( test_data.get<std::string>( "doc_remain_omt_combined" ) == "TripointAbsMs(25,26,2)" );
+    CHECK( test_data.get<std::string>( "doc_remain_omt_method_combined" ) ==
+           "TripointAbsMs(25,26,2)" );
+
+    CHECK( test_data.get<std::string>( "typed_param" ) == "(1,2,3)" );
+    CHECK_FALSE( test_data.get<bool>( "raw_param_ok" ) );
+    CHECK_FALSE( test_data.get<bool>( "wrong_coord_ok" ) );
+    CHECK( test_data.get<std::string>( "raw_reinterpreted" ) == "TripointAbsOmt(1,2,3)" );
+    CHECK( test_data.get<std::string>( "raw_reinterpreted_param" ) == "(1,2,3)" );
+    CHECK( test_data.get<std::string>( "typed_reinterpreted" ) == "TripointAbsOmt(1,2,3)" );
+    CHECK( test_data.get<std::string>( "raw_delta_arithmetic" ) == "TripointAbsSm(364,2,-1)" );
+}
+
+TEST_CASE( "lua_coord_cpp_helpers", "[lua]" )
+{
+    auto lua = make_lua_state();
+    const auto cpp_pos = tripoint_abs_omt( 1, 2, 3 );
+    const auto lua_pos = cata::detail::lua_coords::to_lua( cpp_pos );
+
+    CHECK( lua_pos.raw == cpp_pos.raw() );
+    CHECK( lua_pos.origin == coords::origin::abs );
+    CHECK( lua_pos.scale == coords::scale::overmap_terrain );
+
+    const auto round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>( lua_pos );
+    REQUIRE( round_trip );
+    CHECK( *round_trip == cpp_pos );
+
+    const auto lua_obj = sol::make_object( lua, lua_pos );
+    const auto object_round_trip = cata::detail::lua_coords::as_cpp<tripoint_abs_omt>( lua_obj );
+    REQUIRE( object_round_trip );
+    CHECK( *object_round_trip == cpp_pos );
+
+    CHECK_FALSE( cata::detail::lua_coords::as_cpp<tripoint_bub_ms>( lua_pos ) );
+    CHECK( cata::detail::lua_coords::expect_cpp<tripoint_abs_omt>( lua_pos ) == cpp_pos );
+    CHECK_THROWS_AS( cata::detail::lua_coords::expect_cpp<tripoint_bub_ms>( lua_pos ),
+                     std::runtime_error );
 }
 
 TEST_CASE( "lua_called_from_cpp", "[lua]" )
@@ -276,7 +337,7 @@ TEST_CASE( "lua_map_vehicle_replacement", "[lua]" )
     clear_all_state();
 
     auto &here = get_map();
-    const auto origin = tripoint( 60, 60, 0 );
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
     const auto original_facing = -90_degrees;
     const auto overridden_facing = 180_degrees;
     auto *vehicle_ptr = here.add_vehicle( vproto_id( "bicycle" ), origin, original_facing, 0, 0 );
@@ -326,6 +387,8 @@ TEST_CASE( "lua_table_serde", "[lua]" )
     t["member_int"] = 11;
     t["member_string"] = "fuckoff";
     t["member_usertype"] = tripoint( 7, 5, 3 );
+    t["member_point_coord"] = cata::detail::lua_coords::to_lua( point_bub_ms( 8, 9 ) );
+    t["member_tripoint_coord"] = cata::detail::lua_coords::to_lua( tripoint_abs_omt( 1, 2, 3 ) );
     t["subtable"] = st;
 
     std::string data = serialize_wrapper( [&]( JsonOut & jsout ) {
@@ -367,6 +430,22 @@ TEST_CASE( "lua_table_serde", "[lua]" )
     REQUIRE( mem_usertype.valid() );
     REQUIRE( mem_usertype.is<tripoint>() );
     CHECK( mem_usertype.as<tripoint>() == tripoint( 7, 5, 3 ) );
+
+    auto mem_point_coord = sol::object( nt["member_point_coord"] );
+    REQUIRE( mem_point_coord.valid() );
+    REQUIRE( mem_point_coord.is<cata::detail::lua_coords::lua_point_coord>() );
+    const auto point_coord = mem_point_coord.as<cata::detail::lua_coords::lua_point_coord>();
+    CHECK( point_coord.raw == point( 8, 9 ) );
+    CHECK( point_coord.origin == coords::origin::bubble );
+    CHECK( point_coord.scale == coords::scale::map_square );
+
+    auto mem_tripoint_coord = sol::object( nt["member_tripoint_coord"] );
+    REQUIRE( mem_tripoint_coord.valid() );
+    REQUIRE( mem_tripoint_coord.is<cata::detail::lua_coords::lua_tripoint_coord>() );
+    const auto tripoint_coord = mem_tripoint_coord.as<cata::detail::lua_coords::lua_tripoint_coord>();
+    CHECK( tripoint_coord.raw == tripoint( 1, 2, 3 ) );
+    CHECK( tripoint_coord.origin == coords::origin::abs );
+    CHECK( tripoint_coord.scale == coords::scale::overmap_terrain );
 
     sol::object mem_table = nt["subtable"];
     REQUIRE( mem_table.valid() );
@@ -763,14 +842,31 @@ TEST_CASE( "catalua_table_serde", "[lua]" )
         t["another_key"] = tripoint( 12, 34, 56 );
         run_serde_test( lua, t );
     }
+    SECTION( "table with typed coordinate values" ) {
+        t["my_key"] = cata::detail::lua_coords::to_lua( point_bub_ms( 13, 37 ) );
+        t["another_key"] = cata::detail::lua_coords::to_lua( tripoint_abs_omt( 12, 34, 56 ) );
+        run_serde_test( lua, t );
+    }
     SECTION( "table with userdata keys" ) {
         t[point( 13, 37 )] = "leet";
         t[tripoint( 12, 34, 56 )] = "numbers";
         run_serde_test( lua, t );
     }
+    SECTION( "table with typed coordinate keys" ) {
+        t[cata::detail::lua_coords::to_lua( point_bub_ms( 13, 37 ) )] = "leet";
+        t[cata::detail::lua_coords::to_lua( tripoint_abs_omt( 12, 34, 56 ) )] = "numbers";
+        run_serde_test( lua, t );
+    }
     SECTION( "table with userdata keys and values" ) {
         t[point( 13, 37 )] = tripoint( 1, 3, 37 );
         t[tripoint( 12, 34, 56 )] = point( 98765, 43210 );
+        run_serde_test( lua, t );
+    }
+    SECTION( "table with typed coordinate keys and values" ) {
+        t[cata::detail::lua_coords::to_lua( point_bub_ms( 13, 37 ) )] =
+            cata::detail::lua_coords::to_lua( tripoint_abs_omt( 1, 3, 37 ) );
+        t[cata::detail::lua_coords::to_lua( tripoint_abs_omt( 12, 34, 56 ) )] =
+            cata::detail::lua_coords::to_lua( point_rel_omt( 98765, 43210 ) );
         run_serde_test( lua, t );
     }
     SECTION( "table with tables as keys" ) {

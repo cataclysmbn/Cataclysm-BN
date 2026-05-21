@@ -74,7 +74,7 @@ struct submap_load_request {
     tripoint_abs_sm center;
     int radius = 0;  ///< Half-width in submaps.  For reality_bubble this defines the circle
     ///< radius; for other sources a (2*radius+1)^2 square is loaded per z-level.
-    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are
+    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); omts are
     ///< full vertical pillars and cannot be loaded one slice at a time.
 };
 
@@ -98,7 +98,7 @@ class submap_load_manager
 
         /**
          * Register a new load request.  The request always covers all z-levels
-         * (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are full vertical pillars.
+         * (-OVERMAP_DEPTH to OVERMAP_HEIGHT); omts are full vertical pillars.
          *
          * @return A handle that identifies this request for future updates/releases.
          */
@@ -133,7 +133,7 @@ class submap_load_manager
          * Simulated positions (reality_bubble, fire_spread, player_base,
          * script) are loaded synchronously and trigger listener notifications.
          * Lazy-border positions are submitted to the thread pool for
-         * background disk-only loading (preload_quad) and do NOT trigger
+         * background disk-only loading (preload_omt) and do NOT trigger
          * listener notifications.  Eviction protects the full set
          * (simulated + border).
          *
@@ -142,7 +142,7 @@ class submap_load_manager
         void update();
 
         /**
-         * Block until all in-flight background presave_quad tasks complete.
+         * Block until all in-flight background presave_omt tasks complete.
          *
          * Must be called before saving the game, switching dimensions, or
          * shutting down the thread pool so that no worker holds raw submap
@@ -196,7 +196,7 @@ class submap_load_manager
          * update(), which runs after world_tick() in the same game turn.
          */
         auto is_in_simulated_set( const std::string &dim_id,
-                                  const tripoint &raw_pos ) const noexcept -> bool {
+                                  const tripoint_abs_sm &raw_pos ) const noexcept -> bool {
             return prev_simulated_.contains( { dim_id, point_abs_sm{ raw_pos.xy() } } );
         }
 
@@ -222,7 +222,7 @@ class submap_load_manager
          *
          * Call this when switching dimensions (in game::load_map) after
          * releasing the old reality-bubble handle.  Without this, the
-         * eviction pass in update() would call unload_quad() on the old
+         * eviction pass in update() would call unload_omt() on the old
          * dimension's positions — which now hold freshly-generated submaps
          * for the new dimension in the primary slot — freeing them while
          * m.grid still holds raw pointers to them (use-after-free crash).
@@ -255,7 +255,7 @@ class submap_load_manager
 
     private:
         using desired_key = std::pair<std::string, point_abs_sm>;
-        using quad_key    = std::pair<std::string, tripoint_abs_omt>;
+        using omt_key    = std::pair<std::string, tripoint_abs_omt>;
 
         /** Hash for pair<string, CoordType> used by unordered containers.
          *  CoordType must be hashable via std::hash (all coord_point specializations are). */
@@ -292,19 +292,19 @@ class submap_load_manager
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
 
-        /** In-flight presave_quad futures for dirty quads that left simulation.
-         *  Keyed by quad_key (dim + 3-D OMT address) for O(log N) lookup and erase.
+        /** In-flight presave_omt futures for dirty omts that left simulation.
+         *  Keyed by omt_key (dim + 3-D OMT address) for O(log N) lookup and erase.
          *  Eviction waits for these before freeing the in-memory submaps.
          *  Presence in the map also serves as the in-flight guard. */
-        std::map<quad_key, std::future<void>> presave_futures_;
+        std::map<omt_key, std::future<void>> presave_futures_;
 
         /**
-         * Quads that have entered the simulated zone at least once since they
-         * were last evicted.  Only dirty quads are written to disk on eviction;
-         * border-only quads (never simulated) are discarded without saving because
+         * Omts that have entered the simulated zone at least once since they
+         * were last evicted.  Only dirty omts are written to disk on eviction;
+         * border-only omts (never simulated) are discarded without saving because
          * their in-memory content is identical to what is already on disk.
          */
-        std::unordered_set<quad_key, coord_pair_hash<tripoint_abs_omt>> dirty_quads_;
+        std::unordered_set<omt_key, coord_pair_hash<tripoint_abs_omt>> dirty_omts_;
 
         /** Snapshot of all request centers from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */

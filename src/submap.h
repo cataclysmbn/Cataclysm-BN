@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -74,7 +75,7 @@ struct spawn_point {
 template<int sx, int sy>
 struct maptile_soa {
     protected:
-        maptile_soa( const tripoint_abs_ms &offset );
+        maptile_soa( const tripoint_abs_sm &position );
     public:
         ter_id             ter[sx][sy];  // Terrain on each square
         furn_id            frn[sx][sy];  // Furniture on each square
@@ -90,8 +91,10 @@ struct maptile_soa {
 class submap : maptile_soa<SEEX, SEEY>
 {
     public:
-        submap( const tripoint_abs_ms &offset );
+        submap( const tripoint_abs_sm &position );
         ~submap();
+
+        const tripoint_abs_sm position() const { return pos; }
 
         trap_id get_trap( const point_sm_ms &p ) const {
             return trp[p.x()][p.y()];
@@ -106,7 +109,7 @@ class submap : maptile_soa<SEEX, SEEY>
         }
 
         void set_all_traps( const trap_id &trap ) {
-            std::uninitialized_fill_n( &trp[0][0], elements, trap );
+            std::fill_n( &trp[0][0], elements, trap );
             trap_cache.clear();
         }
 
@@ -126,7 +129,7 @@ class submap : maptile_soa<SEEX, SEEY>
         }
 
         void set_all_furn( const furn_id &furn ) {
-            std::uninitialized_fill_n( &frn[0][0], elements, furn );
+            std::fill_n( &frn[0][0], elements, furn );
             emitter_cache = std::nullopt;
             if( furn != f_null ) {
                 return;
@@ -145,7 +148,7 @@ class submap : maptile_soa<SEEX, SEEY>
         }
 
         void set_all_ter( const ter_id &terr ) {
-            std::uninitialized_fill_n( &ter[0][0], elements, terr );
+            std::fill_n( &ter[0][0], elements, terr );
         }
 
         int get_radiation( const point_sm_ms &p ) const {
@@ -260,7 +263,8 @@ class submap : maptile_soa<SEEX, SEEY>
         void rotate( int turns );
 
         void store( JsonOut &jsout ) const;
-        void load( JsonIn &jsin, const std::string &member_name, int version, const tripoint offset );
+        void load( JsonIn &jsin, const std::string &member_name, int version,
+                   const tripoint_abs_ms offset );
 
         // If is_uniform is true, this submap is a solid block of terrain
         // Uniform submaps aren't saved/loaded, because regenerating them is faster
@@ -314,7 +318,6 @@ class submap : maptile_soa<SEEX, SEEY>
 
         bool transparency_dirty = true;
         bool outside_dirty      = true;
-        bool sheltered_dirty    = true;
         bool floor_dirty        = true;
         bool pf_dirty           = true;
 
@@ -324,7 +327,6 @@ class submap : maptile_soa<SEEX, SEEY>
         // outside_cache: true when the tile has sky access via the 3×3 overhang rule.
         // sheltered_cache: true when some overhead cover exists within 3×3 of the tile.
         auto rebuild_outside_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void;
-        auto rebuild_sheltered_cache( const level_cache *above, const tripoint_bub_sm &grid_pos ) -> void;
         auto rebuild_floor_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         auto rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
@@ -343,6 +345,7 @@ class submap : maptile_soa<SEEX, SEEY>
 
     private:
         static const data_vars::data_set EMPTY_VARS;
+        tripoint_abs_sm pos;
         std::unordered_map<point_sm_ms, data_vars::data_set> ter_vars;
         std::unordered_map<point_sm_ms, data_vars::data_set> frn_vars;
 
@@ -435,4 +438,3 @@ struct maptile {
             return **std::prev( sm->get_items( pos() ).cend() );
         }
 };
-

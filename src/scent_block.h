@@ -3,8 +3,7 @@
 #include <algorithm>
 #include <array>
 
-#include "coordinate_conversions.h"
-#include "point.h"
+#include "coordinates.h"
 #include "scent_map.h"
 
 struct scent_block {
@@ -23,21 +22,21 @@ struct scent_block {
     };
     data_block<datum> assignment;
 
-    tripoint origin;
+    tripoint_bub_ms origin;
     scent_map &scents;
     int modification_count;
 
-    scent_block( const tripoint &sub, scent_map &scents );
+    scent_block( const tripoint_bub_sm &sub, scent_map &scents );
 
     void commit_modifications();
 
-    point index( const tripoint &p ) const {
-        return -origin.xy() + p.xy();
+    point index( const tripoint_bub_ms &p ) const {
+        return -origin.xy().raw() + p.xy().raw();
     }
 
     // We should be working entirely within the range, so don't range check here
-    void apply_gas( const tripoint &p, const int nintensity = 0 );
-    void apply_slime( const tripoint &p, int intensity );
+    void apply_gas( const tripoint_bub_ms &p, const int nintensity = 0 );
+    void apply_slime( const tripoint_bub_ms &p, int intensity );
 };
 
 

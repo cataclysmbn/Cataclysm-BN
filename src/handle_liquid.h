@@ -1,8 +1,8 @@
 #pragma once
 
+#include "coordinates.h"
 #include "item_stack.h"
 #include "map.h"
-#include "point.h"
 
 class item;
 class monster;
@@ -19,7 +19,7 @@ enum liquid_dest : int {
 
 struct liquid_dest_opt {
     liquid_dest dest_opt = LD_NULL;
-    tripoint pos;
+    tripoint_bub_ms pos;
     item *it;
     vehicle *veh = nullptr;
 };
@@ -51,7 +51,7 @@ void handle_all_liquid( detached_ptr<item> &&liquid, int radius );
  */
 bool consume_liquid( item &liquid, int radius = 0 );
 bool consume_liquid( detached_ptr<item> &&liquid, int radius = 0 );
-bool consume_liquid( tripoint pos, int radius = 0 );
+bool consume_liquid( const tripoint_bub_ms &pos, int radius = 0 );
 bool consume_liquid( vehicle *veh, itype_id liquid, int radius = 0 );
 
 /**
@@ -70,7 +70,7 @@ bool handle_liquid( item &liquid, int radius = 0 );
 /**
  * Each of these variants may start a player activity.
  */
-bool handle_liquid( tripoint pos, int radius = 0 );
+bool handle_liquid( const tripoint_bub_ms &pos, int radius = 0 );
 bool handle_liquid( vehicle *veh, int part_id, int radius = 0 );
 } // namespace liquid_handler
 

@@ -5,6 +5,7 @@
 #include <iterator>
 #include <string>
 
+#include "coordinates.h"
 #include "memory_fast.h"
 #include "point.h"
 
@@ -72,5 +73,6 @@ const std::list<typename lru_cache<Key, Value>::Pair> &lru_cache<Key, Value>::li
 
 // explicit template initialization for lru_cache of all types
 template class lru_cache<tripoint, int>;
+template class lru_cache<tripoint_abs_ms, int>;
 template class lru_cache<point, char>;
 template class lru_cache<std::string, shared_ptr_fast<std::istringstream>>;

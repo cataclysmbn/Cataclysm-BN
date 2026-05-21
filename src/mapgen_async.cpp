@@ -10,7 +10,6 @@
 #include "auto_note.h"
 #include "catalua.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "init.h"
 #include "map.h"
 #include "map_extras.h"
@@ -120,14 +119,14 @@ void run_deferred_mapgen_hooks()
     }
 
     // Sort by dimension so bind_dimension() is only called when it changes
-    // (in practice almost all quads share the overworld dimension).
+    // (in practice almost all omts share the overworld dimension).
     std::ranges::sort( pending, []( const auto & a, const auto & b ) {
         return a.dim < b.dim;
     } );
 
     // Reuse one tinymap across the entire batch.  Accumulate items per
     // dimension group and dispatch them together so the batch function can
-    // amortise Lua table allocation and hook-table lookup over all quads.
+    // amortise Lua table allocation and hook-table lookup over all omts.
     tinymap tmp;
     std::string cur_dim;
     std::vector<cata::mapgen_hook_batch_item> batch;
@@ -149,8 +148,8 @@ void run_deferred_mapgen_hooks()
             tmp.bind_dimension( cur_dim );
         }
         batch.push_back( {
-            .sm_base = omt_to_sm_copy( h.omt_pos.raw() ),
-            .omt_pos = h.omt_pos.raw(),
+            .sm_base = project_to<coords::sm>( h.omt_pos ),
+            .omt_pos = h.omt_pos,
             .when    = h.when,
         } );
     } );

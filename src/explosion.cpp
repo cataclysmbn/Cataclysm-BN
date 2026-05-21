@@ -23,6 +23,7 @@
 #include "catalua_sol.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_coord.h"
 #include "cata_utility.h"
 #include "cata_algo.h"
 #include "color.h"
@@ -261,50 +262,50 @@ class ExplosionEvent
 
         enum class Kind { ITEM_MOVEMENT, MOB_MOVEMENT, BLAST, SHRAPNEL, FIELD_ADDITION, FIELD_REMOVAL } kind;
         target_types target;
-        tripoint position;
+        tripoint_bub_ms position;
 
-        static ExplosionEvent mob_movement( const tripoint position, Creature *mob, float angle,
+        static ExplosionEvent mob_movement( const tripoint_bub_ms position, Creature *mob, float angle,
                                             float velocity, float cur_relative_time ) {
             return ExplosionEvent( Kind::MOB_MOVEMENT, position,
             PropelledEntity{
                 mob,
-                rl_vec2d( position.x + 0.5, position.y + 0.5 ),
+                rl_vec2d( position.x() + 0.5, position.y() + 0.5 ),
                 angle,
                 velocity,
                 cur_relative_time
             } );
         }
-        static ExplosionEvent item_movement( const tripoint position, safe_reference<item> item,
+        static ExplosionEvent item_movement( const tripoint_bub_ms position, safe_reference<item> item,
                                              float angle, float velocity, float cur_relative_time ) {
             return ExplosionEvent( Kind::ITEM_MOVEMENT, position,
             PropelledEntity{
                 item,
-                rl_vec2d( position.x + 0.5, position.y + 0.5 ),
+                rl_vec2d( position.x() + 0.5, position.y() + 0.5 ),
                 angle,
                 velocity,
                 cur_relative_time
             } );
         }
-        static ExplosionEvent tile_blast( const tripoint position, const int distance ) {
+        static ExplosionEvent tile_blast( const tripoint_bub_ms position, const int distance ) {
             return ExplosionEvent( Kind::BLAST, position, distance );
         }
-        static ExplosionEvent tile_shrapnel( const tripoint position ) {
+        static ExplosionEvent tile_shrapnel( const tripoint_bub_ms position ) {
             return ExplosionEvent( Kind::SHRAPNEL, position );
         }
         static ExplosionEvent field_addition(
-            const tripoint position, field_type_id target,
+            const tripoint_bub_ms position, field_type_id target,
             const int intensity = INT_MAX, const bool hit_player = false
         ) {
             return ExplosionEvent( Kind::FIELD_ADDITION, position, FieldToAdd{target, intensity, hit_player} );
         }
-        static ExplosionEvent field_removal( const tripoint position, field_type_id target ) {
+        static ExplosionEvent field_removal( const tripoint_bub_ms position, field_type_id target ) {
             return ExplosionEvent( Kind::FIELD_REMOVAL, position, target );
         }
 
     private:
-        ExplosionEvent( Kind kind, const tripoint position ) :
+        ExplosionEvent( Kind kind, const tripoint_bub_ms position ) :
             kind( kind ), position( position ) {};
-        ExplosionEvent( Kind kind, const tripoint position, target_types target ) :
+        ExplosionEvent( Kind kind, const tripoint_bub_ms position, target_types target ) :
             kind( kind ), target( std::move( target ) ), position( position ) {};
 };
 
@@ -312,7 +313,7 @@ class ExplosionProcess
 {
     public:
         // Where did the explosion originate from?
-        const tripoint center;
+        const tripoint_bub_ms center;
 
         // Explosion damage.
         const int blast_power;
@@ -329,7 +330,7 @@ class ExplosionProcess
         // Who do we attribute the explosion & shrapnel to? nullopt to disable
         const std::optional<Creature *> emitter;
     private:
-        using dist_point_pair = std::pair<float, tripoint>;
+        using dist_point_pair = std::pair<float, tripoint_bub_ms>;
         using time_event_pair = std::pair<float, ExplosionEvent>;
 
         std::vector<dist_point_pair> blast_map;
@@ -341,7 +342,7 @@ class ExplosionProcess
         std::map<const Creature *, int> mobs_blasted;
         std::map<const Creature *, int> mobs_shrapneled;
         std::set<const Creature *> flung_set;
-        std::vector<tripoint> recombination_targets;
+        std::vector<tripoint_bub_ms> recombination_targets;
 
         float cur_relative_time;
         long long last_update_ms;
@@ -357,7 +358,7 @@ class ExplosionProcess
         };
 
         ExplosionProcess(
-            const tripoint blast_center,
+            const tripoint_bub_ms blast_center,
             const int blast_power,
             const int blast_radius,
             const std::optional<projectile> &proj = std::nullopt,
@@ -404,8 +405,8 @@ class ExplosionProcess
 
         void fill_maps();
         void init_event_queue();
-        inline float generate_fling_angle( const tripoint from, const tripoint to );
-        inline bool is_occluded( const tripoint from, const tripoint to );
+        inline float generate_fling_angle( const tripoint_bub_ms from, const tripoint_bub_ms to );
+        inline bool is_occluded( const tripoint_bub_ms from, const tripoint_bub_ms to );
         void add_event( const float delay, const ExplosionEvent &event ) {
             assert( delay >= 0 );
             event_queue.emplace( cur_relative_time + delay + std::numeric_limits<float>::epsilon(), event );
@@ -418,12 +419,12 @@ class ExplosionProcess
         }
 
         bool process_next();
-        void blast_tile( const tripoint position, const int rl_distance );
-        void project_shrapnel( const tripoint position );
-        void add_field( const tripoint position, const field_type_id field,
+        void blast_tile( const tripoint_bub_ms position, const int rl_distance );
+        void project_shrapnel( const tripoint_bub_ms position );
+        void add_field( const tripoint_bub_ms position, const field_type_id field,
                         const int intensity, const bool hit_player );
-        void remove_field( const tripoint position, const field_type_id target );
-        void move_entity( const tripoint position, const ExplosionEvent::PropelledEntity &datum,
+        void remove_field( const tripoint_bub_ms position, const field_type_id target );
+        void move_entity( const tripoint_bub_ms position, const ExplosionEvent::PropelledEntity &datum,
                           bool is_mob );
 
         // How long should it take for an entity to travel 1 unit of distance at `velocity`?
@@ -440,12 +441,12 @@ void ExplosionProcess::fill_maps()
     const int shrapnel_range = shrapnel.has_value() ? shrapnel.value().range : 0;
     const int aoe_radius = std::max( blast_radius, shrapnel_range );
     const int z_levels_affected = aoe_radius / ExplosionConstants::Z_LEVEL_DIST;
-    const tripoint_range<tripoint> affected_block(
-        center + tripoint( -aoe_radius, -aoe_radius, -z_levels_affected ),
-        center + tripoint( aoe_radius, aoe_radius, z_levels_affected )
+    const tripoint_range<tripoint_bub_ms> affected_block(
+        center + tripoint_rel_ms( -aoe_radius, -aoe_radius, -z_levels_affected ),
+        center + tripoint_rel_ms( aoe_radius, aoe_radius, z_levels_affected )
     );
 
-    for( const tripoint &target : affected_block ) {
+    for( const tripoint_bub_ms &target : affected_block ) {
         if( !here.inbounds( target ) ) {
             continue;
         }
@@ -457,14 +458,14 @@ void ExplosionProcess::fill_maps()
                                    trig_dist( center, target ) :
                                    square_dist( center, target )
                                );
-        const float z_distance = abs( target.z - center.z );
+        const float z_distance = abs( target.z() - center.z() );
         const float z_aware_distance = distance + ( ExplosionConstants::Z_LEVEL_DIST - 1 ) * z_distance;
         if( blast_radius > 0 && static_cast<int>( std::lround( z_aware_distance ) ) <= blast_radius ) {
             blast_map.emplace_back( z_aware_distance, target );
         }
 
         if( shrapnel && static_cast<int>( std::lround( distance ) ) <= shrapnel_range &&
-            target.z == center.z &&
+            target.z() == center.z() &&
             !is_occluded( center, target ) ) {
             shrapnel_map.emplace_back( distance, target );
         }
@@ -497,16 +498,16 @@ void ExplosionProcess::init_event_queue()
         add_event( time_taken, ExplosionEvent::tile_blast( position, static_cast<int>( distance ) ) );
     }
 }
-inline bool ExplosionProcess::is_occluded( const tripoint from, const tripoint to )
+inline bool ExplosionProcess::is_occluded( const tripoint_bub_ms from, const tripoint_bub_ms to )
 {
     if( from == to ) {
         return false;
     }
 
     map &here = get_map();
-    tripoint last_position = from;
+    auto last_position = from;
 
-    std::vector<tripoint> line_of_movement = line_to( from, to );
+    std::vector<tripoint_bub_ms> line_of_movement = line_to( from, to );
     // Annoyingly, line_to does not include the origin point
     //   so it has to be added manually
     line_of_movement.insert( line_of_movement.begin(), from );
@@ -526,15 +527,16 @@ inline bool ExplosionProcess::is_occluded( const tripoint from, const tripoint t
     return false;
 }
 
-inline float ExplosionProcess::generate_fling_angle( const tripoint from, const tripoint to )
+inline float ExplosionProcess::generate_fling_angle( const tripoint_bub_ms from,
+        const tripoint_bub_ms to )
 {
     if( from != to ) {
         // -+ 0.95 added to add a half-arc
         // It should be noted that this mathematically has a bias towards diagonal directions
         //   but this is the shortest way to get good enough results
         return units::atan2(
-                   to.y - from.y + rng_float( -0.95, 0.95 ),
-                   to.x - from.x + rng_float( -0.95, 0.95 )
+                   to.y() - from.y() + rng_float( -0.95, 0.95 ),
+                   to.x() - from.x() + rng_float( -0.95, 0.95 )
                ).value();
     } else {
         return rng_float( -M_PI, M_PI );
@@ -599,7 +601,7 @@ bool ExplosionProcess::process_next()
     return true;
 }
 
-void ExplosionProcess::project_shrapnel( const tripoint position )
+void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
 {
     map &here = get_map();
 
@@ -652,14 +654,14 @@ void ExplosionProcess::project_shrapnel( const tripoint position )
     }
 
     if( is_animated() ) {
-        std::vector<tripoint> buf = line_to( position, center );
+        std::vector<tripoint_bub_ms> buf = line_to( position, center );
         buf.resize( 2 );
         g->draw_line( position, buf );
     }
     request_redraw |= true;
 }
 
-void ExplosionProcess::blast_tile( const tripoint position, const int rl_distance )
+void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_distance )
 {
     assert( blast_radius > 0 );
     // Verify we have view of the center
@@ -786,7 +788,7 @@ void ExplosionProcess::blast_tile( const tripoint position, const int rl_distanc
                     false,
                     here.passable( position + tripoint_below ),
                     terrain_factor,
-                    center.z > position.z,
+                    center.z() > position.z(),
                     true
                 };
                 // Despite what you might expect, this is NOT the same as smash_items
@@ -884,27 +886,27 @@ void ExplosionProcess::blast_tile( const tripoint position, const int rl_distanc
             }
         }
     }
-    request_redraw |= position.z == g->u.posz();
+    request_redraw |= position.z() == g->u.bub_pos().z();
 }
 
-void ExplosionProcess::add_field( const tripoint position,
+void ExplosionProcess::add_field( const tripoint_bub_ms position,
                                   const field_type_id field,
                                   const int intensity,
                                   const bool hit_player )
 {
     map &here = get_map();
     here.add_field( position, field, intensity, 0_turns, hit_player );
-    request_redraw |= position.z == g->u.posz();
+    request_redraw |= position.z() == g->u.bub_pos().z();
 }
 
-void ExplosionProcess::remove_field( const tripoint position, field_type_id target )
+void ExplosionProcess::remove_field( const tripoint_bub_ms position, field_type_id target )
 {
     map &here = get_map();
     here.remove_field( position, target );
-    request_redraw |= position.z == g->u.posz();
+    request_redraw |= position.z() == g->u.bub_pos().z();
 }
 
-void ExplosionProcess::move_entity( const tripoint position,
+void ExplosionProcess::move_entity( const tripoint_bub_ms position,
                                     const ExplosionEvent::PropelledEntity &datum,
                                     const bool is_mob )
 {
@@ -925,7 +927,7 @@ void ExplosionProcess::move_entity( const tripoint position,
     const float adjusted_delta = time_delta / ExplosionConstants::FLING_SLOWDOWN;
     const float distance_to_travel = std::min( datum.velocity * adjusted_delta, datum.velocity );
 
-    tripoint new_position = position;
+    auto new_position = position;
     float new_velocity = datum.velocity;
     float new_angle = datum.angle;
 
@@ -940,9 +942,9 @@ void ExplosionProcess::move_entity( const tripoint position,
             const float cur_distance_travelled = distance_to_travel * progress;
             rl_vec2d new_position_vec = datum.position +
                                         rl_vec2d( cur_distance_travelled, 0.0 ).rotated( datum.angle );
-            tripoint maybe_new_position = tripoint( static_cast<int>( new_position_vec.x ),
-                                                    static_cast<int>( new_position_vec.y ),
-                                                    position.z );
+            auto maybe_new_position = tripoint_bub_ms( static_cast<int>( new_position_vec.x ),
+                                      static_cast<int>( new_position_vec.y ),
+                                      position.z() );
             if( !here.inbounds( maybe_new_position ) ||
                 here.impassable( maybe_new_position ) ||
                 ( is_mob && maybe_new_position != position && g->critter_at( maybe_new_position ) ) ||
@@ -1086,8 +1088,8 @@ void ExplosionProcess::move_entity( const tripoint position,
             recombination_targets.push_back( position );
             recombination_targets.push_back( new_position );
         }
-        request_redraw |= position.z == g->u.posz();
-        request_redraw |= new_position.z == g->u.posz();
+        request_redraw |= position.z() == g->u.bub_pos().z();
+        request_redraw |= new_position.z() == g->u.bub_pos().z();
     }
 
     if( do_next ) {
@@ -1158,7 +1160,7 @@ void ExplosionProcess::run()
     }
 }
 
-void explosion( const tripoint &p, Creature *source, float power, float factor, bool fire,
+void explosion( const tripoint_bub_ms &p, Creature *source, float power, float factor, bool fire,
                 int legacy_casing_mass,
                 float )
 {
@@ -1175,14 +1177,14 @@ void explosion( const tripoint &p, Creature *source, float power, float factor, 
     explosion( p, data, source );
 }
 
-void explosion( const tripoint &p, const explosion_data &ex, Creature *source )
+void explosion( const tripoint_bub_ms &p, const explosion_data &ex, Creature *source )
 {
     queued_explosion qe( p, ExplosionType::Regular, source );
     qe.exp_data = ex;
     get_explosion_queue().add( std::move( qe ) );
 }
 
-static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
+static std::map<const Creature *, int> legacy_shrapnel( const tripoint_bub_ms &src,
         const projectile &fragment,
         Creature *source )
 {
@@ -1193,7 +1195,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
 
     map &here = get_map();
 
-    auto &_exp_cache = here.access_cache( src.z );
+    auto &_exp_cache = here.access_cache( src.z() );
     const int exp_sx = _exp_cache.cache_x;
     const int exp_sy = _exp_cache.cache_y;
     auto obstacle_cache = std::vector<float>( static_cast<size_t>( exp_sx ) * exp_sy, 0.0f );
@@ -1202,7 +1204,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
     // TODO: Calculate range based on max effective range for projectiles.
     // Basically bisect between 0 and map diameter using shrapnel_calc().
     // Need to update shadowcasting to support limiting range without adjusting initial distance.
-    const tripoint_range<tripoint> area = here.points_on_zlevel( src.z );
+    const tripoint_range<tripoint_bub_ms> area = here.points_on_zlevel( src.z() );
 
     here.build_obstacle_cache( area.min(), area.max() + tripoint_south_east,
                                obstacle_cache.data(), exp_sy );
@@ -1210,7 +1212,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
     // Shadowcasting normally ignores the origin square,
     // so apply it manually to catch monsters standing on the explosive.
     // This "blocks" some fragments, but does not apply deceleration.
-    visited_cache[src.x * exp_sy + src.y] = 1.0f;
+    visited_cache[src.x() * exp_sy + src.y()] = 1.0f;
 
     // This is used to limit radius
     // By default, the radius is 60, so negative values can be helpful here
@@ -1224,8 +1226,8 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
                   src.xy(), offset_distance, fragment.range + 1.0f, k_shrapnel_model );
 
     // Now visited_caches are populated with density and velocity of fragments.
-    for( const tripoint &target : area ) {
-        if( visited_cache[target.x * exp_sy + target.y] <= 0.0f ||
+    for( const tripoint_bub_ms &target : area ) {
+        if( visited_cache[target.x() * exp_sy + target.y()] <= 0.0f ||
             rl_dist( src, target ) > fragment.range ) {
             continue;
         }
@@ -1267,24 +1269,29 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
         }
     }
 
-    const tripoint &blast_center = src;
+    const auto &blast_center = src;
     const float raw_blast_radius = fragment.range;
 
-    using dist_point_pair = std::pair<float, tripoint>;
+    using dist_point_pair = std::pair<float, tripoint_bub_ms>;
+    // Z levels are canonically 1.8x larger than x and y, so this is over twice the size
+    // If this is means to account for gravity, it should only apply to positive z.
     const int Z_LEVEL_DIST = 4;
 
     const int z_levels_affected = raw_blast_radius / Z_LEVEL_DIST;
-    const tripoint_range<tripoint> affected_block(
-        blast_center + tripoint( -raw_blast_radius, -raw_blast_radius, -z_levels_affected ),
-        blast_center + tripoint( raw_blast_radius, raw_blast_radius, z_levels_affected )
+    const auto raw_blast_radius_ms = static_cast<int>( raw_blast_radius );
+    const tripoint_range<tripoint_bub_ms> affected_block(
+        blast_center + tripoint_rel_ms( -raw_blast_radius_ms, -raw_blast_radius_ms,
+                                        -z_levels_affected ),
+        blast_center + tripoint_rel_ms( raw_blast_radius_ms, raw_blast_radius_ms,
+                                        z_levels_affected )
     );
 
     static std::vector<dist_point_pair> blast_map;
-    static std::map<tripoint, nc_color> explosion_colors;
+    static std::map<tripoint_bub_ms, nc_color> explosion_colors;
     blast_map.clear();
     explosion_colors.clear();
 
-    for( const tripoint &target : affected_block ) {
+    for( const tripoint_bub_ms &target : affected_block ) {
         if( !get_map().inbounds( target ) ) {
             continue;
         }
@@ -1295,7 +1302,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
                                    trig_dist( blast_center, target ) :
                                    square_dist( blast_center, target )
                                );
-        const float z_distance = abs( target.z - blast_center.z );
+        const float z_distance = abs( target.z() - blast_center.z() );
         const float z_aware_distance = distance + ( Z_LEVEL_DIST - 1 ) * z_distance;
         if( z_aware_distance <= raw_blast_radius ) {
             blast_map.emplace_back( z_aware_distance, target );
@@ -1313,13 +1320,13 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
     int i = 0;
     for( const dist_point_pair &pair : blast_map ) {
         float distance;
-        tripoint position;
-        tripoint last_position = blast_center;
+        tripoint_bub_ms position;
+        auto last_position = blast_center;
         std::tie( distance, position ) = pair;
 
-        const std::vector<tripoint> line_of_movement = line_to( blast_center, position );
+        const std::vector<tripoint_bub_ms> line_of_movement = line_to( blast_center, position );
         const bool has_obstacles = std::any_of( line_of_movement.begin(),
-        line_of_movement.end(), [position, &last_position]( tripoint ray_position ) {
+        line_of_movement.end(), [position, &last_position]( tripoint_bub_ms ray_position ) {
             if( get_map().obstructed_by_vehicle_rotation( last_position, ray_position ) ) {
                 return true;
             }
@@ -1328,7 +1335,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
         } );
 
         // Don't bother animating explosions that are on other levels
-        const bool to_animate = get_player_character().posz() == position.z;
+        const bool to_animate = get_player_character().bub_pos().z() == position.z();
 
         // Animate the explosion by drawing the shock wave rather than the whole explosion
         if( to_animate && distance > animated_explosion_range ) {
@@ -1357,7 +1364,7 @@ static std::map<const Creature *, int> legacy_shrapnel( const tripoint &src,
 }
 
 // (C1001) Compiler Internal Error on Visual Studio 2015 with Update 2
-static std::map<const Creature *, int> legacy_blast( const tripoint &p, const float power,
+static std::map<const Creature *, int> legacy_blast( const tripoint_bub_ms &p, const float power,
         const float radius, const bool fire, Creature *source )
 {
     std::map<const Creature *, int> blasted;
@@ -1381,16 +1388,16 @@ static std::map<const Creature *, int> legacy_blast( const tripoint &p, const fl
 
     here.bash( p, fire ? power : ( 2 * power ), true, false, false );
 
-    std::priority_queue< std::pair<float, tripoint>, std::vector< std::pair<float, tripoint> >, pair_greater_cmp_first >
-    open;
-    std::set<tripoint> closed;
-    std::map<tripoint, float> dist_map;
+    std::priority_queue< std::pair<float, tripoint_bub_ms>, std::vector<std::pair<float, tripoint_bub_ms>>, pair_greater_cmp_first >
+            open;
+    std::set<tripoint_bub_ms> closed;
+    std::map<tripoint_bub_ms, float> dist_map;
     open.emplace( 0.0f, p );
     dist_map[p] = 0.0f;
     // Find all points to blast
     while( !open.empty() ) {
         const float distance = open.top().first;
-        const tripoint pt = open.top().second;
+        const auto pt = open.top().second;
         open.pop();
 
         if( closed.contains( pt ) ) {
@@ -1411,7 +1418,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint &p, const fl
 
         // Iterate over all neighbors. Bash all of them, propagate to some
         for( size_t i = 0; i < max_index; i++ ) {
-            tripoint dest( pt + tripoint( x_offset[i], y_offset[i], z_offset[i] ) );
+            tripoint_bub_ms dest( pt + tripoint( x_offset[i], y_offset[i], z_offset[i] ) );
             if( closed.contains( dest ) || !here.inbounds( dest ) ||
                 here.obstructed_by_vehicle_rotation( pt, dest ) ) {
                 continue;
@@ -1447,7 +1454,7 @@ static std::map<const Creature *, int> legacy_blast( const tripoint &p, const fl
     }
 
     // Draw the explosion
-    std::map<tripoint, nc_color> explosion_colors;
+    std::map<tripoint_bub_ms, nc_color> explosion_colors;
     for( auto &pt : closed ) {
         if( here.impassable( pt ) ) {
             continue;
@@ -1465,9 +1472,9 @@ static std::map<const Creature *, int> legacy_blast( const tripoint &p, const fl
         }
     }
 
-    draw_custom_explosion( g->u.pos(), explosion_colors, "explosion" );
+    draw_custom_explosion( g->u.bub_pos(), explosion_colors, "explosion" );
 
-    for( const tripoint &pt : closed ) {
+    for( const tripoint_bub_ms &pt : closed ) {
         const float force = power * obstacle_blast_percentage( radius, dist_map.at( pt ) );
         if( force < 1.0f ) {
             // Too weak to matter
@@ -1548,12 +1555,12 @@ static std::map<const Creature *, int> legacy_blast( const tripoint &p, const fl
 
 void explosion_funcs::regular( const queued_explosion &qe )
 {
-    const tripoint &p = qe.pos;
+    const tripoint_bub_ms &p = qe.pos;
     const explosion_data &ex = qe.exp_data;
     auto &shr = ex.fragment;
 
     cata::run_hooks( "on_explosion_start", [&]( sol::table & params ) {
-        params["pos"] = p;
+        params["pos"] = cata::detail::lua_coords::to_lua( p );
         params["damage"] = ex.damage;
         params["radius"] = static_cast<int>( ex.radius );
         params["fire"] = ex.fire;
@@ -1644,7 +1651,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
     }
 }
 
-void flashbang( const tripoint &p, bool player_immune, const std::string &exp_name )
+void flashbang( const tripoint_bub_ms &p, bool player_immune, const std::string &exp_name )
 {
     // flashbangs cannot kill, so skip the source
     queued_explosion qe( p, ExplosionType::Flashbang, nullptr );
@@ -1655,16 +1662,16 @@ void flashbang( const tripoint &p, bool player_immune, const std::string &exp_na
 
 void explosion_funcs::flashbang( const queued_explosion &qe )
 {
-    const tripoint &p = qe.pos;
+    const tripoint_bub_ms &p = qe.pos;
     map &here = get_map();
 
     draw_explosion( p, 8, c_white, qe.graphics_name );
-    int dist = rl_dist( g->u.pos(), p );
+    int dist = rl_dist( g->u.bub_pos(), p );
     if( dist <= 8 && qe.affects_player ) {
         if( !g->u.has_bionic( bio_ears ) && !g->u.is_wearing( itype_rm13_armor_on ) ) {
             g->u.add_effect( effect_deaf, time_duration::from_turns( 40 - dist * 4 ) );
         }
-        if( here.sees( g->u.pos(), p, 8 ) ) {
+        if( here.sees( g->u.bub_pos(), p, 8 ) ) {
             int flash_mod = 0;
             if( g->u.has_trait( trait_PER_SLIME ) ) {
                 if( one_in( 2 ) ) {
@@ -1688,12 +1695,12 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
             continue;
         }
         // TODO: can the following code be called for all types of creatures
-        dist = rl_dist( critter.pos(), p );
+        dist = rl_dist( critter.bub_pos(), p );
         if( dist <= 8 ) {
             if( dist <= 4 ) {
                 critter.add_effect( effect_stunned, time_duration::from_turns( 10 - dist ) );
             }
-            if( critter.has_flag( MF_SEES ) && here.sees( critter.pos(), p, 8 ) ) {
+            if( critter.has_flag( MF_SEES ) && here.sees( critter.bub_pos(), p, 8 ) ) {
                 critter.add_effect( effect_blind, time_duration::from_turns( 18 - dist ) );
             }
             if( critter.has_flag( MF_HEARS ) ) {
@@ -1705,7 +1712,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
     // TODO: Blind/deafen NPC
 }
 
-void shockwave( const tripoint &p, const shockwave_data &sw, const std::string &exp_name,
+void shockwave( const tripoint_bub_ms &p, const shockwave_data &sw, const std::string &exp_name,
                 Creature *source )
 {
     queued_explosion qe( p, ExplosionType::Shockwave, source );
@@ -1716,7 +1723,7 @@ void shockwave( const tripoint &p, const shockwave_data &sw, const std::string &
 
 void explosion_funcs::shockwave( const queued_explosion &qe )
 {
-    const tripoint &p = qe.pos;
+    const tripoint_bub_ms &p = qe.pos;
     const shockwave_data &sw = qe.swave_data;
 
     draw_explosion( p, sw.radius, c_blue, qe.graphics_name );
@@ -1726,33 +1733,33 @@ void explosion_funcs::shockwave( const queued_explosion &qe )
                    "misc", "shockwave" );
 
     for( monster &critter : g->all_monsters() ) {
-        if( critter.posz() != p.z ) {
+        if( critter.bub_pos().z() != p.z() ) {
             continue;
         }
-        if( rl_dist( critter.pos(), p ) <= sw.radius ) {
+        if( rl_dist( critter.bub_pos(), p ) <= sw.radius ) {
             add_msg( _( "%s is caught in the shockwave!" ), critter.name() );
-            g->knockback( p, critter.pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+            g->knockback( p, critter.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
     // TODO: combine the two loops and the case for g->u using all_creatures()
     for( npc &guy : g->all_npcs() ) {
-        if( guy.posz() != p.z ) {
+        if( guy.bub_pos().z() != p.z() ) {
             continue;
         }
-        if( rl_dist( guy.pos(), p ) <= sw.radius ) {
+        if( rl_dist( guy.bub_pos(), p ) <= sw.radius ) {
             add_msg( _( "%s is caught in the shockwave!" ), guy.name );
-            g->knockback( p, guy.pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+            g->knockback( p, guy.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
         }
     }
-    if( rl_dist( g->u.pos(), p ) <= sw.radius && sw.affects_player &&
+    if( rl_dist( g->u.bub_pos(), p ) <= sw.radius && sw.affects_player &&
         ( !g->u.has_trait( trait_LEG_TENT_BRACE ) || g->u.footwear_factor() == 1 ||
           ( g->u.footwear_factor() == .5 && one_in( 2 ) ) ) ) {
         add_msg( m_bad, _( "You're caught in the shockwave!" ) );
-        g->knockback( p, g->u.pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
+        g->knockback( p, g->u.bub_pos(), sw.force, sw.stun, sw.dam_mult, qe.source );
     }
 }
 
-void scrambler_blast( const tripoint &p )
+void scrambler_blast( const tripoint_bub_ms &p )
 {
     if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
         monster &critter = *mon_ptr;
@@ -1764,7 +1771,7 @@ void scrambler_blast( const tripoint &p )
     }
 }
 
-void emp_blast( const tripoint &p )
+void emp_blast( const tripoint_bub_ms &p )
 {
     map &here = get_map();
     Character &u = get_player_character();
@@ -1792,7 +1799,7 @@ void emp_blast( const tripoint &p )
             }
             for( int i = -3; i <= 3; i++ ) {
                 for( int j = -3; j <= 3; j++ ) {
-                    tripoint p2 = p + tripoint( i, j, 0 );
+                    auto p2 = p + tripoint( i, j, 0 );
                     if( here.ter( p2 ) == t_door_metal_locked ) {
                         here.ter_set( p2, t_floor );
                     }
@@ -1865,7 +1872,7 @@ void emp_blast( const tripoint &p )
             add_msg( _( "The %s is unaffected by the EMP blast." ), critter.name() );
         }
     }
-    if( u.pos() == p ) {
+    if( u.bub_pos() == p ) {
         if( u.get_power_level() > 0_kJ ) {
             add_msg( m_bad, _( "The EMP blast drains your power." ) );
             int max_drain = ( u.get_power_level() > 1000_kJ ? 1000 : units::to_kilojoule(
@@ -1892,7 +1899,7 @@ void emp_blast( const tripoint &p )
     // TODO: Drain NPC energy reserves
 }
 
-void resonance_cascade( const tripoint &p )
+void resonance_cascade( const tripoint_bub_ms &p )
 {
     get_explosion_queue().add( queued_explosion( p, ExplosionType::ResonanceCascade, nullptr ) );
 }
@@ -1900,28 +1907,28 @@ void resonance_cascade( const tripoint &p )
 void explosion_funcs::resonance_cascade( const queued_explosion &qe )
 {
     map &here = get_map();
-    const tripoint &p = qe.pos;
+    const tripoint_bub_ms &p = qe.pos;
 
-    const time_duration maxglow = time_duration::from_turns( 100 - 5 * trig_dist( p, g->u.pos() ) );
+    const time_duration maxglow = time_duration::from_turns( 100 - 5 * trig_dist( p, g->u.bub_pos() ) );
     if( maxglow > 0_turns ) {
         const time_duration minglow = std::max( 0_turns, time_duration::from_turns( 60 - 5 * trig_dist( p,
-                                                g->u.pos() ) ) );
+                                                g->u.bub_pos() ) ) );
         g->u.add_effect( effect_teleglow, rng( minglow, maxglow ) * 100 );
     }
 
-    const auto &qe_cache = get_map().access_cache( p.z );
-    const half_open_rectangle<point> map_bounds( point_zero,
-            point( qe_cache.cache_x, qe_cache.cache_y ) );
-    constexpr point cascade_reach( 8, 8 );
+    const auto &qe_cache = get_map().access_cache( p.z() );
+    const half_open_rectangle<point_bub_ms> map_bounds( point_bub_ms::zero(),
+            point_bub_ms( qe_cache.cache_x, qe_cache.cache_y ) );
+    constexpr point_rel_ms cascade_reach( 8, 8 );
 
-    point start = clamp( p.xy() - cascade_reach, map_bounds );
-    point end = clamp( p.xy() + cascade_reach, map_bounds );
+    auto start = clamp( p.xy() - cascade_reach, map_bounds );
+    auto end = clamp( p.xy() + cascade_reach, map_bounds );
 
     std::vector<int> rolls;
 
-    tripoint dest = p;
-    for( dest.y = start.y; dest.y < end.y; dest.y++ ) {
-        for( dest.x = start.x; dest.x < end.x; dest.x++ ) {
+    auto dest = p;
+    for( dest.y() = start.y(); dest.y() < end.y(); dest.y()++ ) {
+        for( dest.x() = start.x(); dest.x() < end.x(); dest.x()++ ) {
             switch( rng( 0, 80 ) ) {
                 case 1:
                 case 2:

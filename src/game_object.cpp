@@ -159,12 +159,12 @@ bool game_object<T>::has_position() const
 }
 
 template<typename T>
-tripoint game_object<T>::position( ) const
+tripoint_bub_ms game_object<T>::position( ) const
 {
     if( !loc ) {
         if( !saved_loc ) {
             debugmsg( "position called on [%s] without a position", debug_name() );
-            return tripoint_zero;
+            return tripoint_bub_ms::zero();
         }
         return saved_loc->position( static_cast<const T *>( this ) );
     }

@@ -9,7 +9,7 @@
 #include "calendar.h"
 #include "character.h"
 #include "character_id.h"
-#include "coordinate_conversions.h"
+#include "coordinates.h"
 #include "dialogue.h"
 #include "effect.h"
 #include "faction.h"
@@ -27,7 +27,6 @@
 #include "pimpl.h"
 #include "player.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -44,7 +43,7 @@ static const trait_id trait_PROF_SWAT( "PROF_SWAT" );
 static npc &create_test_talker()
 {
     const string_id<npc_template> test_talker( "test_talker" );
-    const character_id model_id = get_map().place_npc( point( 25, 25 ), test_talker, true );
+    const character_id model_id = get_map().place_npc( point_bub_ms( 25, 25 ), test_talker, true );
     g->load_npcs();
 
     npc *model_npc = g->find_npc( model_id );
@@ -87,9 +86,8 @@ static std::string gen_dynamic_line( dialogue &d )
 
 static void change_om_type( const std::string &new_type )
 {
-    // TODO: fix point types
-    const tripoint_abs_omt omt_pos( ms_to_omt_copy( get_map().getabs(
-                                        get_player_character().pos() ) ) );
+    const tripoint_abs_omt omt_pos( project_to<coords::omt>( get_map().bub_to_abs(
+                                        get_player_character().bub_pos() ) ) );
     ACTIVE_OVERMAP_BUFFER.ter_set( omt_pos, oter_id( new_type ) );
 }
 
@@ -99,7 +97,7 @@ static npc &prep_test( dialogue &d )
     avatar &player_character = get_avatar();
     REQUIRE_FALSE( player_character.in_vehicle );
 
-    const tripoint test_origin( 15, 15, 0 );
+    const tripoint_bub_ms test_origin( 15, 15, 0 );
     player_character.setpos( test_origin );
 
     g->faction_manager_ptr->create_if_needed();

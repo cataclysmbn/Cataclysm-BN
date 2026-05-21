@@ -32,7 +32,7 @@ auto cut_up_yields( const std::string &target ) -> void
     // Nominal dex to avoid yield penalty.
     you.dex_cur = 12;
     //guy.set_skill_level( skill_id( "fabrication" ), 10 );
-    here.i_at( you.pos() ).clear();
+    here.i_at( you.bub_pos() ).clear();
 
     CAPTURE( target );
     detached_ptr<item> cut_up_target = item::spawn( target );
@@ -50,13 +50,13 @@ auto cut_up_yields( const std::string &target ) -> void
     units::mass cut_up_target_mass = cut_up_target->weight();
     item &item_to_cut = *cut_up_target;
     material_id_list madeof = cut_up_target->made_of();
-    here.add_item_or_charges( you.pos(), std::move( cut_up_target ) );
+    here.add_item_or_charges( you.bub_pos(), std::move( cut_up_target ) );
 
     REQUIRE( smallest_yield_mass <= cut_up_target_mass );
 
-    salvage::complete_salvage( you, item_to_cut, here.getglobal( you.pos() ) );
+    salvage::complete_salvage( you, item_to_cut, you.abs_pos() );
 
-    map_stack salvaged_items = here.i_at( you.pos() );
+    map_stack salvaged_items = here.i_at( you.bub_pos() );
     const units::mass salvaged_mass = std::accumulate( salvaged_items.begin(), salvaged_items.end(),
     0_gram, []( const units::mass acc, const item * salvage ) {
         return acc + salvage->weight();

@@ -42,7 +42,7 @@ static const mtype_id mon_sewer_snake( "mon_sewer_snake" );
 static const mtype_id mon_spider_cellar_giant( "mon_spider_cellar_giant" );
 static const mtype_id mon_spider_widow_giant( "mon_spider_widow_giant" );
 
-timed_event::timed_event( timed_event_type e_t, const time_point &w, int f_id, tripoint p )
+timed_event::timed_event( timed_event_type e_t, const time_point &w, int f_id, tripoint_abs_sm p )
     : type( e_t )
     , when( w )
     , faction_id( f_id )
@@ -58,14 +58,14 @@ void timed_event::actualize()
             break;
 
         case TIMED_EVENT_ROBOT_ATTACK: {
-            const auto u_pos = g->u.global_sm_location();
+            const auto u_pos = g->u.abs_sm_pos();
             if( rl_dist( u_pos, map_point ) <= 4 ) {
                 const mtype_id &robot_type = one_in( 2 ) ? mon_copbot : mon_riotbot;
 
                 g->events().send<event_type::becomes_wanted>( g->u.getID() );
-                point rob( u_pos.x > map_point.x ? 0 - SEEX * 2 : SEEX * 4,
-                           u_pos.y > map_point.y ? 0 - SEEY * 2 : SEEY * 4 );
-                g->place_critter_at( robot_type, tripoint( rob, g->u.posz() ) );
+                point_bub_ms rob( u_pos.x() > map_point.x() ? 0 - SEEX * 2 : SEEX * 4,
+                                  u_pos.y() > map_point.y() ? 0 - SEEY * 2 : SEEY * 4 );
+                g->place_critter_at( robot_type, tripoint_bub_ms( rob, g->u.bub_pos().z() ) );
             }
         }
         break;
@@ -78,14 +78,15 @@ void timed_event::actualize()
                 pgettext( "memorial_male", "Drew the attention of more dark wyrms!" ),
                 pgettext( "memorial_female", "Drew the attention of more dark wyrms!" ) );
             // 50% chance to spawn a dark wyrm near every orifice on the level.
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == ter_id( "t_orifice" ) ) {
                     g->place_critter_around( mon_dark_wyrm, p, 1 );
                 }
             }
             // You could drop the flag, you know.
             if( g->u.has_amount( itype_petrified_eye, 1 ) ) {
-                sounds::sound( g->u.pos(), 60, sounds::sound_t::alert, _( "a tortured scream!" ), false, "shout",
+                sounds::sound( g->u.bub_pos(), 60, sounds::sound_t::alert, _( "a tortured scream!" ), false,
+                               "shout",
                                "scream_tortured" );
                 if( !g->u.is_deaf() ) {
                     add_msg( _( "The eye you're carrying lets out a tortured scream!" ) );
@@ -98,9 +99,9 @@ void timed_event::actualize()
         case TIMED_EVENT_AMIGARA: {
             g->events().send<event_type::angers_amigara_horrors>();
             int num_horrors = rng( 3, 5 );
-            std::optional<tripoint> fault_point;
+            std::optional<tripoint_bub_ms> fault_point;
             bool horizontal = false;
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == t_fault ) {
                     fault_point = p;
                     horizontal = g->m.ter( p + tripoint_east ) == t_fault || g->m.ter( p + tripoint_west ) == t_fault;
@@ -109,20 +110,20 @@ void timed_event::actualize()
             }
             for( int i = 0; fault_point && i < num_horrors; i++ ) {
                 for( int tries = 0; tries < 10; ++tries ) {
-                    tripoint monp = g->u.pos();
+                    auto monp = g->u.bub_pos();
                     if( horizontal ) {
-                        monp.x = rng( fault_point->x, fault_point->x + 2 * SEEX - 8 );
+                        monp.x() = rng( fault_point->x(), fault_point->x() + 2 * SEEX - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point( monp.x, fault_point->y + n ) ) == t_rock_floor ) {
-                                monp.y = fault_point->y + n;
+                            if( g->m.ter( point_bub_ms( monp.x(), fault_point->y() + n ) ) == t_rock_floor ) {
+                                monp.y() = fault_point->y() + n;
                             }
                         }
                     } else {
                         // Vertical fault
-                        monp.y = rng( fault_point->y, fault_point->y + 2 * SEEY - 8 );
+                        monp.y() = rng( fault_point->y(), fault_point->y() + 2 * SEEY - 8 );
                         for( int n = -1; n <= 1; n++ ) {
-                            if( g->m.ter( point( fault_point->x + n, monp.y ) ) == t_rock_floor ) {
-                                monp.x = fault_point->x + n;
+                            if( g->m.ter( point_bub_ms( fault_point->x() + n, monp.y() ) ) == t_rock_floor ) {
+                                monp.x() = fault_point->x() + n;
                             }
                         }
                     }
@@ -136,7 +137,7 @@ void timed_event::actualize()
 
         case TIMED_EVENT_ROOTS_DIE:
             g->events().send<event_type::destroys_triffid_grove>();
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == t_root_wall && one_in( 3 ) ) {
                     g->m.ter_set( p, t_underbrush );
                 }
@@ -146,7 +147,7 @@ void timed_event::actualize()
         case TIMED_EVENT_TEMPLE_OPEN: {
             g->events().send<event_type::opens_temple>();
             bool saw_grate = false;
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == t_grate ) {
                     g->m.ter_set( p, t_stairs_down );
                     if( !saw_grate && g->u.sees( p ) ) {
@@ -166,32 +167,32 @@ void timed_event::actualize()
             auto &flood_lc = g->m.access_cache( g->get_levz() );
             const int flood_sy = flood_lc.cache_y;
             auto flood_buf = std::vector<ter_id>( static_cast<size_t>( flood_lc.cache_x ) * flood_sy );
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
-                flood_buf[p.x * flood_sy + p.y] = g->m.ter( p );
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
+                flood_buf[p.x() * flood_sy + p.y()] = g->m.ter( p );
             }
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == t_water_sh ) {
                     bool deepen = false;
-                    for( const tripoint &w : points_in_radius( p, 1 ) ) {
+                    for( const tripoint_bub_ms &w : points_in_radius( p, 1 ) ) {
                         if( g->m.ter( w ) == t_water_dp ) {
                             deepen = true;
                             break;
                         }
                     }
                     if( deepen ) {
-                        flood_buf[p.x * flood_sy + p.y] = t_water_dp;
+                        flood_buf[p.x() * flood_sy + p.y()] = t_water_dp;
                         flooded = true;
                     }
                 } else if( g->m.ter( p ) == t_rock_floor ) {
                     bool flood = false;
-                    for( const tripoint &w : points_in_radius( p, 1 ) ) {
+                    for( const tripoint_bub_ms &w : points_in_radius( p, 1 ) ) {
                         if( g->m.ter( w ) == t_water_dp || g->m.ter( w ) == t_water_sh ) {
                             flood = true;
                             break;
                         }
                     }
                     if( flood ) {
-                        flood_buf[p.x * flood_sy + p.y] = t_water_sh;
+                        flood_buf[p.x() * flood_sy + p.y()] = t_water_sh;
                         flooded = true;
                     }
                 }
@@ -201,8 +202,8 @@ void timed_event::actualize()
                 return;
             }
             // Check if we should print a message
-            if( flood_buf[g->u.posx() * flood_sy + g->u.posy()] != g->m.ter( g->u.pos() ) ) {
-                if( flood_buf[g->u.posx() * flood_sy + g->u.posy()] == t_water_sh ) {
+            if( flood_buf[g->u.bub_pos().x() * flood_sy + g->u.bub_pos().y()] != g->m.ter( g->u.bub_pos() ) ) {
+                if( flood_buf[g->u.bub_pos().x() * flood_sy + g->u.bub_pos().y()] == t_water_sh ) {
                     add_msg( m_warning, _( "Water quickly floods up to your knees." ) );
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached knees." ),
@@ -213,12 +214,12 @@ void timed_event::actualize()
                     g->memorial().add(
                         pgettext( "memorial_male", "Water level reached the ceiling." ),
                         pgettext( "memorial_female", "Water level reached the ceiling." ) );
-                    avatar_action::swim( g->m, g->u, g->u.pos() );
+                    avatar_action::swim( g->m, g->u, g->u.bub_pos() );
                 }
             }
             // flood_buf is filled with correct tiles; now copy them back to g->m
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
-                g->m.ter_set( p, flood_buf[p.x * flood_sy + p.y] );
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
+                g->m.ter_set( p, flood_buf[p.x() * flood_sy + p.y()] );
             }
             g->timed_events.add( TIMED_EVENT_TEMPLE_FLOOD,
                                  calendar::turn + rng( 2_turns, 3_turns ) );
@@ -231,7 +232,7 @@ void timed_event::actualize()
                 }
             };
             const mtype_id &montype = random_entry( temple_monsters );
-            g->place_critter_around( montype, g->u.pos(), 2 );
+            g->place_critter_around( montype, g->u.bub_pos(), 2 );
         }
         break;
 
@@ -247,13 +248,13 @@ void timed_event::per_turn()
         case TIMED_EVENT_WANTED: {
             // About once every 5 minutes. Suppress in classic zombie mode.
             if( g->get_levz() >= 0 && one_in( 50 ) && !get_option<bool>( "DISABLE_ROBOT_RESPONSE" ) ) {
-                point place = g->m.random_outdoor_tile();
-                if( place.x == -1 && place.y == -1 ) {
+                auto place = g->m.random_outdoor_tile();
+                if( place.x() == -1 && place.y() == -1 ) {
                     // We're safely indoors!
                     return;
                 }
-                g->place_critter_at( mon_eyebot, tripoint( place, g->u.posz() ) );
-                if( g->u.sees( tripoint( place, g->u.posz() ) ) ) {
+                g->place_critter_at( mon_eyebot, tripoint_bub_ms( place, g->u.bub_pos().z() ) );
+                if( g->u.sees( tripoint_bub_ms( place, g->u.bub_pos().z() ) ) ) {
                     add_msg( m_warning, _( "An eyebot swoops down nearby!" ) );
                 }
                 // One eyebot per trigger is enough, really
@@ -280,7 +281,7 @@ void timed_event::per_turn()
 
         case timed_event_type::AMIGARA_WHISPERS: {
             bool faults = false;
-            for( const tripoint &p : g->m.points_on_zlevel() ) {
+            for( const tripoint_bub_ms &p : g->m.points_on_zlevel() ) {
                 if( g->m.ter( p ) == t_fault ) {
                     faults = true;
                     break;
@@ -323,12 +324,12 @@ void timed_event_manager::process()
 void timed_event_manager::add( const timed_event_type type, const time_point &when,
                                const int faction_id )
 {
-    add( type, when, faction_id, g->u.global_sm_location() );
+    add( type, when, faction_id, g->u.abs_sm_pos() );
 }
 
 void timed_event_manager::add( const timed_event_type type, const time_point &when,
                                const int faction_id,
-                               const tripoint &where )
+                               const tripoint_abs_sm &where )
 {
     events.emplace_back( type, when, faction_id, where );
 }
