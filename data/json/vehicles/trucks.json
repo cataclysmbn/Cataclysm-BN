@@ -511,6 +511,66 @@
     }
   },
   {
+    "id": "afs_beer_tanker",
+    "type": "vehicle",
+    "name": "Beer Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "beer", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "beer", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
+    "id": "afs_hydrogen_peroxide_tanker",
+    "type": "vehicle",
+    "name": "Hydrogen Peroxide Tanker",
+    "blueprint": [
+      "Y-ww-----U",
+      "|FWWFFFFF|",
+      "|FFFFFFFF|",
+      "|FFFFFFFF|",
+      "|FWWFFFFF|",
+      "B-ww-----N"
+    ],
+    "blueprint_origin": { "x": 4, "y": 3 },
+    "palette": {
+      "F": [ "hdframe_cross", { "fuel": "chem_hydrogen_peroxide", "part": "afs_mounted_external_tank" } ],
+      "-": [ "hdframe_vertical" ],
+      "|": [ "hdframe_horizontal" ],
+      "W": [
+        "hdframe_horizontal",
+        "wheel_mount_medium",
+        "wheel_wide",
+        { "fuel": "chem_hydrogen_peroxide", "part": "afs_mounted_external_tank" }
+      ],
+      "w": [ "hdframe_horizontal", "wheel_mount_medium", "wheel_wide" ],
+      "B": [ "hdframe_se" ],
+      "Y": [ "hdframe_sw" ],
+      "N": [ "hdframe_ne" ],
+      "U": [ "hdframe_nw" ]
+    }
+  },
+  {
     "id": "afs_sewage_tanker",
     "type": "vehicle",
     "name": "Sewage Tanker",

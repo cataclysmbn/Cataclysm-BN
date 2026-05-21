@@ -41,6 +41,7 @@ class VehicleGroup
 
         static void load( const JsonObject &jo );
         static void reset();
+        static void check();
 
     private:
         weighted_int_list<vproto_id> vehicles;
