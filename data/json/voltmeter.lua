@@ -52,10 +52,10 @@ end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): string
 voltmeter.get_grid_connections_info = function(_who, _item, pos)
-  local pos_abs_ms = gapi.get_map():get_abs_ms(pos)
-  local pos_abs, _ = coords.ms_to_omt(pos_abs_ms)
+  local pos_abs_ms = gapi.get_map():bub_to_abs(pos)
+  local pos_abs_omt = pos_abs_ms:to_omt()
   ---@cast pos_abs Tripoint
-  local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs)
+  local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()
   local connection_names = {}
@@ -82,10 +82,10 @@ end
 
 ---@type fun(who: Character, item: Item, pos: Tripoint): integer
 voltmeter.modify_grid_connections = function(who, item, pos)
-  local pos_abs_ms = gapi.get_map():get_abs_ms(pos)
-  local pos_abs, _ = coords.ms_to_omt(pos_abs_ms)
+  local pos_abs_ms = gapi.get_map():bub_to_abs(pos)
+  local pos_abs_omt = pos_abs_ms:to_omt()
   ---@cast pos_abs Tripoint
-  local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs)
+  local connections = gapi.get_overmap_buffer():electric_grid_connectivity_at(pos_abs_omt)
 
   local six_dirs = gapi.six_cardinal_directions()
   local connection_present = {}
@@ -120,18 +120,18 @@ voltmeter.modify_grid_connections = function(who, item, pos)
   if choice < 0 then return 0 end
 
   local idx = choice + 1
-  local delta = six_dirs[idx]
+  local delta = TripointRelOmt.new(six_dirs[idx])
   if not delta then return 0 end
-  local destination_pos_abs = Tripoint.new(pos_abs.x + delta.x, pos_abs.y + delta.y, pos_abs.z + delta.z)
+  local destination_pos_abs_omt = pos_abs_omt + delta
 
   if connection_present[idx] then
     -- Remove connection
-    gapi.get_overmap_buffer():remove_grid_connection(pos_abs, destination_pos_abs)
+    gapi.get_overmap_buffer():remove_grid_connection(pos_abs_omt, destination_pos_abs_omt)
     gapi.add_msg(MsgType.good, locale.gettext("Grid connection removed."))
   else
     -- Add connection
-    local lhs_locations = gapi.get_overmap_buffer():electric_grid_at(pos_abs)
-    local rhs_locations = gapi.get_overmap_buffer():electric_grid_at(destination_pos_abs)
+    local lhs_locations = gapi.get_overmap_buffer():electric_grid_at(pos_abs_omt)
+    local rhs_locations = gapi.get_overmap_buffer():electric_grid_at(destination_pos_abs_omt)
 
     -- Check if same grid
     local cost_mult = 0
@@ -222,7 +222,7 @@ voltmeter.modify_grid_connections = function(who, item, pos)
       end
       who:invalidate_crafting_inventory()
 
-      local success = gapi.get_overmap_buffer():add_grid_connection(pos_abs, destination_pos_abs)
+      local success = gapi.get_overmap_buffer():add_grid_connection(pos_abs_omt, destination_pos_abs_omt)
       if success then
         gapi.add_msg(MsgType.good, locale.gettext("Grid connection established."))
         return item:get_type():obj():charges_to_use()

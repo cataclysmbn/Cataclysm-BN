@@ -141,7 +141,7 @@ TEST_CASE( "move_save_to_graveyard_with_open_player_db", "[graveyard]" )
 
     // Open the player SQLite db by writing map-memory data, mirroring what the
     // game does during normal play before the character dies.
-    w->write_player_mm_quad( tripoint_zero, []( std::ostream & out ) {
+    w->write_player_mm_omt( tripoint_abs_mmr::zero(), []( std::ostream & out ) {
         out << "{}";
     } );
 

@@ -44,20 +44,20 @@ static void serialize_liquid_source( player_activity &act, vehicle &veh,
 {
     act.values.push_back( LST_VEHICLE );
     act.values.push_back( part_id );
-    act.coords.push_back( veh.global_part_pos3( 0 ) );
+    act.coords.push_back( bub_to_abs( veh.bub_part_location( 0 ) ) );
 }
 
-static void serialize_liquid_source( player_activity &act, tripoint pos )
+static void serialize_liquid_source( player_activity &act, const tripoint_bub_ms &pos )
 {
     act.values.push_back( LST_INFINITE_MAP );
     act.values.push_back( 0 ); //dummy
-    act.coords.push_back( pos );
+    act.coords.push_back( bub_to_abs( pos ) );
 }
 
 static void serialize_liquid_target( player_activity &act, const vehicle &veh )
 {
     act.values.push_back( LTT_VEHICLE );
-    act.coords.push_back( veh.global_part_pos3( 0 ) );
+    act.coords.push_back( bub_to_abs( veh.bub_part_location( 0 ) ) );
 }
 
 static void serialize_liquid_target( player_activity &act, item &container )
@@ -66,10 +66,10 @@ static void serialize_liquid_target( player_activity &act, item &container )
     act.targets.emplace_back( &container );
 }
 
-static void serialize_liquid_target( player_activity &act, const tripoint &pos )
+static void serialize_liquid_target( player_activity &act, const tripoint_bub_ms &pos )
 {
     act.values.push_back( LTT_MAP );
-    act.coords.push_back( pos );
+    act.coords.push_back( bub_to_abs( pos ) );
 }
 
 namespace liquid_handler
@@ -159,7 +159,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
     } );
     // This handles liquids stored in vehicle parts directly (e.g. tanks).
     std::set<vehicle *> opts;
-    for( const auto &e : here.points_in_radius( g->u.pos(), 1 ) ) {
+    for( const auto &e : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         auto veh = veh_pointer_or_null( here.veh_at( e ) );
         if( veh ) {
             vehicle_part_range vpr = veh->get_all_parts();
@@ -195,7 +195,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
         }
     }
 
-    for( auto &target_pos : here.points_in_radius( g->u.pos(), 1 ) ) {
+    for( auto &target_pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         if( !iexamine::has_keg( target_pos ) ) {
             continue;
         }
@@ -203,7 +203,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
             liquid.position() == target_pos ) {
             continue;
         }
-        const std::string dir = direction_name( direction_from( g->u.pos(), target_pos ) );
+        const std::string dir = direction_name( direction_from( g->u.bub_pos(), target_pos ) );
         menu.addentry( -1, true, MENU_AUTOASSIGN, _( "Pour into an adjacent keg (%s)" ), dir );
         actions.emplace_back( [ &, target_pos]() {
             target.pos = target_pos;
@@ -223,7 +223,7 @@ static bool get_liquid_target( item &liquid, const int radius, liquid_dest_opt &
 
         const std::string liqstr = string_format( _( "Pour %s where?" ), liquid_name );
 
-        const std::optional<tripoint> target_pos_ = choose_adjacent( liqstr );
+        const std::optional<tripoint_bub_ms> target_pos_ = choose_adjacent( liqstr );
         if( !target_pos_ ) {
             return;
         }
@@ -332,7 +332,7 @@ static bool perform_liquid_transfer( detached_ptr<item> &&liquid, liquid_dest_op
             return false;
     }
 }
-static bool perform_liquid_transfer( tripoint pos, liquid_dest_opt &target )
+static bool perform_liquid_transfer( const tripoint_bub_ms &pos, liquid_dest_opt &target )
 {
     map &here = get_map();
     switch( target.dest_opt ) {
@@ -430,7 +430,7 @@ bool handle_liquid( item &liquid, const int radius )
     return false;
 }
 
-bool handle_liquid( tripoint pos, int radius )
+bool handle_liquid( const tripoint_bub_ms &pos, int radius )
 {
     map &here = get_map();
     detached_ptr<item> liquid = here.water_from( pos );

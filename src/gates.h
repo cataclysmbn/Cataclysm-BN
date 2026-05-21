@@ -2,11 +2,12 @@
 
 #include <string>
 
+#include "coordinates.h"
+
 class JsonObject;
 class player;
 class map;
 class Character;
-struct tripoint;
 
 namespace gates
 {
@@ -16,9 +17,9 @@ void check();
 void reset();
 
 /** opens/closes the gate via player's activity */
-void toggle_gate( const tripoint &pos, Character &who );
+void toggle_gate( const tripoint_bub_ms &pos, Character &who );
 /** opens/closes the gate immediately */
-void toggle_gate( const tripoint &pos );
+void toggle_gate( const tripoint_bub_ms &pos );
 
 } // namespace gates
 
@@ -29,7 +30,7 @@ namespace doors
  * Handles deducting moves, printing messages (only non-NPCs cause messages), actually closing it,
  * checking if it can be closed, etc.
 */
-void close_door( map &m, Character &who, const tripoint &closep );
+void close_door( map &m, Character &who, const tripoint_bub_ms &closep );
 
 } // namespace doors
 

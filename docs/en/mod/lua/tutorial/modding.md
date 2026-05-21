@@ -225,6 +225,11 @@ To see the full list of functions, constants and types, run the game with `--lua
 argument. This will generate documentation file `lua_doc.md` that will be placed in your `config`
 folder.
 
+Many API functions deal with positions in the game world. The game uses a typed coordinate system
+where every position carries both an origin (the reference frame) and a scale (the unit size).
+See [`coordinates.md`](../explanation/coordinates.md) for a full explanation of the typed
+coordinate types, arithmetic rules, and when raw `Tripoint`/`Point` values are appropriate.
+
 #### Global overrides
 
 Some functions have been globally overriden to improve integration with the game.

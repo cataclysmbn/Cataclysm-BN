@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "catalua_bindings.h"
+#include "catalua_coord.h"
 #include "catalua.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"
@@ -85,29 +86,29 @@ auto cata::detail::reg_monster_groups( sol::state &lua ) -> void
             | std::ranges::to<std::vector<monster *>>();
         } );
 
-        DOC( "Get the group position in submap coordinates relative to its overmap." );
-        luna::set_fx( ut, "pos", []( const UT_CLASS & group ) -> tripoint {
-            return group.pos.raw();
+        DOC( "Get the group position in absolute submap coordinates." );
+        luna::set_fx( ut, "abs_pos", []( const UT_CLASS & group ) -> tripoint_abs_sm {
+            return group.abs_pos;
         } );
-        DOC( "Set the group position in submap coordinates relative to its overmap." );
-        luna::set_fx( ut, "set_pos", []( UT_CLASS & group, const tripoint & pos ) -> void {
-            group.pos = tripoint_om_sm( pos );
+        DOC( "Set the group position in absolute submap coordinates." );
+        luna::set_fx( ut, "set_pos", []( UT_CLASS & group, const tripoint_abs_sm & pos ) -> void {
+            group.abs_pos = pos;
         } );
-        DOC( "Get the current target in submap coordinates relative to the overmap." );
-        luna::set_fx( ut, "target", []( const UT_CLASS & group ) -> tripoint {
-            return group.target.raw();
+        DOC( "Get the current target in absolute submap coordinates." );
+        luna::set_fx( ut, "target", []( const UT_CLASS & group ) -> tripoint_abs_sm {
+            return group.target;
         } );
-        DOC( "Set the current target in submap coordinates relative to the overmap." );
-        luna::set_fx( ut, "set_target", []( UT_CLASS & group, const tripoint & target ) -> void {
-            group.target = tripoint_om_sm( target );
+        DOC( "Set the current target in absolute submap coordinates." );
+        luna::set_fx( ut, "set_target", []( UT_CLASS & group, const tripoint_abs_sm & target ) -> void {
+            group.target = target;
         } );
         DOC( "Get the nemesis target for this group." );
-        luna::set_fx( ut, "nemesis_target", []( const UT_CLASS & group ) -> tripoint {
-            return group.nemesis_target.raw();
+        luna::set_fx( ut, "nemesis_target", []( const UT_CLASS & group ) -> tripoint_abs_sm {
+            return group.nemesis_target;
         } );
         DOC( "Set the nemesis target for this group using absolute submap coordinates." );
-        luna::set_fx( ut, "set_nemesis_target", []( UT_CLASS & group, const tripoint & target ) -> void {
-            group.set_nemesis_target( tripoint_abs_sm( target ) );
+        luna::set_fx( ut, "set_nemesis_target", []( UT_CLASS & group, const tripoint_abs_sm & target ) -> void {
+            group.set_nemesis_target( target );
         } );
         DOC( "Check if the group is safe." );
         luna::set_fx( ut, "is_safe", []( const UT_CLASS & group ) -> bool {

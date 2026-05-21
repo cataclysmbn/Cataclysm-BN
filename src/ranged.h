@@ -4,8 +4,8 @@
 #include <optional>
 #include <vector>
 
+#include "coordinates.h"
 #include "game_constants.h"
-#include "point.h"
 #include "type_id.h"
 
 class aim_activity_actor;
@@ -35,7 +35,7 @@ class detached_ptr;
 namespace target_handler
 {
 // Trajectory to target. Empty if selection was aborted or player ran out of moves
-using trajectory = std::vector<tripoint>;
+using trajectory = std::vector<tripoint_bub_ms>;
 
 /**
  * Firing ranged weapon. This mode allows spending moves on aiming.
@@ -112,9 +112,10 @@ std::optional<shape_factory> get_target_shape_factory( const item &gun );
 void execute_shaped_attack( const shape &sh, const projectile &proj, Creature &attacker,
                             item *source_weapon, const vehicle *in_veh = nullptr );
 
-std::map<tripoint, double> expected_coverage( const shape &sh, const map &here, int bash_power );
+std::map<tripoint_bub_ms, double> expected_coverage( const shape &sh, const map &here,
+        int bash_power );
 
-void draw_cone_aoe( const tripoint &origin, const std::map<tripoint, double> &aoe );
+void draw_cone_aoe( const tripoint_bub_ms &origin, const std::map<tripoint_bub_ms, double> &aoe );
 
 void print_dmg_msg( Creature &target, Creature *source, const dealt_damage_instance &dealt_dam,
                     double severity = 1.0 );
@@ -175,7 +176,7 @@ void make_gun_sound_effect( const Character &who, bool burst, const item &gun );
  * @param shots Maximum number of shots to fire (less may be fired in some circumstances)
  * @return Number of shots actually fired
  */
-int fire_gun( Character &who, const tripoint &target, int shots = 1 );
+int fire_gun( Character &who, const tripoint_bub_ms &target, int shots = 1 );
 
 /**
  * Fire a gun or auxiliary gunmod (ignoring any current mode)
@@ -185,8 +186,8 @@ int fire_gun( Character &who, const tripoint &target, int shots = 1 );
  * @param gun Item to fire (which does not necessary have to be in the characters possession)
  * @return Number of shots actually fired
  */
-int fire_gun( Character &who, const tripoint &target, int shots, item &gun,
-              item *ammo, const std::optional<tripoint> &shot_origin = std::nullopt );
+int fire_gun( Character &who, const tripoint_bub_ms &target, int shots, item &gun,
+              item *ammo, const std::optional<tripoint_bub_ms> &shot_origin = std::nullopt );
 
 /** Expected thrown damage with a given item, given the thrower's effective strength and skill. */
 auto throw_damage( const item &it, const int skill, const int str ) -> int;
@@ -197,8 +198,8 @@ auto throw_damage( const item &it, const int skill, const int str ) -> int;
  * @param to_throw Item being thrown
  * @param blind_throw_from_pos Position of blind throw (if blind throwing)
  */
-auto throw_item( Character &who, const tripoint &target,
+auto throw_item( Character &who, const tripoint_bub_ms &target,
                  detached_ptr<item> &&to_throw,
-                 std::optional<tripoint> blind_throw_from_pos ) -> dealt_projectile_attack;
+                 std::optional<tripoint_bub_ms> blind_throw_from_pos ) -> dealt_projectile_attack;
 
 } // namespace ranged

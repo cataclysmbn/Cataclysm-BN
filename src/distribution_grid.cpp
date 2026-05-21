@@ -8,7 +8,6 @@
 #include "character.h"
 #include "debug.h"
 #include "distribution_grid.h"
-#include "coordinate_conversions.h"
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
 #include "map.h"
@@ -454,7 +453,7 @@ void distribution_grid_tracker::resume_export_node( const tripoint_abs_ms &sourc
         // on the same turn as resume.  request_load() is async (SLM needs at
         // least one update() cycle); without this, the first make_distribution_grid_at
         // call for the remote side hits the empty sentinel and drops energy.
-        MAPBUFFER_REGISTRY.get( it->target_dim_id ).lookup_submap( target_sm.raw() );
+        MAPBUFFER_REGISTRY.get( it->target_dim_id ).lookup_submap( target_sm );
 
         it->paused = false;
         sync_glt_paused( mb, source_pos, false );
@@ -591,7 +590,7 @@ void distribution_grid_tracker::on_submap_unloaded( const tripoint_abs_sm &pos,
     // The null check handles the rare case where this fires after removal
     // (e.g. mapbuffer::save() spatial eviction) — export nodes were already
     // cleaned up by the SLM listener path in that scenario.
-    submap *sm = mb.lookup_submap_in_memory( pos.raw() );
+    submap *sm = mb.lookup_submap_in_memory( pos );
     if( sm != nullptr ) {
         std::ranges::for_each( sm->active_furniture, [&]( const auto & kv ) {
             const grid_link_tile *glt = dynamic_cast<const grid_link_tile *>( kv.second.get() );
@@ -739,7 +738,7 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         const furn_t &old_t = sm->get_furn( p_within_sm ).obj();
         const furn_t &new_t = qt.id.obj();
-        const tripoint pos_local = m.getlocal( qt.p.raw() );
+        const auto pos_local = m.abs_to_bub( qt.p );
 
         if( !qt.msg.empty() ) {
             if( u.sees( pos_local ) ) {

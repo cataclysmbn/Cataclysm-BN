@@ -34,7 +34,9 @@ and reading relevant part of Sol2 docs.
   will have to include, and it provides a public interface.
 - `catalua_sol.h` and `catalua_sol_fwd.h` - Wrappers for `sol/sol.hpp` and `sol/forward.hpp` with
   custom pragmas to make them compile.
-- `catalua_bindings*` - Game Lua bindings live here.
+- `catalua_bindings*` - Game Lua bindings live here. The coordinate bindings
+  (`catalua_bindings_coords*.cpp`, `catalua_coord.h`) are particularly complex; see
+  [`coordinates.md`](coordinates.md) for the Lua-facing API and design rationale.
 - `catalua_console.h`(`.cpp`) - Ingame Lua console.
 - `catalua_impl.h`(`.cpp`) - Implementation details for `catalua.h`(`.cpp`).
 - `catalua_iuse_actor.h`(`.cpp`) - Lua-driven `iuse_actor`.

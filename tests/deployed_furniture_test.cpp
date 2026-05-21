@@ -12,7 +12,7 @@ TEST_CASE( "take_down_deployed_furniture_keeps_furniture_vars", "[iexamine][depl
 {
     clear_all_state();
     auto &here = get_map();
-    const auto pos = tripoint( 60, 60, 0 );
+    const auto pos = tripoint_bub_ms( 60, 60, 0 );
     here.ter_set( pos, ter_id( "t_floor" ) );
     here.furn_set( pos, furn_id( "f_cardboard_box" ) );
     here.i_clear( pos );

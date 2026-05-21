@@ -12,10 +12,10 @@
 #include "vehicle.h"
 #include "vpart_position.h"
 
-auto get_items_at( const tripoint &loc ) -> location_subrange
+auto get_items_at( const tripoint_abs_ms &loc ) -> location_subrange
 {
     map &here = get_map();
-    const optional_vpart_position vp = here.veh_at( g->m.getlocal( loc ) );
+    const optional_vpart_position vp = here.veh_at( loc );
     if( vp ) {
         vehicle &veh = vp->vehicle();
         const int index = veh.part_with_feature( vp->part_index(), VPFLAG_CARGO, false );
@@ -25,12 +25,13 @@ auto get_items_at( const tripoint &loc ) -> location_subrange
         auto items = veh.get_items( index );
         return std::ranges::subrange( items );
     } else {
-        auto items = here.i_at( here.getlocal( loc ) );
+        auto items = here.i_at( here.abs_to_bub( loc ) );
         return std::ranges::subrange( items );
     }
 }
 
-auto take_down_deployed_furniture( const tripoint &furniture_pos, const tripoint &drop_pos ) -> void
+auto take_down_deployed_furniture( const tripoint_bub_ms &furniture_pos,
+                                   const tripoint_bub_ms &drop_pos ) -> void
 {
     auto &here = get_map();
     const auto furn_item = here.furn( furniture_pos ).obj().deployed_item;

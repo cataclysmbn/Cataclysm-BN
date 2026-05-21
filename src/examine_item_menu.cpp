@@ -182,7 +182,7 @@ bool run(
     } );
 
     add_entry( "DROP", rate_drop_item, [&]() {
-        you.drop( itm, you.pos() );
+        you.drop( itm, you.bub_pos() );
         return true;
     } );
 

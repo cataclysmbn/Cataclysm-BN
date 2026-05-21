@@ -6,7 +6,6 @@
 
 class JsonObject;
 class JsonOut;
-struct tripoint;
 class distribution_grid;
 class mapbuffer;
 

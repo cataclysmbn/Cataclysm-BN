@@ -13,8 +13,8 @@
 #include <list>
 #endif
 
+#include "coordinates.h"
 #include "filesystem.h"
-#include "point.h"
 #include "translations.h"
 
 enum action_id : int;
@@ -639,16 +639,17 @@ class input_context
          * the delta vector associated with it. Otherwise returns an empty value.
          * The returned vector will always have a z component of 0.
          */
-        std::optional<tripoint> get_direction( const std::string &action ) const;
+        std::optional<tripoint_rel_ms> get_direction( const std::string &action ) const;
 
         /**
          * Get the coordinates associated with the last mouse click (if any).
          *
          * TODO: This right now is more or less specific to the map window,
-         *       and returns the absolute map coordinate.
+         *       and returns the local map coordinate.
          *       Eventually this should be made more flexible.
+         *       For overmap, we'll need another version that spits out tripoint_rel_omt
          */
-        std::optional<tripoint> get_coordinates( const catacurses::window &capture_win_ );
+        std::optional<tripoint_bub_ms> get_coordinates( const catacurses::window &capture_win_ );
 
         // Below here are shortcuts for registering common key combinations.
         void register_directions();

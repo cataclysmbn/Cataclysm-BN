@@ -12,7 +12,6 @@
 #include "catacharset.h"
 #include "character.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "enums.h"
@@ -43,7 +42,7 @@ static bool popup_string( std::string &result, std::string &title )
     return true;
 }
 
-bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint & )
+bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint_bub_ms & )
 {
     std::string point_name;
     std::string title = _( "Name this gate." );
@@ -51,25 +50,25 @@ bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const
     return known_teleporters.emplace( omt_pt, point_name ).second;
 }
 
-void teleporter_list::deactivate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint & )
+void teleporter_list::deactivate_teleporter( const tripoint_abs_omt &omt_pt,
+        const tripoint_bub_ms & )
 {
     known_teleporters.erase( omt_pt );
 }
 
 // returns the first valid teleport location near a teleporter
 // returns map square (global coordinates)
-static std::optional<tripoint> find_valid_teleporters_omt( const tripoint_abs_omt &omt_pt )
+static std::optional<tripoint_abs_ms> find_valid_teleporters_omt( const tripoint_abs_omt &omt_pt )
 {
     // this is the top left hand square of the global absolute coordinate
     // of the overmap terrain we want to try to teleport to.
     // an OMT is SEEX * SEEY in size
     const tripoint_abs_sm sm_pt = project_to<coords::sm>( omt_pt );
     tinymap checker;
-    // TODO: fix point types
-    checker.load( sm_pt.raw(), true );
-    for( const tripoint &p : checker.points_on_zlevel() ) {
+    checker.load( sm_pt, true );
+    for( const auto &p : checker.points_on_zlevel() ) {
         if( checker.has_flag_furn( "TRANSLOCATOR", p ) ) {
-            return checker.getabs( p );
+            return checker.bub_to_abs( p );
         }
     }
     return std::nullopt;
@@ -80,12 +79,12 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     tinymap omt_dest( 2, true );
     tripoint_abs_sm sm_dest = project_to<coords::sm>( omt_pt );
     // TODO: fix point types
-    omt_dest.load( sm_dest.raw(), true );
-    std::optional<tripoint> global_dest = find_valid_teleporters_omt( omt_pt );
+    omt_dest.load( sm_dest, true );
+    std::optional<tripoint_abs_ms> global_dest = find_valid_teleporters_omt( omt_pt );
     if( !global_dest ) {
         return false;
     }
-    tripoint local_dest = omt_dest.getlocal( *global_dest ) + point( 60, 60 );
+    auto local_dest = omt_dest.abs_to_bub( *global_dest ) + point( 60, 60 );
     you.add_effect( efftype_id( "ignore_fall_damage" ), 1_seconds, bodypart_str_id::NULL_ID(), 0,
                     true );
     g->place_player_overmap( omt_pt );
@@ -93,7 +92,7 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     return true;
 }
 
-void teleporter_list::translocate( const std::set<tripoint> &targets )
+void teleporter_list::translocate( const std::set<tripoint_bub_ms> &targets )
 {
     if( known_teleporters.empty() ) {
         // we can't go somewhere if we don't know how to get there!
@@ -107,7 +106,7 @@ void teleporter_list::translocate( const std::set<tripoint> &targets )
     }
 
     bool valid_targets = false;
-    for( const tripoint &pt : targets ) {
+    for( const tripoint_bub_ms &pt : targets ) {
         Character *you = g->critter_at<Character>( pt );
 
         if( you && you->is_avatar() ) {
@@ -180,7 +179,7 @@ class teleporter_callback : public uilist_callback
                 overmap_ui::draw_overmap_chunk( menu->window, player_character, index_pairs[entnum],
                                                 point( start_x + 1, 1 ),
                                                 29, 21 );
-                int dist = rl_dist( player_character.global_omt_location(), index_pairs[entnum] );
+                int dist = rl_dist( player_character.abs_omt_pos(), index_pairs[entnum] );
                 mvwprintz( menu->window, point( start_x + 2, 1 ), c_white,
                            string_format( _( "Distance: %d %s" ), dist,
                                           index_pairs[entnum].to_string() ) );
