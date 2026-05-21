@@ -1041,7 +1041,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
     std::vector<options_manager::id_and_option> resource_names;
 
     resource_option.clear();
-    const auto resource_dirs = get_directories_with( filename.generic_string(), dirname, true );
+    const auto resource_dirs = get_directories_with( filename, dirname, true );
 
     for( auto &resource_dir : resource_dirs ) {
         read_from_file( resource_dir / filename, [&]( std::istream & fin ) {

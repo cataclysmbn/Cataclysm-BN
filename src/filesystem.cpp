@@ -221,23 +221,25 @@ auto read_entire_file( const fs::path &path ) -> std::string
     return ret;
 }
 
-auto get_files_from_path( const std::string &pattern, const fs::path &root_path,
+auto get_files_from_path( const fs::path &pattern, const fs::path &root_path,
                           const bool recursive_search, const bool match_extension ) -> std::vector<fs::path>
 {
+    const auto pattern_name = pattern.generic_string();
     return find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
-        return name_contains( path, pattern, match_extension );
+        return name_contains( path, pattern_name, match_extension );
     } );
 }
 
-auto get_directories_with( const std::string &pattern, const fs::path &root_path,
+auto get_directories_with( const fs::path &pattern, const fs::path &root_path,
                            const bool recursive_search ) -> std::vector<fs::path>
 {
-    if( pattern.empty() ) {
+    const auto pattern_name = pattern.generic_string();
+    if( pattern_name.empty() ) {
         return {};
     }
 
     auto files = find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
-        return name_contains( path, pattern, true );
+        return name_contains( path, pattern_name, true );
     } );
 
     std::ranges::transform( files, files.begin(), directory_matches );

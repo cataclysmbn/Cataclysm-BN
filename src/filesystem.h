@@ -76,13 +76,13 @@ auto eol() -> const char *;
  * Searches through the directory tree breadth-first. Directories are searched in lexical
  * order. Matching files within in each directory are also ordered lexically.
  *
- * @param pattern The sub-string to match.
+ * @param pattern The sub-string or path-shaped file name to match.
  * @param root_path The path relative to the current working directory to search; empty means ".".
  * @param recursive_search Whether to recursively search sub directories.
  * @param match_extension If true, match pattern at the end of file names. Otherwise, match anywhere
  *                        in the file name.
  */
-auto get_files_from_path( const std::string &pattern,
+auto get_files_from_path( const fs::path &pattern,
 const fs::path &root_path = {}, bool recursive_search = false,
 bool match_extension = false ) -> std::vector<fs::path>;
 
@@ -96,7 +96,7 @@ bool match_extension = false ) -> std::vector<fs::path>;
 auto get_directories_with( const std::vector<std::string> &patterns,
 const fs::path &root_path = {}, bool recursive_search = false ) -> std::vector<fs::path>;
 
-auto get_directories_with( const std::string &pattern,
+auto get_directories_with( const fs::path &pattern,
 const fs::path &root_path = {}, bool recursive_search = false ) -> std::vector<fs::path>;
 
 /**
