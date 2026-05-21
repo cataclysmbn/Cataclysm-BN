@@ -742,7 +742,7 @@ void show_armor_layers_ui( Character &who )
             }
         } else {
             // Player is sorting NPC's armor here
-            if( rl_dist( you.pos(), who.pos() ) > 1 ) {
+            if( rl_dist( you.bub_pos(), who.bub_pos() ) > 1 ) {
                 you.add_msg_if_npc( m_bad, _( "%s is too far to sort armor." ), who.name );
                 return;
             }

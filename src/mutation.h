@@ -300,10 +300,11 @@ struct mutation_branch {
     private:
         translation raw_name;
         translation raw_desc;
+        translation raw_apperance_desc;
     public:
         std::string name() const;
         std::string desc() const;
-
+        std::string apperance_desc() const;
         /**
          * Returns the color to display the mutation name with.
          */
@@ -499,13 +500,21 @@ struct mutation_category_trait {
         LUA_TYPE_OPS( mutation_category_trait, id );
 };
 
+struct mutation_type_default {
+    std::string type_id;
+    trait_id trait;
+};
+
 void load_mutation_type( const JsonObject &jsobj );
 void reset_mutation_types();
+auto mutation_type_check_consistency() -> void;
 bool mutation_category_is_valid( const mutation_category_id &cat );
 bool mutation_type_exists( const std::string &id );
 bool mutation_type_is_mandatory( const std::string &id );
 bool mutation_type_swaps_on_conflict( const std::string &id );
 int mutation_type_random_chance( const std::string &id );
+auto mutation_type_display_name( const std::string &id ) -> std::string;
+auto get_default_mutations_for_types() -> std::vector<mutation_type_default>;
 std::vector<std::string> get_all_mutation_type_ids();
 std::vector<trait_id> get_mutations_in_types( const std::set<std::string> &ids );
 std::vector<trait_id> get_mutations_in_type( const std::string &id );

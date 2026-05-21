@@ -1,7 +1,6 @@
 #include "catch/catch.hpp"
 
 #include "coordinates.h"
-#include "coordinate_conversions.h"
 #include "cata_generators.h"
 #include "stringmaker.h"
 
@@ -185,134 +184,6 @@ TEST_CASE( "coordinate_hash", "[point][coords]" )
     }
 }
 
-TEST_CASE( "coordinate_conversion_consistency", "[point][coords]" )
-{
-    // Verifies that the new coord_point-based conversions yield the same
-    // results as the legacy conversion functions.
-    SECTION( "omt_to_om_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_om new_conversion = project_to<coords::om>( point_abs_omt( p ) );
-        point old_conversion = omt_to_om_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "omt_to_om_tripoint" ) {
-        tripoint p = GENERATE( take( num_trials, random_tripoints() ) );
-        CAPTURE( p );
-        tripoint_abs_om new_conversion = project_to<coords::om>( tripoint_abs_omt( p ) );
-        tripoint old_conversion = omt_to_om_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "omt_to_om_remain_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_om new_conversion;
-        point_om_omt remainder;
-        std::tie( new_conversion, remainder ) = project_remain<coords::om>( point_abs_omt( p ) );
-        point old_conversion = omt_to_om_remain( p );
-        CHECK( old_conversion == new_conversion.raw() );
-        CHECK( p == remainder.raw() );
-    }
-
-    SECTION( "sm_to_omt_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_omt new_conversion = project_to<coords::omt>( point_abs_sm( p ) );
-        point old_conversion = sm_to_omt_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "sm_to_omt_remain_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_omt new_conversion;
-        point_omt_sm remainder;
-        std::tie( new_conversion, remainder ) = project_remain<coords::omt>( point_abs_sm( p ) );
-        point old_conversion = sm_to_omt_remain( p );
-        CHECK( old_conversion == new_conversion.raw() );
-        CHECK( p == remainder.raw() );
-    }
-
-    SECTION( "sm_to_om_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_om new_conversion = project_to<coords::om>( point_abs_sm( p ) );
-        point old_conversion = sm_to_om_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "sm_to_om_remain_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_om new_conversion;
-        point_om_sm remainder;
-        std::tie( new_conversion, remainder ) = project_remain<coords::om>( point_abs_sm( p ) );
-        point old_conversion = sm_to_om_remain( p );
-        CHECK( old_conversion == new_conversion.raw() );
-        CHECK( p == remainder.raw() );
-    }
-
-    SECTION( "omt_to_sm_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_sm new_conversion = project_to<coords::sm>( point_abs_omt( p ) );
-        point old_conversion = omt_to_sm_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "om_to_sm_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_sm new_conversion = project_to<coords::sm>( point_abs_om( p ) );
-        point old_conversion = om_to_sm_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "ms_to_sm_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_sm new_conversion = project_to<coords::sm>( point_abs_ms( p ) );
-        point old_conversion = ms_to_sm_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "sm_to_ms_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_ms new_conversion = project_to<coords::ms>( point_abs_sm( p ) );
-        point old_conversion = sm_to_ms_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "ms_to_omt_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_omt new_conversion = project_to<coords::omt>( point_abs_ms( p ) );
-        point old_conversion = ms_to_omt_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-
-    SECTION( "ms_to_omt_remain_point" ) {
-        point p = GENERATE( take( num_trials, random_points() ) );
-        CAPTURE( p );
-        point_abs_omt new_conversion;
-        point_omt_ms remainder;
-        std::tie( new_conversion, remainder ) = project_remain<coords::omt>( point_abs_ms( p ) );
-        point old_conversion = ms_to_omt_remain( p );
-        CHECK( old_conversion == new_conversion.raw() );
-        CHECK( p == remainder.raw() );
-    }
-
-    SECTION( "omt_to_seg_tripoint" ) {
-        tripoint p = GENERATE( take( num_trials, random_tripoints() ) );
-        CAPTURE( p );
-        tripoint_abs_seg new_conversion = project_to<coords::seg>( tripoint_abs_omt( p ) );
-        tripoint old_conversion = omt_to_seg_copy( p );
-        CHECK( old_conversion == new_conversion.raw() );
-    }
-}
 
 TEST_CASE( "combine_is_opposite_of_remain", "[point][coords]" )
 {
@@ -361,8 +232,8 @@ TEST_CASE( "coord_point_distances", "[point][coords]" )
     }
 
     SECTION( "trig" ) {
-        CHECK( trig_dist( p0, p1 ) == 14 ); // int(10*sqrt(2))
-        CHECK( trig_dist( t0, t1 ) == 17 ); // int(10*sqrt(3))
+        CHECK( std::abs( trig_dist( p0, p1 ) - 14.1421 ) < 0.001 );
+        CHECK( std::abs( trig_dist( t0, t1 ) - 17.3205 ) < 0.001 );
     }
 
     SECTION( "manhattan" ) {

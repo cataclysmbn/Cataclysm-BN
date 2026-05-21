@@ -919,11 +919,14 @@ tab_direction set_stats( avatar &u, points_left &points )
     // Setting the position to -1 ensures that the INBOUNDS check in
     // map.cpp is triggered. This check prevents access to invalid position
     // on the map (like -1,0) and instead returns a dummy default value.
-    u.setx( -1 );
+    auto old_pos = u.bub_pos();
+    old_pos.x() = -1;
+    u.setpos( old_pos );
     u.reset();
     // set position back to 0 to prevent out-of-bound access to lightmap
     // array in map::build_seen_cache()
-    u.setx( 0 );
+    old_pos.x() = 0;
+    u.setpos( old_pos );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w );
@@ -1480,11 +1483,11 @@ tab_direction set_traits( avatar &u, points_left &points )
                     popup( _( "Your profession of %s prevents you from removing this trait." ),
                            u.prof->gender_appropriate_name( u.male ) );
                 } else {
-                    const bool is_mandatory = std::ranges::any_of( cur_trait.obj().types,
+                    const auto mandatory_type = std::ranges::find_if( cur_trait.obj().types,
                     []( const auto & t ) { return mutation_type_is_mandatory( t ); } );
-                    if( is_mandatory ) {
+                    if( mandatory_type != cur_trait.obj().types.end() ) {
                         inc_type = 0;
-                        popup( _( "You must have a trait of this type." ) );
+                        popup( _( "You need to select 1 %s." ), mutation_type_display_name( *mandatory_type ) );
                     }
                 }
             } else if( newcharacter::has_conflicting_trait( u, cur_trait ) ) {
@@ -4035,6 +4038,23 @@ trait_id Character::get_random_trait( const std::function<bool( const mutation_b
     return random_entry( vTraits );
 }
 
+
+auto newcharacter::add_default_mutation_type_traits( Character &ch ) -> void
+{
+    for( const auto &default_mutation : get_default_mutations_for_types() ) {
+        const auto mutations = get_mutations_in_type( default_mutation.type_id );
+        const auto has_mutation_type = std::ranges::any_of( mutations, [&]( const auto & trait ) {
+            return ch.has_trait( trait );
+        } );
+        if( !has_mutation_type && default_mutation.trait.is_valid() ) {
+            if( ch.has_base_trait( default_mutation.trait ) ) {
+                ch.set_mutation( default_mutation.trait );
+            } else {
+                ch.toggle_trait( default_mutation.trait );
+            }
+        }
+    }
+}
 
 void Character::randomize_cosmetic_trait( std::string mutation_type )
 {

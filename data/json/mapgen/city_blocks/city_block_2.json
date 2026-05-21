@@ -219,7 +219,7 @@
             [ "roof_4x4_utility_1", 20 ]
           ]
         },
-        "B": { "chunks": [ [ "roof_16x16_help", 5 ] ] },
+        "B": { "chunks": [ [ "roof_16x16_help", 5 ], [ "roof_12x12_aircraft", 5 ] ] },
         "G": {
           "chunks": [
             [ "null", 50 ],

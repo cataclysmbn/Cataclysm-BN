@@ -64,7 +64,7 @@ fungal_effects::fungal_effects( game &g, map &mp )
 {
 }
 
-void fungal_effects::fungalize( const tripoint &p, Creature *origin, double spore_chance )
+void fungal_effects::fungalize( const tripoint_bub_ms &p, Creature *origin, double spore_chance )
 {
     if( monster *const mon_ptr = g->critter_at<monster>( p ) ) {
         monster &critter = *mon_ptr;
@@ -77,7 +77,7 @@ void fungal_effects::fungalize( const tripoint &p, Creature *origin, double spor
             critter.add_effect( effect_stunned, rng( 1_turns, 3_turns ) );
             critter.apply_damage( origin, bodypart_id( "torso" ), rng( 25, 50 ) );
         }
-    } else if( gm.u.pos() == p && gm.u.get_effect_int( effect_fungus ) < 3 ) {
+    } else if( gm.u.bub_pos() == p && gm.u.get_effect_int( effect_fungus ) < 3 ) {
         // TODO: Make this accept NPCs when they understand fungals
         player &pl = gm.u;
         ///\EFFECT_DEX increases chance of knocking fungal spores away with your TAIL_CATTLE
@@ -121,14 +121,14 @@ void fungal_effects::fungalize( const tripoint &p, Creature *origin, double spor
     }
 }
 
-void fungal_effects::create_spores( const tripoint &p, Creature *origin )
+void fungal_effects::create_spores( const tripoint_bub_ms &p, Creature *origin )
 {
-    for( const tripoint &tmp : get_map().points_in_radius( p, 1 ) ) {
+    for( const auto &tmp : get_map().points_in_radius( p, 1 ) ) {
         fungalize( tmp, origin, fungal_opt.spore_chance );
     }
 }
 
-void fungal_effects::marlossify( const tripoint &p )
+void fungal_effects::marlossify( const tripoint_bub_ms &p )
 {
     auto &terrain = m.ter( p ).obj();
     if( one_in( 25 ) && ( terrain.movecost != 0 && !m.has_furn( p ) )
@@ -145,7 +145,7 @@ void fungal_effects::marlossify( const tripoint &p )
     }
 }
 
-void fungal_effects::spread_fungus_one_tile( const tripoint &p, const int growth )
+void fungal_effects::spread_fungus_one_tile( const tripoint_bub_ms &p, const int growth )
 {
     bool converted = false;
     // Terrain conversion
@@ -250,11 +250,11 @@ void fungal_effects::spread_fungus_one_tile( const tripoint &p, const int growth
     }
 }
 
-void fungal_effects::spread_fungus( const tripoint &p )
+void fungal_effects::spread_fungus( const tripoint_bub_ms &p )
 {
     int growth = 1;
     map &here = get_map();
-    for( const tripoint &tmp : here.points_in_radius( p, 1 ) ) {
+    for( const auto &tmp : here.points_in_radius( p, 1 ) ) {
         if( tmp == p ) {
             continue;
         }
@@ -270,7 +270,7 @@ void fungal_effects::spread_fungus( const tripoint &p )
         if( growth == 9 ) {
             return;
         }
-        for( const tripoint &dest : here.points_in_radius( p, 1 ) ) {
+        for( const auto &dest : here.points_in_radius( p, 1 ) ) {
             // One spread on average
             if( !m.has_flag( flag_FUNGUS, dest ) && one_in( 9 - growth ) ) {
                 //growth chance is 100 in X simplified

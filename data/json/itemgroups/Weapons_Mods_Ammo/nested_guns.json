@@ -1687,6 +1687,18 @@
     ]
   },
   {
+    "id": "nested_m250",
+    "type": "item_group",
+    "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
+    "subtype": "collection",
+    "ammo": 100,
+    "entries": [
+      { "item": "m250", "ammo-group": "on_hand_277", "charges": [ 0, 100 ] },
+      { "item": "belt277", "ammo-group": "on_hand_277", "charges": 100, "prob": 50 },
+      { "group": "on_hand_277" }
+    ]
+  },
+  {
     "id": "nested_rm11b_sniper_rifle",
     "type": "item_group",
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",

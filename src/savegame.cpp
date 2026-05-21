@@ -16,9 +16,9 @@
 #include "calendar.h"
 #include "cata_io.h"
 #include "coordinates.h"
-#include "coordinate_conversions.h"
 #include "creature_tracker.h"
 #include "debug.h"
+#include "dimension_info.h"
 #include "drop_token.h"
 #include "enum_conversions.h"
 #include "faction.h"
@@ -48,7 +48,6 @@
 #include "ui_manager.h"
 #include "weather.h"
 #include "world_type.h"
-#include "dimension_bounds.h"
 #include "overmapbuffer_registry.h"
 
 #if defined(__ANDROID__)
@@ -115,49 +114,24 @@ void game::serialize( std::ostream &fout )
     }
 
     // Save dimension bounds for bounded dimensions (pocket dimensions)
-    if( m.has_dimension_bounds() ) {
-        std::optional<dimension_bounds> bounds = m.get_dimension_bounds();
-        if( bounds ) {
-            json.member( "dimension_bounds" );
-            json.start_object();
-            json.member( "min_x", bounds->min_bound.x() );
-            json.member( "min_y", bounds->min_bound.y() );
-            json.member( "min_z", bounds->min_bound.z() );
-            json.member( "max_x", bounds->max_bound.x() );
-            json.member( "max_y", bounds->max_bound.y() );
-            json.member( "max_z", bounds->max_bound.z() );
-            json.member( "boundary_terrain", bounds->boundary_terrain.str() );
-            json.member( "boundary_overmap_terrain", bounds->boundary_overmap_terrain.str() );
-            json.end_object();
-        }
+    const auto &pocket_info = m.get_pocket_info();
+    if( pocket_info ) {
+        json.member( "pocket_info", pocket_info );
     }
 
     // Serialize all tracked dimension metadata so kept (non-active) pocket dimensions
-    // retain their bounds, origin, and parent chain across save/load.  Without this,
-    // only the current dimension's info is reconstructed after reload.
+    // retain their bounds across save/load. Without this, only the current dimension's
+    // info is reconstructed after reload.
     json.member( "loaded_dimensions" );
     json.start_array();
     std::ranges::for_each( loaded_dimensions_, [&]( const auto & kv ) {
-        const dimension_info &info = kv.second;
+        const auto &info = kv.second;
         json.start_object();
         json.member( "dimension_id", info.dimension_id );
         json.member( "world_type", info.world_type.str() );
         json.member( "display_name", info.display_name );
-        json.member( "origin_pos_x", info.origin_pos.x() );
-        json.member( "origin_pos_y", info.origin_pos.y() );
-        json.member( "origin_pos_z", info.origin_pos.z() );
-        if( info.bounds ) {
-            json.member( "bounds" );
-            json.start_object();
-            json.member( "min_x", info.bounds->min_bound.x() );
-            json.member( "min_y", info.bounds->min_bound.y() );
-            json.member( "min_z", info.bounds->min_bound.z() );
-            json.member( "max_x", info.bounds->max_bound.x() );
-            json.member( "max_y", info.bounds->max_bound.y() );
-            json.member( "max_z", info.bounds->max_bound.z() );
-            json.member( "boundary_terrain", info.bounds->boundary_terrain.str() );
-            json.member( "boundary_overmap_terrain", info.bounds->boundary_overmap_terrain.str() );
-            json.end_object();
+        if( info.pocket_info ) {
+            json.member( "pocket_info", *info.pocket_info );
         }
         json.end_object();
     } );
@@ -206,10 +180,23 @@ static void chkversion( std::istream &fin )
     }
 }
 
+auto game::validate_save_json( std::istream &fin ) -> bool
+{
+    chkversion( fin );
+    try {
+        JsonIn jsin( fin );
+        jsin.skip_value();
+    } catch( const JsonError &jsonerr ) {
+        debugmsg( "Bad save json\n%s", jsonerr.c_str() );
+        return false;
+    }
+    return true;
+}
+
 /*
  * Parse an open .sav file.
  */
-void game::unserialize( std::istream &fin )
+auto game::unserialize( std::istream &fin ) -> bool
 {
     chkversion( fin );
     int tmpturn = 0;
@@ -276,20 +263,18 @@ void game::unserialize( std::istream &fin )
         loaded_dimensions_.clear();
         if( data.has_array( "loaded_dimensions" ) ) {
             for( JsonObject dim_data : data.get_array( "loaded_dimensions" ) ) {
-                dimension_info info;
+                auto info = dimension_info{};
                 dim_data.read( "dimension_id", info.dimension_id );
-                std::string wt_str;
+                auto wt_str = std::string{};
                 dim_data.read( "world_type", wt_str );
                 info.world_type = world_type_id( wt_str );
                 dim_data.read( "display_name", info.display_name );
-                int ox = 0, oy = 0, oz = 0;
-                dim_data.read( "origin_pos_x", ox );
-                dim_data.read( "origin_pos_y", oy );
-                dim_data.read( "origin_pos_z", oz );
-                info.origin_pos = tripoint_abs_sm( ox, oy, oz );
-                if( dim_data.has_object( "bounds" ) ) {
-                    JsonObject bounds_obj = dim_data.get_object( "bounds" );
-                    dimension_bounds bounds;
+                if( dim_data.has_object( "pocket_info" ) ) {
+                    dim_data.read( "pocket_info", info.pocket_info );
+                } else if( dim_data.has_object( "bounds" ) ) {
+                    auto pocket_data = pocket_dimension_data{};
+                    auto bounds_obj = dim_data.get_object( "bounds" );
+                    auto bounds = dimension_bounds{};
                     bounds.min_bound = tripoint_abs_sm(
                                            bounds_obj.get_int( "min_x" ),
                                            bounds_obj.get_int( "min_y" ),
@@ -302,7 +287,8 @@ void game::unserialize( std::istream &fin )
                                                   bounds_obj.get_string( "boundary_terrain" ) );
                     bounds.boundary_overmap_terrain = oter_str_id(
                                                           bounds_obj.get_string( "boundary_overmap_terrain" ) );
-                    info.bounds = bounds;
+                    pocket_data.bounds = bounds;
+                    info.pocket_info = pocket_data;
                 }
                 loaded_dimensions_[info.dimension_id] = info;
             }
@@ -318,26 +304,15 @@ void game::unserialize( std::istream &fin )
 
         // Load dimension bounds BEFORE load_map so loadn() can generate
         // boundary submaps for out-of-bounds areas
-        if( data.has_object( "dimension_bounds" ) ) {
-            JsonObject bounds_obj = data.get_object( "dimension_bounds" );
-            dimension_bounds bounds;
-            bounds.min_bound = tripoint_abs_sm(
-                                   bounds_obj.get_int( "min_x" ),
-                                   bounds_obj.get_int( "min_y" ),
-                                   bounds_obj.get_int( "min_z" ) );
-            bounds.max_bound = tripoint_abs_sm(
-                                   bounds_obj.get_int( "max_x" ),
-                                   bounds_obj.get_int( "max_y" ),
-                                   bounds_obj.get_int( "max_z" ) );
-            bounds.boundary_terrain = ter_str_id( bounds_obj.get_string( "boundary_terrain" ) );
-            bounds.boundary_overmap_terrain = oter_str_id(
-                                                  bounds_obj.get_string( "boundary_overmap_terrain" ) );
-            m.set_dimension_bounds( bounds );
-            get_overmapbuffer( current_dimension_id_ ).set_dimension_bounds( bounds );
+        if( data.has_object( "pocket_info" ) ) {
+            pocket_dimension_data pocket_info;
+            data.read( "pocket_info", pocket_info );
+            m.set_pocket_info( pocket_info );
+            get_overmapbuffer( current_dimension_id_ ).set_pocket_info( pocket_info );
         }
 
         load_map(
-            tripoint( lev.x + com.x * OMAPX * 2, lev.y + com.y * OMAPY * 2, lev.z ),
+            tripoint_abs_sm( lev.x + com.x * OMAPX * 2, lev.y + com.y * OMAPY * 2, lev.z ),
             /*pump_events=*/true
         );
 
@@ -397,8 +372,9 @@ void game::unserialize( std::istream &fin )
 
     } catch( const JsonError &jsonerr ) {
         debugmsg( "Bad save json\n%s", jsonerr.c_str() );
-        return;
+        return false;
     }
+    return true;
 }
 
 // scent_map::deserialize() moved to scent_map.cpp
@@ -459,10 +435,18 @@ void overmap::load_monster_groups( JsonIn &jsin )
         new_group.deserialize( jsin );
 
         jsin.start_array();
-        tripoint_om_sm temp;
+        tripoint_abs_sm temp;
         while( !jsin.end_array() ) {
             temp.deserialize( jsin );
-            new_group.pos = temp;
+            const auto proj = project_remain<coords::om>( temp );
+            if( proj.quotient == pos() ) {
+                new_group.abs_pos = temp;
+            } else if( inbounds( project_to<coords::omt>( temp ) ) ) {
+                // Legacy support, for when the stored position was local to this overmap.
+                new_group.abs_pos = project_combine( pos(), temp.reinterpret_as<tripoint_om_sm>() );
+            } else {
+                new_group.abs_pos = temp;
+            }
             add_mon_group( new_group );
         }
 
@@ -657,7 +641,7 @@ void overmap::unserialize( std::istream &fin, const std::string &file_path )
                 tripoint_om_sm monster_location;
                 monster new_monster;
                 monster_location.deserialize( jsin );
-                new_monster.deserialize( jsin );
+                new_monster.deserialize_from_overmap( jsin, pos(), monster_location );
                 monster_map->insert( std::make_pair( monster_location, std::move( new_monster ) ) );
             }
         } else if( name == "tracked_vehicles" ) {
@@ -991,14 +975,14 @@ void overmap::save_monster_groups( JsonOut &jout ) const
     jout.member( "monster_groups" );
     jout.start_array();
     // Bin groups by their fields, except positions and monsters
-    std::unordered_map<mongroup, std::list<tripoint_om_sm>, mongroup_hash, mongroup_bin_eq>
+    std::unordered_map<mongroup, std::list<tripoint_abs_sm>, mongroup_hash, mongroup_bin_eq>
     binned_groups;
     binned_groups.reserve( zg.size() );
     for( const auto &pos_group : zg ) {
         // Each group in bin adds only position
         // so that 100 identical groups are 1 group data and 100 tripoints
-        std::list<tripoint_om_sm> &positions = binned_groups[pos_group.second];
-        positions.emplace_back( pos_group.first );
+        auto &positions = binned_groups[pos_group.second];
+        positions.emplace_back( pos_group.second.abs_pos );
     }
 
     for( auto &group_bin : binned_groups ) {
@@ -1007,7 +991,7 @@ void overmap::save_monster_groups( JsonOut &jout ) const
         // The position is stored separately, in the list
         // TODO: Do it without the copy
         mongroup saved_group = group_bin.first;
-        saved_group.pos = tripoint_om_sm();
+        saved_group.abs_pos = tripoint_abs_sm::zero();
         jout.write( saved_group );
         jout.write( group_bin.second );
         jout.end_array();
@@ -1099,7 +1083,7 @@ void overmap::serialize( std::ostream &fout ) const
     json.start_array();
     for( auto &i : *monster_map ) {
         i.first.serialize( json );
-        i.second.serialize( json );
+        i.second.serialize_for_overmap( json );
     }
     json.end_array();
     fout << '\n';
@@ -1250,14 +1234,13 @@ template<typename Archive>
 void mongroup::io( Archive &archive )
 {
     archive.io( "type", type );
-    archive.io( "pos", pos, tripoint_om_sm() );
     archive.io( "abs_pos", abs_pos, tripoint_abs_sm() );
     archive.io( "radius", radius, 1u );
     archive.io( "population", population, 1u );
     archive.io( "diffuse", diffuse, false );
     archive.io( "dying", dying, false );
     archive.io( "horde", horde, false );
-    archive.io( "target", target, tripoint_om_sm() );
+    archive.io( "target", target, tripoint_abs_sm() );
     archive.io( "nemesis_target", nemesis_target, tripoint_abs_sm() );
     archive.io( "interest", interest, 0 );
     archive.io( "horde_behaviour", horde_behaviour, io::empty_default_tag() );
@@ -1285,8 +1268,6 @@ void mongroup::deserialize_legacy( JsonIn &json )
         std::string name = json.get_member_name();
         if( name == "type" ) {
             type = mongroup_id( json.get_string() );
-        } else if( name == "pos" ) {
-            pos.deserialize( json );
         } else if( name == "abs_pos" ) {
             abs_pos.deserialize( json );
         } else if( name == "radius" ) {

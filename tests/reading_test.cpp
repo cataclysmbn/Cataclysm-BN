@@ -465,14 +465,14 @@ TEST_CASE( "Losing book during reading", "[reading][book]" )
     SECTION( "Book below player" ) {
         detached_ptr<item> det = item::spawn( "novel_western" );
         item &western = *det;
-        get_map().add_item( u.pos(), std::move( det ) );
+        get_map().add_item( u.bub_pos(), std::move( det ) );
         destroyed_book_test_helper( u, &western );
     }
 
     SECTION( "Book in car" ) {
-        vehicle *veh = get_map().add_vehicle( vproto_id( "car" ), u.pos(), 0_degrees, 0, 0 );
+        vehicle *veh = get_map().add_vehicle( vproto_id( "car" ), u.bub_pos(), 0_degrees, 0, 0 );
         REQUIRE( veh != nullptr );
-        int part = veh->part_with_feature( point_zero, "CARGO", true );
+        int part = veh->part_with_feature( tripoint_mnt_veh::zero(), "CARGO", true );
         REQUIRE( part >= 0 );
         detached_ptr<item> det = item::spawn( "novel_western" );
         item &western = *det;

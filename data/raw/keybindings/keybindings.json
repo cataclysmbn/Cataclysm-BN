@@ -18,14 +18,14 @@
     "id": "UP",
     "category": "UILIST",
     "name": "Pan up",
-    "bindings": [ { "input_method": "keyboard", "key": "UP" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "keyboard", "key": "NUMPAD_8" } ]
   },
   {
     "type": "keybinding",
     "id": "DOWN",
     "category": "UILIST",
     "name": "Pan down",
-    "bindings": [ { "input_method": "keyboard", "key": "DOWN" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "keyboard", "key": "NUMPAD_2" } ]
   },
   {
     "type": "keybinding",
@@ -67,14 +67,14 @@
     "id": "UP",
     "category": "MELEE_STYLE_PICKER",
     "name": "Pan up",
-    "bindings": [ { "input_method": "keyboard", "key": "UP" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "keyboard", "key": "NUMPAD_8" } ]
   },
   {
     "type": "keybinding",
     "id": "DOWN",
     "category": "MELEE_STYLE_PICKER",
     "name": "Pan down",
-    "bindings": [ { "input_method": "keyboard", "key": "DOWN" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "keyboard", "key": "NUMPAD_2" } ]
   },
   {
     "type": "keybinding",
@@ -98,6 +98,7 @@
       { "input_method": "keyboard", "key": "k" },
       { "input_method": "keyboard", "key": "8" },
       { "input_method": "keyboard", "key": "UP" },
+      { "input_method": "keyboard", "key": "NUMPAD_8" },
       { "input_method": "gamepad", "key": "JOY_UP" }
     ]
   },
@@ -109,6 +110,7 @@
       { "input_method": "keyboard", "key": "j" },
       { "input_method": "keyboard", "key": "DOWN" },
       { "input_method": "keyboard", "key": "2" },
+      { "input_method": "keyboard", "key": "NUMPAD_2" },
       { "input_method": "gamepad", "key": "JOY_DOWN" }
     ]
   },
@@ -120,6 +122,7 @@
       { "input_method": "keyboard", "key": "h" },
       { "input_method": "keyboard", "key": "LEFT" },
       { "input_method": "keyboard", "key": "4" },
+      { "input_method": "keyboard", "key": "NUMPAD_4" },
       { "input_method": "gamepad", "key": "JOY_LEFT" }
     ]
   },
@@ -131,6 +134,7 @@
       { "input_method": "keyboard", "key": "l" },
       { "input_method": "keyboard", "key": "RIGHT" },
       { "input_method": "keyboard", "key": "6" },
+      { "input_method": "keyboard", "key": "NUMPAD_6" },
       { "input_method": "gamepad", "key": "JOY_RIGHT" }
     ]
   },
@@ -141,6 +145,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "y" },
       { "input_method": "keyboard", "key": "7" },
+      { "input_method": "keyboard", "key": "NUMPAD_7" },
       { "input_method": "gamepad", "key": "JOY_LEFTUP" }
     ]
   },
@@ -151,6 +156,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "u" },
       { "input_method": "keyboard", "key": "9" },
+      { "input_method": "keyboard", "key": "NUMPAD_9" },
       { "input_method": "gamepad", "key": "JOY_RIGHTUP" }
     ]
   },
@@ -161,6 +167,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "b" },
       { "input_method": "keyboard", "key": "1" },
+      { "input_method": "keyboard", "key": "NUMPAD_1" },
       { "input_method": "gamepad", "key": "JOY_LEFTDOWN" }
     ]
   },
@@ -171,6 +178,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "n" },
       { "input_method": "keyboard", "key": "3" },
+      { "input_method": "keyboard", "key": "NUMPAD_3" },
       { "input_method": "gamepad", "key": "JOY_RIGHTDOWN" }
     ]
   },
@@ -227,6 +235,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "k" },
       { "input_method": "keyboard", "key": "UP" },
+      { "input_method": "keyboard", "key": "NUMPAD_8" },
       { "input_method": "gamepad", "key": "JOY_UP" }
     ]
   },
@@ -238,6 +247,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "j" },
       { "input_method": "keyboard", "key": "DOWN" },
+      { "input_method": "keyboard", "key": "NUMPAD_2" },
       { "input_method": "gamepad", "key": "JOY_DOWN" }
     ]
   },
@@ -249,6 +259,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "h" },
       { "input_method": "keyboard", "key": "LEFT" },
+      { "input_method": "keyboard", "key": "NUMPAD_4" },
       { "input_method": "gamepad", "key": "JOY_LEFT" }
     ]
   },
@@ -260,6 +271,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "l" },
       { "input_method": "keyboard", "key": "RIGHT" },
+      { "input_method": "keyboard", "key": "NUMPAD_6" },
       { "input_method": "gamepad", "key": "JOY_RIGHT" }
     ]
   },
@@ -648,6 +660,13 @@
     "category": "CRAFTING",
     "name": "Toggle recipes to be shown in favorite tab",
     "bindings": [ { "input_method": "keyboard", "key": "*" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "ASSIGN_NPC_CRAFT",
+    "category": "CRAFTING",
+    "name": "Assign nearest NPC to craft",
+    "bindings": [ { "input_method": "keyboard", "key": "N" } ]
   },
   {
     "type": "keybinding",
@@ -1771,10 +1790,17 @@
   },
   {
     "type": "keybinding",
-    "name": "Pick up Nearby Item(s)",
+    "name": "Pick up items from one nearby tile",
     "category": "DEFAULTMODE",
     "id": "pickup",
     "bindings": [ { "input_method": "keyboard", "key": "g" } ]
+  },
+  {
+    "type": "keybinding",
+    "name": "Pick up items from all nearby tiles",
+    "category": "DEFAULTMODE",
+    "id": "pickup_all",
+    "bindings": [ { "input_method": "keyboard", "key": "," } ]
   },
   {
     "type": "keybinding",
@@ -2628,6 +2654,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "8" },
       { "input_method": "keyboard", "key": "UP" },
+      { "input_method": "keyboard", "key": "NUMPAD_8" },
       { "input_method": "gamepad", "key": "JOY_UP" }
     ]
   },
@@ -2639,6 +2666,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "DOWN" },
       { "input_method": "keyboard", "key": "2" },
+      { "input_method": "keyboard", "key": "NUMPAD_2" },
       { "input_method": "gamepad", "key": "JOY_DOWN" }
     ]
   },
@@ -2655,8 +2683,9 @@
     "category": "MUTATIONS",
     "name": "Pan up",
     "bindings": [
-      { "input_method": "keyboard", "key": "8" },
       { "input_method": "keyboard", "key": "UP" },
+      { "input_method": "keyboard", "key": "8" },
+      { "input_method": "keyboard", "key": "NUMPAD_8" },
       { "input_method": "gamepad", "key": "JOY_UP" }
     ]
   },
@@ -2668,6 +2697,7 @@
     "bindings": [
       { "input_method": "keyboard", "key": "DOWN" },
       { "input_method": "keyboard", "key": "2" },
+      { "input_method": "keyboard", "key": "NUMPAD_2" },
       { "input_method": "gamepad", "key": "JOY_DOWN" }
     ]
   },
@@ -2684,14 +2714,14 @@
     "id": "UP",
     "category": "HELP_KEYBINDINGS",
     "name": "Pan up",
-    "bindings": [ { "input_method": "keyboard", "key": "UP" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "keyboard", "key": "NUMPAD_8" } ]
   },
   {
     "type": "keybinding",
     "id": "DOWN",
     "category": "HELP_KEYBINDINGS",
     "name": "Pan down",
-    "bindings": [ { "input_method": "keyboard", "key": "DOWN" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "keyboard", "key": "NUMPAD_2" } ]
   },
   {
     "type": "keybinding",
@@ -2931,63 +2961,63 @@
     "id": "ITEMS_NW",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ North-West",
-    "bindings": [ { "input_method": "keyboard", "key": "7" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "7" }, { "input_method": "keyboard", "key": "NUMPAD_7" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_N",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ North",
-    "bindings": [ { "input_method": "keyboard", "key": "8" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "8" }, { "input_method": "keyboard", "key": "NUMPAD_8" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_NE",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ North-East",
-    "bindings": [ { "input_method": "keyboard", "key": "9" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "9" }, { "input_method": "keyboard", "key": "NUMPAD_9" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_W",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ West",
-    "bindings": [ { "input_method": "keyboard", "key": "4" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "4" }, { "input_method": "keyboard", "key": "NUMPAD_4" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_CE",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ center",
-    "bindings": [ { "input_method": "keyboard", "key": "5" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "5" }, { "input_method": "keyboard", "key": "NUMPAD_5" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_E",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ East",
-    "bindings": [ { "input_method": "keyboard", "key": "6" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "6" }, { "input_method": "keyboard", "key": "NUMPAD_6" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_SW",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ South-West",
-    "bindings": [ { "input_method": "keyboard", "key": "1" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "1" }, { "input_method": "keyboard", "key": "NUMPAD_1" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_S",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ South",
-    "bindings": [ { "input_method": "keyboard", "key": "2" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "2" }, { "input_method": "keyboard", "key": "NUMPAD_2" } ]
   },
   {
     "type": "keybinding",
     "id": "ITEMS_SE",
     "category": "ADVANCED_INVENTORY",
     "name": "Select items @ South-East",
-    "bindings": [ { "input_method": "keyboard", "key": "3" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "3" }, { "input_method": "keyboard", "key": "NUMPAD_3" } ]
   },
   {
     "type": "keybinding",
@@ -3011,7 +3041,8 @@
     "bindings": [
       { "input_method": "keyboard", "key": "i" },
       { "input_method": "keyboard", "key": "I" },
-      { "input_method": "keyboard", "key": "0" }
+      { "input_method": "keyboard", "key": "0" },
+      { "input_method": "keyboard", "key": "NUMPAD_0" }
     ]
   },
   {
@@ -3073,14 +3104,14 @@
     "id": "UP",
     "category": "ITEM_ACTIONS",
     "name": "Pan up",
-    "bindings": [ { "input_method": "keyboard", "key": "UP" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "keyboard", "key": "NUMPAD_8" } ]
   },
   {
     "type": "keybinding",
     "id": "DOWN",
     "category": "ITEM_ACTIONS",
     "name": "Pan down",
-    "bindings": [ { "input_method": "keyboard", "key": "DOWN" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "keyboard", "key": "NUMPAD_2" } ]
   },
   {
     "type": "keybinding",
@@ -3342,14 +3373,22 @@
     "id": "UP",
     "category": "NPC_TRADE",
     "name": "Move cursor up",
-    "bindings": [ { "input_method": "keyboard", "key": "UP" }, { "input_method": "gamepad", "key": "JOY_UP" } ]
+    "bindings": [
+      { "input_method": "keyboard", "key": "UP" },
+      { "input_method": "keyboard", "key": "NUMPAD_8" },
+      { "input_method": "gamepad", "key": "JOY_UP" }
+    ]
   },
   {
     "type": "keybinding",
     "id": "DOWN",
     "category": "NPC_TRADE",
     "name": "Move cursor down",
-    "bindings": [ { "input_method": "keyboard", "key": "DOWN" }, { "input_method": "gamepad", "key": "JOY_DOWN" } ]
+    "bindings": [
+      { "input_method": "keyboard", "key": "DOWN" },
+      { "input_method": "keyboard", "key": "NUMPAD_2" },
+      { "input_method": "gamepad", "key": "JOY_DOWN" }
+    ]
   },
   {
     "type": "keybinding",
@@ -3363,14 +3402,22 @@
     "id": "LEFT",
     "category": "NPC_TRADE",
     "name": "Remove item from trade",
-    "bindings": [ { "input_method": "keyboard", "key": "LEFT" }, { "input_method": "gamepad", "key": "JOY_LEFT" } ]
+    "bindings": [
+      { "input_method": "keyboard", "key": "LEFT" },
+      { "input_method": "keyboard", "key": "NUMPAD_4" },
+      { "input_method": "gamepad", "key": "JOY_LEFT" }
+    ]
   },
   {
     "type": "keybinding",
     "id": "PAGE_UP",
     "category": "NPC_TRADE",
     "name": "Back",
-    "bindings": [ { "input_method": "keyboard", "key": "PPAGE" }, { "input_method": "keyboard", "key": "<" } ]
+    "bindings": [
+      { "input_method": "keyboard", "key": "PPAGE" },
+      { "input_method": "keyboard", "key": "NUMPAD_6" },
+      { "input_method": "keyboard", "key": "<" }
+    ]
   },
   {
     "type": "keybinding",

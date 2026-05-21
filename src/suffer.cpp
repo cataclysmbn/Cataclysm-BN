@@ -264,7 +264,7 @@ void Character::suffer_while_underwater()
             }
         }
     }
-    if( has_trait( trait_FRESHWATEROSMOSIS ) && !get_map().has_flag_ter( "SALT_WATER", pos() ) &&
+    if( has_trait( trait_FRESHWATEROSMOSIS ) && !get_map().has_flag_ter( "SALT_WATER", bub_pos() ) &&
         get_thirst() > thirst_levels::turgid ) {
         mod_thirst( -1 );
     }
@@ -669,7 +669,7 @@ void Character::suffer_from_asthma( const int current_stim )
 
     if( in_sleep_state() && !has_effect( effect_narcosis ) ) {
         inventory map_inv;
-        map_inv.form_from_map( g->u.pos(), 2, &g->u );
+        map_inv.form_from_map( g->u.bub_pos(), 2, &g->u );
         // check if an inhaler is somewhere near
         bool nearby_use = auto_use || oxygenator || map_inv.has_charges( itype_inhaler, 1 ) ||
                           map_inv.has_charges( itype_oxygen_tank, 1 ) ||
@@ -692,11 +692,11 @@ void Character::suffer_from_asthma( const int current_stim )
             // create new variable to resolve a reference issue
             int amount = 1;
             map &here = get_map();
-            if( !here.use_charges( g->u.pos(), 2, itype_inhaler, amount ).empty() ) {
+            if( !here.use_charges( g->u.bub_pos(), 2, itype_inhaler, amount ).empty() ) {
                 add_msg_if_player( m_info, _( "You use your inhaler and go back to sleep." ) );
                 add_effect( effect_took_antiasthmatic, rng( 1_hours, 2_hours ) );
-            } else if( !here.use_charges( g->u.pos(), 2, itype_oxygen_tank, amount ).empty() ||
-                       !here.use_charges( g->u.pos(), 2, itype_smoxygen_tank, amount ).empty() ) {
+            } else if( !here.use_charges( g->u.bub_pos(), 2, itype_oxygen_tank, amount ).empty() ||
+                       !here.use_charges( g->u.bub_pos(), 2, itype_smoxygen_tank, amount ).empty() ) {
                 add_msg_if_player( m_info, _( "You take a deep breath from your oxygen tank "
                                               "and go back to sleep." ) );
             }
@@ -833,7 +833,7 @@ void Character::suffer_feral_kill_withdrawl()
 
 void Character::suffer_in_sunlight()
 {
-    if( !g->is_in_sunlight( pos() ) ) {
+    if( !g->is_in_sunlight( bub_pos() ) ) {
         return;
     }
 
@@ -850,7 +850,7 @@ void Character::suffer_in_sunlight()
                                        sun_intensity_type::normal ) ? 1.0 : 0.5;
 
         int sunlight_nutrition = 0;
-        const int player_local_temp = units::to_fahrenheit( get_weather().get_temperature( pos() ) );
+        const int player_local_temp = units::to_fahrenheit( get_weather().get_temperature( abs_pos() ) );
         const int flux = ( player_local_temp - 65 ) / 2;
 
         if( !has_hat ) {
@@ -1066,19 +1066,19 @@ void Character::suffer_from_other_mutations()
     map &here = get_map();
     if( has_trait( trait_SHARKTEETH ) && one_turn_in( 24_hours ) ) {
         add_msg_if_player( m_neutral, _( "You shed a tooth!" ) );
-        here.spawn_item( pos(), "bone", 1 );
+        here.spawn_item( bub_pos(), "bone", 1 );
     }
 
     if( has_active_mutation( trait_WINGS_INSECT ) ) {
         //~Sound of buzzing Insect Wings
-        sounds::sound( pos(), 10, sounds::sound_t::movement, _( "BZZZZZ" ), false, "misc",
+        sounds::sound( bub_pos(), 10, sounds::sound_t::movement, _( "BZZZZZ" ), false, "misc",
                        "insect_wings" );
     }
 
     bool wearing_shoes = is_wearing_shoes( side::LEFT ) || is_wearing_shoes( side::RIGHT );
     int root_vitamins = 0;
     int root_water = 0;
-    if( has_trait( trait_ROOTS3 ) && here.has_flag( flag_PLOWABLE, pos() ) && !wearing_shoes ) {
+    if( has_trait( trait_ROOTS3 ) && here.has_flag( flag_PLOWABLE, bub_pos() ) && !wearing_shoes ) {
         root_vitamins += 1;
         if( get_thirst() <= thirst_levels::turgid ) {
             root_water += 51;
@@ -1112,7 +1112,7 @@ void Character::suffer_from_other_mutations()
     //Web Weavers...weave web
     if( has_active_mutation( trait_WEB_WEAVER ) && !in_vehicle ) {
         // this adds intensity to if its not already there.
-        here.add_field( pos(), fd_web, 1 );
+        here.add_field( bub_pos(), fd_web, 1 );
 
     }
 
@@ -1137,7 +1137,7 @@ void Character::suffer_from_other_mutations()
 
     if( has_trait( trait_WEB_SPINNER ) && !in_vehicle && one_in( 3 ) ) {
         // this adds intensity to if its not already there.
-        here.add_field( pos(), fd_web, 1 );
+        here.add_field( bub_pos(), fd_web, 1 );
     }
 
     bool should_mutate = has_trait( trait_UNSTABLE ) && !has_trait( trait_CHAOTIC_BAD ) &&
@@ -1175,7 +1175,7 @@ void Character::suffer_from_radiation()
     map &here = get_map();
     // checking for radioactive items in inventory
     const int item_radiation = leak_level( flag_RADIOACTIVE );
-    const int map_radiation = here.get_radiation( pos() );
+    const int map_radiation = here.get_radiation( bub_pos() );
     float rads = map_radiation / 100.0f + item_radiation / 10.0f;
 
     int rad_mut = 0;
@@ -1206,7 +1206,7 @@ void Character::suffer_from_radiation()
         if( rad_mut_proc && !kept_in ) {
             // Irradiate a random nearby point
             // If you can't, irradiate the player instead
-            tripoint rad_point = pos() + point( rng( -3, 3 ), rng( -3, 3 ) );
+            tripoint_bub_ms rad_point = bub_pos() + point_rel_ms( rng( -3, 3 ), rng( -3, 3 ) );
             // TODO: Radioactive vehicles?
             if( here.get_radiation( rad_point ) < rad_mut ) {
                 here.adjust_radiation( rad_point, 1 );
@@ -1329,7 +1329,7 @@ void Character::suffer_from_bad_bionics()
             add_msg_if_player( m_bad, _( "You feel your faulty bionic shuddering." ) );
             sfx::play_variant_sound( "bionics", "elec_blast_muffled", 100 );
         }
-        sounds::sound( pos(), 60, sounds::sound_t::movement, _( "Crackle!" ) ); //sfx above
+        sounds::sound( bub_pos(), 60, sounds::sound_t::movement, _( "Crackle!" ) ); //sfx above
     }
     if( has_bionic( bio_power_weakness ) && has_max_power() &&
         get_power_level() >= get_max_power_level() * .75 ) {
@@ -1540,18 +1540,18 @@ void Character::suffer()
     }
 
     const auto dim = get_dimension();
-    const auto &effects = get_overmapbuffer( dim ).get_settings( global_omt_location() ).region_effects;
+    const auto &effects = get_overmapbuffer( dim ).get_settings( abs_omt_pos() ).region_effects;
     for( const auto& [type, effect_list] : effects ) {
         switch( type ) {
             case region_effect_type::generic:
                 break;
             case region_effect_type::sunlight:
-                if( !g->is_in_sunlight( pos() ) ) {
+                if( !g->is_in_sunlight( bub_pos() ) ) {
                     continue;
                 }
                 break;
             case region_effect_type::surface:
-                if( pos().z < 0 || !g->is_sheltered( pos() ) ) {
+                if( bub_pos().z() < 0 || !g->is_sheltered( bub_pos() ) ) {
                     continue;
                 }
                 break;
@@ -1571,7 +1571,7 @@ void Character::suffer()
                 }
                 break;
             case region_effect_type::underground:
-                if( pos().z >= 0 ) {
+                if( bub_pos().z() >= 0 ) {
                     continue;
                 }
                 break;

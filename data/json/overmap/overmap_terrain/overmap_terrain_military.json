@@ -594,6 +594,7 @@
       "mil_airfield_z4_1_2"
     ],
     "name": "military airfield",
+    "looks_like": "mil_base_2d1",
     "mondensity": 2,
     "flags": [ "SOURCE_AMMO", "SOURCE_VEHICLES", "RISK_HIGH" ]
   },

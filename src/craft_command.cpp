@@ -93,19 +93,19 @@ template void comp_selection<item_comp>::serialize( JsonOut &jsout ) const;
 template void comp_selection<tool_comp>::deserialize( JsonIn &jsin );
 template void comp_selection<item_comp>::deserialize( JsonIn &jsin );
 
-void craft_command::execute( const tripoint &new_loc )
+void craft_command::execute( const tripoint_bub_ms &new_loc )
 {
     if( empty() ) {
         return;
     }
 
-    if( new_loc != tripoint_zero ) {
+    if( new_loc != tripoint_bub_ms::zero() ) {
         loc = new_loc;
     }
 
     bool need_selections = true;
     inventory map_inv;
-    map_inv.form_from_map( crafter->pos(), PICKUP_RANGE, crafter );
+    map_inv.form_from_map( crafter->bub_pos(), PICKUP_RANGE, crafter );
 
     if( has_cached_selections() ) {
         std::vector<comp_selection<item_comp>> missing_items = check_item_components_missing( map_inv );
@@ -119,19 +119,19 @@ void craft_command::execute( const tripoint &new_loc )
         }
     }
 
-    if( need_selections ) {
-        if( !crafter->can_make( rec, batch_size ) ) {
-            if( crafter->can_start_craft( rec, recipe_filter_flags::none, batch_size ) ) {
-                if( !query_yn( _( "You don't have enough charges to complete the %s.\n"
-                                  "Start crafting anyway?" ), rec->result_name() ) ) {
-                    return;
-                }
-            } else {
-                debugmsg( "Tried to start craft without sufficient charges" );
+    if( !crafter->can_make( rec, batch_size ) ) {
+        if( crafter->can_start_craft( rec, recipe_filter_flags::none, batch_size ) ) {
+            if( !query_yn( _( "You don't have enough charges to complete the %s.\n"
+                              "Start crafting anyway?" ), rec->result_name() ) ) {
                 return;
             }
+        } else {
+            debugmsg( "Tried to start craft without sufficient charges" );
+            return;
         }
+    }
 
+    if( need_selections ) {
         flags = recipe_filter_flags::no_rotten;
 
         if( !crafter->can_start_craft( rec, flags, batch_size ) ) {
@@ -237,7 +237,7 @@ detached_ptr<item> craft_command::create_in_progress_craft()
     }
 
     inventory map_inv;
-    map_inv.form_from_map( crafter->pos(), PICKUP_RANGE, crafter );
+    map_inv.form_from_map( crafter->bub_pos(), PICKUP_RANGE, crafter );
 
     if( !check_item_components_missing( map_inv ).empty() ) {
         debugmsg( "Aborting crafting: couldn't find cached components" );
@@ -275,6 +275,7 @@ detached_ptr<item> craft_command::create_in_progress_craft()
     new_craft->set_cached_tool_selections( tool_selections );
     new_craft->set_tools_to_continue( true );
 
+    bool can_fully_prepay = true;
     for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
         const auto type = tool_sel.comp.type;
         if( tool_sel.comp.count > 0 ) {
@@ -282,17 +283,17 @@ detached_ptr<item> craft_command::create_in_progress_craft()
             switch( tool_sel.use_from ) {
                 case usage_from::player:
                     if( !crafter->has_charges( type, full_cost ) ) {
-                        return detached_ptr<item>();
+                        can_fully_prepay = false;
                     }
                     break;
                 case usage_from::map:
                     if( !map_inv.has_charges( type, full_cost ) ) {
-                        return detached_ptr<item>();
+                        can_fully_prepay = false;
                     }
                     break;
                 case usage_from::both:
                     if( crafter->charges_of( type ) + map_inv.charges_of( type ) < full_cost ) {
-                        return detached_ptr<item>();
+                        can_fully_prepay = false;
                     }
                     break;
                 case usage_from::none:
@@ -324,15 +325,55 @@ detached_ptr<item> craft_command::create_in_progress_craft()
             }
         }
     }
-    for( const comp_selection<tool_comp> &tool : tool_selections ) {
-        if( tool.comp.count <= 0 ) {
-            continue;
+
+    if( can_fully_prepay ) {
+        for( const comp_selection<tool_comp> &tool : tool_selections ) {
+            if( tool.comp.count <= 0 ) {
+                continue;
+            }
+            auto to_consume = tool;
+            to_consume.comp.count *= batch_size;
+            crafter->consume_tools( to_consume, 1 );
         }
-        auto to_consume = tool;
-        to_consume.comp.count *= batch_size;
-        crafter->consume_tools( to_consume, 1 );
+        new_craft->set_var( "craft_tools_fully_prepaid", 1 );
+    } else {
+        // Consume only the starting fraction; the rest will be paid per 5% step during crafting.
+        for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
+            if( tool_sel.comp.count <= 0 ) {
+                continue;
+            }
+            const auto full_cost = tool_sel.comp.count * batch_size;
+            const auto start_cost = crafting::charges_for_starting( full_cost );
+            bool has_start = false;
+            switch( tool_sel.use_from ) {
+                case usage_from::player:
+                    has_start = crafter->has_charges( tool_sel.comp.type, start_cost );
+                    break;
+                case usage_from::map:
+                    has_start = map_inv.has_charges( tool_sel.comp.type, start_cost );
+                    break;
+                case usage_from::both:
+                    has_start = crafter->charges_of( tool_sel.comp.type ) +
+                                map_inv.charges_of( tool_sel.comp.type ) >= start_cost;
+                    break;
+                default:
+                    has_start = true;
+                    break;
+            }
+            if( !has_start ) {
+                return detached_ptr<item>();
+            }
+        }
+        for( const comp_selection<tool_comp> &tool_sel : tool_selections ) {
+            if( tool_sel.comp.count <= 0 ) {
+                continue;
+            }
+            auto to_consume = tool_sel;
+            to_consume.comp.count = crafting::charges_for_starting( tool_sel.comp.count * batch_size );
+            crafter->consume_tools( to_consume, 1 );
+        }
+        // craft_tools_fully_prepaid is intentionally NOT set; do_turn will consume per step.
     }
-    new_craft->set_var( "craft_tools_fully_prepaid", 1 );
     new_craft->set_next_failure_point( *crafter );
 
     return new_craft;

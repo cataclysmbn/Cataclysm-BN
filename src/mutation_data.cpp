@@ -298,6 +298,7 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
     mandatory( jo, was_loaded, "description", raw_desc );
     mandatory( jo, was_loaded, "points", points );
 
+    optional( jo, was_loaded, "apperance_description", raw_apperance_desc );
     optional( jo, was_loaded, "visibility", visibility, 0 );
     optional( jo, was_loaded, "ugliness", ugliness, 0 );
     optional( jo, was_loaded, "starting_trait", startingtrait, false );
@@ -579,6 +580,11 @@ std::string mutation_branch::desc() const
     return raw_desc.translated();
 }
 
+std::string mutation_branch::apperance_desc() const
+{
+    return raw_apperance_desc.translated();
+}
+
 static void check_consistency( const std::vector<trait_id> &mvec, const trait_id &mid,
                                const std::string &what )
 {
@@ -591,6 +597,8 @@ static void check_consistency( const std::vector<trait_id> &mvec, const trait_id
 
 void mutation_branch::check_consistency()
 {
+    mutation_type_check_consistency();
+
     for( const auto &mdata : get_all() ) {
         const auto &mid = mdata.id;
         const std::optional<scenttype_id> &s_id = mdata.scent_typeid;

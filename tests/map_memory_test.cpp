@@ -5,18 +5,18 @@
 #include <string>
 
 #include "cata_dynamic_bitset.h"
+#include "coordinates.h"
 #include "game_constants.h"
 #include "json.h"
 #include "lru_cache.h"
 #include "map.h"
 #include "map_memory.h"
-#include "point.h"
 #include "string_formatter.h"
 
-static constexpr tripoint p1{ -SEEX - 2, -SEEY - 3, -1 };
-static constexpr tripoint p2{ 5, 7, -1 };
-static constexpr tripoint p3{ SEEX * 2 + 5, SEEY + 7, -1 };
-static constexpr tripoint p4{ SEEX * 3 + 2, SEEY * 7 + 1, -1 };
+static constexpr tripoint_abs_ms p1{ -SEEX - 2, -SEEY - 3, -1 };
+static constexpr tripoint_abs_ms p2{ 5, 7, -1 };
+static constexpr tripoint_abs_ms p3{ SEEX * 2 + 5, SEEY + 7, -1 };
+static constexpr tripoint_abs_ms p4{ SEEX * 3 + 2, SEEY * 7 + 1, -1 };
 
 TEST_CASE( "map_memory_keeps_region", "[map_memory]" )
 {
@@ -31,8 +31,8 @@ TEST_CASE( "map_memory_keeps_region", "[map_memory]" )
     CHECK( memory.prepare_region( p1, p4 ) );
     CHECK( !memory.prepare_region( p2, p3 ) );
     CHECK( get_map().has_zlevels() == !memory.prepare_region(
-               tripoint( p2.xy(), -p2.z ),
-               tripoint( p3.xy(), -p3.z )
+               tripoint_abs_ms( p2.xy(), -p2.z() ),
+               tripoint_abs_ms( p3.xy(), -p3.z() )
            ) );
 }
 
@@ -71,7 +71,7 @@ TEST_CASE( "map_memory_overwrites", "[map_memory]" )
 TEST_CASE( "map_memory_forgets", "[map_memory]" )
 {
     map_memory memory;
-    memory.memorize_symbol( tripoint_zero, 1 );
+    memory.memorize_symbol( tripoint_abs_ms::zero(), 1 );
     memory.memorize_symbol( p3, 1 );
 }
 
@@ -94,7 +94,7 @@ TEST_CASE( "lru_cache_perf", "[.]" )
                             ( end1 - start1 ).count();
     cata_printf( "completed %d insertions in %lld microseconds.\n", max_size, diff1 );
     /*
-     * Original tripoint hash    completed 1000000 insertions in 96136925 microseconds.
+     * Original tripoint_bub_ms hash    completed 1000000 insertions in 96136925 microseconds.
      * Table based interleave v1 completed 1000000 insertions in 41435604 microseconds.
      * Table based interleave v2 completed 1000000 insertions in 40856530 microseconds.
      * Jbtw hash                 completed 1000000 insertions in 19049163 microseconds.
@@ -156,56 +156,56 @@ TEST_CASE( "shift_map_memory_seen_cache" )
     GIVEN( "all bits are set" ) {
         test_cache.set();
         WHEN( "positive x shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_east );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::east() );
             THEN( "last 12 columns are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( last_twelve, 0 ),
                                  true, false, true, false );
             }
         }
         WHEN( "negative x shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_west );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::west() );
             THEN( "first 12 columns are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( first_twelve, 0 ),
                                  false, true, false, true );
             }
         }
         WHEN( "positive y shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_south );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::south() );
             THEN( "last 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( 0, last_twelve ),
                                  true, true, false, false );
             }
         }
         WHEN( "negative y shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_north );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::north() );
             THEN( "first 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( 0, first_twelve ),
                                  false, false, true, true );
             }
         }
         WHEN( "positive x, positive y shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_south_east );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::south_east() );
             THEN( "last 12 columns and rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( last_twelve, last_twelve ),
                                  true, false, false, false );
             }
         }
         WHEN( "positive x, negative y shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_north_east );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::north_east() );
             THEN( "last 12 columns and first 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( last_twelve, first_twelve ),
                                  false, false, true, false );
             }
         }
         WHEN( "negative x, positive y shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_south_west );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::south_west() );
             THEN( "first 12 columns and last 12 rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( first_twelve, last_twelve ),
                                  false, true, false, false );
             }
         }
         WHEN( "negative x, negative y shift" ) {
-            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_north_west );
+            shift_bitset_cache( test_cache, g_mapsize_x, SEEX, point_rel_sm::north_west() );
             THEN( "first 12 columns and rows are 0, rest are 1" ) {
                 check_quadrants( test_cache, point( first_twelve, first_twelve ),
                                  false, false, false, true );

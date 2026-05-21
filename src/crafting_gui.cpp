@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -29,7 +30,12 @@
 #include "item_contents.h"
 #include "itype.h"
 #include "json.h"
+#include "line.h"
+#include "map.h"
+#include "messages.h"
+#include "npc.h"
 #include "options.h"
+#include "player_activity.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "player.h"
@@ -52,7 +58,6 @@ static const std::string flag_BLIND_HARD( "BLIND_HARD" );
 static const std::string flag_BLIND_NEARLY_IMPOSSIBLE( "BLIND_NEARLY_IMPOSSIBLE" );
 static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
 
-class npc;
 
 enum TAB_MODE {
     NORMAL,
@@ -240,11 +245,10 @@ auto list_nested( const list_nested_options &opts ) -> std::string
 auto ensure_availability( Character &crafter,
                           const recipe *rec,
                           std::unordered_map<const recipe *, availability> &availability_cache,
-                          const recipe_subset &available_recipes,
-                          bool show_unavailable ) -> availability & // *NOPAD*
+                          const recipe_subset &available_recipes ) -> availability & // *NOPAD*
 {
     if( !availability_cache.contains( rec ) ) {
-        const auto known = !show_unavailable || available_recipes.contains( *rec );
+        const auto known = available_recipes.contains( *rec );
         availability_cache.emplace( rec, availability( crafter, rec, 1, known ) );
     }
     return availability_cache.at( rec );
@@ -275,8 +279,7 @@ auto update_nested_can_craft( Character &crafter,
     const recipe_id & nested_id ) {
         const auto *nested_rec = &nested_id.obj();
         auto &nested_avail = ensure_availability( crafter, nested_rec, availability_cache,
-                             available_recipes,
-                             show_unavailable );
+                             available_recipes );
         if( nested_rec->is_nested() ) {
             nested_avail.can_craft = update_nested_can_craft( crafter, *nested_rec, availability_cache,
                                      nested_can_craft_cache, visiting, available_recipes, show_unavailable );
@@ -308,7 +311,7 @@ auto expand_nested_recipes( std::vector<const recipe *> &out_current,
 {
     auto &availability_cache = opts.availability_cache;
     if( !availability_cache.contains( recp ) ) {
-        const auto known = !opts.show_unavailable || opts.available_recipes.contains( *recp );
+        const auto known = opts.available_recipes.contains( *recp );
         availability_cache.emplace( recp, availability( opts.crafter, recp, 1, known ) );
     }
 
@@ -330,7 +333,7 @@ auto expand_nested_recipes( std::vector<const recipe *> &out_current,
     std::ranges::for_each( recp->nested_category_data, [&]( const recipe_id & nested_id ) {
         const auto *nested_rec = &nested_id.obj();
         if( !availability_cache.contains( nested_rec ) ) {
-            const auto known = !opts.show_unavailable || opts.available_recipes.contains( *nested_rec );
+            const auto known = opts.available_recipes.contains( *nested_rec );
             availability_cache.emplace( nested_rec, availability( opts.crafter, nested_rec, 1, known ) );
         }
         if( nested_rec->is_nested() ) {
@@ -338,6 +341,13 @@ auto expand_nested_recipes( std::vector<const recipe *> &out_current,
             nested_avail.can_craft = update_nested_can_craft(
                                          opts.crafter, *nested_rec, availability_cache, opts.nested_can_craft_cache,
                                          opts.visiting_nested, opts.available_recipes, opts.show_unavailable );
+        }
+        // When not showing unavailable recipes, drop leaf children the player
+        // doesn't know. Nested children are kept so we can still descend into
+        // categories whose own descendants are known.
+        if( !opts.show_unavailable && !nested_rec->is_nested() &&
+            !opts.available_recipes.contains( *nested_rec ) ) {
+            return;
         }
         children.push_back( nested_rec );
     } );
@@ -508,7 +518,7 @@ static std::vector<std::string> recipe_info(
                           recp.has_flag( flag_BLIND_HARD ) ? _( "Awkward" ) :
                           recp.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ? _( "Very Hard" ) :
                           recp.has_flag( flag_BLIND_IMPOSSIBLE ) ? _( "Impossible" ) :
-                          _( "Reasonabe" ) );
+                          _( "Reasonable" ) );
 
     std::string nearby_string;
     const inventory &crafting_inv = crafter.crafting_inventory();
@@ -611,6 +621,7 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     ctxt.register_action( "HIDE_SHOW_RECIPE" );
     ctxt.register_action( "COMPARE" );
     ctxt.register_action( "TOGGLE_UNAVAILABLE" );
+    ctxt.register_action( "ASSIGN_NPC_CRAFT", to_translation( "Assign nearest NPC to craft" ) );
     if( highlight_unread_recipes ) {
         ctxt.register_action( "TOGGLE_RECIPE_UNREAD" );
         ctxt.register_action( "MARK_ALL_RECIPES_READ" );
@@ -1044,7 +1055,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 for( int i = 1; i <= 50; i++ ) {
                     current.push_back( chosen );
                     available.emplace_back( crafter, chosen, i,
-                                            !show_unavailable || available_recipes.contains( *chosen ) );
+                                            available_recipes.contains( *chosen ) );
                 }
             } else {
                 std::vector<const recipe *> picking;
@@ -1174,7 +1185,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 for( const recipe *e : current ) {
                     if( !availability_cache.contains( e ) ) {
                         availability_cache.emplace( e, availability( crafter, e, 1,
-                                                    !show_unavailable || available_recipes.contains( *e ) ) );
+                                                    available_recipes.contains( *e ) ) );
                     }
                 }
 
@@ -1381,6 +1392,68 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                 if( highlight_unread_recipes && available_recipes.contains( *chosen ) ) {
                     uistate.read_recipes.insert( chosen->ident() );
                     recalc_unread = true;
+                }
+            }
+        } else if( action == "ASSIGN_NPC_CRAFT" ) {
+            if( current.empty() || available[line].is_nested_category || current[line]->is_nested() ) {
+                popup( _( "Select a craftable recipe first." ) );
+            } else {
+                const recipe *rec = current[line];
+                const int bs = ( batch ) ? line + 1 : 1;
+                std::vector<npc *> nearby = g->get_npcs_if( [&]( const npc & guy ) {
+                    return !guy.in_sleep_state()
+                           && guy.is_obeying( crafter )
+                           && ( !guy.activity || guy.activity->is_null() )
+                           && rl_dist( guy.bub_pos(), crafter.bub_pos() ) <= PICKUP_RANGE
+                           && get_map().clear_path( crafter.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
+                } );
+                std::vector<npc *> candidates;
+                bool any_knows = false;
+                for( npc *guy : nearby ) {
+                    if( !guy->knows_recipe( rec ) ) {
+                        continue;
+                    }
+                    any_knows = true;
+                    if( guy->can_make( rec, bs ) ) {
+                        candidates.push_back( guy );
+                    }
+                }
+                if( candidates.empty() ) {
+                    if( nearby.empty() ) {
+                        popup( _( "No NPC available to craft that nearby." ) );
+                    } else if( !any_knows ) {
+                        popup( _( "No nearby NPC knows how to craft that." ) );
+                    } else {
+                        popup( _( "No nearby NPC has the necessary components to craft that." ) );
+                    }
+                } else {
+                    std::sort( candidates.begin(), candidates.end(), [&]( const npc * a, const npc * b ) {
+                        return rl_dist( a->bub_pos(), crafter.bub_pos() ) < rl_dist( b->bub_pos(), crafter.bub_pos() );
+                    } );
+                    npc *target = nullptr;
+                    if( candidates.size() == 1 ) {
+                        target = candidates.front();
+                    } else {
+                        uilist menu;
+                        menu.text = _( "Assign craft to which NPC?" );
+                        for( size_t i = 0; i < candidates.size(); i++ ) {
+                            menu.addentry( static_cast<int>( i ), true, MENU_AUTOASSIGN,
+                                           candidates[i]->get_name() );
+                        }
+                        menu.addentry( static_cast<int>( candidates.size() ), true, MENU_AUTOASSIGN,
+                                       _( "Cancel" ) );
+                        menu.query();
+                        if( menu.ret >= 0 && menu.ret < static_cast<int>( candidates.size() ) ) {
+                            target = candidates[menu.ret];
+                        }
+                    }
+                    if( target != nullptr ) {
+                        target->make_craft( rec->ident(), bs, target->bub_pos() );
+                        add_msg( m_good, _( "%s starts crafting %s." ),
+                                 target->get_name(), rec->result_name() );
+                        chosen = nullptr;
+                        done = true;
+                    }
                 }
             }
         } else if( action == "HELP_RECIPE" ) {

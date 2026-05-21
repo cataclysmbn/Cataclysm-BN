@@ -777,6 +777,8 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Materials" ), &materials::check },
             { _( "Engine faults" ), &fault::check_consistency },
             { _( "Vehicle parts" ), &vpart_info::check },
+            { _( "Vehicle palettes" ), &VehiclePalette::check },
+            { _( "Vehicle groups" ), &VehicleGroup::check },
             { _( "Mapgen definitions" ), &check_mapgen_definitions },
             { _( "Mapgen palettes" ), &mapgen_palette::check_definitions },
             {
@@ -917,7 +919,7 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     init::load_main_lua_scripts( *loader.lua, packs );
     cata::clear_mod_being_loaded( *loader.lua );
     // Update cached hook-presence flag so worker threads know whether to queue
-    // deferred mapgen postprocess hooks (avoids lock + allocation overhead per quad
+    // deferred mapgen postprocess hooks (avoids lock + allocation overhead per omt
     // when no on_mapgen_postprocess hooks are registered).
     refresh_mapgen_postprocess_hook_presence( *loader.lua );
 }

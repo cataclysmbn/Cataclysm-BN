@@ -1,0 +1,97 @@
+name: Build translations
+on:
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      TX_TOKEN:
+        required: false
+
+jobs:
+  build-translations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install gettext
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - name: Install Transifex CLI
+        run: |
+          curl -sL https://github.com/transifex/cli/releases/download/v1.6.17/tx-linux-amd64.tar.gz | sudo tar zxvf - -C /usr/bin tx
+
+      - name: Checkout local repo
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            .tx
+            tools
+            lang
+          fetch-depth: 1
+
+      - name: Pull translations
+        env:
+          TX_TOKEN: ${{ secrets.TX_TOKEN }}
+        run: |
+          if [ "$GITHUB_REPOSITORY" = "cataclysmbn/Cataclysm-BN" ]; then
+            if [ -z "${TX_TOKEN:-}" ]; then
+              echo "::error::TX_TOKEN is required to pull translations in the upstream repository"
+              exit 1
+            fi
+            tx pull --force --all
+          else
+            cat > lang/po/en_US.po <<'EOF'
+          msgid ""
+          msgstr ""
+          "Project-Id-Version: cataclysm-bn\n"
+          "PO-Revision-Date: 2026-01-01 00:00+0000\n"
+          "Last-Translator: CI\n"
+          "Language-Team: CI\n"
+          "Language: en_US\n"
+          "MIME-Version: 1.0\n"
+          "Content-Type: text/plain; charset=UTF-8\n"
+          "Content-Transfer-Encoding: 8bit\n"
+          "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+          msgid "cataclysm-bn-fork-placeholder-translated"
+          msgstr "cataclysm-bn-fork-placeholder-translated"
+
+          msgid "cataclysm-bn-fork-placeholder-untranslated"
+          msgstr ""
+          EOF
+          fi
+
+      - name: Discard invalid translations
+        run: ./lang/discard_invalid_po.sh
+
+      - name: Verify translations are usable
+        env:
+          TX_TOKEN: ${{ secrets.TX_TOKEN }}
+        run: |
+          po_count=$(find lang/po -maxdepth 1 -name '*.po' | wc -l)
+          min_count=1
+          if [ "$GITHUB_REPOSITORY" = "cataclysmbn/Cataclysm-BN" ]; then
+            min_count=20
+          fi
+          if [ "$po_count" -lt "$min_count" ]; then
+            echo "::error::Expected at least $min_count usable translation files, found $po_count"
+            exit 1
+          fi
+
+      - name: Update translation statistics
+        run: ./lang/update_stats.sh
+
+      - name: Store translation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "translations"
+          if-no-files-found: error
+          path: |
+            lang/po
+            src/lang_stats.inc
+
+      - name: Add summary
+        run: |
+          echo "## Translation Build Complete" >> "$GITHUB_STEP_SUMMARY"
+          echo "Artifact includes:" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`lang/po/\` - Translation files (.po)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- \`src/lang_stats.inc\` - Translation statistics" >> "$GITHUB_STEP_SUMMARY"

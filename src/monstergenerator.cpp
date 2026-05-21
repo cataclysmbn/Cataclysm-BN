@@ -843,6 +843,27 @@ void mtype::load( const JsonObject &jo, const std::string &src )
     // Load pet food data
     optional( jo, was_loaded, "petfood", petfood );
 
+    if( jo.has_object( "pet_training" ) ) {
+        JsonObject pt = jo.get_object( "pet_training" );
+        pet_training_multipliers ptm;
+        pt.read( "hp_mult", ptm.hp );
+        pt.read( "melee_mult", ptm.melee );
+        pt.read( "dodge_mult", ptm.dodge );
+        pt.read( "max_level", ptm.max_level );
+        pt.read( "min_skill", ptm.min_skill );
+        if( pt.has_array( "level_flags" ) ) {
+            for( JsonObject lf_obj : pt.get_array( "level_flags" ) ) {
+                pet_training_level_flags lf;
+                lf_obj.read( "level", lf.level );
+                for( const std::string &flag_str : lf_obj.get_array( "flags" ) ) {
+                    lf.flags.push_back( io::string_to_enum<m_flag>( flag_str ) );
+                }
+                ptm.level_flags.push_back( std::move( lf ) );
+            }
+        }
+        pet_training = ptm;
+    }
+
     if( jo.has_array( "scents_tracked" ) ) {
         for( const std::string line : jo.get_array( "scents_tracked" ) ) {
             scents_tracked.emplace( line );
@@ -906,7 +927,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         if( !mon_spawns.empty() ) {
             on_death.emplace_back( [mon_spawns]( monster & z ) {
                 for( const auto &pair : mon_spawns ) {
-                    g->place_critter_around( pair.second, z.pos(), pair.first );
+                    g->place_critter_around( pair.second, z.bub_pos(), pair.first );
                 }
             } );
         }

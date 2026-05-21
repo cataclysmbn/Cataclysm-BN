@@ -20,7 +20,7 @@ end
 mod.turntimer_hook = function(turn, func)
   gdebug.log_info(string.format("Turn %d, Timer is on for %d turn", gapi.current_turn():to_turn(), turn))
   ---@type TimeDuration
-  local the_when = gapi.current_turn() - gapi.turn_zero() + TimeDuration.from_turns(turn)
+  local the_when = TimeDuration.from_turns(gapi.current_turn():to_turn() - gapi.turn_zero():to_turn() + turn)
   gapi.add_on_every_x_hook(the_when, func)
   --Assurance on game closing
   --storage.hook_assuarance[the_when:to_turns()] = func

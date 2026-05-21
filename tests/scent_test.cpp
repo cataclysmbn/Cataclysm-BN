@@ -6,11 +6,11 @@
 #include "game.h"
 #include "state_helpers.h"
 
-void old_scent_map_update( const tripoint &center, map &m,
+void old_scent_map_update( const tripoint_bub_ms &center, map &m,
                            std::array<std::array<int, MAPSIZE_Y>, MAPSIZE_X> &grscent );
 
 static constexpr int SCENT_RADIUS = 40;
-void old_scent_map_update( const tripoint &center, map &m,
+void old_scent_map_update( const tripoint_bub_ms &center, map &m,
                            std::array<std::array<int, MAPSIZE_Y>, MAPSIZE_X> &grscent )
 {
 
@@ -31,10 +31,10 @@ void old_scent_map_update( const tripoint &center, map &m,
     std::vector<char> monkey( MAPSIZE_X * MAPSIZE_Y, 0 );
 
     // for loop constants
-    const int scentmap_minx = center.x - SCENT_RADIUS;
-    const int scentmap_maxx = center.x + SCENT_RADIUS;
-    const int scentmap_miny = center.y - SCENT_RADIUS;
-    const int scentmap_maxy = center.y + SCENT_RADIUS;
+    const int scentmap_minx = center.x() - SCENT_RADIUS;
+    const int scentmap_maxx = center.x() + SCENT_RADIUS;
+    const int scentmap_miny = center.y() - SCENT_RADIUS;
+    const int scentmap_maxy = center.y() + SCENT_RADIUS;
 
     // decrease this to reduce gas spread. Keep it under 125 for
     // stability. This is essentially a decimal number * 1000.
@@ -126,7 +126,7 @@ void old_scent_map_update( const tripoint &center, map &m,
 TEST_CASE( "scent_matches_old", "[.]" )
 {
     clear_all_state();
-    tripoint origin( 60, 60, 0 );
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     g->place_player( origin );
 
@@ -151,7 +151,7 @@ TEST_CASE( "scent_matches_old", "[.]" )
         }
     }
 
-    old_scent[origin.x][origin.y] = 1000;
+    old_scent[origin.x()][origin.y()] = 1000;
 
     old_scent_map_update( origin, here, old_scent );
     old_scent_map_update( origin, here, old_scent );

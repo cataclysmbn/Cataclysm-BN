@@ -1,0 +1,118 @@
+name: PR Artifact Publisher
+
+on:
+  workflow_run:
+    workflows: [matrix]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-artifact-publish-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve pull request metadata
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          pr_number=$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH")
+
+          if [ -z "$pr_number" ]; then
+            pr_number=$(gh api "repos/${REPOSITORY}/pulls?state=open&base=main&per_page=100" \
+              --jq "map(select(.head.sha == \"${HEAD_SHA}\"))[0].number // empty")
+          fi
+
+          if [ -z "$pr_number" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          current_head=$(gh api "repos/${REPOSITORY}/pulls/${pr_number}" --jq '.head.sha')
+          if [ "$current_head" != "$HEAD_SHA" ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "found=true" >> "$GITHUB_OUTPUT"
+          echo "number=$pr_number" >> "$GITHUB_OUTPUT"
+
+      - name: Build artifact block
+        id: body
+        if: steps.pr.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+
+          artifact_url() {
+            local artifact_name="$1"
+            local artifact_id
+            artifact_id=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts?name=${artifact_name}" \
+              --jq '.artifacts[0] | select(.expired == false) | .id // empty')
+            if [ -n "$artifact_id" ]; then
+              printf 'https://github.com/%s/actions/runs/%s/artifacts/%s' "$REPOSITORY" "$RUN_ID" "$artifact_id"
+            fi
+          }
+
+          artifact_line() {
+            local label="$1"
+            local url="$2"
+            if [ -n "$url" ]; then
+              printf -- '- [✅ %s — download](%s)\n' "$label" "$url"
+            else
+              printf -- '- [❌ %s — build failed](%s)\n' "$label" "$RUN_URL"
+            fi
+          }
+
+          sha_short=${HEAD_SHA:0:7}
+          commit_subject=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.head_commit.message // "" | split("\n")[0]')
+          timestamp=$(date -u "+%F %T")
+
+          artifact_label="pr-${PR_NUMBER}"
+          linux_url=$(artifact_url "linux-tiles-x64-${artifact_label}")
+          windows_url=$(artifact_url "windows-tiles-x64-msvc-${artifact_label}")
+          macos_url=$(artifact_url "osx-tiles-x64-${artifact_label}")
+          android_url=$(artifact_url "android-x64-${artifact_label}")
+
+          {
+            echo 'content<<EOF'
+            echo '## Build Artifacts'
+            echo
+            echo "PR build for commit [${sha_short}](https://github.com/${REPOSITORY}/commit/${HEAD_SHA}) (${commit_subject}) on ${timestamp}"
+            echo
+            artifact_line 'Linux tiles' "$linux_url"
+            artifact_line 'Windows tiles' "$windows_url"
+            artifact_line 'macOS tiles' "$macos_url"
+            artifact_line 'Android tiles' "$android_url"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check out workflow actions
+        if: steps.pr.outputs.found == 'true'
+        uses: actions/checkout@v4
+
+      - name: Update pull request body
+        if: steps.pr.outputs.found == 'true'
+        uses: ./.github/actions/update-pr-artifact-body
+        with:
+          repository: ${{ github.repository }}
+          pr-number: ${{ steps.pr.outputs.number }}
+          content: ${{ steps.body.outputs.content }}
+          token: ${{ github.token }}

@@ -133,9 +133,9 @@ then it should be typed.
 To change the scale of a point without changing its origin, use `project_to`. For example:
 
 ```cpp
-point_abs_ms pos_ms = get_avatar()->global_square_location().xy();
+point_abs_ms pos_ms = get_avatar()->abs_pos().xy();
 point_abs_omt pos_omt = project_to<coords::omt>( pos_ms );
-assert( pos_omt == get_avatar()->global_omt_location().xy() );
+assert( pos_omt == get_avatar()->abs_omt_pos().xy() );
 ```
 
 The same function `project_to` can be used for scaling up or down. When converting to a coarser
@@ -149,7 +149,7 @@ result. For example, suppose you want to know which overmap the avatar is in, an
 terrain they are in within that overmap.
 
 ```cpp
-point_abs_omt abs_pos = get_avatar()->global_omt_location().xy();
+point_abs_omt abs_pos = get_avatar()->abs_omt_pos().xy();
 point_abs_om overmap;
 point_om_omt omt_within_overmap;
 std::tie( overmap, omt_within_overmap ) = project_remain<coords::om>( abs_pos );
@@ -163,7 +163,7 @@ example above, z-coodinates do not have much meaning at the overmap scale, so yo
 z-coordinate in `omt_within_overmap`. That can be done as follows:
 
 ```cpp
-tripoint_abs_omt abs_pos = get_avatar()->global_omt_location();
+tripoint_abs_omt abs_pos = get_avatar()->abs_omt_pos();
 point_abs_om overmap;
 tripoint_om_omt omt_within_overmap;
 std::tie( overmap, omt_within_overmap ) = project_remain<coords::om>( abs_pos );
@@ -175,7 +175,7 @@ of the first, you can combine them into a single value. As you might expect from
 discussion, one of these two can be a `tripoint`, but not both.
 
 ```cpp
-tripoint_abs_omt abs_pos = get_avatar()->global_omt_location();
+tripoint_abs_omt abs_pos = get_avatar()->abs_omt_pos();
 point_abs_om overmap;
 tripoint_om_omt omt_within_overmap;
 std::tie( overmap, omt_within_overmap ) = project_remain<coords::om>( abs_pos );
@@ -254,8 +254,8 @@ To iterate over nearby points of the same type you can use `closest_points_first
 
 | Deprecated                            | Preferred                                 |
 | ------------------------------------- | ----------------------------------------- |
-| `here.getabs( tripoint )`             | `here.bub_to_abs( tripoint_bub_ms( p ) )` |
-| `here.getlocal( tripoint )`           | `here.abs_to_bub( tripoint_abs_ms( p ) )` |
+| `here.bub_to_abs( tripoint )`         | `here.bub_to_abs( tripoint_bub_ms( p ) )` |
+| `here.abs_to_bub( tripoint )`         | `here.abs_to_bub( tripoint_abs_ms( p ) )` |
 | `ms_to_sm_copy( p )`                  | `project_to<coords::sm>( p )`             |
 | `sm_to_ms_copy( p )`                  | `project_to<coords::ms>( p )`             |
 | `sm_to_omt_copy` + `sm_to_omt_remain` | `project_remain<coords::omt>( p )`        |

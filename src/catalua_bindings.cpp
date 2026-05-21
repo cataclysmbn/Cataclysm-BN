@@ -20,6 +20,7 @@
 #include "field_type.h"
 #include "game.h"
 #include "itype.h"
+#include "line.h"
 #include "map.h"
 #include "martialarts.h"
 #include "material.h"
@@ -464,6 +465,7 @@ void cata::detail::reg_enums( sol::state &lua )
     reg_enum<body_part>( lua );
     reg_enum<character_movemode>( lua );
     reg_enum<damage_type>( lua );
+    reg_enum<direction>( lua );
     reg_enum<game_message_type>( lua );
     reg_enum<mf_attitude>( lua );
     reg_enum<m_flag>( lua );
@@ -657,8 +659,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `player` (Player)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
     DOC( "* `mounted` (bool)  " );
@@ -671,8 +673,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `npc` (Npc)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
     DOC( "* `mounted` (bool)  " );
@@ -685,8 +687,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `monster` (Monster)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `force` (bool): If the monster move call was forced  " );
     DOC( "Return false to block the move." );
     DOC_PARAMS( "params" );
@@ -696,8 +698,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
     DOC( "* `mounted` (bool)  " );
@@ -759,7 +761,7 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Called when shot(s) is fired from a gun.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `shooter` (Character)  " );
-    DOC( "* `target_pos` (Tripoint)  " );
+    DOC( "* `target_pos` (TripointBubMs)  " );
     DOC( "* `shots` (int)  " );
     DOC( "* `gun` (item)  " );
     DOC( "* `ammo` (item): For `RELOAD_AND_SHOOT` guns like a bow. On the others, it returns `nil` value.  " );
@@ -769,8 +771,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Called when an item is thrown.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `thrower` (Character)  " );
-    DOC( "* `target_pos` (Tripoint)  " );
-    DOC( "* `throw_from_pos` (Tripoint)  " );
+    DOC( "* `target_pos` (TripointBubMs)  " );
+    DOC( "* `throw_from_pos` (TripointBubMs)  " );
     DOC( "* `thrown` (item)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_throw", []( const sol::table & ) {} );
@@ -850,10 +852,19 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Called every in-game period" );
     luna::set_fx( lib, "on_every_x", []( const sol::table & ) {} );
 
+    DOC( "Called when an explosion starts.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `pos` (TripointBubMs)  " );
+    DOC( "* `damage` (int)  " );
+    DOC( "* `radius` (int)  " );
+    DOC( "* `fire` (bool)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_explosion_start", []( const sol::table & ) {} );
+
     DOC( "Called right after mapgen has completed.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `map` (Map): The tinymap that represents 24x24 area (2x2 submaps, or 1x1 omt).  " );
-    DOC( "* `omt` (Tripoint): The absolute overmap pos.  " );
+    DOC( "* `omt` (TripointAbsOmt): The absolute overmap terrain position.  " );
     DOC( "* `when` (TimePoint): The current time (for time-based effects).  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_mapgen_postprocess", []( const sol::table & ) {} );

@@ -165,7 +165,7 @@
     "skill": "launcher",
     "ammo": "120mm_usable",
     "weight": "1000 kg",
-    "volume": "87500 L",
+    "volume": "87500 ml",
     "bashing": 12,
     "to_hit": -6,
     "ranged_damage": { "damage_type": "bullet", "amount": -15, "armor_penetration": -15 },

@@ -6,11 +6,11 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character.h"
+#include "coordinates.h"
 #include "game.h"
 #include "itype.h"
 #include "iuse_actor.h"
 #include "map.h"
-#include "point.h"
 #include "player_activity.h"
 
 static const activity_id ACT_NULL = activity_id::NULL_ID();
@@ -62,19 +62,19 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
 
     auto setup_activity = [&dummy]( item & cutter ) -> void {
         auto act = std::make_unique<boltcutting_activity_actor>(
-            tripoint_zero, safe_reference<item>( cutter )
+            tripoint_bub_ms::zero(), safe_reference<item>( cutter )
         );
         act->testing = true;
         dummy.assign_activity( std::make_unique<player_activity>( std::move( act ) ) );
     };
 
     SECTION( "boltcut start checks" ) {
-        GIVEN( "a tripoint with nothing" ) {
+        GIVEN( "a tripoint_bub_ms with nothing" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, t_null );
-            REQUIRE( mp.ter( tripoint_zero ) == t_null );
+            mp.ter_set( tripoint_bub_ms::zero(), t_null );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == t_null );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -84,12 +84,12 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             }
         }
 
-        GIVEN( "a tripoint with invalid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with invalid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, t_dirt );
-            REQUIRE( mp.ter( tripoint_zero ) == t_dirt );
+            mp.ter_set( tripoint_bub_ms::zero(), t_dirt );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == t_dirt );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -99,12 +99,12 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             }
         }
 
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_boltcut1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_boltcut1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_boltcut1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_boltcut1 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -114,12 +114,12 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_boltcut1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_boltcut1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_boltcut1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_boltcut1 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -129,12 +129,12 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             }
         }
 
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_boltcut1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_boltcut1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_boltcut1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_boltcut1 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -148,12 +148,12 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_boltcut1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_boltcut1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_boltcut1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_boltcut1 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -173,8 +173,8 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_boltcut3 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_boltcut3 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_boltcut3 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_boltcut3 );
 
             item &boltcutter_elec = dummy.i_add( item::spawn( itype_test_boltcutter_elec,
                                                  calendar::start_of_cataclysm, 2 ) );
@@ -206,12 +206,12 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
     }
 
     SECTION( "boltcut finish checks" ) {
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_boltcut1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_boltcut1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_boltcut1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_boltcut1 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -221,16 +221,16 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "terrain gets converted to new terrain type" ) {
-                CHECK( mp.ter( tripoint_zero ) == t_dirt );
+                CHECK( mp.ter( tripoint_bub_ms::zero() ) == t_dirt );
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_boltcut1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_boltcut1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_boltcut1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_boltcut1 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -240,16 +240,16 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "furniture gets converted to new furniture type" ) {
-                CHECK( mp.furn( tripoint_zero ) == f_null );
+                CHECK( mp.furn( tripoint_bub_ms::zero() ) == f_null );
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_boltcut2 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_boltcut2 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_boltcut2 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_boltcut2 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -259,17 +259,17 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "furniture gets converted to new furniture type" ) {
-                CHECK( mp.furn( tripoint_zero ) == furn_t_test_f_boltcut1 );
+                CHECK( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_boltcut1 );
             }
         }
 
 
-        GIVEN( "a tripoint with a valid furniture with byproducts" ) {
+        GIVEN( "a tripoint_bub_ms with a valid furniture with byproducts" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_boltcut2 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_boltcut2 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_boltcut2 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_boltcut2 );
 
             item &boltcutter = setup_dummy();
             setup_activity( boltcutter );
@@ -289,7 +289,7 @@ TEST_CASE( "boltcut", "[activity][boltcut]" )
                 THEN( "player receives the items" ) {
                     int count_amount = 0;
                     int count_random = 0;
-                    for( const auto &it : get_map().i_at( tripoint_zero ) ) {
+                    for( const auto &it : get_map().i_at( tripoint_bub_ms::zero() ) ) {
                         // can't use switch here
                         const itype_id it_id = it->typeId();
                         if( it_id == test_amount ) {
@@ -324,19 +324,19 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
 
     auto setup_activity = [&dummy]( item & saw ) -> void {
         auto act = std::make_unique<hacksaw_activity_actor>(
-            tripoint_zero, safe_reference<item>( saw )
+            tripoint_bub_ms::zero(), safe_reference<item>( saw )
         );
         act->testing = true;
         dummy.assign_activity( std::make_unique<player_activity>( std::move( act ) ) );
     };
 
     SECTION( "hacksaw start checks" ) {
-        GIVEN( "a tripoint with nothing" ) {
+        GIVEN( "a tripoint_bub_ms with nothing" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, t_null );
-            REQUIRE( mp.ter( tripoint_zero ) == t_null );
+            mp.ter_set( tripoint_bub_ms::zero(), t_null );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == t_null );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -346,12 +346,12 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             }
         }
 
-        GIVEN( "a tripoint with invalid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with invalid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, t_dirt );
-            REQUIRE( mp.ter( tripoint_zero ) == t_dirt );
+            mp.ter_set( tripoint_bub_ms::zero(), t_dirt );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == t_dirt );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -361,12 +361,12 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             }
         }
 
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_hacksaw1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_hacksaw1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_hacksaw1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_hacksaw1 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -376,12 +376,12 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_hacksaw1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_hacksaw1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_hacksaw1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_hacksaw1 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -391,12 +391,12 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             }
         }
 
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_hacksaw1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_hacksaw1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_hacksaw1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_hacksaw1 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -410,12 +410,12 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_hacksaw1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_hacksaw1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_hacksaw1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_hacksaw1 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -435,8 +435,8 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_hacksaw3 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_hacksaw3 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_hacksaw3 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_hacksaw3 );
 
             item &hacksaw_elec = dummy.i_add( item::spawn( itype_test_hacksaw_elec,
                                               calendar::start_of_cataclysm, 1 ) );
@@ -469,12 +469,12 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
     }
 
     SECTION( "hacksaw finish checks" ) {
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_hacksaw1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_hacksaw1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_hacksaw1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_hacksaw1 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -484,16 +484,16 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "terrain gets converted to new terrain type" ) {
-                CHECK( mp.ter( tripoint_zero ) == t_dirt );
+                CHECK( mp.ter( tripoint_bub_ms::zero() ) == t_dirt );
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_hacksaw1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_hacksaw1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_hacksaw1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_hacksaw1 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -503,16 +503,16 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "furniture gets converted to new furniture type" ) {
-                CHECK( mp.furn( tripoint_zero ) == f_null );
+                CHECK( mp.furn( tripoint_bub_ms::zero() ) == f_null );
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_hacksaw2 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_hacksaw2 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_hacksaw2 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_hacksaw2 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -522,17 +522,17 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "furniture gets converted to new furniture type" ) {
-                CHECK( mp.furn( tripoint_zero ) == furn_t_test_f_hacksaw1 );
+                CHECK( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_hacksaw1 );
             }
         }
 
 
-        GIVEN( "a tripoint with a valid furniture with byproducts" ) {
+        GIVEN( "a tripoint_bub_ms with a valid furniture with byproducts" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_hacksaw2 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_hacksaw2 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_hacksaw2 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_hacksaw2 );
 
             item &hacksaw = setup_dummy();
             setup_activity( hacksaw );
@@ -552,7 +552,7 @@ TEST_CASE( "hacksaw", "[activity][hacksaw]" )
                 THEN( "player receives the items" ) {
                     int count_amount = 0;
                     int count_random = 0;
-                    for( const auto &it : get_map().i_at( tripoint_zero ) ) {
+                    for( const auto &it : get_map().i_at( tripoint_bub_ms::zero() ) ) {
                         // can't use switch here
                         const itype_id it_id = it->typeId();
                         if( it_id == test_amount ) {
@@ -588,19 +588,19 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
 
     auto setup_activity = [&dummy]( item & torch ) -> void {
         auto act = std::make_unique<oxytorch_activity_actor>(
-            tripoint_zero, safe_reference<item>( torch )
+            tripoint_bub_ms::zero(), safe_reference<item>( torch )
         );
         act->testing = true;
         dummy.assign_activity( std::make_unique<player_activity>( std::move( act ) ) );
     };
 
     SECTION( "oxytorch start checks" ) {
-        GIVEN( "a tripoint with nothing" ) {
+        GIVEN( "a tripoint_bub_ms with nothing" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, t_null );
-            REQUIRE( mp.ter( tripoint_zero ) == t_null );
+            mp.ter_set( tripoint_bub_ms::zero(), t_null );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == t_null );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -610,12 +610,12 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             }
         }
 
-        GIVEN( "a tripoint with invalid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with invalid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, t_dirt );
-            REQUIRE( mp.ter( tripoint_zero ) == t_dirt );
+            mp.ter_set( tripoint_bub_ms::zero(), t_dirt );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == t_dirt );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -625,12 +625,12 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             }
         }
 
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_oxytorch1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_oxytorch1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_oxytorch1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_oxytorch1 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -640,12 +640,12 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_oxytorch1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_oxytorch1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_oxytorch1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_oxytorch1 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -655,12 +655,12 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             }
         }
 
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_oxytorch1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_oxytorch1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_oxytorch1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_oxytorch1 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -674,12 +674,12 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_oxytorch1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_oxytorch1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_oxytorch1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_oxytorch1 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -699,8 +699,8 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_oxytorch3 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_oxytorch3 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_oxytorch3 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_oxytorch3 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -727,12 +727,12 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
     }
 
     SECTION( "oxytorch finish checks" ) {
-        GIVEN( "a tripoint with valid terrain" ) {
+        GIVEN( "a tripoint_bub_ms with valid terrain" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_oxytorch1 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_oxytorch1 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_oxytorch1 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_oxytorch1 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -742,16 +742,16 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "terrain gets converted to new terrain type" ) {
-                CHECK( mp.ter( tripoint_zero ) == t_dirt );
+                CHECK( mp.ter( tripoint_bub_ms::zero() ) == t_dirt );
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_oxytorch1 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_oxytorch1 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_oxytorch1 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_oxytorch1 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -761,16 +761,16 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "furniture gets converted to new furniture type" ) {
-                CHECK( mp.furn( tripoint_zero ) == f_null );
+                CHECK( mp.furn( tripoint_bub_ms::zero() ) == f_null );
             }
         }
 
-        GIVEN( "a tripoint with valid furniture" ) {
+        GIVEN( "a tripoint_bub_ms with valid furniture" ) {
             clear_map();
             clear_avatar();
 
-            mp.furn_set( tripoint_zero, furn_t_test_f_oxytorch2 );
-            REQUIRE( mp.furn( tripoint_zero ) == furn_t_test_f_oxytorch2 );
+            mp.furn_set( tripoint_bub_ms::zero(), furn_t_test_f_oxytorch2 );
+            REQUIRE( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_oxytorch2 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -780,17 +780,17 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
             REQUIRE( dummy.activity->id() == ACT_NULL );
 
             THEN( "furniture gets converted to new furniture type" ) {
-                CHECK( mp.furn( tripoint_zero ) == furn_t_test_f_oxytorch1 );
+                CHECK( mp.furn( tripoint_bub_ms::zero() ) == furn_t_test_f_oxytorch1 );
             }
         }
 
 
-        GIVEN( "a tripoint with a valid furniture with byproducts" ) {
+        GIVEN( "a tripoint_bub_ms with a valid furniture with byproducts" ) {
             clear_map();
             clear_avatar();
 
-            mp.ter_set( tripoint_zero, ter_test_t_oxytorch2 );
-            REQUIRE( mp.ter( tripoint_zero ) == ter_test_t_oxytorch2 );
+            mp.ter_set( tripoint_bub_ms::zero(), ter_test_t_oxytorch2 );
+            REQUIRE( mp.ter( tripoint_bub_ms::zero() ) == ter_test_t_oxytorch2 );
 
             item &welding_torch = setup_dummy();
             setup_activity( welding_torch );
@@ -810,7 +810,7 @@ TEST_CASE( "oxytorch", "[activity][oxytorch]" )
                 THEN( "player receives the items" ) {
                     int count_amount = 0;
                     int count_random = 0;
-                    for( const auto &it : get_map().i_at( tripoint_zero ) ) {
+                    for( const auto &it : get_map().i_at( tripoint_bub_ms::zero() ) ) {
                         // can't use switch here
                         const itype_id it_id = it->typeId();
                         if( it_id == test_amount ) {

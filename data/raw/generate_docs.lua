@@ -1,11 +1,11 @@
 require("docgen_common")
 
 local slug_for = function(typename, membername)
-  local typename = string.gsub(tostring(typename), "%s", "")
+  local clean_typename = string.gsub(tostring(typename), "%s", "")
   if membername == nil then
-    return ("#sol::%s"):format(typename)
+    return ("#sol::%s"):format(clean_typename)
   else
-    return ("#sol::%s::%s"):format(typename, membername)
+    return ("#sol::%s::%s"):format(clean_typename, membername)
   end
 end
 
@@ -48,21 +48,22 @@ end
 
 local fmt_arg_list = function(arg_list, meta)
   local ret = " "
-  local arg_list = remove_hidden_args(arg_list)
-  if #arg_list == 0 then return ret end
+  local visible_arg_list = remove_hidden_args(arg_list)
+  if #visible_arg_list == 0 then return ret end
 
-  local meta = get_meta_params(meta)
+  local meta_params = get_meta_params(meta)
   local state
-  for i, v in pairs(arg_list) do
-    state, name = next(meta, state)
+  local name
+  for i, value in pairs(visible_arg_list) do
+    state, name = next(meta_params, state)
     if state ~= nil then
-      arg_list[i] = name .. ": " .. v
+      visible_arg_list[i] = name .. ": " .. value
     else
-      arg_list[i] = v
+      visible_arg_list[i] = value
     end
   end
 
-  ret = ret .. table.concat(arg_list, ", ")
+  ret = ret .. table.concat(visible_arg_list, ", ")
   return ret .. " "
 end
 
@@ -148,7 +149,7 @@ local fmt_members = function(typename, members)
   else
     local ret = ""
 
-    local ss = function(a, b) return field_sort_order(a.v) < field_sort_order(b.v) end
+    local ss = function(a, b) return field_sort_less(a.v, b.v) end
 
     local members_sorted = sort_by(wrapped(members), ss)
 

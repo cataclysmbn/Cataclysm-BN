@@ -59,6 +59,7 @@ static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_leashed( "leashed" );
 static const efftype_id effect_led_by_leash( "led_by_leash" );
 static const efftype_id effect_tied( "tied" );
+static const efftype_id effect_well_fed( "well_fed" );
 
 static const itype_id itype_cash_card( "cash_card" );
 static const itype_id itype_id_industrial( "id_industrial" );
@@ -73,15 +74,6 @@ static const flag_id json_flag_MECH_BAT( "MECH_BAT" );
 
 namespace
 {
-
-auto can_train_pet( monster &z ) -> bool
-{
-    return get_player_character().get_skill_level( skill_survival ) > 3 &&
-           z.has_flag( MF_PET_MOUNTABLE ) &&
-           !z.has_flag( MF_COMBAT_MOUNT ) &&
-           !z.has_flag( MF_CANT_TRAIN ) &&
-           z.type->has_fear_trigger( mon_trigger::HOSTILE_CLOSE );
-}
 
 } // namespace
 
@@ -164,8 +156,22 @@ bool monexamine::pet_menu( monster &z )
     if( z.has_flag( MF_CANPLAY ) ) {
         amenu.addentry( play_with_pet, true, 'y', _( "Play with %s" ), pet_name );
     }
-    if( can_train_pet( z ) ) {
-        amenu.addentry( train_combat_pet, true, '[', _( "Train %s" ), pet_name );
+    if( !z.type->pet_training ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (cannot be trained)" ), pet_name );
+    } else if( z.has_flag( MF_CANT_TRAIN ) ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (cannot be trained)" ), pet_name );
+    } else if( z.training_level >= z.type->pet_training->max_level ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (level %d/%d - fully trained)" ),
+                        pet_name, z.training_level, z.type->pet_training->max_level );
+    } else if( get_player_character().get_skill_level( skill_survival ) <
+               z.type->pet_training->min_skill ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires survival %d)" ), pet_name,
+                        z.type->pet_training->min_skill );
+    } else if( !z.has_effect( effect_well_fed ) ) {
+        amenu.addentry( train_combat_pet, false, '[', _( "Train %s (requires well-fed)" ), pet_name );
+    } else {
+        amenu.addentry( train_combat_pet, true, '[', _( "Train %s (level %d/%d)" ), pet_name,
+                        z.training_level, z.type->pet_training->max_level );
     }
     if( z.has_effect( effect_tied ) ) {
         amenu.addentry( untie, true, 'u', _( "Untie" ) );
@@ -402,7 +408,7 @@ void monexamine::shear_animal( monster &z )
                                          qual_shear ) ) );
 
     you.assign_activity( activity_id( "ACT_SHEAR" ), moves, -1 );
-    you.activity->coords.push_back( get_map().getabs( z.pos() ) );
+    you.activity->coords.push_back( get_map().bub_to_abs( z.bub_pos() ) );
     // pin the sheep in place if it isn't already
     if( !z.has_effect( effect_tied ) ) {
         z.add_effect( effect_tied, 1_turns );
@@ -434,7 +440,7 @@ static item *tack_loc()
 
 void monexamine::remove_battery( monster &z )
 {
-    get_map().add_item_or_charges( get_player_character().pos(), z.remove_battery_item() );
+    get_map().add_item_or_charges( get_player_character().bub_pos(), z.remove_battery_item() );
 
 }
 
@@ -640,7 +646,8 @@ bool Character::can_mount( const monster &critter ) const
 mountable_status Character::get_mountable_status( const monster &critter ) const
 {
     const auto &avoid = get_legacy_path_avoid();
-    auto route = get_map().route( pos(), critter.pos(), get_legacy_pathfinding_settings(), avoid );
+    auto route = get_map().route( bub_pos(), critter.bub_pos(), get_legacy_pathfinding_settings(),
+                                  avoid );
 
     if( route.empty() ) {
         return {};
@@ -678,8 +685,8 @@ void monexamine::push( monster &z )
 
     add_msg( _( "You pushed the %s." ), pet_name );
 
-    point delta( z.posx() - you.posx(), z.posy() - you.posy() );
-    z.move_to( tripoint( z.posx() + delta.x, z.posy() + delta.y, z.posz() ) );
+    auto delta = z.bub_pos().xy() - you.bub_pos().xy();
+    z.move_to( z.bub_pos() + delta );
 }
 
 void monexamine::rename_pet( monster &z )
@@ -727,7 +734,7 @@ void monexamine::remove_bag_from( monster &z )
         }
         avatar &you = get_avatar();
         add_msg( _( "You remove the %1$s from %2$s." ), z.get_storage_item()->display_name(), pet_name );
-        get_map().add_item_or_charges( you.pos(), z.remove_storage_item() );
+        get_map().add_item_or_charges( you.bub_pos(), z.remove_storage_item() );
         you.moves -= 200;
     } else {
         add_msg( m_bad, _( "Your %1$s doesn't have a bag!" ), pet_name );
@@ -739,7 +746,7 @@ void monexamine::dump_items( monster &z )
 {
     std::string pet_name = z.get_name();
     avatar &you = get_avatar();
-    z.drop_items( you.pos() );
+    z.drop_items( you.bub_pos() );
     add_msg( _( "You dump the contents of the %s's bag on the ground." ), pet_name );
     you.moves -= 200;
 }
@@ -780,7 +787,7 @@ bool monexamine::give_items_to( monster &z )
         }
     }
     z.add_effect( effect_ai_waiting, 2_turns );
-    you.drop( to_move, z.pos(), true );
+    you.drop( to_move, z.bub_pos(), true );
 
     return false;
 }
@@ -859,7 +866,7 @@ void monexamine::remove_armor( monster &z )
     if( z.get_armor_item() ) {
         z.get_armor_item()->erase_var( "pet_armor" );
         item *armor = z.get_armor_item();
-        get_map().add_item_or_charges( z.pos(), armor->detach() );
+        get_map().add_item_or_charges( z.bub_pos(), armor->detach() );
         add_msg( pgettext( "pet armor", "You remove the %1$s from %2$s." ), armor->display_name(),
                  pet_name );
         // TODO: removing armor from a horse takes a lot longer than 2 seconds. This should be a long action.
@@ -882,8 +889,8 @@ void monexamine::play_with( monster &z )
 
 void monexamine::train_pet( monster &z )
 {
-    std::string pet_name = z.get_name();
     avatar &you = get_avatar();
+    std::string pet_name = z.get_name();
     you.assign_activity( ACT_TRAIN_PET, to_moves<int>( 60_minutes ) );
     you.activity->monsters.push_back( g->shared_from( z ) );
     you.activity->str_values.push_back( pet_name );
@@ -1031,11 +1038,11 @@ void monexamine::deactivate_pet( monster &z )
         remove_battery( z );
     }
     map &here = get_map();
-    here.add_item_or_charges( z.pos(), z.to_item() );
+    here.add_item_or_charges( z.bub_pos(), z.to_item() );
     if( !z.has_flag( MF_INTERIOR_AMMO ) ) {
         for( auto &ammodef : z.ammo ) {
             if( ammodef.second > 0 ) {
-                here.spawn_item( z.pos(), ammodef.first, 1, ammodef.second, calendar::turn );
+                here.spawn_item( z.bub_pos(), ammodef.first, 1, ammodef.second, calendar::turn );
             }
         }
     }
@@ -1055,7 +1062,7 @@ void monexamine::milk_source( monster &source_mon )
     if( milkable_ammo->second > 0 ) {
         const int moves = to_moves<int>( time_duration::from_minutes( milkable_ammo->second / 2 ) );
         you.assign_activity( ACT_MILK, moves, -1 );
-        you.activity->coords.push_back( get_map().getabs( source_mon.pos() ) );
+        you.activity->coords.push_back( get_map().bub_to_abs( source_mon.bub_pos() ) );
         // pin the cow in place if it isn't already
         bool temp_tie = !source_mon.has_effect( effect_tied );
         if( temp_tie ) {

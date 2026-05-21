@@ -389,7 +389,7 @@ void conditional_t<T>::set_at_om_location( const JsonObject &jo, const std::stri
         if( is_npc ) {
             actor = dynamic_cast<player *>( d.beta );
         }
-        const tripoint_abs_omt omt_pos = actor->global_omt_location();
+        const tripoint_abs_omt omt_pos = actor->abs_omt_pos();
         const oter_id &omt_ref = get_overmapbuffer( actor->get_dimension() ).ter( omt_pos );
 
         return omt_ref == oter_id( oter_no_dir( oter_id( location ) ) );
@@ -458,8 +458,8 @@ void conditional_t<T>::set_npc_role_nearby( const JsonObject &jo )
     const std::string &role = jo.get_string( "npc_role_nearby" );
     condition = [role]( const T & d ) {
         const std::vector<npc *> available = g->get_npcs_if( [&]( const npc & guy ) {
-            return d.alpha->posz() == guy.posz() && guy.companion_mission_role_id == role &&
-                   ( rl_dist( d.alpha->pos(), guy.pos() ) <= 48 );
+            return d.alpha->bub_pos().z() == guy.bub_pos().z() && guy.companion_mission_role_id == role &&
+                   ( rl_dist( d.alpha->bub_pos(), guy.bub_pos() ) <= 48 );
         } );
         return !available.empty();
     };
@@ -742,7 +742,7 @@ template<class T>
 void conditional_t<T>::set_at_safe_space()
 {
     condition = []( const T & d ) {
-        return get_overmapbuffer( d.beta->get_dimension() ).is_safe( d.beta->global_omt_location() );
+        return get_overmapbuffer( d.beta->get_dimension() ).is_safe( d.beta->abs_omt_pos() );
     };
 }
 
@@ -778,7 +778,7 @@ void conditional_t<T>::set_is_driving( bool is_npc )
         if( is_npc ) {
             actor = dynamic_cast<player *>( d.beta );
         }
-        if( const optional_vpart_position vp = get_map().veh_at( actor->pos() ) ) {
+        if( const optional_vpart_position vp = get_map().veh_at( actor->bub_pos() ) ) {
             return vp->vehicle().is_moving() && vp->vehicle().player_in_control( *actor );
         }
         return false;
@@ -814,7 +814,7 @@ void conditional_t<T>::set_is_outside()
 {
     condition = []( const T & d ) {
         map &here = get_map();
-        return here.is_outside( d.beta->pos() );
+        return here.is_outside( d.beta->bub_pos() );
     };
 }
 

@@ -98,7 +98,7 @@ void projectile::load( JsonObject &jo )
     jo.read( "proj_effects", proj_effects );
 }
 
-void apply_ammo_effects( const tripoint &p, const std::set<ammo_effect_str_id> &effects,
+void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<ammo_effect_str_id> &effects,
                          Creature *source )
 {
     map &here = get_map();
@@ -126,7 +126,8 @@ void apply_ammo_effects( const tripoint &p, const std::set<ammo_effect_str_id> &
     }
 }
 
-void apply_ammo_effects( const tripoint &p, const std::set<std::string> &effects, Creature *source )
+void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<std::string> &effects,
+                         Creature *source )
 {
     std::set<ammo_effect_str_id> effect_ids;
     for( const std::string &s : effects ) {

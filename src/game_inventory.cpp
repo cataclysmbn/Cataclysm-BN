@@ -295,10 +295,10 @@ void game_menus::inv::common( avatar &you )
 }
 
 item *game_menus::inv::titled_filter_menu( const item_filter &filter, avatar &you,
-        const std::string &title, const std::string &none_message )
+        const std::string &title, const std::string &none_message, int radius )
 {
     return inv_internal( you, inventory_filter_preset( filter ),
-                         title, -1, none_message );
+                         title, radius, none_message );
 }
 
 item *game_menus::inv::titled_menu( avatar &you, const std::string &title,
@@ -888,7 +888,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
             const auto &uses = it.type->use_methods;
 
             if( uses.size() == 1 ) {
-                const auto ret = uses.begin()->second.can_call( p, it, false, p.pos() );
+                const auto ret = uses.begin()->second.can_call( p, it, false, p.bub_pos() );
                 if( !ret.success() ) {
                     return trim_punctuation_marks( ret.str() );
                 }
@@ -1710,7 +1710,7 @@ drop_locations game_menus::inv::multidrop( player &p )
 }
 
 
-void game_menus::inv::compare( player &p, const std::optional<tripoint> &offset )
+void game_menus::inv::compare( player &p, const std::optional<tripoint_rel_ms> &offset )
 {
     p.inv_restack( );
 
@@ -1721,8 +1721,8 @@ void game_menus::inv::compare( player &p, const std::optional<tripoint> &offset 
     inv_s.set_hint( _( "Select two items to compare them." ) );
 
     if( offset ) {
-        inv_s.add_map_items( p.pos() + *offset );
-        inv_s.add_vehicle_items( p.pos() + *offset );
+        inv_s.add_map_items( p.bub_pos() + *offset );
+        inv_s.add_vehicle_items( p.bub_pos() + *offset );
     } else {
         inv_s.add_nearby_items();
     }

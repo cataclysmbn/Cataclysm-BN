@@ -166,19 +166,18 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
 
     // if we're working on an existing part, use that part as the reference point
     // otherwise (e.g. installing a new frame), just use part 0
-    const tripoint q = here.getabs( veh->global_part_pos3( pt ? *pt : veh->part( 0 ) ) );
     const vehicle_part *vpt = pt ? pt : &veh->part( 0 );
-    for( const tripoint &p : veh->get_points( true ) ) {
-        res->coord_set.insert( here.getabs( p ) );
+    const tripoint_abs_ms q = here.bub_to_abs( veh->bub_part_location( *vpt ) );
+    for( const tripoint_abs_ms &p : veh->get_points( true ) ) {
+        res->coord_set.insert( p );
     }
-    res->values.push_back( q.x );   // values[0]
-    res->values.push_back( q.y );   // values[1]
-    res->values.push_back( dd.x );   // values[2]
-    res->values.push_back( dd.y );   // values[3]
-    res->values.push_back( -dd.x );   // values[4]
-    res->values.push_back( -dd.y );   // values[5]
+    res->values.push_back( q.x() );   // values[0]
+    res->values.push_back( q.y() );   // values[1]
+    res->values.push_back( q.z() );   // values[2]
+    res->values.push_back( vehicle_cursor.x() );   // values[3]
+    res->values.push_back( vehicle_cursor.y() );   // values[4]
+    res->values.push_back( vehicle_cursor.z() );   // values[5]
     res->values.push_back( veh->index_of_part( vpt ) ); // values[6]
-    res->values.push_back( q.z );   // values[7]
     res->str_values.push_back( vp->get_id().str() );
     if( target ) {
         res->targets.emplace_back( target );
@@ -187,7 +186,7 @@ std::unique_ptr<player_activity> veh_interact::serialize_activity()
     return res;
 }
 
-std::unique_ptr<player_activity> veh_interact::run( vehicle &veh, point p )
+std::unique_ptr<player_activity> veh_interact::run( vehicle &veh, tripoint_mnt_veh p )
 {
     veh_interact vehint( veh, p );
     vehint.do_main_loop();
@@ -233,11 +232,11 @@ struct veh_interact::install_info_t {
 /**
  * Creates a blank veh_interact window.
  */
-veh_interact::veh_interact( vehicle &veh, point p )
-    : dd( p ), veh( &veh ), main_context( "VEH_INTERACT" )
+veh_interact::veh_interact( vehicle &veh, tripoint_mnt_veh p )
+    : vehicle_cursor( p ), veh( &veh ), main_context( "VEH_INTERACT" )
 {
     stored_view_offset = get_avatar().view_offset;
-    get_avatar().view_offset = tripoint_zero;
+    get_avatar().view_offset = tripoint_rel_ms::zero();
 
     // Only build the shapes map and the wheel list once
     for( const auto &e : vpart_info::all() ) {
@@ -281,7 +280,7 @@ veh_interact::veh_interact( vehicle &veh, point p )
     count_durability();
     cache_tool_availability();
     // Initialize info of selected parts
-    move_cursor( point_zero );
+    move_cursor( tripoint_rel_veh::zero() );
 }
 
 veh_interact::~veh_interact()
@@ -456,8 +455,10 @@ void veh_interact::do_main_loop()
         ui_manager::redraw();
         const std::string action = main_context.handle_input();
         msg.reset();
-        if( const std::optional<tripoint> vec = main_context.get_direction( action ) ) {
-            move_cursor( vec->xy() );
+        if( const std::optional<tripoint_rel_ms> vec = main_context.get_direction( action ) ) {
+            const point_rel_veh vehicle_delta =
+                vec->xy().rotate( 1 ).reinterpret_as<point_rel_veh>();
+            move_cursor( tripoint_rel_veh( vehicle_delta, vec->z() ) );
         } else if( action == "QUIT" ) {
             finish = true;
         } else if( action == "INSTALL" ) {
@@ -532,9 +533,9 @@ void veh_interact::do_main_loop()
         } else if( action == "OVERVIEW_UP" ) {
             move_overview_line( -1 );
         } else if( action == "DESC_LIST_DOWN" ) {
-            move_cursor( point_zero, 1 );
+            move_cursor( tripoint_rel_veh::zero(), 1 );
         } else if( action == "DESC_LIST_UP" ) {
-            move_cursor( point_zero, -1 );
+            move_cursor( tripoint_rel_veh::zero(), -1 );
         } else if( action == "PARTS_LIST_DOWN" ) {
             if( cpart >= 0 && parts_list_offset < static_cast<int>( parts_here.size() ) - 1 ) {
                 parts_list_offset++;
@@ -565,18 +566,18 @@ void veh_interact::cache_tool_availability()
     auto &you = get_avatar();
     crafting_inv = you.crafting_inventory();
 
-    cache_tool_availability_update_lifting( you.pos() );
+    cache_tool_availability_update_lifting( you.bub_pos() );
     int mech_jack = 0;
     if( you.is_mounted() ) {
         mech_jack = you.mounted_creature->mech_str_addition() + 10;
     }
     max_jack = std::max( { you.max_quality( qual_JACK ), mech_jack,
-                           map_selector( you.pos(), PICKUP_RANGE, false ).max_quality( qual_JACK ),
-                           vehicle_selector( you.pos(), PICKUP_RANGE, false, *veh ).max_quality( qual_JACK )
+                           map_selector( you.bub_pos(), PICKUP_RANGE, false ).max_quality( qual_JACK ),
+                           vehicle_selector( you.bub_pos(), PICKUP_RANGE, false, *veh ).max_quality( qual_JACK )
                          } );
 }
 
-void veh_interact::cache_tool_availability_update_lifting( const tripoint &world_cursor_pos )
+void veh_interact::cache_tool_availability_update_lifting( const tripoint_bub_ms &world_cursor_pos )
 {
     max_lift = get_avatar().best_nearby_lifting_assist( world_cursor_pos );
 }
@@ -608,7 +609,7 @@ task_reason veh_interact::cant_do( char mode )
     if( cpart != -1 || cpart > veh->part_count() ) {
         const vehicle_part *pt = &veh->part( cpart );
         if( pt ) {
-            const tripoint q = veh->mount_to_bubble( pt->mount ).raw();
+            const auto q = veh->mount_to_abs( pt->mount );
             const vehicle *cacheveh = &g->m.veh_at( q )->vehicle();
             if( veh != cacheveh ) {
                 return DOUBLE_STACK;
@@ -836,11 +837,11 @@ bool veh_interact::update_part_requirements()
         for( auto &p : veh->steering ) {
             if( !veh->part_flag( p, "TRACKED" ) ) {
                 // tracked parts don't contribute to axle complexity
-                axles.insert( veh->part( p ).mount.x );
+                axles.insert( veh->part( p ).mount.x() );
             }
         }
 
-        if( !axles.empty() && !axles.contains( -dd.x ) ) {
+        if( !axles.empty() && !axles.contains( vehicle_cursor.x() ) ) {
             // Installing more than one steerable axle is hard
             // (but adding a wheel to an existing axle isn't)
             // As with engines, cap at the actual maximum skill.
@@ -1254,7 +1255,7 @@ void veh_interact::do_repair()
     if( reason == INVALID_TARGET ) {
         vehicle_part *most_repairable = get_most_repariable_part();
         if( most_repairable && most_repairable->damage_percent() ) {
-            move_cursor( ( most_repairable->mount + dd ).rotate( 3 ) );
+            move_cursor( ( most_repairable->mount - vehicle_cursor ) );
             return;
         }
     }
@@ -1760,7 +1761,7 @@ void veh_interact::overview( const overview_enable_t &enable,
         }
 
         if( overview_pos >= 0 && static_cast<size_t>( overview_pos ) < overview_opts.size() ) {
-            move_cursor( ( overview_opts[overview_pos].part->mount + dd ).rotate( 3 ) );
+            move_cursor( ( overview_opts[overview_pos].part->mount - vehicle_cursor ) );
         }
 
         if( overview_pos >= 0 && static_cast<size_t>( overview_pos ) < overview_opts.size() &&
@@ -1920,7 +1921,7 @@ bool veh_interact::can_remove_part( int idx, const Character &who )
 
     bool inside_vehicle = false;
     if( who.in_vehicle ) {
-        if( const optional_vpart_position vp = g->m.veh_at( who.pos() ) ) {
+        if( const optional_vpart_position vp = g->m.veh_at( who.bub_pos() ) ) {
             if( vp->is_inside() ) {
                 inside_vehicle = true;
             }
@@ -2221,10 +2222,9 @@ void veh_interact::do_relabel()
  * @param d The coordinates, relative to the viewport's 0-point (?)
  * @return The first vehicle part at the specified coordinates.
  */
-int veh_interact::part_at( point d )
+int veh_interact::part_at( tripoint_bub_ms d )
 {
-    const point vd = -dd + d.rotate( 1 );
-    return veh->part_displayed_at( vd );
+    return veh->part_displayed_at( veh->bubble_to_mount( d ) );
 }
 
 /**
@@ -2243,12 +2243,12 @@ bool veh_interact::can_potentially_install( const vpart_info &vpart )
  * @param d How far to move the cursor.
  * @param dstart_at How far to change the start position for vehicle part descriptions
  */
-void veh_interact::move_cursor( point d, int dstart_at )
+void veh_interact::move_cursor( tripoint_rel_veh d, int dstart_at )
 {
     const auto &here = get_map();
 
-    dd += d.rotate( 3 );
-    if( d != point_zero ) {
+    vehicle_cursor += d;
+    if( d != tripoint_rel_veh::zero() ) {
         start_limit = 0;
         parts_list_offset = 0;
     } else {
@@ -2256,10 +2256,8 @@ void veh_interact::move_cursor( point d, int dstart_at )
     }
 
     // Update the current active component index to the new position.
-    cpart = part_at( point_zero );
-    const point vd = -dd;
-    const point q = veh->coord_translate( vd );
-    const tripoint vehp = veh->global_pos3() + q;
+    cpart = veh->part_displayed_at( vehicle_cursor );
+    const auto vehp = veh->mount_to_bubble( vehicle_cursor );
     const bool has_critter = g->critter_at( vehp );
     bool obstruct = here.impassable_ter_furn( vehp );
     const optional_vpart_position ovp = here.veh_at( vehp );
@@ -2283,7 +2281,7 @@ void veh_interact::move_cursor( point d, int dstart_at )
             if( has_critter && vp.has_flag( VPFLAG_OBSTACLE ) ) {
                 continue;
             }
-            if( veh->can_mount( vd, vp.get_id() ) ) {
+            if( veh->can_mount( vehicle_cursor, vp.get_id() ) ) {
                 if( vp.get_id() != vpart_shapes[ vp.name() + vp.item.str() ][ 0 ]->get_id() ) {
                     // only add first shape to install list
                     continue;
@@ -2386,35 +2384,35 @@ void veh_interact::display_veh()
     if( debug_mode ) {
         // show CoM, pivot in debug mode
 
-        point pivot = veh->pivot_point();
-        point com = veh->local_center_of_mass();
-        const point cur = -dd;
+        auto pivot = veh->pivot_point();
+        auto com = veh->local_center_of_mass();
 
-        mvwprintz( w_disp, point_zero, c_green, "CoM   %d,%d", com.x, com.y );
+        mvwprintz( w_disp, point_zero, c_green, "CoM   %d,%d", com.x(), com.y() );
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        mvwprintz( w_disp, point( 0, 1 ), c_red,   "Pivot %d,%d", pivot.x, pivot.y );
-        mvwprintz( w_disp, point( 0, 2 ), c_dark_gray, "Cur   %d,%d", cur.x, cur.y );
+        mvwprintz( w_disp, point( 0, 1 ), c_red,   "Pivot %d,%d", pivot.x(), pivot.y() );
+        mvwprintz( w_disp, point( 0, 2 ), c_dark_gray, "Cur   %d,%d", vehicle_cursor.x(),
+                   vehicle_cursor.y() );
 
-        const point com_s = ( com + dd ).rotate( 3 ) + h_size;
-        const point pivot_s = ( pivot + dd ).rotate( 3 ) + h_size;
+        const auto com_s = ( com - vehicle_cursor ).xy().rotate( 3 ) + h_size;
+        const auto pivot_s = ( pivot - vehicle_cursor ).xy().rotate( 3 ) + h_size;
 
         for( int x = 0; x < getmaxx( w_disp ); ++x ) {
-            if( x <= com_s.x ) {
-                mvwputch( w_disp, point( x, com_s.y ), c_green, LINE_OXOX );
+            if( x <= com_s.x() ) {
+                mvwputch( w_disp, point( x, com_s.y() ), c_green, LINE_OXOX );
             }
 
-            if( x >= pivot_s.x ) {
-                mvwputch( w_disp, point( x, pivot_s.y ), c_red, LINE_OXOX );
+            if( x >= pivot_s.x() ) {
+                mvwputch( w_disp, point( x, pivot_s.y() ), c_red, LINE_OXOX );
             }
         }
 
         for( int y = 0; y < getmaxy( w_disp ); ++y ) {
-            if( y <= com_s.y ) {
-                mvwputch( w_disp, point( com_s.x, y ), c_green, LINE_XOXO );
+            if( y <= com_s.y() ) {
+                mvwputch( w_disp, point( com_s.x(), y ), c_green, LINE_XOXO );
             }
 
-            if( y >= pivot_s.y ) {
-                mvwputch( w_disp, point( pivot_s.x, y ), c_red, LINE_XOXO );
+            if( y >= pivot_s.y() ) {
+                mvwputch( w_disp, point( pivot_s.x(), y ), c_red, LINE_XOXO );
             }
         }
     }
@@ -2432,23 +2430,24 @@ void veh_interact::display_veh()
     std::vector<int> structural_parts = veh->all_standalone_parts();
     for( auto &structural_part : structural_parts ) {
         const int p = structural_part;
-        int sym = veh->part_sym( p );
+        const auto part_direction = normalize( 270_degrees + veh->part_display_direction( p ) -
+                                               veh->face.dir() );
+        const auto part_face = tileray( part_direction );
+        const auto sym = part_face.dir_symbol( veh->part_sym( p ) );
         nc_color col = veh->part_color( p );
 
-        const point q = ( veh->part( p ).mount + dd ).rotate( 3 );
+        const auto q = ( veh->part( p ).mount - vehicle_cursor ).xy().rotate( 3 );
 
-        if( q == point_zero ) {
+        if( q == point_rel_veh::zero() ) {
             col = hilite( col );
             cpart = p;
         }
-        mvwputch( w_disp, h_size + q, col, special_symbol( sym ) );
+        mvwputch( w_disp, h_size + q.raw(), col, special_symbol( sym ) );
     }
 
     const int hw = getmaxx( w_disp ) / 2;
     const int hh = getmaxy( w_disp ) / 2;
-    const point vd = -dd;
-    const point q = veh->coord_translate( vd );
-    const tripoint vehp = veh->global_pos3() + q;
+    const auto vehp = veh->mount_to_bubble( vehicle_cursor );
 
     const auto &here = get_map();
     bool obstruct = here.impassable_ter_furn( vehp );
@@ -2465,7 +2464,13 @@ void veh_interact::display_veh()
         }
     }
     nc_color col = cpart >= 0 ? veh->part_color( cpart ) : c_black;
-    int sym = cpart >= 0 ? veh->part_sym( cpart ) : ' ';
+    auto sym = static_cast<int>( ' ' );
+    if( cpart >= 0 ) {
+        const auto part_direction = normalize( 270_degrees + veh->part_display_direction( cpart ) -
+                                               veh->face.dir() );
+        const auto part_face = tileray( part_direction );
+        sym = part_face.dir_symbol( veh->part_sym( cpart ) );
+    }
     mvwputch( w_disp, point( hw, hh ), obstruct ? red_background( col ) : hilite( col ),
               special_symbol( sym ) );
     wnoutrefresh( w_disp );
@@ -2489,9 +2494,7 @@ void veh_interact::display_veh_tiles()
     werase( w_disp );
     wnoutrefresh( w_disp );
 
-    // Draw the vehicle with tiles
-    // dd is the cursor offset (negative), so we pass it directly
-    tile_preview->display( *veh, dd, cpart );
+    tile_preview->display( *veh, vehicle_cursor, cpart );
 }
 #endif // TILES
 
@@ -3197,20 +3200,30 @@ void act_vehicle_unload_fuel( vehicle *veh )
  */
 void veh_interact::complete_vehicle( Character &who )
 {
-    if( who.activity->values.size() < 7 ) {
+    if( who.activity->values.size() < 6 ) {
         debugmsg( "Invalid activity ACT_VEHICLE values:%d", who.activity->values.size() );
         return;
     }
+    const bool legacy = who.activity->values.size() == 8;
 
     map &here = get_map();
-    optional_vpart_position vp = here.veh_at( here.getlocal( tripoint( who.activity->values[0],
-                                 who.activity->values[1], who.activity->values[7] ) ) );
+    tripoint_abs_ms abs_part_loc;
+    if( legacy ) {
+        abs_part_loc = tripoint_abs_ms( who.activity->values[0],
+                                        who.activity->values[1],
+                                        who.activity->values[7] );
+    } else {
+        abs_part_loc = tripoint_abs_ms( who.activity->values[0],
+                                        who.activity->values[1],
+                                        who.activity->values[2] );
+    }
+    optional_vpart_position vp = here.veh_at( abs_part_loc );
     if( !vp ) {
         // so the vehicle could have lost some of its parts from other NPCS works during this player/NPCs activity.
         // check the vehicle points that were stored at beginning of activity.
         if( !who.activity->coord_set.empty() ) {
             for( const auto pt : who.activity->coord_set ) {
-                vp = here.veh_at( here.getlocal( pt ) );
+                vp = here.veh_at( here.abs_to_bub( pt ) );
                 if( vp ) {
                     break;
                 }
@@ -3224,9 +3237,15 @@ void veh_interact::complete_vehicle( Character &who )
     }
     vehicle *const veh = &vp->vehicle();
 
-    point d( who.activity->values[4], who.activity->values[5] );
-    int vehicle_part = who.activity->values[6];
     const vpart_id part_id( who.activity->str_values[0] );
+    int vehicle_part = who.activity->values[6];
+    tripoint_mnt_veh cursor_pos;
+    if( legacy ) {
+        cursor_pos = tripoint_mnt_veh( -who.activity->values[4], -who.activity->values[5], 0 );
+    } else {
+        cursor_pos = tripoint_mnt_veh( who.activity->values[3], who.activity->values[4],
+                                       who.activity->values[5] );
+    }
 
     const vpart_info &vpinfo = part_id.obj();
 
@@ -3269,16 +3288,17 @@ void veh_interact::complete_vehicle( Character &who )
 
             who.invalidate_crafting_inventory();
 
-            int partnum = !base->is_null() ? veh->install_part( d, part_id,
+            int partnum = !base->is_null() ? veh->install_part( cursor_pos, part_id,
                           std::move( base ) ) : -1;
             if( partnum < 0 ) {
-                debugmsg( "complete_vehicle install part fails dx=%d dy=%d id=%s", d.x, d.y, part_id.c_str() );
+                debugmsg( "complete_vehicle install part fails dx=%d dy=%d dz=%d id=%s", cursor_pos.x(),
+                          cursor_pos.y(), cursor_pos.z(), part_id.c_str() );
                 break;
             }
 
             // Need map-relative coordinates to compare to output of look_around.
             // Need to call coord_translate() directly since it's a new part.
-            const point q = veh->coord_translate( d );
+            const auto vehp = veh->mount_to_bubble( cursor_pos );
 
             if( vpinfo.has_flag( VPFLAG_CONE_LIGHT ) ||
                 vpinfo.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ||
@@ -3286,39 +3306,37 @@ void veh_interact::complete_vehicle( Character &who )
 
 
                 // Stash offset and set it to the location of the part so look_around will start there.
-                tripoint old_view_offset;
-                const tripoint offset = veh->global_pos3() + q;
+                tripoint_rel_ms old_view_offset;
 
                 auto *u = who.as_avatar();
                 if( u ) {
                     old_view_offset = u->view_offset;
-                    u->view_offset = offset - who.pos();
+                    u->view_offset = vehp - who.bub_pos();
                 }
 
 
-                point delta;
+                tripoint_rel_ms delta;
                 do {
                     popup( _( "Press space, choose a facing direction for the new %s and confirm with enter." ),
                            vpinfo.name() );
-                    const std::optional<tripoint> chosen = g->look_around();
+                    const std::optional<tripoint_bub_ms> chosen = g->look_around();
                     if( !chosen ) {
                         continue;
                     }
-                    delta = ( *chosen - offset ).xy();
+                    delta = *chosen - vehp;
                     // atan2 only gives reasonable values when delta is not all zero
-                } while( delta == point_zero );
+                } while( delta == tripoint_rel_ms::zero() );
 
                 // Restore previous view offsets.
                 if( u ) {
                     u->view_offset = old_view_offset;
                 }
 
-                units::angle dir = normalize( atan2( delta ) - veh->face.dir() );
+                units::angle dir = normalize( atan2( delta.raw().xy() ) - veh->face.dir() );
 
                 veh->part( partnum ).direction = dir;
             }
 
-            const tripoint vehp = veh->global_pos3() + tripoint( q, 0 );
             // TODO: allow boarding for non-players as well.
             player *const pl = g->critter_at<player>( vehp );
             if( vpinfo.has_flag( VPFLAG_BOARDABLE ) && pl ) {
@@ -3461,8 +3479,8 @@ void veh_interact::complete_vehicle( Character &who )
                 here.destroy_vehicle( veh );
                 here.reset_vehicle_cache( );
             } else {
-                point mount = veh->part( vehicle_part ).mount;
-                const tripoint &part_pos = veh->global_part_pos3( vehicle_part );
+                auto mount = veh->part( vehicle_part ).mount;
+                const auto &part_pos = veh->bub_part_location( vehicle_part );
                 veh->remove_part( vehicle_part );
                 // part_removal_cleanup calls refresh, so parts_at_relative is valid
                 veh->part_removal_cleanup();

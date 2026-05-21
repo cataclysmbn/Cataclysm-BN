@@ -530,8 +530,8 @@ TEST_CASE( "spell effect - target_attack", "[magic][spell][effect][target_attack
 {
     clear_all_state();
     // Locations for avatar and monster
-    const tripoint dummy_loc = { 60, 60, 0 };
-    const tripoint mummy_loc = { 62, 60, 0 };
+    const tripoint_bub_ms dummy_loc = { 60, 60, 0 };
+    const tripoint_bub_ms mummy_loc = { 62, 60, 0 };
 
     // For tracking spell damage
     int before_hp = 0;
@@ -541,13 +541,13 @@ TEST_CASE( "spell effect - target_attack", "[magic][spell][effect][target_attack
     avatar &dummy = g->u;
     clear_character( dummy );
     dummy.setpos( dummy_loc );
-    REQUIRE( dummy.pos() == dummy_loc );
+    REQUIRE( dummy.bub_pos() == dummy_loc );
     REQUIRE( g->critter_at( dummy_loc ) );
     REQUIRE( g->num_creatures() == 1 );
 
     // Monster/defender
     monster &mummy = spawn_test_monster( "mon_zombie", mummy_loc );
-    REQUIRE( mummy.pos() == mummy_loc );
+    REQUIRE( mummy.bub_pos() == mummy_loc );
     REQUIRE( g->critter_at( mummy_loc ) );
     REQUIRE( g->num_creatures() == 2 );
 
@@ -583,13 +583,13 @@ TEST_CASE( "spell effect - summon", "[magic][spell][effect][summon]" )
 {
     clear_all_state();
     // Avatar/spellcaster and summoned mummy locations
-    const tripoint dummy_loc = { 60, 60, 0 };
-    const tripoint mummy_loc = { 61, 60, 0 };
+    const tripoint_bub_ms dummy_loc = { 60, 60, 0 };
+    const tripoint_bub_ms mummy_loc = { 61, 60, 0 };
 
     avatar &dummy = g->u;
     clear_character( dummy );
     dummy.setpos( dummy_loc );
-    REQUIRE( dummy.pos() == dummy_loc );
+    REQUIRE( dummy.bub_pos() == dummy_loc );
     REQUIRE( g->critter_at( dummy_loc ) );
     REQUIRE( g->num_creatures() == 1 );
 
@@ -651,7 +651,7 @@ TEST_CASE( "spell effect - recover_energy", "[magic][spell][effect][recover_ener
 
         // Cast montage spell on avatar
         spell montage_spell( montage_id );
-        montage_spell.cast_spell_effect( dummy, dummy.pos() );
+        montage_spell.cast_spell_effect( dummy, dummy.bub_pos() );
 
         // Get stamina back equal to min_damage (at level 0)
         CHECK( dummy.get_stamina() == start_stamina + montage_type.min_damage );
@@ -673,13 +673,13 @@ TEST_CASE( "spell effect - recover_energy", "[magic][spell][effect][recover_ener
         dummy.set_pain( 5 );
         REQUIRE( dummy.get_pain() == 5 );
 
-        kiss_spell.cast_spell_effect( dummy, dummy.pos() );
+        kiss_spell.cast_spell_effect( dummy, dummy.bub_pos() );
         CHECK( dummy.get_pain() == 4 );
 
-        kiss_spell.cast_spell_effect( dummy, dummy.pos() );
+        kiss_spell.cast_spell_effect( dummy, dummy.bub_pos() );
         CHECK( dummy.get_pain() == 3 );
 
-        kiss_spell.cast_spell_effect( dummy, dummy.pos() );
+        kiss_spell.cast_spell_effect( dummy, dummy.bub_pos() );
         CHECK( dummy.get_pain() == 2 );
     }
 }

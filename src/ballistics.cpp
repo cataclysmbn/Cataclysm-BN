@@ -102,7 +102,7 @@ void drop_or_embed_projectile( dealt_projectile_attack &attack )
         return;
     }
 
-    const tripoint &pt = attack.end_point;
+    const auto &pt = attack.end_point;
 
     if( proj.has_effect( ammo_effect_SHATTER_SELF ) ) {
         // Drop the contents, not the thrown item
@@ -232,7 +232,7 @@ static void tie_monster_with_net( monster &z )
     z.set_tied_item( std::move( net_drop ) );
 }
 
-static void apply_net_tangle_aoe( const tripoint &center )
+static void apply_net_tangle_aoe( const tripoint_bub_ms &center )
 {
     map &here = get_map();
     static constexpr std::array<tripoint, 9> net_offsets = {
@@ -248,7 +248,7 @@ static void apply_net_tangle_aoe( const tripoint &center )
     };
 
     std::ranges::for_each( net_offsets, [&]( const tripoint & offset ) {
-        const tripoint pt = center + offset;
+        const auto pt = center + offset;
         if( !here.inbounds( pt ) ) {
             return;
         }
@@ -289,8 +289,8 @@ auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
     return aim;
 }
 
-auto projectile_attack( const projectile &proj_arg, const tripoint &source,
-                        const tripoint &target_arg, const dispersion_sources &dispersion,
+auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &source,
+                        const tripoint_bub_ms &target_arg, const dispersion_sources &dispersion,
                         Creature *origin, item *source_weapon, const vehicle *in_veh,
                         const bool suppress_damage_messages ) -> dealt_projectile_attack
 {
@@ -374,14 +374,14 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     double extend_to_range = no_overshoot ? range : proj_arg.range;
 
-    tripoint target = target_arg;
-    std::vector<tripoint> trajectory;
+    auto target = target_arg;
+    std::vector<tripoint_bub_ms> trajectory;
     std::vector<std::pair<monster, const dealt_projectile_attack>> hit_monsters;
 
     if( aim.missed_by_tiles >= 1.0 ) {
         // We missed enough to target a different tile
-        const double dx = target_arg.x - source.x;
-        const double dy = target_arg.y - source.y;
+        const double dx = target_arg.x() - source.x();
+        const double dy = target_arg.y() - source.y();
         units::angle rad = units::atan2( dy, dx );
 
         // cap wild misses at +/- 30 degrees
@@ -396,12 +396,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
                         rng( range - offset, proj_arg.range );
         new_range = std::max( new_range, 1 );
 
-        target.x = source.x + roll_remainder( new_range * cos( rad ) );
-        target.y = source.y + roll_remainder( new_range * sin( rad ) );
+        target.x() = source.x() + roll_remainder( new_range * cos( rad ) );
+        target.y() = source.y() + roll_remainder( new_range * sin( rad ) );
 
         if( target == source ) {
-            target.x = source.x + sgn( dx );
-            target.y = source.y + sgn( dy );
+            target.x() = source.x() + sgn( dx );
+            target.y() = source.y() + sgn( dy );
         }
 
         // Don't extend range further, miss here can mean hitting the ground near the target
@@ -420,12 +420,12 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
     add_msg( m_debug, "missed_by_tiles: %.2f; missed_by: %.2f; target (orig/hit): %d,%d,%d/%d,%d,%d",
              aim.missed_by_tiles, aim.missed_by,
-             target_arg.x, target_arg.y, target_arg.z,
-             target.x, target.y, target.z );
+             target_arg.x(), target_arg.y(), target_arg.z(),
+             target.x(), target.y(), target.z() );
 
     // Trace the trajectory, doing damage in order
-    tripoint &tp = attack.end_point;
-    tripoint prev_point = source;
+    auto &tp = attack.end_point;
+    auto prev_point = source;
 
     // Add the first point to the trajectory
     trajectory.insert( trajectory.begin(), source );
@@ -438,7 +438,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
     if( !no_overshoot && range < extend_to_range ) {
         // Continue line is very "stiff" when the original range is short
         // TODO: Make it use a more distant point for more realistic extended lines
-        std::vector<tripoint> trajectory_extension = continue_line( trajectory,
+        std::vector<tripoint_bub_ms> trajectory_extension = continue_line( trajectory,
                 extend_to_range - range );
         trajectory.reserve( trajectory.size() + trajectory_extension.size() );
         trajectory.insert( trajectory.end(), trajectory_extension.begin(), trajectory_extension.end() );
@@ -482,14 +482,14 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             break;
         }
 
-        if( tp.z != prev_point.z ) {
-            tripoint floor1 = prev_point;
-            tripoint floor2 = tp;
+        if( tp.z() != prev_point.z() ) {
+            auto floor1 = prev_point;
+            auto floor2 = tp;
 
-            if( floor1.z < floor2.z ) {
-                floor1.z++;
+            if( floor1.z() < floor2.z() ) {
+                floor1.z()++;
             } else {
-                floor2.z++;
+                floor2.z()++;
             }
             // We only stop the bullet if there are two floors in a row
             // this allow the shooter to shoot adjacent enemies from rooftops.
@@ -566,11 +566,11 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
 
         if( here.obstructed_by_vehicle_rotation( prev_point, tp ) ) {
             //We're firing through an impassible gap in a rotated vehicle, randomly hit one of the two walls
-            tripoint rand = tp;
+            auto rand = tp;
             if( one_in( 2 ) ) {
-                rand.x = prev_point.x;
+                rand.x() = prev_point.x();
             } else {
-                rand.y = prev_point.y;
+                rand.y() = prev_point.y();
             }
             if( in_veh == nullptr || veh_pointer_or_null( here.veh_at( rand ) ) != in_veh ) {
                 here.shoot( source, rand, proj, false );
@@ -616,13 +616,18 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
                 }
                 const size_t bt_len = blood_trail_len( attack.dealt_dam.total_damage() );
                 if( bt_len > 0 ) {
-                    const tripoint &dest = move_along_line( tp, trajectory, bt_len );
+                    const tripoint_bub_ms &dest = move_along_line( tp, trajectory, bt_len );
                     here.add_splatter_trail( critter->bloodType(), tp, dest );
                 }
                 sfx::do_projectile_hit( *attack.hit_critter );
                 has_momentum = proj.impact.total_damage() > 0 && is_bullet;
 
                 apply_overpenetration_penalty( is_projectile_modify_overpenetration );
+                // Force embed based on damage after overpenetration penalties
+                if( thrown_item != &null_item_reference() && rng( 1, 100 ) > proj.impact.total_damage() ) {
+                    has_momentum = false;
+                    apply_overpenetration_penalty( 0.0 );
+                }
             } else {
                 attack.missed_by = aim.missed_by;
             }
@@ -686,8 +691,8 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
         }
         Creature *mon_ptr = g->get_creature_if( [&]( const Creature & z ) {
             // search for creatures in radius 4 around impact site
-            if( rl_dist( z.pos(), tp ) <= 4 &&
-                here.sees( z.pos(), tp, -1 ) ) {
+            if( rl_dist( z.bub_pos(), tp ) <= 4 &&
+                here.sees( z.bub_pos(), tp, -1 ) ) {
                 // don't hit targets that have already been hit
                 if( !z.has_effect( effect_bounced ) ) {
                     return true;
@@ -699,9 +704,9 @@ auto projectile_attack( const projectile &proj_arg, const tripoint &source,
             Creature &z = *mon_ptr;
             add_msg( _( "The attack bounced to %s!" ), z.get_name() );
             z.add_effect( effect_bounced, 1_turns );
-            projectile_attack( proj, tp, z.pos(), dispersion, origin, source_weapon, in_veh );
+            projectile_attack( proj, tp, z.bub_pos(), dispersion, origin, source_weapon, in_veh );
             sfx::play_variant_sound( "fire_gun", "bio_lightning_tail",
-                                     sfx::get_heard_volume( z.pos() ), sfx::get_heard_angle( z.pos() ) );
+                                     sfx::get_heard_volume( z.bub_pos() ), sfx::get_heard_angle( z.bub_pos() ) );
         }
     }
     explosion_handler::get_explosion_queue().execute();

@@ -229,10 +229,10 @@ make sure to run it from the project root directory:
 
 ```powershell
 # Correct — run from the project root
-.\out\build\windows-tiles-sounds-x64-msvc-relwithdebinfo\src\cataclysm-bn-tiles.exe
+.\out\build\win-rel-deb\src\cataclysm-bn-tiles.exe
 
 # Wrong — game can't find ./data/
-cd out\build\windows-tiles-sounds-x64-msvc-relwithdebinfo\src
+cd out\build\win-rel-deb\src
 .\cataclysm-bn-tiles.exe
 ```
 

@@ -1,4 +1,5 @@
 #include "catalua_bindings.h"
+#include "catalua_coord.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
@@ -51,11 +52,11 @@ void cata::detail::reg_mapgendata( sol::state &lua )
     DOC( "Fills the ground with default terrain." );
     luna::set_fx( ut, "fill_groundcover", []( mapgendata & dat ) { dat.fill_groundcover(); } );
     DOC( "Generates Nested Mapgen" );
-    luna::set_fx( ut, "nest", [&]( mapgendata & dat, std::string nested, point & pos ) {
+    luna::set_fx( ut, "nest", [&]( mapgendata & dat, std::string nested, const point_rel_ms & pos ) {
         call_mapgen_function( nested, dat, true, pos );
     } );
     DOC( "Generates Normal Mapgen" );
     luna::set_fx( ut, "generate", [&]( mapgendata & dat, std::string mapgen ) {
-        call_mapgen_function( mapgen, dat, false, point_zero );
+        call_mapgen_function( mapgen, dat, false, point_rel_ms::zero() );
     } );
 }

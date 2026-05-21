@@ -5,21 +5,20 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 #include <mutex>
-#include <shared_mutex>
 
 #include "coordinates.h"
-#include "dimension_bounds.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "json.h"
 #include "memory_fast.h"
 #include "overmap_types.h"
-#include "point.h"
 #include "string_id.h"
 #include "type_id.h"
 
@@ -198,11 +197,11 @@ class overmapbuffer
          * Set dimension bounds for pocket dimension overmap rendering.
          * When set, tiles outside the bounds return boundary overmap terrain.
          */
-        void set_dimension_bounds( const dimension_bounds &bounds );
+        void set_pocket_info( const pocket_dimension_data &info );
         /**
          * Clear dimension bounds (e.g. when exiting a pocket dimension).
          */
-        void clear_dimension_bounds();
+        void clear_pocket_info();
 
         /**
         * Generates overmap tiles, if missing
@@ -296,7 +295,7 @@ class overmapbuffer
          * used to remove the vehicle from the old overmap if the new position is
          * on another overmap.
          */
-        void move_vehicle( vehicle *veh, const point_abs_ms &old_msp );
+        void move_vehicle( vehicle *veh, const point_abs_omt &old_omt );
         /**
          * Add the vehicle to be tracked in the overmap.
          */
@@ -628,7 +627,7 @@ class overmapbuffer
         std::set<point_abs_om> known_non_existing;
 
         // Optional dimension bounds for pocket dimension rendering
-        std::optional<dimension_bounds> current_bounds_;
+        std::optional<pocket_dimension_data> pocket_info_;
         // Cached resolved overmap terrain id for out-of-bounds tiles
         oter_id bounds_oter_id_;
 

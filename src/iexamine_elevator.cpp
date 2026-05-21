@@ -22,7 +22,7 @@ namespace
 {
 
 // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-auto move_item( map &here, const tripoint &src, const tripoint &dest ) -> void
+auto move_item( map &here, const tripoint_bub_ms &src, const tripoint_bub_ms &dest ) -> void
 {
     map_stack items_src = here.i_at( src );
     map_stack items_dest = here.i_at( dest );
@@ -33,26 +33,26 @@ auto move_item( map &here, const tripoint &src, const tripoint &dest ) -> void
 namespace elevator
 {
 
-using tiles = std::vector<tripoint>;
+using tiles = std::vector<tripoint_bub_ms>;
 
 auto here( const Character &you ) -> elevator::tiles
 {
     const auto &here = get_map();
-    const auto is_elevator = [&here]( const tripoint & pos ) -> bool { return here.has_flag( TFLAG_ELEVATOR, pos ); };
+    const auto is_elevator = [&here]( const tripoint_bub_ms & pos ) -> bool { return here.has_flag( TFLAG_ELEVATOR, pos ); };
 
-    std::unordered_set<tripoint> visited;
-    return ff::point_flood_fill_4_connected( you.pos(), visited, is_elevator );
+    std::unordered_set<tripoint_bub_ms> visited;
+    return ff::point_flood_fill_4_connected( you.bub_pos(), visited, is_elevator );
 }
 
 auto dest( const elevator::tiles &elevator_here,
-           const tripoint &sm_orig,
+           const tripoint_bub_ms &sm_orig,
            int turns,
            int movez ) -> elevator::tiles
 {
     elevator::tiles tiles;
     std::ranges::transform( elevator_here, std::back_inserter( tiles ),
-    [turns, &sm_orig, movez]( tripoint const & p ) {
-        return rotate_point_sm( { p.xy(), movez }, sm_orig, turns );
+    [turns, &sm_orig, movez]( tripoint_bub_ms const & p ) {
+        return tripoint_bub_ms( rotate_point_sm( { p.xy(), movez }, sm_orig, turns ) );
     } );
 
     return tiles;
@@ -60,7 +60,7 @@ auto dest( const elevator::tiles &elevator_here,
 
 /// allow using misaligned elevators.
 /// doesn't prevent you being stuck in the wall tho cause i was lazy
-auto find_elevators_nearby( const tripoint &pos ) -> std::optional<tripoint>
+auto find_elevators_nearby( const tripoint_bub_ms &pos ) -> std::optional<tripoint_bub_ms>
 {
     constexpr int max_misalign = 3;
     map &here = get_map();
@@ -73,8 +73,8 @@ auto find_elevators_nearby( const tripoint &pos ) -> std::optional<tripoint>
     return {};
 }
 
-auto choose_floor( const tripoint &examp, const tripoint_abs_omt &this_omt,
-                   const tripoint &sm_orig ) -> int
+auto choose_floor( const tripoint_bub_ms &examp, const tripoint_abs_omt &this_omt,
+                   const tripoint_bub_ms &sm_orig ) -> int
 {
     constexpr int retval_offset = 10000; // workaround for uilist retval autoassign when retval == -1
     const auto this_floor = _( " (this floor)" );
@@ -85,18 +85,18 @@ auto choose_floor( const tripoint &examp, const tripoint_abs_omt &this_omt,
         const tripoint_abs_omt that_omt{ this_omt.xy(), z };
         const int turns = get_rot_turns( this_omt, that_omt,
                                          get_overmapbuffer( get_map().get_bound_dimension() ) );
-        const tripoint zp =
-            rotate_point_sm( { examp.xy(), z }, sm_orig, turns );
+        const tripoint_bub_ms zp =
+            tripoint_bub_ms( rotate_point_sm( { examp.xy(), z }, sm_orig, turns ) );
 
         if( !find_elevators_nearby( zp ) ) {
             continue;
         }
         const std::string omt_name = get_overmapbuffer( get_map().get_bound_dimension() ).ter_existing(
                                          that_omt )->get_name();
-        const auto floor_name = z == examp.z ? this_floor : "";
+        const auto floor_name = z == examp.z() ? this_floor : "";
         const std::string name = string_format( "%3iF %s%s", z, omt_name, floor_name );
 
-        choice.addentry( z + retval_offset, z != examp.z, MENU_AUTOASSIGN, name );
+        choice.addentry( z + retval_offset, z != examp.z(), MENU_AUTOASSIGN, name );
     }
     choice.query();
     return choice.ret - retval_offset;
@@ -109,7 +109,7 @@ auto vehicle_status( const wrapped_vehicle &veh, const elevator::tiles &tiles ) 
     const auto &ps = veh.v->get_all_parts();
     const int all_vparts_count = ps.part_count();
     const int vparts_inside = std::count_if( ps.begin(), ps.end(), [&]( const vpart_reference & vp ) {
-        const tripoint p = veh.pos + vp.part().precalc[0];
+        const auto p = veh.pos + vp.part().precalc[0];
         const auto eit = std::ranges::find( tiles, p );
         return eit != tiles.cend();
     } );
@@ -155,16 +155,15 @@ auto move_creatures_away( const elevator::tiles &dest ) -> void
 {
     map &here = get_map();
 
-    const auto is_movable = [&]( const tripoint & candidate ) {
+    const auto is_movable = [&]( const tripoint_bub_ms & candidate ) {
         return !here.has_flag( TFLAG_ELEVATOR, candidate )
                && here.passable( candidate )
                && !g->critter_at( candidate );
     };
 
     for( Creature &critter : g->all_creatures() ) {
-        const tripoint local_pos = here.getlocal( here.getglobal( critter.pos() ) );
 
-        const auto eit = std::ranges::find( dest, local_pos );
+        const auto eit = std::ranges::find( dest, critter.bub_pos() );
         if( eit == dest.cend() ) {
             continue;
         }
@@ -185,7 +184,7 @@ auto move_items( const elevator::tiles &from, const elevator::tiles &dest ) -> v
 
     // oh how i wish i could use zip here
     for( size_type i = 0; i < from.size(); i++ ) {
-        const tripoint &src = from[i];
+        const tripoint_bub_ms &src = from[i];
         move_item( here, src, dest[i] );
     }
 }
@@ -193,21 +192,21 @@ auto move_items( const elevator::tiles &from, const elevator::tiles &dest ) -> v
 auto move_creatures( const elevator::tiles &from, const elevator::tiles &dest ) -> void
 {
     for( Creature &critter : g->all_creatures() ) {
-        const auto eit = std::ranges::find( from, critter.pos() );
+        const auto eit = std::ranges::find( from, critter.bub_pos() );
         if( eit != from.cend() ) {
             critter.setpos( dest[ std::distance( from.cbegin(), eit ) ] );
         }
     }
 }
 
-auto move_vehicles( const elevator_vehicles &vehs, const tripoint &sm_orig, int movez,
+auto move_vehicles( const elevator_vehicles &vehs, const tripoint_bub_ms &sm_orig, int movez,
                     int turns ) -> void
 {
     map &here = get_map();
 
     for( vehicle *v : vehs.v ) {
-        const auto p = tripoint_bub_ms{ rotate_point_sm( { v->global_pos3().xy(), movez }, sm_orig, turns ) };
-        here.displace_vehicle( *v, p - tripoint_bub_ms( v->global_pos3() ) );
+        const auto p = tripoint_bub_ms{ rotate_point_sm( { v->bub_ms_location().xy(), movez }, sm_orig, turns ) };
+        here.displace_vehicle( *v, p - tripoint_bub_ms( v->bub_ms_location() ) );
         v->turn( turns * 90_degrees );
         v->face = tileray( v->turn_dir );
         v->precalc_mounts( 0, v->turn_dir, v->pivot_anchor[0] );
@@ -221,22 +220,22 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
 
     g->vertical_shift( movez );
     // yes, this is inefficient, but i'm lazy
-    elevator::find_elevators_nearby( p.pos() )
-    .transform( []( const tripoint & pos ) -> point { return g->place_player( pos ); } );
+    elevator::find_elevators_nearby( p.bub_pos() )
+    .transform( []( const tripoint_bub_ms & pos ) -> point_rel_sm { return g->place_player( pos ); } );
 
-    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos.raw() );
+    cata_event_dispatch::avatar_moves( *p.as_avatar(), here, old_abs_pos );
 }
 
 } //namespace elevator
 
 } // namespace
 
-void iexamine::elevator( player &p, const tripoint &examp )
+void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
 {
     map &here = get_map();
-    const tripoint_abs_ms old_abs_pos = here.getglobal( p.pos() );
-    const tripoint_abs_omt this_omt = project_to<coords::omt>( here.getglobal( examp ) );
-    const tripoint sm_orig = here.getlocal( project_to<coords::ms>( this_omt ) );
+    const tripoint_abs_ms old_abs_pos = p.abs_pos();
+    const tripoint_abs_omt this_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
+    const auto sm_orig = here.abs_to_bub( project_to<coords::ms>( this_omt ) );
 
     const auto elevator_here = elevator::here( p );
     const auto vehs = elevator::vehicles_on( elevator_here );

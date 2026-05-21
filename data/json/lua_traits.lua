@@ -346,8 +346,7 @@ local function on_character_try_move_with_auto_mop(params)
   local here = gapi.get_map()
   if not is_wielding_mop(ch) then return true end
 
-  local mopped_tiles = auto_mop_surrounding(here, dest)
-  if mopped_tiles > 0 then ch:mod_moves(-150 * mopped_tiles) end
+  ch:mod_moves(-150 * auto_mop_surrounding(here, dest))
   return true
 end
 

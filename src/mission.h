@@ -9,6 +9,7 @@
 
 #include "calendar.h"
 #include "character_id.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "npc_favor.h"

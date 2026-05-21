@@ -99,6 +99,7 @@ static const trait_id trait_M_IMMUNE( "M_IMMUNE" );
 static const trait_id trait_MANDIBLES( "MANDIBLES" );
 static const trait_id trait_MEATARIAN( "MEATARIAN" );
 static const trait_id trait_MOUTH_TENTACLES( "MOUTH_TENTACLES" );
+static const trait_id trait_NO_THIRST( "NO_THIRST" );
 static const trait_id trait_PARAIMMUNE( "PARAIMMUNE" );
 static const trait_id trait_POISRESIST( "POISRESIST" );
 static const trait_id trait_PROBOSCIS( "PROBOSCIS" );
@@ -789,7 +790,7 @@ ret_val<edible_rating> Character::will_eat( const item &food, bool interactive )
         ( ( food_kcal > 0 &&
             get_stored_kcal() + stomach.get_calories() + food_kcal
             > max_stored_kcal() ) ||
-          ( comest->quench > 0 && get_thirst() < comest->quench ) ) ) {
+          ( comest->quench > 0 && get_thirst() < comest->quench && !has_trait( trait_NO_THIRST ) ) ) ) {
         add_consequence( _( "You're full already and the excess food will be wasted." ),
                          edible_rating::too_full );
     }
@@ -842,7 +843,7 @@ bool Character::eat( item &food, bool force )
     int charges_used = 0;
     if( food.type->has_use() ) {
         if( !food.type->can_use( "PETFOOD" ) ) {
-            charges_used = food.type->invoke( *this->as_player(), food, pos() );
+            charges_used = food.type->invoke( *this->as_player(), food, bub_pos() );
             if( charges_used <= 0 ) {
                 return false;
             }
@@ -1064,7 +1065,7 @@ void Character::modify_morale( item &food, int nutr )
 
     if( food.has_flag( flag_EATEN_HOT ) ) {
         auto heater = find_food_heater( *this, crafting_inventory(),
-                                        get_map().has_nearby_fire( pos(), PICKUP_RANGE ) );
+                                        get_map().has_nearby_fire( bub_pos(), PICKUP_RANGE ) );
         if( heater && heater->consume( *this ) ) {
             add_msg_player_or_npc( m_good,
                                    _( "You heat up your %1$s using the %2$s." ),
@@ -1105,9 +1106,9 @@ void Character::modify_morale( item &food, int nutr )
 
     if( food.has_flag( flag_HIDDEN_HALLU ) ) {
         if( has_trait( trait_SPIRITUAL ) ) {
-            add_morale( MORALE_FOOD_GOOD, 36, 72, 2_hours, 1_hours, false );
+            add_morale( MORALE_FEELING_GOOD, 36, 72, 2_hours, 1_hours, false );
         } else {
-            add_morale( MORALE_FOOD_GOOD, 18, 36, 1_hours, 30_minutes, false );
+            add_morale( MORALE_FEELING_GOOD, 18, 36, 1_hours, 30_minutes, false );
         }
     }
 
@@ -1230,7 +1231,7 @@ bool Character::consume_effects( item &food )
         mod_pain( 5 );
         int numslime = 1;
         for( int i = 0; i < numslime; i++ ) {
-            if( monster *const slime = g->place_critter_around( mon_player_blob, pos(), 1 ) ) {
+            if( monster *const slime = g->place_critter_around( mon_player_blob, bub_pos(), 1 ) ) {
                 slime->friendly = -1;
             }
         }
@@ -1265,7 +1266,8 @@ bool Character::consume_effects( item &food )
     mod_thirst( -contained_food.type->comestible->quench );
 
 
-    if( ( excess_kcal > 0 || excess_quench > 0 ) && !food.has_flag( flag_NO_BLOAT ) &&
+    if( ( excess_kcal > 0 || ( excess_quench > 0 && !has_trait( trait_NO_THIRST ) ) ) &&
+        !food.has_flag( flag_NO_BLOAT ) &&
         !has_trait( trait_GOURMAND ) ) {
         add_effect( effect_bloated, 5_minutes );
     }
@@ -1673,7 +1675,7 @@ bool Character::consume_med( item &target )
 
     int amount_used = 1;
     if( target.type->has_use() ) {
-        amount_used = target.type->invoke( *this->as_player(), target, pos() );
+        amount_used = target.type->invoke( *this->as_player(), target, bub_pos() );
         if( amount_used <= 0 ) {
             return false;
         }

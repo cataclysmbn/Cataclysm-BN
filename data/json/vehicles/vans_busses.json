@@ -10,6 +10,7 @@
       [ "|H#t'|>" ],
       [ "O-++-O>" ]
     ],
+    "color_palette": "military_standard",
     "parts": [
       {
         "x": -3,
@@ -127,6 +128,7 @@
       [ "O----+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal_front" ] },
@@ -216,6 +218,7 @@
       [ "+===|#'|" ],
       [ "O----+-O" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -297,6 +300,7 @@
       [ "+===|#'|" ],
       [ "O----+-O" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_horizontal", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -379,6 +383,7 @@
       [ "+===#'|" ],
       [ "o-+++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical", "trunk", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
@@ -449,6 +454,87 @@
     ]
   },
   {
+    "id": "camper_van",
+    "type": "vehicle",
+    "name": "Camper Van",
+    "blueprint": [
+      [ "o---+-o" ],
+      [ "+TF=#'|" ],
+      [ "+B__#'|" ],
+      [ "o-+++-o" ]
+    ],
+    "color_palette": "car_standard",
+    "parts": [
+      { "x": -3, "y": 1, "parts": [ "frame_vertical", "roof", "bed" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof", "aisle_curtain" ] },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_ne", "halfboard_ne", "headlight", "wheel_mount_medium_steerable", "wheel" ]
+      },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door", "roof" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_nw", "halfboard_nw", "headlight", "wheel_mount_medium_steerable", "wheel" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_vertical", "roof" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "roof", "door_sliding", "v_curtain" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_vertical", "board_vertical", "roof" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "door_trunk", "roof", "v_curtain" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_se", "board_se", "wheel_mount_medium", "wheel", "roof" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_vertical", "muffler", "roof", "veh_table" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_sw", "board_sw", "wheel_mount_medium", "wheel", "roof" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical_2", "roof", "minifridge" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_vertical_2",
+          "reclining_seat",
+          "seatbelt",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "vehicle_alarm",
+          "horn_car",
+          "roof"
+        ]
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "engine_inline4", "alternator_car", "battery_car" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor", "aisle_curtain" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_horizontal", "door_trunk", "roof", "v_curtain" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "reclining_seat", "seatbelt", "roof" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door", "roof" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "roof", "door_sliding", "v_curtain" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_vertical", "windshield" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_vertical", "board_vertical", "roof" ] },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "frame_vertical", "board_vertical", { "part": "tank", "fuel": "gasoline" }, "roof" ]
+      }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 5, "items": [ "sunglasses" ] },
+      { "x": -2, "y": 0, "chance": 12, "item_groups": [ "fridgesnacks" ] },
+      { "x": -2, "y": 0, "chance": 10, "item_groups": [ "fridgesnacks" ] },
+      { "x": -2, "y": 0, "chance": 8, "item_groups": [ "fridgesnacks" ] },
+      { "x": -2, "y": 0, "chance": 5, "item_groups": [ "fridgesnacks" ] },
+      { "x": -3, "y": 0, "chance": 5, "items": [ "gasoline_lantern", "matches" ] },
+      { "x": -3, "y": 1, "chance": 8, "item_groups": [ "bed" ] }
+    ]
+  },
+  {
     "id": "hippie_van_electric",
     "type": "vehicle",
     "name": "Electric Hippie Van",
@@ -458,6 +544,7 @@
       [ "+===#'|" ],
       [ "o-+++-o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "xlframe_vertical", "trunk", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "xlframe_vertical_2", "aisle_vertical", "roof" ] },
@@ -537,6 +624,7 @@
       [ "O-#-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -633,6 +721,7 @@
       [ "O-#-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -754,6 +843,7 @@
       [ "O-#-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
@@ -866,6 +956,7 @@
     "id": "lux_rv",
     "type": "vehicle",
     "name": "Luxury RV",
+    "color_palette": "car_standard",
     "blueprint": [  ],
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_horizontal", "floodlight", "roof" ] },
@@ -1004,6 +1095,7 @@
     "type": "vehicle",
     "name": "Survivor RV",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "trunk_floor", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_horizontal", "lit_aisle_horizontal", "aisle_curtain", "roof" ] },
@@ -1158,6 +1250,7 @@
       [ "+OO-+-+-O" ],
       [ "       o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "lit_aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal", "headlight" ] },
@@ -1293,6 +1386,7 @@
       [ "+OO-+-+-O" ],
       [ "       o " ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "lit_aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal_front", "headlight" ] },
@@ -1407,6 +1501,7 @@
       [ "|C=###+#'|" ],
       [ "o-+----+-o" ]
     ],
+    "color_palette": "limo_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "seat_leather", "seatbelt", "roof" ] },
       {
@@ -1512,6 +1607,7 @@
       [ "'#######.'H" ],
       [ "''O'''''+'O" ]
     ],
+    "color_palette": "bus_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight" ] },
@@ -1605,6 +1701,7 @@
       [ "'#######.'H" ],
       [ "''O'''''+'O" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight", "plating_steel" ] },
@@ -1724,6 +1821,7 @@
       [ "''O'+''''''+'O" ],
       [ "            o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight" ] },
@@ -1841,6 +1939,7 @@
       [ "''O-----'''+'O" ],
       [ "            o" ]
     ],
+    "color_palette": "car_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": 2, "y": 2, "parts": [ "frame_horizontal_2", "halfboard_horizontal_2", "headlight" ] },
@@ -1970,6 +2069,7 @@
       [ "O--+-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "swat_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "hdframe_horizontal", "aisle_horizontal", "hdroof" ] },
       { "x": 2, "y": 2, "parts": [ "hdframe_horizontal", "hdhalfboard_horizontal_2", "plating_steel" ] },
@@ -2093,6 +2193,7 @@
       [ "+-O-+-O+" ],
       [ "      o " ]
     ],
+    "color_palette": "wienermobile_standard",
     "parts": [
       { "x": -3, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "chimes", "roof" ] },

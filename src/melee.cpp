@@ -83,10 +83,10 @@ static const matec_id WBLOCK_2( "WBLOCK_2" );
 namespace
 {
 
-auto with_cross_z_melee_cost( const int base_cost, const tripoint &source,
-                              const tripoint &target ) -> int
+auto with_cross_z_melee_cost( const int base_cost, const tripoint_bub_ms &source,
+                              const tripoint_bub_ms &target ) -> int
 {
-    if( std::abs( source.z - target.z ) < 1 ) {
+    if( std::abs( source.z() - target.z() ) < 1 ) {
         return base_cost;
     }
 
@@ -306,7 +306,7 @@ bool Character::handle_melee_wear( item &shield, float wear_multiplier )
         return std::move( mod );
     } );
 
-    shield.contents.spill_contents( pos() );
+    shield.contents.spill_contents( bub_pos() );
 
     shield.detach();
 
@@ -327,7 +327,7 @@ bool Character::handle_melee_wear( item &shield, float wear_multiplier )
             if( comp->typeId() == big_comp && !is_armed() ) {
                 wield( std::move( comp ) );
             } else {
-                g->m.add_item_or_charges( pos(), std::move( comp ) );
+                g->m.add_item_or_charges( bub_pos(), std::move( comp ) );
             }
         }
     } else {
@@ -522,7 +522,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         return;
     }
 
-    int move_cost = with_cross_z_melee_cost( attack_cost( cur_weapon ), pos(), t.pos() );
+    int move_cost = with_cross_z_melee_cost( attack_cost( cur_weapon ), bub_pos(), t.bub_pos() );
 
     if( !attack_hit ) {
         // Lua imelee on_miss callback
@@ -531,7 +531,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         }
 
         int stumble_pen = stumble( *this, cur_weapon );
-        sfx::generate_melee_sound( pos(), t.pos(), false, false );
+        sfx::generate_melee_sound( bub_pos(), t.bub_pos(), false, false );
         if( is_player() ) { // Only display messages if this is the player
 
             if( one_in( 2 ) ) {
@@ -667,7 +667,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
             // Make a rather quiet sound, to alert any nearby monsters
             if( !is_quiet() ) { // check martial arts silence
                 //sound generated later
-                sounds::sound( pos(), 8, sounds::sound_t::combat, "whack!" );
+                sounds::sound( bub_pos(), 8, sounds::sound_t::combat, "whack!" );
             }
             std::string material = "flesh";
             if( t.is_monster() ) {
@@ -676,7 +676,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
                     material = "steel";
                 }
             }
-            sfx::generate_melee_sound( pos(), t.pos(), true, t.is_monster(), material );
+            sfx::generate_melee_sound( bub_pos(), t.bub_pos(), true, t.is_monster(), material );
             int dam = dealt_dam.total_damage();
             melee::melee_stats.damage_amount += dam;
 
@@ -718,8 +718,8 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
         }
     }
 
-    const int mod_sta = -with_cross_z_melee_cost( get_melee_stamina_cost( cur_weapon ), pos(),
-                        t.pos() );
+    const int mod_sta = -with_cross_z_melee_cost( get_melee_stamina_cost( cur_weapon ), bub_pos(),
+                        t.bub_pos() );
     mod_stamina( std::min( -50, mod_sta ) );
     add_msg( m_debug, "Stamina burn: %d", std::min( -50, mod_sta ) );
     mod_moves( -move_cost );
@@ -740,7 +740,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id *f
 
 }
 
-void Character::reach_attack( const tripoint &p )
+void Character::reach_attack( const tripoint_bub_ms &p )
 {
     matec_id force_technique = tec_none;
     /** @EFFECT_MELEE >5 allows WHIP_DISARM technique */
@@ -758,13 +758,13 @@ void Character::reach_attack( const tripoint &p )
     // Max out recoil
     recoil = MAX_RECOIL;
 
-    int move_cost = with_cross_z_melee_cost( attack_cost( primary_weapon() ), pos(), p );
+    int move_cost = with_cross_z_melee_cost( attack_cost( primary_weapon() ), bub_pos(), p );
     int skill = std::min( 10, get_skill_level( skill_stabbing ) );
     int t = 0;
-    std::vector<tripoint> path = line_to( pos(), p, t, 0 );
-    tripoint last_point = pos();
+    std::vector<tripoint_bub_ms> path = line_to( bub_pos(), p, t, 0 );
+    auto last_point = bub_pos();
     path.pop_back(); // Last point is our critter
-    for( const tripoint &path_point : path ) {
+    for( const tripoint_bub_ms &path_point : path ) {
         // Possibly hit some unintended target instead
         Creature *inter = g->critter_at( path_point );
         int inter_block_size = inter != nullptr ? ( inter->get_size() + 1 ) : 2;
@@ -776,11 +776,11 @@ void Character::reach_attack( const tripoint &p )
             critter = inter;
             break;
         } else if( here.obstructed_by_vehicle_rotation( last_point, path_point ) ) {
-            tripoint rand = path_point;
+            auto rand = path_point;
             if( one_in( 2 ) ) {
-                rand.x = last_point.x;
+                rand.x() = last_point.x();
             } else {
-                rand.y = last_point.y;
+                rand.y() = last_point.y();
             }
 
             here.bash( rand, str_cur + primary_weapon().damage_melee( DT_BASH ) );
@@ -803,11 +803,11 @@ void Character::reach_attack( const tripoint &p )
     }
 
     if( here.obstructed_by_vehicle_rotation( last_point, p ) ) {
-        tripoint rand = p;
+        auto rand = p;
         if( one_in( 2 ) ) {
-            rand.x = last_point.x;
+            rand.x() = last_point.x();
         } else {
-            rand.y = last_point.y;
+            rand.y() = last_point.y();
         }
 
         here.bash( rand, str_cur + primary_weapon().damage_melee( DT_BASH ) );
@@ -954,7 +954,7 @@ float Character::get_dodge() const
 
     if( has_effect( effect_grabbed ) ) {
         int zed_number = 0;
-        for( auto &dest : g->m.points_in_radius( pos(), 1, 0 ) ) {
+        for( auto &dest : g->m.points_in_radius( bub_pos(), 1, 0 ) ) {
             const monster *const mon = g->critter_at<monster>( dest );
             if( mon && mon->has_effect( effect_grabbing ) ) {
                 zed_number++;
@@ -1298,7 +1298,7 @@ matec_id Character::pick_technique( Creature &t, const item &weap,
 
     bool downed = t.has_effect( effect_downed );
     bool stunned = t.has_effect( effect_stunned );
-    bool wall_adjacent = g->m.is_wall_adjacent( pos() );
+    bool wall_adjacent = g->m.is_wall_adjacent( bub_pos() );
 
     // first add non-aoe tecs
     for( const matec_id &tec_id : all ) {
@@ -1414,16 +1414,16 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
     std::array<int, 9> offset_b = { {-1, -1, 0, -1, 0, 1, 0, 1, 1 } };
 
     // filter the values to be between -1 and 1 to avoid indexing the array out of bounds
-    int dy = std::max( -1, std::min( 1, t.posy() - posy() ) );
-    int dx = std::max( -1, std::min( 1, t.posx() - posx() ) );
+    int dy = std::max( -1, std::min( 1, t.bub_pos().y() - bub_pos().y() ) );
+    int dx = std::max( -1, std::min( 1, t.bub_pos().x() - bub_pos().x() ) );
     int lookup = dy + 1 + 3 * ( dx + 1 );
 
     //wide hits all targets adjacent to the attacker and the target
     if( technique.aoe == "wide" ) {
         //check if either (or both) of the squares next to our target contain a possible victim
         //offsets are a pre-computed matrix allowing us to quickly lookup adjacent squares
-        tripoint left = pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
-        tripoint right = pos() + tripoint( offset_b[lookup], -offset_a[lookup], 0 );
+        auto left = bub_pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
+        auto right = bub_pos() + tripoint( offset_b[lookup], -offset_a[lookup], 0 );
 
         monster *const mon_l = g->critter_at<monster>( left );
         if( mon_l && mon_l->friendly == 0 ) {
@@ -1451,9 +1451,9 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
         // Impale hits the target and a single target behind them
         // Check if the square cardinally behind our target, or to the left / right,
         // contains a possible target.
-        tripoint left = t.pos() + tripoint( offset_a[lookup], offset_b[lookup], 0 );
-        tripoint target_pos = t.pos() + ( t.pos() - pos() );
-        tripoint right = t.pos() + tripoint( offset_b[lookup], -offset_b[lookup], 0 );
+        auto left = t.bub_pos() + tripoint_rel_ms( offset_a[lookup], offset_b[lookup], 0 );
+        tripoint_bub_ms target_pos = t.bub_pos() + ( t.bub_pos() - bub_pos() );
+        auto right = t.bub_pos() + tripoint_rel_ms( offset_b[lookup], -offset_b[lookup], 0 );
 
         monster *const mon_l = g->critter_at<monster>( left );
         monster *const mon_t = g->critter_at<monster>( target_pos );
@@ -1486,8 +1486,8 @@ bool Character::valid_aoe_technique( Creature &t, const ma_technique &technique,
     }
 
     if( targets.empty() && technique.aoe == "spin" ) {
-        for( const tripoint &tmp : g->m.points_in_radius( pos(), 1 ) ) {
-            if( tmp == t.pos() ) {
+        for( const tripoint_bub_ms &tmp : g->m.points_in_radius( bub_pos(), 1 ) ) {
+            if( tmp == t.bub_pos() ) {
                 continue;
             }
             monster *const mon = g->critter_at<monster>( tmp );
@@ -1577,27 +1577,27 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     if( technique.side_switch ) {
-        const tripoint b = t.pos();
+        const auto b = t.bub_pos();
         int newx;
         int newy;
 
-        if( b.x > posx() ) {
-            newx = posx() - 1;
-        } else if( b.x < posx() ) {
-            newx = posx() + 1;
+        if( b.x() > bub_pos().x() ) {
+            newx = bub_pos().x() - 1;
+        } else if( b.x() < bub_pos().x() ) {
+            newx = bub_pos().x() + 1;
         } else {
-            newx = b.x;
+            newx = b.x();
         }
 
-        if( b.y > posy() ) {
-            newy = posy() - 1;
-        } else if( b.y < posy() ) {
-            newy = posy() + 1;
+        if( b.y() > bub_pos().y() ) {
+            newy = bub_pos().y() - 1;
+        } else if( b.y() < bub_pos().y() ) {
+            newy = bub_pos().y() + 1;
         } else {
-            newy = b.y;
+            newy = b.y();
         }
 
-        const tripoint &dest = tripoint( newx, newy, b.z );
+        const auto &dest = tripoint_bub_ms( newx, newy, b.z() );
         if( g->is_empty( dest ) ) {
             t.setpos( dest );
         }
@@ -1608,16 +1608,16 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     }
 
     if( technique.knockback_dist ) {
-        const tripoint prev_pos = t.pos(); // track target startpoint for knockback_follow
+        const auto prev_pos = t.bub_pos(); // track target startpoint for knockback_follow
         const int kb_offset_x = rng( -technique.knockback_spread, technique.knockback_spread );
         const int kb_offset_y = rng( -technique.knockback_spread, technique.knockback_spread );
-        tripoint kb_point( posx() + kb_offset_x, posy() + kb_offset_y, posz() );
+        tripoint_bub_ms kb_point( bub_pos().x() + kb_offset_x, bub_pos().y() + kb_offset_y, bub_pos().z() );
         for( int dist = rng( 1, technique.knockback_dist ); dist > 0; dist-- ) {
             t.knock_back_from( kb_point );
         }
         // This technique makes the player follow into the tile the target was knocked from
         if( technique.knockback_follow ) {
-            const optional_vpart_position vp0 = g->m.veh_at( pos() );
+            const optional_vpart_position vp0 = g->m.veh_at( bub_pos() );
             vehicle *const veh0 = veh_pointer_or_null( vp0 );
             bool to_swimmable = g->m.has_flag( "SWIMMABLE", prev_pos );
             bool to_deepwater = g->m.has_flag( TFLAG_DEEP_WATER, prev_pos );
@@ -1632,7 +1632,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
                 has_effect( effect_amigara );
 
             if( !move_issue ) {
-                if( t.pos() != prev_pos ) {
+                if( t.bub_pos() != prev_pos ) {
                     g->place_player( prev_pos );
                     g->on_move_effects();
                 }
@@ -1670,7 +1670,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
     if( technique.disarms && p != nullptr && p->is_armed() ) {
         if( rng( get_skill_level( skill_melee ) / 2,
                  get_skill_level( skill_melee ) ) >= p->get_skill_level( skill_melee ) ) {
-            g->m.add_item_or_charges( p->pos(), p->remove_primary_weapon() );
+            g->m.add_item_or_charges( p->bub_pos(), p->remove_primary_weapon() );
             if( p->is_player() ) {
                 add_msg_if_npc( m_bad, _( "<npcname> disarms you!" ) );
             } else {
@@ -2171,10 +2171,10 @@ std::string Character::melee_special_effects( Creature &t, damage_instance &d, i
                                    weap.tname() );
         }
 
-        sounds::sound( pos(), 16, sounds::sound_t::combat, "Crack!", true, "smash_success",
+        sounds::sound( bub_pos(), 16, sounds::sound_t::combat, "Crack!", true, "smash_success",
                        "smash_glass_contents" );
         // Dump its contents on the ground
-        weap.contents.spill_contents( pos() );
+        weap.contents.spill_contents( bub_pos() );
         // Take damage
         deal_damage( nullptr, bodypart_id( "arm_r" ), damage_instance::physical( 0, rng( 0, vol * 2 ),
                      0 ) );
@@ -2489,14 +2489,16 @@ void player_hit_message( Character *attacker, const std::string &message,
 
     if( dam > 0 && attacker->is_player() ) {
         //player hits monster melee
-        SCT.add( point( t.posx(), t.posy() ),
-                 direction_from( point_zero, point( t.posx() - attacker->posx(), t.posy() - attacker->posy() ) ),
+        SCT.add( point( t.bub_pos().x(), t.bub_pos().y() ),
+                 direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(),
+                                 t.bub_pos().y() - attacker->bub_pos().y() ) ),
                  get_hp_bar( dam, t.get_hp_max(), true ).first, m_good,
                  sSCTmod, gmtSCTcolor );
 
         if( t.get_hp() > 0 ) {
-            SCT.add( point( t.posx(), t.posy() ),
-                     direction_from( point_zero, point( t.posx() - attacker->posx(), t.posy() - attacker->posy() ) ),
+            SCT.add( point( t.bub_pos().x(), t.bub_pos().y() ),
+                     direction_from( point_zero, point( t.bub_pos().x() - attacker->bub_pos().x(),
+                                     t.bub_pos().y() - attacker->bub_pos().y() ) ),
                      get_hp_bar( t.get_hp(), t.get_hp_max(), true ).first, m_good,
                      //~ "hit points", used in scrolling combat text
                      _( "hp" ), m_neutral,
@@ -2595,14 +2597,14 @@ double npc_ai::melee_value( const Character &who, const item &weap )
     if( weapon.has_flag( flag_COMBAT_NPC_USE ) && !weapon.has_flag( flag_COMBAT_NPC_ON ) ) {
         if( weapon.get_use( "transform" ) ) {
             const use_function *use = weapon.type->get_use( "transform" );
-            if( use->can_call( who, weapon, false, who.pos() ).success() ) {
+            if( use->can_call( who, weapon, false, who.bub_pos() ).success() ) {
                 // Stolen from item.cpp
                 weapon.convert( dynamic_cast<const iuse_transform *>
                                 ( use->get_actor_ptr() )->target );
             }
         } else if( weapon.get_use( "fireweapon_off" ) ) {
             const use_function *use = weapon.type->get_use( "fireweapon_off" );
-            if( use->can_call( who, weapon, false, who.pos() ).success() ) {
+            if( use->can_call( who, weapon, false, who.bub_pos() ).success() ) {
                 weapon.convert( dynamic_cast<const fireweapon_off_actor *>
                                 ( use->get_actor_ptr() )->target_id );
             }
@@ -2687,7 +2689,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
         } else if( my_roll >= their_roll / 2 ) {
             add_msg( _( "You grab at %s and pull with all your force, but it drops nearby!" ),
                      it.tname() );
-            const tripoint tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+            const tripoint_bub_ms tp = target.bub_pos() + tripoint_rel_ms( rng( -1, 1 ), rng( -1, 1 ), 0 );
             g->m.add_item_or_charges( tp, it.detach( ) );
             you.mod_moves( -100 );
         } else {
@@ -2704,7 +2706,7 @@ void avatar_funcs::try_disarm_npc( avatar &you, npc &target )
     if( my_roll >= their_roll ) {
         add_msg( _( "You smash %s with all your might forcing their %s to drop down nearby!" ),
                  target.name, it.tname() );
-        const tripoint tp = target.pos() + tripoint( rng( -1, 1 ), rng( -1, 1 ), 0 );
+        const tripoint_bub_ms tp = target.bub_pos() + tripoint_rel_ms( rng( -1, 1 ), rng( -1, 1 ), 0 );
         g->m.add_item_or_charges( tp, it.detach( ) );
     } else {
         add_msg( _( "You smash %s with all your might but %s remains in their hands!" ),

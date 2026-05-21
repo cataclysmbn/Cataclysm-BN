@@ -55,6 +55,7 @@ class location_ptr
         bool operator!=( const U against ) const;
 
         /** this is needed until vehicles are GOs */
+        void init_location( location<T> *loc );
         void set_loc_hack( location<T> *loc );
         location<T> *get_loc_hack() const;
 };

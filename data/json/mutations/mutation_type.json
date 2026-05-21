@@ -70,7 +70,8 @@
   {
     "type": "mutation_type",
     "id": "skin_tone",
-    "mandatory_one": true
+    "mandatory_one": true,
+    "default_trait": "SKIN_LIGHTER"
   },
   {
     "type": "mutation_type",

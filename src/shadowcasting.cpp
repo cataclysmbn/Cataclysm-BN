@@ -40,17 +40,15 @@ void exp_lookup::reset( float t ) noexcept
 // Precomputed table for open-air transparency — always valid, never changes.
 static const exp_lookup s_openair_lookup{ LIGHT_TRANSPARENCY_OPEN_AIR };
 
-// ── Z-distance table (Proposals A + B) ───────────────────────────────────────
+// ── Z-distance table ───────────────────────────────────────
 // Precomputes round(sqrt(dx² + dy² + (dz * Z_LEVEL_SCALE)²)) for every
-// (dx, dy, dz) triple that cast_zlight_segment can encounter.  Replaces the
+// (dx, dy, dz) triple that cast_zlight_segment can encounter. Replaces the
 // per-tile sqrt() call and applies a 1.8× z-level scaling to correct the
 // physics: one z-level is ~1.8 horizontal tiles in height.
 //
 // Table layout: [dy * (Z+1) * (R+1) + dz * (R+1) + dx]
 // where R = g_max_view_distance, Z = fov_3d_z_range.
 // Rebuilt whenever those two runtime values change.
-
-// Z_LEVEL_SCALE is declared in shadowcasting.h (inline constexpr float).
 
 static std::mutex            s_zdist_mutex;
 static std::vector<uint16_t> s_zdist_table;
@@ -245,7 +243,7 @@ static void castLight(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     octant_xform xf,
     int row, float start, float end,
@@ -298,8 +296,8 @@ static void castLight(
 
         for( ; delta.x <= x_limit; ++delta.x ) {
             const point current{
-                offset.x + delta.x *xf.xx + delta.y * xf.xy,
-                offset.y + delta.x *xf.yx + delta.y *xf.yy
+                offset.x() + delta.x *xf.xx + delta.y * xf.xy,
+                offset.y() + delta.x *xf.yx + delta.y *xf.yy
             };
 
             if( current.x < 0 || current.y < 0 ||
@@ -414,7 +412,7 @@ void castLightAll(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     const exp_lookup *weather_lookup )
 {
@@ -425,7 +423,7 @@ void castLightAll(
         // The first tile for row=1, delta.x=0 is at offset + apply(0,-1) = offset - (xy, yy).
         const exp_lookup *fast = nullptr;
         if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x - xf.xy, offset.y - xf.yy };
+            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
             if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
                 const float t = input_array[first.x * sy + first.y];
                 if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {
@@ -447,7 +445,7 @@ void castLightAll_q(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     const exp_lookup *weather_lookup )
 {
@@ -456,7 +454,7 @@ void castLightAll_q(
     for( const auto &xf : k_octant_xforms ) {
         const exp_lookup *fast = nullptr;
         if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x - xf.xy, offset.y - xf.yy };
+            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
             if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
                 const float t = input_array[first.x * sy + first.y];
                 if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {
@@ -478,7 +476,7 @@ void castLightOctants_q(
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,
-    point offset, int offset_distance, float numerator,
+    point_bub_ms offset, int offset_distance, float numerator,
     const light_model &model,
     uint8_t octant_mask,
     const exp_lookup *weather_lookup )
@@ -492,7 +490,7 @@ void castLightOctants_q(
         const auto &xf = k_octant_xforms[i];
         const exp_lookup *fast = nullptr;
         if( model.lookup_calc != nullptr ) {
-            const point first{ offset.x - xf.xy, offset.y - xf.yy };
+            const point first{ offset.x() - xf.xy, offset.y() - xf.yy };
             if( first.x >= 0 && first.y >= 0 && first.x < sx && first.y < sy ) {
                 const float t = input_array[first.x * sy + first.y];
                 if( t == LIGHT_TRANSPARENCY_OPEN_AIR ) {
@@ -511,16 +509,16 @@ void castLightOctants_q(
 // ── Internal 3D cast ──────────────────────────────────────────────────────────
 // Casts light through one 3D octant-segment.
 //
-// UseAtomic — when true, output writes use std::atomic_ref CAS so that 16
-// octant segments can run in parallel (Proposal C).  When false, plain
-// assignments are used (serial path).
+// UseAtomic: when true, output writes use std::atomic_ref CAS so that 16
+// octant segments can run in parallel. When false, plain assignments are
+// used (serial path).
 template<bool UseAtomic>
 static void cast_zlight_segment(
     const array_of_grids_of<float> &output_caches,
     const array_of_grids_of<const float> &input_arrays,
     const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
-    const tripoint &offset, int offset_distance,
+    const tripoint_bub_ms &offset, int offset_distance,
     float numerator, const light_model &model,
     octant_xform_3d xf,
     int row = 1,
@@ -580,7 +578,7 @@ static void cast_zlight_segment(
         for( delta.z = z_start; delta.z <= std::min( fov_3d_z_range, z_limit ); ++delta.z ) {
             const tripoint world_offset = xf.apply( 0, delta.y, delta.z );
             tripoint current;
-            current.z = offset.z + world_offset.z;
+            current.z = offset.z() + world_offset.z;
 
             if( current.z > max_z || current.z < min_z ) {
                 continue;
@@ -597,8 +595,8 @@ static void cast_zlight_segment(
 
             for( delta.x = x_start; delta.x <= x_limit; ++delta.x ) {
                 const tripoint world_xy = xf.apply( delta.x, delta.y, delta.z );
-                current.x = offset.x + world_xy.x;
-                current.y = offset.y + world_xy.y;
+                current.x = offset.x() + world_xy.x;
+                current.y = offset.y() + world_xy.y;
 
                 const auto &ic = input_arrays[z_index];
                 if( !( current.x >= 0 && current.y >= 0 &&
@@ -612,10 +610,10 @@ static void cast_zlight_segment(
 
                 const float new_transparency = ic.at( current.x, current.y );
                 const bool new_floor = ( ( xf.zz < 0 )
-                                         ? floor_caches[z_index].at( current.x, current.y )
-                                         : ( z_index < OVERMAP_LAYERS - 1
+                                         ? ( z_index + 1 < OVERMAP_LAYERS
                                              ? floor_caches[z_index + 1].at( current.x, current.y )
-                                             : false ) );
+                                             : false )
+                                         : floor_caches[z_index].at( current.x, current.y ) );
 
                 if( !started_block ) {
                     started_block = true;
@@ -739,7 +737,7 @@ void cast_zlight(
     const array_of_grids_of<const float> &input_arrays,
     const array_of_grids_of<const char> &floor_caches,
     const array_of_grids_of<const diagonal_blocks> &blocked_caches,
-    const tripoint &origin, int offset_distance, float numerator,
+    const tripoint_bub_ms &origin, int offset_distance, float numerator,
     const light_model &model )
 {
     ZoneScoped;

@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "coordinates.h"
 #include "memory_fast.h"
-#include "point.h"
 #include "type_id.h"
 
 class JsonIn;
@@ -46,7 +46,7 @@ class Creature_tracker
          * If there is no monster, it returns a `nullptr`.
          * Dead monsters are ignored and not returned.
          */
-        shared_ptr_fast<monster> find( const tripoint &pos ) const;
+        shared_ptr_fast<monster> find( const tripoint_bub_ms &pos ) const;
         /**
          * Returns a temporary id of the given monster (which must exist in the tracker).
          * The id is valid until monsters are added or removed from the tracker.
@@ -68,7 +68,7 @@ class Creature_tracker
         size_t size() const;
         /** Updates the position of the given monster to the given point. Returns whether the operation
          *  was successful. */
-        bool update_pos( const monster &critter, const tripoint &new_pos );
+        bool update_pos( const monster &critter, const tripoint_bub_ms &new_pos );
         /** Removes the given monster from the Creature tracker, adjusting other entries as needed. */
         void remove( const monster &critter );
         void clear();
@@ -93,7 +93,7 @@ class Creature_tracker
 
     private:
         std::vector<shared_ptr_fast<monster>> monsters_list;
-        std::unordered_map<tripoint, shared_ptr_fast<monster>> monsters_by_location;
+        std::unordered_map<tripoint_bub_ms, shared_ptr_fast<monster>> monsters_by_location;
         /** Remove the monsters entry in @ref monsters_by_location */
         void remove_from_location_map( const monster &critter );
 };

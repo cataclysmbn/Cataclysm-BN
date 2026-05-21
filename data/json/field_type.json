@@ -10,7 +10,7 @@
     "type": "field_type",
     "legacy_enum_id": 1,
     "intensity_levels": [ { "name": "blood splatter", "color": "red" }, { "name": "blood stain" }, { "name": "puddle of blood" } ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -24,7 +24,7 @@
     "type": "field_type",
     "legacy_enum_id": 2,
     "intensity_levels": [ { "name": "bile splatter", "color": "pink" }, { "name": "bile stain" }, { "name": "puddle of bile" } ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -101,7 +101,7 @@
       { "name": "slime stain" },
       { "name": "puddle of slime", "color": "green" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "decay_amount_factor": 2,
     "apply_slime_factor": 10,
     "is_splattering": true,
@@ -120,7 +120,7 @@
       { "name": "acid streak" },
       { "name": "pool of acid", "color": "green" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "immunity_data": { "traits": [ "ACIDPROOF" ] },
     "underwater_age_speedup": "2 minutes",
     "has_acid": true,
@@ -191,7 +191,7 @@
         ]
       }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "is_splattering": true,
     "priority": 2,
     "half_life": "2 minutes",
@@ -208,7 +208,7 @@
       { "name": "sludge trail", "color": "dark_gray" },
       { "name": "thick sludge trail" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "is_splattering": true,
     "accelerated_decay": true,
     "priority": 2,
@@ -736,7 +736,7 @@
       { "name": "plant sap stain" },
       { "name": "puddle of resin" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -751,7 +751,7 @@
     "type": "field_type",
     "legacy_enum_id": 29,
     "intensity_levels": [ { "name": "bug blood splatter", "color": "green" }, { "name": "bug blood stain" }, { "name": "puddle of bug blood" } ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,
@@ -770,7 +770,7 @@
       { "name": "hemolymph stain" },
       { "name": "puddle of hemolymph" }
     ],
-    "description_affix": "covered_in",
+    "description_affix": "covered_in_a",
     "underwater_age_speedup": "25 minutes",
     "decay_amount_factor": 2,
     "is_splattering": true,

@@ -441,7 +441,7 @@ void location_vector<T>::remove_with( std::function < detached_ptr<T>( detached_
 }
 
 template<typename T>
-void location_vector<T>::move_by( tripoint offset )
+void location_vector<T>::move_by( const tripoint_rel_ms &offset )
 {
     auto tile_loc = dynamic_cast<tile_item_location *>( &*loc );
     if( !tile_loc ) {
@@ -449,6 +449,12 @@ void location_vector<T>::move_by( tripoint offset )
         return;
     }
     tile_loc->move_by( offset );
+}
+
+template<typename T>
+void location_vector<T>::init_location( location<T> *new_loc )
+{
+    loc = std::unique_ptr<location<T>>( new_loc );
 }
 
 template<typename T>

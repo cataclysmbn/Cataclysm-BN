@@ -13,7 +13,7 @@
 #endif
 #if defined(__ANDROID__)
 #include <jni.h>
-#include <SDL_system.h>
+#include <SDL3/SDL.h>
 #endif
 /**
  * Return a locale specific path, or if there is no path for the current
@@ -54,8 +54,8 @@ void PATH_INFO::init_user_dir( std::string dir )
         user_dir_value = as_norm_dir( dir );
         return;
     }
-    JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
-    jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+    auto *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    auto activity = static_cast<jobject>( SDL_GetAndroidActivity() );
 
     jclass clazz = env->GetObjectClass( activity );
 

@@ -38,6 +38,21 @@ struct loading_image_cache {
 };
 #endif
 
+auto get_scaled_loading_image_size( const loading_image_scaling_options &opts ) ->
+std::optional<point>
+{
+    if( opts.image_size.x <= 0 || opts.image_size.y <= 0 || opts.screen_size.x <= 0 ||
+        opts.screen_size.y <= 0 ) {
+        return std::nullopt;
+    }
+
+    const auto height_scale = static_cast<double>( opts.screen_size.y ) /
+                              static_cast<double>( opts.image_size.y );
+
+    return point( std::max( 1, static_cast<int>( std::lround( opts.image_size.x * height_scale ) ) ),
+                  opts.screen_size.y );
+}
+
 namespace
 {
 
@@ -238,27 +253,47 @@ auto get_loading_image_cache( loading_image_cache &cache,
 
 auto get_loading_image_rect( const point &image_size ) -> std::optional<SDL_Rect>
 {
-    if( image_size.x <= 0 || image_size.y <= 0 ) { return std::nullopt; }
+    const auto window_size = get_sdl_window_size();
+    const auto buffer_size = get_sdl_display_buffer_size();
+    if( window_size.x <= 0 || window_size.y <= 0 || buffer_size.x <= 0 || buffer_size.y <= 0 ) {
+        return std::nullopt;
+    }
 
-    const auto screen_dimensions = get_window_dimensions( catacurses::stdscr ).window_size_pixel;
-    if( screen_dimensions.x <= 0 || screen_dimensions.y <= 0 ) { return std::nullopt; }
+    return get_scaled_loading_image_size( { .image_size = image_size, .screen_size = window_size } )
+    .transform( [&window_size, &buffer_size]( const point & scaled_size ) {
+        const auto output_rect = SDL_Rect{
+            ( window_size.x - scaled_size.x ) / 2,
+            ( window_size.y - scaled_size.y ) / 2,
+            scaled_size.x,
+            scaled_size.y
+        };
+        return SDL_Rect{
+            static_cast<int>( std::lround( static_cast<double>( output_rect.x ) * buffer_size.x /
+                                           window_size.x ) ),
+            static_cast<int>( std::lround( static_cast<double>( output_rect.y ) * buffer_size.y /
+                                           window_size.y ) ),
+            static_cast<int>( std::lround( static_cast<double>( output_rect.w ) * buffer_size.x /
+                                           window_size.x ) ),
+            static_cast<int>( std::lround( static_cast<double>( output_rect.h ) * buffer_size.y /
+                                           window_size.y ) )
+        };
+    } );
+}
 
-    const auto max_width = static_cast<double>( screen_dimensions.x ) * 0.9;
-    const auto max_height = static_cast<double>( screen_dimensions.y ) * 0.9;
-    const auto width_scale = max_width / static_cast<double>( image_size.x );
-    const auto height_scale = max_height / static_cast<double>( image_size.y );
-    const auto scale = std::min( width_scale, height_scale );
-    const auto scaled_width = std::max( 1, static_cast<int>( std::lround( image_size.x * scale ) ) );
-    const auto scaled_height = std::max( 1, static_cast<int>( std::lround( image_size.y * scale ) ) );
+auto get_loading_image_author_pos( const std::string &text ) -> std::optional<point>
+{
+    const auto screen_dimensions = get_sdl_display_buffer_size();
+    const auto font_size = get_sdl_font_size();
+    if( screen_dimensions.x <= 0 || screen_dimensions.y <= 0 || font_size.x <= 0 ||
+        font_size.y <= 0 ) {
+        return std::nullopt;
+    }
 
-    const auto rect = SDL_Rect{
-        ( screen_dimensions.x - scaled_width ) / 2,
-        ( screen_dimensions.y - scaled_height ) / 2,
-        scaled_width,
-        scaled_height
-    };
+    const auto text_width = utf8_width( text, true );
+    if( text_width <= 0 ) { return std::nullopt; }
 
-    return rect;
+    return point( std::max( 0, screen_dimensions.x - ( text_width + 1 ) * font_size.x ),
+                  std::max( 0, screen_dimensions.y - font_size.y ) );
 }
 
 auto draw_loading_image_author( const std::string &author ) -> bool
@@ -266,26 +301,16 @@ auto draw_loading_image_author( const std::string &author ) -> bool
     if( author.empty() ) { return false; }
 
     const auto text = string_format( _( "by %s" ), author );
-    const auto window_width = getmaxx( catacurses::stdscr );
-    const auto window_height = getmaxy( catacurses::stdscr );
-    if( window_width <= 0 || window_height <= 0 ) { return false; }
+    const auto text_pos = get_loading_image_author_pos( text );
+    if( !text_pos ) { return false; }
 
-    const auto text_width = utf8_width( text, true );
-    const auto text_pos = point( std::max( 0, window_width - text_width - 1 ), window_height - 1 );
-    static const auto outline_offsets = std::array<point, 8> {
-        point( -1, -1 ), point( 0, -1 ), point( 1, -1 ), point( -1, 0 ),
-        point( 1, 0 ), point( -1, 1 ), point( 0, 1 ), point( 1, 1 )
-    };
-
-    for( const auto &offset : outline_offsets ) {
-        const auto outline_pos = text_pos + offset;
-        if( outline_pos.x >= 0 && outline_pos.y >= 0 && outline_pos.x < window_width &&
-            outline_pos.y < window_height ) {
-            trim_and_print( catacurses::stdscr, outline_pos, window_width - outline_pos.x, c_black, text );
-        }
-    }
-    trim_and_print( catacurses::stdscr, text_pos, window_width - text_pos.x, c_white, text );
-    wnoutrefresh( catacurses::stdscr );
+    draw_sdl_text_outlined( {
+        .text = text,
+        .pos_pixel = *text_pos,
+        .text_color = catacurses::white,
+        .outline_color = catacurses::black,
+        .outline_thickness = 2
+    } );
     return true;
 }
 
@@ -294,36 +319,84 @@ auto draw_loading_image_author_if_present( const std::optional<std::string> &aut
     return author.transform( draw_loading_image_author ).value_or( false );
 }
 
+struct sdl_render_state_guard {
+    const SDL_Renderer_Ptr &renderer;
+    point logical_size = point_zero;
+    float scale_x = 1.0f;
+    float scale_y = 1.0f;
+    SDL_Rect viewport = {};
+    std::optional<SDL_Rect> clip_rect;
+    SDL_RendererLogicalPresentation present;
+
+    explicit sdl_render_state_guard( const SDL_Renderer_Ptr &renderer ) : renderer( renderer ) {
+        SDL_GetRenderLogicalPresentation( renderer.get(), &logical_size.x, &logical_size.y,  &present );
+        SDL_GetRenderScale( renderer.get(), &scale_x, &scale_y );
+        SDL_GetRenderViewport( renderer.get(), &viewport );
+        if( SDL_RenderClipEnabled( renderer.get() ) ) {
+            clip_rect.emplace();
+            SDL_GetRenderClipRect( renderer.get(), &*clip_rect );
+        }
+        SDL_SetRenderClipRect( renderer.get(), nullptr );
+        SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+        SDL_SetRenderScale( renderer.get(), 1.0f, 1.0f );
+        SDL_SetRenderViewport( renderer.get(), nullptr );
+    }
+
+    ~sdl_render_state_guard() {
+        if( logical_size.x > 0 && logical_size.y > 0 ) {
+            SDL_SetRenderLogicalPresentation( renderer.get(), logical_size.x, logical_size.y, present );
+        } else {
+            SDL_SetRenderLogicalPresentation( renderer.get(), 0, 0, present );
+            SDL_SetRenderScale( renderer.get(), scale_x, scale_y );
+            SDL_SetRenderViewport( renderer.get(), &viewport );
+        }
+        SDL_SetRenderClipRect( renderer.get(), clip_rect ? &*clip_rect : nullptr );
+    }
+};
+
 #endif // defined( TILES )
 
 } // namespace
 
 #if defined( TILES )
-auto loading_image_splash::advance_loading_image() -> bool
+auto advance_loading_image( loading_image_selection_state &state ) -> bool
 {
-    if( next_loading_image_path >= loading_image_paths.size() ) {
-        loading_image_path.clear();
-        loading_image_author.reset();
+    if( state.paths.empty() ) {
+        state.current_path.clear();
+        state.current_author.reset();
         return false;
     }
+    if( state.next_path >= state.paths.size() ) {
+        state.next_path = 0;
+    }
 
-    loading_image_path = loading_image_paths[next_loading_image_path++];
-    loading_image_author = get_loading_image_author( loading_image_path );
+    state.current_path = state.paths[state.next_path++];
+    state.current_author = get_loading_image_author( state.current_path );
     return true;
 }
 
 auto loading_image_splash::draw_current_loading_image() -> bool
 {
-    while( !loading_image_path.empty() ) {
-        const auto *const cache = get_loading_image_cache( *loading_image_cache_state, loading_image_path );
+    while( !this->selection_state->current_path.empty() ) {
+        const auto *const cache = get_loading_image_cache( *loading_image_cache_state,
+                                  this->selection_state->current_path );
         if( cache != nullptr ) {
-            return get_loading_image_rect( cache->image_size )
-            .transform( [cache]( const SDL_Rect & rect ) {
-                RenderCopy( get_sdl_renderer(), cache->texture, nullptr, &rect );
-                return true;
-            } ).value_or( false );
+            const auto rect = get_loading_image_rect( cache->image_size );
+            if( !rect ) {
+                log_loading_image( string_format( "failed to calculate rect for '%s'",
+                                                  this->selection_state->current_path ) );
+                return false;
+            }
+            const auto &renderer = get_sdl_renderer();
+            const auto render_state_guard = sdl_render_state_guard( renderer );
+            clear_sdl_display_buffer();
+            SDL_FRect fRect{};
+            SDL_RectToFRect( &*rect, &fRect );
+            RenderCopy( renderer, cache->texture, nullptr, &fRect );
+            draw_loading_image_author_if_present( this->selection_state->current_author );
+            return true;
         }
-        if( !advance_loading_image() ) {
+        if( !advance_loading_image( *this->selection_state ) ) {
             break;
         }
     }
@@ -332,31 +405,62 @@ auto loading_image_splash::draw_current_loading_image() -> bool
 }
 #endif
 
-loading_image_splash::loading_image_splash()
-{
 #if defined( TILES )
+loading_image_splash::loading_image_splash() : selection_state( &owned_selection_state )
+{
     loading_image_cache_state = std::make_unique<loading_image_cache>();
-#endif
 
     ui_background = std::make_unique<background_pane>( [this]() {
-#if defined( TILES )
         if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
             return;
         }
-        if( !this->loading_image_lookup_attempted && can_choose_loading_image_path() ) {
-            loading_image_paths = choose_loading_image_paths();
-            next_loading_image_path = 0;
-            this->loading_image_lookup_attempted = true;
-            advance_loading_image();
+        if( !this->selection_state->lookup_attempted && can_choose_loading_image_path() ) {
+            this->selection_state->paths = choose_loading_image_paths();
+            this->selection_state->next_path = 0;
+            this->selection_state->lookup_attempted = true;
         }
-        if( draw_current_loading_image() ) {
-            draw_loading_image_author_if_present( loading_image_author );
+        if( !selected_image_for_this_ui && this->selection_state->lookup_attempted ) {
+            selected_image_for_this_ui = true;
+            advance_loading_image( *this->selection_state );
         }
-#endif
+        draw_current_loading_image();
     } );
 }
 
-loading_image_splash::~loading_image_splash() = default;
+loading_image_splash::loading_image_splash( loading_image_selection_state &selection_state ) :
+    selection_state( &selection_state )
+{
+    loading_image_cache_state = std::make_unique<loading_image_cache>();
+
+    ui_background = std::make_unique<background_pane>( [this]() {
+        if( !get_option<bool>( "LOADING_SCREEN_IMAGES" ) ) {
+            return;
+        }
+        if( !this->selection_state->lookup_attempted && can_choose_loading_image_path() ) {
+            this->selection_state->paths = choose_loading_image_paths();
+            this->selection_state->next_path = 0;
+            this->selection_state->lookup_attempted = true;
+        }
+        if( !selected_image_for_this_ui && this->selection_state->lookup_attempted ) {
+            selected_image_for_this_ui = true;
+            advance_loading_image( *this->selection_state );
+        }
+        draw_current_loading_image();
+    } );
+}
+#else
+loading_image_splash::loading_image_splash()
+{
+    ui_background = std::make_unique<background_pane>();
+}
+#endif
+
+loading_image_splash::~loading_image_splash()
+{
+#if defined( TILES )
+    clear_sdl_display_buffer_before_redraw();
+#endif
+}
 
 loading_ui::loading_ui( bool display )
 {
@@ -366,7 +470,12 @@ loading_ui::loading_ui( bool display )
     }
 }
 
-loading_ui::~loading_ui() = default;
+loading_ui::~loading_ui()
+{
+#if defined( TILES )
+    clear_sdl_display_buffer_before_redraw();
+#endif
+}
 
 void loading_ui::add_entry( const std::string &description )
 {
@@ -388,7 +497,11 @@ void loading_ui::new_context( const std::string &desc )
 void loading_ui::init()
 {
     if( menu != nullptr && ui == nullptr ) {
+#if defined( TILES )
+        ui_splash = std::make_unique<loading_image_splash>( loading_image_selection );
+#else
         ui_splash = std::make_unique<loading_image_splash>();
+#endif
 
         ui = std::make_unique<ui_adaptor>();
         ui->on_screen_resize( [this]( ui_adaptor & ui ) { menu->reposition( ui ); } );

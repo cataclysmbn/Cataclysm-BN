@@ -3,7 +3,7 @@
 #include <optional>
 #include <string>
 
-struct tripoint;
+#include "coordinates.h"
 
 class Character;
 class Creature;
@@ -24,8 +24,8 @@ void spawn_nested_mapgen();
 void character_edit_menu( Character &c );
 void effect_edit_menu( Creature &c );
 void wishitem( Character *who = nullptr );
-void wishitem( Character *, const tripoint & );
-void wishmonster( const std::optional<tripoint> &p );
+void wishitem( Character *, const tripoint_bub_ms & );
+void wishmonster( const std::optional<tripoint_bub_ms> &p );
 void wishmutate( Character * );
 void wishbionics( Character &c );
 void wishskill( Character * );

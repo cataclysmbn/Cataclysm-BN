@@ -3,10 +3,10 @@
 
 #include "avatar.h"
 #include "calendar.h"
+#include "coordinates.h"
 #include "game.h"
 #include "map.h"
 #include "options_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -20,26 +20,26 @@ TEST_CASE( "opening_floor_invalidates_below_seen_cache", "[vision][zlevel]" )
     const ter_id t_open_air( "t_open_air" );
 
     // Place the player on z=1 so we have a meaningful "below".
-    g->place_player( tripoint( 60, 60, 1 ) );
+    g->place_player( tripoint_bub_ms( 60, 60, 1 ) );
 
-    const tripoint hole_pos = g->u.pos() + point_east;
+    const auto hole_pos = g->u.bub_pos() + point_east;
 
     // Ensure deterministic starting terrain.
     here.ter_set( hole_pos, t_floor );
     here.ter_set( hole_pos + tripoint_below, t_floor );
 
     // Simulate the pre-breach state where the below-z tile wasn't previously seen.
-    level_cache &below_cache = here.access_cache( hole_pos.z - 1 );
+    level_cache &below_cache = here.access_cache( hole_pos.z() - 1 );
     below_cache.seen_cache_dirty = false;
-    below_cache.seen_cache[below_cache.idx( hole_pos.x, hole_pos.y )] = 0.0f;
-    below_cache.camera_cache[below_cache.idx( hole_pos.x, hole_pos.y )] = 0.0f;
+    below_cache.seen_cache[below_cache.idx( hole_pos.x(), hole_pos.y() )] = 0.0f;
+    below_cache.camera_cache[below_cache.idx( hole_pos.x(), hole_pos.y() )] = 0.0f;
 
-    REQUIRE_FALSE( here.access_cache( hole_pos.z - 1 ).seen_cache_dirty );
+    REQUIRE_FALSE( here.access_cache( hole_pos.z() - 1 ).seen_cache_dirty );
 
     // Breach the floor (what explosions often do). This must invalidate the below-z seen cache.
     here.ter_set( hole_pos, t_open_air );
 
-    CHECK( here.access_cache( hole_pos.z - 1 ).seen_cache_dirty );
+    CHECK( here.access_cache( hole_pos.z() - 1 ).seen_cache_dirty );
 }
 
 TEST_CASE( "opening_floor_rebuilds_below_light", "[vision][zlevel]" )
@@ -53,21 +53,21 @@ TEST_CASE( "opening_floor_rebuilds_below_light", "[vision][zlevel]" )
     const ter_id t_floor( "t_floor" );
     const ter_id t_open_air( "t_open_air" );
 
-    g->place_player( tripoint( 60, 60, 1 ) );
+    g->place_player( tripoint_bub_ms( 60, 60, 1 ) );
 
     calendar::turn = calendar::turn_zero + 12_hours;
 
-    const tripoint hole_pos = g->u.pos() + point_east;
+    const auto hole_pos = g->u.bub_pos() + point_east;
 
     here.ter_set( hole_pos, t_open_air );
     here.ter_set( hole_pos + tripoint_below, t_floor );
 
-    here.build_map_cache( g->u.posz() );
-    here.update_visibility_cache( g->u.posz() );
+    here.build_map_cache( g->u.bub_pos().z() );
+    here.update_visibility_cache( g->u.bub_pos().z() );
 
-    const level_cache &below_cache = here.access_cache( hole_pos.z - 1 );
+    const level_cache &below_cache = here.access_cache( hole_pos.z() - 1 );
 
-    CHECK( below_cache.seen_cache[below_cache.idx( hole_pos.x, hole_pos.y )] > 0.0f );
-    CHECK( below_cache.visibility_cache[below_cache.idx( hole_pos.x,
-                                                         hole_pos.y )] != lit_level::BLANK );
+    CHECK( below_cache.seen_cache[below_cache.idx( hole_pos.x(), hole_pos.y() )] > 0.0f );
+    CHECK( below_cache.visibility_cache[below_cache.idx( hole_pos.x(),
+                                                         hole_pos.y() )] != lit_level::BLANK );
 }

@@ -535,7 +535,7 @@ bool ma_requirements::is_valid_character( const Character &u ) const
         }
     }
 
-    if( wall_adjacent && !get_map().is_wall_adjacent( u.pos() ) ) {
+    if( wall_adjacent && !get_map().is_wall_adjacent( u.bub_pos() ) ) {
         return false;
     }
 

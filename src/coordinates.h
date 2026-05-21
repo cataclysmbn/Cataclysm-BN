@@ -5,10 +5,12 @@
 #include <iterator>
 
 #include "cuboid_rectangle.h"
+#include "drawing_primitives.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "map_iterator.h"
 #include "point.h"
+#include "point_float.h"
 #include "debug.h"
 
 enum class direction : unsigned;
@@ -60,14 +62,29 @@ constexpr int map_squares_per( scale s )
 }
 
 enum class origin {
-    relative, // this is a special origin that can be added to any other
+    /**
+    * This is a special origin that can be added to any other.
+    * It is intended to be used as an offset rather than a direct
+    * pointer to a location in some reference frame.
+    **/
+    relative,
     abs, // the global absolute origin for the entire game
-    bubble, // from corner of reality bubble
-    vehicle, // local space origin for vehicles, includes rotation
+    /**
+    * From corner of reality bubble.
+    * You can think of bubble space as relative to the current bubble, but
+    * this requires a reference to the bubble to convert.
+    **/
+    bubble,
+    /**
+    * local space origin for vehicles, includes rotation
+    * This is similar to bubble space, but accounts for rotation as well.
+    * Also requires a reference to the vehicle to convert.
+    **/
+    vehicle,
     submap, // from corner of submap
     overmap_terrain, // from corner of overmap_terrain
     overmap, // from corner of overmap
-    segment,
+    segment, // from corner of segment
     mem_map_region, // from corner of memory map region
 };
 
@@ -182,6 +199,20 @@ class coord_point
         static constexpr auto below() requires std::same_as<Point, tripoint> {
             return coord_point( tripoint_below );
         }
+        static constexpr auto min() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_min );
+            } else {
+                return coord_point( tripoint_min );
+            }
+        }
+        static constexpr auto max() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_max );
+            } else {
+                return coord_point( tripoint_max );
+            }
+        }
 
         constexpr coord_point() = default;
         explicit constexpr coord_point( const Point &p ) :
@@ -239,6 +270,10 @@ class coord_point
             raw().deserialize( jsin );
         }
 
+        auto operator-() const -> coord_point {
+            return coord_point( -raw_ );
+        }
+
         coord_point &operator+=( const coord_point<Point, origin::relative, Scale> &r ) {
             raw_ += r.raw();
             return *this;
@@ -286,9 +321,10 @@ class coord_point
         }
 
         // Explicitly reinterpret this coordinate as a different typed coordinate
-        // with the same underlying point type.  Use only during migration scaffolding
+        // with the same underlying point type. Mostly used during migration scaffolding
         // where the origin/scale semantics differ but the raw value must be preserved.
-        // Every call site should be removable once the surrounding code is fully migrated.
+        // The final pass of the migration might want to grep for this, but not all uses
+        // are guaranteed to be problematic.
         template<typename Target>
         requires std::same_as<typename Target::value_type, Point>
         [[nodiscard]] auto reinterpret_as() const -> Target {
@@ -663,10 +699,24 @@ inline int square_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
-inline int trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
-                      const coords::coord_point<Point, Origin, Scale> &loc2 )
+inline int square_dist_fast( const coords::coord_point<Point, Origin, Scale> &loc1,
+                             const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return square_dist_fast( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+inline float trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
+                        const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return trig_dist( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+inline int trig_dist_squared( const coords::coord_point<Point, Origin, Scale> &loc1,
+                              const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return trig_dist_squared( loc1.raw(), loc2.raw() );
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
@@ -674,6 +724,13 @@ inline int rl_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
                     const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return rl_dist( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+inline float rl_dist_exact( const coords::coord_point<Point, Origin, Scale> &loc1,
+                            const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return rl_dist_exact( loc1.raw(), loc2.raw() );
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
@@ -712,6 +769,56 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
+static std::tuple<double, double, double> slope_of( const
+        std::vector<coords::coord_point<Point, Origin, Scale>> &line )
+{
+    assert( !line.empty() && line.front() != line.back() );
+    const double len = trig_dist( line.front(), line.back() );
+    double normDx = ( line.back().x() - line.front().x() ) / len;
+    double normDy = ( line.back().y() - line.front().y() ) / len;
+    double normDz = ( line.back().z() - line.front().z() ) / len;
+    // slope of <x, y, z>
+    return std::make_tuple( normDx, normDy, normDz );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+coords::coord_point<Point, Origin, Scale> move_along_line( const
+        coords::coord_point<Point, Origin, Scale> &loc,
+        const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
+        const int distance )
+{
+    coords::coord_point<Point, Origin, Scale> res( loc );
+    const auto slope = slope_of( line );
+    res.x() += distance * std::get<0>( slope );
+    res.y() += distance * std::get<1>( slope );
+    res.z() += distance * std::get<2>( slope );
+    return res;
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+std::vector<coords::coord_point<Point, Origin, Scale>>
+        continue_line( const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
+                       const int distance )
+{
+    return line_to( line.back(), move_along_line( line.back(), line, distance ) );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void calc_ray_end( units::angle angle, int range,
+                   const coords::coord_point<Point, Origin, Scale> &loc1,
+                   coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    calc_ray_end( angle, range, loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+units::angle coord_to_angle( const coords::coord_point<Point, Origin, Scale> &loc1,
+                             const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return coord_to_angle( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
 coords::coord_point<Point, Origin, Scale>
 midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
           const coords::coord_point<Point, Origin, Scale> &loc2 )
@@ -719,87 +826,53 @@ midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
     return coords::coord_point<Point, Origin, Scale>( ( loc1.raw() + loc2.raw() ) / 2 );
 }
 
-template<typename Point>
-Point midpoint( const inclusive_rectangle<Point> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<point, Origin, Scale>
+midpoint( const inclusive_rectangle<coords::coord_point<point, Origin, Scale>> &rect )
 {
-    constexpr point one( 1, 1 ); // NOLINT(cata-use-named-point-constants)
-    return midpoint( box.p_min, box.p_max + one );
+    return midpoint( rect.p_min, rect.p_max + point( 1, 1 ) );
 }
 
-template<typename Point>
-Point midpoint( const half_open_rectangle<Point> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<point, Origin, Scale>
+midpoint( const half_open_rectangle<coords::coord_point<point, Origin, Scale>> &rect )
 {
-    return midpoint( box.p_min, box.p_max );
+    return midpoint( rect.p_min, rect.p_max );
 }
 
-template<typename Tripoint>
-Tripoint midpoint( const inclusive_cuboid<Tripoint> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<tripoint, Origin, Scale>
+midpoint( const inclusive_cuboid<coords::coord_point<tripoint, Origin, Scale>> &rect )
 {
-    constexpr tripoint one( 1, 1, 1 );
-    return midpoint( box.p_min, box.p_max + one );
+    return midpoint( rect.p_min, rect.p_max + tripoint( 1, 1, 1 ) );
 }
 
-template<typename Tripoint>
-Tripoint midpoint( const half_open_cuboid<Tripoint> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<tripoint, Origin, Scale>
+midpoint( const half_open_cuboid<coords::coord_point<tripoint, Origin, Scale>> &rect )
 {
-    return midpoint( box.p_min, box.p_max );
+    return midpoint( rect.p_min, rect.p_max );
 }
 
-/* find appropriate subdivided coordinates for absolute tile coordinate.
- * This is less obvious than one might think, for negative coordinates, so this
- * was created to give a definitive answer.
- *
- * 'absolute' is defined as the -actual- submap x,y * SEEX + position in submap, and
- * can be obtained from map.getabs(x, y);
- *   usage:
- *    real_coords rc( g->m.getabs(g->u.posx(), g->u.posy() ) );
- */
-struct real_coords {
-    static const int tiles_in_sub = SEEX;
-    static const int tiles_in_sub_n = tiles_in_sub - 1;
-    static const int subs_in_om = OMAPX * 2;
-    static const int subs_in_om_n = subs_in_om - 1;
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_line( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 );
 
-    point abs_pos;     // 1 per tile, starting from tile 0,0 of submap 0,0 of overmap 0,0
-    point abs_sub;     // submap: 12 tiles.
-    point abs_om;      // overmap: 360 submaps.
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_square( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 );
 
-    point sub_pos;     // coordinate (0-11) in submap / abs_pos constrained to % 12.
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_rough_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                        coords::coord_point<Point, Origin, Scale> p, int rad );
 
-    point om_pos;      // overmap tile: 2x2 submaps.
-    point om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  const rl_vec2d &p, double rad );
 
-    real_coords() = default;
-
-    real_coords( point ap ) {
-        fromabs( ap );
-    }
-
-    void fromabs( point abs );
-
-    // specifically for the subjective position returned by overmap::draw
-    void fromomap( point rel_om, point rel_om_pos ) {
-        const point a = point( rel_om.x * OMAPX, rel_om.y * OMAPY ) + rel_om_pos;
-        fromabs( point( a.x * SEEX * 2, a.y * SEEY * 2 ) );
-    }
-
-    point_abs_omt abs_omt() const {
-        return project_to<coords::omt>( point_abs_sm( abs_sub ) );
-    }
-
-    // helper functions to return abs_pos of submap/overmap tile/overmap's start
-
-    point begin_sub() {
-        return point( abs_sub.x * tiles_in_sub, abs_sub.y * tiles_in_sub );
-    }
-    point begin_om_pos() {
-        return point( ( abs_om.x * subs_in_om * tiles_in_sub ) + ( om_pos.x * 2 * tiles_in_sub ),
-                      ( abs_om.y * subs_in_om * tiles_in_sub ) + ( om_pos.y * 2 * tiles_in_sub ) );
-    }
-    point begin_om() {
-        return point( abs_om.x * subs_in_om * tiles_in_sub, abs_om.y * subs_in_om * tiles_in_sub );
-    }
-};
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  coords::coord_point<Point, Origin, Scale> p, int rad );
 
 // Returns a view over every tile position within a single submap, in x-major order.
 // Equivalent to a nested loop over x in [0, SEEX) and y in [0, SEEY).
@@ -809,6 +882,22 @@ struct real_coords {
 //   std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) { ... } );
 inline auto submap_tiles() -> point_range<point_sm_ms>
 {
-    return { point_sm_ms::zero(), point_sm_ms( SEEX - 1, SEEY - 1 ) };
+    return { point_sm_ms::zero(), point_sm_ms( coords::map_squares_per( coords::scale::submap ) - 1, coords::map_squares_per( coords::scale::submap ) - 1 ) };
+}
+
+// Mapgen variant, for the tiny map which is always an omt in size, but is treated as bubble space locally
+inline auto tinymap_tiles() -> point_range<point_bub_ms>
+{
+    return { point_bub_ms::zero(), point_bub_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
+}
+
+inline auto overmap_terrain_tiles() -> point_range<point_omt_ms>
+{
+    return { point_omt_ms::zero(), point_omt_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
+}
+
+inline auto overmap_tiles() -> point_range<point_om_ms>
+{
+    return { point_om_ms::zero(), point_om_ms( coords::map_squares_per( coords::scale::overmap ) - 1, coords::map_squares_per( coords::scale::overmap ) - 1 ) };
 }
 
