@@ -282,6 +282,23 @@
   },
   {
     "type": "npc_class",
+    "id": "NC_EXTERMINATOR",
+    "name": { "str": "Wasp Exterminator" },
+    "job_description": "I'm on a crusade against wasps.",
+    "traits": [ { "group": "NPC_starting_traits" }, { "group": "Appearance_demographics" } ],
+    "common": false,
+    "bonus_per": { "rng": [ 2, 4 ] },
+    "shopkeeper_item_group": "NC_EXTERMINATOR_misc",
+    "weapon_override": "NC_EXTERMINATOR_launcher",
+    "skills": [
+      { "skill": "ALL", "level": { "sum": [ { "dice": [ 3, 2 ] }, { "rng": [ 0, -4 ] } ] } },
+      { "skill": "gun", "bonus": { "rng": [ 2, 4 ] } },
+      { "skill": "launcher", "bonus": { "rng": [ 2, 4 ] } },
+      { "skill": "barter", "bonus": { "rng": [ 2, 5 ] } }
+    ]
+  },
+  {
+    "type": "npc_class",
     "id": "NC_SOLDIER",
     "name": { "str": "Soldier" },
     "job_description": "I'm just here for the paycheck.",
