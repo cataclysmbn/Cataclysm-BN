@@ -109,7 +109,7 @@ const std::map<std::string, std::string> &get_mod_list_cat_tab()
     return mod_list_cat_tab;
 }
 
-void mod_manager::load_replacement_mods( const std::string &path )
+void mod_manager::load_replacement_mods( const fs::path &path )
 {
     read_from_file_json( path, [&]( JsonIn & jsin ) {
         jsin.start_array();
@@ -199,7 +199,7 @@ void mod_manager::remove_invalid_mods( t_mod_list &mods ) const
 namespace mod_management
 {
 
-std::vector<MOD_INFORMATION> load_mods_from( const std::string &path )
+std::vector<MOD_INFORMATION> load_mods_from( const fs::path &path )
 {
     std::vector<MOD_INFORMATION> out;
 
@@ -221,7 +221,7 @@ std::vector<MOD_INFORMATION> load_mods_from( const std::string &path )
     for( const mod_id &ident : has_dupes ) {
         std::string msg = string_format(
                               _( "The are multiple mods with same id [%s] found in folder \"%s\":\n" ),
-                              ident, path );
+                              ident, path.generic_string() );
 
         for( auto it = out.begin(); it != out.end(); ) {
             if( it->ident == ident ) {
@@ -316,16 +316,17 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
     return { std::move( modfile ) };
 }
 
-void load_mod_info( const std::string &info_file_path, std::vector<MOD_INFORMATION> &out )
+void load_mod_info( const fs::path &info_file_path, std::vector<MOD_INFORMATION> &out )
 {
-    const std::string main_path = info_file_path.substr( 0, info_file_path.find_last_of( "/\\" ) );
+    const auto main_path = info_file_path.parent_path().generic_string();
+    const auto file_path = info_file_path.generic_string();
     read_from_file_json( info_file_path, [&]( JsonIn & jsin ) {
         if( jsin.test_object() ) {
             // find type and dispatch single object
             JsonObject jo = jsin.get_object();
             std::optional<MOD_INFORMATION> mf = load_modfile( jo, main_path );
             if( mf ) {
-                mf->path_full = info_file_path;
+                mf->path_full = file_path;
                 out.push_back( std::move( *mf ) );
             }
             jo.finish();
@@ -336,7 +337,7 @@ void load_mod_info( const std::string &info_file_path, std::vector<MOD_INFORMATI
                 JsonObject jo = jsin.get_object();
                 std::optional<MOD_INFORMATION> mf = load_modfile( jo, main_path );
                 if( mf ) {
-                    mf->path_full = info_file_path;
+                    mf->path_full = file_path;
                     out.push_back( std::move( *mf ) );
                 }
                 jo.finish();

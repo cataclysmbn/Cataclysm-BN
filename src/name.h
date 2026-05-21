@@ -2,6 +2,7 @@
 
 #include <string>
 
+#include "filesystem.h"
 enum nameFlags {
     nameIsMaleName   = 1 << 0,
     nameIsFemaleName = 1 << 1,
@@ -22,7 +23,7 @@ nameFlags usage_flag( const std::string &usage );
 nameFlags gender_flag( const std::string &gender );
 
 /// Load names from given json file to use for generation
-void load_from_file( const std::string &filename );
+void load_from_file( const fs::path &filename );
 
 /// Return a random name given search flags
 std::string get( nameFlags searchFlags );

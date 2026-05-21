@@ -205,15 +205,16 @@ void set_language()
     reload_names();
 }
 
-static std::vector<language_info> load_languages( const std::string &filepath )
+static std::vector<language_info> load_languages( const fs::path &filepath )
 {
     std::vector<language_info> ret;
     try {
         std::ifstream stream( filepath, std::ios_base::binary );
+        const auto file_path = filepath.generic_string();
         if( !stream.is_open() ) {
-            throw std::runtime_error( string_format( "File '%s' not found", filepath ) );
+            throw std::runtime_error( string_format( "File '%s' not found", file_path ) );
         }
-        JsonIn json( stream );
+        JsonIn json( stream, file_path );
         JsonArray arr = json.get_array();
         for( const JsonObject &obj : arr ) {
             language_info info;

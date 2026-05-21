@@ -116,13 +116,13 @@ using t_mod_list = std::vector<mod_id>;
  * Load all modinfo.json files (recursively) from the given root.
  * @param path The root folder from which the modinfo files are searched.
  */
-std::vector<MOD_INFORMATION> load_mods_from( const std::string &path );
+std::vector<MOD_INFORMATION> load_mods_from( const fs::path &path );
 
 /**
  * Load all mod information from a json file.
  * (@see load_modfile)
  */
-void load_mod_info( const std::string &info_file_path, std::vector<MOD_INFORMATION> &out );
+void load_mod_info( const fs::path &info_file_path, std::vector<MOD_INFORMATION> &out );
 
 /**
  * Load mod info from a json object.
@@ -207,7 +207,7 @@ class mod_manager
 
         void remove_mod( const mod_id &ident );
         void remove_invalid_mods( t_mod_list &mods ) const;
-        void load_replacement_mods( const std::string &path );
+        void load_replacement_mods( const fs::path &path );
 
         pimpl<dependency_tree> tree;
 

@@ -13,6 +13,7 @@
 #include <list>
 #endif
 
+#include "filesystem.h"
 #include "point.h"
 #include "translations.h"
 
@@ -345,7 +346,7 @@ class input_manager
          * Load keybindings from a json file, override existing bindings.
          * Throws std::string on errors
          */
-        void load( const std::string &file_name, bool is_user_preferences );
+        void load( const fs::path &file_name, bool is_user_preferences );
 
         int input_timeout;
 

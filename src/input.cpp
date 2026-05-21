@@ -179,20 +179,21 @@ void input_manager::init()
     }
 }
 
-void input_manager::load( const std::string &file_name, bool is_user_preferences )
+void input_manager::load( const fs::path &file_name, bool is_user_preferences )
 {
-    std::ifstream data_file( file_name.c_str(), std::ifstream::in | std::ifstream::binary );
+    std::ifstream data_file( file_name, std::ifstream::in | std::ifstream::binary );
+    const auto file_path = file_name.generic_string();
 
     if( !data_file.good() ) {
         // Only throw if this is the first file to load, that file _must_ exist,
         // otherwise the keybindings can not be read at all.
         if( action_contexts.empty() ) {
-            throw std::runtime_error( std::string( "Could not read " ) + file_name );
+            throw std::runtime_error( std::string( "Could not read " ) + file_path );
         }
         return;
     }
 
-    JsonIn jsin( data_file, file_name );
+    JsonIn jsin( data_file, file_path );
 
     //Crawl through once and create an entry for every definition
     jsin.start_array();
@@ -203,7 +204,7 @@ void input_manager::load( const std::string &file_name, bool is_user_preferences
         const std::string type = action.get_string( "type", "keybinding" );
         if( type != "keybinding" ) {
             debugmsg( "Only objects of type 'keybinding' (not %s) should appear in the "
-                      "keybindings file '%s'", type, file_name );
+                      "keybindings file '%s'", type, file_path );
             continue;
         }
 

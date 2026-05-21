@@ -9,6 +9,7 @@
 #include <vector>
 #include <tuple>
 
+#include "filesystem.h"
 #include "translations.h"
 
 class JsonIn;
@@ -31,9 +32,9 @@ class options_manager
         static std::vector<id_and_option> build_tilesets_list();
         static std::vector<id_and_option> build_soundpacks_list();
         static std::vector<id_and_option> load_tilesets_from(
-            const std::string &path );
+            const fs::path &path );
         static std::vector<id_and_option> load_soundpack_from(
-            const std::string &path );
+            const fs::path &path );
 
         void enable_json( const std::string &var );
         void add_retry( const std::string &var, const std::string &val );

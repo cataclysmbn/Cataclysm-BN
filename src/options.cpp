@@ -1085,7 +1085,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
 }
 
 std::vector<options_manager::id_and_option> options_manager::load_tilesets_from(
-    const std::string &path )
+    const fs::path &path )
 {
     // Use local map as build_resource_list will clear the first parameter
     std::map<std::string, std::string> local_tilesets;
@@ -1127,7 +1127,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
 }
 
 std::vector<options_manager::id_and_option> options_manager::load_soundpack_from(
-    const std::string &path )
+    const fs::path &path )
 {
     // build_resource_list will clear &resource_option - first param
     std::map<std::string, std::string> local_soundpacks;

@@ -402,7 +402,7 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
     display_sub_menu( iSel, p_offset + point( offsets[iSel], offset.y - 3 ), sel_line );
 }
 
-std::vector<std::string> main_menu::load_file( const std::string &path,
+std::vector<std::string> main_menu::load_file( const fs::path &path,
         const std::string &alt_text ) const
 {
     std::vector<std::string> result;
@@ -456,7 +456,8 @@ void main_menu::init_windows()
 void main_menu::init_strings()
 {
     // ASCII Art
-    mmenu_title = load_file( PATH_INFO::title( current_holiday ), _( "Cataclysm: Bright Nights" ) );
+    mmenu_title = load_file( PATH_INFO::title( current_holiday ),
+                              _( "Cataclysm: Bright Nights" ) );
     // MOTD
     auto motd = load_file( PATH_INFO::motd(), _( "No message today." ) );
 
