@@ -104,3 +104,24 @@ turn=1335126   time="  0 seconds" type=neutral  message="The floor is lava!"
 ```
 
 you can see when 'the floor is lava', 0 priority hook gets cancelled, due to `on_character_try_move` having `.exit_early` set to true at the call site.
+
+## `on_add_msg`
+
+Fires whenever a message is added to the message log via `add_msg` / `Messages::add_msg`. Lets mods react to in-game events without polling the message stream.
+
+Params:
+
+- `msg`: the message text (string)
+- `type`: the message type (`MsgType` enum — `good`, `bad`, `mixed`, `warning`, `info`, `neutral`, `debug`, etc.)
+
+The hook fires after the empty / inactive / non-debug-mode early exits, but before cooldown coalescing — so duplicate / coalesced messages still trigger the hook. This matches the use cases of accessibility, alarm, and statistics mods, which want every surfaced line.
+
+Do not call `gapi.add_msg` from inside this hook — it will recurse.
+
+```lua
+game.add_hook("on_add_msg", function(params)
+  if params.type == MsgType.bad then
+    -- react to bad-news messages
+  end
+end)
+```

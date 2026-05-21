@@ -2,6 +2,8 @@
 #include "message_types.h"
 #include "calendar.h"
 #include "catacharset.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -185,6 +187,11 @@ class messages_impl
             if( type == m_debug ) {
                 DebugLog( DL::Info, DC::DebugModeMsg ) << msg;
             }
+
+            cata::run_hooks( "on_add_msg", [&]( sol::table & params ) {
+                params["msg"] = msg;
+                params["type"] = type;
+            } );
 
             game_message m = game_message( std::move( msg ), type );
 

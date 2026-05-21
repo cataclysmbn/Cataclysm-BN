@@ -50,6 +50,7 @@ constexpr auto hook_names = std::array
     "on_npc_do_turn",
     "on_monster_do_turn",
     "on_make_mapgen_factory_list",
+    "on_add_msg",
 };
 
 void define_hooks( lua_state &state )
