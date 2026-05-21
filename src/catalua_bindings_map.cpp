@@ -525,6 +525,7 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "rotate", []( map & m, int turns ) { m.rotate( turns ); } );
         luna::set_fx( ut, "make_rubble", []( map & m, tripoint_bub_ms point, furn_id & fid, ter_id & tid ) { m.make_rubble( point, fid, tid ); } );
         luna::set_fx( ut, "destroy", []( map & m, tripoint_bub_ms point ) { m.destroy( point ); } );
+        luna::set_fx( ut, "set_temperature", []( map & m, tripoint_bub_ms point, int temp ) { m.set_temperature( point, temp ); } );
     }
 
     // Register 'tinymap' class to be used in Lua

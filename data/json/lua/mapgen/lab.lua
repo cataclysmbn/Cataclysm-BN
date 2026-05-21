@@ -10,6 +10,7 @@ local see = 12
 
 local t_floor = TerId.new("t_floor"):int_id()
 local t_thconc_floor = TerId.new("t_thconc_floor"):int_id()
+local t_thconc_floor_olight = TerId.new("t_thconc_floor_olight"):int_id()
 local t_strconc_floor = TerId.new("t_strconc_floor"):int_id()
 local t_thconc_olight_floor = TerId.new("t_strconc_floor"):int_id()
 local t_sewage = TerId.new("t_sewage"):int_id()
@@ -40,7 +41,7 @@ local fd_smoke_vent = FieldTypeId.new("fd_smoke_vent"):int_id()
 draw_entry_room = function(data, map)
   for i = 0, 24 do
     for j = 0, 24 do
-      local pt = Tripoint.new(i, j, data:zlevel())
+      local pt = TripointBubMs.new(i, j, data:zlevel())
       if i == 0 or i == 1 or i == 22 or i == 23 or
          j == 0 or j == 1 or j == 22 or j == 23 or
          ( j > 1 and j < 22 and ( i == 10 or i == 13 ) ) then
@@ -50,21 +51,21 @@ draw_entry_room = function(data, map)
       end
     end
   end
-  map:set_ter_at(Tripoint.new(11, 0, data:zlevel()), t_door_metal_locked)
-  map:set_ter_at(Tripoint.new(12, 0, data:zlevel()), t_door_metal_locked)
-  map:set_ter_at(Tripoint.new(11, 1, data:zlevel()), t_floor)
-  map:set_ter_at(Tripoint.new(12, 1, data:zlevel()), t_floor)
-  map:set_ter_at(Tripoint.new(10, 0, data:zlevel()), t_card_science)
-  map:set_ter_at(Tripoint.new(10, 12, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(Tripoint.new(13, 12, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(Tripoint.new(10, 11, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(Tripoint.new(13, 11, data:zlevel()), t_door_metal_c)
-  map:set_ter_at(Tripoint.new(11, 21, data:zlevel()), t_stairs_down)
-  map:set_ter_at(Tripoint.new(12, 21, data:zlevel()), t_stairs_down)
-  data:nest( "lab_room_7x7", Point.new( 2, 2 ) )
-  data:nest( "lab_room_7x7", Point.new( 2, 14 ) )
-  data:nest( "lab_room_7x7", Point.new( 14, 2 ) )
-  data:nest( "lab_room_7x7", Point.new( 14, 14 ) )
+  map:set_ter_at(TripointBubMs.new(11, 0, data:zlevel()), t_door_metal_locked)
+  map:set_ter_at(TripointBubMs.new(12, 0, data:zlevel()), t_door_metal_locked)
+  map:set_ter_at(TripointBubMs.new(11, 1, data:zlevel()), t_floor)
+  map:set_ter_at(TripointBubMs.new(12, 1, data:zlevel()), t_floor)
+  map:set_ter_at(TripointBubMs.new(10, 0, data:zlevel()), t_card_science)
+  map:set_ter_at(TripointBubMs.new(10, 12, data:zlevel()), t_door_metal_c)
+  map:set_ter_at(TripointBubMs.new(13, 12, data:zlevel()), t_door_metal_c)
+  map:set_ter_at(TripointBubMs.new(10, 11, data:zlevel()), t_door_metal_c)
+  map:set_ter_at(TripointBubMs.new(13, 11, data:zlevel()), t_door_metal_c)
+  map:set_ter_at(TripointBubMs.new(11, 21, data:zlevel()), t_stairs_down)
+  map:set_ter_at(TripointBubMs.new(12, 21, data:zlevel()), t_stairs_down)
+  data:nest( "lab_room_7x7", PointRelMs.new( 2, 2 ) )
+  data:nest( "lab_room_7x7", PointRelMs.new( 2, 14 ) )
+  data:nest( "lab_room_7x7", PointRelMs.new( 14, 2 ) )
+  data:nest( "lab_room_7x7", PointRelMs.new( 14, 14 ) )
   if map.is_ot_match( "road", data:east(), ot_match_type ) then
     map:rotate(1)
   elseif map.is_ot_match( "road", data:south(), ot_match_type ) then
@@ -77,7 +78,7 @@ end
 draw_sewer_room = function(data, map, walls)
   for i = 0, 24 do
     for j = 0, 24 do
-      local pt = Tripoint.new( i, j, data:zlevel() )
+      local pt = TripointBubMs.new( i, j, data:zlevel() )
       map:set_ter_at(pt, t_thconc_floor)
       -- If there is a sewer nearby, down the center make a 5 tile wide sewage line
       if ( ( walls.left or walls.right ) and j > see - 3 and j < see + 2 ) or
@@ -121,29 +122,29 @@ insert_stairs = function(map, up_id, down_id, zlevel, from_above)
   local valid_points = {}
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = Tripoint.new(i, j, zlevel)
-      local pt_above = Tripoint.new(i, j, zlevel + 1)
-      local pt_below = Tripoint.new(i, j, zlevel - 1)
+      local pt = TripointBubMs.new(i, j, zlevel)
+      local pt_above = TripointBubMs.new(i, j, zlevel + 1)
+      local pt_below = TripointBubMs.new(i, j, zlevel - 1)
       -- If we somehow see a stair link take the stupid stair link
       if ( from_above and map:get_ter_at(pt_above) == t_stairs_down ) or
          ( not from_above and map:get_ter_at(pt_below) == t_stairs_up ) then
         if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-          valid_points = {Point.new(i, j)}
+          valid_points = {PointBubMs.new(i, j)}
           i = 24
           break
         end
       end
       if map:get_ter_at(pt) == t_thconc_floor and map:get_furn_at(pt) == f_null and map:get_trap_at(pt) == tr_null then
-        table.insert(valid_points, Point.new(i, j))
+        table.insert(valid_points, PointBubMs.new(i, j))
       end
     end
   end
   if #valid_points > 0 then
     local final_point = valid_points[gapi.rng(1, #valid_points)]
     if( from_above ) then
-      map:set_ter_at(Tripoint.new(final_point, zlevel), up_id)
+      map:set_ter_at(TripointBubMs.new(final_point, zlevel), up_id)
     else
-      map:set_ter_at(Tripoint.new(final_point, zlevel), down_id)
+      map:set_ter_at(TripointBubMs.new(final_point, zlevel), down_id)
     end
   else
     if( from_above ) then
@@ -159,13 +160,14 @@ draw_lights = function(data, map)
   if map.is_ot_match( "central_lab", data:id(), ot_match_prefix ) then
     light_chance = 1
   else
-    light_chance = math.pow( gapi.rng(1, 12), 1.6 )
+    light_chance = math.floor( gapi.rng(1, 12) ^ 1.6 )
   end
   if light_chance > 0 then
     for i = 0, 23 do
       for j = 0, 23 do
-        if not( i * j % 2 == 0 or i + j % 4 == 0 ) and gapi.rng( 0, light_chance ) then
-          map:set_ter_at( Tripoint.new(i, j, data:zlevel(), t_thconc_floor_olight))
+        if not( i * j % 2 == 0 or i + j % 4 == 0 ) and gapi.rng( 0, light_chance ) == 1 then
+          map:set_ter_at( TripointBubMs.new(i, j, data:zlevel()), t_thconc_floor_olight)
+        end
       end
     end
   end
@@ -178,19 +180,19 @@ draw_walls = function(data, map, walls)
     exterior_wall_ter = t_reinforced_glass
   end
   for i = 0, 23 do
-    local pt = Tripoint.new( i, 0, data:zlevel() )
+    local pt = TripointBubMs.new( i, 0, data:zlevel() )
     if walls.top == 0 then
       map:set_ter_at( pt, exterior_wall_ter )
       map:set_furn_at( pt, f_null )
       map:clear_items_at( pt )
     end
-    pt = Tripoint.new( 0, i, data:zlevel() )
+    pt = TripointBubMs.new( 0, i, data:zlevel() )
     if walls.left == 0 then
       map:set_ter_at( pt, exterior_wall_ter )
       map:set_furn_at( pt, f_null )
       map:clear_items_at( pt )
     end
-    pt = Tripoint.new( i, 23, data:zlevel() )
+    pt = TripointBubMs.new( i, 23, data:zlevel() )
     if walls.bottom == 2 then
       if i == 11 or i == 12 then
         map:set_ter_at( pt, t_door_metal_c )
@@ -202,7 +204,7 @@ draw_walls = function(data, map, walls)
     end
     map:set_furn_at( pt, f_null )
     map:clear_items_at( pt )
-    pt = Tripoint.new( 23, i, data:zlevel() )
+    pt = TripointBubMs.new( 23, i, data:zlevel() )
     if walls.right == 2 then
       if i == 11 or i == 12 then
         map:set_ter_at( pt, t_door_metal_c )
@@ -241,7 +243,9 @@ draw_normal_room = function(data, map)
     walls.left = 2
     boarders = boarders - 1
   end
-  if boarders == 3 then
+  if map.is_ot_match( "finale", data:id(), ot_match_contains ) then
+    data:generate("lab_finale_1level")
+  elseif boarders == 3 then
     data:generate("lab_1side")
     if left_wall == 2 then
       map:rotate( 1 )
@@ -286,7 +290,7 @@ draw_slimepit_room = function(data, map)
   for i = 0, 23 do
     for j = 0, 23 do
       if ( j < top_wall or j > bottom_wall  or i > right_wall or i < left_wall ) then
-        local pt = Tripoint.new( i, j, data:zlevel() )
+        local pt = TripointBubMs.new( i, j, data:zlevel() )
         if gapi.rng(1, 5) == 1 then
           -- This pretty closely mimics make_rubble for the purposes
           map:set_ter_at( pt, t_slime )
@@ -304,7 +308,7 @@ draw_ants_room = function(data, map)
     for j = 0, 23 do
       -- Diamond area that covers 2 spaces on edge
       if i + j > 10 and i + j < 36 and math.abs( i - j ) < 13 then
-        local pt = Tripoint.new( i, j, data:zlevel() )
+        local pt = TripointBubMs.new( i, j, data:zlevel() )
         if map:has_ter_flag_at( "DOOR", pt ) or map:has_ter_flag_at( "WALL", pt ) then
           -- If edge
           -- Or 25% of the time
@@ -340,7 +344,7 @@ draw_fullflood_room = function(data, map)
   end
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = Tripoint.new( i, j, data:zlevel())
+      local pt = TripointBubMs.new( i, j, data:zlevel())
       if gapi.rng(1, 10) ~= 1 then
         if map:get_ter_at(pt) == t_thconc_floor or map:get_ter_at(pt) == t_strconc_floor or map:get_ter_at(pt) == t_thconc_floor_olight then
           map:set_ter_at(pt, fluid)
@@ -363,7 +367,7 @@ draw_partflood_room = function(data, map)
   end
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = Tripoint.new( i, j, data:zlevel())
+      local pt = TripointBubMs.new( i, j, data:zlevel())
       if gapi.rng(1, 5) == 1 then
         if map:get_ter_at(pt) == t_thconc_floor or map:get_ter_at(pt) == t_strconc_floor or map:get_ter_at(pt) == t_thconc_floor_olight then
           map:set_ter_at(pt, fluid)
@@ -382,7 +386,7 @@ draw_gasleak_room = function(data, map)
   end
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = Tripoint.new( i, j, data:zlevel())
+      local pt = TripointBubMs.new( i, j, data:zlevel())
       if gapi.rng(1, 200) == 1 then
         if map:get_ter_at(pt) == t_thconc_floor or map:get_ter_at(pt) == t_strconc_floor then
           map:add_field_at( pt, field, 1, TimeDuration.from_turns(0) )
@@ -395,7 +399,7 @@ end
 draw_fungal_room = function(data, map)
   for i = 0, 23 do
     for j = 0, 23 do
-      local pt = Tripoint.new( i, j, data:zlevel())
+      local pt = TripointBubMs.new( i, j, data:zlevel())
       if gapi.rng(1, 5) ~= 1 then
         if map:has_flag_at("FLAT", pt) then
           map:set_ter_at(pt, t_fungus_floor_in)
@@ -417,8 +421,6 @@ lab.special_effects = {
   {weight=1, func=draw_partflood_room},
   {weight=2, func=draw_gasleak_room},
   {weight=1, func=draw_fungal_room},
-  -- {weight=1, func=draw_portal_room},
-  -- {weight=1, func=draw_radiation_room},
 }
 
 lab.draw = function(data, map)
@@ -483,8 +485,12 @@ lab.ice_draw = function(data, map)
   if data:zlevel() == 0 then
     temperature = -20
   else
-    temperature = -20 * math.log( -1 * data:zlevel() ) - 45
+    temperature = math.floor( -20 * math.log( -1 * data:zlevel() ) - 45 )
   end
+  map:set_temperature( TripointBubMs.new(0, 0, data:zlevel()), temperature)
+  map:set_temperature( TripointBubMs.new(0, 12, data:zlevel()), temperature)
+  map:set_temperature( TripointBubMs.new(12, 0, data:zlevel()), temperature)
+  map:set_temperature( TripointBubMs.new(12, 12, data:zlevel()), temperature)
   lab.draw(data, map)
 end
 
