@@ -4969,7 +4969,8 @@ double vehicle::coeff_water_drag() const
     if( hull_indices.empty() ) {
         hull_coverage = 0;
     } else {
-        hull_coverage = static_cast<double>( floating.size() ) / hull_indices.size();
+        hull_coverage = std::clamp( static_cast<double>( floating.size() ) / hull_indices.size(), 0.0,
+                                    1.0 );
     }
 
     std::set<int> occupied_y;
