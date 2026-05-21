@@ -1,5 +1,6 @@
 #if defined(TILES)
 #include "sdl_font.h"
+#include "filesystem.h"
 #include "output.h"
 #include "platform_win.h"
 #include "string_utils.h"
@@ -247,7 +248,7 @@ CachedTTFFont::CachedTTFFont(
         }
     }
     bool add_prefix = true;
-    std::vector<std::string> known_prefixes = {
+    std::vector<fs::path> known_prefixes = {
         PATH_INFO::user_fontdir(), PATH_INFO::fontdir()
     };
 
@@ -283,17 +284,17 @@ CachedTTFFont::CachedTTFFont(
     }
 #endif
 
-    for( const std::string &kp : known_prefixes ) {
-        if( typeface.starts_with( kp ) ) {
+    for( const fs::path &kp : known_prefixes ) {
+        if( typeface.starts_with( kp.generic_string() ) ) {
             add_prefix = false;
             break;
         }
     }
 
     for( const std::string &ks : known_suffixes ) {
-        for( const std::string &kp : known_prefixes ) {
+        for( const fs::path &kp : known_prefixes ) {
             if( add_prefix ) {
-                typefaces.emplace_back( kp + typeface + ( add_suffix ? ks : "" ) );
+                typefaces.emplace_back( ( kp / ( typeface + ( add_suffix ? ks : "" ) ) ).generic_string() );
             }
             typefaces.emplace_back( typeface + ( add_suffix ? ks : "" ) );
         }
