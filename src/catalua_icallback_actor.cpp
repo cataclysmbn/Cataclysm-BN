@@ -333,7 +333,8 @@ bool lua_istate_actor::has_on_tick() const
     return on_tick_func != sol::lua_nil;
 }
 
-auto lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const -> void
+auto lua_istate_actor::call_on_tick( Character &who, item &it,
+                                     const tripoint_bub_ms &pos ) const -> void
 {
     if( on_tick_func == sol::lua_nil ) {
         return;
