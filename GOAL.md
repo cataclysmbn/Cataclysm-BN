@@ -188,6 +188,8 @@ A later semantic audit of `SPELL` objects using `"effect": "lua"` found addition
 
 I also fixed one Lua runtime hazard by adding the missing `mod_fatigue` wrapper and added compatible effect definitions for Lua-managed concentration/mind-sense/resuscitation state effects.
 
+A further Lua ID-reference audit found one silent `pcall`-hidden invalid recipe reference for the Heart of Fire start path. It now teaches the existing `psi_centering_meditation_drain_reduce` recipe, and `tools/parity_audit.py` validates literal Lua references for effects, flags, items, monsters, mutations, recipes, spells, skills, and vitamins against BN base data plus the MoM fork.
+
 Current follow-up checks:
 
 ```text
