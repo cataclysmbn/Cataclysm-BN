@@ -248,7 +248,7 @@ auto get_directories_with( const fs::path &pattern, const fs::path &root_path,
     return files;
 }
 
-auto get_directories_with( const std::vector<std::string> &patterns, const fs::path &root_path,
+auto get_directories_with( const std::vector<fs::path> &patterns, const fs::path &root_path,
                            const bool recursive_search ) -> std::vector<fs::path>
 {
     if( patterns.empty() ) {
@@ -256,8 +256,8 @@ auto get_directories_with( const std::vector<std::string> &patterns, const fs::p
     }
 
     auto files = find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
-        return std::ranges::any_of( patterns, [&]( const std::string & ext ) {
-            return name_contains( path, ext, true );
+        return std::ranges::any_of( patterns, [&]( const fs::path & ext ) {
+            return name_contains( path, ext.generic_string(), true );
         } );
     } );
 

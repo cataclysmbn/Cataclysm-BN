@@ -169,7 +169,7 @@ void worldfactory::init()
 {
     load_last_world_info();
 
-    std::vector<std::string> qualifiers;
+    std::vector<fs::path> qualifiers;
     qualifiers.push_back( PATH_INFO::worldoptions() );
     qualifiers.push_back( SAVE_MASTER );
 

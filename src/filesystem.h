@@ -93,7 +93,7 @@ bool match_extension = false ) -> std::vector<fs::path>;
  * @param patterns A vector or patterns to match.
  * @see get_files_from_path
  */
-auto get_directories_with( const std::vector<std::string> &patterns,
+auto get_directories_with( const std::vector<fs::path> &patterns,
 const fs::path &root_path = {}, bool recursive_search = false ) -> std::vector<fs::path>;
 
 auto get_directories_with( const fs::path &pattern,
