@@ -3119,6 +3119,27 @@ void label::serialize( JsonOut &json ) const
     json.end_object();
 }
 
+namespace
+{
+
+/// Vehicle pivots used to be 2D mount-space points before tripoint migration.
+auto read_legacy_vehicle_pivot( const JsonObject &data, tripoint_mnt_veh &pivot ) -> void
+{
+    if( !data.has_member( "pivot" ) ) {
+        return;
+    }
+
+    const auto pivot_json = data.get_array( "pivot" );
+    if( pivot_json.size() != 2 && pivot_json.size() != 3 ) {
+        data.throw_error( "vehicle pivot must have 2 or 3 coordinates", "pivot" );
+    }
+
+    const auto z = pivot_json.size() == 3 ? pivot_json.get_int( 2 ) : 0;
+    pivot = tripoint_mnt_veh( pivot_json.get_int( 0 ), pivot_json.get_int( 1 ), z );
+}
+
+} // namespace
+
 /*
  * Load vehicle from a json blob that might just exceed player in size.
  */
@@ -3199,7 +3220,7 @@ void vehicle::deserialize( JsonIn &jsin )
     // Loading vehicles that predate the pivot logic is a special
     // case of this, they will load with an anchor of (0,0) which
     // is what they're expecting.
-    data.read( "pivot", pivot_anchor[0] );
+    read_legacy_vehicle_pivot( data, pivot_anchor[0] );
     pivot_anchor[1] = pivot_anchor[0];
     pivot_rotation[1] = pivot_rotation[0] = fdir_angle;
     data.read( "is_following", is_following );
