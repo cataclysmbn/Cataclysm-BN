@@ -909,6 +909,8 @@ void map::reset_vehicle_cache( )
             continue;
         }
         for( const auto &elem : ch->vehicle_list ) {
+            // abs_sm_pos is always the authoritative absolute position; the
+            // vehicle derives its bubble position from it when refreshing caches.
             elem->adjust_zlevel( 0, tripoint_rel_ms::zero() );
             add_vehicle_to_cache( elem );
         }

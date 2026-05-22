@@ -7,11 +7,10 @@
 #include "avatar_action.h"
 #include "computer.h"
 #include "construction_partial.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cata_utility.h"
 #include "data_vars.h"
-#include "dimension_bounds.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "field_type.h"
 #include "game.h"
@@ -724,8 +723,10 @@ TEST_CASE( "start_location_prepare_map_uses_active_dimension", "[map][dimension]
         .boundary_overmap_terrain = oter_str_id( "pd_border" )
     };
 
-    REQUIRE( g->travel_to_dimension( "start_prepare_map_test", pocket_dimension, bounds,
-                                     tripoint_abs_sm( 0, 0, 0 ) ) );
+    auto pocket_data = pocket_dimension_data{};
+    pocket_data.bounds = bounds;
+    REQUIRE( g->travel_to_dimension( dimension_id( "start_prepare_map_test" ), pocket_dimension,
+                                     pocket_data, tripoint_abs_sm( 0, 0, 0 ) ) );
 
     const auto omtstart = project_to<coords::omt>( tripoint_abs_sm( 0, 0, 0 ) );
     CHECK_NOTHROW( sloc_field.obj().prepare_map( omtstart ) );
