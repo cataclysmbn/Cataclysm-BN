@@ -1,0 +1,1194 @@
+[
+  {
+    "id": "sq_multiballoon",
+    "copy-from": "balloon",
+    "type": "vehicle_part",
+    "name": "다중격벽 수소낭",
+    "description": "과거의 비행선이 왜 수소 대신 헬륨을 썼는지, 그리고 그 헬륨 비행선조차 왜 역사 속으로 사라졌는지를 몸소 증명해 줄 발명품입니다. 차량용 배터리로 물을 전기 분해하여 얻어낸 수소를 그래핀 시트로 만든 주머니에 꽉꽉 채워 넣었습니다. 그나마 벌집 모양의 다중 격벽 구조로 바느질해 두어서 새가 한 번 쪼았다고 바로 추락하진 않겠지만, 소이탄이나 화염병 근처에는 절대 가지 않는 것이 당신의 목숨과 차량의 뼈대를 보존하는 길입니다.",
+    "item": "sq_multiballoon",
+    "height": 300,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+    },
+    "durability": 120,
+    "damage_modifier": 80,
+    "//": "Todo: should explode if damaged or destroyed by bullets, fire, or electric damage.",
+    "breaks_into": [ { "item": "scrap", "count": [ 10, 20 ] } ],
+    "flags": [ "BALLOON", "SHOCK_IMMUNE" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "sq_multiballoon_external",
+    "copy-from": "sq_multiballoon",
+    "type": "vehicle_part",
+    "name": "외장형 다중격벽 수소낭",
+    "description": "과거의 비행선이 왜 수소 대신 헬륨을 썼는지, 그리고 그 헬륨 비행선조차 왜 역사 속으로 사라졌는지를 몸소 증명해 줄 발명품입니다. 차량용 배터리로 물을 전기 분해하여 얻어낸 수소를 그래핀 시트로 만든 주머니에 꽉꽉 채워 넣었습니다. 그나마 벌집 모양의 다중 격벽 구조로 바느질해 두어서 새가 한 번 쪼았다고 바로 추락하진 않겠지만, 소이탄이나 화염병 근처에는 절대 가지 않는 것이 당신의 목숨과 차량의 뼈대를 보존하는 길입니다.",
+    "location": "structural",
+    "//": "Overhead, so don't affect movement but don't board.",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF", "NOCOLLIDE", "NOCOLLIDEBELOW" ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_multiballoon",
+    "symbol": "o",
+    "color": "light_gray",
+    "name": { "str": "다중격벽 수소낭" },
+    "description": "과거의 비행선이 왜 수소 대신 헬륨을 썼는지, 그리고 그 헬륨 비행선조차 왜 역사 속으로 사라졌는지를 몸소 증명해 줄 발명품입니다. 차량용 배터리로 물을 전기 분해하여 얻어낸 수소를 그래핀 시트로 만든 주머니에 꽉꽉 채워 넣었습니다. 그나마 벌집 모양의 다중 격벽 구조로 바느질해 두어서 새가 한 번 쪼았다고 바로 추락하진 않겠지만, 소이탄이나 화염병 근처에는 절대 가지 않는 것이 당신의 목숨과 차량의 뼈대를 보존하는 길입니다.",
+    "price": "12500 USD",
+    "price_postapoc": "200 USD",
+    "material": [ "superalloy", "graphene_sheet" ],
+    "weight": "3 kg",
+    "volume": "50 L",
+    "bashing": 4,
+    "to_hit": -3,
+    "category": "veh_parts",
+    "explosion": { "damage": 100, "radius": 2 },
+    "explode_in_fire": false
+  },
+  {
+    "type": "recipe",
+    "result": "sq_multiballoon",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "book_learn": [ [ "book_icef", 8 ], [ "textbook_mechanics", 8 ] ],
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "2 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 10 ], [ "adhesive", 5 ] ],
+    "components": [ [ [ "graphene", 10 ] ], [ [ "c_hydrogen_gas", 100 ], [ "airship_balloon_item", 2 ] ], [ [ "alloy_sheet", 8 ] ] ]
+  },
+  {
+    "id": "sq_antigrav_hover",
+    "copy-from": "helicopter_rotors",
+    "type": "vehicle_part",
+    "name": "반중력 호버 장치",
+    "item": "sq_antigrav_hover",
+    "location": "under",
+    "symbol": "O",
+    "broken_symbol": "x",
+    "color": "magenta",
+    "rotor_diameter": 20,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+    },
+    "height": 600,
+    "durability": 450,
+    "epower": -1500,
+    "wheel_type": "off-road",
+    "contact_area": 20,
+    "description": "바퀴가 있어야 할 자리를 대체하는 다목적 반중력 추진기입니다. 대지의 마찰력을 비웃으며 늪지와 폐허 위를 미끄러지듯 주파하게 합니다. 이 자비 없는 쇳덩어리를 통제하지 못해 콘크리트 벽에 처박혀 으깨진 기업의 테스트 파일럿은 셀 수조차 없습니다.",
+    "damage_modifier": 50,
+    "breaks_into": [ { "item": "scrap", "count": [ 15, 30 ] }, { "item": "steel_chunk", "count": [ 8, 16 ] } ],
+    "flags": [ "BALLOON", "WHEEL", "FLOATS", "ROTOR", "STABLE", "SELF_JACK", "VARIABLE_SIZE", "TRACKED", "ENABLED_DRAINS_EPOWER" ],
+    "damage_reduction": { "all": 40 }
+  },
+  {
+    "id": "sq_antigrav_hover",
+    "type": "WHEEL",
+    "category": "veh_parts",
+    "name": { "str_sp": "반중력 호버 장치" },
+    "description": "바퀴가 있어야 할 자리를 대체하는 다목적 반중력 추진기입니다. 대지의 마찰력을 비웃으며 늪지와 폐허 위를 미끄러지듯 주파하게 합니다. 이 자비 없는 쇳덩어리를 통제하지 못해 콘크리트 벽에 처박혀 으깨진 기업의 테스트 파일럿은 셀 수조차 없습니다.",
+    "price": "334000 USD",
+    "price_postapoc": "2250 USD",
+    "weight": "120 kg",
+    "volume": "80 L",
+    "looks_like": "xl_wind_turbine",
+    "material": "steel",
+    "symbol": "O",
+    "color": "magenta"
+  },
+  {
+    "type": "recipe",
+    "result": "sq_antigrav_hover",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "book_learn": [ [ "sq_recipe_lab_fusion", 9 ] ],
+    "skills_required": [ [ "fabrication", 9 ], [ "electronics", 9 ], [ "computer", 9 ] ],
+    "skill_used": "mechanics",
+    "difficulty": 9,
+    "time": "8 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "components": [
+      [ [ "amplifier", 2 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "vertigon", 15 ] ],
+      [ [ "nanomaterial", 50 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "portal", 2 ] ],
+      [ [ "e_scrap", 10 ] ],
+      [ [ "sq_fusion_core", 1 ] ],
+      [ [ "frame", 2 ] ],
+      [ [ "alloy_sheet", 8 ] ]
+    ]
+  },
+  {
+    "id": "sq_antigrav_module",
+    "copy-from": "balloon",
+    "type": "vehicle_part",
+    "name": "반중력 부양모듈",
+    "description": "베르티곤의 불안정한 역장을 이용해 수 톤에 달하는 차량의 물리적 질량을 강제로 지워버리는 반중력 하부 부품입니다. 이 모듈을 장착한 거대한 중장갑 요새는 지형의 페널티를 무시한 채 늪지와 폐허 위를 깃털처럼 미끄러지듯 주파할 수 있습니다.",
+    "item": "sq_antigrav_module",
+    "height": 2500,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+    },
+    "durability": 120,
+    "damage_modifier": 80,
+    "//": "Todo: should explode if damaged or destroyed by bullets, fire, or electric damage.",
+    "breaks_into": [ { "item": "scrap", "count": [ 10, 20 ] } ],
+    "flags": [ "BALLOON", "SHOCK_IMMUNE" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "sq_antigrav_module_external",
+    "copy-from": "sq_antigrav_module",
+    "type": "vehicle_part",
+    "name": "외장형 반중력 부양모듈",
+    "description": "베르티곤의 불안정한 역장을 이용해 수 톤에 달하는 차량의 물리적 질량을 강제로 지워버리는 반중력 하부 부품입니다. 이 모듈을 장착한 거대한 중장갑 요새는 지형의 페널티를 무시한 채 늪지와 폐허 위를 깃털처럼 미끄러지듯 주파할 수 있습니다.",
+    "location": "structural",
+    "//": "Overhead, so don't affect movement but don't board.",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF", "NOCOLLIDE", "NOCOLLIDEBELOW" ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_antigrav_module",
+    "symbol": "o",
+    "color": "magenta",
+    "name": { "str": "반중력 부양모듈" },
+    "description": "베르티곤의 불안정한 역장을 이용해 수 톤에 달하는 차량의 물리적 질량을 강제로 지워버리는 반중력 하부 부품입니다. 이 모듈을 장착한 거대한 중장갑 요새는 지형의 페널티를 무시한 채 늪지와 폐허 위를 깃털처럼 미끄러지듯 주파할 수 있습니다.",
+    "price": "512500 USD",
+    "price_postapoc": "2500 USD",
+    "material": [ "superalloy" ],
+    "weight": "3 kg",
+    "volume": "50 L",
+    "bashing": 4,
+    "to_hit": -3,
+    "category": "veh_parts",
+    "explosion": { "damage": 100, "radius": 2 },
+    "explode_in_fire": false
+  },
+  {
+    "type": "recipe",
+    "result": "sq_antigrav_module",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "book_learn": [ [ "sq_recipe_lab_fusion", 9 ] ],
+    "skills_required": [ [ "fabrication", 9 ], [ "electronics", 6 ], [ "computer", 4 ] ],
+    "skill_used": "mechanics",
+    "difficulty": 9,
+    "time": "4 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "components": [
+      [ [ "amplifier", 2 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "vertigon", 8 ] ],
+      [ [ "nanomaterial", 50 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "portal", 2 ] ],
+      [ [ "e_scrap", 10 ] ],
+      [ [ "sq_fusion_core", 1 ] ],
+      [ [ "frame", 1 ] ],
+      [ [ "alloy_sheet", 8 ] ]
+    ]
+  },
+  {
+    "id": "sq_antigrav_thruster",
+    "copy-from": "propeller_rotors",
+    "symbol": "^",
+    "color": "magenta",
+    "type": "vehicle_part",
+    "name": "반중력 추진기",
+    "description": "베르티곤의 불안정한 반발 역장을 후방으로 폭주시켜 막대한 가속도를 얻어내는 비인도적인 추진 장치입니다. 점화 스위치를 누르는 순간 등받이를 박살 낼 듯 짓누르는 살인적인 중력가속도는 탑승자의 척추를 위협합니다. 하지만 기업의 회계사들은 이 무식한 깡추진력으로 적의 방어선을 돌파할 수 있다면, 파일럿의 장기 파열쯤은 '수용 가능한 작전 손실'로 기록할 뿐입니다.",
+    "item": "sq_antigrav_thruster",
+    "propeller_diameter": 20,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "vehicle_weld_removal", 10 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "60 m", "using": [ [ "welding_standard", 20 ] ] }
+    },
+    "durability": 120,
+    "damage_modifier": 80,
+    "breaks_into": [ { "item": "scrap", "count": [ 10, 20 ] } ],
+    "flags": [ "PROPELLER", "PROTUSION", "SHOCK_RESISTANT" ],
+    "damage_reduction": { "bash": 10 }
+  },
+  {
+    "id": "sq_antigrav_thruster_external",
+    "copy-from": "sq_antigrav_thruster",
+    "type": "vehicle_part",
+    "name": "외장형 반중력 추진기",
+    "location": "structural",
+    "extend": { "flags": [ "PROTUSION", "EXTENDABLE", "AISLE", "ROOF", "NOCOLLIDE", "NOCOLLIDEBELOW" ] }
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_antigrav_thruster",
+    "symbol": "^",
+    "color": "magenta",
+    "name": { "str": "반중력 추진기" },
+    "description": "베르티곤의 불안정한 반발 역장을 후방으로 폭주시켜 막대한 가속도를 얻어내는 비인도적인 추진 장치입니다. 점화 스위치를 누르는 순간 등받이를 박살 낼 듯 짓누르는 살인적인 중력가속도는 탑승자의 척추를 위협합니다. 하지만 기업의 회계사들은 이 무식한 깡추진력으로 적의 방어선을 돌파할 수 있다면, 파일럿의 장기 파열쯤은 '수용 가능한 작전 손실'로 기록할 뿐입니다.",
+    "price": "512500 USD",
+    "price_postapoc": "2500 USD",
+    "material": [ "plastic" ],
+    "weight": "120 kg",
+    "volume": "50 L",
+    "bashing": 4,
+    "to_hit": -3,
+    "category": "veh_parts",
+    "explosion": { "damage": 100, "radius": 2 },
+    "explode_in_fire": false
+  },
+  {
+    "type": "recipe",
+    "result": "sq_antigrav_thruster",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "book_learn": [ [ "sq_recipe_lab_fusion", 9 ] ],
+    "skills_required": [ [ "fabrication", 9 ], [ "electronics", 9 ], [ "computer", 6 ] ],
+    "skill_used": "mechanics",
+    "difficulty": 9,
+    "time": "4 h",
+    "autolearn": true,
+    "using": [ [ "welding_standard", 20 ], [ "adhesive", 5 ] ],
+    "components": [
+      [ [ "amplifier", 2 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "vertigon", 10 ] ],
+      [ [ "nanomaterial", 50 ] ],
+      [ [ "plut_cell", 4 ] ],
+      [ [ "portal", 2 ] ],
+      [ [ "e_scrap", 10 ] ],
+      [ [ "sq_fusion_core", 1 ] ],
+      [ [ "alloy_sheet", 8 ] ]
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sq_adv_workbench",
+    "name": { "str": "차량용 머니퓰레이터 작업대" },
+    "symbol": "#",
+    "color": "cyan",
+    "broken_symbol": "#",
+    "broken_color": "light_gray",
+    "damage_modifier": 60,
+    "durability": 120,
+    "size": 120,
+    "item": "sq_adv_workbench",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 10 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FLAT_SURF", "WELDRIG", "WORKBENCH" ],
+    "breaks_into": [
+      { "item": "pipe", "count": [ 4, 6 ] },
+      { "item": "sheet_metal", "count": [ 0, 1 ] },
+      { "item": "sheet_metal_small", "count": [ 12, 24 ] },
+      { "item": "steel_chunk", "count": [ 4, 8 ] },
+      { "item": "scrap", "count": [ 12, 24 ] }
+    ],
+    "workbench": { "multiplier": 2.0, "mass": 500000, "volume": "50L" },
+    "damage_reduction": { "all": 29 }
+  },
+  {
+    "id": "sq_space_anomaly",
+    "type": "vehicle_part",
+    "name": "차원 저장고",
+    "//": "Keep away from Svarog detectors!",
+    "item": "sq_space_anomaly",
+    "location": "center",
+    "symbol": "O",
+    "broken_symbol": "O",
+    "color": "magenta",
+    "broken_color": "magenta",
+    "durability": 400,
+    "size": 40000,
+    "cargo_weight_modifier": 0,
+    "breaks_into": [  ],
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 8 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "45 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 9 ] ], "time": "25 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "CARGO", "COVERED", "UNMOUNT_ON_DAMAGE", "BOARDABLE", "LOCKABLE_CARGO" ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "afs_metal_rig",
+    "name": { "str": "MetalMaster forge buddy" },
+    "symbol": "&",
+    "categories": [ "Cargo", "Util" ],
+    "color": "red",
+    "broken_symbol": "x",
+    "broken_color": "red",
+    "looks_like": "welding_rig",
+    "damage_modifier": 10,
+    "durability": 200,
+    "description": "A welding and metalworking station, powered by the vehicle's battery.  'e'xamine the forge rig to utilize its welder or soldering iron; you'll still need glare protection.",
+    "size": "50 L",
+    "item": "afs_metal_rig",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "WELDRIG", "COVERED", "CRAFTER" ],
+    "integrated_tools": [ "forge", "kiln", "welder", "soldering_iron" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 3, 6 ] },
+      { "item": "steel_chunk", "count": [ 3, 6 ] },
+      { "item": "scrap", "count": [ 3, 6 ] },
+      { "item": "welder", "charges": 0, "prob": 50 },
+      { "item": "forge", "charges": 0, "prob": 50 },
+      { "item": "kiln", "charges": 0, "prob": 50 }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "afs_cooking_rig",
+    "name": { "str": "cooking rig" },
+    "symbol": "&",
+    "categories": [ "Cargo", "Util" ],
+    "color": "blue",
+    "broken_symbol": "x",
+    "broken_color": "blue",
+    "looks_like": "kitchen_unit",
+    "damage_modifier": 10,
+    "durability": 125,
+    "description": "An all-in-one kitchen unit and chemistry lab.  'e'xamine it to use its hotplate to heat up food or drinks.",
+    "size": "50 L",
+    "item": "afs_cooking_rig",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "HOTPLATE", "FAUCET", "COVERED", "CRAFTER" ],
+    "integrated_tools": [ "chemistry_set", "electrolysis_kit", "pot", "pan", "hotplate" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 6, 9 ] },
+      { "item": "steel_chunk", "count": [ 6, 9 ] },
+      { "item": "scrap", "count": [ 6, 9 ] },
+      { "item": "pot", "prob": 50 },
+      { "item": "pan", "prob": 50 },
+      { "item": "chemistry_set", "charges": 0, "prob": 50 },
+      { "item": "hotplate", "charges": 0, "prob": 50 }
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "afs_kitchen_rig",
+    "name": { "str": "KitchenMaster cooking buddy" },
+    "symbol": "&",
+    "categories": [ "Cargo", "Util" ],
+    "color": "yellow",
+    "broken_symbol": "x",
+    "broken_color": "yellow",
+    "looks_like": "kitchen_unit",
+    "damage_modifier": 10,
+    "durability": 200,
+    "description": "An all-in-one kitchen unit, chemistry lab, and food preparation area.  'e'xamine it to use its hotplate to heat up food or drinks.",
+    "size": "50 L",
+    "item": "afs_kitchen_rig",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "HOTPLATE", "FAUCET", "WATER_PURIFIER", "COVERED", "CRAFTER" ],
+    "integrated_tools": [ "chemistry_set", "electrolysis_kit", "pot", "pan", "hotplate", "dehydrator", "vac_sealer", "food_processor", "press" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 9, 18 ] },
+      { "item": "steel_chunk", "count": [ 9, 18 ] },
+      { "item": "scrap", "count": [ 9, 18 ] },
+      { "item": "pot", "prob": 50 },
+      { "item": "pan", "prob": 50 },
+      { "item": "chemistry_set", "charges": 0, "prob": 50 },
+      { "item": "hotplate", "charges": 0, "prob": 50 },
+      { "item": "water_purifier", "charges": 0, "prob": 50 },
+      { "item": "vac_sealer", "charges": 0, "prob": 50 },
+      { "item": "dehydrator", "charges": 0, "prob": 50 },
+      { "item": "food_processor", "charges": 0, "prob": 50 },
+      { "item": "press", "charges": 0, "prob": 50 }
+    ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "afs_metal_rig",
+    "copy-from": "vehicle_rig",
+    "name": { "str": "MetalMaster forge buddy", "str_pl": "MetalMaster forge buddies" },
+    "description": "From the makers of the best-selling* FOODCO kitchen buddy comes the MetalMaster forge buddy, for all your metalworking, firing, and welding needs!  It's just as clunky and awkward as the thing it's spinning off, and still requires a vehicle battery to function."
+  },
+  {
+    "type": "GENERIC",
+    "id": "afs_kitchen_rig",
+    "copy-from": "vehicle_rig",
+    "name": { "str": "KitchenMaster cooking buddy", "str_pl": "KitchenMaster cooking buddies" },
+    "description": "Because it *clearly* needed one, this large all-in-one station provides the functions of FOODCO's kitchen buddy, now with complementary fume hoods and chemistry materials.  Why a chef would need a chemical rig is anyone's guess, but you can mount it on a vehicle to make use of it."
+  },
+  {
+    "type": "GENERIC",
+    "id": "afs_cooking_rig",
+    "copy-from": "vehicle_rig",
+    "name": { "str": "cooking rig" },
+    "description": "Skillet, pot, hotplate, and chemistry set; everything you need to cook food and chemicals.  Includes proper fume vents and a separator, so you don't contaminate your food with toxic chemicals."
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_megafreezer",
+    "name": { "str_sp": "화물 냉동고" },
+    "description": "식품을 냉동 보관할 수 있는 이동식 솔루션으로 설계된 대형 버전의 300L의 대용량 냉동고입니다. 외부 요소로부터 단열 기능을 제공합니다.",
+    "volume": "300 L",
+    "weight": "100 kg",
+    "price": 245000,
+    "price_postapoc": 10000,
+    "looks_like": "minifreezer",
+    "copy-from": "minifridge"
+  },
+  {
+    "result": "sq_megafreezer",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "mechanics",
+    "skills_required": [ "fabrication", 5 ],
+    "difficulty": 6,
+    "time": "120 m",
+    "reversible": true,
+    "autolearn": true,
+    "book_learn": [ [ "textbook_mechanics", 5 ], [ "manual_mechanics", 5 ], [ "textbook_fabrication", 5 ] ],
+    "using": [ [ "welding_standard", 50 ] ],
+    "qualities": [
+      { "id": "HAMMER", "level": 2 },
+      { "id": "SAW_M", "level": 1 },
+      { "id": "DRILL", "level": 1 },
+      { "id": "SCREW", "level": 1 },
+      { "id": "WRENCH", "level": 1 }
+    ],
+    "components": [ [ [ "minifreezer", 2 ] ], [ [ "cargo_rack", 1 ] ] ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sq_megafreezer",
+    "name": { "str": "화물 냉동고" },
+    "description": "식품을 냉동 보관할 수 있는 이동식 솔루션으로 설계된 대형 버전의 300L의 대용량 냉동고입니다. 외부 요소로부터 단열 기능을 제공합니다.",
+    "symbol": "=",
+    "color": "light_blue",
+    "broken_symbol": "#",
+    "broken_color": "blue",
+    "looks_like": "minifreezer",
+    "damage_modifier": 80,
+    "durability": 100,
+    "epower": -70,
+    "size": 1200,
+    "item": "sq_megafreezer",
+    "location": "center",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "CARGO", "OBSTACLE", "FREEZER", "COVERED", "ENABLED_DRAINS_EPOWER" ],
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 8, 13 ] },
+      { "item": "steel_chunk", "count": [ 8, 13 ] },
+      { "item": "scrap", "count": [ 8, 13 ] },
+      { "item": "hose", "prob": 50 },
+      { "item": "motor_tiny", "prob": 25 }
+    ],
+    "damage_reduction": { "all": 32 }
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_supercharge_station",
+    "name": { "str": "초고속 충전소" },
+    "looks_like": "recharge_station",
+    "description": "차량 전력으로 작동하는 최첨단 충전소입니다. 작동 중에 내부 저장공간에 삽입된 모든 충전 가능한 배터리 (셀식 배터리, 납-산 배터리 등) 를 초고속 충전 기술로 배터리 충전소보다 훨씬 빨리 충전시킬 것입니다. 이 장치는 사전에 설치된 저장공간이 있어야 설치할 수 있으며, 대시보드나 전자기기 제어장치에서 끄고 켤 수 있습니다.",
+    "weight": "13500 g",
+    "to_hit": 1,
+    "color": "light_blue",
+    "symbol": "-",
+    "material": [ "steel", "plastic" ],
+    "volume": "8 L",
+    "bashing": 6,
+    "category": "veh_parts",
+    "price": 330000,
+    "price_postapoc": 20000
+  },
+  {
+    "type": "recipe",
+    "result": "sq_supercharge_station",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_PARTS",
+    "skill_used": "electronics",
+    "difficulty": 8,
+    "time": "100 m",
+    "reversible": true,
+    "decomp_learn": 7,
+    "autolearn": true,
+    "book_learn": [ [ "textbook_mechanics", 7 ], [ "textbook_electronics", 6 ], [ "advanced_electronics", 6 ], [ "textbook_robots", 5 ] ],
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ] ],
+    "using": [ [ "soldering_standard", 50 ] ],
+    "qualities": [ { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "recharge_station", 1 ] ],
+      [ [ "power_supply", 2 ] ],
+      [ [ "processor", 2 ] ],
+      [ [ "scrap", 5 ] ],
+      [ [ "cable", 8 ] ]
+    ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sq_supercharge_station",
+    "name": { "str": "초고속 충전소" },
+    "symbol": "o",
+    "looks_like": "recharge_station",
+    "color": "light_blue",
+    "broken_symbol": "#",
+    "broken_color": "blue",
+    "damage_modifier": 10,
+    "durability": 30,
+    "description": "차량 전력으로 작동하는 최첨단 충전소입니다. 작동 중에 내부 저장공간에 삽입된 모든 충전 가능한 배터리 (셀식 배터리, 납-산 배터리 등) 를 초고속 충전 기술로 배터리 충전소보다 훨씬 빨리 충전시킬 것입니다. 이 장치는 사전에 설치된 저장공간이 있어야 설치할 수 있으며, 대시보드나 전자기기 제어장치에서 끄고 켤 수 있습니다.",
+    "bonus": 12000,
+    "item": "sq_supercharge_station",
+    "location": "on_cargo",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ], [ "electronics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ], [ "electronics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_screw", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 4 ] ], "time": "30 m", "using": [ [ "adhesive", 1 ] ] }
+    },
+    "flags": [ "INTERNAL", "RECHARGE", "FOLDABLE" ],
+    "folded_volume": 8,
+    "breaks_into": [
+      { "item": "steel_chunk", "count": [ 0, 2 ] },
+      { "item": "scrap", "count": [ 1, 2 ] },
+      { "item": "cable", "charges": [ 1, 3 ] }
+    ],
+    "damage_reduction": { "all": 10 }
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_engine_atomic",
+    "name": { "str": "원자력 엔진" },
+    "description": "방사능 붕괴를 통해 열을 생성하여 차량에 지속적이고 안정적인 전력을 얻는 원자력 엔진입니다. 첨단 설계 덕분에 한 차량에 여러 개를 설치해도 출력 낭비가 일어나지 않습니다.",
+    "color": "light_green",
+    "looks_like": "minireactor",
+    "weight": "300 kg",
+    "material": [ "superalloy" ],
+    "volume": "25 L",
+    "price": 1208000,
+    "price_postapoc": 7500,
+    "copy-from": "motor"
+  },
+  {
+    "type": "recipe",
+    "result": "sq_engine_atomic",
+    "category": "CC_ELECTRONIC",
+    "subcategory": "CSC_ELECTRONIC_PARTS",
+    "skill_used": "electronics",
+    "skills_required": [ "fabrication", 9 ],
+    "difficulty": 9,
+    "time": "320 m",
+    "reversible": false,
+    "decomp_learn": 2,
+    "book_learn": [ [ "recipe_lab_elec", 7 ], [ "textbook_atomic_lab", 7 ] ],
+    "using": [ [ "soldering_standard", 5 ], [ "steel_standard", 1 ] ],
+    "qualities": [ { "id": "HAMMER", "level": 1 }, { "id": "SCREW", "level": 1 } ],
+    "components": [
+      [ [ "minireactor", 1 ] ],
+      [ [ "motor_enhanced", 1 ] ],
+      [ [ "sq_atomic_forge", 1 ] ],
+      [ [ "power_supply", 5 ] ],
+      [ [ "alloy_plate", 2 ] ],
+      [ [ "plut_cell", 20 ], [ "sq_uranium_cell", 4 ] ]
+    ]
+  },
+  {
+    "id": "sq_engine_atomic",
+    "copy-from": "engine_motor",
+    "color": "light_green",
+    "type": "vehicle_part",
+    "name": { "str": "원자력 엔진" },
+    "item": "sq_engine_atomic",
+    "looks_like": "minireactor",
+    "description": "방사능 붕괴를 통해 열을 생성하여 차량에 지속적이고 안정적인 전력을 얻는 원자력 엔진입니다. 첨단 설계 덕분에 한 차량에 여러 개를 설치해도 출력 낭비가 일어나지 않습니다.",
+    "durability": 200,
+    "epower": 12500,
+    "power": 193600,
+    "energy_consumption": 0,
+    "damage_modifier": 80,
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 6 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "breaks_into": [
+      { "item": "steel_lump", "count": [ 10, 15 ] },
+      { "item": "steel_chunk", "count": [ 3, 5 ] },
+      { "item": "scrap", "count": [ 3, 5 ] },
+      { "item": "e_scrap", "count": [ 5, 10 ] },
+      { "item": "bearing", "count": [ 20, 50 ] },
+      { "item": "plut_cell", "count": [ 3, 5 ] },
+      { "item": "cable", "charges": [ 10, 15 ] }
+    ],
+    "extend": { "flags": [ "E_NO_POWER_DECAY" ] },
+    "damage_reduction": { "all": 50 }
+  },
+  {
+    "id": "sq_hardlight_pistol",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "차량용 하드라이트 부무장" },
+    "looks_like": "plasma_gun",
+    "item": "sq_hardlight_pistol",
+    "color": "light_blue",
+    "broken_color": "light_blue",
+    "breaks_into": [ { "item": "sq_hardlight_pistol", "prob": 50 } ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "750 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ] }
+    }
+  },
+  {
+    "id": "sq_hardlight_shotgun",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "차량용 하드라이트 확산총" },
+    "looks_like": "plasma_gun",
+    "item": "sq_hardlight_shotgun",
+    "color": "light_blue",
+    "broken_color": "light_blue",
+    "breaks_into": [ { "item": "sq_hardlight_shotgun", "prob": 50 } ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "3500 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ] }
+    }
+  },
+  {
+    "id": "sq_hardlight_smg",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "차량용 하드라이트 카빈" },
+    "looks_like": "plasma_gun",
+    "item": "sq_hardlight_smg",
+    "color": "light_blue",
+    "broken_color": "light_blue",
+    "breaks_into": [ { "item": "sq_hardlight_smg", "prob": 50 } ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "1250 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ] }
+    }
+  },
+  {
+    "id": "sq_hardlight_rifle",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "차량용 하드라이트 소총" },
+    "looks_like": "plasma_gun",
+    "item": "sq_hardlight_rifle",
+    "color": "light_blue",
+    "broken_color": "light_blue",
+    "breaks_into": [ { "item": "sq_hardlight_rifle", "prob": 50 } ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "2250 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ] }
+    }
+  },
+  {
+    "id": "sq_hardlight_sniper",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "차량용 하드라이트 정밀소총" },
+    "looks_like": "plasma_gun",
+    "item": "sq_hardlight_sniper",
+    "color": "light_blue",
+    "broken_color": "light_blue",
+    "breaks_into": [ { "item": "sq_hardlight_sniper", "prob": 50 } ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "2500 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ] }
+    }
+  },
+  {
+    "id": "sq_tesla_cannon",
+    "copy-from": "turret",
+    "type": "vehicle_part",
+    "name": { "str": "차량용 테슬라 캐논" },
+    "looks_like": "emp_gun",
+    "item": "sq_tesla_cannon",
+    "color": "cyan",
+    "broken_color": "cyan",
+    "breaks_into": [ { "item": "sq_tesla_cannon", "prob": 50 } ],
+    "extend": { "flags": [ "FOLDABLE" ] },
+    "folded_volume": "3000 ml",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ], [ "electronics", 6 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ] }
+    }
+  },
+  {
+    "id": "sq_carbide_plating",
+    "type": "GENERIC",
+    "category": "vehicle_parts",
+    "name": { "str_sp": "겹층 탄화물 장갑판" },
+    "description": "강화된 겹층 탄화물 플레이트로, 가벼우면서도 튼튼한, 차량에 부착할 수 있는 최고의 총알 방지 장치입니다.",
+    "weight": "4500 g",
+    "volume": "3000 ml",
+    "price": 36000,
+    "price_postapoc": 1200,
+    "material": "carbide",
+    "symbol": ",",
+    "looks_like": "polycarbonate_sheet",
+    "color": "dark_gray",
+    "flags": [ "NO_SALVAGE" ]
+  },
+  {
+    "result": "sq_carbide_plating",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_MATERIALS",
+    "skill_used": "fabrication",
+    "skills_required": [ "cooking", 9 ],
+    "difficulty": 7,
+    "time": "45 m",
+    "batch_time_factors": [ 50, 5 ],
+    "book_learn": [ [ "recipe_lab_cvd", 5 ] ],
+    "autolearn": false,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ] ],
+    "components": [ [ [ "carbide_plate", 6 ] ] ]
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sq_plating_carbide",
+    "name": { "str": "겹층 탄화물 장갑판" },
+    "symbol": ")",
+    "color": "dark_gray",
+    "broken_symbol": ";",
+    "broken_color": "dark_gray",
+    "durability": 1100,
+    "item": "sq_carbide_plating",
+    "location": "armor",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 6 ] ], "time": "30 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 4 ] ], "time": "15 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 7 ] ], "time": "30 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "ARMOR" ],
+    "breaks_into": [ { "item": "carbide_plate", "count": [ 0, 4 ] } ],
+    "damage_reduction": { "all": 70, "cut": 95, "stab": 118 }
+  },
+  {
+    "type": "recipe",
+    "result": "carbonfiber_boat_hull",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 6,
+    "time": "60 m",
+    "reversible": true,
+    "autolearn": true,
+    "using": [ [ "welding_standard", 25 ] ],
+    "components": [ [ [ "kevlar_plate", 20 ], [ "carbide_plate", 15 ] ] ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_carbide_frame",
+    "name": { "str": "겹층 탄화물 프레임" },
+    "looks_like": "carbide_plate",
+    "description": "겹층 탄화물로 만든 큰 프레임이다. 제작에 쓰인다.",
+    "weight": "5000 g",
+    "to_hit": -5,
+    "color": "light_gray",
+    "material": [ "carbide" ],
+    "volume": "15 L",
+    "bashing": 20,
+    "price": 16500,
+    "price_postapoc": 300,
+    "copy-from": "foldframe"
+  },
+  {
+    "type": "recipe",
+    "result": "sq_carbide_frame",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "45 m",
+    "reversible": true,
+    "autolearn": true,
+    "using": [ [ "welding_standard", 10 ] ],
+    "components": [ [ [ "carbide_plate", 10 ] ], [ [ "graphene", 2 ] ] ]
+  },
+  {
+    "abstract": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "name": { "str": "겹층 탄화물 프레임" },
+    "item": "sq_carbide_frame",
+    "location": "structure",
+    "durability": 600,
+    "description": "겹층 탄화물 프레임입니다. 프레임 위에 다른 차량 부품들을 장착할 수 있고, 또 다른 프레임을 붙여서 차량 크기를 늘릴 수 있습니다. ",
+    "breaks_into": "ig_vp_sq_carbide_frame",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 1 ] ], "time": "20 m", "using": [ [ "welding_standard", 10 ] ] },
+      "removal": { "skills": [ [ "mechanics", 1 ] ], "time": "10 m", "using": "vehicle_weld_removal" },
+      "repair": { "skills": [ [ "mechanics", 1 ] ], "time": "5 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "MOUNTABLE" ],
+    "damage_reduction": { "all": 82 }
+  },
+  {
+    "type": "GENERIC",
+    "id": "sq_carbide_hdframe",
+    "name": { "str": "고강도 겹층 탄화물 프레임" },
+    "looks_like": "frame",
+    "description": "경량 군용 차량 건조에 사용되는 대형 강화 겹층 탄화물 프레임입니다.",
+    "weight": "25000 g",
+    "to_hit": -6,
+    "color": "dark_gray",
+    "material": [ "carbide" ],
+    "volume": "20 L",
+    "bashing": 25,
+    "price": 36000,
+    "price_postapoc": 750,
+    "qualities": [ [ "ANVIL", 1 ] ],
+    "copy-from": "foldframe"
+  },
+  {
+    "type": "recipe",
+    "result": "sq_carbide_hdframe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_VEHICLE",
+    "skill_used": "fabrication",
+    "difficulty": 7,
+    "time": "90 m",
+    "reversible": true,
+    "autolearn": true,
+    "using": [ [ "welding_standard", 50 ] ],
+    "components": [ [ [ "carbide_plate", 25 ] ], [ [ "graphene", 10 ] ] ]
+  },
+  {
+    "abstract": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "name": { "str": "고강도 겹층 탄화물 프레임" },
+    "looks_like": "hdframe",
+    "item": "sq_carbide_hdframe",
+    "location": "structure",
+    "color": "dark_gray",
+    "durability": 1140,
+    "description": "상대적으로 무거운 겹층 탄화물 프레임입니다. 프레임 위에 다른 차량 부품들을 장착할 수 있고, 또 다른 프레임을 붙여서 차량 크기를 늘릴 수 있습니다. 질량이 클수록 충돌로 인한 피해량을 더 적게 받습니다.",
+    "breaks_into": "ig_vp_sq_carbide_hdframe",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ] ], "time": "40 m", "using": [ [ "welding_standard", 20 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "20 m", "using": "vehicle_weld_removal" },
+      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "10 m", "using": [ [ "welding_standard", 10 ] ] }
+    },
+    "flags": [ "MOUNTABLE" ],
+    "damage_reduction": { "all": 164 }
+  },
+  {
+    "abstract": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "name": { "str": "겹층 탄화물 장갑판" },
+    "item": "sq_carbide_frame",
+    "location": "center",
+    "color": "dark_gray",
+    "durability": 675,
+    "description": "튼튼한 겹층 탄화물 벽입니다. 좀비들이 차량에 들어오는 것을 막고 시야를 차단합니다.",
+    "breaks_into": "ig_vp_sq_carbide_plate",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "OPAQUE", "OBSTACLE", "FULL_BOARD", "NO_ROOF_NEEDED" ],
+    "damage_reduction": { "all": 120 }
+  },
+  {
+    "abstract": "sq_carbide_hdhalfboard",
+    "copy-from": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "name": { "str": "겹층 탄화물 쿼터패널" },
+    "description": "절반 높이의 튼튼한 겹층 탄화물 벽입니다. 좀비들이 차량에 들어오는 것을 막지만 시야를 차단하지는 않습니다.",
+    "proportional": { "durability": 0.8 },
+    "extend": { "flags": [ "HALF_BOARD" ] },
+    "delete": { "flags": [ "OPAQUE", "FULL_BOARD" ] },
+    "damage_reduction": { "all": 120 }
+  },
+  {
+    "type": "vehicle_part",
+    "id": "sq_carbide_hdroof",
+    "name": { "str": "겹층 탄화물 지붕" },
+    "symbol": "#",
+    "color": "dark_gray",
+    "broken_symbol": "#",
+    "broken_color": "dark_gray",
+    "durability": 1500,
+    "description": "두꺼운 겹층 탄화물 지붕.",
+    "item": "sq_carbide_frame",
+    "location": "roof",
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_weld_removal", 1 ] ] },
+      "repair": { "skills": [ [ "mechanics", 2 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ] ] }
+    },
+    "flags": [ "ROOF" ],
+    "breaks_into": "ig_vp_steel_plate",
+    "damage_reduction": { "all": 125 }
+  },
+  {
+    "type": "item_group",
+    "id": "ig_vp_sq_carbide_plate",
+    "subtype": "collection",
+    "entries": [ { "item": "carbide_plate", "count": [ 4, 7 ] }, { "item": "graphene", "count": [ 4, 6 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "ig_vp_sq_carbide_frame",
+    "subtype": "collection",
+    "entries": [ { "item": "carbide_plate", "count": [ 4, 6 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "ig_vp_sq_carbide_hdframe",
+    "subtype": "collection",
+    "entries": [ { "item": "carbide_plate", "count": [ 8, 12 ] } ]
+  },
+  {
+    "id": "sq_carbide_frame_cover",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "^"
+  },
+  {
+    "id": "sq_carbide_hdframe_cover",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "^"
+  },
+  {
+    "id": "sq_carbide_hdboard_horizontal",
+    "copy-from": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_horizontal",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "sq_carbide_frame_cross",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "c",
+    "extend": { "flags": [ "INITIAL_PART" ] }
+  },
+  {
+    "id": "sq_carbide_hdframe_cross",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "c",
+    "extend": { "flags": [ "INITIAL_PART" ] }
+  },
+  {
+    "id": "sq_carbide_frame_horizontal",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "sq_carbide_hdframe_horizontal",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "h"
+  },
+  {
+    "id": "sq_carbide_frame_horizontal_2",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "="
+  },
+  {
+    "id": "sq_carbide_hdframe_horizontal_2",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "="
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_horizontal_2",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "="
+  },
+  {
+    "id": "sq_carbide_frame_ne",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "sq_carbide_hdframe_ne",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "sq_carbide_hdboard_ne",
+    "looks_like": "board_ne",
+    "copy-from": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_ne",
+    "looks_like": "halfboard_ne",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "u"
+  },
+  {
+    "id": "sq_carbide_frame_nw",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "sq_carbide_hdframe_nw",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "sq_carbide_hdboard_nw",
+    "looks_like": "board_nw",
+    "copy-from": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_nw",
+    "looks_like": "halfboard_nw",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "y"
+  },
+  {
+    "id": "sq_carbide_frame_se",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "sq_carbide_hdframe_se",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "sq_carbide_hdboard_se",
+    "looks_like": "board_se",
+    "copy-from": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_se",
+    "looks_like": "halfboard_se",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "n"
+  },
+  {
+    "id": "sq_carbide_frame_sw",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "sq_carbide_hdframe_sw",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "sq_carbide_hdboard_sw",
+    "looks_like": "board_sw",
+    "copy-from": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_sw",
+    "looks_like": "halfboard_sw",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "b"
+  },
+  {
+    "id": "sq_carbide_frame_vertical",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "sq_carbide_hdframe_vertical",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "sq_carbide_hdboard_vertical",
+    "copy-from": "sq_carbide_hdboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_vertical",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "j"
+  },
+  {
+    "id": "sq_carbide_frame_vertical_2",
+    "copy-from": "sq_carbide_frame",
+    "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
+    "id": "sq_carbide_hdframe_vertical_2",
+    "copy-from": "sq_carbide_hdframe",
+    "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
+    "id": "sq_carbide_hdhalfboard_vertical_2",
+    "copy-from": "sq_carbide_hdhalfboard",
+    "type": "vehicle_part",
+    "symbol": "H"
+  }
+]

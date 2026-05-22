@@ -1,0 +1,8 @@
+[
+  {
+    "type": "vehicle",
+    "id": "skyisland_warp_raft",
+    "name": "warp raft",
+    "parts": [ { "x": 0, "y": 0, "parts": [ "inflatable_section", "inflatable_airbag", "folding_seat", "hand_paddles" ] } ]
+  }
+]

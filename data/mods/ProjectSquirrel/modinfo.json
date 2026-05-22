@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "Jake's_Squirrel_mod",
+    "name": "<color_yellow>프로젝트: 다람쥐</color>",
+    "authors": [ "NakedJake" ],
+    "version": "1.1.1",
+    "description": "하이테크 모드.",
+    "category": "content",
+    "dependencies": [ "bn" ]
+  }
+]

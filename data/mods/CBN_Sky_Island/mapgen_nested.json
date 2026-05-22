@@ -1,0 +1,26 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "mx_exitroom",
+    "object": {
+      "mapgensize": [ 11, 11 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "           ",
+        "  -     -  ",
+        " ----D---- ",
+        "--.......--",
+        " -.......- ",
+        " D...X...D ",
+        " -.......- ",
+        "--.......--",
+        " ----D---- ",
+        "  -     -  ",
+        "           "
+      ],
+      "terrain": { "D": "t_door_c", "-": "t_wall_r", ".": "t_carpet_red", "X": "t_carpet_red" },
+      "furniture": { "X": "f_skyisland_return_obelisk" }
+    }
+  }
+]

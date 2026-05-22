@@ -1,0 +1,28 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "MSX++DEAD_PEOPLE", "UNDEAD_PEOPLE", "UNDEAD_PEOPLE_BASE" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/sq_mutation_replacement_tileset.png",
+        "tiles": [
+          { "id": "overlay_mutation_SABER_TEETH", "fg": 0, "rotates": false },
+          { "id": "overlay_female_mutation_FEL_EYE", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_FEL_EYE", "fg": 0, "rotates": false },
+          { "id": "overlay_female_mutation_LYNX_FUR", "fg": 1, "rotates": false },
+          { "id": "overlay_male_mutation_LYNX_FUR", "fg": 2, "rotates": false },
+          { "id": "overlay_female_mutation_FELINE_FUR", "fg": 3, "rotates": false },
+          { "id": "overlay_male_mutation_FELINE_FUR", "fg": 4, "rotates": false },
+          { "id": "overlay_female_mutation_MUZZLE_RAT", "fg": 5, "rotates": false },
+          { "id": "overlay_male_mutation_MUZZLE_RAT", "fg": 6, "rotates": false },
+          { "id": "overlay_female_mutation_INCISORS", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_INCISORS", "fg": 0, "rotates": false },
+          { "id": "overlay_female_mutation_FUR", "fg": 7, "rotates": false },
+          { "id": "overlay_male_mutation_FUR", "fg": 8, "rotates": false },
+          { "id": "overlay_mutation_WHISKERS", "fg": 9, "rotates": false },
+          { "id": "overlay_mutation_WHISKERS_RAT", "fg": 9, "rotates": false }
+        ]
+      }
+    ]
+  }
+]

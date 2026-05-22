@@ -1,0 +1,23 @@
+[
+  {
+    "id": "sq_rtg_forge",
+    "type": "MIGRATION",
+    "replace": "sq_atomic_forge"
+  },
+  {
+    "id": "sq_uranium_forge",
+    "type": "MIGRATION",
+    "replace": "sq_atomic_forge"
+  },
+  {
+    "id": "sq_uranium_forge_done",
+    "type": "MIGRATION",
+    "replace": "sq_atomic_forge"
+  },
+  {
+    "id": "sq_fsurvivor_belt",
+    "type": "MIGRATION",
+    "replace": "sq_fsurvivor_belt_notools",
+    "contents": [ "screwdriver_set", "wrench", "saw", "hacksaw", "hammer", "scalpel" ]
+  }
+]

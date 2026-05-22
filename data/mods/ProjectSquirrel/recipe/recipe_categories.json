@@ -1,0 +1,20 @@
+[
+  {
+    "type": "recipe_category",
+    "id": "CC_첨단기술",
+    "recipe_subcategories": [
+      "CSC_ALL",
+      "CSC_첨단기술_TOOLS",
+      "CSC_첨단기술_MEDICAL",
+      "CSC_첨단기술_ARMOR",
+      "CSC_첨단기술_MATERIALS",
+      "CSC_첨단기술_근접무기",
+      "CSC_첨단기술_RANGED",
+      "CSC_첨단기술_MODS",
+      "CSC_첨단기술_MAGAZINES",
+      "CSC_첨단기술_드론",
+      "CSC_첨단기술_MUTAGEN",
+      "CSC_첨단기술_OTHER"
+    ]
+  }
+]

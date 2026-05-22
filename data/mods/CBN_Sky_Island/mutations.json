@@ -1,0 +1,15 @@
+[
+  {
+    "id": "SKYISLAND_WARP_FLIGHT",
+    "type": "mutation",
+    "name": { "str": "Warp Flight" },
+    "points": 0,
+    "visibility": 0,
+    "ugliness": 0,
+    "valid": false,
+    "purifiable": false,
+    "player_display": false,
+    "description": "Warp energy grants you the power of flight. This is a temporary effect from landing protection.",
+    "flags": [ "FLIGHT_ALWAYS_ACTIVE" ]
+  }
+]

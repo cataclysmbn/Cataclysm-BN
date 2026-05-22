@@ -1,0 +1,2787 @@
+[
+  {
+    "type": "mutation_category",
+    "id": "PLANT",
+    "name": "Plant",
+    "threshold_mut": "THRESH_PLANT",
+    "mutagen_message": "You feel much closer to nature.",
+    "iv_message": "You inject some nutrients into your phloem.",
+    "memorial_message": "Bloomed forth."
+  },
+  {
+    "type": "mutation_category",
+    "id": "INSECT",
+    "name": "Insect",
+    "threshold_mut": "THRESH_INSECT",
+    "mutagen_message": "You hear buzzing, and feel your body harden.",
+    "iv_message": "You sting yourself… for the Queen.",
+    "memorial_message": "Metamorphosed."
+  },
+  {
+    "type": "mutation_category",
+    "id": "SPIDER",
+    "name": "Spider",
+    "threshold_mut": "THRESH_SPIDER",
+    "mutagen_message": "You feel insidious.",
+    "iv_message": "Mmm… the *special* venom.",
+    "memorial_message": "Found a place in the web of life."
+  },
+  {
+    "type": "mutation_category",
+    "id": "SLIME",
+    "name": "Slime",
+    "threshold_mut": "THRESH_SLIME",
+    "mutagen_message": "Your body loses all rigidity for a moment.",
+    "iv_message": "This stuff takes you back.  Downright primordial!",
+    "memorial_message": "Gave up on rigid human norms.",
+    "junkie_message": "Maybe if you drank enough, you'd become mutagen..."
+  },
+  {
+    "type": "mutation_category",
+    "id": "FISH",
+    "name": "Fish",
+    "threshold_mut": "THRESH_FISH",
+    "mutagen_message": "You are overcome by an overwhelming longing for the ocean.",
+    "iv_message": "Your pulse pounds as the waves.",
+    "memorial_message": "Went deep."
+  },
+  {
+    "type": "mutation_category",
+    "id": "RAT",
+    "name": "Rat",
+    "threshold_mut": "THRESH_RAT",
+    "mutagen_message": "You feel a momentary nausea.",
+    "iv_message": "You squeak as the shot hits you.",
+    "iv_sound": true,
+    "iv_sound_message": "eep!",
+    "iv_sound_id": "shout",
+    "iv_sound_variant": "squeak",
+    "//": "Sound of ratlike squeaking",
+    "iv_noise": 1,
+    "memorial_message": "Found that survival *is* everything."
+  },
+  {
+    "type": "mutation_category",
+    "id": "BEAST",
+    "name": "Beast",
+    "threshold_mut": "THRESH_BEAST",
+    "mutagen_message": "Your heart races and you see blood for a moment.",
+    "iv_message": "Your heart races wildly as the injection takes hold.",
+    "memorial_message": "Embraced his bestial nature."
+  },
+  {
+    "type": "mutation_category",
+    "id": "URSINE",
+    "name": "Bear",
+    "threshold_mut": "THRESH_URSINE",
+    "mutagen_message": "You feel an urge to… patrol?  the forests?",
+    "iv_message": "You feel yourself quite equipped for wilderness survival.",
+    "memorial_message": "Became one with the bears."
+  },
+  {
+    "type": "mutation_category",
+    "id": "FELINE",
+    "name": "Feline",
+    "threshold_mut": "THRESH_FELINE",
+    "mutagen_message": "As you lap up the last of the mutagen, you wonder why...",
+    "iv_message": "Your back arches as the mutagen takes hold.",
+    "memorial_message": "Realized the dream."
+  },
+  {
+    "type": "mutation_category",
+    "id": "LUPINE",
+    "name": "Wolf",
+    "threshold_mut": "THRESH_LUPINE",
+    "mutagen_message": "You feel an urge to mark your territory.  But then it passes.",
+    "iv_message": "As the mutagen hits you, your ears twitch and you stifle a yipe.",
+    "memorial_message": "Wolfed out."
+  },
+  {
+    "type": "mutation_category",
+    "id": "CATTLE",
+    "name": "Cattle",
+    "//": "~rBGH is a bovine growth hormone, unpopular with consumers",
+    "threshold_mut": "THRESH_CATTLE",
+    "mutagen_message": "Your mind and body slow down.  You feel peaceful.",
+    "iv_message": "You wonder if this is what rBGH feels like...",
+    "memorial_message": "Stopped worrying and learned to love the cowbell."
+  },
+  {
+    "type": "mutation_category",
+    "id": "CEPHALOPOD",
+    "name": "Cephalopod",
+    "//": "~Zork reference, but it's talking about your blood vessels",
+    "threshold_mut": "THRESH_CEPHALOPOD",
+    "mutagen_message": "Your mind is overcome by images of eldritch horrors… and then they pass.",
+    "iv_message": "You watch the mutagen flow through a maze of little twisty passages.  All the same.",
+    "memorial_message": "Began living the dreams."
+  },
+  {
+    "type": "mutation_category",
+    "id": "BIRD",
+    "name": "Bird",
+    "threshold_mut": "THRESH_BIRD",
+    "mutagen_message": "Your body lightens and you long for the sky.",
+    "iv_message": "Your arms spasm in an oddly wavelike motion.",
+    "memorial_message": "Broke free of humanity."
+  },
+  {
+    "type": "mutation_category",
+    "id": "LIZARD",
+    "name": "Lizard",
+    "threshold_mut": "THRESH_LIZARD",
+    "mutagen_message": "For a heartbeat, your blood cools down.",
+    "iv_message": "Your blood cools down.  The feeling is… different.",
+    "memorial_message": "Shed the ugly human skin."
+  },
+  {
+    "type": "mutation_category",
+    "id": "TROGLOBITE",
+    "name": "Troglobite",
+    "threshold_mut": "THRESH_TROGLOBITE",
+    "mutagen_message": "You yearn for a cool, dark place to hide.",
+    "iv_message": "As you press the plunger, it all goes so bright...",
+    "memorial_message": "Adapted to underground living."
+  },
+  {
+    "type": "mutation_category",
+    "id": "ALPHA",
+    "name": "Alpha",
+    "//": "5-15 pain, 66% for each of the follow-ups, so slightly better odds (designed for injection).",
+    "threshold_mut": "THRESH_ALPHA",
+    "mutagen_message": "You feel… better.  Somehow.",
+    "iv_message": "You took that shot like a champ!",
+    "iv_min_mutations": 1,
+    "iv_additional_mutations": 2,
+    "iv_additional_mutations_chance": 3,
+    "iv_hunger": 5,
+    "//2": "Alpha doesn't make a lot of massive morphological changes, so less nutrients needed.",
+    "iv_thirst": 3,
+    "iv_pain": 3,
+    "iv_fatigue": 5,
+    "memorial_message": "Started representing."
+  },
+  {
+    "type": "mutation_category",
+    "id": "MEDICAL",
+    "name": "Medical",
+    "//": "2-6 pain, same as Alpha--since specifically intended for medical applications.",
+    "threshold_mut": "THRESH_MEDICAL",
+    "mutagen_message": "You can feel the blood rushing through your veins and a strange, medicated feeling washes over your senses.",
+    "iv_message": "You can feel the blood in your medication stream.  It's a strange feeling.",
+    "iv_min_mutations": 1,
+    "iv_additional_mutations": 2,
+    "iv_additional_mutations_chance": 3,
+    "iv_hunger": 5,
+    "//2": "Medical's are pretty much all physiology, IIRC",
+    "iv_thirst": 3,
+    "iv_pain": 3,
+    "iv_fatigue": 5,
+    "memorial_message": "Resumed clinical trials.",
+    "junkie_message": "Ahh, there it is.  You can feel the mutagen again."
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHIMERA",
+    "name": "Chimera",
+    "//": "24-36 pain, Scream,, -40 Morale, but two guaranteed mutations and 75% each for third and fourth",
+    "threshold_mut": "THRESH_CHIMERA",
+    "mutagen_message": "You need to roar, bask, bite, and flap.  NOW.",
+    "iv_message": "everyanimalthateverlived.bursting.from.YOU!",
+    "iv_min_mutations": 2,
+    "iv_additional_mutations": 2,
+    "iv_additional_mutations_chance": 4,
+    "iv_hunger": 20,
+    "//2": "Chimera's all about the massive morphological changes Done Quick, so lotsa nutrition needed",
+    "iv_thirst": 20,
+    "iv_pain": 4,
+    "iv_fatigue": 20,
+    "iv_morale": -40,
+    "iv_morale_max": -200,
+    "iv_sound": true,
+    "iv_sound_message": "yourself roar in agony!",
+    "iv_sound_id": "shout",
+    "iv_sound_variant": "roar",
+    "iv_noise": 25,
+    "iv_sleep": true,
+    "iv_sleep_dur": 800,
+    "iv_sleep_message": "With a final *pop*, you go out like a light.",
+    "memorial_message": "United disunity."
+  },
+  {
+    "type": "mutation_category",
+    "id": "ELFA",
+    "name": "Fey",
+    "threshold_mut": "THRESH_ELFA",
+    "mutagen_message": "Nature is becoming one with you...",
+    "iv_message": "Everything goes green for a second.",
+    "//": "3-15 pain, morale boost, but no more mutagenic than cat-9s",
+    "iv_pain": 3,
+    "iv_morale": 25,
+    "iv_morale_max": 100,
+    "iv_sleep": true,
+    "//2": "Should be out for two minutes.  Ecstasy Of Green",
+    "iv_sleep_dur": 20,
+    "iv_sleep_message": "It's painfully beautiful...",
+    "memorial_message": "Accepted a more natural way of life."
+  },
+  {
+    "type": "mutation_category",
+    "id": "RAPTOR",
+    "name": "Raptor",
+    "//": "Little more painful than average, but nowhere near as harsh & effective as Chimera.",
+    "threshold_mut": "THRESH_RAPTOR",
+    "mutagen_message": "Mmm… sweet, bloody flavor… tastes like victory.",
+    "iv_message": "You distinctly smell the mutagen mixing with your blood… and then it passes.",
+    "memorial_message": "Hatched."
+  },
+  {
+    "type": "mutation_category",
+    "id": "MOUSE",
+    "name": "Mouse",
+    "threshold_mut": "THRESH_MOUSE",
+    "mutagen_message": "You feel a desire to curl up in a nice, warm pile of… shredded paper.",
+    "iv_message": "You feel… small.  But comfortable.",
+    "memorial_message": "Found the cheese."
+  },
+  {
+    "type": "mutation_category",
+    "id": "FLEET",
+    "name": "fleet",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_PLANT",
+    "name": "Plant",
+    "threshold_mut": "",
+    "mutagen_message": "You feel much closer to nature.",
+    "iv_message": "You inject some nutrients into your phloem.",
+    "memorial_message": "Bloomed forth."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_INSECT",
+    "name": "Insect",
+    "threshold_mut": "",
+    "mutagen_message": "You hear buzzing, and feel your body harden.",
+    "iv_message": "You sting yourself… for the Queen.",
+    "memorial_message": "Metamorphosed."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_SPIDER",
+    "name": "Spider",
+    "threshold_mut": "",
+    "mutagen_message": "You feel insidious.",
+    "iv_message": "Mmm… the *special* venom.",
+    "memorial_message": "Found a place in the web of life."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_SLIME",
+    "name": "Slime",
+    "threshold_mut": "",
+    "mutagen_message": "Your body loses all rigidity for a moment.",
+    "iv_message": "This stuff takes you back.  Downright primordial!",
+    "memorial_message": "Gave up on rigid human norms.",
+    "junkie_message": "Maybe if you drank enough, you'd become mutagen..."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_FISH",
+    "name": "Fish",
+    "threshold_mut": "",
+    "mutagen_message": "You are overcome by an overwhelming longing for the ocean.",
+    "iv_message": "Your pulse pounds as the waves.",
+    "memorial_message": "Went deep."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_RAT",
+    "name": "Rat",
+    "threshold_mut": "",
+    "mutagen_message": "You feel a momentary nausea.",
+    "iv_message": "You squeak as the shot hits you.",
+    "iv_sound": true,
+    "iv_sound_message": "eep!",
+    "iv_sound_id": "shout",
+    "iv_sound_variant": "squeak",
+    "iv_noise": 1,
+    "memorial_message": "Found that survival *is* everything."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_BEAST",
+    "name": "Beast",
+    "threshold_mut": "",
+    "mutagen_message": "Your heart races and you see blood for a moment.",
+    "iv_message": "Your heart races wildly as the injection takes hold.",
+    "memorial_message": "Embraced his bestial nature."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_URSINE",
+    "name": "Bear",
+    "threshold_mut": "",
+    "mutagen_message": "You feel an urge to… patrol?  the forests?",
+    "iv_message": "You feel yourself quite equipped for wilderness survival.",
+    "memorial_message": "Became one with the bears."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_FELINE",
+    "name": "Feline",
+    "threshold_mut": "",
+    "mutagen_message": "As you lap up the last of the mutagen, you wonder why...",
+    "iv_message": "Your back arches as the mutagen takes hold.",
+    "memorial_message": "Realized the dream."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_LUPINE",
+    "name": "Wolf",
+    "threshold_mut": "",
+    "mutagen_message": "You feel an urge to mark your territory.  But then it passes.",
+    "iv_message": "As the mutagen hits you, your ears twitch and you stifle a yipe.",
+    "memorial_message": "Wolfed out."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_CATTLE",
+    "name": "Cattle",
+    "threshold_mut": "",
+    "mutagen_message": "Your mind and body slow down.  You feel peaceful.",
+    "iv_message": "You wonder if this is what rBGH feels like...",
+    "memorial_message": "Stopped worrying and learned to love the cowbell."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_CEPHALOPOD",
+    "name": "Cephalopod",
+    "threshold_mut": "",
+    "mutagen_message": "Your mind is overcome by images of eldritch horrors… and then they pass.",
+    "iv_message": "You watch the mutagen flow through a maze of little twisty passages.  All the same.",
+    "memorial_message": "Began living the dreams."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_BIRD",
+    "name": "Bird",
+    "threshold_mut": "",
+    "mutagen_message": "Your body lightens and you long for the sky.",
+    "iv_message": "Your arms spasm in an oddly wavelike motion.",
+    "memorial_message": "Broke free of humanity."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_LIZARD",
+    "name": "Lizard",
+    "threshold_mut": "",
+    "mutagen_message": "For a heartbeat, your blood cools down.",
+    "iv_message": "Your blood cools down.  The feeling is… different.",
+    "memorial_message": "Shed the ugly human skin."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_TROGLOBITE",
+    "name": "Troglobite",
+    "threshold_mut": "",
+    "mutagen_message": "You yearn for a cool, dark place to hide.",
+    "iv_message": "As you press the plunger, it all goes so bright...",
+    "memorial_message": "Adapted to underground living."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_ALPHA",
+    "name": "Alpha",
+    "threshold_mut": "",
+    "mutagen_message": "You feel… better.  Somehow.",
+    "iv_message": "You took that shot like a champ!",
+    "iv_min_mutations": 1,
+    "iv_additional_mutations": 2,
+    "iv_additional_mutations_chance": 3,
+    "iv_hunger": 5,
+    "//2": "Alpha doesn't make a lot of massive morphological changes, so less nutrients needed.",
+    "iv_thirst": 3,
+    "iv_pain": 3,
+    "iv_fatigue": 5,
+    "memorial_message": "Started representing."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_MEDICAL",
+    "name": "Medical",
+    "threshold_mut": "",
+    "mutagen_message": "You can feel the blood rushing through your veins and a strange, medicated feeling washes over your senses.",
+    "iv_message": "You can feel the blood in your medication stream.  It's a strange feeling.",
+    "iv_min_mutations": 1,
+    "iv_additional_mutations": 2,
+    "iv_additional_mutations_chance": 3,
+    "iv_hunger": 5,
+    "//2": "Medical's are pretty much all physiology, IIRC",
+    "iv_thirst": 3,
+    "iv_pain": 3,
+    "iv_fatigue": 5,
+    "memorial_message": "Resumed clinical trials.",
+    "junkie_message": "Ahh, there it is.  You can feel the mutagen again."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_CHIMERA",
+    "name": "Chimera",
+    "threshold_mut": "",
+    "mutagen_message": "You need to roar, bask, bite, and flap.  NOW.",
+    "iv_message": "everyanimalthateverlived.bursting.from.YOU!",
+    "iv_min_mutations": 2,
+    "iv_additional_mutations": 2,
+    "iv_additional_mutations_chance": 4,
+    "iv_hunger": 20,
+    "iv_thirst": 20,
+    "iv_pain": 4,
+    "iv_fatigue": 20,
+    "iv_morale": -40,
+    "iv_morale_max": -200,
+    "iv_sound": true,
+    "iv_sound_message": "yourself roar in agony!",
+    "iv_sound_id": "shout",
+    "iv_sound_variant": "roar",
+    "iv_noise": 25,
+    "iv_sleep": true,
+    "iv_sleep_dur": 800,
+    "iv_sleep_message": "With a final *pop*, you go out like a light.",
+    "memorial_message": "United disunity."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_ELFA",
+    "name": "Fey",
+    "threshold_mut": "",
+    "mutagen_message": "Nature is becoming one with you...",
+    "iv_message": "Everything goes green for a second.",
+    "iv_pain": 3,
+    "iv_morale": 25,
+    "iv_morale_max": 100,
+    "iv_sleep": true,
+    "//2": "Should be out for two minutes.  Ecstasy Of Green",
+    "iv_sleep_dur": 20,
+    "iv_sleep_message": "It's painfully beautiful...",
+    "memorial_message": "Accepted a more natural way of life."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_RAPTOR",
+    "name": "Raptor",
+    "threshold_mut": "",
+    "mutagen_message": "Mmm… sweet, bloody flavor… tastes like victory.",
+    "iv_message": "You distinctly smell the mutagen mixing with your blood… and then it passes.",
+    "memorial_message": "Hatched."
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_MOUSE",
+    "name": "Mouse",
+    "threshold_mut": "",
+    "mutagen_message": "You feel a desire to curl up in a nice, warm pile of… shredded paper.",
+    "iv_message": "You feel… small.  But comfortable.",
+    "memorial_message": "Found the cheese."
+  },
+  {
+    "type": "mutation_category",
+    "id": "BIOLUM1",
+    "name": "biolum1",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BIOLUM2",
+    "name": "biolum2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GOODHEARING",
+    "name": "goodhearing",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FEYHEARING",
+    "name": "feyhearing",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GOODCARDIO",
+    "name": "goodcardio",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GOODCARDIO2",
+    "name": "goodcardio2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "QUICK",
+    "name": "quick",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FASTHEALER",
+    "name": "fasthealer",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LIGHTEATER",
+    "name": "lighteater",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "EASYSLEEPER",
+    "name": "easysleeper",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "EASYSLEEPER2",
+    "name": "easysleeper2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PAINRESIST",
+    "name": "pain resist",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "NIGHTVISION",
+    "name": "nightvision",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "POISRESIST",
+    "name": "poisresist",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BOVINE_BULK",
+    "name": "bovine_bulk",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BOVINE_BULK2",
+    "name": "bovine_bulk2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TOUGH",
+    "name": "tough",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TOUGH2",
+    "name": "tough2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TOUGH3",
+    "name": "tough3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "THICKSKIN",
+    "name": "thickskin",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "STRONGSTOMACH",
+    "name": "strongstomach",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GOODMEMORY",
+    "name": "goodmemory",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DEFT",
+    "name": "deft",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TOLERANCE",
+    "name": "tolerance",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GOURMAND",
+    "name": "gourmand",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "NONADDICTIVE",
+    "name": "nonaddictive",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ANIMALEMPATH",
+    "name": "animalempath",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ANIMALEMPATH2",
+    "name": "animalempath2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TERRIFYING",
+    "name": "terrifying",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DISRESISTANT",
+    "name": "disresistant",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ADRENALINE",
+    "name": "adrenaline",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WAKEFUL",
+    "name": "wakeful",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SELFAWARE",
+    "name": "selfaware",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MASOCHIST",
+    "name": "masochist",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LIGHTSTEP",
+    "name": "lightstep",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ROBUST",
+    "name": "robust",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "EAGLEEYED",
+    "name": "eagleeyed",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CANNIBAL",
+    "name": "cannibal",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PSYCHOPATH",
+    "name": "psychopath",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "KILLER",
+    "name": "killer",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEAKSCENT",
+    "name": "weakscent",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PRETTY",
+    "name": "pretty",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HEAVYSLEEPER",
+    "name": "heavysleeper",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ALBINO",
+    "name": "albino",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SKIN_ROUGH",
+    "name": "skin_rough",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "NIGHTVISION2",
+    "name": "nightvision2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "NIGHTVISION3",
+    "name": "nightvision3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CEPH_EYES",
+    "name": "ceph_eyes",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ELFAEYES",
+    "name": "elfaeyes",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FEL_EYE",
+    "name": "fel_eye",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BIRD_EYE",
+    "name": "bird_eye",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INFRARED",
+    "name": "infrared",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LIZ_EYE",
+    "name": "liz_eye",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LIZ_IR",
+    "name": "liz_ir",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FASTHEALER2",
+    "name": "fasthealer2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "REGEN",
+    "name": "regen",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "REGEN_LIZ",
+    "name": "regen_liz",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WAKEFUL2",
+    "name": "wakeful2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WAKEFUL3",
+    "name": "wakeful3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FANGS",
+    "name": "fangs",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INCISORS",
+    "name": "incisors",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MEMBRANE",
+    "name": "membrane",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GILLS",
+    "name": "gills",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GILLS_CEPH",
+    "name": "gills_ceph",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SCALES",
+    "name": "scales",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "THICK_SCALES",
+    "name": "thick_scales",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SLEEK_SCALES",
+    "name": "sleek_scales",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LIGHT_BONES",
+    "name": "light_bones",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FEATHERS",
+    "name": "feathers",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DOWN",
+    "name": "down",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LIGHTFUR",
+    "name": "lightfur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FUR",
+    "name": "fur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "URSINE_FUR",
+    "name": "ursine_fur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LUPINE_FUR",
+    "name": "lupine_fur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FELINE_FUR",
+    "name": "feline_fur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LYNX_FUR",
+    "name": "lynx_fur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PATCHSKIN1",
+    "name": "patchskin1",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PATCHSKIN2",
+    "name": "patchskin2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHITIN",
+    "name": "chitin",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHITIN2",
+    "name": "chitin2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHITIN3",
+    "name": "chitin3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHITIN_FUR",
+    "name": "chitin_fur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHITIN_FUR2",
+    "name": "chitin_fur2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHITIN_FUR3",
+    "name": "chitin_fur3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CF_HAIR",
+    "name": "ch_hair",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SPINES",
+    "name": "spines",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "QUILLS",
+    "name": "quills",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BARBS",
+    "name": "barbs",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PLANTSKIN",
+    "name": "plantskin",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BARK",
+    "name": "bark",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "THORNS",
+    "name": "thorns",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LEAVES",
+    "name": "leaves",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LEAVES2",
+    "name": "leaves2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LEAVES3",
+    "name": "leaves3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TRANSPIRATION",
+    "name": "transpiration",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FLOWERS",
+    "name": "flowers",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ROSEBUDS",
+    "name": "rosebuds",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "NAILS",
+    "name": "nails",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CLAWS",
+    "name": "claws",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CLAWS_RAT",
+    "name": "claws_rat",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CLAWS_ST",
+    "name": "claws_st",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CLAWS_RETRACT",
+    "name": "claws_retract",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CLAWS_TENTACLE",
+    "name": "claws_tentacle",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INK_GLANDS",
+    "name": "ink_glands",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INSECT_RESERVOIR",
+    "name": "insect_reservoir",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TALONS",
+    "name": "talons",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RADIOGENIC",
+    "name": "radiogenic",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PHEROMONE_INSECT",
+    "name": "pheromone_insect",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PHEROMONE_MAMMAL",
+    "name": "pheromone_mammal",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DISIMMUNE",
+    "name": "disimmune",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INFRESIST",
+    "name": "infresist",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INFIMMUNE",
+    "name": "infimmune",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PARAIMMUNE",
+    "name": "paraimmune",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "POISONOUS",
+    "name": "poisonous",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "POISONOUS2",
+    "name": "poisonous2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SLIME_HANDS",
+    "name": "slime_hands",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BENDY1",
+    "name": "bendy1",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BENDY2",
+    "name": "BENDY2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BENDY3",
+    "name": "BENDY3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "COMPOUND_EYES",
+    "name": "compunds_eyes",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PADDED_FEET",
+    "name": "padded_feet",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "STRONG_LEGS",
+    "name": "strong_legs",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RAP_TALONS",
+    "name": "rap_talons",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HOOVES",
+    "name": "hooves",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ALCMET",
+    "name": "alcmet",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PAINRESIST_TROGLO",
+    "name": "painresist_troglo",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "STOCKY_TROGLO",
+    "name": "stocky_troglo",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SAPROVORE",
+    "name": "saprovore",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SAPROPHAGE",
+    "name": "SAPROPHAGE",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GIZZARD",
+    "name": "gizzard",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RUMINANT",
+    "name": "ruminant",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "EATPOISON",
+    "name": "eatpoison",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "EATDEAD",
+    "name": "eatdead",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BURROW",
+    "name": "burrow",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SABER_TEETH",
+    "name": "saber_teeth",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "EATHEALTH",
+    "name": "eathealth",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HORNS",
+    "name": "horns",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HORNS_CURLED",
+    "name": "horns_curled",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HORNS_POINTED",
+    "name": "horns_pointed",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ANTLERS",
+    "name": "antlers",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ANTENNAE",
+    "name": "antennae",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FLEET2",
+    "name": "fleet2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_STUB",
+    "name": "tail_stub",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_FIN",
+    "name": "tail_fin",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_LONG",
+    "name": "tail_long",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_CATTLE",
+    "name": "tail_cattle",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_RAT",
+    "name": "tail_rat",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_THICK",
+    "name": "tail_thick",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_RAPTOR",
+    "name": "tail_raptor",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_FLUFFY",
+    "name": "tail_fluffy",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_STING",
+    "name": "tail_sting",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_CLUB",
+    "name": "tail_club",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HIBERNATE",
+    "name": "hibernate",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MUT_TOUGH2",
+    "name": "mut_tough2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MUT_TOUGH3",
+    "name": "mut_tough3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PAINREC1",
+    "name": "painrec1",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MASOCHIST_MED",
+    "name": "masochist_med",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CENOBITE",
+    "name": "cenobite",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "NOPAIN",
+    "name": "nopain",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WINGS_BIRD",
+    "name": "wings_bird",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WINGS_INSECT",
+    "name": "wings_insect",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MOUTH_TENTACLES",
+    "name": "mouth_tentacles",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MANDIBLES",
+    "name": "mandibles",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FANGS_SPIDER",
+    "name": "fangs_spider",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CANINE_EARS",
+    "name": "canine_ears",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LUPINE_EARS",
+    "name": "lupine_ears",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FELINE_EARS",
+    "name": "feline_ears",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "URSINE_EARS",
+    "name": "ursine_ears",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ELFA_EARS",
+    "name": "elfa_ears",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MOUSE_EARS",
+    "name": "mouse_ears",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEB_WALKER",
+    "name": "web_walker",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEB_SPINNER",
+    "name": "web_spinner",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEB_WEAVER",
+    "name": "web_weaver",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEB_RAPPEL",
+    "name": "web_rappel",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEB_ROPE",
+    "name": "web_rope",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEB_BRIDGE",
+    "name": "web_bridge",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WHISKERS",
+    "name": "whiskers",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WHISKERS_RAT",
+    "name": "whiskers_rat",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FAT",
+    "name": "fat",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LARGE_OK",
+    "name": "large_ok",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HUGE_OK",
+    "name": "huge_ok",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "STR_UP_3",
+    "name": "str_up_3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "STR_UP_4",
+    "name": "str_up_4",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "STR_ALPHA",
+    "name": "str_alpha",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DEX_UP_3",
+    "name": "dex_up_3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DEX_UP_4",
+    "name": "dex_up_4",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DEX_ALPHA",
+    "name": "dex_alpha",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INT_UP_3",
+    "name": "int_up_3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INT_UP_4",
+    "name": "int_up_4",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INT_ALPHA",
+    "name": "int_alpha",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PER_UP_3",
+    "name": "per_up_3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PER_UP_4",
+    "name": "per_up_4",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PER_ALPHA",
+    "name": "per_alpha",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SMALL",
+    "name": "small",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SMALL_OK",
+    "name": "small_ok",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CRAFTY",
+    "name": "crafty",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SLII_NOSTRILS",
+    "name": "slit_nostrils",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FORKED_TONGUE",
+    "name": "forked_tongue",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WINGS_BAT",
+    "name": "wings_bat",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WINGS_BUTTERFLY",
+    "name": "wings_butterfly",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PALE",
+    "name": "pale",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SPOTS",
+    "name": "spots",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BEAUTIFUL",
+    "name": "beautiful",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BEAUTIFUL2",
+    "name": "beautiful2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BEAUTIFUL3",
+    "name": "beautiful3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SNOUT",
+    "name": "snout",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MINOTAUR",
+    "name": "minotaur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MUZZLE",
+    "name": "muzzle",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MUZZLE_BEAR",
+    "name": "muzzle_bear",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MUZZLE_RAT",
+    "name": "muzzle_rat",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MUZZLE_LONG",
+    "name": "muzzle_long",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PROBOSCIS",
+    "name": "proboscis",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HOLLOW_BONES",
+    "name": "hollow_bones",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "VOMITOUS",
+    "name": "vomitous",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PERSISTENCE_HUNTER",
+    "name": "persistence_hunter",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PERSISTENCE_HUNTER2",
+    "name": "persistence_hunter2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HUNGER",
+    "name": "hunger",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MET_RAT",
+    "name": "met_rat",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HUNGER2",
+    "name": "hunger2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HUNGER3",
+    "name": "hunger3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "NO_THIRST",
+    "name": "no_thirst",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HEAVYSLEEPER2",
+    "name": "HEAVYSLEEPER2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WEBBED",
+    "name": "webbed",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PAWS",
+    "name": "paws",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PAWS_LARGE",
+    "name": "paws_large",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BEAK",
+    "name": "beak",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BEAK_PECK",
+    "name": "beak_peck",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "BEAK_HUM",
+    "name": "beak_hum",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RADIOACTIVE",
+    "name": "radioactive",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SLIMY",
+    "name": "slimy",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "VISCOUS",
+    "name": "viscous",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "AMORPHOUS",
+    "name": "amorphous",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SLIMESPAWNER",
+    "name": "slimespawner",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HERBIVORE",
+    "name": "herbivore",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CARNIVORE",
+    "name": "carnivore",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "VINES2",
+    "name": "vines2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "VINES3",
+    "name": "vines3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HAIRROOTS",
+    "name": "hairroots",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ROOTS2",
+    "name": "roots2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ROOTS3",
+    "name": "roots3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "CHLOROMORPH",
+    "name": "chloromorph",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TREE_COMMUNION",
+    "name": "tree_communion",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "COLDBLOOD3",
+    "name": "coldblood3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "COLDBLOOD4",
+    "name": "coldblood4",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GROWL",
+    "name": "growl",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SNARL",
+    "name": "snarl",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "HISS",
+    "name": "hiss",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SHOUT1",
+    "name": "shout1",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SHOUT3",
+    "name": "shout3",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ARM_FEATHERS",
+    "name": "arm_feathers",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INSECT_ARMS_OK",
+    "name": "insect_arms_ok",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ARACHNID_ARMS_OK",
+    "name": "arachnid_arms_ok",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ARM_TENTACLES_8",
+    "name": "arm_tentacles_8",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SHELL",
+    "name": "shell",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SHELL2",
+    "name": "shell2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LEG_TENTACLES",
+    "name": "leg_tentacles",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "LEG_TENT_BRACE",
+    "name": "leg_tent_brace",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FELINE_FLEXIBILITY",
+    "name": "feline_flexibility",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ACIDPROOF",
+    "name": "acidproof",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ACIDBLOOD",
+    "name": "acidblood",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "AMPHIBIAN",
+    "name": "amphibian",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SEESLEEP",
+    "name": "seesleep",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "WATERSLEEP",
+    "name": "watersleep",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TOXICFLESH",
+    "name": "toxicflesh",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FRESHWATEROSMOSIS",
+    "name": "freshwaterosmosis",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ELECTRORECEPTORS",
+    "name": "electroreceptors",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SHARKTEETH",
+    "name": "sharkteeth",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "STRONGBACK",
+    "name": "strongback",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "INT_SLIME",
+    "name": "int_slime",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "FAST_REFLEXES",
+    "name": "fast_reflexes",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "PER_SLIME_OK",
+    "name": "per_slime_ok",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "MUT_TOUGH",
+    "name": "mut_tough",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "GRAZER",
+    "name": "grazer",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "DISRESISTANCE",
+    "name": "disresistance",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "ROUGH_SKIN",
+    "name": "rough_skin",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SLIT_NOSTRILS",
+    "name": "slit_nostrils",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SMALL2",
+    "name": "small2",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RABBIT_EARS",
+    "name": "rabbit_ears",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_RABBIT",
+    "name": "tail_rabbit",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RABBIT_FUR",
+    "name": "rabbit_fur",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RABBIT_FEET",
+    "name": "rabbit_feet",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "RABBIT_NOSE",
+    "name": "rabbit_nose",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_RABBIT",
+    "name": "thresh_rabbit",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "THRESH_SERPENT",
+    "name": "thresh_serpent",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_SNAKE",
+    "name": "tail_snake",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "TAIL_SNAKE_OK",
+    "name": "tail_snake_ok",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  },
+  {
+    "type": "mutation_category",
+    "id": "SNAKE_COILS",
+    "name": "snake_coils",
+    "threshold_mut": "",
+    "mutagen_message": "",
+    "iv_message": ""
+  }
+]

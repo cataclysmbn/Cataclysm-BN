@@ -1,0 +1,7 @@
+[
+  {
+    "type": "recipe_category",
+    "id": "CC_WARP",
+    "recipe_subcategories": [ "CSC_ALL", "CSC_WARP_MATERIALS", "CSC_WARP_UPGRADES", "CSC_WARP_PROOFS" ]
+  }
+]

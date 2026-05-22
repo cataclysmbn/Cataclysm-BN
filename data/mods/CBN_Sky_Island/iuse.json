@@ -1,0 +1,197 @@
+[
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_WARP_OBELISK",
+    "name": { "str": "Initiate warp expedition" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_RETURN_OBELISK",
+    "name": { "str": "Return home" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_HEART_MENU",
+    "name": { "str": "Access Heart of the Island" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_PROOF_DETERMINATION",
+    "name": { "str": "Activate Proof of Determination" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_PROOF_MASTERY",
+    "name": { "str": "Activate Proof of Mastery" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_STABILITY1",
+    "name": { "str": "Unlock Stability I" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_STABILITY2",
+    "name": { "str": "Unlock Stability II" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_STABILITY3",
+    "name": { "str": "Unlock Stability III" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_SCOUTING1",
+    "name": { "str": "Unlock Scouting I" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_SCOUTING2",
+    "name": { "str": "Unlock Scouting II" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_EXITS1",
+    "name": { "str": "Unlock Multiple Exits" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_RAIDLENGTH1",
+    "name": { "str": "Unlock Large Expeditions" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_RAIDLENGTH2",
+    "name": { "str": "Unlock Extended Expeditions" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_BASEMENTS",
+    "name": { "str": "Unlock Basement Starts" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_ROOFS",
+    "name": { "str": "Unlock Rooftop Starts" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_LABS",
+    "name": { "str": "Unlock Lab Starts" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_QUICKHEAL",
+    "name": { "str": "Heal all wounds" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_EARTHBOUND_PILL",
+    "name": { "str": "Extend expedition time" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_SKYWARD_BEACON",
+    "name": { "str": "Return to the sky" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_WARP_CRYSTAL",
+    "name": { "str": "Check warp status" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_ANIMAL_TELEPORTER",
+    "name": { "str": "Warp creature home" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_WARP_FOCUS",
+    "name": { "str": "Cast Warp Home" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_SCOUTING_CLAIRVOYANCE1",
+    "name": { "str": "Unlock Scouting Clairvoyance I" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_SCOUTING_CLAIRVOYANCE2",
+    "name": { "str": "Unlock Scouting Clairvoyance II" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_BONUSMISSIONS1",
+    "name": { "str": "Unlock Bonus Missions I" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_BONUSMISSIONS2",
+    "name": { "str": "Unlock Bonus Missions II" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_BONUSMISSIONS3",
+    "name": { "str": "Unlock Bonus Missions III" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_BONUSMISSIONS4",
+    "name": { "str": "Unlock Bonus Missions IV" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_BONUSMISSIONS5",
+    "name": { "str": "Unlock Bonus Missions V" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_HARDMISSIONS1",
+    "name": { "str": "Unlock Harder Missions" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_HARDMISSIONS2",
+    "name": { "str": "Unlock Hardest Missions" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_SLAUGHTER",
+    "name": { "str": "Unlock Slaughter Missions" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_UPGRADE_LANDING_FLIGHT",
+    "name": { "str": "Unlock Landing Flight" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_IMPRINT_AUTODOC",
+    "name": { "str": "Imprint on Autodoc" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_IMPRINT_AUTODOC_COUCH",
+    "name": { "str": "Imprint on Autodoc Couch" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_IMPRINT_NANOFAB_BODY",
+    "name": { "str": "Imprint on Nanofabricator" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_IMPRINT_NANOFAB_PANEL",
+    "name": { "str": "Imprint on Nanofabricator Control Panel" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_IMPRINT_CVD_BODY",
+    "name": { "str": "Imprint on CVD Machine" }
+  },
+  {
+    "type": "item_action",
+    "id": "SKYISLAND_IMPRINT_CVD_PANEL",
+    "name": { "str": "Imprint on CVD Control Panel" }
+  }
+]

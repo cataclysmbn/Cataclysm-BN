@@ -1,0 +1,13 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "CBN_Sky_Island",
+    "name": "Sky Island",
+    "authors": [ "Original: TGWeaver", "BN Port: grayson and Claude :)" ],
+    "description": "Cataclysm BN port of the Sky Island mod. Raid-based gameplay inspired by Escape from Tarkov and Dark & Darker. This is a very early version!",
+    "category": "content",
+    "dependencies": [ "bn" ],
+    "version": "0.0.1-alpha",
+    "lua_api_version": 2
+  }
+]

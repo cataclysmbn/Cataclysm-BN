@@ -1,0 +1,52 @@
+[
+  {
+    "id": "tailors_kit",
+    "type": "TOOL",
+    "copy-from": "tailors_kit",
+    "name": { "str": "tailor's kit" },
+    "use_action": [
+      {
+        "type": "repair_item",
+        "item_action_type": "repair_fabric",
+        "materials": [ "cotton", "leather", "nylon", "wool", "fur", "faux_fur", "nomex", "kevlar", "neoprene", "gutskin", "graphene_sheet" ],
+        "skill": "tailor",
+        "tool_quality": 3,
+        "cost_scaling": 0.1,
+        "move_cost": 800
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [
+          "cotton",
+          "leather",
+          "nylon",
+          "wool",
+          "fur",
+          "faux_fur",
+          "nomex",
+          "kevlar",
+          "neoprene",
+          "gutskin",
+          "plastic",
+          "kevlar_rigid",
+          "scute"
+        ],
+        "skill": "tailor",
+        "clothing_mods": [
+          "leather_padded",
+          "steel_padded",
+          "alloy_padded",
+          "kevlar_padded",
+          "nomex_padded",
+          "furred",
+          "wooled",
+          "graphene_padded",
+          "resized_large",
+          "lightened",
+          "pocketed"
+        ]
+      }
+    ],
+    "flags": [ "ALLOWS_REMOTE_USE" ]
+  }
+]

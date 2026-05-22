@@ -1,0 +1,62 @@
+[
+  {
+    "type": "mission_definition",
+    "id": "MISSION_SKYISLAND_BUILD_BASEMENT",
+    "name": "Sky Island Basement Construction",
+    "description": "Construct a basement level on your sky island.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "days_since_cataclysm": 0 },
+    "difficulty": 0,
+    "value": 0,
+    "origins": [  ],
+    "end": { "effect": [ { "mapgen_update": "mx_skyisland_base1", "z": 9 } ] }
+  },
+  {
+    "type": "mission_definition",
+    "id": "MISSION_SKYISLAND_BUILD_BIGROOM1",
+    "name": "Sky Island Expansion 1",
+    "description": "Expand your basement with cross-shaped corridors and a central room with skylight.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "days_since_cataclysm": 0 },
+    "difficulty": 0,
+    "value": 0,
+    "origins": [  ],
+    "end": { "effect": [ { "mapgen_update": "mx_skyisland_a1", "z": 9 } ] }
+  },
+  {
+    "type": "mission_definition",
+    "id": "MISSION_SKYISLAND_BUILD_BIGROOM2",
+    "name": "Sky Island Expansion 2",
+    "description": "Further expand your basement corridors.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "days_since_cataclysm": 0 },
+    "difficulty": 0,
+    "value": 0,
+    "origins": [  ],
+    "end": { "effect": [ { "mapgen_update": "mx_skyisland_a2", "z": 9 } ] }
+  },
+  {
+    "type": "mission_definition",
+    "id": "MISSION_SKYISLAND_BUILD_BIGROOM3",
+    "name": "Sky Island Expansion 3",
+    "description": "Expand your basement with a larger central room.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "days_since_cataclysm": 0 },
+    "difficulty": 0,
+    "value": 0,
+    "origins": [  ],
+    "end": { "effect": [ { "mapgen_update": "mx_skyisland_a3", "z": 9 } ] }
+  },
+  {
+    "type": "mission_definition",
+    "id": "MISSION_SKYISLAND_BUILD_BIGROOM4",
+    "name": "Sky Island Expansion 4",
+    "description": "Complete your basement expansion with maximum size.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": { "days_since_cataclysm": 0 },
+    "difficulty": 0,
+    "value": 0,
+    "origins": [  ],
+    "end": { "effect": [ { "mapgen_update": "mx_skyisland_a4", "z": 9 } ] }
+  }
+]

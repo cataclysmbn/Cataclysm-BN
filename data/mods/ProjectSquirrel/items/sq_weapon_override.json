@@ -1,0 +1,99 @@
+[
+  {
+    "type": "martial_art",
+    "id": "style_eskrima",
+    "copy-from": "style_eskrima",
+    "name": { "str": "Eskrima" },
+    "weapon_category": [ "STILETTOS", "KNIVES", "BATONS", "TONFAS", "QUARTERSTAVES", "FIST_WEAPONS", "BIONIC_WEAPONRY", "SHORT_SWORDS" ]
+  },
+  {
+    "type": "martial_art",
+    "id": "style_barbaran",
+    "copy-from": "style_barbaran",
+    "name": { "str": "Barbaran Montante" },
+    "weapon_category": [ "MEDIEVAL_SWORDS", "2H_SWORDS", "1H_HAMMERS", "2H_HAMMERS", "1H_AXES", "FLAILS", "MACES" ]
+  },
+  {
+    "type": "martial_art",
+    "id": "style_fencing",
+    "copy-from": "style_fencing",
+    "name": { "str": "Fencing" },
+    "weapon_category": [ "BATONS", "DUELING_SWORDS", "SHORT_SWORDS" ]
+  },
+  {
+    "id": "rm103a_pistol",
+    "copy-from": "rm103a_pistol",
+    "type": "GUN",
+    "name": { "str": "RM103A automagnum" },
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 2 ] ],
+    "magazine_well": "250 ml",
+    "magazines": [ [ "8x40mm", [ "8x40_25_mag", "8x40_10_mag" ] ] ]
+  },
+  {
+    "id": "rm2000_smg",
+    "copy-from": "rm2000_smg",
+    "type": "GUN",
+    "name": { "str": "RM2000 submachine gun" },
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "magazine_well": "250 ml",
+    "magazines": [ [ "8x40mm", [ "8x40_50_mag", "8x40_100_mag", "8x40_25_mag", "8x40_10_mag" ] ] ]
+  },
+  {
+    "id": "rm99_pistol",
+    "copy-from": "rm99_pistol",
+    "type": "GUN",
+    "name": { "str": "RM99 revolver" },
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 5 ] ],
+    "ranged_damage": { "damage_type": "bullet", "amount": 30 }
+  },
+  {
+    "type": "GENERIC",
+    "id": "bio_blade_weapon",
+    "copy-from": "bio_blade_weapon",
+    "name": { "str": "monomolecular blade" },
+    "bashing": 8,
+    "cutting": 36
+  },
+  {
+    "id": "zweihander",
+    "copy-from": "zweihander",
+    "type": "GENERIC",
+    "name": { "str": "zweihaender" },
+    "extend": { "flags": [ "REACH_ATTACK" ] }
+  },
+  {
+    "id": "zweihander_fake",
+    "copy-from": "zweihander_fake",
+    "type": "GENERIC",
+    "name": { "str": "zweihaender fake" },
+    "extend": { "flags": [ "REACH_ATTACK" ] }
+  },
+  {
+    "id": "zweihander_inferior",
+    "copy-from": "zweihander_inferior",
+    "type": "GENERIC",
+    "name": { "str": "zweihaender replica" },
+    "extend": { "flags": [ "REACH_ATTACK" ] }
+  },
+  {
+    "id": "nodachi",
+    "type": "GENERIC",
+    "copy-from": "nodachi",
+    "name": { "str_sp": "nodachi" },
+    "extend": { "flags": [ "REACH_ATTACK" ] }
+  },
+  {
+    "id": "nodachi_inferior",
+    "type": "GENERIC",
+    "copy-from": "nodachi_inferior",
+    "name": { "str": "nodachi replica" },
+    "extend": { "flags": [ "REACH_ATTACK" ] }
+  },
+  {
+    "id": "nodachi_fake",
+    "type": "GENERIC",
+    "copy-from": "nodachi_fake",
+    "name": { "str": "nodachi fake" },
+    "extend": { "flags": [ "REACH_ATTACK" ] }
+  }
+]

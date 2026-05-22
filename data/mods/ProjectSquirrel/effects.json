@@ -1,0 +1,14 @@
+[
+  {
+    "type": "effect_type",
+    "id": "sq_stun_immune",
+    "name": [ "충격 흡수 방패" ],
+    "desc": [ "방패가 들어오는 공격의 충격을 완전히 흡수합니다. 기절함 효과를 막습니다." ],
+    "removes_effects": [ "stunned" ],
+    "blocks_effects": [ "stunned" ],
+    "rating": "good",
+    "max_duration": "120 m",
+    "max_intensity": 120,
+    "int_dur_factor": "1 m"
+  }
+]

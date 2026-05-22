@@ -1,0 +1,612 @@
+[
+  {
+    "id": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 도색: 국방색" },
+    "description": "콜세어 기동 타격복의 국방색 도색.",
+    "weight": "0 g",
+    "volume": "0 ml",
+    "price": 0,
+    "material": [ "steel" ],
+    "symbol": "[",
+    "color": "dark_gray"
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_color_camo",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 도색: 국방색" },
+    "description": "파이어니어 환경 피갑복의 국방색 도색."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_color_camo",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "램파트 도색: 국방색" },
+    "description": "램파트 강습 장갑복의 국방색 도색."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_color_black",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 도색: 검은색" },
+    "description": "콜세어 기동 타격복의 검은색 도색."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_color_black",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 도색: 검은색" },
+    "description": "파이어니어 환경 피갑복의 검은색 도색."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_color_black",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "램파트 도색: 검은색" },
+    "description": "램파트 강습 장갑복의 검은색 도색."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_color_urban",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 도색: 시가전" },
+    "description": "콜세어 기동 타격복의 시가전 도색."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_color_urban",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 도색: 시가전" },
+    "description": "파이어니어 환경 피갑복의 시가전 도색."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_color_urban",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "램파트 도색: 시가전" },
+    "description": "램파트 강습 장갑복의 시가전 도색."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_color_desert",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 도색: 사막전" },
+    "description": "콜세어 기동 타격복의 사막전 도색."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_color_desert",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 도색: 사막전" },
+    "description": "파이어니어 환경 피갑복의 사막전 도색."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_color_desert",
+    "copy-from": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "ARMOR",
+    "name": { "str": "램파트 도색: 사막전" },
+    "description": "램파트 강습 장갑복의 사막전 도색."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 바이저: 레드" },
+    "description": "콜세어 기동 타격복의 레드 바이저.",
+    "weight": "0 g",
+    "volume": "0 ml",
+    "price": 0,
+    "material": [ "steel" ],
+    "symbol": "[",
+    "color": "dark_gray"
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_visor_red",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 바이저: 레드" },
+    "description": "파이어니어 환경 피갑복의 레드 바이저."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_visor_red",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "램파트 바이저: 레드" },
+    "description": "램파트 강습 장갑복의 레드 바이저."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_visor_yellow",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 바이저: 옐로" },
+    "description": "콜세어 기동 타격복의 옐로 바이저."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_visor_green",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 바이저: 그린" },
+    "description": "파이어니어 환경 피갑복의 그린 바이저."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_visor_green",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "램파트 바이저: 그린" },
+    "description": "램파트 강습 장갑복의 그린 바이저."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_visor_cyan",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 바이저: 시안" },
+    "description": "콜세어 기동 타격복의 시안 바이저."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_visor_cyan",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 바이저: 시안" },
+    "description": "파이어니어 환경 피갑복의 시안 바이저."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_visor_cyan",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "램파트 바이저: 시안" },
+    "description": "램파트 강습 장갑복의 시안 바이저."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_visor_blue",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 바이저: 블루" },
+    "description": "콜세어 기동 타격복의 블루 바이저."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_visor_blue",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 바이저: 블루" },
+    "description": "파이어니어 환경 피갑복의 블루 바이저."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_visor_blue",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "램파트 바이저: 블루" },
+    "description": "램파트 강습 장갑복의 블루 바이저."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_visor_purple",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 바이저: 퍼플" },
+    "description": "콜세어 기동 타격복의 퍼플 바이저."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_visor_purple",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 바이저: 퍼플" },
+    "description": "파이어니어 환경 피갑복의 퍼플 바이저."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_visor_purple",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "램파트 바이저: 퍼플" },
+    "description": "램파트 강습 장갑복의 퍼플 바이저."
+  },
+  {
+    "id": "sq_advanced_lsurvivor_suit_visor_white",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "콜세어 바이저: 화이트" },
+    "description": "콜세어 기동 타격복의 화이트 바이저."
+  },
+  {
+    "id": "sq_advanced_fsurvivor_suit_visor_white",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "파이어니어 바이저: 화이트" },
+    "description": "파이어니어 환경 피갑복의 화이트 바이저."
+  },
+  {
+    "id": "sq_advanced_hsurvivor_suit_visor_white",
+    "copy-from": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "ARMOR",
+    "name": { "str": "램파트 바이저: 화이트" },
+    "description": "램파트 강습 장갑복의 화이트 바이저."
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_color_camo",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_color_camo",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_color_camo",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_color_black",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_color_black",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_color_black",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_color_urban",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_color_urban",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_color_urban",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_color_desert",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_color_desert",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_color_desert",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_visor_red",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_visor_yellow",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_visor_cyan",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_visor_blue",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_visor_purple",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_lsurvivor_suit_visor_white",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_visor_red",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_visor_green",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_visor_cyan",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_visor_blue",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_visor_purple",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_fsurvivor_suit_visor_white",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_visor_red",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_visor_green",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_visor_cyan",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_visor_blue",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_visor_purple",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  },
+  {
+    "result": "sq_advanced_hsurvivor_suit_visor_white",
+    "type": "recipe",
+    "category": "CC_첨단기술",
+    "subcategory": "CSC_첨단기술_OTHER",
+    "skill_used": "fabrication",
+    "difficulty": 10,
+    "skills_required": [ [ "mechanics", 10 ], [ "electronics", 10 ], [ "computer", 10 ] ],
+    "time": "5 m",
+    "autolearn": true,
+    "tools": [ [ [ "sq_atomic_forge", -1 ] ], [ [ "sq_cvdmachine", -1 ] ], [ [ "sq_nanofab", -1 ] ] ],
+    "components": [ [ [ "nanomaterial", 5 ] ] ]
+  }
+]

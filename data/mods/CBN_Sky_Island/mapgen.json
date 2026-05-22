@@ -1,0 +1,20 @@
+[
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "mx_treasuregoal",
+    "object": {
+      "mapgensize": [ 5, 5 ],
+      "rotation": [ 0, 3 ],
+      "rows": [
+        "  x  ",
+        " xxx ",
+        "xxoxx",
+        " xxx ",
+        "  x  "
+      ],
+      "terrain": { "x": [ "t_carpet_green" ], "o": [ "t_carpet_purple" ] },
+      "items": { "o": [ { "item": "skyisland_treasure_shards", "chance": 100 } ] }
+    }
+  }
+]

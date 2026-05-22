@@ -1,0 +1,155 @@
+[
+  {
+    "type": "construction_group",
+    "id": "skyisland_floor_to_wood",
+    "name": "Warp floor into wood floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_floor_to_flagstone",
+    "name": "Warp floor into worked stone floor"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_floor_to_sand",
+    "name": "Warp floor into fine sand"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_floor_to_wood_floor",
+    "group": "skyisland_floor_to_wood",
+    "category": "OTHER",
+    "required_skills": [ [ "survival", 0 ] ],
+    "time": "5 s",
+    "components": [ [ [ "skyisland_wood_floor_tokens", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_flags": [ "keep_items" ],
+    "post_terrain": "t_floor"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_floor_to_flagstone_floor",
+    "group": "skyisland_floor_to_flagstone",
+    "category": "OTHER",
+    "required_skills": [ [ "survival", 0 ] ],
+    "time": "5 s",
+    "components": [ [ [ "skyisland_flagstone_floor_tokens", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_flags": [ "keep_items" ],
+    "post_terrain": "t_rock_floor"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_floor_to_sand_floor",
+    "group": "skyisland_floor_to_sand",
+    "category": "OTHER",
+    "required_skills": [ [ "survival", 0 ] ],
+    "time": "5 s",
+    "components": [ [ [ "skyisland_sand_floor_tokens", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_flags": [ "keep_items" ],
+    "post_terrain": "t_sand"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_build_autodoc",
+    "name": "Warp: Build Autodoc (copyplate)"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_build_autodoc_couch",
+    "name": "Warp: Build Autodoc Couch (copyplate)"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_build_autodoc_do",
+    "group": "skyisland_build_autodoc",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "electronics", 6 ], [ "mechanics", 4 ] ],
+    "time": "20 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ], [ { "id": "WRENCH", "level": 1 } ] ],
+    "components": [ [ [ "skyisland_autodoc_active", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_furniture": "f_autodoc"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_build_autodoc_couch_do",
+    "group": "skyisland_build_autodoc_couch",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "electronics", 6 ], [ "mechanics", 4 ] ],
+    "time": "20 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ], [ { "id": "WRENCH", "level": 1 } ] ],
+    "components": [ [ [ "skyisland_autodoc_couch_active", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_furniture": "f_autodoc_couch"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_build_nanofab_body",
+    "name": "Warp: Build Nanofabricator Body (copyplate)"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_build_nanofab_panel",
+    "name": "Warp: Build Nanofabricator Control Panel (copyplate)"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_build_cvd_body",
+    "name": "Warp: Build CVD Machine Body (copyplate)"
+  },
+  {
+    "type": "construction_group",
+    "id": "skyisland_build_cvd_panel",
+    "name": "Warp: Build CVD Control Panel (copyplate)"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_build_nanofab_body_do",
+    "group": "skyisland_build_nanofab_body",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "electronics", 8 ], [ "mechanics", 6 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ], [ { "id": "WRENCH", "level": 2 } ] ],
+    "components": [ [ [ "skyisland_nanofab_body_active", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_terrain": "t_nanofab_body"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_build_nanofab_panel_do",
+    "group": "skyisland_build_nanofab_panel",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "electronics", 8 ], [ "mechanics", 6 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ], [ { "id": "WRENCH", "level": 2 } ] ],
+    "components": [ [ [ "skyisland_nanofab_panel_active", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_terrain": "t_nanofab"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_build_cvd_body_do",
+    "group": "skyisland_build_cvd_body",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "electronics", 8 ], [ "mechanics", 6 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ], [ { "id": "WRENCH", "level": 2 } ] ],
+    "components": [ [ [ "skyisland_cvd_body_active", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_terrain": "t_cvdbody"
+  },
+  {
+    "type": "construction",
+    "id": "skyisland_build_cvd_panel_do",
+    "group": "skyisland_build_cvd_panel",
+    "category": "CONSTRUCT",
+    "required_skills": [ [ "electronics", 8 ], [ "mechanics", 6 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ], [ { "id": "WRENCH", "level": 2 } ] ],
+    "components": [ [ [ "skyisland_cvd_panel_active", 1 ] ] ],
+    "pre_flags": [ "FLAT" ],
+    "post_terrain": "t_cvdmachine"
+  }
+]

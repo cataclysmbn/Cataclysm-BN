@@ -1,0 +1,120 @@
+[
+  {
+    "id": "ammo_rail",
+    "type": "requirement",
+    "//": "Components required for rail ammo",
+    "components": [ [ [ "steel_rail", 1 ], [ "rebar_rail", 1 ], [ "sq_du_rail", 1 ] ] ]
+  },
+  {
+    "id": "sugar_standard",
+    "type": "requirement",
+    "//": "One unit provides ~260kcal; chosen to match one unit of molasses",
+    "components": [
+      [
+        [ "sugar", 14 ],
+        [ "syrup", 5 ],
+        [ "beet_syrup", 6 ],
+        [ "molasses", 1 ],
+        [ "honey_bottled", 4 ],
+        [ "honey_glassed", 2 ],
+        [ "sq_insect_jelly", 2 ]
+      ]
+    ]
+  },
+  {
+    "id": "beverage_sweetener",
+    "type": "requirement",
+    "components": [
+      [
+        [ "sugar", 3 ],
+        [ "honey_bottled", 1 ],
+        [ "honey_glassed", 1 ],
+        [ "syrup", 1 ],
+        [ "beet_syrup", 2 ],
+        [ "sq_insect_jelly", 2 ]
+      ]
+    ]
+  },
+  {
+    "id": "filament",
+    "type": "requirement",
+    "//": "Materials for use when sewing items",
+    "components": [ [ [ "thread", 1 ], [ "sinew", 1 ], [ "plant_fibre", 1 ], [ "yarn", 1 ], [ "sq_monofilament", 1 ] ] ]
+  },
+  {
+    "id": "fabric_standard",
+    "type": "requirement",
+    "//": "Any valid fabric material, for when the material used shouldn't impact the material of the end product.  Excludes felt patches, since this may still be worn on skin.",
+    "components": [ [ [ "rag", 1 ], [ "nylon", 1 ], [ "nomex", 1 ], [ "neoprene", 1 ], [ "graphene", 1 ] ] ]
+  },
+  {
+    "id": "forging_standard",
+    "type": "requirement",
+    "//": "Forging of steel items (per steel chunk), charcoal forge is already a substitute for forge",
+    "tools": [ [ [ "forge", 20 ], [ "oxy_torch", 20 ], [ "sq_atomic_forge", -1 ] ] ]
+  },
+  {
+    "id": "blacksmithing_standard",
+    "type": "requirement",
+    "//": "Includes forging resources as well as tools needed for basic blacksmithing.  Permits working hot metal on stone surfaces.",
+    "qualities": [ { "id": "ANVIL", "level": 1 }, { "id": "HAMMER", "level": 2 } ],
+    "tools": [ [ [ "forge", 20 ], [ "oxy_torch", 20 ], [ "sq_atomic_forge", -1 ] ], [ [ "tongs", -1 ] ] ]
+  },
+  {
+    "id": "blacksmithing_intermediate",
+    "type": "requirement",
+    "//": "Includes forging resources as well as tools needed for mid-level blacksmithing.  Require a harder work surface for hot-cut chiseling and other uses of chisel quality.",
+    "qualities": [ { "id": "ANVIL", "level": 2 }, { "id": "HAMMER", "level": 3 }, { "id": "CHISEL", "level": 3 } ],
+    "tools": [ [ [ "forge", 20 ], [ "oxy_torch", 20 ], [ "sq_atomic_forge", -1 ] ], [ [ "tongs", -1 ] ] ]
+  },
+  {
+    "id": "blacksmithing_advanced",
+    "type": "requirement",
+    "//": "Includes forging resources as well as tools needed for advanced blacksmithing.  Require a proper dediciated anvil for use of a swage and die set.",
+    "qualities": [ { "id": "ANVIL", "level": 3 }, { "id": "HAMMER", "level": 3 }, { "id": "CHISEL", "level": 3 } ],
+    "tools": [ [ [ "forge", 20 ], [ "oxy_torch", 20 ], [ "sq_atomic_forge", -1 ] ], [ [ "tongs", -1 ] ], [ [ "swage", -1 ] ] ]
+  },
+  {
+    "type": "material",
+    "id": "graphene_sheet",
+    "name": "그래핀",
+    "density": 30,
+    "specific_heat_liquid": 0.82,
+    "specific_heat_solid": 0.45,
+    "latent_heat": 273,
+    "reinforces": true,
+    "bash_resist": 3,
+    "cut_resist": 3,
+    "bullet_resist": 6,
+    "acid_resist": 30,
+    "fire_resist": 30,
+    "elec_resist": 30,
+    "chip_resist": 20,
+    "repaired_with": "graphene",
+    "dmg_adj": [ "ripped", "torn", "shredded", "tattered" ],
+    "bash_dmg_verb": "ripped",
+    "cut_dmg_verb": "cut"
+  },
+  {
+    "type": "material",
+    "id": "carbide",
+    "name": "layered carbide",
+    "density": 30,
+    "specific_heat_liquid": 0.82,
+    "specific_heat_solid": 0.45,
+    "latent_heat": 273,
+    "reinforces": true,
+    "bash_resist": 6,
+    "cut_resist": 6,
+    "bullet_resist": 12,
+    "acid_resist": 30,
+    "fire_resist": 30,
+    "elec_resist": 30,
+    "chip_resist": 20,
+    "salvaged_into": "graphene",
+    "repaired_with": "carbide_plate",
+    "dmg_adj": [ "marked", "dented", "smashed", "shattered" ],
+    "bash_dmg_verb": "dented",
+    "cut_dmg_verb": "scratched"
+  }
+]

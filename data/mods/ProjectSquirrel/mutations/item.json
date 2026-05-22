@@ -1,0 +1,2701 @@
+[
+  {
+    "id": "target_iv_mutagen_fleet",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "빠른 발 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 평평한 지형에서 조금 더 빨리 움직일 수 있도록 만들어 줄 겁니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FLEET" }
+  },
+  {
+    "id": "target_iv_mutagen_plant_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "식물 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 식물과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_PLANT" }
+  },
+  {
+    "id": "target_iv_mutagen_insect_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "곤충 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 곤충과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_INSECT" }
+  },
+  {
+    "id": "target_iv_mutagen_spider_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거미 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 거미와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_SPIDER" }
+  },
+  {
+    "id": "target_iv_mutagen_slime_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "슬라임 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 슬라임과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_SLIME" }
+  },
+  {
+    "id": "target_iv_mutagen_fish_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "어류 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 어류와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_FISH" }
+  },
+  {
+    "id": "target_iv_mutagen_rat_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "쥐 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 쥐와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_RAT" }
+  },
+  {
+    "id": "target_iv_mutagen_beast_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "야수 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 야수와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_BEAST" }
+  },
+  {
+    "id": "target_iv_mutagen_ursine_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "곰 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 곰과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_URSINE" }
+  },
+  {
+    "id": "target_iv_mutagen_feline_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고양잇과 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 고양잇과와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_FELINE" }
+  },
+  {
+    "id": "target_iv_mutagen_lupine_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "늑대 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 늑대와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_LUPINE" }
+  },
+  {
+    "id": "target_iv_mutagen_cattle_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "소 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 소와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_CATTLE" }
+  },
+  {
+    "id": "target_iv_mutagen_cephalopod_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "연체동물 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 연체동물과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_CEPHALOPOD" }
+  },
+  {
+    "id": "target_iv_mutagen_bird_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "조류 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 조류와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_BIRD" }
+  },
+  {
+    "id": "target_iv_mutagen_lizard_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "도마뱀 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 도마뱀과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_LIZARD" }
+  },
+  {
+    "id": "target_iv_mutagen_troglobite_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "동굴인 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 동굴인과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_TROGLOBITE" }
+  },
+  {
+    "id": "target_iv_mutagen_alpha_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "알파 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 알파 실험체와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_ALPHA" }
+  },
+  {
+    "id": "target_iv_mutagen_medical_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "메디컬 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 메디컬 프로토타입 실험체와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_MEDICAL" }
+  },
+  {
+    "id": "target_iv_mutagen_chimera_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "키메라 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 혼종과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_CHIMERA" }
+  },
+  {
+    "id": "target_iv_mutagen_elfa_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "엘프 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 엘프와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_ELFA" }
+  },
+  {
+    "id": "target_iv_mutagen_raptor_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "랩터 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 랩터와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_RAPTOR" }
+  },
+  {
+    "id": "target_iv_mutagen_mouse_thresh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "생쥐 임계 변이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 생쥐와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_MOUSE" }
+  },
+  {
+    "id": "target_iv_mutagen_biolum1",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "작은 생체발광 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 책을 읽을 수 있을 만큼의 은은한 빛을 내는, 조절 가능한 기관을 생겨나게 합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BIOLUM1" }
+  },
+  {
+    "id": "target_iv_mutagen_biolum2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "생체발광 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 램프 정도의 밝은 빛을 내는, 조절 가능한 기관을 생겨나게 합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BIOLUM2" }
+  },
+  {
+    "id": "target_iv_mutagen_goodhearing",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "좋은 청력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 청력을 향상시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GOODHEARING" }
+  },
+  {
+    "id": "target_iv_mutagen_feyhearing",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "요정의 청각 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 판타지 세계관의 엘프처럼 소리를 잘 듣게 됩니다. 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FEYHEARING" }
+  },
+  {
+    "id": "target_iv_mutagen_goodcardio",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "높은 지구력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 지구력의 최대치와 회복 속도를 늘려줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GOODCARDIO" }
+  },
+  {
+    "id": "target_iv_mutagen_goodcardio2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "초활동적 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 지구력의 최대치와 회복 속도를 크게 늘려줍니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GOODCARDIO2" }
+  },
+  {
+    "id": "target_iv_mutagen_quick",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "빠름 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 전반적으로 행동 속도를 더 빠르게 만들어줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "QUICK" }
+  },
+  {
+    "id": "target_iv_mutagen_fasthealer",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "빠른 회복 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 회복 속도를 조금 더 빠르게 만들어줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FASTHEALER" }
+  },
+  {
+    "id": "target_iv_mutagen_lighteater",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "소식 체질 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 일반적인 사람보다 음식이 덜 필요하게 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LIGHTEATER" }
+  },
+  {
+    "id": "target_iv_mutagen_easysleeper",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "재주좋은 수면가 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 언제나 쉽게 깊은 잠에 빠질 수 있게 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "EASYSLEEPER" }
+  },
+  {
+    "id": "target_iv_mutagen_easysleeper2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "숙련된 수면가 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 거의 모든 곳에서 잠들 수 있게 해줄 것입니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "EASYSLEEPER2" }
+  },
+  {
+    "id": "target_iv_mutagen_painresist",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고통 저항 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고통에 더 저항하게 만들 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PAINRESIST" }
+  },
+  {
+    "id": "target_iv_mutagen_nightvision",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "야간 시야 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 저조도 환경에서 눈이 빛에 조금 더 민감해져서 약한 야간 시력이 생깁니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "NIGHTVISION" }
+  },
+  {
+    "id": "target_iv_mutagen_poisresist",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "독 저항성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 독에 대한 저항력을 높여줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "POISRESIST" }
+  },
+  {
+    "id": "target_iv_mutagen_bovinebulk",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "타고난 체격 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 단단한 몸을 만듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BOVINE_BULK" }
+  },
+  {
+    "id": "target_iv_mutagen_bovinebulk2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "강대한 체격 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 대격변 이전 스포츠에 출전할 수 없을 정도로 엄청나게 강력한 몸을 만들게 합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BOVINE_BULK2" }
+  },
+  {
+    "id": "target_iv_mutagen_tough",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "강인함 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 뼈와 근육을 단단하게 해서 여러분이 취할 수 있는 타격의 양을 증가시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TOUGH" }
+  },
+  {
+    "id": "target_iv_mutagen_tough2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "튼튼함 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 단순한 강인함을 넘어 몸의 내구성을 더욱 높여줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TOUGH2" }
+  },
+  {
+    "id": "target_iv_mutagen_tough3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "격파불가 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 기본적으로 슈퍼 솔져 수준의 신체 내구성입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TOUGH3" }
+  },
+  {
+    "id": "target_iv_mutagen_thickskin",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "두꺼운 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 피부를 두껍게 하여 날카로운 지형에 다치는 것에 대한 저항력을 줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THICKSKIN" }
+  },
+  {
+    "id": "target_iv_mutagen_strongback",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "강인한 등 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 척추가 강화되어 당신은 더 무거운 짐을 나를 수 있게 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "STRONGBACK" }
+  },
+  {
+    "id": "target_iv_mutagen_strongstomach",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "강한 위장 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 소화기 계통의 강도를 높입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "STRONGSTOMACH" }
+  },
+  {
+    "id": "target_iv_mutagen_goodmemory",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "좋은 기억력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 장기 및 단기 기억력을 개선합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GOODMEMORY" }
+  },
+  {
+    "id": "target_iv_mutagen_deft",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "재빠름 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 강화된 전투 대응 반사를 통해 대상과 연결되지 않은 공격의 회복을 향상시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "DEFT" }
+  },
+  {
+    "id": "target_iv_mutagen_tolerance",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "약물 저항성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 중독 물질에 대한 신체의 여과 능력을 향상시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TOLERANCE" }
+  },
+  {
+    "id": "target_iv_mutagen_gourmand",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "미식가 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 맛있는 음식 섭취에 대한 반응으로 도파민 생성을 증가시키고 더 많은 양을 수용하기 위해 소화 시스템을 확장합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GOURMAND" }
+  },
+  {
+    "id": "target_iv_mutagen_nonaddictive",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "중독 저항성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 외부 도파민 공급원에 대한 뇌의 의존도를 낮추어 중독에 대한 저항력을 효과적으로 높입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "NONADDICTIVE" }
+  },
+  {
+    "id": "target_iv_mutagen_animalempath",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "동물 공감력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 동물이 있는 상태에서 활성화되는 본능적인 움직임 패턴을 뇌에 삽입하여 동물이 덜 수줍어하거나 신뢰할 수 있게 만듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ANIMALEMPATH" }
+  },
+  {
+    "id": "target_iv_mutagen_animalempath2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "동물 친화력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 대부분의 동물이 당신을 내버려 두거나, 당신을 확인하기 위해 친근한 방식으로 행동할 만큼 충분히 호기심을 갖게 하는 방식으로 동물이 있는 곳에서 움직이도록 뇌의 특정 부분을 재구성합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ANIMALEMPATH2" }
+  },
+  {
+    "id": "target_iv_mutagen_terrifying",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "공포스러움 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 페로몬과 행동 방식을 수정하여 생물체들의 마음에 공포를 불어넣어 생물체가 도망가거나 겁을 먹을 가능성을 높입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TERRIFYING" }
+  },
+  {
+    "id": "target_iv_mutagen_disresistant",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "질병 저항력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 질병에 대한 면역 체계를 강화합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "DISRESISTANCE" }
+  },
+  {
+    "id": "target_iv_mutagen_adrenaline",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고 아드레날린 분비 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 부신의 반응과 크기를 증가시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ADRENALINE" }
+  },
+  {
+    "id": "target_iv_mutagen_wakeful",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "적은 수면 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 신체의 수면 의존도를 낮춥니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WAKEFUL" }
+  },
+  {
+    "id": "target_iv_mutagen_selfaware",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "높은 자각력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 신체의 상태에 대한 인식력을 높입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SELFAWARE" }
+  },
+  {
+    "id": "target_iv_mutagen_masochist",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "마조히스트 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고통과 쾌락을 연관시키도록 뇌를 다시 구성합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MASOCHIST" }
+  },
+  {
+    "id": "target_iv_mutagen_lightstep",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "가벼운 걸음 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 이동 패턴을 변경하여 걷는 동안 소음을 감소시키고 함정을 작동시킬 가능성을 줄입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LIGHTSTEP" }
+  },
+  {
+    "id": "target_iv_mutagen_robust",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "튼튼한 유전자 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. DNA의 손상 및 변질에 대한 완충제를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ROBUST" }
+  },
+  {
+    "id": "target_iv_mutagen_eagleeyed",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "정찰 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 시야 범위가 넓어지고 먼 곳을 더 잘 볼 수 있습니다.",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "EAGLEEYED" }
+  },
+  {
+    "id": "target_iv_mutagen_cannibal",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "식인 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 자신의 종족을 먹을 때 도파민 생산을 갈망하고 분비량을 증가시키도록 뇌의 일부를 재구성합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CANNIBAL" }
+  },
+  {
+    "id": "target_iv_mutagen_psychopath",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "사이코패스 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 전반적으로 도덕적 행동과 도덕성에 대해 신경 쓸 수 있는 능력을 제거합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PSYCHOPATH" }
+  },
+  {
+    "id": "target_iv_mutagen_killer",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "살인충동 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 어떤 생물을 죽일 때 도파민 생성을 증가시켜 생물 살해를 갈망하게 만듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "KILLER" }
+  },
+  {
+    "id": "target_iv_mutagen_weakscent",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "약한 체취 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 냄새를 유발하는 대부분의 땀샘과 일반적인 냄새를 제거합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WEAKSCENT" }
+  },
+  {
+    "id": "target_iv_mutagen_pretty",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "예쁜 외모 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 주사기로 주입한다는 점과 '실제로' 효과가 있다는 점을 제외한다면 뷰티 크림과 비슷합니다. 당신을 더욱 매력적으로 만듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PRETTY" }
+  },
+  {
+    "id": "target_iv_mutagen_heavysleeper",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "깊은 수면 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 잠자는 동안 환경 반응성을 낮춥니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HEAVYSLEEPER" }
+  },
+  {
+    "id": "target_iv_mutagen_albino",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "알비노 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸의 색소 침착을 제거하고 색소 침착을 생성하는 신체의 능력을 제거합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ALBINO" }
+  },
+  {
+    "id": "target_iv_mutagen_roughskin",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거친 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 거친 질감의 피부를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ROUGH_SKIN" }
+  },
+  {
+    "id": "target_iv_mutagen_nightvision2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뛰어난 야간 시야 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 빛에 민감한 원뿔세포의 양을 증가시켜 좋은 야간 시야를 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "NIGHTVISION2" }
+  },
+  {
+    "id": "target_iv_mutagen_nightvision3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "완전한 야간 시야 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 빛에 민감한 원뿔을 풍부하게 제공하여 대부분의 생물보다 뛰어난 야간 시야를 제공합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "NIGHTVISION3" }
+  },
+  {
+    "id": "target_iv_mutagen_cepheyes",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "연체동물의 눈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 눈 구조를 연체동물의 눈 구조로 변형시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CEPH_EYES" }
+  },
+  {
+    "id": "target_iv_mutagen_elfaeyes",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "요정의 눈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 눈의 색소 침착을 다양한 녹색 음영으로만 전환할 수 있는 자가 조절 색소체로 대체합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ELFAEYES" }
+  },
+  {
+    "id": "target_iv_mutagen_feleye",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고양이의 눈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신의 눈을 고양이의 눈으로 변이시킵니다. 야간 시야는 포함되어 있지 않습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FEL_EYE" }
+  },
+  {
+    "id": "target_iv_mutagen_birdeye",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "새의 눈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 구조적으로 눈을 조류와 유사하게 변경하여 시력과 지각력을 높입니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BIRD_EYE" }
+  },
+  {
+    "id": "target_iv_mutagen_infrared",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "적외선 시야 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 적외선 파장을 볼 수 있도록 눈을 변경하여 어둠 속에서 온혈 생물을 볼 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INFRARED" }
+  },
+  {
+    "id": "target_iv_mutagen_lizeye",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "파충류 눈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신의 눈을 파충류처럼 구조적으로 변형시킵니다. 적외선 시야는 포함되어 있지 않습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LIZ_EYE" }
+  },
+  {
+    "id": "target_iv_mutagen_lizir",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "파충류 시야 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 다양한 파충류와 같은 적외선 스펙트럼을 볼 수 있는 능력을 눈에 부여합니다. 신체적 변화 또한 적용될 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LIZ_IR" }
+  },
+  {
+    "id": "target_iv_mutagen_fasthealer2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "신속 회복 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 구조적 손상에 대한 반응으로 세포 분열 속도를 증가시켜 치유 인자를 정상 이상으로 향상시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FASTHEALER2" }
+  },
+  {
+    "id": "target_iv_mutagen_regen",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "재생 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 구조적 손상에 반응하는 세포 분열 속도가 거의 부자연스러운 수준으로 증가하여 매우 높은 수준으로 치유를 개선합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "REGEN" }
+  },
+  {
+    "id": "target_iv_mutagen_regenliz",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "파충류의 재생력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 골절과 상처 모두에 자체적인 빠른 복구 능력을 부여합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "REGEN_LIZ" }
+  },
+  {
+    "id": "target_iv_mutagen_wakeful2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "아주 적은 수면 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 뇌가 깨어 있는 동안 REM 수면과 유사한 기능을 짧게 폭발적으로 수행하여 깨어 있는 시간을 늘리고 필요한 수면 시간을 줄입니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WAKEFUL2" }
+  },
+  {
+    "id": "target_iv_mutagen_wakeful3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "피로감을 못 느낌 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신의 두뇌는 항상 REM 수면과 유사한 기능을 지속적으로 수행하여 수면의 필요성을 효과적으로 제거합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WAKEFUL3" }
+  },
+  {
+    "id": "target_iv_mutagen_fangs",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "송곳니 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 송곳니 한 쌍을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FANGS" }
+  },
+  {
+    "id": "target_iv_mutagen_incisors",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "절치 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 설치류와 같은 앞니가 자랍니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INCISORS" }
+  },
+  {
+    "id": "target_iv_mutagen_membrane",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "제 3의 눈꺼풀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 인간이 잃어버린 순막을 복원하여 수중을 볼 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MEMBRANE" }
+  },
+  {
+    "id": "target_iv_mutagen_gills",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "아가미 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 아가미를 제공하여 수중에서 숨을 쉴 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GILLS" }
+  },
+  {
+    "id": "target_iv_mutagen_gillsceph",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "연체동물의 아가미 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 문어나 오징어의 아가미를 제공하여 물속에서 숨을 쉴 수 있게 해줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GILLS_CEPH" }
+  },
+  {
+    "id": "target_iv_mutagen_scales",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "비늘 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 녹색 파충류 비늘로 몸을 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SCALES" }
+  },
+  {
+    "id": "target_iv_mutagen_thickscales",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "두꺼운 비늘 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 두껍고 튼튼한 녹색 파충류 비늘로 몸을 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THICK_SCALES" }
+  },
+  {
+    "id": "target_iv_mutagen_sleekscales",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "매끄러운 비늘 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 물고기처럼 매끄러운 유체 역학적인 비늘로 몸을 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SLEEK_SCALES" }
+  },
+  {
+    "id": "target_iv_mutagen_lightbones",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "가벼운 뼈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 뼈를 가볍게 하여 당신을 더 빠르지만 연약하게 만듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LIGHT_BONES" }
+  },
+  {
+    "id": "target_iv_mutagen_feathers",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "깃털 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸을 깃털로 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FEATHERS" }
+  },
+  {
+    "id": "target_iv_mutagen_down",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "부드러운 깃털 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 미세한 층을 가진 부드러운 깃털로 몸을 덮습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "DOWN" }
+  },
+  {
+    "id": "target_iv_mutagen_lightfur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "짧은 털가죽 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 얇은 털로 몸을 감쌉니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LIGHTFUR" }
+  },
+  {
+    "id": "target_iv_mutagen_fur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "털가죽 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 두꺼운 털로 몸을 감쌉니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FUR" }
+  },
+  {
+    "id": "target_iv_mutagen_ursinefur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "덥수룩한 털가죽 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 곰처럼 매우 두껍고 덥수룩한 털로 몸을 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "URSINE_FUR" }
+  },
+  {
+    "id": "target_iv_mutagen_lupinefur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "잿빛 털가죽 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 늑대와 같은 털로 몸을 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LUPINE_FUR" }
+  },
+  {
+    "id": "target_iv_mutagen_felinefur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "매끄러운 털가죽 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고양이와 같은 매끄러운 모피 층으로 몸을 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FELINE_FUR" }
+  },
+  {
+    "id": "target_iv_mutagen_lynxfur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "스라소니 털가죽 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 단열을 위해 더 긴 모피로 뺨과 목을 덮습니다. 다른 모피 변이가 적용될 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LYNX_FUR" }
+  },
+  {
+    "id": "target_iv_mutagen_patchskin1",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "누더기 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신의 피부를 모피와 비늘의 융합물로 변이시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PATCHSKIN1" }
+  },
+  {
+    "id": "target_iv_mutagen_patchskin2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "두꺼운 누더기 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신의 피부를 두꺼워진 모피와 비늘의 융합물로 변이시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PATCHSKIN2" }
+  },
+  {
+    "id": "target_iv_mutagen_chitin",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "키틴질 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 유연하고 얇은 키틴질 층으로 표피를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CHITIN" }
+  },
+  {
+    "id": "target_iv_mutagen_chitin2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "키틴질 외골격 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 단단한 키틴질 갑옷 층으로 표피를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CHITIN2" }
+  },
+  {
+    "id": "target_iv_mutagen_chitin3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "두꺼운 키틴질 외골격 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 두껍고 딱딱한 키틴질 갑옷 층으로 표피를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CHITIN3" }
+  },
+  {
+    "id": "target_iv_mutagen_chitinfur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "털이 난 키틴질 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 약간 털이 많은 키틴으로 표피를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CHITIN_FUR" }
+  },
+  {
+    "id": "target_iv_mutagen_chitinfur2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "털로 덮인 키틴질 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 매우 털이 많은 키틴질 층으로 표피를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CHITIN_FUR2" }
+  },
+  {
+    "id": "target_iv_mutagen_chitinfur3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "털로 덮인 외피 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 모피 키틴질 껍질로 표피를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CHITIN_FUR3" }
+  },
+  {
+    "id": "target_iv_mutagen_cfhair",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "쐐기풀같은 털 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 느슨한 키틴의 털로 이루어진 근접 공격자에 대한 방어 메커니즘을 구축합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CF_HAIR" }
+  },
+  {
+    "id": "target_iv_mutagen_spines",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뼈로 된 가시 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 방어를 위해 날카로운 뼈로 된 가시로 피부를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SPINES" }
+  },
+  {
+    "id": "target_iv_mutagen_quills",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "큰 가시 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 방어를 위해 크고 날카로운 가시로 피부를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "QUILLS" }
+  },
+  {
+    "id": "target_iv_mutagen_barbs",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "돌격용 가시 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 적에게 날려보내거나 근접 방어로 사용할 수 있는 느슨한 가시로 피부를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BARBS" }
+  },
+  {
+    "id": "target_iv_mutagen_plantskin",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "코르크 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 피부를 녹색으로 만들고 약간 나무같아지며, 수분을 더 잘 유지할 수 있게 합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PLANTSKIN" }
+  },
+  {
+    "id": "target_iv_mutagen_bark",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "나무껍질 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 나무처럼 얇은 껍질로 피부를 감싸줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BARK" }
+  },
+  {
+    "id": "target_iv_mutagen_thorns",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "가시 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 작은 나무 가시로 피부를 덮습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THORNS" }
+  },
+  {
+    "id": "target_iv_mutagen_leaves",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "잎 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 머리카락을 풀처럼 긴 잎사귀로 바꿔줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LEAVES" }
+  },
+  {
+    "id": "target_iv_mutagen_leaves2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "우거진 잎 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 더 큰 이파리를 제공합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LEAVES2" }
+  },
+  {
+    "id": "target_iv_mutagen_leaves3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "파릇파릇한 잎 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 머리를 덮지 않으면 영양 공급원 역할을 할 수 있는 크고 생생한 잎을 제공합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LEAVES3" }
+  },
+  {
+    "id": "target_iv_mutagen_transpiration",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "증산 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 영양분을 이동시키는 방법으로 물의 증발을 이용하도록 변경합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TRANSPIRATION" }
+  },
+  {
+    "id": "target_iv_mutagen_flowers",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "개화 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 두피에 꽃을 피웁니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FLOWERS" }
+  },
+  {
+    "id": "target_iv_mutagen_rosebuds",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "장미꽃봉오리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 머리 꼭대기에 장미 봉오리를 피워줍니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ROSEBUDS" }
+  },
+  {
+    "id": "target_iv_mutagen_nails",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "긴 손톱 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 사람을 자를 수 있는 더 긴 손톱을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "NAILS" }
+  },
+  {
+    "id": "target_iv_mutagen_claws",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "동물의 발톱 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 손끝에 동물의 발톱을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CLAWS" }
+  },
+  {
+    "id": "target_iv_mutagen_clawsrat",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "쥐 발톱 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 쥐 같은 발톱을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CLAWS_RAT" }
+  },
+  {
+    "id": "target_iv_mutagen_clawsst",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "스테인리스 발톱 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 스테인레스 스틸로 만든 것 같은 발톱을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CLAWS_ST" }
+  },
+  {
+    "id": "target_iv_mutagen_clawsretract",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "숨길 수 있는 발톱 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 사용하지 않을 때 접을 수 있는 발톱을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CLAWS_RETRACT" }
+  },
+  {
+    "id": "target_iv_mutagen_clawstentacle",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "촉수 갈퀴 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 촉수에 갈고리가 달린 큰 갈퀴를 줍니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CLAWS_TENTACLE" }
+  },
+  {
+    "id": "target_iv_mutagen_inkglands",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "먹물샘 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 먹물을 뿌려서 눈이 멀게 할 수 있는 먹물샘을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INK_GLANDS" }
+  },
+  {
+    "id": "target_iv_mutagen_insectreservoir",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "돌출된 저장소 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 여분의 액체를 포함할 수 있도록 복부 밖으로 부풀어 오르는 체액 저장소를 개발하게 합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INSECT_RESERVOIR" }
+  },
+  {
+    "id": "target_iv_mutagen_talons",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "커다란 발톱 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 검지가 거대한 발톱으로 자랍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TALONS" }
+  },
+  {
+    "id": "target_iv_mutagen_radiogenic",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "방사성 대사체계 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 방사능 수치를 소모하여 스스로의 체력을 회복할 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RADIOGENIC" }
+  },
+  {
+    "id": "target_iv_mutagen_pheromoneinsect",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "곤충 페로몬 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸에서 곤충 페로몬을 생성하여 대부분의 곤충에게 우호적으로 인지하게 만듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PHEROMONE_INSECT" }
+  },
+  {
+    "id": "target_iv_mutagen_pheromonemammal",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "포유동물 페로몬 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸에서 대부분의 포유류를 진정시키고 친근하게 만드는 페로몬을 생성합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PHEROMONE_MAMMAL" }
+  },
+  {
+    "id": "target_iv_mutagen_disimmune",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "질병 면역 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 환경적 질병에 면역이 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "DISIMMUNE" }
+  },
+  {
+    "id": "target_iv_mutagen_infresist",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "감염 면역 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 감염에 대한 면역을 갖게 하며, 멸균되지 않은 CBM을 설치할 수 있게 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INFRESIST" }
+  },
+  {
+    "id": "target_iv_mutagen_paraimmune",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "기생충 면역 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸을 기생충이 살기 부적합하게 만들어 효과적으로 면역화합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PARAIMMUNE" }
+  },
+  {
+    "id": "target_iv_mutagen_poisonous",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "독 생성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 생물학적 공격으로 적에게 독을 주입합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "POISONOUS" }
+  },
+  {
+    "id": "target_iv_mutagen_poisonous2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "맹독 생성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 생물학적 공격으로 적에게 강력한 독을 주입합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "POISONOUS2" }
+  },
+  {
+    "id": "target_iv_mutagen_slimehands",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "끈적이는 손바닥 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 손에서 부식성 점액이 생성됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SLIME_HANDS" }
+  },
+  {
+    "id": "target_iv_mutagen_bendy1",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "신축성 있는 관절 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 팔다리에 약간의 유연성을 제공합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BENDY1" }
+  },
+  {
+    "id": "target_iv_mutagen_bendy2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고무같은 관절 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 팔다리에 상당한 유연성을 제공합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BENDY2" }
+  },
+  {
+    "id": "target_iv_mutagen_bendy3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "무정형관절 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 팔다리를 위족처럼 바꿉니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BENDY3" }
+  },
+  {
+    "id": "target_iv_mutagen_compoundeyes",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "겹눈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 곤충과 같은 겹눈을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "COMPOUND_EYES" }
+  },
+  {
+    "id": "target_iv_mutagen_stronglegs",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "튼튼한 다리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 다리의 근육량을 증가시켜 아무 지형을 가로질러 움직이게 하며, 조금 더 많은 짐을 짊어지는 데에 도움을 줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "STRONG_LEGS" }
+  },
+  {
+    "id": "target_iv_mutagen_raptalons",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "갈고리 발톱 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 랩터의 발톱처럼 발가락에 구부러지고 커다란 발톱을 줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RAP_TALONS" }
+  },
+  {
+    "id": "target_iv_mutagen_hooves",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "발굽 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 발을 발굽으로 바꿉니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HOOVES" }
+  },
+  {
+    "id": "target_iv_mutagen_alcmet",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "알코올 신진대사 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 소화 시스템이 알코올을 대사하여 열량 공급원으로 사용할 수 있도록 합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ALCMET" }
+  },
+  {
+    "id": "target_iv_mutagen_painresisttroglo",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "불굴의 지하생활 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 지하 생활의 통증과 고통에 잘 적응하도록 몸을 적응시킵니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PAINRESIST_TROGLO" }
+  },
+  {
+    "id": "target_iv_mutagen_stockytroglo",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "지하형 체구 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸은 짧아지지만 신체 질량이 근육으로 바뀌어 근력은 증가하지만 민첩성은 떨어집니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "STOCKY_TROGLO" }
+  },
+  {
+    "id": "target_iv_mutagen_saprovore",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "청소동물 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 썩은 음식을 먹을 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SAPROVORE" }
+  },
+  {
+    "id": "target_iv_mutagen_saprophage",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "청소식물 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 뿌리와 광합성을 기반으로 한 생계 유지 및 때때로 썩는 음식에 대한 신진대사 선호도를 제공합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SAPROPHAGE" }
+  },
+  {
+    "id": "target_iv_mutagen_gizzard",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "모래주머니 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 새처럼 모래주머니를 얻습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GIZZARD" }
+  },
+  {
+    "id": "target_iv_mutagen_ruminant",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "되새김동물 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 관목이나 덤불과 같은 식물을 직접 먹을 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RUMINANT" }
+  },
+  {
+    "id": "target_iv_mutagen_grazer",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "방목가축 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 풀을 먹을 수 있게 해줍니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GRAZER" }
+  },
+  {
+    "id": "target_iv_mutagen_eatpoison",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "초월적 창자 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 독이 있는 음식을 먹을 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "EATPOISON" }
+  },
+  {
+    "id": "target_iv_mutagen_eatdead",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "죽음을 먹는 자 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 이것으로 좀비들은 곧 밀키트처럼 보일 것입니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "EATDEAD" }
+  },
+  {
+    "id": "target_iv_mutagen_burrow",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "굴 파기 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 발톱으로 거의 모든 것을 파헤칠 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BURROW" }
+  },
+  {
+    "id": "target_iv_mutagen_saberteeth",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "칼날 이빨 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 매우 크고 믿을 수 없을 정도로 날카로운 송곳니를 자라게 합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SABER_TEETH" }
+  },
+  {
+    "id": "target_iv_mutagen_eathealth",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "대사과다증 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 신진대사를 엄청나게 크게 높여 과도한 음식을 상처 치유에 사용할 수 있는 조직으로 직접 전환할 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "EATHEALTH" }
+  },
+  {
+    "id": "target_iv_mutagen_horns",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뿔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 머리에 작은 뿔을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HORNS" }
+  },
+  {
+    "id": "target_iv_mutagen_hornscurled",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "둥근 뿔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 구부러진 뿔을 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HORNS_CURLED" }
+  },
+  {
+    "id": "target_iv_mutagen_hornspointed",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뾰족한 뿔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 뾰족한 뿔을 줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HORNS_POINTED" }
+  },
+  {
+    "id": "target_iv_mutagen_antlers",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "사슴 뿔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 사슴 뿔을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ANTLERS" }
+  },
+  {
+    "id": "target_iv_mutagen_antennae",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "더듬이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 곤충처럼 더듬이를 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ANTENNAE" }
+  },
+  {
+    "id": "target_iv_mutagen_fleet2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "로드-러너 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 평평한 표면에서 훨씬 빠르게 움직일 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FLEET2" }
+  },
+  {
+    "id": "target_iv_mutagen_tailstub",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "짧은 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 짧은 꼬리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_STUB" }
+  },
+  {
+    "id": "target_iv_mutagen_tailfin",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "지느러미 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 상어나 물고기와 같은 꼬리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_FIN" }
+  },
+  {
+    "id": "target_iv_mutagen_taillong",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "긴 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고양이와 같은 꼬리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_LONG" }
+  },
+  {
+    "id": "target_iv_mutagen_tailcattle",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "소 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 소와 같은 꼬리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_CATTLE" }
+  },
+  {
+    "id": "target_iv_mutagen_tailrat",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "설치류 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 쥐와 같은 꼬리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_RAT" }
+  },
+  {
+    "id": "target_iv_mutagen_tailthick",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "두꺼운 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 채찍으로 사용할 수 있는 두꺼운 파충류 꼬리를 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_THICK" }
+  },
+  {
+    "id": "target_iv_mutagen_tailraptor",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "랩터 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 균형을 잡는 데 도움이 되는 길고 다소 뻣뻣한 랩터 꼬리를 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_RAPTOR" }
+  },
+  {
+    "id": "target_iv_mutagen_tailfluffy",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "솜털 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 길고 푹신한 꼬리를 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_FLUFFY" }
+  },
+  {
+    "id": "target_iv_mutagen_tailsting",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "침 달린 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 무언가를 찌르는 데 유용한 끝 부분에 스파이크가 달린 긴 꼬리를 제공합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_STING" }
+  },
+  {
+    "id": "target_iv_mutagen_tailclub",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "몽둥이 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 무언가를 부수는 데 유용한 끝에 곤봉이 달린 꼬리를 줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_CLUB" }
+  },
+  {
+    "id": "target_iv_mutagen_hibernate",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "동면 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 정말 오랜 시간 동안 지방을 저장하고 잠을 잘 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HIBERNATE" }
+  },
+  {
+    "id": "target_iv_mutagen_muttough",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "강인한 생명력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸을 더 강인하게 만듭니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MUT_TOUGH" }
+  },
+  {
+    "id": "target_iv_mutagen_muttough2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "단단함 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸을 더욱 강인하게 만듭니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MUT_TOUGH2" }
+  },
+  {
+    "id": "target_iv_mutagen_muttough3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "태애앵크 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몇 대 맞는 것 쯤이야 우습지요. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MUT_TOUGH3" }
+  },
+  {
+    "id": "target_iv_mutagen_painrec1",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고통 회복 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고통에서 빨리 벗어날 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PAINREC1" }
+  },
+  {
+    "id": "target_iv_mutagen_masochistmed",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고행 중독자 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고통을 갈망하고 좋아하기 시작합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MASOCHIST_MED" }
+  },
+  {
+    "id": "target_iv_mutagen_cenobite",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고행자 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신은 고통을 사랑합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CENOBITE" }
+  },
+  {
+    "id": "target_iv_mutagen_nopain",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "통증 무감각 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 모든 통각 신경을 제거합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "NOPAIN" }
+  },
+  {
+    "id": "target_iv_mutagen_wingsbird",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "조류 날개 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 날지는 못하지만 강하 중에 속도를 낮춰 추락 피해를 받지 않게 하는 깃털 같은 날개가 자랍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WINGS_BIRD" }
+  },
+  {
+    "id": "target_iv_mutagen_wingsinsect",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "곤충 날개 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 벌같은 한 쌍의 크고 반투명한 날개를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WINGS_INSECT" }
+  },
+  {
+    "id": "target_iv_mutagen_mouthtentacles",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "입 촉수 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 입 주위에 촉수를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MOUTH_TENTACLES" }
+  },
+  {
+    "id": "target_iv_mutagen_mandibles",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "추가 아래턱 뼈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 곤충같은 하악골을 사용하는 체계로 입을 바꿉니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MANDIBLES" }
+  },
+  {
+    "id": "target_iv_mutagen_fangsspider",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "접는 송곳니 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 아래턱을 거미 송곳니로 바꿉니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FANGS_SPIDER" }
+  },
+  {
+    "id": "target_iv_mutagen_canineears",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "개의 귀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 개의 귀를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CANINE_EARS" }
+  },
+  {
+    "id": "target_iv_mutagen_lupineears",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "늑대의 귀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 늑대의 귀를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LUPINE_EARS" }
+  },
+  {
+    "id": "target_iv_mutagen_felineears",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고양이 귀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고양이의 귀를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FELINE_EARS" }
+  },
+  {
+    "id": "target_iv_mutagen_ursineears",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "곰의 귀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 곰의 귀를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "URSINE_EARS" }
+  },
+  {
+    "id": "target_iv_mutagen_elfaears",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뾰족한 귀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 엘프의 귀를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ELFA_EARS" }
+  },
+  {
+    "id": "target_iv_mutagen_mouseears",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "설치류 귀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 설치류의 귀를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MOUSE_EARS" }
+  },
+  {
+    "id": "target_iv_mutagen_webwalker",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거미줄을 걷는 자 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 느려지지 않고 거미줄을 통과할 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WEB_WALKER" }
+  },
+  {
+    "id": "target_iv_mutagen_webweaver",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거미줄을 만드는 자 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 자신만의 거미줄을 생산할 수 있는 기능을 제공합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WEB_WEAVER" }
+  },
+  {
+    "id": "target_iv_mutagen_webrappel",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거미줄 다이버 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 낭떠러지를 하강하거나 추락할 때 거미줄을 사용합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WEB_RAPPEL" }
+  },
+  {
+    "id": "target_iv_mutagen_webrope",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거미줄 밧줄 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 거미줄로 밧줄을 만들 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WEB_ROPE" }
+  },
+  {
+    "id": "target_iv_mutagen_webbridge",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거미줄 건축가 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 허공 이편저편을 거미줄로 덮어 다리를 만들 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WEB_BRIDGE" }
+  },
+  {
+    "id": "target_iv_mutagen_whiskers",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "수염 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 고양이의 수염을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WHISKERS" }
+  },
+  {
+    "id": "target_iv_mutagen_whiskersrat",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뻣뻣한 수염 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 설치류의 수염을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WHISKERS_RAT" }
+  },
+  {
+    "id": "target_iv_mutagen_fat",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "지방 축적 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 즉시 체중이 늘어납니다! 헬창들이 싫어합니다!",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FAT" }
+  },
+  {
+    "id": "target_iv_mutagen_largeok",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "커다람 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 성장 혈청을 주입하여 오늘부터 더욱 커다래져보십시오! 주의. Large Inc.는 지원되지 않는 인프라로 인한 성장 부족에 대해 책임을 지지 않습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LARGE_OK" }
+  },
+  {
+    "id": "target_iv_mutagen_hugeok",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거대함 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 아주 커어어어어다래집니다!!! 당신의 몸이 받쳐준다면요... 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HUGE_OK" }
+  },
+  {
+    "id": "target_iv_mutagen_strup3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뛰어난 근력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 캬~ 근육 찢 었 다!",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "STR_UP_3" }
+  },
+  {
+    "id": "target_iv_mutagen_strup4",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "초인적 근력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 크르르! 내 알통 좀 봐봐! 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "STR_UP_4" }
+  },
+  {
+    "id": "target_iv_mutagen_stralpha",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "최고의 근력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 나 같은 알파가 이렇게 강한 건 당연하지. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "STR_ALPHA" }
+  },
+  {
+    "id": "target_iv_mutagen_dexup3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "극한적 민첩성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 카드 마술을 할 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "DEX_UP_3" }
+  },
+  {
+    "id": "target_iv_mutagen_dexup4",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "초인적 민첩성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 손가락 관절 사이로 동전 뒤집기를 할 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "DEX_UP_4" }
+  },
+  {
+    "id": "target_iv_mutagen_dexalpha",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "최고의 민첩성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 그럼, 알파는 이렇게 민첩해야 한다고. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "DEX_ALPHA" }
+  },
+  {
+    "id": "target_iv_mutagen_intup3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "극한적 지능 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 딥 블루조차 당신에게 적수가 되지 않습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INT_UP_3" }
+  },
+  {
+    "id": "target_iv_mutagen_intup4",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "초인적 지능 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신은 특이점을 통과했습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INT_UP_4" }
+  },
+  {
+    "id": "target_iv_mutagen_intalpha",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "최고의 지능 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 비알파는 그저 지적 평민일 뿐이다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INT_ALPHA" }
+  },
+  {
+    "id": "target_iv_mutagen_perup3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "극한적 지각력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 주변에 있는 대부분의 것을 인식합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PER_UP_3" }
+  },
+  {
+    "id": "target_iv_mutagen_perup4",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "초인적 지각력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 주변에 있는 모든 것을 인식할 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PER_UP_4" }
+  },
+  {
+    "id": "target_iv_mutagen_peralpha",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "최고의 지각력 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 물론 알파는 가장 작은 세부 사항까지 인식할 수 있지. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PER_ALPHA" }
+  },
+  {
+    "id": "target_iv_mutagen_intslime",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "분산 신경과학 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 슬라임같은 몸 전체에 뉴런을 분산시켜 기본적으로 하나의 큰 두뇌가 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INT_SLIME" }
+  },
+  {
+    "id": "target_iv_mutagen_perslimeok",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "분산된 감각 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 감각 기관을 마음대로 늘리고 줄일 수 있게 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PER_SLIME_OK" }
+  },
+  {
+    "id": "target_iv_mutagen_small2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "매우 작음 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 원래 크기의 절반이 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SMALL2" }
+  },
+  {
+    "id": "target_iv_mutagen_smallok",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "존재감 없음 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 작은 형태에 숙달됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SMALL_OK" }
+  },
+  {
+    "id": "target_iv_mutagen_crafty",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "꾀돌이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 쥐처럼 교활해집니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CRAFTY" }
+  },
+  {
+    "id": "target_iv_mutagen_slitnostrils",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "기다란 콧구멍 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 코를 평평하게 하고 얇은 콧구멍 슬릿을 만듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SLIT_NOSTRILS" }
+  },
+  {
+    "id": "target_iv_mutagen_forkedtongue",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "갈라진 혀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 갈라진 혀를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FORKED_TONGUE" }
+  },
+  {
+    "id": "target_iv_mutagen_wingsbat",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "박쥐 날개 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 박쥐같은 가죽 날개 한 쌍을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WINGS_BAT" }
+  },
+  {
+    "id": "target_iv_mutagen_wingsbutterfly",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "나비 날개 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 예쁜 나비같은 날개 한 쌍을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WINGS_BUTTERFLY" }
+  },
+  {
+    "id": "target_iv_mutagen_pale",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "창백한 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 창백한 피부를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PALE" }
+  },
+  {
+    "id": "target_iv_mutagen_spots",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "점박이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신이 항상 원했던 점박이 무늬 컬렉션이 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SPOTS" }
+  },
+  {
+    "id": "target_iv_mutagen_beautiful",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "아름다움 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 아름다워집니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BEAUTIFUL" }
+  },
+  {
+    "id": "target_iv_mutagen_beautiful2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "아주 아름다움 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 아주 아름다워집니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BEAUTIFUL2" }
+  },
+  {
+    "id": "target_iv_mutagen_beautiful3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "완벽한 아름다움 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 믿을 수 없을 정도로 아름다워집니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BEAUTIFUL3" }
+  },
+  {
+    "id": "target_iv_mutagen_snout",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "주둥이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 주둥이를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SNOUT" }
+  },
+  {
+    "id": "target_iv_mutagen_minotaur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "황소 주둥이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 카울릭 머리의 원인 그 자체가 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MINOTAUR" }
+  },
+  {
+    "id": "target_iv_mutagen_muzzle",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "늑대의 주둥이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 어쨌든 당신은 항상 개 같은 사람이었습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MUZZLE" }
+  },
+  {
+    "id": "target_iv_mutagen_muzzlebear",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "곰의 주둥이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 이제 꿀단지를 핥을 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MUZZLE_BEAR" }
+  },
+  {
+    "id": "target_iv_mutagen_muzzlerat",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "설치류 주둥이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 쥐 얼굴을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MUZZLE_RAT" }
+  },
+  {
+    "id": "target_iv_mutagen_muzzlelong",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "파충류 주둥이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 렙틸리언 그 자체가 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MUZZLE_LONG" }
+  },
+  {
+    "id": "target_iv_mutagen_proboscis",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "모기 주둥이 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신이 파리인지 모기인지는 스스로 알아낼 몫입니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PROBOSCIS" }
+  },
+  {
+    "id": "target_iv_mutagen_hollowbones",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "속이 빈 뼈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 새처럼 뼈를 비워 공격과 이동이 더 빨라지지만 많이 운반할 수는 없습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HOLLOW_BONES" }
+  },
+  {
+    "id": "target_iv_mutagen_vomitous",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "구역질 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 누군가가 많이 토하고 싶어하는 이유는 내 알 바 아닙니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "VOMITOUS" }
+  },
+  {
+    "id": "target_iv_mutagen_persistencehunter",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "끈질긴 사냥꾼 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 사냥감이 지쳐 멈출 때까지 다양한 속도로 몇 마일 동안 쫓을 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PERSISTENCE_HUNTER" }
+  },
+  {
+    "id": "target_iv_mutagen_persistencehunter2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "극도로 끈질긴 사냥꾼 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 말 그대로 사냥감이 지쳐서 죽을 때까지 며칠 동안 쫓을 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PERSISTENCE_HUNTER2" }
+  },
+  {
+    "id": "target_iv_mutagen_hunger",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "빠른 신진대사 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 신진대사율을 높이고 칼로리 소모량을 증가시킵니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HUNGER" }
+  },
+  {
+    "id": "target_iv_mutagen_metrat",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "신속한 신진대사 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 대부분의 사람들보다 더 많은 음식이 필요하지만 더 빠르게 치유됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "MET_RAT" }
+  },
+  {
+    "id": "target_iv_mutagen_hunger2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "매우 빠른 신진대사 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 음식을 많이 먹어야 하지만 지구력 회복은 손 안대고 코 풀기입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HUNGER2" }
+  },
+  {
+    "id": "target_iv_mutagen_hunger3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "극한의 신진대사 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신이 어떻게 스스로를 유지하는 지를 추측하는 건 자유지만, 당신은 분명히 그걸 보여줄 수 있는 엄청난 지구력을 가지고 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HUNGER3" }
+  },
+  {
+    "id": "target_iv_mutagen_nothirst",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "신진대사 재수화 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 먹는 것에서 수분을 얻어 쥐처럼 배고픔이 곧 갈증이 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "NO_THIRST" }
+  },
+  {
+    "id": "target_iv_mutagen_heavysleeper2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "아주 깊은 수면 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 총격전 속에서 잠을 잘 수 있습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HEAVYSLEEPER2" }
+  },
+  {
+    "id": "target_iv_mutagen_webbed",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "물갈퀴 달린 손 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 손발에 큼직한 물갈퀴가 달립니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WEBBED" }
+  },
+  {
+    "id": "target_iv_mutagen_paws",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "동물의 발 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 손을 동물의 앞발로 바꿉니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PAWS" }
+  },
+  {
+    "id": "target_iv_mutagen_pawslarge",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "널찍한 앞발 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 손을 수영을 더 잘할 수 있는 큰 발로 바꿉니다. 그러나 손재주와 조작에 문제가 될 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "PAWS_LARGE" }
+  },
+  {
+    "id": "target_iv_mutagen_beak",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "부리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 물건을 쪼아댈 수 있는 새의 부리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BEAK" }
+  },
+  {
+    "id": "target_iv_mutagen_beakpeck",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "딱따구리 부리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 딱따구리의 부리를 얻어 하루 종일 적을 쪼아보세요. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BEAK_PECK" }
+  },
+  {
+    "id": "target_iv_mutagen_beakhum",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "벌새 부리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 벌새 부리를 얻습니다. 꽃이 맛있어 보입니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "BEAK_HUM" }
+  },
+  {
+    "id": "target_iv_mutagen_radioactive",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "저 방사성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 어떤 이유로든 약간 방사능이 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RADIOACTIVE1" }
+  },
+  {
+    "id": "target_iv_mutagen_slimy",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "끈적함 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 항상 미세한 점액층으로 몸이 코팅됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SLIMY" }
+  },
+  {
+    "id": "target_iv_mutagen_viscous",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "점성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 몸의 점액 배출을 늘려 끈적끈적하고 젤처럼 만듭니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "VISCOUS" }
+  },
+  {
+    "id": "target_iv_mutagen_amorphous",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "부정형 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신의 살을 즐거운 젤리 같이 일관되게 만듭니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "AMORPHOUS" }
+  },
+  {
+    "id": "target_iv_mutagen_slimespawner",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "전세포화 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 하나의 큰 세포가 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SLIMESPAWNER" }
+  },
+  {
+    "id": "target_iv_mutagen_herbivore",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "초식동물 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 초식동물이 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HERBIVORE" }
+  },
+  {
+    "id": "target_iv_mutagen_carnivore",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "육식동물 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 육식동물이 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CARNIVORE" }
+  },
+  {
+    "id": "target_iv_mutagen_vines2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "덩굴 팔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 덩굴과 같은 팔다리를 얻어 채찍질하거나 레펠 하강이 가능해집니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "VINES2" }
+  },
+  {
+    "id": "target_iv_mutagen_vines3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "덩굴 발아 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 덩굴 가지를 완전히 제어하여 마음대로 떨어뜨릴 수 있게 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "VINES3" }
+  },
+  {
+    "id": "target_iv_mutagen_hairroots",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "머리카락 뿌리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 머리카락에서 뿌리가 자랍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HAIRROOTS" }
+  },
+  {
+    "id": "target_iv_mutagen_roots2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뿌리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 발의 뿌리를 얻어 파낼 수 있는 지형에 가만히 있으면 흙에서 영양과 수분을 흡수할 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ROOTS2" }
+  },
+  {
+    "id": "target_iv_mutagen_roots3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뿌리 내리기 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 파낼 수 있는 지형에 있으면 느려지는 대가로 뿌리를 내려 영양과 수분을 흡수합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ROOTS3" }
+  },
+  {
+    "id": "target_iv_mutagen_chloromorph",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "엽록소 형성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 파낼 수 있는 흙에서 잠을 자면 배고픔이나 갈증이 해소될 것입니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "CHLOROMORPH" }
+  },
+  {
+    "id": "target_iv_mutagen_treecommunion",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "균근 교감 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 나무들에게 제정신인 사람처럼 말을 걸 수 있게 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TREE_COMMUNION" }
+  },
+  {
+    "id": "target_iv_mutagen_coldblood3",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "심한 열기 의존증 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 추울수록 느려지지만 많이 먹을 필요가 없게 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "COLDBLOOD3" }
+  },
+  {
+    "id": "target_iv_mutagen_coldblood4",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "변온동물 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 추울수록 느려지지만 더울수록 빨라지며, 많이 먹을 필요가 없게 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "COLDBLOOD4" }
+  },
+  {
+    "id": "target_iv_mutagen_growl",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거슬리는 목소리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 거친 목소리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "GROWL" }
+  },
+  {
+    "id": "target_iv_mutagen_snarl",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "으르렁거리는 목소리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 으르렁거리는 목소리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SNARL" }
+  },
+  {
+    "id": "target_iv_mutagen_hiss",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "쉭쉭거리는 목소리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 쉭쉭거리는 목소리를 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "HISS" }
+  },
+  {
+    "id": "target_iv_mutagen_armfeathers",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "깃털로 덮인 팔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 팔에 깃털을 얻습니다. 방수 및 아주 사소한 보호 외에는 그다지 쓸모가 없습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ARM_FEATHERS" }
+  },
+  {
+    "id": "target_iv_mutagen_insectarmsok",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "곤충 팔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 두 개의 여분의 곤충 팔을 돋아나게 합니다. 딱히 많이 쓸모가 있지는 않습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "INSECT_ARMS_OK" }
+  },
+  {
+    "id": "target_iv_mutagen_arachnidarmsok",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "거미 팔 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 네 개의 여분의 거미 팔을 돋아나게 합니다. 딱히 많이 쓸모가 있지는 않습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ARACHNID_ARMS_OK" }
+  },
+  {
+    "id": "target_iv_mutagen_armtentacles8",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "8개의 촉수 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 8개의 촉수 팔을 얻습니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ARM_TENTACLES_8" }
+  },
+  {
+    "id": "target_iv_mutagen_shell",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "껍데기 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 스스로를 보호하기 위한 껍데기를 얻습니다. 몸통 장비를 파괴하고 제한합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SHELL" }
+  },
+  {
+    "id": "target_iv_mutagen_shell2",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "널찍한 껍데기 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 기존의 껍데기를 잠잘 수 있고 따뜻함을 얻을 수 있는 곳으로 바꿉니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SHELL2" }
+  },
+  {
+    "id": "target_iv_mutagen_legtentacles",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "다리 촉수 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 다리를 여섯 가닥의 촉수로 바꿉니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LEG_TENTACLES" }
+  },
+  {
+    "id": "target_iv_mutagen_legtentbrace",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "촉수 버팀대 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 하체 촉수에 빨판을 돋아나게 하여 가만히 있기 편해집니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "LEG_TENT_BRACE" }
+  },
+  {
+    "id": "target_iv_mutagen_felineflexibility",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "고양이과 유연성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 이것은 내부적으로 근육, 관절 및 뇌의 작동방식 등을 다소 변경하여 장애물을 쉽게 통과할 수 있게 하고 공격을 더 쉽게 피하도록 도와줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FELINE_FLEXIBILITY" }
+  },
+  {
+    "id": "target_iv_mutagen_acidproof",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "내산성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 산성 피해에 대한 저항성을 가집니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ACIDPROOF" }
+  },
+  {
+    "id": "target_iv_mutagen_acidblood",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "산성 혈액 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 혈액을 산성으로 바꾸어 적들이 당신을 아프게 한 것을 후회하게 만듭니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ACIDBLOOD" }
+  },
+  {
+    "id": "target_iv_mutagen_amphibian",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "양서류 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 육지와 물 모두에서 편안한 수륙 양용 뮤턴트가 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "AMPHIBIAN" }
+  },
+  {
+    "id": "target_iv_mutagen_seesleep",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "눈꺼풀 없는 눈 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 눈꺼풀을 제거하고 투명한 막으로 교체합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SEESLEEP" }
+  },
+  {
+    "id": "target_iv_mutagen_watersleep",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "수중 친화성 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 수중에서 수면이 쉬워지고 물속에서 무언가를 먹을 수 있게 됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "WATERSLEEP" }
+  },
+  {
+    "id": "target_iv_mutagen_freshwaterosmosis",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "담수삼투 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 민물에 들어가있으면 갈증이 해소됩니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FRESHWATEROSMOSIS" }
+  },
+  {
+    "id": "target_iv_mutagen_electroreceptors",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "전기수용체 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 벽을 통해 전기로 움직이는 생물과 로봇을 볼 수 있지만 전기충격에 약해집니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "ELECTRORECEPTORS" }
+  },
+  {
+    "id": "target_iv_mutagen_toxicflesh",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "독성 피부 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 당신을 깨무는 녀석들에게 고약한 맛을 선물합니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TOXICFLESH" }
+  },
+  {
+    "id": "target_iv_mutagen_sharkteeth",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "상어 이빨 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 상어의 이빨처럼 날카로운 이빨이 납니다. 매우 빠르게 자라나며 자주 빠집니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SHARKTEETH" }
+  },
+  {
+    "id": "target_iv_mutagen_fastreflexes",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "재빠른 반사신경 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 반사 신경이 빨라져 회피 능력이 향상됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "FAST_REFLEXES" }
+  },
+  {
+    "id": "target_iv_mutagen_rabbit_ears",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "토끼 귀 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 귀가 길고 뾰족해져 주변의 미세한 소리까지 잡아내는 뛰어난 청력을 얻게 됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RABBIT_EARS" }
+  },
+  {
+    "id": "target_iv_mutagen_tail_rabbit",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "토끼 꼬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 엉덩이에 귀여운 솜뭉치 같은 꼬리가 자라나며 귀엽고 사랑스럽고 예쁩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_RABBIT" }
+  },
+  {
+    "id": "target_iv_mutagen_rabbit_fur",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "토끼 털 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 온몸이 부드럽고 빽빽한 토끼 털로 덮여 추위로부터 몸을 보호해 줍니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RABBIT_FUR" }
+  },
+  {
+    "id": "target_iv_mutagen_rabbit_feet",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "토끼 발 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 발이 거대한 토끼의 발처럼 변형됩니다. 발차기가 강해지고 운이 좋아지는 것 같은 느낌이 듭니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RABBIT_FEET" }
+  },
+  {
+    "id": "target_iv_mutagen_rabbit_nose",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "토끼 코 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 코가 씰룩거리는 토끼의 코로 변형됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "RABBIT_NOSE" }
+  },
+  {
+    "id": "target_iv_mutagen_thresh_rabbit",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "토끼 임계점 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 토끼와 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_RABBIT" }
+  },
+  {
+    "id": "target_iv_mutagen_thresh_serpent",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뱀 임계점 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 특정한 계통의 변이를 많이 가지고 있다면 당신의 몸을 더욱 더 뱀과 같은 상태에 영구적으로 적응시킬 것입니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "THRESH_SERPENT" }
+  },
+  {
+    "id": "target_iv_mutagen_tail_snake",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "뱀 신체 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 두 다리가 완전히 융합되어 거대한 뱀의 하반신으로 변형됩니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_SNAKE" }
+  },
+  {
+    "id": "target_iv_mutagen_tail_snake_ok",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "굽이치는 몸 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 거대한 뱀의 하반신으로 지형에 구애받지 않고 미끄러지듯 이동할 수 있습니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "TAIL_SNAKE_OK" }
+  },
+  {
+    "id": "target_iv_mutagen_snake_coils",
+    "copy-from": "iv_mutagen_flavor",
+    "type": "COMESTIBLE",
+    "name": "으스러뜨리는 똬리 혈청",
+    "description": "하나의 특정한 변이만을 제공하도록 설계된 특수 돌연변이 혈청. 마치 아나콘다처럼 꼬리가 튼튼하고 강력해집니다. 특정 임계 변이를 요구합니다.",
+    "color": "light_gray",
+    "use_action": { "type": "mutagen_iv", "mutation_category": "SNAKE_COILS" }
+  }
+]

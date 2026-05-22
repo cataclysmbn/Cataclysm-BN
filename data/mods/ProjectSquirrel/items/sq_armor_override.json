@@ -1,0 +1,634 @@
+[
+  {
+    "id": "coat_fur",
+    "type": "ARMOR",
+    "copy-from": "coat_fur",
+    "name": { "str": "fur coat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "coat_faux_fur",
+    "type": "ARMOR",
+    "copy-from": "coat_faux_fur",
+    "name": { "str": "faux fur coat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "coat_fur_sf",
+    "repairs_like": "jacket_leather",
+    "type": "ARMOR",
+    "copy-from": "coat_fur_sf",
+    "name": { "str": "sable coat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "coat_lab",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "coat_lab",
+    "name": { "str": "lab coat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "coat_gut",
+    "type": "ARMOR",
+    "copy-from": "coat_gut",
+    "name": { "str": "gutskin parka" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "coat_winter",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "coat_winter",
+    "name": { "str": "winter coat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "duster",
+    "type": "ARMOR",
+    "copy-from": "duster",
+    "name": { "str": "duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "duster_fur",
+    "type": "ARMOR",
+    "copy-from": "duster_fur",
+    "name": { "str": "fur duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "duster_faux_fur",
+    "type": "ARMOR",
+    "copy-from": "duster_fur",
+    "looks_like": "duster_fur",
+    "name": { "str": "faux fur duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "duster_leather",
+    "type": "ARMOR",
+    "copy-from": "duster_leather",
+    "name": { "str": "leather duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "duster_survivor",
+    "type": "ARMOR",
+    "copy-from": "duster_survivor",
+    "name": { "str": "survivor duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "greatcoat",
+    "type": "ARMOR",
+    "copy-from": "greatcoat",
+    "name": { "str": "greatcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_army",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "jacket_army",
+    "name": { "str_sp": "army jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_chef",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "jacket_chef",
+    "name": { "str": "chef's jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_flannel",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "jacket_flannel",
+    "name": { "str": "flannel jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_jean",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "jacket_jean",
+    "name": { "str": "jean jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_leather",
+    "type": "ARMOR",
+    "copy-from": "jacket_leather",
+    "name": { "str": "leather jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_leather_red",
+    "type": "ARMOR",
+    "copy-from": "jacket_leather_red",
+    "name": { "str": "red leather jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_light",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "jacket_light",
+    "name": { "str": "light jacket" },
+    "valid_mods": [ "lightened", "pocketed" ]
+  },
+  {
+    "id": "peacoat",
+    "type": "ARMOR",
+    "copy-from": "peacoat",
+    "name": { "str": "peacoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "robe",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "robe",
+    "name": { "str": "robe" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_duster",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_duster",
+    "name": { "str": "sleeveless duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_duster_fur",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_duster_fur",
+    "name": { "str": "sleeveless fur duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_duster_faux_fur",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_duster_faux_fur",
+    "name": { "str": "sleeveless faux fur duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_duster_leather",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_duster_leather",
+    "name": { "str": "sleeveless leather duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_duster_survivor",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_duster_survivor",
+    "name": { "str": "sleeveless survivor duster" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_trenchcoat",
+    "name": { "str": "sleeveless trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_trenchcoat_fur",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_trenchcoat_fur",
+    "name": { "str": "sleeveless fur trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_trenchcoat_faux_fur",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_trenchcoat_faux_fur",
+    "name": { "str": "sleeveless faux fur trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_trenchcoat_leather",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_trenchcoat_leather",
+    "name": { "str": "sleeveless leather trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_trenchcoat_survivor",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_trenchcoat_survivor",
+    "name": { "str": "sleeveless survivor trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "sleeveless_tunic",
+    "type": "ARMOR",
+    "copy-from": "sleeveless_tunic",
+    "name": { "str": "sleeveless tunic" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "trenchcoat",
+    "name": { "str": "trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "trenchcoat_fur",
+    "type": "ARMOR",
+    "copy-from": "trenchcoat_fur",
+    "name": { "str": "fur trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "trenchcoat_faux_fur",
+    "type": "ARMOR",
+    "copy-from": "trenchcoat_faux_fur",
+    "name": { "str": "faux fur trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "trenchcoat_leather",
+    "type": "ARMOR",
+    "copy-from": "trenchcoat_leather",
+    "name": { "str": "leather trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "trenchcoat_survivor",
+    "type": "ARMOR",
+    "copy-from": "trenchcoat_survivor",
+    "name": { "str": "survivor trenchcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "tunic",
+    "type": "ARMOR",
+    "copy-from": "tunic",
+    "name": { "str": "tunic" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "tunic_rag",
+    "type": "ARMOR",
+    "copy-from": "tunic_rag",
+    "name": { "str": "rag tunic" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "tux",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "tux",
+    "name": { "str": "tuxedo" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "waistcoat",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "waistcoat",
+    "name": { "str": "waistcoat" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "winter_jacket_army",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "winter_jacket_army",
+    "name": { "str": "army winter jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "jacket_leather_mod",
+    "type": "ARMOR",
+    "copy-from": "jacket_leather_mod",
+    "name": { "str": "armored leather jacket" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "vest_leather_mod",
+    "type": "ARMOR",
+    "copy-from": "vest_leather_mod",
+    "name": { "str": "armored leather vest" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "armor_nomad",
+    "type": "ARMOR",
+    "copy-from": "armor_nomad",
+    "name": { "str": "nomad gear" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "armor_nomad_light",
+    "type": "ARMOR",
+    "copy-from": "armor_nomad_light",
+    "name": { "str": "light nomad gear" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "armor_riot",
+    "repairs_like": "survivor_suit",
+    "type": "ARMOR",
+    "copy-from": "armor_riot",
+    "name": { "str": "riot armor" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "armor_scavenger",
+    "type": "ARMOR",
+    "copy-from": "armor_scavenger",
+    "name": { "str": "scavenger gear" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "beekeeping_suit",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "beekeeping_suit",
+    "name": { "str": "beekeeping suit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "fsurvivor_suit",
+    "type": "ARMOR",
+    "copy-from": "fsurvivor_suit",
+    "name": { "str": "survivor firesuit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "gambeson",
+    "type": "ARMOR",
+    "copy-from": "gambeson",
+    "name": { "str": "gambeson" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "hsurvivor_suit",
+    "type": "ARMOR",
+    "copy-from": "hsurvivor_suit",
+    "name": { "str": "heavy survivor suit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "lsurvivor_suit",
+    "type": "ARMOR",
+    "copy-from": "lsurvivor_suit",
+    "name": { "str": "light survivor suit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "suit",
+    "repairs_like": "trenchcoat",
+    "type": "ARMOR",
+    "copy-from": "suit",
+    "name": { "str": "suit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "survivor_suit",
+    "type": "ARMOR",
+    "copy-from": "survivor_suit",
+    "name": { "str": "survivor suit" },
+    "material_thickness": 5,
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "swat_armor",
+    "repairs_like": "survivor_suit",
+    "type": "ARMOR",
+    "copy-from": "swat_armor",
+    "name": { "str": "SWAT armor" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "touring_suit",
+    "repairs_like": "armor_larmor",
+    "type": "ARMOR",
+    "copy-from": "touring_suit",
+    "name": { "str": "leather touring suit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "wsurvivor_suit",
+    "type": "ARMOR",
+    "copy-from": "wsurvivor_suit",
+    "name": { "str": "winter survivor suit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "anbc_suit",
+    "type": "ARMOR",
+    "copy-from": "anbc_suit",
+    "name": { "str": "ANBC suit" },
+    "valid_mods": [ "steel_padded", "alloy_padded", "lightened", "pocketed" ]
+  },
+  {
+    "id": "depowered_armor",
+    "type": "ARMOR",
+    "copy-from": "depowered_armor",
+    "looks_like": "depowered_armor",
+    "name": { "str": "salvaged power armor" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "depowered_helmet",
+    "type": "ARMOR",
+    "copy-from": "depowered_helmet",
+    "looks_like": "depowered_helmet",
+    "name": { "str": "salvaged power armor helmet" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "power_armor_basic",
+    "type": "ARMOR",
+    "copy-from": "power_armor_basic",
+    "looks_like": "power_armor_basic",
+    "name": { "str": "power armor", "str_pl": "suits of power armor" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "power_armor_basic_on",
+    "type": "ARMOR",
+    "copy-from": "power_armor_basic_on",
+    "looks_like": "power_armor_basic",
+    "name": { "str": "power armor (active)", "str_pl": "suits of power armor (active)" },
+    "extend": { "flags": [ "OVERSIZE", "CLIMATE_CONTROL", "TRADER_AVOID" ] }
+  },
+  {
+    "id": "power_armor_heavy",
+    "type": "ARMOR",
+    "copy-from": "power_armor_heavy",
+    "looks_like": "power_armor_heavy",
+    "name": { "str": "heavy power armor", "str_pl": "suits of heavy power armor" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "power_armor_heavy_on",
+    "type": "ARMOR",
+    "copy-from": "power_armor_heavy_on",
+    "looks_like": "power_armor_heavy",
+    "name": { "str": "heavy power armor (active)", "str_pl": "suits of heavy power armor (active)" },
+    "extend": { "flags": [ "OVERSIZE", "CLIMATE_CONTROL", "TRADER_AVOID" ] }
+  },
+  {
+    "id": "power_armor_light",
+    "type": "ARMOR",
+    "copy-from": "power_armor_light",
+    "looks_like": "power_armor_light",
+    "name": { "str": "light power armor", "str_pl": "suits of light power armor" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "power_armor_light_on",
+    "type": "ARMOR",
+    "copy-from": "power_armor_light_on",
+    "looks_like": "power_armor_light",
+    "name": { "str": "light power armor (active)", "str_pl": "suits of light power armor (active)" },
+    "extend": { "flags": [ "OVERSIZE", "CLIMATE_CONTROL", "TRADER_AVOID" ] }
+  },
+  {
+    "id": "power_armor_helmet_basic",
+    "type": "ARMOR",
+    "copy-from": "power_armor_helmet_basic",
+    "looks_like": "power_armor_helmet_basic",
+    "name": { "str": "power armor helmet" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "power_armor_helmet_basic_on",
+    "type": "ARMOR",
+    "copy-from": "power_armor_helmet_basic_on",
+    "name": { "str": "power armor helmet (active)", "str_pl": "power armor helmets (active)" },
+    "looks_like": "power_armor_helmet_basic",
+    "extend": { "flags": [ "OVERSIZE", "WATCH", "THERMOMETER", "CLIMATE_CONTROL", "TRADER_AVOID" ] }
+  },
+  {
+    "id": "power_armor_helmet_heavy",
+    "type": "ARMOR",
+    "copy-from": "power_armor_helmet_heavy",
+    "looks_like": "power_armor_helmet_heavy",
+    "name": { "str": "heavy power armor helmet" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "power_armor_helmet_heavy_on",
+    "type": "ARMOR",
+    "copy-from": "power_armor_helmet_heavy_on",
+    "looks_like": "power_armor_helmet_heavy",
+    "name": { "str": "heavy power armor helmet (active)", "str_pl": "heavy power armor helmets (active)" },
+    "extend": { "flags": [ "OVERSIZE", "WATCH", "THERMOMETER", "CLIMATE_CONTROL", "TRADER_AVOID" ] }
+  },
+  {
+    "id": "power_armor_helmet_light",
+    "type": "ARMOR",
+    "copy-from": "power_armor_helmet_light",
+    "looks_like": "power_armor_helmet_light",
+    "name": { "str": "light power armor helmet" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "power_armor_helmet_light_on",
+    "type": "ARMOR",
+    "copy-from": "power_armor_helmet_light_on",
+    "looks_like": "power_armor_helmet_light",
+    "name": { "str": "light power armor helmet (active)", "str_pl": "light power armor helmets (active)" },
+    "extend": { "flags": [ "OVERSIZE", "WATCH", "THERMOMETER", "CLIMATE_CONTROL", "TRADER_AVOID" ] }
+  },
+  {
+    "id": "rm13_armor",
+    "type": "TOOL_ARMOR",
+    "copy-from": "rm13_armor",
+    "name": { "str": "RM13 combat armor" },
+    "extend": { "flags": [ "OVERSIZE" ] },
+    "material_thickness": 3
+  },
+  {
+    "id": "rm13_armor_on",
+    "copy-from": "rm13_armor_on",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "RM13 combat armor (on)", "str_pl": "RM13 combat armors (on)" },
+    "extend": { "flags": [ "OVERSIZE" ] },
+    "material_thickness": 5
+  },
+  {
+    "id": "phase_immersion_suit",
+    "copy-from": "phase_immersion_suit",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "phase immersion suit" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "id": "phase_immersion_suit_on",
+    "copy-from": "phase_immersion_suit_on",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "phase immersion suit (on)", "str_pl": "phase immersion suits (on)" },
+    "extend": { "flags": [ "OVERSIZE" ] }
+  },
+  {
+    "result": "armor_chitin",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_SUIT",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "time": "1 h 40 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 3 ], [ "tailor_portfolio", 3 ] ],
+    "using": [ [ "cordage", 2 ] ],
+    "components": [ [ [ "chitin_piece", 36 ] ], [ [ "fabric_hides_proper", 36, "LIST" ], [ "fabric_standard", 36, "LIST" ] ] ]
+  },
+  {
+    "result": "helmet_chitin",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "time": "1 h",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 3 ], [ "tailor_portfolio", 3 ] ],
+    "components": [
+      [ [ "cordage_superior", 1, "LIST" ] ],
+      [ [ "chitin_piece", 6 ] ],
+      [ [ "fabric_hides_proper", 6, "LIST" ], [ "fabric_standard", 6, "LIST" ] ]
+    ]
+  },
+  {
+    "result": "boots_chitin",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_FEET",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "time": "40 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 3 ], [ "tailor_portfolio", 3 ] ],
+    "using": [ [ "cordage", 1 ] ],
+    "components": [ [ [ "chitin_piece", 16 ] ], [ [ "fabric_hides_proper", 16, "LIST" ], [ "fabric_standard", 16, "LIST" ] ] ]
+  },
+  {
+    "result": "gauntlets_chitin",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HANDS",
+    "skill_used": "tailor",
+    "difficulty": 4,
+    "time": "30 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 3 ], [ "tailor_portfolio", 3 ] ],
+    "components": [
+      [ [ "cordage_superior", 1, "LIST" ] ],
+      [ [ "chitin_piece", 3 ] ],
+      [ [ "fabric_hides_proper", 3, "LIST" ], [ "fabric_standard", 3, "LIST" ] ]
+    ]
+  }
+]

@@ -1,0 +1,535 @@
+[
+  {
+    "id": "MISSION_REACH_EXTRACT_SHORT",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 35, "min_distance": 5, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_MEDIUM",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 90, "min_distance": 30, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_LONG",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 160, "min_distance": 50, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_SHORT_SCOUT1",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 1, "random": true, "search_range": 35, "min_distance": 5, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_SHORT_SCOUT2",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 2, "random": true, "search_range": 35, "min_distance": 5, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_MEDIUM_SCOUT1",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 1, "random": true, "search_range": 90, "min_distance": 30, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_MEDIUM_SCOUT2",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 2, "random": true, "search_range": 90, "min_distance": 30, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_LONG_SCOUT1",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 1, "random": true, "search_range": 160, "min_distance": 50, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_REACH_EXTRACT_LONG_SCOUT2",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Reach the exit portal!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "If you want to get home with your stuff, you'll need to reach the nearby exit portal. It's the only thing that can bring you back to your sanctuary island in one piece.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 2, "random": true, "search_range": 160, "min_distance": 50, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_exitroom" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_SLAUGHTER_ZOMBIES_10",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill 10 Zombies" },
+    "goal": "MGOAL_KILL_MONSTER_SPEC",
+    "description": "Zombies have absorbed latent energies which must be released. Kill at least 10 zombified creatures before returning to your sanctuary.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "monster_species": "ZOMBIE",
+    "monster_kill_goal": 10
+  },
+  {
+    "id": "MISSION_SLAUGHTER_ZOMBIES_50",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill 50 Zombies" },
+    "goal": "MGOAL_KILL_MONSTER_SPEC",
+    "description": "Zombies have absorbed latent energies which must be released. Kill at least 50 zombified creatures before returning to your sanctuary.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "monster_species": "ZOMBIE",
+    "monster_kill_goal": 50
+  },
+  {
+    "id": "MISSION_SLAUGHTER_ZOMBIES_100",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill 100 Zombies" },
+    "goal": "MGOAL_KILL_MONSTER_SPEC",
+    "description": "Zombies have absorbed latent energies which must be released. Kill at least 100 zombified creatures before returning to your sanctuary.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "monster_species": "ZOMBIE",
+    "monster_kill_goal": 100
+  },
+  {
+    "id": "MISSION_SLAUGHTER_MIGO",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill a Mi-Go" },
+    "goal": "MGOAL_KILL_MONSTER_SPEC",
+    "description": "The mi-go have absorbed latent energies which must be released. Kill at least one mi-go creature before returning to your sanctuary.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "monster_species": "MIGO",
+    "monster_kill_goal": 1
+  },
+  {
+    "id": "MISSION_SLAUGHTER_NETHER",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill 3 Nether Creatures" },
+    "goal": "MGOAL_KILL_MONSTER_SPEC",
+    "description": "A rift to another dimension has drained latent energies which must be released. Kill at least 3 nether-born creatures before returning to your sanctuary.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "monster_species": "NETHER",
+    "monster_kill_goal": 3
+  },
+  {
+    "id": "MISSION_SLAUGHTER_BIRD",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill 5 Birds" },
+    "goal": "MGOAL_KILL_MONSTER_SPEC",
+    "description": "Even the local wildlife has started absorbing latent warp energy. Kill at least 5 non-zombie birds before returning to your sanctuary.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "monster_species": "BIRD",
+    "monster_kill_goal": 5,
+    "end": { "effect": [ { "u_buy_item": "skyisland_warp_shard", "count": 1 } ] }
+  },
+  {
+    "id": "MISSION_SLAUGHTER_MAMMAL",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill 5 Mammals" },
+    "goal": "MGOAL_KILL_MONSTER_SPEC",
+    "description": "Even the local wildlife has started absorbing latent warp energy. Kill at least 5 non-zombie mammals before returning to your sanctuary.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "monster_species": "MAMMAL",
+    "monster_kill_goal": 5
+  },
+  {
+    "id": "MISSION_BONUS_TREASURE_SHORT",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Find the warp shards!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "A very small cluster of warp energy has left shards behind at this location. All you need to do is find and retrieve them. There may be threats nearby, but unlike most tasks, no special guards are on-site. A minimal reward, but little risk.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 30, "min_distance": 5, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_treasuregoal" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_TREASURE_MEDIUM",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Find the warp shards!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "A very small cluster of warp energy has left shards behind at this location. All you need to do is find and retrieve them. There may be threats nearby, but unlike most tasks, no special guards are on-site. A minimal reward, but little risk.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 60, "min_distance": 20, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_treasuregoal" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_TREASURE_LONG",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Find the warp shards!" },
+    "goal": "MGOAL_GO_TO",
+    "description": "A very small cluster of warp energy has left shards behind at this location. All you need to do is find and retrieve them. There may be threats nearby, but unlike most tasks, no special guards are on-site. A minimal reward, but little risk.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 80, "min_distance": 30, "z": 0 },
+      "update_mapgen": { "place_nested": [ { "chunks": [ "mx_treasuregoal" ], "x": [ 0, 13 ], "y": [ 0, 13 ] } ] }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_LIGHT",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Clear zombie cluster" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A handful of zombies are congregating at a location where warp resonance is high. Clear them out for a minimal reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [ { "monster": "mon_zombie", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked", "repeat": [ 4, 8 ] } ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_HORDE",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Clear zombie horde" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A horde of low level zombies are congregating at a location where warp resonance is high. Clear them out for a small reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [ { "monster": "mon_zombie", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked", "repeat": [ 8, 24 ] } ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_MID",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Clear evolved zombies" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A swarm of evolved zombies are congregating at a location where warp resonance is high. Clear them out for a medium reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie", "x": [ 1, 22 ], "y": [ 1, 22 ], "name": "Marked", "target": true, "repeat": [ 0, 4 ] },
+          {
+            "monster": "mon_zombie_tough",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "target": true,
+            "name": "Marked",
+            "repeat": [ 3, 8 ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_MID_HORDE",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Clear evolved horde" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A huge horde of evolved zombies are congregating at a location where warp resonance is high. Clear them out for a large reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie", "x": [ 1, 22 ], "y": [ 1, 22 ], "name": "Marked", "target": true, "repeat": [ 0, 6 ] },
+          {
+            "monster": "mon_zombie_tough",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "target": true,
+            "name": "Marked",
+            "repeat": [ 8, 20 ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_HARD",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Clear fearsome zombies" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A swarm of rather powerful zombies are congregating at a location where warp resonance is high. Clear them out for a large reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie", "x": [ 1, 22 ], "y": [ 1, 22 ], "name": "Marked", "target": true, "repeat": [ 0, 4 ] },
+          {
+            "monster": "mon_zombie_tough",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "name": "Marked",
+            "target": true,
+            "repeat": [ 0, 2 ]
+          },
+          {
+            "monster": "mon_zombie_brute",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "target": true,
+            "name": "Marked",
+            "repeat": [ 4, 8 ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_ELITE",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Clear elite zombies" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A swarm of extremely dangerous zombies are congregating at a location where warp resonance is high. Clear them out for a very large reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie_tough", "x": [ 1, 22 ], "y": [ 1, 22 ], "name": "Marked", "target": true, "repeat": [ 0, 2 ] },
+          {
+            "monster": "mon_zombie_brute",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "name": "Marked",
+            "target": true,
+            "repeat": [ 0, 1 ]
+          },
+          {
+            "monster": "mon_zombie_hulk",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "target": true,
+            "name": "Marked",
+            "repeat": [ 4, 8 ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_BOSS",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill zombie lord" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A single supremely powerful zombie has been found at a location where warp resonance is high. Destroy it for a very large reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [ { "monster": "mon_zombie_master", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked" } ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_BOSS_MULTI",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill zombie superteam" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A team of supremely powerful zombies has been found at a location where warp resonance is high. Destroy it for a very large reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          {
+            "monster": "mon_zombie_master",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "target": true,
+            "name": "Marked",
+            "pack_size": [ 2, 5 ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_BOSS_GROUP",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill zombie leader + swarm" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A supremely powerful zombie has been found at a location where warp resonance is high. Be warned that it will be accompanied by an elite swarm! Destroy them all for a huge reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie_master", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked" },
+          {
+            "monster": "mon_zombie_hulk",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "target": true,
+            "name": "Marked",
+            "repeat": [ 2, 5 ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_BOSS_HORDE",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill horde lord" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A supremely powerful zombie has been found at a location where warp resonance is high. Be warned that it will be accompanied by an massive horde of weaker zombies! Destroy them all for a huge reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie_master", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked" },
+          {
+            "monster": "mon_zombie",
+            "x": [ 1, 22 ],
+            "y": [ 1, 22 ],
+            "target": true,
+            "name": "Marked",
+            "repeat": [ 10, 22 ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_MIGO",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Clear mi-go threat" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A group of lethal mi-gos are draining a location where warp resonance is high. Destroy them all for a very large reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [ { "monster": "mon_mi_go", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked", "repeat": [ 2, 5 ] } ]
+      }
+    }
+  },
+  {
+    "id": "MISSION_BONUS_KILL_MIGO_ELITE",
+    "type": "mission_definition",
+    "name": { "str": "RAID: Kill mi-go overlord" },
+    "goal": "MGOAL_KILL_MONSTERS",
+    "description": "A group of lethal mi-gos are draining a location where warp resonance is high. Destroy them all for a very large reward of warp shards.",
+    "difficulty": 0,
+    "value": 0,
+    "origins": [ "ORIGIN_GAME_START" ],
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 0, "random": true, "search_range": 20, "min_distance": 5, "z": 0 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_mi_go", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked", "repeat": [ 0, 2 ] },
+          { "monster": "mon_mi_go_myrmidon", "x": [ 1, 22 ], "y": [ 1, 22 ], "target": true, "name": "Marked" }
+        ]
+      }
+    }
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "MSX++DEAD_PEOPLE", "UNDEAD_PEOPLE", "UNDEAD_PEOPLE_BASE" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/sq_mutation_ears_tileset.png",
+        "sprite_offset_y": -16,
+        "tiles": [
+          { "id": "overlay_female_mutation_CANINE_EARS", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_CANINE_EARS", "fg": 0, "rotates": false },
+          { "id": "overlay_female_mutation_LUPINE_EARS", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_LUPINE_EARS", "fg": 0, "rotates": false },
+          { "id": "overlay_female_mutation_FELINE_EARS", "fg": 1, "rotates": false },
+          { "id": "overlay_male_mutation_FELINE_EARS", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_MOUSE_EARS", "fg": 2, "rotates": false },
+          { "id": "overlay_male_mutation_MOUSE_EARS", "fg": 2, "rotates": false }
+        ]
+      }
+    ]
+  }
+]

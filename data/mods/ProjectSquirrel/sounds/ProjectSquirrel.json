@@ -1,0 +1,368 @@
+[
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_powershot",
+    "files": [
+      "guns/eweapons/heavy_rail_rifle_1.ogg",
+      "guns/eweapons/heavy_rail_rifle_2.ogg",
+      "guns/eweapons/heavy_rail_rifle_3.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_powershot",
+    "files": [
+      "guns/eweapons/heavy_rail_rifle_1.ogg",
+      "guns/eweapons/heavy_rail_rifle_2.ogg",
+      "guns/eweapons/heavy_rail_rifle_3.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_fusion_hammer",
+    "files": [ "guns/flammable/flammable_1.ogg", "guns/flammable/flammable_2.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_fusion_hammer",
+    "files": [ "guns/flammable/flammable_1.ogg", "guns/flammable/flammable_2.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_walkergun",
+    "files": [
+      "guns/223/223_1.ogg",
+      "guns/223/223_2.ogg",
+      "guns/223/223_3.ogg",
+      "guns/223/223_4.ogg",
+      "guns/223/223_5.ogg",
+      "guns/223/223_6.ogg",
+      "guns/223/223_7.ogg",
+      "guns/223/223_8.ogg",
+      "guns/223/223_9.ogg",
+      "guns/223/223_10.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 60,
+    "variant": "sq_walkergun",
+    "files": [
+      "guns/223/223_1.ogg",
+      "guns/223/223_2.ogg",
+      "guns/223/223_3.ogg",
+      "guns/223/223_4.ogg",
+      "guns/223/223_5.ogg",
+      "guns/223/223_6.ogg",
+      "guns/223/223_7.ogg",
+      "guns/223/223_8.ogg",
+      "guns/223/223_9.ogg",
+      "guns/223/223_10.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_walkergun2",
+    "files": [ "guns/40mm/40mm_1.ogg", "guns/40mm/40mm_2.ogg", "guns/40mm/40mm_3.ogg", "guns/40mm/40mm_4.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 60,
+    "variant": "sq_walkergun2",
+    "files": [ "guns/40mm/40mm_1.ogg", "guns/40mm/40mm_2.ogg", "guns/40mm/40mm_3.ogg", "guns/40mm/40mm_4.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_walkergun3",
+    "files": [
+      "guns/308/308_1.ogg",
+      "guns/308/308_2.ogg",
+      "guns/308/308_3.ogg",
+      "guns/308/308_4.ogg",
+      "guns/308/308_5.ogg",
+      "guns/308/308_6.ogg",
+      "guns/308/308_7.ogg",
+      "guns/308/308_8.ogg",
+      "guns/308/308_9.ogg",
+      "guns/308/308_10.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 60,
+    "variant": "sq_walkergun3",
+    "files": [
+      "guns/308/308_1.ogg",
+      "guns/308/308_2.ogg",
+      "guns/308/308_3.ogg",
+      "guns/308/308_4.ogg",
+      "guns/308/308_5.ogg",
+      "guns/308/308_6.ogg",
+      "guns/308/308_7.ogg",
+      "guns/308/308_8.ogg",
+      "guns/308/308_9.ogg",
+      "guns/308/308_10.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_walkergun4",
+    "files": [ "guns/50/50_1.ogg", "guns/50/50_2.ogg", "guns/50/50_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 60,
+    "variant": "sq_walkergun4",
+    "files": [ "guns/50/50_1.ogg", "guns/50/50_2.ogg", "guns/50/50_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 100,
+    "variant": "sq_walkergun5",
+    "files": [
+      "guns/eweapons/gatling_mech_laser_1.ogg",
+      "guns/eweapons/gatling_mech_laser_2.ogg",
+      "guns/eweapons/gatling_mech_laser_3.ogg",
+      "guns/eweapons/gatling_mech_laser_4.ogg",
+      "guns/eweapons/gatling_mech_laser_5.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 50,
+    "variant": "sq_walkergun5",
+    "files": [
+      "guns/eweapons/gatling_mech_laser_1.ogg",
+      "guns/eweapons/gatling_mech_laser_2.ogg",
+      "guns/eweapons/gatling_mech_laser_3.ogg",
+      "guns/eweapons/gatling_mech_laser_4.ogg",
+      "guns/eweapons/gatling_mech_laser_5.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_walkergun6",
+    "files": [ "guns/50/50_1.ogg", "guns/50/50_2.ogg", "guns/50/50_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 60,
+    "variant": "sq_walkergun6",
+    "files": [ "guns/50/50_1.ogg", "guns/50/50_2.ogg", "guns/50/50_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_walkergun7",
+    "files": [ "guns/eweapons/ftk93.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 60,
+    "variant": "sq_walkergun7",
+    "files": [ "guns/eweapons/ftk93.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 65,
+    "variant": "sq_hardlight_pistol",
+    "files": [ "guns/eweapons/v29_1.ogg", "guns/eweapons/v29_2.ogg", "guns/eweapons/v29_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_hardlight_pistol",
+    "files": [ "guns/eweapons/v29_1.ogg", "guns/eweapons/v29_2.ogg", "guns/eweapons/v29_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_hardlight_smg",
+    "files": [ "guns/eweapons/plasma_gun.ogg", "guns/eweapons/plasma_rifle.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 50,
+    "variant": "sq_hardlight_smg",
+    "files": [ "guns/eweapons/plasma_gun.ogg", "guns/eweapons/plasma_rifle.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 65,
+    "variant": "sq_hardlight_shotgun",
+    "files": [ "guns/eweapons/bio_laser_gun_1.ogg", "guns/eweapons/bio_laser_gun_2.ogg", "guns/eweapons/bio_laser_gun_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_hardlight_shotgun",
+    "files": [ "guns/eweapons/bio_laser_gun_1.ogg", "guns/eweapons/bio_laser_gun_2.ogg", "guns/eweapons/bio_laser_gun_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 65,
+    "variant": "sq_hardlight_rifle",
+    "files": [ "guns/eweapons/bio_laser_gun_1.ogg", "guns/eweapons/bio_laser_gun_2.ogg", "guns/eweapons/bio_laser_gun_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_hardlight_rifle",
+    "files": [ "guns/eweapons/bio_laser_gun_1.ogg", "guns/eweapons/bio_laser_gun_2.ogg", "guns/eweapons/bio_laser_gun_3.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_hardlight_sniper",
+    "files": [
+      "guns/eweapons/gatling_mech_laser_1.ogg",
+      "guns/eweapons/gatling_mech_laser_2.ogg",
+      "guns/eweapons/gatling_mech_laser_3.ogg",
+      "guns/eweapons/gatling_mech_laser_4.ogg",
+      "guns/eweapons/gatling_mech_laser_5.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_hardlight_sniper",
+    "files": [
+      "guns/eweapons/gatling_mech_laser_1.ogg",
+      "guns/eweapons/gatling_mech_laser_2.ogg",
+      "guns/eweapons/gatling_mech_laser_3.ogg",
+      "guns/eweapons/gatling_mech_laser_4.ogg",
+      "guns/eweapons/gatling_mech_laser_5.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_fusion_pistol",
+    "files": [ "guns/eweapons/bio_blaster_gun_1.ogg", "guns/eweapons/bio_blaster_gun_2.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_fusion_pistol",
+    "files": [ "guns/eweapons/bio_blaster_gun_1.ogg", "guns/eweapons/bio_blaster_gun_2.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_fusion_shotgun",
+    "files": [ "guns/eweapons/ftk93.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_fusion_shotgun",
+    "files": [ "guns/eweapons/ftk93.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_fusion_rifle",
+    "files": [
+      "guns/others/Rocket_1.ogg",
+      "guns/others/Rocket_2.ogg",
+      "guns/others/Rocket_3.ogg",
+      "guns/others/Rocket_4.ogg",
+      "guns/others/Rocket_5.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_fusion_rifle",
+    "files": [
+      "guns/others/Rocket_1.ogg",
+      "guns/others/Rocket_2.ogg",
+      "guns/others/Rocket_3.ogg",
+      "guns/others/Rocket_4.ogg",
+      "guns/others/Rocket_5.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_fusion_sniper",
+    "files": [ "guns/others/120mm_1.ogg", "guns/others/120mm_2.ogg", "guns/others/120mm_3.ogg", "guns/others/120mm_4.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_fusion_sniper",
+    "files": [ "guns/others/120mm_1.ogg", "guns/others/120mm_2.ogg", "guns/others/120mm_3.ogg", "guns/others/120mm_4.ogg" ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun",
+    "volume": 75,
+    "variant": "sq_fusion_hmg",
+    "files": [
+      "guns/others/Rocket_1.ogg",
+      "guns/others/Rocket_2.ogg",
+      "guns/others/Rocket_3.ogg",
+      "guns/others/Rocket_4.ogg",
+      "guns/others/Rocket_5.ogg"
+    ]
+  },
+  {
+    "type": "sound_effect",
+    "id": "fire_gun_distant",
+    "volume": 40,
+    "variant": "sq_fusion_hmg",
+    "files": [
+      "guns/others/Rocket_1.ogg",
+      "guns/others/Rocket_2.ogg",
+      "guns/others/Rocket_3.ogg",
+      "guns/others/Rocket_4.ogg",
+      "guns/others/Rocket_5.ogg"
+    ]
+  }
+]

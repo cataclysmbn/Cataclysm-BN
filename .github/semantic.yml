@@ -30,8 +30,10 @@ scopes:
   - mods/Arcana_Dinomod_Patch
   - mods/Arcana_MagiclalNights_Patch
   - mods/Arcana_aftershock_Patch
+  - mods/CBN_Sky_Island
   - mods/CheesyInnaWoodFixes
   - mods/DinoMod
+  - mods/Jake's_Squirrel_mod
   - mods/MMA
   - mods/MagicalNights
   - mods/MonsterGirls
@@ -97,5 +99,6 @@ scopes:
   - mods/test_lua_require
   - mods/udp_redux
   - mods/underground_dynamic_temperature
+  - mods/vehicle_color_expansion
   - mods/weather_variants
   - mods

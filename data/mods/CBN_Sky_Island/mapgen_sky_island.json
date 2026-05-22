@@ -1,0 +1,265 @@
+[
+  {
+    "type": "overmap_terrain",
+    "id": "sky_island_core",
+    "name": "sky island",
+    "sym": "#",
+    "color": "white",
+    "see_cost": 1
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "sky_island_edge",
+    "name": "sky island",
+    "sym": "#",
+    "color": "white",
+    "see_cost": 1
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "sky_island_corner",
+    "name": "sky island",
+    "sym": "#",
+    "color": "white",
+    "see_cost": 1
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "sky_island_subcore",
+    "name": "sky island",
+    "sym": "#",
+    "color": "white",
+    "see_cost": 1
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "sky_island_subedge",
+    "name": "sky island",
+    "sym": "#",
+    "color": "white",
+    "see_cost": 1
+  },
+  {
+    "type": "overmap_terrain",
+    "id": "sky_island_subcorner",
+    "name": "sky island",
+    "sym": "#",
+    "color": "white",
+    "see_cost": 1
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "sky_island_core",
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "           ...          ",
+        "           ...          ",
+        "           ...          ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "           YXZ          ",
+        "           ...          ",
+        "           ...          ",
+        "           ...          ",
+        "            V           "
+      ],
+      "terrain": { " ": "t_grass", ".": "t_concrete", "V": "t_concrete", "X": "t_concrete", "Y": "t_grass", "Z": "t_grass" },
+      "furniture": { "X": "f_skyisland_warp_obelisk", "V": "f_skyisland_heart" },
+      "items": {
+        "Z": [ { "item": "skyisland_trash_heap", "chance": 100 } ],
+        "Y": [ { "item": "skyisland_starterkit_items", "chance": 100 } ]
+      }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "sky_island_edge",
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        ",,,,,,,,,,,,,,,,,,,,,,,,",
+        "........................",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { " ": "t_grass", ".": "t_skyisland_fake_air", ",": "t_open_air" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "sky_island_corner",
+    "object": {
+      "fill_ter": "t_open_air",
+      "rows": [
+        ",,,,,,,,,,,,,,,,,,,,,,,,",
+        ",,,,,...................",
+        ",,,...                  ",
+        ",,..                    ",
+        ",,.                     ",
+        ",..                     ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      "
+      ],
+      "terrain": { " ": "t_grass", ".": "t_skyisland_fake_air", ",": "t_open_air" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "sky_island_subcore",
+    "object": {
+      "fill_ter": "t_skyisland_fake_air",
+      "rows": [
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "            <           ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { " ": "t_skyisland_warprock", "<": "t_stairs_up" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "sky_island_subedge",
+    "object": {
+      "fill_ter": "t_skyisland_fake_air",
+      "rows": [
+        "........................",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        ",
+        "                        "
+      ],
+      "terrain": { " ": "t_skyisland_warprock", ".": "t_skyisland_fake_air" }
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": "sky_island_subcorner",
+    "object": {
+      "fill_ter": "t_skyisland_fake_air",
+      "rows": [
+        ",,,,,...................",
+        ",,,...                  ",
+        ",,..                    ",
+        ",,.                     ",
+        ",..                     ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      ",
+        ",.                      "
+      ],
+      "terrain": { " ": "t_skyisland_warprock", ".": "t_skyisland_fake_air", ",": "t_skyisland_fake_air" }
+    }
+  }
+]

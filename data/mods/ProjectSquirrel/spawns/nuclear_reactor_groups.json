@@ -1,0 +1,17 @@
+[
+  {
+    "id": "nuclear_waste",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "nuclear_waste", "container-item": "hazardous_waste_drum", "count": [ 1, 2 ], "charges": [ 50, 200 ] } ]
+  },
+  {
+    "id": "nuclear_reactor",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "nuclear_waste", "count-min": 15, "count-max": 50 },
+      { "item": "sq_uranium_condensed", "count-min": 1, "count-max": 10 }
+    ]
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "type": "clothing_mod",
+    "id": "lightened",
+    "flag": "lightened",
+    "item": "rag",
+    "implement_prompt": "Remove the lining",
+    "destroy_prompt": "Re-lining",
+    "restricted": true,
+    "mod_value": [
+      { "type": "bash", "value": -0.5, "round_up": true, "proportion": [ "thickness" ] },
+      { "type": "cut", "value": -0.5, "round_up": true, "proportion": [ "thickness" ] },
+      { "type": "bullet", "value": -0.5, "round_up": true, "proportion": [ "thickness" ] },
+      { "type": "encumbrance", "value": -1, "round_up": true, "proportion": [ "thickness" ] },
+      { "type": "warmth", "value": -2, "round_up": true, "proportion": [ "thickness" ] }
+    ]
+  },
+  {
+    "type": "clothing_mod",
+    "id": "graphene_padded",
+    "flag": "graphene_padded",
+    "item": "graphene",
+    "implement_prompt": "Pad with Graphene sheet",
+    "destroy_prompt": "Destroy Graphene sheet padding",
+    "mod_value": [
+      { "type": "bash", "value": 0.5, "proportion": [ "thickness" ] },
+      { "type": "cut", "value": 0.5, "proportion": [ "thickness" ] },
+      { "type": "bullet", "value": 1, "proportion": [ "thickness" ] },
+      { "type": "acid", "value": 2, "round_up": true, "proportion": [ "thickness", "coverage" ] },
+      { "type": "fire", "value": 2, "round_up": true, "proportion": [ "thickness", "coverage" ] },
+      { "type": "encumbrance", "value": 0.25, "round_up": true, "proportion": [ "thickness", "coverage" ] }
+    ]
+  }
+]

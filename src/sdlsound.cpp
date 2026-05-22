@@ -477,15 +477,17 @@ static auto add_sfx_path( const std::string &path ) -> int
 
 auto sfx::load_sound_effects( const JsonObject &jsobj ) -> void
 {
+    const auto key = id_and_variant( jsobj.get_string( "id" ),
+                                     jsobj.get_string( "variant", "default" ) );
+    const auto volume = jsobj.get_int( "volume", 100 );
+    const auto files = jsobj.get_array( "files" );
     if( !sound_init_success ) {
         return;
     }
-    const id_and_variant key( jsobj.get_string( "id" ), jsobj.get_string( "variant", "default" ) );
-    const int volume = jsobj.get_int( "volume", 100 );
     auto &effects = sfx_resources.sound_effects[key];
 
-    for( const std::string file : jsobj.get_array( "files" ) ) {
-        sound_effect new_sound_effect;
+    for( const auto &file : files ) {
+        auto new_sound_effect = sound_effect{};
         new_sound_effect.volume      = volume;
         new_sound_effect.resource_id = add_sfx_path( file );
         effects.push_back( new_sound_effect );
@@ -494,12 +496,14 @@ auto sfx::load_sound_effects( const JsonObject &jsobj ) -> void
 
 auto sfx::load_sound_effect_preload( const JsonObject &jsobj ) -> void
 {
+    const auto preload = jsobj.get_array( "preload" );
     if( !sound_init_success ) {
         return;
     }
-    for( JsonObject aobj : jsobj.get_array( "preload" ) ) {
-        const id_and_variant preload_key( aobj.get_string( "id" ),
-                                          aobj.get_string( "variant", "default" ) );
+    for( const auto &entry : preload ) {
+        const auto aobj = entry.get_object();
+        const auto preload_key = id_and_variant( aobj.get_string( "id" ),
+                                                 aobj.get_string( "variant", "default" ) );
         sfx_preload.push_back( preload_key );
     }
 }

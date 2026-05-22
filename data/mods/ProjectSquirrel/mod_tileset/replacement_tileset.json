@@ -1,0 +1,36 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE", "MshockRealXotto", "MSX++DEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/sq_replacement_items.png",
+        "tiles": [
+          { "id": "overlay_worn_gambeson", "fg": 1, "rotates": false },
+          { "id": "overlay_worn_boots_hsurvivor", "fg": 2, "rotates": false },
+          { "id": "overlay_worn_hsurvivor_suit", "fg": 3, "rotates": false },
+          { "id": "overlay_wielded_rm120c", "fg": 4, "rotates": false },
+          { "id": "overlay_wielded_rm228", "fg": 5, "rotates": false },
+          { "id": "overlay_wielded_needlegun", "fg": 6, "rotates": false },
+          { "id": "overlay_wielded_needlepistol", "fg": 7, "rotates": false },
+          { "id": "overlay_wielded_rm99_pistol", "fg": 8, "rotates": false },
+          { "id": "overlay_wielded_rm11b_sniper_rifle", "fg": 9, "rotates": false },
+          { "id": "overlay_wielded_rm2000_smg", "fg": 10, "rotates": false },
+          { "id": "overlay_wielded_rm51_assault_rifle", "fg": 11, "rotates": false },
+          { "id": "overlay_wielded_rm614_lmg", "fg": 12, "rotates": false },
+          { "id": "overlay_wielded_rm88_battle_rifle", "fg": 13, "rotates": false },
+          { "id": "overlay_wielded_laser_rifle", "fg": 14, "rotates": false },
+          { "id": "kukri", "fg": 15, "rotates": false },
+          { "id": "overlay_wielded_kukri", "fg": 16, "rotates": false },
+          { "id": "overlay_wielded_rm20", "fg": 17, "rotates": false },
+          { "id": "overlay_wielded_rm103a_pistol", "fg": 18, "rotates": false }
+        ],
+        "//": "range 1 to 8",
+        "sprite_width": 32,
+        "sprite_height": 32,
+        "sprite_offset_x": 0,
+        "sprite_offset_y": 0
+      }
+    ]
+  }
+]

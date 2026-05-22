@@ -1,0 +1,14 @@
+[
+  {
+    "id": "lightened",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "이 장비는 안감을 빼내어 <good>방해도와 보온도가 감소</good>되었지만, <bad>방어력 또한 감소</bad>되었습니다"
+  },
+  {
+    "id": "graphene_padded",
+    "type": "json_flag",
+    "context": [ "ARMOR", "TOOL_ARMOR" ],
+    "info": "이 장비는 그래핀을 안감에 덧대어 <good>종합적인 방호력이 조금 향상</good>되었습니다"
+  }
+]

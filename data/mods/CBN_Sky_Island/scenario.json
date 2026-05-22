@@ -1,0 +1,24 @@
+[
+  {
+    "type": "scenario",
+    "id": "scenario_skyisland_warper",
+    "name": "Sky Island Warper",
+    "points": 0,
+    "description": "As if the world ending wasn't enough, it seems some kind of extradimensional powers that be have taken an interest in you. You have been placed on a floating island high above the Earth, safe but isolated. Only by using the reality-bending powers of warp technology can you visit the world below in brief, randomly-targeted excursions. Venture down, gather supplies, and return with only what you can carry to upgrade your home base and your stash over time.",
+    "start_name": "Sky Island",
+    "allowed_locs": [ "sloc_skyisland" ],
+    "flags": [ "LONE_START" ]
+  },
+  {
+    "type": "start_location",
+    "id": "sloc_skyisland",
+    "name": "Sky Island",
+    "terrain": [ "sky_island_core" ],
+    "flags": [ "ALLOW_OUTSIDE" ]
+  },
+  {
+    "type": "SCENARIO_BLACKLIST",
+    "subtype": "whitelist",
+    "scenarios": [ "scenario_skyisland_warper" ]
+  }
+]

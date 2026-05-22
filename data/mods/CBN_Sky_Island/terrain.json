@@ -1,0 +1,24 @@
+[
+  {
+    "type": "terrain",
+    "id": "t_skyisland_fake_air",
+    "name": "open air",
+    "description": "This is the edge of the island. A metaphysical border stops you from going over the edge yourself, but anything you drop here will be gone forever.",
+    "symbol": " ",
+    "color": "cyan",
+    "looks_like": "t_open_air",
+    "move_cost": 0,
+    "flags": [ "TRANSPARENT", "DESTROY_ITEM", "NO_SHOOT", "BLOCK_WIND", "TRANSPARENT_FLOOR" ]
+  },
+  {
+    "type": "terrain",
+    "id": "t_skyisland_warprock",
+    "name": "warped rock",
+    "looks_like": "t_rock",
+    "description": "A sparkly-black stone that's glassy smooth to the touch. Seems indestructible by normal means.",
+    "symbol": "#",
+    "color": "dark_gray",
+    "move_cost": 0,
+    "flags": [ "NOITEM", "WALL", "NO_SCENT", "BLOCK_WIND" ]
+  }
+]

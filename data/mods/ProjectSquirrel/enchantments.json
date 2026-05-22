@@ -1,0 +1,8 @@
+[
+  {
+    "type": "enchantment",
+    "id": "ENCH_TEST_STRENGTH",
+    "condition": "ALWAYS",
+    "ench_effects": [ { "effect": "test_strength", "intensity": 1 } ]
+  }
+]

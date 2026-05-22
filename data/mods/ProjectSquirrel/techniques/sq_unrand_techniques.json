@@ -1,0 +1,120 @@
+[
+  {
+    "type": "technique",
+    "id": "WIDE2",
+    "name": "Wide Strike",
+    "unarmed_allowed": true,
+    "melee_allowed": true,
+    "weighting": 50,
+    "messages": [ "You swing in a wide arc through %s", "<npcname> swings in a wide arc through %s" ],
+    "aoe": "wide",
+    "description": "Attack in a wide arc, hitting multiple targets"
+  },
+  {
+    "type": "technique",
+    "id": "SPIN2",
+    "name": "회전 베기",
+    "unarmed_allowed": true,
+    "melee_allowed": true,
+    "weighting": 50,
+    "messages": [ "You swing through %s and everyone nearby", "<npcname> swings through %s and everyone nearby" ],
+    "aoe": "spin",
+    "description": "Attack adjacent enemies"
+  },
+  {
+    "type": "technique",
+    "id": "BRUTAL2",
+    "name": "Brutal Strike",
+    "unarmed_allowed": true,
+    "melee_allowed": true,
+    "crit_tec": true,
+    "stun_dur": 1,
+    "messages": [ "You send %s reeling", "<npcname> sends %s reeling" ],
+    "description": "기절 1턴, 치명타시"
+  },
+  {
+    "//": "루실",
+    "type": "technique",
+    "id": "SQ_EXECUTION",
+    "name": "처형",
+    "skill_requirements": [ { "name": "melee", "level": 4 } ],
+    "unarmed_allowed": true,
+    "melee_allowed": true,
+    "crit_ok": true,
+    "stunned_target": true,
+    "weighting": 5,
+    "mult_bonuses": [
+      { "stat": "movecost", "scale": 1.5 },
+      { "stat": "damage", "type": "bash", "scale": 2 },
+      { "stat": "damage", "type": "cut", "scale": 2 },
+      { "stat": "damage", "type": "stab", "scale": 2 }
+    ],
+    "messages": [ "%s을(를) 내려찍어 마무리 일격을 가합니다", "<npcname> %s을(를) 내려찍습니다" ],
+    "description": "이동력 소모 150%, 기절한 대상에게 200% 피해"
+  },
+  {
+    "//": "히노아라시",
+    "type": "technique",
+    "id": "SQ_NITEN_WATER_CUT",
+    "name": "Flowing Water Cut",
+    "messages": [ "You strike %s with the slow power of flowing water", "<npcname> strikes %s with the slow power of flowing water" ],
+    "skill_requirements": [ { "name": "melee", "level": 4 } ],
+    "melee_allowed": true,
+    "mult_bonuses": [
+      { "stat": "movecost", "scale": 1.75 },
+      { "stat": "damage", "type": "bash", "scale": 2.0 },
+      { "stat": "damage", "type": "cut", "scale": 2.0 }
+    ],
+    "description": "이동력 소모 175%, 200% 피해"
+  },
+  {
+    "type": "technique",
+    "id": "SQ_NITEN_RED_LEAF",
+    "name": "Red Leaf's Cut",
+    "messages": [ "Your strike knocks %s off balance", "<npcname>'s strike knocks %s off balance" ],
+    "skill_requirements": [ { "name": "melee", "level": 3 } ],
+    "melee_allowed": true,
+    "down_dur": 1,
+    "description": "기절 1턴"
+  },
+  {
+    "type": "technique",
+    "id": "SQ_NITEN_STONE_CUT",
+    "name": "Fire and Stone's Cut",
+    "messages": [ "You stun %s with the force of your cut", "<npcname> stuns %s with the force of their cut" ],
+    "skill_requirements": [ { "name": "melee", "level": 5 } ],
+    "melee_allowed": true,
+    "crit_tec": true,
+    "stun_dur": 1,
+    "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 1.5 }, { "stat": "damage", "type": "cut", "scale": 1.5 } ],
+    "description": "기절 1턴, 150% 피해, 치명타시"
+  },
+  {
+    "type": "technique",
+    "id": "SQ_NITEN_TIMING_ATTACK",
+    "name": "In-One Timing",
+    "messages": [ "You strike at %s's weaknesses", "<npcname> strikes %s's weaknesses" ],
+    "skill_requirements": [ { "name": "melee", "level": 5 } ],
+    "melee_allowed": true,
+    "crit_ok": true,
+    "stun_dur": 1,
+    "mult_bonuses": [
+      { "stat": "movecost", "scale": 0.5 },
+      { "stat": "damage", "type": "bash", "scale": 1.5 },
+      { "stat": "damage", "type": "cut", "scale": 1.5 }
+    ],
+    "description": "이동력 소모 50%, 기절 1턴, 150% 피해"
+  },
+  {
+    "type": "technique",
+    "id": "SQ_NITEN_FEINT",
+    "name": "Feint",
+    "messages": [ "You feint at %s", "<npcname> feints at %s" ],
+    "skill_requirements": [ { "name": "melee", "level": 2 } ],
+    "melee_allowed": true,
+    "defensive": true,
+    "miss_recovery": true,
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.8 } ],
+    "description": "빗나갈시 이동력 소모 80%"
+  }
+]

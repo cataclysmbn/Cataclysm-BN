@@ -1,0 +1,15 @@
+[
+  {
+    "type": "item_group",
+    "id": "sports",
+    "items": [ [ "sq_stamina_juice", 60 ], [ "sq_homebrew_antiseptic", 1 ], [ "a_bwirebat", 2 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "allsporting",
+    "ammo": 50,
+    "magazine": 100,
+    "subtype": "distribution",
+    "entries": [ { "item": "sq_stamina_juice", "prob": 20 } ]
+  }
+]

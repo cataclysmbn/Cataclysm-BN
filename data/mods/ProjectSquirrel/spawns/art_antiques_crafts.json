@@ -1,0 +1,46 @@
+[
+  {
+    "type": "item_group",
+    "id": "art",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "a_broadsword", "prob": 1 },
+      { "item": "a_zweihander", "prob": 1 },
+      { "item": "a_nodachi", "prob": 1 },
+      { "item": "a_katana", "prob": 1 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "medieval",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "a_broadsword", "prob": 1 },
+      { "item": "a_zweihander", "prob": 1 },
+      { "item": "a_nodachi", "prob": 1 },
+      { "item": "a_katana", "prob": 1 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "antique_rare",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "a_broadsword", "prob": 1 },
+      { "item": "a_zweihander", "prob": 1 },
+      { "item": "a_nodachi", "prob": 1 },
+      { "item": "a_katana", "prob": 1 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "antique_bank_vault",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "a_broadsword", "prob": 1 },
+      { "item": "a_zweihander", "prob": 1 },
+      { "item": "a_nodachi", "prob": 1 },
+      { "item": "a_katana", "prob": 1 }
+    ]
+  }
+]
