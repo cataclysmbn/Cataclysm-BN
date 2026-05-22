@@ -10,12 +10,14 @@
 #include "monster.h"
 #include "npc.h"
 #include "player.h"
+#include "rot.h"
 #include "submap.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "veh_type.h"
+#include "weather.h"
 #include "game.h"
 namespace
 {
@@ -441,7 +443,13 @@ item_location_type vehicle_item_location::where() const
 
 detached_ptr<item> vehicle_item_location::detach( item *it )
 {
+    const auto part_index = veh->get_part_id_hack( hack_id );
+    const auto item_pos = veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount );
+    const auto temperature = rot::temperature_flag_for_part( *veh, part_index );
     detached_ptr<item> ret = veh->get_part_hack( hack_id ).remove_item( *it );
+    if( ret && temperature != temperature_flag::TEMP_NORMAL ) {
+        ret = item::actualize_rot( std::move( ret ), item_pos, temperature, get_weather() );
+    }
     veh->invalidate_mass();
     return ret;
 }

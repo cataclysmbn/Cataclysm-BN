@@ -9,7 +9,10 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
+#include "state_helpers.h"
 #include "units_temperature.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
 #include "weather.h"
 
 static const furn_str_id f_atomic_freezer( "f_atomic_freezer" );
@@ -204,4 +207,40 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
     REQUIRE( sealed_stack_after.size() == 1 );
     auto normal_stack_after = m.i_at( normal_pnt );
     REQUIRE( normal_stack_after.empty() );
+}
+
+TEST_CASE( "Vehicle freezer catches up food rot before removal" )
+{
+    clear_all_state();
+    calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+
+    auto &here = get_map();
+    const auto vehicle_pos = tripoint_bub_ms( 60, 60, 0 );
+    auto *veh = here.add_vehicle( vproto_id( "none" ), vehicle_pos, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ), true ) >= 0 );
+    const auto freezer_index = veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "minifreezer" ),
+                               true );
+    REQUIRE( freezer_index >= 0 );
+    veh->part( freezer_index ).enabled = true;
+
+    auto sashimi = item::spawn( "sashimi" );
+    REQUIRE( sashimi->goes_bad() );
+    REQUIRE_FALSE( veh->add_item( freezer_index, std::move( sashimi ) ) );
+
+    auto freezer_items = veh->get_items( freezer_index );
+    REQUIRE( freezer_items.size() == 1 );
+
+    calendar::turn += 21_days;
+    auto carried = freezer_items.only_item().detach();
+
+    REQUIRE( carried );
+    CHECK( carried->get_rot() == 0_turns );
+
+    carried = item::process( std::move( carried ), nullptr, vehicle_pos, false,
+                             temperature_flag::TEMP_NORMAL, get_weather() );
+
+    REQUIRE( carried );
+    CHECK( !carried->rotten() );
+    CHECK( carried->get_rot() == 0_turns );
 }
