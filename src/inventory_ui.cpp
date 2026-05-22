@@ -441,7 +441,7 @@ size_t inventory_column::get_cells_width() const
 
 void inventory_column::set_filter( const std::string &filter )
 {
-    
+
     entries_cell_cache.clear();
     paging_is_valid = false;
     prepare_paging( filter );
@@ -769,14 +769,14 @@ void inventory_column::prepare_paging( const std::string &filter )
 
     // FIXME: toggled status of multiselect menu resets when filtering the menu
     // First, remove all non-items
-    for (size_t i = 0; i < entries_hidden.size(); ++i) {
-        entries.push_back(entries_hidden[i]);
+    for( size_t i = 0; i < entries_hidden.size(); ++i ) {
+        entries.push_back( entries_hidden[i] );
     }
 
     entries_hidden.clear();
-    for (size_t i = 0; i < entries.size(); ++i) {
-        if (entries[i].is_item() && !filter_fn(entries[i])) {
-            entries_hidden.push_back(entries[i]);
+    for( size_t i = 0; i < entries.size(); ++i ) {
+        if( entries[i].is_item() && !filter_fn( entries[i] ) ) {
+            entries_hidden.push_back( entries[i] );
         }
     }
 
