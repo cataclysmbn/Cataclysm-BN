@@ -3138,6 +3138,25 @@ auto read_legacy_vehicle_pivot( const JsonObject &data, tripoint_mnt_veh &pivot 
     pivot = tripoint_mnt_veh( pivot_json.get_int( 0 ), pivot_json.get_int( 1 ), z );
 }
 
+auto read_saved_vehicle_parts( const JsonObject &data, std::vector<vehicle_part> &parts ) -> void
+{
+    if( !data.has_array( "parts" ) ) {
+        return;
+    }
+
+    parts.clear();
+    const auto part_array = data.get_array( "parts" );
+    for( auto part_index = size_t{ 0 }; part_index < part_array.size(); ++part_index ) {
+        auto part = vehicle_part();
+        try {
+            part_array.read( part_index, part, true );
+            parts.push_back( std::move( part ) );
+        } catch( const JsonError &err ) {
+            DebugLog( DL::Warn, DC::DebugMsg ) << "Skipping invalid saved vehicle part: " << err.c_str();
+        }
+    }
+}
+
 } // namespace
 
 /*
@@ -3213,8 +3232,6 @@ void vehicle::deserialize( JsonIn &jsin )
     data.read( "theft_time", theft_time );
     data.read( "dimension_id", dimension_id_ );
 
-    data.read( "parts", parts );
-
     // we persist the pivot anchor so that if the rules for finding
     // the pivot change, existing vehicles do not shift around.
     // Loading vehicles that predate the pivot logic is a special
@@ -3223,6 +3240,8 @@ void vehicle::deserialize( JsonIn &jsin )
     read_legacy_vehicle_pivot( data, pivot_anchor[0] );
     pivot_anchor[1] = pivot_anchor[0];
     pivot_rotation[1] = pivot_rotation[0] = fdir_angle;
+
+    read_saved_vehicle_parts( data, parts );
     data.read( "is_following", is_following );
     data.read( "follow_distance", follow_distance );
     data.read( "is_patrolling", is_patrolling );

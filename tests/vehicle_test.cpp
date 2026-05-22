@@ -155,6 +155,68 @@ auto vehicle_with_legacy_pivot_json() -> std::string
            )json";
 }
 
+auto vehicle_with_invalid_part_and_legacy_pivot_json() -> std::string
+{
+    return R"json(
+           {
+           "type": "none",
+           "posx": 5,
+           "posy": 6,
+           "om_id": 0,
+           "faceDir": 180,
+           "moveDir": 180,
+           "turn_dir": 180,
+           "velocity": 0,
+           "falling": false,
+           "floating": false,
+           "flying": false,
+           "cruise_velocity": 0,
+           "vertical_velocity": 0,
+           "name": "legacy pivot invalid part test vehicle",
+           "owner": "",
+           "old_owner": "",
+           "parts": [
+           {
+           "id": "missing_saved_vehicle_part",
+           "mount_dx": 99,
+           "mount_dy": 99,
+           "open": false,
+           "direction": 0,
+           "blood": 0,
+           "proxy_part_id": "null",
+           "proxy_sym": 0,
+           "enabled": false,
+           "flags": 0,
+           "passenger_id": -1,
+           "crew_id": -1,
+           "items": [],
+           "ammo_pref": "null",
+           "part_color": [ 0, 0, 0, 0 ]
+       },
+           {
+           "id": "frame_horizontal",
+           "mount_dx": 0,
+           "mount_dy": 0,
+           "open": false,
+           "direction": 0,
+           "blood": 0,
+           "proxy_part_id": "null",
+           "proxy_sym": 0,
+           "enabled": false,
+           "flags": 0,
+           "passenger_id": -1,
+           "crew_id": -1,
+           "items": [],
+           "ammo_pref": "null",
+           "part_color": [ 0, 0, 0, 0 ]
+       }
+           ],
+           "pivot": [ -1, 0 ],
+           "zones": []
+       }
+           )json";
+}
+
 } // namespace
 
 TEST_CASE( "vehicle deserialize accepts legacy two coordinate pivot", "[vehicle][save]" )
@@ -165,6 +227,17 @@ TEST_CASE( "vehicle deserialize accepts legacy two coordinate pivot", "[vehicle]
 
     REQUIRE( jsin.read( veh, true ) );
     CHECK( veh.mount_to_abs( tripoint_mnt_veh( -1, 0, 0 ) ) == tripoint_abs_ms( 5, 6, 0 ) );
+    CHECK( veh.mount_to_abs( tripoint_mnt_veh( 0, 0, 0 ) ) == tripoint_abs_ms( 4, 6, 0 ) );
+}
+
+TEST_CASE( "vehicle deserialize keeps valid saved parts after an invalid part", "[vehicle][save]" )
+{
+    auto json = std::istringstream( vehicle_with_invalid_part_and_legacy_pivot_json() );
+    auto jsin = JsonIn( json );
+    auto veh = vehicle();
+
+    REQUIRE( jsin.read( veh, true ) );
+    CHECK( veh.part_count() == 1 );
     CHECK( veh.mount_to_abs( tripoint_mnt_veh( 0, 0, 0 ) ) == tripoint_abs_ms( 4, 6, 0 ) );
 }
 

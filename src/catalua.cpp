@@ -171,6 +171,7 @@ bool load_world_lua_state( const world *world, const std::string &path )
     const auto ret = world->read_from_file( path, [&]( std::istream & stream ) {
         JsonIn jsin( stream );
         JsonObject jsobj = jsin.get_object();
+        jsobj.allow_omitted_members();
 
         for( const mod_id &mod : mods ) {
             if( !jsobj.has_object( mod.str() ) ) {
