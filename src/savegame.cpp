@@ -1215,7 +1215,7 @@ void overmap::serialize( std::ostream &fout ) const
     json.end_array();
 
     std::vector<std::pair<om_pos_dir, std::string>> flattened_joins_used(
-        joins_used.begin(), joins_used.end() );
+                joins_used.begin(), joins_used.end() );
     json.member( "joins_used", flattened_joins_used );
     json.member( "mapgen_arg_storage", mapgen_arg_storage );
     fout << '\n';
