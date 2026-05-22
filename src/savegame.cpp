@@ -269,6 +269,12 @@ auto game::unserialize( std::istream &fin ) -> bool
                 dim_data.read( "world_type", wt_str );
                 info.world_type = world_type_id( wt_str );
                 dim_data.read( "display_name", info.display_name );
+                auto legacy_origin_pos_x = 0;
+                auto legacy_origin_pos_y = 0;
+                auto legacy_origin_pos_z = 0;
+                dim_data.read( "origin_pos_x", legacy_origin_pos_x );
+                dim_data.read( "origin_pos_y", legacy_origin_pos_y );
+                dim_data.read( "origin_pos_z", legacy_origin_pos_z );
                 if( dim_data.has_object( "pocket_info" ) ) {
                     dim_data.read( "pocket_info", info.pocket_info );
                 } else if( dim_data.has_object( "bounds" ) ) {
@@ -1209,7 +1215,7 @@ void overmap::serialize( std::ostream &fout ) const
     json.end_array();
 
     std::vector<std::pair<om_pos_dir, std::string>> flattened_joins_used(
-                joins_used.begin(), joins_used.end() );
+        joins_used.begin(), joins_used.end() );
     json.member( "joins_used", flattened_joins_used );
     json.member( "mapgen_arg_storage", mapgen_arg_storage );
     fout << '\n';
