@@ -21,11 +21,12 @@
 #include "memory_fast.h"
 #include "pimpl.h"
 #include "units.h"
+#include "pickup_token.h"
 
 class Character;
+class player;
 class item;
 class item_category;
-class player;
 class string_input_popup;
 struct tripoint;
 class ui_adaptor;
@@ -214,6 +215,16 @@ class inventory_selector_preset
 
 const inventory_selector_preset default_preset;
 
+class pickup_inventory_preset : public inventory_selector_preset
+{
+    public:
+        pickup_inventory_preset( const player &p ) : p( p ) {}
+        std::string get_denial( const item *loc ) const override;
+
+    private:
+        const player &p;
+};
+
 class inventory_column
 {
     public:
@@ -266,7 +277,6 @@ class inventory_column
         std::vector<inventory_entry *> get_all_selected() const;
         std::vector<inventory_entry *> get_entries(
             const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
-
         inventory_entry *find_by_invlet( int invlet ) const;
 
         void draw( const catacurses::window &win, point pos ) const;
@@ -673,6 +683,7 @@ class inventory_multiselector : public inventory_selector
     protected:
         void rearrange_columns( size_t client_width ) override;
         size_t query_count( size_t count );
+        void set_chosen_count( inventory_entry &entry, size_t count );
     private:
         std::unique_ptr<inventory_column> selection_col;
 };
@@ -733,5 +744,14 @@ class inventory_drop_selector : public inventory_multiselector
     private:
         excluded_stacks dropping;
 };
+
+
+class inventory_pickup_selector : public inventory_multiselector
+{
+    public:
+        inventory_pickup_selector( player &p, const inventory_selector_preset& preset = default_preset);
+        std::vector<pickup::pick_drop_selection> execute();
+};
+
 
 

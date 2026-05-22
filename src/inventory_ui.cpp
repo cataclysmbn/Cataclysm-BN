@@ -34,6 +34,7 @@
 #include "vehicle_selector.h"
 #include "visitable.h"
 #include "vpart_position.h"
+#include "game_inventory.h"
 
 #if defined(__ANDROID__)
 #include <SDL3/SDL.h>
@@ -134,6 +135,21 @@ class selection_column_preset : public inventory_selector_preset
 };
 
 static const selection_column_preset selection_preset{};
+
+std::string pickup_inventory_preset::get_denial( const item *loc ) const
+{
+    if( !p.has_item( *loc ) ) {
+        if( loc->made_of( LIQUID ) ) {
+            return _( "Can't pick up spilt liquids" );
+        } else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
+            return _( "Too big to pick up" );
+        } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
+            return _( "Too heavy to pick up" );
+        }
+    }
+
+    return std::string();
+}
 
 int inventory_entry::get_total_charges() const
 {
@@ -640,6 +656,7 @@ std::vector<inventory_entry *> inventory_column::get_entries(
 
     return res;
 }
+
 
 void inventory_column::set_stack_favorite( const item *location, bool favorite )
 {
@@ -1182,7 +1199,7 @@ void inventory_selector::add_item( inventory_column &target_column,
                custom_category );
 }
 
-
+[[clang::optnone]]
 void inventory_selector::add_items( inventory_column &target_column,
                                     const std::function<item*( item * )> &locator,
                                     const std::vector<std::list<item *>> &stacks,
@@ -2029,6 +2046,15 @@ size_t inventory_multiselector::query_count( size_t count = 0 )
     return count;
 }
 
+void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t count )
+{
+    if (entry.is_item()) {
+        entry.chosen_count = std::min( count, entry.get_available_count() );
+        on_change( entry );
+    }
+
+}
+
 inventory_compare_selector::inventory_compare_selector( player &p ) :
     inventory_multiselector( p, default_preset, _( "ITEMS TO COMPARE" ) ) {}
 
@@ -2402,4 +2428,86 @@ inventory_selector::stats inventory_drop_selector::get_raw_stats() const
                u.weight_capacity(),
                u.volume_carried_reduced_by( dropping ),
                u.volume_capacity_reduced_by( 0_ml, dropping ) );
+}
+
+inventory_pickup_selector::inventory_pickup_selector( player &p, const inventory_selector_preset& preset) :
+    inventory_multiselector(p, preset, "ITEMS TO PICKUP") {}
+
+std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute() 
+{
+    shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
+
+    while( true ) {
+        ui_manager::redraw();
+
+        const inventory_input input = get_input();
+
+        if( input.ch >= '0' && input.ch <= '9' ) {
+            const auto selected( get_active_column().get_all_selected() );
+
+            size_t count = query_count( input.ch - '0' );
+            for( const auto &elem : selected ) {
+                set_chosen_count( *elem, count );
+            }
+        } else if( input.entry != nullptr ) {
+            select( input.entry->any_item() );
+            if( input.entry->chosen_count == 0 ) {
+                set_chosen_count( *input.entry, max_chosen_count );
+            }
+        } else if( input.action == "RIGHT" ) {
+            const auto selected( get_active_column().get_all_selected() );
+
+            size_t count = max_chosen_count;
+
+            // Any non favorite item to select?
+            const bool select_nonfav = std::any_of( selected.begin(), selected.end(),
+            []( const inventory_entry * elem ) {
+                return ( !elem->any_item()->is_favorite ) && elem->chosen_count == 0;
+            } );
+
+            // Otherwise, any favorite item to select?
+            const bool select_fav = !select_nonfav && std::any_of( selected.begin(), selected.end(),
+            []( const inventory_entry * elem ) {
+                return elem->any_item()->is_favorite && elem->chosen_count == 0;
+            } );
+
+            for( const auto &elem : selected ) {
+                const bool is_favorite = elem->any_item()->is_favorite;
+                if( ( select_nonfav && !is_favorite ) || ( select_fav && is_favorite ) ) {
+                    set_chosen_count( *elem, count );
+                } else if( !select_nonfav && !select_fav ) {
+                    // Every element is selected, unselect all
+                    set_chosen_count( *elem, 0 );
+                }
+            }
+        } else if( input.action == "CONFIRM" ) {
+            std::vector<pickup::pick_drop_selection> result;
+            std::vector<item*> locations;
+            std::vector<int> counts;
+            for (auto col_ptr : get_all_columns()) {
+                for (auto entry_ptr : col_ptr->get_entries([](const inventory_entry& e) { return true; })) {
+                    if (entry_ptr->is_item() && entry_ptr->chosen_count > 0) {
+                        for (auto item_ptr : entry_ptr->locations) {
+                            locations.push_back(item_ptr);
+                            counts.push_back(entry_ptr->chosen_count);
+                        }
+                    }
+                }
+            }
+            result = pickup::optimize_pickup( locations, counts );
+            if( result.empty() ) {
+                popup_getkey( _( "No items were selected.  Use %s to select them." ),
+                              ctxt.get_desc( "RIGHT" ) );
+                continue;
+            } else {
+                return result;
+            }
+        } else if( input.action == "QUIT" ) {
+            return std::vector<pickup::pick_drop_selection>();
+        } else {
+            on_input( input );
+        }
+    }
+
+    return std::vector<pickup::pick_drop_selection>();
 }
