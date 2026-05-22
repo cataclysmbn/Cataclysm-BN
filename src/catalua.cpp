@@ -321,10 +321,10 @@ void set_mod_being_loaded( lua_state &state, const mod_id &mod )
     lua.globals()["game"]["current_mod"] = mod.str();
     lua.globals()["game"]["current_mod_path"] = mod->path + "/";
     lua.globals()["package"]["path"] =
-           string_format(
-               "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
-               cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "lua" ), mod->path
-           );
+        string_format(
+            "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
+            cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "lua" ), mod->path
+        );
 }
 
 void clear_mod_being_loaded( lua_state &state )

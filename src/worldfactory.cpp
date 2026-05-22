@@ -1290,7 +1290,7 @@ int worldfactory::show_worldgen_tab_confirm( const catacurses::window &win, WORL
 
         // +1 for end-of-text cursor
         spopup.window( w_confirmation, namebar_pos, namebar_pos.x + max_worldname_len + 1 )
-              .context( ctxt );
+        .context( ctxt );
 
         ui.position_from_window( win );
     };

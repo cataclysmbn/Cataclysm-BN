@@ -160,8 +160,8 @@ void mod_manager::refresh_mod_list()
     add_mods( mod_management::load_mods_from( PATH_INFO::user_moddir() ) );
 
     std::optional<t_mod_list> default_list = mod_management::load_mod_list(
-            PATH_INFO::mods_user_default()
-        );
+                PATH_INFO::mods_user_default()
+            );
     if( !default_list ) {
         default_list = mod_management::load_mod_list( PATH_INFO::mods_dev_default() );
     }
@@ -411,7 +411,7 @@ void mod_manager::add_mods( std::vector<MOD_INFORMATION> &&list )
 
     if( !replaced.empty() ) {
         DebugLog( DL::Info, DC::Main ) << "[Mod manager] Replaced " << replaced.size() <<
-                                          " mod(s) with user overrides.";
+                                       " mod(s) with user overrides.";
         std::string msg;
         for( const replacement &it : replaced ) {
             msg += string_format( "[%s] from \"%s\" with \"%s\"\n", it.id, it.path_old, it.path_new );

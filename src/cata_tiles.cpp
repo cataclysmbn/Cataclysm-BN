@@ -1754,7 +1754,7 @@ bool tileset_loader::create_textures_from_tile_atlas( const SDL_Surface_Ptr &til
     for( tiles_pixel_color_entry &entry : tile_values_data ) {
         std::vector<texture> *tile_values = std::get<0>( entry );
         color_pixel_function_pointer color_pixel_function = get_color_pixel_function( std::get<1>
-            ( entry ) );
+                ( entry ) );
         bool success;
         if( !color_pixel_function ) {
             // TODO: Move it inside apply_color_filter.
@@ -1823,7 +1823,7 @@ void tileset_loader::load_tileset( const fs::path &img_path, const bool pump_eve
     if( max_texture_width == 0 ) {
         max_texture_width = sprite_width * min_tile_xcount;
         dbg( DL::Info ) <<
-        "max_texture_width was set to 0.  Changing it to " <<
+                        "max_texture_width was set to 0.  Changing it to " <<
                         max_texture_width;
     } else {
         throwErrorIf( max_texture_width < sprite_width,
@@ -1833,7 +1833,7 @@ void tileset_loader::load_tileset( const fs::path &img_path, const bool pump_eve
     if( max_texture_height == 0 ) {
         max_texture_height = sprite_height * min_tile_ycount;
         dbg( DL::Info ) <<
-        "max_texture_height was set to 0.  Changing it to "
+                        "max_texture_height was set to 0.  Changing it to "
                         << max_texture_height;
     } else {
         throwErrorIf( max_texture_height < sprite_height,
@@ -2746,7 +2746,7 @@ void tileset_loader::load_tilejson_from_file( const JsonObject &config )
         }
     }
     dbg( DL::Info ) << "Tile Width: " << ts.tile_width << " Tile Height: " << ts.tile_height <<
-                       " Tile Definitions: " << ts.tile_ids.size();
+                    " Tile Definitions: " << ts.tile_ids.size();
 }
 
 /**
@@ -3400,7 +3400,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                         invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
                                            np.x < min_visible_x || np.x > max_visible_x ||
                                            would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
-                                               cache ) );
+                                                   cache ) );
                     }
 
                     if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
@@ -3657,7 +3657,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 invisible[1 + i] = np.y() < min_visible_y || np.y() > max_visible_y ||
                                    np.x() < min_visible_x || np.x() > max_visible_x ||
                                    would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x(), np.y() )],
-                                       cache ) );
+                                           cache ) );
             }
             //calling draw to memorize everything.
             //bypass cache check in case we learn something new about the terrain's connections
@@ -4081,7 +4081,7 @@ bool cata_tiles::draw_from_id_string(
     // Trying to search for tile type
     auto search_result = prevent_occlusion_transp && retract > 0 && tile.category != C_OVERMAP_TERRAIN
                          ? tile_type_search( tile_search_params{ tile.id + "_transparent", tile.category,
-                             tile.subcategory, tile.subtile, tile.rota } )
+                                 tile.subcategory, tile.subtile, tile.rota } )
                          : std::optional<tile_search_result> {};
     if( search_result == std::nullopt ) {
         search_result = tile_type_search( tile );
@@ -4911,7 +4911,7 @@ bool cata_tiles::draw_furniture( const tripoint_bub_ms &p, const lit_level ll, i
             const auto furn = [&]( const tripoint_bub_ms & q, const bool invis ) -> furn_id {
                 const auto it = furniture_override.find( q );
                 return it != furniture_override.end() ? it->second :
-                                               ( !overridden || !invis ) ? here.furn( tripoint_bub_ms( q ) ) : f_null;
+                ( !overridden || !invis ) ? here.furn( tripoint_bub_ms( q ) ) : f_null;
             };
             const int neighborhood[4] = {
                 static_cast<int>( furn( p + point_south, invisible[1] ) ),
@@ -5006,7 +5006,7 @@ bool cata_tiles::draw_trap( const tripoint_bub_ms &p, const lit_level ll, int &h
             const auto tr_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> trap_id {
                 const auto it = trap_override.find( q );
                 return it != trap_override.end() ? it->second :
-                                          ( !overridden || !invis ) ? here.tr_at( tripoint_bub_ms( q ) ).loadid : tr_null;
+                ( !overridden || !invis ) ? here.tr_at( tripoint_bub_ms( q ) ).loadid : tr_null;
             };
             const int neighborhood[4] = {
                 static_cast<int>( tr_at( p + point_south, invisible[1] ) ),
@@ -5081,7 +5081,7 @@ bool cata_tiles::draw_field_or_item( const tripoint_bub_ms &p, const lit_level l
         auto field_at = [&]( const tripoint_bub_ms & q, const bool invis ) -> field_type_id {
             const auto it = field_override.find( q );
             return it != field_override.end() ? it->second :
-                                       ( !fld_overridden || !invis ) ? here.field_at( q ).displayed_field_type() : fd_null;
+            ( !fld_overridden || !invis ) ? here.field_at( q ).displayed_field_type() : fd_null;
         };
         // for rotation information
         const int neighborhood[4] = {
@@ -6407,7 +6407,7 @@ void cata_tiles::draw_line()
     draw_from_id_string(
     {line_endpoint_id, C_NONE, empty_string, 0, 0},
     line_trajectory.back(), std::nullopt, std::nullopt,
-                   lit_level::LIT, false, 0, false
+    lit_level::LIT, false, 0, false
     );
 }
 void cata_tiles::draw_cursor()
@@ -6586,7 +6586,7 @@ void cata_tiles::get_terrain_orientation( const tripoint_bub_ms &p, int &rota, i
     const auto ter = [&]( const tripoint_bub_ms & q, const bool invis ) -> ter_id {
         const auto override = ter_override.find( q );
         return override != ter_override.end() ? override->second :
-                                       ( !overridden || !invis ) ? here.ter( q ) : t_null;
+        ( !overridden || !invis ) ? here.ter( q ) : t_null;
     };
 
     // get terrain at x,y
