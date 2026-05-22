@@ -166,7 +166,10 @@ draw_lights = function(data, map)
     for i = 0, 23 do
       for j = 0, 23 do
         if not( i * j % 2 == 0 or i + j % 4 == 0 ) and gapi.rng( 0, light_chance ) == 1 then
-          map:set_ter_at( TripointBubMs.new(i, j, data:zlevel()), t_thconc_floor_olight)
+          if map:get_ter_at( TripointBubMs.new(i, j, data:zlevel())) == t_thconc_floor or
+             map:get_ter_at( TripointBubMs.new(i, j, data:zlevel())) == t_strconc_floor then
+            map:set_ter_at( TripointBubMs.new(i, j, data:zlevel()), t_thconc_floor_olight)
+          end
         end
       end
     end
@@ -221,10 +224,10 @@ end
   
 draw_normal_room = function(data, map)
   walls = {
-    top=false,
-    bottom=false,
-    left=false,
-    right=false
+    top=0,
+    bottom=0,
+    left=0,
+    right=0
   }
   boarders = 4
   if map.is_ot_match( "lab", data:north(), ot_match_contains ) then
@@ -247,18 +250,18 @@ draw_normal_room = function(data, map)
     data:generate("lab_finale_1level")
   elseif boarders == 3 then
     data:generate("lab_1side")
-    if left_wall == 2 then
+    if walls.left == 0 then
       map:rotate( 1 )
-    elseif bottom_wall == 2 then
+    elseif walls.bottom == 0 then
       map:rotate( 2 )
-    elseif right_wall == 2 then
+    elseif walls.right == 0 then
       map:rotate( 3 )
     end
   else
     data:generate("lab_4side")
-    -- Build forth the walls
-    draw_walls(data, map, walls)
   end
+  -- Build forth the walls
+  draw_walls(data, map, walls)
   -- Ideally this should link stairs
   -- The moment tinymaps can see above and below this will link stairs
   -- We all know this will never happen
