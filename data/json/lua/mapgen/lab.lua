@@ -47,7 +47,7 @@ draw_entry_room = function(data, map)
          ( j > 1 and j < 22 and ( i == 10 or i == 13 ) ) then
         map:set_ter_at(pt, t_concrete_wall)
       else
-        map:set_ter_at(pt, t_floor)
+        map:set_ter_at(pt, t_thconc_floor)
       end
     end
   end
