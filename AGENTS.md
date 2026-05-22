@@ -77,7 +77,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 ### WHEN working on code changes
 
 - **Style**: Follow [Code Style](./docs/en/dev/explanation/code_style.md). Use `_( "text" )` for L10n.
-- **Format**: Format code before building/testing. Use a formatter target or command limited to files touched for the task; do not run repository-wide formatting when the task scope is narrower.
+- **Format**: Format code before building/testing. Use a formatter target or command limited to files touched for the task; do not run repository-wide formatting when the task scope is narrower. Before running any formatter target, confirm it is file-scoped; if it is not, use the underlying formatter on the touched files only.
 
 ```sh
 # Format C++ code
