@@ -193,23 +193,23 @@ auto throw_grabbed_creature( avatar &you ) -> bool
         return true;
     }
 
-    const auto distance = std::max( 1.0f, static_cast<float>( rl_dist( target->pos(), trajectory.back() ) ) );
-    throwforce *= distance;
+    const auto distance = std::max( 1, rl_dist( target->pos(), trajectory.back() ) );
+    const auto fling_velocity = creature_throw::grabbed_throw_velocity( distance );
     const units::angle target_angle = coord_to_angle( target->pos(), trajectory.back() );
 
     target->remove_effect( effect_grabbed );
     you.remove_effect( effect_grabbing );
     you.mod_moves( -100 );
-    you.mod_stamina( -creature_throw::grabbed_stamina_cost( throwforce ) );
+    you.mod_stamina( -creature_throw::grabbed_stamina_cost( fling_velocity ) );
 
-    if( npc *const guy = target->as_npc(); guy != nullptr && throwforce > 24.0f ) {
+    if( npc *const guy = target->as_npc(); guy != nullptr && fling_velocity > 24.0f ) {
         guy->make_angry();
     } else if( monster *const mon = target->as_monster(); mon != nullptr && mon->friendly == 0 ) {
         mon->on_hit( &you, body_part_torso.id(), nullptr, false );
     }
 
-    add_msg( _( "You %1$s %2$s!" ), throw_descriptor( throwforce ), target->disp_name() );
-    g->fling_creature( target, target_angle, throwforce );
+    add_msg( _( "You %1$s %2$s!" ), throw_descriptor( fling_velocity ), target->disp_name() );
+    g->fling_creature( target, target_angle, fling_velocity );
     return true;
 }
 

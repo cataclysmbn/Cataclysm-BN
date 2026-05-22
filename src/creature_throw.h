@@ -15,4 +15,9 @@ inline auto grabbed_stamina_cost( const float throwforce ) -> int
                        min_stamina_cost, max_stamina_cost );
 }
 
+inline auto grabbed_throw_velocity( const int distance ) -> float
+{
+    return std::max( 1, distance ) * 10.0f;
+}
+
 } // namespace creature_throw

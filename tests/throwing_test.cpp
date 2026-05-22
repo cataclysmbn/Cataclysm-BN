@@ -47,6 +47,13 @@ TEST_CASE( "grabbed creature throw stamina cost is bounded", "[throwing], [balan
     CHECK( creature_throw::grabbed_stamina_cost( 1000.0f ) == creature_throw::max_stamina_cost );
 }
 
+TEST_CASE( "grabbed creature throw velocity follows selected distance", "[throwing], [balance]" )
+{
+    CHECK( creature_throw::grabbed_throw_velocity( 1 ) == 10.0f );
+    CHECK( creature_throw::grabbed_throw_velocity( 3 ) == 30.0f );
+    CHECK( creature_throw::grabbed_throw_velocity( 15 ) == 150.0f );
+}
+
 TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]" )
 {
     clear_all_state();

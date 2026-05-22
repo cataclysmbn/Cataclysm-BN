@@ -2446,6 +2446,13 @@ static damage_unit &get_damage_unit( std::vector<damage_unit> &di, const damage_
     return nullunit;
 }
 
+static auto can_be_downed_after_knockback( const Creature &target ) -> bool
+{
+    const auto *const knocked_monster = dynamic_cast<const monster *>( &target );
+    return !target.is_immune_effect( effect_downed ) &&
+           ( knocked_monster == nullptr || !knocked_monster->flies() );
+}
+
 static void print_damage_info( const damage_instance &di )
 {
     if( !debug_mode ) {
@@ -2532,6 +2539,10 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         tripoint_bub_ms kb_point( bub_pos().x() + kb_offset_x, bub_pos().y() + kb_offset_y, bub_pos().z() );
         for( int dist = rng( 1, technique.knockback_dist ); dist > 0; dist-- ) {
             t.knock_back_from( kb_point );
+        }
+        if( t.pos() != prev_pos && !t.has_effect( effect_downed ) &&
+            can_be_downed_after_knockback( t ) && !one_in( 4 ) ) {
+            t.add_effect( effect_downed, 1_turns );
         }
         // This technique makes the player follow into the tile the target was knocked from
         if( technique.knockback_follow ) {
