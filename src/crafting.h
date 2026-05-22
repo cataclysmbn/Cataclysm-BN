@@ -3,6 +3,7 @@
 #include <list>
 #include <optional>
 #include <set>
+#include <unordered_set>
 #include <vector>
 
 #include "point.h"
@@ -120,3 +121,17 @@ void complete_disassemble( Character &who, const iuse_location &target,
                            const tripoint_bub_ms &pos );
 
 } // namespace crafting
+
+/// An item found on the map that the player should physically walk to and collect.
+struct map_ingredient {
+    tripoint_abs_ms loc;
+    itype_id type;
+};
+
+/// Returns items within @p radius of @p who that match any id in @p wanted.
+/// Skips the player's own tile, unreachable tiles, and liquid items.
+/// Results are sorted nearest-first.
+std::vector<map_ingredient> gather_map_ingredients(
+    const Character &who,
+    const std::unordered_set<itype_id> &wanted,
+    int radius );

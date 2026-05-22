@@ -11,6 +11,7 @@
 #include <utility>
 #include <vector>
 
+#include "activity_actor_definitions.h"
 #include "avatar.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -622,6 +623,8 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     ctxt.register_action( "COMPARE" );
     ctxt.register_action( "TOGGLE_UNAVAILABLE" );
     ctxt.register_action( "ASSIGN_NPC_CRAFT", to_translation( "Assign nearest NPC to craft" ) );
+    ctxt.register_action( "FETCH_RECIPE_INGREDIENTS",
+                          to_translation( "Fetch ingredients from nearby containers" ) );
     if( highlight_unread_recipes ) {
         ctxt.register_action( "TOGGLE_RECIPE_UNREAD" );
         ctxt.register_action( "MARK_ALL_RECIPES_READ" );
@@ -1454,6 +1457,31 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                         chosen = nullptr;
                         done = true;
                     }
+                }
+            }
+        } else if( action == "FETCH_RECIPE_INGREDIENTS" ) {
+            if( current.empty() || available[line].is_nested_category || current[line]->is_nested() ) {
+                popup( _( "Select a craftable recipe first." ) );
+            } else {
+                const recipe *rec = current[line];
+                std::unordered_set<itype_id> wanted;
+                for( const auto &alt : rec->deduped_requirements().alternatives() ) {
+                    for( const auto &comp_group : alt.get_components() ) {
+                        for( const auto &comp : comp_group ) {
+                            wanted.insert( comp.type );
+                        }
+                    }
+                }
+                auto pending = gather_map_ingredients( crafter, wanted, PICKUP_RANGE );
+                if( pending.empty() ) {
+                    popup( _( "No matching ingredients found in nearby containers." ) );
+                } else {
+                    crafter.assign_activity(
+                        std::make_unique<player_activity>(
+                            std::make_unique<fetch_recipe_ingredients_activity_actor>(
+                                std::move( pending ) ) ) );
+                    chosen = nullptr;
+                    done = true;
                 }
             }
         } else if( action == "HELP_RECIPE" ) {

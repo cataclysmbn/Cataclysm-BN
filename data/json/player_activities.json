@@ -489,6 +489,15 @@
     "verbose_tooltip": false
   },
   {
+    "id": "ACT_FETCH_RECIPE_INGREDIENTS",
+    "type": "activity_type",
+    "verb": "fetching ingredients",
+    "suspendable": false,
+    "special": true,
+    "no_resume": true,
+    "verbose_tooltip": false
+  },
+  {
     "id": "ACT_MULTIPLE_FARM",
     "type": "activity_type",
     "verb": "farming",

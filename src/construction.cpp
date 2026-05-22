@@ -9,10 +9,12 @@
 #include <memory>
 #include <numeric>
 #include <ranges>
+#include <unordered_set>
 #include <utility>
 
 #include "action.h"
 #include "activity_actor_definitions.h"
+#include "cached_options.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "character.h"
@@ -22,6 +24,7 @@
 #include "construction_category.h"
 #include "construction_group.h"
 #include "coordinates.h"
+#include "crafting.h"
 #include "crafting_quality.h"
 #include "cursesdef.h"
 #include "debug.h"
@@ -483,6 +486,8 @@ std::optional<construction_id> construction_menu( const bool blueprint )
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "FILTER" );
     ctxt.register_action( "RESET_FILTER" );
+    ctxt.register_action( "FETCH_RECIPE_INGREDIENTS",
+                          to_translation( "Fetch ingredients from nearby containers" ) );
 
     const std::vector<construction_category> &construct_cat = construction_categories::get_all();
     std::vector<size_t> construct_cat_order;
@@ -1475,6 +1480,28 @@ std::optional<construction_id> construction_menu( const bool blueprint )
             hide_unconstructable = !hide_unconstructable;
             offset = 0;
             list_available_constructions( available, cat_available, hide_unconstructable );
+        } else if( action == "FETCH_RECIPE_INGREDIENTS" ) {
+            if( constructs.empty() || select >= static_cast<int>( constructs.size() ) ) {
+                continue;
+            }
+            std::unordered_set<itype_id> wanted;
+            for( const construction *con : constructions_by_group( constructs[select] ) ) {
+                for( const auto &comp_group : con->requirements->get_components() ) {
+                    for( const auto &comp : comp_group ) {
+                        wanted.insert( comp.type );
+                    }
+                }
+            }
+            auto pending = gather_map_ingredients( g->u, wanted, PICKUP_RANGE );
+            if( pending.empty() ) {
+                popup( _( "No matching ingredients found in nearby containers." ) );
+            } else {
+                g->u.assign_activity(
+                    std::make_unique<player_activity>(
+                        std::make_unique<fetch_recipe_ingredients_activity_actor>(
+                            std::move( pending ) ) ) );
+                exit = true;
+            }
         } else if( action == "CONFIRM" ) {
             if( constructs.empty() || select >= static_cast<int>( constructs.size() ) ) {
                 // Nothing to be done here

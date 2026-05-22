@@ -526,6 +526,28 @@ class move_items_activity_actor : public activity_actor
         static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
 };
 
+class fetch_recipe_ingredients_activity_actor : public activity_actor
+{
+    private:
+        std::vector<map_ingredient> pending;
+        std::size_t idx = 0;
+
+    public:
+        explicit fetch_recipe_ingredients_activity_actor( std::vector<map_ingredient> items ) :
+            pending( std::move( items ) ) {}
+
+        activity_id get_type() const override {
+            return activity_id( "ACT_FETCH_RECIPE_INGREDIENTS" );
+        }
+
+        void start( player_activity &, Character & ) override {}
+        void do_turn( player_activity &act, Character &who ) override;
+        void finish( player_activity &, Character & ) override {}
+
+        void serialize( JsonOut &jsout ) const override;
+        static std::unique_ptr<activity_actor> deserialize( JsonIn &jsin );
+};
+
 class toggle_gate_activity_actor : public activity_actor
 {
     private:

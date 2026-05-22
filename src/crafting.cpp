@@ -639,6 +639,36 @@ void Character::invalidate_crafting_inventory()
     cached_position = tripoint_bub_ms::min();
 }
 
+std::vector<map_ingredient> gather_map_ingredients(
+    const Character &who,
+    const std::unordered_set<itype_id> &wanted,
+    int radius )
+{
+    auto &here = get_map();
+    std::vector<map_ingredient> result;
+
+    for( const tripoint_bub_ms &loc : closest_points_first( who.bub_pos(), 1, radius ) ) {
+        if( !here.clear_path( who.bub_pos(), loc, radius, 1, 100 ) ) {
+            continue;
+        }
+        for( const auto *it : here.i_at( loc ) ) {
+            if( !it->made_of( LIQUID ) && wanted.count( it->typeId() ) ) {
+                result.push_back( { here.bub_to_abs( loc ), it->typeId() } );
+            }
+        }
+        if( const std::optional<vpart_reference> vp =
+                here.veh_at( loc ).part_with_feature( "CARGO", true ) ) {
+            for( const auto *it : vp->vehicle().get_items( vp->part_index() ) ) {
+                if( !it->made_of( LIQUID ) && wanted.count( it->typeId() ) ) {
+                    result.push_back( { here.bub_to_abs( loc ), it->typeId() } );
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 void Character::make_craft( const recipe_id &id_to_make, int batch_size,
                             const tripoint_bub_ms &loc )
 {

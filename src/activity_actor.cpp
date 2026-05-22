@@ -1068,6 +1068,84 @@ std::unique_ptr<activity_actor> move_items_activity_actor::deserialize( JsonIn &
     return actor;
 }
 
+void fetch_recipe_ingredients_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    auto &here = get_map();
+
+    while( idx < pending.size() ) {
+        const map_ingredient &next = pending[idx];
+        const tripoint_bub_ms src = here.abs_to_bub( next.loc );
+
+        if( rl_dist( who.bub_pos(), src ) > 1 ) {
+            auto route = route_adjacent( static_cast<const player &>( who ), src );
+            if( route.empty() ) {
+                ++idx;
+                continue;
+            }
+            // Walk to the item; activity (with current idx) resumes on arrival
+            who.set_destination( route, who.remove_activity() );
+            return;
+        }
+
+        // Adjacent — grab from ground
+        for( item *it : here.i_at( src ) ) {
+            if( it->typeId() == next.type && !it->made_of( LIQUID ) ) {
+                detached_ptr<item> taken = it->detach();
+                who.mod_moves( -pickup::cost_to_move_item( who, *taken ) );
+                who.i_add_or_drop( std::move( taken ) );
+                break;
+            }
+        }
+        // Also grab from vehicle cargo at same tile
+        if( const std::optional<vpart_reference> vp =
+                here.veh_at( src ).part_with_feature( "CARGO", true ) ) {
+            for( item *it : vp->vehicle().get_items( vp->part_index() ) ) {
+                if( it->typeId() == next.type && !it->made_of( LIQUID ) ) {
+                    detached_ptr<item> taken = it->detach();
+                    who.mod_moves( -pickup::cost_to_move_item( who, *taken ) );
+                    who.i_add_or_drop( std::move( taken ) );
+                    break;
+                }
+            }
+        }
+
+        ++idx;
+    }
+
+    act.set_to_null();
+}
+
+void fetch_recipe_ingredients_activity_actor::serialize( JsonOut &jsout ) const
+{
+    jsout.start_object();
+    jsout.member( "idx", idx );
+    jsout.member( "pending" );
+    jsout.start_array();
+    for( const auto &mi : pending ) {
+        jsout.start_object();
+        jsout.member( "loc", mi.loc );
+        jsout.member( "type", mi.type );
+        jsout.end_object();
+    }
+    jsout.end_array();
+    jsout.end_object();
+}
+
+std::unique_ptr<activity_actor> fetch_recipe_ingredients_activity_actor::deserialize( JsonIn &jsin )
+{
+    auto actor = std::make_unique<fetch_recipe_ingredients_activity_actor>(
+                     std::vector<map_ingredient>{} );
+    JsonObject data = jsin.get_object();
+    data.read( "idx", actor->idx );
+    for( JsonObject elem : data.get_array( "pending" ) ) {
+        map_ingredient mi;
+        elem.read( "loc", mi.loc );
+        elem.read( "type", mi.type );
+        actor->pending.push_back( mi );
+    }
+    return actor;
+}
+
 void pickup_activity_actor::do_turn( player_activity &act, Character &who )
 {
     // If we don't have target items bail out
@@ -2588,6 +2666,7 @@ deserialize_functions = {
     { activity_id( "ACT_DIG_CHANNEL" ), &dig_channel_activity_actor::deserialize },
     { activity_id( "ACT_DISASSEMBLE" ), &disassemble_activity_actor::deserialize },
     { activity_id( "ACT_DROP" ), &drop_activity_actor::deserialize },
+    { activity_id( "ACT_FETCH_RECIPE_INGREDIENTS" ), &fetch_recipe_ingredients_activity_actor::deserialize },
     { activity_id( "ACT_HACKING" ), &hacking_activity_actor::deserialize },
     { activity_id( "ACT_HACKSAW" ), &hacksaw_activity_actor::deserialize },
     { activity_id( "ACT_LOCKPICK" ), &lockpick_activity_actor::deserialize },

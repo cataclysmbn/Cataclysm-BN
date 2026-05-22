@@ -670,6 +670,13 @@
   },
   {
     "type": "keybinding",
+    "id": "FETCH_RECIPE_INGREDIENTS",
+    "category": "CRAFTING",
+    "name": "Fetch ingredients from nearby containers",
+    "bindings": [ { "input_method": "keyboard", "key": "G" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "LEVEL_UP",
     "name": "Go Up",
     "bindings": [ { "input_method": "keyboard", "key": "PPAGE" }, { "input_method": "keyboard", "key": "<" } ]
@@ -1483,6 +1490,13 @@
     "category": "CONSTRUCTION",
     "name": "Toggle unavailable constructions",
     "bindings": [ { "input_method": "keyboard", "key": ";" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "FETCH_RECIPE_INGREDIENTS",
+    "category": "CONSTRUCTION",
+    "name": "Fetch ingredients from nearby containers",
+    "bindings": [ { "input_method": "keyboard", "key": "G" } ]
   },
   {
     "type": "keybinding",
