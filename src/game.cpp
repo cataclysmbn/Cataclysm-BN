@@ -266,6 +266,23 @@ static void init_bubble_config()
     init_bubble_config( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
+static auto discard_monster_map_for_loaded_bubble( map &here,
+        const std::string &dimension_id ) -> void
+{
+    const auto origin = here.get_abs_sub();
+    const auto zmin = here.has_zlevels() ? -OVERMAP_DEPTH : origin.z();
+    const auto zmax = here.has_zlevels() ? OVERMAP_HEIGHT : origin.z();
+    const auto z_range = std::views::iota( zmin, zmax + 1 );
+    const auto xy_range = std::views::iota( 0, g_mapsize );
+    std::ranges::for_each(
+        cata::views::cartesian_product( z_range, xy_range, xy_range ),
+    [&]( auto tup ) {
+        const auto [gz, gx, gy] = tup;
+        get_overmapbuffer( dimension_id ).discard_monster_map(
+            tripoint_abs_sm{ origin.x() + gx, origin.y() + gy, gz } );
+    } );
+}
+
 static constexpr int DANGEROUS_PROXIMITY = 5;
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
@@ -3282,24 +3299,18 @@ bool game::load( const save_t &name )
     // setup() already called init_bubble_config() + m.resize().
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
-    update_map( u );
-    // Discard stale monster_map entries for submaps inside the initial bubble.
-    // Old saves can have duplicates (same monster in critter_tracker and monster_map);
-    // discarding in-bubble entries prevents visible duplication on load.
-    {
-        const tripoint &origin = m.get_abs_sub().raw();
-        const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : origin.z;
-        const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : origin.z;
-        const auto z_range = std::views::iota( zmin, zmax + 1 );
-        const auto xy_range = std::views::iota( 0, g_mapsize );
-        std::ranges::for_each(
-            cata::views::cartesian_product( z_range, xy_range, xy_range ),
-        [&]( auto tup ) {
-            auto [gz, gx, gy] = tup;
-            get_overmapbuffer( current_dimension_id_ ).discard_monster_map(
-                tripoint_abs_sm{ origin.x + gx, origin.y + gy, gz } );
-        } );
+    // Old saves can have duplicate authority for in-bubble monsters: one copy in
+    // active_monsters and another in overmap monster_map.  Purge the stale overmap
+    // buckets before update_map() gets a chance to spawn newly-entered submaps.
+    discard_monster_map_for_loaded_bubble( m, current_dimension_id_ );
+    // Repair active monsters left outside every loaded submap by older broken saves.
+    for( auto &critter : all_monsters() ) {
+        if( m.get_submap_at( critter.bub_pos() ) == nullptr ) {
+            despawn_monster( critter );
+        }
     }
+    update_map( u );
+    discard_monster_map_for_loaded_bubble( m, current_dimension_id_ );
     m.build_floor_cache( get_levz() );
     for( auto &e : u.inv_dump() ) {
         e->set_owner( g->u );
@@ -11896,10 +11907,10 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
         project_to<coords::sm>( om_dest ).raw() + point( -g_half_mapsize, -g_half_mapsize ) );
     const tripoint_bub_ms player_pos( u.bub_pos().xy(), map_sm_pos.z() );
     load_map( map_sm_pos );
-    m.spawn_monsters( true ); // Static monsters
     // update weather now as it could be different on the new location
     get_weather().nextweather = calendar::turn;
     place_player( player_pos );
+    m.spawn_monsters( true ); // Static monsters
     update_overmap_seen();
     // load_npcs() scans around the player's absolute position, updated by place_player().
     load_npcs();

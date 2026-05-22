@@ -1504,13 +1504,19 @@ void faction_manager::deserialize( JsonIn &jsin )
 
 void Creature_tracker::deserialize( JsonIn &jsin )
 {
-    monsters_list.clear();
-    monsters_by_location.clear();
+    clear();
     jsin.start_array();
     while( !jsin.end_array() ) {
         // TODO: would be nice if monster had a constructor using JsonIn or similar, so this could be one statement.
-        shared_ptr_fast<monster> mptr = make_shared_fast<monster>();
+        auto mptr = make_shared_fast<monster>();
         jsin.read( *mptr );
+        if( const auto existing_mon_ptr = find( mptr->bub_pos() ) ) {
+            if( !existing_mon_ptr->is_hallucination() && !mptr->is_hallucination() ) {
+                DebugLog( DL::Warn, DC::Game ) << "Skipping duplicate active monster "
+                                               << mptr->disp_name() << " at " << mptr->bub_pos();
+                continue;
+            }
+        }
         add( mptr );
     }
 }
