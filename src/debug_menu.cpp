@@ -82,6 +82,7 @@
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "pimpl.h"
 #include "player.h"
 #include "pldata.h"
@@ -2314,7 +2315,7 @@ void debug()
 #if defined(TILES) && defined(DYNAMIC_ATLAS)
             tilecontext->current_tileset()->texture_atlas()->readback_load();
             tilecontext->current_tileset()->texture_atlas()->readback_dump(
-                PATH_INFO::config_dir().generic_string() );
+                cata_files::path_to_generic_utf8( PATH_INFO::config_dir() ) );
             tilecontext->current_tileset()->texture_atlas()->readback_clear();
 #endif
             break;

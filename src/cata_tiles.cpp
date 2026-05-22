@@ -65,6 +65,7 @@
 #include "overlay_ordering.h"
 #include "overmap_location.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "pixel_minimap.h"
 #include "player.h"
 #include "rect_range.h"
@@ -445,10 +446,12 @@ static void get_tile_information( const fs::path &config_path, fs::path &json_pa
                 getline( fin, sOption );
             } else if( sOption.find( "JSON" ) != std::string::npos ) {
                 fin >> json_path;
-                dbg( DL::Info ) << "JSON path set to [" << json_path.generic_string() << "].";
+                dbg( DL::Info ) << "JSON path set to [" <<
+                                cata_files::path_to_generic_utf8( json_path ) << "].";
             } else if( sOption.find( "TILESET" ) != std::string::npos ) {
                 fin >> tileset_path;
-                dbg( DL::Info ) << "TILESET path set to [" << tileset_path.generic_string() << "].";
+                dbg( DL::Info ) << "TILESET path set to [" <<
+                                cata_files::path_to_generic_utf8( tileset_path ) << "].";
             } else {
                 getline( fin, sOption );
             }
@@ -462,11 +465,13 @@ static void get_tile_information( const fs::path &config_path, fs::path &json_pa
 
     if( json_path.empty() ) {
         json_path = default_json;
-        dbg( DL::Info ) << "JSON set to default [" << json_path.generic_string() << "].";
+        dbg( DL::Info ) << "JSON set to default [" <<
+                        cata_files::path_to_generic_utf8( json_path ) << "].";
     }
     if( tileset_path.empty() ) {
         tileset_path = default_tileset;
-        dbg( DL::Info ) << "TILESET set to default [" << tileset_path.generic_string() << "].";
+        dbg( DL::Info ) << "TILESET set to default [" <<
+                        cata_files::path_to_generic_utf8( tileset_path ) << "].";
     }
 }
 
@@ -1775,7 +1780,7 @@ static void extend_vector_by( std::vector<T> &vec, const size_t additional_size 
 
 void tileset_loader::load_tileset( const fs::path &img_path, const bool pump_events )
 {
-    const auto img_path_string = img_path.generic_string();
+    const auto img_path_string = cata_files::path_to_generic_utf8( img_path );
     const SDL_Surface_Ptr tile_atlas = load_image( img_path_string.c_str() );
     assert( tile_atlas );
     tile_atlas_width = tile_atlas->w;
@@ -2137,12 +2142,13 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
     auto json_path = tileset_root / json_conf;
     const auto img_path = tileset_root / tileset_path;
 
-    dbg( DL::Info ) << "Attempting to Load JSON file " << json_path.generic_string();
+    dbg( DL::Info ) << "Attempting to Load JSON file " <<
+                    cata_files::path_to_generic_utf8( json_path );
     std::ifstream config_file( json_path, std::ifstream::in | std::ifstream::binary );
 
     if( !config_file.good() ) {
         throw std::runtime_error( std::string( "Failed to open tile info json: " ) +
-                                  json_path.generic_string() );
+                                  cata_files::path_to_generic_utf8( json_path ) );
     }
 
     JsonIn config_json( config_file );
@@ -2185,15 +2191,17 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         json_path = mts.get_full_path();
 
         if( !mts.is_compatible( tileset_id ) ) {
-            dbg( DL::Info ) << "Mod tileset in \"" << json_path.generic_string() << "\" is not compatible.";
+            dbg( DL::Info ) << "Mod tileset in \"" << cata_files::path_to_generic_utf8( json_path )
+                            << "\" is not compatible.";
             continue;
         }
-        dbg( DL::Info ) << "Attempting to Load JSON file " << json_path.generic_string();
+        dbg( DL::Info ) << "Attempting to Load JSON file " <<
+                        cata_files::path_to_generic_utf8( json_path );
         std::ifstream mod_config_file( json_path, std::ifstream::in | std::ifstream::binary );
 
         if( !mod_config_file.good() ) {
             throw std::runtime_error( std::string( "Failed to open tile info json: " ) +
-                                      json_path.generic_string() );
+                                      cata_files::path_to_generic_utf8( json_path ) );
         }
 
         JsonIn mod_config_json( mod_config_file );
@@ -2330,7 +2338,8 @@ void tileset_loader::load_internal( const JsonObject &config, const fs::path &ti
         R = -1;
         G = -1;
         B = -1;
-        dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path.generic_string();
+        dbg( DL::Info ) << "Attempting to Load Tileset file " <<
+                        cata_files::path_to_generic_utf8( img_path );
         load_tileset( img_path, pump_events );
         load_tilejson_from_file( config );
         offset = size;

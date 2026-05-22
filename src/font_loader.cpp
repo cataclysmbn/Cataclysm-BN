@@ -2,10 +2,12 @@
 
 #include <algorithm>
 
+#include "path_utils.h"
+
 void ensure_unifont_loaded( std::vector<std::string> &font_list )
 {
     if( !std::ranges::contains( font_list, "unifont" ) ) {
-        font_list.emplace_back( ( PATH_INFO::fontdir() / "unifont.ttf" ).generic_string() );
+        font_list.emplace_back( cata_files::path_to_generic_utf8( PATH_INFO::fontdir() / "unifont.ttf" ) );
     }
 }
 
@@ -36,8 +38,8 @@ void font_loader::load_throws( const fs::path &path )
         ensure_unifont_loaded( overmap_typeface );
 
     } catch( const std::exception &err ) {
-        throw std::runtime_error( std::string( "loading font settings from " ) + path.generic_string() +
-                                  " failed: " +
+        throw std::runtime_error( std::string( "loading font settings from " ) +
+                                  cata_files::path_to_generic_utf8( path ) + " failed: " +
                                   err.what() );
     }
 }

@@ -37,6 +37,7 @@
 #include "output.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "pldata.h"
 #include "popup.h"
 #include "safemode_ui.h"
@@ -596,7 +597,7 @@ void main_menu::load_char_templates()
 
     for( const auto &path : get_files_from_path( ".template", PATH_INFO::templatedir(), false,
             true ) ) {
-        templates.push_back( path.stem().generic_string() );
+        templates.push_back( cata_files::path_to_generic_utf8( path.stem() ) );
     }
     std::sort( templates.begin(), templates.end(), localized_compare );
     std::reverse( templates.begin(), templates.end() );

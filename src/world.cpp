@@ -16,6 +16,7 @@
 #include "worldfactory.h"
 #include "mod_manager.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "compress.h"
 #include "sqlite3.h"
 #include "zlib.h"
@@ -25,7 +26,7 @@ static auto open_db( const fs::path &path ) -> sqlite3 *
 {
     sqlite3 *db = nullptr;
     int ret;
-    const auto path_string = path.generic_string();
+    const auto path_string = cata_files::path_to_generic_utf8( path );
 
     ret = sqlite3_initialize();
     if( ret != SQLITE_OK ) {
@@ -77,7 +78,7 @@ save_t save_t::from_save_id( const std::string &save_id )
 
 save_t save_t::from_base_path( const fs::path &base_path )
 {
-    return save_t( base64_decode( base_path.generic_string() ) );
+    return save_t( base64_decode( cata_files::path_to_generic_utf8( base_path ) ) );
 }
 
 auto WORLDINFO::folder_path() const -> fs::path
@@ -263,7 +264,7 @@ void load_external_option( const JsonObject &jo )
 static auto file_exist_in_db( sqlite3 *db, const fs::path &path ) -> bool
 {
     int fileCount = 0;
-    const auto path_string = path.generic_string();
+    const auto path_string = cata_files::path_to_generic_utf8( path );
     const char *sql = "SELECT count() FROM files WHERE path = :path";
     sqlite3_stmt *stmt = nullptr;
 
@@ -295,7 +296,7 @@ static auto file_exist_in_db( sqlite3 *db, const fs::path &path ) -> bool
 
 static auto write_to_db( sqlite3 *db, const fs::path &path, file_write_fn writer ) -> void
 {
-    const auto path_string = path.generic_string();
+    const auto path_string = cata_files::path_to_generic_utf8( path );
     std::ostringstream oss;
     writer( oss );
     auto data = oss.str();
@@ -303,7 +304,7 @@ static auto write_to_db( sqlite3 *db, const fs::path &path, file_write_fn writer
     std::vector<std::byte> compressedData;
     zlib_compress( data, compressedData );
 
-    auto parent = path.parent_path().generic_string();
+    auto parent = cata_files::path_to_generic_utf8( path.parent_path() );
 
     auto sql = R"sql(
         INSERT INTO files(path, parent, data, compression)
@@ -341,7 +342,7 @@ static auto write_to_db( sqlite3 *db, const fs::path &path, file_write_fn writer
 static auto read_from_db( sqlite3 *db, const fs::path &path, file_read_fn reader,
                           bool optional ) -> bool
 {
-    const auto path_string = path.generic_string();
+    const auto path_string = cata_files::path_to_generic_utf8( path );
     const char *sql = "SELECT data, compression FROM files WHERE path = :path LIMIT 1";
 
     sqlite3_stmt *stmt = nullptr;
@@ -399,7 +400,7 @@ static auto read_from_db_json( sqlite3 *db, const fs::path &path, file_read_json
                                bool optional ) -> bool
 {
     return read_from_db( db, path, [&]( std::istream & fin ) {
-        JsonIn jsin( fin, path.generic_string() );
+        JsonIn jsin( fin, cata_files::path_to_generic_utf8( path ) );
         reader( jsin );
     }, optional );
 }
@@ -718,7 +719,7 @@ bool world::write_player_mm_omt( const std::string &dim_id, const tripoint_abs_m
     } else {
         auto mm_dir_suffix = fs::path( ".mm1" ) / dim_prefix_path( dim_id );
         auto mm_dir = get_player_path();
-        mm_dir += mm_dir_suffix.generic_string();
+        mm_dir += cata_files::path_to_generic_utf8( mm_dir_suffix );
         assure_dir_exist( mm_dir );
         const std::string descr = string_format(
                                       _( "memory map region for (%d,%d,%d)" ),
@@ -769,7 +770,7 @@ namespace
 auto append_player_path( const fs::path &player_path, const fs::path &path ) -> fs::path
 {
     auto result = player_path;
-    result += path.generic_string();
+    result += cata_files::path_to_generic_utf8( path );
     return result;
 }
 
@@ -858,14 +859,15 @@ void world::convert_from_v1( const std::unique_ptr<WORLDINFO> &old_world )
     auto root_paths = get_files_from_path( "", old_world_path, false, true );
     for( const auto &file_path : root_paths ) {
         // Remove the old world path prefix from the file path
-        const auto part = fs::relative( file_path, old_world_path ).generic_string();
+        const auto part = cata_files::path_to_generic_utf8( fs::relative( file_path, old_world_path ) );
 
         // Migrate contents of the maps/ directory into the map database
         if( part == "maps" ) {
             // Recurse down the directory tree and migrate files into sqlite.
             auto subpaths = get_files_from_path( "", file_path, true, true );
             for( const auto &subpath : subpaths ) {
-                const auto map_path = ( fs::path( "maps" ) / fs::relative( subpath, file_path ) ).generic_string();
+                const auto map_path = cata_files::path_to_generic_utf8( fs::path( "maps" ) /
+                                      fs::relative( subpath, file_path ) );
                 if( !map_path.ends_with( ".map" ) ) {
                     continue;
                 }
@@ -911,7 +913,8 @@ void world::convert_from_v1( const std::unique_ptr<WORLDINFO> &old_world )
                 // Recurse down the directory tree and migrate files into sqlite.
                 auto subpaths = get_files_from_path( "", file_path, true, true );
                 for( const auto &subpath : subpaths ) {
-                    const auto map_path = fs::relative( subpath, file_path ).generic_string();
+                    const auto map_path = cata_files::path_to_generic_utf8( fs::relative( subpath,
+                                          file_path ) );
                     if( dir_exist( subpath ) ) {
                         continue;
                     }

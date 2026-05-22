@@ -27,6 +27,7 @@
 #include "mod_manager.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -183,12 +184,12 @@ void worldfactory::init()
         auto world_sav_files = get_files_from_path( SAVE_EXTENSION, world_dir, false );
         // split the save file names between the directory and the extension
         for( auto &world_sav_file : world_sav_files ) {
-            auto save_file_name = world_sav_file.filename().generic_string();
+            auto save_file_name = cata_files::path_to_generic_utf8( world_sav_file.filename() );
             save_file_name.erase( save_file_name.find( SAVE_EXTENSION ) );
             world_sav_file = save_file_name;
         }
         // the directory name is the name of the world
-        const auto worldname = world_dir.filename().generic_string();
+        const auto worldname = cata_files::path_to_generic_utf8( world_dir.filename() );
 
         // create and store the world
         all_worlds[worldname] = std::make_unique<WORLDINFO>();
@@ -491,7 +492,7 @@ void worldfactory::load_last_world_info()
         return;
     }
 
-    JsonIn jsin( *file, PATH_INFO::lastworld().generic_string() );
+    JsonIn jsin( *file, cata_files::path_to_generic_utf8( PATH_INFO::lastworld() ) );
     try {
         JsonObject data = jsin.get_object();
         last_world_name = data.get_string( "world_name" );

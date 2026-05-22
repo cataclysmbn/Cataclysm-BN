@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "get_version.h"
 #include "path_info.h"
+#include "path_utils.h"
 
 // signal handlers are expected to have C linkage, and only use the
 // common subset of C & C++
@@ -70,7 +71,7 @@ extern "C" {
         // messages written just before the crash are on disk.
         flush_debug_log();
 
-        const auto crash_log_file = PATH_INFO::crash().generic_string();
+        const auto crash_log_file = cata_files::path_to_generic_utf8( PATH_INFO::crash() );
 #if defined(_WIN32)
         const auto minidump_file = crash_log_file + ".dmp";
         dump_to( minidump_file.c_str() );

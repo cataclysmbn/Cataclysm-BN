@@ -15,6 +15,7 @@
 #include "fstream_utils.h"
 #include "json.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "string_formatter.h"
 #include "string_id.h"
 #include "translations.h"
@@ -221,7 +222,7 @@ std::vector<MOD_INFORMATION> load_mods_from( const fs::path &path )
     for( const mod_id &ident : has_dupes ) {
         std::string msg = string_format(
                               _( "The are multiple mods with same id [%s] found in folder \"%s\":\n" ),
-                              ident, path.generic_string() );
+                              ident, cata_files::path_to_generic_utf8( path ) );
 
         for( auto it = out.begin(); it != out.end(); ) {
             if( it->ident == ident ) {
@@ -318,8 +319,8 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
 
 void load_mod_info( const fs::path &info_file_path, std::vector<MOD_INFORMATION> &out )
 {
-    const auto main_path = info_file_path.parent_path().generic_string();
-    const auto file_path = info_file_path.generic_string();
+    const auto main_path = cata_files::path_to_generic_utf8( info_file_path.parent_path() );
+    const auto file_path = cata_files::path_to_generic_utf8( info_file_path );
     read_from_file_json( info_file_path, [&]( JsonIn & jsin ) {
         if( jsin.test_object() ) {
             // find type and dispatch single object

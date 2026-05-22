@@ -153,6 +153,7 @@
 #include "overmapbuffer.h"
 #include "panels.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "pathfinding.h"
 #include "pickup.h"
 #include "player.h"
@@ -3049,11 +3050,13 @@ void game::move_save_to_graveyard( const std::string &dirname )
     const auto prefix = base64_encode( u.get_save_id() ) + ".";
 
     if( !assure_dir_exist( graveyard_dir ) ) {
-        debugmsg( "could not create graveyard path '%s'", graveyard_dir.generic_string() );
+        debugmsg( "could not create graveyard path '%s'",
+                  cata_files::path_to_generic_utf8( graveyard_dir ) );
     }
 
     if( !assure_dir_exist( graveyard_save_dir ) ) {
-        debugmsg( "could not create graveyard path '%s'", graveyard_save_dir.generic_string() );
+        debugmsg( "could not create graveyard path '%s'",
+                  cata_files::path_to_generic_utf8( graveyard_save_dir ) );
     }
 
     // Close the player SQLite handle before moving files — on Windows, MoveFileExW
@@ -3062,7 +3065,7 @@ void game::move_save_to_graveyard( const std::string &dirname )
 
     const auto save_files = get_files_from_path( prefix, save_dir );
     if( save_files.empty() ) {
-        debugmsg( "could not find save files in '%s'", save_dir.generic_string() );
+        debugmsg( "could not find save files in '%s'", cata_files::path_to_generic_utf8( save_dir ) );
     }
 
     for( const auto &src_path : save_files ) {
@@ -3076,13 +3079,14 @@ void game::move_save_to_graveyard( const std::string &dirname )
         if( ::copy_file( src_path, dst_path ) ) {
             if( !remove_file( src_path ) ) {
                 debugmsg( "could not remove file '%s' after copying to graveyard",
-                          src_path.generic_string() );
+                          cata_files::path_to_generic_utf8( src_path ) );
             }
             continue;
         }
 
-        debugmsg( "could not move file '%s' to graveyard '%s'", src_path.generic_string(),
-                  dst_path.generic_string() );
+        debugmsg( "could not move file '%s' to graveyard '%s'",
+                  cata_files::path_to_generic_utf8( src_path ),
+                  cata_files::path_to_generic_utf8( dst_path ) );
     }
 }
 
@@ -3535,12 +3539,13 @@ void game::write_memorial_file( const std::string &filename, std::string sLastWo
 
     //Check if both dirs exist. Nested assure_dir_exist fails if the first dir of the nested dir does not exist.
     if( !assure_dir_exist( memorial_dir ) ) {
-        debugmsg( "Could not make '%s' directory", memorial_dir.generic_string() );
+        debugmsg( "Could not make '%s' directory", cata_files::path_to_generic_utf8( memorial_dir ) );
         return;
     }
 
     if( !assure_dir_exist( memorial_active_world_dir ) ) {
-        debugmsg( "Could not make '%s' directory", memorial_active_world_dir.generic_string() );
+        debugmsg( "Could not make '%s' directory",
+                  cata_files::path_to_generic_utf8( memorial_active_world_dir ) );
         return;
     }
 
@@ -9094,8 +9099,9 @@ bool game::take_screenshot() const
     const auto current_file_path = map_directory / file_name;
 
     // Take a screenshot of the viewport.
-    if( take_screenshot( current_file_path.generic_string() ) ) {
-        popup( _( "Successfully saved your screenshot to: %s" ), map_directory.generic_string() );
+    if( take_screenshot( cata_files::path_to_generic_utf8( current_file_path ) ) ) {
+        popup( _( "Successfully saved your screenshot to: %s" ),
+               cata_files::path_to_generic_utf8( map_directory ) );
         return true;
     } else {
         popup( _( "An error occurred while trying to save the screenshot." ) );

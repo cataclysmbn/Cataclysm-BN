@@ -26,6 +26,7 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "popup.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
@@ -182,7 +183,7 @@ void input_manager::init()
 void input_manager::load( const fs::path &file_name, bool is_user_preferences )
 {
     std::ifstream data_file( file_name, std::ifstream::in | std::ifstream::binary );
-    const auto file_path = file_name.generic_string();
+    const auto file_path = cata_files::path_to_generic_utf8( file_name );
 
     if( !data_file.good() ) {
         // Only throw if this is the first file to load, that file _must_ exist,

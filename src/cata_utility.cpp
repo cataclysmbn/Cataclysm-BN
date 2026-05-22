@@ -18,6 +18,7 @@
 #include "json.h"
 #include "options.h"
 #include "output.h"
+#include "path_utils.h"
 #include "rng.h"
 #include "translations.h"
 #include "units.h"
@@ -232,7 +233,7 @@ auto cata_ofstream::open( const fs::path &path ) -> cata_ofstream &
 {
     auto mode = cata_ios_mode_to_c( true, _mode );
 
-    _file = _wfopen( utf8_to_wstr( path.generic_string() ).c_str(), mode.c_str() );
+    _file = _wfopen( path.wstring().c_str(), mode.c_str() );
     if( !_file ) {
         // failed
         return *this;
@@ -356,7 +357,7 @@ auto cata_ifstream::open( const fs::path &path ) -> cata_ifstream &
 {
     auto mode = cata_ios_mode_to_c( false, _mode );
 
-    _file = _wfopen( utf8_to_wstr( path.generic_string() ).c_str(), mode.c_str() );
+    _file = _wfopen( path.wstring().c_str(), mode.c_str() );
     if( !_file ) {
         // failed
         return *this;
@@ -480,10 +481,11 @@ auto write_to_file( const fs::path &path, file_write_fn &writer,
         return true;
     } catch( const std::exception &err ) {
         if( fail_message && fail_message[0] != '\0' ) {
-            popup( _( "Failed to write %1$s to \"%2$s\": %3$s" ), fail_message, path.generic_string(),
-                   err.what() );
+            popup( _( "Failed to write %1$s to \"%2$s\": %3$s" ), fail_message,
+                   cata_files::path_to_generic_utf8( path ), err.what() );
         } else if( fail_message == nullptr ) {
-            std::throw_with_nested( std::runtime_error( "file write failed: " + path.generic_string() ) );
+            std::throw_with_nested( std::runtime_error( "file write failed: " +
+                                    cata_files::path_to_generic_utf8( path ) ) );
         }
         return false;
     }
@@ -550,7 +552,8 @@ auto read_from_file( const fs::path &path, file_read_fn reader, bool optional ) 
         return true;
 
     } catch( const std::exception &err ) {
-        debugmsg( _( "Failed to read from \"%1$s\": %2$s" ), path.generic_string(), err.what() );
+        debugmsg( _( "Failed to read from \"%1$s\": %2$s" ), cata_files::path_to_generic_utf8( path ),
+                  err.what() );
         return false;
     }
 }
@@ -558,7 +561,7 @@ auto read_from_file( const fs::path &path, file_read_fn reader, bool optional ) 
 auto read_from_file_json( const fs::path &path, file_read_json_fn reader, bool optional ) -> bool
 {
     return read_from_file( path, [&]( std::istream & fin ) {
-        JsonIn jsin( fin, path.generic_string() );
+        JsonIn jsin( fin, cata_files::path_to_generic_utf8( path ) );
         reader( jsin );
     }, optional );
 }
@@ -602,7 +605,8 @@ void ofstream_wrapper::close()
     }
     if( !rename_file( temp_path, path ) ) {
         // Leave the temp path, so the user can move it if possible.
-        throw std::runtime_error( "moving temporary file \"" + temp_path.generic_string() + "\" failed" );
+        throw std::runtime_error( "moving temporary file \"" +
+                                  cata_files::path_to_generic_utf8( temp_path ) + "\" failed" );
     }
 }
 

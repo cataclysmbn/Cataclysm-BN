@@ -41,6 +41,7 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "rng.h"
 #include "type_id.h"
 #include "ui_manager.h"
@@ -638,8 +639,8 @@ int main( int argc, char *argv[] )
                               "Current path: \"%s\"\n"
                               "Please ensure the current working directory is correct.\n"
                               "Perhaps you meant to start \"cataclysm-launcher\"?\n",
-                              PATH_INFO::datadir().generic_string(),
-                              current_path.generic_string()
+                              cata_files::path_to_generic_utf8( PATH_INFO::datadir() ),
+                              cata_files::path_to_generic_utf8( current_path )
                           );
         report_fatal_error( msg );
         exit( 1 );
@@ -651,8 +652,8 @@ int main( int argc, char *argv[] )
                                   "Can't open or create \"%s\"\n"
                                   "Current path: \"%s\"\n"
                                   "Please ensure you have write permission.\n",
-                                  dir.generic_string(),
-                                  current_path.generic_string()
+                                  cata_files::path_to_generic_utf8( dir ),
+                                  cata_files::path_to_generic_utf8( current_path )
                               );
             report_fatal_error( msg );
             exit( 1 );
@@ -662,8 +663,8 @@ int main( int argc, char *argv[] )
                                   "Can't write to \"%s\"\n"
                                   "Current path: \"%s\"\n"
                                   "Please ensure you have write permission and free storage space.\n",
-                                  dir.generic_string(),
-                                  current_path.generic_string()
+                                  cata_files::path_to_generic_utf8( dir ),
+                                  cata_files::path_to_generic_utf8( current_path )
                               );
             report_fatal_error( msg );
             exit( 1 );
