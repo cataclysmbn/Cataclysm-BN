@@ -21,11 +21,9 @@
         "condition": {
           "and": [
             { "u_has_mission": "MISSION_SCIENCE_REP_1" },
-            {
-              "not": { "npc_has_var": "micro_got", "type": "mission", "context": "docmission_1", "value": "yes" }
-            }
+            { "not": { "npc_has_var": "micro_got", "type": "mission", "context": "docmission_1", "value": "yes" } }
           ]
-        },
+        }
       },
       {
         "text": "Care to trade?",
@@ -91,22 +89,14 @@
     "id": [ "TALK_DESCRIBE_SUPPLYDROP_PERSUADE_SUCCESS" ],
     "type": "talk_topic",
     "dynamic_line": "Wow, could it really do that?  Ok, please take it, and make sure to mention me when you save the world!",
-    "speaker_effect": {
-      "effect": [
-        { "npc_add_var": "micro_got", "type": "mission", "context": "docmission_1", "value": "yes" }
-      ]
-    },
+    "speaker_effect": { "effect": [ { "npc_add_var": "micro_got", "type": "mission", "context": "docmission_1", "value": "yes" } ] },
     "responses": [ { "text": "Yeah, I'll make sure to do that.", "topic": "TALK_DONE" } ]
   },
   {
     "id": [ "TALK_DESCRIBE_SUPPLYDROP_INTIMIDATE_SUCCESS" ],
     "type": "talk_topic",
     "dynamic_line": "O-ok no need to get violent, just take it!",
-    "speaker_effect": {
-      "effect": [
-        { "npc_add_var": "micro_got", "type": "mission", "context": "docmission_1", "value": "yes" }
-      ]
-    },
+    "speaker_effect": { "effect": [ { "npc_add_var": "micro_got", "type": "mission", "context": "docmission_1", "value": "yes" } ] },
     "responses": [ { "text": "Good.", "topic": "TALK_DONE" } ]
   },
   {
