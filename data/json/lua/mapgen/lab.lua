@@ -250,11 +250,11 @@ draw_normal_room = function(data, map)
     data:generate("lab_finale_1level")
   elseif boarders == 3 then
     data:generate("lab_1side")
-    if walls.left == 0 then
+    if walls.right == 2 then
       map:rotate( 1 )
-    elseif walls.bottom == 0 then
+    elseif walls.bottom == 2 then
       map:rotate( 2 )
-    elseif walls.right == 0 then
+    elseif walls.left == 2 then
       map:rotate( 3 )
     end
   else
