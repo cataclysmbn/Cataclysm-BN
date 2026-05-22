@@ -1,11 +1,13 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <sstream>
 
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "string_formatter.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "game.h"
 #include "world.h"
 #include "cata_utility.h"
@@ -164,6 +166,38 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
 static std::string conv_str( const char8_t *c )
 {
     return reinterpret_cast<const char *>( c );
+}
+
+static auto path_from_u8( const char8_t *c ) -> fs::path
+{
+    return fs::path( std::u8string( c ) );
+}
+
+TEST_CASE( "filesystem_scan_unicode_paths_without_narrow_conversion",
+           "[filesystem][windows][9013]" )
+{
+    const auto base = g->get_active_world()->info->folder_path() /
+                      ( "fs_issue_9013_" + get_pid_string() );
+    const auto unicode_dir = base / path_from_u8( u8"💥-issue-9013-파일" );
+    const auto marker = unicode_dir / "tile_config.json";
+    const auto writer = []( std::ostream & s ) { s << "{}"; };
+
+    REQUIRE( !dir_exist( base ) );
+    REQUIRE( assure_dir_exist( base ) );
+    REQUIRE( assure_dir_exist( unicode_dir ) );
+    REQUIRE( write_to_file( marker, writer, nullptr ) );
+
+    auto files = std::vector<fs::path> {};
+    CHECK_NOTHROW( files = get_files_from_path( ".json", base, true, true ) );
+    CHECK( std::ranges::find( files, marker ) != files.end() );
+
+    auto dirs = std::vector<fs::path> {};
+    CHECK_NOTHROW( dirs = get_directories_with( "tile_config.json", base, true ) );
+    CHECK( std::ranges::find( dirs, unicode_dir ) != dirs.end() );
+    CHECK( cata_files::path_to_generic_utf8( marker ).find( conv_str( u8"💥-issue-9013-파일" ) ) !=
+           std::string::npos );
+
+    REQUIRE( remove_tree( base ) );
 }
 
 TEST_CASE( "filesystem_ascii", "[filesystem]" )
