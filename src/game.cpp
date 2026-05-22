@@ -10947,7 +10947,7 @@ void game::butcher()
                     break;
                 case MULTIBUTCHER:
                     butcher_submenu( corpses );
-                    for( item*&it : corpses ) {
+                    for( item *&it : corpses ) {
                         u.activity->targets.emplace_back( it );
                     }
                     break;
@@ -11721,7 +11721,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc )
 
             if( !corpses.empty() ) {
                 u.assign_activity( activity_id( "ACT_BUTCHER" ), 0, true );
-                for( item*&it : corpses ) {
+                for( item *&it : corpses ) {
                     u.activity->targets.emplace_back( it );
                 }
             }
