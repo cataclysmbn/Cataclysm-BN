@@ -1997,7 +1997,8 @@ auto monster::load( const JsonObject &data,
     auto stored_pos_abs = tripoint_abs_ms::zero();
     if( data.read( "pos_abs", stored_pos_abs ) ) {
         pos_abs = stored_pos_abs;
-    } else if( has_legacy_x && has_legacy_y ) {
+    }
+    if( has_legacy_x && has_legacy_y ) {
         if( legacy_context ) {
             const auto abs_sm_pos = project_combine( legacy_context->om_pos, legacy_context->submap_pos );
             const auto legacy_remainder = project_remain<coords::sm>( legacy_bub_pos );
