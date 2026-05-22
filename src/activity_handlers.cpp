@@ -1920,17 +1920,23 @@ void activity_handlers::pulp_do_turn( player_activity *act, player *p )
     const auto &pos = here.abs_to_bub( act->placement );
 
     // Stabbing weapons are a lot less effective at pulping
-    const int cut_power = std::max( p->primary_weapon().damage_melee( DT_CUT ),
-                                    p->primary_weapon().damage_melee( DT_STAB ) / 2 );
+    const auto cut_power = std::max( p->primary_weapon().damage_melee( DT_CUT ),
+                                     p->primary_weapon().damage_melee( DT_STAB ) / 2 );
 
     ///\EFFECT_STR increases pulping power, with diminishing returns
-    float pulp_power = std::sqrt( ( p->str_cur + p->primary_weapon().damage_melee( DT_BASH ) ) *
-                                  ( cut_power + 1.0f ) );
-    float pulp_effort = p->str_cur + p->primary_weapon().damage_melee( DT_BASH );
+    const auto pulp_effort = std::max( 0, p->str_cur + p->primary_weapon().damage_melee( DT_BASH ) );
+    auto pulp_power = std::sqrt( pulp_effort * std::max( 0.0f, cut_power + 1.0f ) );
     // Multiplier to get the chance right + some bonus for survival skill
     pulp_power *= 40 + p->get_skill_level( skill_survival ) * 5;
 
-    const int mess_radius = p->primary_weapon().has_flag( flag_MESSY ) ? 2 : 1;
+    if( pulp_power <= 0.0f || !std::isfinite( pulp_power ) ) {
+        p->add_msg_player_or_npc( m_bad, _( "You are unable to pulp the corpse." ),
+                                  _( "<npcname> is unable to pulp the corpse." ) );
+        act->moves_left = 0;
+        return;
+    }
+
+    const auto mess_radius = p->primary_weapon().has_flag( flag_MESSY ) ? 2 : 1;
 
     int moves = 0;
     // use this to collect how many corpse are pulped
