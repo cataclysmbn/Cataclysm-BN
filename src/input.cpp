@@ -26,6 +26,7 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "popup.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
@@ -182,7 +183,7 @@ void input_manager::init()
 void input_manager::load( const fs::path &file_name, bool is_user_preferences )
 {
     std::ifstream data_file( file_name, std::ifstream::in | std::ifstream::binary );
-    const auto file_path = file_name.generic_string();
+    const auto file_path = cata_files::path_to_generic_utf8( file_name );
 
     if( !data_file.good() ) {
         // Only throw if this is the first file to load, that file _must_ exist,
@@ -565,7 +566,7 @@ const action_attributes &input_manager::get_action_attributes(
 translation input_manager::get_default_action_name( const std::string &action_id ) const
 {
     const t_action_contexts::const_iterator default_action_context = action_contexts.find(
-                default_context_id );
+            default_context_id );
     if( default_action_context == action_contexts.end() ) {
         return no_translation( action_id );
     }
@@ -749,7 +750,7 @@ std::vector<char> input_context::keys_bound_to( const std::string &action_descri
 {
     std::vector<char> result;
     const std::vector<input_event> &events = inp_mngr.get_input_for_action( action_descriptor,
-            category );
+        category );
     for( const auto &events_event : events ) {
         // Ignore multi-key input and non-keyboard input
         // TODO: fix for Unicode.
@@ -813,7 +814,7 @@ std::string input_context::get_desc( const std::string &action_descriptor,
 
     bool is_local = false;
     const std::vector<input_event> &events = inp_mngr.get_input_for_action( action_descriptor,
-            category, &is_local );
+        category, &is_local );
 
     if( events.empty() ) {
         return is_local ? _( "Unbound locally!" ) : _( "Unbound globally!" );
@@ -1151,8 +1152,8 @@ action_id input_context::display_menu( const bool permit_execute_action )
         legwidth = width - filter_pos.x * 2 - BORDER_SPACE;
         // +1 for end-of-text cursor
         spopup.window( w_help, filter_pos, filter_pos.x + legwidth + 1 )
-        .max_length( legwidth )
-        .context( ctxt );
+              .max_length( legwidth )
+              .context( ctxt );
         ui.position_from_window( w_help );
     };
     recalc_size( ui );
@@ -1518,7 +1519,7 @@ std::string input_context::get_action_name( const std::string &action_id ) const
     // this context that is masking the global hotkey. Fallback to the global
     // hotkey's name.
     const action_attributes &default_attributes = inp_mngr.get_action_attributes( action_id,
-            default_context_id );
+        default_context_id );
     if( !default_attributes.name.empty() ) {
         return default_attributes.name.translated();
     }
@@ -1551,7 +1552,7 @@ std::string input_context::press_x( const std::string &action_id,
         return _( "mouse movement" );
     }
     const input_manager::t_input_event_list &events = inp_mngr.get_input_for_action( action_id,
-            category );
+        category );
     if( events.empty() ) {
         return key_unbound;
     }

@@ -15,6 +15,7 @@
 #include "json.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "point.h"
 #include "rng.h"
 #include "string_formatter.h"
@@ -924,7 +925,7 @@ void color_manager::show_gui()
                 ui_templates.text = _( "Color templates:" );
 
                 for( const auto &filename : vFiles ) {
-                    ui_templates.addentry( filename.filename().generic_string() );
+                    ui_templates.addentry( cata_files::path_to_generic_utf8( filename.filename() ) );
                 }
 
                 ui_templates.query();

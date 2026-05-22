@@ -3,6 +3,7 @@
 #include "color.h"
 #include "string_formatter.h"
 #include "output.h"
+#include "path_utils.h"
 #include "string_utils.h"
 #include "path_display.h"
 
@@ -15,7 +16,7 @@ struct section {
 
 auto display_path( const fs::path &path ) -> std::string
 {
-    return path.generic_string();
+    return cata_files::path_to_generic_utf8( path );
 }
 
 auto create_line_printer( const std::string &base_path )

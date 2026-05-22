@@ -28,6 +28,7 @@
 #include "mapsharing.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "point.h"
 #include "popup.h"
 #include "sdlsound.h"
@@ -1076,7 +1077,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
                           operation_name, resource_name );
             } else {
                 resource_option.insert( std::pair<std::string, std::string>( resource_name,
-                                        resource_dir.generic_string() ) );
+                                        cata_files::path_to_generic_utf8( resource_dir ) ) );
             }
         } );
     }
@@ -1106,12 +1107,12 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
 
     // Load from data directory
     std::vector<options_manager::id_and_option> data_tilesets = load_tilesets_from(
-                PATH_INFO::gfxdir() );
+            PATH_INFO::gfxdir() );
     result.insert( result.end(), data_tilesets.begin(), data_tilesets.end() );
 
     // Load from user directory
     std::vector<options_manager::id_and_option> user_tilesets = load_tilesets_from(
-                PATH_INFO::user_gfx() );
+            PATH_INFO::user_gfx() );
     for( const options_manager::id_and_option &id : user_tilesets ) {
         if( !std::ranges::contains( result, id ) ) {
             result.emplace_back( id );
@@ -3677,8 +3678,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     // temporary alias so the code below does not need to be changed
     options_container &OPTIONS = options;
     options_container &ACTIVE_WORLD_OPTIONS = world_options.has_value() ?
-            *world_options.value() :
-            OPTIONS;
+        *world_options.value() :
+        OPTIONS;
 
     auto OPTIONS_OLD = OPTIONS;
     auto WOPTIONS_OLD = ACTIVE_WORLD_OPTIONS;

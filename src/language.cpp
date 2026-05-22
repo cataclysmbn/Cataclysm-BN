@@ -26,6 +26,7 @@
 #include "name.h"
 #include "options.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "string_utils.h"
 #include "translations.h"
 #include "ui.h"
@@ -210,7 +211,7 @@ static std::vector<language_info> load_languages( const fs::path &filepath )
     std::vector<language_info> ret;
     try {
         std::ifstream stream( filepath, std::ios_base::binary );
-        const auto file_path = filepath.generic_string();
+        const auto file_path = cata_files::path_to_generic_utf8( filepath );
         if( !stream.is_open() ) {
             throw std::runtime_error( string_format( "File '%s' not found", file_path ) );
         }
@@ -495,7 +496,7 @@ static void add_base_catalogue( std::vector<trans_catalogue> &list, const std::s
     // TODO: split source code strings from data strings
     //       and load data translations from separate file(s)
     add_cat_if_exists( list, lang_id,
-                       ( PATH_INFO::base_path() / "lang" / "mo" ).generic_string() + "/",
+                       cata_files::path_to_generic_utf8( PATH_INFO::base_path() / "lang" / "mo" ) + "/",
                        "/LC_MESSAGES/cataclysm-bn.mo"
                      );
 }

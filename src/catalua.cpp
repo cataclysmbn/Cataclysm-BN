@@ -35,6 +35,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "mod_manager.h"
 #include "mutation.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "point.h"
 #include "worldfactory.h"
 
@@ -51,7 +52,7 @@ void startup_lua_test()
     sol::state lua = make_lua_state();
     const auto lua_startup_script = PATH_INFO::datadir() / "raw" / "on_game_start.lua";
     try {
-        run_lua_script( lua, lua_startup_script.string() );
+        run_lua_script( lua, cata_files::path_to_generic_utf8( lua_startup_script ) );
     } catch( std::runtime_error &e ) {
         debugmsg( "%s", e.what() );
     }
@@ -76,17 +77,17 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
     };
     lua.globals()["package"]["path"] = string_format(
                                            "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
-                                           ( PATH_INFO::datadir() / "lua" ).generic_string(),
-                                           ( PATH_INFO::datadir() / "raw" ).generic_string()
+                                           cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "lua" ),
+                                           cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "raw" )
                                        );
 
     try {
-        run_lua_script( lua, script_path.string() );
+        run_lua_script( lua, cata_files::path_to_generic_utf8( script_path ) );
         sol::protected_function doc_gen_func = lua["doc_gen_func"]["impl"];
         sol::protected_function_result res = doc_gen_func();
         check_func_result( res );
         const auto ret = res.get<std::string>();
-        write_to_file( to.string(), [&]( std::ostream & s ) -> void {
+        write_to_file( to, [&]( std::ostream & s ) -> void {
             s << ret;
         } );
     } catch( std::runtime_error &e ) {
@@ -320,10 +321,10 @@ void set_mod_being_loaded( lua_state &state, const mod_id &mod )
     lua.globals()["game"]["current_mod"] = mod.str();
     lua.globals()["game"]["current_mod_path"] = mod->path + "/";
     lua.globals()["package"]["path"] =
-        string_format(
-            "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
-            ( PATH_INFO::datadir() / "lua" ).generic_string(), mod->path
-        );
+           string_format(
+               "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
+               cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "lua" ), mod->path
+           );
 }
 
 void clear_mod_being_loaded( lua_state &state )

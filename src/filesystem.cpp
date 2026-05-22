@@ -17,6 +17,7 @@
 #include "catacharset.h"
 #include "debug.h"
 #include "fstream_utils.h"
+#include "path_utils.h"
 #include "string_utils.h"
 
 #if defined(_WIN32)
@@ -33,12 +34,12 @@ namespace
 
 auto path_text( const fs::path &path ) -> std::string
 {
-    return path.generic_string();
+    return cata_files::path_to_generic_utf8( path );
 }
 
 auto name_contains( const fs::path &path, const std::string &match, const bool at_end ) -> bool
 {
-    const auto filename = path.filename().generic_string();
+    const auto filename = path_text( path.filename() );
     if( match.size() > filename.size() ) {
         return false;
     }
@@ -76,13 +77,11 @@ auto find_file_if_bfs( const fs::path &root_path, const bool recursive_search,
             continue;
         }
 
-        std::ranges::sort( entries, {}, []( const fs::directory_entry & entry ) {
-            return entry.path().generic_string();
-        } );
+        std::ranges::sort( entries, {}, []( const fs::directory_entry & entry ) { return entry.path(); } );
 
         for( const auto &entry : entries ) {
             const auto full_path = entry.path();
-            if( full_path.filename().generic_string().ends_with( '~' ) ) {
+            if( path_text( full_path.filename() ).ends_with( '~' ) ) {
                 continue;
             }
 
@@ -189,7 +188,7 @@ auto remove_tree( const fs::path &path ) -> bool
     fs::remove_all( path, ec );
     if( ec ) {
         dbg( DL::Error ) << "remove_tree [" << path_text( path ) << "] failed with \"" << ec.message() <<
-                         "\".";
+                            "\".";
         return false;
     }
     return true;
@@ -224,7 +223,7 @@ auto read_entire_file( const fs::path &path ) -> std::string
 auto get_files_from_path( const fs::path &pattern, const fs::path &root_path,
                           const bool recursive_search, const bool match_extension ) -> std::vector<fs::path>
 {
-    const auto pattern_name = pattern.generic_string();
+    const auto pattern_name = path_text( pattern );
     return find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
         return name_contains( path, pattern_name, match_extension );
     } );
@@ -233,7 +232,7 @@ auto get_files_from_path( const fs::path &pattern, const fs::path &root_path,
 auto get_directories_with( const fs::path &pattern, const fs::path &root_path,
                            const bool recursive_search ) -> std::vector<fs::path>
 {
-    const auto pattern_name = pattern.generic_string();
+    const auto pattern_name = path_text( pattern );
     if( pattern_name.empty() ) {
         return {};
     }
@@ -257,7 +256,7 @@ auto get_directories_with( const std::vector<fs::path> &patterns, const fs::path
 
     auto files = find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
         return std::ranges::any_of( patterns, [&]( const fs::path & ext ) {
-            return name_contains( path, ext.generic_string(), true );
+            return name_contains( path, path_text( ext ), true );
         } );
     } );
 
