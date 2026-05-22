@@ -2127,6 +2127,10 @@ bool game::do_turn()
     // Finally, clear pathfinding cache
     Pathfinding::clear_d_maps();
 
+    // // Drain the OS input buffer so key-repeat events generated during world
+    // // processing don't accumulate and drive movement after key release.
+    inp_mngr.pump_events();
+
     return false;
 }
 
