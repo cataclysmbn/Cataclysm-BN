@@ -600,7 +600,7 @@ void ofstream_wrapper::close()
         remove_file( temp_path );
         throw std::runtime_error( "writing to file failed" );
     }
-    if( !rename_file( temp_path, path ) ) {
+    if( !rename_path( temp_path, path ) ) {
         // Leave the temp path, so the user can move it if possible.
         throw std::runtime_error( "moving temporary file \"" + temp_path.generic_string() + "\" failed" );
     }

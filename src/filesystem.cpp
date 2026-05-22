@@ -158,18 +158,12 @@ auto remove_file( const fs::path &path ) -> bool
     return fs::remove( path, ec ) && !ec;
 }
 
-auto rename_file( const fs::path &old_path, const fs::path &new_path ) -> bool
+auto rename_path( const fs::path &old_path, const fs::path &new_path ) -> bool
 {
-    if( !file_exist( old_path ) || dir_exist( new_path ) ) {
+    if( dir_exist( new_path ) ) {
         return false;
     }
     auto ec = std::error_code{};
-    if( file_exist( new_path ) ) {
-        fs::remove( new_path, ec );
-        if( ec ) {
-            return false;
-        }
-    }
     fs::rename( old_path, new_path, ec );
     return !ec;
 }

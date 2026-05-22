@@ -735,7 +735,7 @@ void DebugFile::init( DebugOutput output_mode, const std::string &filename )
             if( stat( filename.c_str(), &buffer ) == 0 ) {
                 // Continue with the old log file if it's smaller than 1 MiB
                 if( buffer.st_size >= 1024 * 1024 ) {
-                    rename_failed = !rename_file( filename, oldfile );
+                    rename_failed = !rename_path( filename, oldfile );
                 }
             }
             file = std::make_shared<std::ofstream>(

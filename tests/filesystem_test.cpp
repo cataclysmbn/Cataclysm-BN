@@ -43,12 +43,14 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     const auto file1_1 = dir1 / ( s2 + ".json" );
     const auto file1_2 = dir1 / ( s3 + ".json" );
     const auto dir2 = dir1 / s3;
+    const auto dir3 = base / ( s3 + "_renamed" );
     const auto file2_1 = dir2 / ( s2 + ".json" );
 
     CAPTURE( dir1 );
     CAPTURE( file1_1 );
     CAPTURE( file1_2 );
     CAPTURE( dir2 );
+    CAPTURE( dir3 );
     CAPTURE( file2_1 );
 
     std::string writebuf = s3;
@@ -81,14 +83,22 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     REQUIRE( file_exist( file1_1 ) );
     REQUIRE( read_from_file( file1_1, reader ) );
     CHECK( readbuf == writebuf );
-    REQUIRE( rename_file( file1_1, file1_2 ) );
-    REQUIRE( !rename_file( file1_1, file1_2 ) );
+    REQUIRE( rename_path( file1_1, file1_2 ) );
+    REQUIRE( !rename_path( file1_1, file1_2 ) );
     REQUIRE( file_exist( file1_2 ) );
-    REQUIRE( !rename_file( file1_2, dir1 ) );
+    REQUIRE( !rename_path( file1_2, dir1 ) );
     REQUIRE( file_exist( file1_2 ) );
     REQUIRE( !dir_exist( file1_2 ) );
     REQUIRE( remove_file( file1_2 ) );
     REQUIRE( !remove_file( file1_2 ) );
+
+    // Renaming directories
+    REQUIRE( rename_path( dir1, dir3 ) );
+    REQUIRE( !dir_exist( dir1 ) );
+    REQUIRE( dir_exist( dir3 ) );
+    REQUIRE( !rename_path( dir3, base ) );
+    REQUIRE( remove_directory( dir3 ) );
+    REQUIRE( assure_dir_exist( dir1 ) );
 
     // Copying file
     REQUIRE( write_to_file( file1_1, writer, nullptr ) );

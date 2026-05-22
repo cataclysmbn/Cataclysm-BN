@@ -38,10 +38,10 @@ auto remove_directory( const fs::path &path ) -> bool;
  */
 auto remove_tree( const fs::path &path ) -> bool;
 /**
- * Rename a file, overwriting the target. Does not overwrite directories.
+ * Rename a file or directory, overwriting existing files. Does not overwrite directories.
  * @return true on success, false on failure.
  */
-auto rename_file( const fs::path &old_path, const fs::path &new_path ) -> bool;
+auto rename_path( const fs::path &old_path, const fs::path &new_path ) -> bool;
 /**
  * Check if can write to the given directory (write permission, disk space).
  * @return false if cannot write or if unable to check.

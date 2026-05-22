@@ -227,7 +227,7 @@ void worldfactory::init()
             const auto origin_path = old_world.folder_path();
             // move files from origin_path into new world path
             for( const auto &origin_file : get_files_from_path( ".", origin_path, false ) ) {
-                rename_file( origin_file, newworld->folder_path() / origin_file.filename() );
+                rename_path( origin_file, newworld->folder_path() / origin_file.filename() );
             }
             newworld->world_saves = old_world.world_saves;
             newworld->WORLD_OPTIONS = old_world.WORLD_OPTIONS;
@@ -1621,7 +1621,10 @@ void worldfactory::convert_to_v2( const std::string &worldname )
     old_world->world_saves = worldinfo->world_saves;
 
     // Rename the world folder perform the move
-    rename_file( worldinfo->folder_path(), old_world->folder_path() );
+    if( !rename_path( worldinfo->folder_path(), old_world->folder_path() ) ) {
+        popup( _( "Failed to create backup world '%s', aborting conversion" ), backup_name );
+        return;
+    }
     worldinfo->world_save_format = save_format::V2_COMPRESSED_SQLITE3;
     world new_world( worldinfo );
     new_world.convert_from_v1( old_world );
