@@ -10280,7 +10280,7 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
                    tripoint_bub_ms( max.x(), max.y(), abs_sub.z() ), fill_values );
 
     const inclusive_rectangle<point_bub_ms> local_bounds( min, max );
-    const auto mark_vehicle_obstruction = [&]( const tripoint_bub_ms &part_pos ) {
+    const auto mark_vehicle_obstruction = [&]( const tripoint_bub_ms & part_pos ) {
         if( !local_bounds.contains( part_pos.xy() ) || part_pos.x() < 0 || part_pos.y() < 0 ||
             part_pos.x() >= scent_cache_x || part_pos.y() >= st_sy ) {
             return;
