@@ -128,6 +128,7 @@ void string_input_popup::create_context()
     ctxt->register_action( "PAGE_DOWN" );
     ctxt->register_action( "SCROLL_UP" );
     ctxt->register_action( "SCROLL_DOWN" );
+    ctxt->register_action( "NUMPAD_6" );
     ctxt->register_action( "ANY_INPUT" );
 }
 
@@ -351,6 +352,7 @@ int64_t string_input_popup::query_int64_t( const bool loop, const bool draw_only
     return std::atoll( query_string( loop, draw_only ).c_str() );
 }
 
+[[clang::optnone]]
 const std::string &string_input_popup::query_string( const bool loop, const bool draw_only,
         const bool printable )
 {
@@ -454,7 +456,8 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
             _position = -1;
             _canceled = true;
             return _text;
-        } else if( action == "TEXT.CONFIRM" ) {
+        } else if( action == "TEXT.CONFIRM" || ( action == "TEXT.RIGHT" && !( edit.empty() &&
+                   _position + 1 <= static_cast<int>( ret.size() ) ) ) ) {
             add_to_history( ret.str() );
             _confirmed = true;
             _text = ret.str();
@@ -591,6 +594,8 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
     _text = ret.str();
     return _text;
 }
+
+
 
 string_input_popup &string_input_popup::window( const catacurses::window &w, point start,
         int endx )
