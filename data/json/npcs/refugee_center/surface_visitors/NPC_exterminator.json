@@ -1,0 +1,128 @@
+[
+  {
+    "type": "npc",
+    "id": "wasp_exterminator",
+    "//": "Little reference, professional wasp hunter.",
+    "name_unique": "Orel 'Bolt' Rigby",
+    "gender": "male",
+    "name_suffix": "Wasp Exterminator",
+    "class": "NC_EXTERMINATOR",
+    "attitude": 0,
+    "mission": 7,
+    "chat": "TALK_EXTERMINATOR",
+    "faction": "no_faction",
+    "mission_offered": "MISSION_EXTERMINATOR_1"
+  },
+  {
+    "id": "TALK_EXTERMINATOR",
+    "type": "talk_topic",
+    "dynamic_line": "Zombies aside,  I feel like I'm fighting wasps constantly...",
+    "responses": [
+      { "text": "Wasps?", "topic": "TALK_EXTERMINATOR_WASPS" },
+      { "text": "What do you do around here?", "topic": "TALK_EXTERMINATOR_DO" },
+      { "text": "Got anything for sale?", "topic": "TALK_EXTERMINATOR_SALE" },
+      { "text": "Got any wasp hunting advice?", "topic": "TALK_EXTERMINATOR_ADVICE" },
+      { "text": "Need any help?", "topic": "TALK_MISSION_LIST" },
+      { "text": "Goodbye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_EXTERMINATOR_WASPS",
+    "type": "talk_topic",
+    "dynamic_line": "Ants, bees, slimes, spiders... I like them.  Wasps though... wasps are fucking everywhere.  The problem with wasps is that at this point I'm just so fed up with stumbling upon them all the time.",
+    "responses": [ { "text": "Sounds rough.", "topic": "TALK_EXTERMINATOR" } ]
+  },
+  {
+    "id": "TALK_EXTERMINATOR_DO",
+    "type": "talk_topic",
+    "dynamic_line": "I hunt wasps.  I bet I've eliminated half the ones around here, but there's always more out there.",
+    "responses": [ { "text": "Interesting.", "topic": "TALK_EXTERMINATOR" } ]
+  },
+  {
+    "id": "TALK_EXTERMINATOR_SALE",
+    "type": "talk_topic",
+    "dynamic_line": "Sure, just bagged a fresh round of wasps.  You probably want to avoid the meat, but the chitin and such should be useful.",
+    "responses": [
+      { "text": "…", "effect": "start_trade", "topic": "TALK_EXTERMINATOR" },
+      { "text": "Know when you'll get more?", "topic": "TALK_EXTERMINATOR_RESTOCK" }
+    ]
+  },
+  {
+    "id": "TALK_EXTERMINATOR_RESTOCK",
+    "type": "talk_topic",
+    "dynamic_line": "Around <interval>.",
+    "responses": [ { "text": "Thanks for the info, bye.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": "TALK_EXTERMINATOR_ADVICE",
+    "type": "talk_topic",
+    "dynamic_line": [
+      "Wasp nests are especially weak to flame, being made of paper and all.",
+      "Some of those radio towers have become infested by wasps, you can see their nests on there.",
+      "There used to be even more wasps around here, those things used to be everywhere.  Can you imagine that?",
+      "Wasp queens like to hide, but they're deadly if you decide to go knocking on their nest."
+    ],
+    "responses": [ { "text": "…", "topic": "TALK_EXTERMINATOR" } ]
+  },
+  {
+    "id": "MISSION_EXTERMINATOR_1",
+    "type": "mission_definition",
+    "name": { "str": "Kill the Acidic Wasp Queen" },
+    "description": "Kill the <color_red>giant acidic wasp queen</color> to prevent the possible spread of <color_red>giant acidic wasps</color>.",
+    "goal": "MGOAL_KILL_MONSTERS",
+    "difficulty": 8,
+    "value": 10000,
+    "start": {
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 1, "random": true, "search_range": 50 },
+      "update_mapgen": {
+        "rows": [
+          "                        ",
+          "                        ",
+          "            t           ",
+          "                        ",
+          "              t      t  ",
+          "       t   t----        ",
+          "         ----..-t       ",
+          " t    t---..-..---t  t  ",
+          "       -.-..---..--t    ",
+          "     ---.---.,---.-     ",
+          "    t-.--.,--...-.--    ",
+          "      --...-.--.--.     ",
+          "     -..-,-...,-..-t  t ",
+          " t   --....-.-..---     ",
+          "     t---.,.-.---..-    ",
+          "      -.---.---..---    ",
+          "    t  --.---..---t     ",
+          "       t-....---t    t  ",
+          "         -----t         ",
+          "           t            ",
+          "                 t      ",
+          "      t                 ",
+          "                        ",
+          "                        "
+        ],
+        "terrain": {
+          "t": [ "t_region_tree", "t_region_groundcover_swamp" ],
+          ",": [ "t_region_tree" ],
+          "-": [ "t_paper" ],
+          ".": [ "t_floor_paper" ]
+        },
+        "place_monster": [ { "monster": "mon_wasp_mega_acid", "x": 11, "y": 11, "target": true } ],
+        "place_monsters": [ { "monster": "GROUP_WASP_NEST", "x": [ 0, 23 ], "y": [ 0, 23 ], "density": 0.6 } ]
+      }
+    },
+    "end": { "effect": { "u_buy_item": "hazmat_suit" } },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "dialogue": {
+      "describe": "I found something very disturbing...",
+      "offer": "When I was out on the hunt earlier, I found something disturbing.  A typical giant wasp nest, except the queen seems to have started mutating acidic powers.  I had to get out of there quickly, my beesuit isn't built to handle acid, but we need to nip this in the bud.  Imagine the horror if these acid wasps became widespread.",
+      "accepted": "Good luck.",
+      "rejected": "Just imagine if that thing managed to spread!",
+      "advice": "Whatever armor you decide to wear, make sure it's very resistant to acid, and make sure you can repair it...",
+      "inquire": "Is it dead?",
+      "success": "You don't know how much you've done for all of us.  Here, this suit should be useful for any other acidic critters.",
+      "success_lie": "What good does this do us?",
+      "failure": "It was a lost cause anyways…"
+    }
+  }
+]

@@ -334,7 +334,7 @@ void reg_item( sol::state &lua )
         DOC( "Erase all variables" );
         SET_FX( clear_vars );
         DOC( "Returns all stored item vars as a table" );
-        luna::set_fx( ut, "vars_table", []( sol::this_state state, const item & it )
+        luna::set_fx( ut, "vars_table", []( const item & it, sol::this_state state )
         {
             sol::state_view lua( state );
             sol::table vars = lua.create_table();

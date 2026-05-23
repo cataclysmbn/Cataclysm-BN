@@ -97,7 +97,7 @@
     "symbol": "/",
     "color": "light_gray",
     "techniques": [ "WIDE", "BRUTAL" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -22 ] ],
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", -22 ] ],
     "flags": [ "DURABLE_MELEE", "NONCONDUCTIVE" ]
   },
   {
@@ -150,7 +150,7 @@
     "material": [ "steel", "wood" ],
     "symbol": "/",
     "color": "light_gray",
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 7 ] ],
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", 7 ] ],
     "techniques": [ "WBLOCK_1" ],
     "flags": [ "DURABLE_MELEE" ]
   },

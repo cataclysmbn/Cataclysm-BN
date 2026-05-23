@@ -10,11 +10,11 @@
 #include <array>
 #include <string>
 
+#include "coordinates.h"
 #include "cube_direction.h"
 #include "flat_set.h"
 #include "memory_fast.h"
 #include "omdata.h"
-#include "point.h"
 #include "type_id.h"
 
 struct city;
@@ -46,12 +46,12 @@ struct overmap_special_spawns : public overmap_spawns {
 // piece of an overmap_special at a particular location
 struct overmap_special_locations {
     overmap_special_locations() = default;
-    overmap_special_locations( const tripoint &p,
+    overmap_special_locations( const tripoint_rel_omt &p,
                                const cata::flat_set<overmap_location_id> &l )
         : p( p )
         , locations( l )
     {};
-    tripoint p;
+    tripoint_rel_omt p;
     cata::flat_set<overmap_location_id> locations;
 
     /**
@@ -64,7 +64,7 @@ struct overmap_special_locations {
 
 struct overmap_special_terrain : overmap_special_locations {
     overmap_special_terrain() = default;
-    overmap_special_terrain( const tripoint &p, const oter_str_id &t,
+    overmap_special_terrain( const tripoint_rel_omt &p, const oter_str_id &t,
                              const cata::flat_set<overmap_location_id> &l )
         : overmap_special_locations{ p, l }
         , terrain( t )
@@ -75,8 +75,8 @@ struct overmap_special_terrain : overmap_special_locations {
 };
 
 struct overmap_special_connection {
-    tripoint p;
-    std::optional<tripoint> from;
+    tripoint_rel_omt p;
+    std::optional<tripoint_rel_omt> from;
     cube_direction initial_dir = cube_direction::last;
     overmap_connection_id connection;
     bool existing = false;
@@ -122,7 +122,7 @@ class overmap_special
         }
         bool can_spawn() const;
         /** Returns terrain at the given point. */
-        const oter_str_id &get_terrain_at( const tripoint &p ) const;
+        const oter_str_id &get_terrain_at( const tripoint_rel_omt &p ) const;
         /** @returns true if this special requires a city */
         bool requires_city() const;
         /** @returns whether the special at specified tripoint can belong to the specified city. */

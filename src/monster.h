@@ -108,7 +108,7 @@ class monster : public Creature, public location_visitable<monster>
     public:
         monster();
         monster( const mtype_id &id );
-        monster( const mtype_id &id, const tripoint &pos );
+        monster( const mtype_id &id, const tripoint_bub_ms &pos );
         monster( const monster & );
         ~monster() override;
         monster &operator=( const monster & ) = delete;
@@ -135,7 +135,7 @@ class monster : public Creature, public location_visitable<monster>
         /// Immediatly spawn an offspring without mutating baby timer.
         void reproduce();
         void refill_udders();
-        void spawn( const tripoint &p );
+        auto spawn( const tripoint_bub_ms &p ) -> void;
         creature_size get_size() const override;
         units::mass get_weight() const override;
         units::mass weight_capacity() const override;
@@ -187,17 +187,20 @@ class monster : public Creature, public location_visitable<monster>
         bool made_of_any( const std::set<material_id> &ms ) const override;
         bool made_of( phase_id p ) const; // Returns true if its phase is p
 
-        bool avoid_trap( const tripoint &pos, const trap &tr ) const override;
+        bool avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const override;
 
         void serialize( JsonOut &json ) const;
+        auto serialize_for_overmap( JsonOut &json ) const -> void;
         void deserialize( JsonIn &jsin );
+        auto deserialize_from_overmap( JsonIn &jsin, const point_abs_om &om_pos,
+                                       const tripoint_om_sm &submap_pos ) -> void;
 
-        tripoint move_target(); // Returns point at the end of the monster's current plans
+        tripoint_bub_ms move_target(); // Returns point at the end of the monster's current plans
         Creature *attack_target(); // Returns the creature at the end of plans (if hostile)
 
         // Movement
-        void shift( point sm_shift ); // Shifts the monster to the appropriate submap
-        void set_goal( const tripoint &p );
+        auto shift( point_rel_sm sm_shift ) -> void; // Shifts local navigation state after a submap shift
+        void set_goal( const tripoint_bub_ms &p );
         // Updates current pos AND our plans
         bool is_wandering() const; // Returns true if we have no plans
 
@@ -211,16 +214,16 @@ class monster : public Creature, public location_visitable<monster>
          * can_move_to() is a wrapper for both of them.
          * can_squeeze_to() checks for vehicle holes.
          */
-        bool can_move_to( const tripoint &p ) const;
-        bool can_reach_to( const tripoint &p ) const;
-        bool will_move_to( const tripoint &p ) const;
-        bool can_squeeze_to( const tripoint &p ) const;
+        bool can_move_to( const tripoint_bub_ms &p ) const;
+        bool can_reach_to( const tripoint_bub_ms &p ) const;
+        bool will_move_to( const tripoint_bub_ms &p ) const;
+        bool can_squeeze_to( const tripoint_bub_ms &p ) const;
 
-        bool will_reach( point p ); // Do we have plans to get to (x, y)?
-        int  turns_to_reach( point p ); // How long will it take?
+        bool will_reach( const point_bub_ms &p ); // Do we have plans to get to (x, y)?
+        int  turns_to_reach( const point_bub_ms &p ); // How long will it take?
 
         // Go in a straight line to p
-        void set_dest( const tripoint &p );
+        void set_dest( const tripoint_bub_ms &p );
         // Reset our plans, we've become aimless.
         void unset_dest();
 
@@ -234,7 +237,7 @@ class monster : public Creature, public location_visitable<monster>
          * @param f The priority of the destination, as well as how long we should
          *          wander towards there.
          */
-        void wander_to( const tripoint &p, int f ); // Try to get to (x, y), we don't know
+        void wander_to( const tripoint_bub_ms &p, int f ); // Try to get to (x, y), we don't know
         // the route.  Give up after f steps.
 
         // How good of a target is given creature (checks for visibility).
@@ -322,21 +325,21 @@ class monster : public Creature, public location_visitable<monster>
         void execute_action( const monster_action_t &action );
 
         void move(); // Thin wrapper: decide_action() → execute_action()
-        void footsteps( const tripoint &p ); // noise made by movement
-        void shove_vehicle( const tripoint &remote_destination,
-                            const tripoint &nearby_destination ); // shove vehicles out of the way
+        void footsteps( const tripoint_bub_ms &p ); // noise made by movement
+        void shove_vehicle( const tripoint_bub_ms &remote_destination,
+                            const tripoint_bub_ms &nearby_destination ); // shove vehicles out of the way
 
         // check if the given square could drown a drownable monster
-        bool is_aquatic_danger( const tripoint &at_pos );
+        bool is_aquatic_danger( const tripoint_bub_ms &at_pos );
 
         // check if a monster at a position will drown and kill it if necessary
         // returns true if the monster dies
         // chance is the one_in( chance ) that the monster will drown
-        bool die_if_drowning( const tripoint &at_pos, int chance = 1 );
+        bool die_if_drowning( const tripoint_bub_ms &at_pos, int chance = 1 );
 
-        tripoint scent_move() const;
-        int calc_movecost( const tripoint &f, const tripoint &t ) const;
-        int calc_climb_cost( const tripoint &f, const tripoint &t ) const;
+        tripoint_bub_ms scent_move() const;
+        int calc_movecost( const tripoint_bub_ms &f, const tripoint_bub_ms &t ) const;
+        int calc_climb_cost( const tripoint_bub_ms &f, const tripoint_bub_ms &t ) const;
 
         bool is_immune_field( const field_type_id &fid ) const override;
 
@@ -357,7 +360,7 @@ class monster : public Creature, public location_visitable<monster>
          *
          * @return true if movement successful, false otherwise
          */
-        bool move_to( const tripoint &p, bool force = false, bool step_on_critter = false,
+        bool move_to( const tripoint_bub_ms &p, bool force = false, bool step_on_critter = false,
                       float stagger_adjustment = 1.0 );
 
         /**
@@ -368,14 +371,14 @@ class monster : public Creature, public location_visitable<monster>
          *
          * @return true if something was attacked, false otherwise
          */
-        bool attack_at( const tripoint &p );
+        bool attack_at( const tripoint_bub_ms &p );
 
         /**
          * Try to smash/bash/destroy your way through the terrain at p.
          *
          * @return true if we destroyed something, false otherwise.
          */
-        bool bash_at( const tripoint &p );
+        bool bash_at( const tripoint_bub_ms &p );
 
         /**
          * Try to push away whatever occupies p, then step in.
@@ -387,17 +390,17 @@ class monster : public Creature, public location_visitable<monster>
          *
          * @return True if we managed to push something and took its place, false otherwise.
          */
-        bool push_to( const tripoint &p, int boost, size_t depth );
+        bool push_to( const tripoint_bub_ms &p, int boost, size_t depth );
 
         /** Returns innate monster bash skill, without calculating additional from helpers */
         int bash_skill() const;
-        int bash_estimate( const tripoint &target ) const;
+        int bash_estimate( const tripoint_bub_ms &target ) const;
         /** Returns ability of monster and any cooperative helpers to
          * bash the designated target.  **/
-        int group_bash_skill( const tripoint &target ) const;
+        int group_bash_skill( const tripoint_bub_ms &target ) const;
 
         void stumble();
-        void knock_back_to( const tripoint &to ) override;
+        void knock_back_to( const tripoint_bub_ms &to ) override;
 
         // Combat
         bool is_fleeing( Character &who ) const; // True if we're fleeing
@@ -495,7 +498,7 @@ class monster : public Creature, public location_visitable<monster>
         /** Returns multiplier on fall damage at low velocity (knockback/pit/1 z-level, not 5 z-levels) */
         float fall_damage_mod() const override;
         /** Deals falling/collision damage with terrain/creature at pos */
-        int impact( int force, const tripoint &pos ) override;
+        int impact( int force, const tripoint_bub_ms &pos ) override;
 
         bool has_grab_break_tec() const override;
 
@@ -559,7 +562,7 @@ class monster : public Creature, public location_visitable<monster>
                 detached_ptr<item> *result = nullptr );
         std::vector<detached_ptr<item>> clear_items();
         void drop_items();
-        void drop_items( const tripoint &p );
+        void drop_items( const tripoint_bub_ms &p );
 
         /**
          * Makes monster react to heard sound
@@ -568,7 +571,7 @@ class monster : public Creature, public location_visitable<monster>
          * @param vol Volume at the center of the sound source
          * @param distance Distance to sound source (currently just rl_dist)
          */
-        void hear_sound( const tripoint &source, int vol, int distance );
+        void hear_sound( const tripoint_bub_ms &source, int vol, int distance );
 
         bool is_hallucination() const override;    // true if the monster isn't actually real
 
@@ -584,7 +587,7 @@ class monster : public Creature, public location_visitable<monster>
         void add_msg_player_or_npc( const game_message_params &params, const std::string &player_msg,
                                     const std::string &npc_msg ) const override;
         // TEMP VALUES
-        tripoint wander_pos; // Wander destination - Just try to move in that direction
+        tripoint_bub_ms wander_pos; // Wander destination - Just try to move in that direction
         int wandf;           // Urge to wander - Increased by sound, decrements each move
 
         // LOD-1 scheduling: game turn on which this monster next enters the
@@ -639,17 +642,10 @@ class monster : public Creature, public location_visitable<monster>
         // abstract for a fish monster representing a hidden stock of population in that area.
         int fish_population = 1;
 
-        void setpos( const tripoint &p ) override;
-        const tripoint &pos() const override;
-        int posx() const override {
-            return position.x;
-        }
-        int posy() const override {
-            return position.y;
-        }
-        int posz() const override {
-            return position.z;
-        }
+        auto setpos( const tripoint_bub_ms &p ) -> void override;
+        auto setpos( const tripoint_abs_ms &p ) -> void override;
+        tripoint_bub_ms bub_pos() const override;
+        auto abs_pos() const -> tripoint_abs_ms override;
 
         short ignoring;
 
@@ -677,11 +673,6 @@ class monster : public Creature, public location_visitable<monster>
         void init_from_item( const item &itm );
 
         time_point last_updated = calendar::turn_zero;
-        // Absolute map-square position, stamped by game::despawn_monster() immediately before
-        // removal from critter_tracker.  Authoritative while the monster is stored in
-        // overmap::monster_map; stale (or zero-initialised) for active critter_tracker monsters.
-        tripoint_abs_ms pos_abs;
-
         // ID of the dimension this monster belongs to.  Empty string = primary dimension.
         // Set when the monster is spawned or loaded from a non-primary dimension submap.
         // Persisted across saves so cross-dimension LOD assignment survives reload.
@@ -703,7 +694,7 @@ class monster : public Creature, public location_visitable<monster>
         void on_load();
 
         const pathfinding_settings &get_legacy_pathfinding_settings() const override;
-        std::set<tripoint> get_legacy_path_avoid() const override;
+        std::set<tripoint_bub_ms> get_legacy_path_avoid() const override;
 
         std::pair<PathfindingSettings, RouteSettings> get_pathfinding_pair() const override;
 
@@ -761,10 +752,16 @@ class monster : public Creature, public location_visitable<monster>
         location_vector<item> corpse_components; // Hack to make bionic corpses generate CBMs on death
 
     private:
+        struct legacy_position_context {
+            point_abs_om om_pos;
+            tripoint_om_sm submap_pos;
+        };
+
         int hp;
         std::map<std::string, mon_special_attack> special_attacks;
-        tripoint goal;
-        tripoint position;
+        // Absolute map-square position for active and overmap-stored monsters.
+        tripoint_abs_ms pos_abs;
+        tripoint_bub_ms goal;
         bool dead;
         /** Legacy loading logic for monsters that are packing ammo. **/
         void normalize_ammo( int old_ammo );
@@ -777,7 +774,7 @@ class monster : public Creature, public location_visitable<monster>
         time_point udder_timer;
         monster_horde_attraction horde_attraction;
         /** Found path. Note: Not used by monsters that don't pathfind! **/
-        std::vector<tripoint> path;
+        std::vector<tripoint_bub_ms> path;
         bool repath_requested = false;
         std::bitset<NUM_MEFF> effect_cache;
         std::optional<time_duration> summon_time_limit = std::nullopt;
@@ -794,10 +791,10 @@ class monster : public Creature, public location_visitable<monster>
         location_ptr<item, false> storage_item; // storage item for monster carrying items
         location_ptr<item, false> battery_item; // item to power mechs
         location_vector<item> inv; // Inventory
-        void store( JsonOut &json ) const;
-        void load( const JsonObject &data );
+        auto store( JsonOut &json, bool include_local_state ) const -> void;
+        auto load( const JsonObject &data,
+                   const std::optional<legacy_position_context> &legacy_context = std::nullopt ) -> void;
 
         /** Processes monster-specific effects of an effect. */
         void process_one_effect( effect &it, bool is_new ) override;
 };
-

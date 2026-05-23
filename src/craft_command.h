@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "point.h"
+#include "coordinates.h"
 #include "recipe.h"
 #include "requirements.h"
 #include "type_id.h"
@@ -76,11 +76,11 @@ class craft_command
         /** Instantiates an empty craft_command, which can't be executed. */
         craft_command() = default;
         craft_command( const recipe *to_make, int batch_size, bool is_long, Character *crafter,
-                       const tripoint &loc = tripoint_zero ) :
+                       const tripoint_bub_ms &loc = tripoint_bub_ms::zero() ) :
             rec( to_make ), batch_size( batch_size ), longcraft( is_long ), crafter( crafter ), loc( loc ) {}
 
         /** Selects components to use for the craft, then assigns the crafting activity to 'crafter'. */
-        void execute( const tripoint &new_loc = tripoint_zero );
+        void execute( const tripoint_bub_ms &new_loc = tripoint_bub_ms::zero() );
 
         /**
          * Consumes the selected components and returns the resulting in progress craft item.
@@ -124,7 +124,7 @@ class craft_command
 
         // Location of the workbench to place the item on
         // zero_tripoint indicates crafting without a workbench
-        tripoint loc = tripoint_zero;
+        tripoint_bub_ms loc = tripoint_bub_ms::zero();
 
         std::vector<comp_selection<item_comp>> item_selections;
         std::vector<comp_selection<tool_comp>> tool_selections;

@@ -21,9 +21,9 @@ TEST_CASE( "explosion_flung_items_damage_creatures", "[explosion][damage]" )
     put_player_underground();
     map &here = get_map();
 
-    const tripoint explosion_center( 30, 30, 0 );
-    const tripoint item_pos = explosion_center + tripoint_east;
-    const tripoint zombie_pos = item_pos + tripoint_east;
+    const tripoint_bub_ms explosion_center( 30, 30, 0 );
+    const auto item_pos = explosion_center + tripoint_east;
+    const auto zombie_pos = item_pos + tripoint_east;
 
     SECTION( "heavy_items_flung_by_explosion_damage_creatures" ) {
         monster &zombie = spawn_test_monster( mon_zombie.str(), zombie_pos );

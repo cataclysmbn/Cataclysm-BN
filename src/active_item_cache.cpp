@@ -56,8 +56,11 @@ void active_item_cache::add( item &it )
 
 bool active_item_cache::empty() const
 {
-    return std::all_of( active_items.begin(), active_items.end(), []( const auto & active_queue ) {
-        return active_queue.second.second.empty();
+    return std::ranges::all_of( active_items, []( const auto & active_queue ) {
+        return std::ranges::none_of( active_queue.second.second, []( const cache_reference<item>
+        &active_item ) {
+            return static_cast<bool>( active_item );
+        } );
     } );
 }
 

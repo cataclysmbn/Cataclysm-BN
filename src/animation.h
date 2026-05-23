@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "color.h"
-#include "point.h"
+#include "coordinates.h"
 
 enum explosion_neighbors {
     N_NO_NEIGHBORS = 0,
@@ -45,23 +45,24 @@ using bucketed_points = std::list<one_bucket>;
 
 namespace explosion_handler
 {
-void draw_explosion( const tripoint &p, int radius, const nc_color &col,
+void draw_explosion( const tripoint_bub_ms &p, int radius, const nc_color &col,
                      const std::string &exp_name );
-void draw_custom_explosion( const tripoint &p, const std::map<tripoint, nc_color> &area,
+void draw_custom_explosion( const tripoint_bub_ms &p,
+                            const std::map<tripoint_bub_ms, nc_color> &area,
                             const std::string &exp_name );
 } // namespace explosion_handler
 
 // TODO: Better file
-bucketed_points bucket_by_distance( const tripoint &origin,
-                                    const std::map<tripoint, double> &to_bucket );
+bucketed_points bucket_by_distance( const tripoint_bub_ms &origin,
+                                    const std::map<tripoint_bub_ms, double> &to_bucket );
 bucketed_points optimal_bucketing( const bucketed_points &buckets, size_t max_buckets );
 
 bool minimap_requires_animation();
 bool terrain_requires_animation();
 
 struct draw_sprite_line_options {
-    const tripoint &p;
-    const std::vector<tripoint> &points;
+    const tripoint_bub_ms &p;
+    const std::vector<tripoint_bub_ms> &points;
     /// Sprite for 0 degree angle (↑)
     std::string sprite;
     bool rotate = false;
@@ -70,7 +71,7 @@ struct draw_sprite_line_options {
 void draw_line_of( const draw_sprite_line_options &options );
 
 struct draw_bullet_trajectories_options {
-    const std::vector<std::vector<tripoint>> &trajectories;
+    const std::vector<std::vector<tripoint_bub_ms>> &trajectories;
     char bullet;
     bool draw_as_line = false;
     std::string custom_sprite;

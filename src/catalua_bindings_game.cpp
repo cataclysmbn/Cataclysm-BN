@@ -1,10 +1,14 @@
 #include "catalua_bindings.h"
+#include "catalua_coord.h"
 #include "catalua_bindings_utils.h"
 #include "catalua_impl.h"
 #include "catalua_luna.h"
 #include "catalua_luna_doc.h"
 
+#include <algorithm>
 #include <ranges>
+#include <stdexcept>
+#include <vector>
 
 #include "avatar.h"
 #include "distribution_grid.h"
@@ -33,6 +37,23 @@ void add_msg_lua( game_message_type t, sol::variadic_args va )
     add_msg( t, msg );
 }
 
+auto direction_from_relative_delta( const cata::detail::lua_coords::lua_tripoint_coord &delta ) ->
+direction
+{
+    if( delta.origin != coords::origin::relative ) {
+        throw std::runtime_error( "direction_from expects a relative TripointCoord delta" );
+    }
+    return direction_from( delta.raw );
+}
+
+auto overmap_terrain_cardinal_directions() -> std::vector<tripoint_rel_omt>
+{
+    return std::vector<tripoint_rel_omt> {
+        tripoint_rel_omt::north(), tripoint_rel_omt::south(), tripoint_rel_omt::east(),
+        tripoint_rel_omt::west(), tripoint_rel_omt::above(), tripoint_rel_omt::below()
+    };
+}
+
 } // namespace
 
 void cata::detail::reg_game_api( sol::state &lua )
@@ -48,9 +69,9 @@ void cata::detail::reg_game_api( sol::state &lua )
     add_msg_lua, []( sol::variadic_args va ) { add_msg_lua( game_message_type::m_neutral, va ); }
                   ) );
     DOC( "Teleports player to absolute coordinate in overmap" );
-    luna::set_fx( lib, "place_player_overmap_at", []( const tripoint & p ) -> void { g->place_player_overmap( tripoint_abs_omt( p ) ); } );
+    luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
-    luna::set_fx( lib, "place_player_local_at", []( const tripoint & p ) -> void { g->place_player( p ); } );
+    luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
@@ -149,44 +170,45 @@ void cata::detail::reg_game_api( sol::state &lua )
     } );
 
     luna::set_fx( lib, "get_creature_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Creature * { return g->critter_at<Creature>( p, allow_hallucination.value_or( false ) ); } );
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> Creature * { return g->critter_at<Creature>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_monster_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> monster * { return g->critter_at<monster>( p, allow_hallucination.value_or( false ) ); } );
-    luna::set_fx( lib, "place_monster_at", []( const mtype_id & id, const tripoint & p ) { return g->place_critter_at( id, p ); } );
-    luna::set_fx( lib, "place_monster_around", []( const mtype_id & id, const tripoint & p,
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> monster * { return g->critter_at<monster>( p, allow_hallucination.value_or( false ) ); } );
+    luna::set_fx( lib, "place_monster_at", []( const mtype_id & id, const tripoint_bub_ms & p ) { return g->place_critter_at( id, p ); } );
+    luna::set_fx( lib, "place_monster_around", []( const mtype_id & id, const tripoint_bub_ms & p,
     const int radius ) { return g->place_critter_around( id, p, radius ); } );
-    luna::set_fx( lib, "spawn_hallucination", []( const tripoint & p ) -> bool { return g->spawn_hallucination( p ); } );
+    luna::set_fx( lib, "spawn_hallucination", []( const tripoint_bub_ms & p ) -> bool { return g->spawn_hallucination( p ); } );
     luna::set_fx( lib, "get_character_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> Character * { return g->critter_at<Character>( p, allow_hallucination.value_or( false ) ); } );
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> Character * { return g->critter_at<Character>( p, allow_hallucination.value_or( false ) ); } );
     luna::set_fx( lib, "get_npc_at",
-                  []( const tripoint & p, sol::optional<bool> allow_hallucination ) -> npc * { return g->critter_at<npc>( p, allow_hallucination.value_or( false ) ); } );
+                  []( const tripoint_bub_ms & p, sol::optional<bool> allow_hallucination ) -> npc * { return g->critter_at<npc>( p, allow_hallucination.value_or( false ) ); } );
 
     luna::set_fx( lib, "choose_adjacent",
-    []( const std::string & message, sol::optional<bool> allow_vertical ) -> sol::optional<tripoint> {
-        std::optional<tripoint> stdOpt = choose_adjacent( message, allow_vertical.value_or( false ) );
+                  []( const std::string & message,
+    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_bub_ms> {
+        std::optional<tripoint_bub_ms> stdOpt = choose_adjacent( message, allow_vertical.value_or( false ) );
 
         if( stdOpt.has_value() )
         {
-            return sol::optional<tripoint>( *stdOpt );
+            return sol::optional<tripoint_bub_ms>( *stdOpt );
         }
-        return sol::optional<tripoint>();
+        return sol::optional<tripoint_bub_ms>();
     } );
     luna::set_fx( lib, "choose_direction", []( const std::string & message,
-    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint> {
-        std::optional<tripoint> stdOpt = choose_direction( message, allow_vertical.value_or( false ) );
+    sol::optional<bool> allow_vertical ) -> sol::optional<tripoint_rel_ms> {
+        std::optional<tripoint_rel_ms> stdOpt = choose_direction( message, allow_vertical.value_or( false ) );
 
         if( stdOpt.has_value() )
         {
-            return sol::optional<tripoint>( *stdOpt );
+            return sol::optional<tripoint_rel_ms>( *stdOpt );
         }
-        return sol::optional<tripoint>();
+        return sol::optional<tripoint_rel_ms>();
     } );
     luna::set_fx( lib, "look_around", []() {
         auto result = g->look_around();
         if( result.has_value() ) {
-            return sol::optional<tripoint>( *result );
+            return sol::optional<tripoint_bub_ms>( *result );
         }
-        return sol::optional<tripoint>();
+        return sol::optional<tripoint_bub_ms>();
     } );
 
     luna::set_fx( lib, "play_variant_sound",
@@ -283,19 +305,14 @@ void cata::detail::reg_game_api( sol::state &lua )
     DOC( "Get the global overmap buffer" );
     luna::set_fx( lib, "get_overmap_buffer", []() -> overmapbuffer & { return get_active_overmapbuffer(); } );
 
-    DOC( "Get direction from a tripoint delta" );
-    luna::set_fx( lib, "direction_from", []( const tripoint & delta ) -> direction { return direction_from( delta ); } );
+    DOC( "Get direction from a relative tripoint coordinate delta." );
+    luna::set_fx( lib, "direction_from", &direction_from_relative_delta );
 
     DOC( "Get direction name from direction enum" );
     luna::set_fx( lib, "direction_name", []( direction dir ) -> std::string { return direction_name( dir ); } );
 
-    DOC( "Get the six cardinal directions (N, S, E, W, Up, Down)" );
-    luna::set_fx( lib, "six_cardinal_directions", []() -> std::vector<tripoint> {
-        return std::vector<tripoint>{
-            tripoint_north, tripoint_south, tripoint_east,
-            tripoint_west, tripoint_above, tripoint_below
-        };
-    } );
+    DOC( "Get the six cardinal overmap-terrain direction offsets (N, S, E, W, Up, Down)." );
+    luna::set_fx( lib, "six_cardinal_directions", &overmap_terrain_cardinal_directions );
 
     luna::finalize_lib( lib );
 }

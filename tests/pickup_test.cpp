@@ -24,10 +24,10 @@ TEST_CASE( "nearby pickup finds items on all adjacent ground tiles", "[pickup]" 
     clear_all_state();
 
     map &here = get_map();
-    const auto center = tripoint{ 60, 60, 0 };
+    const auto center = tripoint_bub_ms{ 60, 60, 0 };
     g->place_player( center );
 
-    for( const tripoint &pos : here.points_in_radius( center, 2 ) ) {
+    for( const tripoint_bub_ms &pos : here.points_in_radius( center, 2 ) ) {
         here.i_clear( pos );
     }
 
@@ -49,7 +49,7 @@ TEST_CASE( "nearby pickup finds adjacent vehicle cargo", "[pickup][vehicle]" )
     clear_all_state();
 
     map &here = get_map();
-    const auto center = tripoint{ 60, 60, 0 };
+    const auto center = tripoint_bub_ms{ 60, 60, 0 };
     const auto cart_pos = center + tripoint_east;
     g->place_player( center );
 

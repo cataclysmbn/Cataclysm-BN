@@ -67,10 +67,10 @@ class player_activity
         std::vector<safe_reference<item>> targets;
         std::vector<int> values;
         std::vector<std::string> str_values;
-        std::vector<tripoint> coords;
-        std::unordered_set<tripoint> coord_set;
+        std::vector<tripoint_abs_ms> coords;
+        std::unordered_set<tripoint_abs_ms> coord_set;
         std::vector<weak_ptr_fast<monster>> monsters;
-        tripoint placement;
+        tripoint_abs_ms placement;
 
         bool no_drink_nearby_for_auto_consume = false;
         bool no_food_nearby_for_auto_consume = false;

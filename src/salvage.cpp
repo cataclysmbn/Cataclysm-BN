@@ -228,7 +228,7 @@ void complete_salvage( Character &who, item &cut, tripoint_abs_ms pos )
     who.reset_encumbrance();
 
     map &here = get_map();
-    auto pos_here = here.getlocal( pos );
+    auto pos_here = here.abs_to_bub( pos );
 
     for( const auto &salvaged : salvage_results( cut ) ) {
         int amount = std::floor( salvagable_percent * salvaged.second );
@@ -341,7 +341,7 @@ bool prompt_salvage_single( Character &who, item &target )
     iuse_location loc( target, 0 );
     who.assign_activity( std::make_unique<player_activity>(
                              std::make_unique<salvage_activity_actor>(
-                                 iuse_locations{ loc }, here.getglobal( who.pos() ) ) ) );
+                                 iuse_locations{ loc }, who.abs_pos() ) ) );
     return true;
 }
 
@@ -359,14 +359,14 @@ bool salvage_single( Character &who, item &target )
 
     who.assign_activity( std::make_unique<player_activity>(
                              std::make_unique<salvage_activity_actor>(
-                                 iuse_locations{ loc }, here.getglobal( who.pos() ) ) ) );
+                                 iuse_locations{ loc }, who.abs_pos() ) ) );
     return true;
 }
 
 bool salvage_all( Character &who )
 {
     map &here = get_map();
-    tripoint pos = who.pos();
+    auto pos = who.bub_pos();
     std::vector<iuse_location> targets;
     //yes this should NOT be a reference
     quality_cache cache = who.crafting_inventory().get_quality_cache();
@@ -380,7 +380,7 @@ bool salvage_all( Character &who )
     }
 
     if( !targets.empty() ) {
-        tripoint_abs_ms pos_abs( here.getabs( pos ) );
+        tripoint_abs_ms pos_abs( here.bub_to_abs( pos ) );
 
         who.assign_activity( std::make_unique<player_activity>
                              ( std::make_unique<salvage_activity_actor>( std::move(

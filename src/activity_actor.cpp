@@ -336,10 +336,10 @@ item *aim_activity_actor::get_weapon()
 void aim_activity_actor::restore_view()
 {
     avatar &player_character = get_avatar();
-    bool changed_z = player_character.view_offset.z != initial_view_offset.z;
+    bool changed_z = player_character.view_offset.z() != initial_view_offset.z();
     player_character.view_offset = initial_view_offset;
     if( changed_z ) {
-        get_map().invalidate_map_cache( player_character.view_offset.z );
+        get_map().invalidate_map_cache( player_character.view_offset.z() );
         g->invalidate_main_ui_adaptor();
     }
 }
@@ -368,7 +368,7 @@ bool aim_activity_actor::load_RAS_weapon()
         {
             return false;
         }
-        if( square_dist( you.pos(), you.ammo_location->position() ) > 1 )
+        if( square_dist( you.bub_pos(), you.ammo_location->position() ) > 1 )
         {
             return false;
         }
@@ -389,7 +389,7 @@ bool aim_activity_actor::load_RAS_weapon()
 void autodrive_activity_actor::start( player_activity &/* act */, Character &who )
 {
     const bool in_vehicle = who.in_vehicle && who.controlling_vehicle;
-    const optional_vpart_position vp = get_map().veh_at( who.pos() );
+    const optional_vpart_position vp = get_map().veh_at( who.bub_pos() );
     if( !( vp && in_vehicle ) ) {
         who.cancel_activity();
         return;
@@ -553,8 +553,8 @@ void dig_activity_actor::serialize( JsonOut &jsout ) const
 
 std::unique_ptr<activity_actor> dig_activity_actor::deserialize( JsonIn &jsin )
 {
-    std::unique_ptr<dig_activity_actor> actor( new dig_activity_actor( 0, tripoint_zero,
-            {}, tripoint_zero, {} ) );
+    std::unique_ptr<dig_activity_actor> actor( new dig_activity_actor( 0, tripoint_bub_ms::zero(),
+            {}, tripoint_bub_ms::zero(), {} ) );
 
     JsonObject data = jsin.get_object();
 
@@ -623,8 +623,9 @@ void dig_channel_activity_actor::serialize( JsonOut &jsout ) const
 
 std::unique_ptr<activity_actor> dig_channel_activity_actor::deserialize( JsonIn &jsin )
 {
-    std::unique_ptr<dig_channel_activity_actor> actor( new dig_channel_activity_actor( 0, tripoint_zero,
-            {}, tripoint_zero, {} ) );
+    std::unique_ptr<dig_channel_activity_actor> actor( new dig_channel_activity_actor( 0,
+            tripoint_bub_ms::zero(),
+            {}, tripoint_bub_ms::zero(), {} ) );
 
     JsonObject data = jsin.get_object();
 
@@ -697,7 +698,7 @@ void disassemble_activity_actor::do_turn( player_activity &act, Character &who )
         if( !target.loc ) {
             debugmsg( "Lost target of ACT_DISASSEMBLY" );
         } else {
-            crafting::complete_disassemble( who, target, get_map().getlocal( pos.raw() ) );
+            crafting::complete_disassemble( who, target, get_map().abs_to_bub( pos ) );
         }
         targets.erase( targets.begin() );
         progress.pop();
@@ -753,7 +754,7 @@ std::unique_ptr<activity_actor> disassemble_activity_actor::deserialize( JsonIn 
 }
 
 drop_activity_actor::drop_activity_actor( Character &ch, const drop_locations &items,
-        bool force_ground, const tripoint &relpos )
+        bool force_ground, const tripoint_rel_ms &relpos )
     : force_ground( force_ground ), relpos( relpos )
 {
     this->items = pickup::reorder_for_dropping( ch, items );
@@ -805,7 +806,7 @@ enum hack_type {
     HACK_NULL
 };
 
-static hack_type get_hack_type( tripoint examp )
+static hack_type get_hack_type( tripoint_bub_ms examp )
 {
     hack_type type = HACK_NULL;
     const map &here = get_map();
@@ -823,7 +824,7 @@ static hack_type get_hack_type( tripoint examp )
 
 void hacking_activity_actor::start( player_activity &act, Character & )
 {
-    hack_type type = get_hack_type( act.placement );
+    hack_type type = get_hack_type( abs_to_bub( act.placement ) );
     std::string name;
 
     switch( type ) {
@@ -901,7 +902,7 @@ hacking_activity_actor::hacking_activity_actor( use_bionic )
 
 void hacking_activity_actor::finish( player_activity &act, Character &who )
 {
-    tripoint examp = act.placement;
+    tripoint_bub_ms examp = abs_to_bub( act.placement );
     hack_type type = get_hack_type( examp );
     map &here = get_map();
     switch( hack_attempt( who, using_bionic ) ) {
@@ -912,11 +913,12 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
             // currently all things that can be hacked have equivalent alarm failure states.
             // this may not always be the case with new hackable things.
             g->events().send<event_type::triggers_alarm>( who.getID() );
-            sounds::sound( who.pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true, "environment",
+            sounds::sound( who.bub_pos(), 60, sounds::sound_t::music, _( "an alarm sound!" ), true,
+                           "environment",
                            "alarm" );
-            if( examp.z > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
+            if( examp.z() > 0 && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                     who.global_sm_location() );
+                                     who.abs_sm_pos() );
             }
             break;
         case HACK_NOTHING:
@@ -925,12 +927,12 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
         case HACK_SUCCESS:
             if( type == HACK_GAS ) {
                 int tankGasUnits;
-                const std::optional<tripoint> pTank_ = iexamine::getNearFilledGasTank( examp, tankGasUnits );
+                const std::optional<tripoint_bub_ms> pTank_ = iexamine::getNearFilledGasTank( examp, tankGasUnits );
                 if( !pTank_ ) {
                     break;
                 }
-                const tripoint pTank = *pTank_;
-                const std::optional<tripoint> pGasPump = iexamine::getGasPumpByNumber( examp,
+                const tripoint_bub_ms pTank = *pTank_;
+                const std::optional<tripoint_bub_ms> pGasPump = iexamine::getGasPumpByNumber( examp,
                         uistate.ags_pay_gas_selected_pump );
                 if( pGasPump && iexamine::toPumpFuel( pTank, *pGasPump, tankGasUnits ) ) {
                     who.add_msg_if_player( _( "You hack the terminal and route all available fuel to your pump!" ) );
@@ -946,7 +948,7 @@ void hacking_activity_actor::finish( player_activity &act, Character &who )
                 who.add_msg_if_player( _( "You activate the panel!" ) );
                 who.add_msg_if_player( m_good, _( "The nearby doors unlock." ) );
                 here.ter_set( examp, t_card_reader_broken );
-                for( const tripoint &tmp : here.points_in_radius( ( examp ), 3 ) ) {
+                for( const tripoint_bub_ms &tmp : here.points_in_radius( ( examp ), 3 ) ) {
                     if( here.ter( tmp ) == t_door_metal_locked ) {
                         here.ter_set( tmp, t_door_metal_c );
                     }
@@ -985,7 +987,7 @@ std::unique_ptr<activity_actor> hacking_activity_actor::deserialize( JsonIn &jsi
 
 void move_items_activity_actor::do_turn( player_activity &act, Character &who )
 {
-    const tripoint dest = relative_destination + who.pos();
+    const auto dest = relative_destination + who.bub_pos();
 
     while( who.moves > 0 && !target_items.empty() ) {
         safe_reference<item> target = std::move( target_items.back() );
@@ -1013,10 +1015,10 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
             continue;
         }
 
-        const tripoint src = target->position();
+        const tripoint_bub_ms src = target->position();
         detached_ptr<item> newit = quantity == 0 ? target->detach() : target->split( quantity );
 
-        const int distance = src.z == dest.z ? std::max( rl_dist( src, dest ), 1 ) : 1;
+        const int distance = src.z() == dest.z() ? std::max( rl_dist( src, dest ), 1 ) : 1;
         who.mod_moves( -pickup::cost_to_move_item( who, *newit ) * distance );
 
         std::vector<detached_ptr<item>> vec;
@@ -1031,7 +1033,7 @@ void move_items_activity_actor::do_turn( player_activity &act, Character &who )
     if( target_items.empty() ) {
         // Nuke the current activity, leaving the backlog alone.
         act.set_to_null();
-        if( who.is_hauling() && !has_haulable_items( who.pos() ) ) {
+        if( who.is_hauling() && !has_haulable_items( who.bub_pos() ) ) {
             who.stop_hauling();
         }
     }
@@ -1053,7 +1055,7 @@ void move_items_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> move_items_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<move_items_activity_actor> actor( new move_items_activity_actor( {}, {}, false,
-            tripoint_zero ) );
+            tripoint_rel_ms::zero() ) );
 
     JsonObject data = jsin.get_object();
 
@@ -1076,7 +1078,7 @@ void pickup_activity_actor::do_turn( player_activity &act, Character &who )
 
     // If the player moves while picking up (i.e.: in a moving vehicle) cancel
     // the activity, only populate starting_pos when grabbing from the ground
-    if( starting_pos && *starting_pos != who.pos() ) {
+    if( starting_pos && *starting_pos != who.bub_pos() ) {
         who.cancel_activity();
         who.add_msg_if_player( _( "Moving canceled auto-pickup." ) );
         return;
@@ -1197,7 +1199,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1293,7 +1295,7 @@ void hacksaw_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> hacksaw_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<hacksaw_activity_actor> actor( new hacksaw_activity_actor(
-                tripoint_zero, safe_reference<item>() ) );
+                tripoint_bub_ms::zero(), safe_reference<item>() ) );
     JsonObject data = jsin.get_object();
     data.read( "progress", actor->progress );
     data.read( "target", actor->target );
@@ -1346,7 +1348,7 @@ void boltcutting_activity_actor::do_turn( player_activity &/* act */, Character 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1451,7 +1453,7 @@ void boltcutting_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> boltcutting_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<boltcutting_activity_actor> actor( new boltcutting_activity_actor(
-                tripoint_zero, safe_reference<item>() ) );
+                tripoint_bub_ms::zero(), safe_reference<item>() ) );
 
     JsonObject data = jsin.get_object();
     data.read( "progress", actor->progress );
@@ -1463,7 +1465,7 @@ std::unique_ptr<activity_actor> boltcutting_activity_actor::deserialize( JsonIn 
 std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_item(
     int moves_total,
     item &lockpick,
-    const tripoint &target
+    const tripoint_abs_ms &target
 )
 {
     return std::unique_ptr<lockpick_activity_actor> ( new lockpick_activity_actor(
@@ -1476,7 +1478,7 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_item(
 
 std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
     detached_ptr<item> &&fake_lockpick,
-    const tripoint &target
+    const tripoint_abs_ms &target
 )
 {
     return std::unique_ptr<lockpick_activity_actor>( new lockpick_activity_actor(
@@ -1489,7 +1491,7 @@ std::unique_ptr<lockpick_activity_actor> lockpick_activity_actor::use_bionic(
 
 void lockpick_activity_actor::start( player_activity &/*act*/, Character & )
 {
-    const tripoint target = get_map().getlocal( this->target );
+    const auto target = get_map().abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1532,7 +1534,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         return;
     }
 
-    const tripoint target = get_map().getlocal( this->target );
+    const auto target = get_map().abs_to_bub( this->target );
     const ter_id ter_type = get_map().ter( target );
     const furn_id furn_type = get_map().furn( target );
     const optional_vpart_position veh = get_map().veh_at( target );
@@ -1617,11 +1619,11 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
         && ( lock_roll + dice( 1, 30 ) ) > pick_roll ) {
 
         if( get_map().has_flag( "ALARMED", target ) ) {
-            sounds::sound( who.pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
+            sounds::sound( who.bub_pos(), 40, sounds::sound_t::alarm, _( "an alarm sound!" ),
                            true, "environment", "alarm" );
             if( !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
                 g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0,
-                                     who.global_sm_location() );
+                                     who.abs_sm_pos() );
             }
         } else if( veh && veh->vehicle().has_security_working() ) {
             veh->vehicle().is_alarm_on = true;
@@ -1633,7 +1635,7 @@ void lockpick_activity_actor::finish( player_activity &act, Character &who )
     }
 }
 
-bool lockpick_activity_actor::is_pickable( const tripoint &p )
+bool lockpick_activity_actor::is_pickable( const tripoint_bub_ms &p )
 {
     const ter_id ter_type = get_map().ter( p );
     const furn_id furn_type = get_map().furn( p );
@@ -1652,25 +1654,25 @@ bool lockpick_activity_actor::is_pickable( const tripoint &p )
     return result;
 }
 
-std::optional<tripoint> lockpick_activity_actor::select_location( avatar &you )
+std::optional<tripoint_bub_ms> lockpick_activity_actor::select_location( avatar &you )
 {
     if( you.is_mounted() ) {
         you.add_msg_if_player( m_info, _( "You cannot do that while mounted." ) );
         return std::nullopt;
     }
 
-    const std::optional<tripoint> target = choose_adjacent_highlight(
-            _( "Use your lockpick where?" ), _( "There is nothing to lockpick nearby." ), is_pickable, false );
+    const std::optional<tripoint_bub_ms> target = choose_adjacent_highlight(
+                _( "Use your lockpick where?" ), _( "There is nothing to lockpick nearby." ), is_pickable, false );
     if( !target ) {
         return std::nullopt;
     }
 
     if( is_pickable( *target ) ) {
-        return target;
+        return *target;
     }
 
     const ter_id terr_type = get_map().ter( *target );
-    if( *target == you.pos() ) {
+    if( *target == you.bub_pos() ) {
         you.add_msg_if_player( m_info, _( "You pick your nose and your sinuses swing open." ) );
     } else if( g->critter_at<npc>( *target ) ) {
         you.add_msg_if_player( m_info,
@@ -1699,7 +1701,7 @@ void lockpick_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> lockpick_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<lockpick_activity_actor> actor( new lockpick_activity_actor( 0,
-            safe_reference<item>(), detached_ptr<item>(), tripoint_zero ) );
+            safe_reference<item>(), detached_ptr<item>(), tripoint_abs_ms::zero() ) );
 
     JsonObject data = jsin.get_object();
 
@@ -1758,7 +1760,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
         if( who.is_avatar() ) {
             who.add_msg_if_player( m_bad, _( "Your %1$s ran out of charges." ), tool->tname() );
         } else { // who.is_npc()
-            if( get_avatar().sees( who.pos() ) ) {
+            if( get_avatar().sees( who.bub_pos() ) ) {
                 add_msg( _( "%1$s %2$s ran out of charges." ), who.disp_name( false,
                          true ), tool->tname() );
             }
@@ -1860,7 +1862,7 @@ void oxytorch_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> oxytorch_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<oxytorch_activity_actor> actor( new oxytorch_activity_actor(
-                tripoint_zero, safe_reference<item>() ) );
+                tripoint_bub_ms::zero(), safe_reference<item>() ) );
     JsonObject data = jsin.get_object();
     data.read( "progress", actor->progress );
     data.read( "target", actor->target );
@@ -1929,7 +1931,7 @@ void toggle_gate_activity_actor::serialize( JsonOut &jsout ) const
 std::unique_ptr<activity_actor> toggle_gate_activity_actor::deserialize( JsonIn &jsin )
 {
     std::unique_ptr<toggle_gate_activity_actor> actor( new toggle_gate_activity_actor( 0,
-            tripoint_zero ) );
+            tripoint_bub_ms::zero() ) );
 
     JsonObject data = jsin.get_object();
 
@@ -1942,7 +1944,7 @@ std::unique_ptr<activity_actor> toggle_gate_activity_actor::deserialize( JsonIn 
 
 
 stash_activity_actor::stash_activity_actor( Character &ch, const drop_locations &items,
-        const tripoint &relpos ) : relpos( relpos )
+        const tripoint_rel_ms &relpos ) : relpos( relpos )
 {
     this->items = pickup::reorder_for_dropping( ch, items );
 }
@@ -1988,7 +1990,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     }
 
     item *it = &*target;
-    std::optional<tripoint> blind_throw_pos = blind_throw_from_pos;
+    std::optional<tripoint_bub_ms> blind_throw_pos = blind_throw_from_pos;
 
     // Stop the activity. Whether we will or will not throw doesn't matter.
     act.set_to_null();
@@ -2001,7 +2003,7 @@ void throw_activity_actor::do_turn( player_activity &act, Character &who )
     // Shift our position to our "peeking" position, so that the UI
     // for picking a throw point lets us target the location we couldn't
     // otherwise see.
-    const tripoint original_player_position = who.pos();
+    const auto original_player_position = who.bub_pos();
     if( blind_throw_pos ) {
         who.setpos( *blind_throw_pos );
     }
@@ -2058,7 +2060,7 @@ craft_activity_actor::craft_activity_actor(
     const recipe *rec,
     int batch_size,
     int craft_counter,
-    const tripoint &location,
+    const tripoint_abs_ms &location,
     std::vector<comp_selection<item_comp>> item_selections,
     std::vector<comp_selection<tool_comp>> tool_selections,
     bool tools_prepaid,
@@ -2093,7 +2095,7 @@ auto craft_activity_actor::find_in_progress_craft( const player_activity &act,
     }
     // If not in inventory, check the map at the crafter's feet — set_item_inventory
     // may have placed it there if the NPC was over their carry capacity.
-    map_selector sel( who.pos(), 0 );
+    map_selector sel( who.bub_pos(), 0 );
     sel.visit_items( [&]( item * it ) {
         if( it->is_craft() && &it->get_making() == rec ) {
             result = it;
@@ -2337,7 +2339,7 @@ void craft_activity_actor::do_complete_craft( player_activity &act, Character &w
     craft_item->detach();
     if( is_long && rec ) {
         if( who.making_would_work( rec->ident(), batch_size ) ) {
-            who.last_craft->execute( location );
+            who.last_craft->execute( get_map().abs_to_bub( location ) );
         }
     }
 }
@@ -2438,7 +2440,7 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.getlocal( target );
+        auto local = here.abs_to_bub( target );
         pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
     //if something goes terribly wrong we don't CTD
@@ -2453,7 +2455,7 @@ inline void construction_activity_actor::calc_all_moves( player_activity &act, C
 void construction_activity_actor::start( player_activity &/*act*/, Character &/*who*/ )
 {
     map &here = get_map();
-    auto local = here.getlocal( target );
+    auto local = here.abs_to_bub( target );
     pc = here.partial_con_at( tripoint_bub_ms( local ) );
     auto &built = *pc->id;
 
@@ -2490,7 +2492,7 @@ void construction_activity_actor::do_turn( player_activity &act, Character &who 
     // Check if pc was lost for some reason, but actually still exists on map, e.g. save/load
     if( !pc ) {
         map &here = get_map();
-        auto local = here.getlocal( target );
+        auto local = here.abs_to_bub( target );
         pc = here.partial_con_at( tripoint_bub_ms( local ) );
     }
 

@@ -1204,7 +1204,7 @@ requirement_data requirement_data::continue_requirements( const std::vector<item
             comp.count -= qty;
             craft_components.remove_items_with( [&comp, &qty]( detached_ptr<item> &&e ) {
                 std::vector<detached_ptr<item>> used;
-                e = item::use_charges( std::move( e ), comp.type, qty, used, tripoint_zero );
+                e = item::use_charges( std::move( e ), comp.type, qty, used, tripoint_bub_ms::zero() );
                 return qty > 0 ? VisitResponse::SKIP : VisitResponse::ABORT;
             } );
         } else {

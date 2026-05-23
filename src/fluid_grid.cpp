@@ -11,7 +11,6 @@
 #include <ranges>
 
 #include "calendar.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cuboid_rectangle.h"
 #include "debug.h"
@@ -239,7 +238,7 @@ auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
 
 auto is_outdoors_at( const tripoint_abs_ms &p ) -> bool
 {
-    return get_map().is_outside( get_map().getlocal( p.raw() ) );
+    return get_map().is_outside( get_map().abs_to_bub( p ) );
 }
 
 auto rain_charges_for( double collector_area_m2, const weather_sum &weather ) -> int
@@ -1435,7 +1434,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
             if( !is_outdoors_at( inst.pos ) ) {
                 return;
             }
-            const auto weather = sum_conditions( last_run, to, inst.pos.raw() );
+            const auto weather = sum_conditions( last_run, to, inst.pos );
             if( weather.rain_amount <= 0 ) {
                 return;
             }

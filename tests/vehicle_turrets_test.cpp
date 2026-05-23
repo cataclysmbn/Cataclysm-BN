@@ -10,6 +10,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "creature_functions.h"
+#include "coordinates.h"
 #include "faction.h"
 #include "game.h"
 #include "item.h"
@@ -18,7 +19,6 @@
 #include "map_helpers.h"
 #include "monster.h"
 #include "npc.h"
-#include "point.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
 #include "string_id.h"
@@ -71,13 +71,13 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
     avatar &player_character = get_avatar();
     for( auto e : turret_types() ) {
         SECTION( e->name() ) {
-            vehicle *veh = here.add_vehicle( vproto_id( "none" ), point( 65, 65 ), 270_degrees, 0, 0 );
+            vehicle *veh = here.add_vehicle( vproto_id( "none" ), point_bub_ms( 65, 65 ), 270_degrees, 0, 0 );
             REQUIRE( veh );
 
-            const int idx = veh->install_part( point_zero, e->get_id(), true );
+            const int idx = veh->install_part( tripoint_mnt_veh::zero(), e->get_id(), true );
             REQUIRE( idx >= 0 );
 
-            REQUIRE( veh->install_part( point_zero, vpart_id( "storage_battery" ), true ) >= 0 );
+            REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "storage_battery" ), true ) >= 0 );
             veh->charge_battery( 10000 );
 
             auto ammo =
@@ -88,7 +88,7 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
                 REQUIRE( tank );
                 INFO( tank->get_id().str() );
 
-                auto tank_idx = veh->install_part( point_zero, tank->get_id(), true );
+                auto tank_idx = veh->install_part( tripoint_mnt_veh::zero(), tank->get_id(), true );
                 REQUIRE( tank_idx >= 0 );
                 REQUIRE( veh->part( tank_idx ).ammo_set( ammo->default_ammotype() ) );
 
@@ -102,8 +102,9 @@ TEST_CASE( "vehicle_turret", "[vehicle][gun][magazine][.]" )
             REQUIRE( qry.query() == turret_data::status::ready );
             REQUIRE( qry.range() > 0 );
 
-            player_character.setpos( veh->global_part_pos3( idx ) );
-            REQUIRE( qry.fire( player_character, player_character.pos() + point( qry.range(), 0 ) ) > 0 );
+            player_character.setpos( veh->bub_part_location( idx ) );
+            REQUIRE( qry.fire( player_character, player_character.abs_pos() + point_rel_ms( qry.range(),
+                               0 ) ) > 0 );
 
             here.destroy_vehicle( veh );
         }
@@ -114,7 +115,7 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
 {
     clear_all_state();
     map &here = get_map();
-    vehicle *veh = here.add_vehicle( vproto_id( "none" ), point( 65, 65 ), 270_degrees, 0, 0 );
+    vehicle *veh = here.add_vehicle( vproto_id( "none" ), point_bub_ms( 65, 65 ), 270_degrees, 0, 0 );
     REQUIRE( veh );
 
     const auto turret_part_id = vpart_id( "mounted_rebar_rifle" );
@@ -122,12 +123,12 @@ TEST_CASE( "vehicle_turret_autoloader_integral_magazine", "[vehicle][gun][turret
     const auto cargo_part_id = vpart_id( "box" );
     const auto battery_part_id = vpart_id( "storage_battery" );
 
-    const auto turret_index = veh->install_part( point_zero, turret_part_id, true );
+    const auto turret_index = veh->install_part( tripoint_mnt_veh::zero(), turret_part_id, true );
     REQUIRE( turret_index >= 0 );
-    REQUIRE( veh->install_part( point_zero, autoloader_part_id, true ) >= 0 );
-    const auto cargo_index = veh->install_part( point_zero, cargo_part_id, true );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), autoloader_part_id, true ) >= 0 );
+    const auto cargo_index = veh->install_part( tripoint_mnt_veh::zero(), cargo_part_id, true );
     REQUIRE( cargo_index >= 0 );
-    REQUIRE( veh->install_part( point_zero, battery_part_id, true ) >= 0 );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), battery_part_id, true ) >= 0 );
     veh->charge_battery( 10000 );
 
     vehicle_part &turret_part = veh->part( turret_index );
@@ -167,7 +168,7 @@ TEST_CASE( "vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][t
     map &here = get_map();
     set_time( calendar::turn_zero + 12_hours );
 
-    const auto shooter_pos = tripoint( 60, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     avatar &shooter = get_avatar();
     shooter.setpos( shooter_pos );
     shooter.set_body();
@@ -181,8 +182,8 @@ TEST_CASE( "vehicle_turret_iff_protects_followers_in_line_of_fire", "[vehicle][t
 
     const auto hostile_pos = shooter_pos + point( 8, 0 );
     monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
-    here.invalidate_map_cache( shooter_pos.z );
-    here.build_map_cache( shooter_pos.z, true );
+    here.invalidate_map_cache( shooter_pos.z() );
+    here.build_map_cache( shooter_pos.z(), true );
     REQUIRE( shooter.sees( hostile ) );
 
     const auto target = creature_functions::auto_find_hostile_target(
@@ -198,7 +199,7 @@ TEST_CASE( "vehicle_turret_iff_allows_clear_shots", "[vehicle][turret][npc][iff]
     map &here = get_map();
     set_time( calendar::turn_zero + 12_hours );
 
-    const auto shooter_pos = tripoint( 60, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
     avatar &shooter = get_avatar();
     shooter.setpos( shooter_pos );
     shooter.set_body();
@@ -211,8 +212,8 @@ TEST_CASE( "vehicle_turret_iff_allows_clear_shots", "[vehicle][turret][npc][iff]
 
     const auto hostile_pos = shooter_pos + point( 8, 0 );
     monster &hostile = spawn_test_monster( "mon_zombie_tough", hostile_pos );
-    here.invalidate_map_cache( shooter_pos.z );
-    here.build_map_cache( shooter_pos.z, true );
+    here.invalidate_map_cache( shooter_pos.z() );
+    here.build_map_cache( shooter_pos.z(), true );
     REQUIRE( shooter.sees( hostile ) );
 
     const auto target = creature_functions::auto_find_hostile_target(

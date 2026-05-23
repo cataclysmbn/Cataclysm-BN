@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "color.h"
+#include "coordinates.h"
 #include "cuboid_rectangle.h"
 #include "cursesdef.h"
 #include "memory_fast.h"
@@ -431,7 +432,7 @@ class pointmenu_cb : public uilist_callback
         struct impl_t;
         pimpl<impl_t> impl;
     public:
-        pointmenu_cb( const std::vector< tripoint > &pts );
+        pointmenu_cb( const std::vector<tripoint_bub_ms> &pts );
         ~pointmenu_cb() override;
         void select( uilist *menu ) override;
 };

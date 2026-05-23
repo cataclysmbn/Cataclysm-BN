@@ -16,7 +16,7 @@
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_functions.h"
-#include "coordinate_conversions.h"
+#include "coordinates.h"
 #include "craft_command.h"
 #include "crafting.h"
 #include "distribution_grid.h"
@@ -30,7 +30,6 @@
 #include "overmapbuffer.h"
 #include "player_activity.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
@@ -256,12 +255,12 @@ TEST_CASE( "crafting_with_a_companion", "[.]" )
         standard_npc who( "helper" );
 
         who.set_attitude( NPCATT_FOLLOW );
-        who.spawn_at_sm( tripoint_zero );
+        who.spawn_at_sm( tripoint_abs_sm::zero() );
 
         g->load_npcs();
 
         CHECK( !dummy.in_vehicle );
-        dummy.setpos( who.pos() );
+        dummy.setpos( who.bub_pos() );
         const auto helpers( character_funcs::get_crafting_helpers( dummy ) );
 
         REQUIRE( std::find( helpers.begin(), helpers.end(), &who ) != helpers.end() );
@@ -298,7 +297,7 @@ static void prep_craft( const recipe_id &rid, std::vector<detached_ptr<item>> &t
                         bool expect_craftable )
 {
     clear_avatar();
-    const tripoint test_origin( 60, 60, 0 );
+    const tripoint_bub_ms test_origin( 60, 60, 0 );
     g->u.setpos( test_origin );
     g->u.wear_item( item::spawn( "backpack" ), false );
     for( detached_ptr<item> &gear : tools ) {
@@ -517,8 +516,8 @@ static int resume_craft()
     REQUIRE( crafts.size() == 1 );
     item *craft = crafts.front();
     set_time( midday ); // Ensure light for crafting
-    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.pos()} ) ==
-             1.0 );
+    REQUIRE( crafting_speed_multiplier( you, *craft, bench_location{bench_type::hands, you.abs_pos()} )
+             == 1.0 );
     REQUIRE( !you.activity );
     avatar_funcs::use_item( you, *craft );
     REQUIRE( you.activity );
@@ -565,7 +564,7 @@ static auto assign_completed_craft_activity( Character &you, const recipe &recip
         item *target = nullptr ) -> void
 {
     auto actor = std::make_unique<craft_activity_actor>( &recipe_to_make, 1, 10'000'000,
-                 you.pos(), std::vector<comp_selection<item_comp>> {},
+                 you.abs_pos(), std::vector<comp_selection<item_comp>> {},
                  std::vector<comp_selection<tool_comp>> {}, true, false );
     auto act = std::make_unique<player_activity>( std::move( actor ) );
     if( target != nullptr ) {
@@ -594,8 +593,8 @@ TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting
 
     SECTION( "targeted map craft wins over inventory craft with the same recipe" ) {
         you.i_add( make_food_craft( sandwich_recipe, false ) );
-        here.add_item( you.pos(), make_food_craft( sandwich_recipe, true ) );
-        auto &target_craft = here.i_at( you.pos() ).only_item();
+        here.add_item( you.bub_pos(), make_food_craft( sandwich_recipe, true ) );
+        auto &target_craft = here.i_at( you.bub_pos() ).only_item();
         target_craft.set_counter( 10'000'000 );
 
         assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
@@ -607,13 +606,13 @@ TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting
         CHECK( !has_component( *sandwiches.front(), itype_id( "meat_smoked" ) ) );
         CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 51 );
         CHECK( in_progress_crafts( you ).size() == 1 );
-        CHECK( here.i_at( you.pos() ).empty() );
+        CHECK( here.i_at( you.bub_pos() ).empty() );
     }
 
     SECTION( "targeted inventory craft is preserved when a map craft has the same recipe" ) {
         auto &target_craft = you.i_add( make_food_craft( sandwich_recipe, false ) );
         target_craft.set_counter( 10'000'000 );
-        here.add_item( you.pos(), make_food_craft( sandwich_recipe, true ) );
+        here.add_item( you.bub_pos(), make_food_craft( sandwich_recipe, true ) );
 
         assign_completed_craft_activity( you, sandwich_recipe, &target_craft );
         finish_craft_activity( you );
@@ -624,8 +623,8 @@ TEST_CASE( "craft activity completes the targeted in-progress craft", "[crafting
         CHECK( !has_component( *sandwiches.front(), itype_id( "pine_nuts" ) ) );
         CHECK( you.compute_effective_nutrients( *sandwiches.front() ).kcal == 101 );
         CHECK( in_progress_crafts( you ).empty() );
-        REQUIRE( here.i_at( you.pos() ).size() == 1 );
-        CHECK( here.i_at( you.pos() ).only_item().is_craft() );
+        REQUIRE( here.i_at( you.bub_pos() ).size() == 1 );
+        CHECK( here.i_at( you.bub_pos() ).only_item().is_craft() );
     }
 
     SECTION( "missing target falls back to an available matching craft" ) {
@@ -736,7 +735,7 @@ TEST_CASE( "debug hammerspace", "[crafting]" )
 
         WHEN( "The character tries to craft a no-dachi" ) {
             craft_command command( &*test_recipe, 1, false, &dummy );
-            item *craft_item = dummy.start_craft( command, dummy.pos() );
+            item *craft_item = dummy.start_craft( command, dummy.bub_pos() );
 
             THEN( "The craft item is created" ) {
                 REQUIRE( ( craft_item && !craft_item->is_null() ) );
@@ -757,13 +756,13 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
     clear_all_state();
     map &m = get_map();
     avatar &u = get_avatar();
-    constexpr tripoint start_pos = tripoint( 60, 60, 0 );
-    const tripoint_abs_ms start_pos_abs( m.getabs( start_pos ) );
+    constexpr tripoint_bub_ms start_pos = tripoint_bub_ms( 60, 60, 0 );
+    const tripoint_abs_ms start_pos_abs( m.bub_to_abs( start_pos ) );
     u.setpos( start_pos );
     clear_avatar();
     GIVEN( "player is near an oven on an electric grid with a battery on it" ) {
         // TODO: clear_grids()
-        auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( u.global_omt_location() );
+        auto om = ACTIVE_OVERMAP_BUFFER.get_om_global( u.abs_omt_pos() );
         om.om->set_electric_grid_connections( om.local, {} );
 
         m.furn_set( start_pos + point( 10, 0 ), furn_str_id( "f_battery" ) );
@@ -789,8 +788,8 @@ TEST_CASE( "oven electric grid", "[crafting][overmap][grids][slow]" )
             // Any way to clean it up without re-running the slow test for every check?
             AND_WHEN( "the player is near a pot and a chunk of meat" ) {
                 u.invalidate_crafting_inventory();
-                m.add_item( u.pos(), item::spawn( "pot" ) );
-                m.add_item( u.pos(), item::spawn( "meat" ) );
+                m.add_item( u.bub_pos(), item::spawn( "pot" ) );
+                m.add_item( u.bub_pos(), item::spawn( "meat" ) );
                 THEN( "cooked meat can be crafted" ) {
                     const recipe &r = *recipe_id( "meat_cooked" );
                     const inventory &crafting_inv = u.crafting_inventory();

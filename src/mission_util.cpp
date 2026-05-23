@@ -8,7 +8,6 @@
 #include <vector>
 
 #include "avatar.h"
-#include "coordinate_conversions.h"
 #include "debug.h"
 #include "dialogue.h"
 #include "enum_conversions.h"
@@ -32,7 +31,7 @@
 
 static tripoint_abs_omt reveal_destination( const std::string &type, overmapbuffer &omb )
 {
-    const tripoint_abs_omt your_pos = get_player_character().global_omt_location();
+    const tripoint_abs_omt your_pos = get_player_character().abs_omt_pos();
 
     omt_find_params params{};
     params.types.emplace_back( type, ot_match_type::type );
@@ -65,7 +64,7 @@ static void reveal_target( mission *miss, const std::string &omter_id )
                  oter->get_name() );
         miss->set_target( destination );
         if( one_in( 3 ) &&
-            mission_util::reveal_road( g->u.global_omt_location(), destination, omb ) ) {
+            mission_util::reveal_road( g->u.abs_omt_pos(), destination, omb ) ) {
             add_msg( _( "%s also marks the road that leads to it…" ), p->name );
         }
     }
@@ -107,7 +106,7 @@ tripoint_abs_omt mission_util::reveal_om_ter( const std::string &omter, int reve
     find_params.seen = must_see ? std::make_optional( true ) : std::nullopt;
 
     // Missions are normally on z-level 0, but allow an optional argument.
-    tripoint_abs_omt loc = get_player_character().global_omt_location();
+    tripoint_abs_omt loc = get_player_character().abs_omt_pos();
     loc.z() = target_z;
     const tripoint_abs_omt place = omb.find_closest( loc, find_params );
     if( place != overmap::invalid_tripoint && reveal_rad >= 0 ) {
@@ -138,11 +137,11 @@ tripoint_abs_omt mission_util::random_house_in_closest_city( overmapbuffer &omb 
 {
     Character &player_character = get_player_character();
     // TODO: fix point types
-    const tripoint_abs_sm center( player_character.global_sm_location() );
+    const tripoint_abs_sm center( player_character.abs_sm_pos() );
     const city_reference cref = omb.closest_city( center );
     if( !cref ) {
         debugmsg( "could not find closest city" );
-        return g->u.global_omt_location();
+        return g->u.abs_omt_pos();
     }
     return random_house_in_city( cref, omb );
 }
@@ -290,7 +289,7 @@ static std::optional<tripoint_abs_omt> find_or_create_om_terrain(
 static tripoint_abs_omt get_mission_om_origin( const mission_target_params &params )
 {
     // use the player or NPC's current position, adjust for the z value if any
-    tripoint_abs_omt origin_pos = get_player_character().global_omt_location();
+    tripoint_abs_omt origin_pos = get_player_character().abs_omt_pos();
     if( !params.origin_u ) {
         npc *guy = nullptr;
 
@@ -300,7 +299,7 @@ static tripoint_abs_omt get_mission_om_origin( const mission_target_params &para
             guy = g->find_npc( params.mission_pointer->get_npc_id() );
         }
         if( guy ) {
-            origin_pos = guy->global_omt_location();
+            origin_pos = guy->abs_omt_pos();
         }
     }
     if( params.z ) {
@@ -378,7 +377,7 @@ tripoint_abs_omt mission_util::target_om_ter_random( const std::string &omter, i
 {
     auto &omb = get_overmapbuffer( miss->get_dimension() );
     if( loc == overmap::invalid_tripoint ) {
-        loc = g->u.global_omt_location();
+        loc = g->u.abs_omt_pos();
     }
 
     omt_find_params find_params{};
@@ -389,7 +388,7 @@ tripoint_abs_omt mission_util::target_om_ter_random( const std::string &omter, i
 
     auto places = omb.find_all( loc, find_params );
     if( places.empty() ) {
-        return g->u.global_omt_location();
+        return g->u.abs_omt_pos();
     }
     const overmap *loc_om = omb.get_existing_om_global( loc ).om;
     assert( loc_om );

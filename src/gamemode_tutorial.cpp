@@ -10,7 +10,6 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character_functions.h"
-#include "coordinate_conversions.h"
 #include "debug.h"
 #include "game.h"
 #include "game_constants.h"
@@ -150,8 +149,8 @@ bool tutorial_game::init()
     you.set_skill_level( skill_gun, 5 );
     you.set_skill_level( skill_melee, 5 );
     g->load_map( project_to<coords::sm>( lp_abs ) );
-    you.setx( 2 );
-    you.sety( 4 );
+    const auto z = you.bub_pos().z();
+    you.setpos( tripoint_bub_ms( 2, 4, z ) );
 
     // This shifts the view to center the players pos
     g->update_map( you );
@@ -165,7 +164,7 @@ void tutorial_game::per_turn()
     add_message( tut_lesson::LESSON_MOVE );
     add_message( tut_lesson::LESSON_LOOK );
 
-    if( g->light_level( g->u.posz() ) == 1 ) {
+    if( g->light_level( g->u.bub_pos().z() ) == 1 ) {
         if( g->u.has_amount( itype_flashlight, 1 ) ) {
             add_message( tut_lesson::LESSON_DARK );
         } else {
@@ -183,7 +182,7 @@ void tutorial_game::per_turn()
 
     map &here = get_map();
     if( !tutorials_seen[tut_lesson::LESSON_BUTCHER] ) {
-        for( const item * const &it : here.i_at( point( g->u.posx(), g->u.posy() ) ) ) {
+        for( const item * const &it : here.i_at( g->u.bub_pos().xy() ) ) {
             if( it->is_corpse() ) {
                 add_message( tut_lesson::LESSON_BUTCHER );
                 break;
@@ -191,7 +190,7 @@ void tutorial_game::per_turn()
         }
     }
 
-    for( const tripoint &p : here.points_in_radius( g->u.pos(), 1 ) ) {
+    for( const auto &p : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
         if( here.ter( p ) == t_door_o ) {
             add_message( tut_lesson::LESSON_OPEN );
             break;
@@ -213,7 +212,7 @@ void tutorial_game::per_turn()
         }
     }
 
-    if( !here.i_at( point( g->u.posx(), g->u.posy() ) ).empty() ) {
+    if( !here.i_at( g->u.bub_pos().xy() ).empty() ) {
         add_message( tut_lesson::LESSON_PICKUP );
     }
 }
@@ -237,9 +236,9 @@ void tutorial_game::post_action( action_id act )
     switch( act ) {
         case ACTION_RELOAD_WEAPON:
             if( g->u.primary_weapon().is_gun() && !tutorials_seen[tut_lesson::LESSON_GUN_FIRE] ) {
-                g->place_critter_at( mon_zombie, tripoint( g->u.posx(), g->u.posy() - 6, g->u.posz() ) );
-                g->place_critter_at( mon_zombie, tripoint( g->u.posx() + 2, g->u.posy() - 5, g->u.posz() ) );
-                g->place_critter_at( mon_zombie, tripoint( g->u.posx() - 2, g->u.posy() - 5, g->u.posz() ) );
+                g->place_critter_at( mon_zombie, g->u.bub_pos() + point_rel_ms( 0, -6 ) );
+                g->place_critter_at( mon_zombie, g->u.bub_pos() + point_rel_ms( 2, -5 ) );
+                g->place_critter_at( mon_zombie, g->u.bub_pos() + point_rel_ms( -2, -5 ) );
                 add_message( tut_lesson::LESSON_GUN_FIRE );
             }
             break;
@@ -257,7 +256,7 @@ void tutorial_game::post_action( action_id act )
                 add_message( tut_lesson::LESSON_ACT_GRENADE );
             }
             map &here = get_map();
-            for( const tripoint &dest : here.points_in_radius( g->u.pos(), 1 ) ) {
+            for( const auto &dest : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
                 if( here.tr_at( dest ).id == trap_str_id( "tr_bubblewrap" ) ) {
                     add_message( tut_lesson::LESSON_ACT_BUBBLEWRAP );
                 }

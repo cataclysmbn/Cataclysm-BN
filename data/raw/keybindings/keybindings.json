@@ -3707,7 +3707,7 @@
     "type": "keybinding",
     "id": "TEXT.CONFIRM",
     "name": "Confirm text input",
-    "bindings": [ { "input_method": "keyboard", "key": "RETURN" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "RETURN" }, { "input_method": "keyboard", "key": "NUMPAD_6" } ]
   },
   {
     "type": "keybinding",

@@ -11,6 +11,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "calendar.h"
+#include "coordinates.h"
 #include "game.h"
 #include "map.h"
 #include "map_helpers.h"
@@ -19,13 +20,12 @@
 #include "item.h"
 #include "player.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "ranged.h"
 #include "state_helpers.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 
-static constexpr tripoint shooter_pos( 60, 60, 0 );
+static constexpr tripoint_bub_ms shooter_pos( 60, 60, 0 );
 
 static void set_up_player_vision()
 {
@@ -40,12 +40,12 @@ static void set_up_player_vision()
 
     calendar::turn = calendar::turn_zero + 12_hours;
 
-    g->m.update_visibility_cache( shooter_pos.z );
-    g->m.invalidate_map_cache( shooter_pos.z );
-    g->m.build_map_cache( shooter_pos.z );
-    g->m.update_visibility_cache( shooter_pos.z );
-    g->m.invalidate_map_cache( shooter_pos.z );
-    g->m.build_map_cache( shooter_pos.z );
+    g->m.update_visibility_cache( shooter_pos.z() );
+    g->m.invalidate_map_cache( shooter_pos.z() );
+    g->m.build_map_cache( shooter_pos.z() );
+    g->m.update_visibility_cache( shooter_pos.z() );
+    g->m.invalidate_map_cache( shooter_pos.z() );
+    g->m.build_map_cache( shooter_pos.z() );
 }
 
 TEST_CASE( "Aiming at a clearly visible target", "[ranged][aiming]" )
@@ -113,15 +113,15 @@ TEST_CASE( "Aiming at a target behind wall", "[ranged][aiming]" )
     set_up_player_vision();
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 2, 0 ) );
     WHEN( "There is no direct, passable line to target" ) {
-        const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+        const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
         int impassable_tiles = std::count_if( path.begin(), path.end(),
-        []( const tripoint & p ) {
+        []( const tripoint_bub_ms & p ) {
             return g->m.impassable( p );
         } );
         REQUIRE( impassable_tiles >= 1 );
         AND_WHEN( "All the tiles on the most direct line are opaque" ) {
             int non_transparent_tiles = std::count_if( path.begin(), path.end(),
-            []( const tripoint & p ) {
+            []( const tripoint_bub_ms & p ) {
                 return !g->m.is_transparent( p );
             } );
             REQUIRE( non_transparent_tiles > 0 );
@@ -150,16 +150,16 @@ TEST_CASE( "Aiming at a target behind bars", "[ranged][aiming]" )
     }
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 2, 0 ) );
     WHEN( "There is no direct, passable line to target" ) {
-        const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+        const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
         int impassable_tiles = std::count_if( path.begin(), path.end(),
-        []( const tripoint & p ) {
+        []( const tripoint_bub_ms & p ) {
             return g->m.impassable( p );
         } );
         REQUIRE( impassable_tiles >= 1 );
         // Transparent and NOT hardcoded to absorb bullets (t_window etc.)
         AND_WHEN( "All the tiles on the most direct line are transparent" ) {
             int non_transparent_tiles = std::count_if( path.begin(), path.end(),
-            []( const tripoint & p ) {
+            []( const tripoint_bub_ms & p ) {
                 return !g->m.is_transparent( p );
             } );
             REQUIRE( non_transparent_tiles == 0 );
@@ -183,9 +183,9 @@ TEST_CASE( "Aiming a turret from a solid vehicle", "[ranged][aiming]" )
 
     monster &z = spawn_test_monster( "debug_mon", shooter_pos + point( 5, 0 ) );
 
-    const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+    const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
     int impassable_tiles_before = std::count_if( path.begin(), path.end(),
-    []( const tripoint & p ) {
+    []( const tripoint_bub_ms & p ) {
         return g->m.impassable( p );
     } );
     REQUIRE( impassable_tiles_before == 0 );
@@ -196,19 +196,19 @@ TEST_CASE( "Aiming a turret from a solid vehicle", "[ranged][aiming]" )
 
     WHEN( "Shooter's line of fire becomes blocked by vehicle's windshield" ) {
         int impassable_tiles_after = std::count_if( path.begin(), path.end(),
-        []( const tripoint & p ) {
+        []( const tripoint_bub_ms & p ) {
             return g->m.impassable( p );
         } );
         REQUIRE( impassable_tiles_after >= 1 );
         REQUIRE( shooter.sees( z ) );
         AND_WHEN( "All the blocking tiles are impassable only because of the vehicle" ) {
             int non_vehicle_blocking_tiles = std::count_if( path.begin(), path.end(),
-            [&veh]( const tripoint & p ) {
+            [&veh]( const tripoint_bub_ms & p ) {
                 return g->m.move_cost( p, veh ) == 0;
             } );
             REQUIRE( non_vehicle_blocking_tiles == 0 );
             AND_WHEN( "The shooter aims the turret" ) {
-                turret_data turret = veh->turret_query( shooter_pos );
+                turret_data turret = veh->turret_query( get_map().bub_to_abs( shooter_pos ) );
                 REQUIRE( static_cast<bool>( turret ) );
                 REQUIRE( turret.query() == turret_data::status::ready );
                 REQUIRE( avatar_action::can_fire_turret( shooter, g->m, turret ) );
@@ -240,17 +240,17 @@ TEST_CASE( "Aiming a turret from a solid vehicle", "[ranged][aiming]" )
 //         for( int x = 5; x < 30; x++ ) {
 //             for( int y = 5; y < 30; y++ ) {
 //                 point wall_offset = point( x, y ).rotate( rot, point_zero );
-//                 const tripoint wall_pos = shooter_pos + wall_offset;
+//                 const tripoint_bub_ms wall_pos = shooter_pos + wall_offset;
 //                 g->m.ter_set( wall_pos, t_wall );
 //                 point mon_offset = point( x, y + 1 ).rotate( rot, point_zero );
-//                 const tripoint monster_pos = shooter_pos + mon_offset;
+//                 const tripoint_bub_ms monster_pos = shooter_pos + mon_offset;
 //                 monster &z = spawn_test_monster( "debug_mon", monster_pos );
 //                 if( !shooter.sees( z ) ) {
 //                     // TODO: Use player for this, so that this isn't needed
 //                     unseen++;
 //                     continue;
 //                 }
-//                 const auto path = g->m.find_clear_path( shooter.pos(), z.pos() );
+//                 const auto path = g->m.find_clear_path( shooter.bub_pos(), z.bub_pos() );
 //                 std::vector<Creature *> t = ranged::targetable_creatures( shooter, max_range );
 //                 if( std::count( t.begin(), t.end(), &z ) == 0 ) {
 //                     failed.emplace_back( wall_pos, monster_pos );

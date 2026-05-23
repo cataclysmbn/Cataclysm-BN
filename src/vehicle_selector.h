@@ -3,10 +3,10 @@
 #include <vector>
 #include <iosfwd>
 
+#include "coordinates.h"
 #include "visitable.h"
 
 class vehicle;
-struct tripoint;
 
 class vehicle_cursor : public location_visitable<vehicle_cursor>
 {
@@ -37,7 +37,7 @@ class vehicle_selector : public location_visitable<vehicle_selector>
          *  @param accessible whether found items must be accessible from pos to be considered
          *  @param visibility_only accessibility based on line of sight, not walkability
          */
-        vehicle_selector( const tripoint &pos, int radius = 0, bool accessible = true,
+        vehicle_selector( const tripoint_bub_ms &pos, int radius = 0, bool accessible = true,
                           bool visibility_only = false );
 
         /**
@@ -47,7 +47,7 @@ class vehicle_selector : public location_visitable<vehicle_selector>
          *  @param accessible whether found items must be accessible from pos to be considered
          *  @param ignore don't include this vehicle as part of the selection
          */
-        vehicle_selector( const tripoint &pos, int radius, bool accessible, const vehicle &ignore );
+        vehicle_selector( const tripoint_bub_ms &pos, int radius, bool accessible, const vehicle &ignore );
 
         // similar to item_location you are not supposed to store this class between turns
         vehicle_selector( const vehicle_selector &that ) = delete;
