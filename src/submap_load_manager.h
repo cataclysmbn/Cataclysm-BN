@@ -295,7 +295,6 @@ class submap_load_manager
 
         /** OMT-space lazy-border columns waiting for amortized preload. */
         retained_omt_list lazy_omt_queue_;
-        std::unordered_set<retained_omt_key, coord_pair_hash<point_abs_omt>> lazy_omt_queued_;
 
         /** Compute the simulated desired set (excludes lazy_border). */
         key_set compute_desired_set() const;
@@ -321,6 +320,7 @@ class submap_load_manager
         auto is_omt_column_loaded( const retained_omt_key &key ) -> bool;
         auto mark_omt_column_dirty( const retained_omt_key &key ) -> void;
         auto load_lazy_omt_column( const retained_omt_key &key ) -> void;
+        auto lazy_omt_priority( const retained_omt_key &key ) const -> int;
         auto queue_lazy_border_omts( const horizontal_omt_set &border_omts ) -> void;
         auto process_lazy_border_preload() -> void;
 
@@ -346,6 +346,8 @@ class submap_load_manager
         /** Snapshot of all request centers from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */
         std::vector<std::pair<load_request_handle, tripoint>> prev_centers_;
+
+        point lazy_omt_preload_direction_ = point_zero;
 };
 
 extern submap_load_manager submap_loader;

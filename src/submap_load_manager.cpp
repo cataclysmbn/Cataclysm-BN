@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "cata_cartesian_product.h"
+#include "cached_options.h"
 #include "game_constants.h"
 #include "mapbuffer.h"
 #include "clzones.h"
@@ -35,6 +36,11 @@ auto divide_round_up_size( const std::size_t numerator, const std::size_t denomi
 -> std::size_t
 {
     return ( numerator + denominator - 1 ) / denominator;
+}
+
+auto signum( const int value ) -> int
+{
+    return ( value > 0 ) - ( value < 0 );
 }
 
 auto is_omt_zlevel_loaded( mapbuffer &mb, const tripoint_abs_omt &omt_addr ) -> bool
@@ -186,7 +192,10 @@ auto submap_load_manager::current_reality_bubble_radius() const -> int
 auto submap_load_manager::retained_omt_soft_cap() const -> std::size_t
 {
     const auto radius = static_cast<std::size_t>( std::max( 0, current_reality_bubble_radius() ) );
-    return std::max( retained_omt_min_soft_cap, radius * retained_omt_soft_scale );
+    const auto base_cap = std::max( retained_omt_min_soft_cap, radius * retained_omt_soft_scale );
+    const auto multiplier = static_cast<std::size_t>(
+                                std::clamp( retained_omt_cache_multiplier, 1, 20 ) + 1 );
+    return divide_round_up_size( base_cap * multiplier, 2 );
 }
 
 auto submap_load_manager::retained_omt_hard_cap() const -> std::size_t
@@ -364,28 +373,71 @@ auto submap_load_manager::load_lazy_omt_column( const retained_omt_key &key ) ->
     }
 }
 
+auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const -> int
+{
+    if( lazy_omt_preload_direction_ == point_zero ) {
+        return 0;
+    }
+
+    auto best = 0;
+    const auto &[dim_id, omt_xy] = key;
+    std::ranges::for_each( requests_, [&]( const auto &kv ) {
+        const auto &req = kv.second;
+        if( req.source != load_request_source::lazy_border || req.dimension_id != dim_id ) {
+            return;
+        }
+        const auto c = req.center.xy();
+        const auto r = req.radius;
+        const auto min_omt = project_to<coords::omt>( point_abs_sm{ c.x() - r, c.y() - r } );
+        const auto max_omt = project_to<coords::omt>( point_abs_sm{ c.x() + r, c.y() + r } );
+
+        auto score = 0;
+        if( lazy_omt_preload_direction_.x > 0 && omt_xy.x() > max_omt.x() ) {
+            score += 2;
+        } else if( lazy_omt_preload_direction_.x < 0 && omt_xy.x() < min_omt.x() ) {
+            score += 2;
+        }
+
+        if( lazy_omt_preload_direction_.y > 0 && omt_xy.y() > max_omt.y() ) {
+            score += 2;
+        } else if( lazy_omt_preload_direction_.y < 0 && omt_xy.y() < min_omt.y() ) {
+            score += 2;
+        }
+
+        best = std::max( best, score );
+    } );
+    return best;
+}
+
 auto submap_load_manager::queue_lazy_border_omts( const horizontal_omt_set &border_omts ) -> void
 {
     ZoneScopedN( "slm_queue_lazy_border_omts" );
 
-    for( auto it = lazy_omt_queue_.begin(); it != lazy_omt_queue_.end(); ) {
-        if( border_omts.count( *it ) == 0 || is_omt_column_loaded( *it ) ) {
-            lazy_omt_queued_.erase( *it );
-            it = lazy_omt_queue_.erase( it );
-        } else {
-            ++it;
-        }
-    }
-
+    auto candidates = std::vector<retained_omt_key> {};
     std::ranges::for_each( border_omts, [&]( const retained_omt_key &key ) {
-        if( lazy_omt_queued_.count( key ) != 0 ) {
-            return;
+        if( !is_omt_column_loaded( key ) ) {
+            candidates.push_back( key );
         }
-        if( is_omt_column_loaded( key ) ) {
-            return;
+    } );
+    std::ranges::sort( candidates, [&]( const retained_omt_key &lhs,
+                                         const retained_omt_key &rhs ) {
+        const auto lhs_priority = lazy_omt_priority( lhs );
+        const auto rhs_priority = lazy_omt_priority( rhs );
+        if( lhs_priority != rhs_priority ) {
+            return lhs_priority > rhs_priority;
         }
+        if( lhs.first != rhs.first ) {
+            return lhs.first < rhs.first;
+        }
+        if( lhs.second.x() != rhs.second.x() ) {
+            return lhs.second.x() < rhs.second.x();
+        }
+        return lhs.second.y() < rhs.second.y();
+    } );
+
+    lazy_omt_queue_.clear();
+    std::ranges::for_each( candidates, [&]( const retained_omt_key &key ) {
         lazy_omt_queue_.push_back( key );
-        lazy_omt_queued_.insert( key );
     } );
 }
 
@@ -399,14 +451,24 @@ auto submap_load_manager::process_lazy_border_preload() -> void
         return;
     }
 
+    const auto urgent = static_cast<std::size_t>( std::ranges::count_if(
+                            lazy_omt_queue_, [&]( const retained_omt_key &key ) {
+        return lazy_omt_priority( key ) > 0;
+    } ) );
+    TracyPlot( "Lazy Border Leading OMTs", static_cast<int64_t>( urgent ) );
+
     auto budget = divide_round_up_size( queued, lazy_border_steps_to_cross_omt );
+    const auto movement_axes = static_cast<std::size_t>(
+                                   std::abs( lazy_omt_preload_direction_.x ) +
+                                   std::abs( lazy_omt_preload_direction_.y ) );
+    const auto urgent_steps = movement_axes > 1 ? SEEX / movement_axes : SEEX;
+    budget = std::max( budget, divide_round_up_size( urgent, urgent_steps ) );
     budget = std::max( std::size_t{ 1 }, budget );
     TracyPlot( "Lazy Border OMT Budget", static_cast<int64_t>( budget ) );
 
     while( budget > 0 && !lazy_omt_queue_.empty() ) {
         const auto key = lazy_omt_queue_.front();
         lazy_omt_queue_.pop_front();
-        lazy_omt_queued_.erase( key );
         if( !is_omt_column_loaded( key ) ) {
             load_lazy_omt_column( key );
         }
@@ -461,9 +523,25 @@ void submap_load_manager::update()
     {
         std::vector<std::pair<load_request_handle, tripoint>> cur_centers;
         cur_centers.reserve( requests_.size() );
+        auto bubble_delta = point_zero;
         std::ranges::for_each( requests_, [&]( const auto & kv ) {
             cur_centers.emplace_back( kv.first, kv.second.center.raw() );
+            const auto &req = kv.second;
+            if( req.source != load_request_source::reality_bubble ) {
+                return;
+            }
+            const auto prev = std::ranges::find_if( prev_centers_, [&]( const auto &entry ) {
+                return entry.first == kv.first;
+            } );
+            if( prev == prev_centers_.end() ) {
+                return;
+            }
+            bubble_delta = point{ signum( req.center.x() - prev->second.x ),
+                                  signum( req.center.y() - prev->second.y ) };
         } );
+        if( bubble_delta != point_zero ) {
+            lazy_omt_preload_direction_ = bubble_delta;
+        }
         if( cur_centers == prev_centers_ ) {
             process_lazy_border_preload();
             process_retained_omt_eviction();
@@ -839,7 +917,6 @@ void submap_load_manager::flush_prev_desired()
     retained_omts_.clear();
     retained_omt_index_.clear();
     lazy_omt_queue_.clear();
-    lazy_omt_queued_.clear();
     dirty_omts_.clear();
 }
 

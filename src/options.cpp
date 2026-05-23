@@ -2611,6 +2611,11 @@ void options_manager::add_options_performance()
         //                        "fires to be simulated correctly. "
         //                        "0 disables out-of-bubble fire spread loading entirely. " ),
         //      0, 250, 25 );
+        add( "RETAINED_OMT_CACHE_MULTIPLIER", page_id,
+             translate_marker( "Retained Map Cache" ),
+             translate_marker( "Keep more map data loaded to reduce lag when moving around the same general area, "
+                               "at the cost of memory usage." ),
+             1, 20, is_android ? 1 : 3 );
         add( "POWER_PORTAL_LOAD_RADIUS", page_id,
              translate_marker( "Power portal load radius (submaps)" ),
              translate_marker( "Radius in submaps around each end of a power-portal link that is "
@@ -4313,6 +4318,7 @@ void options_manager::cache_to_globals()
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
     lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
+    retained_omt_cache_multiplier = ::get_option<int>( "RETAINED_OMT_CACHE_MULTIPLIER" );
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );
