@@ -531,6 +531,8 @@ class fetch_recipe_ingredients_activity_actor : public activity_actor
     private:
         std::vector<map_ingredient> pending;
         std::size_t idx = 0;
+        tripoint_abs_ms origin;
+        bool returning = false;
 
     public:
         explicit fetch_recipe_ingredients_activity_actor( std::vector<map_ingredient> items ) :
@@ -540,7 +542,7 @@ class fetch_recipe_ingredients_activity_actor : public activity_actor
             return activity_id( "ACT_FETCH_RECIPE_INGREDIENTS" );
         }
 
-        void start( player_activity &, Character & ) override {}
+        void start( player_activity &, Character &who ) override;
         void do_turn( player_activity &act, Character &who ) override;
         void finish( player_activity &, Character & ) override {}
 

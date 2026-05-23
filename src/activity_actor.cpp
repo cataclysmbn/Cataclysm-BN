@@ -1068,9 +1068,24 @@ std::unique_ptr<activity_actor> move_items_activity_actor::deserialize( JsonIn &
     return actor;
 }
 
+void fetch_recipe_ingredients_activity_actor::start( player_activity &, Character &who )
+{
+    origin = get_map().bub_to_abs( who.bub_pos() );
+}
+
 void fetch_recipe_ingredients_activity_actor::do_turn( player_activity &act, Character &who )
 {
     auto &here = get_map();
+
+    // Helper: add item to inventory; overflow drops at the player's origin tile
+    const auto add_or_drop_at_origin = [&]( detached_ptr<item> taken ) {
+        if( !who.can_pick_weight( *taken, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ||
+            !who.can_pick_volume( *taken ) ) {
+            here.add_item_or_charges( here.abs_to_bub( origin ), std::move( taken ) );
+        } else {
+            who.i_add( std::move( taken ) );
+        }
+    };
 
     while( idx < pending.size() ) {
         const map_ingredient &next = pending[idx];
@@ -1092,7 +1107,7 @@ void fetch_recipe_ingredients_activity_actor::do_turn( player_activity &act, Cha
             if( it->typeId() == next.type && !it->made_of( LIQUID ) ) {
                 detached_ptr<item> taken = it->detach();
                 who.mod_moves( -pickup::cost_to_move_item( who, *taken ) );
-                who.i_add_or_drop( std::move( taken ) );
+                add_or_drop_at_origin( std::move( taken ) );
                 break;
             }
         }
@@ -1103,13 +1118,25 @@ void fetch_recipe_ingredients_activity_actor::do_turn( player_activity &act, Cha
                 if( it->typeId() == next.type && !it->made_of( LIQUID ) ) {
                     detached_ptr<item> taken = it->detach();
                     who.mod_moves( -pickup::cost_to_move_item( who, *taken ) );
-                    who.i_add_or_drop( std::move( taken ) );
+                    add_or_drop_at_origin( std::move( taken ) );
                     break;
                 }
             }
         }
 
         ++idx;
+    }
+
+    // All items collected — walk back to origin if needed
+    const tripoint_bub_ms orig_bub = here.abs_to_bub( origin );
+    if( !returning && who.bub_pos() != orig_bub ) {
+        returning = true;
+        auto route = here.route( who.bub_pos(), orig_bub,
+                                 who.get_legacy_pathfinding_settings() );
+        if( !route.empty() ) {
+            who.set_destination( route, who.remove_activity() );
+            return;
+        }
     }
 
     act.set_to_null();
@@ -1119,6 +1146,8 @@ void fetch_recipe_ingredients_activity_actor::serialize( JsonOut &jsout ) const
 {
     jsout.start_object();
     jsout.member( "idx", idx );
+    jsout.member( "origin", origin );
+    jsout.member( "returning", returning );
     jsout.member( "pending" );
     jsout.start_array();
     for( const auto &mi : pending ) {
@@ -1137,6 +1166,8 @@ std::unique_ptr<activity_actor> fetch_recipe_ingredients_activity_actor::deseria
                      std::vector<map_ingredient>{} );
     JsonObject data = jsin.get_object();
     data.read( "idx", actor->idx );
+    data.read( "origin", actor->origin );
+    data.read( "returning", actor->returning );
     for( JsonObject elem : data.get_array( "pending" ) ) {
         map_ingredient mi;
         elem.read( "loc", mi.loc );
