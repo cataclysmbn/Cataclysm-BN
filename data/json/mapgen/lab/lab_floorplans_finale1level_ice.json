@@ -181,9 +181,7 @@
       ],
       "palettes": [ "lab_palette", "lab_loot_research" ],
       "furniture": { "R": "f_rack", "D": "f_desk", "A": "f_artifact_analyzer_console", "P": "t_dimensional_portal" },
-      "mapping": {
-        "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] }
-      },
+      "mapping": { "R": { "item": [ { "item": "dimensional_anchor" }, { "item": "phase_immersion_suit" } ] } },
       "place_nested": [ { "chunks": [ "lab_finale_loot_ice" ], "x": 4, "y": 1 } ],
       "place_loot": [ { "item": "id_science", "x": [ 19, 20 ], "y": [ 2, 5 ] } ],
       "place_monster": [ { "monster": "mon_mech_lifter", "x": 2, "y": 2, "chance": 100 } ]
@@ -311,7 +309,13 @@
       ],
       "palettes": [ "lab_palette" ],
       "mapping": {
-        "r": { "item": [ { "item": "iv_mutagen_alpha", "chance": 100, "repeat": [ 2, 2 ] }, { "item": "iv_mutagen_elfa", "chance": 100, "repeat": [ 2, 2 ] }, { "item": "iv_mutagen_medical", "chance": 100, "repeat": [ 2, 2 ] } ] },
+        "r": {
+          "item": [
+            { "item": "iv_mutagen_alpha", "chance": 100, "repeat": [ 2, 2 ] },
+            { "item": "iv_mutagen_elfa", "chance": 100, "repeat": [ 2, 2 ] },
+            { "item": "iv_mutagen_medical", "chance": 100, "repeat": [ 2, 2 ] }
+          ]
+        },
         "R": { "item": [ { "item": "purifier_smart_shot", "chance": 100 } ] }
       }
     }
@@ -361,7 +365,7 @@
         "r": { "item": [ { "item": "plut_cell", "chance": 100, "repeat": [ 3, 8 ] } ] },
         "R": {
           "items": [
-            {  "item": "heavy_atomic_battery_cell", "chance": 100, "charges": 10000 },
+            { "item": "heavy_atomic_battery_cell", "chance": 100, "charges": 10000 },
             { "item": "adv_UPS_off", "chance": 100, "repeat": [ 2, 2 ] },
             { "item": "v29", "chance": 100 },
             { "item": "laser_rifle", "chance": 100, "repeat": [ 2, 2 ] },
@@ -389,7 +393,11 @@
       "mapping": {
         "r": { "item": [ { "item": "mininuke_mod", "chance": 100, "repeat": [ 6, 10 ] } ] },
         "R": {
-          "item": [ { "item": "recipe_atomic_battery", "chance": 100 }, { "item": "plut_cell", "chance": 100, "repeat": [ 8, 16 ] }, { "item": "mininuke_launcher", "chance": 100 } ]
+          "item": [
+            { "item": "recipe_atomic_battery", "chance": 100 },
+            { "item": "plut_cell", "chance": 100, "repeat": [ 8, 16 ] },
+            { "item": "mininuke_launcher", "chance": 100 }
+          ]
         }
       }
     }
@@ -409,7 +417,9 @@
       "palettes": [ "lab_palette" ],
       "mapping": {
         "r": { "item": [ { "item": "plut_cell", "chance": 100, "repeat": [ 4, 10 ] } ] },
-        "R": { "item": [ { "item": "rm13_armor", "chance": 100, "repeat": [ 2, 2 ] }, { "item": "recipe_caseless", "chance": 100 } ] }
+        "R": {
+          "item": [ { "item": "rm13_armor", "chance": 100, "repeat": [ 2, 2 ] }, { "item": "recipe_caseless", "chance": 100 } ]
+        }
       }
     }
   },
