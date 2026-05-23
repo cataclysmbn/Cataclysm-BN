@@ -988,6 +988,9 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
         if( we_go_up ) {
             return is_supported_wall_climb_anchor( here, change.from );
         }
+        if( here.is_outside( change.from ) && !here.is_outside( change.to ) ) {
+            return false;
+        }
         return is_supported_wall_climb_anchor( here, change.to ) ||
                is_supported_wall_climb_anchor( here, change.from );
     };

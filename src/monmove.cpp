@@ -182,6 +182,10 @@ auto can_wall_climb_between( const map &here, const tripoint_bub_ms &from,
         return wall_climb_anchor_is_usable( here, from );
     }
 
+    if( here.is_outside( from ) && !here.is_outside( to ) ) {
+        return false;
+    }
+
     return wall_climb_anchor_is_usable( here, to ) ||
            wall_climb_anchor_is_usable( here, from );
 }
