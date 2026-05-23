@@ -33,7 +33,7 @@ class font_loader
         int overmap_fontsize = 16;
 
     private:
-        void load_throws( const std::string &path );
+        void load_throws( const fs::path &path );
 
     public:
         void load();

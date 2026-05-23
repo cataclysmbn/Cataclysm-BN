@@ -3,6 +3,7 @@
 #include "color.h"
 #include "string_formatter.h"
 #include "output.h"
+#include "path_utils.h"
 #include "string_utils.h"
 #include "path_display.h"
 
@@ -12,6 +13,11 @@ namespace
 struct section {
     std::string name, path;
 };
+
+auto display_path( const fs::path &path ) -> std::string
+{
+    return cata_files::path_to_generic_utf8( path );
+}
 
 auto create_line_printer( const std::string &base_path )
 {
@@ -42,15 +48,15 @@ auto path_info( const section &title,
 
 auto user_directory() -> std::string
 {
-    return path_info( {_( "User Directory" ), PATH_INFO::user_dir() }, {
-        { _( "user mods" ), PATH_INFO::user_moddir() },
-        { _( "user saves" ), PATH_INFO::savedir() },
-        { _( "user sounds" ), PATH_INFO::user_sound() },
-        { _( "user graphics" ), PATH_INFO::user_gfx() },
-        { _( "user fonts" ), PATH_INFO::user_fontdir() },
-        { _( "user memorials" ), PATH_INFO::memorialdir() },
-        { _( "user templates" ), PATH_INFO::templatedir() },
-        { _( "user graveyard" ), PATH_INFO::graveyarddir() },
+    return path_info( { _( "User Directory" ), display_path( PATH_INFO::user_dir() ) }, {
+        { _( "user mods" ), display_path( PATH_INFO::user_moddir() ) },
+        { _( "user saves" ), display_path( PATH_INFO::savedir() ) },
+        { _( "user sounds" ), display_path( PATH_INFO::user_sound() ) },
+        { _( "user graphics" ), display_path( PATH_INFO::user_gfx() ) },
+        { _( "user fonts" ), display_path( PATH_INFO::user_fontdir() ) },
+        { _( "user memorials" ), display_path( PATH_INFO::memorialdir() ) },
+        { _( "user templates" ), display_path( PATH_INFO::templatedir() ) },
+        { _( "user graveyard" ), display_path( PATH_INFO::graveyarddir() ) },
     } );
 }
 
@@ -59,45 +65,45 @@ auto defaults_directory() -> std::string
     const section title = { _( "Defaults Directory" ),
                             PATH_INFO::base_path().empty()
                             ? _( "(Current Working Directory)" )
-                            : PATH_INFO::base_path()
+                            : display_path( PATH_INFO::base_path() )
                           };
 
     return path_info( title, {
-        { _( "data directory" ), colorize( PATH_INFO::datadir(), c_white ) },
-        { _( "font" ), PATH_INFO::fontdir() },
-        { _( "help" ), PATH_INFO::help() },
-        { _( "mods" ), PATH_INFO::moddir() },
-        { _( "default enabled mods" ), PATH_INFO::mods_dev_default() },
-        { _( "replacement mods" ), PATH_INFO::mods_replacements() },
-        { _( "color templates" ), PATH_INFO::color_templates() },
-        { _( "colors" ), PATH_INFO::colors() },
-        { _( "font config" ), PATH_INFO::fontconfig() },
-        { _( "language definitions file" ), PATH_INFO::language_defs_file() },
-        { _( "sokoban" ), PATH_INFO::sokoban() },
-        { _( "main menu tips" ), PATH_INFO::main_menu_tips() },
-        { _( "keybindings" ), PATH_INFO::keybindingsdir() },
-        { _( "graphics" ), PATH_INFO::gfxdir() },
-        { _( "default sound" ), PATH_INFO::defaultsounddir() },
-        { _( "sound" ), PATH_INFO::data_sound() },
+        { _( "data directory" ), colorize( display_path( PATH_INFO::datadir() ), c_white ) },
+        { _( "font" ), display_path( PATH_INFO::fontdir() ) },
+        { _( "help" ), display_path( PATH_INFO::help() ) },
+        { _( "mods" ), display_path( PATH_INFO::moddir() ) },
+        { _( "default enabled mods" ), display_path( PATH_INFO::mods_dev_default() ) },
+        { _( "replacement mods" ), display_path( PATH_INFO::mods_replacements() ) },
+        { _( "color templates" ), display_path( PATH_INFO::color_templates() ) },
+        { _( "colors" ), display_path( PATH_INFO::colors() ) },
+        { _( "font config" ), display_path( PATH_INFO::fontconfig() ) },
+        { _( "language definitions file" ), display_path( PATH_INFO::language_defs_file() ) },
+        { _( "sokoban" ), display_path( PATH_INFO::sokoban() ) },
+        { _( "main menu tips" ), display_path( PATH_INFO::main_menu_tips() ) },
+        { _( "keybindings" ), display_path( PATH_INFO::keybindingsdir() ) },
+        { _( "graphics" ), display_path( PATH_INFO::gfxdir() ) },
+        { _( "default sound" ), display_path( PATH_INFO::defaultsounddir() ) },
+        { _( "sound" ), display_path( PATH_INFO::data_sound() ) },
     } );
 }
 
 auto config_directory() -> std::string
 {
-    return path_info( { _( "Config Directory" ), PATH_INFO::config_dir() }, {
-        { _( "debug" ), PATH_INFO::debug() },
-        { _( "crash" ), PATH_INFO::crash() },
-        { _( "options" ), PATH_INFO::options() },
-        { _( "autopickup" ), PATH_INFO::autopickup() },
-        { _( "base colors" ), PATH_INFO::base_colors() },
-        { _( "custom colors" ), PATH_INFO::custom_colors() },
-        { _( "user default mods" ), PATH_INFO::mods_user_default() },
-        { _( "distraction" ), PATH_INFO::distraction() },
-        { _( "user font config" ), PATH_INFO::user_fontconfig() },
-        { _( "user keybindings" ), PATH_INFO::user_keybindings() },
-        { _( "last world" ), PATH_INFO::lastworld() },
-        { _( "panel options" ), PATH_INFO::panel_options() },
-        { _( "safe mode" ), PATH_INFO::safemode() },
+    return path_info( { _( "Config Directory" ), display_path( PATH_INFO::config_dir() ) }, {
+        { _( "debug" ), display_path( PATH_INFO::debug() ) },
+        { _( "crash" ), display_path( PATH_INFO::crash() ) },
+        { _( "options" ), display_path( PATH_INFO::options() ) },
+        { _( "autopickup" ), display_path( PATH_INFO::autopickup() ) },
+        { _( "base colors" ), display_path( PATH_INFO::base_colors() ) },
+        { _( "custom colors" ), display_path( PATH_INFO::custom_colors() ) },
+        { _( "user default mods" ), display_path( PATH_INFO::mods_user_default() ) },
+        { _( "distraction" ), display_path( PATH_INFO::distraction() ) },
+        { _( "user font config" ), display_path( PATH_INFO::user_fontconfig() ) },
+        { _( "user keybindings" ), display_path( PATH_INFO::user_keybindings() ) },
+        { _( "last world" ), display_path( PATH_INFO::lastworld() ) },
+        { _( "panel options" ), display_path( PATH_INFO::panel_options() ) },
+        { _( "safe mode" ), display_path( PATH_INFO::safemode() ) },
     } );
 }
 

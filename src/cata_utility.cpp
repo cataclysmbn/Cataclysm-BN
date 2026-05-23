@@ -18,6 +18,7 @@
 #include "json.h"
 #include "options.h"
 #include "output.h"
+#include "path_utils.h"
 #include "rng.h"
 #include "translations.h"
 #include "units.h"
@@ -228,11 +229,11 @@ noexcept
     return *this;
 }
 
-cata_ofstream &cata_ofstream::open( const std::string &path )
+auto cata_ofstream::open( const fs::path &path ) -> cata_ofstream &
 {
-    std::wstring mode = cata_ios_mode_to_c( true, _mode );
+    auto mode = cata_ios_mode_to_c( true, _mode );
 
-    _file = _wfopen( utf8_to_wstr( path ).c_str(), mode.c_str() );
+    _file = _wfopen( path.wstring().c_str(), mode.c_str() );
     if( !_file ) {
         // failed
         return *this;
@@ -274,12 +275,12 @@ noexcept
     return *this;
 }
 
-cata_ofstream &cata_ofstream::open( const std::string &path )
+auto cata_ofstream::open( const fs::path &path ) -> cata_ofstream &
 {
-    std::ios_base::openmode mode = cata_ios_mode_to_std( std::ios_base::out, _mode );
+    auto mode = cata_ios_mode_to_std( std::ios_base::out, _mode );
 
 #if defined (_MSC_VER)
-    _stream = std::make_unique<std::ofstream>( utf8_to_wstr( path ), mode );
+    _stream = std::make_unique<std::ofstream>( path, mode );
 #else
     _stream = std::make_unique<std::ofstream>( path, mode );
 #endif
@@ -352,11 +353,11 @@ noexcept
     return *this;
 }
 
-cata_ifstream &cata_ifstream::open( const std::string &path )
+auto cata_ifstream::open( const fs::path &path ) -> cata_ifstream &
 {
-    std::wstring mode = cata_ios_mode_to_c( false, _mode );
+    auto mode = cata_ios_mode_to_c( false, _mode );
 
-    _file = _wfopen( utf8_to_wstr( path ).c_str(), mode.c_str() );
+    _file = _wfopen( path.wstring().c_str(), mode.c_str() );
     if( !_file ) {
         // failed
         return *this;
@@ -397,12 +398,12 @@ noexcept
     return *this;
 }
 
-cata_ifstream &cata_ifstream::open( const std::string &path )
+auto cata_ifstream::open( const fs::path &path ) -> cata_ifstream &
 {
-    std::ios_base::openmode mode = cata_ios_mode_to_std( std::ios_base::in, _mode );
+    auto mode = cata_ios_mode_to_std( std::ios_base::in, _mode );
 
 #if defined (_MSC_VER)
-    _stream = std::make_unique<std::ifstream>( utf8_to_wstr( path ), mode );
+    _stream = std::make_unique<std::ifstream>( path, mode );
 #else
     _stream = std::make_unique<std::ifstream>( path, mode );
 #endif
@@ -469,7 +470,8 @@ std::istream *cata_ifstream::operator->()
  * @param fail_message The message to display if the write fails.
  * @return True if the write was successful, false otherwise.
  */
-bool write_to_file( const std::string &path, file_write_fn &writer, const char *const fail_message )
+auto write_to_file( const fs::path &path, file_write_fn &writer,
+                    const char *const fail_message ) -> bool
 {
     try {
         // Any of the below may throw. ofstream_wrapper will clean up the temporary path on its own.
@@ -479,15 +481,17 @@ bool write_to_file( const std::string &path, file_write_fn &writer, const char *
         return true;
     } catch( const std::exception &err ) {
         if( fail_message && fail_message[0] != '\0' ) {
-            popup( _( "Failed to write %1$s to \"%2$s\": %3$s" ), fail_message, path.c_str(), err.what() );
+            popup( _( "Failed to write %1$s to \"%2$s\": %3$s" ), fail_message,
+                   cata_files::path_to_generic_utf8( path ), err.what() );
         } else if( fail_message == nullptr ) {
-            std::throw_with_nested( std::runtime_error( "file write failed: " + path ) );
+            std::throw_with_nested( std::runtime_error( "file write failed: " +
+                                    cata_files::path_to_generic_utf8( path ) ) );
         }
         return false;
     }
 }
 
-ofstream_wrapper::ofstream_wrapper( const std::string &path, const cata_ios_mode mode )
+ofstream_wrapper::ofstream_wrapper( const fs::path &path, const cata_ios_mode mode )
     : path( path )
 
 {
@@ -530,7 +534,7 @@ std::istream &safe_getline( std::istream &ins, std::string &str )
     }
 }
 
-bool read_from_file( const std::string &path, file_read_fn reader, bool optional )
+auto read_from_file( const fs::path &path, file_read_fn reader, bool optional ) -> bool
 {
     if( optional && !file_exist( path ) ) {
         return false;
@@ -548,15 +552,16 @@ bool read_from_file( const std::string &path, file_read_fn reader, bool optional
         return true;
 
     } catch( const std::exception &err ) {
-        debugmsg( _( "Failed to read from \"%1$s\": %2$s" ), path.c_str(), err.what() );
+        debugmsg( _( "Failed to read from \"%1$s\": %2$s" ), cata_files::path_to_generic_utf8( path ),
+                  err.what() );
         return false;
     }
 }
 
-bool read_from_file_json( const std::string &path, file_read_json_fn reader, bool optional )
+auto read_from_file_json( const fs::path &path, file_read_json_fn reader, bool optional ) -> bool
 {
     return read_from_file( path, [&]( std::istream & fin ) {
-        JsonIn jsin( fin, path );
+        JsonIn jsin( fin, cata_files::path_to_generic_utf8( path ) );
         reader( jsin );
     }, optional );
 }
@@ -570,7 +575,8 @@ void ofstream_wrapper::open( cata_ios_mode mode )
     // Create a *unique* temporary path. No other running program should
     // use this path. If the file exists, it must be of a *former* program
     // instance and can savely be deleted.
-    temp_path = path + "." + get_pid_string() + ".temp";
+    temp_path = path;
+    temp_path += "." + get_pid_string() + ".temp";
 
     if( file_exist( temp_path ) ) {
         remove_file( temp_path );
@@ -599,7 +605,8 @@ void ofstream_wrapper::close()
     }
     if( !rename_file( temp_path, path ) ) {
         // Leave the temp path, so the user can move it if possible.
-        throw std::runtime_error( "moving temporary file \"" + temp_path + "\" failed" );
+        throw std::runtime_error( "moving temporary file \"" +
+                                  cata_files::path_to_generic_utf8( temp_path ) + "\" failed" );
     }
 }
 

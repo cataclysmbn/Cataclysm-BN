@@ -10255,8 +10255,12 @@ void map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &en
 void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
                           const point_bub_ms &min, const point_bub_ms &max )
 {
-    auto reduce = TFLAG_REDUCE_SCENT;
-    auto block = TFLAG_NO_SCENT;
+    if( st_sy <= 0 ) {
+        return;
+    }
+    const auto scent_cache_x = static_cast<int>( scent_transfer.size() / static_cast<size_t>( st_sy ) );
+    const auto reduce = TFLAG_REDUCE_SCENT;
+    const auto block = TFLAG_NO_SCENT;
     auto fill_values = [&]( const tripoint_bub_sm & gp, const submap * sm, point_sm_ms lp ) {
         // We need to generate the x/y coordinates, because we can't get them "for free"
         const auto p = project_combine( gp, lp );
@@ -10276,6 +10280,16 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
                    tripoint_bub_ms( max.x(), max.y(), abs_sub.z() ), fill_values );
 
     const inclusive_rectangle<point_bub_ms> local_bounds( min, max );
+    const auto mark_vehicle_obstruction = [&]( const tripoint_bub_ms & part_pos ) {
+        if( !local_bounds.contains( part_pos.xy() ) || part_pos.x() < 0 || part_pos.y() < 0 ||
+            part_pos.x() >= scent_cache_x || part_pos.y() >= st_sy ) {
+            return;
+        }
+        const auto index = static_cast<size_t>( part_pos.x() * st_sy + part_pos.y() );
+        if( scent_transfer[index] == 5 ) {
+            scent_transfer[index] = 1;
+        }
+    };
 
     // Now vehicles
 
@@ -10283,23 +10297,13 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
     for( auto &wrapped_veh : vehs ) {
         vehicle &veh = *( wrapped_veh.v );
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OBSTACLE ) ) {
-            const tripoint_bub_ms part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) &&
-                scent_transfer[part_pos.x() * st_sy + part_pos.y()] == 5 ) {
-                scent_transfer[part_pos.x() * st_sy + part_pos.y()] = 1;
-            }
+            mark_vehicle_obstruction( vp.pos() );
         }
 
         // Doors, but only the closed ones
         for( const vpart_reference &vp : veh.get_any_parts( VPFLAG_OPENABLE ) ) {
-            if( vp.part().open ) {
-                continue;
-            }
-
-            const tripoint_bub_ms part_pos = vp.pos();
-            if( local_bounds.contains( part_pos.xy() ) &&
-                scent_transfer[part_pos.x() * st_sy + part_pos.y()] == 5 ) {
-                scent_transfer[part_pos.x() * st_sy + part_pos.y()] = 1;
+            if( !vp.part().open ) {
+                mark_vehicle_obstruction( vp.pos() );
             }
         }
     }
