@@ -871,8 +871,20 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
 bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
+    const bool split_needs_rot_actualization = goes_bad() && has_position();
+    const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
+    const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+    const auto split_temperature = !split_needs_rot_actualization ? temperature_flag::TEMP_NORMAL :
+                                   vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
+                                   rot::temperature_flag_for_location( get_map(), *this );
     detached_ptr<item> det = unsafe_split( qty );
+    if( det && split_needs_rot_actualization ) {
+        det = actualize_rot( std::move( det ), split_pos, split_temperature, get_weather() );
+    }
     if( !det ) {
+        if( charges == 0 && has_position() ) {
+            detach().release();
+        }
         return false;
     }
     item &after_split = *det;
