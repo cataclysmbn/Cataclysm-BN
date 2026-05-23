@@ -451,7 +451,7 @@ TEST_CASE( "wall_climbing_monsters_do_not_climb_down_into_interiors", "[monster]
     put_player_underground();
 
     auto &here = get_map();
-    const auto roof_pos = tripoint_bub_ms{ 60, 60, 1 };
+    const auto roof_pos = tripoint{ 60, 60, 1 };
     const auto interior_pos = roof_pos + tripoint_below;
 
     for( const auto &pos : points_in_radius( roof_pos, 1 ) ) {
@@ -459,7 +459,7 @@ TEST_CASE( "wall_climbing_monsters_do_not_climb_down_into_interiors", "[monster]
     }
     here.ter_set( interior_pos, ter_id( "t_floor" ) );
     here.ter_set( interior_pos + tripoint_west, ter_id( "t_wall" ) );
-    here.build_map_cache( interior_pos.z(), true );
+    here.build_map_cache( interior_pos.z, true );
 
     monster &spider = spawn_test_monster( "mon_spider_cellar_giant_s", roof_pos );
 
