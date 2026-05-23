@@ -646,11 +646,9 @@ std::vector<inventory_entry *> inventory_column::get_entries(
 {
     std::vector<inventory_entry *> res;
 
-    if( allows_selecting() ) {
-        for( const auto &elem : entries ) {
-            if( filter_func( elem ) ) {
-                res.push_back( const_cast<inventory_entry *>( &elem ) );
-            }
+    for( const auto &elem : entries ) {
+        if( filter_func( elem ) ) {
+            res.push_back( const_cast<inventory_entry *>( &elem ) );
         }
     }
 
@@ -2052,7 +2050,13 @@ void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t c
         entry.chosen_count = std::min( count, entry.get_available_count() );
         on_change( entry );
     }
+}
 
+[[clang::optnone]]
+std::vector<inventory_entry*> inventory_multiselector::get_selection_column_items() const 
+{
+    auto func = [](const inventory_entry& e){ return e.is_item();};
+    return selection_col->get_entries(func);
 }
 
 inventory_compare_selector::inventory_compare_selector( player &p ) :
@@ -2484,16 +2488,14 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             std::vector<pickup::pick_drop_selection> result;
             std::vector<item*> locations;
             std::vector<int> counts;
-            for (auto col_ptr : get_all_columns()) {
-                for (auto entry_ptr : col_ptr->get_entries([](const inventory_entry& e) { return true; })) {
-                    if (entry_ptr->is_item() && entry_ptr->chosen_count > 0) {
-                        for (auto item_ptr : entry_ptr->locations) {
-                            locations.push_back(item_ptr);
-                            counts.push_back(entry_ptr->chosen_count);
-                        }
-                    }
+
+            for (auto entry_ptr : get_selection_column_items()) {
+                for (auto item_ptr : entry_ptr->locations) {
+                    locations.push_back(item_ptr);
+                    counts.push_back(1);
                 }
             }
+   
             result = pickup::optimize_pickup( locations, counts );
             if( result.empty() ) {
                 popup_getkey( _( "No items were selected.  Use %s to select them." ),
@@ -2510,4 +2512,24 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
     }
 
     return std::vector<pickup::pick_drop_selection>();
+}
+
+inventory_selector::stats inventory_pickup_selector::get_raw_stats() const 
+{
+    units::mass weight_carried = u.weight_carried();
+    units::volume volume_carried = u.volume_carried();
+    std::vector<inventory_entry*> selected_items = get_selection_column_items();
+
+    //Add the weights and volumes of selected items
+    //which might be picked up
+    for (auto entry_ptr : selected_items) {
+        weight_carried += entry_ptr->any_item()->weight() * entry_ptr->chosen_count;
+        volume_carried += entry_ptr->any_item()->volume() * entry_ptr->chosen_count;
+    }
+
+    return get_weight_and_volume_stats(
+               weight_carried,
+               u.weight_capacity(),
+               volume_carried,
+               u.volume_capacity() );
 }

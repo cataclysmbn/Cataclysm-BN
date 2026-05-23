@@ -684,7 +684,7 @@ class inventory_multiselector : public inventory_selector
         void rearrange_columns( size_t client_width ) override;
         size_t query_count( size_t count );
         void set_chosen_count( inventory_entry &entry, size_t count );
-    private:
+        std::vector<inventory_entry*> get_selection_column_items() const;
         std::unique_ptr<inventory_column> selection_col;
 };
 
@@ -751,6 +751,8 @@ class inventory_pickup_selector : public inventory_multiselector
     public:
         inventory_pickup_selector( player &p, const inventory_selector_preset& preset = default_preset);
         std::vector<pickup::pick_drop_selection> execute();
+    protected:
+        stats get_raw_stats() const override;
 };
 
 
