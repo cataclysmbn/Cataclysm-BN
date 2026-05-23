@@ -1,5 +1,6 @@
 #if defined(TILES)
 #include "sdl_geometry.h"
+#include "sdl_utils.h"
 #include "debug.h"
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
@@ -7,26 +8,29 @@
 void GeometryRenderer::horizontal_line( const SDL_Renderer_Ptr &renderer, point pos, int x2,
                                         int thickness, const SDL_Color &color ) const
 {
-    SDL_Rect rect { pos.x, pos.y, x2 - pos.x, thickness };
+    SDL_FRect rect { static_cast<float>( pos.x ), static_cast<float>( pos.y ),
+                     static_cast<float>( x2 - pos.x ), static_cast<float>( thickness ) };
     this->rect( renderer, rect, color );
 }
 
 void GeometryRenderer::vertical_line( const SDL_Renderer_Ptr &renderer, point pos, int y2,
                                       int thickness, const SDL_Color &color ) const
 {
-    SDL_Rect rect { pos.x, pos.y, thickness, y2 - pos.y };
+    SDL_FRect rect { static_cast<float>( pos.x ), static_cast<float>( pos.y ),
+                     static_cast<float>( thickness ), static_cast<float>( y2 - pos.y ) };
     this->rect( renderer, rect, color );
 }
 
 void GeometryRenderer::rect( const SDL_Renderer_Ptr &renderer, point pos, int width,
                              int height, const SDL_Color &color ) const
 {
-    SDL_Rect rect { pos.x, pos.y, width, height };
+    SDL_FRect rect { static_cast<float>( pos.x ), static_cast<float>( pos.y ),
+                     static_cast<float>( width ), static_cast<float>( height ) };
     this->rect( renderer, rect, color );
 }
 
 
-void DefaultGeometryRenderer::rect( const SDL_Renderer_Ptr &renderer, const SDL_Rect &rect,
+void DefaultGeometryRenderer::rect( const SDL_Renderer_Ptr &renderer, const SDL_FRect &rect,
                                     const SDL_Color &color ) const
 {
     SetRenderDrawColor( renderer, color.r, color.g, color.b, color.a );
@@ -35,20 +39,11 @@ void DefaultGeometryRenderer::rect( const SDL_Renderer_Ptr &renderer, const SDL_
 
 ColorModulatedGeometryRenderer::ColorModulatedGeometryRenderer( const SDL_Renderer_Ptr &renderer )
 {
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-    static const Uint32 rmask = 0xff000000;
-    static const Uint32 gmask = 0x00ff0000;
-    static const Uint32 bmask = 0x0000ff00;
-    static const Uint32 amask = 0x000000ff;
-#else
-    static const Uint32 rmask = 0x000000ff;
-    static const Uint32 gmask = 0x0000ff00;
-    static const Uint32 bmask = 0x00ff0000;
-    static const Uint32 amask = 0xff000000;
-#endif
-    SDL_Surface_Ptr alt_surf( SDL_CreateRGBSurface( 0, 1, 1, 32, rmask, gmask, bmask, amask ) );
+    SDL_Surface_Ptr alt_surf = CreateSurface( sdl_color_pixel_format, 1, 1 );
     if( alt_surf ) {
-        FillRect( alt_surf, nullptr, SDL_MapRGB( alt_surf->format, 255, 255, 255 ) );
+        FillSurfaceRect( alt_surf, nullptr,
+                         SDL_MapRGB( SDL_GetPixelFormatDetails( alt_surf->format ), nullptr,
+                                     255, 255, 255 ) );
 
         tex.reset( SDL_CreateTextureFromSurface( renderer.get(), alt_surf.get() ) );
         alt_surf.reset();
@@ -65,7 +60,7 @@ ColorModulatedGeometryRenderer::ColorModulatedGeometryRenderer( const SDL_Render
     }
 }
 
-void ColorModulatedGeometryRenderer::rect( const SDL_Renderer_Ptr &renderer, const SDL_Rect &rect,
+void ColorModulatedGeometryRenderer::rect( const SDL_Renderer_Ptr &renderer, const SDL_FRect &rect,
         const SDL_Color &color ) const
 {
     if( tex ) {

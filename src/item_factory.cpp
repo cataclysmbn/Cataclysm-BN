@@ -22,6 +22,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "color.h"
+#include "coordinates.h"
 #include "damage.h"
 #include "debug.h"
 #include "debug_menu.h"
@@ -39,15 +40,8 @@
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
-#include "point.h"
 
 class player;
-
-namespace iuse
-{
-auto report_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
-auto modify_fluid_grid_connections( player *, item *, bool, const tripoint & ) -> int;
-} // namespace iuse
 #include "material.h"
 #include "options.h"
 #include "recipe.h"
@@ -65,6 +59,7 @@ auto modify_fluid_grid_connections( player *, item *, bool, const tripoint & ) -
 #include "value_ptr.h"
 #include "veh_type.h"
 #include "vitamin.h"
+#include "wheel_dimensions.h"
 
 class player;
 struct tripoint;
@@ -853,7 +848,7 @@ class iuse_function_wrapper : public iuse_actor
             : iuse_actor( type ), cpp_function( f ) { }
 
         ~iuse_function_wrapper() override = default;
-        int use( player &p, item &it, bool a, const tripoint &pos ) const override {
+        int use( player &p, item &it, bool a, const tripoint_bub_ms &pos ) const override {
             return ( *cpp_function )( &p, &it, a, pos );
         }
         std::unique_ptr<iuse_actor> clone() const override {
@@ -1139,6 +1134,9 @@ void Item_factory::init()
     add_actor( std::make_unique<iuse_flowerpot_collect>() );
     add_actor( std::make_unique<iuse_dimension_travel>() );
     add_actor( std::make_unique<iuse_pocket_dimension>() );
+    add_actor( std::make_unique<iuse_portal_link>() );
+    add_actor( std::make_unique<iuse_paint_stuff>() );
+    add_actor( std::make_unique<iuse_paint_stuff_config>() );
 
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
@@ -1346,6 +1344,19 @@ void Item_factory::check_definitions() const
             }
             if( type->ammo->range != 0 && type->ammo->shape ) {
                 msg += string_format( "shape is set, but range is %d != 0", type->ammo->range );
+            }
+            if( type->ammo->shot ) {
+                if( type->ammo->shot->count <= 0 ) {
+                    msg += string_format( "shot.count must be positive, but is %d\n",
+                                          type->ammo->shot->count );
+                }
+                if( type->ammo->shot->half_angle < 0 ) {
+                    msg += string_format( "shot.half_angle must be non-negative, but is %.2f\n",
+                                          type->ammo->shot->half_angle );
+                }
+                if( type->ammo->shape && type->ammo->shot->count > 1 ) {
+                    msg += "shape and shot.count > 1 cannot be combined\n";
+                }
             }
         }
         if( type->battery ) {
@@ -1782,6 +1793,12 @@ void islot_ammo::load( const JsonObject &jo )
     assign( jo, "effects", ammo_effects );
     optional( jo, was_loaded, "show_stats", force_stat_display, std::nullopt );
     optional( jo, was_loaded, "shape", shape, std::nullopt );
+    if( jo.has_object( "shot" ) ) {
+        const auto shot_jo = jo.get_object( "shot" );
+        shot = islot_ammo::shot_data {};
+        assign( shot_jo, "count", shot->count );
+        assign( shot_jo, "half_angle", shot->half_angle );
+    }
     assign( jo, "aimedcritmaxbonus", aimedcritmaxbonus );
     assign( jo, "aimedcritbonus", aimedcritbonus );
     assign( jo, "speed", speed );
@@ -1829,8 +1846,12 @@ void Item_factory::load_engine( const JsonObject &jo, const std::string &src )
 
 void Item_factory::load( islot_wheel &slot, const JsonObject &jo, const std::string & )
 {
-    assign( jo, "diameter", slot.diameter );
-    assign( jo, "width", slot.width );
+    if( const auto diameter = wheel_dimensions::read_from_json( jo, "diameter" ) ) {
+        slot.diameter = *diameter;
+    }
+    if( const auto width = wheel_dimensions::read_from_json( jo, "width" ) ) {
+        slot.width = *width;
+    }
 }
 
 void Item_factory::load_wheel( const JsonObject &jo, const std::string &src )
@@ -1995,35 +2016,8 @@ void Item_factory::load( islot_armor &slot, const JsonObject &jo, const std::str
     assign( jo, "valid_mods", slot.valid_mods, strict );
 
     if( jo.has_array( "armor_portion_data" ) ) {
-        bool dont_add_first = false;
-        if( !slot.data.empty() ) { // Uses copy-from
-            dont_add_first = true;
-            const JsonObject &obj = *jo.get_array( "armor_portion_data" ).begin();
-
-            if( obj.has_array( "encumbrance" ) ) {
-                slot.data[0].encumber = obj.get_array( "encumbrance" ).get_int( 0 );
-                slot.data[0].max_encumber = obj.get_array( "encumbrance" ).get_int( 1 );
-            } else if( obj.has_int( "encumbrance" ) ) {
-                slot.data[0].encumber = obj.get_int( "encumbrance" );
-                slot.data[0].max_encumber = slot.data[0].encumber;
-            }
-            if( obj.has_int( "coverage" ) ) {
-                slot.data[0].coverage = obj.get_int( "coverage" );
-            }
-            body_part_set temp_cover_data;
-            assign_coverage_from_json( obj, "covers", temp_cover_data, slot.sided );
-            if( temp_cover_data.any() ) {
-                slot.data[0].covers = temp_cover_data;
-            }
-        }
-
+        slot.data.clear();
         for( const JsonObject &obj : jo.get_array( "armor_portion_data" ) ) {
-            // If this item used copy-from, data[0] is already set, so skip adding first data
-            if( dont_add_first ) {
-                obj.allow_omitted_members();
-                dont_add_first = false;
-                continue;
-            }
             armor_portion_data tempData;
             body_part_set temp_cover_data;
             assign_coverage_from_json( obj, "covers", temp_cover_data, slot.sided );

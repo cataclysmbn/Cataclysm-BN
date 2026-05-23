@@ -11,7 +11,6 @@
 #include <ranges>
 
 #include "calendar.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cuboid_rectangle.h"
 #include "debug.h"
@@ -185,16 +184,6 @@ auto clear_transformer_last_run_at( const tripoint_abs_ms &p ) -> void
     target_submap->transformer_last_run.erase( target_pos );
 }
 
-auto ticks_between( const time_point &from, const time_point &to,
-                    const time_duration &tick_length ) -> int
-{
-    if( tick_length <= 0_turns ) {
-        return 0;
-    }
-    return ( to_turn<int>( to ) / to_turns<int>( tick_length ) ) -
-           ( to_turn<int>( from ) / to_turns<int>( tick_length ) );
-}
-
 auto volume_from_charges( const itype_id &liquid_type, int charges ) -> units::volume
 {
     if( charges <= 0 ) {
@@ -249,7 +238,7 @@ auto batches_for_inputs( const std::vector<fluid_grid_transform_io> &inputs,
 
 auto is_outdoors_at( const tripoint_abs_ms &p ) -> bool
 {
-    return get_map().is_outside( get_map().getlocal( p.raw() ) );
+    return get_map().is_outside( get_map().abs_to_bub( p ) );
 }
 
 auto rain_charges_for( double collector_area_m2, const weather_sum &weather ) -> int
@@ -298,7 +287,7 @@ auto collect_transformers( const std::set<tripoint_abs_omt> &grid,
         }
         std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
             std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
-                const auto pos = point( x, y );
+                const auto pos = point_sm_ms( x, y );
                 const auto &furn = sm->get_furn( pos ).obj();
                 if( !furn.fluid_grid ) {
                     return;
@@ -310,7 +299,7 @@ auto collect_transformers( const std::set<tripoint_abs_omt> &grid,
                 if( !furn.fluid_grid->transformer ) {
                     return;
                 }
-                const auto abs_pos = project_combine( sm_coord, point_sm_ms( pos ) );
+                const auto abs_pos = project_combine( sm_coord, pos );
                 transformers.push_back( transformer_instance{
                     .pos = abs_pos,
                     .config = &*furn.fluid_grid->transformer,
@@ -333,7 +322,7 @@ auto tank_capacity_at( mapbuffer &mb, const tripoint_abs_ms &p ) -> std::optiona
         return std::nullopt;
     }
 
-    const auto &furn = target_submap->get_furn( target_pos.raw() ).obj();
+    const auto &furn = target_submap->get_furn( target_pos ).obj();
     return tank_capacity_for_furn( furn );
 }
 
@@ -347,7 +336,7 @@ auto has_transformer_at( mapbuffer &mb, const tripoint_abs_ms &p ) -> bool
         return false;
     }
 
-    const auto &furn = target_submap->get_furn( target_pos.raw() ).obj();
+    const auto &furn = target_submap->get_furn( target_pos ).obj();
     if( !furn.fluid_grid ) {
         return false;
     }
@@ -606,7 +595,7 @@ auto submap_has_transformer( const tripoint_abs_sm &sm_coord, mapbuffer &mb ) ->
             if( found ) {
                 return;
             }
-            const auto pos = point( x, y );
+            const auto pos = point_sm_ms( x, y );
             const auto &furn = sm->get_furn( pos ).obj();
             if( !furn.fluid_grid ) {
                 return;
@@ -710,7 +699,7 @@ auto submap_tank_cache_at( const tripoint_abs_sm &sm_coord,
     auto entry = submap_tank_cache_entry{};
     std::ranges::for_each( std::views::iota( 0, SEEX ), [&]( int x ) {
         std::ranges::for_each( std::views::iota( 0, SEEY ), [&]( int y ) {
-            const auto pos = point( x, y );
+            const auto pos = point_sm_ms( x, y );
             const auto &furn = sm->get_furn( pos ).obj();
             const auto tank_capacity = tank_capacity_for_furn( furn );
             if( tank_capacity ) {
@@ -1159,7 +1148,7 @@ class fluid_grid_tracker
                 return;
             }
 
-            const auto &furn = target_submap->get_furn( target_pos.raw() ).obj();
+            const auto &furn = target_submap->get_furn( target_pos ).obj();
             const auto tank_capacity = tank_capacity_for_furn( furn );
             if( !tank_capacity ) {
                 return;
@@ -1184,7 +1173,7 @@ class fluid_grid_tracker
             enforce_tank_type_limit( state, tank_count );
             grid.set_state( state );
 
-            auto &items = target_submap->get_items( target_pos.raw() );
+            auto &items = target_submap->get_items( target_pos );
             items.clear();
 
             std::ranges::for_each( overflow.stored_by_type, [&]( const auto & entry ) {
@@ -1436,7 +1425,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
     auto state_dirty = false;
     std::ranges::for_each( transformers, [&]( const transformer_instance & inst ) {
         const auto last_run = transformer_last_run_at( inst.pos );
-        const auto tick_count = ticks_between( last_run, to, inst.config->tick_interval );
+        const auto tick_count = calendar::ticks_between( last_run, to, inst.config->tick_interval );
         if( tick_count <= 0 ) {
             return;
         }
@@ -1445,7 +1434,7 @@ auto process_transformers_at( const tripoint_abs_omt &p, time_point to ) -> void
             if( !is_outdoors_at( inst.pos ) ) {
                 return;
             }
-            const auto weather = sum_conditions( last_run, to, inst.pos.raw() );
+            const auto weather = sum_conditions( last_run, to, inst.pos );
             if( weather.rain_amount <= 0 ) {
                 return;
             }
@@ -1693,7 +1682,7 @@ auto on_tank_removed( const tripoint_abs_ms &p ) -> void
         return;
     }
 
-    auto &items = target_submap->get_items( target_pos.raw() );
+    auto &items = target_submap->get_items( target_pos );
     std::ranges::for_each( overflow.stored_by_type, [&]( const auto & entry ) {
         if( entry.second <= 0_ml ) {
             return;

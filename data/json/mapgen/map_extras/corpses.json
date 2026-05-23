@@ -136,6 +136,45 @@
   {
     "type": "mapgen",
     "method": "json",
+    "update_mapgen_id": "mx_survivor",
+    "object": {
+      "place_nested": [
+        {
+          "chunks": [ [ "lost_survivors_chunk_2", 90 ], [ "lost_survivors_chunk_3", 10 ] ],
+          "x": [ 1, 22 ],
+          "y": [ 1, 22 ],
+          "repeat": [ 10, 16 ]
+        },
+        { "chunks": [ [ "lost_survivors_chunk_1", 100 ] ], "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 1, 3 ] }
+      ],
+      "place_loot": [ { "group": "mass_grave_casings", "chance": 80, "repeat": 20, "x": [ 1, 22 ], "y": [ 1, 22 ] } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lost_survivors_chunk_1",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "place_loot": [ { "group": "map_extra_corpse", "x": 0, "y": 0 } ],
+      "place_items": [ { "item": "mon_zombie_survivor_elite_death_drops", "chance": 100, "x": 0, "y": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lost_survivors_chunk_2",
+    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "group": "GROUP_ZOMBIE", "chance": 100, "x": 0, "y": 0 } ] }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "lost_survivors_chunk_3",
+    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "group": "GROUP_ZOMBIE_UPGRADE", "chance": 100, "x": 0, "y": 0 } ] }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
     "update_mapgen_id": "mx_science",
     "object": {
       "place_nested": [
@@ -370,5 +409,45 @@
       "mapgensize": [ 4, 4 ],
       "place_monster": [ { "monster": [ [ "mon_zombie_cop", 75 ], [ "mon_zombie_swat", 25 ] ], "chance": 100, "x": [ 0, 3 ], "y": [ 0, 3 ] } ]
     }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "update_mapgen_id": "mx_crawler",
+    "object": {
+      "place_nested": [
+        {
+          "chunks": [ [ "mx_crawler_chunk_2", 90 ], [ "mx_crawler_chunk_3", 40 ] ],
+          "x": [ 8, 14 ],
+          "y": [ 8, 14 ],
+          "repeat": [ 7, 9 ]
+        },
+        { "chunks": [ [ "mx_crawler_chunk_1", 100 ] ], "x": [ 1, 22 ], "y": [ 1, 22 ], "repeat": [ 3, 5 ] }
+      ],
+      "place_loot": [ { "group": "migo_table_corpses", "chance": 80, "repeat": 10, "x": [ 8, 14 ], "y": [ 8, 14 ] } ],
+      "place_monster": [ { "monster": "mon_mutant_crawler", "chance": 100, "x": 0, "y": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "mx_crawler_chunk_1",
+    "object": {
+      "mapgensize": [ 1, 1 ],
+      "place_loot": [ { "group": "map_extra_corpse", "x": 0, "y": 0 } ],
+      "place_items": [ { "item": "mon_zombie_survivor_elite_death_drops", "chance": 100, "x": 0, "y": 0 } ]
+    }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "mx_crawler_chunk_2",
+    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "monster": "mon_chud", "chance": 100, "x": 0, "y": 0 } ] }
+  },
+  {
+    "type": "mapgen",
+    "method": "json",
+    "nested_mapgen_id": "mx_crawler_chunk_3",
+    "object": { "mapgensize": [ 1, 1 ], "place_monster": [ { "monster": "mon_one_eye", "chance": 100, "x": 0, "y": 0 } ] }
   }
 ]

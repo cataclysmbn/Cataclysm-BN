@@ -76,12 +76,8 @@
       },
       { "type": "bite", "cooldown": 5 }
     ],
-    "death_drops": [
-      { "item": "lizardfolk_javelin", "prob": 30 },
-      { "item": "loincloth", "prob": 40 },
-      { "item": "spearsling", "prob": 20 },
-      { "item": "bone_human", "prob": 10 }
-    ]
+    "monster_weapon": "lizardfolk_monster_weapon",
+    "death_drops": [ { "item": "loincloth", "prob": 40 }, { "item": "spearsling", "prob": 20 }, { "item": "bone_human", "prob": 10 } ]
   },
   {
     "id": "mon_lizardfolk_shaman",

@@ -4,6 +4,7 @@
     "type": "vehicle",
     "name": "canoe",
     "blueprint": [ [ "<OO>" ] ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_horizontal", "seat_wood_light", "hand_paddles", "boat_board" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_horizontal", "boat_board", "seat_wood_light" ] },
@@ -165,6 +166,7 @@
       [ "OO" ],
       [ "OO" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "hand_paddles", "raft_board" ] },
       { "x": 1, "y": 0, "parts": [ "frame_wood_cross", "raft_board" ] },
@@ -177,6 +179,7 @@
     "id": "inflatable_boat",
     "type": "vehicle",
     "name": "inflatable boat",
+    "color_palette": "visibility_standard",
     "blueprint": [
       [ "OO" ],
       [ "OO" ]
@@ -282,6 +285,7 @@
       [ "|OO|" ],
       [ "\\--/" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "seat_wood", "hand_paddles", "boat_board" ] },
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "seat_wood", "boat_board" ] },
@@ -317,6 +321,7 @@
       [ "||##==|______|| " ],
       [ " ||||||||++|||  " ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "windshield", "v_curtain", "boat_board" ] },
       { "x": -8, "y": 0, "parts": [ "frame_wood_vertical", "wooden_aisle_vertical", "roof_wood", "boat_board" ] },
@@ -456,6 +461,7 @@
       [ "||##__|_____t||  " ],
       [ " ||||||||++|||   " ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": -9, "y": 0, "parts": [ "frame_wood_horizontal", "woodboard_horizontal", "plating_wood", "boat_board" ] },
       { "x": -8, "y": 0, "parts": [ "frame_wood_vertical", "wood box", "roof_wood", "boat_board" ] },
@@ -630,6 +636,7 @@
       [ "|=t'#_#'_||" ],
       [ "|O||'+'||| " ]
     ],
+    "color_palette": "military_boat",
     "parts": [
       {
         "x": -6,
@@ -816,6 +823,7 @@
       [ "|=_______________||  " ],
       [ "||OO||||||||||||||   " ]
     ],
+    "color_palette": "military_boat",
     "parts": [
       { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
       { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
@@ -1203,6 +1211,7 @@
       [ "|=_______________||  " ],
       [ "||OO||||||||||||||   " ]
     ],
+    "color_palette": "military_boat",
     "parts": [
       { "x": -11, "y": 0, "parts": [ "frame_cross", "plating_steel", "metal_boat_hull" ] },
       { "x": -10, "y": 0, "parts": [ "frame_cross", "aisle_vertical", "metal_boat_hull" ] },
@@ -1237,7 +1246,12 @@
           "seat",
           "seatbelt",
           "turret_mount",
-          { "ammo_types": [ "40x53mm_m430a1" ], "part": "mounted_mk19", "ammo": 60, "ammo_qty": [ 1, 25 ] },
+          {
+            "part": "mounted_25mm_autocannon",
+            "ammo": 80,
+            "ammo_types": [ "25mm_apds", "25mm_hei" ],
+            "ammo_qty": [ 10, 50 ]
+          },
           "metal_boat_hull"
         ]
       },
@@ -1574,6 +1588,7 @@
       [ "=#'||" ],
       [ "|||| " ]
     ],
+    "color_palette": "military_boat",
     "parts": [
       {
         "x": -1,
@@ -1644,6 +1659,7 @@
       [ "=t#'||" ],
       [ "=|||| " ]
     ],
+    "color_palette": "sneaky_standard",
     "parts": [
       {
         "x": -2,
@@ -1700,6 +1716,7 @@
     "type": "vehicle",
     "name": "Barge Trailer",
     "blueprint": [  ],
+    "color_palette": "cargo_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "hdframe_vertical_2", "cargo_space", "metal_boat_hull" ] },
       { "x": 0, "y": -1, "parts": [ "hdframe_vertical_2", "cargo_space", "metal_boat_hull" ] },
@@ -1742,6 +1759,7 @@
     "name": "Scuba Boat",
     "//": "has foldable seats,floor trunks for individual divers and a heater for warming up after diving. the main trunk generally has spare tanks or rebreathers.",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": -2,
@@ -1762,7 +1780,7 @@
       {
         "x": 1,
         "y": 0,
-        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "controls", "seat", "seatbelt", "roof_cloth" ]
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
       },
       { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
@@ -1819,6 +1837,7 @@
     "name": "Fishing Boat",
     "//": "has a fridge and floor trunks. the main fridge generally has alcohol and fish.",
     "blueprint": [  ],
+    "color_palette": "car_standard",
     "parts": [
       {
         "x": -2,
@@ -1839,7 +1858,7 @@
       {
         "x": 1,
         "y": 0,
-        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "controls", "seat", "seatbelt", "roof_cloth" ]
+        "parts": [ "aluminium_boat_hull", "frame_cross", "dashboard", "sonar_array", "controls", "seat", "seatbelt", "roof_cloth" ]
       },
       { "x": -2, "y": 1, "parts": [ "frame_se", "aluminium_boat_hull", "xlhalfboard_vertical" ] },
       { "x": -1, "y": 1, "parts": [ "frame_vertical", "aluminium_boat_hull" ] },
@@ -1921,5 +1940,49 @@
       { "x": 1, "y": 1, "parts": [ "frame_horizontal", "board_ne", "metal_boat_hull" ] }
     ],
     "items": [  ]
+  },
+  {
+    "type": "vehicle",
+    "id": "carbon_catamaran",
+    "name": "Carbon Catamaran",
+    "blueprint": [
+      "y======-++---u",
+      "/.CeeC#......$",
+      "<I_cc_>___I__!",
+      "'_____[___S__!",
+      "<I____>___I__!",
+      "/.ssss#......$",
+      "b======-++---n"
+    ],
+    "blueprint_origin": { "x": 10, "y": 3 },
+    "palette": {
+      "c": [ "frame_carbon_horizontal", "seat", "roof_carbon" ],
+      "C": [ "frame_carbon_horizontal", "carbonfiber_boat_hull", "seat", "roof_carbon" ],
+      "e": [ "frame_carbon_horizontal", "carbonfiber_boat_hull", "veh_table", "roof_carbon" ],
+      "_": [ "frame_carbon_horizontal", "aisle_carbon_horizontal", "roof_carbon" ],
+      ".": [ "frame_carbon_horizontal", "aisle_carbon_horizontal", "roof_carbon", "carbonfiber_boat_hull" ],
+      ">": [ "frame_carbon_horizontal", "carbon_board_horizontal" ],
+      "#": [ "frame_carbon_horizontal", "carbon_board_horizontal", "carbonfiber_boat_hull" ],
+      "<": [ "frame_carbon_horizontal", "carbon_board_horizontal_rear" ],
+      "/": [ "frame_carbon_horizontal", "carbon_board_horizontal_rear", "carbonfiber_boat_hull" ],
+      "[": [ "frame_carbon_horizontal", "door_carbon_opaque" ],
+      "+": [ "frame_carbon_horizontal", "door_carbon", "carbonfiber_boat_hull" ],
+      "s": [ "frame_carbon_horizontal", "bed", "roof_carbon", "carbonfiber_boat_hull" ],
+      "!": [ "frame_carbon_horizontal", "carbon_halfboard_horizontal_2_front" ],
+      "$": [ "frame_carbon_horizontal", "carbon_halfboard_horizontal_2_front", "carbonfiber_boat_hull" ],
+      "-": [ "frame_carbon_horizontal", "carbon_halfboard_vertical", "carbonfiber_boat_hull" ],
+      "=": [ "frame_carbon_horizontal", "carbon_board_vertical", "carbonfiber_boat_hull" ],
+      "I": [ "frame_carbon_horizontal", "box_carbon", "roof_carbon" ],
+      "y": [ "frame_carbon_horizontal", "carbon_board_sw", "carbonfiber_boat_hull" ],
+      "b": [ "frame_carbon_horizontal", "carbon_board_se", "carbonfiber_boat_hull" ],
+      "x": [ "frame_carbon_horizontal", "carbon_halfboard_sw", "carbonfiber_boat_hull" ],
+      "z": [ "frame_carbon_horizontal", "carbon_halfboard_se", "carbonfiber_boat_hull" ],
+      "Y": [ "frame_carbon_horizontal", "carbon_halfboard_sw" ],
+      "B": [ "frame_carbon_horizontal", "carbon_halfboard_se" ],
+      "u": [ "frame_carbon_horizontal", "carbon_board_nw", "carbonfiber_boat_hull" ],
+      "n": [ "frame_carbon_horizontal", "carbon_board_ne", "carbonfiber_boat_hull" ],
+      "'": [ "frame_carbon_horizontal", "windshield", "v_curtain" ],
+      "S": [ "frame_carbon_vertical", "seat", "sail_large" ]
+    }
   }
 ]

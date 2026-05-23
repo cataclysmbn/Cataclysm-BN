@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "npc.h"
 #include "state_helpers.h"
@@ -22,14 +23,14 @@ static void update_body_for( Character &dude, time_duration time )
         return;
     }
     for( time_point now = start; now < end; now += 5_minutes ) {
-        dude.update_body( now, now + 5_minutes );
+        dude.update_body( 5_minutes );
     }
 }
 
 TEST_CASE( "must_sleep_8_hours", "[fatigue]" )
 {
     clear_all_state();
-    standard_npc dude( "sleeper", tripoint_north_west );
+    standard_npc dude( "sleeper", tripoint_bub_ms::north_west() );
     dude.set_fatigue( 0 );
     WHEN( "The character is active for 16 hours" ) {
         update_body_for( dude, 16_hours );
@@ -55,7 +56,7 @@ TEST_CASE( "must_sleep_8_hours", "[fatigue]" )
 TEST_CASE( "sleep_deprivation_rate", "[fatigue]" )
 {
     clear_all_state();
-    standard_npc dude( "sleeper", tripoint_north_west );
+    standard_npc dude( "sleeper", tripoint_bub_ms::north_west() );
     dude.set_fatigue( 0 );
     dude.set_sleep_deprivation( 0 );
     WHEN( "The character is active for 18 hours" ) {

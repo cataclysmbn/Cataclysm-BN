@@ -467,7 +467,7 @@ mission_type_id mission_type::get_random_id( const mission_origin origin,
 {
     std::vector<mission_type_id> valid;
     for( auto &t : get_all() ) {
-        if( std::ranges::find( t.origins, origin ) == t.origins.end() ) {
+        if( !std::ranges::contains( t.origins, origin ) ) {
             continue;
         }
         if( t.place( p ) ) {

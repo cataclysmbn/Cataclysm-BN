@@ -1,5 +1,14 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
+#include <array>
+#include <optional>
+#include <queue>
+#include <set>
+#include <vector>
+
+#include "ballistics.h"
+#include "dispersion.h"
 #include "shape.h"
 #include "shape_impl.h"
 #include "map.h"
@@ -9,62 +18,171 @@
 #include "map_helpers.h"
 #include "overmapbuffer.h"
 #include "game.h"
+#include "itype.h"
+#include "rng.h"
+#include "skill.h"
 #include "state_helpers.h"
 
+static const skill_id skill_gun( "gun" );
+static const skill_id skill_shotgun( "shotgun" );
+
+// Seed 0 preserves the current test-suite RNG state.
+constexpr auto deterministic_rng_seeds = std::array { 1U, 2U, 3U, 4U, 5U, 4242424242U };
+
+static auto fire_shell_at_target( const itype_id &ammo_id,
+                                  const std::vector<itype_id> &armor_ids, const unsigned int seed ) -> int
+{
+    clear_all_state();
+    rng_set_engine_seed( seed );
+    REQUIRE( get_map().has_zlevels() );
+    get_player_character().setpos( tripoint_bub_ms{ 60, 60, -2 } );
+
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
+    auto shooter = standard_npc( "shooter", shooter_pos );
+    shooter.set_skill_level( skill_gun, 10 );
+    shooter.set_skill_level( skill_shotgun, 10 );
+
+    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
+    target->worn.clear();
+    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
+    target->setpos( target_pos );
+    for( const auto &armor_id : armor_ids ) {
+        target->worn.push_back( item::spawn( armor_id ) );
+    }
+    ACTIVE_OVERMAP_BUFFER.insert_npc( target );
+    g->load_npcs();
+
+    detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
+    gun->ammo_set( ammo_id );
+
+    REQUIRE( gun->ammo_data() != nullptr );
+    REQUIRE( gun->ammo_data()->ammo != nullptr );
+    REQUIRE( gun->ammo_data()->ammo->shot.has_value() );
+    REQUIRE( gun->ammo_data()->ammo->shot->count > 1 );
+    REQUIRE_FALSE( ranged::get_shape_factory( *gun ).has_value() );
+    REQUIRE( ranged::get_target_shape_factory( *gun ).has_value() );
+    REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
+
+    const auto target_hp_total_before = target->get_hp();
+    shooter.wield( std::move( gun ) );
+
+    const auto shots_to_fire = 5;
+    const auto shots_fired = ranged::fire_gun( shooter, target_pos, shots_to_fire,
+                             shooter.primary_weapon(),
+                             nullptr );
+
+    REQUIRE( shots_fired == shots_to_fire );
+    return target_hp_total_before - target->get_hp();
+}
+
+static auto fire_shells_at_target( const itype_id &ammo_id,
+                                   const std::vector<itype_id> &armor_ids ) -> int
+{
+    auto total_damage = 0;
+    for( const auto seed : deterministic_rng_seeds ) {
+        CAPTURE( seed );
+        total_damage += fire_shell_at_target( ammo_id, armor_ids, seed );
+    }
+    return total_damage;
+}
+
+static auto reachable_shape_points_no_obstacle( const shape &s,
+        const map &here ) -> std::set<tripoint_bub_ms>
+{
+    const auto origin = tripoint_bub_ms( s.get_origin() );
+    auto queue = std::queue<tripoint_bub_ms>();
+    auto reachable = std::set<tripoint_bub_ms>();
+
+    const auto try_enqueue = [&s, &here, &queue, &reachable]( const tripoint_bub_ms & from,
+    const tripoint_bub_ms & candidate ) {
+        if( reachable.contains( candidate ) || s.distance_at( candidate.raw() ) >= 0.0 ||
+            here.obstructed_by_vehicle_rotation( from, candidate ) ) {
+            return;
+        }
+        reachable.insert( candidate );
+        queue.push( candidate );
+    };
+
+    std::ranges::for_each( here.points_in_radius( origin, 1 ), [&try_enqueue,
+    &origin]( const tripoint_bub_ms & child ) {
+        try_enqueue( origin, child );
+    } );
+
+    while( !queue.empty() ) {
+        const auto p = queue.front();
+        queue.pop();
+        std::ranges::for_each( here.points_in_radius( p, 1 ), [&try_enqueue,
+        &p]( const tripoint_bub_ms & child ) {
+            try_enqueue( p, child );
+        } );
+    }
+
+    reachable.erase( origin );
+    return reachable;
+}
+
 static void shape_coverage_vs_distance_no_obstacle( const shape_factory_impl &c,
-        const tripoint &origin, const tripoint &end )
+        const tripoint_bub_ms &origin, const tripoint_bub_ms &end )
 {
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
     projectile p;
     p.impact = damage_instance();
     p.impact.add_damage( DT_STAB, 10 );
     auto cov = ranged::expected_coverage( *s, get_map(), 200 );
+    const auto reachable_shape_points = reachable_shape_points_no_obstacle( *s, get_map() );
 
-    map &here = get_map();
     inclusive_cuboid<tripoint> bb = s->bounding_box();
     REQUIRE( bb.p_min != bb.p_max );
-    inclusive_cuboid<tripoint> expanded_bb( bb.p_min - point( 5, 5 ), bb.p_max + point( 5, 5 ) );
-    bool had_any = false;
+    const auto origin_coverage = cov.contains( origin ) ? cov.at( origin ) : 0.0;
+    CAPTURE( origin );
+    CAPTURE( end );
+    CAPTURE( cov.size() );
+    CAPTURE( reachable_shape_points.size() );
     CHECK( s->distance_at( rl_vec3d( origin ) ) > 0.0 );
-    CHECK( cov[origin] <= 0.0 );
-    for( const tripoint &p : here.points_in_rectangle( expanded_bb.p_min, expanded_bb.p_max ) ) {
-        double signed_distance = s->distance_at( p );
-        bool distance_on_shape_is_negative = signed_distance < 0.0;
-        bool point_is_covered = cov.find( p ) != cov.end() && cov.at( p ) > 0.0;
-        bool in_bounding_box = bb.contains( p );
+    CHECK( origin_coverage <= 0.0 );
+
+    std::ranges::for_each( cov, [&bb, &reachable_shape_points,
+         &s]( const std::pair<const tripoint_bub_ms, double> &entry ) {
+        const auto &p = entry.first;
+        const auto coverage = entry.second;
+        const auto signed_distance = s->distance_at( p.raw() );
         CAPTURE( p );
         CAPTURE( signed_distance );
-        CAPTURE( cov[p] );
-        CHECK( distance_on_shape_is_negative == point_is_covered );
-        had_any |= distance_on_shape_is_negative;
-        if( point_is_covered ) {
-            CHECK( in_bounding_box );
-        }
-    }
+        CAPTURE( coverage );
+        CHECK( coverage > 0.0 );
+        CHECK( reachable_shape_points.contains( p ) );
+        CHECK( signed_distance < 0.0 );
+        CHECK( bb.contains( p.raw() ) );
+    } );
 
-    CHECK( had_any );
+    std::ranges::for_each( reachable_shape_points, [&cov]( const tripoint_bub_ms & p ) {
+        CAPTURE( p );
+        CHECK( cov.contains( p ) );
+    } );
 }
 
 TEST_CASE( "expected shape coverage mass test", "[shape]" )
 {
     clear_all_state();
     cone_factory c( 15_degrees, 10.0 );
-    const tripoint origin( 60, 60, 0 );
-    for( const tripoint &end : points_in_radius<tripoint>( origin, 5 ) ) {
+    const tripoint_bub_ms origin( 60, 60, 0 );
+    for( const tripoint_bub_ms &end : points_in_radius<tripoint_bub_ms>( origin, 5 ) ) {
         shape_coverage_vs_distance_no_obstacle( c, origin, end );
     }
 
     // Hard case
-    shape_coverage_vs_distance_no_obstacle( c, {65, 65, 0}, tripoint{65, 65, 0} + point( 2, 1 ) );
+    shape_coverage_vs_distance_no_obstacle( c, {65, 65, 0}, tripoint_bub_ms{65, 65, 0} + point_rel_ms(
+            2, 1 ) );
 }
 
 TEST_CASE( "expected shape coverage without obstacles", "[shape]" )
 {
     clear_all_state();
     cone_factory c( 22.5_degrees, 10.0 );
-    const tripoint origin( 60, 60, 0 );
-    const tripoint offset( 5, 5, 0 );
-    const tripoint end = origin + offset;
+    const tripoint_bub_ms origin( 60, 60, 0 );
+    const tripoint_rel_ms offset( 5, 5, 0 );
+    const tripoint_bub_ms end = origin + offset;
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
     auto cov = ranged::expected_coverage( *s, get_map(), 3 );
 
@@ -80,12 +198,12 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
 {
     clear_all_state();
     cone_factory c( 22.5_degrees, 10.0 );
-    const tripoint origin( 60, 60, 0 );
-    const tripoint offset( 5, 0, 0 );
-    const tripoint end = origin + offset;
+    const tripoint_bub_ms origin( 60, 60, 0 );
+    const tripoint_rel_ms offset( 5, 0, 0 );
+    const tripoint_bub_ms end = origin + offset;
     map &here = get_map();
     for( int wall_offset = -10; wall_offset <= 10; wall_offset++ ) {
-        here.ter_set( tripoint( 62, 60 + wall_offset, 0 ), t_window );
+        here.ter_set( tripoint_bub_ms( 62, 60 + wall_offset, 0 ), t_window );
     }
 
     std::shared_ptr<shape> s = c.create( rl_vec3d( origin ), rl_vec3d( end ) );
@@ -97,36 +215,61 @@ TEST_CASE( "expected shape coverage through windows", "[shape]" )
     CHECK( cov[origin + 4 * point_east] == Approx( 0.25 ) );
 }
 
-TEST_CASE( "character using birdshot against another character", "[shape][ranged]" )
+TEST_CASE( "character using birdshot against another character", "[ranged]" )
+{
+    const auto damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
+
+    CHECK( damage > 0 );
+}
+
+TEST_CASE( "birdshot pellets are much worse against armor", "[ranged][balance]" )
+{
+    const auto unarmored_damage = fire_shells_at_target( itype_id( "shot_bird" ), {} );
+    const auto armored_damage = fire_shells_at_target( itype_id( "shot_bird" ),
+    { itype_id( "survivor_suit" ), itype_id( "depowered_helmet" ) } );
+
+    CHECK( unarmored_damage > armored_damage );
+    CHECK( unarmored_damage >= armored_damage * 2 );
+}
+
+TEST_CASE( "pellet projectile keeps last hit critter after overpenetration",
+           "[ranged][projectile]" )
 {
     clear_all_state();
+    rng_set_engine_seed( deterministic_rng_seeds.front() );
     REQUIRE( get_map().has_zlevels() );
-    get_player_character().setpos( {60, 60, -2} );
 
-    const tripoint shooter_pos( 60, 60, 0 );
-    const tripoint target_pos( 64, 64, 0 );
-    standard_npc shooter( "shooter", shooter_pos );
-    shared_ptr_fast<npc> target = make_shared_fast<npc>();
-    target->randomize();
+    auto &shooter = get_player_character();
+    const auto shooter_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 62, 60, 0 );
+    shooter.set_body();
+    shooter.setpos( shooter_pos );
+    shooter.set_skill_level( skill_gun, 10 );
+    shooter.set_skill_level( skill_shotgun, 10 );
+
+    auto target = make_shared_fast<standard_npc>( "pellet_target", target_pos );
     target->worn.clear();
-    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_zero );
+    target->spawn_at_precise( get_map().get_abs_sub().xy(), tripoint_sm_ms::zero() );
     target->setpos( target_pos );
     ACTIVE_OVERMAP_BUFFER.insert_npc( target );
     g->load_npcs();
+    CHECK( shooter.sees( *target ) );
 
     detached_ptr<item> gun = item::spawn( itype_id( "m1014" ) );
-    gun->ammo_set( itype_id( "shot_bird" ) );
-
-    REQUIRE( gun->gun_range() >= rl_dist( shooter_pos, target_pos ) );
-    REQUIRE( g->all_npcs().items.size() == 1 );
-    REQUIRE( target->pos() == target_pos );
-    REQUIRE( g->critter_at( target_pos ) == &*target );
-    const int target_hp_total_before = target->get_hp();
-    REQUIRE( target->get_hp() >= 100 );
+    gun->ammo_set( itype_id( "shot_00" ) );
     shooter.wield( std::move( gun ) );
-    int shots_fired = ranged::fire_gun( shooter, target_pos, 1, shooter.primary_weapon(),
-                                        nullptr );
 
-    REQUIRE( shots_fired > 0 );
-    CHECK( target->get_hp() < target_hp_total_before );
+    auto probe = projectile {};
+    probe.speed = shooter.primary_weapon().gun_speed();
+    probe.impact = shooter.primary_weapon().gun_damage();
+    probe.range = shooter.primary_weapon().gun_range();
+    for( const auto &ammo_effect : shooter.primary_weapon().ammo_effects() ) {
+        probe.add_effect( ammo_effect );
+    }
+    const auto probe_attack = projectile_attack( probe, shooter_pos, target_pos, dispersion_sources {},
+                              &shooter, &shooter.primary_weapon(), nullptr, true );
+
+    CHECK( probe_attack.hit_critter != nullptr );
+    CHECK( probe_attack.dealt_dam.total_damage() > 0 );
+    CHECK( probe_attack.end_point != target_pos );
 }

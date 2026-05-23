@@ -38,6 +38,7 @@
       [ "ambulance", 900 ],
       [ "fire_truck", 300 ],
       [ "fire_engine", 200 ],
+      [ "hazmat_truck", 100 ],
       [ "flatbed_truck", 640 ],
       [ "flatbed_truck_diesel", 160 ],
       [ "pickup", 640 ],
@@ -53,6 +54,7 @@
       [ "bus", 500 ],
       [ "bus_tour", 50 ],
       [ "rv", 500 ],
+      [ "camper_van", 125 ],
       [ "limousine", 200 ],
       [ "lux_rv", 100 ],
       [ "meth_lab", 200 ],
@@ -64,6 +66,8 @@
       [ "ifv_m2_bradley", 50 ],
       [ "humvee", 150 ],
       [ "humvee_gl", 50 ],
+      [ "jltv", 150 ],
+      [ "jltv_gl", 50 ],
       [ "icecream_truck", 50 ],
       [ "food_truck", 50 ],
       [ "wienermobile", 5 ],
@@ -113,9 +117,11 @@
       [ "boat_motor_police", 150 ],
       [ "CG_patrol_boat", 75 ],
       [ "CG_cutter", 25 ],
-      [ "sailboat", 125 ],
+      [ "sailboat", 100 ],
+      [ "carbon_catamaran", 10 ],
       [ "pirate_ship", 25 ],
       [ "DUKW", 75 ],
+      [ "floatplane_small", 25 ],
       [ "hovercraft_motor_single", 25 ],
       [ "CG_cutter_25mm", 25 ]
     ]
@@ -145,7 +151,8 @@
       [ "kayak_racing", 50 ],
       [ "kayak_motorized", 25 ],
       [ "wood_rowboat_double", 60 ],
-      [ "inflatable_boat", 115 ],
+      [ "inflatable_boat", 100 ],
+      [ "floatplane_small", 15 ],
       [ "jetski", 30 ],
       [ "raft", 190 ],
       [ "fishing_boat", 25 ],
@@ -202,6 +209,7 @@
       [ "cube_van_cheap", 500 ],
       [ "hippie_van", 450 ],
       [ "hippie_van_electric", 50 ],
+      [ "camper_van", 50 ],
       [ "4x4_car", 400 ],
       [ "whillys_mb", 100 ]
     ]
@@ -228,8 +236,24 @@
       [ "flatbed_truck", 400 ],
       [ "flatbed_truck_diesel", 100 ],
       [ "semi_truck", 600 ],
+      [ "afs_gas_tanker", 125 ],
+      [ "afs_diesel_tanker", 125 ],
+      [ "afs_water_tanker", 125 ],
+      [ "afs_sewage_tanker", 100 ],
+      [ "afs_milk_tanker", 100 ],
+      [ "afs_beer_tanker", 100 ],
+      [ "afs_cooking_oil_tanker", 100 ],
+      [ "afs_fertilizer_tanker", 50 ],
+      [ "afs_ether_tanker", 50 ],
+      [ "afs_bleach_tanker", 50 ],
+      [ "afs_hydrogen_peroxide_tanker", 50 ],
+      [ "afs_formaldehyde_tanker", 50 ],
+      [ "afs_plutonium_slurry_tanker", 50 ],
+      [ "afs_sulfuric_acid_tanker", 50 ],
       [ "humvee", 600 ],
       [ "humvee_gl", 150 ],
+      [ "jltv", 600 ],
+      [ "jltv_gl", 150 ],
       [ "military_cargo_truck", 300 ],
       [ "policecar", 400 ],
       [ "policecar_k9", 2 ],
@@ -250,6 +274,7 @@
       [ "bus", 350 ],
       [ "bus_tour", 25 ],
       [ "rv", 800 ],
+      [ "camper_van", 200 ],
       [ "limousine", 200 ],
       [ "lux_rv", 100 ],
       [ "surv_rv", 1 ],
@@ -267,6 +292,8 @@
       [ "tank_m60_patton", 50 ],
       [ "howitzer_m109", 75 ],
       [ "tank_xm7_elec", 25 ],
+      [ "tank_xm_hover", 25 ],
+      [ "xapc_hover", 25 ],
       [ "tractor_bandit", 5 ]
     ]
   },
@@ -309,6 +336,37 @@
   },
   {
     "type": "vehicle_group",
+    "id": "suburban_home_compact",
+    "//": "A more compact version of suburban_home. Do not add vehicles that are longer than 6 tiles.",
+    "vehicles": [
+      [ "car", 1000 ],
+      [ "sedan", 1000 ],
+      [ "car_anmlcmpt", 150 ],
+      [ "car_hatch", 500 ],
+      [ "car_mini", 250 ],
+      [ "electric_car", 400 ],
+      [ "electric_sedan", 400 ],
+      [ "beetle", 300 ],
+      [ "muscle_car", 300 ],
+      [ "car_sports", 100 ],
+      [ "car_sports_electric", 50 ],
+      [ "car_racing_electric", 5 ],
+      [ "superbike", 50 ],
+      [ "motorcycle", 200 ],
+      [ "motorcycle_cross", 25 ],
+      [ "motorcycle_enduro", 50 ],
+      [ "motorcycle_sidecart", 100 ],
+      [ "scooter", 100 ],
+      [ "scooter_electric", 100 ],
+      [ "portable_generator", 50 ],
+      [ "bicycle", 200 ],
+      [ "bicycle_dirt", 150 ],
+      [ "bicycle_electric", 100 ],
+      [ "tricycle", 5 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
     "id": "dirtlot",
     "vehicles": [
       [ "quad_bike", 100 ],
@@ -326,16 +384,20 @@
       [ "military_cargo_truck", 100 ],
       [ "humvee", 100 ],
       [ "humvee_gl", 50 ],
+      [ "jltv", 100 ],
+      [ "jltv_gl", 50 ],
       [ "apc", 100 ],
       [ "apc-gl", 50 ],
       [ "aapc-mg", 50 ],
       [ "aapc-gl", 25 ],
       [ "ifv_m2_bradley", 75 ],
       [ "rv", 200 ],
+      [ "camper_van", 50 ],
       [ "limousine", 100 ],
       [ "schoolbus", 200 ],
       [ "bus_tour", 50 ],
       [ "fire_truck", 200 ],
+      [ "hazmat_truck", 50 ],
       [ "policecar", 100 ],
       [ "policecar_k9", 1 ],
       [ "policesuv", 100 ],
@@ -344,6 +406,20 @@
       [ "quad_bike", 100 ],
       [ "truck_trailer", 500 ],
       [ "semi_truck", 500 ],
+      [ "afs_gas_tanker", 125 ],
+      [ "afs_diesel_tanker", 125 ],
+      [ "afs_water_tanker", 125 ],
+      [ "afs_sewage_tanker", 100 ],
+      [ "afs_milk_tanker", 100 ],
+      [ "afs_beer_tanker", 100 ],
+      [ "afs_cooking_oil_tanker", 100 ],
+      [ "afs_fertilizer_tanker", 50 ],
+      [ "afs_ether_tanker", 50 ],
+      [ "afs_bleach_tanker", 50 ],
+      [ "afs_hydrogen_peroxide_tanker", 50 ],
+      [ "afs_formaldehyde_tanker", 50 ],
+      [ "afs_plutonium_slurry_tanker", 50 ],
+      [ "afs_sulfuric_acid_tanker", 50 ],
       [ "cube_van", 1000 ],
       [ "flatbed_truck", 800 ],
       [ "flatbed_truck_diesel", 200 ],
@@ -380,7 +456,9 @@
       [ "tank_m60_patton", 10 ],
       [ "tank_m60_patton_mothballed", 10 ],
       [ "howitzer_m109", 50 ],
-      [ "tank_xm7_elec", 5 ]
+      [ "tank_xm7_elec", 5 ],
+      [ "tank_xm_hover", 5 ],
+      [ "xapc_hover", 5 ]
     ]
   },
   {
@@ -430,6 +508,9 @@
       [ "humvee", 500 ],
       [ "humvee_gl", 250 ],
       [ "humvee_tow", 125 ],
+      [ "jltv", 500 ],
+      [ "jltv_gl", 250 ],
+      [ "jltv_tow", 125 ],
       [ "whillys_mb", 125 ],
       [ "apc", 500 ],
       [ "apc-gl", 500 ],
@@ -440,8 +521,25 @@
       [ "tank_m60_patton", 100 ],
       [ "tank_m60_patton_mothballed", 100 ],
       [ "howitzer_m109", 250 ],
-      [ "tank_xm7_elec", 50 ]
+      [ "tank_xm7_elec", 50 ],
+      [ "tank_xm_hover", 50 ],
+      [ "xapc_hover", 50 ]
     ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "experimental_military_vehicles",
+    "vehicles": [ [ "tank_xm7_elec", 50 ], [ "tank_xm_hover", 30 ], [ "xapc_hover", 40 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "hover_military_vehicles",
+    "vehicles": [ [ "tank_xm_hover", 30 ], [ "xapc_hover", 40 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "military_decoy_vehicles",
+    "vehicles": [ [ "whillys_mb", 50 ], [ "4x4_car", 50 ] ]
   },
   {
     "type": "vehicle_group",
@@ -454,6 +552,8 @@
       [ "autotractor", 1000 ],
       [ "excavator", 500 ],
       [ "helicopter_gyro", 100 ],
+      [ "plane_small_wood", 75 ],
+      [ "biplane_wood", 75 ],
       [ "tractor_heavy_plow", 250 ],
       [ "tractor_heavy_seed", 250 ],
       [ "tractor_heavy_reaper", 250 ],
@@ -508,6 +608,22 @@
     ]
   },
   {
+    "id": "survivor_vehicles",
+    "type": "vehicle_group",
+    "//": "Various vehicles used by survivors for the surrounded vehicle map extra",
+    "vehicles": [
+      [ "military_cargo_truck", 40 ],
+      [ "armored_car", 50 ],
+      [ "humvee", 60 ],
+      [ "jltv", 40 ],
+      [ "whillys_mb", 80 ],
+      [ "pickup_technical", 100 ],
+      [ "tractor_bandit", 100 ],
+      [ "surv_rv", 75 ],
+      [ "surv_car", 180 ]
+    ]
+  },
+  {
     "type": "vehicle_group",
     "id": "junkyard_vehicles",
     "vehicles": [
@@ -529,6 +645,7 @@
       [ "pickup", 480 ],
       [ "pickup_diesel", 120 ],
       [ "hippie_van", 700 ],
+      [ "camper_van", 140 ],
       [ "4x4_car", 400 ],
       [ "whillys_mb", 100 ],
       [ "tractor_bandit", 200 ],
@@ -547,6 +664,7 @@
       [ "suv", 400 ],
       [ "car_mini", 250 ],
       [ "rv", 250 ],
+      [ "camper_van", 50 ],
       [ "meth_lab", 50 ],
       [ "beetle", 400 ],
       [ "muscle_car", 400 ],
@@ -586,6 +704,7 @@
       [ "pickup_diesel", 140 ],
       [ "hippie_van", 720 ],
       [ "hippie_van_electric", 80 ],
+      [ "camper_van", 500 ],
       [ "4x4_car", 600 ],
       [ "whillys_mb", 200 ]
     ]
@@ -600,6 +719,7 @@
       [ "car_anmlcmpt", 100 ],
       [ "suv", 400 ],
       [ "rv", 200 ],
+      [ "camper_van", 50 ],
       [ "tractor_bandit", 250 ],
       [ "car_sports", 300 ],
       [ "cube_van_cheap", 200 ],
@@ -625,6 +745,7 @@
       [ "electric_sedan", 600 ],
       [ "hippie_van", 675 ],
       [ "hippie_van_electric", 75 ],
+      [ "camper_van", 150 ],
       [ "motorcycle", 500 ],
       [ "superbike", 50 ],
       [ "motorcycle_sidecart", 300 ]
@@ -686,7 +807,11 @@
     "id": "runway",
     "//": "Lower chance of wrecked helis, include planes and other aircraft",
     "vehicles": [
-      [ "plane_small", 500 ],
+      [ "plane_small", 400 ],
+      [ "plane_small_wood", 75 ],
+      [ "biplane_wood", 75 ],
+      [ "plane_f35_lightning", 25 ],
+      [ "plane_av8_harrier", 5 ],
       [ "2seater2", 100 ],
       [ "SmallFlier1", 300 ],
       [ "2seater2_Wreck", 100 ],
@@ -706,6 +831,12 @@
     "id": "runway_large",
     "//": "Larger planes or blimps that might not fit in normal spawns",
     "vehicles": [ [ "passenger_plane", 500 ], [ "cargo_plane", 500 ], [ "blimp", 500 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "runway_fuel",
+    "//": "Tankers for refueling planes, blimps, helis, and other vehicles at civilian locations",
+    "vehicles": [ [ "afs_avgas_tanker", 500 ], [ "afs_diesel_tanker", 100 ], [ "afs_gas_tanker", 100 ] ]
   },
   {
     "type": "vehicle_group",
@@ -884,6 +1015,7 @@
       [ "electric_sedan", 600 ],
       [ "hippie_van", 675 ],
       [ "hippie_van_electric", 75 ],
+      [ "camper_van", 150 ],
       [ "motorcycle", 500 ],
       [ "motorcycle_enduro", 50 ],
       [ "superbike", 50 ],
@@ -1004,7 +1136,8 @@
       [ "pickup_diesel", 200 ],
       [ "policecar", 400 ],
       [ "ambulance", 300 ],
-      [ "fire_truck", 150 ]
+      [ "fire_truck", 150 ],
+      [ "hazmat_truck", 50 ]
     ]
   },
   {
@@ -1064,7 +1197,8 @@
       [ "pickup", 640 ],
       [ "pickup_diesel", 160 ],
       [ "hippie_van", 180 ],
-      [ "hippie_van_electric", 200 ]
+      [ "hippie_van_electric", 200 ],
+      [ "camper_van", 50 ]
     ]
   },
   {
@@ -1102,6 +1236,69 @@
       [ "whillys_mb_display", 15 ],
       [ "tank_m60_patton", 25 ],
       [ "tank_m60_patton_mothballed", 25 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "crashed_aircraft",
+    "vehicles": [ [ "plane_f35_lightning_wreckage", 150 ], [ "plane_f15e_eagle_wreckage", 100 ], [ "plane_av8_harrier_wreckage", 80 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "aircraft_carrier_flight_deck",
+    "vehicles": [
+      [ "plane_f35_lightning", 25 ],
+      [ "plane_av8_harrier", 10 ],
+      [ "helicopter_apache_1a", 5 ],
+      [ "helicopter_apache_1b", 10 ],
+      [ "helicopter_apache_1c", 10 ],
+      [ "helicopter_osprey_2c", 15 ],
+      [ "helicopter_osprey_2b", 10 ],
+      [ "Medevac1", 3 ],
+      [ "Medevac1_Wreck", 2 ],
+      [ "Medevac2", 3 ],
+      [ "Medevac2_Wreck", 2 ],
+      [ "helicopter_atomic", 2 ],
+      [ "helicopter_atomic_wreck", 3 ]
+    ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "airfield_hangar",
+    "vehicles": [ [ "plane_f35_lightning", 50 ], [ "plane_f15e_eagle", 75 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "fire_station_vehicles",
+    "vehicles": [ [ "fire_truck", 300 ], [ "fire_engine", 200 ], [ "hazmat_truck", 100 ] ]
+  },
+  {
+    "type": "vehicle_group",
+    "id": "hws_vehicles",
+    "vehicles": [ [ "military_cargo_truck", 500 ], [ "hazmat_truck", 500 ] ]
+  },
+  {
+    "id": "roof_small_aircraft",
+    "type": "vehicle_group",
+    "//": "50% planes, 50% helis, limited to within a 12x12 footprint",
+    "vehicles": [
+      [ "plane_small", 240 ],
+      [ "motorcycle_plane", 10 ],
+      [ "plane_small_wood", 125 ],
+      [ "biplane_wood", 125 ],
+      [ "helicopter_gyro", 100 ],
+      [ "SmallFlier1", 40 ],
+      [ "SmallFlier2", 30 ],
+      [ "SmallFlier3", 30 ],
+      [ "Smallflier1_Wreck", 40 ],
+      [ "SmallFlier2_Wreck", 30 ],
+      [ "SmallFlier3_Wreck", 30 ],
+      [ "2seater2", 50 ],
+      [ "2seater2_Wreck", 50 ],
+      [ "Medevac1", 25 ],
+      [ "Medevac2", 25 ],
+      [ "Medevac1_Wreck", 25 ],
+      [ "Medevac2_Wreck", 25 ]
     ]
   }
 ]

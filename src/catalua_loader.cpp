@@ -3,6 +3,7 @@
 #include "catalua_sol.h"
 #include "filesystem.h"
 #include "path_info.h"
+#include "path_utils.h"
 
 #include <algorithm>
 #include <ranges>
@@ -76,9 +77,9 @@ auto is_within_allowed_paths( fs::path const &resolved ) -> bool
 {
     const auto data_dir = fs::path{ PATH_INFO::datadir() }.lexically_normal();
     const auto base_dir = fs::path{ PATH_INFO::base_path() }.lexically_normal();
-    const auto resolved_norm = resolved.lexically_normal().string();
-    return resolved_norm.starts_with( data_dir.string() ) ||
-           resolved_norm.starts_with( base_dir.string() );
+    const auto resolved_norm = cata_files::path_to_generic_utf8( resolved.lexically_normal() );
+    return resolved_norm.starts_with( cata_files::path_to_generic_utf8( data_dir ) ) ||
+           resolved_norm.starts_with( cata_files::path_to_generic_utf8( base_dir ) );
 }
 
 auto try_file_with_suffixes( fs::path const &base ) -> std::optional<fs::path>
@@ -86,7 +87,7 @@ auto try_file_with_suffixes( fs::path const &base ) -> std::optional<fs::path>
     for( const auto &suffix : { ".lua", "/init.lua" } ) {
         auto path = base;
         path += suffix;
-        if( file_exist( path.string() ) ) {
+        if( file_exist( path ) ) {
             return path;
         }
     }
@@ -145,7 +146,8 @@ auto module_loader( lua_State *L ) -> int
     const auto guard = script_context_guard{ path };
 
     // Load the file
-    const auto status = luaL_loadfile( L, path.string().c_str() );
+    const auto path_string = cata_files::path_to_generic_utf8( path );
+    const auto status = luaL_loadfile( L, path_string.c_str() );
     if( status != LUA_OK ) {
         return lua_error( L );
     }
@@ -168,11 +170,12 @@ auto module_searcher( lua_State *L ) -> int
     }
 
     // Push path as upvalue, return loader closure
-    lua_pushstring( L, found->string().c_str() );
+    const auto found_path = cata_files::path_to_generic_utf8( *found );
+    lua_pushstring( L, found_path.c_str() );
     lua_pushcclosure( L, module_loader, 1 );
 
     // Second return: file path (for debug/error messages)
-    lua_pushstring( L, found->string().c_str() );
+    lua_pushstring( L, found_path.c_str() );
 
     return 2;
 }

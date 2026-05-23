@@ -1,0 +1,95 @@
+[
+  {
+    "type": "item_group",
+    "id": "magic_shop_books",
+    "//": "Additions to magic shop itemgroups are for automatic compatibility with Magiclysm.  General assumption is only the non-faction books were traded around enough for the non-arcanist magical community to start collecting samples.  Todo: remember magic_CBM itemgroup for when magitech is added to arcana.",
+    "items": [ [ "book_potioncraft", 25 ], [ "book_scrollcraft", 15 ], [ "book_summoning", 10 ], [ "book_syncretism", 5 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "potions_common",
+    "items": [ [ "numbness_potion", 25 ], [ "strength_potion", 20 ], [ "speed_potion", 15 ], [ "healing_potion", 10 ] ]
+  },
+  {
+    "id": "alchemy_items",
+    "type": "item_group",
+    "items": [ [ "book_potioncraft", 5 ], { "group": "arcana_hunt_random", "prob": 10 } ]
+  },
+  {
+    "id": "magic_recipe_basic",
+    "type": "item_group",
+    "items": [ [ "book_potioncraft", 25 ], [ "book_scrollcraft", 15 ] ]
+  },
+  {
+    "id": "magic_recipe_advanced",
+    "type": "item_group",
+    "items": [ [ "book_summoning", 10 ], [ "book_syncretism", 5 ] ]
+  },
+  {
+    "id": "spell_scroll_tier_0",
+    "type": "item_group",
+    "items": [
+      [ "scroll_spell_lightning", 10 ],
+      [ "scroll_spell_confusion", 10 ],
+      [ "scroll_spell_acidspray", 10 ],
+      [ "scroll_spell_insight", 10 ],
+      [ "scroll_spell_plants", 10 ]
+    ]
+  },
+  {
+    "id": "spell_scroll_tier_1",
+    "type": "item_group",
+    "items": [ [ "scroll_spell_agile", 10 ], [ "scroll_spell_clarity", 10 ], [ "scroll_spell_elecresist", 10 ] ]
+  },
+  {
+    "id": "spell_scroll_tier_2",
+    "type": "item_group",
+    "items": [
+      [ "scroll_spell_heal", 10 ],
+      [ "scroll_spell_flame_armor", 10 ],
+      [ "scroll_spell_might", 10 ],
+      [ "scroll_spell_cleric", 10 ]
+    ]
+  },
+  {
+    "id": "spell_scroll_tier_3",
+    "type": "item_group",
+    "items": [ [ "scroll_spell_clairvoyance", 10 ], [ "scroll_spell_free_action", 10 ], [ "scroll_spell_invis", 10 ] ]
+  },
+  {
+    "id": "technomancer_items",
+    "type": "item_group",
+    "subtype": "collection",
+    "items": [ [ "thermic_essence_cutter", 5 ] ]
+  },
+  {
+    "id": "magic_CBM",
+    "//": "Weights are expected to generally make Arcana CBMs show up half the time.",
+    "type": "item_group",
+    "items": [
+      [ "bio_electrothermal_arc_projector", 1 ],
+      [ "bio_rift_focus_projector", 1 ],
+      [ "bio_essence_surge_cell", 3 ],
+      [ "bio_temporal_stimulation", 2 ],
+      [ "bio_life_sign_suppression", 3 ],
+      [ "bio_kinetic_amplifier", 1 ]
+    ]
+  },
+  {
+    "id": "bionics_failed_bio",
+    "//": "Weights follow the same conventions as defined in Cata++ for this itemgroup.",
+    "type": "item_group",
+    "items": [ [ "bio_temporal_stimulation", 1 ] ]
+  },
+  {
+    "id": "bionics_apophis",
+    "//": "Weights follow the same conventions as defined in Cata++ for this itemgroup.",
+    "type": "item_group",
+    "items": [ [ "bio_temporal_stimulation", 1 ], [ "bio_life_sign_suppression", 1 ], [ "bio_kinetic_amplifier", 1 ] ]
+  },
+  {
+    "id": "afs_weapons_rare",
+    "type": "item_group",
+    "items": [ { "group": "lab_magitech_weaponry", "prob": 5 } ]
+  }
+]

@@ -535,7 +535,8 @@
       { "group": "nested_M24", "prob": 15 },
       { "group": "nested_m27iar", "prob": 5 },
       { "group": "nested_m4a1", "prob": 45 },
-      { "group": "nested_sig552", "prob": 10 }
+      { "group": "nested_sig552", "prob": 10 },
+      { "group": "nested_m7", "prob": 15 }
     ]
   },
   {
@@ -556,7 +557,8 @@
       { "group": "everyday_M24", "prob": 15 },
       { "group": "everyday_m27iar", "prob": 5 },
       { "group": "everyday_m4a1", "prob": 45 },
-      { "group": "everyday_sig552", "prob": 10 }
+      { "group": "everyday_sig552", "prob": 10 },
+      { "group": "everyday_m7", "prob": 15 }
     ]
   },
   {
@@ -584,7 +586,9 @@
       { "group": "nested_scar_l", "prob": 50 },
       { "group": "nested_scar_h", "prob": 50 },
       { "group": "nested_m110a1", "prob": 50 },
-      { "group": "nested_acr_300blk", "prob": 15 }
+      { "group": "nested_acr_300blk", "prob": 15 },
+      { "group": "nested_m7", "prob": 15 },
+      { "group": "nested_m250", "prob": 10 }
     ]
   },
   {
@@ -612,7 +616,9 @@
       { "group": "everyday_scar_l", "prob": 50 },
       { "group": "everyday_scar_h", "prob": 50 },
       { "group": "everyday_m110a1", "prob": 50 },
-      { "group": "everyday_acr_300blk", "prob": 15 }
+      { "group": "everyday_acr_300blk", "prob": 15 },
+      { "group": "everyday_m7", "prob": 15 },
+      { "group": "everyday_m250", "prob": 10 }
     ]
   },
   {
@@ -663,12 +669,14 @@
       { "group": "nested_m110a1", "prob": 10 },
       { "group": "nested_needlegun", "prob": 10 },
       { "group": "nested_needlepistol", "prob": 10 },
+      { "group": "nested_dp-12", "prob": 10 },
       { "group": "nested_ksg-25", "prob": 10 },
       { "group": "nested_tavor_12", "prob": 10 },
       { "group": "nested_SPAS_12", "prob": 10 },
       { "group": "nested_rm120c", "prob": 10 },
       { "group": "nested_rm228", "prob": 10 },
-      { "group": "nested_deagle_44", "prob": 10 }
+      { "group": "nested_deagle_44", "prob": 10 },
+      { "group": "nested_m7", "prob": 10 }
     ]
   },
   {
@@ -699,7 +707,8 @@
       { "group": "nested_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "nested_longrifle_flintlock", "prob": 90 },
       { "group": "nested_rifle_flintlock", "prob": 90 },
-      { "group": "nested_steyr_aug", "prob": 40 }
+      { "group": "nested_steyr_aug", "prob": 40 },
+      { "group": "nested_m7", "prob": 20 }
     ]
   },
   {
@@ -718,7 +727,8 @@
       { "group": "everyday_iwi_tavor_x95_300blk", "prob": 20 },
       { "group": "everyday_longrifle_flintlock", "prob": 90 },
       { "group": "everyday_rifle_flintlock", "prob": 90 },
-      { "group": "everyday_steyr_aug", "prob": 40 }
+      { "group": "everyday_steyr_aug", "prob": 40 },
+      { "group": "everyday_m7", "prob": 20 }
     ]
   },
   {
@@ -857,6 +867,7 @@
     "id": "guns_shotgun_obscure",
     "//": "Imported or otherwise very obscure shotguns.",
     "items": [
+      { "group": "nested_dp-12", "prob": 10 },
       { "group": "nested_ksg-25", "prob": 15 },
       { "group": "nested_saiga_12", "prob": 25 },
       { "group": "nested_bp_12", "prob": 15 },
@@ -870,6 +881,7 @@
     "id": "carried_guns_shotgun_obscure",
     "//": "Imported or otherwise very obscure shotguns. Actually has a decent chance of having mags instead of loose ammo.",
     "items": [
+      { "group": "everyday_dp-12", "prob": 10 },
       { "group": "everyday_ksg-25", "prob": 15 },
       { "group": "everyday_saiga_12", "prob": 25 },
       { "group": "everyday_bp_12", "prob": 15 },
@@ -1167,6 +1179,40 @@
       { "group": "guns_pistol_common", "prob": 5 },
       { "group": "guns_smg_common", "prob": 5 },
       { "group": "guns_rifle_common", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_surplus",
+    "subtype": "distribution",
+    "entries": [
+      { "collection": [ { "item": "hi_power_9mm" }, { "group": "display_hi_power_9mm_mag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "m9" }, { "group": "display_m9_mag", "count": [ 1, 2 ] } ], "prob": 15 },
+      { "collection": [ { "item": "m1911" }, { "group": "display_m1911_mag", "count": [ 1, 2 ] } ], "prob": 20 },
+      { "collection": [ { "item": "tommygun" }, { "group": "display_tommygun_mag", "count": [ 1, 2 ] } ], "prob": 20 },
+      { "collection": [ { "item": "sten" }, { "item": "stenmag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "fn_fal" }, { "group": "display_fn_fal_mag", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "hk_g3" }, { "group": "display_hk_g3_mag", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "m1a" }, { "group": "display_m14_mag", "count": [ 1, 2 ] } ], "prob": 15 },
+      { "collection": [ { "item": "ar10" }, { "item": "ar10mag_20rd", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "ak47" }, { "group": "display_ak47_mag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "sks" }, { "item": "762x39_clip", "count": [ 1, 2 ], "prob": 50 } ], "prob": 10 },
+      { "collection": [ { "item": "mosin44" }, { "item": "762R_clip", "count": [ 1, 2 ], "prob": 50 } ], "prob": 10 },
+      {
+        "collection": [ { "item": "mosin91_30" }, { "item": "762R_clip", "count": [ 1, 2 ], "prob": 50 } ],
+        "prob": 10
+      },
+      { "collection": [ { "item": "garand" }, { "item": "garandclip", "count": [ 1, 2 ] } ], "prob": 20 },
+      { "collection": [ { "item": "m1903" }, { "item": "3006_clip", "count": [ 1, 2 ], "prob": 50 } ], "prob": 15 },
+      { "collection": [ { "item": "m1918" }, { "group": "display_m1918_mag", "count": [ 1, 2 ] } ], "prob": 15 },
+      { "item": "winchester_1897", "prob": 10 },
+      { "collection": [ { "item": "m60" }, { "item": "ammolink308", "count": [ 100, 200 ] } ], "prob": 10 },
+      { "collection": [ { "item": "m2browning" }, { "item": "ammolink50", "count": [ 100, 200 ] } ], "prob": 5 },
+      { "collection": [ { "item": "m1874_gatling" }, { "item": "gatlingdrum240", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "flamethrower" }, { "item": "pressurized_tank", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "item": "m79", "prob": 5 },
+      { "item": "RPG", "prob": 5 },
+      { "collection": [ { "item": "m202_flash" }, { "item": "m74_clip", "count": [ 1, 2 ] } ], "prob": 5 }
     ]
   }
 ]

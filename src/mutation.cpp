@@ -107,6 +107,26 @@ std::string enum_to_string<mutagen_technique>( mutagen_technique data )
 
 } // namespace io
 
+namespace
+{
+
+auto get_threshold_mutation_for_tier( const mutation_category_id &category_id,
+                                      const size_t tier ) -> trait_id
+{
+    if( !category_id.is_valid() ) {
+        return trait_id::NULL_ID();
+    }
+
+    const auto &threshold_muts = category_id->threshold_muts;
+    if( tier >= threshold_muts.size() ) {
+        return trait_id::NULL_ID();
+    }
+
+    return threshold_muts[tier];
+}
+
+} // namespace
+
 bool Character::has_trait( const trait_id &b ) const
 {
     return my_mutations.contains( b ) || enchantment_cache->get_mutations().contains( b );
@@ -347,10 +367,10 @@ void Character::mutation_effect( const trait_id &mut )
 
                 it->on_takeoff( *this );
                 detached_ptr<item> det = worn.remove( it );
-                get_map().add_item_or_charges( pos(), std::move( det ) );
+                get_map().add_item_or_charges( bub_pos(), std::move( det ) );
             }
 
-            get_map().add_item_or_charges( pos(), std::move( armor ) );
+            get_map().add_item_or_charges( bub_pos(), std::move( armor ) );
         }
         return detached_ptr<item>();
     } );
@@ -541,6 +561,7 @@ void Character::activate_mutation( const trait_id &mut )
     if( !mut->enchantments.empty() ) {
         recalculate_enchantment_cache();
     }
+    get_map().invalidate_lightmap_caches();
 
     if( mdata.transform ) {
         const cata::value_ptr<mut_transform> trans = mdata.transform;
@@ -550,7 +571,7 @@ void Character::activate_mutation( const trait_id &mut )
     }
 
     if( mut == trait_WEB_WEAVER ) {
-        g->m.add_field( pos(), fd_web, 1 );
+        g->m.add_field( bub_pos(), fd_web, 1 );
         add_msg_if_player( _( "You start spinning web with your spinnerets!" ) );
     } else if( mut == trait_BURROW ) {
         tdata.powered = false;
@@ -558,7 +579,7 @@ void Character::activate_mutation( const trait_id &mut )
         invoke_item( burrowing_item );
         return;  // handled when the activity finishes
     } else if( mut == trait_SLIMESPAWNER ) {
-        monster *const slime = g->place_critter_around( mtype_id( "mon_player_blob" ), pos(), 1 );
+        monster *const slime = g->place_critter_around( mtype_id( "mon_player_blob" ), bub_pos(), 1 );
         if( !slime ) {
             // Oops, no room to divide!
             add_msg_if_player( m_bad, _( "You focus, but are too hemmed in to birth a new slimespring!" ) );
@@ -600,13 +621,13 @@ void Character::activate_mutation( const trait_id &mut )
         return;
     } else if( mut == trait_TREE_COMMUNION ) {
         tdata.powered = false;
-        if( !ACTIVE_OVERMAP_BUFFER.ter( global_omt_location() ).obj().is_wooded() ) {
+        if( !get_overmapbuffer( get_dimension() ).ter( abs_omt_pos() ).obj().is_wooded() ) {
             add_msg_if_player( m_info, _( "You can only do that in a wooded area." ) );
             return;
         }
         // Check for adjacent trees.
         bool adjacent_tree = false;
-        for( const tripoint &p2 : g->m.points_in_radius( pos(), 1 ) ) {
+        for( const auto &p2 : g->m.points_in_radius( bub_pos(), 1 ) ) {
             if( g->m.has_flag( "TREE", p2 ) ) {
                 adjacent_tree = true;
             }
@@ -666,6 +687,7 @@ void Character::deactivate_mutation( const trait_id &mut )
     // Handle stat changes from deactivation
     apply_mods( mut, false );
     recalc_sight_limits();
+    get_map().invalidate_lightmap_caches();
     const mutation_branch &mdata = mut.obj();
     if( mdata.transform ) {
         const cata::value_ptr<mut_transform> trans = mdata.transform;
@@ -1196,7 +1218,7 @@ bool Character::mutate_towards( const trait_id &mut )
 
     // Check mutations of the same type - except for the ones we might need for pre-reqs
     for( const auto &consider : same_type ) {
-        if( std::ranges::find( all_prereqs, consider ) == all_prereqs.end() ) {
+        if( !std::ranges::contains( all_prereqs, consider ) ) {
             cancel.push_back( consider );
         }
     }
@@ -1277,9 +1299,11 @@ bool Character::mutate_towards( const trait_id &mut )
         }
     }
 
-    for( auto cat : mdata.category ) {
-        if( has_trait( cat->threshold_muts[tierreq] ) ) {
+    for( const auto &cat : mdata.category ) {
+        const auto threshold_mut = get_threshold_mutation_for_tier( cat, tierreq );
+        if( threshold_mut && has_trait( threshold_mut ) ) {
             has_threshreq = true;
+            break;
         }
     }
 
@@ -1608,7 +1632,7 @@ static mutagen_rejection try_reject_mutagen( Character &guy, const item &it, boo
         if( guy.has_trait( trait_M_SPORES ) || guy.has_trait( trait_M_FERTILE ) ||
             guy.has_trait( trait_M_BLOSSOMS ) || guy.has_trait( trait_M_BLOOM ) ) {
             guy.add_msg_if_player( m_good, _( "We decontaminate it with spores." ) );
-            g->m.ter_set( guy.pos(), t_fungus );
+            g->m.ter_set( guy.bub_pos(), t_fungus );
             if( guy.is_avatar() ) {
                 g->memorial().add(
                     pgettext( "memorial_male", "Destroyed a harmful invader." ),
@@ -1684,7 +1708,23 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
 {
     // Can't cross the same tier threshold multiple times
     if( guy.thresh_tier >= tier ) {
-        return;
+        // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
+        // Mostly an issue with debug quit and similar scenarios
+        bool has_thresh = false;
+        for( const trait_id &mut : guy.get_mutations() ) {
+            if( mut->threshold ) {
+                has_thresh = true;
+                break;
+            }
+        }
+        if( has_thresh ) {
+            return;
+        } else {
+            // The character does not have a threshold mutation but has a tier greater than 0
+            // This must be a bug, reset their threshold information
+            guy.thresh_tier = 0;
+            guy.thresh_category = mutation_category_id::NULL_ID();
+        }
     }
 
     // No skipping tiers
@@ -1695,14 +1735,30 @@ void test_crossing_threshold( Character &guy, const mutation_category_trait &m_c
 
     // If there is no threshold for this category at this tier, don't check it
     const std::vector<trait_id> &mutation_thresh = m_category.threshold_muts;
-    if( mutation_thresh.size() < tier + 1 ) {
+    if( mutation_thresh.size() <= static_cast<std::vector<trait_id>::size_type>( tier ) ) {
         return;
     }
 
     mutation_category_id mutation_category = m_category.id;
     // If you've already passed a threshold, you can't get a different tree's threshold
     if( ( guy.thresh_tier > 0 ) && ( guy.thresh_category != mutation_category ) ) {
-        return;
+        // Check for the incredibly stupid scenario where the player somehow has a tier but not any actual thresholds
+        // Mostly an issue with debug quit and similar scenarios
+        bool has_thresh = false;
+        for( const trait_id &mut : guy.get_mutations() ) {
+            if( mut->threshold ) {
+                has_thresh = true;
+                break;
+            }
+        }
+        if( has_thresh ) {
+            return;
+        } else {
+            // The character does not have a threshold mutation but has a tier greater than 0
+            // This must be a bug, reset their threshold information
+            guy.thresh_tier = 0;
+            guy.thresh_category = mutation_category_id::NULL_ID();
+        }
     }
 
     int total = 0;
@@ -1788,7 +1844,7 @@ bool are_same_type_traits( const trait_id &trait_a, const trait_id &trait_b )
 
 bool contains_trait( std::vector<string_id<mutation_branch>> traits, const trait_id &trait )
 {
-    return std::ranges::find( traits, trait ) != traits.end();
+    return std::ranges::contains( traits, trait );
 }
 
 bool can_use_mutation( const trait_id &mut, const Character &character )

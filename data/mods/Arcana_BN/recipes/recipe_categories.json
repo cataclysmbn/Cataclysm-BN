@@ -1,0 +1,16 @@
+[
+  {
+    "type": "recipe_category",
+    "id": "CC_ARCANA",
+    "recipe_subcategories": [
+      "CSC_ALL",
+      "CSC_ARCANA_WEAPON",
+      "CSC_ARCANA_AMMO",
+      "CSC_ARCANA_ARMOR",
+      "CSC_ARCANA_ALCHEMY",
+      "CSC_ARCANA_SPELLS",
+      "CSC_ARCANA_MAGITECH",
+      "CSC_ARCANA_OTHER"
+    ]
+  }
+]

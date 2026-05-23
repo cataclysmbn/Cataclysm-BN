@@ -37,7 +37,7 @@ mapgendata::mapgendata( map &mp, dummy_settings_t )
     : density_( 0 )
     , when_( calendar::turn )
     , mission_( nullptr )
-    , omapbuf_( ACTIVE_OVERMAP_BUFFER )
+    , omapbuf_( get_primary_overmapbuffer() )
     , pos( tripoint_zero )
     , region( dummy_regional_settings )
     , m( mp )
@@ -82,21 +82,8 @@ mapgendata::mapgendata( const tripoint_abs_omt &over, map &mp, const float densi
             joins.emplace( rotated_dir, *join );
         }
     }
-    if( std::optional<mapgen_arguments> *maybe_args = omap.mapgen_args( over ) ) {
-        if( *maybe_args ) {
-            mapgen_args_ = **maybe_args;
-        } else {
-            // We are the first omt from this overmap_special to be generated,
-            // so now is the time to generate the arguments
-            if( std::optional<overmap_special_id> s = omap.overmap_special_at( over ) ) {
-                const overmap_special &special = **s;
-                *maybe_args = special.get_args( *this );
-                mapgen_args_ = **maybe_args;
-            } else {
-                debugmsg( "mapgen params expected but no overmap special found for terrain %s",
-                          terrain_type_.id().str() );
-            }
-        }
+    if( auto args = omap.get_or_init_mapgen_args( over, *this, terrain_type_.id().str() ) ) {
+        mapgen_args_ = std::move( *args );
     }
 }
 
@@ -183,7 +170,7 @@ int &mapgendata::dir( int dir_in )
     }
 }
 
-void mapgendata::square_groundcover( const point &p1, const point &p2 ) const
+void mapgendata::square_groundcover( const point_bub_ms &p1, const point_bub_ms &p2 ) const
 {
     m.draw_square_ter( default_groundcover, p1, p2 );
 }

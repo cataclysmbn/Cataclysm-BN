@@ -14,8 +14,8 @@ TEST_CASE( "monster_faction_memory_anger", "[monster][faction][anger]" )
 {
     clear_all_state();
 
-    const tripoint tank_pos( 5, 5, 0 );
-    const tripoint hazmat_pos( 7, 5, 0 );
+    const tripoint_bub_ms tank_pos( 5, 5, 0 );
+    const tripoint_bub_ms hazmat_pos( 7, 5, 0 );
 
     monster &tank = spawn_test_monster( "mon_tankbot", tank_pos );
     monster &hazmat = spawn_test_monster( "mon_eyebot", hazmat_pos );
@@ -56,8 +56,8 @@ TEST_CASE( "monster_faction_memory_zombie_attacks_tank", "[monster][faction][ang
 {
     clear_all_state();
 
-    const tripoint tank_pos( 5, 5, 0 );
-    const tripoint zombie_pos( 7, 5, 0 );
+    const tripoint_bub_ms tank_pos( 5, 5, 0 );
+    const tripoint_bub_ms zombie_pos( 7, 5, 0 );
 
     monster &tank = spawn_test_monster( "mon_tankbot", tank_pos );
     monster &zombie = spawn_test_monster( "mon_zombie", zombie_pos );
@@ -93,9 +93,9 @@ TEST_CASE( "monster_faction_memory_friend_attacked", "[monster][faction][anger]"
 {
     clear_all_state();
 
-    const tripoint tank1_pos( 5, 5, 0 );
-    const tripoint tank2_pos( 6, 5, 0 );
-    const tripoint zombie_pos( 7, 5, 0 );
+    const tripoint_bub_ms tank1_pos( 5, 5, 0 );
+    const tripoint_bub_ms tank2_pos( 6, 5, 0 );
+    const tripoint_bub_ms zombie_pos( 7, 5, 0 );
 
     monster &tank1 = spawn_test_monster( "mon_tankbot", tank1_pos );
     monster &tank2 = spawn_test_monster( "mon_tankbot", tank2_pos );

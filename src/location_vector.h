@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "detached_ptr.h"
+#include "coordinates.h"
 
 template<typename T>
 class location;
@@ -232,6 +233,7 @@ class location_vector
         using reverse_iterator = std::reverse_iterator<iterator>;
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
+        location_vector() = default;
         location_vector( location<T> *loc );
         location_vector( location<T> *loc, std::vector<detached_ptr<T>> &from );
         location_vector( location_vector && ) = delete;
@@ -273,7 +275,9 @@ class location_vector
 
         void remove_with( std::function < detached_ptr<T>( detached_ptr<T> && ) > cb );
 
-        void move_by( tripoint offset );
+        void move_by( const tripoint_rel_ms &offset );
+
+        void init_location( location<T> *new_loc );
 
         /** this is needed until vehicles are GOs */
         void set_loc_hack( location<T> *loc );

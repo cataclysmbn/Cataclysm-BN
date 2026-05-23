@@ -12,6 +12,7 @@
       [ "O--+-+-O" ],
       [ "      o " ]
     ],
+    "color_palette": "ems_standard",
     "parts": [
       { "x": 0, "y": 1, "parts": [ "frame_vertical", "box", "roof" ] },
       {
@@ -113,6 +114,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "swat_standard",
     "parts": [
       {
         "x": 0,
@@ -182,6 +184,7 @@
       [ "|T|#|#'" ],
       [ "OO---+'" ]
     ],
+    "color_palette": "firetruck_standard",
     "parts": [
       {
         "x": -5,
@@ -338,6 +341,7 @@
       [ "|+++-+-+-" ],
       [ "        o" ]
     ],
+    "color_palette": "firetruck_standard",
     "parts": [
       { "x": 2, "y": -1, "parts": [ "hdframe_nw", "halfboard_nw" ] },
       { "x": 2, "y": 0, "parts": [ "hdframe_horizontal", "halfboard_horizontal", "horn_big" ] },
@@ -481,6 +485,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -553,6 +558,7 @@
       [ "+=##'|" ],
       [ "o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -626,6 +632,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -708,6 +715,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -792,6 +800,7 @@
       [ "+==##'|" ],
       [ "-o-++-o" ]
     ],
+    "color_palette": "police_standard",
     "parts": [
       {
         "x": 0,
@@ -877,6 +886,7 @@
       [ "O--+-+-O" ],
       [ "     o " ]
     ],
+    "color_palette": "swat_standard",
     "parts": [
       { "x": 0, "y": 1, "parts": [ "hdframe_vertical", "aisle_horizontal", "hdroof" ] },
       {
@@ -980,6 +990,112 @@
       { "x": -4, "y": 0, "chance": 50, "magazine": 100, "ammo": 50, "item_groups": [ "guns_swat" ] },
       { "x": -4, "y": 0, "chance": 50, "item_groups": [ "ammo_swat" ] },
       { "x": -4, "y": 2, "chance": 50, "item_groups": [ "swat_gear" ] }
+    ]
+  },
+  {
+    "id": "hazmat_truck",
+    "type": "vehicle",
+    "name": "Hazmat Response Vehicle",
+    "blueprint": [
+      [ "OO---+'|" ],
+      [ "|T|=|#'|" ],
+      [ "+T|=+H'|" ],
+      [ "|T|=|#'|" ],
+      [ "OO---+'|" ]
+    ],
+    "color_palette": "firetruck_standard",
+    "parts": [
+      {
+        "x": -5,
+        "y": -1,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "wheel_mount_medium", "wheel_wide", "board_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": -1,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "wheel_mount_medium", "wheel_wide", "board_vertical" ]
+      },
+      { "x": -3, "y": -1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_vertical" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "floodlight", "board_vertical" ] },
+      {
+        "x": -1,
+        "y": -1,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_vertical", { "part": "tank", "fuel": "gasoline" } ]
+      },
+      {
+        "x": 0,
+        "y": -1,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "wheel_mount_medium_steerable", "wheel_wide", "door" ]
+      },
+      { "x": 1, "y": -1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "windshield" ] },
+      { "x": 2, "y": -1, "parts": [ "frame_nw", "halfboard_nw", "headlight" ] },
+      { "x": -5, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "door_trunk", "storage_battery" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "cargo_space" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_horizontal" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "trunk" ] },
+      { "x": -1, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_horizontal" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "light_red", "seat", "seatbelt", "controls", "dashboard" ]
+      },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "roof", "NBC_seal", "windshield" ] },
+      { "x": 2, "y": 0, "parts": [ "frame_horizontal", "halfboard_horizontal_front", "headlight" ] },
+      { "x": -5, "y": 1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "door_trunk", "storage_battery" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "cargo_space" ] },
+      { "x": -3, "y": 1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_horizontal" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "trunk" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "door_opaque" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_horizontal", "roof", "NBC_seal", "aisle_horizontal" ] },
+      {
+        "x": 1,
+        "y": 1,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "windshield", "engine_v8", "alternator_truck", "horn_big" ]
+      },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal_front", "headlight" ] },
+      { "x": -5, "y": 2, "parts": [ "frame_horizontal", "roof", "NBC_seal", "door_trunk", "storage_battery" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_horizontal", "roof", "NBC_seal", "cargo_space" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_horizontal" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_horizontal", "roof", "NBC_seal", "trunk" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_horizontal" ] },
+      { "x": 0, "y": 2, "parts": [ "frame_horizontal", "roof", "NBC_seal", "light_red", "seat", "seatbelt" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_horizontal", "roof", "NBC_seal", "windshield" ] },
+      { "x": 2, "y": 2, "parts": [ "frame_horizontal", "halfboard_horizontal_front", "headlight" ] },
+      {
+        "x": -5,
+        "y": 3,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "wheel_mount_medium", "wheel_wide", "board_vertical" ]
+      },
+      {
+        "x": -4,
+        "y": 3,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "wheel_mount_medium", "wheel_wide", "board_vertical" ]
+      },
+      { "x": -3, "y": 3, "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_vertical", "beeper" ] },
+      { "x": -2, "y": 3, "parts": [ "frame_horizontal", "roof", "NBC_seal", "floodlight", "board_vertical" ] },
+      {
+        "x": -1,
+        "y": 3,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "board_vertical", { "part": "tank", "fuel": "gasoline" } ]
+      },
+      {
+        "x": 0,
+        "y": 3,
+        "parts": [ "frame_horizontal", "roof", "NBC_seal", "wheel_mount_medium_steerable", "wheel_wide", "door" ]
+      },
+      { "x": 1, "y": 3, "parts": [ "frame_horizontal", "roof", "NBC_seal", "windshield" ] },
+      { "x": 2, "y": 3, "parts": [ "frame_ne", "halfboard_ne", "headlight" ] }
+    ],
+    "items": [
+      { "x": -4, "y": 0, "chance": 50, "item_groups": [ "hazmat_truck", "hazmat_truck" ] },
+      { "x": -4, "y": 1, "chance": 50, "item_groups": [ "hazmat_truck", "hazmat_truck" ] },
+      { "x": -4, "y": 2, "chance": 50, "item_groups": [ "hazmat_truck", "hazmat_truck" ] },
+      { "x": -2, "y": 0, "chance": 25, "item_groups": [ "hazmat_suits" ] },
+      { "x": -2, "y": 0, "chance": 25, "item_groups": [ "hazmat_masks" ] },
+      { "x": -2, "y": 1, "chance": 25, "item_groups": [ "hazmat_suits" ] },
+      { "x": -2, "y": 1, "chance": 25, "item_groups": [ "hazmat_masks" ] },
+      { "x": -2, "y": 2, "chance": 25, "item_groups": [ "hazmat_suits" ] },
+      { "x": -2, "y": 2, "chance": 25, "item_groups": [ "hazmat_masks" ] }
     ]
   }
 ]

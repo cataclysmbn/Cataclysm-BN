@@ -10,6 +10,7 @@
 #include "avatar.h"
 #include "ballistics.h"
 #include "calendar.h"
+#include "coordinates.h"
 #include "damage.h"
 #include "dispersion.h"
 #include "game.h"
@@ -23,7 +24,6 @@
 #include "npc.h"
 #include "player.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "projectile.h"
 #include "ranged.h"
 #include "state_helpers.h"
@@ -33,7 +33,7 @@
 TEST_CASE( "throwing distance test", "[throwing], [balance]" )
 {
     clear_all_state();
-    const standard_npc thrower( "Thrower", tripoint( 60, 60, 0 ), {}, 4, 10, 10, 10, 10 );
+    const standard_npc thrower( "Thrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 10, 10, 10, 10 );
     item &grenade = *item::spawn_temporary( "grenade" );
     CHECK( thrower.throw_range( grenade ) >= 30 );
     CHECK( thrower.throw_range( grenade ) <= 35 );
@@ -61,7 +61,7 @@ static std::ostream &operator<<( std::ostream &stream, const throw_test_pstats &
 
 static const skill_id skill_throw = skill_id( "throw" );
 
-static void reset_player( player &p, const throw_test_pstats &pstats, const tripoint &pos )
+static void reset_player( player &p, const throw_test_pstats &pstats, const tripoint_bub_ms &pos )
 {
     clear_character( p );
     CHECK( !p.in_vehicle );
@@ -92,8 +92,8 @@ static void test_throwing_player_versus(
     const int range, const throw_test_pstats &pstats,
     const epsilon_threshold &hit_thresh, const epsilon_threshold &dmg_thresh )
 {
-    const tripoint monster_start = { 30 + range, 30, 0 };
-    const tripoint player_start = { 30, 30, 0 };
+    const tripoint_bub_ms monster_start = { 30 + range, 30, 0 };
+    const tripoint_bub_ms player_start = { 30, 30, 0 };
     bool hit_thresh_met = false;
     bool dmg_thresh_met = false;
     throw_test_data data;
@@ -123,7 +123,8 @@ static void test_throwing_player_versus(
             return;
         }
 
-        dealt_projectile_attack atk = ranged::throw_item( p, mon.pos(), std::move( det ), std::nullopt );
+        dealt_projectile_attack atk = ranged::throw_item( p, mon.bub_pos(), std::move( det ),
+                                      std::nullopt );
         data.hits.add( atk.hit_critter != nullptr );
         data.dmg.add( atk.dealt_dam.total_damage() );
 

@@ -1,26 +1,25 @@
 local ui = {}
 
----@type fun(str: string): void
-ui.query_any_key = function(str)
+---@param str string
+---@param color Color?
+ui.query_any_key = function(str, color)
   local popup = QueryPopup.new()
   popup:message(str)
+  if color then popup:message_color(color) end
   popup:allow_any_key(true)
   popup:query()
 end
 
----@type fun(str: string): boolean
+---@param str string
+---@return boolean
 ui.query_yn = function(str)
   local popup = QueryPopup.new()
   popup:message(str)
   return popup:query_yn() == "YES"
 end
 
----@type fun(str: string): void
-ui.popup = function(str)
-  local popup = QueryPopup.new()
-  popup:message(str)
-  popup:allow_any_key(true)
-  popup:query()
-end
+---@param str string
+---@param color Color?
+ui.popup = function(str, color) ui.query_any_key(str, color) end
 
 return ui

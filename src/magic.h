@@ -11,10 +11,10 @@
 
 #include "bodypart.h"
 #include "catalua_type_operators.h"
+#include "coordinates.h"
 #include "damage.h"
 #include "enum_bitset.h"
 #include "event_bus.h"
-#include "point.h"
 #include "sounds.h"
 #include "translations.h"
 #include "type_id.h"
@@ -54,6 +54,7 @@ enum spell_flag {
     DIVIDE_DAMAGE, // divides damage equally among all the targets of the spell
     RANDOM_DURATION, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_TARGET, // picks a random valid target within your range instead of normal behavior.
+    MUTATE_THRESH, // allows mutate spell_effect to try and cross thresholds for the category provided, accuracy optionally defines highest tier of threshold to test for (default of 1).
     MUTATE_TRAIT, // overrides the mutate spell_effect to use a specific trait_id instead of a category
     WONDER, // instead of casting each of the extra_spells, it picks N of them and casts them (where N is std::min( damage(), number_of_spells ))
     PAIN_NORESIST, // pain altering spells can't be resisted (like with the deadened trait)
@@ -178,7 +179,7 @@ class spell_type
         std::string sound_variant;
         // spell effect string. used to look up spell function
         std::string effect_name;
-        std::function<void( const spell &, Creature &, const tripoint & )> effect;
+        std::function<void( const spell &, Creature &, const tripoint_bub_ms & )> effect;
         // extra information about spell effect. allows for combinations for effects
         std::string effect_str;
         // list of additional "spell effects"
@@ -430,7 +431,7 @@ class spell
         // check if the spell's class is the same as input
         bool is_spell_class( const trait_id &mid ) const;
 
-        bool in_aoe( const tripoint &source, const tripoint &target ) const;
+        bool in_aoe( const tripoint_bub_ms &source, const tripoint_bub_ms &target ) const;
 
         // get spell id (from type)
         spell_id id() const;
@@ -477,32 +478,32 @@ class spell
         int get_difficulty() const;
 
         // tries to create a field at the location specified
-        void create_field( const tripoint &at ) const;
+        void create_field( const tripoint_bub_ms &at ) const;
 
         // makes a spell sound at the location
-        void make_sound( const tripoint &target ) const;
-        void make_sound( const tripoint &target, int loudness ) const;
+        void make_sound( const tripoint_bub_ms &target ) const;
+        void make_sound( const tripoint_bub_ms &target, int loudness ) const;
         // heals the critter at the location, returns amount healed (Character heals each body part)
-        int heal( const tripoint &target ) const;
+        int heal( const tripoint_bub_ms &target ) const;
 
         // casts the spell effect. returns true if successful
-        void cast_spell_effect( Creature &source, const tripoint &target ) const;
+        void cast_spell_effect( Creature &source, const tripoint_bub_ms &target ) const;
         // goes through the spell effect and all of its internal spells
-        void cast_all_effects( Creature &source, const tripoint &target ) const;
+        void cast_all_effects( Creature &source, const tripoint_bub_ms &target ) const;
         // uses up the components in @you's inventory
         void use_components( Character &who ) const;
         // checks if a target point is in spell range
-        bool is_target_in_range( const Creature &caster, const tripoint &p ) const;
+        bool is_target_in_range( const Creature &caster, const tripoint_bub_ms &p ) const;
 
         // is the target valid for this spell?
-        bool is_valid_target( const Creature &caster, const tripoint &p ) const;
+        bool is_valid_target( const Creature &caster, const tripoint_bub_ms &p ) const;
         bool is_valid_target( valid_target t ) const;
         bool is_valid_effect_target( valid_target t ) const;
-        bool target_by_monster_id( const tripoint &p ) const;
+        bool target_by_monster_id( const tripoint_bub_ms &p ) const;
 
         // picks a random valid tripoint from @area
-        std::optional<tripoint> random_valid_target( const Creature &caster,
-                const tripoint &caster_pos ) const;
+        std::optional<tripoint_bub_ms> random_valid_target( const Creature &caster,
+                const tripoint_bub_ms &caster_pos ) const;
 
         LUA_TYPE_OPS( spell, type );
 };
@@ -514,6 +515,8 @@ class known_magic
         std::map<spell_id, spell> spellbook;
         // invlets assigned to spell_id
         std::map<spell_id, int> invlets;
+        // the last known spell selected for casting
+        std::optional<spell_id> last_cast_spell_id;
         // the base mana a Character would start with
         int mana_base = 0;
         // current mana
@@ -541,6 +544,8 @@ class known_magic
         std::vector<spell_id> spells() const;
         // gets the spell associated with the spell_id to be edited
         spell &get_spell( const spell_id &sp );
+        auto last_cast_spell() const -> std::optional<spell_id>;
+        auto set_last_cast_spell( const spell_id &sp ) -> void;
         // opens up a ui that the Character can choose a spell from
         // returns the index of the spell in the vector of spells
         int select_spell( Character &guy );
@@ -578,50 +583,51 @@ class known_magic
 namespace spell_effect
 {
 
-void teleport_random( const spell &sp, Creature &caster, const tripoint & );
-void pain_split( const spell &, Creature &, const tripoint & );
+void teleport_random( const spell &sp, Creature &caster, const tripoint_bub_ms & );
+void pain_split( const spell &, Creature &, const tripoint_bub_ms & );
 void target_attack( const spell &sp, Creature &caster,
-                    const tripoint &epicenter );
+                    const tripoint_bub_ms &epicenter );
 void projectile_attack( const spell &sp, Creature &caster,
-                        const tripoint &target );
+                        const tripoint_bub_ms &target );
 void cone_attack( const spell &sp, Creature &caster,
-                  const tripoint &target );
+                  const tripoint_bub_ms &target );
 void line_attack( const spell &sp, Creature &caster,
-                  const tripoint &target );
+                  const tripoint_bub_ms &target );
 
-void area_pull( const spell &sp, Creature &caster, const tripoint &center );
-void area_push( const spell &sp, Creature &caster, const tripoint &center );
-void directed_push( const spell &sp, Creature &caster, const tripoint &target );
+void area_pull( const spell &sp, Creature &caster, const tripoint_bub_ms &center );
+void area_push( const spell &sp, Creature &caster, const tripoint_bub_ms &center );
+void directed_push( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
 
-std::set<tripoint> spell_effect_blast( const spell &, const tripoint &, const tripoint &target,
-                                       int aoe_radius, bool ignore_walls );
-std::set<tripoint> spell_effect_cone( const spell &sp, const tripoint &source,
-                                      const tripoint &target,
-                                      int aoe_radius, bool ignore_walls );
-std::set<tripoint> spell_effect_line( const spell &, const tripoint &source,
-                                      const tripoint &target,
-                                      int aoe_radius, bool ignore_walls );
+std::set<tripoint_bub_ms> spell_effect_blast( const spell &, const tripoint_bub_ms &,
+        const tripoint_bub_ms &target,
+        int aoe_radius, bool ignore_walls );
+std::set<tripoint_bub_ms> spell_effect_cone( const spell &sp, const tripoint_bub_ms &source,
+        const tripoint_bub_ms &target,
+        int aoe_radius, bool ignore_walls );
+std::set<tripoint_bub_ms> spell_effect_line( const spell &, const tripoint_bub_ms &source,
+        const tripoint_bub_ms &target,
+        int aoe_radius, bool ignore_walls );
 
-void spawn_ethereal_item( const spell &sp, Creature &, const tripoint & );
-void recover_energy( const spell &sp, Creature &, const tripoint &target );
-void spawn_summoned_monster( const spell &sp, Creature &caster, const tripoint &target );
-void spawn_summoned_vehicle( const spell &sp, Creature &caster, const tripoint &target );
-void translocate( const spell &sp, Creature &caster, const tripoint &target );
+void spawn_ethereal_item( const spell &sp, Creature &, const tripoint_bub_ms & );
+void recover_energy( const spell &sp, Creature &, const tripoint_bub_ms &target );
+void spawn_summoned_monster( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void spawn_summoned_vehicle( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void translocate( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
 // adds a timed event to the caster only
-void timed_event( const spell &sp, Creature &caster, const tripoint & );
-void transform_blast( const spell &sp, Creature &caster, const tripoint &target );
-void noise( const spell &sp, Creature &, const tripoint &target );
-void vomit( const spell &sp, Creature &caster, const tripoint &target );
-void explosion( const spell &sp, Creature &caster, const tripoint &target );
-void flashbang( const spell &sp, Creature &caster, const tripoint &target );
-void mod_moves( const spell &sp, Creature &caster, const tripoint &target );
-void map_area( const spell &sp, Creature &caster, const tripoint & );
-void morale( const spell &sp, Creature &caster, const tripoint &target );
-void charm_monster( const spell &sp, Creature &caster, const tripoint &target );
-void mutate( const spell &sp, Creature &caster, const tripoint &target );
-void bash( const spell &sp, Creature &caster, const tripoint &target );
-void dash( const spell &sp, Creature &caster, const tripoint &target );
-void none( const spell &sp, Creature &, const tripoint &target );
+void timed_event( const spell &sp, Creature &caster, const tripoint_bub_ms & );
+void transform_blast( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void noise( const spell &sp, Creature &, const tripoint_bub_ms &target );
+void vomit( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void explosion( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void flashbang( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void mod_moves( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void map_area( const spell &sp, Creature &caster, const tripoint_bub_ms & );
+void morale( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void charm_monster( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void mutate( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void bash( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void dash( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+void none( const spell &sp, Creature &, const tripoint_bub_ms &target );
 } // namespace spell_effect
 
 class spellbook_callback : public uilist_callback
@@ -640,9 +646,9 @@ struct area_expander {
     // A single node for a tree.
     struct node {
         // Expanded position
-        tripoint position;
+        tripoint_bub_ms position;
         // Previous position
-        tripoint from;
+        tripoint_bub_ms from;
         // Accumulated cost.
         float cost = 0;
     };
@@ -654,7 +660,7 @@ struct area_expander {
     std::vector<node> area;
 
     // Maps coordinate to expanded node.
-    std::map<tripoint, int> area_search;
+    std::map<tripoint_bub_ms, int> area_search;
 
     struct area_node_comparator {
         area_node_comparator( std::vector<area_expander::node> &area ) : area( area ) {
@@ -671,18 +677,17 @@ struct area_expander {
 
     area_expander();
     // Check whether we have already visited this node.
-    int contains( const tripoint &pt ) const;
+    int contains( const tripoint_bub_ms &pt ) const;
 
     // Adds node to a search tree. Returns true if new node is allocated.
-    bool enqueue( const tripoint &from, const tripoint &to, float cost );
+    bool enqueue( const tripoint_bub_ms &from, const tripoint_bub_ms &to, float cost );
 
     // Run wave propagation
-    int run( const tripoint &center );
+    int run( const tripoint_bub_ms &center );
 
     // Sort nodes by its cost.
     void sort_ascending();
 
     void sort_descending();
 };
-
 

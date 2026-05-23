@@ -1261,6 +1261,25 @@
         "tool_quality": 10,
         "cost_scaling": 0.1,
         "move_cost": 500
+      },
+      {
+        "type": "sew_advanced",
+        "materials": [
+          "iron",
+          "steel",
+          "budget_steel",
+          "hardsteel",
+          "aluminum",
+          "copper",
+          "bronze",
+          "silver",
+          "gold",
+          "platinum",
+          "superalloy",
+          "glass"
+        ],
+        "skill": "fabrication",
+        "clothing_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ]
       }
     ],
     "flags": [ "ALLOWS_REMOTE_USE" ],

@@ -67,15 +67,27 @@
     ]
   },
   {
+    "id": "military_range_guns",
+    "type": "item_group",
+    "subtype": "distribution",
+    "//": "Selection of guns matching the casing spawns used in mass_grave_casings as used at mass graves and military camp firing range",
+    "entries": [
+      { "group": "military_standard_pistols", "prob": 10, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] },
+      { "group": "military_standard_assault_rifles", "prob": 50, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] },
+      { "group": "military_standard_sniper_rifles", "prob": 20, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] },
+      { "group": "military_standard_shotguns", "prob": 20, "damage": [ 0, 2 ], "dirt": [ 1000, 5000 ] }
+    ]
+  },
+  {
     "type": "item_group",
     "id": "military_standard_assault_rifles",
     "//": "Mainly the standard rifles that an Army/Marine rifleman, Army TL, or Marine assistant automatic rifleman would use, but allow a handful of Ranger and Delta Force rifles",
     "subtype": "distribution",
     "entries": [
-      { "group": "everyday_m4a1", "prob": 75, "charges": [ 0, 30 ] },
-      { "group": "everyday_m27iar", "prob": 10, "charges": [ 0, 30 ] },
-      { "group": "everyday_h&k416a5", "prob": 5, "charges": [ 0, 30 ] },
-      { "group": "everyday_scar_h", "prob": 5, "charges": [ 0, 30 ] },
+      { "group": "everyday_m4a1_military", "prob": 75, "charges": [ 0, 30 ] },
+      { "group": "everyday_m27iar_military", "prob": 10, "charges": [ 0, 30 ] },
+      { "group": "everyday_h&k416a5_military", "prob": 5, "charges": [ 0, 30 ] },
+      { "group": "everyday_scar_h_military", "prob": 5, "charges": [ 0, 30 ] },
       { "item": "m16a4", "prob": 5, "charges": [ 0, 30 ] }
     ]
   },
@@ -180,6 +192,7 @@
       { "item": "e_tool", "prob": 50 },
       { "item": "mask_gas", "prob": 20 },
       { "item": "two_way_radio", "prob": 60 },
+      { "item": "army_powered_earmuffs", "prob": 25 },
       { "item": "sheath", "contents-item": "knife_combat", "prob": 80 }
     ]
   },
@@ -391,6 +404,9 @@
       { "item": "tac_helmet", "prob": 10 },
       { "item": "tac_fullhelmet", "prob": 5 },
       { "item": "helmet_lobster", "prob": 5 },
+      { "item": "army_powered_earmuffs", "prob": 15 },
+      { "item": "urban_ghillie", "prob": 5 },
+      { "item": "nature_ghillie", "prob": 5 },
       { "item": "gum", "prob": 20 },
       { "item": "caff_gum", "prob": 10 },
       { "item": "nic_gum", "prob": 5 },
@@ -462,10 +478,13 @@
       { "item": "winter_pants_army", "prob": 20 },
       { "item": "winter_jacket_army", "prob": 20 },
       { "item": "winter_gloves_army", "prob": 20 },
+      { "item": "urban_ghillie", "prob": 5 },
+      { "item": "nature_ghillie", "prob": 5 },
       { "item": "army_top", "prob": 70 },
       { "group": "ammo_pocket_batteries_full", "prob": 40 },
       { "item": "radio", "prob": 10, "charges-min": 10, "charges-max": 95 },
       { "item": "mil_gps_device", "prob": 5, "charges-min": 10, "charges-max": 95 },
+      { "item": "army_powered_earmuffs", "prob": 20 },
       { "item": "boots_combat", "prob": 50 },
       { "item": "bandages", "prob": 10, "charges-min": 1, "charges-max": 3 },
       { "item": "cig", "prob": 60, "charges-min": 1, "charges-max": 20 },
@@ -704,6 +723,8 @@
       { "item": "rucksack", "prob": 20 },
       { "item": "gobag", "prob": 2 },
       { "item": "survival_kit", "prob": 3 },
+      { "item": "urban_ghillie", "prob": 3 },
+      { "item": "nature_ghillie", "prob": 3 },
       { "item": "recipe_raptor", "prob": 2 },
       { "item": "tac_helmet", "prob": 5 },
       { "item": "tac_fullhelmet", "prob": 2 },
@@ -803,8 +824,11 @@
       [ "motor_oil", 100 ],
       [ "solar_panel", 3 ],
       [ "recharge_station", 8 ],
-      [ "turret_mount", 12 ],
-      [ "turret_controls", 3 ]
+      [ "turret_mount", 15 ],
+      [ "laser_designator_item", 5 ],
+      [ "turret_autoloader", 5 ],
+      [ "bomber_controls", 5 ],
+      [ "turret_controls", 5 ]
     ]
   },
   {
@@ -917,6 +941,27 @@
         "prob": 50
       },
       { "item": "25mm_casing", "count": [ 1, 5 ], "prob": 90 }
+    ]
+  },
+  {
+    "id": "pilot_bail_kit",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "item": "flotation_vest", "prob": 25 },
+      { "item": "premium_survival_kit", "prob": 25 },
+      { "item": "mil_gps_device", "prob": 25 },
+      { "item": "knife_combat", "container-item": "sheath", "prob": 25 }
+    ]
+  },
+  {
+    "id": "aircraft_carrier_heavy_munitions",
+    "type": "item_group",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "atgm_heat", "prob": 25 },
+      { "item": "belt25mm", "contents-group": "25mm_ammo", "prob": 25 },
+      { "item": "aerial_bomb", "prob": 50 }
     ]
   }
 ]

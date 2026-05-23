@@ -48,5 +48,22 @@
     "max_level": 4,
     "intelligence": 4,
     "time": "18 m"
+  },
+  {
+    "id": "textbook_cutting",
+    "type": "BOOK",
+    "copy-from": "base_book",
+    "name": { "str": "TC 7-21.2 (CUI) Special Forces Cutting Weapon Techniques" },
+    "description": "A large military manual describing advanced techniques and practices for all manner of cutting weapons, from large knives and swords to razors and sharp rocks. Requires some experience to understand.",
+    "weight": "800 g",
+    "volume": "500 ml",
+    "price": "85 USD",
+    "price_postapoc": "5 USD",
+    "color": "blue",
+    "skill": "cutting",
+    "required_level": 3,
+    "max_level": 6,
+    "intelligence": 9,
+    "time": "28 m"
   }
 ]

@@ -3,12 +3,12 @@
 #include <memory>
 
 #include "calendar.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "item.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
-#include "point.h"
 #include "units_temperature.h"
 #include "weather.h"
 
@@ -20,7 +20,7 @@ static void set_map_temperature( weather_manager &weather, units::temperature ne
     weather.clear_temp_cache();
 }
 
-static void ensure_no_temperature_mods( tripoint location )
+static void ensure_no_temperature_mods( tripoint_bub_ms location )
 {
     REQUIRE( get_heat_radiation( location, false ) == 0 );
     REQUIRE( get_convection_temperature( location ) == 0 );
@@ -47,14 +47,14 @@ TEST_CASE( "Rate of rotting" )
         detached_ptr<item> sealed_item = item::in_its_container( item::spawn( "offal_canned" ) );
 
         set_map_temperature( weather, 18_c );
-        ensure_no_temperature_mods( tripoint_zero );
-        REQUIRE( weather.get_temperature( tripoint_zero ) == 18_c );
+        ensure_no_temperature_mods( tripoint_bub_ms::zero() );
+        REQUIRE( weather.get_temperature( tripoint_abs_ms::zero() ) == 18_c );
 
-        normal_item = item::process( std::move( normal_item ), nullptr, tripoint_zero, false,
+        normal_item = item::process( std::move( normal_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_NORMAL, weather );
-        sealed_item = item::process( std::move( sealed_item ), nullptr, tripoint_zero, false,
+        sealed_item = item::process( std::move( sealed_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_NORMAL, weather );
-        freeze_item = item::process( std::move( freeze_item ), nullptr, tripoint_zero, false,
+        freeze_item = item::process( std::move( freeze_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_NORMAL, weather );
 
         // Item should exist with no rot when it is brand new
@@ -65,11 +65,11 @@ TEST_CASE( "Rate of rotting" )
         INFO( "Initial turn: " << to_turn<int>( calendar::turn ) );
 
         calendar::turn += 20_minutes;
-        normal_item = item::process( std::move( normal_item ), nullptr, tripoint_zero, false,
+        normal_item = item::process( std::move( normal_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_NORMAL, weather );
-        sealed_item = item::process( std::move( sealed_item ), nullptr, tripoint_zero, false,
+        sealed_item = item::process( std::move( sealed_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_NORMAL, weather );
-        freeze_item = item::process( std::move( freeze_item ), nullptr, tripoint_zero, false,
+        freeze_item = item::process( std::move( freeze_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_FREEZER, weather );
 
         // After 20 minutes the normal item should have 20 minutes of rot
@@ -82,9 +82,9 @@ TEST_CASE( "Rate of rotting" )
         // Move time 110 minutes
         calendar::turn += 110_minutes;
         // TODO: Check >1 hour normal processing as well - can't be "simply done" because of weather globals
-        sealed_item = item::process( std::move( sealed_item ), nullptr, tripoint_zero, false,
+        sealed_item = item::process( std::move( sealed_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_NORMAL, weather );
-        freeze_item = item::process( std::move( freeze_item ), nullptr, tripoint_zero, false,
+        freeze_item = item::process( std::move( freeze_item ), nullptr, tripoint_bub_ms::zero(), false,
                                      temperature_flag::TEMP_FREEZER, weather );
         // In freezer and in preserving container still should be no rot
         CHECK( sealed_item->get_rot() == 0_turns );
@@ -105,26 +105,27 @@ TEST_CASE( "Items rot away" )
         detached_ptr<item> test_item = item::spawn( "meat_cooked" );
 
         // Process item once to set all of its values.
-        test_item = item::process( std::move( test_item ), nullptr, tripoint_zero, false,
+        test_item = item::process( std::move( test_item ), nullptr, tripoint_bub_ms::zero(), false,
                                    temperature_flag::TEMP_HEATER, weather );
 
         // Set rot to >2 days and process again. process_rot should destroy the item.
         calendar::turn += 20_minutes;
         test_item->mod_rot( 4_days );
-        test_item = item::process_rot( std::move( test_item ), false, tripoint_zero, nullptr,
+        test_item = item::process_rot( std::move( test_item ), false, tripoint_bub_ms::zero(), nullptr,
                                        temperature_flag::TEMP_HEATER, weather );
         CHECK( !test_item );
     }
 
     SECTION( "Item on map rots away" ) {
         weather_manager weather;
-        const tripoint loc;
+        const tripoint_bub_ms loc;
 
         if( calendar::turn <= calendar::start_of_cataclysm ) {
             calendar::turn = calendar::start_of_cataclysm + 1_minutes;
         }
 
-        detached_ptr<item> test_item = item::process( item::spawn( "meat_cooked" ), nullptr, tripoint_zero,
+        detached_ptr<item> test_item = item::process( item::spawn( "meat_cooked" ), nullptr,
+                                       tripoint_bub_ms::zero(),
                                        false, temperature_flag::TEMP_HEATER, weather );
         map &m = get_map();
         m.add_item_or_charges( loc, std::move( test_item ), false );
@@ -151,9 +152,9 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
     constexpr tripoint_abs_sm test_location = tripoint_abs_sm( 100, 100, 0 );
     m.load( test_location, false );
 
-    const tripoint freezer_pnt = {13, 13, 0};
-    const tripoint sealed_pnt = {14, 13, 0};
-    const tripoint normal_pnt = {15, 13, 0};
+    const tripoint_bub_ms freezer_pnt = {13, 13, 0};
+    const tripoint_bub_ms sealed_pnt = {14, 13, 0};
+    const tripoint_bub_ms normal_pnt = {15, 13, 0};
     m.furn_set( freezer_pnt, f_atomic_freezer );
     m.furn_set( sealed_pnt, furn_str_id::NULL_ID() );
     m.furn_set( normal_pnt, furn_str_id::NULL_ID() );

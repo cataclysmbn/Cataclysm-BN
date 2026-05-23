@@ -81,8 +81,7 @@ void effect( int intensity, time_duration duration, bodypart_str_id bp_id,
              const std::string &effect_id_str,
              const std::string &effect_msg,
              int effect_msg_frequency, int effect_msg_blocked_frequency, game_message_type message_type,
-             std::string precipitation_name,
-             bool ignore_armor, int clothing_protection, int umbrella_protection );
+             std::string precipitation_name, std::vector<std::tuple<std::string, int>> );
 void morale( int intensity, int bonus, int bonus_max, time_duration duration,
              time_duration decay_start,
              const std::string &morale_id_str, const std::string &morale_msg,
@@ -99,8 +98,8 @@ struct weather_sum {
 
 namespace weather
 {
-bool is_sheltered( const map &m, const tripoint &p );
-bool is_in_sunlight( const map &m, const tripoint &p, const weather_type_id &weather );
+bool is_sheltered( const map &m, const tripoint_bub_ms &p );
+bool is_in_sunlight( const map &m, const tripoint_bub_ms &p, const weather_type_id &weather );
 } // namespace weather
 
 std::string get_shortdirstring( int angle );
@@ -124,12 +123,12 @@ std::string print_pressure( double pressure, int decimals = 0 );
 int get_local_windchill( double temperature_f, double humidity, double wind_mph );
 
 int get_local_humidity( double humidity, const weather_type_id &weather, bool sheltered = false );
-double get_local_windpower( double windpower, const oter_id &omter, const tripoint &location,
+double get_local_windpower( double windpower, const oter_id &omter, const tripoint_abs_ms &location,
                             const int &winddirection,
                             bool sheltered = false );
 weather_sum sum_conditions( const time_point &start,
                             const time_point &end,
-                            const tripoint &location );
+                            const tripoint_abs_ms &location );
 
 /**
  * @param it The container item which is to be filled.
@@ -138,7 +137,7 @@ weather_sum sum_conditions( const time_point &start,
  * @param tr The funnel (trap which acts as a funnel).
  */
 void retroactively_fill_from_funnel( item &it, const trap &tr, const time_point &start,
-                                     const time_point &end, const tripoint &pos );
+                                     const time_point &end, const tripoint_abs_ms &pos );
 
 double funnel_charges_per_turn( double surface_area_mm2, double rain_depth_mm_per_hour );
 
@@ -160,12 +159,12 @@ auto get_hourly_rotpoints_at_temp( const units::temperature temp ) -> int;
  * The first overload is in map-square coords, the second for larger scale
  * queries.
  */
-bool warm_enough_to_plant( const tripoint &pos );
+bool warm_enough_to_plant( const tripoint_abs_ms &pos );
 bool warm_enough_to_plant( const tripoint_abs_omt &pos );
 
-bool is_wind_blocker( const tripoint &location );
+bool is_wind_blocker( const tripoint_bub_ms &location );
 
-const weather_type_id &current_weather( const tripoint &location,
+const weather_type_id &current_weather( const tripoint_abs_ms &location,
                                         const time_point &t = calendar::turn );
 /**
  * Glare.
@@ -211,13 +210,13 @@ class weather_manager
         time_point nextweather;
 
         /** temperature cache, cleared every turn, sparse map of map tripoints to temperatures */
-        mutable std::unordered_map< tripoint, units::temperature > temperature_cache;
+        mutable std::unordered_map< tripoint_abs_ms, units::temperature > temperature_cache;
         // Returns outdoor or indoor temperature of given location (in local coords).
-        auto get_temperature( const tripoint &location ) const -> units::temperature;
+        auto get_temperature( const tripoint_abs_ms &location ) const -> units::temperature;
         // Returns outdoor or indoor temperature of given location
         auto get_temperature( const tripoint_abs_omt &location ) const -> units::temperature;
         // Returns water temperature of given location (in local coords).
-        auto get_water_temperature( const tripoint &location ) const -> units::temperature;
+        auto get_water_temperature( const tripoint_abs_ms &location ) const -> units::temperature;
         void clear_temp_cache();
 
         // Get precise weather data

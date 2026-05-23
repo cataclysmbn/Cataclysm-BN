@@ -26,6 +26,7 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "popup.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
@@ -179,20 +180,21 @@ void input_manager::init()
     }
 }
 
-void input_manager::load( const std::string &file_name, bool is_user_preferences )
+void input_manager::load( const fs::path &file_name, bool is_user_preferences )
 {
-    std::ifstream data_file( file_name.c_str(), std::ifstream::in | std::ifstream::binary );
+    std::ifstream data_file( file_name, std::ifstream::in | std::ifstream::binary );
+    const auto file_path = cata_files::path_to_generic_utf8( file_name );
 
     if( !data_file.good() ) {
         // Only throw if this is the first file to load, that file _must_ exist,
         // otherwise the keybindings can not be read at all.
         if( action_contexts.empty() ) {
-            throw std::runtime_error( std::string( "Could not read " ) + file_name );
+            throw std::runtime_error( std::string( "Could not read " ) + file_path );
         }
         return;
     }
 
-    JsonIn jsin( data_file, file_name );
+    JsonIn jsin( data_file, file_path );
 
     //Crawl through once and create an entry for every definition
     jsin.start_array();
@@ -203,7 +205,7 @@ void input_manager::load( const std::string &file_name, bool is_user_preferences
         const std::string type = action.get_string( "type", "keybinding" );
         if( type != "keybinding" ) {
             debugmsg( "Only objects of type 'keybinding' (not %s) should appear in the "
-                      "keybindings file '%s'", type, file_name );
+                      "keybindings file '%s'", type, file_path );
             continue;
         }
 
@@ -252,6 +254,17 @@ void input_manager::load( const std::string &file_name, bool is_user_preferences
             events.push_back( new_event );
         }
 
+        if( is_user_preferences && context != default_context_id &&
+            action.get_bool( "is_deleted", false ) ) {
+            if( actions.contains( action_id ) ) {
+                auto &attributes = actions[action_id];
+                attributes.input_events.clear();
+                attributes.is_user_created = false;
+                attributes.is_deleted = true;
+            }
+            continue;
+        }
+
         // An invariant of this class is that user-created, local keybindings
         // with an empty set of input_events do not exist in the
         // action_contexts map. In prior versions of this class, this was not
@@ -268,8 +281,9 @@ void input_manager::load( const std::string &file_name, bool is_user_preferences
             actions.contains( action_id ) ) {
             // In case this is the second file containing user preferences,
             // this replaces the default bindings with the user's preferences.
-            action_attributes &attributes = actions[action_id];
+            auto &attributes = actions[action_id];
             attributes.input_events = events;
+            attributes.is_deleted = false;
             if( action.has_member( "is_user_created" ) ) {
                 attributes.is_user_created = action.get_bool( "is_user_created" );
             }
@@ -292,9 +306,12 @@ void input_manager::save()
 
                 jsout.member( "id", action.first );
                 jsout.member( "category", a->first );
-                bool is_user_created = action.second.is_user_created;
+                const auto is_user_created = action.second.is_user_created;
                 if( is_user_created ) {
                     jsout.member( "is_user_created", is_user_created );
+                }
+                if( action.second.is_deleted ) {
+                    jsout.member( "is_deleted", true );
                 }
 
                 jsout.member( "bindings" );
@@ -371,6 +388,17 @@ void input_manager::init_keycode_mapping()
     add_keycode_pair( KEY_END,       translate_marker_context( "key name", "END" ) );
     add_keycode_pair( '\n',          translate_marker_context( "key name", "RETURN" ) );
     add_keycode_pair( KEY_DC,        translate_marker_context( "key name", "DELETE" ) );
+    add_keycode_pair( NUMPAD_0,      translate_marker_context( "key name", "NUMPAD_0" ) );
+    add_keycode_pair( NUMPAD_1,      translate_marker_context( "key name", "NUMPAD_1" ) );
+    add_keycode_pair( NUMPAD_2,      translate_marker_context( "key name", "NUMPAD_2" ) );
+    add_keycode_pair( NUMPAD_3,      translate_marker_context( "key name", "NUMPAD_3" ) );
+    add_keycode_pair( NUMPAD_4,      translate_marker_context( "key name", "NUMPAD_4" ) );
+    add_keycode_pair( NUMPAD_5,      translate_marker_context( "key name", "NUMPAD_5" ) );
+    add_keycode_pair( NUMPAD_6,      translate_marker_context( "key name", "NUMPAD_6" ) );
+    add_keycode_pair( NUMPAD_7,      translate_marker_context( "key name", "NUMPAD_7" ) );
+    add_keycode_pair( NUMPAD_8,      translate_marker_context( "key name", "NUMPAD_8" ) );
+    add_keycode_pair( NUMPAD_9,      translate_marker_context( "key name", "NUMPAD_9" ) );
+
 
     for( int c = 0; IS_CTRL_CHAR( c ); c++ ) {
         // Some codes fall into this range but have more common names we'd prefer to use.
@@ -509,7 +537,7 @@ const action_attributes &input_manager::get_action_attributes(
         const t_action_contexts::const_iterator action_context = action_contexts.find( context );
         if( action_context != action_contexts.end() ) {
             const t_actions::const_iterator action = action_context->second.find( action_id );
-            if( action != action_context->second.end() ) {
+            if( action != action_context->second.end() && !action->second.is_deleted ) {
                 if( overwrites_default ) {
                     *overwrites_default = true;
                 }
@@ -562,9 +590,11 @@ input_manager::t_input_event_list &input_manager::get_or_create_event_list(
     // A new action is created in the event that the user creates a local
     // keymapping that masks a global one.
     if( !actions.contains( action_descriptor ) ) {
-        action_attributes &attributes = actions[action_descriptor];
+        auto &attributes = actions[action_descriptor];
         attributes.name = get_default_action_name( action_descriptor );
         attributes.is_user_created = true;
+    } else if( actions[action_descriptor].is_deleted ) {
+        actions[action_descriptor].is_deleted = false;
     }
 
     return actions[action_descriptor].input_events;
@@ -587,7 +617,7 @@ void input_manager::remove_input_for_action(
                 // there's an attempt to remove bindings anyway, presumably the user wants
                 // to fully remove the binding from that context.
                 if( action->second.input_events.empty() ) {
-                    actions.erase( action );
+                    action->second.is_deleted = true;
                 } else {
                     action->second.input_events.clear();
                 }
@@ -1000,33 +1030,35 @@ void rotate_direction_cw( int &dx, int &dy )
     dy = dir_num / 3 - 1;
 }
 
-std::optional<tripoint> input_context::get_direction( const std::string &action ) const
+std::optional<tripoint_rel_ms> input_context::get_direction( const std::string &action ) const
 {
-    static const auto noop = static_cast<tripoint( * )( tripoint )>( []( tripoint p ) {
+    static const auto noop = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( [](
+    tripoint_rel_ms p ) {
         return p;
     } );
-    static const auto rotate = static_cast<tripoint( * )( tripoint )>( []( tripoint p ) {
-        rotate_direction_cw( p.x, p.y );
+    static const auto rotate = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( [](
+    tripoint_rel_ms p ) {
+        rotate_direction_cw( p.x(), p.y() );
         return p;
     } );
     const auto transform = iso_mode && tile_iso && use_tiles ? rotate : noop;
 
     if( action == "UP" ) {
-        return transform( tripoint_north );
+        return transform( tripoint_rel_ms::north() );
     } else if( action == "DOWN" ) {
-        return transform( tripoint_south );
+        return transform( tripoint_rel_ms::south() );
     } else if( action == "LEFT" ) {
-        return transform( tripoint_west );
+        return transform( tripoint_rel_ms::west() );
     } else if( action == "RIGHT" ) {
-        return transform( tripoint_east );
+        return transform( tripoint_rel_ms::east() );
     } else if( action == "LEFTUP" ) {
-        return transform( tripoint_north_west );
+        return transform( tripoint_rel_ms::north_west() );
     } else if( action == "RIGHTUP" ) {
-        return transform( tripoint_north_east );
+        return transform( tripoint_rel_ms::north_east() );
     } else if( action == "LEFTDOWN" ) {
-        return transform( tripoint_south_west );
+        return transform( tripoint_rel_ms::south_west() );
     } else if( action == "RIGHTDOWN" ) {
-        return transform( tripoint_south_east );
+        return transform( tripoint_rel_ms::south_east() );
     } else {
         return std::nullopt;
     }
@@ -1444,7 +1476,8 @@ bool gamepad_available()
     return false;
 }
 
-std::optional<tripoint> input_context::get_coordinates( const catacurses::window &capture_win )
+std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
+        &capture_win )
 {
     if( !coordinate_input_received ) {
         return std::nullopt;
@@ -1457,13 +1490,13 @@ std::optional<tripoint> input_context::get_coordinates( const catacurses::window
         return std::nullopt;
     }
 
-    point view_offset;
+    point_bub_ms view_offset;
     if( capture_win == g->w_terrain ) {
         view_offset = g->ter_view_p.xy();
     }
 
-    const point p = view_offset - ( view_size / 2 - coordinate );
-    return tripoint( p, g->get_levz() );
+    const point_bub_ms p = view_offset - ( view_size / 2 - coordinate );
+    return tripoint_bub_ms( p, g->get_levz() );
 }
 #endif
 

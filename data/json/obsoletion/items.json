@@ -2332,14 +2332,14 @@
       [ [ "paper", 8 ] ],
       [ [ "bag_plastic", 1 ] ]
     ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "result": "mre_dessert",
     "type": "uncraft",
     "time": "4 s",
     "components": [ [ [ "dry_fruit", 1 ] ], [ [ "candy2", 1 ] ], [ [ "cookies", 1 ] ], [ [ "bag_plastic", 1 ] ] ],
-    "flags": [ "BLIND_EASY" ]
+    "flags": [ "BLIND_NO_EFFECT" ]
   },
   {
     "type": "COMESTIBLE",
@@ -4184,5 +4184,21 @@
       [ "FILE", 2 ],
       [ "REAM", 1 ]
     ]
+  },
+  {
+    "type": "GENERIC",
+    "id": "reinforced_glass_pane",
+    "symbol": "]",
+    "color": "light_blue",
+    "name": { "str": "pane of reinforced glass", "str_pl": "panes of reinforced glass" },
+    "description": "A small pane of glass strengthened with steel wiring.",
+    "category": "scrap_glass",
+    "price": "50 USD",
+    "price_postapoc": "1 USD",
+    "material": [ "glass", "steel" ],
+    "weight": "10040 g",
+    "volume": "3 L",
+    "bashing": 4,
+    "to_hit": -2
   }
 ]

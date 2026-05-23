@@ -53,10 +53,10 @@ ui_adaptor::ui_adaptor( ui_adaptor::debug_message_ui ) : disabling_uis_below( tr
     // but `ui_manager` will redo the entire redrawing as soon as the redraw
     // callback returns.
     const SDL_Renderer_Ptr &renderer = get_sdl_renderer();
-    if( SDL_RenderIsClipEnabled( renderer.get() ) ) {
+    if( SDL_RenderClipEnabled( renderer.get() ) ) {
         prev_clip_rect = SDL_Rect();
-        SDL_RenderGetClipRect( renderer.get(), &prev_clip_rect.value() );
-        SDL_RenderSetClipRect( renderer.get(), nullptr );
+        SDL_GetRenderClipRect( renderer.get(), &prev_clip_rect.value() );
+        SDL_SetRenderClipRect( renderer.get(), nullptr );
     } else {
         prev_clip_rect = std::nullopt;
     }
@@ -77,7 +77,7 @@ ui_adaptor::~ui_adaptor()
         // See ui_adaptor( debug_message_ui )
         if( prev_clip_rect.has_value() ) {
             const SDL_Renderer_Ptr &renderer = get_sdl_renderer();
-            SDL_RenderSetClipRect( renderer.get(), &prev_clip_rect.value() );
+            SDL_SetRenderClipRect( renderer.get(), &prev_clip_rect.value() );
         }
 #endif
     }
@@ -442,15 +442,20 @@ void ui_adaptor::screen_resized()
     redraw();
 }
 
-background_pane::background_pane()
+background_pane::background_pane( background_redraw_cb_t redraw_cb ) :
+    ui( ui_adaptor::disable_uis_below{} )
 {
-    ui.on_screen_resize( []( ui_adaptor & ui ) {
-        ui.position_from_window( catacurses::stdscr );
-    } );
+    ui.on_screen_resize( []( ui_adaptor & ui ) { ui.position_from_window( catacurses::stdscr ); } );
     ui.position_from_window( catacurses::stdscr );
-    ui.on_redraw( []( const ui_adaptor & ) {
+    ui.on_redraw( [redraw_cb = std::move( redraw_cb )]( const ui_adaptor & ) {
         catacurses::erase();
         wnoutrefresh( catacurses::stdscr );
+
+        // SDL-only background draws must happen after stdscr is written, otherwise
+        // the curses refresh immediately paints over the custom background.
+        if( redraw_cb ) {
+            redraw_cb();
+        }
     } );
 }
 

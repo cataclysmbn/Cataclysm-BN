@@ -8,7 +8,7 @@
     "object": {
       "fill_ter": "t_floor",
       "rows": [
-        "......[.......p.........",
+        "......[.......p`........",
         "...........[...`........",
         "````````````````........",
         "`%..!!.jj.!!...`........",
@@ -20,7 +20,7 @@
         "`.#          E|  |J no..",
         "`.#yxxx             7#..",
         "`.#|||| hhh         Y#..",
-        "`.#S--+ fff         6#..",
+        "`.#S¨¨+ fff         6#..",
         "`.#98t| hhh Ty RR  Y6#..",
         "`.#####*###|||+||+|||#..",
         "`......``^#db  T|  dD#^.",
@@ -33,23 +33,8 @@
         "...............[........",
         "........................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": {
-        "%": [ "t_region_shrub", "t_region_shrub_fruit", "t_region_shrub_decorative" ],
-        "[": [ [ "t_region_tree_fruit", 2 ], [ "t_region_tree_nut", 2 ], "t_region_tree_shade" ],
-        "!": "t_region_groundcover_urban",
-        "`": "t_concrete",
-        "#": "t_rock_wall",
-        "-": "t_linoleum_white",
-        "Q": "t_linoleum_white",
-        "8": "t_linoleum_white",
-        "B": "t_linoleum_white",
-        "S": "t_linoleum_white",
-        "t": "t_linoleum_white",
-        "$": "t_screened_porch_wall",
-        "=": "t_screen_door_c"
-      },
-      "furniture": { "!": "f_region_flower" },
+      "palettes": [ "standard_domestic_palette", "parameterized_linoleum_color_bathroom", "standard_domestic_landscaping_palette" ],
+      "terrain": { "#": "t_rock_wall", "$": "t_screened_porch_wall", "=": "t_screen_door_c" },
       "place_item": [ { "item": "stereo", "x": 4, "y": 10, "chance": 100 }, { "item": "television", "x": 5, "y": 10, "chance": 100 } ],
       "place_nested": [
         {

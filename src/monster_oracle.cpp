@@ -24,7 +24,8 @@ status_t monster_oracle_t::not_hallucination() const
 
 status_t monster_oracle_t::items_available() const
 {
-    if( !get_map().has_flag( TFLAG_SEALED, subject->pos() ) && get_map().has_items( subject->pos() ) ) {
+    if( !get_map().has_flag( TFLAG_SEALED, subject->bub_pos() ) &&
+        get_map().has_items( subject->bub_pos() ) ) {
         return running;
     }
     return failure;

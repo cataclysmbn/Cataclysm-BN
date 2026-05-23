@@ -434,17 +434,17 @@ void game::chat()
 
     const std::vector<npc *> available = get_npcs_if( [&]( const npc & guy ) {
         // TODO: Get rid of the z-level check when z-level vision gets "better"
-        return u.posz() == guy.posz() && u.sees( guy.pos() ) &&
-               rl_dist( u.pos(), guy.pos() ) <= SEEX * 2;
+        return u.bub_pos().z() == guy.bub_pos().z() && u.sees( guy.bub_pos() ) &&
+               rl_dist( u.bub_pos(), guy.bub_pos() ) <= SEEX * 2;
     } );
     const int available_count = available.size();
     const std::vector<npc *> followers = get_npcs_if( [&]( const npc & guy ) {
-        return guy.is_player_ally() && guy.is_following() && guy.can_hear( u.pos(), volume );
+        return guy.is_player_ally() && guy.is_following() && guy.can_hear( u.bub_pos(), volume );
     } );
     const int follower_count = followers.size();
     const std::vector<npc *> guards = get_npcs_if( [&]( const npc & guy ) {
         return guy.mission == NPC_MISSION_GUARD_ALLY &&
-               guy.can_hear( u.pos(), volume );
+               guy.can_hear( u.bub_pos(), volume );
     } );
     const int guard_count = guards.size();
 
@@ -707,13 +707,13 @@ void game::chat()
             }
 
             map &here = get_map();
-            std::optional<tripoint> p = look_around();
+            std::optional<tripoint_bub_ms> p = look_around();
 
             if( !p ) {
                 return;
             }
 
-            if( here.impassable( tripoint( *p ) ) ) {
+            if( here.impassable( *p ) ) {
                 add_msg( m_info, _( "This destination can't be reached." ) );
                 return;
             }
@@ -721,12 +721,12 @@ void game::chat()
             const auto &to = p.value();
             if( npcselect == follower_count ) {
                 for( npc *them : followers ) {
-                    tripoint_abs_ms( here.getabs( to ) );
-                    them->goto_to_this_pos = here.getglobal( to );
+                    tripoint_abs_ms( here.bub_to_abs( to ) );
+                    them->goto_to_this_pos = here.bub_to_abs( to );
                 }
                 yell_msg = _( "Everyone move there!" );
             } else {
-                followers[npcselect]->goto_to_this_pos = here.getglobal( to );
+                followers[npcselect]->goto_to_this_pos = here.bub_to_abs( to );
                 yell_msg = string_format( _( "Move there, %s!" ), followers[npcselect]->get_name() );
             }
             break;
@@ -871,17 +871,17 @@ void game::chat()
 }
 
 void npc::handle_sound( const sounds::sound_t spriority, const std::string &description,
-                        int heard_volume, const tripoint &spos )
+                        int heard_volume, const tripoint_bub_ms &spos )
 {
     map &here = get_map();
-    const tripoint s_abs_pos = here.getabs( spos );
-    const tripoint my_abs_pos = here.getabs( pos() );
+    const auto s_abs_pos = here.bub_to_abs( spos );
+    const auto my_abs_pos = abs_pos();
 
     add_msg( m_debug, "%s heard '%s', priority %d at volume %d from %d:%d, my pos %d:%d",
              disp_name(), description, static_cast<int>( spriority ), heard_volume,
-             s_abs_pos.x, s_abs_pos.y, my_abs_pos.x, my_abs_pos.y );
+             s_abs_pos.x(), s_abs_pos.y(), my_abs_pos.x(), my_abs_pos.y() );
 
-    bool player_ally = get_player_character().pos() == spos && is_player_ally();
+    bool player_ally = get_player_character().bub_pos() == spos && is_player_ally();
     player *const sound_source = g->critter_at<player>( spos );
     bool npc_ally = sound_source && sound_source->is_npc() && is_ally( *sound_source );
 
@@ -937,7 +937,7 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
             } else if( spriority > sounds::sound_t::activity ) {
                 warn_about( "combat_noise", rng( 1, 10 ) * 1_minutes );
             }
-            bool should_check = rl_dist( pos(), spos ) < investigate_dist;
+            bool should_check = rl_dist( bub_pos(), spos ) < investigate_dist;
             if( should_check ) {
                 const zone_manager &mgr = zone_manager::get_manager();
                 if( mgr.has( zone_type_npc_no_investigate, s_abs_pos, fac_id ) ) {
@@ -948,7 +948,7 @@ void npc::handle_sound( const sounds::sound_t spriority, const std::string &desc
                 }
             }
             if( should_check ) {
-                add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x, s_abs_pos.y );
+                add_msg( m_debug, "%s added noise at pos %d:%d", name, s_abs_pos.x(), s_abs_pos.y() );
                 dangerous_sound temp_sound;
                 temp_sound.abs_pos = s_abs_pos;
                 temp_sound.volume = heard_volume;
@@ -1274,7 +1274,7 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic ) const
         }
     } else if( topic == "TALK_HOW_MUCH_FURTHER" ) {
         // TODO: this ignores the z-component
-        const tripoint_abs_omt player_pos = p->global_omt_location();
+        const tripoint_abs_omt player_pos = p->abs_omt_pos();
         int dist = rl_dist( player_pos, p->goal );
         std::string response;
         dist *= 100;
@@ -1400,7 +1400,18 @@ std::string dialogue::dynamic_line( const talk_topic &the_topic ) const
     } else if( topic == "TALK_OPINION" ) {
         return "&" + p->opinion_text();
     } else if( topic == "TALK_MIND_CONTROL" ) {
-        bool not_following = !g->get_follower_list().contains( p->getID() );
+        const auto player_id = get_avatar().getID();
+        for( auto *miss : p->chatbin.missions_assigned ) {
+            if( miss->get_assigned_player_id() == player_id ) {
+                miss->fail();
+            }
+        }
+        std::erase_if( p->chatbin.missions_assigned, [player_id]( const auto * miss ) { return miss->get_assigned_player_id() == player_id; } );
+        if( p->chatbin.mission_selected != nullptr &&
+            p->chatbin.mission_selected->get_assigned_player_id() == player_id ) {
+            p->chatbin.mission_selected = nullptr;
+        }
+        const bool not_following = !g->get_follower_list().contains( p->getID() );
         talk_function::follow( *p );
         if( not_following ) {
             return _( "YES, MASTER!" );
@@ -2762,7 +2773,7 @@ void talk_effect_fun_t::set_u_buy_monster( const std::string &monster_type_id, i
         const mtype_id mtype( monster_type_id );
 
         for( int i = 0; i < count; i++ ) {
-            monster *const mon_ptr = g->place_critter_around( mtype, u.pos(), 3 );
+            monster *const mon_ptr = g->place_critter_around( mtype, u.bub_pos(), 3 );
             if( !mon_ptr ) {
                 add_msg( m_debug, "Cannot place u_buy_monster, no valid placement locations." );
                 break;
@@ -3051,6 +3062,7 @@ void talk_effect_t::parse_string_effect( const std::string &effect_id, const Jso
             WRAP( do_read ),
             WRAP( do_butcher ),
             WRAP( do_farming ),
+            WRAP( do_craft ),
             WRAP( assign_guard ),
             WRAP( stop_guard ),
             WRAP( buy_cow ),
@@ -3666,7 +3678,7 @@ static consumption_result try_consume( npc &p, item &it, std::string &reason )
             reason = _( "Thanks, I feel better already." );
         }
         if( to_eat.type->has_use() ) {
-            amount_used = to_eat.type->invoke( p, to_eat, p.pos() );
+            amount_used = to_eat.type->invoke( p, to_eat, p.bub_pos() );
             if( amount_used <= 0 ) {
                 reason = _( "It doesn't look like a good idea to consume this…" );
                 return REFUSED;

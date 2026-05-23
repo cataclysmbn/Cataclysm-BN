@@ -7,6 +7,8 @@
     "category": "core",
     "core": true,
     "lua_api_version": 2,
-    "path": "../../json"
+    "loading_images": [ "loading/" ],
+    "path": "../../json",
+    "conflicts": [ "Tankmod_Revived", "Heavy miners", "Mining_Mod" ]
   }
 ]

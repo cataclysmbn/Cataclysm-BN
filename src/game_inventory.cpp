@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
@@ -106,6 +107,35 @@ class inventory_filter_preset : public inventory_selector_preset
 
 namespace
 {
+
+class common_inventory_selector : public inventory_pick_selector
+{
+    public:
+        explicit common_inventory_selector( player &p ) : inventory_pick_selector( p ) {
+            ctxt.register_action( "unload_all",
+                                  to_translation( "Unload every carried item that can be unloaded" ) );
+        }
+
+        auto clear_shortcuts() -> void {
+            unload_all_selected = false;
+        }
+
+        [[nodiscard]] auto selected_unload_all() const -> bool {
+            return unload_all_selected;
+        }
+
+    protected:
+        auto handle_action( const std::string &action ) -> bool override {
+            if( action != "unload_all" ) {
+                return false;
+            }
+            unload_all_selected = true;
+            return true;
+        }
+
+    private:
+        bool unload_all_selected = false;
+};
 
 std::string good_bad_none( int value )
 {
@@ -222,7 +252,7 @@ static item *inv_internal( player &u, const inventory_selector_preset &preset,
 
 void game_menus::inv::common( avatar &you )
 {
-    inventory_pick_selector inv_s( you );
+    common_inventory_selector inv_s( you );
 
     inv_s.set_title( _( "Inventory" ) );
     inv_s.set_hint( string_format(
@@ -235,7 +265,14 @@ void game_menus::inv::common( avatar &you )
         inv_s.clear_items();
         inv_s.add_character_items( you );
 
-        item *location = inv_s.execute();
+        inv_s.clear_shortcuts();
+        auto *location = inv_s.execute();
+
+        if( inv_s.selected_unload_all() ) {
+            avatar_action::unload_all( you );
+            started_action = true;
+            continue;
+        }
 
         if( location == nullptr ) {
             if( inv_s.keep_open ) {
@@ -258,10 +295,10 @@ void game_menus::inv::common( avatar &you )
 }
 
 item *game_menus::inv::titled_filter_menu( const item_filter &filter, avatar &you,
-        const std::string &title, const std::string &none_message )
+        const std::string &title, const std::string &none_message, int radius )
 {
     return inv_internal( you, inventory_filter_preset( filter ),
-                         title, -1, none_message );
+                         title, radius, none_message );
 }
 
 item *game_menus::inv::titled_menu( avatar &you, const std::string &title,
@@ -851,7 +888,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
             const auto &uses = it.type->use_methods;
 
             if( uses.size() == 1 ) {
-                const auto ret = uses.begin()->second.can_call( p, it, false, p.pos() );
+                const auto ret = uses.begin()->second.can_call( p, it, false, p.bub_pos() );
                 if( !ret.success() ) {
                     return trim_punctuation_marks( ret.str() );
                 }
@@ -868,7 +905,7 @@ class activatable_inventory_preset : public pickup_inventory_preset
                            loc->ammo_required() );
             }
 
-            if( !it.has_flag( flag_ALLOWS_REMOTE_USE ) ) {
+            if( !it.has_flag( flag_ALLOWS_REMOTE_USE ) && !it.has_flag( flag_TEMPORARY_ITEM ) ) {
                 return pickup_inventory_preset::get_denial( loc );
             }
 
@@ -1673,7 +1710,7 @@ drop_locations game_menus::inv::multidrop( player &p )
 }
 
 
-void game_menus::inv::compare( player &p, const std::optional<tripoint> &offset )
+void game_menus::inv::compare( player &p, const std::optional<tripoint_rel_ms> &offset )
 {
     p.inv_restack( );
 
@@ -1684,8 +1721,8 @@ void game_menus::inv::compare( player &p, const std::optional<tripoint> &offset 
     inv_s.set_hint( _( "Select two items to compare them." ) );
 
     if( offset ) {
-        inv_s.add_map_items( p.pos() + *offset );
-        inv_s.add_vehicle_items( p.pos() + *offset );
+        inv_s.add_map_items( p.bub_pos() + *offset );
+        inv_s.add_vehicle_items( p.bub_pos() + *offset );
     } else {
         inv_s.add_nearby_items();
     }

@@ -206,6 +206,8 @@ enum m_flag : int {
     MF_MOUNTABLE_DOORS,     //Player can open/close doors while riding this monster
     MF_MOUNTABLE_LEDGE,     //Player can drop down ledges while riding this monster
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
+    MF_COMBAT_MOUNT,        // This monster is trained for combat
+    MF_CANT_TRAIN,            // This monster can't be trained for combat
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };
@@ -315,6 +317,7 @@ struct mtype {
         int speed = 0;          /** e.g. human = 100 */
         int agro = 0;           /** chance will attack [-100,100] */
         int morale = 0;         /** initial morale level at spawn */
+        std::optional<int> preferred_z;
 
         // Number of hitpoints regenerated per turn.
         int regenerates = 0;
@@ -339,6 +342,25 @@ struct mtype {
 
         // Pet food category this monster is in
         pet_food_data petfood;
+
+        struct pet_training_level_flags {
+            int level = 0;
+            std::vector<m_flag> flags;
+        };
+
+        struct pet_training_multipliers {
+            // Per-level multipliers: 1.2 means each training level gives +20% of base stat.
+            // Values below 1.0 would decrease stats; values above 1.0 increase them.
+            float hp = 1.2f;
+            float melee = 1.15f;
+            float dodge = 1.15f;
+            int max_level = 3;
+            int min_skill = 3;
+            std::vector<pet_training_level_flags> level_flags;
+        };
+        // Per-level stat multipliers when this monster is trained as a pet.
+        // Absent means this monster cannot be trained.
+        std::optional<pet_training_multipliers> pet_training;
 
         std::set<scenttype_id> scents_tracked; /**Types of scent tracked by this mtype*/
         std::set<scenttype_id> scents_ignored; /**Types of scent ignored by this mtype*/
@@ -432,6 +454,10 @@ struct mtype {
          * If this monster is a rideable mech with enhanced strength, this is the strength it gives to the player
          */
         int mech_str_bonus = 0;
+        /**
+         * If present, disarming techniques will work on this creature
+         */
+        item_group_id monster_weapon;
 
         /** Emission sources that cycle each turn the monster remains alive */
         std::map<emit_id, time_duration> emit_fields;
@@ -483,4 +509,3 @@ struct mtype {
 };
 
 mon_effect_data load_mon_effect_data( const JsonObject &e );
-

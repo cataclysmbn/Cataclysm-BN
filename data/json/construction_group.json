@@ -1016,6 +1016,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_multicooker",
+    "name": "Plug In Multi Cooker"
+  },
+  {
+    "type": "construction_group",
     "id": "install_refrigerator",
     "name": "Plug In Refrigerator"
   },
@@ -1636,6 +1641,11 @@
   },
   {
     "type": "construction_group",
+    "id": "salt_water_fill_pit",
+    "name": "Fill Pit With Salt Water"
+  },
+  {
+    "type": "construction_group",
     "id": "build_high_end_of_a_natural_ramp",
     "name": "Dig High End of a Ramp"
   },
@@ -1868,5 +1878,10 @@
     "type": "construction_group",
     "id": "place_roulette",
     "name": "Place Roulette Table"
+  },
+  {
+    "type": "construction_group",
+    "id": "build_bathtub",
+    "name": "Build Bathtub"
   }
 ]

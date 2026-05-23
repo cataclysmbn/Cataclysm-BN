@@ -335,12 +335,14 @@ xxxx..xxxx  new_feature -> new_feature
 
 ## ユニットテスト
 
-ソースツリーの tests/ にテストスイートが組み込まれています。ゲームソースへの**あらゆる**変更の後にテストスイートを実行する必要があります。通常通り `make` を実行すると tests/cata_test にテスト実行ファイルがビルドされ、通常の実行ファイルと同様に、または `make check` を介して呼び出すことができます。引数なしで実行すると、テストスイート全体が実行されます。`--help` を付けると、操作を調整するために使用できるいくつかの呼び出しオプションが表示されます。
+ソースツリーの `tests/` にテストスイートが組み込まれています。ゲームソースへの**あらゆる**変更の後にテストスイートを実行する必要があります。CMake は選択したビルドプリセットの `tests/` ディレクトリにテスト実行ファイルをビルドします。引数なしで実行すると、テストスイート全体が実行されます。`--help` を付けると、操作を調整するために使用できるいくつかの呼び出しオプションが表示されます。
 
 ```sh
-$ make
+$ cmake --preset linux-slim
+... configuration details ...
+$ cmake --build --preset linux-slim --target cata_test-tiles
 ... compilation details ...
-$ tests/cata_test
+$ ./out/build/linux-slim/tests/cata_test-tiles
 Starting the actual test at Fri Nov  9 04:37:03 2018
 ===============================================================================
 All tests passed (1324684 assertions in 94 test cases)
@@ -348,7 +350,7 @@ Ended test at Fri Nov  9 04:37:45 2018
 The test took 41.772 seconds
 ```
 
-習慣的に `make YOUR BUILD OPTIONS && make check` のように make を呼び出すことをお勧めします。
+選択したプリセットの CMake ビルドとテストコマンドを習慣的に実行することをお勧めします。
 
 ## ゲーム内テスト、テスト環境、デバッグメニュー
 

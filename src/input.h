@@ -13,7 +13,8 @@
 #include <list>
 #endif
 
-#include "point.h"
+#include "coordinates.h"
+#include "filesystem.h"
 #include "translations.h"
 
 enum action_id : int;
@@ -75,6 +76,18 @@ static constexpr int KEY_END        = 0x168;    /* End */
 
 static constexpr int LEGEND_HEIGHT = 11;
 static constexpr int BORDER_SPACE = 2;
+
+static constexpr int NUMPAD_1 = 0x401;
+static constexpr int NUMPAD_2 = 0x402;
+static constexpr int NUMPAD_3 = 0x403;
+static constexpr int NUMPAD_4 = 0x404;
+static constexpr int NUMPAD_5 = 0x405;
+static constexpr int NUMPAD_6 = 0x406;
+static constexpr int NUMPAD_7 = 0x407;
+static constexpr int NUMPAD_8 = 0x408;
+static constexpr int NUMPAD_9 = 0x409;
+static constexpr int NUMPAD_0 = 0x40a;
+
 
 bool is_mouse_enabled();
 std::string get_input_string_from_file( const std::string &fname = "input.txt" );
@@ -184,8 +197,9 @@ struct input_event {
  * A set of attributes for an action
  */
 struct action_attributes {
-    action_attributes() : is_user_created( false ) {}
+    action_attributes() : is_user_created( false ), is_deleted( false ) {}
     bool is_user_created;
+    bool is_deleted;
     translation name;
     std::vector<input_event> input_events;
 };
@@ -332,7 +346,7 @@ class input_manager
          * Load keybindings from a json file, override existing bindings.
          * Throws std::string on errors
          */
-        void load( const std::string &file_name, bool is_user_preferences );
+        void load( const fs::path &file_name, bool is_user_preferences );
 
         int input_timeout;
 
@@ -625,16 +639,17 @@ class input_context
          * the delta vector associated with it. Otherwise returns an empty value.
          * The returned vector will always have a z component of 0.
          */
-        std::optional<tripoint> get_direction( const std::string &action ) const;
+        std::optional<tripoint_rel_ms> get_direction( const std::string &action ) const;
 
         /**
          * Get the coordinates associated with the last mouse click (if any).
          *
          * TODO: This right now is more or less specific to the map window,
-         *       and returns the absolute map coordinate.
+         *       and returns the local map coordinate.
          *       Eventually this should be made more flexible.
+         *       For overmap, we'll need another version that spits out tripoint_rel_omt
          */
-        std::optional<tripoint> get_coordinates( const catacurses::window &capture_win_ );
+        std::optional<tripoint_bub_ms> get_coordinates( const catacurses::window &capture_win_ );
 
         // Below here are shortcuts for registering common key combinations.
         void register_directions();

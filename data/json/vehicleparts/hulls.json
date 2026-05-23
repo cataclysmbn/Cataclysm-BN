@@ -165,7 +165,7 @@
     "description": "A rigid aluminum sheet that keeps water out of your boat.",
     "symbol": "o",
     "color": "light_blue",
-    "looks_like": "boat_board",
+    "looks_like": "metal_boat_hull",
     "broken_symbol": "x",
     "broken_color": "light_gray",
     "damage_modifier": 50,

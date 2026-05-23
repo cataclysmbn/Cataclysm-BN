@@ -36,7 +36,7 @@
 #include "vpart_position.h"
 
 #if defined(__ANDROID__)
-#include <SDL_keyboard.h>
+#include <SDL3/SDL.h>
 #endif
 
 #include <algorithm>
@@ -204,7 +204,7 @@ const item_category *inventory_entry::get_category_ptr() const
 
 bool inventory_column::activatable() const
 {
-    return std::any_of( entries.begin(), entries.end(), []( const inventory_entry & e ) {
+    return std::ranges::any_of( entries, []( const inventory_entry & e ) {
         return e.is_selectable();
     } );
 }
@@ -1114,7 +1114,7 @@ static std::vector<std::list<item *>> restack_items( const std::vector<item *>::
 }
 
 const item_category *inventory_selector::naturalize_category( const item_category &category,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     const auto find_cat_by_id = [ this ]( const item_category_id & id ) {
         const auto iter = std::find_if( categories.begin(),
@@ -1124,10 +1124,10 @@ const item_category *inventory_selector::naturalize_category( const item_categor
         return iter != categories.end() ? &*iter : nullptr;
     };
 
-    const int dist = rl_dist( u.pos(), pos );
+    const int dist = rl_dist( u.bub_pos(), pos );
 
     if( dist != 0 ) {
-        const std::string suffix = direction_suffix( u.pos(), pos );
+        const std::string suffix = direction_suffix( u.bub_pos().raw(), pos.raw() );
         const item_category_id id = item_category_id( string_format( "%s_%s", category.get_id().c_str(),
                                     suffix.c_str() ) );
 
@@ -1225,7 +1225,7 @@ void inventory_selector::add_character_items( Character &character )
     }
 }
 
-void inventory_selector::add_map_items( const tripoint &target )
+void inventory_selector::add_map_items( const tripoint_bub_ms &target )
 {
     if( g->m.accessible_items( target ) ) {
         const auto items = g->m.i_at( target );
@@ -1238,7 +1238,7 @@ void inventory_selector::add_map_items( const tripoint &target )
     }
 }
 
-void inventory_selector::add_vehicle_items( const tripoint &target )
+void inventory_selector::add_vehicle_items( const tripoint_bub_ms &target )
 {
     const std::optional<vpart_reference> vp = g->m.veh_at( target ).part_with_feature( "CARGO", true );
     if( !vp ) {
@@ -1260,9 +1260,10 @@ void inventory_selector::add_vehicle_items( const tripoint &target )
 void inventory_selector::add_nearby_items( int radius )
 {
     if( radius >= 0 ) {
-        for( const tripoint &pos : closest_points_first( u.pos(), radius ) ) {
+        for( const tripoint_bub_ms &pos : closest_points_first( u.bub_pos(), radius ) ) {
             // can not reach this -> can not access its contents
-            if( u.pos() != pos && !g->m.clear_path( u.pos(), pos, rl_dist( u.pos(), pos ), 1, 100 ) ) {
+            if( u.bub_pos() != pos &&
+                !g->m.clear_path( u.bub_pos(), pos, rl_dist( u.bub_pos(), pos ), 1, 100 ) ) {
                 continue;
             }
             add_map_items( pos );
@@ -1954,6 +1955,8 @@ item *inventory_pick_selector::execute()
             }
         } else if( input.action == "INVENTORY_FILTER" ) {
             set_filter();
+        } else if( handle_action( input.action ) ) {
+            return nullptr;
         } else {
             on_input( input );
         }
@@ -1984,6 +1987,46 @@ void inventory_multiselector::rearrange_columns( size_t client_width )
     selection_col->set_visibility( true );
     inventory_selector::rearrange_columns( client_width );
     selection_col->set_visibility( !is_overflown( client_width ) );
+}
+
+size_t inventory_multiselector::query_count( size_t count = 0 )
+{
+    std::string count_str;
+    if( count == 0 ) {
+        count_str = "";
+    } else {
+        count_str = std::to_string( count );
+    }
+
+    spopup = std::make_unique<string_input_popup>();
+    spopup->max_length( 256 ).identifier( "inventory" )
+    .text( count_str );
+
+    shared_ptr_fast<ui_adaptor> current_ui = ui.lock();
+    if( current_ui ) {
+        current_ui->mark_resize();
+    }
+
+    do {
+        ui_manager::redraw();
+        spopup->query_string( /*loop=*/false );
+    } while( !spopup->confirmed() && !spopup->canceled() );
+
+    if( spopup->confirmed() ) {
+        count_str = spopup->text();
+        try {
+            count = std::stoull( count_str );
+        } catch( const std::exception &e ) {
+            count = 0;
+        }
+
+        if( current_ui ) {
+            current_ui->mark_resize();
+        }
+    }
+
+    spopup.reset();
+    return count;
 }
 
 inventory_compare_selector::inventory_compare_selector( player &p ) :
@@ -2239,9 +2282,15 @@ drop_locations inventory_drop_selector::execute()
         const inventory_input input = get_input();
 
         if( input.ch >= '0' && input.ch <= '9' ) {
-            count = std::min( count, INT_MAX / 10 - 10 );
-            count *= 10;
-            count += input.ch - '0';
+            const auto selected( get_active_column().get_all_selected() );
+
+            count = query_count( input.ch - '0' );
+            count = std::min( count, max_chosen_count );
+            for( const auto &elem : selected ) {
+                set_chosen_count( *elem, count );
+            }
+
+            count = 0;
         } else if( input.entry != nullptr ) {
             select( input.entry->any_item() );
             if( count == 0 && input.entry->chosen_count == 0 ) {

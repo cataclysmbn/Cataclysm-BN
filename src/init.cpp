@@ -63,6 +63,7 @@
 #include "magic_ter_furn_transform.h"
 #include "map_extras.h"
 #include "mapbuffer.h"
+#include "map_feature_descriptions.h"
 #include "mapdata.h"
 #include "mapgen.h"
 #include "mapgen_async.h"
@@ -85,6 +86,7 @@
 #include "overmap_connection.h"
 #include "overmap_location.h"
 #include "overmap_special.h"
+#include "path_utils.h"
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
@@ -106,6 +108,7 @@
 #include "type_id.h"
 #include "veh_type.h"
 #include "vehicle_group.h"
+#include "vehicle_palette.h"
 #include "vitamin.h"
 #include "weather.h"
 #include "weather_type.h"
@@ -309,6 +312,7 @@ void DynamicDataLoader::initialize()
     } );
 
     add( "vehicle_part",  &vpart_info::load );
+    add( "vehicle_color_palette",  &VehiclePalette::load );
     add( "vehicle",  &vehicle_prototype::load );
     add( "vehicle_group",  &VehicleGroup::load );
     add( "vehicle_placement",  &VehiclePlacement::load );
@@ -415,6 +419,7 @@ void DynamicDataLoader::initialize()
     add( "overmap_special", &overmap_specials::load );
     add( "city_building", &city_buildings::load );
     add( "map_extra", &MapExtras::load );
+    add( "map_feature_description", &map_feature_descriptions::load_map_feature_descriptions );
 
     add( "region_settings", &load_region_settings );
     add( "region_overlay", &load_region_overlay );
@@ -466,6 +471,7 @@ void DynamicDataLoader::initialize()
     add( "event_statistic", &event_statistic::load_statistic );
     add( "score", &score::load_score );
     add( "achievement", &achievement::load_achievement );
+    add( "named_color", &RGBColor::load_named_color );
 #if defined(TILES)
     add( "mod_tileset", &load_mod_tileset );
 #else
@@ -474,7 +480,7 @@ void DynamicDataLoader::initialize()
 #endif
 }
 
-void DynamicDataLoader::load_data_from_path( const std::string &path, const std::string &src,
+void DynamicDataLoader::load_data_from_path( const fs::path &path, const std::string &src,
         loading_ui &ui )
 {
     assert( !finalized && "Can't load additional data after finalization.  Must be unloaded first." );
@@ -485,9 +491,9 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
     // But not the other way round.
 
     // get a list of all files in the directory
-    str_vec files = get_files_from_path( ".json", path, true, true );
+    auto files = get_files_from_path( ".json", path, true, true );
     if( files.empty() ) {
-        std::ifstream tmp( path.c_str(), std::ios::in );
+        std::ifstream tmp( path, std::ios::in );
         if( tmp ) {
             // path is actually a file, don't checking the extension,
             // assume we want to load this file anyway
@@ -495,8 +501,7 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
         }
     }
     // iterate over each file
-    for( auto &files_i : files ) {
-        const std::string &file = files_i;
+    for( const auto &file : files ) {
         // open the file as a stream
         cata_ifstream infile = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( file ) );
         // and stuff it into ram
@@ -508,8 +513,9 @@ void DynamicDataLoader::load_data_from_path( const std::string &path, const std:
         );
         try {
             // parse it
-            JsonIn jsin( iss, file );
-            load_all_from_json( jsin, src, ui, path, file );
+            JsonIn jsin( iss, cata_files::path_to_generic_utf8( file ) );
+            load_all_from_json( jsin, src, ui, cata_files::path_to_generic_utf8( path ),
+                                cata_files::path_to_generic_utf8( file ) );
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
         }
@@ -585,6 +591,7 @@ void DynamicDataLoader::unload_data()
     json_flag::reset();
     json_trait_flag::reset();
     MapExtras::reset();
+    map_feature_descriptions::reset_map_feature_descriptions();
     mapgen_palette::reset();
     materials::reset();
     mission_type::reset();
@@ -633,6 +640,7 @@ void DynamicDataLoader::unload_data()
     trap::reset();
     unload_talk_topics();
     VehicleGroup::reset();
+    VehiclePalette::reset();
     VehiclePlacement::reset();
     VehicleSpawn::reset();
     vitamin::reset();
@@ -642,6 +650,7 @@ void DynamicDataLoader::unload_data()
     world_types::reset();
     zone_type::reset_zones();
     l10n_data::unload_mod_catalogues();
+    RGBColor::unload_names();
 #if defined(TILES)
     reset_mod_tileset();
 #endif
@@ -769,6 +778,8 @@ void DynamicDataLoader::check_consistency( loading_ui &ui )
             { _( "Materials" ), &materials::check },
             { _( "Engine faults" ), &fault::check_consistency },
             { _( "Vehicle parts" ), &vpart_info::check },
+            { _( "Vehicle palettes" ), &VehiclePalette::check },
+            { _( "Vehicle groups" ), &VehicleGroup::check },
             { _( "Mapgen definitions" ), &check_mapgen_definitions },
             { _( "Mapgen palettes" ), &mapgen_palette::check_definitions },
             {
@@ -909,7 +920,7 @@ static void load_and_finalize_packs( loading_ui &ui, const std::string &msg,
     init::load_main_lua_scripts( *loader.lua, packs );
     cata::clear_mod_being_loaded( *loader.lua );
     // Update cached hook-presence flag so worker threads know whether to queue
-    // deferred mapgen postprocess hooks (avoids lock + allocation overhead per quad
+    // deferred mapgen postprocess hooks (avoids lock + allocation overhead per omt
     // when no on_mapgen_postprocess hooks are registered).
     refresh_mapgen_postprocess_hook_presence( *loader.lua );
 }
@@ -1025,6 +1036,10 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }
 
+    // Ensure the last checked mod unloads before process exit so Lua-backed
+    // mapgen functions do not outlive the active Lua state.
+    on_out_of_scope clear_last_checked_data( [] { clear_loaded_data(); } );
+
     for( const mod_id &id : to_check ) {
         clear_loaded_data();
 
@@ -1056,7 +1071,7 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
 
         // TODO: Why would we need these calls?
         MAPBUFFER.clear();
-        ACTIVE_OVERMAP_BUFFER.clear();
+        get_primary_overmapbuffer().clear();
     }
 
     return !debug_has_error_been_observed();

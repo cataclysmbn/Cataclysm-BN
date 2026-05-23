@@ -297,6 +297,13 @@
     "permanent": true
   },
   {
+    "type": "effect_type",
+    "id": "monster_disarmed",
+    "name": [ "Disarmed" ],
+    "desc": [ "AI tag for a monster's attacks being disabled due to disarming tecs.  This is a bug if you have it." ],
+    "permanent": true
+  },
+  {
     "//": "ACTUAL PLAYER EFFECTS START HERE",
     "type": "effect_type",
     "id": "downed",

@@ -947,7 +947,7 @@
     "charges": 15,
     "autolearn": true,
     "batch_time_factors": [ 50, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "rock_quern", -1 ], [ "clay_quern", -1 ] ] ],
     "components": [
       [
@@ -986,7 +986,7 @@
     "time": "1 h",
     "autolearn": true,
     "batch_time_factors": [ 50, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "rock_quern", -1 ], [ "clay_quern", -1 ] ] ],
     "components": [ [ [ "bone_sturdy", 1, "LIST" ] ] ]
   },
@@ -1000,7 +1000,7 @@
     "time": "1 h",
     "autolearn": true,
     "batch_time_factors": [ 50, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "rock_quern", -1 ], [ "clay_quern", -1 ] ] ],
     "components": [ [ [ "bone_tainted", 1 ] ] ]
   },
@@ -1354,7 +1354,7 @@
     "time": "1 h 7 m 30 s",
     "autolearn": true,
     "batch_time_factors": [ 50, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "mortar_pestle", -1 ] ] ],
     "components": [
       [
@@ -1396,7 +1396,7 @@
     "time": "1 h 30 m",
     "autolearn": true,
     "batch_time_factors": [ 50, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "mortar_pestle", -1 ] ] ],
     "components": [ [ [ "bone_sturdy", 1, "LIST" ] ] ]
   },
@@ -1412,7 +1412,7 @@
     "time": "1 h 30 m",
     "autolearn": true,
     "batch_time_factors": [ 50, 3 ],
-    "flags": [ "BLIND_EASY" ],
+    "flags": [ "BLIND_NO_EFFECT" ],
     "tools": [ [ [ "mortar_pestle", -1 ] ] ],
     "components": [ [ [ "bone_tainted", 1 ] ] ]
   },

@@ -8,6 +8,7 @@
 *.tmp
 *.zip
 /WinDepend/
+/android/app/jni/sdl3
 /bindist/
 build.*
 build
@@ -28,7 +29,8 @@ test_user_dir*
 /font/
 /graveyard/
 /memorial/
-/mods/
+/mods/*
+!/mods/put-your-third-party-mods-here.txt
 /obj/
 /objwin/
 /save/
@@ -43,6 +45,7 @@ CataclysmWin.layout
 cata_test
 cata_test-tiles
 cataclysm
+cataclysm-bn
 cataclysm-tiles
 cataclysm-bn-tiles
 json_formatter
@@ -112,6 +115,7 @@ cscope.*
 tags
 
 # Generated translation source
+/lang/po/*.po
 /lang/po/cataclysm-bn.pot
 
 # Compiled binary translations
@@ -236,3 +240,4 @@ clang-tidy-trace
 
 CMakeFiles/
 CMakeCache.txt
+__cmake_systeminformation/

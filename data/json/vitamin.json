@@ -13,7 +13,7 @@
     "id": "iron",
     "type": "vitamin",
     "vit_type": "vitamin",
-    "name": { "str": "Iron" },
+    "name": { "ctxt": "nutrient", "str": "Iron" },
     "excess": "hypervitaminosis",
     "deficiency": "anemia",
     "min": -12000,

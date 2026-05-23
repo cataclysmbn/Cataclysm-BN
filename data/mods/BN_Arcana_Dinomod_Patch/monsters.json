@@ -1,0 +1,968 @@
+[
+  {
+    "id": "mon_silophosaurus",
+    "copy-from": "mon_silophosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_seratosaurus",
+    "copy-from": "mon_seratosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_skinosaurus",
+    "copy-from": "mon_skinosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sorvosaurus",
+    "copy-from": "mon_sorvosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sallosaurus",
+    "copy-from": "mon_sallosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sacrocanthosaurus",
+    "copy-from": "mon_sacrocanthosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_skiats",
+    "copy-from": "mon_skiats",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sryptosaurus",
+    "copy-from": "mon_sryptosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sappalachiosaurus",
+    "copy-from": "mon_sappalachiosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sorgosaurus",
+    "copy-from": "mon_sorgosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_salbertosaurus",
+    "copy-from": "mon_salbertosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sianzhousaurus",
+    "copy-from": "mon_sianzhousaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sanuqsaurus",
+    "copy-from": "mon_sanuqsaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_saspletosaurus",
+    "copy-from": "mon_saspletosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_syrannosaurus",
+    "copy-from": "mon_syrannosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sallimimus",
+    "copy-from": "mon_sallimimus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sktruthiomimus",
+    "copy-from": "mon_sktruthiomimus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sornithomimus",
+    "copy-from": "mon_sornithomimus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sothronychus",
+    "copy-from": "mon_sothronychus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sanzu",
+    "copy-from": "mon_sanzu",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_seinonychus",
+    "copy-from": "mon_seinonychus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sutahraptor",
+    "copy-from": "mon_sutahraptor",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sissi",
+    "copy-from": "mon_sissi",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_samargasaurus",
+    "copy-from": "mon_samargasaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sapatosaurus",
+    "copy-from": "mon_sapatosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_srontosaurus",
+    "copy-from": "mon_srontosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_siplodocus",
+    "copy-from": "mon_siplodocus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_samarasaurus",
+    "copy-from": "mon_samarasaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_srachiosaurus",
+    "copy-from": "mon_srachiosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_salamosaurus",
+    "copy-from": "mon_salamosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sktegosaurus",
+    "copy-from": "mon_sktegosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_syoplosaurus",
+    "copy-from": "mon_syoplosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sankylosaurus",
+    "copy-from": "mon_sankylosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sodosaurus",
+    "copy-from": "mon_sodosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sedmontonia",
+    "copy-from": "mon_sedmontonia",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_samptosaurus",
+    "copy-from": "mon_samptosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sadrosaurus",
+    "copy-from": "mon_sadrosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sarasaurolophus",
+    "copy-from": "mon_sarasaurolophus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sorythosaurus",
+    "copy-from": "mon_sorythosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_saiasaura",
+    "copy-from": "mon_saiasaura",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sedmontosaurus",
+    "copy-from": "mon_sedmontosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sachycephalosaurus",
+    "copy-from": "mon_sachycephalosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sachyrhinosaurus",
+    "copy-from": "mon_sachyrhinosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sentaceratops",
+    "copy-from": "mon_sentaceratops",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sosmoceratops",
+    "copy-from": "mon_sosmoceratops",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sorosaurus",
+    "copy-from": "mon_sorosaurus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sriceratops",
+    "copy-from": "mon_sriceratops",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_silophosaurus_brute",
+    "copy-from": "mon_silophosaurus_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_silophosaurus_hulk",
+    "copy-from": "mon_silophosaurus_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_skinosaurus_brute",
+    "copy-from": "mon_skinosaurus_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_skinosaurus_hulk",
+    "copy-from": "mon_skinosaurus_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sorvosaurus_brute",
+    "copy-from": "mon_sorvosaurus_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sorvosaurus_hulk",
+    "copy-from": "mon_sorvosaurus_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sallosaurus_brute",
+    "copy-from": "mon_sallosaurus_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sallosaurus_hulk",
+    "copy-from": "mon_sallosaurus_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_syrannosaurus_brute",
+    "copy-from": "mon_syrannosaurus_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_syrannosaurus_hulk",
+    "copy-from": "mon_syrannosaurus_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sallimimus_brute",
+    "copy-from": "mon_sallimimus_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sallimimus_hulk",
+    "copy-from": "mon_sallimimus_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sothronychus_brute",
+    "copy-from": "mon_sothronychus_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sothronychus_hulk",
+    "copy-from": "mon_sothronychus_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sanzu_brute",
+    "copy-from": "mon_sanzu_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sanzu_hulk",
+    "copy-from": "mon_sanzu_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sutahraptor_brute",
+    "copy-from": "mon_sutahraptor_brute",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_sutahraptor_hulk",
+    "copy-from": "mon_sutahraptor_hulk",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_skeletal_death_drops"
+  },
+  {
+    "id": "mon_zilophosaurus_shady",
+    "copy-from": "mon_zilophosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zeratosaurus_shady",
+    "copy-from": "mon_zeratosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zpinosaurus_shady",
+    "copy-from": "mon_zpinosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zorvosaurus_shady",
+    "copy-from": "mon_zorvosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zallosaurus_shady",
+    "copy-from": "mon_zallosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zacrocanthosaurus_shady",
+    "copy-from": "mon_zacrocanthosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_ziats_shady",
+    "copy-from": "mon_ziats_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zryptosaurus_shady",
+    "copy-from": "mon_zryptosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zappalachiosaurus_shady",
+    "copy-from": "mon_zappalachiosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zorgosaurus_shady",
+    "copy-from": "mon_zorgosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zalbertosaurus_shady",
+    "copy-from": "mon_zalbertosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zianzhousaurus_shady",
+    "copy-from": "mon_zianzhousaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zanuqsaurus_shady",
+    "copy-from": "mon_zanuqsaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zaspletosaurus_shady",
+    "copy-from": "mon_zaspletosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zyrannosaurus_shady",
+    "copy-from": "mon_zyrannosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zallimimus_shady",
+    "copy-from": "mon_zallimimus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_ztruthiomimus_shady",
+    "copy-from": "mon_ztruthiomimus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zornithomimus_shady",
+    "copy-from": "mon_zornithomimus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zothronychus_shady",
+    "copy-from": "mon_zothronychus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zanzu_shady",
+    "copy-from": "mon_zanzu_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zeinonychus_shady",
+    "copy-from": "mon_zeinonychus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zutahraptor_shady",
+    "copy-from": "mon_zutahraptor_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zankylosaurus_shady",
+    "copy-from": "mon_zankylosaurus_shady",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zilophosaurus_nightstalker",
+    "copy-from": "mon_zilophosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zeratosaurus_nightstalker",
+    "copy-from": "mon_zeratosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zpinosaurus_nightstalker",
+    "copy-from": "mon_zpinosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zorvosaurus_nightstalker",
+    "copy-from": "mon_zorvosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zallosaurus_nightstalker",
+    "copy-from": "mon_zallosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zacrocanthosaurus_nightstalker",
+    "copy-from": "mon_zacrocanthosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_ziats_nightstalker",
+    "copy-from": "mon_ziats_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zryptosaurus_nightstalker",
+    "copy-from": "mon_zryptosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zappalachiosaurus_nightstalker",
+    "copy-from": "mon_zappalachiosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zorgosaurus_nightstalker",
+    "copy-from": "mon_zorgosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zalbertosaurus_nightstalker",
+    "copy-from": "mon_zalbertosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zianzhousaurus_nightstalker",
+    "copy-from": "mon_zianzhousaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zanuqsaurus_nightstalker",
+    "copy-from": "mon_zanuqsaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zaspletosaurus_nightstalker",
+    "copy-from": "mon_zaspletosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zyrannosaurus_nightstalker",
+    "copy-from": "mon_zyrannosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zallimimus_nightstalker",
+    "copy-from": "mon_zallimimus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_ztruthiomimus_nightstalker",
+    "copy-from": "mon_ztruthiomimus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zornithomimus_nightstalker",
+    "copy-from": "mon_zornithomimus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zothronychus_nightstalker",
+    "copy-from": "mon_zothronychus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zanzu_nightstalker",
+    "copy-from": "mon_zanzu_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zeinonychus_nightstalker",
+    "copy-from": "mon_zeinonychus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zutahraptor_nightstalker",
+    "copy-from": "mon_zutahraptor_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zankylosaurus_nightstalker",
+    "copy-from": "mon_zankylosaurus_nightstalker",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_shady_death_drops"
+  },
+  {
+    "id": "mon_zilophosaurus_fungus",
+    "copy-from": "mon_zilophosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zeratosaurus_fungus",
+    "copy-from": "mon_zeratosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zpinosaurus_fungus",
+    "copy-from": "mon_zpinosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zorvosaurus_fungus",
+    "copy-from": "mon_zorvosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zallosaurus_fungus",
+    "copy-from": "mon_zallosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zacrocanthosaurus_fungus",
+    "copy-from": "mon_zacrocanthosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_ziats_fungus",
+    "copy-from": "mon_ziats_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zryptosaurus_fungus",
+    "copy-from": "mon_zryptosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zappalachiosaurus_fungus",
+    "copy-from": "mon_zappalachiosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zorgosaurus_fungus",
+    "copy-from": "mon_zorgosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zalbertosaurus_fungus",
+    "copy-from": "mon_zalbertosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zianzhousaurus_fungus",
+    "copy-from": "mon_zianzhousaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zanuqsaurus_fungus",
+    "copy-from": "mon_zanuqsaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zaspletosaurus_fungus",
+    "copy-from": "mon_zaspletosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zyrannosaurus_fungus",
+    "copy-from": "mon_zyrannosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zallimimus_fungus",
+    "copy-from": "mon_zallimimus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_ztruthiomimus_fungus",
+    "copy-from": "mon_ztruthiomimus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zornithomimus_fungus",
+    "copy-from": "mon_zornithomimus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zothronychus_fungus",
+    "copy-from": "mon_zothronychus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zanzu_fungus",
+    "copy-from": "mon_zanzu_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zeinonychus_fungus",
+    "copy-from": "mon_zeinonychus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zutahraptor_fungus",
+    "copy-from": "mon_zutahraptor_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zissi_fungus",
+    "copy-from": "mon_zissi_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zamargasaurus_fungus",
+    "copy-from": "mon_zamargasaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zapatosaurus_fungus",
+    "copy-from": "mon_zapatosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zrontosaurus_fungus",
+    "copy-from": "mon_zrontosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_ziplodocus_fungus",
+    "copy-from": "mon_ziplodocus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zamarasaurus_fungus",
+    "copy-from": "mon_zamarasaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zrachiosaurus_fungus",
+    "copy-from": "mon_zrachiosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zalamosaurus_fungus",
+    "copy-from": "mon_zalamosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_ztegosaurus_fungus",
+    "copy-from": "mon_ztegosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zyoplosaurus_fungus",
+    "copy-from": "mon_zyoplosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zankylosaurus_fungus",
+    "copy-from": "mon_zankylosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zodosaurus_fungus",
+    "copy-from": "mon_zodosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zedmontonia_fungus",
+    "copy-from": "mon_zedmontonia_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zamptosaurus_fungus",
+    "copy-from": "mon_zamptosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zadrosaurus_fungus",
+    "copy-from": "mon_zadrosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zarasaurolophus_fungus",
+    "copy-from": "mon_zarasaurolophus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zorythosaurus_fungus",
+    "copy-from": "mon_zorythosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zaiasaura_fungus",
+    "copy-from": "mon_zaiasaura_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zedmontosaurus_fungus",
+    "copy-from": "mon_zedmontosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zachycephalosaurus_fungus",
+    "copy-from": "mon_zachycephalosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zachyrhinosaurus_fungus",
+    "copy-from": "mon_zachyrhinosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zentaceratops_fungus",
+    "copy-from": "mon_zentaceratops_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zosmoceratops_fungus",
+    "copy-from": "mon_zosmoceratops_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zorosaurus_fungus",
+    "copy-from": "mon_zorosaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zriceratops_fungus",
+    "copy-from": "mon_zriceratops_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zteranodon_fungus",
+    "copy-from": "mon_zteranodon_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zuetzalcoatlus_fungus",
+    "copy-from": "mon_zuetzalcoatlus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  },
+  {
+    "id": "mon_zosasaurus_fungus",
+    "copy-from": "mon_zosasaurus_fungus",
+    "type": "MONSTER",
+    "death_drops": "zombie_dino_fungal_death_drops"
+  }
+]

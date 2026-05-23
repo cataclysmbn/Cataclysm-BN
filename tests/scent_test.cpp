@@ -5,12 +5,14 @@
 #include "map_helpers.h"
 #include "game.h"
 #include "state_helpers.h"
+#include "vehicle.h"
+#include "veh_type.h"
 
-void old_scent_map_update( const tripoint &center, map &m,
+void old_scent_map_update( const tripoint_bub_ms &center, map &m,
                            std::array<std::array<int, MAPSIZE_Y>, MAPSIZE_X> &grscent );
 
 static constexpr int SCENT_RADIUS = 40;
-void old_scent_map_update( const tripoint &center, map &m,
+void old_scent_map_update( const tripoint_bub_ms &center, map &m,
                            std::array<std::array<int, MAPSIZE_Y>, MAPSIZE_X> &grscent )
 {
 
@@ -31,18 +33,18 @@ void old_scent_map_update( const tripoint &center, map &m,
     std::vector<char> monkey( MAPSIZE_X * MAPSIZE_Y, 0 );
 
     // for loop constants
-    const int scentmap_minx = center.x - SCENT_RADIUS;
-    const int scentmap_maxx = center.x + SCENT_RADIUS;
-    const int scentmap_miny = center.y - SCENT_RADIUS;
-    const int scentmap_maxy = center.y + SCENT_RADIUS;
+    const int scentmap_minx = center.x() - SCENT_RADIUS;
+    const int scentmap_maxx = center.x() + SCENT_RADIUS;
+    const int scentmap_miny = center.y() - SCENT_RADIUS;
+    const int scentmap_maxy = center.y() + SCENT_RADIUS;
 
     // decrease this to reduce gas spread. Keep it under 125 for
     // stability. This is essentially a decimal number * 1000.
     const int diffusivity = 100;
 
     // The new scent flag searching function. Should be wayyy faster than the old one.
-    m.scent_blockers( monkey, MAPSIZE_Y, point( scentmap_minx - 1, scentmap_miny - 1 ),
-                      point( scentmap_maxx + 1, scentmap_maxy + 1 ) );
+    m.scent_blockers( monkey, MAPSIZE_Y, point_bub_ms( scentmap_minx - 1, scentmap_miny - 1 ),
+                      point_bub_ms( scentmap_maxx + 1, scentmap_maxy + 1 ) );
 
     for( int x = 0; x < MAPSIZE_X; x++ ) {
         for( int y = 0; y < MAPSIZE_Y; y++ ) {
@@ -123,10 +125,27 @@ void old_scent_map_update( const tripoint &center, map &m,
     }
 }
 
+TEST_CASE( "scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    auto *const veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms::zero(), 0_degrees, 0,
+                                        0 );
+    REQUIRE( veh != nullptr );
+    REQUIRE( veh->install_part( tripoint_mnt_veh( -1, 0, 0 ), vpart_id( "windshield" ), true ) >= 0 );
+    REQUIRE( veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "windshield" ), true ) >= 0 );
+
+    auto scent_transfer = std::vector<char>( MAPSIZE_X * MAPSIZE_Y, 5 );
+    here.scent_blockers( scent_transfer, MAPSIZE_Y, point_bub_ms( -5, -5 ), point_bub_ms( 5, 5 ) );
+
+    CHECK( scent_transfer[MAPSIZE_Y] == 1 );
+}
+
 TEST_CASE( "scent_matches_old", "[.]" )
 {
     clear_all_state();
-    tripoint origin( 60, 60, 0 );
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     g->place_player( origin );
 
@@ -151,7 +170,7 @@ TEST_CASE( "scent_matches_old", "[.]" )
         }
     }
 
-    old_scent[origin.x][origin.y] = 1000;
+    old_scent[origin.x()][origin.y()] = 1000;
 
     old_scent_map_update( origin, here, old_scent );
     old_scent_map_update( origin, here, old_scent );

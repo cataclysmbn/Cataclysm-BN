@@ -1,0 +1,54 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/arcana_expan_dp_large.png",
+        "tiles": [
+          { "id": "mon_dark_wyrm_summoned", "fg": 0, "rotates": false },
+          { "id": "mon_flesh_angel_summoned", "fg": 1, "rotates": false },
+          { "id": "mon_flying_polyp_summoned", "fg": 2, "rotates": false },
+          { "id": "mon_jabberwock_summoned", "fg": 3, "rotates": false },
+          { "id": "mon_mech_arcana", "fg": 4, "rotates": false },
+          { "id": "mon_mech_arcana_boss", "fg": 5, "rotates": false },
+          { "id": "mon_mi_go_summoned", "fg": 6, "rotates": false },
+          {
+            "id": "mon_moruboru",
+            "fg": [
+              { "weight": 25, "sprite": 7 },
+              { "weight": 25, "sprite": 8 },
+              { "weight": 25, "sprite": 9 },
+              { "weight": 25, "sprite": 10 }
+            ],
+            "rotates": false,
+            "animated": true
+          },
+          { "id": "corpse_mon_moruboru", "fg": 11, "rotates": false },
+          { "id": "mon_shoggoth_summoned", "fg": 12, "rotates": false },
+          {
+            "id": "mon_spirit_of_fire",
+            "fg": [
+              { "weight": 10, "sprite": 13 },
+              { "weight": 10, "sprite": 14 },
+              { "weight": 10, "sprite": 15 },
+              { "weight": 10, "sprite": 16 },
+              { "weight": 10, "sprite": 17 },
+              { "weight": 10, "sprite": 18 }
+            ],
+            "rotates": false,
+            "animated": true
+          },
+          { "id": "mon_thing_summoned", "fg": 19, "rotates": false },
+          { "id": "mon_yugg_summoned", "fg": 20, "rotates": false },
+          { "id": [ "broken_mech_arcana", "broken_mech_arcana_boss" ], "fg": 21, "rotates": false },
+          { "id": "bot_mech_arcana", "fg": 22, "rotates": false }
+        ],
+        "sprite_width": 64,
+        "sprite_height": 80,
+        "sprite_offset_x": -16,
+        "sprite_offset_y": -48
+      }
+    ]
+  }
+]

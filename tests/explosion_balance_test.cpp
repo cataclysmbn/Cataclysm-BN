@@ -9,6 +9,7 @@
 
 #include "avatar.h"
 #include "creature.h"
+#include "coordinates.h"
 #include "explosion_queue.h"
 #include "game.h"
 #include "item.h"
@@ -18,7 +19,6 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "test_statistics.h"
@@ -35,7 +35,7 @@ enum class outcome_type {
 
 namespace
 {
-void set_off_explosion( item &explosive, const tripoint &origin )
+void set_off_explosion( item &explosive, const tripoint_bub_ms &origin )
 {
     explosion_handler::get_explosion_queue().clear();
     explosive.charges = 0;
@@ -58,9 +58,9 @@ void check_lethality( const std::string &explosive_id, const int range, float le
         clear_map();
         put_player_underground();
         // Spawn some monsters in a circle.
-        tripoint origin( 30, 30, 0 );
+        tripoint_bub_ms origin( 30, 30, 0 );
         int num_subjects_this_time = 0;
-        for( const tripoint &monster_position : closest_points_first( origin, range ) ) {
+        for( const tripoint_bub_ms &monster_position : closest_points_first( origin, range ) ) {
             if( rl_dist( monster_position, origin ) != range ) {
                 continue;
             }
@@ -77,7 +77,7 @@ void check_lethality( const std::string &explosive_id, const int range, float le
         } );
         num_survivors += survivors.size();
         for( Creature *survivor : survivors ) {
-            survivor_stats << survivor->pos() << " " << survivor->get_hp() << ", ";
+            survivor_stats << survivor->bub_pos() << " " << survivor->get_hp() << ", ";
             bool wounded = survivor->get_hp() < survivor->get_hp_max();
             num_wounded += wounded ? 1 : 0;
             total_hp += survivor->get_hp();
@@ -120,16 +120,16 @@ void check_vehicle_damage( const std::string &explosive_id, const std::string &v
                            const int range )
 {
     put_player_underground();
-    tripoint origin( 30, 30, 0 );
+    tripoint_bub_ms origin( 30, 30, 0 );
 
     vehicle *target_vehicle = get_map().add_vehicle( vproto_id( vehicle_id ), origin, 0_degrees,
                               -1, 0 );
     std::vector<int> before_hp = get_part_hp( target_vehicle );
 
     while( get_map().veh_at( origin ) ) {
-        origin.x++;
+        origin.x()++;
     }
-    origin.x += range;
+    origin.x() += range;
 
     item &explosive = *item::spawn_temporary( explosive_id );
     set_off_explosion( explosive, origin );
@@ -171,7 +171,7 @@ TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
 {
     clear_all_state();
     put_player_underground();
-    tripoint origin( 30, 30, 0 );
+    tripoint_bub_ms origin( 30, 30, 0 );
 
     item &grenade = *item::spawn_temporary( "can_bomb_act" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
@@ -182,7 +182,7 @@ TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
     REQUIRE( actor->explosion.radius <= 0 );
     REQUIRE( actor->explosion.fragment->range > 2 );
 
-    for( const tripoint &pt : closest_points_first( origin, 2 ) ) {
+    for( const tripoint_bub_ms &pt : closest_points_first( origin, 2 ) ) {
         if( square_dist( origin, pt ) > 1 ) {
             g->m.ter_set( pt, t_wall_metal );
         }
@@ -202,7 +202,7 @@ TEST_CASE( "shrapnel at huge range", "[grenade][explosion]" )
 {
     clear_all_state();
     put_player_underground();
-    tripoint origin;
+    tripoint_bub_ms origin;
 
     item &grenade = *item::spawn_temporary( "debug_shrapnel_blast" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
@@ -213,7 +213,8 @@ TEST_CASE( "shrapnel at huge range", "[grenade][explosion]" )
     REQUIRE( actor->explosion.radius <= 0 );
     REQUIRE( actor->explosion.fragment->range > g_mapsize_x + g_mapsize_y );
 
-    const monster &m = spawn_test_monster( "mon_zombie", tripoint( g_mapsize_x - 1, g_mapsize_y - 1,
+    const monster &m = spawn_test_monster( "mon_zombie", tripoint_bub_ms( g_mapsize_x - 1,
+                                           g_mapsize_y - 1,
                                            0 ) );
 
     set_off_explosion( grenade, origin );
@@ -225,7 +226,7 @@ TEST_CASE( "shrapnel at max grenade range", "[grenade][explosion]" )
 {
     clear_all_state();
     put_player_underground();
-    tripoint origin( 60, 60, 0 );
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     item &grenade = *item::spawn_temporary( "can_bomb_act" );
     REQUIRE( grenade.get_use( "explosion" ) != nullptr );
@@ -237,18 +238,18 @@ TEST_CASE( "shrapnel at max grenade range", "[grenade][explosion]" )
     REQUIRE( actor->explosion.fragment->range > 1 );
 
     const int range = actor->explosion.fragment->range;
-    for( const tripoint &pt : closest_points_first( origin, range + 1 ) ) {
+    for( const tripoint_bub_ms &pt : closest_points_first( origin, range + 1 ) ) {
         spawn_test_monster( "mon_zombie", pt );
     }
 
     set_off_explosion( grenade, origin );
 
-    for( const tripoint &pt : closest_points_first( origin, range + 1 ) ) {
+    for( const tripoint_bub_ms &pt : closest_points_first( origin, range + 1 ) ) {
         const monster *m = g->critter_at<monster>( pt );
         REQUIRE( m != nullptr );
-        CAPTURE( m->pos() );
-        CAPTURE( rl_dist( origin, m->pos() ) );
-        if( rl_dist( origin, m->pos() ) <= range ) {
+        CAPTURE( m->bub_pos() );
+        CAPTURE( rl_dist( origin, m->bub_pos() ) );
+        if( rl_dist( origin, m->bub_pos() ) <= range ) {
             CHECK( m->hp_percentage() < 100 );
         } else {
             CHECK( m->hp_percentage() == 100 );
@@ -260,7 +261,7 @@ TEST_CASE( "rotated_vehicle_walls_block_explosions" )
 {
     clear_all_state();
     put_player_underground();
-    tripoint origin( 60, 60, 0 );
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     item &grenade = *item::spawn_temporary( "can_bomb_act" );
 
@@ -270,13 +271,13 @@ TEST_CASE( "rotated_vehicle_walls_block_explosions" )
 
     here.build_map_cache( 0 );
 
-    tripoint mon_origin = origin + tripoint( -2, 1, 0 );
+    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
 
     monster &s = spawn_test_monster( "mon_squirrel", mon_origin );
 
     REQUIRE( veh_pointer_or_null( here.veh_at( mon_origin ) ) != nullptr );
 
-    tripoint explode_at = mon_origin + tripoint_north_west;
+    auto explode_at = mon_origin + tripoint_north_west;
 
     REQUIRE( veh_pointer_or_null( here.veh_at( explode_at ) ) == nullptr );
 

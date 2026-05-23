@@ -1,0 +1,156 @@
+[
+  {
+    "id": "chalice_cult_books",
+    "type": "item_group",
+    "items": [
+      [ "essay_book", 5 ],
+      [ "poetry_book", 10 ],
+      [ "plays_book", 10 ],
+      [ "philosophy_book", 15 ],
+      [ "novel_experimental", 5 ],
+      [ "book_sacrifice", 25 ],
+      [ "book_summoning", 12 ],
+      [ "book_scrollcraft", 10 ],
+      [ "book_magicfordummies", 3 ],
+      [ "manual_sojutsu", 4 ],
+      [ "manual_swordsmanship", 1 ]
+    ]
+  },
+  {
+    "id": "chalice_cult_books_postapoc",
+    "type": "item_group",
+    "items": [
+      [ "essay_book", 5 ],
+      [ "poetry_book", 10 ],
+      [ "plays_book", 10 ],
+      [ "philosophy_book", 15 ],
+      [ "novel_experimental", 5 ],
+      [ "book_sacrifice", 25 ],
+      [ "book_summoning", 10 ],
+      [ "book_scrollcraft", 10 ],
+      [ "book_magicfordummies", 3 ],
+      [ "book_syncretism", 5 ],
+      [ "manual_sojutsu", 1 ],
+      [ "manual_swordsmanship", 1 ]
+    ]
+  },
+  {
+    "id": "chalice_cult_spells",
+    "type": "item_group",
+    "items": [
+      [ "scroll_spell_insight", 1 ],
+      [ "scroll_spell_lightning", 1 ],
+      [ "scroll_spell_might", 1 ],
+      [ "scroll_spell_invis", 1 ],
+      [ "scroll_spell_free_action", 1 ]
+    ]
+  },
+  {
+    "id": "chalice_cult_gear",
+    "type": "item_group",
+    "items": [
+      [ "spear_steel", 15 ],
+      [ "qiang", 10 ],
+      [ "longsword", 3 ],
+      [ "zweihander", 2 ],
+      [ "robe", 15 ],
+      [ "cloak", 5 ],
+      [ "armor_plarmor", 10 ],
+      [ "helmet_larmor", 10 ],
+      [ "gauntlets_larmor", 5 ],
+      [ "gloves_plate", 15 ],
+      [ "boots_larmor", 5 ],
+      [ "boots_plate", 5 ]
+    ]
+  },
+  {
+    "id": "chalice_cult_gear_magic",
+    "type": "item_group",
+    "items": [
+      [ "offering_chalice", 30 ],
+      [ "spear_pestilence", 20 ],
+      [ "thunder_sigil", 25 ],
+      [ "robe_shadow", 10 ],
+      [ "gauntlets_necro", 15 ],
+      [ "cyclopean_mirror", 5 ]
+    ]
+  },
+  {
+    "id": "chalice_cult_consumables",
+    "type": "item_group",
+    "items": [
+      [ "vortex_stone", 20 ],
+      [ "scroll_sun", 2 ],
+      [ "scroll_moon", 3 ],
+      [ "scroll_artiface", 5 ],
+      [ "scroll_nature", 4 ],
+      [ "scroll_destruction", 6 ],
+      [ "scroll_subversion", 1 ],
+      [ "summon_kreck", 4 ],
+      [ "summon_blank", 4 ],
+      [ "summon_flaming_eye", 3 ],
+      [ "summon_hunting_horror", 3 ],
+      [ "summon_flying_polyp", 2 ],
+      [ "summon_mi_go", 2 ],
+      [ "summon_yugg", 1 ],
+      [ "summon_shoggoth", 1 ]
+    ]
+  },
+  {
+    "id": "chalice_cult_crafting",
+    "type": "item_group",
+    "items": [
+      [ "bowl_clay", 20 ],
+      [ "candle", 15 ],
+      [ "matches", 15 ],
+      { "item": "silver_small", "prob": 10, "charges": [ 25, 100 ] },
+      { "item": "gold_small", "prob": 40, "charges": [ 25, 100 ] },
+      { "item": "scrap", "prob": 15, "count": [ 1, 10 ] },
+      { "item": "feather", "prob": 5, "charges": [ 10, 20 ] },
+      { "item": "chitin_piece", "prob": 5, "charges": [ 1, 5 ] },
+      { "item": "fur", "prob": 10, "count": [ 1, 5 ] },
+      { "item": "paper", "prob": 5, "charges": [ 20, 50 ] },
+      [ "bee_sting", 10 ],
+      { "group": "arcana_hunt_random", "prob": 25 },
+      { "item": "essence", "prob": 40, "count": [ 1, 3 ] },
+      { "item": "essence_blood", "prob": 35, "count": [ 3, 9 ] }
+    ]
+  },
+  {
+    "id": "chalice_cult_casualty_special",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "item": "stormbringer" },
+      { "item": "bscabbard" },
+      { "item": "bone_human", "count": [ 3, 9 ] }
+    ]
+  },
+  {
+    "id": "chalice_cult_casualties",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "chalice_cult_gear", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "chalice_cult_gear_magic", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "chalice_cult_consumables", "prob": 25 },
+      { "group": "chalice_cult_crafting", "prob": 25 },
+      { "item": "bone_human", "prob": 100, "count": [ 3, 9 ] }
+    ]
+  },
+  {
+    "id": "chalice_cult_casualties_fresh",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "chalice_cult_gear", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "chalice_cult_gear_magic", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "chalice_cult_consumables", "prob": 25 },
+      { "group": "chalice_cult_crafting", "prob": 25 },
+      { "group": "arcanist_corpses_adult_random", "damage": 4 }
+    ]
+  }
+]

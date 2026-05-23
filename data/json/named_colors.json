@@ -1,0 +1,1089 @@
+[
+  {
+    "//": "Custom",
+    "type": "named_color",
+    "name": "Cataclysm Red",
+    "value": "#622625"
+  },
+  {
+    "type": "named_color",
+    "name": "Cataclysm Green",
+    "value": "#3f4535"
+  },
+  {
+    "//": "RAL Classic",
+    "type": "named_color",
+    "name": "Green beige",
+    "value": "#CDBA88"
+  },
+  {
+    "type": "named_color",
+    "name": "Beige",
+    "value": "#D0B084"
+  },
+  {
+    "type": "named_color",
+    "name": "Sand yellow",
+    "value": "#D2AA6D"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal yellow",
+    "value": "#F9A800"
+  },
+  {
+    "type": "named_color",
+    "name": "Golden yellow",
+    "value": "#E49E00"
+  },
+  {
+    "type": "named_color",
+    "name": "Honey yellow",
+    "value": "#CB8E00"
+  },
+  {
+    "type": "named_color",
+    "name": "Maize yellow",
+    "value": "#E29000"
+  },
+  {
+    "type": "named_color",
+    "name": "Daffodil yellow",
+    "value": "#E88C00"
+  },
+  {
+    "type": "named_color",
+    "name": "Brown beige",
+    "value": "#AF804F"
+  },
+  {
+    "type": "named_color",
+    "name": "Lemon yellow",
+    "value": "#DDAF27"
+  },
+  {
+    "type": "named_color",
+    "name": "Oyster white",
+    "value": "#E3D9C6"
+  },
+  {
+    "type": "named_color",
+    "name": "Ivory",
+    "value": "#DDC49A"
+  },
+  {
+    "type": "named_color",
+    "name": "Light ivory",
+    "value": "#E6D2B5"
+  },
+  {
+    "type": "named_color",
+    "name": "Sulfur yellow",
+    "value": "#F1DD38"
+  },
+  {
+    "type": "named_color",
+    "name": "Saffron yellow",
+    "value": "#F6A950"
+  },
+  {
+    "type": "named_color",
+    "name": "Zinc yellow",
+    "value": "#FACA30"
+  },
+  {
+    "type": "named_color",
+    "name": "Grey beige",
+    "value": "#A48F7A"
+  },
+  {
+    "type": "named_color",
+    "name": "Olive yellow",
+    "value": "#A08F65"
+  },
+  {
+    "type": "named_color",
+    "name": "Colza yellow",
+    "value": "#F6B600"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic yellow",
+    "value": "#F7B500"
+  },
+  {
+    "type": "named_color",
+    "name": "Ochre yellow",
+    "value": "#BA8F4C"
+  },
+  {
+    "type": "named_color",
+    "name": "Luminous yellow",
+    "value": "#FFFF00"
+  },
+  {
+    "type": "named_color",
+    "name": "Curry",
+    "value": "#A77F0E"
+  },
+  {
+    "type": "named_color",
+    "name": "Melon yellow",
+    "value": "#FF9B00"
+  },
+  {
+    "type": "named_color",
+    "name": "Broom yellow",
+    "value": "#E2A300"
+  },
+  {
+    "type": "named_color",
+    "name": "Dahlia yellow",
+    "value": "#F99A1C"
+  },
+  {
+    "type": "named_color",
+    "name": "Pastel yellow",
+    "value": "#EB9C52"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl beige",
+    "value": "#908370"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl gold",
+    "value": "#80643F"
+  },
+  {
+    "type": "named_color",
+    "name": "Sun yellow",
+    "value": "#F09200"
+  },
+  {
+    "type": "named_color",
+    "name": "Yellow orange",
+    "value": "#DD7907"
+  },
+  {
+    "type": "named_color",
+    "name": "Red orange",
+    "value": "#BE4E20"
+  },
+  {
+    "type": "named_color",
+    "name": "Vermilion",
+    "value": "#C63927"
+  },
+  {
+    "type": "named_color",
+    "name": "Pastel orange",
+    "value": "#FA842B"
+  },
+  {
+    "type": "named_color",
+    "name": "Pure orange",
+    "value": "#E75B12"
+  },
+  {
+    "type": "named_color",
+    "name": "Luminous orange",
+    "value": "#FF2300"
+  },
+  {
+    "type": "named_color",
+    "name": "Luminous bright orange",
+    "value": "#FFA421"
+  },
+  {
+    "type": "named_color",
+    "name": "Bright red orange",
+    "value": "#F3752C"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic orange",
+    "value": "#E15501"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal orange",
+    "value": "#D4652F"
+  },
+  {
+    "type": "named_color",
+    "name": "Deep orange",
+    "value": "#EC7C25"
+  },
+  {
+    "type": "named_color",
+    "name": "Salmon orange",
+    "value": "#DB6A50"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl orange",
+    "value": "#954527"
+  },
+  {
+    "type": "named_color",
+    "name": "RAL orange",
+    "value": "#FA4402"
+  },
+  {
+    "type": "named_color",
+    "name": "Flame red",
+    "value": "#AB2524"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal red",
+    "value": "#A02128"
+  },
+  {
+    "type": "named_color",
+    "name": "Carmine red",
+    "value": "#A1232B"
+  },
+  {
+    "type": "named_color",
+    "name": "Ruby red",
+    "value": "#8D1D2C"
+  },
+  {
+    "type": "named_color",
+    "name": "Purple red",
+    "value": "#701F29"
+  },
+  {
+    "type": "named_color",
+    "name": "Wine red",
+    "value": "#5E2028"
+  },
+  {
+    "type": "named_color",
+    "name": "Black red",
+    "value": "#402225"
+  },
+  {
+    "type": "named_color",
+    "name": "Oxide red",
+    "value": "#703731"
+  },
+  {
+    "type": "named_color",
+    "name": "Brown red",
+    "value": "#7E292C"
+  },
+  {
+    "type": "named_color",
+    "name": "Beige red",
+    "value": "#CB8D73"
+  },
+  {
+    "type": "named_color",
+    "name": "Tomato red",
+    "value": "#9C322E"
+  },
+  {
+    "type": "named_color",
+    "name": "Antique pink",
+    "value": "#D47479"
+  },
+  {
+    "type": "named_color",
+    "name": "Light pink",
+    "value": "#E1A6AD"
+  },
+  {
+    "type": "named_color",
+    "name": "Coral red",
+    "value": "#AC4034"
+  },
+  {
+    "type": "named_color",
+    "name": "Rose",
+    "value": "#D3545F"
+  },
+  {
+    "type": "named_color",
+    "name": "Strawberry red",
+    "value": "#D14152"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic red",
+    "value": "#C1121C"
+  },
+  {
+    "type": "named_color",
+    "name": "Salmon pink",
+    "value": "#D56D56"
+  },
+  {
+    "type": "named_color",
+    "name": "Luminous red",
+    "value": "#F70000"
+  },
+  {
+    "type": "named_color",
+    "name": "Luminous bright red",
+    "value": "#FF0000"
+  },
+  {
+    "type": "named_color",
+    "name": "Raspberry red",
+    "value": "#B42041"
+  },
+  {
+    "type": "named_color",
+    "name": "Pure red",
+    "value": "#E72512"
+  },
+  {
+    "type": "named_color",
+    "name": "Orient red",
+    "value": "#AC323B"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl ruby red",
+    "value": "#711521"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl pink",
+    "value": "#B24C43"
+  },
+  {
+    "type": "named_color",
+    "name": "Red lilac",
+    "value": "#8A5A83"
+  },
+  {
+    "type": "named_color",
+    "name": "Red violet",
+    "value": "#933D50"
+  },
+  {
+    "type": "named_color",
+    "name": "Heather violet",
+    "value": "#D15B8F"
+  },
+  {
+    "type": "named_color",
+    "name": "Claret violet",
+    "value": "#691639"
+  },
+  {
+    "type": "named_color",
+    "name": "Blue lilac",
+    "value": "#83639D"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic purple",
+    "value": "#992572"
+  },
+  {
+    "type": "named_color",
+    "name": "Purple violet",
+    "value": "#4A203B"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal violet",
+    "value": "#904684"
+  },
+  {
+    "type": "named_color",
+    "name": "Pastel violet",
+    "value": "#A38995"
+  },
+  {
+    "type": "named_color",
+    "name": "Telemagenta",
+    "value": "#C63678"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl violet",
+    "value": "#8773A1"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl blackberry",
+    "value": "#6B6880"
+  },
+  {
+    "type": "named_color",
+    "name": "Violet blue",
+    "value": "#384C70"
+  },
+  {
+    "type": "named_color",
+    "name": "Green blue",
+    "value": "#1F4764"
+  },
+  {
+    "type": "named_color",
+    "name": "Ultramarine blue",
+    "value": "#2B2C7C"
+  },
+  {
+    "type": "named_color",
+    "name": "Sapphire blue",
+    "value": "#2A3756"
+  },
+  {
+    "type": "named_color",
+    "name": "Black blue",
+    "value": "#1D1F2A"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal blue",
+    "value": "#154889"
+  },
+  {
+    "type": "named_color",
+    "name": "Brilliant blue",
+    "value": "#41678D"
+  },
+  {
+    "type": "named_color",
+    "name": "Grey blue",
+    "value": "#313C48"
+  },
+  {
+    "type": "named_color",
+    "name": "Azure blue",
+    "value": "#2E5978"
+  },
+  {
+    "type": "named_color",
+    "name": "Gentian blue",
+    "value": "#13447C"
+  },
+  {
+    "type": "named_color",
+    "name": "Steel blue",
+    "value": "#232C3F"
+  },
+  {
+    "type": "named_color",
+    "name": "Light blue",
+    "value": "#3481B8"
+  },
+  {
+    "type": "named_color",
+    "name": "Cobalt blue",
+    "value": "#232D53"
+  },
+  {
+    "type": "named_color",
+    "name": "Pigeon blue",
+    "value": "#6C7C98"
+  },
+  {
+    "type": "named_color",
+    "name": "Sky blue",
+    "value": "#2874B2"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic blue",
+    "value": "#0E518D"
+  },
+  {
+    "type": "named_color",
+    "name": "Turquoise blue",
+    "value": "#21888F"
+  },
+  {
+    "type": "named_color",
+    "name": "Capri blue",
+    "value": "#1A5784"
+  },
+  {
+    "type": "named_color",
+    "name": "Ocean blue",
+    "value": "#0B4151"
+  },
+  {
+    "type": "named_color",
+    "name": "Water blue",
+    "value": "#07737A"
+  },
+  {
+    "type": "named_color",
+    "name": "Night blue",
+    "value": "#2F2A5A"
+  },
+  {
+    "type": "named_color",
+    "name": "Distant blue",
+    "value": "#4D668E"
+  },
+  {
+    "type": "named_color",
+    "name": "Pastel blue",
+    "value": "#6A93B0"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl Gentian blue",
+    "value": "#296478"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl night blue",
+    "value": "#102C54"
+  },
+  {
+    "type": "named_color",
+    "name": "Patina green",
+    "value": "#327662"
+  },
+  {
+    "type": "named_color",
+    "name": "Emerald green",
+    "value": "#28713E"
+  },
+  {
+    "type": "named_color",
+    "name": "Leaf green",
+    "value": "#276235"
+  },
+  {
+    "type": "named_color",
+    "name": "Olive green",
+    "value": "#4B573E"
+  },
+  {
+    "type": "named_color",
+    "name": "Blue green",
+    "value": "#0E4243"
+  },
+  {
+    "type": "named_color",
+    "name": "Moss green",
+    "value": "#0F4336"
+  },
+  {
+    "type": "named_color",
+    "name": "Grey olive",
+    "value": "#40433B"
+  },
+  {
+    "type": "named_color",
+    "name": "Bottle green",
+    "value": "#283424"
+  },
+  {
+    "type": "named_color",
+    "name": "Brown green",
+    "value": "#35382E"
+  },
+  {
+    "type": "named_color",
+    "name": "Fir green",
+    "value": "#26392F"
+  },
+  {
+    "type": "named_color",
+    "name": "Grass green",
+    "value": "#3E753B"
+  },
+  {
+    "type": "named_color",
+    "name": "Reseda green",
+    "value": "#68825B"
+  },
+  {
+    "type": "named_color",
+    "name": "Black green",
+    "value": "#31403D"
+  },
+  {
+    "type": "named_color",
+    "name": "Reed green",
+    "value": "#797C5A"
+  },
+  {
+    "type": "named_color",
+    "name": "Yellow olive",
+    "value": "#444337"
+  },
+  {
+    "type": "named_color",
+    "name": "Black olive",
+    "value": "#3D403A"
+  },
+  {
+    "type": "named_color",
+    "name": "Turquoise green",
+    "value": "#026A52"
+  },
+  {
+    "type": "named_color",
+    "name": "May green",
+    "value": "#468641"
+  },
+  {
+    "type": "named_color",
+    "name": "Yellow green",
+    "value": "#48A43F"
+  },
+  {
+    "type": "named_color",
+    "name": "Pastel green",
+    "value": "#B7D9B1"
+  },
+  {
+    "type": "named_color",
+    "name": "Chrome green",
+    "value": "#354733"
+  },
+  {
+    "type": "named_color",
+    "name": "Pale green",
+    "value": "#86A47C"
+  },
+  {
+    "type": "named_color",
+    "name": "Olive-drab/brown olive",
+    "value": "#3E3C32"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic green",
+    "value": "#008754"
+  },
+  {
+    "type": "named_color",
+    "name": "Fern green",
+    "value": "#53753C"
+  },
+  {
+    "type": "named_color",
+    "name": "Opal green",
+    "value": "#005D52"
+  },
+  {
+    "type": "named_color",
+    "name": "Light green",
+    "value": "#81C0BB"
+  },
+  {
+    "type": "named_color",
+    "name": "Pine green",
+    "value": "#2D5546"
+  },
+  {
+    "type": "named_color",
+    "name": "Mint green",
+    "value": "#007243"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal green",
+    "value": "#0F8558"
+  },
+  {
+    "type": "named_color",
+    "name": "Mint turquoise",
+    "value": "#478A84"
+  },
+  {
+    "type": "named_color",
+    "name": "Pastel turquoise",
+    "value": "#7FB0B2"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl green",
+    "value": "#1B542C"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl opal green",
+    "value": "#005D4C"
+  },
+  {
+    "type": "named_color",
+    "name": "Pure green",
+    "value": "#25E712"
+  },
+  {
+    "type": "named_color",
+    "name": "Luminous green",
+    "value": "#00F700"
+  },
+  {
+    "type": "named_color",
+    "name": "Squirrel grey",
+    "value": "#7E8B92"
+  },
+  {
+    "type": "named_color",
+    "name": "Silver grey",
+    "value": "#8F999F"
+  },
+  {
+    "type": "named_color",
+    "name": "Olive grey",
+    "value": "#817F68"
+  },
+  {
+    "type": "named_color",
+    "name": "Moss grey",
+    "value": "#7A7B6D"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal grey",
+    "value": "#9EA0A1"
+  },
+  {
+    "type": "named_color",
+    "name": "Mouse grey",
+    "value": "#6B716F"
+  },
+  {
+    "type": "named_color",
+    "name": "Beige grey",
+    "value": "#756F61"
+  },
+  {
+    "type": "named_color",
+    "name": "Khaki grey",
+    "value": "#746643"
+  },
+  {
+    "type": "named_color",
+    "name": "Green grey",
+    "value": "#5B6259"
+  },
+  {
+    "type": "named_color",
+    "name": "Tarpaulin grey",
+    "value": "#575D57"
+  },
+  {
+    "type": "named_color",
+    "name": "Iron grey",
+    "value": "#555D61"
+  },
+  {
+    "type": "named_color",
+    "name": "Basalt grey",
+    "value": "#596163"
+  },
+  {
+    "type": "named_color",
+    "name": "Brown grey",
+    "value": "#555548"
+  },
+  {
+    "type": "named_color",
+    "name": "Slate grey",
+    "value": "#51565C"
+  },
+  {
+    "type": "named_color",
+    "name": "Anthracite grey",
+    "value": "#373F43"
+  },
+  {
+    "type": "named_color",
+    "name": "Black grey",
+    "value": "#2E3234"
+  },
+  {
+    "type": "named_color",
+    "name": "Umbra grey",
+    "value": "#4B4D46"
+  },
+  {
+    "type": "named_color",
+    "name": "Concrete grey",
+    "value": "#818479"
+  },
+  {
+    "type": "named_color",
+    "name": "Graphite grey",
+    "value": "#474A50"
+  },
+  {
+    "type": "named_color",
+    "name": "Granite grey",
+    "value": "#374447"
+  },
+  {
+    "type": "named_color",
+    "name": "Stone grey",
+    "value": "#939388"
+  },
+  {
+    "type": "named_color",
+    "name": "Blue grey",
+    "value": "#5D6970"
+  },
+  {
+    "type": "named_color",
+    "name": "Pebble grey",
+    "value": "#B9B9A8"
+  },
+  {
+    "type": "named_color",
+    "name": "Cement grey",
+    "value": "#818979"
+  },
+  {
+    "type": "named_color",
+    "name": "Yellow grey",
+    "value": "#939176"
+  },
+  {
+    "type": "named_color",
+    "name": "Light grey",
+    "value": "#CBD0CC"
+  },
+  {
+    "type": "named_color",
+    "name": "Platinum grey",
+    "value": "#9A9697"
+  },
+  {
+    "type": "named_color",
+    "name": "Dusty grey",
+    "value": "#7C7F7E"
+  },
+  {
+    "type": "named_color",
+    "name": "Agate grey",
+    "value": "#B4B8B0"
+  },
+  {
+    "type": "named_color",
+    "name": "Quartz grey",
+    "value": "#6B695F"
+  },
+  {
+    "type": "named_color",
+    "name": "Window grey",
+    "value": "#9DA3A6"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic grey A",
+    "value": "#8F9695"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic grey B",
+    "value": "#4E5451"
+  },
+  {
+    "type": "named_color",
+    "name": "Silk grey",
+    "value": "#BDBDB2"
+  },
+  {
+    "type": "named_color",
+    "name": "Telegrey 1",
+    "value": "#91969A"
+  },
+  {
+    "type": "named_color",
+    "name": "Telegrey 2",
+    "value": "#82898E"
+  },
+  {
+    "type": "named_color",
+    "name": "Telegrey 4",
+    "value": "#CFD0CF"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl mouse grey",
+    "value": "#888175"
+  },
+  {
+    "type": "named_color",
+    "name": "Green brown",
+    "value": "#887142"
+  },
+  {
+    "type": "named_color",
+    "name": "Ochre brown",
+    "value": "#9C6B30"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal brown",
+    "value": "#7B5141"
+  },
+  {
+    "type": "named_color",
+    "name": "Clay brown",
+    "value": "#80542F"
+  },
+  {
+    "type": "named_color",
+    "name": "Copper brown",
+    "value": "#8F4E35"
+  },
+  {
+    "type": "named_color",
+    "name": "Fawn brown",
+    "value": "#6F4A2F"
+  },
+  {
+    "type": "named_color",
+    "name": "Olive brown",
+    "value": "#6F4F28"
+  },
+  {
+    "type": "named_color",
+    "name": "Nut brown",
+    "value": "#5A3A29"
+  },
+  {
+    "type": "named_color",
+    "name": "Red brown",
+    "value": "#673831"
+  },
+  {
+    "type": "named_color",
+    "name": "Sepia brown",
+    "value": "#49392D"
+  },
+  {
+    "type": "named_color",
+    "name": "Chestnut brown",
+    "value": "#633A34"
+  },
+  {
+    "type": "named_color",
+    "name": "Mahogany brown",
+    "value": "#4C2F26"
+  },
+  {
+    "type": "named_color",
+    "name": "Chocolate brown",
+    "value": "#44322D"
+  },
+  {
+    "type": "named_color",
+    "name": "Grey brown",
+    "value": "#3F3A3A"
+  },
+  {
+    "type": "named_color",
+    "name": "Black brown",
+    "value": "#211F20"
+  },
+  {
+    "type": "named_color",
+    "name": "Orange brown",
+    "value": "#A65E2F"
+  },
+  {
+    "type": "named_color",
+    "name": "Beige brown",
+    "value": "#79553C"
+  },
+  {
+    "type": "named_color",
+    "name": "Pale brown",
+    "value": "#755C49"
+  },
+  {
+    "type": "named_color",
+    "name": "Terra brown",
+    "value": "#4E3B2B"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl copper",
+    "value": "#773C27"
+  },
+  {
+    "type": "named_color",
+    "name": "Cream",
+    "value": "#EFEBDC"
+  },
+  {
+    "type": "named_color",
+    "name": "Grey white",
+    "value": "#DDDED4"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal white",
+    "value": "#F4F8F4"
+  },
+  {
+    "type": "named_color",
+    "name": "Signal black",
+    "value": "#2E3032"
+  },
+  {
+    "type": "named_color",
+    "name": "Jet black",
+    "value": "#0A0A0D"
+  },
+  {
+    "type": "named_color",
+    "name": "White aluminium",
+    "value": "#A5A8A6"
+  },
+  {
+    "type": "named_color",
+    "name": "Grey aluminium",
+    "value": "#8F8F8C"
+  },
+  {
+    "type": "named_color",
+    "name": "Pure white",
+    "value": "#F7F9EF"
+  },
+  {
+    "type": "named_color",
+    "name": "Graphite black",
+    "value": "#1C1C1C"
+  },
+  {
+    "type": "named_color",
+    "name": "Clean room white",
+    "value": "#FFFDE6"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic white",
+    "value": "#F7FBF5"
+  },
+  {
+    "type": "named_color",
+    "name": "Traffic black",
+    "value": "#2A2D2F"
+  },
+  {
+    "type": "named_color",
+    "name": "Papyrus white",
+    "value": "#CFD3CD"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl light grey",
+    "value": "#858583"
+  },
+  {
+    "type": "named_color",
+    "name": "Pearl dark grey",
+    "value": "#7E8182"
+  }
+]

@@ -31,7 +31,7 @@ TEST_CASE( "Monster losing grabbing effect", "[player][melee][grab]" )
     clear_character( dummy );
 
     // Four nearby spots
-    tripoint mon_pos = dummy.pos() + tripoint_north;
+    auto mon_pos = dummy.bub_pos() + tripoint_north;
 
     // Grabbed by a monster
     monster *zed = g->place_critter_at( mtype_id( "debug_mon" ), mon_pos );

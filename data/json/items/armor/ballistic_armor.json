@@ -83,6 +83,7 @@
     "encumbrance": 50,
     "warmth": 30,
     "material_thickness": 8,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "OUTER", "STURDY" ]
   },
   {
@@ -105,6 +106,7 @@
     "encumbrance": 50,
     "warmth": 30,
     "material_thickness": 8,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "OUTER", "STURDY" ]
   }
 ]

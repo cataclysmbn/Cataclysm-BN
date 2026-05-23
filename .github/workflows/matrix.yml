@@ -1,4 +1,4 @@
-name: General build matrix
+name: matrix
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
   pull_request:
     branches: [main]
     paths-ignore: [docs/**, scripts/**, "**.md", "**.mdx"]
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 # Cancel all previous instances in favor of latest revision of a PR.
 # Allow running main builds to complete to help with ccache refreshes.
 concurrency:
-  group: general-build-${{ github.event.pull_request.number || github.ref_name }}
+  group: matrix-build-${{ github.event.pull_request.number || github.ref_name }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -23,6 +23,7 @@ jobs:
     outputs:
       should_skip_code: ${{ steps.skip_code_check.outputs.should_skip }}
       should_skip_data: ${{ steps.skip_data_check.outputs.should_skip }}
+      should_skip_platform: ${{ steps.skip_platform_check.outputs.should_skip }}
     steps:
       - id: skip_code_check
         uses: fkirc/skip-duplicate-actions@master
@@ -32,6 +33,10 @@ jobs:
         uses: fkirc/skip-duplicate-actions@master
         with:
           paths_ignore: '["android/**", "docs/**", "doxygen_doc/**", "msvc-**", "tools/**", "utilities/**", "scripts/**"]'
+      - id: skip_platform_check
+        uses: fkirc/skip-duplicate-actions@master
+        with:
+          paths_ignore: '["docs/**", "doxygen_doc/**", "lgtm/**", "utilities/**", "scripts/**", "**.md", "**.mdx"]'
 
   varied_builds:
     needs: skip-duplicates
@@ -40,7 +45,7 @@ jobs:
       max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
       matrix:
         include:
-          - title: GCC, Ubuntu, Curses, CMake
+          - title: gcc, curses
             preset: ci-curses
             os: ubuntu-latest
             tiles: 0
@@ -49,7 +54,7 @@ jobs:
             ccache_key: linux-gcc-curses
             always-run: true
 
-          - title: GCC, Ubuntu, Tiles, Sound, CMake, Languages
+          - title: gcc, tiles, i18n
             preset: ci-tiles
             os: ubuntu-latest
             tiles: 1
@@ -63,7 +68,7 @@ jobs:
       ZSTD_CLEVEL: 3
       TILES: ${{ matrix.tiles }}
       TEST_STAGE: ${{ matrix.test-stage }}
-      SKIP: ${{ matrix.always-run != true && ( github.event.pull_request.draft == true || needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
+      SKIP: ${{ matrix.always-run != true && ( needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
 
     steps:
       - name: checkout repository
@@ -83,10 +88,21 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
 
-      - name: install SDL2 dependencies (ubuntu)
-        if: ${{ env.SKIP == 'false' && matrix.tiles == 1 }}
+      #- name: Install SDL3 (ubuntu)
+      #  if: ${{ env.SKIP == 'false' }}
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel Dependencies (ubuntu)
+        if: ${{ env.SKIP == 'false' }}
         run: |
-          sudo apt-get install libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+            libfreetype-dev libharfbuzz-dev \
+            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
+            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
       # problem matchers are only ran on GCC to reduce error spam
       - name: add problem matcher
@@ -126,6 +142,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
+          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF']"
           buildPreset: ${{ matrix.preset }}
           buildPresetAdditionalArgs: "['-j', '2']"
 
@@ -155,12 +172,22 @@ jobs:
               done
           fi
 
-      - name: emit success artifact
-        if: ${{ success() && matrix.upload-artifact == 'true' }}
+      - name: create Linux tiles playtest package
+        if: ${{ success() && env.SKIP == 'false' && matrix.upload-artifact == true }}
+        env:
+          VERSION_LABEL: pr-${{ github.event.pull_request.number || github.run_id }}
+        run: |
+          mkdir -p lang/mo
+          cmake --install build --prefix cataclysmbn-${VERSION_LABEL}
+          tar -czvf cbn-linux-tiles-x64-${VERSION_LABEL}.tar.gz cataclysmbn-${VERSION_LABEL}
+
+      - name: upload Linux tiles playtest package
+        if: ${{ success() && env.SKIP == 'false' && matrix.upload-artifact == true }}
         uses: actions/upload-artifact@v4.6.0
         with:
-          name: ${{ github.event.number }}
-          path: ${{ github.event.number }}
+          name: linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}
+          path: cbn-linux-tiles-x64-pr-${{ github.event.pull_request.number || github.run_id }}.tar.gz
+          if-no-files-found: error
 
       - name: upload artifacts if failed
         uses: actions/upload-artifact@v4.6.0
@@ -169,3 +196,28 @@ jobs:
           name: cata_test-${{ matrix.tiles == 1 && 'tiles' || 'curses' }}
           path: build/tests/cata_test${{ matrix.tiles == 1 && '-tiles' || '' }}
           if-no-files-found: ignore
+
+  builds:
+    needs: skip-duplicates
+    if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: experimental
+      mode: ci
+      artifact-label: pr-${{ github.event.pull_request.number || github.run_id }}
+      matrix-json: |
+        [
+          { "name": "Windows MSVC", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-latest", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true },
+          { "name": "macOS Curses", "platform": "macos", "artifact": "osx-curses-x64", "os": "macos-15-intel", "preset": "osx-curses-x64-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles", "platform": "macos", "artifact": "osx-tiles-x64", "os": "macos-15-intel", "preset": "osx-tiles-x64-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage", "upload-artifact": true },
+          { "name": "macOS Curses ARM", "platform": "macos", "artifact": "osx-curses-arm", "os": "macos-15", "preset": "osx-curses-arm-dist", "tiles": false, "sound": false, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "macOS Tiles ARM", "platform": "macos", "artifact": "osx-tiles-arm", "os": "macos-15", "preset": "osx-tiles-arm-dist", "tiles": true, "sound": true, "ext": "dmg", "content-type": "application/x-apple-diskimage" },
+          { "name": "Android ARM64", "platform": "android", "artifact": "android-x64", "os": "ubuntu-latest", "android": "arm64", "tiles": true, "ext": "apk", "content-type": "application/apk", "upload-artifact": true }
+        ]
+      download-translations: false
+      bundle-tilesets: false
+      package-artifacts: true
+      run-tests: true
+      android-localize: false
+      upload-artifacts: true
+    secrets: inherit

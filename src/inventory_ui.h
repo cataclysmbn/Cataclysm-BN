@@ -440,8 +440,8 @@ class inventory_selector
         virtual ~inventory_selector();
         /** These functions add items from map / vehicles. */
         void add_character_items( Character &character );
-        void add_map_items( const tripoint &target );
-        void add_vehicle_items( const tripoint &target );
+        void add_map_items( const tripoint_bub_ms &target );
+        void add_vehicle_items( const tripoint_bub_ms &target );
         void add_nearby_items( int radius = 1 );
         void add_bionics_items( Character &character );
         /** Remove all items */
@@ -488,7 +488,7 @@ class inventory_selector
         input_context ctxt;
 
         const item_category *naturalize_category( const item_category &category,
-                const tripoint &pos );
+                const tripoint_bub_ms &pos );
 
         void add_entry( inventory_column &target_column,
                         std::vector<item *> &&locations,
@@ -617,14 +617,12 @@ class inventory_selector
         void toggle_navigation_mode();
 
         const navigation_mode_data &get_navigation_data( navigation_mode m ) const;
-
+        std::unique_ptr<string_input_popup> spopup;
+        weak_ptr_fast<ui_adaptor> ui;
 
     private:
         catacurses::window w_inv;
 
-        weak_ptr_fast<ui_adaptor> ui;
-
-        std::unique_ptr<string_input_popup> spopup;
 
         std::vector<inventory_column *> columns;
 
@@ -660,6 +658,11 @@ class inventory_pick_selector : public inventory_selector
             inventory_selector( p, preset ) {}
 
         item *execute();
+
+    protected:
+        virtual auto handle_action( const std::string &/*action*/ ) -> bool {
+            return false;
+        }
 };
 
 class inventory_multiselector : public inventory_selector
@@ -669,7 +672,7 @@ class inventory_multiselector : public inventory_selector
                                  const std::string &selection_column_title = "" );
     protected:
         void rearrange_columns( size_t client_width ) override;
-
+        size_t query_count( size_t count );
     private:
         std::unique_ptr<inventory_column> selection_col;
 };
@@ -716,6 +719,12 @@ class inventory_drop_selector : public inventory_multiselector
         drop_locations execute();
 
     protected:
+        /**
+         * Opens prompt that asks for number of items to select
+         *
+         * @param count Number that the prompt starts out with
+         * @return size_t Number the prompt returns
+         */
         stats get_raw_stats() const override;
         /** Toggle item dropping */
         void set_chosen_count( inventory_entry &entry, size_t count );

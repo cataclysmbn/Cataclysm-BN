@@ -6,8 +6,10 @@
 #include <set>
 
 #include "character_id.h"
+#include "coordinates.h"
 #include "item.h"
 #include "item_group.h"
+#include "hsv_color.h"
 #include "point.h"
 #include "visitable.h"
 #include "location_ptr.h"
@@ -40,7 +42,7 @@ struct vehicle_part {
         vehicle_part();
         vehicle_part( vehicle * );
 
-        vehicle_part( const vpart_id &vp, point dp, detached_ptr<item> &&obj, vehicle * );
+        vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp, detached_ptr<item> &&obj, vehicle * );
         vehicle_part( const vehicle_part &, vehicle * );
 
         vehicle_part( vehicle_part && );
@@ -100,10 +102,10 @@ struct vehicle_part {
         /**
          * Consume fuel, charges or ammunition (if available)
          * @param qty maximum amount of ammo that should be consumed
-         * @param pos current global location of part from which ammo is being consumed
+         * @param pos current bubble location of part from which ammo is being consumed
          * @return amount consumed which will be between 0 and specified qty
          */
-        int ammo_consume( int qty, const tripoint &pos );
+        int ammo_consume( int qty, const tripoint_bub_ms &pos );
 
         /**
          * Consume fuel by energy content.
@@ -122,7 +124,7 @@ struct vehicle_part {
          * @param pos Position of this part for item::process
          * @param e_heater Engine has a heater and is on
          */
-        void process_contents( const tripoint &pos, bool e_heater );
+        void process_contents( const tripoint_bub_ms &pos, bool e_heater );
 
         /**
          *  Try adding @param liquid to tank optionally limited by @param qty
@@ -139,13 +141,13 @@ struct vehicle_part {
         /** Try to set fault returning false if specified fault cannot occur with this item */
         bool fault_set( const fault_id &f );
 
-        /** Get wheel diameter times wheel width (inches^2) or return 0 if part is not wheel */
+        /** Get wheel diameter times wheel width (millimeters^2) or return 0 if part is not wheel */
         int wheel_area() const;
 
-        /** Get wheel diameter (inches) or return 0 if part is not wheel */
+        /** Get wheel diameter (millimeters) or return 0 if part is not wheel */
         int wheel_diameter() const;
 
-        /** Get wheel width (inches) or return 0 if part is not wheel */
+        /** Get wheel width (millimeters) or return 0 if part is not wheel */
         int wheel_width() const;
 
         /**
@@ -164,7 +166,7 @@ struct vehicle_part {
         void unset_crew();
 
         /** Reset the target for this part. */
-        void reset_target( const tripoint &pos );
+        void reset_target( const tripoint_abs_ms &pos );
 
         /**
          * @name Part capabilities
@@ -212,11 +214,14 @@ struct vehicle_part {
 
     public:
         /** mount point: x is on the forward/backward axis, y is on the left/right axis */
-        point mount;
+        tripoint_mnt_veh mount;
 
-        /** mount translated to face.dir [0] and turn_dir [1] */
+        /** mount translated to face.dir [0] and turn_dir [1]; XY rotation only, z is always mount.z() */
         // NOLINTNEXTLINE(cata-use-named-point-constants)
-        std::array<tripoint, 2> precalc = { { tripoint( -1, -1, 0 ), tripoint( -1, -1, 0 ) } };
+        std::array<point_rel_ms, 2> precalc = { { point_rel_ms( -1, -1 ), point_rel_ms( -1, -1 ) } };
+
+        /** terrain-topology z offset relative to vehicle origin, double-buffered like precalc */
+        std::array<int, 2> z_terrain = { 0, 0 };
 
         /** current part health with range [0,durability] */
         int hp() const;
@@ -276,9 +281,10 @@ struct vehicle_part {
          * Two coordinate pairs are stored: actual target point, and target vehicle center.
          * Both cases use absolute coordinates (relative to world origin)
          */
-        std::pair<tripoint, tripoint> target = { tripoint_min, tripoint_min };
+        std::pair<tripoint_abs_ms, tripoint_abs_ms> target = { tripoint_abs_ms( tripoint_min ), tripoint_abs_ms( tripoint_min ) };
 
     private:
+        RGBColorPair part_color_ {};
 
         /** Copies static (i.e. non-item) properties from another part */
         void copy_static_from( const vehicle_part &source );
@@ -302,6 +308,11 @@ struct vehicle_part {
          */
         character_id crew_id;
     public:
+
+        // POWER_DRAW_LINKED_PORTAL: portal tap link state (persisted per-part instance).
+        std::string portal_tap_dim_id;
+        tripoint_abs_ms portal_tap_pos;
+        bool portal_tap_linked = false;
         /** Get part definition common to all parts of this type */
         const vpart_info &info() const;
 
@@ -335,6 +346,9 @@ struct vehicle_part {
          * this part.
          */
         std::vector<detached_ptr<item>> pieces_for_broken_part() const;
-};
 
+        RGBColorPair get_color( bool ignore_default = false ) const;
+        void set_color( const RGBColorPair &color ) { set_color( color.bg, color.fg ); }
+        void set_color( const RGBColor &bg, const RGBColor &fg );
+};
 

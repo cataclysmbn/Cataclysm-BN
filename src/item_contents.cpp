@@ -55,7 +55,7 @@ size_t item_contents::num_item_stacks() const
     return items.size();
 }
 
-bool item_contents::spill_contents( const tripoint &pos )
+bool item_contents::spill_contents( const tripoint_bub_ms &pos )
 {
     for( detached_ptr<item> &it : items.clear() ) {
         get_map().add_item_or_charges( pos, std::move( it ) );

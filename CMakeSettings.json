@@ -4,7 +4,7 @@
       "name": "Debug",
       "generator": "Ninja",
       "configurationType": "Debug",
-      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-debug",
+      "buildRoot": "${projectDir}/out/build/win-debug",
       "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
@@ -26,7 +26,7 @@
       "name": "RelWithDebInfo",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
-      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-relwithdebinfo",
+      "buildRoot": "${projectDir}/out/build/win-rel-deb",
       "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
@@ -48,7 +48,7 @@
       "name": "Release",
       "generator": "Ninja",
       "configurationType": "Release",
-      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-release",
+      "buildRoot": "${projectDir}/out/build/win-release",
       "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
@@ -70,7 +70,7 @@
       "name": "Tests",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
-      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-tests",
+      "buildRoot": "${projectDir}/out/build/win-tests",
       "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
@@ -92,7 +92,7 @@
       "name": "Tracy",
       "generator": "Ninja",
       "configurationType": "Release",
-      "buildRoot": "${projectDir}/out/build/windows-tiles-sounds-x64-msvc-tracy",
+      "buildRoot": "${projectDir}/out/build/win-tracy",
       "installRoot": "${projectDir}/out/install/windows-tiles-sounds-x64-msvc",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [

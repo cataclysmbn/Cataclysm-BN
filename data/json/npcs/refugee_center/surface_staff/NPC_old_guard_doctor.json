@@ -36,7 +36,7 @@
   {
     "id": "TALK_SCIENCE_REP_NEW_DOING",
     "type": "talk_topic",
-    "dynamic_line": "The Old Guard--that's what's left of the feds--set me up here to screen any new arrivals for infection risks.  Can't be too paranoid these days.  Sad to have to turn people away, but I like the assignment for the chance to get news about the outside world.",
+    "dynamic_line": "The Old Guard--that's what's left of the feds--drafted me when they arrived a while ago and set me up here to screen any new arrivals for infection risks.  Can't be too paranoid these days.  Sad to have to turn people away, but I like the assignment for the chance to get news about the outside world.",
     "responses": [
       { "text": "What kind of news?", "topic": "TALK_SCIENCE_REP_NEW_NEWS" },
       { "text": "Never mind…", "topic": "TALK_SCIENCE_REP" }
@@ -63,28 +63,58 @@
   {
     "id": "MISSION_SCIENCE_REP_1",
     "type": "mission_definition",
-    "name": { "str": "Analyze Zombie Blood" },
+    "name": { "str": "Find a Microcentrifuge" },
     "goal": "MGOAL_FIND_ITEM",
-    "description": "Use a <color_light_blue>blood draw kit</color> to extract <color_red>tainted blood</color> from a zombie, then bring the blood sample to a <color_red>hospital</color> and locate a centrifuge to analyze the blood with.",
-    "difficulty": 5,
-    "value": 50000,
-    "item": "software_blood_data",
+    "description": "Find a <color_light_blue>microcentrifuge</color>. The doctor knows of a <color_red>medical supply drop</color> where one could likely be found.",
+    "difficulty": 2,
+    "value": 0,
+    "item": "microcentrifuge",
     "start": {
-      "effect": [ { "u_buy_item": "vacutainer" }, { "u_buy_item": "usb_drive" } ],
-      "assign_mission_target": { "om_terrain": "hospital_2", "om_special": "hospital", "reveal_radius": 3 }
+      "assign_mission_target": { "om_terrain": "field", "reveal_radius": 1, "random": true, "search_range": 60 },
+      "update_mapgen": {
+        "rows": [
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                 a      ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "        a               ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "           a            ",
+          "                        ",
+          "                        ",
+          "      a                 ",
+          "                        ",
+          "                 a      ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        "
+        ],
+        "furniture": { "a": "f_crate_o" },
+        "place_npcs": [ { "class": "NPC_scavenger_docmission", "x": 15, "y": 7 } ]
+      }
     },
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_SCIENCE_REP_2",
+    "end": { "effect": { "u_buy_item": "1st_aid" } },
     "dialogue": {
       "describe": "It could be very informative to perform an analysis of zombie blood…",
-      "offer": "We don't have the equipment for real analysis here so it'll need to be done in the field.  I need you to get a fresh sample of zombie blood, take it to a hospital, and perform a centrifuge analysis of it.",
-      "accepted": "Excellent.  Take this blood draw kit; once you've found a zombie corpse, use it to extract blood from the body, then take it to a hospital for analysis.",
+      "offer": "We don't have the equipment for real analysis here so I'll need you to get some.  Critically, I'm missing a microcentrifuge with which I could perform an analysis of zombie blood.  I need you to procure a microcentrifuge and bring it to me.",
+      "accepted": "Excellent.  I happen to know of the location of a nearby supply drop of medical equipment, which likely contains a microcentrifuge.  Otherwise, you should try your luck at research locations.",
       "rejected": "Are you sure?  The scientific value of that blood data could be priceless…",
-      "advice": "The centrifuge is a bit technical; you might want to study up on the usage of computers before completing that part.",
-      "inquire": "Well, do you have the data yet?",
-      "success": "Excellent!  This may be the key to removing the infection.",
-      "success_lie": "Wait, you couldn't possibly have the data!  Liar!",
-      "failure": "What a shame, that data could have proved invaluable…"
+      "advice": "The supply drop should be unguarded, but watch your back.",
+      "inquire": "Well, do you have the microcentrifuge yet?",
+      "success": "Excellent!  This may be the key to removing the infection.  I don't have much to spare, but take this as thanks.",
+      "success_lie": "Wait, this isn't a centrifuge!  Liar!",
+      "failure": "What a shame, that equipment could have proved invaluable…"
     }
   },
   {
@@ -98,6 +128,9 @@
     "start": "create_lab_console",
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_SCIENCE_REP_3",
+    "end": {
+      "effect": [ { "u_buy_item": "oldguard_armor" }, { "u_buy_item": "oldguard_rifle" }, { "u_buy_item": "recipe_oldguard" } ]
+    },
     "dialogue": {
       "describe": "We need help…",
       "offer": "The medical software didn't just analyze the blood, it triggered a government alert.  Medical staff was under orders to immediately drive any matching samples to the nearest laboratory.  That must mean the government knew!  We have the destination address.  Go there, get in, and bring back any records you can download off a computer.",
@@ -105,7 +138,7 @@
       "rejected": "Can't blame you, but come back if you change your mind.",
       "advice": "If the laboratory is locked, maybe you can find an id card from employees who died in the evacuation.  Also brush up on your computer skills, any computers will have some security on them.  Bring back anything you find on a USB drive.",
       "inquire": "Have you completed your mission?",
-      "success": "Thanks!  This data looks damaged, but maybe I can make something out of it.",
+      "success": "Thanks!  This data looks damaged, but maybe I can make something out of it. Also, since you've proven to be capable, I want to give you this equipment. The Old Guard issued it to me when they dropped by with the representative a while ago, but I'm not much of a fighter. I'm sure you could put it to good use though.",
       "success_lie": "What good does this do us?",
       "failure": "It was a lost cause anyways…"
     }

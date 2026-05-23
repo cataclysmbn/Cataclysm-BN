@@ -14,6 +14,12 @@
   },
   {
     "type": "item_group",
+    "subtype": "distribution",
+    "id": "goblin_warrior_monster_weapon",
+    "entries": [ { "item": "cudgel", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
     "subtype": "collection",
     "id": "goblin_slinger_drops",
     "entries": [
@@ -21,9 +27,14 @@
       { "item": "legguard_scrap", "prob": 40 },
       { "item": "boots_scrap", "prob": 40 },
       { "item": "armguard_scrap", "prob": 40 },
-      { "item": "cuirass_scrap", "prob": 40 },
-      { "item": "sling", "prob": 95 }
+      { "item": "cuirass_scrap", "prob": 40 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "goblin_slinger_monster_weapon",
+    "entries": [ { "item": "sling", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -34,9 +45,20 @@
       { "item": "legguard_scrap", "prob": 40 },
       { "item": "boots_scrap", "prob": 40 },
       { "item": "armguard_scrap", "prob": 40 },
-      { "item": "cuirass_scrap", "prob": 40 },
-      { "group": "enchanted_melee_weapons_plus1", "prob": 100 }
+      { "item": "cuirass_scrap", "prob": 40 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "goblin_chieftain_monster_weapon",
+    "entries": [ { "group": "enchanted_melee_weapons_plus1", "prob": 100 } ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "lizardfolk_monster_weapon",
+    "entries": [ { "item": "lizardfolk_javelin", "prob": 100, "count": [ 1, 5 ] } ]
   },
   {
     "type": "item_group",
@@ -46,9 +68,14 @@
       { "item": "chainmail_legs", "prob": 40 },
       { "item": "chainmail_feet", "prob": 40 },
       { "item": "chainmail_arms", "prob": 40 },
-      { "item": "chainmail_vest", "prob": 40 },
-      { "item": "cutlass", "prob": 95 }
+      { "item": "chainmail_vest", "prob": 40 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "orc_warrior_monster_weapon",
+    "entries": [ { "item": "cutlass", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -58,9 +85,14 @@
       { "item": "chainmail_legs", "prob": 40 },
       { "item": "chainmail_feet", "prob": 40 },
       { "item": "chainmail_arms", "prob": 40 },
-      { "item": "chainmail_vest", "prob": 40 },
-      { "item": "longbow", "prob": 95 }
+      { "item": "chainmail_vest", "prob": 40 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "orc_archer_monster_weapon",
+    "entries": [ { "item": "longbow", "prob": 100 } ]
   },
   {
     "type": "item_group",
@@ -73,5 +105,11 @@
       { "item": "chainmail_vest", "prob": 40 },
       { "item": "pike_plus_one", "prob": 95 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "distribution",
+    "id": "orc_blood_warrior_weapon",
+    "entries": [ { "item": "pike_plus_one", "prob": 100 } ]
   }
 ]

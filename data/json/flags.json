@@ -148,6 +148,36 @@
     "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
   },
   {
+    "id": "BLIND_NO_EFFECT",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "Light levels have no effect."
+  },
+  {
+    "id": "BLIND_EASY",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is easy to do in the dark."
+  },
+  {
+    "id": "BLIND_HARD",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is difficult to do in the dark."
+  },
+  {
+    "id": "BLIND_NEARLY_IMPOSSIBLE",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is incredibly difficult to do in the dark, and impossible if you cannot see."
+  },
+  {
+    "id": "BLIND_IMPOSSIBLE",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is cannot be done if you cannot see."
+  },
+  {
     "id": "EFFECT_NIGHT_VISION",
     "context": [  ],
     "type": "json_flag"
@@ -502,6 +532,18 @@
     "id": "MUSHROOM_PLANTABLE",
     "context": [  ],
     "type": "json_flag"
+  },
+  {
+    "id": "NATURE_CAMO",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>natural environments</info>."
+  },
+  {
+    "id": "URBAN_CAMO",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>urban and rocky environments</info>."
   },
   {
     "id": "NO_CVD",
@@ -1653,6 +1695,12 @@
     "info": "This gear <good>enhances your vision</good> when worn, and <info>tints your field of view</info>."
   },
   {
+    "id": "GNVE_EFFECT",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly enhances your vision</good> when worn, and <info>tints your field of view</info>."
+  },
+  {
     "id": "RECON_VISION",
     "type": "json_flag",
     "context": [  ],
@@ -2260,6 +2308,12 @@
     "context": [  ]
   },
   {
+    "id": "WORN_GUN",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gun can be fired while <good>worn</good>."
+  },
+  {
     "id": "WRITE_MESSAGE",
     "type": "json_flag",
     "context": [ "TOOL" ]
@@ -2540,5 +2594,10 @@
     "id": "TRACKED",
     "type": "json_flag",
     "context": [ "vehicle_part" ]
+  },
+  {
+    "id": "NO_PAINT",
+    "type": "json_flag",
+    "context": [  ]
   }
 ]

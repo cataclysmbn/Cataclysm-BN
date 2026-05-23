@@ -16,10 +16,12 @@ constexpr int LUA_API_VERSION = 2;
 #include "avatar.h"
 #include "bionics.h"
 #include "catalua_console.h"
+#include "catalua_coord.h"
 #include "catalua_hooks.h"
 #include "catalua_impl.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_readonly.h"
+#include "catalua_coord.h"
 #include "catalua_serde.h"
 #include "filesystem.h"
 #include "fstream_utils.h"
@@ -33,6 +35,7 @@ constexpr int LUA_API_VERSION = 2;
 #include "mod_manager.h"
 #include "mutation.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "point.h"
 #include "worldfactory.h"
 
@@ -47,9 +50,9 @@ std::string get_lapi_version_string()
 void startup_lua_test()
 {
     sol::state lua = make_lua_state();
-    std::string lua_startup_script = PATH_INFO::datadir() + "raw/on_game_start.lua";
+    const auto lua_startup_script = PATH_INFO::datadir() / "raw" / "on_game_start.lua";
     try {
-        run_lua_script( lua, lua_startup_script );
+        run_lua_script( lua, cata_files::path_to_generic_utf8( lua_startup_script ) );
     } catch( std::runtime_error &e ) {
         debugmsg( "%s", e.what() );
     }
@@ -74,16 +77,17 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
     };
     lua.globals()["package"]["path"] = string_format(
                                            "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
-                                           PATH_INFO::datadir() + "/lua", PATH_INFO::datadir() + "/raw"
+                                           cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "lua" ),
+                                           cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "raw" )
                                        );
 
     try {
-        run_lua_script( lua, script_path.string() );
+        run_lua_script( lua, cata_files::path_to_generic_utf8( script_path ) );
         sol::protected_function doc_gen_func = lua["doc_gen_func"]["impl"];
         sol::protected_function_result res = doc_gen_func();
         check_func_result( res );
         const auto ret = res.get<std::string>();
-        write_to_file( to.string(), [&]( std::ostream & s ) -> void {
+        write_to_file( to, [&]( std::ostream & s ) -> void {
             s << ret;
         } );
     } catch( std::runtime_error &e ) {
@@ -168,6 +172,7 @@ bool load_world_lua_state( const world *world, const std::string &path )
     const auto ret = world->read_from_file( path, [&]( std::istream & stream ) {
         JsonIn jsin( stream );
         JsonObject jsobj = jsin.get_object();
+        jsobj.allow_omitted_members();
 
         for( const mod_id &mod : mods ) {
             if( !jsobj.has_object( mod.str() ) ) {
@@ -319,7 +324,7 @@ void set_mod_being_loaded( lua_state &state, const mod_id &mod )
     lua.globals()["package"]["path"] =
         string_format(
             "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
-            PATH_INFO::datadir() + "/lua", mod->path
+            cata_files::path_to_generic_utf8( PATH_INFO::datadir() / "lua" ), mod->path
         );
 }
 
@@ -890,6 +895,10 @@ int get_lua_api_version()
 
 void lua_state_deleter::operator()( lua_state *state ) const
 {
+    cata::lua_action_menu::clear_entries();
+    bionic_callback_actors.clear();
+    mutation_callback_actors.clear();
+    get_hook_cache().clear();
     delete state;
 }
 
@@ -903,14 +912,79 @@ void run_on_game_load_hooks( lua_state &state )
     run_hooks( "on_game_load", nullptr, { .state = &state } );
 }
 
-void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint &p,
+void run_on_mapgen_postprocess_hooks( lua_state &state, map &m, const tripoint_abs_omt &p,
                                       const time_point &when )
 {
     run_hooks( "on_mapgen_postprocess", [&]( sol::table & params ) {
         params["map"] = &m;
-        params["omt"] = p;
+        params["omt"] = cata::detail::lua_coords::to_lua( p );
         params["when"] = when;
     }, { .state = &state } );
+}
+
+void run_on_mapgen_postprocess_hooks_batch( lua_state &state, tinymap &tmp,
+        std::span<const mapgen_hook_batch_item> items )
+{
+    if( items.empty() ) {
+        return;
+    }
+
+    auto &lua = state.lua;
+    const auto maybe_hooks = lua.globals()["game"]["hooks"]["on_mapgen_postprocess"]
+                             .get<sol::optional<sol::table>>();
+    if( !maybe_hooks ) {
+        return;
+    }
+
+    const auto &hooks   = *maybe_hooks;
+    const auto &entries = get_hook_entries( lua, "on_mapgen_postprocess", hooks );
+    if( entries.empty() ) {
+        return;
+    }
+
+    // Create the params table once for the whole batch.
+    // params["map"] holds a pointer to tmp; bind_submaps_for_hook() rebinds the
+    // underlying submap grid in-place, so the Lua side always sees current data
+    // without us needing to reassign params["map"] per item.
+    // The results table is intentionally omitted — on_mapgen_postprocess callers
+    // discard the return value, so tracking per-hook results is pure overhead.
+    auto params = lua.create_table();
+    params["map"] = static_cast<map *>( &tmp );
+
+    std::ranges::for_each( items, [&]( const mapgen_hook_batch_item & item ) {
+        tmp.bind_submaps_for_hook( item.sm_base );
+        params["prev"] = sol::lua_nil;
+        params["omt"]  = cata::detail::lua_coords::to_lua( item.omt_pos );
+        params["when"] = item.when;
+
+        std::ranges::for_each( entries, [&]( const hook_entry & e ) {
+            try {
+                const sol::object obj = hooks.get_or<sol::object>( e.index, sol::lua_nil );
+                if( obj == sol::lua_nil ) {
+                    return;
+                }
+
+                sol::protected_function func;
+                if( e.is_table ) {
+                    func = obj.as<sol::table>()
+                           .get_or<sol::object>( "fn", sol::lua_nil )
+                           .as<sol::protected_function>();
+                } else {
+                    func = obj.as<sol::protected_function>();
+                }
+
+                sol::protected_function_result res = func( params );
+                check_func_result( res );
+
+                if( res.valid() ) {
+                    params["prev"] = res.get<sol::object>();
+                }
+            } catch( const std::runtime_error &err ) {
+                debugmsg( "Failed to run hook on_mapgen_postprocess[%d]: %s",
+                          e.index, err.what() );
+            }
+        } );
+    } );
 }
 
 bool has_mapgen_postprocess_hooks( lua_state &state )

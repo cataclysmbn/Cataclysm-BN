@@ -40,10 +40,10 @@
 #include "character_id.h"
 #include "character_martial_arts.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "thread_pool.h"
 #include "effect.h"
 #include "enum_conversions.h"
 #include "enums.h"
@@ -82,6 +82,7 @@
 #include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "pimpl.h"
 #include "player.h"
 #include "pldata.h"
@@ -103,7 +104,7 @@
 #include "uistate.h"
 #include "units.h"
 #include "units_utility.h"
-#include "url_utility.h"
+#include "utils/url.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "veh_type.h"
@@ -173,6 +174,8 @@ enum debug_menu_index {
     DEBUG_TRAIT_GROUP,
     DEBUG_SHOW_MSG,
     DEBUG_CRASH_GAME,
+    DEBUG_SHOW_WORKER_MSG,
+    DEBUG_CRASH_WORKER,
     DEBUG_RELOAD_TRANSLATIONS,
     DEBUG_MAP_EXTRA,
     DEBUG_DISPLAY_NPC_PATH,
@@ -193,6 +196,7 @@ enum debug_menu_index {
     DEBUG_DISPLAY_LIGHTING,
     DEBUG_DISPLAY_RADIATION,
     DEBUG_DISPLAY_TRANSPARENCY,
+    DEBUG_DISPLAY_OUTSIDE,
     DEBUG_DISPLAY_SUBMAP_GRID,
     DEBUG_TEST_MAP_EXTRA_DISTRIBUTION,
     DEBUG_VEHICLE_BATTERY_CHARGE,
@@ -246,6 +250,7 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_DISPLAY_VISIBILITY, true, 'v', _( "Toggle display visibility" ) ) },
             { uilist_entry( DEBUG_DISPLAY_LIGHTING, true, 'l', _( "Toggle display lighting" ) ) },
             { uilist_entry( DEBUG_DISPLAY_TRANSPARENCY, true, 'p', _( "Toggle display transparency" ) ) },
+            { uilist_entry( DEBUG_DISPLAY_OUTSIDE, true, 'O', _( "Toggle display outside/sheltered/indoors" ) ) },
             { uilist_entry( DEBUG_DISPLAY_RADIATION, true, 'R', _( "Toggle display radiation" ) ) },
             { uilist_entry( DEBUG_DISPLAY_SUBMAP_GRID, true, 'o', _( "Toggle display submap grid" ) ) },
 #if defined(TILES)
@@ -260,6 +265,8 @@ static int info_uilist( bool display_all_entries = true )
             { uilist_entry( DEBUG_TRAIT_GROUP, true, 't', _( "Test trait group" ) ) },
             { uilist_entry( DEBUG_SHOW_MSG, true, 'd', _( "Show debug message" ) ) },
             { uilist_entry( DEBUG_CRASH_GAME, true, 'C', _( "Crash game (test crash handling)" ) ) },
+            { uilist_entry( DEBUG_SHOW_WORKER_MSG, true, 0, _( "Show debug message (worker thread)" ) ) },
+            { uilist_entry( DEBUG_CRASH_WORKER, true, 0, _( "Crash worker thread (test crash handling)" ) ) },
             { uilist_entry( DEBUG_RELOAD_TRANSLATIONS, true, 'L', _( "Reload translations" ) ) },
             { uilist_entry( DEBUG_DISPLAY_NPC_PATH, true, 'n', _( "Toggle NPC pathfinding on map" ) ) },
             { uilist_entry( DEBUG_PRINT_FACTION_INFO, true, 'f', _( "Print faction info to console" ) ) },
@@ -419,13 +426,13 @@ static int debug_menu_uilist( bool display_all_entries = true )
 
 void teleport_short()
 {
-    const std::optional<tripoint> where = g->look_around( true );
-    if( !where || *where == g->u.pos() ) {
+    const std::optional<tripoint_bub_ms> where = g->look_around( LA_MODE_3D );
+    if( !where || *where == g->u.bub_pos() ) {
         return;
     }
     g->place_player( *where );
-    const tripoint new_pos( g->u.pos() );
-    add_msg( _( "You teleport to point (%d,%d,%d)." ), new_pos.x, new_pos.y, new_pos.z );
+    const auto new_pos = g->u.bub_pos();
+    add_msg( _( "You teleport to point (%d,%d,%d)." ), new_pos.x(), new_pos.y(), new_pos.z() );
 }
 
 void teleport_long()
@@ -450,23 +457,24 @@ void teleport_overmap( bool specific_coordinates )
             return;
         }
         const std::vector<std::string> coord_strings = string_split( text, ',' );
-        tripoint coord;
-        coord.x = !coord_strings.empty() ? std::atoi( coord_strings[0].c_str() ) : 0;
-        coord.y = coord_strings.size() >= 2 ? std::atoi( coord_strings[1].c_str() ) : 0;
-        coord.z = coord_strings.size() >= 3 ? std::atoi( coord_strings[2].c_str() ) : 0;
-        where = tripoint_abs_omt( OMAPX * coord.x, OMAPY * coord.y, coord.z );
+        tripoint_abs_omt coord;
+        coord.x() = !coord_strings.empty() ? std::atoi( coord_strings[0].c_str() ) : 0;
+        coord.y() = coord_strings.size() >= 2 ? std::atoi( coord_strings[1].c_str() ) : 0;
+        coord.z() = coord_strings.size() >= 3 ? std::atoi( coord_strings[2].c_str() ) : 0;
+        where = tripoint_abs_omt( OMAPX * coord.x(), OMAPY * coord.y(), coord.z() );
     } else {
-        const std::optional<tripoint> dir_ = choose_direction( _( "Where is the desired overmap?" ) );
+        const std::optional<tripoint_rel_ms> dir_ = choose_direction(
+                    _( "Where is the desired overmap?" ) );
         if( !dir_ ) {
             return;
         }
-        const tripoint offset = tripoint( OMAPX * dir_->x, OMAPY * dir_->y, dir_->z );
-        where = g->u.global_omt_location() + offset;
+        const auto offset = tripoint_rel_omt( OMAPX * dir_->x(), OMAPY * dir_->y(), dir_->z() );
+        where = g->u.abs_omt_pos() + offset;
     }
 
     g->place_player_overmap( where );
 
-    const tripoint_abs_om new_pos = project_to<coords::om>( g->u.global_omt_location() );
+    const tripoint_abs_om new_pos = project_to<coords::om>( g->u.abs_omt_pos() );
     add_msg( _( "You teleport to overmap %s." ), new_pos.to_string() );
 }
 
@@ -491,7 +499,7 @@ static void teleport_to_overmap_special()
     const overmap_special *target = vec_os[area_menu.ret];
     const overmap_special_id target_id = target->id;
     mission_target_params t;
-    t.overmap_terrain = target->get_terrain_at( tripoint() )->get_mapgen_id();
+    t.overmap_terrain = target->get_terrain_at( tripoint_rel_omt() )->get_mapgen_id();
     t.overmap_special = target_id;
     t.search_range = 0;
     t.reveal_radius = 3;
@@ -511,28 +519,27 @@ void spawn_nested_mapgen()
     nest_menu.query();
     const int nest_choice = nest_menu.ret;
     if( nest_choice >= 0 && nest_choice < static_cast<int>( nest_str.size() ) ) {
-        const std::optional<tripoint> where = g->look_around( true );
+        const std::optional<tripoint_bub_ms> where = g->look_around( LA_MODE_3D );
         if( !where ) {
             return;
         }
 
         map &here = get_map();
-        const tripoint_abs_ms abs_ms( here.getabs( *where ) );
+        const tripoint_abs_ms abs_ms = here.bub_to_abs( *where );
         const tripoint_abs_omt abs_omt = project_to<coords::omt>( abs_ms );
         const tripoint_abs_sm abs_sub = project_to<coords::sm>( abs_ms );
 
         map target_map;
         target_map.load( abs_sub, true );
-        // TODO: fix point types
-        const tripoint local_ms = target_map.getlocal( abs_ms.raw() );
+        const auto local_ms = project_remain<coords::omt>( abs_ms ).remainder;
         mapgendata md( abs_omt, target_map, 0.0f, calendar::turn, nullptr,
                        get_overmapbuffer( target_map.get_bound_dimension() ) );
         const auto &ptr = nested_mapgen[nest_str[nest_choice]].pick();
         if( ptr == nullptr ) {
             return;
         }
-        ( *ptr )->nest( md, local_ms.xy() );
-        target_map.save();
+        const auto nested_offset = point_rel_ms( local_ms.x(), local_ms.y() );
+        ( *ptr )->nest( md, nested_offset );
         g->load_npcs();
         here.invalidate_map_cache( g->get_levz() );
     }
@@ -540,19 +547,20 @@ void spawn_nested_mapgen()
 
 static Character &pick_character( Character &preselected )
 {
-    std::vector< tripoint > locations;
+    std::vector<tripoint_bub_ms> locations;
     uilist charmenu;
     int charnum = 0;
     charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, "%s", _( "You" ) );
-    locations.emplace_back( g->u.pos() );
+    locations.emplace_back( g->u.bub_pos() );
     for( const npc &guy : g->all_npcs() ) {
         charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, guy.name );
-        locations.emplace_back( guy.pos() );
+        locations.emplace_back( guy.bub_pos() );
     }
     avatar &u = get_avatar();
-    u.view_offset = u.pos() - preselected.pos();
-    auto iter = std::find_if( locations.begin(), locations.end(), [&preselected]( const tripoint & p ) {
-        return p == preselected.pos();
+    u.view_offset = u.bub_pos() - preselected.bub_pos();
+    auto iter = std::find_if( locations.begin(),
+    locations.end(), [&preselected]( const tripoint_bub_ms & p ) {
+        return p == preselected.bub_pos();
     } );
     size_t preselect_index = iter != locations.end() ? std::distance( locations.begin(), iter ) : 0;
 
@@ -575,7 +583,7 @@ static void control_npc_menu()
     uilist charmenu;
     int charnum = 0;
     for( const auto &elem : g->get_follower_list() ) {
-        shared_ptr_fast<npc> follower = ACTIVE_OVERMAP_BUFFER.find_npc( elem );
+        shared_ptr_fast<npc> follower = get_overmapbuffer( get_avatar().get_dimension() ).find_npc( elem );
         if( follower ) {
             followers.emplace_back( follower );
             charmenu.addentry( charnum++, true, MENU_AUTOASSIGN, follower->get_name() );
@@ -597,7 +605,7 @@ void character_edit_menu( Character &c )
     npc *np = c.is_npc() ? static_cast<npc *>( &c ) : nullptr;
     player &p = static_cast<player &>( c );
 
-    const tripoint start_view_offset = get_avatar().view_offset;
+    const auto start_view_offset = get_avatar().view_offset;
 
     std::string nmenu_label;
     if( np != nullptr ) {
@@ -612,7 +620,7 @@ void character_edit_menu( Character &c )
         if( np->has_destination() ) {
             data << string_format(
                      _( "Destination: %s %s" ), np->goal.to_string(),
-                     ACTIVE_OVERMAP_BUFFER.ter( np->goal )->get_name() ) << '\n';
+                     get_overmapbuffer( np->get_dimension() ).ter( np->goal )->get_name() ) << '\n';
         } else {
             data << _( "No destination." ) << '\n';
         }
@@ -690,7 +698,7 @@ void character_edit_menu( Character &c )
     switch( nmenu.ret ) {
         case edit_character::pick: {
             Character &other = pick_character( c );
-            get_avatar().view_offset = other.pos() - get_avatar().pos();
+            get_avatar().view_offset = other.bub_pos() - get_avatar().bub_pos();
             // TODO: Make it not able to cause a stack overflow
             character_edit_menu( other );
             get_avatar().view_offset = start_view_offset;
@@ -1095,7 +1103,7 @@ void character_edit_menu( Character &c )
             mission_debug::edit( p );
             break;
         case edit_character::tele: {
-            if( const std::optional<tripoint> newpos = g->look_around( true ) ) {
+            if( const std::optional<tripoint_bub_ms> newpos = g->look_around( LA_MODE_3D ) ) {
                 p.setpos( *newpos );
                 if( p.is_player() ) {
                     if( p.is_mounted() ) {
@@ -1478,15 +1486,15 @@ void benchmark( const int max_difference, bench_kind kind )
 }
 
 // prompts player to select 2 points that will form a rectangular area
-static std::optional<tripoint_range<tripoint>> select_area()
+static std::optional<tripoint_range<tripoint_bub_ms>> select_area()
 {
     static_popup popup;
     popup.on_top( true );
     popup.message( "%s", _( "Select first point." ) );
 
-    tripoint initial_pos = g->u.pos();
+    auto initial_pos = g->u.bub_pos();
     const look_around_result first = g->look_around( false, initial_pos, initial_pos,
-                                     false, true, false, false, tripoint_zero, true );
+                                     false, true, false, false, tripoint_bub_ms::zero(), LA_MODE_3D );
 
     if( !first.position ) {
         return std::nullopt;
@@ -1494,7 +1502,7 @@ static std::optional<tripoint_range<tripoint>> select_area()
 
     popup.message( "%s", _( "Select second point." ) );
     const look_around_result second = g->look_around( false, initial_pos, *first.position,
-                                      true, true, false, false, tripoint_zero, true );
+                                      true, true, false, false, tripoint_bub_ms::zero(), LA_MODE_3D );
 
     if( !second.position ) {
         return std::nullopt;
@@ -1543,11 +1551,12 @@ void debug()
         case DEBUG_SPAWN_NPC: {
             shared_ptr_fast<npc> temp = make_shared_fast<npc>();
             temp->randomize();
-            temp->spawn_at_precise( { g->get_levx(), g->get_levy() }, u.pos() + point( -4, -4 ) );
-            ACTIVE_OVERMAP_BUFFER.insert_npc( temp );
+            const auto proj = project_remain<coords::sm>( u.abs_pos() + point_rel_ms( -4, -4 ) );
+            temp->spawn_at_precise( proj.quotient, proj.remainder_tripoint );
+            get_overmapbuffer( get_avatar().get_dimension() ).insert_npc( temp );
             temp->form_opinion( u );
             temp->mission = NPC_MISSION_NULL;
-            temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->global_omt_location(),
+            temp->add_new_mission( mission::reserve_random( ORIGIN_ANY_NPC, temp->abs_omt_pos(),
                                    temp->getID() ) );
             std::string new_fac_id = "solo_";
             new_fac_id += temp->name;
@@ -1594,19 +1603,19 @@ void debug()
             s += vgettext( "%d creature exists.\n", "%d creatures exist.\n", g->num_creatures() );
             popup_top(
                 s.c_str(),
-                u.posx(), g->u.posy(), g->get_levx(), g->get_levy(),
-                ACTIVE_OVERMAP_BUFFER.ter( g->u.global_omt_location() )->get_name(),
+                u.bub_pos().x(), g->u.bub_pos().y(), g->get_levx(), g->get_levy(),
+                get_overmapbuffer( get_avatar().get_dimension() ).ter( g->u.abs_omt_pos() )->get_name(),
                 to_turns<int>( calendar::turn - calendar::turn_zero ),
                 get_option<bool>( "RANDOM_NPC" ) ? _( "NPCs are going to spawn." ) :
                 _( "NPCs are NOT going to spawn." ),
                 g->num_creatures() );
             for( const npc &guy : g->all_npcs() ) {
-                tripoint t = guy.global_sm_location();
-                add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x,
-                         t.y, guy.posx(), guy.posy() );
+                auto t = guy.abs_sm_pos();
+                add_msg( m_info, _( "%s: map ( %d:%d ) pos ( %d:%d )" ), guy.name, t.x(),
+                         t.y(), guy.bub_pos().x(), guy.bub_pos().y() );
             }
 
-            add_msg( m_info, _( "(you: %d:%d)" ), u.posx(), u.posy() );
+            add_msg( m_info, _( "(you: %d:%d)" ), u.bub_pos().x(), u.bub_pos().y() );
             add_msg( m_info, _( "Thirst: %d, kCal: %d / %d" ), u.get_thirst(), u.get_stored_kcal(),
                      u.max_stored_kcal() );
             add_msg( m_info, _( "Body Mass Index: %.0f\nBasal Metabolic Rate: %i" ), u.bmi(), u.bmr() );
@@ -1618,15 +1627,15 @@ void debug()
             break;
         }
         case DEBUG_REPRODUCE_AREA: {
-            const std::optional<tripoint_range<tripoint>> points_opt = select_area();
+            const std::optional<tripoint_range<tripoint_bub_ms>> points_opt = select_area();
             if( !points_opt.has_value() ) {
                 break;
             }
 
-            const tripoint_range<tripoint> points = points_opt.value();
+            const tripoint_range<tripoint_bub_ms> points = points_opt.value();
             std::vector<Creature *> creatures = g->get_creatures_if(
             [&points]( const Creature & critter ) -> bool {
-                return !critter.is_avatar() && critter.is_monster() && points.is_point_inside( critter.pos() );
+                return !critter.is_avatar() && critter.is_monster() && points.is_point_inside( critter.bub_pos() );
             } );
 
             for( Creature *critter : creatures ) {
@@ -1635,15 +1644,15 @@ void debug()
         }
         break;
         case DEBUG_ERASE_ITEMS_AREA: {
-            const std::optional<tripoint_range<tripoint>> points_opt = select_area();
+            const std::optional<tripoint_range<tripoint_bub_ms>> points_opt = select_area();
             if( !points_opt.has_value() ) {
                 break;
             }
 
-            const tripoint_range<tripoint> points = points_opt.value();
+            const tripoint_range<tripoint_bub_ms> points = points_opt.value();
 
             const int count = std::accumulate( points.begin(), points.end(), 0,
-            [&m]( int sum, const tripoint & p ) {
+            [&m]( int sum, const tripoint_bub_ms & p ) {
                 const int size = m.i_at( p ).size();
                 m.i_clear( p );
                 return sum + size;
@@ -1652,15 +1661,15 @@ void debug()
         }
         break;
         case DEBUG_KILL_AREA: {
-            const std::optional<tripoint_range<tripoint>> points_opt = select_area();
+            const std::optional<tripoint_range<tripoint_bub_ms>> points_opt = select_area();
             if( !points_opt.has_value() ) {
                 break;
             }
 
-            const tripoint_range<tripoint> points = points_opt.value();
+            const tripoint_range<tripoint_bub_ms> points = points_opt.value();
             std::vector<Creature *> creatures = g->get_creatures_if(
             [&points]( const Creature & critter ) -> bool {
-                return !critter.is_avatar() && points.is_point_inside( critter.pos() );
+                return !critter.is_avatar() && points.is_point_inside( critter.bub_pos() );
             } );
 
             for( Creature *critter : creatures ) {
@@ -1682,7 +1691,7 @@ void debug()
             break;
 
         case DEBUG_SPAWN_VEHICLE:
-            if( m.veh_at( u.pos() ) ) {
+            if( m.veh_at( u.bub_pos() ) ) {
                 add_msg( m_bad, "There's already vehicle here." );
             } else {
                 // Vector of name, id so that we can sort by name
@@ -1707,7 +1716,7 @@ void debug()
                 if( veh_menu.ret >= 0 && veh_menu.ret < static_cast<int>( veh_strings.size() ) ) {
                     // Didn't cancel
                     const vproto_id &selected_opt = veh_strings[veh_menu.ret].second;
-                    tripoint dest = u.pos();
+                    auto dest = u.bub_pos();
                     uilist veh_cond_menu;
                     veh_cond_menu.text = _( "Vehicle condition" );
                     veh_cond_menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Light damage" ) );
@@ -1735,7 +1744,7 @@ void debug()
             break;
 
         case DEBUG_SPAWN_ARTIFACT:
-            if( const std::optional<tripoint> center = g->look_around( true ) ) {
+            if( const std::optional<tripoint_bub_ms> center = g->look_around( LA_MODE_3D ) ) {
                 artifact_natural_property prop = static_cast<artifact_natural_property>( rng( ARTPROP_NULL + 1,
                                                  ARTPROP_MAX - 1 ) );
                 m.create_anomaly( *center, prop );
@@ -1818,7 +1827,7 @@ void debug()
         break;
 
         case DEBUG_GEN_SOUND: {
-            const std::optional<tripoint> where = g->look_around( true );
+            const std::optional<tripoint_bub_ms> where = g->look_around( LA_MODE_3D );
             if( !where ) {
                 return;
             }
@@ -1908,14 +1917,14 @@ void debug()
             const auto &sounds_to_draw = sounds::get_monster_sounds();
 
             shared_ptr_fast<game::draw_callback_t> sound_cb = make_shared_fast<game::draw_callback_t>( [&]() {
-                const point offset {
-                    u.view_offset.xy() + point( POSX - u.posx(), POSY - u.posy() )
+                const point_rel_ms offset {
+                    u.view_offset.xy() + point( POSX - u.bub_pos().x(), POSY - u.bub_pos().y() )
                 };
                 for( const auto &sound : sounds_to_draw.first ) {
-                    mvwputch( g->w_terrain, offset + sound.xy(), c_yellow, '?' );
+                    mvwputch( g->w_terrain, ( offset + sound.xy() ).raw(), c_yellow, '?' );
                 }
                 for( const auto &sound : sounds_to_draw.second ) {
-                    mvwputch( g->w_terrain, offset + sound.xy(), c_red, '?' );
+                    mvwputch( g->w_terrain, ( offset + sound.xy() ).raw(), c_red, '?' );
                 }
             } );
             g->add_draw_callback( sound_cb );
@@ -1960,6 +1969,9 @@ void debug()
             break;
         case DEBUG_DISPLAY_TRANSPARENCY:
             g->display_toggle_overlay( ACTION_DISPLAY_TRANSPARENCY );
+            break;
+        case DEBUG_DISPLAY_OUTSIDE:
+            g->display_toggle_overlay( ACTION_DISPLAY_OUTSIDE );
             break;
         case DEBUG_DISPLAY_SUBMAP_GRID:
             g->debug_submap_grid_overlay = !g->debug_submap_grid_overlay;
@@ -2106,6 +2118,17 @@ void debug()
         case DEBUG_CRASH_GAME:
             raise( SIGSEGV );
             break;
+        case DEBUG_SHOW_WORKER_MSG:
+            get_thread_pool().submit_returning( []() {
+                debugmsg( "Test debugmsg from worker thread" );
+            } ).get();
+            drain_worker_thread_debugmsgs();
+            break;
+        case DEBUG_CRASH_WORKER:
+            get_thread_pool().submit( []() {
+                raise( SIGSEGV );
+            } );
+            break;
         case DEBUG_RELOAD_TRANSLATIONS:
             l10n_data::reload_catalogues();
             break;
@@ -2123,8 +2146,8 @@ void debug()
                     tripoint_abs_sm where_sm = project_to<coords::sm>( where_omt );
                     tinymap mx_map;
                     // TODO: fix point types
-                    mx_map.load( where_sm.raw(), false );
-                    MapExtras::apply_function( mx_str[mx_choice], mx_map, where_sm.raw() );
+                    mx_map.load( where_sm, false );
+                    MapExtras::apply_function( mx_str[mx_choice], mx_map, where_sm );
                     g->load_npcs();
                     m.invalidate_map_cache( g->get_levz() );
                 }
@@ -2232,7 +2255,7 @@ void debug()
         }
 
         case DEBUG_VEHICLE_BATTERY_CHARGE: {
-            optional_vpart_position v_part_pos = g->m.veh_at( u.pos() );
+            optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
                 add_msg( m_bad, _( "There's no vehicle there." ) );
                 break;
@@ -2255,13 +2278,13 @@ void debug()
             break;
         }
         case DEBUG_VEHICLE_EXPORT_JSON: {
-            const optional_vpart_position v_part_pos = g->m.veh_at( u.pos() );
+            const optional_vpart_position v_part_pos = g->m.veh_at( u.bub_pos() );
             if( !v_part_pos ) {
                 add_msg( m_bad, _( "There's no vehicle there." ) );
                 break;
             }
             const vehicle &veh = v_part_pos->vehicle();
-            auto ss = std::ofstream( PATH_INFO::config_dir() + veh.name + ".json" );
+            auto ss = std::ofstream( PATH_INFO::config_dir() / ( veh.name + ".json" ) );
             JsonOut json( ss, true );
             json.start_array();
             json_export::vehicle( json, veh );
@@ -2291,7 +2314,8 @@ void debug()
         case DEBUG_DUMP_TILES: {
 #if defined(TILES) && defined(DYNAMIC_ATLAS)
             tilecontext->current_tileset()->texture_atlas()->readback_load();
-            tilecontext->current_tileset()->texture_atlas()->readback_dump( PATH_INFO::config_dir() );
+            tilecontext->current_tileset()->texture_atlas()->readback_dump(
+                cata_files::path_to_generic_utf8( PATH_INFO::config_dir() ) );
             tilecontext->current_tileset()->texture_atlas()->readback_clear();
 #endif
             break;

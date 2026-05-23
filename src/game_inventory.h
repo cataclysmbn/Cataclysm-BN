@@ -6,6 +6,7 @@
 #include <utility>
 #include <optional>
 
+#include "coordinates.h"
 #include "item_handling_util.h"
 
 struct tripoint;
@@ -28,7 +29,7 @@ item *titled_menu( avatar &you, const std::string &title,
                    const std::string &none_message = "" );
 // item selector for items in @you's inventory with a filter
 item *titled_filter_menu( const item_filter &filter, avatar &you,
-                          const std::string &title, const std::string &none_message = "" );
+                          const std::string &title, const std::string &none_message = "", int radius = -1 );
 
 /**
 * @name Customized inventory menus
@@ -42,7 +43,7 @@ item *titled_filter_menu( const item_filter &filter, avatar &you,
 /*@{*/
 
 void common( avatar &you );
-void compare( player &p, const std::optional<tripoint> &offset );
+void compare( player &p, const std::optional<tripoint_rel_ms> &offset );
 void compare( const item &left, const item &right );
 /** Assign (or reassign from existing) letter to item in character's inventory. */
 void reassign_letter( Character &who, item &it, int invlet );

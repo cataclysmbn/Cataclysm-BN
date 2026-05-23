@@ -20,6 +20,7 @@
 #include "field_type.h"
 #include "game.h"
 #include "itype.h"
+#include "line.h"
 #include "map.h"
 #include "martialarts.h"
 #include "material.h"
@@ -272,6 +273,7 @@ void cata::detail::reg_technique( sol::state &lua )
         luna::set( ut,  "block_counter", &ma_technique::block_counter );
         luna::set( ut,  "miss_recovery", &ma_technique::miss_recovery );
         luna::set( ut,  "grab_break", &ma_technique::grab_break );
+        luna::set( ut,  "force_unarmed", &ma_technique::force_unarmed );
 
     }
 }
@@ -463,6 +465,7 @@ void cata::detail::reg_enums( sol::state &lua )
     reg_enum<body_part>( lua );
     reg_enum<character_movemode>( lua );
     reg_enum<damage_type>( lua );
+    reg_enum<direction>( lua );
     reg_enum<game_message_type>( lua );
     reg_enum<mf_attitude>( lua );
     reg_enum<m_flag>( lua );
@@ -490,20 +493,23 @@ static const auto lowercase = []( std::string t )
     return t;
 };
 
-namespace Name
+namespace
 {
-std::string string_search( sol::variadic_args va )
+
+auto string_search( sol::variadic_args va ) -> std::string
 {
-    nameFlags flags = static_cast<nameFlags>( 0 );
+    auto flags = static_cast<nameFlags>( 0 );
     // Only 9 flags exist, so cap
-    for( int i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
+    for( auto i = 0; i < std::min( static_cast<int>( va.size() ), 10 ); i++ ) {
         if( !va[i].is<std::string>() ) { continue; }
-        auto in = lowercase( va.get<std::string>( i ) );
-        flags = flags | usage_flag( in ) | gender_flag( in );
+        const auto in = lowercase( va.get<std::string>( i ) );
+        flags = flags | Name::usage_flag( in ) | Name::gender_flag( in );
     }
-    return get( flags );
+    return Name::get( flags );
 }
-}
+
+} // namespace
+
 void cata::detail::reg_names( sol::state &lua )
 {
     luna::userlib lib = luna::begin_lib( lua, "ch_names" );
@@ -524,7 +530,7 @@ void cata::detail::reg_names( sol::state &lua )
     DOC( "Generates a single name using any combination of search flags." );
     luna::set_fx( lib, "pick", []( sol::variadic_args va ) -> std::string {
         if( va.size() < 1 || !va[0].is<std::string>() ) { return std::string(); };
-        return Name::string_search( va );
+        return string_search( va );
     } );
 
     luna::finalize_lib( lib );
@@ -653,8 +659,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `player` (Player)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
     DOC( "* `mounted` (bool)  " );
@@ -667,8 +673,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `npc` (Npc)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
     DOC( "* `mounted` (bool)  " );
@@ -681,8 +687,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `monster` (Monster)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `force` (bool): If the monster move call was forced  " );
     DOC( "Return false to block the move." );
     DOC_PARAMS( "params" );
@@ -692,8 +698,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "All registered callbacks run; if any returns false, movement is blocked.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `char` (Character)  " );
-    DOC( "* `from` (Tripoint)  " );
-    DOC( "* `to` (Tripoint)  " );
+    DOC( "* `from` (TripointBubMs)  " );
+    DOC( "* `to` (TripointBubMs)  " );
     DOC( "* `movement_mode` (CharacterMoveMode)  " );
     DOC( "* `via_ramp` (bool)  " );
     DOC( "* `mounted` (bool)  " );
@@ -707,6 +713,22 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "* `character` (Character)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_character_reset_stats", []( const sol::table & ) {} );
+
+    DOC( "Called when a skill is confirmed on the character display (`@`) skill tab.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC( "* `skill` (SkillId)  " );
+    DOC( "Set `params.results.handled = true` to prevent the default training toggle.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_display_skill_action", []( const sol::table & ) {} );
+
+    DOC( "Called when drawing skill info on the character display (`@`) skill tab.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `character` (Character)  " );
+    DOC( "* `skill` (SkillId)  " );
+    DOC( "Set `params.results.text` to append text below the regular skill description.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_character_display_skill_info", []( const sol::table & ) {} );
 
     DOC( "Called when character gets the effect which has `EFFECT_LUA_ON_ADDED` flag.  " );
     DOC( "The hook receives a table with keys:  " );
@@ -739,7 +761,7 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Called when shot(s) is fired from a gun.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `shooter` (Character)  " );
-    DOC( "* `target_pos` (Tripoint)  " );
+    DOC( "* `target_pos` (TripointBubMs)  " );
     DOC( "* `shots` (int)  " );
     DOC( "* `gun` (item)  " );
     DOC( "* `ammo` (item): For `RELOAD_AND_SHOOT` guns like a bow. On the others, it returns `nil` value.  " );
@@ -749,8 +771,8 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Called when an item is thrown.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `thrower` (Character)  " );
-    DOC( "* `target_pos` (Tripoint)  " );
-    DOC( "* `throw_from_pos` (Tripoint)  " );
+    DOC( "* `target_pos` (TripointBubMs)  " );
+    DOC( "* `throw_from_pos` (TripointBubMs)  " );
     DOC( "* `thrown` (item)  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_throw", []( const sol::table & ) {} );
@@ -830,10 +852,19 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC( "Called every in-game period" );
     luna::set_fx( lib, "on_every_x", []( const sol::table & ) {} );
 
+    DOC( "Called when an explosion starts.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `pos` (TripointBubMs)  " );
+    DOC( "* `damage` (int)  " );
+    DOC( "* `radius` (int)  " );
+    DOC( "* `fire` (bool)  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_explosion_start", []( const sol::table & ) {} );
+
     DOC( "Called right after mapgen has completed.  " );
     DOC( "The hook receives a table with keys:  " );
     DOC( "* `map` (Map): The tinymap that represents 24x24 area (2x2 submaps, or 1x1 omt).  " );
-    DOC( "* `omt` (Tripoint): The absolute overmap pos.  " );
+    DOC( "* `omt` (TripointAbsOmt): The absolute overmap terrain position.  " );
     DOC( "* `when` (TimePoint): The current time (for time-based effects).  " );
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_mapgen_postprocess", []( const sol::table & ) {} );
@@ -864,8 +895,8 @@ void cata::detail::reg_time_types( sol::state &lua )
         luna::set_fx( ut, "is_day", &is_day );
         luna::set_fx( ut, "is_dusk", &is_dusk );
         luna::set_fx( ut, "is_dawn", &is_dawn );
-        luna::set_fx( ut, "sunrise", &sunrise );
-        luna::set_fx( ut, "sunset", &sunset );
+        luna::set_fx( ut, "sunrise", []( const time_point & tp ) { return sunrise( tp ); } );
+        luna::set_fx( ut, "sunset", []( const time_point & tp ) { return sunset( tp ); } );
         luna::set_fx( ut, "moon_phase", &get_moon_phase );
         luna::set_fx( ut, "season", []( const time_point & tp ) { return calendar::name_season( season_of_year( tp ) ); } );
 

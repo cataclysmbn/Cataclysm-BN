@@ -135,6 +135,11 @@ experience you need to get to a level is below:
 
 - `RANDOM_TARGET` - picks a random valid target within your range instead of normal behavior.
 
+- `MUTATE_THRESH` - mutate spell_effect will check for if it can grant the victim that the associated
+  threshold, does nothing if `MUTATE_TRAIT` is also present and requires a category to be specified. If
+  accuracy is defined, this will determine how many tiers of that category's thresholds it will try to
+  cross, with a default of tier 1.
+
 - `MUTATE_TRAIT` - overrides the mutate spell_effect to use a specific trait_id instead of a
   category
 

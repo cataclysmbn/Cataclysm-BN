@@ -385,7 +385,9 @@
         "chance": 20,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 8,
+          "mx_survivor": 3,
           "mx_science": 20,
           "mx_collegekids": 25,
           "mx_drugdeal": 8,
@@ -396,7 +398,7 @@
           "mx_grass": 20,
           "mx_fallen_shed": 30,
           "mx_spider": 200,
-          "mx_nest_wasp": 100,
+          "mx_nest_wasp": 50,
           "mx_grove": 500,
           "mx_shrubbery": 500,
           "mx_clearcut": 125,
@@ -413,7 +415,9 @@
         "chance": 20,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 8,
+          "mx_survivor": 3,
           "mx_science": 20,
           "mx_collegekids": 25,
           "mx_drugdeal": 20,
@@ -424,8 +428,9 @@
           "mx_grass": 10,
           "mx_fallen_shed": 20,
           "mx_spider": 200,
-          "mx_nest_wasp": 100,
+          "mx_nest_wasp": 50,
           "mx_jabberwock": 1,
+          "mx_elfa": 2,
           "mx_grove": 500,
           "mx_shrubbery": 500,
           "mx_clearcut": 125,
@@ -442,7 +447,9 @@
         "chance": 20,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 8,
+          "mx_survivor": 3,
           "mx_science": 20,
           "mx_collegekids": 25,
           "mx_drugdeal": 20,
@@ -470,7 +477,9 @@
         "chance": 6,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 2,
+          "mx_survivor": 1,
           "mx_science": 1,
           "mx_collegekids": 3,
           "mx_drugdeal": 3,
@@ -486,16 +495,19 @@
           "mx_point_burned_ground": 50,
           "mx_casings": 20,
           "mx_corpses": 3,
-          "mx_nest_wasp": 5,
+          "mx_nest_wasp": 2,
           "mx_mass_grave": 5,
-          "mx_grave": 5
+          "mx_grave": 5,
+          "mx_surrounded_vehicle": 1
         }
       },
       "road": {
         "chance": 75,
         "extras": {
           "mx_helicopter": 1,
+          "mx_aircraft": 1,
           "mx_military": 25,
+          "mx_survivor": 8,
           "mx_science": 40,
           "mx_collegekids": 50,
           "mx_roadblock": 100,
@@ -509,7 +521,8 @@
           "mx_mayhem": 50,
           "mx_casings": 100,
           "mx_corpses": 30,
-          "mx_prison_bus": 15
+          "mx_prison_bus": 15,
+          "mx_surrounded_vehicle": 30
         }
       },
       "bridgehead_ground": { "chance": 5, "extras": { "mx_minefield": 100 } },
@@ -517,7 +530,7 @@
         "chance": 90,
         "extras": {
           "mx_house_spider": 40,
-          "mx_house_wasp": 60,
+          "mx_house_wasp": 30,
           "mx_military": 5,
           "mx_science": 12,
           "mx_collegekids": 15,
@@ -534,13 +547,22 @@
       "marloss": { "chance": 20, "extras": { "mx_marloss_pilgrimage": 100 } },
       "subway": {
         "chance": 75,
-        "extras": { "mx_military": 5, "mx_science": 12, "mx_collegekids": 15, "mx_portal": 7, "mx_portal_in": 3, "mx_casings": 30 }
+        "extras": {
+          "mx_military": 5,
+          "mx_science": 12,
+          "mx_collegekids": 15,
+          "mx_portal": 7,
+          "mx_portal_in": 3,
+          "mx_casings": 30,
+          "mx_crawler": 2
+        }
       },
       "research_facility_lot": {
         "chance": 3,
         "extras": {
           "mx_helicopter": 15,
           "mx_military": 65,
+          "mx_survivor": 10,
           "mx_collegekids": 1,
           "mx_portal": 200,
           "mx_crater": 180,
@@ -554,6 +576,7 @@
         "extras": {
           "mx_jabberwock": 1,
           "mx_military": 5,
+          "mx_survivor": 1,
           "mx_portal": 100,
           "mx_crater": 300,
           "mx_portal_in": 40,

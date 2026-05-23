@@ -1,19 +1,18 @@
 #include "batch_turns.h"
 
 #include <algorithm>
-#include <climits>
-#include <cstdint>
+#include <bitset>
+#include <cstddef>
 #include <ranges>
 
 #include "profile.h"
 
 #include "calendar.h"
-#include "distribution_grid.h"
+#include "game_constants.h"
 #include "field.h"
 #include "field_type.h"
 #include "item.h"
 #include "submap.h"
-#include "units.h"
 #include "vehicle.h"
 
 /**
@@ -50,60 +49,74 @@ void batch_turns_field( submap &sm, int n )
     if( n <= 0 || sm.field_count == 0 ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_FIELDS );
 
-    for( int x = 0; x < SEEX; ++x ) {
-        for( int y = 0; y < SEEY; ++y ) {
-            field &curfield = sm.get_field( { x, y } );
-            if( !curfield.displayed_field_type() ) {
+    std::ranges::for_each( sm.field_cache, [&]( const point_sm_ms & local ) {
+        field &curfield = sm.get_field( local );
+        if( !curfield.displayed_field_type() ) {
+            return;
+        }
+        for( auto it = curfield.begin(); it != curfield.end(); ) {
+            field_entry &cur = it->second;
+
+            // Dead entries clean up on next normal tick; leave them alone.
+            if( !cur.is_field_alive() ) {
+                ++it;
                 continue;
             }
-            for( auto it = curfield.begin(); it != curfield.end(); ) {
-                field_entry &cur = it->second;
 
-                // Dead entries clean up on next normal tick; leave them alone.
-                if( !cur.is_field_alive() ) {
-                    ++it;
-                    continue;
-                }
+            const field_type &fdata = cur.get_field_type().obj();
 
-                const field_type &fdata = cur.get_field_type().obj();
+            // Fire fields are never batch-decayed; they require real simulation
+            // to avoid instant-kill and unsimulated structural damage on load.
+            if( fdata.has_fire ) {
+                ++it;
+                continue;
+            }
 
-                // Fire fields are never batch-decayed; they require real simulation
-                // to avoid instant-kill and unsimulated structural damage on load.
-                if( fdata.has_fire ) {
-                    ++it;
-                    continue;
-                }
+            if( fdata.half_life > 0_turns ) {
+                const int hl           = to_turns<int>( fdata.half_life );
+                const int current_age  = to_turns<int>( cur.get_field_age() );
+                const int intensity    = cur.get_field_intensity();
+                int remaining_age      = 0;
+                const int drops        = compute_field_decay( intensity, hl,
+                                         current_age, n, remaining_age );
+                if( drops > 0 ) {
+                    cur.set_field_intensity( intensity - drops );
+                    cur.set_field_age( time_duration::from_turns( remaining_age ) );
 
-                if( fdata.half_life > 0_turns ) {
-                    const int hl           = to_turns<int>( fdata.half_life );
-                    const int current_age  = to_turns<int>( cur.get_field_age() );
-                    const int intensity    = cur.get_field_intensity();
-                    int remaining_age      = 0;
-                    const int drops        = compute_field_decay( intensity, hl,
-                                             current_age, n, remaining_age );
-                    if( drops > 0 ) {
-                        cur.set_field_intensity( intensity - drops );
-                        cur.set_field_age( time_duration::from_turns( remaining_age ) );
-
-                        if( !cur.is_field_alive() ) {
-                            --sm.field_count;
-                            curfield.remove_field( it++ );
-                            continue;
-                        }
-                    } else {
-                        // Just age the field without decaying.
-                        cur.mod_field_age( time_duration::from_turns( n ) );
+                    if( !cur.is_field_alive() ) {
+                        --sm.field_count;
+                        curfield.remove_field( it++ );
+                        continue;
                     }
                 } else {
-                    // No half-life: simply age the field.
+                    // Just age the field without decaying.
                     cur.mod_field_age( time_duration::from_turns( n ) );
                 }
-                ++it;
+            } else {
+                // No half-life: simply age the field.
+                cur.mod_field_age( time_duration::from_turns( n ) );
             }
+            ++it;
         }
-    }
+    } );
+
+    // Compact + deduplicate — mirrors the same fix in process_fields_in_submap.
+    std::bitset<SEEX *SEEY> seen;
+    sm.field_cache.erase(
+    std::ranges::remove_if( sm.field_cache, [&]( const point_sm_ms & local ) {
+        if( !sm.get_field( local ).displayed_field_type() ) {
+            return true;
+        }
+        const auto idx = static_cast<std::size_t>( local.x() + local.y() * SEEX );
+        if( seen.test( idx ) ) {
+            return true;
+        }
+        seen.set( idx );
+        return false;
+    } ).begin(),
+    sm.field_cache.end()
+    );
 }
 
 void batch_turns_items( submap &sm, int n )
@@ -112,7 +125,6 @@ void batch_turns_items( submap &sm, int n )
     if( n <= 0 || sm.active_items.empty() ) {
         return;
     }
-    n = std::min( n, MAX_CATCHUP_ITEMS );
 
     std::ranges::for_each(
     sm.active_items.get() | std::views::filter( []( const item * it ) {
@@ -122,53 +134,6 @@ void batch_turns_items( submap &sm, int n )
         it->advance_timer( n );
     }
     );
-}
-
-void batch_turns_vehicle( vehicle &veh, int n )
-{
-    ZoneScoped;
-    if( n <= 0 ) {
-        return;
-    }
-    n = std::min( n, MAX_CATCHUP_VEHICLE );
-
-    // net_battery_charge_rate_w() returns watts (positive = charging, negative = discharging).
-    // Each game turn is 1 second, so watts == watt-turns per turn.
-    const int net_per_turn = veh.net_battery_charge_rate_w();
-    if( net_per_turn == 0 ) {
-        return;
-    }
-
-    const int64_t total = static_cast<int64_t>( net_per_turn ) * n;
-    // Clamp to int range for the charge/discharge API.
-    constexpr int64_t INT_MAX_64 = static_cast<int64_t>( INT_MAX );
-    if( total > 0 ) {
-        const int charge = static_cast<int>( std::min( total, INT_MAX_64 ) );
-        veh.charge_battery( charge, /*include_other_vehicles=*/false );
-    } else {
-        const int discharge = static_cast<int>( std::min( -total, INT_MAX_64 ) );
-        veh.discharge_battery( discharge, /*recurse=*/false );
-    }
-}
-
-void batch_turns_distribution_grid( distribution_grid &grid, int n )
-{
-    ZoneScoped;
-    if( n <= 0 ) {
-        return;
-    }
-    n = std::min( n, MAX_CATCHUP_GRID );
-
-    const auto stat = grid.get_power_stat();
-    // Positive means net generation (charge batteries), negative means net drain.
-    const int64_t net_per_turn = static_cast<int64_t>( stat.gen_w ) -
-                                 static_cast<int64_t>( stat.use_w );
-    if( net_per_turn == 0 ) {
-        return;
-    }
-
-    const int64_t delta = net_per_turn * static_cast<int64_t>( n );
-    grid.apply_net_power( delta );
 }
 
 void run_submap_batch_turns( submap &sm, int n )
@@ -182,7 +147,7 @@ void run_submap_batch_turns( submap &sm, int n )
     batch_turns_items( sm, n );
     for( const auto &veh_ptr : sm.vehicles ) {
         if( veh_ptr ) {
-            batch_turns_vehicle( *veh_ptr, n );
+            veh_ptr->update_time( calendar::turn );
         }
     }
 }

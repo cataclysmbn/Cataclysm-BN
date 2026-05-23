@@ -6,6 +6,7 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "character_id.h"
+#include "coordinates.h"
 #include "faction.h"
 #include "game.h"
 #include "map.h"
@@ -15,7 +16,6 @@
 #include "options.h"
 #include "options_helpers.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"
@@ -29,7 +29,7 @@ static const itype_id fuel_type_muscle( "muscle" );
 static npc &create_test_npc()
 {
     const string_id<npc_template> test_guy( "test_talker" );
-    const tripoint npc_pos( 15, 15, 0 );
+    const tripoint_bub_ms npc_pos( 15, 15, 0 );
     const character_id model_id = get_map().place_npc( npc_pos.xy(), test_guy );
     g->load_npcs();
 
@@ -60,7 +60,7 @@ TEST_CASE( "multiple_manual_engines_allowed", "[vehicle][muscle][engine]" )
     map &here = get_map();
 
     GIVEN( "a tandem bicycle with two foot_pedals" ) {
-        const tripoint bike_origin( 10, 10, 0 );
+        const tripoint_bub_ms bike_origin( 10, 10, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "tandem" ), bike_origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
 
@@ -100,7 +100,7 @@ TEST_CASE( "npc_muscle_engine_fuel_availability", "[vehicle][muscle][npc]" )
     map &here = get_map();
 
     GIVEN( "a tandem bicycle with an NPC assigned to rear seat" ) {
-        const tripoint bike_origin( 10, 10, 0 );
+        const tripoint_bub_ms bike_origin( 10, 10, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "tandem" ), bike_origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
 
@@ -109,7 +109,7 @@ TEST_CASE( "npc_muscle_engine_fuel_availability", "[vehicle][muscle][npc]" )
         // Find the rear seat with foot pedals at position x=-1
         int rear_seat_part = -1;
         for( const vpart_reference &vpr : veh_ptr->get_all_parts() ) {
-            if( vpr.part().is_seat() && vpr.mount().x == -1 ) { // Rear seat position
+            if( vpr.part().is_seat() && vpr.mount().x() == -1 ) { // Rear seat position
                 rear_seat_part = vpr.part_index();
                 break;
             }
@@ -128,7 +128,7 @@ TEST_CASE( "npc_muscle_engine_fuel_availability", "[vehicle][muscle][npc]" )
             }
 
             // Position NPC at rear seat and board them
-            const tripoint rear_seat_pos = veh_ptr->global_part_pos3( rear_seat_part );
+            const tripoint_bub_ms rear_seat_pos = veh_ptr->bub_part_location( rear_seat_part );
             test_npc.setpos( rear_seat_pos );
             here.board_vehicle( rear_seat_pos, &test_npc );
             REQUIRE( test_npc.in_vehicle );
@@ -142,9 +142,9 @@ TEST_CASE( "npc_muscle_engine_fuel_availability", "[vehicle][muscle][npc]" )
                     // Get the part at this engine index
                     const vehicle_part &engine_part = veh_ptr->part( veh_ptr->engines[e] );
                     const vpart_info &engine_info = veh_ptr->part_info( veh_ptr->engines[e] );
-                    CAPTURE( e, engine_info.get_id().str(), engine_part.mount.x, engine_part.mount.y );
+                    CAPTURE( e, engine_info.get_id().str(), engine_part.mount.x(), engine_part.mount.y() );
 
-                    if( engine_part.mount.x == -1 ) { // Rear position
+                    if( engine_part.mount.x() == -1 ) { // Rear position
                         rear_engine_idx = static_cast<int>( e );
                         break;
                     }
@@ -164,7 +164,7 @@ TEST_CASE( "npc_muscle_engine_fuel_availability", "[vehicle][muscle][npc]" )
                 AND_THEN( "NPC should be providing power" ) {
                     // Check that the NPC is boarded at the same position as the engine
                     const vehicle_part &engine_part = veh_ptr->part( veh_ptr->engines[rear_engine_idx] );
-                    const point engine_mount = engine_part.mount;
+                    const auto engine_mount = engine_part.mount;
 
                     const player *passenger = nullptr;
                     for( const vpart_reference &vpr : veh_ptr->get_all_parts() ) {
@@ -190,7 +190,7 @@ TEST_CASE( "player_and_npc_muscle_power_combined", "[vehicle][muscle][npc][playe
         map &here = get_map();
         avatar &player = get_avatar();
 
-        const tripoint bike_origin( 60, 60, 0 );  // Use same coordinates as working test
+        const tripoint_bub_ms bike_origin( 60, 60, 0 );  // Use same coordinates as working test
 
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "tandem" ), bike_origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
@@ -211,9 +211,9 @@ TEST_CASE( "player_and_npc_muscle_power_combined", "[vehicle][muscle][npc][playe
         int rear_seat_part = -1;
         for( const vpart_reference &vpr : veh_ptr->get_all_parts() ) {
             if( vpr.part().is_seat() ) {
-                if( vpr.mount().x == 0 ) { // Front seat
+                if( vpr.mount().x() == 0 ) { // Front seat
                     front_seat_part = vpr.part_index();
-                } else if( vpr.mount().x == -1 ) { // Rear seat
+                } else if( vpr.mount().x() == -1 ) { // Rear seat
                     rear_seat_part = vpr.part_index();
                 }
             }
@@ -226,7 +226,7 @@ TEST_CASE( "player_and_npc_muscle_power_combined", "[vehicle][muscle][npc][playe
         REQUIRE( player.in_vehicle );
 
         // Position NPC at rear seat and board them
-        const tripoint rear_seat_pos = veh_ptr->global_part_pos3( rear_seat_part );
+        const tripoint_bub_ms rear_seat_pos = veh_ptr->bub_part_location( rear_seat_part );
         test_npc.setpos( rear_seat_pos );
         here.board_vehicle( rear_seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
@@ -257,7 +257,7 @@ TEST_CASE( "npc_muscle_engine_energy_consumption", "[vehicle][muscle][npc][energ
     override_option opt( "NO_NPC_FOOD", "false" );
 
     GIVEN( "an NPC powering a muscle engine under load" ) {
-        const tripoint bike_origin( 10, 10, 0 );
+        const tripoint_bub_ms bike_origin( 10, 10, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), bike_origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
 
@@ -275,14 +275,14 @@ TEST_CASE( "npc_muscle_engine_energy_consumption", "[vehicle][muscle][npc][energ
         // Board NPC to the seat with foot pedals
         int seat_part = -1;
         for( const vpart_reference &vpr : veh_ptr->get_all_parts() ) {
-            if( vpr.part().is_seat() && vpr.mount().x == 0 ) {
+            if( vpr.part().is_seat() && vpr.mount().x() == 0 ) {
                 seat_part = vpr.part_index();
                 break;
             }
         }
         REQUIRE( seat_part >= 0 );
 
-        const tripoint seat_pos = veh_ptr->global_part_pos3( seat_part );
+        const tripoint_bub_ms seat_pos = veh_ptr->bub_part_location( seat_part );
         test_npc.setpos( seat_pos );
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
@@ -309,7 +309,7 @@ TEST_CASE( "npc_muscle_engine_with_disabled_needs", "[vehicle][muscle][npc][ener
     override_option opt( "NO_NPC_FOOD", "true" );
 
     GIVEN( "an NPC powering a muscle engine with needs disabled" ) {
-        const tripoint bike_origin( 10, 10, 0 );
+        const tripoint_bub_ms bike_origin( 10, 10, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), bike_origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
 
@@ -327,14 +327,14 @@ TEST_CASE( "npc_muscle_engine_with_disabled_needs", "[vehicle][muscle][npc][ener
         // Board NPC to seat
         int seat_part = -1;
         for( const vpart_reference &vpr : veh_ptr->get_all_parts() ) {
-            if( vpr.part().is_seat() && vpr.mount().x == 0 ) {
+            if( vpr.part().is_seat() && vpr.mount().x() == 0 ) {
                 seat_part = vpr.part_index();
                 break;
             }
         }
         REQUIRE( seat_part >= 0 );
 
-        const tripoint seat_pos = veh_ptr->global_part_pos3( seat_part );
+        const tripoint_bub_ms seat_pos = veh_ptr->bub_part_location( seat_part );
         test_npc.setpos( seat_pos );
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );
@@ -356,7 +356,7 @@ TEST_CASE( "npc_muscle_engine_broken_limbs", "[.][vehicle][muscle][npc][injury]"
     map &here = get_map();
 
     GIVEN( "an NPC with broken legs assigned to foot pedals" ) {
-        const tripoint bike_origin( 10, 10, 0 );
+        const tripoint_bub_ms bike_origin( 10, 10, 0 );
         vehicle *veh_ptr = here.add_vehicle( vproto_id( "bicycle" ), bike_origin, 0_degrees, 0, 0 );
         REQUIRE( veh_ptr != nullptr );
 
@@ -385,14 +385,14 @@ TEST_CASE( "npc_muscle_engine_broken_limbs", "[.][vehicle][muscle][npc][injury]"
         // Board NPC to seat
         int seat_part = -1;
         for( const vpart_reference &vpr : veh_ptr->get_all_parts() ) {
-            if( vpr.part().is_seat() && vpr.mount().x == 0 ) {
+            if( vpr.part().is_seat() && vpr.mount().x() == 0 ) {
                 seat_part = vpr.part_index();
                 break;
             }
         }
         REQUIRE( seat_part >= 0 );
 
-        const tripoint seat_pos = veh_ptr->global_part_pos3( seat_part );
+        const tripoint_bub_ms seat_pos = veh_ptr->bub_part_location( seat_part );
         test_npc.setpos( seat_pos );
         here.board_vehicle( seat_pos, &test_npc );
         REQUIRE( test_npc.in_vehicle );

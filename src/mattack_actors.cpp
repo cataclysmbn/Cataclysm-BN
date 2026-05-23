@@ -17,6 +17,8 @@
 #include "generic_factory.h"
 #include "gun_mode.h"
 #include "int_id.h"
+#include "itype.h"
+#include "iuse_actor.h"
 #include "item.h"
 #include "json.h"
 #include "line.h"
@@ -42,6 +44,7 @@ static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_laserlocked( "laserlocked" );
+static const efftype_id effect_monster_disarmed( "monster_disarmed" );
 static const efftype_id effect_poison( "poison" );
 static const efftype_id effect_targeted( "targeted" );
 static const efftype_id effect_was_laserlocked( "was_laserlocked" );
@@ -52,15 +55,15 @@ static const trait_id trait_NORANGEDCRIT( "NO_RANGED_CRIT" );
 // Simplified version of the function in monattack.cpp
 static bool is_adjacent( const monster &z, const Creature &target )
 {
-    if( rl_dist( z.pos(), target.pos() ) != 1 ) {
+    if( rl_dist( z.bub_pos(), target.bub_pos() ) != 1 ) {
         return false;
     }
 
-    if( !z.can_squeeze_to( target.pos() ) ) {
+    if( !z.can_squeeze_to( target.bub_pos() ) ) {
         return false;
     }
 
-    return z.posz() == target.posz();
+    return z.bub_pos().z() == target.bub_pos().z();
 }
 
 void leap_actor::load_internal( const JsonObject &obj, const std::string & )
@@ -86,9 +89,9 @@ bool leap_actor::call( monster &z ) const
         return false;
     }
 
-    std::vector<tripoint> options;
-    tripoint target = z.move_target();
-    float best_float = trigdist ? trig_dist( z.pos(), target ) : square_dist( z.pos(), target );
+    std::vector<tripoint_bub_ms> options;
+    auto target = z.move_target();
+    float best_float = trigdist ? trig_dist( z.bub_pos(), target ) : square_dist( z.bub_pos(), target );
     if( best_float < min_consider_range || best_float > max_consider_range ) {
         return false;
     }
@@ -100,13 +103,13 @@ bool leap_actor::call( monster &z ) const
         return false;
     }
     map &here = get_map();
-    std::multimap<int, tripoint> candidates;
-    for( const tripoint &candidate : here.points_in_radius( z.pos(), max_range ) ) {
-        if( candidate == z.pos() ) {
+    std::multimap<int, tripoint_bub_ms> candidates;
+    for( const auto &candidate : here.points_in_radius( z.bub_pos(), max_range ) ) {
+        if( candidate == z.bub_pos() ) {
             continue;
         }
-        float leap_dist = trigdist ? trig_dist( z.pos(), candidate ) :
-                          square_dist( z.pos(), candidate );
+        float leap_dist = trigdist ? trig_dist( z.bub_pos(), candidate ) :
+                          square_dist( z.bub_pos(), candidate );
         if( leap_dist > max_range || leap_dist < min_range ) {
             continue;
         }
@@ -118,7 +121,7 @@ bool leap_actor::call( monster &z ) const
     }
     for( const auto &candidate : candidates ) {
         const int &cur_dist = candidate.first;
-        const tripoint &dest = candidate.second;
+        const tripoint_bub_ms &dest = candidate.second;
         if( cur_dist > best ) {
             break;
         }
@@ -130,8 +133,8 @@ bool leap_actor::call( monster &z ) const
         }
         bool blocked_path = false;
         // check if monster has a clear path to the proposed point
-        std::vector<tripoint> line = here.find_clear_path( z.pos(), dest );
-        tripoint prev_point = z.pos();
+        std::vector<tripoint_bub_ms> line = here.find_clear_path( z.bub_pos(), dest );
+        auto prev_point = z.bub_pos();
         for( auto &i : line ) {
             if( here.impassable( i ) || here.obstructed_by_vehicle_rotation( prev_point, i ) ) {
                 blocked_path = true;
@@ -156,7 +159,7 @@ bool leap_actor::call( monster &z ) const
     }
 
     z.moves -= move_cost;
-    const tripoint chosen = random_entry( options );
+    const auto chosen = random_entry( options );
     bool seen = g->u.sees( z ); // We can see them jump...
     z.setpos( chosen );
     seen |= g->u.sees( z ); // ... or we can see them land
@@ -203,7 +206,7 @@ bool mon_spellcasting_actor::call( monster &mon ) const
         return false;
     }
 
-    const tripoint target = self ? mon.pos() : mon.attack_target()->pos();
+    const auto target = self ? mon.bub_pos() : mon.attack_target()->bub_pos();
 
     std::string fx = spell_data.effect();
     // is the spell an attack that needs to hit the target?
@@ -211,7 +214,7 @@ bool mon_spellcasting_actor::call( monster &mon ) const
     const bool targeted_attack = fx == "target_attack" || fx == "projectile_attack" ||
                                  fx == "cone_attack" || fx == "line_attack";
 
-    if( targeted_attack && rl_dist( mon.pos(), target ) > spell_data.range() ) {
+    if( targeted_attack && rl_dist( mon.bub_pos(), target ) > spell_data.range() ) {
         return false;
     }
 
@@ -225,6 +228,98 @@ bool mon_spellcasting_actor::call( monster &mon ) const
     }
 
     spell_data.cast_all_effects( mon, target );
+
+    return true;
+}
+
+std::unique_ptr<mattack_actor> deployer_actor::clone() const
+{
+    return std::make_unique<deployer_actor>( *this );
+}
+
+void deployer_actor::load_internal( const JsonObject &obj, const std::string & )
+{
+    for( const JsonMember member : obj.get_object( "deployables" ) ) {
+        const JsonObject jo = member.get_object();
+        grenades[itype_id( member.name() )] = {
+            _( jo.get_string( "message" ) ),
+            jo.get_int( "chance" ),
+            jo.get_float( "ammo_percentage" ),
+            jo.get_int( "range" )
+        };
+    }
+}
+
+bool deployer_actor::call( monster &mon ) const
+{
+    if( !mon.can_act() ) {
+        return false;
+    }
+    bool has_attack_target = mon.attack_target();
+    has_attack_target = has_attack_target || ( !mon.friendly && mon.sees( g->u ) );
+    if( !has_attack_target ) {
+        // this is an attack. there is no reason to attack if there isn't a real target.
+        return false;
+    }
+
+    int total_ammo = 0;
+    for( const auto &ammo_entry : mon.type->starting_ammo ) {
+        total_ammo += ammo_entry.second;
+    }
+    if( total_ammo == 0 ) {
+        // Should never happen, but protect us from a div/0 if it does.
+        return false;
+    }
+
+    // Find how much ammo we currently have to get the total ratio
+    int curr_ammo = 0;
+    for( const auto &amm : mon.ammo ) {
+        curr_ammo += amm.second;
+    }
+    float rat = curr_ammo / static_cast<float>( total_ammo );
+
+    weighted_float_list<itype_id> possible_attacks;
+    for( const auto &amm : mon.ammo ) {
+        if( amm.second > 0 && grenades.at( amm.first ).ammo_percentage >= rat ) {
+            possible_attacks.add( amm.first, 1.0 / grenades.at( amm.first ).chance );
+        }
+    }
+    if( possible_attacks.empty() ) {
+        return false;
+    }
+
+    itype_id att = *possible_attacks.pick();
+
+    std::vector<tripoint_bub_ms> empty_points_in_rad;
+
+    auto points_in_rad = g->m.points_in_radius( mon.bub_pos(), grenades.at( att ).range );
+    for( tripoint_bub_ms p : points_in_rad ) {
+        if( g->is_empty( p ) ) {
+            empty_points_in_rad.push_back( p );
+        }
+    }
+
+    // Get our monster type
+    const use_function *usage = att->get_use( "place_monster" );
+    if( usage == nullptr ) {
+        // Invalid bomb item usage, Toggle this special off so we stop processing
+        add_msg( m_debug, "Invalid bomb item usage in deployer special for %s.", mon.name() );
+        return false;
+    }
+    auto *actor = dynamic_cast<const place_monster_iuse *>( usage->get_actor_ptr() );
+    if( actor == nullptr ) {
+        // Invalid bomb item, Toggle this special off so we stop processing
+        add_msg( m_debug, "Invalid bomb type in deployer special for %s.", mon.name() );
+        return false;
+    }
+
+    const auto where = empty_points_in_rad[ rng( 0, empty_points_in_rad.size() - 1 ) ];
+
+    if( monster *const hack = g->place_critter_at( actor->mtypeid, where ) ) {
+        mon.ammo[att]--;
+        hack->make_ally( mon );
+        add_msg( m_bad, grenades.at( att ).message );
+    }
 
     return true;
 }
@@ -312,8 +407,8 @@ bool melee_actor::call( monster &z ) const
 
     if( hitspread < 0 ) {
         auto msg_type = target->is_avatar() ? m_warning : m_info;
-        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.pos() ),
-                                 sfx::get_heard_angle( z.pos() ) );
+        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos() ),
+                                 sfx::get_heard_angle( z.bub_pos() ) );
         target->add_msg_player_or_npc( msg_type, miss_msg_u, miss_msg_npc, z.name() );
         return true;
     }
@@ -337,8 +432,8 @@ bool melee_actor::call( monster &z ) const
     if( damage_total > 0 ) {
         on_damage( z, *target, dealt_damage );
     } else {
-        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.pos() ),
-                                 sfx::get_heard_angle( z.pos() ) );
+        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos() ),
+                                 sfx::get_heard_angle( z.bub_pos() ) );
         target->add_msg_player_or_npc( m_neutral, no_dmg_msg_u, no_dmg_msg_npc, z.name(),
                                        body_part_name_accusative( bp_hit ) );
     }
@@ -351,8 +446,8 @@ bool melee_actor::call( monster &z ) const
 void melee_actor::on_damage( monster &z, Creature &target, dealt_damage_instance &dealt ) const
 {
     if( target.is_player() ) {
-        sfx::play_variant_sound( "mon_bite", "bite_hit", sfx::get_heard_volume( z.pos() ),
-                                 sfx::get_heard_angle( z.pos() ) );
+        sfx::play_variant_sound( "mon_bite", "bite_hit", sfx::get_heard_volume( z.bub_pos() ),
+                                 sfx::get_heard_angle( z.bub_pos() ) );
         sfx::do_player_death_hurt( dynamic_cast<player &>( target ), false );
     }
     auto msg_type = target.attitude_to( g->u ) == Attitude::A_FRIENDLY ? m_bad : m_neutral;
@@ -496,15 +591,15 @@ int gun_actor::get_max_range()  const
 namespace
 {
 
-auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
+auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint_bub_ms>
 {
     const auto is_different_plane = []( const wrapped_vehicle & v, const monster & m ) -> bool {
-        return !fov_3d && v.pos.z != m.pos().z;
+        return !fov_3d && v.pos.z() != m.bub_pos().z();
     };
 
     map &here = get_map();
     bool found = false;
-    tripoint aim_at;
+    tripoint_bub_ms aim_at;
     for( wrapped_vehicle &v : here.get_vehicles() ) {
         if( is_different_plane( v, z ) || v.v->velocity == 0 ) {
             continue;
@@ -517,7 +612,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
                 continue;
             }
 
-            int new_dist = rl_dist( z.pos(), vp.pos() );
+            int new_dist = rl_dist( z.bub_pos(), vp.pos() );
             if( new_dist <= range ) {
                 aim_at = vp.pos();
                 range = new_dist;
@@ -528,15 +623,15 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
 
         if( !found_controls ) {
-            std::vector<tripoint> line = here.find_clear_path( z.pos(), v.v->global_pos3() );
-            tripoint prev_point = z.pos();
-            for( tripoint &i : line ) {
+            std::vector<tripoint_bub_ms> line = here.find_clear_path( z.bub_pos(), v.v->bub_ms_location() );
+            auto prev_point = z.bub_pos();
+            for( tripoint_bub_ms &i : line ) {
                 if( !z.sees( i ) ||  here.floor_between( prev_point, i ) ) {
                     break;
                 }
                 optional_vpart_position vp = here.veh_at( i );
                 if( vp && &vp->vehicle() == v.v ) {
-                    int new_dist = rl_dist( z.pos(), i );
+                    int new_dist = rl_dist( z.bub_pos(), i );
                     if( new_dist <= range ) {
                         aim_at = i;
                         range = new_dist;
@@ -554,7 +649,7 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
     if( found ) {
         return std::make_optional( aim_at );
     } else {
-        return std::optional<tripoint>();
+        return std::optional<tripoint_bub_ms>();
     }
 }
 
@@ -562,12 +657,15 @@ auto find_target_vehicle( monster &z, int range ) -> std::optional<tripoint>
 
 bool gun_actor::call( monster &z ) const
 {
+    if( z.type->monster_weapon && z.has_effect( effect_monster_disarmed ) ) {
+        return false;
+    }
     /// common firing logic.
     /// @param target_critter can be nullptr if shooting at a vehicle (untargeted).
-    auto attempt_shoot = [&]( const tripoint & aim_pos, Creature * target_critter ) {
+    auto attempt_shoot = [&]( const tripoint_bub_ms & aim_pos, Creature * target_critter ) {
         if( target_critter && z.attitude_to( *target_critter ) == Attitude::A_FRIENDLY ) { return false; }
 
-        const int dist = rl_dist( z.pos(), aim_pos );
+        const int dist = rl_dist( z.bub_pos(), aim_pos );
         for( const auto &entry : ranges ) {
             if( dist >= entry.first.first && dist <= entry.first.second ) {
                 // If target_critter is null, it's "untargeted" (vehicle), so we skip try_target.
@@ -589,7 +687,7 @@ bool gun_actor::call( monster &z ) const
 
         auto res = creature_functions::auto_find_hostile_target( z, { .range = max_range, .trail = has_trail, .area = 0 } );
         if( res ) {
-            return attempt_shoot( res.value().get().pos(), &res.value().get() );
+            return attempt_shoot( res.value().get().bub_pos(), &res.value().get() );
         }
         if( const int hostiles = res.error(); hostiles > 0 && g->u.sees( z ) ) {
             add_msg( m_warning, vgettext( "Pointed in your direction, the %s emits an IFF warning beep.",
@@ -602,7 +700,7 @@ bool gun_actor::call( monster &z ) const
     Creature *target = z.attack_target();
 
     if( target && ( target->is_monster() || z.aggro_character ) && z.sees( *target ) ) {
-        return attempt_shoot( target->pos(), target );
+        return attempt_shoot( target->bub_pos(), target );
     }
     if( target_moving_vehicles ) {
         if( const auto vehicle_pos = find_target_vehicle( z, get_max_range() ) ) {
@@ -614,7 +712,7 @@ bool gun_actor::call( monster &z ) const
 
 bool gun_actor::try_target( monster &z, Creature &target ) const
 {
-    if( require_sunlight && !g->is_in_sunlight( z.pos() ) ) {
+    if( require_sunlight && !g->is_in_sunlight( z.bub_pos() ) ) {
         if( one_in( 3 ) && g->u.sees( z ) ) {
             add_msg( _( failure_msg ), z.name() );
         }
@@ -630,7 +728,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
 
     if( not_targeted || not_laser_locked ) {
         if( targeting_volume > 0 && !targeting_sound.empty() ) {
-            sounds::sound( z.pos(), targeting_volume, sounds::sound_t::alarm,
+            sounds::sound( z.bub_pos(), targeting_volume, sounds::sound_t::alarm,
                            _( targeting_sound ) );
         }
         if( not_targeted ) {
@@ -658,7 +756,7 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
     return true;
 }
 
-void gun_actor::shoot( monster &z, const tripoint &target, const gun_mode_id &mode,
+void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode_id &mode,
                        int inital_recoil ) const
 {
     z.moves -= move_cost;
@@ -673,12 +771,12 @@ void gun_actor::shoot( monster &z, const tripoint &target, const gun_mode_id &mo
 
     if( !gun->ammo_sufficient() ) {
         if( !no_ammo_sound.empty() ) {
-            sounds::sound( z.pos(), 10, sounds::sound_t::combat, _( no_ammo_sound ) );
+            sounds::sound( z.bub_pos(), 10, sounds::sound_t::combat, _( no_ammo_sound ) );
         }
         return;
     }
 
-    standard_npc tmp( _( "The " ) + z.name(), z.pos(), {}, 8,
+    standard_npc tmp( _( "The " ) + z.name(), z.bub_pos(), {}, 8,
                       fake_str, fake_dex, fake_int, fake_per );
     tmp.set_fake( true );
     if( z.friendly ) {

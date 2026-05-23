@@ -1,0 +1,124 @@
+[
+  {
+    "id": "TALK_RANCH_FOREMAN",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "[MISSION] I've been asked to find information on shipments between laboratories that may have been handling anomalies.  Can you help me with that?",
+        "topic": "TALK_RANCH_FOREMAN_NICHOLAS_1",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "nicholas_mission_2_mid", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_PURIFIER_1_2" }
+          ]
+        }
+      },
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_RANCH_FOREMAN_GM_PRELUDE"
+      },
+      {
+        "text": "[MISSION] I've been asked to help attract work for another community of survivors.  Know anyone who could help?",
+        "topic": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_NICHOLAS_1",
+    "type": "talk_topic",
+    "dynamic_line": "Don't have much contact with people who'd know about that sort of thing.  However, I did hear about a scavenger caravan the refugee center sent that hit some of the old labs.",
+    "responses": [
+      { "text": "What did they find?", "topic": "TALK_RANCH_FOREMAN_NICHOLAS_2" },
+      { "text": "Nevermind then.", "topic": "TALK_RANCH_FOREMAN" }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_NICHOLAS_2",
+    "type": "talk_topic",
+    "dynamic_line": "Something interesting, evidently.  Enough that they had to fight some bandits for it.  They struck camp sometime after that and never made it back onto the road.",
+    "responses": [
+      { "text": "Can you tell me more?", "topic": "TALK_RANCH_FOREMAN_NICHOLAS_3" },
+      { "text": "I'll ask around for other leads.", "topic": "TALK_RANCH_FOREMAN" }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_NICHOLAS_3",
+    "type": "talk_topic",
+    "dynamic_line": "I suppose.  But first I'm interested in something myself.  What you need this for anyway?",
+    "responses": [
+      {
+        "text": "I need more information on what was being shipped between the sites on this list.",
+        "condition": { "u_has_item": "cf_purifier_project_data" },
+        "topic": "TALK_RANCH_FOREMAN_NICHOLAS_4"
+      },
+      {
+        "text": "There's a specific research facility I was asked to try and find.",
+        "topic": "TALK_RANCH_FOREMAN_NICHOLAS_5"
+      },
+      { "text": "Nothing important.", "topic": "TALK_RANCH_FOREMAN_NICHOLAS_REFUSE" }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_NICHOLAS_4",
+    "type": "talk_topic",
+    "dynamic_line": "Well that is fascinating.  You're doing your homework on these locations, you could say.  I'd be interested too, we're always in need of supplies and this might give us another way to get them.  Whatever you're looking for in those shipments, if you're willing to share that info we can coordinate on this to avoid stepping on each other's toes.",
+    "responses": [
+      { "text": "Sure.  Tell me what you know.", "topic": "TALK_RANCH_FOREMAN_NICHOLAS_ACCEPT" },
+      { "text": "Let me think about it.", "topic": "TALK_RANCH_FOREMAN" }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_NICHOLAS_ACCEPT",
+    "type": "talk_topic",
+    "dynamic_line": "I'll mark where they were last heard from.  Goes without saying, be careful out there.  I don't know for sure what sort of paperwork or maps or whatever they found, but they seemed excited enough and it sounded like whatever they had would've been the key to any future lab dives they had planned.  You come back here in one piece with that info and I'll do what I can to compensate you.",
+    "speaker_effect": [ { "effect": { "add_mission": "MISSION_CF_PURIFIER_1_INTERLUDE_2" } } ],
+    "responses": [
+      { "text": "Thanks!  Before I go…", "topic": "TALK_EVAC_MERCHANT" },
+      { "text": "Thanks, I'll be back later!", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_NICHOLAS_REFUSE",
+    "type": "talk_topic",
+    "dynamic_line": "Some old refugee caravan that wasn't even headed our way's nothing important, either.  Probably just got eaten by what passes for wildlife these days.  You change your mind and feel a bit more open to telling me what you're after, then maybe we can make a deal.",
+    "responses": [ { "text": "…", "topic": "TALK_RANCH_FOREMAN" } ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_NICHOLAS_5",
+    "type": "talk_topic",
+    "dynamic_line": "I see.  I'll assume it's dangerous if it involved anomalous stuff as you described it.  I think we can make a deal here.  If you find whatever that caravan was so excited over and it leads you to what you're after, clue us in too if there's any other useful labs it can help scope out.  That way we'll know what to look for and where, so we won't be risking our lives over nothing.",
+    "responses": [
+      { "text": "You have a deal, then.", "topic": "TALK_RANCH_FOREMAN_NICHOLAS_ACCEPT" },
+      { "text": "Maybe later.", "topic": "TALK_RANCH_FOREMAN" }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_FOREMAN_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "I've heard rumors, and I know some people trying to make the journey here have had trouble of that sort.  I'll go ahead and relay to you the most recent bit of information I've overheard regarding that, send it off to whoever you're asking on behalf of.",
+    "responses": [  ]
+  },
+  {
+    "id": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4",
+    "type": "talk_topic",
+    "dynamic_line": "Afraid I can't help you with that, we have enough on our plates as it is.  Once things are a bit more set up, I guess ask around, but I've got a lot of work to deal with myself.",
+    "responses": [ { "text": "…", "topic": "TALK_RANCH_FOREMAN" } ]
+  }
+]

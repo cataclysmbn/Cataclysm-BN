@@ -4,11 +4,13 @@
 #include <cstdlib>
 #include <iterator>
 
-#include "coordinate_conversions.h"
 #include "cuboid_rectangle.h"
+#include "drawing_primitives.h"
 #include "enums.h"
 #include "game_constants.h"
+#include "map_iterator.h"
 #include "point.h"
+#include "point_float.h"
 #include "debug.h"
 
 enum class direction : unsigned;
@@ -18,16 +20,19 @@ namespace coords
 
 enum class scale {
     map_square,
+    vehicle,
     submap,
     overmap_terrain,
     segment,
     overmap,
-    vehicle
+    mem_map_region
 };
 
 constexpr scale ms = scale::map_square;
+constexpr scale veh = scale::vehicle;
 constexpr scale sm = scale::submap;
 constexpr scale omt = scale::overmap_terrain;
+constexpr scale mmr = scale::mem_map_region;
 constexpr scale seg = scale::segment;
 constexpr scale om = scale::overmap;
 
@@ -39,10 +44,14 @@ constexpr int map_squares_per( scale s )
     switch( s ) {
         case scale::map_square:
             return 1;
+        case scale::vehicle: // Explicitly note the 1:1 here, since that may one day change
+            return map_squares_per( scale::map_square );
         case scale::submap:
             return SEEX;
         case scale::overmap_terrain:
             return SEEX * 2;
+        case scale::mem_map_region:
+            return MM_REG_SIZE * map_squares_per( scale::submap );
         case scale::segment:
             return SEG_SIZE * map_squares_per( scale::overmap_terrain );
         case scale::overmap:
@@ -53,22 +62,47 @@ constexpr int map_squares_per( scale s )
 }
 
 enum class origin {
-    relative, // this is a special origin that can be added to any other
+    /**
+    * This is a special origin that can be added to any other.
+    * It is intended to be used as an offset rather than a direct
+    * pointer to a location in some reference frame.
+    **/
+    relative,
     abs, // the global absolute origin for the entire game
+    /**
+    * From corner of reality bubble.
+    * You can think of bubble space as relative to the current bubble, but
+    * this requires a reference to the bubble to convert.
+    **/
+    bubble,
+    /**
+    * local space origin for vehicles, includes rotation
+    * This is similar to bubble space, but accounts for rotation as well.
+    * Also requires a reference to the vehicle to convert.
+    **/
+    vehicle,
     submap, // from corner of submap
     overmap_terrain, // from corner of overmap_terrain
     overmap, // from corner of overmap
+    segment, // from corner of segment
+    mem_map_region, // from corner of memory map region
 };
 
 constexpr origin origin_from_scale( scale s )
 {
     switch( s ) {
+        case scale::vehicle:
+            return origin::vehicle;
         case scale::submap:
             return origin::submap;
         case scale::overmap_terrain:
             return origin::overmap_terrain;
         case scale::overmap:
             return origin::overmap;
+        case scale::segment:
+            return origin::segment;
+        case scale::mem_map_region:
+            return origin::mem_map_region;
         default:
             constexpr_fatal( origin::abs, "Requested origin for scale %d", s );
     }
@@ -92,6 +126,93 @@ class coord_point
 {
     public:
         static constexpr int dimension = Point::dimension;
+        using value_type = Point;
+        static constexpr origin origin_tag = Origin;
+        static constexpr scale scale_tag = Scale;
+
+        static constexpr auto zero() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_zero );
+            } else {
+                return coord_point( tripoint_zero );
+            }
+        }
+        static constexpr auto north() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_north );
+            } else {
+                return coord_point( tripoint_north );
+            }
+        }
+        static constexpr auto north_east() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_north_east );
+            } else {
+                return coord_point( tripoint_north_east );
+            }
+        }
+        static constexpr auto east() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_east );
+            } else {
+                return coord_point( tripoint_east );
+            }
+        }
+        static constexpr auto south_east() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_south_east );
+            } else {
+                return coord_point( tripoint_south_east );
+            }
+        }
+        static constexpr auto south() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_south );
+            } else {
+                return coord_point( tripoint_south );
+            }
+        }
+        static constexpr auto south_west() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_south_west );
+            } else {
+                return coord_point( tripoint_south_west );
+            }
+        }
+        static constexpr auto west() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_west );
+            } else {
+                return coord_point( tripoint_west );
+            }
+        }
+        static constexpr auto north_west() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_north_west );
+            } else {
+                return coord_point( tripoint_north_west );
+            }
+        }
+        static constexpr auto above() requires std::same_as<Point, tripoint> {
+            return coord_point( tripoint_above );
+        }
+        static constexpr auto below() requires std::same_as<Point, tripoint> {
+            return coord_point( tripoint_below );
+        }
+        static constexpr auto min() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_min );
+            } else {
+                return coord_point( tripoint_min );
+            }
+        }
+        static constexpr auto max() {
+            if constexpr( std::same_as<Point, point> ) {
+                return coord_point( point_max );
+            } else {
+                return coord_point( tripoint_max );
+            }
+        }
 
         constexpr coord_point() = default;
         explicit constexpr coord_point( const Point &p ) :
@@ -125,13 +246,16 @@ class coord_point
         constexpr auto y() const {
             return raw_.y;
         }
-        constexpr auto xy() const {
+        constexpr auto xy() const
+        requires std::same_as<Point, tripoint> {
             return coord_point<point, Origin, Scale>( raw_.xy() );
         }
-        constexpr auto &z() {
+        constexpr auto &z()
+        requires std::same_as<Point, tripoint> {
             return raw_.z;
         }
-        constexpr auto z() const {
+        constexpr auto z() const
+        requires std::same_as<Point, tripoint> {
             return raw_.z;
         }
 
@@ -144,6 +268,10 @@ class coord_point
         }
         void deserialize( JsonIn &jsin ) {
             raw().deserialize( jsin );
+        }
+
+        auto operator-() const -> coord_point {
+            return coord_point( -raw_ );
         }
 
         coord_point &operator+=( const coord_point<Point, origin::relative, Scale> &r ) {
@@ -191,6 +319,23 @@ class coord_point
         friend coord_point operator-( const coord_point &l, const tripoint &r ) {
             return coord_point( l.raw() - r );
         }
+
+        // Explicitly reinterpret this coordinate as a different typed coordinate
+        // with the same underlying point type. Mostly used during migration scaffolding
+        // where the origin/scale semantics differ but the raw value must be preserved.
+        // The final pass of the migration might want to grep for this, but not all uses
+        // are guaranteed to be problematic.
+        template<typename Target>
+        requires std::same_as<typename Target::value_type, Point>
+        [[nodiscard]] auto reinterpret_as() const -> Target {
+            return Target( raw_ );
+        }
+
+        auto rotate( int turns, point dim = {1, 1} ) const -> coord_point
+        requires std::same_as<Point, point> {
+            return coord_point( raw_.rotate( turns, dim ) );
+        }
+
     private:
         Point raw_;
 };
@@ -434,6 +579,18 @@ inline auto project_bounds( const coord_point<tripoint, Origin, CoarseScale> &co
             project_to<FineScale>( coarse + one ) - one );
 }
 
+template<typename T>
+concept IsCoordPoint = requires( const T &t )
+{
+    { t.raw() }
+    -> std::convertible_to<typename T::value_type>;
+    typename T::value_type;
+};
+
+template<typename A, typename B>
+concept SameOrigin = IsCoordPoint<A> &&IsCoordPoint<B> &&
+                     ( A::origin_tag == B::origin_tag );
+
 } // namespace coords
 
 namespace std
@@ -462,31 +619,68 @@ struct hash<coords::coord_point<Point, Origin, Scale>> {
  * For more details see doc/POINTS_COORDINATES.md.
  */
 /*@{*/
+using point_bub_sm = coords::coord_point<point, coords::origin::bubble, coords::sm>;
+using point_bub_ms = coords::coord_point<point, coords::origin::bubble, coords::ms>;
 using point_rel_ms = coords::coord_point<point, coords::origin::relative, coords::ms>;
 using point_abs_ms = coords::coord_point<point, coords::origin::abs, coords::ms>;
 using point_sm_ms = coords::coord_point<point, coords::origin::submap, coords::ms>;
 using point_omt_ms = coords::coord_point<point, coords::origin::overmap_terrain, coords::ms>;
+using point_mmr_ms = coords::coord_point<point, coords::origin::mem_map_region, coords::ms>;
+using point_seg_ms = coords::coord_point<point, coords::origin::segment, coords::ms>;
+using point_om_ms = coords::coord_point<point, coords::origin::overmap, coords::ms>;
+using point_rel_veh = coords::coord_point<point, coords::origin::relative, coords::veh>;
+using point_mnt_veh = coords::coord_point<point, coords::origin::vehicle, coords::veh>;
+using point_rel_sm = coords::coord_point<point, coords::origin::relative, coords::sm>;
 using point_abs_sm = coords::coord_point<point, coords::origin::abs, coords::sm>;
 using point_omt_sm = coords::coord_point<point, coords::origin::overmap_terrain, coords::sm>;
+using point_mmr_sm = coords::coord_point<point, coords::origin::mem_map_region, coords::sm>;
+using point_seg_sm = coords::coord_point<point, coords::origin::segment, coords::sm>;
 using point_om_sm = coords::coord_point<point, coords::origin::overmap, coords::sm>;
 using point_rel_omt = coords::coord_point<point, coords::origin::relative, coords::omt>;
 using point_abs_omt = coords::coord_point<point, coords::origin::abs, coords::omt>;
 using point_om_omt = coords::coord_point<point, coords::origin::overmap, coords::omt>;
+using point_seg_omt = coords::coord_point<point, coords::origin::segment, coords::omt>;
+using point_mmr_omt = coords::coord_point<point, coords::origin::mem_map_region, coords::omt>;
+using point_rel_mmr = coords::coord_point<point, coords::origin::relative, coords::mmr>;
+using point_abs_mmr = coords::coord_point<point, coords::origin::abs, coords::mmr>;
+using point_seg_mmr = coords::coord_point<point, coords::origin::segment, coords::mmr>;
+using point_om_mmr = coords::coord_point<point, coords::origin::overmap, coords::mmr>;
+using point_rel_seg = coords::coord_point<point, coords::origin::relative, coords::seg>;
 using point_abs_seg = coords::coord_point<point, coords::origin::abs, coords::seg>;
+using point_om_seg = coords::coord_point<point, coords::origin::overmap, coords::seg>;
 using point_rel_om = coords::coord_point<point, coords::origin::relative, coords::om>;
 using point_abs_om = coords::coord_point<point, coords::origin::abs, coords::om>;
 
+using tripoint_bub_sm = coords::coord_point<tripoint, coords::origin::bubble, coords::sm>;
+using tripoint_bub_ms = coords::coord_point<tripoint, coords::origin::bubble, coords::ms>;
 using tripoint_rel_ms = coords::coord_point<tripoint, coords::origin::relative, coords::ms>;
 using tripoint_abs_ms = coords::coord_point<tripoint, coords::origin::abs, coords::ms>;
 using tripoint_sm_ms = coords::coord_point<tripoint, coords::origin::submap, coords::ms>;
 using tripoint_omt_ms = coords::coord_point<tripoint, coords::origin::overmap_terrain, coords::ms>;
+using tripoint_mmr_ms = coords::coord_point<tripoint, coords::origin::mem_map_region, coords::ms>;
+using tripoint_seg_ms = coords::coord_point<tripoint, coords::origin::segment, coords::ms>;
+using tripoint_om_ms = coords::coord_point<tripoint, coords::origin::overmap, coords::ms>;
+using tripoint_rel_veh = coords::coord_point<tripoint, coords::origin::relative, coords::veh>;
+using tripoint_mnt_veh = coords::coord_point<tripoint, coords::origin::vehicle, coords::veh>;
 using tripoint_rel_sm = coords::coord_point<tripoint, coords::origin::relative, coords::sm>;
 using tripoint_abs_sm = coords::coord_point<tripoint, coords::origin::abs, coords::sm>;
+using tripoint_omt_sm = coords::coord_point<tripoint, coords::origin::overmap_terrain, coords::sm>;
+using tripoint_mmr_sm = coords::coord_point<tripoint, coords::origin::mem_map_region, coords::sm>;
+using tripoint_seg_sm = coords::coord_point<tripoint, coords::origin::segment, coords::sm>;
 using tripoint_om_sm = coords::coord_point<tripoint, coords::origin::overmap, coords::sm>;
 using tripoint_rel_omt = coords::coord_point<tripoint, coords::origin::relative, coords::omt>;
 using tripoint_abs_omt = coords::coord_point<tripoint, coords::origin::abs, coords::omt>;
 using tripoint_om_omt = coords::coord_point<tripoint, coords::origin::overmap, coords::omt>;
+using tripoint_seg_omt = coords::coord_point<tripoint, coords::origin::segment, coords::omt>;
+using tripoint_mmr_omt = coords::coord_point<tripoint, coords::origin::mem_map_region, coords::omt>;
+using tripoint_rel_mmr = coords::coord_point<tripoint, coords::origin::relative, coords::mmr>;
+using tripoint_abs_mmr = coords::coord_point<tripoint, coords::origin::abs, coords::mmr>;
+using tripoint_seg_mmr = coords::coord_point<tripoint, coords::origin::segment, coords::mmr>;
+using tripoint_om_mmr = coords::coord_point<tripoint, coords::origin::overmap, coords::mmr>;
+using tripoint_rel_seg = coords::coord_point<tripoint, coords::origin::relative, coords::seg>;
 using tripoint_abs_seg = coords::coord_point<tripoint, coords::origin::abs, coords::seg>;
+using tripoint_om_seg = coords::coord_point<tripoint, coords::origin::overmap, coords::seg>;
+using tripoint_rel_om = coords::coord_point<tripoint, coords::origin::relative, coords::om>;
 using tripoint_abs_om = coords::coord_point<tripoint, coords::origin::abs, coords::om>;
 /*@}*/
 
@@ -494,6 +688,8 @@ using coords::project_to;
 using coords::project_remain;
 using coords::project_combine;
 using coords::project_bounds;
+using coords::IsCoordPoint;
+using coords::SameOrigin;
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
 inline int square_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
@@ -503,10 +699,24 @@ inline int square_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
-inline int trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
-                      const coords::coord_point<Point, Origin, Scale> &loc2 )
+inline int square_dist_fast( const coords::coord_point<Point, Origin, Scale> &loc1,
+                             const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return square_dist_fast( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+inline float trig_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
+                        const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return trig_dist( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+inline int trig_dist_squared( const coords::coord_point<Point, Origin, Scale> &loc1,
+                              const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return trig_dist_squared( loc1.raw(), loc2.raw() );
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
@@ -514,6 +724,13 @@ inline int rl_dist( const coords::coord_point<Point, Origin, Scale> &loc1,
                     const coords::coord_point<Point, Origin, Scale> &loc2 )
 {
     return rl_dist( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+inline float rl_dist_exact( const coords::coord_point<Point, Origin, Scale> &loc1,
+                            const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return rl_dist_exact( loc1.raw(), loc2.raw() );
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
@@ -552,6 +769,56 @@ std::vector<coords::coord_point<Point, Origin, Scale>>
 }
 
 template<typename Point, coords::origin Origin, coords::scale Scale>
+static std::tuple<double, double, double> slope_of( const
+        std::vector<coords::coord_point<Point, Origin, Scale>> &line )
+{
+    assert( !line.empty() && line.front() != line.back() );
+    const double len = trig_dist( line.front(), line.back() );
+    double normDx = ( line.back().x() - line.front().x() ) / len;
+    double normDy = ( line.back().y() - line.front().y() ) / len;
+    double normDz = ( line.back().z() - line.front().z() ) / len;
+    // slope of <x, y, z>
+    return std::make_tuple( normDx, normDy, normDz );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+coords::coord_point<Point, Origin, Scale> move_along_line( const
+        coords::coord_point<Point, Origin, Scale> &loc,
+        const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
+        const int distance )
+{
+    coords::coord_point<Point, Origin, Scale> res( loc );
+    const auto slope = slope_of( line );
+    res.x() += distance * std::get<0>( slope );
+    res.y() += distance * std::get<1>( slope );
+    res.z() += distance * std::get<2>( slope );
+    return res;
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+std::vector<coords::coord_point<Point, Origin, Scale>>
+        continue_line( const std::vector<coords::coord_point<Point, Origin, Scale>> &line,
+                       const int distance )
+{
+    return line_to( line.back(), move_along_line( line.back(), line, distance ) );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void calc_ray_end( units::angle angle, int range,
+                   const coords::coord_point<Point, Origin, Scale> &loc1,
+                   coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    calc_ray_end( angle, range, loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
+units::angle coord_to_angle( const coords::coord_point<Point, Origin, Scale> &loc1,
+                             const coords::coord_point<Point, Origin, Scale> &loc2 )
+{
+    return coord_to_angle( loc1.raw(), loc2.raw() );
+}
+
+template<typename Point, coords::origin Origin, coords::scale Scale>
 coords::coord_point<Point, Origin, Scale>
 midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
           const coords::coord_point<Point, Origin, Scale> &loc2 )
@@ -559,85 +826,78 @@ midpoint( const coords::coord_point<Point, Origin, Scale> &loc1,
     return coords::coord_point<Point, Origin, Scale>( ( loc1.raw() + loc2.raw() ) / 2 );
 }
 
-template<typename Point>
-Point midpoint( const inclusive_rectangle<Point> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<point, Origin, Scale>
+midpoint( const inclusive_rectangle<coords::coord_point<point, Origin, Scale>> &rect )
 {
-    constexpr point one( 1, 1 ); // NOLINT(cata-use-named-point-constants)
-    return midpoint( box.p_min, box.p_max + one );
+    return midpoint( rect.p_min, rect.p_max + point( 1, 1 ) );
 }
 
-template<typename Point>
-Point midpoint( const half_open_rectangle<Point> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<point, Origin, Scale>
+midpoint( const half_open_rectangle<coords::coord_point<point, Origin, Scale>> &rect )
 {
-    return midpoint( box.p_min, box.p_max );
+    return midpoint( rect.p_min, rect.p_max );
 }
 
-template<typename Tripoint>
-Tripoint midpoint( const inclusive_cuboid<Tripoint> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<tripoint, Origin, Scale>
+midpoint( const inclusive_cuboid<coords::coord_point<tripoint, Origin, Scale>> &rect )
 {
-    constexpr tripoint one( 1, 1, 1 );
-    return midpoint( box.p_min, box.p_max + one );
+    return midpoint( rect.p_min, rect.p_max + tripoint( 1, 1, 1 ) );
 }
 
-template<typename Tripoint>
-Tripoint midpoint( const half_open_cuboid<Tripoint> &box )
+template<typename coords::origin Origin, coords::scale Scale>
+coords::coord_point<tripoint, Origin, Scale>
+midpoint( const half_open_cuboid<coords::coord_point<tripoint, Origin, Scale>> &rect )
 {
-    return midpoint( box.p_min, box.p_max );
+    return midpoint( rect.p_min, rect.p_max );
 }
 
-/* find appropriate subdivided coordinates for absolute tile coordinate.
- * This is less obvious than one might think, for negative coordinates, so this
- * was created to give a definitive answer.
- *
- * 'absolute' is defined as the -actual- submap x,y * SEEX + position in submap, and
- * can be obtained from map.getabs(x, y);
- *   usage:
- *    real_coords rc( g->m.getabs(g->u.posx(), g->u.posy() ) );
- */
-struct real_coords {
-    static const int tiles_in_sub = SEEX;
-    static const int tiles_in_sub_n = tiles_in_sub - 1;
-    static const int subs_in_om = OMAPX * 2;
-    static const int subs_in_om_n = subs_in_om - 1;
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_line( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 );
 
-    point abs_pos;     // 1 per tile, starting from tile 0,0 of submap 0,0 of overmap 0,0
-    point abs_sub;     // submap: 12 tiles.
-    point abs_om;      // overmap: 360 submaps.
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_square( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  coords::coord_point<Point, Origin, Scale> p1, coords::coord_point<Point, Origin, Scale> p2 );
 
-    point sub_pos;     // coordinate (0-11) in submap / abs_pos constrained to % 12.
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_rough_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                        coords::coord_point<Point, Origin, Scale> p, int rad );
 
-    point om_pos;      // overmap tile: 2x2 submaps.
-    point om_sub;      // submap (0-359) in overmap / abs_sub constrained to % 360. equivalent to g->levx
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  const rl_vec2d &p, double rad );
 
-    real_coords() = default;
+template<typename Point, coords::origin Origin, coords::scale Scale>
+void draw_circle( const std::function<void( coords::coord_point<Point, Origin, Scale> )> &set,
+                  coords::coord_point<Point, Origin, Scale> p, int rad );
 
-    real_coords( point ap ) {
-        fromabs( ap );
-    }
+// Returns a view over every tile position within a single submap, in x-major order.
+// Equivalent to a nested loop over x in [0, SEEX) and y in [0, SEEY).
+//
+// Usage:
+//   for( const auto p : submap_tiles() ) { sm.get_ter( p ); }
+//   std::ranges::for_each( submap_tiles(), [&]( const point_sm_ms p ) { ... } );
+inline auto submap_tiles() -> point_range<point_sm_ms>
+{
+    return { point_sm_ms::zero(), point_sm_ms( coords::map_squares_per( coords::scale::submap ) - 1, coords::map_squares_per( coords::scale::submap ) - 1 ) };
+}
 
-    void fromabs( point abs );
+// Mapgen variant, for the tiny map which is always an omt in size, but is treated as bubble space locally
+inline auto tinymap_tiles() -> point_range<point_bub_ms>
+{
+    return { point_bub_ms::zero(), point_bub_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
+}
 
-    // specifically for the subjective position returned by overmap::draw
-    void fromomap( point rel_om, point rel_om_pos ) {
-        const point a = om_to_omt_copy( rel_om ) + rel_om_pos;
-        fromabs( omt_to_ms_copy( a ) );
-    }
+inline auto overmap_terrain_tiles() -> point_range<point_omt_ms>
+{
+    return { point_omt_ms::zero(), point_omt_ms( coords::map_squares_per( coords::scale::overmap_terrain ) - 1, coords::map_squares_per( coords::scale::overmap_terrain ) - 1 ) };
+}
 
-    point_abs_omt abs_omt() const {
-        return project_to<coords::omt>( point_abs_sm( abs_sub ) );
-    }
-
-    // helper functions to return abs_pos of submap/overmap tile/overmap's start
-
-    point begin_sub() {
-        return point( abs_sub.x * tiles_in_sub, abs_sub.y * tiles_in_sub );
-    }
-    point begin_om_pos() {
-        return point( ( abs_om.x * subs_in_om * tiles_in_sub ) + ( om_pos.x * 2 * tiles_in_sub ),
-                      ( abs_om.y * subs_in_om * tiles_in_sub ) + ( om_pos.y * 2 * tiles_in_sub ) );
-    }
-    point begin_om() {
-        return point( abs_om.x * subs_in_om * tiles_in_sub, abs_om.y * subs_in_om * tiles_in_sub );
-    }
-};
+inline auto overmap_tiles() -> point_range<point_om_ms>
+{
+    return { point_om_ms::zero(), point_om_ms( coords::map_squares_per( coords::scale::overmap ) - 1, coords::map_squares_per( coords::scale::overmap ) - 1 ) };
+}
 

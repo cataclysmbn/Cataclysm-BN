@@ -6,6 +6,7 @@
 
 #include "avatar.h"
 #include "ballistics.h"
+#include "coordinates.h"
 #include "damage.h"
 #include "dispersion.h"
 #include "game.h"
@@ -15,15 +16,15 @@
 #include "monster.h"
 #include "npc.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "projectile.h"
 #include "state_helpers.h"
 #include "type_id.h"
 #include "vehicle.h"
 #include "vpart_position.h"
 
-static tripoint projectile_end_point( const std::vector<tripoint> &range, const item &gun,
-                                      int proj_range )
+static tripoint_bub_ms projectile_end_point( const std::vector<tripoint_bub_ms> &range,
+        const item &gun,
+        int proj_range )
 {
     projectile test_proj;
     test_proj.speed = gun.gun_speed();
@@ -45,14 +46,14 @@ TEST_CASE( "projectiles_through_obstacles", "[projectile]" )
 {
     clear_all_state();
     // Move the player out of the way of the test area
-    get_avatar().setpos( { 2, 2, 0 } );
+    get_avatar().setpos( tripoint_bub_ms{ 2, 2, 0 } );
 
     map &here = get_map();
     // Ensure that a projectile fired from a gun can pass through a wall
     // First, set up a test area - three tiles in a row
     // One on either side clear, with a wooden wall in the middle
-    std::vector<tripoint> range = { tripoint_zero, tripoint_east, tripoint( 2, 0, 0 ) };
-    for( const tripoint &pt : range ) {
+    std::vector<tripoint_bub_ms> range = { tripoint_bub_ms::zero(), tripoint_bub_ms::east(), tripoint_bub_ms( 2, 0, 0 ) };
+    for( const tripoint_bub_ms &pt : range ) {
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -83,6 +84,40 @@ TEST_CASE( "projectiles_through_obstacles", "[projectile]" )
     CHECK( projectile_end_point( range, *gun_penetrating, 3 ) == range[0] );
 }
 
+TEST_CASE( "projectiles_stop_at_reality_bubble_edge", "[projectile][ballistics]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto shooter_pos = tripoint_bub_ms( 2, 2, 0 );
+    const auto target_pos = tripoint_bub_ms( -1, 2, 0 );
+    const auto clear_points = std::vector<tripoint_bub_ms> { shooter_pos, tripoint_bub_ms( 1, 2, 0 ), tripoint_bub_ms( 0, 2, 0 ) };
+
+    for( const auto &pt : clear_points ) {
+        REQUIRE( here.inbounds( pt ) );
+        here.ter_set( pt, ter_id( "t_dirt" ) );
+        here.furn_set( pt, furn_id( "f_null" ) );
+    }
+
+    auto &shooter = get_avatar();
+    shooter.setpos( shooter_pos );
+    shooter.set_body();
+
+    auto gun_ptr = item::spawn( itype_id( "m1a" ) );
+    gun_ptr->ammo_set( itype_id( "308" ), 1 );
+    auto &gun = *gun_ptr;
+
+    auto test_proj = projectile {};
+    test_proj.speed = gun.gun_speed();
+    test_proj.range = 20;
+    test_proj.impact = gun.gun_damage();
+
+    const auto attack = projectile_attack(
+                            test_proj, shooter_pos, target_pos, dispersion_sources {}, &shooter, &gun );
+
+    CHECK( here.inbounds( attack.end_point ) );
+}
+
 TEST_CASE( "adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
 {
     clear_all_state();
@@ -90,13 +125,13 @@ TEST_CASE( "adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
 
     // Set up test area: shooter at (50,60), friendly NPC adjacent at (51,60), target at (55,60).
     // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
-    const auto shooter_pos = tripoint( 50, 60, 0 );
-    const auto friendly_pos = tripoint( 51, 60, 0 );
-    const auto target_pos = tripoint( 55, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 50, 60, 0 );
+    const auto friendly_pos = tripoint_bub_ms( 51, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 55, 60, 0 );
 
     // Clear the area
     for( int x = 50; x <= 55; ++x ) {
-        auto pt = tripoint( x, 60, 0 );
+        auto pt = tripoint_bub_ms( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -148,13 +183,13 @@ TEST_CASE( "npc_adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
 
     // Set up test area: NPC shooter at (50,60), friendly NPC adjacent at (51,60), target at (55,60).
     // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
-    const auto shooter_pos = tripoint( 50, 60, 0 );
-    const auto friendly_pos = tripoint( 51, 60, 0 );
-    const auto target_pos = tripoint( 55, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 50, 60, 0 );
+    const auto friendly_pos = tripoint_bub_ms( 51, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 55, 60, 0 );
 
     // Clear the area
     for( int x = 50; x <= 55; ++x ) {
-        auto pt = tripoint( x, 60, 0 );
+        auto pt = tripoint_bub_ms( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -178,7 +213,7 @@ TEST_CASE( "npc_adjacent_friendly_fire_prevention", "[projectile][ballistics]" )
     REQUIRE( shooter.attitude_to( ally ) == Attitude::A_FRIENDLY );
 
     // Move player out of the way
-    get_avatar().setpos( tripoint( 10, 10, 0 ) );
+    get_avatar().setpos( tripoint_bub_ms( 10, 10, 0 ) );
 
     // Create a gun for the projectile
     auto gun_ptr = item::spawn( itype_id( "glock_19" ) );
@@ -214,13 +249,13 @@ TEST_CASE( "npc_protects_adjacent_player", "[projectile][ballistics]" )
 
     // Set up test area: NPC shooter at (50,60), player adjacent at (51,60), target at (55,60).
     // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
-    const auto shooter_pos = tripoint( 50, 60, 0 );
-    const auto player_pos = tripoint( 51, 60, 0 );
-    const auto target_pos = tripoint( 55, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 50, 60, 0 );
+    const auto player_pos = tripoint_bub_ms( 51, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 55, 60, 0 );
 
     // Clear the area
     for( int x = 50; x <= 55; ++x ) {
-        auto pt = tripoint( x, 60, 0 );
+        auto pt = tripoint_bub_ms( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -274,21 +309,22 @@ TEST_CASE( "monster_adjacent_ally_fire_prevention", "[projectile][ballistics]" )
     clear_all_state();
     map &here = get_map();
 
-    // Set up test area: monster shooter at (0,0), allied monster at (1,0), target at (5,0)
-    const auto shooter_pos = tripoint_zero;
-    const auto ally_pos = tripoint_east;
-    const auto target_pos = tripoint( 5, 0, 0 );
+    // Set up test area away from the map edge: monster shooter at (50,60),
+    // allied monster at (51,60), target at (55,60).
+    const auto shooter_pos = tripoint_bub_ms( 50, 60, 0 );
+    const auto ally_pos = tripoint_bub_ms( 51, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 55, 60, 0 );
 
     // Clear the area
-    for( int x = 0; x <= 5; ++x ) {
-        auto pt = tripoint( x, 0, 0 );
+    for( int x = 50; x <= 55; ++x ) {
+        auto pt = tripoint_bub_ms( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
     }
 
     // Move player out of the way
-    get_avatar().setpos( tripoint( 10, 10, 0 ) );
+    get_avatar().setpos( tripoint_bub_ms( 10, 10, 0 ) );
 
     // Create two monsters from the same faction
     monster &shooter = spawn_test_monster( "mon_zombie", shooter_pos );
@@ -329,13 +365,13 @@ TEST_CASE( "hostile_npc_adjacent_ally_fire_prevention", "[projectile][ballistics
 
     // Set up test area: hostile NPC shooter at (50,60), allied hostile NPC at (51,60), target at (55,60).
     // Positions near map center so spawned NPCs are within load_npcs radius (4 submaps).
-    const auto shooter_pos = tripoint( 50, 60, 0 );
-    const auto ally_pos = tripoint( 51, 60, 0 );
-    const auto target_pos = tripoint( 55, 60, 0 );
+    const auto shooter_pos = tripoint_bub_ms( 50, 60, 0 );
+    const auto ally_pos = tripoint_bub_ms( 51, 60, 0 );
+    const auto target_pos = tripoint_bub_ms( 55, 60, 0 );
 
     // Clear the area
     for( int x = 50; x <= 55; ++x ) {
-        auto pt = tripoint( x, 60, 0 );
+        auto pt = tripoint_bub_ms( x, 60, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );
@@ -352,7 +388,7 @@ TEST_CASE( "hostile_npc_adjacent_ally_fire_prevention", "[projectile][ballistics
     ally.set_attitude( NPCATT_KILL );
 
     // Move player out of the way after NPCs are loaded.
-    get_avatar().setpos( tripoint( 10, 10, 0 ) );
+    get_avatar().setpos( tripoint_bub_ms( 10, 10, 0 ) );
 
     REQUIRE( g->critter_at( shooter_pos ) == &shooter );
     REQUIRE( g->critter_at( ally_pos ) == &ally );
@@ -394,13 +430,13 @@ TEST_CASE( "friendly_monster_iff_respects_adjacent_player", "[projectile][monste
 
     // Set up test area: friendly monster at (0,0), player adjacent at (1,0), hostile at (2,0)
     // This tests that IFF checks still apply when player is adjacent to friendly monster
-    const auto monster_pos = tripoint_zero;
-    const auto player_pos = tripoint_east;
-    const auto hostile_pos = tripoint( 2, 0, 0 );
+    const auto monster_pos = tripoint_bub_ms::zero();
+    const auto player_pos = tripoint_bub_ms::east();
+    const auto hostile_pos = tripoint_bub_ms( 2, 0, 0 );
 
     // Clear the area
     for( int x = 0; x <= 3; ++x ) {
-        auto pt = tripoint( x, 0, 0 );
+        auto pt = tripoint_bub_ms( x, 0, 0 );
         REQUIRE( here.inbounds( pt ) );
         here.ter_set( pt, ter_id( "t_dirt" ) );
         here.furn_set( pt, furn_id( "f_null" ) );

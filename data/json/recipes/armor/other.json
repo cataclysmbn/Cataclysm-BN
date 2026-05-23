@@ -370,6 +370,7 @@
     "components": [
       [ [ "tool_belt", 1 ] ],
       [ [ "duct_tape", 100 ] ],
+      [ [ "kevlar_plate", 2 ] ],
       [
         [ "tacvest", 1 ],
         [ "legrig", 1 ],

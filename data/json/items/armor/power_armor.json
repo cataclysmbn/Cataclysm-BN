@@ -22,6 +22,7 @@
     "warmth": 50,
     "material_thickness": 7,
     "environmental_protection": 6,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATERPROOF", "STURDY" ]
   },
   {
@@ -46,6 +47,7 @@
     "material_thickness": 7,
     "environmental_protection": 6,
     "qualities": [ [ "GLARE", 2 ] ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "WATERPROOF", "STURDY", "SUN_GLASSES" ]
   },
   {
@@ -72,6 +74,7 @@
     "warmth": 60,
     "material_thickness": 10,
     "environmental_protection": 10,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -133,6 +136,7 @@
     "warmth": 60,
     "material_thickness": 12,
     "environmental_protection": 10,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -194,6 +198,7 @@
     "warmth": 60,
     "material_thickness": 8,
     "environmental_protection": 10,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "use_action": {
       "type": "set_transform",
       "turn_off": false,
@@ -261,6 +266,7 @@
       "need_worn": true,
       "active": true
     },
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
   },
   {
@@ -317,6 +323,7 @@
       "need_worn": true,
       "active": true
     },
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
   },
   {
@@ -373,6 +380,7 @@
       "active": true
     },
     "qualities": [ [ "GLARE", 1 ] ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "flags": [ "USE_UPS", "NAT_UPS", "POWERARMOR_EXTERNAL", "WATERPROOF", "STURDY", "PARTIAL_DEAF", "SUN_GLASSES", "WATCH" ]
   },
   {
@@ -419,6 +427,30 @@
     "encumbrance": 5,
     "storage": "40 L",
     "material_thickness": 10,
+    "valid_mods": [ "resized_large", "resized_small" ],
+    "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
+  },
+  {
+    "id": "heavy_power_armor_frame",
+    "type": "TOOL_ARMOR",
+    "name": { "str": "advanced power armor hauling frame" },
+    "description": "A cutting-edge advanced hauling frame made from superalloy designed to interface with military exoskeletons.  Barely deployed before the Cataclysm struck.",
+    "weight": "1300 g",
+    "volume": "11 L",
+    "price": "20 kUSD",
+    "price_postapoc": "200 USD",
+    "to_hit": 1,
+    "bashing": 1,
+    "material": [ "superalloy" ],
+    "symbol": "[",
+    "looks_like": "power_armor_frame",
+    "color": "light_gray",
+    "covers": [ "torso" ],
+    "coverage": 10,
+    "encumbrance": 0,
+    "storage": "40 L",
+    "material_thickness": 10,
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "BELTED", "ONLY_ONE" ]
   },
   {
@@ -445,6 +477,7 @@
       "flags": [ "SHEATH_SWORD", "SHEATH_AXE", "SHEATH_SPEAR" ],
       "skills": [ "smg", "shotgun", "rifle", "launcher" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "BELTED", "ONLY_ONE" ]
   },
   {
@@ -470,6 +503,7 @@
       "flags": [ "SHEATH_KNIFE", "SHEATH_SWORD", "BELT_CLIP" ],
       "skills": [ "pistol", "smg", "shotgun", "rifle", "launcher" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "WAIST" ]
   },
   {
@@ -500,6 +534,7 @@
       "draw_cost": 80,
       "flags": [ "MAG_COMPACT", "MAG_BULKY", "MAG_BELT" ]
     },
+    "valid_mods": [ "resized_large", "resized_small" ],
     "flags": [ "POWERARMOR_MOD", "COMPACT", "STURDY", "WAIST" ]
   },
   {
@@ -710,6 +745,7 @@
     "warmth": 20,
     "material_thickness": 6,
     "environmental_protection": 3,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded", "resized_large", "resized_small" ],
     "max_charges": 500,
     "ammo": "battery",
     "relic_data": { "passive_effects": [ { "has": "WORN", "condition": "ACTIVE", "values": [ { "value": "STRENGTH", "add": 2 } ] } ] },
@@ -758,6 +794,7 @@
     "material_thickness": 8,
     "max_charges": 500,
     "ammo": "battery",
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "relic_data": {
       "passive_effects": [
         {
@@ -832,6 +869,7 @@
     "material_thickness": 8,
     "max_charges": 500,
     "ammo": "battery",
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "relic_data": {
       "passive_effects": [
         {

@@ -9,6 +9,7 @@
 #include "filesystem.h"
 #include "json.h"
 #include "path_info.h"
+#include "path_utils.h"
 
 template<typename ColorType>
 class color_loader
@@ -45,8 +46,8 @@ class color_loader
             return it->second;
         }
 
-        void load_colorfile( const std::string &path ) {
-            std::ifstream colorfile( path.c_str(), std::ifstream::in | std::ifstream::binary );
+        void load_colorfile( const fs::path &path ) {
+            std::ifstream colorfile( path, std::ifstream::in | std::ifstream::binary );
             JsonIn jsin( colorfile );
             jsin.start_array();
             while( !jsin.end_array() ) {
@@ -61,17 +62,18 @@ class color_loader
     public:
         /// @throws std::exception upon any kind of error.
         void load( std::array<ColorType, COLOR_NAMES_COUNT> &windowsPalette ) {
-            const std::string default_path = PATH_INFO::colors();
-            const std::string custom_path = PATH_INFO::base_colors();
+            const auto default_path = PATH_INFO::colors();
+            const auto custom_path = PATH_INFO::base_colors();
 
             if( !file_exist( custom_path ) ) {
-                copy_file( default_path, custom_path );
+                ::copy_file( default_path, custom_path );
             }
 
             try {
                 load_colorfile( custom_path );
             } catch( const JsonError &err ) {
-                debugmsg( "Failed to load color data from \"%s\": %s", custom_path, err.what() );
+                debugmsg( "Failed to load color data from \"%s\": %s",
+                          cata_files::path_to_generic_utf8( custom_path ), err.what() );
 
                 // this should succeed, otherwise the installation is botched
                 load_colorfile( default_path );

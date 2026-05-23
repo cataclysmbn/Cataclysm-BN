@@ -68,6 +68,74 @@
     "type": "vehicle_part"
   },
   {
+    "abstract": "3d_printer_basic_abstract",
+    "breaks_into": [
+      { "count": [ 3, 6 ], "item": "steel_lump" },
+      { "count": [ 3, 6 ], "item": "steel_chunk" },
+      { "count": [ 3, 6 ], "item": "scrap" },
+      { "charges": 0, "item": "3d_printer_basic", "prob": 50 }
+    ],
+    "broken_color": "light_blue",
+    "broken_symbol": "x",
+    "color": "light_blue",
+    "looks_like": "f_heavy_lathe",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 24 },
+    "description": "A 3D printer mounted in the vehicle, that draws power from the vehicle's batteries.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "COVERED" ],
+    "integrated_tools": [ "3d_printer_basic" ],
+    "item": "3d_printer_basicrig",
+    "location": "center",
+    "name": { "str": "vehicle 3D printer" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ], [ "computer", 2 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "=",
+    "type": "vehicle_part"
+  },
+  {
+    "abstract": "3d_printer_advanced_abstract",
+    "breaks_into": [
+      { "count": [ 3, 6 ], "item": "steel_lump" },
+      { "count": [ 3, 6 ], "item": "steel_chunk" },
+      { "count": [ 3, 6 ], "item": "scrap" },
+      { "charges": 0, "item": "3d_printer_advanced", "prob": 50 }
+    ],
+    "broken_color": "light_blue",
+    "broken_symbol": "x",
+    "color": "light_blue",
+    "looks_like": "f_heavy_lathe",
+    "damage_modifier": 10,
+    "damage_reduction": { "all": 24 },
+    "description": "An advanced 3D printer mounted in the vehicle, that draws power from the vehicle's batteries.",
+    "durability": 80,
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "COVERED" ],
+    "integrated_tools": [ "3d_printer_advanced" ],
+    "item": "3d_printer_advancedrig",
+    "location": "center",
+    "name": { "str": "vehicle advanced 3D printer" },
+    "requirements": {
+      "install": { "skills": [ [ "mechanics", 3 ], [ "computer", 5 ] ], "time": "60 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "removal": { "skills": [ [ "mechanics", 2 ] ], "time": "30 m", "using": [ [ "vehicle_bolt", 1 ] ] },
+      "repair": {
+        "skills": [ [ "mechanics", 4 ] ],
+        "time": "60 m",
+        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
+      }
+    },
+    "size": "50 L",
+    "symbol": "=",
+    "type": "vehicle_part"
+  },
+  {
     "abstract": "craft_rig_abstract",
     "breaks_into": [
       { "count": [ 4, 7 ], "item": "steel_lump" },
@@ -86,8 +154,9 @@
     "damage_reduction": { "all": 20 },
     "description": "A multi-function crafting station, with a water purifier, food processor, food dehydrator, vacuum sealer, and hand press for making ammo.  Draws power from the vehicle's batteries.  'e'xamine the tile with the kitchen buddy to access the water faucet or to purify water in a vehicle tank or in a container in your inventory.  If you attempt to craft an item that needs one of the kitchen buddy's functions, it will automatically be selected as a tool.",
     "durability": 80,
-    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "WATER_PURIFIER", "FAUCET", "COVERED" ],
+    "flags": [ "CARGO", "OBSTACLE", "CRAFTER", "WATER_PURIFIER", "FAUCET", "COVERED", "CONVERTER" ],
     "integrated_tools": [ "dehydrator", "vac_sealer", "food_processor", "press", "water_purifier" ],
+    "converter": { "input": "water", "input_step": 8, "output": "water_clean", "output_step": 8, "max_steps": 6, "charge_cost": 1 },
     "item": "craftrig",
     "location": "center",
     "looks_like": "f_sink",
@@ -253,6 +322,18 @@
     "type": "vehicle_part"
   },
   {
+    "copy-from": "3d_printer_basic_abstract",
+    "id": "3d_printer_basicrig",
+    "symbol": "=",
+    "type": "vehicle_part"
+  },
+  {
+    "copy-from": "3d_printer_advanced_abstract",
+    "id": "3d_printer_advancedrig",
+    "symbol": "=",
+    "type": "vehicle_part"
+  },
+  {
     "copy-from": "craft_rig_abstract",
     "id": "craft_rig",
     "symbol": "&",
@@ -370,7 +451,8 @@
         "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ]
       }
     },
-    "flags": [ "WATER_PURIFIER", "SHOCK_RESISTANT" ],
+    "converter": { "input": "water", "input_step": 8, "output": "water_clean", "output_step": 8, "max_steps": 6, "charge_cost": 1 },
+    "flags": [ "WATER_PURIFIER", "SHOCK_RESISTANT", "CONVERTER" ],
     "breaks_into": [ { "item": "plastic_chunk", "count": [ 1, 2 ] } ],
     "damage_reduction": { "all": 26 }
   },

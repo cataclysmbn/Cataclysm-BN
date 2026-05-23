@@ -1,6 +1,8 @@
 gdebug.log_info("NPC Lua hook test activated.")
 
+---@type ModNpcLuaHookTest
 local mod = game.mod_runtime[game.current_mod]
+local ui = require("lib.ui")
 
 ---@param params OnDialogueStartParams
 mod.on_dialogue_start = function(params)
@@ -33,11 +35,7 @@ mod.on_dialogue_end = function(params)
 end
 
 ---@param params OnTryNPCInterationParams
-mod.on_try_npc_interaction = function(params)
-  local check = QueryPopup.new()
-  check:message("Allow Interaction?")
-  return check:query_yn() == "YES"
-end
+mod.on_try_npc_interaction = function(params) return ui.query_yn("Allow Interaction?") end
 
 ---@param params OnTryNPCInterationParams
 mod.force_talk = function(params)
@@ -45,4 +43,5 @@ mod.force_talk = function(params)
   return false
 end
 
+---@param params OnNPCInterationParams
 mod.on_npc_interaction = function(params) print("Interacted with " .. params.npc.name) end

@@ -340,7 +340,7 @@
     "symbol": "/",
     "color": "dark_gray",
     "techniques": [ "WBLOCK_2" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 15 ] ],
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", 15 ] ],
     "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NONCONDUCTIVE" ]
   },
   {
@@ -357,7 +357,7 @@
     "cutting": 16,
     "color": "light_gray",
     "techniques": [ "WBLOCK_1" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", -27 ] ],
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", -27 ] ],
     "flags": [ "SHEATH_SWORD" ]
   },
   {
@@ -795,7 +795,7 @@
     "price_postapoc": "25 USD",
     "weight": "525 g",
     "techniques": [ "WBLOCK_2", "RAPID" ],
-    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 10 ] ]
+    "qualities": [ [ "CUT", 2 ], [ "BUTCHER", 10 ] ]
   },
   {
     "id": "sword_bayonet",
@@ -2317,5 +2317,34 @@
       { "type": "firestarter", "moves": 30 }
     ],
     "extend": { "flags": [ "FIRE", "LIGHT_240", "CHARGEDIM", "TRADER_AVOID", "COMBAT_NPC_ON" ] }
+  },
+  {
+    "id": "radiant_blade",
+    "type": "GENERIC",
+    "category": "weapons",
+    "weapon_category": [ "JAPANESE_SWORDS", "2H_SWORDS", "MEDIEVAL_SWORDS", "1H_SWORDS" ],
+    "name": { "str": "radiant blade" },
+    "description": "Trails of brilliant light snake across the blade of this masterwork sword. Integrated with the remains of a mutant triffid, it is light and versatile enough to be easily adapted to most sword fighting styles.",
+    "weight": "350 g",
+    "volume": "2500 ml",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 3,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 4 },
+            { "damage_type": "cut", "amount": 4 },
+            { "damage_type": "light", "amount": 30 }
+          ]
+        }
+      }
+    ],
+    "material": "steel",
+    "symbol": "/",
+    "color": "light_gray",
+    "techniques": [ "RAPID", "WBLOCK_2", "WIDE", "BRUTAL" ],
+    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 9 ] ],
+    "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NONCONDUCTIVE", "TRADER_AVOID", "LIGHT_240" ]
   }
 ]

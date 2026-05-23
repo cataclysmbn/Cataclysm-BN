@@ -1,0 +1,32 @@
+[
+  {
+    "id": "essence_type",
+    "name": "essence",
+    "default": "essence",
+    "type": "ammunition_type"
+  },
+  {
+    "id": "essence_blood_type",
+    "name": "blood essence",
+    "default": "essence_blood",
+    "type": "ammunition_type"
+  },
+  {
+    "id": "essence_dull_type",
+    "name": "dull essence",
+    "default": "essence_dull",
+    "type": "ammunition_type"
+  },
+  {
+    "id": "essence_pure_type",
+    "name": "crystallized essence",
+    "default": "essence_pure",
+    "type": "ammunition_type"
+  },
+  {
+    "id": "essence_fake_type",
+    "name": "displace surge power",
+    "default": "essence_fake",
+    "type": "ammunition_type"
+  }
+]

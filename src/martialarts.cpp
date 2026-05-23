@@ -211,6 +211,7 @@ void ma_technique::load( const JsonObject &jo, const std::string &src )
     optional( jo, was_loaded, "block_counter", block_counter, false );
     optional( jo, was_loaded, "miss_recovery", miss_recovery, false );
     optional( jo, was_loaded, "grab_break", grab_break, false );
+    optional( jo, was_loaded, "force_unarmed", force_unarmed, false );
 
     optional( jo, was_loaded, "weighting", weighting, 1 );
 
@@ -534,7 +535,7 @@ bool ma_requirements::is_valid_character( const Character &u ) const
         }
     }
 
-    if( wall_adjacent && !get_map().is_wall_adjacent( u.pos() ) ) {
+    if( wall_adjacent && !get_map().is_wall_adjacent( u.bub_pos() ) ) {
         return false;
     }
 
@@ -711,6 +712,7 @@ ma_technique::ma_technique()
 
     miss_recovery = false; // allows free recovery from misses, like tec_feint
     grab_break = false; // allows grab_breaks, like tec_break
+    force_unarmed = false; // doesn't factor in unarmed weapon damage
 }
 
 bool ma_technique::is_valid_character( const Character &u ) const
@@ -1520,11 +1522,11 @@ std::string ma_technique::get_description() const
     }
 
     if( disarms ) {
-        dump += _( "* Will <info>disarm</info> the target" ) + std::string( "\n" );
+        dump += _( "* Will <info>attempt to disarm</info> the target" ) + std::string( "\n" );
     }
 
     if( take_weapon ) {
-        dump += _( "* Will <info>disarm</info> the target and <info>take their weapon</info>" ) +
+        dump += _( "* Will <info>attempt to disarm</info> the target and <info>take their weapon</info>" ) +
                 std::string( "\n" );
     }
 

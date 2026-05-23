@@ -12,6 +12,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "coordinates.h"
 #include "creature.h"
 #include "dispersion.h"
 #include "fstream_utils.h"
@@ -23,7 +24,6 @@
 #include "npc.h"
 #include "player.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "ranged.h"
 #include "state_helpers.h"
 #include "test_statistics.h"
@@ -224,7 +224,7 @@ static void assert_encumbrance( npc &shooter, int encumbrance )
     }
 }
 
-static constexpr tripoint shooter_pos( 60, 60, 0 );
+static constexpr tripoint_bub_ms shooter_pos( 60, 60, 0 );
 
 TEST_CASE( "unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]" )
 {
@@ -290,7 +290,7 @@ TEST_CASE( "competent_shooter_accuracy", "[ranged] [balance]" )
     SECTION( "a skilled shooter with an accurate shotgun" ) {
         arm_character( shooter, "ksg", { "red_dot_sight" } );
         test_shooting_scenario( shooter, 9, 15, 33 );
-        test_fast_shooting( shooter, 75, 0.45 );
+        test_fast_shooting( shooter, 75, 0.5 );
     }
     SECTION( "a skilled shooter with an accurate smg" ) {
         arm_character( shooter, "hk_mp5", { "tele_sight" } );
@@ -324,7 +324,7 @@ TEST_CASE( "expert_shooter_accuracy", "[ranged] [balance]" )
     SECTION( "an expert archer with an excellent crossbow" ) {
         arm_character( shooter, "compcrossbow", { "holo_sight" }, "bolt_cf" );
         test_shooting_scenario( shooter, 12, 20, 100 );
-        test_fast_shooting( shooter, 30, 0.4 );
+        test_fast_shooting( shooter, 30, 0.45 );
     }
     SECTION( "an expert shooter with an excellent shotgun" ) {
         arm_character( shooter, "m1014", { "holo_sight" } );

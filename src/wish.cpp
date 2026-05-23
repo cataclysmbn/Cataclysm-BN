@@ -35,6 +35,7 @@
 #include "skill.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
+#include "string_utils.h"
 #include "translations.h"
 #include "type_id.h"
 #include "ui.h"
@@ -574,7 +575,7 @@ class wish_monster_callback: public uilist_callback
         ~wish_monster_callback() override = default;
 };
 
-void debug_menu::wishmonster( const std::optional<tripoint> &p )
+void debug_menu::wishmonster( const std::optional<tripoint_bub_ms> &p )
 {
     std::vector<const mtype *> mtypes;
 
@@ -604,9 +605,9 @@ void debug_menu::wishmonster( const std::optional<tripoint> &p )
         wmenu.query();
         if( wmenu.ret >= 0 ) {
             const mtype_id &mon_type = mtypes[ wmenu.ret ]->id;
-            if( std::optional<tripoint> spawn = p ? p : g->look_around( true ) ) {
+            if( std::optional<tripoint_bub_ms> spawn = p ? p : g->look_around( LA_MODE_3D ) ) {
                 int num_spawned = 0;
-                for( const tripoint &destination : closest_points_first( *spawn, cb.group ) ) {
+                for( const tripoint_bub_ms &destination : closest_points_first( *spawn, cb.group ) ) {
                     monster *const mon = g->place_critter_at( mon_type, destination );
                     if( !mon ) {
                         continue;
@@ -693,8 +694,24 @@ class wish_item_callback: public uilist_callback
 
                 std::vector<iteminfo> info = tmp.info();
                 std::string info_string = format_item_info( info, {} );
-                fold_and_print( menu->window, point( startx, starty ), menu->pad_right - 1, c_light_gray,
-                                info_string );
+                const auto info_lines = foldstring( info_string, menu->pad_right - 1 );
+                int line_y = starty;
+                for( const std::string &line_text : info_lines ) {
+                    if( line_y >= menu->w_height - 1 ) {
+                        break;
+                    }
+                    const std::string stripped = trim_whitespaces(
+                                                     remove_color_tags( line_text ) );
+                    if( stripped == "--" ) {
+                        mvwhline( menu->window, point( startx, line_y ), LINE_OXOX,
+                                  menu->pad_right - 1 );
+                    } else if( !stripped.empty() ) {
+                        nc_color cur_color = c_light_gray;
+                        print_colored_text( menu->window, point( startx, line_y ), cur_color,
+                                            c_light_gray, line_text );
+                    }
+                    ++line_y;
+                }
             }
 
             if( spawn_everything ) {
@@ -713,12 +730,12 @@ class wish_item_callback: public uilist_callback
 
 void debug_menu::wishitem( Character *who )
 {
-    wishitem( who, tripoint( -1, -1, -1 ) );
+    wishitem( who, tripoint_bub_ms( -1, -1, -1 ) );
 }
 
-void debug_menu::wishitem( Character *who, const tripoint &pos )
+void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
 {
-    if( who == nullptr && pos.x <= 0 ) {
+    if( who == nullptr && pos.x() <= 0 ) {
         debugmsg( "game::wishitem(): invalid parameters" );
         return;
     }
@@ -818,7 +835,7 @@ void debug_menu::wishitem( Character *who, const tripoint &pos )
                         }
                     }
                     who->invalidate_crafting_inventory();
-                } else if( pos.x >= 0 && pos.y >= 0 ) {
+                } else if( pos.x() >= 0 && pos.y() >= 0 ) {
                     g->m.add_item_or_charges( pos, item::spawn( *granted ) );
                     wmenu.ret = -1;
                 }

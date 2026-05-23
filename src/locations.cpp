@@ -1,7 +1,6 @@
 #include "locations.h"
 
 #include "character.h"
-#include "coordinates.h"
 #include "detached_ptr.h"
 #include "item.h"
 #include "itype.h"
@@ -50,10 +49,10 @@ bool fake_item_location::is_loaded( const item * ) const
     return false; //Loaded means in the reality bubble so no
 }
 
-tripoint fake_item_location::position( const item * ) const
+tripoint_bub_ms fake_item_location::position( const item * ) const
 {
     debugmsg( "Attempted to find the position of a fake item" );
-    return tripoint_zero;
+    return tripoint_bub_ms::zero();
 }
 
 item_location_type fake_item_location::where() const
@@ -93,9 +92,9 @@ bool temp_item_location::is_loaded( const item * ) const
     return false; //Loaded means in the reality bubble so no
 }
 
-tripoint temp_item_location::position( const item * ) const
+tripoint_bub_ms temp_item_location::position( const item * ) const
 {
-    return tripoint_zero;
+    return tripoint_bub_ms::zero();
 }
 
 item_location_type temp_item_location::where() const
@@ -123,9 +122,9 @@ bool character_item_location::is_loaded( const item * ) const
     return holder->is_loaded();
 }
 
-tripoint character_item_location::position( const item * ) const
+tripoint_bub_ms character_item_location::position( const item * ) const
 {
-    return holder->pos();
+    return holder->bub_pos();
 }
 
 item_location_type character_item_location::where() const
@@ -214,9 +213,9 @@ bool wield_item_location::is_loaded( const item * ) const
     return holder->is_loaded();
 }
 
-tripoint wield_item_location::position( const item * ) const
+tripoint_bub_ms wield_item_location::position( const item * ) const
 {
-    return holder->pos();
+    return holder->bub_pos();
 }
 
 item_location_type wield_item_location::where( ) const
@@ -255,7 +254,7 @@ std::string worn_item_location::describe( const Character *ch, const item * ) co
     return holder->name;
 }
 
-tile_item_location::tile_item_location( tripoint position )
+tile_item_location::tile_item_location( const tripoint_abs_ms &position )
 {
     pos = position;
 }
@@ -263,7 +262,7 @@ tile_item_location::tile_item_location( tripoint position )
 detached_ptr<item> tile_item_location::detach( item *it )
 {
     map &here = get_map();
-    tripoint local = here.getlocal( pos );
+    const auto local = here.abs_to_bub( pos );
     map_stack items = here.i_at( local );
     for( auto iter = items.begin(); iter != items.end(); iter++ ) {
         if( *iter == it ) {
@@ -279,20 +278,19 @@ detached_ptr<item> tile_item_location::detach( item *it )
 void tile_item_location::attach( detached_ptr<item> &&obj )
 {
     map &here = get_map();
-    tripoint local = here.getlocal( pos );
-    map_stack items = here.i_at( local );
+    map_stack items = here.i_at( here.abs_to_bub( pos ) );
     items.insert( std::move( obj ) );
 }
 
 bool tile_item_location::is_loaded( const item * ) const
 {
     map &here = get_map();
-    return here.inbounds( here.getlocal( pos ) );
+    return here.inbounds( pos );
 }
 
-tripoint tile_item_location::position( const item * ) const
+tripoint_bub_ms tile_item_location::position( const item * ) const
 {
-    return get_map().getlocal( pos );
+    return get_map().abs_to_bub( pos );
 }
 
 item_location_type tile_item_location::where() const
@@ -305,22 +303,22 @@ int tile_item_location::obtain_cost( const Character &ch, int qty, const item *i
     const item *split_stack = cost_split_helper( it, qty );
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *split_stack, true,
              MAP_HANDLING_PENALTY );
-    mv += 100 * rl_dist( ch.pos(), get_map().getlocal( pos ) );
+    mv += 100 * rl_dist( ch.bub_pos(), get_map().abs_to_bub( pos ) );
     return mv;
 }
 
 std::string tile_item_location::describe( const Character *ch, const item * ) const
 {
     map &here = get_map();
-    tripoint local = here.getlocal( pos );
+    const auto local = here.abs_to_bub( pos );
     std::string res = here.name( local );
     if( ch ) {
-        res += std::string( " " ) += direction_suffix( ch->pos(), local );
+        res += std::string( " " ) += direction_suffix( ch->bub_pos().raw(), local.raw() );
     }
     return res;
 }
 
-void tile_item_location::move_by( tripoint offset )
+void tile_item_location::move_by( tripoint_rel_ms offset )
 {
     pos += offset;
 }
@@ -330,9 +328,9 @@ bool monster_item_location::is_loaded( const item * ) const
     return on->is_loaded();
 }
 
-tripoint monster_item_location::position( const item * ) const
+tripoint_bub_ms monster_item_location::position( const item * ) const
 {
-    return on->pos();
+    return on->bub_pos();
 }
 
 item_location_type monster_item_location::where() const
@@ -428,12 +426,12 @@ bool vehicle_item_location::is_loaded( const item * ) const
     }
 
     //Have to check the bounds, the vehicle might be half outside the bubble
-    return get_map().inbounds( veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    return get_map().inbounds( veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
 }
 
-tripoint vehicle_item_location::position( const item * ) const
+tripoint_bub_ms vehicle_item_location::position( const item * ) const
 {
-    return veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount );
+    return veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount );
 }
 
 item_location_type vehicle_item_location::where() const
@@ -459,7 +457,7 @@ int vehicle_item_location::obtain_cost( const Character &ch, int qty, const item
     const item *obj = cost_split_helper( it, qty );
     int mv = dynamic_cast<const player *>( &ch )->item_handling_cost( *obj, true,
              VEHICLE_HANDLING_PENALTY );
-    mv += 100 * rl_dist( ch.pos(), veh->mount_to_tripoint( veh->get_part_hack( hack_id ).mount ) );
+    mv += 100 * rl_dist( ch.bub_pos(), veh->mount_to_bubble( veh->get_part_hack( hack_id ).mount ) );
     return mv;
 }
 
@@ -476,7 +474,7 @@ std::string vehicle_item_location::describe( const Character *ch, const item * )
         return "Error: vehicle part without storage";
     }
     if( ch ) {
-        res += " " + direction_suffix( ch->pos(), part_pos.pos() );
+        res += " " + direction_suffix( ch->bub_pos().raw(), part_pos.pos().raw() );
     }
     return res;
 }
@@ -548,7 +546,7 @@ int contents_item_location::obtain_cost( const Character &ch, int qty, const ite
     return INVENTORY_HANDLING_PENALTY + container->obtain_cost( ch, qty );
 }
 
-tripoint contents_item_location::position( const item * ) const
+tripoint_bub_ms contents_item_location::position( const item * ) const
 {
     return container->position();
 }
@@ -573,7 +571,12 @@ void component_item_location::attach( detached_ptr<item> &&obj )
     return container->add_component( std::move( obj ) );
 }
 
-partial_con_item_location::partial_con_item_location( tripoint position ) : tile_item_location(
+partial_con_item_location::partial_con_item_location( const tripoint_bub_ms &position ) :
+    tile_item_location(
+        bub_to_abs( position ) ) {}
+
+partial_con_item_location::partial_con_item_location( const tripoint_abs_ms &position ) :
+    tile_item_location(
         position ) {}
 
 detached_ptr<item> partial_con_item_location::detach( item * )

@@ -1,0 +1,78 @@
+[
+  {
+    "id": "bio_electrothermal_arc_projector",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Electrothermal Arc Projector CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "A small implant for the left arm that fires bolts of exotic energy that bounces between targets, electrocuting and immolating anything it hits.",
+    "price": "8500 USD",
+    "price_postapoc": "55 USD",
+    "weight": "500 g",
+    "difficulty": 6,
+    "installation_data": "AID_bio_electrothermal_arc_projector"
+  },
+  {
+    "id": "bio_rift_focus_projector",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Rift Focus Projector CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "A small implant for the right hand that creates small holes in reality, focused into beams of otherworldly energy.  While potent, robotic targets and some otherworldly creatures are immune to it.",
+    "price": "9400 USD",
+    "price_postapoc": "60 USD",
+    "weight": "500 g",
+    "difficulty": 6,
+    "installation_data": "AID_bio_rift_focus_projector"
+  },
+  {
+    "id": "bio_essence_surge_cell",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Essence Surge Cell CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "A small generator that converts essence into bionic power, with four separate chambers for different essence types.  Able to hold 5 motes of crystallized essence, 50 motes of standard essence, 150 motes of blood essence, and 1500 motes of dull essence.",
+    "price": "9000 USD",
+    "price_postapoc": "90 USD",
+    "weight": "600 g",
+    "difficulty": 8,
+    "installation_data": "AID_bio_essence_surge_cell"
+  },
+  {
+    "id": "bio_temporal_stimulation",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Temporal Stimulation CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "Using exotic energies the user can distort time to a limited extent, channeled to increase speed and stamina, at the cost of increased fatigue.",
+    "price": "14000 USD",
+    "price_postapoc": "60 USD",
+    "difficulty": 9,
+    "installation_data": "AID_bio_temporal_stimulation"
+  },
+  {
+    "id": "bio_life_sign_suppression",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Life Sign Suppression CBM" },
+    "looks_like": "bio_int_enhancer",
+    "description": "A bionic that creates a disruptive energy that conceals the user's life force, rendering them invisible to the undead, at the cost of steadily sickening the body and attracting hostility from natural wildlife.  Zombies will still be able to hear you, however.",
+    "price": "30000 USD",
+    "price_postapoc": "125 USD",
+    "difficulty": 11,
+    "installation_data": "AID_bio_life_sign_suppression"
+  },
+  {
+    "id": "bio_kinetic_amplifier",
+    "copy-from": "bionic_general_npc_usable",
+    "type": "BIONIC_ITEM",
+    "name": { "str": "Kinetic Amplifier CBM" },
+    "looks_like": "bio_claws",
+    "description": "An implant that can weaponize kinetic energy through anomalous means.  When deployed it serves as an unarmed weapon that can grant a powerful knockback effect that amplifies the user's damage and armor penetration.  As a side effect, its strikes have a chance of releasing a blinding flashbang effect on impact.",
+    "price": "9000 USD",
+    "price_postapoc": "50 USD",
+    "weight": "500 g",
+    "difficulty": 5,
+    "installation_data": "AID_bio_kinetic_amplifier"
+  }
+]

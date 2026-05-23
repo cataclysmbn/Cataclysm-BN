@@ -1,3 +1,4 @@
+#include "coordinates.h"
 #include "enums.h"
 #include "game.h" // IWYU pragma: associated
 
@@ -27,7 +28,7 @@ static const efftype_id effect_harnessed( "harnessed" );
 
 namespace
 {
-auto make_scraping_noise( const tripoint &pos, const int volume ) -> void
+auto make_scraping_noise( const tripoint_bub_ms &pos, const int volume ) -> void
 {
     sounds::sound( pos, volume, sounds::sound_t::movement,
                    _( "a scraping noise." ), true, "misc", "scraping" );
@@ -50,7 +51,7 @@ auto get_grabbed_vehicle_movecost( vehicle *veh ) -> int
 {
     const int str_req = base_str_req( veh );
     const auto &map = get_map();
-    const tripoint &vehpos = veh->global_pos3();
+    const tripoint_bub_ms &vehpos = veh->bub_ms_location();
 
     const auto get_wheel_pos = [&]( const int p ) {
         return vehpos + veh->part( p ).precalc[0];
@@ -59,7 +60,7 @@ auto get_grabbed_vehicle_movecost( vehicle *veh ) -> int
     const auto &wheel_indices = veh->wheelcache;
     return std::accumulate( wheel_indices.begin(), wheel_indices.end(), 0,
     [&]( const int sum, const int p ) {
-        const tripoint wheel_pos = get_wheel_pos( p );
+        const tripoint_bub_ms wheel_pos = get_wheel_pos( p );
         const int mapcost = map.move_cost( wheel_pos, veh );
         const int movecost = str_req / static_cast<int>( wheel_indices.size() ) * mapcost;
 
@@ -98,9 +99,9 @@ auto get_vehicle_str_requirement( vehicle *veh ) -> int
 } // namespace
 
 
-bool game::grabbed_veh_move( const tripoint &dp )
+bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 {
-    const optional_vpart_position grabbed_vehicle_vp = m.veh_at( u.pos() + u.grab_point );
+    const optional_vpart_position grabbed_vehicle_vp = m.veh_at( u.bub_pos() + u.grab_point );
     if( !grabbed_vehicle_vp ) {
         add_msg( m_info, _( "No vehicle at grabbed point." ) );
         u.grab( OBJECT_NONE );
@@ -121,31 +122,31 @@ bool game::grabbed_veh_move( const tripoint &dp )
             return false;
         }
     }
-    const vehicle *veh_under_player = veh_pointer_or_null( m.veh_at( u.pos() ) );
+    const vehicle *veh_under_player = veh_pointer_or_null( m.veh_at( u.bub_pos() ) );
     if( grabbed_vehicle == veh_under_player ) {
         u.grab_point = -dp;
         return false;
     }
 
-    tripoint dp_veh = -u.grab_point;
-    const tripoint prev_grab = u.grab_point;
-    tripoint next_grab = u.grab_point;
+    auto dp_veh = -u.grab_point;
+    const auto prev_grab = u.grab_point;
+    auto next_grab = u.grab_point;
 
     bool zigzag = false;
 
     if( dp == prev_grab ) {
         // We are pushing in the direction of vehicle
         dp_veh = dp;
-    } else if( std::abs( dp.x + dp_veh.x ) != 2 && std::abs( dp.y + dp_veh.y ) != 2 ) {
+    } else if( std::abs( dp.x() + dp_veh.x() ) != 2 && std::abs( dp.y() + dp_veh.y() ) != 2 ) {
         // Not actually moving the vehicle, don't do the checks
         u.grab_point = -( dp + dp_veh );
         return false;
-    } else if( ( dp.x == prev_grab.x || dp.y == prev_grab.y ) &&
-               next_grab.x != 0 && next_grab.y != 0 ) {
+    } else if( ( dp.x() == prev_grab.x() || dp.y() == prev_grab.y() ) &&
+               next_grab.x() != 0 && next_grab.y() != 0 ) {
         // Zig-zag (or semi-zig-zag) pull: player is diagonal to vehicle
         // and moves away from it, but not directly away
-        dp_veh.x = dp.x == -dp_veh.x ? 0 : dp_veh.x;
-        dp_veh.y = dp.y == -dp_veh.y ? 0 : dp_veh.y;
+        dp_veh.x() = dp.x() == -dp_veh.x() ? 0 : dp_veh.x();
+        dp_veh.y() = dp.y() == -dp_veh.y() ? 0 : dp_veh.y();
 
         next_grab = -dp_veh;
         zigzag = true;
@@ -169,7 +170,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
     ///\EFFECT_STR determines ability to drag vehicles
     if( str_req <= str ) {
         if( !grabbed_vehicle->valid_wheel_config() && !grabbed_vehicle->has_sufficient_lift( true ) ) {
-            make_scraping_noise( grabbed_vehicle->global_pos3(), str_req * 2 );
+            make_scraping_noise( grabbed_vehicle->bub_ms_location(), str_req * 2 );
         }
 
         //calculate exertion factor and movement penalty
@@ -195,7 +196,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
     }
 
     std::string blocker_name = _( "errors in movement code" );
-    const auto get_move_dir = [&]( const tripoint & dir, const tripoint & from ) {
+    const auto get_move_dir = [&]( const tripoint_rel_ms & dir, const tripoint_rel_ms & from ) {
         tileray mdir;
 
         mdir.init( dir.xy() );
@@ -205,35 +206,35 @@ bool game::grabbed_veh_move( const tripoint &dp )
 
         // Grabbed part has to stay at distance 1 to the player
         // and in roughly the same direction.
-        const tripoint new_part_pos = grabbed_vehicle->global_pos3() +
-                                      grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
-        const tripoint expected_pos = u.pos() + dp + from;
-        const tripoint actual_dir = expected_pos - new_part_pos;
+        const auto new_part_pos = grabbed_vehicle->bub_ms_location() +
+                                  grabbed_vehicle->part( grabbed_part ).precalc[ 1 ];
+        const auto expected_pos = tripoint_bub_ms( u.bub_pos() ) + dp + from;
+        const tripoint_rel_ms actual_dir = expected_pos - new_part_pos;
 
         grabbed_vehicle->adjust_zlevel( 1, dp );
 
         // Set player location to illegal value so it can't collide with vehicle.
-        const tripoint player_prev = u.pos();
-        u.setpos( tripoint_zero );
+        const auto player_prev = u.bub_pos();
+        u.setpos( tripoint_bub_ms::zero() );
         std::vector<veh_collision> colls;
         const bool failed = grabbed_vehicle->collision( colls, actual_dir, true );
         u.setpos( player_prev );
         if( !colls.empty() ) {
             blocker_name = colls.front().target_name;
         }
-        return failed ? tripoint_zero : actual_dir;
+        return failed ? tripoint_rel_ms::zero() : actual_dir;
     };
 
     // First try the move as intended
     // But if that fails and the move is a zig-zag, try to recover:
     // Try to place the vehicle in the position player just left rather than "flattening" the zig-zag
-    tripoint final_dp_veh = get_move_dir( dp_veh, next_grab );
-    if( final_dp_veh == tripoint_zero && zigzag ) {
+    tripoint_rel_ms final_dp_veh = get_move_dir( dp_veh, next_grab );
+    if( final_dp_veh == tripoint_rel_ms::zero() && zigzag ) {
         final_dp_veh = get_move_dir( -prev_grab, -dp );
         next_grab = -dp;
     }
 
-    if( final_dp_veh == tripoint_zero ) {
+    if( final_dp_veh == tripoint_rel_ms::zero() ) {
         add_msg( _( "The %s collides with %s." ), grabbed_vehicle->name, blocker_name );
         u.grab_point = prev_grab;
         return true;
@@ -253,7 +254,7 @@ bool game::grabbed_veh_move( const tripoint &dp )
 
     for( int p : grabbed_vehicle->wheelcache ) {
         if( one_in( 2 ) ) {
-            tripoint wheel_p = grabbed_vehicle->global_part_pos3( grabbed_part );
+            tripoint_bub_ms wheel_p = grabbed_vehicle->bub_part_location( grabbed_part );
             grabbed_vehicle->handle_trap( wheel_p, p );
         }
     }

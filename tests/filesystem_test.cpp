@@ -1,11 +1,13 @@
 #include "catch/catch.hpp"
 
+#include <algorithm>
 #include <sstream>
 
 #include "filesystem.h"
 #include "fstream_utils.h"
 #include "string_formatter.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "game.h"
 #include "world.h"
 #include "cata_utility.h"
@@ -32,18 +34,18 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     CAPTURE( str_to_hex( s3 ) );
 
     // Make sure there's no interference from e.g. uncleaned old runs
-    std::string base = g->get_active_world()->info->folder_path() + "/fs_test_" +
-                       get_pid_string() + "_" + std::to_string( serial ) + "/";
+    const auto base = g->get_active_world()->info->folder_path() /
+                      ( "fs_test_" + get_pid_string() + "_" + std::to_string( serial ) );
     CAPTURE( base );
     REQUIRE( !dir_exist( base ) );
     REQUIRE( assure_dir_exist( base ) );
     REQUIRE( can_write_to_dir( base ) );
 
-    std::string dir1 = base + s1 + "/";
-    std::string file1_1 = dir1 + s2 + ".json";
-    std::string file1_2 = dir1 + s3 + ".json";
-    std::string dir2 = dir1 + s3 + "/";
-    std::string file2_1 = dir2 + s2 + ".json";
+    const auto dir1 = base / s1;
+    const auto file1_1 = dir1 / ( s2 + ".json" );
+    const auto file1_2 = dir1 / ( s3 + ".json" );
+    const auto dir2 = dir1 / s3;
+    const auto file2_1 = dir2 / ( s2 + ".json" );
 
     CAPTURE( dir1 );
     CAPTURE( file1_1 );
@@ -92,22 +94,22 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
 
     // Copying file
     REQUIRE( write_to_file( file1_1, writer, nullptr ) );
-    REQUIRE( copy_file( file1_1, file1_2 ) );
+    REQUIRE( ::copy_file( file1_1, file1_2 ) );
     REQUIRE( file_exist( file1_2 ) );
-    REQUIRE( copy_file( file1_1, file1_2 ) );
+    REQUIRE( ::copy_file( file1_1, file1_2 ) );
     REQUIRE( remove_file( file1_2 ) );
     REQUIRE( write_to_file( file1_2, writer2, nullptr ) );
-    REQUIRE( copy_file( file1_2, file1_1 ) );
+    REQUIRE( ::copy_file( file1_2, file1_1 ) );
     REQUIRE( remove_file( file1_2 ) );
     REQUIRE( read_from_file( file1_1, reader ) );
     CHECK( readbuf == writebuf2 );
     REQUIRE( assure_dir_exist( dir2 ) );
-    REQUIRE( !copy_file( file1_2, file1_1 ) );
-    REQUIRE( !copy_file( file1_1, dir2 ) );
-    REQUIRE( !copy_file( dir2, file1_2 ) );
+    REQUIRE( !::copy_file( file1_2, file1_1 ) );
+    REQUIRE( !::copy_file( file1_1, dir2 ) );
+    REQUIRE( !::copy_file( dir2, file1_2 ) );
     REQUIRE( remove_file( file1_1 ) );
     REQUIRE( remove_directory( dir2 ) );
-    REQUIRE( !copy_file( file1_1, file1_2 ) );
+    REQUIRE( !::copy_file( file1_1, file1_2 ) );
 
     // Checking if can write to dir
     REQUIRE( can_write_to_dir( dir1 ) );
@@ -121,18 +123,18 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     REQUIRE( assure_dir_exist( dir2 ) );
     REQUIRE( write_to_file( file2_1, writer, nullptr ) );
     {
-        std::vector<std::string> got = get_files_from_path(
-                                           ".json",
-                                           base,
-                                           true,
-                                           true
-                                       );
-        std::vector<std::string> exp = {
+        auto got = get_files_from_path(
+                       ".json",
+                       base,
+                       true,
+                       true
+                   );
+        std::vector<fs::path> exp = {
             file1_1,
             file1_2,
             file2_1,
         };
-        const auto comparator = []( const std::string & a, const std::string & b ) {
+        const auto comparator = []( const fs::path & a, const fs::path & b ) {
             // We don't care about lexicographic order here, just the data order
             // NOLINTNEXTLINE(cata-use-localized-sorting)
             return a > b;
@@ -164,6 +166,38 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
 static std::string conv_str( const char8_t *c )
 {
     return reinterpret_cast<const char *>( c );
+}
+
+static auto path_from_u8( const char8_t *c ) -> fs::path
+{
+    return fs::path( std::u8string( c ) );
+}
+
+TEST_CASE( "filesystem_scan_unicode_paths_without_narrow_conversion",
+           "[filesystem][windows][9013]" )
+{
+    const auto base = g->get_active_world()->info->folder_path() /
+                      ( "fs_issue_9013_" + get_pid_string() );
+    const auto unicode_dir = base / path_from_u8( u8"💥-issue-9013-파일" );
+    const auto marker = unicode_dir / "tile_config.json";
+    const auto writer = []( std::ostream & s ) { s << "{}"; };
+
+    REQUIRE( !dir_exist( base ) );
+    REQUIRE( assure_dir_exist( base ) );
+    REQUIRE( assure_dir_exist( unicode_dir ) );
+    REQUIRE( write_to_file( marker, writer, nullptr ) );
+
+    auto files = std::vector<fs::path> {};
+    CHECK_NOTHROW( files = get_files_from_path( ".json", base, true, true ) );
+    CHECK( std::ranges::find( files, marker ) != files.end() );
+
+    auto dirs = std::vector<fs::path> {};
+    CHECK_NOTHROW( dirs = get_directories_with( "tile_config.json", base, true ) );
+    CHECK( std::ranges::find( dirs, unicode_dir ) != dirs.end() );
+    CHECK( cata_files::path_to_generic_utf8( marker ).find( conv_str( u8"💥-issue-9013-파일" ) ) !=
+           std::string::npos );
+
+    REQUIRE( remove_tree( base ) );
 }
 
 TEST_CASE( "filesystem_ascii", "[filesystem]" )

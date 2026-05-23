@@ -363,8 +363,7 @@ void diary::kill_changes()
             bool flag = true;
             for( const std::string &npc_name : curr_page->npc_kills ) {
 
-                if( ( std::find( prev_npc_kills.begin(), prev_npc_kills.end(),
-                                 npc_name ) == prev_npc_kills.end() ) ) {
+                if( !std::ranges::contains( prev_npc_kills, npc_name ) ) {
                     if( flag ) {
                         add_to_change_list( _( "NPC killed:" ) );
                         flag = false;
@@ -711,7 +710,7 @@ void diary::new_page()
     page->npc_kills = g->get_kill_tracker().npc_kills;
     avatar *u = &get_avatar();
 
-    page->overmap_position_str = overmap_ui::fmt_omt_coords( u->global_omt_location() );
+    page->overmap_position_str = overmap_ui::fmt_omt_coords( u->abs_omt_pos() );
     page->mission_completed = mission::to_uid_vector( u->get_completed_missions() );
     page->mission_active = mission::to_uid_vector( u->get_active_missions() );
     page->mission_failed = mission::to_uid_vector( u->get_failed_missions() );
@@ -748,10 +747,10 @@ void diary::delete_page()
 void diary::export_to_md( bool last_export )
 {
     std::ofstream myfile;
-    std::string path = last_export
-                       ? PATH_INFO::memorialdir()
-                       : ( g->get_active_world() ? g->get_active_world()->info->folder_path() : PATH_INFO::savedir() );
-    path += "/" + owner + "s_diary.md";
+    auto path = last_export
+                ? PATH_INFO::memorialdir()
+                : ( g->get_active_world() ? g->get_active_world()->info->folder_path() : PATH_INFO::savedir() );
+    path /= owner + "s_diary.md";
     myfile.open( path );
 
     for( int i = 0; i < static_cast<int>( pages.size() ); i++ ) {

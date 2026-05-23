@@ -27,12 +27,15 @@
 #include "veh_type.h"
 #include "vpart_position.h"
 #include "weather.h"
+#include "wheel_dimensions.h"
 
 static const itype_id fuel_type_battery( "battery" );
 static const itype_id fuel_type_none( "null" );
 
 static const itype_id itype_battery( "battery" );
 static const itype_id itype_muscle( "muscle" );
+
+static const flag_id flag_NO_PAINT( "NO_PAINT" );
 
 /*-----------------------------------------------------------------------------
  *                              VEHICLE_PART
@@ -46,7 +49,8 @@ vehicle_part::vehicle_part( vehicle *veh )
 vehicle_part::vehicle_part()
     : id( vpart_id::NULL_ID() ), base( new fake_item_location() ), items( new fake_item_location() ) {}
 
-vehicle_part::vehicle_part( const vpart_id &vp, point dp, detached_ptr<item> &&obj, vehicle *veh )
+vehicle_part::vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp,
+                            detached_ptr<item> &&obj, vehicle *veh )
     : mount( dp ), id( vp ),
       base( new vehicle_base_item_location( veh, hack_id ) ),
       items( new vehicle_item_location( veh, hack_id ) )
@@ -95,6 +99,7 @@ void vehicle_part::copy_static_from( const vehicle_part &source )
     ammo_pref = source.ammo_pref;
     crew_id = source.crew_id;
     hack_id = source.hack_id;
+    part_color_ = source.part_color_;
 }
 
 //TODO!: This is a bit scuffed and will be until vehicles are game objects.
@@ -157,16 +162,16 @@ detached_ptr<item> vehicle_part::properties_to_item() const
             tmp->reset_cable();
         } else {
             if( data->intermap_connection() ) {
-                if( data->con1.point.raw() == target.first ) {
+                if( data->con1.point == target.first ) {
                     data->unset_con2( tmp.get() );
-                } else if( data->con2.point.raw() == target.first ) {
+                } else if( data->con2.point == target.first ) {
                     data->unset_con1( tmp.get() );
                 } else {
                     tmp->reset_cable();
                 }
                 if( !has_flag( targets_grid ) ) {
                     map &here = get_map();
-                    const tripoint local_pos = here.getlocal( target.first );
+                    const auto local_pos = here.abs_to_bub( target.first );
                     if( !here.veh_at( local_pos ) ) {
                         // That vehicle ain't there no more.
                         tmp->set_flag( flag_NO_DROP );
@@ -203,7 +208,8 @@ std::string vehicle_part::name( bool with_prefix ) const
         res.insert( 0, string_format( _( "%2.1fL " ), base->engine_displacement() / 100.0 ) );
 
     } else if( wheel_diameter() > 0 ) {
-        res.insert( 0, string_format( _( "%d\" " ), wheel_diameter() ) );
+        res.insert( 0, string_format( _( "%s " ),
+                                      wheel_dimensions::format_for_display( wheel_diameter() ).c_str() ) );
     }
 
     if( base->is_faulty() ) {
@@ -379,7 +385,7 @@ void vehicle_part::ammo_unset()
     }
 }
 
-int vehicle_part::ammo_consume( int qty, const tripoint &pos )
+int vehicle_part::ammo_consume( int qty, const tripoint_bub_ms &pos )
 {
     if( is_tank() && !base->contents.empty() ) {
         const int res = std::min( ammo_remaining(), qty );
@@ -461,7 +467,7 @@ bool vehicle_part::can_reload( const item *obj ) const
     return ammo_remaining() < ammo_capacity();
 }
 
-void vehicle_part::process_contents( const tripoint &pos, const bool e_heater )
+void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_heater )
 {
     // for now we only care about processing food containers since things like
     // fuel don't care about temperature yet
@@ -515,13 +521,13 @@ int vehicle_part::wheel_area() const
     return info().wheel_area();
 }
 
-/** Get wheel diameter (inches) or return 0 if part is not wheel */
+/** Get wheel diameter (millimeters) or return 0 if part is not wheel */
 int vehicle_part::wheel_diameter() const
 {
     return base->is_wheel() ? base->type->wheel->diameter : 0;
 }
 
-/** Get wheel width (inches) or return 0 if part is not wheel */
+/** Get wheel width (millimeters) or return 0 if part is not wheel */
 int vehicle_part::wheel_width() const
 {
     return base->is_wheel() ? base->type->wheel->width : 0;
@@ -557,7 +563,7 @@ void vehicle_part::unset_crew()
     crew_id = character_id();
 }
 
-void vehicle_part::reset_target( const tripoint &pos )
+void vehicle_part::reset_target( const tripoint_abs_ms &pos )
 {
     target.first = pos;
     target.second = pos;
@@ -661,8 +667,8 @@ bool vehicle::can_enable( const vehicle_part &pt, bool alert ) const
     }
 
     // Disallow running a planter underground for now
-    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.pos() ) ||
-            global_pos3().z < 0 ) ) {
+    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.abs_pos() ) ||
+            bub_ms_location().z() < 0 ) ) {
         if( alert ) {
             add_msg( m_bad, _( "It is too cold to plant anything now." ) );
         }
@@ -711,4 +717,41 @@ std::string vehicle_part::carried_name() const
         return std::string();
     }
     return carry_names.top().substr( name_offset );
+}
+
+RGBColorPair vehicle_part::get_color( bool ignore_default ) const
+{
+    if( ignore_default ) {
+        return part_color_;
+    }
+
+    const auto [def_bg, def_fg] = info().default_color;
+    const auto [set_bg, set_fg] = part_color_;
+    return RGBColorPair{
+        set_bg == RGBColor{} ? def_bg : set_bg,
+        set_fg == RGBColor{} ? def_fg : set_fg
+    };
+}
+
+void vehicle_part::set_color( const RGBColor &bg, const RGBColor &fg )
+{
+    part_color_ = RGBColorPair{
+        .bg = bg,
+        .fg = fg
+    };
+
+    if( base->type->has_flag( flag_NO_PAINT ) ) {
+        return;
+    }
+
+    auto &vars = base->item_vars();
+    if( bg == fg ) {
+        vars.set<RGBColor>( TINT_COLOR_VAR_NAME, bg );
+        vars.erase( TINT_COLOR_FG_VAR_NAME );
+        vars.erase( TINT_COLOR_BG_VAR_NAME );
+    } else {
+        vars.erase( TINT_COLOR_VAR_NAME );
+        vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, fg );
+        vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, bg );
+    }
 }

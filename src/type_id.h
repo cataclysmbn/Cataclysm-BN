@@ -193,6 +193,9 @@ using quality_id = string_id<quality>;
 class VehicleGroup;
 using vgroup_id = string_id<VehicleGroup>;
 
+class VehiclePalette;
+using vpalette_id = string_id<VehiclePalette>;
+
 class vitamin;
 using vitamin_id = string_id<vitamin>;
 

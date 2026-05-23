@@ -1,0 +1,98 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_MARLOSS_VOICE",
+    "responses": [
+      {
+        "text": "For what purpose do you aid these interlopers?",
+        "topic": "TALK_MARLOSS_VOICE_INTERLOPERS",
+        "condition": {
+          "and": [
+            { "not": { "u_has_trait_flag": "mycus" } },
+            {
+              "u_has_any_trait": [ "THRESH_VEIL", "PROF_CHALICE", "PROF_CHALICE2", "PROF_CLEANSINGFLAME", "PROF_CLEANSINGFLAME2" ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_MARLOSS_VOICE_INTERLOPERS",
+    "dynamic_line": "I do not know what you mean.  We seek harmony, and greater understanding of the world.  We have found peace here.",
+    "responses": [
+      {
+        "text": "You are dangerously ignorant of the threat this place presents, and their intent.",
+        "topic": "TALK_MARLOSS_VOICE_INTERLOPERS_PARAGON",
+        "condition": { "u_has_trait": "THRESH_VEIL" }
+      },
+      {
+        "text": "These things do not belong in this world.",
+        "topic": "TALK_MARLOSS_VOICE_INTERLOPERS_CHALICE",
+        "condition": { "u_has_any_trait": [ "PROF_CHALICE", "PROF_CHALICE2" ] }
+      },
+      {
+        "text": "\"Any otherworldly monster must be returned to its true domain, living or dead.\"  That is my duty.  Do not interfere.",
+        "topic": "TALK_MARLOSS_VOICE_INTERLOPERS_CLEANSINGFLAME",
+        "condition": { "u_has_trait": "PROF_CLEANSINGFLAME" }
+      },
+      {
+        "text": "These things are an infection that must be cured.",
+        "topic": "TALK_MARLOSS_VOICE_INTERLOPERS_CLEANSINGFLAME2",
+        "condition": { "u_has_trait": "PROF_CLEANSINGFLAME2" }
+      },
+      { "text": "Then enjoy your peace while it lasts.  I've nothing more to say to you.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_MARLOSS_VOICE_INTERLOPERS_PARAGON",
+    "dynamic_line": "This place is our shelter and nourishment, our calm in the storm.  But what of your intent?  I am a simple priest, and I wish no harm upon you.",
+    "responses": [
+      {
+        "text": "[ATTACK] You are their slave.  My master wills that I free you through death.",
+        "topic": "TALK_DONE",
+        "effect": "hostile"
+      },
+      {
+        "text": "In time, you will see the betrayal these things inflict.  Remember that I gave you fair warning.",
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_MARLOSS_VOICE_INTERLOPERS_CHALICE",
+    "dynamic_line": "If they are truly of another world, then this is a blessing.  One only needs to have an open mind and heart.",
+    "responses": [
+      { "text": "[ATTACK] Enough.  May He forge your chains.", "topic": "TALK_DONE", "effect": "hostile" },
+      {
+        "text": "And you need to open your eyes.  I will let you live, so that one day you will see the truth.",
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_MARLOSS_VOICE_INTERLOPERS_CLEANSINGFLAME",
+    "//": "Corruption of a couple lines translated from the Orphic Hymn To Nature",
+    "dynamic_line": "\"All things are of nature, born from the mother who shines upon both finite and infinite.\"  Would you truly wish harm upon the blessing we have been given?",
+    "responses": [
+      { "text": "[ATTACK] You will burn with them all the same, profligate.", "topic": "TALK_DONE", "effect": "hostile" },
+      {
+        "text": "My quarrel is not with you.  I hope that you will learn the true danger that lurks here.",
+        "topic": "TALK_DONE"
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_MARLOSS_VOICE_INTERLOPERS_CLEANSINGFLAME2",
+    "dynamic_line": "This is a blessing, not an infection.  In such troubled times, we give thanks for the blessing that shelters us.",
+    "responses": [
+      { "text": "[ATTACK] It is clearly already too late for you, then.  Die.", "topic": "TALK_DONE", "effect": "hostile" },
+      { "text": "Then I will leave you to your delusions.", "topic": "TALK_DONE" }
+    ]
+  }
+]
