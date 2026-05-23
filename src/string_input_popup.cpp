@@ -352,7 +352,6 @@ int64_t string_input_popup::query_int64_t( const bool loop, const bool draw_only
     return std::atoll( query_string( loop, draw_only ).c_str() );
 }
 
-[[clang::optnone]]
 const std::string &string_input_popup::query_string( const bool loop, const bool draw_only,
         const bool printable )
 {
@@ -594,8 +593,6 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
     _text = ret.str();
     return _text;
 }
-
-
 
 string_input_popup &string_input_popup::window( const catacurses::window &w, point start,
         int endx )
