@@ -2463,7 +2463,7 @@ void options_manager::add_options_performance()
                            "Higher values reduce redundant ray traces at the cost of more RAM.  "
                            "Reduce if memory is tight; increase on machines with spare RAM and many "
                            "on-screen creatures." ),
-         1000, 500000, is_android ? 64000 : 128000 );
+         1024, 4194304, is_android ? 65536 : 262144 );
 
     add_empty_line();
 
@@ -2513,11 +2513,6 @@ void options_manager::add_options_performance()
                                "Disable on machines where the ~70 k-cell work unit is too small to "
                                "amortize dispatch latency.  Requires restart." ),
              true );
-        add( "LAZY_BORDER", page_id,
-             translate_marker( "Pre-load Border" ),
-             translate_marker( "Preload a one-overmap-tile border around the reality bubble over several turns.  "
-                               "This reduces map-shift hitches at the cost of extra per-turn loading work." ),
-             !is_android );
     } );
 
     get_option( "THREAD_POOL_WORKERS" ).setPrerequisite( "MULTITHREADING_ENABLED" );
@@ -2525,7 +2520,6 @@ void options_manager::add_options_performance()
     get_option( "MONSTER_PLAN_CHUNK_SIZE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_MAP_CACHE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_SCENT_UPDATE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
-    get_option( "LAZY_BORDER" ).setPrerequisite( "MULTITHREADING_ENABLED" );
 
     add_empty_line();
 
@@ -2540,6 +2534,12 @@ void options_manager::add_options_performance()
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. " ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "LAZY_BORDER", page_id,
+             translate_marker( "Pre-load Border" ),
+             translate_marker( "Preload a one-overmap-tile border around the reality bubble over several turns.  "
+                               "This reduces map-shift hitches at the cost of extra per-turn loading work and    "
+                               "some additional memory usage." ),
+             !is_android );
         add( "ACTIVITY_MOBILE_BUBBLE_SIZE", page_id,
              translate_marker( "Mobile Activity Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is performing a "
