@@ -2,14 +2,16 @@
 
 #include <algorithm>
 
+#include "path_utils.h"
+
 void ensure_unifont_loaded( std::vector<std::string> &font_list )
 {
     if( !std::ranges::contains( font_list, "unifont" ) ) {
-        font_list.emplace_back( PATH_INFO::fontdir() + "unifont.ttf" );
+        font_list.emplace_back( cata_files::path_to_generic_utf8( PATH_INFO::fontdir() / "unifont.ttf" ) );
     }
 }
 
-void font_loader::load_throws( const std::string &path )
+void font_loader::load_throws( const fs::path &path )
 {
     try {
         cata_ifstream stream = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( path ) );
@@ -36,18 +38,19 @@ void font_loader::load_throws( const std::string &path )
         ensure_unifont_loaded( overmap_typeface );
 
     } catch( const std::exception &err ) {
-        throw std::runtime_error( std::string( "loading font settings from " ) + path + " failed: " +
+        throw std::runtime_error( std::string( "loading font settings from " ) +
+                                  cata_files::path_to_generic_utf8( path ) + " failed: " +
                                   err.what() );
     }
 }
 
 void font_loader::load()
 {
-    const std::string user_fontconfig = PATH_INFO::user_fontconfig();
-    const std::string fontconfig = PATH_INFO::fontconfig();
+    const auto user_fontconfig = PATH_INFO::user_fontconfig();
+    const auto fontconfig = PATH_INFO::fontconfig();
     bool try_user = true;
     if( !file_exist( user_fontconfig ) ) {
-        if( !copy_file( fontconfig, user_fontconfig ) ) {
+        if( !::copy_file( fontconfig, user_fontconfig ) ) {
             try_user = false;
             DebugLog( DL::Error, DC::SDL ) << "failed to create user font config file "
                                            << user_fontconfig;

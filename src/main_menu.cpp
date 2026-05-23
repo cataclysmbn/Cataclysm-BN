@@ -37,6 +37,7 @@
 #include "output.h"
 #include "overmapbuffer.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "pldata.h"
 #include "popup.h"
 #include "safemode_ui.h"
@@ -402,7 +403,7 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
     display_sub_menu( iSel, p_offset + point( offsets[iSel], offset.y - 3 ), sel_line );
 }
 
-std::vector<std::string> main_menu::load_file( const std::string &path,
+std::vector<std::string> main_menu::load_file( const fs::path &path,
         const std::string &alt_text ) const
 {
     std::vector<std::string> result;
@@ -456,7 +457,8 @@ void main_menu::init_windows()
 void main_menu::init_strings()
 {
     // ASCII Art
-    mmenu_title = load_file( PATH_INFO::title( current_holiday ), _( "Cataclysm: Bright Nights" ) );
+    mmenu_title = load_file( PATH_INFO::title( current_holiday ),
+                             _( "Cataclysm: Bright Nights" ) );
     // MOTD
     auto motd = load_file( PATH_INFO::motd(), _( "No message today." ) );
 
@@ -593,11 +595,9 @@ void main_menu::load_char_templates()
 {
     templates.clear();
 
-    for( std::string path : get_files_from_path( ".template", PATH_INFO::templatedir(), false,
+    for( const auto &path : get_files_from_path( ".template", PATH_INFO::templatedir(), false,
             true ) ) {
-        path.erase( path.find( ".template" ), std::string::npos );
-        path.erase( 0, path.find_last_of( "\\/" ) + 1 );
-        templates.push_back( path );
+        templates.push_back( cata_files::path_to_generic_utf8( path.stem() ) );
     }
     std::sort( templates.begin(), templates.end(), localized_compare );
     std::reverse( templates.begin(), templates.end() );
@@ -918,7 +918,7 @@ bool main_menu::new_character_tab()
                               .query().action;
             if( res == "DELETE" &&
                 query_yn( _( "Are you sure you want to delete %s?" ), templates[opt_val] ) ) {
-                const auto path = PATH_INFO::templatedir() + templates[opt_val] + ".template";
+                const auto path = PATH_INFO::templatedir() / ( templates[opt_val] + ".template" );
                 if( !remove_file( path ) ) {
                     popup( _( "Sorry, something went wrong." ) );
                 } else {

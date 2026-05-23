@@ -153,6 +153,7 @@
 #include "overmapbuffer.h"
 #include "panels.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "pathfinding.h"
 #include "pickup.h"
 #include "player.h"
@@ -263,6 +264,23 @@ static void init_bubble_config( int size )
 static void init_bubble_config()
 {
     init_bubble_config( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
+}
+
+static auto discard_monster_map_for_loaded_bubble( map &here,
+        const std::string &dimension_id ) -> void
+{
+    const auto origin = here.get_abs_sub();
+    const auto zmin = here.has_zlevels() ? -OVERMAP_DEPTH : origin.z();
+    const auto zmax = here.has_zlevels() ? OVERMAP_HEIGHT : origin.z();
+    const auto z_range = std::views::iota( zmin, zmax + 1 );
+    const auto xy_range = std::views::iota( 0, g_mapsize );
+    std::ranges::for_each(
+        cata::views::cartesian_product( z_range, xy_range, xy_range ),
+    [&]( auto tup ) {
+        const auto [gz, gx, gy] = tup;
+        get_overmapbuffer( dimension_id ).discard_monster_map(
+            tripoint_abs_sm{ origin.x() + gx, origin.y() + gy, gz } );
+    } );
 }
 
 static constexpr int DANGEROUS_PROXIMITY = 5;
@@ -2127,6 +2145,10 @@ bool game::do_turn()
     // Finally, clear pathfinding cache
     Pathfinding::clear_d_maps();
 
+    // Drain the OS input buffer so key-repeat events generated during world
+    // processing don't accumulate and drive movement after key release.
+    inp_mngr.pump_events();
+
     return false;
 }
 
@@ -3043,17 +3065,19 @@ void game::win_screen()
 
 void game::move_save_to_graveyard( const std::string &dirname )
 {
-    const std::string save_dir           = get_active_world()->info->folder_path();
-    const std::string graveyard_dir      = PATH_INFO::graveyarddir();
-    const std::string graveyard_save_dir = graveyard_dir + dirname + "/";
-    const std::string &prefix            = base64_encode( u.get_save_id() ) + ".";
+    const auto save_dir = get_active_world()->info->folder_path();
+    const auto graveyard_dir = PATH_INFO::graveyarddir();
+    const auto graveyard_save_dir = graveyard_dir / dirname;
+    const auto prefix = base64_encode( u.get_save_id() ) + ".";
 
     if( !assure_dir_exist( graveyard_dir ) ) {
-        debugmsg( "could not create graveyard path '%s'", graveyard_dir );
+        debugmsg( "could not create graveyard path '%s'",
+                  cata_files::path_to_generic_utf8( graveyard_dir ) );
     }
 
     if( !assure_dir_exist( graveyard_save_dir ) ) {
-        debugmsg( "could not create graveyard path '%s'", graveyard_save_dir );
+        debugmsg( "could not create graveyard path '%s'",
+                  cata_files::path_to_generic_utf8( graveyard_save_dir ) );
     }
 
     // Close the player SQLite handle before moving files — on Windows, MoveFileExW
@@ -3062,26 +3086,28 @@ void game::move_save_to_graveyard( const std::string &dirname )
 
     const auto save_files = get_files_from_path( prefix, save_dir );
     if( save_files.empty() ) {
-        debugmsg( "could not find save files in '%s'", save_dir );
+        debugmsg( "could not find save files in '%s'", cata_files::path_to_generic_utf8( save_dir ) );
     }
 
     for( const auto &src_path : save_files ) {
-        const std::string dst_path = graveyard_save_dir +
-                                     src_path.substr( src_path.rfind( '/' ) + 1, std::string::npos );
+        const auto dst_path = graveyard_save_dir / src_path.filename();
 
         if( rename_file( src_path, dst_path ) ) {
             continue;
         }
 
         // rename() fails across filesystems (EXDEV); fall back to copy then delete
-        if( copy_file( src_path, dst_path ) ) {
+        if( ::copy_file( src_path, dst_path ) ) {
             if( !remove_file( src_path ) ) {
-                debugmsg( "could not remove file '%s' after copying to graveyard", src_path );
+                debugmsg( "could not remove file '%s' after copying to graveyard",
+                          cata_files::path_to_generic_utf8( src_path ) );
             }
             continue;
         }
 
-        debugmsg( "could not move file '%s' to graveyard '%s'", src_path, dst_path );
+        debugmsg( "could not move file '%s' to graveyard '%s'",
+                  cata_files::path_to_generic_utf8( src_path ),
+                  cata_files::path_to_generic_utf8( dst_path ) );
     }
 }
 
@@ -3153,7 +3179,9 @@ bool game::load( const save_t &name )
     saving_blocked_by_failed_load = true;
     auto save_json_valid = false;
     const auto validate_save = [&]( std::istream & fin ) { save_json_valid = validate_save_json( fin ); };
-    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, validate_save ) ||
+    auto save_path = name.base_path();
+    save_path += SAVE_EXTENSION;
+    if( !get_active_world()->read_from_file( save_path, validate_save ) ||
         !save_json_valid ) {
         return false;
     }
@@ -3181,7 +3209,7 @@ bool game::load( const save_t &name )
     fire_loader.clear( submap_loader );
     auto unserialized = false;
     const auto load_save = [&]( std::istream & fin ) { unserialized = unserialize( fin ); };
-    if( !get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION, load_save ) ||
+    if( !get_active_world()->read_from_file( save_path, load_save ) ||
         !unserialized ) {
         return false;
     }
@@ -3234,11 +3262,15 @@ bool game::load( const save_t &name )
 
     get_weather().nextweather = calendar::turn;
 
-    get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION_LOG,
+    auto save_log_path = name.base_path();
+    save_log_path += SAVE_EXTENSION_LOG;
+    get_active_world()->read_from_file( save_log_path,
                                         std::bind( &memorial_logger::load, &memorial(), _1 ), true );
 
 #if defined(__ANDROID__)
-    get_active_world()->read_from_file( name.base_path() + SAVE_EXTENSION_SHORTCUTS,
+    auto save_shortcuts_path = name.base_path();
+    save_shortcuts_path += SAVE_EXTENSION_SHORTCUTS;
+    get_active_world()->read_from_file( save_shortcuts_path,
                                         std::bind( &game::load_shortcuts, this, _1 ), true );
 #endif
 
@@ -3271,24 +3303,18 @@ bool game::load( const save_t &name )
     // setup() already called init_bubble_config() + m.resize().
     init_bubble_config();
     reality_bubble_radius_ = g_half_mapsize;
-    update_map( u );
-    // Discard stale monster_map entries for submaps inside the initial bubble.
-    // Old saves can have duplicates (same monster in critter_tracker and monster_map);
-    // discarding in-bubble entries prevents visible duplication on load.
-    {
-        const tripoint &origin = m.get_abs_sub().raw();
-        const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : origin.z;
-        const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : origin.z;
-        const auto z_range = std::views::iota( zmin, zmax + 1 );
-        const auto xy_range = std::views::iota( 0, g_mapsize );
-        std::ranges::for_each(
-            cata::views::cartesian_product( z_range, xy_range, xy_range ),
-        [&]( auto tup ) {
-            auto [gz, gx, gy] = tup;
-            get_overmapbuffer( current_dimension_id_ ).discard_monster_map(
-                tripoint_abs_sm{ origin.x + gx, origin.y + gy, gz } );
-        } );
+    // Old saves can have duplicate authority for in-bubble monsters: one copy in
+    // active_monsters and another in overmap monster_map.  Purge the stale overmap
+    // buckets before update_map() gets a chance to spawn newly-entered submaps.
+    discard_monster_map_for_loaded_bubble( m, current_dimension_id_ );
+    // Repair active monsters left outside every loaded submap by older broken saves.
+    for( auto &critter : all_monsters() ) {
+        if( m.get_submap_at( critter.bub_pos() ) == nullptr ) {
+            despawn_monster( critter );
+        }
     }
+    update_map( u );
+    discard_monster_map_for_loaded_bubble( m, current_dimension_id_ );
     m.build_floor_cache( get_levz() );
     for( auto &e : u.inv_dump() ) {
         e->set_owner( g->u );
@@ -3522,22 +3548,23 @@ std::vector<std::string> game::list_active_saves()
  */
 void game::write_memorial_file( const std::string &filename, std::string sLastWords )
 {
-    const std::string &memorial_dir = PATH_INFO::memorialdir();
-    const std::string &memorial_active_world_dir = memorial_dir +
-            world_generator->active_world->info->world_name + "/";
+    const auto memorial_dir = PATH_INFO::memorialdir();
+    const auto memorial_active_world_dir = memorial_dir /
+                                           world_generator->active_world->info->world_name;
 
     //Check if both dirs exist. Nested assure_dir_exist fails if the first dir of the nested dir does not exist.
     if( !assure_dir_exist( memorial_dir ) ) {
-        debugmsg( "Could not make '%s' directory", memorial_dir );
+        debugmsg( "Could not make '%s' directory", cata_files::path_to_generic_utf8( memorial_dir ) );
         return;
     }
 
     if( !assure_dir_exist( memorial_active_world_dir ) ) {
-        debugmsg( "Could not make '%s' directory", memorial_active_world_dir );
+        debugmsg( "Could not make '%s' directory",
+                  cata_files::path_to_generic_utf8( memorial_active_world_dir ) );
         return;
     }
 
-    std::string path = memorial_active_world_dir + filename + ".txt";
+    const auto path = memorial_active_world_dir / ( filename + ".txt" );
 
     write_to_file( path, [&]( std::ostream & fout ) {
         memorial().write( fout, sLastWords );
@@ -9073,7 +9100,7 @@ bool game::take_screenshot( const std::string &path ) const
 bool game::take_screenshot() const
 {
     // check that the current '<world>/screenshots' directory exists
-    std::string map_directory = get_active_world()->info->folder_path() + "/screenshots/";
+    const auto map_directory = get_active_world()->info->folder_path() / "screenshots";
     assure_dir_exist( map_directory );
 
     // build file name: <map_dir>/screenshots/[<character_name>]_<date>.png
@@ -9084,11 +9111,12 @@ bool game::take_screenshot() const
     const std::string tmp_file_name = string_format( "[%s]_%s.png", get_player_character().get_name(),
                                       date_buffer.str() );
     const std::string file_name = ensure_valid_file_name( tmp_file_name );
-    const std::string current_file_path = map_directory + file_name;
+    const auto current_file_path = map_directory / file_name;
 
     // Take a screenshot of the viewport.
-    if( take_screenshot( current_file_path ) ) {
-        popup( _( "Successfully saved your screenshot to: %s" ), map_directory );
+    if( take_screenshot( cata_files::path_to_generic_utf8( current_file_path ) ) ) {
+        popup( _( "Successfully saved your screenshot to: %s" ),
+               cata_files::path_to_generic_utf8( map_directory ) );
         return true;
     } else {
         popup( _( "An error occurred while trying to save the screenshot." ) );
@@ -11883,10 +11911,10 @@ void game::place_player_overmap( const tripoint_abs_omt &om_dest )
         project_to<coords::sm>( om_dest ).raw() + point( -g_half_mapsize, -g_half_mapsize ) );
     const tripoint_bub_ms player_pos( u.bub_pos().xy(), map_sm_pos.z() );
     load_map( map_sm_pos );
-    m.spawn_monsters( true ); // Static monsters
     // update weather now as it could be different on the new location
     get_weather().nextweather = calendar::turn;
     place_player( player_pos );
+    m.spawn_monsters( true ); // Static monsters
     update_overmap_seen();
     // load_npcs() scans around the player's absolute position, updated by place_player().
     load_npcs();
