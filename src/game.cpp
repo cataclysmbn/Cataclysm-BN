@@ -733,14 +733,13 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
         submap_loader.update_request( reality_bubble_handle_, bubble_center );
     }
 
-    // Lazy border: 2-submap (one omt) strip kept in memory but not simulated.
-    // The cached option currently force-disables this path.
+    // Lazy border: one OMT-space layer kept in memory but not simulated.
     if( lazy_border_enabled ) {
         if( lazy_border_handle_ == 0 ) {
             lazy_border_handle_ = submap_loader.request_load(
                                       load_request_source::lazy_border,
                                       new_dim_id, bubble_center,
-                                      reality_bubble_radius_ + 2 );
+                                      reality_bubble_radius_ );
         } else {
             submap_loader.update_request( lazy_border_handle_, bubble_center );
         }
@@ -13865,7 +13864,7 @@ point_rel_sm game::update_map( int &x, int &y )
                 lazy_border_handle_ = submap_loader.request_load(
                                           load_request_source::lazy_border,
                                           m.get_bound_dimension(), new_center,
-                                          reality_bubble_radius_ + 2 );
+                                          reality_bubble_radius_ );
             } else {
                 submap_loader.update_request( lazy_border_handle_, new_center );
             }
