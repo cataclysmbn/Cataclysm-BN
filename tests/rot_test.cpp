@@ -44,11 +44,12 @@ static auto make_storage( const vpart_id &storage_part,
                           const bool enabled ) -> vehicle_storage_fixture
 {
     clear_all_state();
-    calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+    calendar::turn = calendar::start_of_cataclysm + 91_days;
     set_map_temperature( get_weather(), 18_c );
 
     auto &here = get_map();
     const auto vehicle_pos = tripoint_bub_ms( 60, 60, 0 );
+    here.set_temperature( vehicle_pos, 100 );
     auto *veh = here.add_vehicle( vproto_id( "none" ), vehicle_pos, 0_degrees, 0, 0 );
     REQUIRE( veh != nullptr );
     REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ), true ) >= 0 );
@@ -91,7 +92,7 @@ static auto process_storage_for( const time_duration duration ) -> void
 static auto prepare_map_storage_test() -> void
 {
     clear_all_state();
-    calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+    calendar::turn = calendar::start_of_cataclysm + 91_days;
     set_map_temperature( get_weather(), 18_c );
 }
 
@@ -345,6 +346,7 @@ TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )
     SECTION( "powered freezer furniture preserves food" ) {
         prepare_map_storage_test();
         const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
         get_map().furn_set( pos, f_test_minifreezer_on );
         add_sashimi_to_map( pos );
 
@@ -359,6 +361,7 @@ TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )
     SECTION( "powered fridge furniture partially protects food" ) {
         prepare_map_storage_test();
         const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
         get_map().furn_set( pos, f_test_fridge_on );
         add_sashimi_to_map( pos );
 
@@ -370,9 +373,24 @@ TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )
         CHECK( items.only_item().get_relative_rot() < 1.0 );
     }
 
+    SECTION( "unprotected map storage reports stale rot when inspected before processing" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        add_sashimi_to_map( pos );
+
+        calendar::turn += 20_days;
+
+        auto items = get_map().i_at( pos );
+        REQUIRE( items.size() == 1 );
+        CHECK( items.only_item().get_rot() > 0_turns );
+        CHECK_FALSE( items.only_item().is_fresh() );
+    }
+
     SECTION( "unprotected map storage rots food normally" ) {
         prepare_map_storage_test();
         const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
         add_sashimi_to_map( pos );
 
         process_storage_for( 25_hours );
