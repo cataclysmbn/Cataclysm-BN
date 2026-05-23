@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <future>
@@ -20,6 +21,21 @@
 #include "point.h"
 #include "profile.h"
 #include "thread_pool.h"
+
+namespace
+{
+static constexpr auto retained_omt_min_soft_cap = std::size_t{ 16 };
+static constexpr auto retained_omt_soft_scale = std::size_t{ 4 };
+static constexpr auto retained_omt_hard_scale = std::size_t{ 2 };
+static constexpr auto retained_omt_panic_scale = std::size_t{ 4 };
+static constexpr auto retained_omt_max_budget_scale = std::size_t{ 8 };
+
+auto divide_round_up_size( const std::size_t numerator, const std::size_t denominator )
+-> std::size_t
+{
+    return ( numerator + denominator - 1 ) / denominator;
+}
+} // namespace
 
 submap_load_manager submap_loader;
 
@@ -125,6 +141,130 @@ void submap_load_manager::compute_border_into( key_set &target ) const
     } );
 }
 
+auto submap_load_manager::current_reality_bubble_radius() const -> int
+{
+    auto radius = 0;
+    std::ranges::for_each( requests_, [&]( const auto &kv ) {
+        const auto &req = kv.second;
+        if( req.source == load_request_source::reality_bubble ) {
+            radius = std::max( radius, req.radius );
+        }
+    } );
+    return radius;
+}
+
+auto submap_load_manager::retained_omt_soft_cap() const -> std::size_t
+{
+    const auto radius = static_cast<std::size_t>( std::max( 0, current_reality_bubble_radius() ) );
+    return std::max( retained_omt_min_soft_cap, radius * retained_omt_soft_scale );
+}
+
+auto submap_load_manager::retained_omt_hard_cap() const -> std::size_t
+{
+    return retained_omt_soft_cap() * retained_omt_hard_scale;
+}
+
+auto submap_load_manager::retained_omt_panic_cap() const -> std::size_t
+{
+    return retained_omt_hard_cap() * retained_omt_panic_scale;
+}
+
+auto submap_load_manager::retained_omt_base_budget() const -> std::size_t
+{
+    const auto radius = static_cast<std::size_t>( std::max( 0, current_reality_bubble_radius() ) );
+    return std::max( std::size_t{ 1 }, radius / 6 );
+}
+
+auto submap_load_manager::retain_omt( const retained_omt_key &key ) -> void
+{
+    if( auto it = retained_omt_index_.find( key ); it != retained_omt_index_.end() ) {
+        retained_omts_.splice( retained_omts_.end(), retained_omts_, it->second );
+        return;
+    }
+    auto it = retained_omts_.insert( retained_omts_.end(), key );
+    retained_omt_index_.emplace( key, it );
+}
+
+auto submap_load_manager::erase_retained_omt( const retained_omt_key &key ) -> void
+{
+    const auto it = retained_omt_index_.find( key );
+    if( it == retained_omt_index_.end() ) {
+        return;
+    }
+    retained_omts_.erase( it->second );
+    retained_omt_index_.erase( it );
+}
+
+auto submap_load_manager::erase_desired_retained_omts( const key_set &desired ) -> void
+{
+    std::ranges::for_each( desired, [&]( const desired_key &key ) {
+        erase_retained_omt( { key.first, project_to<coords::omt>( key.second ) } );
+    } );
+}
+
+auto submap_load_manager::evict_omt_column( const retained_omt_key &key ) -> void
+{
+    const auto &[dim_id, omt_xy] = key;
+    auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
+    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
+    [&]( const auto z ) {
+        const auto omt_addr = tripoint_abs_omt{ omt_xy, z };
+        const auto qk = omt_key{ dim_id, omt_addr };
+        const auto was_dirty = dirty_omts_.contains( qk );
+        if( was_dirty ) {
+            if( auto it = presave_futures_.find( qk ); it != presave_futures_.end() ) {
+                it->second.get();
+                presave_futures_.erase( it );
+            }
+            dirty_omts_.erase( qk );
+            mb.unload_omt( omt_addr, true );
+        } else {
+            mb.unload_omt( omt_addr, false );
+        }
+    } );
+}
+
+auto submap_load_manager::evict_oldest_retained_omts( std::size_t count ) -> void
+{
+    while( count > 0 && !retained_omts_.empty() ) {
+        const auto key = retained_omts_.front();
+        retained_omts_.pop_front();
+        retained_omt_index_.erase( key );
+        evict_omt_column( key );
+        --count;
+    }
+}
+
+auto submap_load_manager::process_retained_omt_eviction() -> void
+{
+    ZoneScopedN( "slm_retained_omt_eviction" );
+    const auto retained = retained_omt_index_.size();
+    TracyPlot( "Retained OMT Columns", static_cast<int64_t>( retained ) );
+
+    const auto soft_cap = retained_omt_soft_cap();
+    if( retained <= soft_cap ) {
+        TracyPlot( "Retained OMT Evict Budget", int64_t{ 0 } );
+        return;
+    }
+
+    const auto hard_cap = retained_omt_hard_cap();
+    const auto panic_cap = retained_omt_panic_cap();
+    auto budget = retained_omt_base_budget();
+    if( retained > panic_cap ) {
+        budget = retained - hard_cap;
+    } else {
+        if( retained > hard_cap ) {
+            const auto scale = std::min( retained_omt_max_budget_scale,
+                                         divide_round_up_size( retained, hard_cap ) );
+            budget *= scale;
+        }
+        budget = std::min( budget, retained - soft_cap );
+    }
+
+    TracyPlot( "Retained OMT Evict Budget", static_cast<int64_t>( budget ) );
+    evict_oldest_retained_omts( budget );
+}
+
 void submap_load_manager::drain_lazy_loads()
 {
     ZoneScopedN( "drain_lazy_loads" );
@@ -168,7 +308,7 @@ void submap_load_manager::update()
 
     // Early exit: if no request centers have changed since the last update,
     // the desired/simulated/border sets are identical — skip the expensive
-    // set construction, diffing, eviction, and lazy submission.
+    // set construction, diffing, loading, and retention work.
     {
         std::vector<std::pair<load_request_handle, tripoint>> cur_centers;
         cur_centers.reserve( requests_.size() );
@@ -176,6 +316,7 @@ void submap_load_manager::update()
             cur_centers.emplace_back( kv.first, kv.second.center.raw() );
         } );
         if( cur_centers == prev_centers_ ) {
+            process_retained_omt_eviction();
             return;
         }
         prev_centers_ = std::move( cur_centers );
@@ -195,6 +336,7 @@ void submap_load_manager::update()
     TracyPlot( "Border Submaps",
                static_cast<int64_t>( all_desired.size() - simulated.size() ) );
     TracyPlot( "Total Desired Submaps", static_cast<int64_t>( all_desired.size() ) );
+    erase_desired_retained_omts( all_desired );
 
     // ---- Synchronous loading for newly-simulated positions ----
     // new_omts is keyed by 2-D horizontal OMT position.  All z-levels for a
@@ -334,7 +476,7 @@ void submap_load_manager::update()
 
     // ---- Submit async presaves for dirty omts leaving simulation ----
     // Omts entering the border zone are no longer touched by game logic.
-    // We can serialize them to disk on a worker thread so that eviction
+    // We can serialize them to the pending-writes cache on a worker thread so eviction
     // (when they later leave the border zone) is just a fast memory free.
     // The 2-D simulated set means each departing horizontal position drives a
     // z-level loop; presaved_this_turn prevents duplicate submissions when
@@ -371,14 +513,14 @@ void submap_load_manager::update()
         TracyPlot( "Presave Futures In-Flight", static_cast<int64_t>( presave_futures_.size() ) );
     }
 
-    // ---- Eviction (full set: simulated + border) ----
+    // ---- Retain departed omts (full set: simulated + border) ----
     // prev_desired_ is now 2-D (horizontal SM positions).  Multiple entries
     // can map to the same horizontal OMT (up to 4: the 2×2 omt footprint).
-    // omts_checked deduplicates by horizontal OMT so we evict each column
+    // omts_checked deduplicates by horizontal OMT so we retain each column
     // exactly once.  The sibling check and the z-level loop both work in
     // terms of the 2-D desired set.
     {
-        ZoneScopedN( "slm_eviction" );
+        ZoneScopedN( "slm_retain_departed_omts" );
         using horiz_key = std::pair<std::string, point_abs_omt>;
         std::unordered_set<horiz_key, coord_pair_hash<point_abs_omt>> omts_checked;
         for( const desired_key &key : prev_desired_ ) {
@@ -401,34 +543,12 @@ void submap_load_manager::update()
                 }
             }
             if( !any_still_desired ) {
-                // Evict all z-levels for this horizontal OMT column.
-                for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-                    const tripoint_abs_omt omt_addr{ omt_xy, z };
-                    const omt_key qk{ key.first, omt_addr };
-                    const bool was_dirty = dirty_omts_.count( qk ) > 0;
-                    if( was_dirty ) {
-                        if( auto it = presave_futures_.find( qk ); it != presave_futures_.end() ) {
-                            // A presave worker still holds raw pointers to these submaps.
-                            // Wait for it to finish before re-serialising and freeing.
-                            // This path should be rare — presaves normally complete between
-                            // two update() calls.
-                            it->second.get();
-                            presave_futures_.erase( it );
-                        }
-                        // Serialise the current submap state before evicting.  This
-                        // intentionally re-serialises even when a presave already ran,
-                        // to capture modifications made after the presave snapshot
-                        // (e.g. fire spreading into a border submap).
-                        dirty_omts_.erase( qk );
-                        MAPBUFFER_REGISTRY.get( key.first ).unload_omt( omt_addr, true );
-                    } else {
-                        // Not dirty: omt was never simulated — evict without I/O.
-                        MAPBUFFER_REGISTRY.get( key.first ).unload_omt( omt_addr, false );
-                    }
-                }
+                retain_omt( { key.first, omt_xy } );
             }
         }
     }
+
+    process_retained_omt_eviction();
 
     prev_simulated_ = std::move( simulated );
     prev_desired_ = std::move( all_desired );
@@ -533,6 +653,8 @@ void submap_load_manager::flush_prev_desired()
     prev_desired_.clear();
     prev_simulated_.clear();
     prev_centers_.clear();
+    retained_omts_.clear();
+    retained_omt_index_.clear();
     dirty_omts_.clear();
 }
 

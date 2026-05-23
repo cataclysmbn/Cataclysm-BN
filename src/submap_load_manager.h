@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <list>
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -132,10 +134,9 @@ class submap_load_manager
          *
          * Simulated positions (reality_bubble, fire_spread, player_base,
          * script) are loaded synchronously and trigger listener notifications.
-         * Lazy-border positions are submitted to the thread pool for
-         * background disk-only loading (preload_omt) and do NOT trigger
-         * listener notifications.  Eviction protects the full set
-         * (simulated + border).
+         * Lazy-border positions, when enabled, are kept resident but do NOT
+         * trigger listener notifications.  OMTs that leave the desired set are
+         * retained briefly in memory, then evicted over a small per-turn budget.
          *
          * Call site: game::do_turn(), game::update_map()
          */
@@ -270,6 +271,8 @@ class submap_load_manager
         };
 
         using key_set = std::unordered_set<desired_key, coord_pair_hash<point_abs_sm>>;
+        using retained_omt_key = std::pair<std::string, point_abs_omt>;
+        using retained_omt_list = std::list<retained_omt_key>;
 
         load_request_handle next_handle_ = 1;
         std::map<load_request_handle, submap_load_request> requests_;
@@ -283,11 +286,28 @@ class submap_load_manager
 
         std::vector<submap_load_listener *> listeners_;
 
+        /** Non-simulated OMT columns kept resident for short-term backtracking. */
+        retained_omt_list retained_omts_;
+        std::unordered_map<retained_omt_key, retained_omt_list::iterator,
+                           coord_pair_hash<point_abs_omt>> retained_omt_index_;
+
         /** Compute the simulated desired set (excludes lazy_border). */
         key_set compute_desired_set() const;
 
         /** Add lazy_border positions into @p target. */
         void compute_border_into( key_set &target ) const;
+
+        auto current_reality_bubble_radius() const -> int;
+        auto retained_omt_soft_cap() const -> std::size_t;
+        auto retained_omt_hard_cap() const -> std::size_t;
+        auto retained_omt_panic_cap() const -> std::size_t;
+        auto retained_omt_base_budget() const -> std::size_t;
+        auto retain_omt( const retained_omt_key &key ) -> void;
+        auto erase_retained_omt( const retained_omt_key &key ) -> void;
+        auto erase_desired_retained_omts( const key_set &desired ) -> void;
+        auto evict_omt_column( const retained_omt_key &key ) -> void;
+        auto evict_oldest_retained_omts( std::size_t count ) -> void;
+        auto process_retained_omt_eviction() -> void;
 
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;

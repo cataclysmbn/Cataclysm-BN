@@ -567,7 +567,7 @@ class game : public submap_load_listener
     private:
         /** Resizes the reality bubble to an explicit target size.
          *  Safe to call mid-session: despawns out-of-range entities, flushes the
-         *  background streamer, rebuilds map grid and all dependent caches.
+         *  submap load-manager work, rebuilds map grid and all dependent caches.
          */
         void resize_reality_bubble_to( int new_size );
 
@@ -1273,7 +1273,7 @@ class game : public submap_load_listener
         /// Always use this instead of assigning the two fields separately.
         void set_active_dimension_id( const std::string &dim_id );
 
-        /// Sequenced critical section of a dimension switch: drain all background
+        /// Sequenced critical section of a dimension switch: drain all load-manager
         /// work, release load handles, flush the desired set, update the active
         /// dimension ID, and clear the old dimension's distribution-grid tracker.
         /// Must only be called from travel_to_dimension() after swapping_dimensions

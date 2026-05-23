@@ -666,7 +666,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
     // flush prev_desired_ so update() does not evict freshly-generated submaps
     // for the new dimension (use-after-free via stale m.grid pointers).
     if( reality_bubble_handle_ != 0 && new_dim_id != old_dim_id ) {
-        // Drain any in-flight lazy-border tasks for the old dimension before
+        // Drain any in-flight submap load-manager tasks for the old dimension before
         // releasing handles and switching — workers must not race with the
         // new dimension's mapbuffer setup.
         submap_loader.drain_lazy_loads();
@@ -734,8 +734,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
     }
 
     // Lazy border: 2-submap (one omt) strip kept in memory but not simulated.
-    // Pre-loaded from disk in the background so map shifts find data already
-    // resident.  Controlled by the LAZY_BORDER cached option.
+    // The cached option currently force-disables this path.
     if( lazy_border_enabled ) {
         if( lazy_border_handle_ == 0 ) {
             lazy_border_handle_ = submap_loader.request_load(
@@ -3401,8 +3400,8 @@ bool game::save_artifacts()
 bool game::save_maps()
 {
     try {
-        // Drain any in-flight lazy-border preload tasks before save so that
-        // save_omt workers do not race with background workers calling add_submap().
+        // Drain any in-flight load-manager tasks before save so save_omt workers
+        // do not race with background workers calling add_submap().
         submap_loader.drain_lazy_loads();
         save_all_overmapbuffers(); // can throw — saves every loaded dimension's overmapbuffer
         // Save mapbuffers for all registered dimensions (active + any kept/non-active).

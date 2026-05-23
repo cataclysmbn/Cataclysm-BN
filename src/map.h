@@ -352,17 +352,17 @@ struct level_cache {
 
     // True when the tile has sky access via the 3×3 overhang rule (top-down floor cascade).
     // False means fully enclosed — protected from rain, wind, weather effects.
-    std::vector<bool>               outside_cache;
+    std::vector<char>               outside_cache;
 
     // True when at least one tile within 3×3 above has overhead coverage (floor or sheltered
     // tile at z+1).  Distinct from outside_cache: a tile can be outside yet sheltered (overhang).
-    std::vector<bool>               sheltered_cache;
+    std::vector<char>               sheltered_cache;
 
     // True when this tile has an unobstructed ray to the sun for the current in-game hour.
     // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
     // Consulted by build_sunlight_cache() to distinguish direct-sun tiles (full
     // outside_light_level) from scatter-lit outdoor tiles (reduced ambient level).
-    std::vector<bool>               angled_sunlight_cache;
+    std::vector<char>               angled_sunlight_cache;
 
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
@@ -2489,4 +2489,3 @@ class fake_map : public tinymap
                   int fake_map_z );
         ~fake_map() override;
 };
-

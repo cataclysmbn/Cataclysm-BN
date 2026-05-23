@@ -202,9 +202,19 @@ void mapbuffer::unload_omt( const tripoint_abs_omt &omt_addr, bool save )
 
 submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
 {
+    ZoneScopedN( "mapbuffer_lookup_submap" );
     // Fast path: submap already resident in memory.
-    if( submap *sm = lookup_submap_in_memory( p ) ) {
-        return sm;
+    auto *resident_sm = static_cast<submap *>( nullptr );
+    {
+        ZoneScopedN( "lookup_memory" );
+        resident_sm = lookup_submap_in_memory( p );
+    }
+    if( resident_sm != nullptr ) {
+        ZoneScopedN( "lookup_memory_hit" );
+        return resident_sm;
+    }
+    {
+        ZoneScopedN( "lookup_memory_miss" );
     }
 
     // Cache miss — perform disk I/O outside submaps_mutex_ so that concurrent
@@ -213,6 +223,7 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
 
     std::string pending_data;
     {
+        ZoneScopedN( "lookup_pending_writes" );
         std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
         const auto it = pending_writes_.find( omt_addr );
         if( it != pending_writes_.end() ) {
@@ -229,17 +240,21 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
     try {
         bool found = false;
         if( !pending_data.empty() ) {
+            ZoneScopedN( "lookup_pending_deserialize" );
             std::istringstream iss( pending_data );
             JsonIn jsin( iss );
             deserialize_into_vec( jsin, loaded, already_loaded );
             found = true;
         } else {
+            ZoneScopedN( "lookup_disk_read" );
             found = g->get_active_world()->read_map_omt( dimension_id_, omt_addr,
             [this, &loaded, &already_loaded]( JsonIn & jsin ) {
+                ZoneScopedN( "lookup_disk_deserialize" );
                 deserialize_into_vec( jsin, loaded, already_loaded );
             } );
         }
         if( !found ) {
+            ZoneScopedN( "lookup_not_found" );
             return nullptr;
         }
     } catch( const std::exception &err ) {
@@ -247,15 +262,22 @@ submap *mapbuffer::lookup_submap( const tripoint_abs_sm &p )
         return nullptr;
     }
 
-    for( auto &[pos, sm] : loaded ) {
-        if( !add_submap( pos, sm ) ) {
-            DebugLog( DL::Warn, DC::Map ) << string_format(
-                                              "lookup_submap: submap %d,%d,%d already loaded; keeping in-memory version",
-                                              pos.x(), pos.y(), pos.z() );
+    {
+        ZoneScopedN( "lookup_add_loaded" );
+        for( auto &[pos, sm] : loaded ) {
+            if( !add_submap( pos, sm ) ) {
+                DebugLog( DL::Warn, DC::Map ) << string_format(
+                                                  "lookup_submap: submap %d,%d,%d already loaded; keeping in-memory version",
+                                                  pos.x(), pos.y(), pos.z() );
+            }
         }
     }
 
-    submap *result = lookup_submap_in_memory( p );
+    auto *result = static_cast<submap *>( nullptr );
+    {
+        ZoneScopedN( "lookup_final_memory" );
+        result = lookup_submap_in_memory( p );
+    }
     if( !result ) {
         debugmsg( "file did not contain the expected submap %d,%d,%d", p.x(), p.y(), p.z() );
     }
