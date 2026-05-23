@@ -90,6 +90,8 @@ static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
 namespace
 {
 
+constexpr auto max_wall_climb_difficulty = 10;
+
 auto get_wall_support( const map &here,
                        const tripoint_bub_ms &anchor ) -> std::optional<tripoint_bub_ms>
 {
@@ -159,6 +161,29 @@ auto anchored_on_wall( const map &here, const tripoint_bub_ms &pos ) -> bool
     }
 
     return supports >= 1;
+}
+
+auto wall_climb_anchor_is_usable( const map &here, const tripoint_bub_ms &anchor ) -> bool
+{
+    return here.climb_difficulty( anchor ) <= max_wall_climb_difficulty &&
+           anchored_on_wall( here, anchor );
+}
+
+auto can_wall_climb_between( const map &here, const tripoint_bub_ms &from,
+                             const tripoint_bub_ms &to ) -> bool
+{
+    const auto dz = to.z() - from.z();
+
+    if( std::abs( dz ) != 1 ) {
+        return false;
+    }
+
+    if( dz > 0 ) {
+        return wall_climb_anchor_is_usable( here, from );
+    }
+
+    return wall_climb_anchor_is_usable( here, to ) ||
+           wall_climb_anchor_is_usable( here, from );
 }
 
 } // namespace
@@ -390,26 +415,7 @@ auto monster::can_wall_climb_to( const tripoint_bub_ms &p ) const -> bool
     }
 
     const auto from = bub_pos();
-    const auto dz = p.z() - from.z();
-
-    if( std::abs( dz ) != 1 ) {
-        return false;
-    }
-
-    const auto climb_target = dz > 0 ? from : p;
-    const auto target_climb_diff = here.climb_difficulty( climb_target );
-    if( target_climb_diff <= 10 && anchored_on_wall( here, climb_target ) ) {
-        return true;
-    }
-
-    if( dz < 0 ) {
-        const auto source_climb_diff = here.climb_difficulty( from );
-        if( source_climb_diff <= 10 && anchored_on_wall( here, from ) ) {
-            return true;
-        }
-    }
-
-    return false;
+    return can_wall_climb_between( here, from, p );
 }
 
 void monster::set_dest( const tripoint_bub_ms &p )
@@ -1337,9 +1343,10 @@ monster_action_t monster::decide_action() const
             }
 
             bool can_z_move  = true;
+            bool can_z_attack = true;
             const bool is_z_move = candidate.z() != bub_pos().z();
             if( is_z_move ) {
-                bool can_z_attack = fov_3d;
+                can_z_attack = fov_3d;
                 const auto wall_climb_move = can_wall_climb_to( candidate );
                 if( !here.valid_move( bub_pos(), candidate, false, true, via_ramp ) ) {
                     can_z_move   = wall_climb_move;
@@ -1362,10 +1369,6 @@ monster_action_t monster::decide_action() const
                         can_z_move = true;
                     }
                 }
-
-                if( !can_z_attack ) {
-                    continue;
-                }
             }
 
             if( !can_z_move ) {
@@ -1378,6 +1381,9 @@ monster_action_t monster::decide_action() const
             if( critter_here != nullptr ) {
                 const Attitude att = attitude_to( *critter_here );
                 if( att == Attitude::A_HOSTILE ) {
+                    if( is_z_move && !can_z_attack ) {
+                        continue;
+                    }
                     // When attacking an adjacent enemy, we're direct.
                     next_step     = candidate;
                     has_next_step = true;
@@ -2080,9 +2086,13 @@ int monster::calc_climb_cost( const tripoint_bub_ms &f, const tripoint_bub_ms &t
         return 100;
     }
 
+    if( climbs_walls() && can_wall_climb_between( g->m, f, t ) ) {
+        return g->m.has_flag( TFLAG_NO_FLOOR, t ) ? 200 : 150;
+    }
+
     if( climbs() ) {
         const auto diff = g->m.climb_difficulty( f );
-        if( diff <= 10 ) {
+        if( diff <= max_wall_climb_difficulty ) {
             if( g->m.has_flag( TFLAG_NO_FLOOR, t ) && !climbs_walls() ) {
                 return 0;
             }

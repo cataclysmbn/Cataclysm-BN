@@ -2791,16 +2791,16 @@ int map::climb_difficulty( const tripoint_bub_ms &p ) const
     }
 
     const auto neighbor_range = points_in_radius( p, 1 );
-    auto climb_points = std::vector<tripoint>( neighbor_range.begin(), neighbor_range.end() );
+    auto climb_points = std::vector<tripoint_bub_ms>( neighbor_range.begin(), neighbor_range.end() );
 
     if( has_flag( TFLAG_NO_FLOOR, p ) ) {
         const auto below = p + tripoint_below;
         const auto below_range = points_in_radius( below, 1 );
-        const auto below_points = std::vector<tripoint>( below_range.begin(), below_range.end() );
+        const auto below_points = std::vector<tripoint_bub_ms>( below_range.begin(), below_range.end() );
         climb_points.insert( climb_points.end(), below_points.begin(), below_points.end() );
     }
 
-    for( const tripoint &pt : climb_points ) {
+    for( const tripoint_bub_ms &pt : climb_points ) {
         if( impassable_ter_furn( pt ) ) {
             // TODO: Non-hardcoded climbability
             best_difficulty = std::min( best_difficulty, 10 );
