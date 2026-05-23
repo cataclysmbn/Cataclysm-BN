@@ -2661,7 +2661,8 @@ bool monster::will_reach( const point_bub_ms &p )
         return false;
     }
 
-    if( ( has_flag( MF_IMMOBILE ) || has_flag( MF_STATIONARY ) || has_flag( MF_RIDEABLE_MECH ) ) && ( bub_pos().xy() != p ) ) {
+    if( ( has_flag( MF_IMMOBILE ) || has_flag( MF_STATIONARY ) || has_flag( MF_RIDEABLE_MECH ) ) &&
+        ( bub_pos().xy() != p ) ) {
         return false;
     }
 
