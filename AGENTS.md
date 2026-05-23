@@ -77,7 +77,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 ### WHEN working on code changes
 
 - **Style**: Follow [Code Style](./docs/en/dev/explanation/code_style.md). Use `_( "text" )` for L10n.
-- **Format**: Format code before building/testing. Use a formatter target or command limited to files touched for the task; do not run repository-wide formatting when the task scope is narrower.
+- **Format**: Format code before building/testing. Use a formatter target or command limited to files touched for the task; do not run repository-wide formatting when the task scope is narrower. Before running any formatter target, confirm it is file-scoped; if it is not, use the underlying formatter on the touched files only.
 
 ```sh
 # Format C++ code
@@ -139,6 +139,7 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - **Docs**: [Building](./docs/en/dev/guides/building/cmake.md), [Formatting](./docs/en/dev/guides/formatting.md), [Dev Index](./docs/en/dev/).
 - **Review**: [LLM Guide](./.github/llm_review_guide.md).
 
+- When fixing a reported regression or crash, add a regression test that would fail on the original defect whenever technically possible; if it is not possible, state the exact reason in the PR and final summary.
 - When fixing a bug, preserve requested behavior and visible content unless the user explicitly asks to remove it; fix the underlying issue instead of suppressing the affected feature.
 - When reviewing PRs that stop tracking generated or externally pulled files, verify ignore rules by running the generator/pull command or checking `git status --ignored`; do not assume removed tracked files are ignored.
 - When generated or externally pulled files are removed from tracking, verify all CI and release consumers still receive required files or directories.

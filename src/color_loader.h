@@ -9,6 +9,7 @@
 #include "filesystem.h"
 #include "json.h"
 #include "path_info.h"
+#include "path_utils.h"
 
 template<typename ColorType>
 class color_loader
@@ -71,8 +72,8 @@ class color_loader
             try {
                 load_colorfile( custom_path );
             } catch( const JsonError &err ) {
-                debugmsg( "Failed to load color data from \"%s\": %s", custom_path.generic_string(),
-                          err.what() );
+                debugmsg( "Failed to load color data from \"%s\": %s",
+                          cata_files::path_to_generic_utf8( custom_path ), err.what() );
 
                 // this should succeed, otherwise the installation is botched
                 load_colorfile( default_path );

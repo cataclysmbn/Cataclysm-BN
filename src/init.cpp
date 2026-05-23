@@ -86,6 +86,7 @@
 #include "overmap_connection.h"
 #include "overmap_location.h"
 #include "overmap_special.h"
+#include "path_utils.h"
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
@@ -512,8 +513,9 @@ void DynamicDataLoader::load_data_from_path( const fs::path &path, const std::st
         );
         try {
             // parse it
-            JsonIn jsin( iss, file.generic_string() );
-            load_all_from_json( jsin, src, ui, path.generic_string(), file.generic_string() );
+            JsonIn jsin( iss, cata_files::path_to_generic_utf8( file ) );
+            load_all_from_json( jsin, src, ui, cata_files::path_to_generic_utf8( path ),
+                                cata_files::path_to_generic_utf8( file ) );
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
         }

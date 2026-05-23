@@ -19,6 +19,7 @@
 #include "input.h"
 #include "mod_manager.h"
 #include "output.h"
+#include "path_utils.h"
 #include "point.h"
 #include "rng.h"
 #include "sdltiles.h"
@@ -71,12 +72,15 @@ auto get_loading_image_search_roots( const MOD_INFORMATION &mod ) -> std::unorde
     using namespace std::views;
 
     const auto modinfo_root = mod.path_full.empty() ? std::string{} :
-                              std::filesystem::path( mod.path_full ).parent_path().generic_string();
+                              cata_files::path_to_generic_utf8(
+                                  std::filesystem::path( mod.path_full ).parent_path() );
 
     const auto root_paths = std::array<std::string, 2> { mod.path, modinfo_root };
     return root_paths
     | filter( []( const std::string & root_path ) { return !root_path.empty(); } )
-    | transform( []( const std::string & root_path ) { return std::filesystem::path( root_path ).lexically_normal().generic_string(); } )
+    | transform( []( const std::string & root_path ) {
+        return cata_files::path_to_generic_utf8( std::filesystem::path( root_path ).lexically_normal() );
+    } )
     | std::ranges::to<std::unordered_set>();
 }
 
@@ -94,7 +98,8 @@ auto can_choose_loading_image_path() -> bool { return world_generator != nullptr
 
 auto get_loading_image_author( const std::string &loading_image_path ) -> std::optional<std::string>
 {
-    const auto image_stem = std::filesystem::path( loading_image_path ).stem().generic_string();
+    const auto image_stem = cata_files::path_to_generic_utf8(
+                                std::filesystem::path( loading_image_path ).stem() );
     const auto author_parts = string_split( image_stem, '_' );
 
     if( author_parts.size() < 2 || author_parts.front().empty() ) { return {}; }
@@ -109,7 +114,7 @@ struct loading_image_match_options {
 auto has_loading_image_extension( const std::string &path ) -> bool
 {
     static const auto exts = std::unordered_set<std::string> { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" };
-    auto ext = std::filesystem::path( path ).extension().generic_string();
+    auto ext = cata_files::path_to_generic_utf8( std::filesystem::path( path ).extension() );
     std::ranges::transform( ext, ext.begin(), []( const unsigned char ch ) { return static_cast<char>( std::tolower( ch ) ); } );
 
     return exts.contains( ext );
@@ -121,8 +126,11 @@ std::vector<std::string>
     using namespace std::views;
 
     return get_files_from_path( "", directory_path, true )
-    | filter( []( const fs::path & path ) { return file_exist( path ) && has_loading_image_extension( path.generic_string() ); } )
-    | transform( []( const fs::path & path ) { return path.generic_string(); } )
+    | filter( []( const fs::path & path ) {
+        return file_exist( path ) &&
+               has_loading_image_extension( cata_files::path_to_generic_utf8( path ) );
+    } )
+    | transform( []( const fs::path & path ) { return cata_files::path_to_generic_utf8( path ); } )
     | std::ranges::to<std::vector>();
 }
 
@@ -139,16 +147,16 @@ auto get_loading_image_matches_at_root( const std::string &image_name,
         return {};
     }
 
-    const auto normalized_direct_path = direct_path.generic_string();
-    if( file_exist( normalized_direct_path ) &&
-        has_loading_image_extension( normalized_direct_path ) ) {
+    const auto normalized_direct_path = cata_files::path_to_generic_utf8( direct_path );
+    if( file_exist( direct_path ) && has_loading_image_extension( normalized_direct_path ) ) {
         return { normalized_direct_path };
     }
-    if( dir_exist( normalized_direct_path ) ) {
+    if( dir_exist( direct_path ) ) {
         return get_loading_images_from_directory( normalized_direct_path );
     }
 
-    const auto image_filename = std::filesystem::path( image_name ).filename().generic_string();
+    const auto image_filename = cata_files::path_to_generic_utf8(
+                                    std::filesystem::path( image_name ).filename() );
     if( image_filename.empty() ) {
         return {};
     }
@@ -159,13 +167,13 @@ auto get_loading_image_matches_at_root( const std::string &image_name,
            | filter( [&normalized_root, &image_filename,
                       &author_prefixed_filename]( const fs::path & path ) {
         const auto normalized_path = path.lexically_normal();
-        const auto filename = normalized_path.filename().generic_string();
+        const auto filename = cata_files::path_to_generic_utf8( normalized_path.filename() );
         return path_is_inside_root( normalized_root, normalized_path )
                && file_exist( path )
-               && has_loading_image_extension( path.generic_string() )
+               && has_loading_image_extension( cata_files::path_to_generic_utf8( path ) )
                && ( filename == image_filename || filename.ends_with( author_prefixed_filename ) );
     } )
-    | transform( []( const fs::path & path ) { return path.generic_string(); } )
+    | transform( []( const fs::path & path ) { return cata_files::path_to_generic_utf8( path ); } )
     | std::ranges::to<std::vector>();
 }
 

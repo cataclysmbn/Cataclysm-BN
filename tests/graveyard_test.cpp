@@ -9,6 +9,7 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "point.h"
 #include "world.h"
 
@@ -39,9 +40,10 @@ TEST_CASE( "graveyarddir_returns_user_dir_graveyard", "[graveyard]" )
 
 TEST_CASE( "move_save_to_graveyard_moves_character_files", "[graveyard]" )
 {
-    const auto save_dir = ( g->get_active_world()->info->folder_path() / "" ).generic_string();
+    const auto save_dir = cata_files::path_to_generic_utf8( g->get_active_world()->info->folder_path() /
+                          "" );
     const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = ( PATH_INFO::graveyarddir() / "" ).generic_string();
+    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
     const std::string dirname = "test_char_" + get_pid_string();
     const std::string dest_dir = graveyard_dir + dirname + "/";
 
@@ -71,9 +73,10 @@ TEST_CASE( "move_save_to_graveyard_moves_character_files", "[graveyard]" )
 
 TEST_CASE( "move_save_to_graveyard_ignores_unrelated_files", "[graveyard]" )
 {
-    const auto save_dir = ( g->get_active_world()->info->folder_path() / "" ).generic_string();
+    const auto save_dir = cata_files::path_to_generic_utf8( g->get_active_world()->info->folder_path() /
+                          "" );
     const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = ( PATH_INFO::graveyarddir() / "" ).generic_string();
+    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
     const std::string dirname = "test_unrelated_" + get_pid_string();
     const std::string dest_dir = graveyard_dir + dirname + "/";
 
@@ -99,9 +102,10 @@ TEST_CASE( "move_save_to_graveyard_ignores_unrelated_files", "[graveyard]" )
 
 TEST_CASE( "move_save_to_graveyard_creates_directories", "[graveyard]" )
 {
-    const auto save_dir = ( g->get_active_world()->info->folder_path() / "" ).generic_string();
+    const auto save_dir = cata_files::path_to_generic_utf8( g->get_active_world()->info->folder_path() /
+                          "" );
     const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = ( PATH_INFO::graveyarddir() / "" ).generic_string();
+    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
     const std::string dirname = "test_mkdir_" + get_pid_string();
     const std::string dest_dir = graveyard_dir + dirname + "/";
 
@@ -133,9 +137,9 @@ TEST_CASE( "move_save_to_graveyard_with_open_player_db", "[graveyard]" )
     // Player db only exists in V2 saves; assert rather than silently pass on V1.
     REQUIRE( w->info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 );
 
-    const auto save_dir = ( w->info->folder_path() / "" ).generic_string();
+    const auto save_dir = cata_files::path_to_generic_utf8( w->info->folder_path() / "" );
     const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = ( PATH_INFO::graveyarddir() / "" ).generic_string();
+    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
     const std::string dirname = "test_open_db_" + get_pid_string();
     const std::string dest_dir = graveyard_dir + dirname + "/";
 

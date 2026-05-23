@@ -28,6 +28,7 @@
 #include "mapsharing.h"
 #include "output.h"
 #include "path_info.h"
+#include "path_utils.h"
 #include "point.h"
 #include "popup.h"
 #include "sdlsound.h"
@@ -1076,7 +1077,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
                           operation_name, resource_name );
             } else {
                 resource_option.insert( std::pair<std::string, std::string>( resource_name,
-                                        resource_dir.generic_string() ) );
+                                        cata_files::path_to_generic_utf8( resource_dir ) ) );
             }
         } );
     }
