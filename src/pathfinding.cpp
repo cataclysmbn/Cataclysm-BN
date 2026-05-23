@@ -1094,7 +1094,7 @@ std::vector<tripoint_bub_ms> Pathfinding::get_route_3d(
                         }
 
                         const float dist = rl_dist_exact( tripoint_bub_ms( cur_origin_point, 0 ),
-                                           tripoint_bub_ms( p, 0 ) );
+                                                          tripoint_bub_ms( p, 0 ) );
                         if( dist < best_distance ) {
                             best_z_change = *candidate;
                             best_distance = dist;
