@@ -12120,8 +12120,9 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
     std::swap( *srcVars, *dstVars );
 
     // Actually move the furniture.
-    m.furn_set( fdest, m.furn( fpos ), atd ? atd->clone() : nullptr );
-    m.furn_set( fpos, f_null );
+    // Ignore grab destroy checks
+    m.furn_set( fdest, m.furn( fpos ), atd ? atd->clone() : nullptr, true );
+    m.furn_set( fpos, f_null, nullptr, true );
     u.clear_memorized_overlay( m.bub_to_abs( tripoint_bub_ms( fpos ) ) );
 
     if( fire_intensity == 1 && !pulling_furniture ) {

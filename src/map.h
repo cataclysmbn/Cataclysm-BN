@@ -947,9 +947,11 @@ class map : public submap_load_listener
         * @param p Position within the map
         * @param new_furniture Id of new furniture
         * @param new_active Override default active tile of new furniture
+        * @param ignore_grabbed Ignore destruction of grabbed tile, useful when player is moved afterwards
         */
         void furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
-                       const cata::poly_serialized<active_tile_data> &new_active = nullptr );
+                       const cata::poly_serialized<active_tile_data> &new_active = nullptr,
+                       const bool ignore_grabbed = false );
         void furn_set( const point_bub_ms &p, const furn_id &new_furniture ) {
             furn_set( tripoint_bub_ms( p, abs_sub.z() ), new_furniture );
         }
