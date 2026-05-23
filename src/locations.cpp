@@ -448,7 +448,7 @@ detached_ptr<item> vehicle_item_location::detach( item *it )
     const auto temperature = storage_temperature();
     detached_ptr<item> ret = part_index >= 0 ? veh->remove_item( part_index, it ) :
                              veh->get_part_hack( hack_id ).remove_item( *it );
-    if( ret && temperature != temperature_flag::TEMP_NORMAL ) {
+    if( ret ) {
         ret = item::actualize_rot( std::move( ret ), item_pos, temperature, get_weather() );
     }
     veh->invalidate_mass();
@@ -457,8 +457,13 @@ detached_ptr<item> vehicle_item_location::detach( item *it )
 
 void vehicle_item_location::attach( detached_ptr<item> &&obj )
 {
-    veh->get_part_hack( hack_id ).add_item( std::move( obj ) );
-    veh->invalidate_mass();
+    const auto part_index = veh->get_part_id_hack( hack_id );
+    if( part_index >= 0 ) {
+        obj = veh->add_item( part_index, std::move( obj ) );
+    } else {
+        veh->get_part_hack( hack_id ).add_item( std::move( obj ) );
+        veh->invalidate_mass();
+    }
 }
 
 auto vehicle_item_location::storage_temperature() const -> temperature_flag
