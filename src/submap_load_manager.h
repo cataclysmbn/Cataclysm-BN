@@ -291,7 +291,7 @@ class submap_load_manager
         /** Non-simulated OMT columns kept resident for short-term backtracking. */
         retained_omt_list retained_omts_;
         std::unordered_map<retained_omt_key, retained_omt_list::iterator,
-                           coord_pair_hash<point_abs_omt>> retained_omt_index_;
+            coord_pair_hash<point_abs_omt>> retained_omt_index_;
 
         /** OMT-space lazy-border columns waiting for amortized preload. */
         retained_omt_list lazy_omt_queue_;
