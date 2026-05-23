@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "cuboid_rectangle.h"
-#include "filesystem.h"
 #include "cursesdef.h"
 #include "input.h"
 #include "point.h"
@@ -44,7 +43,7 @@ class main_menu
         */
         void init_strings();
         /** Helper function for @ref init_strings */
-        std::vector<std::string> load_file( const fs::path &path,
+        std::vector<std::string> load_file( const std::string &path,
                                             const std::string &alt_text ) const;
 
         // Play a sound whenever the user moves left or right in the main menu or its tabs

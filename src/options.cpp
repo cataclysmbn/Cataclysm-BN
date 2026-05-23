@@ -28,7 +28,6 @@
 #include "mapsharing.h"
 #include "output.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "point.h"
 #include "popup.h"
 #include "sdlsound.h"
@@ -1037,7 +1036,7 @@ void options_manager::cOpt::setValue( const std::string &sSetIn )
  */
 static std::vector<options_manager::id_and_option> build_resource_list(
     std::map<std::string, std::string> &resource_option, const std::string &operation_name,
-    const fs::path &dirname, const fs::path &filename )
+    const std::string &dirname, const std::string &filename )
 {
     std::vector<options_manager::id_and_option> resource_names;
 
@@ -1045,7 +1044,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
     const auto resource_dirs = get_directories_with( filename, dirname, true );
 
     for( auto &resource_dir : resource_dirs ) {
-        read_from_file( resource_dir / filename, [&]( std::istream & fin ) {
+        read_from_file( resource_dir + "/" + filename, [&]( std::istream & fin ) {
             std::string resource_name;
             std::string view_name;
             // should only have 2 values inside it, otherwise is going to only load the last 2 values
@@ -1076,8 +1075,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
                 debugmsg( "Found \"%s\" duplicate with name \"%s\" (new definition will be ignored)",
                           operation_name, resource_name );
             } else {
-                resource_option.insert( std::pair<std::string, std::string>( resource_name,
-                                        cata_files::path_to_generic_utf8( resource_dir ) ) );
+                resource_option.insert( std::pair<std::string, std::string>( resource_name, resource_dir ) );
             }
         } );
     }
@@ -1086,7 +1084,7 @@ static std::vector<options_manager::id_and_option> build_resource_list(
 }
 
 std::vector<options_manager::id_and_option> options_manager::load_tilesets_from(
-    const fs::path &path )
+    const std::string &path )
 {
     // Use local map as build_resource_list will clear the first parameter
     std::map<std::string, std::string> local_tilesets;
@@ -1128,7 +1126,7 @@ std::vector<options_manager::id_and_option> options_manager::build_tilesets_list
 }
 
 std::vector<options_manager::id_and_option> options_manager::load_soundpack_from(
-    const fs::path &path )
+    const std::string &path )
 {
     // build_resource_list will clear &resource_option - first param
     std::map<std::string, std::string> local_soundpacks;

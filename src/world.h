@@ -20,10 +20,10 @@ class save_t
 
     public:
         std::string decoded_name() const;
-        auto base_path() const -> fs::path;
+        std::string base_path() const;
 
         static save_t from_save_id( const std::string &save_id );
-        static save_t from_base_path( const fs::path &base_path );
+        static save_t from_base_path( const std::string &base_path );
 
         bool operator==( const save_t &rhs ) const {
             return name == rhs.name;
@@ -56,7 +56,7 @@ struct WORLDINFO {
          * all the world specific files. It depends on @ref world_name,
          * changing that will also change the result of this function.
          */
-        auto folder_path() const -> fs::path;
+        std::string folder_path() const;
 
         std::string world_name;
         options_manager::options_container WORLD_OPTIONS;
@@ -159,20 +159,20 @@ class world
         /*
          * Player-specific file operations. Paths will be prefixed with the player's save ID.
          */
-        auto player_file_exist( const fs::path &path ) -> bool;
-        auto write_to_player_file( const fs::path &path, file_write_fn writer,
-                                   const char *fail_message = nullptr ) -> bool;
-        auto read_from_player_file( const fs::path &path, file_read_fn reader,
-                                    bool optional = true ) -> bool;
-        auto read_from_player_file_json( const fs::path &path, file_read_json_fn reader,
-                                         bool optional = true ) -> bool;
+        bool player_file_exist( const std::string &path );
+        bool write_to_player_file( const std::string &path, file_write_fn writer,
+                                   const char *fail_message = nullptr );
+        bool read_from_player_file( const std::string &path, file_read_fn reader,
+                                    bool optional = true );
+        bool read_from_player_file_json( const std::string &path, file_read_json_fn reader,
+                                         bool optional = true );
 
         /*
          * Generic file operations, acting as a catch-all for miscellaneous save files
          * living in the root of the world directory.
          */
-        auto assure_dir_exist( const fs::path &path ) const -> bool;
-        auto file_exist( const fs::path &path ) const -> bool;
+        bool assure_dir_exist( const std::string &path ) const;
+        bool file_exist( const std::string &path ) const;
 
         /**
          * If fail_message is provided, this method will eat any exceptions and display a popup with the
@@ -186,12 +186,12 @@ class world
          * @param fail_message The message to display if the write fails.
          * @return True if the write was successful, false otherwise.
          */
-        auto write_to_file( const fs::path &path, file_write_fn writer,
-                            const char *fail_message = nullptr ) const -> bool;
-        auto read_from_file( const fs::path &path, file_read_fn reader,
-                             bool optional = true ) const -> bool;
-        auto read_from_file_json( const fs::path &path, file_read_json_fn reader,
-                                  bool optional = true ) const -> bool;
+        bool write_to_file( const std::string &path, file_write_fn writer,
+                            const char *fail_message = nullptr ) const;
+        bool read_from_file( const std::string &path, file_read_fn reader,
+                             bool optional = true ) const;
+        bool read_from_file_json( const std::string &path, file_read_json_fn reader,
+                                  bool optional = true ) const;
 
         /**
          * Convert (copy) the save data from the old format to the new format.
@@ -203,9 +203,9 @@ class world
         /** If non-zero, indicates we're in the middle of a save event */
         int64_t save_tx_start_ts = 0;
 
-        auto overmap_terrain_filename( const point_abs_om &p ) const -> fs::path;
-        auto overmap_player_filename( const point_abs_om &p ) const -> fs::path;
-        auto get_player_path() const -> fs::path;
+        std::string overmap_terrain_filename( const point_abs_om &p ) const;
+        std::string overmap_player_filename( const point_abs_om &p ) const;
+        std::string get_player_path() const;
 
         sqlite3 *map_db = nullptr;
 

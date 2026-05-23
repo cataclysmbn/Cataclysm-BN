@@ -14,7 +14,6 @@
 #endif
 
 #include "coordinates.h"
-#include "filesystem.h"
 #include "translations.h"
 
 enum action_id : int;
@@ -346,7 +345,7 @@ class input_manager
          * Load keybindings from a json file, override existing bindings.
          * Throws std::string on errors
          */
-        void load( const fs::path &file_name, bool is_user_preferences );
+        void load( const std::string &file_name, bool is_user_preferences );
 
         int input_timeout;
 

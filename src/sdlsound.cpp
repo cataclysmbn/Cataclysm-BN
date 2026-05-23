@@ -20,7 +20,6 @@
 #include "messages.h"
 #include "options.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "rng.h"
 #include "sdl_wrappers.h"
 #include "sounds.h"
@@ -826,8 +825,7 @@ auto sfx::get_channel_volume( const channel channel ) -> int
 
 auto load_soundset() -> void
 {
-    const auto default_path             = cata_files::path_to_generic_utf8(
-            PATH_INFO::defaultsounddir() );
+    const std::string default_path     = PATH_INFO::defaultsounddir();
     const std::string default_soundpack = "basic";
     std::string current_soundpack       = get_option<std::string>( "SOUNDPACKS" );
     std::string soundpack_path;

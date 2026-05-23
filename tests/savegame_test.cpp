@@ -28,12 +28,12 @@ TEST_CASE( "failed save load blocks saving over the broken save", "[save][load]"
     const auto save_path = world_path / "#QnJva2VuU2F2ZQ==.sav";
     CHECK( fs::copy_file( fixture_path, save_path, fs::copy_options::overwrite_existing ) );
 
-    const auto before_load = read_entire_file( save_path );
+    const auto before_load = read_entire_file( save_path.string() );
     auto loaded = true;
     const auto debug_message = capture_debugmsg_during( [&]() { loaded = g->load( save_t::from_save_id( "BrokenSave" ) ); } );
 
     CHECK_FALSE( loaded );
     CHECK( debug_message.find( "Bad save json" ) != std::string::npos );
     CHECK_FALSE( g->save( false ) );
-    CHECK( read_entire_file( save_path ) == before_load );
+    CHECK( read_entire_file( save_path.string() ) == before_load );
 }

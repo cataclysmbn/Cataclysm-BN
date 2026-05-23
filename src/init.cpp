@@ -86,7 +86,6 @@
 #include "overmap_connection.h"
 #include "overmap_location.h"
 #include "overmap_special.h"
-#include "path_utils.h"
 #include "profession.h"
 #include "recipe_dictionary.h"
 #include "recipe_groups.h"
@@ -480,7 +479,7 @@ void DynamicDataLoader::initialize()
 #endif
 }
 
-void DynamicDataLoader::load_data_from_path( const fs::path &path, const std::string &src,
+void DynamicDataLoader::load_data_from_path( const std::string &path, const std::string &src,
         loading_ui &ui )
 {
     assert( !finalized && "Can't load additional data after finalization.  Must be unloaded first." );
@@ -491,9 +490,9 @@ void DynamicDataLoader::load_data_from_path( const fs::path &path, const std::st
     // But not the other way round.
 
     // get a list of all files in the directory
-    auto files = get_files_from_path( ".json", path, true, true );
+    str_vec files = get_files_from_path( ".json", path, true, true );
     if( files.empty() ) {
-        std::ifstream tmp( path, std::ios::in );
+        std::ifstream tmp( path.c_str(), std::ios::in );
         if( tmp ) {
             // path is actually a file, don't checking the extension,
             // assume we want to load this file anyway
@@ -501,7 +500,8 @@ void DynamicDataLoader::load_data_from_path( const fs::path &path, const std::st
         }
     }
     // iterate over each file
-    for( const auto &file : files ) {
+    for( auto &files_i : files ) {
+        const std::string &file = files_i;
         // open the file as a stream
         cata_ifstream infile = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( file ) );
         // and stuff it into ram
@@ -513,9 +513,8 @@ void DynamicDataLoader::load_data_from_path( const fs::path &path, const std::st
         );
         try {
             // parse it
-            JsonIn jsin( iss, cata_files::path_to_generic_utf8( file ) );
-            load_all_from_json( jsin, src, ui, cata_files::path_to_generic_utf8( path ),
-                                cata_files::path_to_generic_utf8( file ) );
+            JsonIn jsin( iss, file );
+            load_all_from_json( jsin, src, ui, path, file );
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
         }

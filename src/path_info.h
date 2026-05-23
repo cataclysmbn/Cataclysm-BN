@@ -1,75 +1,74 @@
 #pragma once
 
-#include "filesystem.h"
-
 #include <string>
 
 enum class holiday : int;
 
 namespace PATH_INFO
 {
-auto init_base_path( fs::path path ) -> void;
-auto init_user_dir( fs::path dir ) -> void;
-auto set_standard_filenames() -> void;
+void init_base_path( std::string path );
+void init_user_dir( std::string dir );
+void set_standard_filenames();
 
-auto autopickup() -> fs::path;
-auto base_colors() -> fs::path;
-auto base_path() -> fs::path;
-auto colors() -> fs::path;
-auto color_templates() -> fs::path;
-auto config_dir() -> fs::path;
-auto custom_colors() -> fs::path;
-auto datadir() -> fs::path;
-auto debug() -> fs::path;
-auto defaultsounddir() -> fs::path;
-auto defaulttilejson() -> fs::path;
-auto defaulttilepng() -> fs::path;
-auto fontconfig() -> fs::path;
-auto user_fontconfig() -> fs::path;
-auto fontdir() -> fs::path;
-auto user_fontdir() -> fs::path;
-auto language_defs_file() -> fs::path;
-auto graveyarddir() -> fs::path;
-auto help() -> fs::path;
-auto keybindingsdir() -> fs::path;
-auto main_menu_tips() -> fs::path;
-auto lastworld() -> fs::path;
-auto memorialdir() -> fs::path;
-auto moddir() -> fs::path;
-auto options() -> fs::path;
-auto panel_options() -> fs::path;
-auto safemode() -> fs::path;
-auto distraction() -> fs::path;
-auto savedir() -> fs::path;
-auto sokoban() -> fs::path;
-auto templatedir() -> fs::path;
-auto user_dir() -> fs::path;
-auto user_keybindings() -> fs::path;
-auto user_moddir() -> fs::path;
-auto worldoptions() -> fs::path;
-auto crash() -> fs::path;
-auto tileset_conf() -> fs::path;
-auto gfxdir() -> fs::path;
-auto user_gfx() -> fs::path;
-auto data_sound() -> fs::path;
-auto user_sound() -> fs::path;
-auto mods_replacements() -> fs::path;
-auto mods_dev_default() -> fs::path;
-auto mods_user_default() -> fs::path;
-auto soundpack_conf() -> fs::path;
+std::string autopickup();
+std::string base_colors();
+std::string base_path();
+std::string colors();
+std::string color_templates();
+std::string config_dir();
+std::string custom_colors();
+std::string datadir();
+std::string debug();
+std::string defaultsounddir();
+std::string defaulttilejson();
+std::string defaulttilepng();
+std::string fontconfig();
+std::string user_fontconfig();
+std::string fontdir();
+std::string user_fontdir();
+std::string language_defs_file();
+std::string graveyarddir();
+std::string help();
+std::string keybindingsdir();
+std::string main_menu_tips();
+std::string lastworld();
+std::string memorialdir();
+std::string moddir();
+std::string options();
+std::string panel_options();
+std::string safemode();
+std::string distraction();
+std::string savedir();
+std::string sokoban();
+std::string templatedir();
+std::string user_dir();
+std::string user_keybindings();
+std::string user_moddir();
+std::string worldoptions();
+std::string crash();
+std::string tileset_conf();
+std::string gfxdir();
+std::string user_gfx();
+std::string data_sound();
+std::string user_sound();
+std::string mods_replacements();
+std::string mods_dev_default();
+std::string mods_user_default();
+std::string soundpack_conf();
 
-auto credits() -> fs::path;
-auto motd() -> fs::path;
-auto title( holiday current_holiday ) -> fs::path;
-auto names() -> fs::path;
+std::string credits();
+std::string motd();
+std::string title( holiday current_holiday );
+std::string names();
 
-auto set_datadir( const fs::path &datadir ) -> void;
-auto set_config_dir( const fs::path &config_dir ) -> void;
-auto set_savedir( const fs::path &savedir ) -> void;
-auto set_memorialdir( const fs::path &memorialdir ) -> void;
-auto set_options( const fs::path &options ) -> void;
-auto set_autopickup( const fs::path &autopickup ) -> void;
-auto set_motd( const fs::path &motd ) -> void;
+void set_datadir( const std::string &datadir );
+void set_config_dir( const std::string &config_dir );
+void set_savedir( const std::string &savedir );
+void set_memorialdir( const std::string &memorialdir );
+void set_options( const std::string &options );
+void set_autopickup( const std::string &autopickup );
+void set_motd( const std::string &motd );
 
 } // namespace PATH_INFO
+
 

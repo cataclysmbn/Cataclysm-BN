@@ -362,7 +362,7 @@ std::string PlfNode::debug_dump() const
 constexpr u32 MO_STRING_DESCR_SIZE = 8;
 constexpr u8 PLF_SEPARATOR = 0;
 
-trans_catalogue trans_catalogue::load_from_file( const fs::path &file_path )
+trans_catalogue trans_catalogue::load_from_file( const std::string &file_path )
 {
     std::stringstream buffer;
     cata_ifstream file = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open( file_path ) );
