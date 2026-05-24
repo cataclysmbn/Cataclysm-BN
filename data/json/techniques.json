@@ -205,6 +205,7 @@
     "disarms": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -219,6 +220,7 @@
     "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -234,6 +236,7 @@
     "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -249,6 +252,7 @@
     "disarms": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -847,6 +851,7 @@
     "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.25 },
       { "stat": "damage", "type": "cut", "scale": 1.25 },
@@ -865,6 +870,7 @@
     "disarms": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.25 },
       { "stat": "damage", "type": "cut", "scale": 1.25 },
@@ -885,6 +891,7 @@
     "down_dur": 1,
     "stun_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.5 },
       { "stat": "damage", "type": "cut", "scale": 1.5 },
@@ -917,6 +924,7 @@
     "force_unarmed": true,
     "down_dur": 1,
     "knockback_dist": 1,
+    "controlled_knockback": true,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {
@@ -1471,6 +1479,7 @@
     "down_dur": 2,
     "knockback_dist": 2,
     "knockback_spread": 2,
+    "controlled_knockback": true,
     "stunned_target": true,
     "force_unarmed": true,
     "mult_bonuses": [ { "stat": "damage", "type": "bash", "scale": 2 } ]

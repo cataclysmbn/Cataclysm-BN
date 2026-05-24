@@ -2539,9 +2539,13 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         std::optional<target_handler::trajectory> trajectory;
         bool player_cancelled_throw = false;
 
-        if( is_avatar() && avatar_action::is_manual_combat_mode() ) {
-            trajectory = target_handler::mode_throw_creature( *as_avatar(), t, technique.knockback_dist );
-            player_cancelled_throw = !trajectory.has_value();
+        if( is_avatar() && avatar_action::is_manual_combat_mode() && technique.controlled_knockback ) {
+            auto &you = *as_avatar();
+            auto selected_trajectory = target_handler::mode_throw_creature( you, t, technique.knockback_dist );
+            player_cancelled_throw = selected_trajectory.empty();
+            if( !player_cancelled_throw ) {
+                trajectory = std::move( selected_trajectory );
+            }
         }
 
         if( !player_cancelled_throw ) {
