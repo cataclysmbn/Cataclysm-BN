@@ -196,6 +196,7 @@
 #include "veh_interact.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_grab.h"
 #include "vehicle_part.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
@@ -11184,12 +11185,26 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     const auto furn_dest = dest_loc + u.grab_point;
 
     bool grabbed = u.get_grab_type() != OBJECT_NONE;
+    auto grabbed_vehicle_target = std::optional<vehicle_grab_target>{};
+    if( grabbed && u.get_grab_type() == OBJECT_VEHICLE ) {
+        grabbed_vehicle_target = vehicle_grab_target_at( m, u.bub_pos() + u.grab_point );
+        if( grabbed_vehicle_target ) {
+            u.grab_point = grabbed_vehicle_target->pos - u.bub_pos();
+        }
+    }
     if( grabbed ) {
         const auto &dp = dest_loc - u.bub_pos();
-        pushing = dp ==  u.grab_point;
-        pulling = dp == -u.grab_point;
+        if( u.get_grab_type() == OBJECT_VEHICLE ) {
+            const auto horizontal_dp = tripoint_rel_ms( dp.xy(), 0 );
+            const auto horizontal_grab = tripoint_rel_ms( u.grab_point.xy(), 0 );
+            pushing = horizontal_dp == horizontal_grab;
+            pulling = horizontal_dp == -horizontal_grab;
+        } else {
+            pushing = dp ==  u.grab_point;
+            pulling = dp == -u.grab_point;
+        }
     }
-    if( grabbed && dest_loc.z() != u.bub_pos().z() ) {
+    if( grabbed && u.get_grab_type() != OBJECT_VEHICLE && dest_loc.z() != u.bub_pos().z() ) {
         add_msg( m_warning, _( "You let go of the grabbed object." ) );
         grabbed = false;
         u.grab( OBJECT_NONE );
@@ -11206,8 +11221,9 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
             grabbed = false;
         }
     } else if( grabbed && u.get_grab_type() == OBJECT_VEHICLE ) {
-        grabbed_vehicle = veh_pointer_or_null( m.veh_at( u.bub_pos() + u.grab_point ) );
-        if( grabbed_vehicle == nullptr ) {
+        if( grabbed_vehicle_target ) {
+            grabbed_vehicle = &grabbed_vehicle_target->vp.vehicle();
+        } else {
             // We were grabbing a vehicle that isn't there anymore
             grabbed = false;
         }
@@ -11218,6 +11234,10 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     if( u.grab_point != tripoint_rel_ms::zero() && !grabbed ) {
         add_msg( m_warning, _( "Can't find grabbed object." ) );
         u.grab( OBJECT_NONE );
+        pushing = false;
+        pulling = false;
+        shifting_furniture = false;
+        grabbed_vehicle = nullptr;
     }
 
     if( ( m.impassable( dest_loc ) && !character_funcs::can_noclip( u ) ) && !pushing &&
@@ -11328,13 +11348,10 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 
     const int mcost = m.combined_movecost( u.bub_pos(), dest_loc, grabbed_vehicle, modifier,
                                            via_ramp ) * multiplier;
-    // only do this check if we can't noclip
-    if( !character_funcs::can_noclip( u ) ) {
-        if( grabbed_move( dest_loc - u.bub_pos() ) ) {
-            return true;
-        } else if( mcost == 0 ) {
-            return false;
-        }
+    if( grabbed_move( dest_loc - u.bub_pos() ) ) {
+        return true;
+    } else if( mcost == 0 && !character_funcs::can_noclip( u ) ) {
+        return false;
     }
 
     bool diag = trigdist && u.bub_pos().x() != dest_loc.x() && u.bub_pos().y() != dest_loc.y();
@@ -11509,7 +11526,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     auto ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
 
-    if( pulling ) {
+    if( pulling && u.get_grab_type() == OBJECT_FURNITURE ) {
         const auto shifted_furn_pos = furn_pos - ms_shift;
         const auto shifted_furn_dest = furn_dest - ms_shift;
         const time_duration fire_age = m.get_field_age( shifted_furn_pos, fd_fire );
@@ -12168,8 +12185,8 @@ bool game::grabbed_move( const tripoint_rel_ms &dp )
         return false;
     }
 
-    if( dp.z() != 0 ) {
-        // No dragging stuff up/down stairs yet!
+    if( dp.z() != 0 && u.get_grab_type() != OBJECT_VEHICLE ) {
+        // No dragging furniture up/down stairs yet!
         return false;
     }
 
@@ -13733,8 +13750,11 @@ void game::vertical_shift( const int z_after )
         return;
     }
 
-    // TODO: Implement dragging stuff up/down
-    u.grab( OBJECT_NONE );
+    // Vehicle grabs can remain valid across ramp z-level shifts. Other grabs
+    // still lack vertical movement support.
+    if( u.get_grab_type() != OBJECT_VEHICLE ) {
+        u.grab( OBJECT_NONE );
+    }
 
     scent.reset();
 
