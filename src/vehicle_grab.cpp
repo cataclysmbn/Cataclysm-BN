@@ -6,8 +6,8 @@
 namespace
 {
 
-auto vehicle_grab_target_at_exact( const map &here, const tripoint_bub_ms &pos )
--> std::optional<vehicle_grab_target>
+auto vehicle_grab_target_at_exact( const map &here,
+                                   const tripoint_bub_ms &pos ) -> std::optional<vehicle_grab_target>
 {
     if( const auto vp = here.veh_at( pos ) ) {
         return vehicle_grab_target{ .pos = vp->pos(), .vp = *vp };
@@ -18,8 +18,8 @@ auto vehicle_grab_target_at_exact( const map &here, const tripoint_bub_ms &pos )
 
 } // namespace
 
-auto vehicle_grab_target_at( const map &here, const tripoint_bub_ms &pos )
-- > std::optional<vehicle_grab_target>
+auto vehicle_grab_target_at( const map &here,
+                             const tripoint_bub_ms &pos ) -> std::optional<vehicle_grab_target>
 {
     if( const auto target = vehicle_grab_target_at_exact( here, pos ) ) {
         return target;

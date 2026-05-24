@@ -12021,8 +12021,8 @@ struct furniture_move_effort_options {
     tripoint_bub_ms to;
 };
 
-static auto multiply_ratio_round_up( const int value, const int numerator, const int denominator )
-- > int
+static auto multiply_ratio_round_up( const int value, const int numerator,
+                                     const int denominator ) -> int
 {
     const auto safe_denominator = std::max( 1, denominator );
     return ( value * numerator + safe_denominator - 1 ) / safe_denominator;
@@ -12092,8 +12092,8 @@ static auto furniture_contents_strength_req( map &here, const tripoint_bub_ms &p
     return furniture_contents_weight / 4_kilogram;
 }
 
-static auto furniture_move_effort_for( const furniture_move_effort_options &options )
-- > furniture_move_effort
+static auto furniture_move_effort_for(
+    const furniture_move_effort_options &options ) -> furniture_move_effort
 {
     const auto vertical_direction = furniture_vertical_direction_for( options.from, options.to );
     const auto &furntype = options.here.furn( options.from ).obj();

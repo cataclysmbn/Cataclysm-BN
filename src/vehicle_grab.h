@@ -12,5 +12,5 @@ struct vehicle_grab_target {
     vpart_position vp;
 };
 
-auto vehicle_grab_target_at( const map &here, const tripoint_bub_ms &pos )
-- > std::optional<vehicle_grab_target>;
+auto vehicle_grab_target_at( const map &here,
+                             const tripoint_bub_ms &pos ) -> std::optional<vehicle_grab_target>;

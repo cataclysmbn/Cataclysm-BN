@@ -57,8 +57,8 @@ auto vehicle_points_contain_monster( const std::set<tripoint_abs_ms> &vehicle_po
     return std::ranges::any_of( vehicle_points, point_has_monster );
 }
 
-auto make_horde_vehicle_spawn_fixture( const horde_vehicle_spawn_options &options )
--> horde_vehicle_spawn_fixture
+auto make_horde_vehicle_spawn_fixture(
+    const horde_vehicle_spawn_options &options ) -> horde_vehicle_spawn_fixture
 {
     clear_all_state();
     ACTIVE_OVERMAP_BUFFER.clear();
