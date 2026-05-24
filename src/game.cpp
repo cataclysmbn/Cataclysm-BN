@@ -7411,8 +7411,7 @@ void game::pickup( const tripoint_bub_ms &p )
     } );
     add_draw_callback( hilite_cb );
     
-    std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::multipickup( u );
-    // auto pickup_ptr = std::make_unique<player_activity>(std::make_unique<pickup_activity_actor>(pickup_list, g->u.bub_pos()));
+    std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_from_tile( g->u, p);
     g->u.assign_activity(std::make_unique<player_activity>(std::make_unique<pickup_activity_actor>(pickup_list, g->u.bub_pos())));
 
     // pickup::pick_up( p, 0 );
@@ -7420,11 +7419,16 @@ void game::pickup( const tripoint_bub_ms &p )
 
 void game::pickup_all()
 {
-    pickup::pick_up_all_nearby();
+    std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_nearby( g->u);
+    g->u.assign_activity(std::make_unique<player_activity>(std::make_unique<pickup_activity_actor>(pickup_list, g->u.bub_pos())));
+
+    // pickup::pick_up_all_nearby();
 }
 
 void game::pickup_feet()
 {
+    std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_from_tile( g->u, g->u.bub_pos());
+    g->u.assign_activity(std::make_unique<player_activity>(std::make_unique<pickup_activity_actor>(pickup_list, g->u.bub_pos())));
     // pickup::pick_up( u.bub_pos(), 1 );
 }
 

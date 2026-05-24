@@ -1687,7 +1687,34 @@ drop_locations game_menus::inv::multidrop( player &p )
     }
 }
 
-std::vector<pickup::pick_drop_selection> game_menus::inv::multipickup( player &p )
+std::vector<pickup::pick_drop_selection> game_menus::inv::pickup_from_tile( player &p, const tripoint_bub_ms &target )
+{
+    p.inv_restack( );
+
+    pickup_inventory_preset preset(p);
+    inventory_pickup_selector inv_s( p, preset);
+
+    inv_s.set_title( _( "Multipickup" ) );
+    inv_s.set_hint( _( "To pickup x items, type a number before selecting." ) );
+
+    while( true ) {
+        p.inv_restack( );
+        inv_s.clear_items();
+        inv_s.add_map_items(target);
+        inv_s.add_vehicle_items(target);
+
+
+        if( inv_s.empty() ) {
+            popup( std::string( _( "You have nothing to pickup." ) ), PF_GET_KEY );
+            return std::vector<pickup::pick_drop_selection>();
+        }
+
+        std::vector<pickup::pick_drop_selection> result = inv_s.execute();
+        return result;
+    }
+}
+
+std::vector<pickup::pick_drop_selection> game_menus::inv::pickup_nearby( player &p)
 {
     p.inv_restack( );
 
