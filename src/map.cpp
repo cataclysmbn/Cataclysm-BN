@@ -10207,8 +10207,8 @@ auto map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &en
     }
 
     // Submaps that contain the bounding points
-    const auto min_sm = point_bub_sm( min.x() / SEEX, min.y() / SEEY );
-    const auto max_sm = point_bub_sm( max.x() / SEEX, max.y() / SEEY );
+    const auto min_sm = project_to<coords::sm>( min );
+    const auto max_sm = project_to<coords::sm>( max );
     const auto submap_range = point_range<point_bub_sm>( min_sm, max_sm );
 
     const auto apply_to_submap = [&]( const tripoint_bub_sm &sm_pos,
@@ -10237,11 +10237,13 @@ auto map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &en
                 // submaps are intentionally set to null.
                 continue;
             }
+            const auto sm_ms_min = project_remain<coords::sm>( min ).remainder;
+            const auto sm_ms_max = project_remain<coords::sm>( max ).remainder;
 
-            const auto sm_min = point_sm_ms( smp.x() > min_sm.x() ? 0 : min.x() % SEEX,
-                                             smp.y() > min_sm.y() ? 0 : min.y() % SEEY );
-            const auto sm_max = point_sm_ms( smp.x() < max_sm.x() ? SEEX - 1 : max.x() % SEEX,
-                                             smp.y() < max_sm.y() ? SEEY - 1 : max.y() % SEEY );
+            const auto sm_min = point_sm_ms( smp.x() > min_sm.x() ? 0 : sm_ms_min.x(),
+                                             smp.y() > min_sm.y() ? 0 : sm_ms_min.y() );
+            const auto sm_max = point_sm_ms( smp.x() < max_sm.x() ? SEEX - 1 : sm_ms_max.x(),
+                                             smp.y() < max_sm.y() ? SEEY - 1 : sm_ms_max.y() );
             switch( apply_to_submap( sm_pos, cur_submap, sm_min, sm_max ) ) {
                 case ITER_CONTINUE:
                 case ITER_SKIP_SUBMAP:
