@@ -284,7 +284,7 @@ bool monster::can_squeeze_to( const tripoint_bub_ms &p ) const
 
 bool monster::can_move_to( const tripoint_bub_ms &p ) const
 {
-    return can_reach_to( p ) && will_move_to( p ) && !has_flag( MF_STATIONARY );
+    return can_reach_to( p ) && will_move_to( p );
 }
 
 void monster::set_dest( const tripoint_bub_ms &p )
@@ -1328,6 +1328,10 @@ monster_action_t monster::decide_action() const
                    attitude_to( *critter_here ) != Attitude::A_HOSTILE &&
                    has_flag( MF_PUSH_MON ) ) {
             action.kind = monster_action_kind::push;
+        } else if( has_flag( MF_STATIONARY ) ) {
+            // Stationary monsters can't move but can take any other action, unlike MF_IMMOBILE
+            action.kind = monster_action_kind::idle;
+            action.move_cost     = 100;
         } else {
             action.kind = monster_action_kind::move;
         }
@@ -2657,7 +2661,8 @@ bool monster::will_reach( const point_bub_ms &p )
         return false;
     }
 
-    if( ( has_flag( MF_IMMOBILE ) || has_flag( MF_RIDEABLE_MECH ) ) && ( bub_pos().xy() != p ) ) {
+    if( ( has_flag( MF_IMMOBILE ) || has_flag( MF_STATIONARY ) || has_flag( MF_RIDEABLE_MECH ) ) &&
+        ( bub_pos().xy() != p ) ) {
         return false;
     }
 

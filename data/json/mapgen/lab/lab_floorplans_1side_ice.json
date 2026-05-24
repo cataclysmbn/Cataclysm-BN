@@ -1,0 +1,112 @@
+[
+  {
+    "//": "mi-go containment",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_1side_ice" ],
+    "weight": 200,
+    "object": {
+      "fill_ter": "t_strconc_floor",
+      "rows": [
+        "|--------|-..-|--------|",
+        "|,,C8cc,,|....|,,,ll,,,|",
+        "|,,,,,,,,|....|,,,,,,,,|",
+        "|c,,,,,,,|6...|,,r,,r,,|",
+        "|S,,,,,,,|-LL-|,,r,,r,,|",
+        "|c,,,,,,,|x,,%|,,r,,r,,|",
+        "|,,,cc,,,|,,,,M,,,,,,,,|",
+        "|,,,cc,,,|,,,,|,,,,,,,,|",
+        "|J,,cc,,,G,,,,|-ggGGgg-|",
+        "|J,,cc,,,G,,,,|,,,,,,,,|",
+        "|j,,,,,,,|,,,,g,,,,,,,,|",
+        "|j,,,,,,,|,,,,g,,d,hd,,|",
+        "|,,,,,,,,|,,,,|,,d7dd,,|",
+        "|-ggGGgg-|-GG-|-gggggg-|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|,,,,,,,,,,,,,,,,,,,,,,|",
+        "|oooooooooooooooooooooo|",
+        "|,,,,o,,,,,,,,,,,o,,,,,|",
+        "|-gg|L|-gg-|-gg-|L|-gg-|",
+        "|,,,|,|,,,,|,,,,|,|,,,,|",
+        "|,,,|,|,,,,|,,,,|,|,,,,|",
+        "|,,,L,L,,,,|,,,,L,L,,,,|",
+        "|,,,|,|,,,,|,,,,|,|,,,,|",
+        "|---|-|----|----|-|----|"
+      ],
+      "palettes": [ "lab_palette" ],
+      "place_monster": [
+        { "monster": "mon_mi_go", "x": [ 19, 22 ], "y": [ 20, 22 ] },
+        { "monster": "mon_mi_go", "x": [ 12, 15 ], "y": [ 20, 22 ] },
+        { "monster": "mon_mi_go_scout", "x": [ 7, 10 ], "y": [ 20, 22 ] },
+        { "monster": "mon_mi_go_slaver", "x": [ 1, 5 ], "y": [ 20, 22 ] },
+        {
+          "monster": "mon_zombie_soldier_shieldman",
+          "x": [ 11, 12 ],
+          "y": [ 5, 10 ],
+          "pack_size": [ 2, 4 ],
+          "chance": 100
+        }
+      ],
+      "place_traps": [ { "trap": "tr_dissector", "x": [ 4, 5 ], "y": [ 6, 6 ] } ],
+      "furniture": { "C": "f_centrifuge", "j": "f_sample_freezer", "J": "f_glass_freezer" },
+      "terrain": { "7": "t_console", "8": "t_console", "C": "t_strconc_floor", "o": "t_floor_red" },
+      "mapping": {
+        "r": {
+          "items": [
+            { "item": "military", "chance": 30 },
+            { "item": "ammo_milspec", "chance": 30 },
+            { "item": "mags_milspec", "chance": 30 },
+            { "item": "guns_milspec", "chance": 30 }
+          ]
+        },
+        "l": {
+          "items": [
+            { "item": "clothing_soldier_set", "chance": 100 },
+            { "item": "gear_soldier_sidearm", "chance": 33 },
+            { "item": "book_military", "chance": 33 }
+          ]
+        },
+        "d": { "items": [ { "item": "office", "chance": 60 } ] },
+        "c": {
+          "items": [
+            { "item": "meat_tainted", "chance": 40 },
+            { "item": "fat_tainted", "chance": 40 },
+            { "item": "surgery", "chance": 40 }
+          ]
+        },
+        "j": {
+          "items": [
+            { "item": "meat_tainted", "chance": 80, "repeat": [ 2, 5 ] },
+            { "item": "fat_tainted", "chance": 80, "repeat": [ 2, 5 ] }
+          ]
+        },
+        "J": {
+          "items": [
+            { "item": "fetid_goop", "chance": 80, "repeat": [ 2, 3 ] },
+            { "item": "resin_chunk", "chance": 80, "repeat": [ 2, 3 ] }
+          ]
+        }
+      },
+      "computers": {
+        "6": {
+          "name": "Alien Containment Entrance",
+          "security": 4,
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 } ],
+          "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
+        },
+        "7": {
+          "name": "Containment Control",
+          "security": 4,
+          "options": [ { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 } ],
+          "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
+        },
+        "8": {
+          "name": "Centrifuge",
+          "options": [ { "name": "Analyze blood", "action": "blood_anal" } ],
+          "failures": [ { "action": "destroy_blood" } ]
+        }
+      },
+      "place_nested": [ { "chunks": [ "lab_1side_border_doors" ], "x": 0, "y": 0 } ]
+    }
+  }
+]

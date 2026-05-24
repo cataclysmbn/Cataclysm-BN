@@ -121,8 +121,7 @@ std::vector<std::string>
     using namespace std::views;
 
     return get_files_from_path( "", directory_path, true )
-    | filter( []( const fs::path & path ) { return file_exist( path ) && has_loading_image_extension( path.generic_string() ); } )
-    | transform( []( const fs::path & path ) { return path.generic_string(); } )
+    | filter( []( const std::string & path ) { return file_exist( path ) && has_loading_image_extension( path ); } )
     | std::ranges::to<std::vector>();
 }
 
@@ -157,15 +156,14 @@ auto get_loading_image_matches_at_root( const std::string &image_name,
 
     return get_files_from_path( image_filename, root_path, true, true )
            | filter( [&normalized_root, &image_filename,
-                      &author_prefixed_filename]( const fs::path & path ) {
-        const auto normalized_path = path.lexically_normal();
+                      &author_prefixed_filename]( const std::string & path ) {
+        const auto normalized_path = std::filesystem::path( path ).lexically_normal();
         const auto filename = normalized_path.filename().generic_string();
         return path_is_inside_root( normalized_root, normalized_path )
                && file_exist( path )
-               && has_loading_image_extension( path.generic_string() )
+               && has_loading_image_extension( path )
                && ( filename == image_filename || filename.ends_with( author_prefixed_filename ) );
     } )
-    | transform( []( const fs::path & path ) { return path.generic_string(); } )
     | std::ranges::to<std::vector>();
 }
 

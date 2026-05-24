@@ -32,18 +32,18 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     CAPTURE( str_to_hex( s3 ) );
 
     // Make sure there's no interference from e.g. uncleaned old runs
-    const auto base = g->get_active_world()->info->folder_path() /
-                      ( "fs_test_" + get_pid_string() + "_" + std::to_string( serial ) );
+    std::string base = g->get_active_world()->info->folder_path() + "/fs_test_" +
+                       get_pid_string() + "_" + std::to_string( serial ) + "/";
     CAPTURE( base );
     REQUIRE( !dir_exist( base ) );
     REQUIRE( assure_dir_exist( base ) );
     REQUIRE( can_write_to_dir( base ) );
 
-    const auto dir1 = base / s1;
-    const auto file1_1 = dir1 / ( s2 + ".json" );
-    const auto file1_2 = dir1 / ( s3 + ".json" );
-    const auto dir2 = dir1 / s3;
-    const auto file2_1 = dir2 / ( s2 + ".json" );
+    std::string dir1 = base + s1 + "/";
+    std::string file1_1 = dir1 + s2 + ".json";
+    std::string file1_2 = dir1 + s3 + ".json";
+    std::string dir2 = dir1 + s3 + "/";
+    std::string file2_1 = dir2 + s2 + ".json";
 
     CAPTURE( dir1 );
     CAPTURE( file1_1 );
@@ -92,22 +92,22 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
 
     // Copying file
     REQUIRE( write_to_file( file1_1, writer, nullptr ) );
-    REQUIRE( ::copy_file( file1_1, file1_2 ) );
+    REQUIRE( copy_file( file1_1, file1_2 ) );
     REQUIRE( file_exist( file1_2 ) );
-    REQUIRE( ::copy_file( file1_1, file1_2 ) );
+    REQUIRE( copy_file( file1_1, file1_2 ) );
     REQUIRE( remove_file( file1_2 ) );
     REQUIRE( write_to_file( file1_2, writer2, nullptr ) );
-    REQUIRE( ::copy_file( file1_2, file1_1 ) );
+    REQUIRE( copy_file( file1_2, file1_1 ) );
     REQUIRE( remove_file( file1_2 ) );
     REQUIRE( read_from_file( file1_1, reader ) );
     CHECK( readbuf == writebuf2 );
     REQUIRE( assure_dir_exist( dir2 ) );
-    REQUIRE( !::copy_file( file1_2, file1_1 ) );
-    REQUIRE( !::copy_file( file1_1, dir2 ) );
-    REQUIRE( !::copy_file( dir2, file1_2 ) );
+    REQUIRE( !copy_file( file1_2, file1_1 ) );
+    REQUIRE( !copy_file( file1_1, dir2 ) );
+    REQUIRE( !copy_file( dir2, file1_2 ) );
     REQUIRE( remove_file( file1_1 ) );
     REQUIRE( remove_directory( dir2 ) );
-    REQUIRE( !::copy_file( file1_1, file1_2 ) );
+    REQUIRE( !copy_file( file1_1, file1_2 ) );
 
     // Checking if can write to dir
     REQUIRE( can_write_to_dir( dir1 ) );
@@ -121,18 +121,18 @@ static void filesystem_test_group( int serial, const std::string &s1, const std:
     REQUIRE( assure_dir_exist( dir2 ) );
     REQUIRE( write_to_file( file2_1, writer, nullptr ) );
     {
-        auto got = get_files_from_path(
-                       ".json",
-                       base,
-                       true,
-                       true
-                   );
-        std::vector<fs::path> exp = {
+        std::vector<std::string> got = get_files_from_path(
+                                           ".json",
+                                           base,
+                                           true,
+                                           true
+                                       );
+        std::vector<std::string> exp = {
             file1_1,
             file1_2,
             file2_1,
         };
-        const auto comparator = []( const fs::path & a, const fs::path & b ) {
+        const auto comparator = []( const std::string & a, const std::string & b ) {
             // We don't care about lexicographic order here, just the data order
             // NOLINTNEXTLINE(cata-use-localized-sorting)
             return a > b;

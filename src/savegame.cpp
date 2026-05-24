@@ -269,6 +269,12 @@ auto game::unserialize( std::istream &fin ) -> bool
                 dim_data.read( "world_type", wt_str );
                 info.world_type = world_type_id( wt_str );
                 dim_data.read( "display_name", info.display_name );
+                auto legacy_origin_pos_x = 0;
+                auto legacy_origin_pos_y = 0;
+                auto legacy_origin_pos_z = 0;
+                dim_data.read( "origin_pos_x", legacy_origin_pos_x );
+                dim_data.read( "origin_pos_y", legacy_origin_pos_y );
+                dim_data.read( "origin_pos_z", legacy_origin_pos_z );
                 if( dim_data.has_object( "pocket_info" ) ) {
                     dim_data.read( "pocket_info", info.pocket_info );
                 } else if( dim_data.has_object( "bounds" ) ) {
@@ -1498,13 +1504,19 @@ void faction_manager::deserialize( JsonIn &jsin )
 
 void Creature_tracker::deserialize( JsonIn &jsin )
 {
-    monsters_list.clear();
-    monsters_by_location.clear();
+    clear();
     jsin.start_array();
     while( !jsin.end_array() ) {
         // TODO: would be nice if monster had a constructor using JsonIn or similar, so this could be one statement.
-        shared_ptr_fast<monster> mptr = make_shared_fast<monster>();
+        auto mptr = make_shared_fast<monster>();
         jsin.read( *mptr );
+        if( const auto existing_mon_ptr = find( mptr->bub_pos() ) ) {
+            if( !existing_mon_ptr->is_hallucination() && !mptr->is_hallucination() ) {
+                DebugLog( DL::Warn, DC::Game ) << "Skipping duplicate active monster "
+                                               << mptr->disp_name() << " at " << mptr->bub_pos();
+                continue;
+            }
+        }
         add( mptr );
     }
 }

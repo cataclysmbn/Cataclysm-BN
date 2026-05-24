@@ -49,9 +49,9 @@ std::string get_lapi_version_string()
 void startup_lua_test()
 {
     sol::state lua = make_lua_state();
-    const auto lua_startup_script = PATH_INFO::datadir() / "raw" / "on_game_start.lua";
+    std::string lua_startup_script = PATH_INFO::datadir() + "raw/on_game_start.lua";
     try {
-        run_lua_script( lua, lua_startup_script.string() );
+        run_lua_script( lua, lua_startup_script );
     } catch( std::runtime_error &e ) {
         debugmsg( "%s", e.what() );
     }
@@ -76,8 +76,7 @@ auto generate_lua_docs( const std::filesystem::path &script_path,
     };
     lua.globals()["package"]["path"] = string_format(
                                            "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
-                                           ( PATH_INFO::datadir() / "lua" ).generic_string(),
-                                           ( PATH_INFO::datadir() / "raw" ).generic_string()
+                                           PATH_INFO::datadir() + "/lua", PATH_INFO::datadir() + "/raw"
                                        );
 
     try {
@@ -171,6 +170,7 @@ bool load_world_lua_state( const world *world, const std::string &path )
     const auto ret = world->read_from_file( path, [&]( std::istream & stream ) {
         JsonIn jsin( stream );
         JsonObject jsobj = jsin.get_object();
+        jsobj.allow_omitted_members();
 
         for( const mod_id &mod : mods ) {
             if( !jsobj.has_object( mod.str() ) ) {
@@ -322,7 +322,7 @@ void set_mod_being_loaded( lua_state &state, const mod_id &mod )
     lua.globals()["package"]["path"] =
         string_format(
             "%1$s/?.lua;%1$s/?/init.lua;%2$s/?.lua;%2$s/?/init.lua",
-            ( PATH_INFO::datadir() / "lua" ).generic_string(), mod->path
+            PATH_INFO::datadir() + "/lua", mod->path
         );
 }
 

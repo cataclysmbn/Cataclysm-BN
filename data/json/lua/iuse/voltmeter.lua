@@ -120,7 +120,7 @@ voltmeter.modify_grid_connections = function(who, item, pos)
   if choice < 0 then return 0 end
 
   local idx = choice + 1
-  local delta = TripointRelOmt.new(six_dirs[idx])
+  local delta = six_dirs[idx]
   if not delta then return 0 end
   local destination_pos_abs_omt = pos_abs_omt + delta
 

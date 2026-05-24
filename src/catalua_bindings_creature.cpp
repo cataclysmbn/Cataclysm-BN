@@ -360,6 +360,7 @@ void cata::detail::reg_monster( sol::state &lua )
 
         SET_FX_T( make_fungus, bool() );
         SET_FX_T( make_friendly, void() );
+        SET_FX_T( make_pet, void() );
 
         SET_FX_T( make_ally, void( const monster & ) );
 

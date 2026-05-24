@@ -353,6 +353,7 @@
       [ "baldric_holster", 3 ],
       [ "holster", 8 ],
       [ "shoulder_holster", 4 ],
+      [ "shoulder_pouch", 4 ],
       [ "bootstrap", 2 ],
       [ "wristholster", 1 ],
       [ "bholster", 5 ],

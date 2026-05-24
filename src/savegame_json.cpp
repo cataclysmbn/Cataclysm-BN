@@ -1997,7 +1997,8 @@ auto monster::load( const JsonObject &data,
     auto stored_pos_abs = tripoint_abs_ms::zero();
     if( data.read( "pos_abs", stored_pos_abs ) ) {
         pos_abs = stored_pos_abs;
-    } else if( has_legacy_x && has_legacy_y ) {
+    }
+    if( has_legacy_x && has_legacy_y ) {
         if( legacy_context ) {
             const auto abs_sm_pos = project_combine( legacy_context->om_pos, legacy_context->submap_pos );
             const auto legacy_remainder = project_remain<coords::sm>( legacy_bub_pos );
@@ -3119,6 +3120,46 @@ void label::serialize( JsonOut &json ) const
     json.end_object();
 }
 
+namespace
+{
+
+/// Vehicle pivots used to be 2D mount-space points before tripoint migration.
+auto read_legacy_vehicle_pivot( const JsonObject &data, tripoint_mnt_veh &pivot ) -> void
+{
+    if( !data.has_member( "pivot" ) ) {
+        return;
+    }
+
+    const auto pivot_json = data.get_array( "pivot" );
+    if( pivot_json.size() != 2 && pivot_json.size() != 3 ) {
+        data.throw_error( "vehicle pivot must have 2 or 3 coordinates", "pivot" );
+    }
+
+    const auto z = pivot_json.size() == 3 ? pivot_json.get_int( 2 ) : 0;
+    pivot = tripoint_mnt_veh( pivot_json.get_int( 0 ), pivot_json.get_int( 1 ), z );
+}
+
+auto read_saved_vehicle_parts( const JsonObject &data, std::vector<vehicle_part> &parts ) -> void
+{
+    if( !data.has_array( "parts" ) ) {
+        return;
+    }
+
+    parts.clear();
+    const auto part_array = data.get_array( "parts" );
+    for( auto part_index = size_t{ 0 }; part_index < part_array.size(); ++part_index ) {
+        auto part = vehicle_part();
+        try {
+            part_array.read( part_index, part, true );
+            parts.push_back( std::move( part ) );
+        } catch( const JsonError &err ) {
+            DebugLog( DL::Warn, DC::DebugMsg ) << "Skipping invalid saved vehicle part: " << err.c_str();
+        }
+    }
+}
+
+} // namespace
+
 /*
  * Load vehicle from a json blob that might just exceed player in size.
  */
@@ -3192,16 +3233,16 @@ void vehicle::deserialize( JsonIn &jsin )
     data.read( "theft_time", theft_time );
     data.read( "dimension_id", dimension_id_ );
 
-    data.read( "parts", parts );
-
     // we persist the pivot anchor so that if the rules for finding
     // the pivot change, existing vehicles do not shift around.
     // Loading vehicles that predate the pivot logic is a special
     // case of this, they will load with an anchor of (0,0) which
     // is what they're expecting.
-    data.read( "pivot", pivot_anchor[0] );
+    read_legacy_vehicle_pivot( data, pivot_anchor[0] );
     pivot_anchor[1] = pivot_anchor[0];
     pivot_rotation[1] = pivot_rotation[0] = fdir_angle;
+
+    read_saved_vehicle_parts( data, parts );
     data.read( "is_following", is_following );
     data.read( "follow_distance", follow_distance );
     data.read( "is_patrolling", is_patrolling );

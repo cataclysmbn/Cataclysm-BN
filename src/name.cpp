@@ -77,7 +77,7 @@ static void load( JsonIn &jsin )
     }
 }
 
-void load_from_file( const fs::path &filename )
+void load_from_file( const std::string &filename )
 {
     read_from_file_json( filename, load );
 }

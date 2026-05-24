@@ -147,16 +147,18 @@
       "rotation": [ 0, 3 ],
       "rows": [
         ".......",
-        ".......",
-        ".......",
-        ".cccc6.",
-        ".......",
-        ".......",
+        "./III/.",
+        ".IBBBI.",
+        ".IB.B6.",
+        ".IBBBI.",
+        "./III/.",
         "......."
       ],
       "palettes": [ "lab_palette", "lab_palette_map_computer" ],
-      "terrain": { "c": [ "t_thconc_floor" ] },
-      "place_monster": [ { "monster": "mon_turret_light", "x": [ 2, 3 ], "y": [ 3, 3 ] } ]
+      "terrain": { "I": [ "t_floor_red" ], "/": [ "t_floor_red" ] },
+      "furniture": { "B": [ "f_sandbag_half" ], "/": [ "f_sign" ] },
+      "place_monster": [ { "monster": "mon_turret_light", "x": [ 3, 3 ], "y": [ 3, 3 ] } ],
+      "signs": { "/": { "signage": "Warning!\nLive Fire Zone\nAvoid In Case of Lockdown!" } }
     }
   },
   {
@@ -168,18 +170,20 @@
       "rotation": [ 0, 3 ],
       "rows": [
         ".........",
-        "....c....",
-        "....c....",
-        "....c....",
-        "....c....",
-        "....c....",
-        "....c....",
+        ".........",
+        "../III/..",
+        "..IBBBI..",
+        "..IB.BI..",
+        "..IBBBI..",
+        "../III/..",
         "....6....",
         "........."
       ],
       "palettes": [ "lab_palette", "lab_palette_map_computer" ],
-      "terrain": { "c": [ "t_thconc_floor" ] },
-      "place_monster": [ { "monster": "mon_turret_light", "x": [ 4, 4 ], "y": [ 1, 4 ] } ]
+      "terrain": { "I": [ "t_floor_red" ], "/": [ "t_floor_red" ] },
+      "furniture": { "B": [ "f_sandbag_half" ], "/": [ "f_sign" ] },
+      "place_monster": [ { "monster": "mon_turret_light", "x": [ 4, 4 ], "y": [ 4, 4 ] } ],
+      "signs": { "/": { "signage": "Warning!\nLive Fire Zone\nAvoid In Case of Lockdown!" } }
     }
   },
   {

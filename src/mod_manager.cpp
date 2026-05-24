@@ -109,7 +109,7 @@ const std::map<std::string, std::string> &get_mod_list_cat_tab()
     return mod_list_cat_tab;
 }
 
-void mod_manager::load_replacement_mods( const fs::path &path )
+void mod_manager::load_replacement_mods( const std::string &path )
 {
     read_from_file_json( path, [&]( JsonIn & jsin ) {
         jsin.start_array();
@@ -199,7 +199,7 @@ void mod_manager::remove_invalid_mods( t_mod_list &mods ) const
 namespace mod_management
 {
 
-std::vector<MOD_INFORMATION> load_mods_from( const fs::path &path )
+std::vector<MOD_INFORMATION> load_mods_from( const std::string &path )
 {
     std::vector<MOD_INFORMATION> out;
 
@@ -221,7 +221,7 @@ std::vector<MOD_INFORMATION> load_mods_from( const fs::path &path )
     for( const mod_id &ident : has_dupes ) {
         std::string msg = string_format(
                               _( "The are multiple mods with same id [%s] found in folder \"%s\":\n" ),
-                              ident, path.generic_string() );
+                              ident, path );
 
         for( auto it = out.begin(); it != out.end(); ) {
             if( it->ident == ident ) {
@@ -316,17 +316,16 @@ std::optional<MOD_INFORMATION> load_modfile( const JsonObject &jo, const std::st
     return { std::move( modfile ) };
 }
 
-void load_mod_info( const fs::path &info_file_path, std::vector<MOD_INFORMATION> &out )
+void load_mod_info( const std::string &info_file_path, std::vector<MOD_INFORMATION> &out )
 {
-    const auto main_path = info_file_path.parent_path().generic_string();
-    const auto file_path = info_file_path.generic_string();
+    const std::string main_path = info_file_path.substr( 0, info_file_path.find_last_of( "/\\" ) );
     read_from_file_json( info_file_path, [&]( JsonIn & jsin ) {
         if( jsin.test_object() ) {
             // find type and dispatch single object
             JsonObject jo = jsin.get_object();
             std::optional<MOD_INFORMATION> mf = load_modfile( jo, main_path );
             if( mf ) {
-                mf->path_full = file_path;
+                mf->path_full = info_file_path;
                 out.push_back( std::move( *mf ) );
             }
             jo.finish();
@@ -337,7 +336,7 @@ void load_mod_info( const fs::path &info_file_path, std::vector<MOD_INFORMATION>
                 JsonObject jo = jsin.get_object();
                 std::optional<MOD_INFORMATION> mf = load_modfile( jo, main_path );
                 if( mf ) {
-                    mf->path_full = file_path;
+                    mf->path_full = info_file_path;
                     out.push_back( std::move( *mf ) );
                 }
                 jo.finish();
@@ -349,7 +348,7 @@ void load_mod_info( const fs::path &info_file_path, std::vector<MOD_INFORMATION>
     }, true );
 }
 
-bool save_mod_list( const t_mod_list &list, const fs::path &path )
+bool save_mod_list( const t_mod_list &list, const std::string &path )
 {
     return write_to_file( path, [&]( std::ostream & fout ) {
         JsonOut json( fout, true ); // pretty-print
@@ -357,7 +356,7 @@ bool save_mod_list( const t_mod_list &list, const fs::path &path )
     }, _( "list of default mods" ) );
 }
 
-std::optional<t_mod_list> load_mod_list( const fs::path &path )
+std::optional<t_mod_list> load_mod_list( const std::string &path )
 {
     t_mod_list res;
 
@@ -425,9 +424,9 @@ bool mod_manager::set_default_mods( const t_mod_list &mods )
     return mod_management::save_mod_list( mods, PATH_INFO::mods_user_default() );
 }
 
-fs::path mod_manager::get_mods_list_file( WORLDINFO *world )
+std::string mod_manager::get_mods_list_file( WORLDINFO *world )
 {
-    return world->folder_path() / "mods.json";
+    return world->folder_path() + "/mods.json";
 }
 
 void mod_manager::save_mods_list( WORLDINFO *world ) const
@@ -435,7 +434,7 @@ void mod_manager::save_mods_list( WORLDINFO *world ) const
     if( world == nullptr ) {
         return;
     }
-    const auto path = get_mods_list_file( world );
+    const std::string path = get_mods_list_file( world );
     if( world->active_mod_order.empty() ) {
         // If we were called from load_mods_list to prune the list,
         // and it's empty now, delete the file.

@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include <array>
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>
@@ -13,6 +14,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "itype.h"
 #include "map.h"
 #include "map_helpers.h"
@@ -20,6 +22,7 @@
 #include "coordinates.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_grab.h"
 #include "vehicle_part.h"
 #include "vpart_range.h"
 #include "bodypart.h"
@@ -83,8 +86,43 @@ static void set_ramp( const int transit_x, bool use_ramp, bool up )
             }
         }
     }
-    here.invalidate_map_cache( 0 );
-    here.build_map_cache( 0, true );
+    for( const auto z : std::array{ -1, 0, 1 } ) {
+        here.invalidate_map_cache( z );
+        here.build_map_cache( z, true );
+    }
+}
+
+static auto setup_grabbed_shopping_cart( const tripoint_bub_ms &player_pos,
+        const tripoint_bub_ms &cart_pos ) -> vehicle &
+{
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    player_character.setpos( player_pos );
+    player_character.str_max = 100;
+    player_character.str_cur = 100;
+
+    auto *veh_ptr = here.add_vehicle( vproto_id( "shopping_cart" ), cart_pos, 0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    for( const auto vp : veh_ptr->get_all_parts() ) {
+        veh_ptr->get_items( vp.part_index() ).clear();
+    }
+
+    player_character.grab( OBJECT_VEHICLE, cart_pos - player_pos );
+    REQUIRE( player_character.get_grab_type() == OBJECT_VEHICLE );
+    REQUIRE( player_character.grab_point == cart_pos - player_pos );
+
+    return *veh_ptr;
+}
+
+static auto check_avatar_still_grabs( const vehicle &expected_vehicle ) -> void
+{
+    auto &player_character = get_avatar();
+    CHECK( player_character.get_grab_type() == OBJECT_VEHICLE );
+    const auto grabbed_target = vehicle_grab_target_at( get_map(),
+                                player_character.bub_pos() + player_character.grab_point );
+    REQUIRE( grabbed_target );
+    CHECK( &grabbed_target->vp.vehicle() == &expected_vehicle );
 }
 
 // Algorithm goes as follows:
@@ -227,6 +265,164 @@ static std::vector<std::string> ramp_vehs_to_test = {{
         "motorcycle",
     }
 };
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pulled_up_ramp", "[vehicle][ramp][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, true, true );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 61, 60, 0 ),
+                 tripoint_bub_ms( 62, 60, 0 ) );
+    const auto player_start_abs = player_character.abs_pos();
+    const auto cart_start_abs = cart.abs_ms_location();
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, 1 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
+    check_avatar_still_grabs( cart );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
+    check_avatar_still_grabs( cart );
+}
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pulled_on_flat_ground", "[vehicle][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, false, true );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 61, 60, 0 ),
+                 tripoint_bub_ms( 62, 60, 0 ) );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.bub_pos() == tripoint_bub_ms( 60, 60, 0 ) );
+    CHECK( cart.bub_ms_location() == tripoint_bub_ms( 61, 60, 0 ) );
+    check_avatar_still_grabs( cart );
+}
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pulled_with_debug_noclip", "[vehicle][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, false, true );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 61, 60, 0 ),
+                 tripoint_bub_ms( 62, 60, 0 ) );
+    player_character.set_mutation( trait_id( "DEBUG_NOCLIP" ) );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.bub_pos() == tripoint_bub_ms( 60, 60, 0 ) );
+    CHECK( cart.bub_ms_location() == tripoint_bub_ms( 61, 60, 0 ) );
+    check_avatar_still_grabs( cart );
+}
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pushed_on_flat_ground", "[vehicle][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, false, true );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 62, 60, 0 ),
+                 tripoint_bub_ms( 61, 60, 0 ) );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.bub_pos() == tripoint_bub_ms( 61, 60, 0 ) );
+    CHECK( cart.bub_ms_location() == tripoint_bub_ms( 60, 60, 0 ) );
+    check_avatar_still_grabs( cart );
+}
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pushed_with_debug_noclip", "[vehicle][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, false, true );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 62, 60, 0 ),
+                 tripoint_bub_ms( 61, 60, 0 ) );
+    player_character.set_mutation( trait_id( "DEBUG_NOCLIP" ) );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.bub_pos() == tripoint_bub_ms( 61, 60, 0 ) );
+    CHECK( cart.bub_ms_location() == tripoint_bub_ms( 60, 60, 0 ) );
+    check_avatar_still_grabs( cart );
+}
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pushed_up_ramp", "[vehicle][ramp][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, true, true );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 62, 60, 0 ),
+                 tripoint_bub_ms( 61, 60, 0 ) );
+    const auto player_start_abs = player_character.abs_pos();
+    const auto cart_start_abs = cart.abs_ms_location();
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, 1 ) );
+    check_avatar_still_grabs( cart );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, 1 ) );
+    check_avatar_still_grabs( cart );
+}
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pulled_down_ramp", "[vehicle][ramp][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, true, false );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 61, 60, 0 ),
+                 tripoint_bub_ms( 62, 60, 0 ) );
+    const auto player_start_abs = player_character.abs_pos();
+    const auto cart_start_abs = cart.abs_ms_location();
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, -1 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
+    check_avatar_still_grabs( cart );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
+    check_avatar_still_grabs( cart );
+}
+
+TEST_CASE( "grabbed_shopping_cart_can_be_pushed_down_ramp", "[vehicle][ramp][grab]" )
+{
+    clear_all_state();
+    set_ramp( 60, true, false );
+
+    auto &here = get_map();
+    auto &player_character = get_avatar();
+    auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 62, 60, 0 ),
+                 tripoint_bub_ms( 61, 60, 0 ) );
+    const auto player_start_abs = player_character.abs_pos();
+    const auto cart_start_abs = cart.abs_ms_location();
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -1, 0, 0 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -1, 0, -1 ) );
+    check_avatar_still_grabs( cart );
+
+    REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
+    CHECK( player_character.abs_pos() == player_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
+    CHECK( cart.abs_ms_location() == cart_start_abs + tripoint_rel_ms( -2, 0, -1 ) );
+    check_avatar_still_grabs( cart );
+}
 
 // I'd like to do this in a single loop, but that doesn't work for some reason
 TEST_CASE( "vehicle_ramp_test_59", "[vehicle][ramp]" )

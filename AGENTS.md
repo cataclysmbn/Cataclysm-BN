@@ -62,7 +62,6 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
 - **MUST NOT** manually write an options/struct type at a call site when the function parameter type makes it inferable; use `{ .field = value }` instead of `options_type{ .field = value }`.
 - **SHOULD** search for existing solution because it's a large, legacy codebase.
-- **MUST** review every touched call site, container, initializer, assignment, and concatenation for type-boundary regressions after changing `fs::path`/`std::string` APIs; do not push one compiler-log fix without this sweep.
 
 ## Workflow
 
@@ -77,7 +76,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 ### WHEN working on code changes
 
 - **Style**: Follow [Code Style](./docs/en/dev/explanation/code_style.md). Use `_( "text" )` for L10n.
-- **Format**: Format code before building/testing. Use a formatter target or command limited to files touched for the task; do not run repository-wide formatting when the task scope is narrower.
+- **Format**: Format code before building/testing.
 
 ```sh
 # Format C++ code
@@ -122,7 +121,6 @@ deno task docs:gen
 - **MUST** run `msgfmt -f -c -o /tmp/ko.mo lang/po/ko.po` after touching Korean PO files and fix reported errors before PR.
 - **MUST** run `./tools/check_po_printf_format.py` after touching PO files and fix reported errors before PR.
 - Do not call PO/printf errors pre-existing to skip them when the task touches that locale or validation path.
-- Do not state CI failures are fixed until the latest remote CI check for the failing job succeeds; clearly separate local validation from pending CI.
 - If a mistake is found during the task, update AGENTS/skill immediately and fix the current branch before summarizing.
 
 ## WHEN translating docs
