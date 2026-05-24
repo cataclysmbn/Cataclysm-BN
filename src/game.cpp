@@ -11662,6 +11662,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc )
         u.stop_hauling();
     }
     u.setpos( dest_loc );
+    m.invalidate_lightmap_caches();
     if( u.is_mounted() ) {
         monster *mon = u.mounted_creature.get();
         mon->setpos( dest_loc );
@@ -11962,6 +11963,7 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         //tunneling costs 100 moves baseline, 50 per extra tile up to a cap of 500 moves
         u.moves -= ( 50 + ( tunneldist * 50 ) );
         u.setpos( dest );
+        m.invalidate_lightmap_caches();
 
         if( m.veh_at( u.bub_pos() ).part_with_feature( "BOARDABLE", true ) ) {
             m.board_vehicle( u.bub_pos(), &u );

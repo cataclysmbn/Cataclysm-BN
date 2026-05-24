@@ -441,7 +441,6 @@ size_t inventory_column::get_cells_width() const
 
 void inventory_column::set_filter( const std::string &filter )
 {
-    entries = entries_unfiltered;
     entries_cell_cache.clear();
     paging_is_valid = false;
     prepare_paging( filter );
@@ -769,29 +768,32 @@ void inventory_column::prepare_paging( const std::string &filter )
 
     // FIXME: toggled status of multiselect menu resets when filtering the menu
     // First, remove all non-items
+    for( size_t i = 0; i < entries_hidden.size(); ++i ) {
+        entries.push_back( entries_hidden[i] );
+    }
+
+    entries_hidden.clear();
+    for( size_t i = 0; i < entries.size(); ++i ) {
+        if( entries[i].is_item() && !filter_fn( entries[i] ) ) {
+            entries_hidden.push_back( entries[i] );
+        }
+    }
+
     const auto new_end = std::remove_if( entries.begin(),
     entries.end(), [&filter_fn]( const inventory_entry & entry ) {
         return !entry.is_item() || !filter_fn( entry );
     } );
     entries.erase( new_end, entries.end() );
     // Then sort them with respect to categories
-    auto from = entries.begin();
-    while( from != entries.end() ) {
-        auto to = std::next( from );
-        while( to != entries.end() && from->get_category_ptr() == to->get_category_ptr() ) {
-            to->update_cache();
-            std::advance( to, 1 );
+    auto sort_function = [this]( const inventory_entry & lhs, const inventory_entry & rhs ) {
+        if( *lhs.get_category_ptr() != *rhs.get_category_ptr() ) {
+            return *lhs.get_category_ptr() < *rhs.get_category_ptr();
+        } else {
+            return preset.sort_compare( lhs, rhs );
         }
-        if( !ordered_categories.contains( from->get_category_ptr()->get_id().c_str() ) ) {
-            std::sort( from, to, [ this ]( const inventory_entry & lhs, const inventory_entry & rhs ) {
-                if( lhs.is_selectable() != rhs.is_selectable() ) {
-                    return lhs.is_selectable(); // Disabled items always go last
-                }
-                return preset.sort_compare( lhs, rhs );
-            } );
-        }
-        from = to;
-    }
+    };
+    std::sort( entries.begin(), entries.end(), sort_function );
+
     // Recover categories
     const item_category *current_category = nullptr;
     for( auto iter = entries.begin(); iter != entries.end(); ++iter ) {
@@ -822,9 +824,6 @@ void inventory_column::prepare_paging( const std::string &filter )
     }
     entries_cell_cache.clear();
     paging_is_valid = true;
-    if( entries_unfiltered.empty() ) {
-        entries_unfiltered = entries;
-    }
     // Select the uppermost possible entry
     select( selected_index, selected_index ? scroll_direction::BACKWARD : scroll_direction::FORWARD );
 }
