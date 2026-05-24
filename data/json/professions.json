@@ -2769,7 +2769,7 @@
         "entries": [
           { "group": "charged_two_way_radio" },
           { "item": "sw629", "ammo-item": "44fmj", "charges": 6, "container-item": "shoulder_holster" },
-          { "item": "legpouch_large", "contents-group": "speedloaders_44_detective" },
+          { "item": "shoulder_pouch", "contents-group": "speedloaders_44_detective" },
           { "item": "44fmj", "charges": 12 }
         ]
       },
@@ -6630,7 +6630,7 @@
         "items": [ "fancy_sunglasses", "platinum_watch", "money_bundle" ],
         "entries": [
           { "item": "shoulder_holster", "contents-group": "hitman_pistol" },
-          { "item": "legpouch_large", "contents-group": "hitman_mags_ppq" }
+          { "item": "shoulder_pouch", "contents-group": "hitman_mags_ppq" }
         ]
       },
       "male": [
