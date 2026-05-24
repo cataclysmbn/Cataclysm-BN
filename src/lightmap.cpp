@@ -951,18 +951,31 @@ float map::light_transparency( const tripoint_bub_ms &p ) const
 
 // End of tile light/transparency
 
+static auto scaled_visibility_for_view_distance( const float vis,
+        const float visibility_scale_factor ) -> float
+{
+    if( vis <= LIGHT_TRANSPARENCY_SOLID ) {
+        return 0.0f;
+    }
+    if( vis >= VISIBILITY_FULL ) {
+        return VISIBILITY_FULL;
+    }
+    if( visibility_scale_factor == 1.0f ) {
+        return vis;
+    }
+    return std::pow( vis, visibility_scale_factor );
+}
+
 map::apparent_light_info map::apparent_light_helper( const level_cache &map_cache,
-        const tripoint_bub_ms &p )
+        const tripoint_bub_ms &p, const float visibility_scale_factor )
 {
     const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x(), p.y() )],
                                 map_cache.camera_cache[map_cache.idx( p.x(), p.y() )] );
     // Use g_visible_threshold which scales with g_max_view_distance.
     const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + g_visible_threshold;
 
-    // Scale vis so the LIT/LOW transition happens at g_max_view_distance instead of 60.
     // vis^(60/g_max) stretches the 1/exp(t*d) decay curve to match the current bubble size.
-    const float scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
-    const float scaled_vis = ( vis > 0.0f ) ? std::pow( vis, scale_factor ) : 0.0f;
+    const auto scaled_vis = scaled_visibility_for_view_distance( vis, visibility_scale_factor );
 
     auto is_opaque = [&map_cache]( point_bub_ms  p ) {
         return map_cache.transparency_cache[map_cache.idx( p.x(), p.y() )] <= LIGHT_TRANSPARENCY_SOLID &&
@@ -1031,7 +1044,7 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
         return lit_level::BRIGHT;
     }
     const auto &map_cache = get_cache_ref( p.z() );
-    const apparent_light_info a = apparent_light_helper( map_cache, p );
+    const apparent_light_info a = apparent_light_helper( map_cache, p, cache.visibility_scale_factor );
 
     float apparent_light = a.apparent_light;
 
@@ -1098,9 +1111,10 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
     }
 
     const auto &map_cache = get_cache_ref( t.z() );
-    const apparent_light_info a = apparent_light_helper( map_cache, t );
-    const float light_at_player = map_cache.lm[map_cache.idx( g->u.bub_pos().x(),
-                                                 g->u.bub_pos().y() )].max();
+    const auto visibility_scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
+    const auto a = apparent_light_helper( map_cache, t, visibility_scale_factor );
+    const auto light_at_player = map_cache.lm[map_cache.idx( g->u.bub_pos().x(),
+                                        g->u.bub_pos().y() )].max();
     return !a.obstructed &&
            ( a.apparent_light >= g->u.get_vision_threshold( light_at_player ) ||
              map_cache.sm[map_cache.idx( t.x(), t.y() )] > 0.0 );

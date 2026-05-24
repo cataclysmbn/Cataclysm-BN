@@ -6829,6 +6829,8 @@ void map::update_visibility_cache( const int zlev )
     visibility_variables_cache.u_clairvoyance = g->u.clairvoyance();
     visibility_variables_cache.u_sight_impaired = g->u.sight_impaired();
     visibility_variables_cache.u_is_boomered = g->u.has_effect( effect_boomered );
+    visibility_variables_cache.visibility_scale_factor =
+        60.0f / static_cast<float>( g_max_view_distance );
 
     auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 

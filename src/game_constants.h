@@ -203,5 +203,3 @@ constexpr float very_obese = 35.0f;
 constexpr float morbidly_obese = 40.0f;
 } // namespace character_weight_category
 
-
-

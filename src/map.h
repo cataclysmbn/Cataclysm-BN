@@ -130,6 +130,7 @@ struct visibility_variables {
     int g_light_level;
     int u_clairvoyance;
     float vision_threshold;
+    float visibility_scale_factor;
 };
 
 struct bash_params {
@@ -607,7 +608,7 @@ class map : public submap_load_listener
         /** Helper function for light claculation; exposed here for map editor
          */
         static apparent_light_info apparent_light_helper( const level_cache &map_cache,
-                const tripoint_bub_ms &p );
+                const tripoint_bub_ms &p, float visibility_scale_factor );
         /** Determine the visible light level for a tile, based on light_at
          * for the tile, vision distance, etc
          *

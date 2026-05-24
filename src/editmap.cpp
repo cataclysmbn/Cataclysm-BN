@@ -748,9 +748,11 @@ void editmap::update_view_with_help( const std::string &txt, const std::string &
                map_cache.seen_cache[map_cache.idx( target.x(), target.y() )],
                map_cache.camera_cache[map_cache.idx( target.x(), target.y() )]
              );
-    map::apparent_light_info al = map::apparent_light_helper( map_cache, target );
-    int apparent_light = static_cast<int>(
-                             here.apparent_light_at( target, here.get_visibility_variables_cache() ) );
+    const auto &visibility_cache = here.get_visibility_variables_cache();
+    const auto al = map::apparent_light_helper( map_cache, target,
+                    visibility_cache.visibility_scale_factor );
+    const auto apparent_light = static_cast<int>(
+                                    here.apparent_light_at( target, visibility_cache ) );
     mvwprintw( w_info, point( 1, off++ ), _( "outside: %d sheltered: %d floor: %d obstructed: %d" ),
                static_cast<int>( here.is_outside( target ) ),
                static_cast<int>( here.is_sheltered( target ) ),
