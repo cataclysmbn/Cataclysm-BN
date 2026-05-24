@@ -2086,8 +2086,9 @@ class map : public submap_load_listener
 
         inline auto bubble_tiles() const -> point_range<point_bub_ms>
         {
-            return { point_bub_ms::zero(), point_bub_ms( coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1,
-                                                         coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1 ) };
+            return { point_bub_ms::zero(), point_bub_ms(
+                     coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1,
+                     coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1 ) };
         }
 
         inline auto bubble_submap_bounds() const -> inclusive_rectangle<point_bub_sm>
