@@ -1637,6 +1637,16 @@ std::string inventory_selector::get_filter() const
     return filter;
 }
 
+void inventory_selector::wield(inventory_entry& entry) 
+{
+    
+}
+
+void inventory_selector::wear(inventory_entry& entry)
+{
+
+}
+
 void inventory_selector::draw_columns( const catacurses::window &w ) const
 {
     const auto columns = get_visible_columns();
@@ -2490,8 +2500,8 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             std::vector<int> counts;
 
             for (auto entry_ptr : get_selection_column_items()) {
-                for (auto item_ptr : entry_ptr->locations) {
-                    locations.push_back(item_ptr);
+                for (size_t i = 0; i < entry_ptr->locations.size() && i < entry_ptr->chosen_count; ++i) {
+                    locations.push_back(entry_ptr->locations[i]);
                     counts.push_back(1);
                 }
             }

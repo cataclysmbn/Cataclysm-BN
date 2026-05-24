@@ -478,6 +478,10 @@ class inventory_selector
         /** Get last filter string set by set_filter or entered by player */
         std::string get_filter() const;
 
+        /** Actions you can take from inventory menus */
+        void wield(inventory_entry& entry);
+        void wear(inventory_entry& entry);
+
         // An array of cells for the stat lines. Example: ["Weight (kg)", "10", "/", "20"].
         using stat = std::array<std::string, 4>;
         using stats = std::array<stat, 2>;
