@@ -19,7 +19,7 @@ auto vehicle_grab_target_at_exact( const map &here, const tripoint_bub_ms &pos )
 } // namespace
 
 auto vehicle_grab_target_at( const map &here, const tripoint_bub_ms &pos )
--> std::optional<vehicle_grab_target>
+- > std::optional<vehicle_grab_target>
 {
     if( const auto target = vehicle_grab_target_at_exact( here, pos ) ) {
         return target;

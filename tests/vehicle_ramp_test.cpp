@@ -297,7 +297,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pulled_on_flat_ground", "[vehicle][grab
     auto &here = get_map();
     auto &player_character = get_avatar();
     auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 61, 60, 0 ),
-                    tripoint_bub_ms( 62, 60, 0 ) );
+                 tripoint_bub_ms( 62, 60, 0 ) );
 
     REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
     CHECK( player_character.bub_pos() == tripoint_bub_ms( 60, 60, 0 ) );
@@ -313,7 +313,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pulled_with_debug_noclip", "[vehicle][g
     auto &here = get_map();
     auto &player_character = get_avatar();
     auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 61, 60, 0 ),
-                    tripoint_bub_ms( 62, 60, 0 ) );
+                 tripoint_bub_ms( 62, 60, 0 ) );
     player_character.set_mutation( trait_id( "DEBUG_NOCLIP" ) );
 
     REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
@@ -330,7 +330,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_on_flat_ground", "[vehicle][grab
     auto &here = get_map();
     auto &player_character = get_avatar();
     auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 62, 60, 0 ),
-                    tripoint_bub_ms( 61, 60, 0 ) );
+                 tripoint_bub_ms( 61, 60, 0 ) );
 
     REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );
     CHECK( player_character.bub_pos() == tripoint_bub_ms( 61, 60, 0 ) );
@@ -346,7 +346,7 @@ TEST_CASE( "grabbed_shopping_cart_can_be_pushed_with_debug_noclip", "[vehicle][g
     auto &here = get_map();
     auto &player_character = get_avatar();
     auto &cart = setup_grabbed_shopping_cart( tripoint_bub_ms( 62, 60, 0 ),
-                    tripoint_bub_ms( 61, 60, 0 ) );
+                 tripoint_bub_ms( 61, 60, 0 ) );
     player_character.set_mutation( trait_id( "DEBUG_NOCLIP" ) );
 
     REQUIRE( avatar_action::move( player_character, here, tripoint_rel_ms::west() ) );

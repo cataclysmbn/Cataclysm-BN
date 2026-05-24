@@ -11185,7 +11185,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     const auto grabbed_furn_pos = tripoint_bub_ms( u.bub_pos() + u.grab_point );
 
     bool grabbed = u.get_grab_type() != OBJECT_NONE;
-    auto grabbed_vehicle_target = std::optional<vehicle_grab_target>{};
+    auto grabbed_vehicle_target = std::optional<vehicle_grab_target> {};
     if( grabbed && u.get_grab_type() == OBJECT_VEHICLE ) {
         grabbed_vehicle_target = vehicle_grab_target_at( m, u.bub_pos() + u.grab_point );
         if( grabbed_vehicle_target ) {
@@ -12022,7 +12022,7 @@ struct furniture_move_effort_options {
 };
 
 static auto multiply_ratio_round_up( const int value, const int numerator, const int denominator )
--> int
+- > int
 {
     const auto safe_denominator = std::max( 1, denominator );
     return ( value * numerator + safe_denominator - 1 ) / safe_denominator;
@@ -12093,7 +12093,7 @@ static auto furniture_contents_strength_req( map &here, const tripoint_bub_ms &p
 }
 
 static auto furniture_move_effort_for( const furniture_move_effort_options &options )
--> furniture_move_effort
+- > furniture_move_effort
 {
     const auto vertical_direction = furniture_vertical_direction_for( options.from, options.to );
     const auto &furntype = options.here.furn( options.from ).obj();
@@ -12175,7 +12175,7 @@ auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
     const auto dst_items = m.i_at( fdest ).size();
 
     const auto only_liquid_items = std::all_of( m.i_at( fdest ).begin(), m.i_at( fdest ).end(),
-    [&]( const auto &liquid_item ) {
+    [&]( const auto & liquid_item ) {
         return liquid_item->made_of( LIQUID );
     } );
 

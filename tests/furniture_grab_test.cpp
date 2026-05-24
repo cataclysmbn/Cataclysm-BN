@@ -106,7 +106,8 @@ static auto check_avatar_still_grabs_furniture( const tripoint_bub_ms &expected_
     const auto &here = get_map();
     auto &player_character = get_avatar();
     CHECK( player_character.get_grab_type() == OBJECT_FURNITURE );
-    const auto grabbed_pos = tripoint_bub_ms( player_character.bub_pos() + player_character.grab_point );
+    const auto grabbed_pos = tripoint_bub_ms( player_character.bub_pos() +
+                             player_character.grab_point );
     CHECK( grabbed_pos == expected_pos );
     CHECK( here.furn( grabbed_pos ) == expected_furniture );
 }
