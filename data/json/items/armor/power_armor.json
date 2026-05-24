@@ -731,7 +731,7 @@
     "copy-from": "shoulder_pouch",
     "type": "ARMOR",
     "name": { "str": "power armor shoulder magazine pouch" },
-    "description": "A shoulder magazine pouch that can hold two small magazines or speedloaders, converted to clip onto power armor.",
+    "description": "A shoulder pouch that can hold two small magazines or speedloaders, converted to clip onto power armor.",
     "material": [ "leather", "steel" ],
     "proportional": { "encumbrance": 2 },
     "relative": { "weight": "500 g" },
