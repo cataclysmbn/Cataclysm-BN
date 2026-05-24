@@ -466,15 +466,6 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint_bub_ms & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
                       sol::resolve<bool( const tripoint_bub_ms &, const ter_id & )>( &map::ter_set ) );
-        DOC( "Coordinate-based variants that avoid allocating a Tripoint object." );
-        luna::set_fx( ut, "get_ter_at_xyz", []( const map & m, int x, int y, int z ) -> ter_id {
-            return m.ter( tripoint_bub_ms( x, y, z ) );
-        } );
-        luna::set_fx( ut, "set_ter_at_xyz", []( map & m, int x, int y, int z,
-        const ter_id & id ) -> bool {
-            return m.ter_set( tripoint_bub_ms( x, y, z ), id );
-        } );
-
         luna::set_fx( ut, "has_furn_flag_at",
                       sol::resolve<bool( const std::string &, const tripoint_bub_ms & ) const>( &map::has_flag_furn ) );
         luna::set_fx( ut, "get_furn_at",

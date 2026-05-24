@@ -16,17 +16,15 @@
 #include "worldfactory.h"
 #include "mod_manager.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "compress.h"
 #include "sqlite3.h"
 #include "zlib.h"
 
 #define dbg(x) DebugLogFL((x),DC::Main)
-static auto open_db( const fs::path &path ) -> sqlite3 *
+static sqlite3 *open_db( const std::string &path )
 {
     sqlite3 *db = nullptr;
     int ret;
-    const auto path_string = cata_files::path_to_generic_utf8( path );
 
     ret = sqlite3_initialize();
     if( ret != SQLITE_OK ) {
@@ -34,9 +32,9 @@ static auto open_db( const fs::path &path ) -> sqlite3 *
         throw std::runtime_error( "Failed to initialize sqlite3" );
     }
 
-    ret = sqlite3_open_v2( path_string.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL );
+    ret = sqlite3_open_v2( path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL );
     if( ret != SQLITE_OK ) {
-        dbg( DL::Error ) << "Failed to open db" << path_string << " (Error " << ret << ")";
+        dbg( DL::Error ) << "Failed to open db" << path << " (Error " << ret << ")";
         throw std::runtime_error( "Failed to open db" );
     }
 
@@ -52,7 +50,7 @@ static auto open_db( const fs::path &path ) -> sqlite3 *
     char *sqlErrMsg = 0;
     ret = sqlite3_exec( db, sql, NULL, NULL, &sqlErrMsg );
     if( ret != SQLITE_OK ) {
-        dbg( DL::Error ) << "Failed to init db" << path_string << " (" << sqlErrMsg << ")";
+        dbg( DL::Error ) << "Failed to init db" << path << " (" << sqlErrMsg << ")";
         throw std::runtime_error( "Failed to open db" );
     }
 
@@ -66,7 +64,7 @@ std::string save_t::decoded_name() const
     return name;
 }
 
-auto save_t::base_path() const -> fs::path
+std::string save_t::base_path() const
 {
     return base64_encode( name );
 }
@@ -76,14 +74,14 @@ save_t save_t::from_save_id( const std::string &save_id )
     return save_t( save_id );
 }
 
-save_t save_t::from_base_path( const fs::path &base_path )
+save_t save_t::from_base_path( const std::string &base_path )
 {
-    return save_t( base64_decode( cata_files::path_to_generic_utf8( base_path ) ) );
+    return save_t( base64_decode( base_path ) );
 }
 
-auto WORLDINFO::folder_path() const -> fs::path
+std::string WORLDINFO::folder_path() const
 {
-    return PATH_INFO::savedir() / world_name;
+    return PATH_INFO::savedir() + world_name;
 }
 
 WORLDINFO::WORLDINFO()
@@ -162,7 +160,7 @@ bool WORLDINFO::load_options()
     WORLD_OPTIONS = get_options().get_world_defaults();
 
     using namespace std::placeholders;
-    const auto path = folder_path() / PATH_INFO::worldoptions();
+    const auto path = folder_path() + "/" + PATH_INFO::worldoptions();
     return read_from_file_json( path, [&]( JsonIn & jsin ) {
         load_options( jsin );
     }, true );
@@ -177,7 +175,7 @@ bool WORLDINFO::save( const bool is_conversion ) const
     }
 
     if( !is_conversion ) {
-        const auto savefile = folder_path() / PATH_INFO::worldoptions();
+        const auto savefile = folder_path() + "/" + PATH_INFO::worldoptions();
         const bool saved = write_to_file( savefile, [&]( std::ostream & fout ) {
             JsonOut jout( fout );
 
@@ -211,8 +209,8 @@ bool WORLDINFO::save( const bool is_conversion ) const
     // When a world is freshly created, we need to create a file here to remember the users'
     // choice of world save format.
     if( world_save_format == save_format::V2_COMPRESSED_SQLITE3 &&
-        !file_exist( folder_path() / "map.sqlite3" ) ) {
-        sqlite3 *db = open_db( folder_path() / "map.sqlite3" );
+        !file_exist( folder_path() + "/map.sqlite3" ) ) {
+        sqlite3 *db = open_db( folder_path() + "/map.sqlite3" );
         sqlite3_close( db );
     }
     return true;
@@ -261,10 +259,9 @@ void load_external_option( const JsonObject &jo )
     }
 }
 
-static auto file_exist_in_db( sqlite3 *db, const fs::path &path ) -> bool
+static bool file_exist_in_db( sqlite3 *db, const std::string &path )
 {
     int fileCount = 0;
-    const auto path_string = cata_files::path_to_generic_utf8( path );
     const char *sql = "SELECT count() FROM files WHERE path = :path";
     sqlite3_stmt *stmt = nullptr;
 
@@ -273,7 +270,7 @@ static auto file_exist_in_db( sqlite3 *db, const fs::path &path ) -> bool
         throw std::runtime_error( "DB query failed" );
     }
 
-    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path_string.c_str(), -1,
+    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path.c_str(), -1,
                            SQLITE_TRANSIENT ) != SQLITE_OK ) {
         dbg( DL::Error ) << "Failed to bind parameter: " << sqlite3_errmsg( db ) << '\n';
         sqlite3_finalize( stmt );
@@ -294,9 +291,8 @@ static auto file_exist_in_db( sqlite3 *db, const fs::path &path ) -> bool
     return fileCount > 0;
 }
 
-static auto write_to_db( sqlite3 *db, const fs::path &path, file_write_fn writer ) -> void
+static void write_to_db( sqlite3 *db, const std::string &path, file_write_fn writer )
 {
-    const auto path_string = cata_files::path_to_generic_utf8( path );
     std::ostringstream oss;
     writer( oss );
     auto data = oss.str();
@@ -304,7 +300,8 @@ static auto write_to_db( sqlite3 *db, const fs::path &path, file_write_fn writer
     std::vector<std::byte> compressedData;
     zlib_compress( data, compressedData );
 
-    auto parent = cata_files::path_to_generic_utf8( path.parent_path() );
+    size_t basePos = path.find_last_of( "/\\" );
+    auto parent = ( basePos == std::string::npos ) ? "" : path.substr( 0, basePos );
 
     auto sql = R"sql(
         INSERT INTO files(path, parent, data, compression)
@@ -322,7 +319,7 @@ static auto write_to_db( sqlite3 *db, const fs::path &path, file_write_fn writer
         throw std::runtime_error( "DB query failed" );
     }
 
-    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path_string.c_str(), -1,
+    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path.c_str(), -1,
                            SQLITE_TRANSIENT ) != SQLITE_OK ||
         sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":parent" ), parent.c_str(), -1,
                            SQLITE_TRANSIENT ) != SQLITE_OK ||
@@ -339,10 +336,9 @@ static auto write_to_db( sqlite3 *db, const fs::path &path, file_write_fn writer
     sqlite3_finalize( stmt );
 }
 
-static auto read_from_db( sqlite3 *db, const fs::path &path, file_read_fn reader,
-                          bool optional ) -> bool
+static bool read_from_db( sqlite3 *db, const std::string &path, file_read_fn reader,
+                          bool optional )
 {
-    const auto path_string = cata_files::path_to_generic_utf8( path );
     const char *sql = "SELECT data, compression FROM files WHERE path = :path LIMIT 1";
 
     sqlite3_stmt *stmt = nullptr;
@@ -352,7 +348,7 @@ static auto read_from_db( sqlite3 *db, const fs::path &path, file_read_fn reader
         throw std::runtime_error( "DB query failed" );
     }
 
-    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path_string.c_str(), -1,
+    if( sqlite3_bind_text( stmt, sqlite3_bind_parameter_index( stmt, ":path" ), path.c_str(), -1,
                            SQLITE_TRANSIENT ) != SQLITE_OK ) {
         dbg( DL::Error ) << "Failed to bind parameter: " << sqlite3_errmsg( db ) << '\n';
         sqlite3_finalize( stmt );
@@ -396,11 +392,11 @@ static auto read_from_db( sqlite3 *db, const fs::path &path, file_read_fn reader
     return true;
 }
 
-static auto read_from_db_json( sqlite3 *db, const fs::path &path, file_read_json_fn reader,
-                               bool optional ) -> bool
+static bool read_from_db_json( sqlite3 *db, const std::string &path, file_read_json_fn reader,
+                               bool optional )
 {
     return read_from_db( db, path, [&]( std::istream & fin ) {
-        JsonIn jsin( fin, cata_files::path_to_generic_utf8( path ) );
+        JsonIn jsin( fin, path );
         reader( jsin );
     }, optional );
 }
@@ -414,7 +410,7 @@ world::world( WORLDINFO *info )
     }
 
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        map_db = open_db( info->folder_path() / "map.sqlite3" );
+        map_db = open_db( info->folder_path() + "/map.sqlite3" );
     } else {
         if( !assure_dir_exist( "/maps" ) ) {
             dbg( DL::Error ) << "Unable to create or open world directory structure: " << info->folder_path();
@@ -495,47 +491,49 @@ int64_t world::commit_save_tx()
 // Non-primary (dim_id != ""):      dimensions/<dim_id>/maps/<seg>/..., etc.
 // dim_prefix_path() prepends "dimensions/<dim_id>/" when dim_id is non-empty.
 
-static auto dim_prefix_path( const std::string &dim_id ) -> fs::path
+static std::string dim_prefix_path( const std::string &dim_id )
 {
-    return dim_id.empty() ? fs::path{} :
-           fs::path( "dimensions" ) / dim_id;
+    if( dim_id.empty() ) {
+        return {};
+    }
+    return "dimensions/" + dim_id + "/";
 }
 
-static auto get_omt_dirname( const std::string &dim_id,
-                             const tripoint_abs_omt &omt_addr ) -> fs::path
+static std::string get_omt_dirname( const std::string &dim_id, const tripoint_abs_omt &omt_addr )
 {
     const auto segment_addr = project_to<coords::seg>( omt_addr );
-    return dim_prefix_path( dim_id ) / "maps" / string_format( "%d.%d.%d",
-            segment_addr.x(), segment_addr.y(), segment_addr.z() );
+    return string_format( "%smaps/%d.%d.%d",
+                          dim_prefix_path( dim_id ),
+                          segment_addr.x(), segment_addr.y(), segment_addr.z() );
 }
 
-static auto get_omt_filename( const tripoint_abs_omt &omt_addr ) -> fs::path
+static std::string get_omt_filename( const tripoint_abs_omt &omt_addr )
 {
     return string_format( "%d.%d.%d.map", omt_addr.x(), omt_addr.y(), omt_addr.z() );
 }
 
-static auto get_overmap_terrain_filename( const std::string &dim_id,
-        const point_abs_om &p ) -> fs::path
+static std::string get_overmap_terrain_filename( const std::string &dim_id,
+        const point_abs_om &p )
 {
-    return dim_prefix_path( dim_id ) / string_format( "o.%d.%d", p.x(), p.y() );
+    return string_format( "%so.%d.%d", dim_prefix_path( dim_id ), p.x(), p.y() );
 }
 
-static auto get_overmap_player_filename( const std::string &dim_id,
-        const point_abs_om &p ) -> fs::path
+static std::string get_overmap_player_filename( const std::string &dim_id,
+        const point_abs_om &p )
 {
-    return dim_prefix_path( dim_id ) / string_format( ".seen.%d.%d", p.x(), p.y() );
+    return string_format( "%s.seen.%d.%d", dim_prefix_path( dim_id ), p.x(), p.y() );
 }
 
-static auto get_mm_filename( const std::string &dim_id, const tripoint_abs_mmr &p ) -> fs::path
+static std::string get_mm_filename( const std::string &dim_id, const tripoint_abs_mmr &p )
 {
-    return dim_prefix_path( dim_id ) / string_format( "%d.%d.%d.mmr", p.x(), p.y(), p.z() );
+    return string_format( "%s%d.%d.%d.mmr", dim_prefix_path( dim_id ), p.x(), p.y(), p.z() );
 }
 
 bool world::read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
                           file_read_json_fn reader ) const
 {
-    const auto dirname = get_omt_dirname( dim_id, omt_addr );
-    auto omt_path = dirname / get_omt_filename( omt_addr );
+    const std::string dirname = get_omt_dirname( dim_id, omt_addr );
+    std::string omt_path = dirname + "/" + get_omt_filename( omt_addr );
 
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
         return read_from_db_json( map_db, omt_path, reader, true );
@@ -544,10 +542,9 @@ bool world::read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt
             // Fix for old saves where the path was generated using std::stringstream,
             // which may insert locale-specific thousands separators.
             std::ostringstream buf;
-            buf << omt_addr.x() << "." << omt_addr.y() << "." << omt_addr.z() << ".map";
-            const auto locale_omt_path = dirname / buf.str();
-            if( file_exist( locale_omt_path ) ) {
-                omt_path = locale_omt_path;
+            buf << dirname << "/" << omt_addr.x() << "." << omt_addr.y() << "." << omt_addr.z() << ".map";
+            if( file_exist( buf.str() ) ) {
+                omt_path = buf.str();
             }
         }
         return read_from_file_json( omt_path, reader, true );
@@ -557,8 +554,8 @@ bool world::read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt
 bool world::write_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
                            file_write_fn writer ) const
 {
-    const auto dirname = get_omt_dirname( dim_id, omt_addr );
-    const auto omt_path = dirname / get_omt_filename( omt_addr );
+    const std::string dirname = get_omt_dirname( dim_id, omt_addr );
+    const std::string omt_path = dirname + "/" + get_omt_filename( omt_addr );
 
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
         write_to_db( map_db, omt_path, writer );
@@ -635,7 +632,7 @@ bool world::read_player_mm_omt( const std::string &dim_id, const tripoint_abs_mm
         sqlite3 *playerdb = get_player_db();
         return read_from_db_json( playerdb, fname, reader, true );
     } else {
-        return read_from_player_file_json( fs::path( ".mm1" ) / fname, reader, true );
+        return read_from_player_file_json( ".mm1/" + fname, reader, true );
     }
 }
 
@@ -664,12 +661,12 @@ bool world::write_map_omt( const tripoint_abs_omt &omt_addr, file_write_fn write
  * DOMAIN SPECIFIC: OVERMAP
  */
 
-auto world::overmap_terrain_filename( const point_abs_om &p ) const -> fs::path
+std::string world::overmap_terrain_filename( const point_abs_om &p ) const
 {
     return get_overmap_terrain_filename( legacy_dim_id(), p );
 }
 
-auto world::overmap_player_filename( const point_abs_om &p ) const -> fs::path
+std::string world::overmap_player_filename( const point_abs_om &p ) const
 {
     return get_overmap_player_filename( legacy_dim_id(), p );
 }
@@ -717,14 +714,12 @@ bool world::write_player_mm_omt( const std::string &dim_id, const tripoint_abs_m
         write_to_db( playerdb, fname, writer );
         return true;
     } else {
-        auto mm_dir_suffix = fs::path( ".mm1" ) / dim_prefix_path( dim_id );
-        auto mm_dir = get_player_path();
-        mm_dir += cata_files::path_to_generic_utf8( mm_dir_suffix );
+        const std::string mm_dir = get_player_path() + ".mm1/" + dim_prefix_path( dim_id );
         assure_dir_exist( mm_dir );
         const std::string descr = string_format(
                                       _( "memory map region for (%d,%d,%d)" ),
                                       p.x(), p.y(), p.z() );
-        return write_to_player_file( fs::path( ".mm1" ) / fname, writer, descr.c_str() );
+        return write_to_player_file( ".mm1/" + fname, writer, descr.c_str() );
     }
 }
 
@@ -737,7 +732,7 @@ bool world::write_player_mm_omt( const tripoint_abs_mmr &p, file_write_fn writer
  * PLAYER OPERATIONS
  */
 
-auto world::get_player_path() const -> fs::path
+std::string world::get_player_path() const
 {
     return base64_encode( g->u.get_save_id() );
 }
@@ -745,95 +740,83 @@ auto world::get_player_path() const -> fs::path
 sqlite3 *world::get_player_db()
 {
     if( !save_db ) {
-        auto player_db_path = info->folder_path() / get_player_path();
-        player_db_path += ".sqlite3";
-        save_db = open_db( player_db_path );
+        save_db = open_db( info->folder_path() + "/" + get_player_path() + ".sqlite3" );
         last_save_id = g->u.get_save_id();
     }
 
     if( last_save_id != g->u.get_save_id() ) {
-        ::copy_file(
-            info->folder_path() / ( base64_encode( last_save_id ) + ".sqlite3" ),
-            info->folder_path() / ( base64_encode( g->u.get_save_id() ) + ".sqlite3" )
+        copy_file(
+            info->folder_path() + "/" + base64_encode( last_save_id ) + ".sqlite3",
+            info->folder_path() + "/" + base64_encode( g->u.get_save_id() ) + ".sqlite3"
         );
-        auto player_db_path = info->folder_path() / get_player_path();
-        player_db_path += ".sqlite3";
-        save_db = open_db( player_db_path );
+        save_db = open_db( info->folder_path() + "/" + get_player_path() + ".sqlite3" );
     }
 
     return save_db;
 }
 
-namespace
+bool world::player_file_exist( const std::string &path )
 {
-
-auto append_player_path( const fs::path &player_path, const fs::path &path ) -> fs::path
-{
-    auto result = player_path;
-    result += cata_files::path_to_generic_utf8( path );
-    return result;
+    return file_exist( get_player_path() + path );
 }
 
-auto world_relative_path( const fs::path &path ) -> fs::path
+bool world::write_to_player_file( const std::string &path, file_write_fn writer,
+                                  const char *fail_message )
 {
-    return path.is_absolute() ? path.relative_path() : path;
+    return write_to_file( get_player_path() + path, writer, fail_message );
 }
 
-} // namespace
-
-auto world::player_file_exist( const fs::path &path ) -> bool
+bool world::read_from_player_file( const std::string &path, file_read_fn reader,
+                                   bool optional )
 {
-    return file_exist( append_player_path( get_player_path(), path ) );
+    return read_from_file( get_player_path() + path, reader, optional );
 }
 
-auto world::write_to_player_file( const fs::path &path, file_write_fn writer,
-                                  const char *fail_message ) -> bool
+bool world::read_from_player_file_json( const std::string &path, file_read_json_fn reader,
+                                        bool optional )
 {
-    return write_to_file( append_player_path( get_player_path(), path ), writer, fail_message );
-}
-
-auto world::read_from_player_file( const fs::path &path, file_read_fn reader,
-                                   bool optional ) -> bool
-{
-    return read_from_file( append_player_path( get_player_path(), path ), reader, optional );
-}
-
-auto world::read_from_player_file_json( const fs::path &path, file_read_json_fn reader,
-                                        bool optional ) -> bool
-{
-    return read_from_file_json( append_player_path( get_player_path(), path ), reader, optional );
+    return read_from_file_json( get_player_path() + path, reader, optional );
 }
 
 /**
  * GENERIC OPERATIONS
  */
 
-auto world::assure_dir_exist( const fs::path &path ) const -> bool
+bool world::assure_dir_exist( const std::string &path ) const
 {
-    return ::assure_dir_exist( info->folder_path() / world_relative_path( path ) );
+    return ::assure_dir_exist( info->folder_path() + "/" + path );
 }
 
-auto world::file_exist( const fs::path &path ) const -> bool
+bool world::file_exist( const std::string &path ) const
 {
-    return ::file_exist( info->folder_path() / world_relative_path( path ) );
+    return ::file_exist( info->folder_path() + "/" + path );
 }
 
-auto world::write_to_file( const fs::path &path, file_write_fn writer,
-                           const char *fail_message ) const -> bool
+bool world::write_to_file( const std::string &path, file_write_fn writer,
+                           const char *fail_message ) const
 {
-    return ::write_to_file( info->folder_path() / world_relative_path( path ), writer, fail_message );
+    return ::write_to_file( info->folder_path() + "/" + path, writer, fail_message );
 }
 
-auto world::read_from_file( const fs::path &path, file_read_fn reader,
-                            bool optional ) const -> bool
+bool world::read_from_file( const std::string &path, file_read_fn reader,
+                            bool optional ) const
 {
-    return ::read_from_file( info->folder_path() / world_relative_path( path ), reader, optional );
+    return ::read_from_file( info->folder_path() + "/" + path, reader, optional );
 }
 
-auto world::read_from_file_json( const fs::path &path, file_read_json_fn reader,
-                                 bool optional ) const -> bool
+bool world::read_from_file_json( const std::string &path, file_read_json_fn reader,
+                                 bool optional ) const
 {
-    return ::read_from_file_json( info->folder_path() / world_relative_path( path ), reader, optional );
+    return ::read_from_file_json( info->folder_path() + "/" + path, reader, optional );
+}
+
+static void replaceBackslashes( std::string &input )
+{
+    std::size_t pos = 0;
+    while( ( pos = input.find( '\\', pos ) ) != std::string::npos ) {
+        input.replace( pos, 1, "/" );
+        pos++; // Move past the replaced character
+    }
 }
 
 /**
@@ -855,19 +838,20 @@ void world::convert_from_v1( const std::unique_ptr<WORLDINFO> &old_world )
     // Begin copying files to the new world folder.
     // This method is BFS, so we'll need to run two passes to keep player-specific
     // files together.
-    const auto old_world_path = old_world->folder_path();
-    auto root_paths = get_files_from_path( "", old_world_path, false, true );
-    for( const auto &file_path : root_paths ) {
+    auto old_world_path = old_world->folder_path() + "/";
+    auto root_paths = get_files_from_path( "", old_world->folder_path(), false, true );
+    for( auto &file_path : root_paths ) {
         // Remove the old world path prefix from the file path
-        const auto part = cata_files::path_to_generic_utf8( fs::relative( file_path, old_world_path ) );
+        std::string part = file_path.substr( old_world_path.size() );
+        replaceBackslashes( part );
 
         // Migrate contents of the maps/ directory into the map database
         if( part == "maps" ) {
             // Recurse down the directory tree and migrate files into sqlite.
             auto subpaths = get_files_from_path( "", file_path, true, true );
-            for( const auto &subpath : subpaths ) {
-                const auto map_path = cata_files::path_to_generic_utf8( fs::path( "maps" ) /
-                                      fs::relative( subpath, file_path ) );
+            for( auto &subpath : subpaths ) {
+                std::string map_path = "maps/" + subpath.substr( file_path.size() + 1 );
+                replaceBackslashes( map_path );
                 if( !map_path.ends_with( ".map" ) ) {
                     continue;
                 }
@@ -898,7 +882,7 @@ void world::convert_from_v1( const std::unique_ptr<WORLDINFO> &old_world )
                     sqlite3_exec( last_save_db, "COMMIT", NULL, NULL, NULL );
                     sqlite3_close( last_save_db );
                 }
-                last_save_db = open_db( info->folder_path() / ( save_id + ".sqlite3" ) );
+                last_save_db = open_db( info->folder_path() + "/" + save_id + ".sqlite3" );
                 last_save_id = save_id;
                 sqlite3_exec( last_save_db, "BEGIN TRANSACTION", NULL, NULL, NULL );
             }
@@ -912,10 +896,10 @@ void world::convert_from_v1( const std::unique_ptr<WORLDINFO> &old_world )
             } else {
                 // Recurse down the directory tree and migrate files into sqlite.
                 auto subpaths = get_files_from_path( "", file_path, true, true );
-                for( const auto &subpath : subpaths ) {
-                    const auto map_path = cata_files::path_to_generic_utf8( fs::relative( subpath,
-                                          file_path ) );
-                    if( dir_exist( subpath ) ) {
+                for( auto &subpath : subpaths ) {
+                    std::string map_path = subpath.substr( file_path.size() + 1 );
+                    replaceBackslashes( map_path );
+                    if( map_path.ends_with( '/' ) ) {
                         continue;
                     }
                     ::read_from_file( subpath, [&]( std::istream & fin ) {
@@ -930,8 +914,8 @@ void world::convert_from_v1( const std::unique_ptr<WORLDINFO> &old_world )
         }
 
         // Copy all other files as-is
-        if( file_exist( file_path ) ) {
-            ::copy_file( file_path, info->folder_path() / part );
+        if( !part.ends_with( "/" ) ) {
+            copy_file( file_path, info->folder_path() + "/" + part );
         }
     }
 

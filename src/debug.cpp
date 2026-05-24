@@ -43,7 +43,6 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "point.h"
 #include "string_utils.h"
 #include "translations.h"
@@ -297,7 +296,7 @@ static void debug_error_prompt(
     std::string backtrace_instructions =
         string_format(
             _( "See %s for a full stack backtrace" ),
-            cata_files::path_to_generic_utf8( PATH_INFO::debug() )
+            PATH_INFO::debug()
         );
 #endif
 
@@ -769,7 +768,7 @@ void setupDebug( DebugOutput output_mode )
 {
     setDebugLogLevels( enum_bitset<DL>().set( DL::Info ).set( DL::Warn ).set( DL::Error ), true );
     setDebugLogClasses( enum_bitset<DC>().set( DC::Main ).set( DC::DebugMsg ), true );
-    debugFile().init( output_mode, cata_files::path_to_generic_utf8( PATH_INFO::debug() ) );
+    debugFile().init( output_mode, PATH_INFO::debug() );
 }
 
 void deinitDebug()

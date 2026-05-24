@@ -1,200 +1,149 @@
 #include "filesystem.h"
 
 // FILE I/O
+#include <stdexcept>
+#include <sys/stat.h>
+#include <cstdlib>
 #include <algorithm>
 #include <cerrno>
-#include <cstdlib>
+#include <cstdio>
 #include <cstring>
 #include <deque>
+#include <filesystem>
 #include <fstream>
-#include <iterator>
-#include <stdexcept>
 #include <string>
-#include <system_error>
-#include <utility>
 #include <vector>
+#include <iterator>
+#include <utility>
 
-#include "catacharset.h"
 #include "debug.h"
+#include "catacharset.h"
 #include "fstream_utils.h"
-#include "path_utils.h"
 #include "string_utils.h"
 
 #if defined(_WIN32)
 #   include "platform_win.h"
+#   pragma GCC diagnostic push
+#   pragma GCC diagnostic ignored "-Wzero-as-null-pointer-constant"
+#   include "wdirent.h"
+#   pragma GCC diagnostic pop
 #   include <direct.h>
 #else
+#   include <dirent.h>
 #   include <unistd.h>
 #endif
 
 #define dbg(x) DebugLog((x), DC::Main)
 
-namespace
+#if defined _WIN32
+static bool do_mkdir( const std::string &path )
 {
-
-auto path_text( const fs::path &path ) -> std::string
-{
-    return cata_files::path_to_generic_utf8( path );
+    return CreateDirectoryW( utf8_to_wstr( path ).c_str(), nullptr ) != 0;
 }
-
-auto name_contains( const fs::path &path, const std::string &match, const bool at_end ) -> bool
+#else
+static bool do_mkdir( const std::string &path )
 {
-    const auto filename = path_text( path.filename() );
-    if( match.size() > filename.size() ) {
-        return false;
-    }
-
-    return at_end ? filename.ends_with( match ) : filename.find( match ) != std::string::npos;
+    return mkdir( path.c_str(), 0777 ) == 0;
 }
+#endif
 
-template <typename Predicate>
-auto find_file_if_bfs( const fs::path &root_path, const bool recursive_search,
-                       Predicate predicate ) -> std::vector<fs::path>
-{
-    auto directories = std::deque<fs::path> { root_path.empty() ? fs::path( "." ) : root_path };
-    auto results = std::vector<fs::path> {};
-    if( !dir_exist( directories.front() ) ) {
-        return results;
-    }
-
-    while( !directories.empty() ) {
-        const auto path = std::move( directories.front() );
-        directories.pop_front();
-
-        const auto n_dirs = static_cast<std::ptrdiff_t>( directories.size() );
-        const auto n_results = static_cast<std::ptrdiff_t>( results.size() );
-
-        auto entries = std::vector<fs::directory_entry> {};
-        auto ec = std::error_code{};
-        for( const auto &entry : fs::directory_iterator( path,
-                fs::directory_options::skip_permission_denied,
-                ec ) ) {
-            entries.emplace_back( entry );
-        }
-        if( ec ) {
-            dbg( DL::Warn ) << "directory iteration [" << path_text( path ) << "] failed with \"" <<
-                            ec.message() << "\".";
-            continue;
-        }
-
-        std::ranges::sort( entries, {}, []( const fs::directory_entry & entry ) { return entry.path(); } );
-
-        for( const auto &entry : entries ) {
-            const auto full_path = entry.path();
-            if( path_text( full_path.filename() ).ends_with( '~' ) ) {
-                continue;
-            }
-
-            auto is_dir_ec = std::error_code{};
-            const auto is_dir = entry.is_directory( is_dir_ec );
-            if( is_dir_ec ) {
-                dbg( DL::Warn ) << "stat [" << path_text( full_path ) << "] failed with \"" <<
-                                is_dir_ec.message() << "\".";
-                continue;
-            }
-            if( recursive_search && is_dir ) {
-                directories.emplace_back( full_path );
-            }
-
-            if( predicate( full_path, is_dir ) ) {
-                results.emplace_back( full_path );
-            }
-        }
-
-        // Keep files and directories to recurse ordered consistently.
-        // NOLINTNEXTLINE(cata-use-localized-sorting)
-        std::sort( std::begin( directories ) + n_dirs, std::end( directories ) );
-        // NOLINTNEXTLINE(cata-use-localized-sorting)
-        std::sort( std::begin( results ) + n_results, std::end( results ) );
-    }
-
-    return results;
-}
-
-auto directory_matches( const fs::path &file ) -> fs::path
-{
-    return file.parent_path();
-}
-
-} // namespace
-
-auto assure_dir_exist( const fs::path &path ) -> bool
+bool assure_dir_exist( const std::string &path )
 {
     if( dir_exist( path ) ) {
         return true;
     }
-    auto ec = std::error_code{};
-    return fs::create_directory( path, ec ) && !ec;
+    return do_mkdir( path );
 }
 
-auto dir_exist( const fs::path &path ) -> bool
+bool dir_exist( const std::string &path )
 {
-    auto ec = std::error_code{};
-    return fs::is_directory( path, ec ) && !ec;
-}
-
-auto file_exist( const fs::path &path ) -> bool
-{
-    auto ec = std::error_code{};
-    return fs::is_regular_file( path, ec ) && !ec;
-}
-
-auto as_norm_dir( const fs::path &path ) -> fs::path
-{
-    if( path.empty() ) {
-        return {};
+    DIR *dir = opendir( path.c_str() );
+    if( dir != nullptr ) {
+        closedir( dir );
+        return true;
     }
-    const auto norm = ( path / fs::path{} ).lexically_normal();
-    return norm == "." ? fs::path( "." ) : norm;
+    return false;
 }
 
-auto remove_file( const fs::path &path ) -> bool
+#if defined(_WIN32)
+bool file_exist( const std::string &path )
 {
-    if( !file_exist( path ) ) {
-        return false;
+    DWORD dwAttrib = GetFileAttributesW( utf8_to_wstr( path ).c_str() );
+
+    return ( dwAttrib != INVALID_FILE_ATTRIBUTES &&
+             !( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
+}
+#else
+bool file_exist( const std::string &path )
+{
+    struct stat buffer;
+    bool success = stat( path.c_str(), &buffer ) == 0;
+    return success && S_ISREG( buffer.st_mode );
+}
+#endif
+
+std::string as_norm_dir( const std::string &path )
+{
+    std::filesystem::path dir = std::filesystem::path( path ) / std::filesystem::path{};
+    std::filesystem::path norm = dir.lexically_normal();
+    const std::string ret = norm.generic_string();
+    if( ret == "." ) {
+        return "./"; // TODO Change the many places that use strings instead of paths
     }
-    auto ec = std::error_code{};
-    return fs::remove( path, ec ) && !ec;
+    return ret;
 }
 
-auto rename_file( const fs::path &old_path, const fs::path &new_path ) -> bool
+#if defined(_WIN32)
+
+bool remove_file( const std::string &path )
 {
-    if( !file_exist( old_path ) || dir_exist( new_path ) ) {
-        return false;
-    }
-    auto ec = std::error_code{};
-    if( file_exist( new_path ) ) {
-        fs::remove( new_path, ec );
-        if( ec ) {
-            return false;
-        }
-    }
-    fs::rename( old_path, new_path, ec );
-    return !ec;
+    return DeleteFileW( utf8_to_wstr( path ).c_str() ) != 0;
+}
+#else
+bool remove_file( const std::string &path )
+{
+    return unlink( path.c_str() ) == 0;
+}
+#endif
+
+#if defined(_WIN32)
+bool rename_file( const std::string &old_path, const std::string &new_path )
+{
+    return MoveFileExW(
+               utf8_to_wstr( old_path ).c_str(),
+               utf8_to_wstr( new_path ).c_str(),
+               MOVEFILE_REPLACE_EXISTING
+           ) != 0;
+}
+#else
+bool rename_file( const std::string &old_path, const std::string &new_path )
+{
+    return rename( old_path.c_str(), new_path.c_str() ) == 0;
+}
+#endif
+
+bool remove_directory( const std::string &path )
+{
+#if defined(_WIN32)
+    return RemoveDirectoryW( utf8_to_wstr( path ).c_str() ) != 0;
+#else
+    return remove( path.c_str() ) == 0;
+#endif
 }
 
-auto remove_directory( const fs::path &path ) -> bool
+bool remove_tree( const std::string &path )
 {
-    if( !dir_exist( path ) ) {
-        return false;
-    }
-    auto ec = std::error_code{};
-    return fs::remove( path, ec ) && !ec;
-}
-
-auto remove_tree( const fs::path &path ) -> bool
-{
-    auto ec = std::error_code{};
-    fs::remove_all( path, ec );
-    if( ec ) {
-        dbg( DL::Error ) << "remove_tree [" << path_text( path ) << "] failed with \"" << ec.message() <<
-                         "\".";
+    try {
+        // C++20 - path constructor can take the string as is but it fails on windows
+        std::filesystem::remove_all( std::filesystem::path( path ) );
+    } catch( std::filesystem::filesystem_error &e ) {
+        dbg( DL::Error ) << "remove_tree [" << path << "] failed with \"" << e.what() << "\".";
         return false;
     }
     return true;
 }
 
-auto cata_files::eol() -> const char *
+const char *cata_files::eol()
 {
 #if defined(_WIN32)
     // NOLINTNEXTLINE(cata-text-style): carriage return is necessary here
@@ -205,103 +154,364 @@ auto cata_files::eol() -> const char *
     return local_eol;
 }
 
-auto read_entire_file( const fs::path &path ) -> std::string
+std::string read_entire_file( const std::string &path )
 {
-    auto infile = cata_ifstream{};
+    cata_ifstream infile;
     infile.mode( cata_ios_mode::binary ).open( path );
     if( !infile.is_open() ) {
         return "";
     }
-    auto ret = std::string( std::istreambuf_iterator<char>( *infile ),
-                            std::istreambuf_iterator<char>() );
+    std::string ret = std::string( std::istreambuf_iterator<char>( *infile ),
+                                   std::istreambuf_iterator<char>() );
     if( infile.fail() ) {
         return "";
     }
     return ret;
 }
 
-auto get_files_from_path( const fs::path &pattern, const fs::path &root_path,
-                          const bool recursive_search, const bool match_extension ) -> std::vector<fs::path>
+namespace
 {
-    const auto pattern_name = path_text( pattern );
-    return find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
-        return name_contains( path, pattern_name, match_extension );
-    } );
+
+// TODO: move elsewhere.
+template <typename T, size_t N>
+inline size_t sizeof_array( T const( & )[N] ) noexcept
+{
+    return N;
 }
 
-auto get_directories_with( const fs::path &pattern, const fs::path &root_path,
-                           const bool recursive_search ) -> std::vector<fs::path>
+//--------------------------------------------------------------------------------------------------
+// For non-empty path, call function for each file at path.
+//--------------------------------------------------------------------------------------------------
+template <typename Function>
+void for_each_dir_entry( const std::string &path, Function function )
 {
-    const auto pattern_name = path_text( pattern );
-    if( pattern_name.empty() ) {
+    using dir_ptr = DIR*;
+
+    if( path.empty() ) {
+        return;
+    }
+
+    const dir_ptr root = opendir( path.c_str() );
+    if( !root ) {
+        const auto e_str = strerror( errno );
+        dbg( DL::Warn ) << "opendir [" << path << "] failed with \"" << e_str << "\".";
+        return;
+    }
+
+    while( const auto entry = readdir( root ) ) {
+        function( *entry );
+    }
+    closedir( root );
+}
+
+//--------------------------------------------------------------------------------------------------
+#if !defined(_WIN32)
+std::string resolve_path( const std::string &full_path )
+{
+    const auto result_str = realpath( full_path.c_str(), nullptr );
+    if( !result_str ) {
+        const auto e_str = strerror( errno );
+        dbg( DL::Warn ) << "realpath [" << full_path << "] failed with \"" << e_str << "\".";
         return {};
     }
 
-    auto files = find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
-        return name_contains( path, pattern_name, true );
+    std::string result( result_str );
+    free( result_str );
+    return result;
+}
+#endif
+
+//--------------------------------------------------------------------------------------------------
+bool is_directory_stat( const std::string &full_path )
+{
+    if( full_path.empty() ) {
+        return false;
+    }
+
+#if defined(_WIN32)
+    struct _stat result;
+    int stat_ret = _wstat( utf8_to_wstr( full_path ).c_str(), &result );
+#else
+    struct stat result;
+    int stat_ret = stat( full_path.c_str(), &result );
+#endif
+    if( stat_ret != 0 ) {
+        const auto e_str = strerror( errno );
+        dbg( DL::Warn ) << "stat [" << full_path << "] failed with \"" << e_str << "\".";
+        return false;
+    }
+
+    if( S_ISDIR( result.st_mode ) ) {
+        // NOLINTNEXTLINE(readability-simplify-boolean-expr)
+        return true;
+    }
+
+#if !defined(_WIN32)
+    if( S_ISLNK( result.st_mode ) ) {
+        return is_directory_stat( resolve_path( full_path ) );
+    }
+#endif
+
+    return false;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Returns true if entry is a directory, false otherwise.
+//--------------------------------------------------------------------------------------------------
+#if defined(__MINGW32__)
+bool is_directory( const dirent &/*entry*/, const std::string &full_path )
+{
+    // no dirent::d_type
+    return is_directory_stat( full_path );
+}
+#else
+bool is_directory( const dirent &entry, const std::string &full_path )
+{
+    if( entry.d_type == DT_DIR ) {
+        return true;
+    }
+
+#if !defined(_WIN32)
+    if( entry.d_type == DT_LNK ) {
+        return is_directory_stat( resolve_path( full_path ) );
+    }
+#endif
+
+    if( entry.d_type == DT_UNKNOWN ) {
+        return is_directory_stat( full_path );
+    }
+
+    return false;
+}
+#endif
+
+//--------------------------------------------------------------------------------------------------
+// Returns true if the name of entry matches "." or "..".
+//--------------------------------------------------------------------------------------------------
+bool is_special_dir( const dirent &entry )
+{
+    return !strncmp( entry.d_name, ".",  sizeof( entry.d_name ) - 1 ) ||
+           !strncmp( entry.d_name, "..", sizeof( entry.d_name ) - 1 );
+}
+
+//--------------------------------------------------------------------------------------------------
+// If at_end is true, returns whether entry's name ends in match.
+// Otherwise, returns whether entry's name contains match.
+//--------------------------------------------------------------------------------------------------
+bool name_contains( const dirent &entry, const std::string &match, const bool at_end )
+{
+    const size_t len_fname = strlen( entry.d_name );
+    const size_t len_match = match.length();
+
+    if( len_match > len_fname ) {
+        return false;
+    }
+
+    const size_t offset = at_end ? ( len_fname - len_match ) : 0;
+    return strstr( entry.d_name + offset, match.c_str() ) != nullptr;
+}
+
+//--------------------------------------------------------------------------------------------------
+// Return every file at root_path matching predicate.
+//
+// If root_path is empty, search the current working directory.
+// If root_path does not exist, returns empty list.
+// If recursive_search is true, search breadth-first into the directory hierarchy.
+//
+// Results are ordered depth-first with directories searched in lexically order. Furthermore,
+// regular files at each level are also ordered lexically by file name.
+//
+// Files ending in ~ are excluded.
+//--------------------------------------------------------------------------------------------------
+template <typename Predicate>
+std::vector<std::string> find_file_if_bfs( const std::string &root_path,
+        const bool recursive_search,
+        Predicate predicate )
+{
+    std::deque<std::string>  directories;
+    if( root_path.empty() ) {
+        directories.emplace_back( "./" );
+    } else if( root_path.ends_with( "/" ) ) {
+        directories.emplace_back( root_path );
+    } else {
+        directories.emplace_back( root_path + "/" );
+    }
+    std::vector<std::string> results;
+    if( !dir_exist( *directories.begin() ) ) {
+        return results;
+    }
+
+    while( !directories.empty() ) {
+        const auto path = std::move( directories.front() );
+        directories.pop_front();
+
+        const auto n_dirs    = static_cast<std::ptrdiff_t>( directories.size() );
+        const auto n_results = static_cast<std::ptrdiff_t>( results.size() );
+
+        for_each_dir_entry( path, [&]( const dirent & entry ) {
+            // exclude special directories.
+            if( is_special_dir( entry ) ) {
+                return;
+            }
+
+            const auto full_path = path + entry.d_name;
+
+            // don't add files ending in '~'.
+            if( full_path.back() == '~' ) {
+                return;
+            }
+
+            // add sub directories to recursive_search if requested
+            const auto is_dir = is_directory( entry, full_path );
+            if( recursive_search && is_dir ) {
+                directories.emplace_back( full_path + "/" );
+            }
+
+            // check the file
+            if( !predicate( entry, is_dir ) ) {
+                return;
+            }
+
+            results.emplace_back( full_path );
+        } );
+
+        // Keep files and directories to recurse ordered consistently
+        // by sorting from the old end to the new end.
+        // NOLINTNEXTLINE(cata-use-localized-sorting)
+        std::sort( std::begin( directories ) + n_dirs,    std::end( directories ) );
+        // NOLINTNEXTLINE(cata-use-localized-sorting)
+        std::sort( std::begin( results )     + n_results, std::end( results ) );
+    }
+
+    return results;
+}
+
+} //anonymous namespace
+
+//--------------------------------------------------------------------------------------------------
+std::vector<std::string> get_files_from_path( const std::string &pattern,
+        const std::string &root_path, const bool recursive_search, const bool match_extension )
+{
+    return find_file_if_bfs( root_path, recursive_search, [&]( const dirent & entry, bool ) {
+        return name_contains( entry, pattern, match_extension );
+    } );
+}
+
+/**
+ *  Find directories which containing pattern.
+ *  @param pattern Search pattern.
+ *  @param root_path Search root.
+ *  @param recursive_search Be recurse or not.
+ *  @return vector or directories without pattern filename at end.
+ */
+std::vector<std::string> get_directories_with( const std::string &pattern,
+        const std::string &root_path, const bool recursive_search )
+{
+    if( pattern.empty() ) {
+        return std::vector<std::string>();
+    }
+
+    auto files = find_file_if_bfs( root_path, recursive_search, [&]( const dirent & entry, bool ) {
+        return name_contains( entry, pattern, true );
     } );
 
-    std::ranges::transform( files, files.begin(), directory_matches );
+    // Chop off the file names. Dir path MUST be splitted by '/'
+    for( auto &file : files ) {
+        file.erase( file.rfind( '/' ), std::string::npos );
+    }
+
     files.erase( std::unique( std::begin( files ), std::end( files ) ), std::end( files ) );
 
     return files;
 }
 
-auto get_directories_with( const std::vector<fs::path> &patterns, const fs::path &root_path,
-                           const bool recursive_search ) -> std::vector<fs::path>
+/**
+ *  Find directories which containing pattern.
+ *  @param patterns Search patterns.
+ *  @param root_path Search root.
+ *  @param recursive_search Be recurse or not.
+ *  @return vector or directories without pattern filename at end.
+ */
+std::vector<std::string> get_directories_with( const std::vector<std::string> &patterns,
+        const std::string &root_path, const bool recursive_search )
 {
     if( patterns.empty() ) {
-        return {};
+        return std::vector<std::string>();
     }
 
-    auto files = find_file_if_bfs( root_path, recursive_search, [&]( const fs::path & path, bool ) {
-        return std::ranges::any_of( patterns, [&]( const fs::path & ext ) {
-            return name_contains( path, path_text( ext ), true );
+    const auto ext_beg = std::begin( patterns );
+    const auto ext_end = std::end( patterns );
+
+    auto files = find_file_if_bfs( root_path, recursive_search, [&]( const dirent & entry, bool ) {
+        return std::any_of( ext_beg, ext_end, [&]( const std::string & ext ) {
+            return name_contains( entry, ext, true );
         } );
     } );
 
-    std::ranges::transform( files, files.begin(), directory_matches );
+    //chop off the file names
+    for( auto &file : files ) {
+        file.erase( file.rfind( '/' ), std::string::npos );
+    }
+
+    //remove resulting duplicates
     files.erase( std::unique( std::begin( files ), std::end( files ) ), std::end( files ) );
 
     return files;
 }
 
-auto copy_file( const fs::path &source_path, const fs::path &dest_path ) -> bool
+bool copy_file( const std::string &source_path, const std::string &dest_path )
 {
-    if( !file_exist( source_path ) || dir_exist( dest_path ) ) {
+    cata_ifstream source_stream = std::move( cata_ifstream().mode( cata_ios_mode::binary ).open(
+                                      source_path ) );
+    if( !source_stream.is_open() ) {
         return false;
     }
-    auto ec = std::error_code{};
-    fs::copy_file( source_path, dest_path, fs::copy_options::overwrite_existing, ec );
-    return !ec;
+    bool res = write_to_file( dest_path, [&]( std::ostream & dest_stream ) {
+        dest_stream << source_stream->rdbuf();
+    }, "" );
+    return res && !source_stream.fail();
 }
 
-auto ensure_valid_file_name( const std::string &file_name ) -> std::string
+std::string ensure_valid_file_name( const std::string &file_name )
 {
-    const auto replacement_char = ' ';
-    const auto invalid_chars = std::string( "\\/:?\"<>|" );
+    const char replacement_char = ' ';
+    const std::string invalid_chars = "\\/:?\"<>|";
 
     // do any replacement in the file name, if needed.
-    auto new_file_name = file_name;
-    std::ranges::transform( new_file_name, new_file_name.begin(), [&]( const char c ) {
-        return invalid_chars.find( c ) != std::string::npos ? replacement_char : c;
+    std::string new_file_name = file_name;
+    std::transform( new_file_name.begin(), new_file_name.end(),
+    new_file_name.begin(), [&]( const char c ) {
+        if( invalid_chars.find( c ) != std::string::npos ) {
+            return replacement_char;
+        }
+        return c;
     } );
 
     return new_file_name;
 }
 
 // This string is 'CataclysmBrightNights' encoded as base64
-const auto *CBN = "Q2F0YWNseXNtQnJpZ2h0TmlnaHRz";
+const char *CBN = "Q2F0YWNseXNtQnJpZ2h0TmlnaHRz";
 
-auto can_write_to_dir( const fs::path &dir_path ) -> bool
+bool can_write_to_dir( const std::string &dir_path )
 {
-    const auto dummy_file = dir_path / CBN;
-
-    if( file_exist( dummy_file ) && !remove_file( dummy_file ) ) {
-        return false;
+    std::string dummy_file;
+    if( dir_path.ends_with( "/" ) ) {
+        dummy_file = dir_path + CBN;
+    } else {
+        dummy_file = dir_path + "/" + CBN;
     }
 
-    const auto writer = []( std::ostream & s ) { s << CBN << '\n'; };
+    if( file_exist( dummy_file ) ) {
+        if( !remove_file( dummy_file ) ) {
+            return false;
+        }
+    }
+
+    const auto writer = []( std::ostream & s ) {
+        // Write at least something to check if there is free space on disk
+        s << CBN << '\n';
+    };
 
     if( !write_to_file( dummy_file, writer, "" ) ) {
         return false;
@@ -310,7 +520,7 @@ auto can_write_to_dir( const fs::path &dir_path ) -> bool
     return remove_file( dummy_file );
 }
 
-auto get_pid_string() -> std::string
+std::string get_pid_string()
 {
 #if defined _WIN32
     return std::to_string( GetCurrentProcessId() );

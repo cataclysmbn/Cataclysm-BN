@@ -1,8 +1,6 @@
 #if defined(TILES)
 #include "sdl_font.h"
-#include "filesystem.h"
 #include "output.h"
-#include "path_utils.h"
 #include "platform_win.h"
 #include "string_utils.h"
 
@@ -65,12 +63,12 @@ std::unique_ptr<Font> Font::load_font( SDL_Renderer_Ptr &renderer, SDL_PixelForm
             try {
                 return std::unique_ptr<Font>( std::make_unique<BitmapFont>( renderer, format, width, height,
                                               palette,
-                                              cata_files::path_to_generic_utf8( PATH_INFO::user_fontdir() / typeface ) ) );
+                                              PATH_INFO::user_fontdir() + typeface ) );
             } catch( std::exception & ) {
                 try {
                     return std::unique_ptr<Font>( std::make_unique<BitmapFont>( renderer, format, width, height,
                                                   palette,
-                                                  cata_files::path_to_generic_utf8( PATH_INFO::fontdir() / typeface ) ) );
+                                                  PATH_INFO::fontdir() + typeface ) );
                 } catch( std::exception &err ) {
                     dbg( DL::Error ) << "Failed to load font " << typeface << ": " << err.what();
                     // Continue to load as truetype font
@@ -249,7 +247,7 @@ CachedTTFFont::CachedTTFFont(
         }
     }
     bool add_prefix = true;
-    std::vector<fs::path> known_prefixes = {
+    std::vector<std::string> known_prefixes = {
         PATH_INFO::user_fontdir(), PATH_INFO::fontdir()
     };
 
@@ -285,18 +283,17 @@ CachedTTFFont::CachedTTFFont(
     }
 #endif
 
-    for( const fs::path &kp : known_prefixes ) {
-        if( typeface.starts_with( cata_files::path_to_generic_utf8( kp ) ) ) {
+    for( const std::string &kp : known_prefixes ) {
+        if( typeface.starts_with( kp ) ) {
             add_prefix = false;
             break;
         }
     }
 
     for( const std::string &ks : known_suffixes ) {
-        for( const fs::path &kp : known_prefixes ) {
+        for( const std::string &kp : known_prefixes ) {
             if( add_prefix ) {
-                typefaces.emplace_back( cata_files::path_to_generic_utf8( kp / ( typeface +
-                                        ( add_suffix ? ks : "" ) ) ) );
+                typefaces.emplace_back( kp + typeface + ( add_suffix ? ks : "" ) );
             }
             typefaces.emplace_back( typeface + ( add_suffix ? ks : "" ) );
         }

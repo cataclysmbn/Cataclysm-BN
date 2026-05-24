@@ -4,9 +4,12 @@
 #include "coordinates.h"
 #include "point.h"
 
+#include <algorithm>
+#include <iterator>
 #include <optional>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 
 namespace cata::detail::lua_coords
 {
@@ -216,6 +219,19 @@ auto sol_lua_push( sol::types<coord_point<Point, Origin, Scale>>, lua_State *L,
                    const coord_point<Point, Origin, Scale> &coord ) -> int
 {
     return cata::detail::lua_coords::push_coord( L, coord );
+}
+
+template<typename Point, origin Origin, scale Scale>
+auto sol_lua_push( sol::types<std::vector<coord_point<Point, Origin, Scale>>>, lua_State *L,
+                   const std::vector<coord_point<Point, Origin, Scale>> &coords ) -> int
+{
+    using Coord = coord_point<Point, Origin, Scale>;
+    auto lua_values = std::vector<cata::detail::lua_coords::lua_coord_for_t<Coord>> {};
+    lua_values.reserve( coords.size() );
+    std::ranges::transform( coords, std::back_inserter( lua_values ), []( const Coord & coord ) {
+        return cata::detail::lua_coords::to_lua( coord );
+    } );
+    return sol::stack::push( L, std::move( lua_values ) );
 }
 
 } // namespace coords

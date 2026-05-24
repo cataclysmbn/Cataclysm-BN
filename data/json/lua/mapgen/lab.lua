@@ -246,19 +246,40 @@ draw_normal_room = function(data, map)
     walls.left = 2
     boarders = boarders - 1
   end
-  if map.is_ot_match( "finale", data:id(), ot_match_contains ) then
-    data:generate("lab_finale_1level")
-  elseif boarders == 3 then
-    data:generate("lab_1side")
-    if walls.right == 2 then
-      map:rotate( 1 )
-    elseif walls.bottom == 2 then
-      map:rotate( 2 )
-    elseif walls.left == 2 then
-      map:rotate( 3 )
+  if map.is_ot_match( "ice", data:id(), ot_match_contains ) then
+    if map.is_ot_match( "finale", data:id(), ot_match_contains ) then
+      data:generate("lab_finale_1level_ice")
+    elseif boarders == 3 then
+      if gapi.rng(1, 4) == 1 then
+        data:generate("lab_1side_ice")
+      else
+        data:generate("lab_1side")
+      end
+      if walls.right == 2 then
+        map:rotate( 1 )
+      elseif walls.bottom == 2 then
+        map:rotate( 2 )
+      elseif walls.left == 2 then
+        map:rotate( 3 )
+      end
+    else
+      data:generate("lab_4side")
     end
   else
-    data:generate("lab_4side")
+    if map.is_ot_match( "finale", data:id(), ot_match_contains ) then
+      data:generate("lab_finale_1level")
+    elseif boarders == 3 then
+      data:generate("lab_1side")
+      if walls.right == 2 then
+        map:rotate( 1 )
+      elseif walls.bottom == 2 then
+        map:rotate( 2 )
+      elseif walls.left == 2 then
+        map:rotate( 3 )
+      end
+    else
+      data:generate("lab_4side")
+    end
   end
   -- Build forth the walls
   draw_walls(data, map, walls)

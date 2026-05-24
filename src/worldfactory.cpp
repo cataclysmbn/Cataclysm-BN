@@ -27,7 +27,6 @@
 #include "mod_manager.h"
 #include "output.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -170,7 +169,7 @@ void worldfactory::init()
 {
     load_last_world_info();
 
-    std::vector<fs::path> qualifiers;
+    std::vector<std::string> qualifiers;
     qualifiers.push_back( PATH_INFO::worldoptions() );
     qualifiers.push_back( SAVE_MASTER );
 
@@ -184,19 +183,21 @@ void worldfactory::init()
         auto world_sav_files = get_files_from_path( SAVE_EXTENSION, world_dir, false );
         // split the save file names between the directory and the extension
         for( auto &world_sav_file : world_sav_files ) {
-            auto save_file_name = cata_files::path_to_generic_utf8( world_sav_file.filename() );
-            save_file_name.erase( save_file_name.find( SAVE_EXTENSION ) );
-            world_sav_file = save_file_name;
+            size_t save_index = world_sav_file.find( SAVE_EXTENSION );
+            world_sav_file = world_sav_file.substr( world_dir.size() + 1,
+                                                    save_index - ( world_dir.size() + 1 ) );
         }
         // the directory name is the name of the world
-        const auto worldname = cata_files::path_to_generic_utf8( world_dir.filename() );
+        std::string worldname;
+        size_t name_index = world_dir.find_last_of( "/\\" );
+        worldname = world_dir.substr( name_index + 1 );
 
         // create and store the world
         all_worlds[worldname] = std::make_unique<WORLDINFO>();
         // give the world a name
         all_worlds[worldname]->world_name = worldname;
         // Record the world save format. V2 is identified by the presence of a map.sqlite3 file.
-        if( file_exist( world_dir / "map.sqlite3" ) ) {
+        if( file_exist( world_dir + "/map.sqlite3" ) ) {
             all_worlds[worldname]->world_save_format = save_format::V2_COMPRESSED_SQLITE3;
         } else {
             all_worlds[worldname]->world_save_format = save_format::V1;
@@ -225,10 +226,12 @@ void worldfactory::init()
 
         // save world as conversion world
         if( newworld->save( true ) ) {
-            const auto origin_path = old_world.folder_path();
+            const std::string origin_path = old_world.folder_path();
             // move files from origin_path into new world path
-            for( const auto &origin_file : get_files_from_path( ".", origin_path, false ) ) {
-                rename_file( origin_file, newworld->folder_path() / origin_file.filename() );
+            for( auto &origin_file : get_files_from_path( ".", origin_path, false ) ) {
+                std::string filename = origin_file.substr( origin_file.find_last_of( "/\\" ) );
+
+                rename( origin_file.c_str(), ( newworld->folder_path() + filename ).c_str() );
             }
             newworld->world_saves = old_world.world_saves;
             newworld->WORLD_OPTIONS = old_world.WORLD_OPTIONS;
@@ -492,7 +495,7 @@ void worldfactory::load_last_world_info()
         return;
     }
 
-    JsonIn jsin( *file, cata_files::path_to_generic_utf8( PATH_INFO::lastworld() ) );
+    JsonIn jsin( *file, PATH_INFO::lastworld() );
     try {
         JsonObject data = jsin.get_object();
         last_world_name = data.get_string( "world_name" );
@@ -1538,10 +1541,10 @@ size_t worldfactory::get_world_index( const std::string &name )
 }
 
 // Helper predicate to exclude files from deletion when resetting a world directory.
-static bool isForbidden( const fs::path &candidate )
+static bool isForbidden( const std::string &candidate )
 {
-    const auto filename = candidate.filename();
-    return filename == PATH_INFO::worldoptions() || filename == "mods.json";
+    return candidate.find( PATH_INFO::worldoptions() ) != std::string::npos ||
+           candidate.find( "mods.json" ) != std::string::npos;
 }
 
 void worldfactory::delete_world( const std::string &worldname, const bool delete_folder )
@@ -1551,22 +1554,27 @@ void worldfactory::delete_world( const std::string &worldname, const bool delete
         set_active_world( nullptr );
     }
 
-    const auto worldpath = get_world( worldname )->folder_path();
-    std::set<fs::path> directory_paths;
+    std::string worldpath = get_world( worldname )->folder_path();
+    std::set<std::string> directory_paths;
 
     auto file_paths = get_files_from_path( "", worldpath, true, true );
     if( !delete_folder ) {
-        auto forbidden = std::ranges::find_if( file_paths, isForbidden );
+        std::vector<std::string>::iterator forbidden = std::ranges::find_if( file_paths,
+                isForbidden );
         while( forbidden != file_paths.end() ) {
             file_paths.erase( forbidden );
             forbidden = std::ranges::find_if( file_paths, isForbidden );
         }
     }
-    for( const auto &file_path : file_paths ) {
-        auto part = fs::relative( file_path.parent_path(), worldpath );
-        while( !part.empty() && part != "." ) {
+    for( auto &file_path : file_paths ) {
+        // strip to path and remove worldpath from it
+        std::string part = file_path.substr( worldpath.size(),
+                                             file_path.find_last_of( "/\\" ) - worldpath.size() );
+        size_t last_separator = part.find_last_of( "/\\" );
+        while( last_separator != std::string::npos && part.size() > 1 ) {
             directory_paths.insert( part );
-            part = part.parent_path();
+            part = part.substr( 0, last_separator );
+            last_separator = part.find_last_of( "/\\" );
         }
     }
 
@@ -1577,7 +1585,7 @@ void worldfactory::delete_world( const std::string &worldname, const bool delete
     // directory will fail.  Removing directories in reverse order
     // will prevent this situation from arising.
     for( auto it = directory_paths.rbegin(); it != directory_paths.rend(); ++it ) {
-        remove_directory( worldpath / *it );
+        remove_directory( worldpath + *it );
     }
     if( delete_folder ) {
         remove_directory( worldpath );

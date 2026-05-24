@@ -371,7 +371,7 @@ class inventory_column
         const inventory_selector_preset &preset;
 
         std::vector<inventory_entry> entries;
-        std::vector<inventory_entry> entries_unfiltered;
+        std::vector<inventory_entry> entries_hidden;
         navigation_mode mode = navigation_mode::ITEM;
         bool active = false;
         bool multiselect = false;

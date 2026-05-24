@@ -65,7 +65,6 @@
 #include "overlay_ordering.h"
 #include "overmap_location.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "pixel_minimap.h"
 #include "player.h"
 #include "rect_range.h"
@@ -427,11 +426,11 @@ void cata_tiles::reinit()
     RenderClear( renderer );
 }
 
-static void get_tile_information( const fs::path &config_path, fs::path &json_path,
-                                  fs::path &tileset_path )
+static void get_tile_information( const std::string &config_path, std::string &json_path,
+                                  std::string &tileset_path )
 {
-    const auto default_json = PATH_INFO::defaulttilejson();
-    const auto default_tileset = PATH_INFO::defaulttilepng();
+    const std::string default_json = PATH_INFO::defaulttilejson();
+    const std::string default_tileset = PATH_INFO::defaulttilepng();
 
     // Get JSON and TILESET vars from config
     const auto reader = [&]( std::istream & fin ) {
@@ -446,12 +445,10 @@ static void get_tile_information( const fs::path &config_path, fs::path &json_pa
                 getline( fin, sOption );
             } else if( sOption.find( "JSON" ) != std::string::npos ) {
                 fin >> json_path;
-                dbg( DL::Info ) << "JSON path set to [" <<
-                                cata_files::path_to_generic_utf8( json_path ) << "].";
+                dbg( DL::Info ) << "JSON path set to [" << json_path << "].";
             } else if( sOption.find( "TILESET" ) != std::string::npos ) {
                 fin >> tileset_path;
-                dbg( DL::Info ) << "TILESET path set to [" <<
-                                cata_files::path_to_generic_utf8( tileset_path ) << "].";
+                dbg( DL::Info ) << "TILESET path set to [" << tileset_path << "].";
             } else {
                 getline( fin, sOption );
             }
@@ -465,13 +462,11 @@ static void get_tile_information( const fs::path &config_path, fs::path &json_pa
 
     if( json_path.empty() ) {
         json_path = default_json;
-        dbg( DL::Info ) << "JSON set to default [" <<
-                        cata_files::path_to_generic_utf8( json_path ) << "].";
+        dbg( DL::Info ) << "JSON set to default [" << json_path << "].";
     }
     if( tileset_path.empty() ) {
         tileset_path = default_tileset;
-        dbg( DL::Info ) << "TILESET set to default [" <<
-                        cata_files::path_to_generic_utf8( tileset_path ) << "].";
+        dbg( DL::Info ) << "TILESET set to default [" << tileset_path << "].";
     }
 }
 
@@ -1778,10 +1773,9 @@ static void extend_vector_by( std::vector<T> &vec, const size_t additional_size 
     vec.resize( vec.size() + additional_size );
 }
 
-void tileset_loader::load_tileset( const fs::path &img_path, const bool pump_events )
+void tileset_loader::load_tileset( const std::string &img_path, const bool pump_events )
 {
-    const auto img_path_string = cata_files::path_to_generic_utf8( img_path );
-    const SDL_Surface_Ptr tile_atlas = load_image( img_path_string.c_str() );
+    const SDL_Surface_Ptr tile_atlas = load_image( img_path.c_str() );
     assert( tile_atlas );
     tile_atlas_width = tile_atlas->w;
 
@@ -2123,15 +2117,16 @@ std::optional<tile_search_result> cata_tiles::tile_type_search( const tile_searc
 void tileset_loader::load( const std::string &tileset_id, const bool precheck,
                            const bool pump_events )
 {
-    auto json_conf = fs::path{};
-    auto tileset_path = fs::path{};
-    auto tileset_root = fs::path{};
+    std::string json_conf;
+    std::string tileset_path;
+    std::string tileset_root;
 
     const auto tset_iter = TILESETS.find( tileset_id );
     if( tset_iter != TILESETS.end() ) {
         tileset_root = tset_iter->second;
         dbg( DL::Info ) << '"' << tileset_id << '"' << " tileset: found config file path: " << tileset_root;
-        get_tile_information( tileset_root / PATH_INFO::tileset_conf(), json_conf, tileset_path );
+        get_tile_information( tileset_root + '/' + PATH_INFO::tileset_conf(),
+                              json_conf, tileset_path );
         dbg( DL::Info ) << "Current tileset is: " << tileset_id;
     } else {
         dbg( DL::Error ) << "Tileset \"" << tileset_id << "\" from options is invalid";
@@ -2139,16 +2134,14 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         tileset_path = PATH_INFO::defaulttilepng();
     }
 
-    auto json_path = tileset_root / json_conf;
-    const auto img_path = tileset_root / tileset_path;
+    std::string json_path = tileset_root + '/' + json_conf;
+    std::string img_path = tileset_root + '/' + tileset_path;
 
-    dbg( DL::Info ) << "Attempting to Load JSON file " <<
-                    cata_files::path_to_generic_utf8( json_path );
-    std::ifstream config_file( json_path, std::ifstream::in | std::ifstream::binary );
+    dbg( DL::Info ) << "Attempting to Load JSON file " << json_path;
+    std::ifstream config_file( json_path.c_str(), std::ifstream::in | std::ifstream::binary );
 
     if( !config_file.good() ) {
-        throw std::runtime_error( std::string( "Failed to open tile info json: " ) +
-                                  cata_files::path_to_generic_utf8( json_path ) );
+        throw std::runtime_error( std::string( "Failed to open tile info json: " ) + json_path );
     }
 
     JsonIn config_json( config_file );
@@ -2191,17 +2184,14 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
         json_path = mts.get_full_path();
 
         if( !mts.is_compatible( tileset_id ) ) {
-            dbg( DL::Info ) << "Mod tileset in \"" << cata_files::path_to_generic_utf8( json_path )
-                            << "\" is not compatible.";
+            dbg( DL::Info ) << "Mod tileset in \"" << json_path << "\" is not compatible.";
             continue;
         }
-        dbg( DL::Info ) << "Attempting to Load JSON file " <<
-                        cata_files::path_to_generic_utf8( json_path );
-        std::ifstream mod_config_file( json_path, std::ifstream::in | std::ifstream::binary );
+        dbg( DL::Info ) << "Attempting to Load JSON file " << json_path;
+        std::ifstream mod_config_file( json_path.c_str(), std::ifstream::in | std::ifstream::binary );
 
         if( !mod_config_file.good() ) {
-            throw std::runtime_error( std::string( "Failed to open tile info json: " ) +
-                                      cata_files::path_to_generic_utf8( json_path ) );
+            throw std::runtime_error( std::string( "Failed to open tile info json: " ) + json_path );
         }
 
         JsonIn mod_config_json( mod_config_file );
@@ -2264,15 +2254,15 @@ void tileset_loader::load( const std::string &tileset_id, const bool precheck,
 #endif
 }
 
-void tileset_loader::load_internal( const JsonObject &config, const fs::path &tileset_root,
-                                    const fs::path &img_path, const bool pump_events )
+void tileset_loader::load_internal( const JsonObject &config, const std::string &tileset_root,
+                                    const std::string &img_path, const bool pump_events )
 {
     if( config.has_array( "tiles-new" ) ) {
         // new system, several entries
         // When loading multiple tileset images this defines where
         // the tiles from the most recently loaded image start from.
         for( const JsonObject &tile_part_def : config.get_array( "tiles-new" ) ) {
-            const auto tileset_image_path = tileset_root / tile_part_def.get_string( "file" );
+            const std::string tileset_image_path = tileset_root + '/' + tile_part_def.get_string( "file" );
             R = -1;
             G = -1;
             B = -1;
@@ -2338,8 +2328,7 @@ void tileset_loader::load_internal( const JsonObject &config, const fs::path &ti
         R = -1;
         G = -1;
         B = -1;
-        dbg( DL::Info ) << "Attempting to Load Tileset file " <<
-                        cata_files::path_to_generic_utf8( img_path );
+        dbg( DL::Info ) << "Attempting to Load Tileset file " << img_path;
         load_tileset( img_path, pump_events );
         load_tilejson_from_file( config );
         offset = size;

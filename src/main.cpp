@@ -41,7 +41,6 @@
 #include "options.h"
 #include "output.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "rng.h"
 #include "type_id.h"
 #include "ui_manager.h"
@@ -631,7 +630,7 @@ int main( int argc, char *argv[] )
         }
     }
 
-    const auto current_path = fs::current_path();
+    std::string current_path = std::filesystem::current_path().string();
 
     if( !dir_exist( PATH_INFO::datadir() ) ) {
         std::string msg = string_format(
@@ -639,21 +638,21 @@ int main( int argc, char *argv[] )
                               "Current path: \"%s\"\n"
                               "Please ensure the current working directory is correct.\n"
                               "Perhaps you meant to start \"cataclysm-launcher\"?\n",
-                              cata_files::path_to_generic_utf8( PATH_INFO::datadir() ),
-                              cata_files::path_to_generic_utf8( current_path )
+                              PATH_INFO::datadir(),
+                              current_path
                           );
         report_fatal_error( msg );
         exit( 1 );
     }
 
-    const auto check_dir_good = [&current_path]( const fs::path & dir ) {
+    const auto check_dir_good = [&current_path]( const std::string & dir ) {
         if( !assure_dir_exist( dir ) ) {
             std::string msg = string_format(
                                   "Can't open or create \"%s\"\n"
                                   "Current path: \"%s\"\n"
                                   "Please ensure you have write permission.\n",
-                                  cata_files::path_to_generic_utf8( dir ),
-                                  cata_files::path_to_generic_utf8( current_path )
+                                  dir.c_str(),
+                                  current_path
                               );
             report_fatal_error( msg );
             exit( 1 );
@@ -663,8 +662,8 @@ int main( int argc, char *argv[] )
                                   "Can't write to \"%s\"\n"
                                   "Current path: \"%s\"\n"
                                   "Please ensure you have write permission and free storage space.\n",
-                                  cata_files::path_to_generic_utf8( dir ),
-                                  cata_files::path_to_generic_utf8( current_path )
+                                  dir.c_str(),
+                                  current_path
                               );
             report_fatal_error( msg );
             exit( 1 );
@@ -676,18 +675,18 @@ int main( int argc, char *argv[] )
         check_dir_good( PATH_INFO::user_dir() );
         std::string external_storage_path( SDL_GetAndroidExternalStoragePath() );
         if( dir_exist( external_storage_path + "/config" ) ) {
-            fs::copy( fs::path( external_storage_path ) / "config", PATH_INFO::user_dir() / "config",
-                      fs::copy_options::recursive );
-            fs::copy( fs::path( external_storage_path ) / "font", PATH_INFO::user_dir() / "font",
-                      fs::copy_options::recursive );
-            fs::copy( fs::path( external_storage_path ) / "gfx", PATH_INFO::user_dir() / "gfx",
-                      fs::copy_options::recursive );
-            fs::copy( fs::path( external_storage_path ) / "save", PATH_INFO::user_dir() / "save",
-                      fs::copy_options::recursive );
-            fs::copy( fs::path( external_storage_path ) / "sound", PATH_INFO::user_dir() / "sound",
-                      fs::copy_options::recursive );
-            fs::copy( fs::path( external_storage_path ) / "templates", PATH_INFO::user_dir() / "templates",
-                      fs::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/config", PATH_INFO::user_dir() + "config",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/font", PATH_INFO::user_dir() + "font",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/gfx", PATH_INFO::user_dir() + "gfx",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/save", PATH_INFO::user_dir() + "save",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/sound", PATH_INFO::user_dir() + "sound",
+                                   std::filesystem::copy_options::recursive );
+            std::filesystem::copy( external_storage_path + "/templates", PATH_INFO::user_dir() + "templates",
+                                   std::filesystem::copy_options::recursive );
         }
     }
 #endif

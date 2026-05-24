@@ -747,10 +747,10 @@ void diary::delete_page()
 void diary::export_to_md( bool last_export )
 {
     std::ofstream myfile;
-    auto path = last_export
-                ? PATH_INFO::memorialdir()
-                : ( g->get_active_world() ? g->get_active_world()->info->folder_path() : PATH_INFO::savedir() );
-    path /= owner + "s_diary.md";
+    std::string path = last_export
+                       ? PATH_INFO::memorialdir()
+                       : ( g->get_active_world() ? g->get_active_world()->info->folder_path() : PATH_INFO::savedir() );
+    path += "/" + owner + "s_diary.md";
     myfile.open( path );
 
     for( int i = 0; i < static_cast<int>( pages.size() ); i++ ) {

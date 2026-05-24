@@ -9,7 +9,6 @@
 #include "fstream_utils.h"
 #include "game.h"
 #include "path_info.h"
-#include "path_utils.h"
 #include "point.h"
 #include "world.h"
 
@@ -34,17 +33,16 @@ static void remove_graveyard_subdir( const std::string &graveyard_dir,
 
 TEST_CASE( "graveyarddir_returns_user_dir_graveyard", "[graveyard]" )
 {
-    const auto expected = PATH_INFO::user_dir() / "graveyard";
+    const std::string expected = PATH_INFO::user_dir() + "graveyard/";
     CHECK( PATH_INFO::graveyarddir() == expected );
 }
 
 TEST_CASE( "move_save_to_graveyard_moves_character_files", "[graveyard]" )
 {
-    const auto save_dir = cata_files::path_to_generic_utf8( g->get_active_world()->info->folder_path() /
-                          "" );
-    const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
-    const std::string dirname = "test_char_" + get_pid_string();
+    const std::string save_dir = g->get_active_world()->info->folder_path() + "/";
+    const std::string prefix   = base64_encode( g->u.get_save_id() ) + ".";
+    const std::string graveyard_dir = PATH_INFO::graveyarddir();
+    const std::string dirname  = "test_char_" + get_pid_string();
     const std::string dest_dir = graveyard_dir + dirname + "/";
 
     // Create dummy save files with the character's prefix
@@ -73,12 +71,11 @@ TEST_CASE( "move_save_to_graveyard_moves_character_files", "[graveyard]" )
 
 TEST_CASE( "move_save_to_graveyard_ignores_unrelated_files", "[graveyard]" )
 {
-    const auto save_dir = cata_files::path_to_generic_utf8( g->get_active_world()->info->folder_path() /
-                          "" );
-    const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
-    const std::string dirname = "test_unrelated_" + get_pid_string();
-    const std::string dest_dir = graveyard_dir + dirname + "/";
+    const std::string save_dir  = g->get_active_world()->info->folder_path() + "/";
+    const std::string prefix    = base64_encode( g->u.get_save_id() ) + ".";
+    const std::string graveyard_dir = PATH_INFO::graveyarddir();
+    const std::string dirname   = "test_unrelated_" + get_pid_string();
+    const std::string dest_dir  = graveyard_dir + dirname + "/";
 
     // A character file must be present so save_files is non-empty
     const std::string char_file = save_dir + prefix + "unrelated_test_char";
@@ -102,12 +99,11 @@ TEST_CASE( "move_save_to_graveyard_ignores_unrelated_files", "[graveyard]" )
 
 TEST_CASE( "move_save_to_graveyard_creates_directories", "[graveyard]" )
 {
-    const auto save_dir = cata_files::path_to_generic_utf8( g->get_active_world()->info->folder_path() /
-                          "" );
-    const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
-    const std::string dirname = "test_mkdir_" + get_pid_string();
-    const std::string dest_dir = graveyard_dir + dirname + "/";
+    const std::string save_dir  = g->get_active_world()->info->folder_path() + "/";
+    const std::string prefix    = base64_encode( g->u.get_save_id() ) + ".";
+    const std::string graveyard_dir = PATH_INFO::graveyarddir();
+    const std::string dirname   = "test_mkdir_" + get_pid_string();
+    const std::string dest_dir  = graveyard_dir + dirname + "/";
 
     // Ensure the graveyard subtree does not exist beforehand
     remove_graveyard_subdir( graveyard_dir, dest_dir );
@@ -137,11 +133,11 @@ TEST_CASE( "move_save_to_graveyard_with_open_player_db", "[graveyard]" )
     // Player db only exists in V2 saves; assert rather than silently pass on V1.
     REQUIRE( w->info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 );
 
-    const auto save_dir = cata_files::path_to_generic_utf8( w->info->folder_path() / "" );
-    const std::string prefix = base64_encode( g->u.get_save_id() ) + ".";
-    const auto graveyard_dir = cata_files::path_to_generic_utf8( PATH_INFO::graveyarddir() / "" );
-    const std::string dirname = "test_open_db_" + get_pid_string();
-    const std::string dest_dir = graveyard_dir + dirname + "/";
+    const std::string save_dir      = w->info->folder_path() + "/";
+    const std::string prefix        = base64_encode( g->u.get_save_id() ) + ".";
+    const std::string graveyard_dir = PATH_INFO::graveyarddir();
+    const std::string dirname       = "test_open_db_" + get_pid_string();
+    const std::string dest_dir      = graveyard_dir + dirname + "/";
 
     // Open the player SQLite db by writing map-memory data, mirroring what the
     // game does during normal play before the character dies.

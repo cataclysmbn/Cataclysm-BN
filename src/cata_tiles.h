@@ -13,7 +13,6 @@
 
 #include "animation.h"
 #include "coordinates.h"
-#include "filesystem.h"
 #include "enums.h"
 #include "hash_utils.h"
 #include "hsv_color.h"
@@ -561,7 +560,7 @@ class tileset_loader
          *        executing if you set it to true.
          * @throw std::exception If the image can not be loaded.
          */
-        void load_tileset( const fs::path &path, bool pump_events );
+        void load_tileset( const std::string &path, bool pump_events );
         /**
          * Load tiles from json data.This expects a "tiles" array in
          * <B>config</B>. That array should contain all the tile definition that
@@ -585,8 +584,8 @@ class tileset_loader
          *        executing if you set it to true.
          * @throw std::exception On any error.
          */
-        void load_internal( const JsonObject &config, const fs::path &tileset_root,
-                            const fs::path &img_path, bool pump_events );
+        void load_internal( const JsonObject &config, const std::string &tileset_root,
+                            const std::string &img_path, bool pump_events );
     public:
         tileset_loader( tileset &ts, const SDL_Renderer_Ptr &r ) : ts( ts ), renderer( r ) {
         }

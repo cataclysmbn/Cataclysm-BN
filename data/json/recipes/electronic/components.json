@@ -820,7 +820,7 @@
       [
         [ "can_drink_unsealed", 5 ],
         [ "can_food_unsealed", 5 ],
-        [ "can_food_big", 5 ],
+        [ "can_food_big_unsealed", 5 ],
         [ "can_medium_unsealed", 5 ],
         [ "canister_empty", 5 ]
       ]

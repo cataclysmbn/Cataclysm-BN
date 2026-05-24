@@ -3829,6 +3829,7 @@ void overmap::move_hordes()
                 type.id == mtype_id( "mon_jabberwock" ) || // Jabberwockies are an exception.
                 this_monster.get_speed() <= 30 || // So are very slow zombies, like crawling zombies.
                 this_monster.has_flag( MF_IMMOBILE ) || // Also exempt anything stationary.
+                this_monster.has_flag( MF_STATIONARY ) || // Also exempt anything stationary.
                 this_monster.has_effect( effect_pet ) || // "Zombie pet" zlaves are, too.
                 !this_monster.will_join_horde( INT_MAX ) || // So are zombies who won't join a horde of any size.
                 this_monster.mission_id != -1 // We mustn't delete monsters that are related to missions.

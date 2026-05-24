@@ -4127,7 +4127,7 @@ void avatar::character_to_template( const std::string &name )
 void avatar::save_template( const std::string &name, const points_left &points )
 {
     std::string name_san = ensure_valid_file_name( name );
-    write_to_file( PATH_INFO::templatedir() / ( name_san + ".template" ), [&]( std::ostream & fout ) {
+    write_to_file( PATH_INFO::templatedir() + name_san + ".template", [&]( std::ostream & fout ) {
         JsonOut jsout( fout, true );
 
         jsout.start_array();
@@ -4152,8 +4152,8 @@ void avatar::save_template( const std::string &name, const points_left &points )
 
 bool avatar::load_template( const std::string &template_name, points_left &points )
 {
-    return read_from_file_json( PATH_INFO::templatedir() / ( template_name +
-    ".template" ), [&]( JsonIn & jsin ) {
+    return read_from_file_json( PATH_INFO::templatedir() + template_name +
+    ".template", [&]( JsonIn & jsin ) {
 
         if( jsin.test_array() ) {
             // not a legacy template
