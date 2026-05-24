@@ -89,6 +89,32 @@ TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[th
     }
 }
 
+TEST_CASE( "flung creatures take damage when they slam into a wall", "[throwing][impact]" )
+{
+    clear_all_state();
+    clear_map();
+
+    map &here = g->m;
+    const tripoint source = { 40, 30, 0 };
+    const tripoint target = { 41, 30, 0 };
+    const tripoint landing = { 42, 30, 0 };
+    const tripoint wall = { 43, 30, 0 };
+
+    here.ter_set( source, ter_id( "t_floor" ) );
+    here.ter_set( target, ter_id( "t_floor" ) );
+    here.ter_set( landing, ter_id( "t_floor" ) );
+    here.ter_set( wall, ter_id( "t_wall" ) );
+    g->u.setpos( { 10, 10, 0 } );
+
+    monster &zombie = spawn_test_monster( "mon_zombie", target );
+    const int hp_before = zombie.get_hp();
+
+    g->fling_creature( &zombie, coord_to_angle( source, target ), 30.0f );
+
+    CHECK( zombie.pos() == landing );
+    CHECK( zombie.get_hp() < hp_before );
+}
+
 struct throw_test_data {
     statistics<bool> hits;
     statistics<double> dmg;

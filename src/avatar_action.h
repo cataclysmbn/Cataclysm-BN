@@ -39,6 +39,7 @@ void swim( map &m, avatar &you, const tripoint_bub_ms &p );
 auto autoattack( avatar &you, map &m ) -> void;
 auto manual_attack( avatar &you, map &m ) -> void;
 auto toggle_manual_combat_mode() -> void;
+auto is_manual_combat_mode() -> bool;
 
 void mend( avatar &you, item *loc );
 

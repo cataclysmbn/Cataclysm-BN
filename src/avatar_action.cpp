@@ -867,7 +867,12 @@ auto avatar_action::toggle_manual_combat_mode() -> void
 {
     manual_combat_mode = !manual_combat_mode;
     add_msg( m_info, manual_combat_mode ? _( "Manual combat mode ON!" ) :
-             _( "Manual combat mode OFF!" ) );
+                                          _( "Manual combat mode OFF!" ) );
+}
+
+auto avatar_action::is_manual_combat_mode() -> bool
+{
+    return manual_combat_mode;
 }
 
 bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weapon )

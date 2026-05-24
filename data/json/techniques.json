@@ -814,6 +814,7 @@
     "crit_ok": true,
     "weighting": 2,
     "down_dur": 2,
+    "knockback_dist": 1,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 0.5 },
       { "stat": "damage", "type": "cut", "scale": 0.5 },
@@ -845,6 +846,7 @@
     "melee_allowed": true,
     "force_unarmed": true,
     "down_dur": 1,
+    "knockback_dist": 1,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.25 },
       { "stat": "damage", "type": "cut", "scale": 1.25 },
@@ -862,6 +864,7 @@
     "force_unarmed": true,
     "disarms": true,
     "down_dur": 1,
+    "knockback_dist": 1,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.25 },
       { "stat": "damage", "type": "cut", "scale": 1.25 },
@@ -881,6 +884,7 @@
     "force_unarmed": true,
     "down_dur": 1,
     "stun_dur": 1,
+    "knockback_dist": 1,
     "mult_bonuses": [
       { "stat": "damage", "type": "bash", "scale": 1.5 },
       { "stat": "damage", "type": "cut", "scale": 1.5 },
@@ -912,6 +916,7 @@
     "dodge_counter": true,
     "force_unarmed": true,
     "down_dur": 1,
+    "knockback_dist": 1,
     "mult_bonuses": [ { "stat": "movecost", "scale": 0 } ]
   },
   {

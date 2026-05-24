@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "avatar_action.h"
 #include "avatar.h"
 #include "avatar_functions.h"
 #include "bodypart.h"
@@ -28,6 +29,7 @@
 #include "character_functions.h"
 #include "character_martial_arts.h"
 #include "creature.h"
+#include "creature_throw.h"
 #include "damage.h"
 #include "debug.h"
 #include "enums.h"
@@ -58,6 +60,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
+#include "ranged.h"
 #include "rng.h"
 #include "skill.h"
 #include "ui.h"
@@ -2528,17 +2531,39 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         }
     }
 
-    if( technique.stun_dur > 0 && !technique.powerful_knockback ) {
-        t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
-    }
-
     if( technique.knockback_dist ) {
         const auto prev_pos = t.bub_pos(); // track target startpoint for knockback_follow
         const int kb_offset_x = rng( -technique.knockback_spread, technique.knockback_spread );
         const int kb_offset_y = rng( -technique.knockback_spread, technique.knockback_spread );
-        tripoint_bub_ms kb_point( bub_pos().x() + kb_offset_x, bub_pos().y() + kb_offset_y, bub_pos().z() );
-        for( int dist = rng( 1, technique.knockback_dist ); dist > 0; dist-- ) {
-            t.knock_back_from( kb_point );
+        const tripoint_bub_ms kb_point( bub_pos().x() + kb_offset_x, bub_pos().y() + kb_offset_y, bub_pos().z() );
+        std::optional<target_handler::trajectory> trajectory;
+        bool player_cancelled_throw = false;
+
+        if( is_avatar() && avatar_action::is_manual_combat_mode() ) {
+            trajectory = target_handler::mode_throw_creature( *as_avatar(), t, technique.knockback_dist );
+            player_cancelled_throw = !trajectory.has_value();
+        }
+
+        if( !player_cancelled_throw ) {
+            if( trajectory ) {
+                const auto distance = std::max( 1, rl_dist( t.pos(), trajectory->back() ) );
+                const float fling_velocity = creature_throw::grabbed_throw_velocity( distance ) *
+                                             ( technique.powerful_knockback ? 1.25f : 1.0f );
+                const units::angle throw_angle = coord_to_angle( t.pos(), trajectory->back() );
+
+                g->fling_creature( &t, throw_angle, fling_velocity );
+            } else {
+                const int kb_dist = rng( 1, technique.knockback_dist );
+                const float fling_velocity = creature_throw::grabbed_throw_velocity( kb_dist ) *
+                                             ( technique.powerful_knockback ? 1.25f : 1.0f );
+                const units::angle throw_angle = coord_to_angle( kb_point, t.pos() );
+
+                g->fling_creature( &t, throw_angle, fling_velocity );
+            }
+        }
+
+        if( technique.stun_dur > 0 && !technique.powerful_knockback ) {
+            t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
         }
         if( t.pos() != prev_pos && !t.has_effect( effect_downed ) &&
             can_be_downed_after_knockback( t ) && !one_in( 4 ) ) {
