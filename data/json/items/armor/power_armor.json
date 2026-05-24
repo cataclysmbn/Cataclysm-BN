@@ -727,7 +727,7 @@
     "extend": { "flags": [ "POWERARMOR_MOD" ] }
   },
   {
-   "id": "power_armor_shoulder_pouch",
+    "id": "power_armor_shoulder_pouch",
     "copy-from": "shoulder_pouch",
     "type": "ARMOR",
     "name": { "str": "power armor shoulder magazine pouch" },
