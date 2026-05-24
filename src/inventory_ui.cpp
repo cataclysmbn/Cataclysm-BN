@@ -734,7 +734,7 @@ void inventory_column::on_input( const inventory_input &input )
             const item *loc = get_selected().any_item();
             set_stack_favorite( loc, !loc->is_favorite );
         }
-    }
+    } 
 }
 
 void inventory_column::add_entry( const inventory_entry &entry )
@@ -1808,6 +1808,11 @@ void inventory_selector::on_input( const inventory_input &input )
         toggle_active_column( scroll_direction::BACKWARD );
     } else if( input.action == "RIGHT" ) {
         toggle_active_column( scroll_direction::FORWARD );
+    } else if ( input.action == "INVENTORY_FILTER" ) {
+        set_filter();
+        for (auto col_ptr : get_all_columns()) {
+            col_ptr->set_filter(get_filter());
+        }
     } else {
         if( has_available_choices() ) {
             for( inventory_column *elem : columns ) {
@@ -1815,9 +1820,6 @@ void inventory_selector::on_input( const inventory_input &input )
             }
         }
         refresh_active_column(); // Columns can react to actions by losing their activation capacity
-        if( input.action == "TOGGLE_FAVORITE" ) {
-            keep_open = true;
-        }
     }
 }
 
@@ -1977,17 +1979,12 @@ item *inventory_pick_selector::execute()
             if( selected ) {
                 return selected.any_item();
             }
-        } else if( input.action == "INVENTORY_FILTER" ) {
-            set_filter();
-        } else if( handle_action( input.action ) ) {
+        }else if( handle_action( input.action ) ) {
             return nullptr;
         } else {
             on_input( input );
         }
 
-        if( input.action == "TOGGLE_FAVORITE" ) {
-            return nullptr;
-        }
     }
 }
 
@@ -2102,10 +2099,6 @@ std::pair<const item *, const item *> inventory_compare_selector::execute()
                           ctxt.get_desc( "RIGHT" ) );
         } else if( input.action == "QUIT" ) {
             return std::make_pair( nullptr, nullptr );
-        } else if( input.action == "INVENTORY_FILTER" ) {
-            set_filter();
-        } else if( input.action == "TOGGLE_FAVORITE" ) {
-            // TODO: implement favoriting in multi selection menus while maintaining selection
         } else {
             on_input( input );
         }
@@ -2196,8 +2189,6 @@ std::vector<iuse_location> inventory_iuse_selector::execute()
             break;
         } else if( input.action == "QUIT" ) {
             return std::vector<iuse_location>();
-        } else if( input.action == "INVENTORY_FILTER" ) {
-            set_filter();
         } else {
             on_input( input );
             count = 0;
@@ -2390,13 +2381,6 @@ drop_locations inventory_drop_selector::execute()
             }
             break;
         } else if( input.action == "QUIT" ) {
-            return drop_locations();
-        } else if( input.action == "INVENTORY_FILTER" ) {
-            set_filter();
-        } else if( input.action == "TOGGLE_FAVORITE" ) {
-            // change the item favorited state
-            get_active_column().on_input( input );
-            this->keep_open = true;
             return drop_locations();
         } else {
             on_input( input );
