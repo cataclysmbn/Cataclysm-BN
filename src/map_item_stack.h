@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "coordinates.h"
-#include "point.h"
 
 class item;
 

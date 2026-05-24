@@ -14,7 +14,7 @@ map_item_stack::item_group::item_group() : count( 0 )
 {
 }
 
-map_item_stack::item_group::item_group( const tripoint_rel_ms &p, const int arg_count ) : pos( p ),
+map_item_stack::item_group::item_group( const tripoint_rel_ms &p, int arg_count ) : pos( p ),
     count( arg_count )
 {
 }
