@@ -495,6 +495,13 @@ const inventory_column::entry_cell_cache_t &inventory_column::get_entry_cell_cac
     return entries_cell_cache[index];
 }
 
+void inventory_column::refresh_entry_cell_caches() {
+    entries_cell_cache.clear();
+    for (size_t i = 0; i < entries.size(); ++i) {
+        entries_cell_cache.push_back(make_entry_cell_cache(entries[i])); 
+    }
+}
+
 void inventory_column::set_width( const size_t new_width,
                                   const std::vector<inventory_column *> &all_columns )
 {
@@ -733,7 +740,11 @@ void inventory_column::on_input( const inventory_input &input )
         if( !get_selected().locations.empty() ) {
             const item *loc = get_selected().any_item();
             set_stack_favorite( loc, !loc->is_favorite );
+            entries_cell_cache.clear();
+            paging_is_valid = false;
+            prepare_paging();
         }
+
     } 
 }
 
@@ -781,7 +792,6 @@ void inventory_column::prepare_paging( const std::string &filter )
         return preset.get_filter( filter );
     } );
 
-    // FIXME: toggled status of multiselect menu resets when filtering the menu
     // First, remove all non-items
     for( size_t i = 0; i < entries_hidden.size(); ++i ) {
         entries.push_back( entries_hidden[i] );
@@ -1810,9 +1820,6 @@ void inventory_selector::on_input( const inventory_input &input )
         toggle_active_column( scroll_direction::FORWARD );
     } else if ( input.action == "INVENTORY_FILTER" ) {
         set_filter();
-        for (auto col_ptr : get_all_columns()) {
-            col_ptr->set_filter(get_filter());
-        }
     } else {
         if( has_available_choices() ) {
             for( inventory_column *elem : columns ) {
