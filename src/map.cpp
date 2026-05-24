@@ -10207,8 +10207,8 @@ auto map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &en
     }
 
     // Submaps that contain the bounding points
-    const auto min_sm = project_to<coords::sm>( min );
-    const auto max_sm = project_to<coords::sm>( max );
+    const auto min_sm = project_to<coords::sm>( min.xy() );
+    const auto max_sm = project_to<coords::sm>( max.xy() );
     const auto submap_range = point_range<point_bub_sm>( min_sm, max_sm );
 
     const auto apply_to_submap = [&]( const tripoint_bub_sm & sm_pos,
