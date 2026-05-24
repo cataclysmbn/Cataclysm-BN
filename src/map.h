@@ -2084,6 +2084,17 @@ class map : public submap_load_listener
         int my_MAPSIZE;
         bool zlevels;
 
+        inline auto bubble_tiles() -> point_range<point_bub_ms>
+        {
+            return { point_bub_ms::zero(), point_bub_ms( coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1,
+                                                         coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1 ) };
+        }
+
+        inline auto bubble_submaps() -> point_range<point_bub_sm>
+        {
+            return { point_bub_sm::zero(), point_bub_sm( my_MAPSIZE - 1, my_MAPSIZE - 1 ) };
+        }
+
         // stores vision adjustment for the tiles immediately surrounding the player, the order is given by eight_adjacent_offsets in point.h
         // examples of adjustment: crouching
         vision_adjustment vision_transparency_cache[8] = { VISION_ADJUST_NONE };
