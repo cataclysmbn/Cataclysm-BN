@@ -12,6 +12,7 @@
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "damage.h"
+#include "debug.h"
 #include "enums.h"
 #include "game.h"
 #include "item.h"
@@ -235,8 +236,15 @@ TEST_CASE( "vehicle deserialize keeps valid saved parts after an invalid part", 
     auto json = std::istringstream( vehicle_with_invalid_part_and_legacy_pivot_json() );
     auto jsin = JsonIn( json );
     auto veh = vehicle();
+    auto loaded = false;
 
-    REQUIRE( jsin.read( veh, true ) );
+    const auto debug_msg = capture_debugmsg_during( [&]() {
+        loaded = jsin.read( veh, true );
+    } );
+
+    REQUIRE( loaded );
+    CHECK( debug_msg.find( "Skipping invalid saved vehicle part" ) != std::string::npos );
+    CHECK( debug_msg.find( "missing_saved_vehicle_part" ) != std::string::npos );
     CHECK( veh.part_count() == 1 );
     CHECK( veh.mount_to_abs( tripoint_mnt_veh( 0, 0, 0 ) ) == tripoint_abs_ms( 4, 6, 0 ) );
 }
