@@ -94,6 +94,7 @@ void game::serialize( std::ostream &fout )
     json.member( "initial_season", static_cast<int>( calendar_config._initial_season ) );
     json.member( "auto_travel_mode", auto_travel_mode );
     json.member( "run_mode", static_cast<int>( safe_mode ) );
+    json.member( "manual_combat_mode", manual_combat_mode );
     json.member( "mostseen", mostseen );
     json.member( "show_zone_overlay", show_zone_overlay );
     // current map coordinates
@@ -326,6 +327,8 @@ auto game::unserialize( std::istream &fin ) -> bool
         if( get_option<bool>( "SAFEMODE" ) && safe_mode == SAFE_MODE_OFF ) {
             safe_mode = SAFE_MODE_ON;
         }
+        manual_combat_mode = false;
+        data.read( "manual_combat_mode", manual_combat_mode );
 
         // Silently discard old grscent/typescent flat-array data; scent now lives on submaps.
         {

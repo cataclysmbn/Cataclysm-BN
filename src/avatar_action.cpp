@@ -70,11 +70,9 @@ class player;
 namespace
 {
 
-auto manual_combat_mode = false;
-
 auto melee_attack_from_movement( avatar &you, Creature &target ) -> void
 {
-    if( manual_combat_mode ) {
+    if( g->manual_combat_mode ) {
         you.melee_attack( target, true );
         return;
     }
@@ -865,14 +863,14 @@ auto avatar_action::manual_attack( avatar &you, map & ) -> void
 
 auto avatar_action::toggle_manual_combat_mode() -> void
 {
-    manual_combat_mode = !manual_combat_mode;
-    add_msg( m_info, manual_combat_mode ? _( "Manual combat mode ON!" ) :
+    g->manual_combat_mode = !g->manual_combat_mode;
+    add_msg( m_info, g->manual_combat_mode ? _( "Manual combat mode ON!" ) :
                                           _( "Manual combat mode OFF!" ) );
 }
 
 auto avatar_action::is_manual_combat_mode() -> bool
 {
-    return manual_combat_mode;
+    return g->manual_combat_mode;
 }
 
 bool avatar_action::can_fire_weapon( avatar &you, const map &m, const item &weapon )
