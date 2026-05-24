@@ -8878,8 +8878,7 @@ std::vector<map_item_stack> game::find_nearby_items( int iRadius )
 
     for( int i = 1; i <= range; i++ ) {
         int z = i % 2 ? center_z - i / 2 : center_z + i / 2;
-        for( tripoint_bub_ms &points_p_it : closest_points_first<tripoint_bub_ms>( {u.bub_pos().xy(), z},
-                iRadius ) ) {
+        for( auto &points_p_it : closest_points_first<tripoint_bub_ms>( {u.bub_pos().xy(), z}, iRadius ) ) {
             if( points_p_it.y() >= u.bub_pos().y() - iRadius && points_p_it.y() <= u.bub_pos().y() + iRadius &&
                 u.sees( points_p_it ) &&
                 m.sees_some_items( points_p_it, u ) ) {
