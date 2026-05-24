@@ -254,7 +254,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
 
     u.grab_point = grabbed_vehicle->bub_part_location( grabbed_part ) - player_next_pos;
 
-    for( int p : grabbed_vehicle->wheelcache ) {
+    for( const auto p : grabbed_vehicle->wheelcache ) {
         if( one_in( 2 ) ) {
             const auto wheel_p = grabbed_vehicle->bub_part_location( p );
             grabbed_vehicle->handle_trap( wheel_p, p );

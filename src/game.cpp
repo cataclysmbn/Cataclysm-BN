@@ -11181,8 +11181,8 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     bool pulling = false; // moving -away- from grabbed tile; check for move_cost > 0
     bool shifting_furniture = false; // moving furniture and staying still; skip check for move_cost > 0
 
-    const auto furn_pos = u.bub_pos() + u.grab_point;
-    const auto furn_dest = dest_loc + u.grab_point;
+    const auto dp = dest_loc - u.bub_pos();
+    const auto grabbed_furn_pos = tripoint_bub_ms( u.bub_pos() + u.grab_point );
 
     bool grabbed = u.get_grab_type() != OBJECT_NONE;
     auto grabbed_vehicle_target = std::optional<vehicle_grab_target>{};
@@ -11193,8 +11193,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
         }
     }
     if( grabbed ) {
-        const auto &dp = dest_loc - u.bub_pos();
-        if( u.get_grab_type() == OBJECT_VEHICLE ) {
+        if( u.get_grab_type() == OBJECT_VEHICLE || u.get_grab_type() == OBJECT_FURNITURE ) {
             const auto horizontal_dp = tripoint_rel_ms( dp.xy(), 0 );
             const auto horizontal_grab = tripoint_rel_ms( u.grab_point.xy(), 0 );
             pushing = horizontal_dp == horizontal_grab;
@@ -11204,7 +11203,13 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
             pulling = dp == -u.grab_point;
         }
     }
-    if( grabbed && u.get_grab_type() != OBJECT_VEHICLE && dest_loc.z() != u.bub_pos().z() ) {
+    const auto ramp_entry = tripoint_bub_ms( dest_loc.xy(), u.bub_pos().z() );
+    const auto allow_furniture_z_move = grabbed && u.get_grab_type() == OBJECT_FURNITURE &&
+                                        ( pushing || pulling ) && dp.z() != 0 && via_ramp &&
+                                        ( ( dp.z() > 0 && m.has_flag( TFLAG_RAMP_UP, ramp_entry ) ) ||
+                                          ( dp.z() < 0 && m.has_flag( TFLAG_RAMP_DOWN, ramp_entry ) ) );
+    if( grabbed && u.get_grab_type() != OBJECT_VEHICLE && dest_loc.z() != u.bub_pos().z() &&
+        !allow_furniture_z_move ) {
         add_msg( m_warning, _( "You let go of the grabbed object." ) );
         grabbed = false;
         u.grab( OBJECT_NONE );
@@ -11214,7 +11219,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     const vehicle *grabbed_vehicle = nullptr;
     if( grabbed && u.get_grab_type() == OBJECT_FURNITURE ) {
         // We only care about shifting, because it's the only one that can change our destination
-        if( m.has_furn( u.bub_pos() + u.grab_point ) ) {
+        if( m.has_furn( grabbed_furn_pos ) ) {
             shifting_furniture = !pushing && !pulling;
         } else {
             // We were grabbing a furniture that isn't there
@@ -11348,7 +11353,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 
     const int mcost = m.combined_movecost( u.bub_pos(), dest_loc, grabbed_vehicle, modifier,
                                            via_ramp ) * multiplier;
-    if( grabbed_move( dest_loc - u.bub_pos() ) ) {
+    if( grabbed_move( dp, allow_furniture_z_move ) ) {
         return true;
     } else if( mcost == 0 && !character_funcs::can_noclip( u ) ) {
         return false;
@@ -11522,15 +11527,16 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     }
 
     auto oldpos = u.bub_pos();
-    auto submap_shift = place_player( dest_loc );
+    const auto keep_grab = u.get_grab_type() == OBJECT_VEHICLE || allow_furniture_z_move;
+    auto submap_shift = place_player( dest_loc, keep_grab );
     auto ms_shift = project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift;
 
     if( pulling && u.get_grab_type() == OBJECT_FURNITURE ) {
-        const auto shifted_furn_pos = furn_pos - ms_shift;
-        const auto shifted_furn_dest = furn_dest - ms_shift;
-        const time_duration fire_age = m.get_field_age( shifted_furn_pos, fd_fire );
-        const int fire_intensity = m.get_field_intensity( shifted_furn_pos, fd_fire );
+        const auto shifted_furn_pos = grabbed_furn_pos - ms_shift;
+        const auto shifted_furn_dest = tripoint_bub_ms( u.bub_pos() + u.grab_point );
+        const auto fire_age = m.get_field_age( shifted_furn_pos, fd_fire );
+        const auto fire_intensity = m.get_field_intensity( shifted_furn_pos, fd_fire );
         m.remove_field( shifted_furn_pos, fd_fire );
         m.set_field_intensity( shifted_furn_dest, fd_fire, fire_intensity );
         m.set_field_age( shifted_furn_dest, fd_fire, fire_age );
@@ -11545,7 +11551,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     return true;
 }
 
-point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc )
+auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab ) -> point_rel_sm
 {
     const optional_vpart_position vp1 = m.veh_at( dest_loc );
     if( const std::optional<std::string> label = vp1.get_label() ) {
@@ -11670,7 +11676,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc )
     // Move the player
     // Start with z-level, to make it less likely that old functions (2D ones) freak out
     if( m.has_zlevels() && dest_loc.z() != get_levz() ) {
-        vertical_shift( dest_loc.z() );
+        vertical_shift( dest_loc.z(), keep_grab );
     }
 
     if( u.is_hauling() && ( !m.can_put_items( dest_loc ) ||
@@ -11995,11 +12001,136 @@ bool game::phasing_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
     return false;
 }
 
-bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
+enum class furniture_vertical_direction {
+    none,
+    up,
+    down,
+};
+
+struct furniture_move_effort {
+    int str_req = 0;
+    int adjusted_str = 0;
+    int move_cost = 0;
+    int stamina_cost = 0;
+};
+
+struct furniture_move_effort_options {
+    const avatar &you;
+    map &here;
+    tripoint_bub_ms from;
+    tripoint_bub_ms to;
+};
+
+static auto multiply_ratio_round_up( const int value, const int numerator, const int denominator )
+-> int
+{
+    const auto safe_denominator = std::max( 1, denominator );
+    return ( value * numerator + safe_denominator - 1 ) / safe_denominator;
+}
+
+static auto furniture_vertical_direction_for( const tripoint_bub_ms &from,
+        const tripoint_bub_ms &to ) -> furniture_vertical_direction
+{
+    if( to.z() > from.z() ) {
+        return furniture_vertical_direction::up;
+    }
+
+    if( to.z() < from.z() ) {
+        return furniture_vertical_direction::down;
+    }
+
+    return furniture_vertical_direction::none;
+}
+
+static auto ramp_adjusted_furniture_destination( map &here, const tripoint_bub_ms &from,
+        const tripoint_rel_ms &horizontal_dp ) -> tripoint_bub_ms
+{
+    auto dest = tripoint_bub_ms( from + horizontal_dp );
+
+    if( here.has_flag( TFLAG_RAMP_UP, dest ) && here.inbounds_z( dest.z() + 1 ) ) {
+        dest.z() += 1;
+    } else if( here.has_flag( TFLAG_RAMP_DOWN, dest ) && here.inbounds_z( dest.z() - 1 ) ) {
+        dest.z() -= 1;
+    }
+
+    return dest;
+}
+
+static auto is_ramp_tile_or_mate( const map &here, const tripoint_bub_ms &pos ) -> bool
+{
+    if( here.has_flag( TFLAG_RAMP, pos ) || here.has_flag( TFLAG_RAMP_UP, pos ) ||
+        here.has_flag( TFLAG_RAMP_DOWN, pos ) ) {
+        return true;
+    }
+
+    const auto above = pos + tripoint_above;
+    const auto below = pos + tripoint_below;
+    return ( here.inbounds_z( above.z() ) && here.has_flag( TFLAG_RAMP_DOWN, above ) ) ||
+           ( here.inbounds_z( below.z() ) && here.has_flag( TFLAG_RAMP_UP, below ) );
+}
+
+static auto furniture_drag_strength( const avatar &you ) -> int
+{
+    auto adjusted_str = you.get_str();
+    if( you.is_mounted() ) {
+        auto *mons = you.mounted_creature.get();
+        if( mons->has_flag( MF_RIDEABLE_MECH ) && mons->mech_str_addition() != 0 ) {
+            adjusted_str = mons->mech_str_addition();
+        }
+    }
+
+    return adjusted_str;
+}
+
+static auto furniture_contents_strength_req( map &here, const tripoint_bub_ms &pos ) -> int
+{
+    auto furniture_contents_weight = 0_gram;
+    for( const auto &contained_item : here.i_at( pos ) ) {
+        furniture_contents_weight += contained_item->weight();
+    }
+
+    return furniture_contents_weight / 4_kilogram;
+}
+
+static auto furniture_move_effort_for( const furniture_move_effort_options &options )
+-> furniture_move_effort
+{
+    const auto vertical_direction = furniture_vertical_direction_for( options.from, options.to );
+    const auto &furntype = options.here.furn( options.from ).obj();
+    auto str_req = std::max( 0, furntype.move_str_req +
+                             furniture_contents_strength_req( options.here, options.from ) );
+
+    if( vertical_direction == furniture_vertical_direction::up ) {
+        str_req = multiply_ratio_round_up( str_req, 3, 2 );
+    }
+
+    const auto adjusted_str = furniture_drag_strength( options.you );
+    auto move_cost = str_req * 10;
+    constexpr auto dresser_strength_anchor = 8;
+    auto stamina_cost = multiply_ratio_round_up(
+                            get_option<int>( "PLAYER_BASE_STAMINA_BURN_RATE" ) * 7,
+                            str_req, dresser_strength_anchor );
+    stamina_cost = multiply_ratio_round_up( stamina_cost, std::max( 1, str_req ),
+                                            std::max( std::max( 1, str_req ), adjusted_str ) );
+
+    if( vertical_direction != furniture_vertical_direction::none ) {
+        move_cost *= 2;
+        stamina_cost = multiply_ratio_round_up( stamina_cost, 3, 2 );
+    }
+
+    return furniture_move_effort{
+        .str_req = str_req,
+        .adjusted_str = adjusted_str,
+        .move_cost = move_cost,
+        .stamina_cost = stamina_cost,
+    };
+}
+
+auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
 {
     // Furniture: pull, push, or standing still and nudging object around.
     // Can push furniture out of reach.
-    auto fpos = u.bub_pos() + u.grab_point;
+    const auto fpos = tripoint_bub_ms( u.bub_pos() + u.grab_point );
     // supposed position of grabbed furniture
     if( !m.has_furn( fpos ) ) {
         // Where did it go? We're grabbing thin air so reset.
@@ -12008,68 +12139,71 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
         return false;
     }
 
-    const bool pushing_furniture = dp ==  u.grab_point;
-    const bool pulling_furniture = dp == -u.grab_point;
-    const bool shifting_furniture = !pushing_furniture && !pulling_furniture;
+    const auto horizontal_dp = tripoint_rel_ms( dp.xy(), 0 );
+    const auto horizontal_grab = tripoint_rel_ms( u.grab_point.xy(), 0 );
+    const auto pushing_furniture = horizontal_dp ==  horizontal_grab;
+    const auto pulling_furniture = horizontal_dp == -horizontal_grab;
+    const auto shifting_furniture = !pushing_furniture && !pulling_furniture;
 
-    auto fdest = fpos + dp; // intended destination of furniture.
+    const auto furniture_dp = pushing_furniture || pulling_furniture ? horizontal_dp : dp;
+    const auto fdest = ramp_adjusted_furniture_destination( m, fpos, furniture_dp );
+    const auto ramp_drag = fdest.z() != fpos.z() || dp.z() != 0 ||
+                           is_ramp_tile_or_mate( m, fdest );
     // Check floor: floorless tiles don't need to be flat and have no traps
-    const bool has_floor = m.has_floor( fdest );
+    const auto has_floor = m.has_floor( fdest );
     // Unfortunately, game::is_empty fails for tiles we're standing on,
     // which will forbid pulling, so:
-    const bool canmove = (
+    const auto canmove = (
                              m.passable( fdest ) &&
                              critter_at<npc>( fdest ) == nullptr &&
                              critter_at<monster>( fdest ) == nullptr &&
                              ( !pulling_furniture || is_empty( u.bub_pos() + dp ) ) &&
-                             ( !has_floor || m.has_flag( "FLAT", fdest ) ) &&
+                             ( !has_floor || m.has_flag( "FLAT", fdest ) || ramp_drag ) &&
                              !m.has_furn( fdest ) &&
                              !m.veh_at( fdest ) &&
                              ( !has_floor || m.tr_at( fdest ).is_null() )
                          );
 
-    const furn_t furntype = m.furn( fpos ).obj();
-    const int src_items = m.i_at( fpos ).size();
-    const int dst_items = m.i_at( fdest ).size();
+    const auto &furntype = m.furn( fpos ).obj();
+    if( furntype.move_str_req < 0 ) {
+        add_msg( _( "You can't move the %s." ), furntype.name() );
+        u.grab( OBJECT_NONE );
+        return false;
+    }
 
-    const bool only_liquid_items = std::all_of( m.i_at( fdest ).begin(), m.i_at( fdest ).end(),
-    [&]( item * const & liquid_item ) {
+    const auto src_items = m.i_at( fpos ).size();
+    const auto dst_items = m.i_at( fdest ).size();
+
+    const auto only_liquid_items = std::all_of( m.i_at( fdest ).begin(), m.i_at( fdest ).end(),
+    [&]( const auto &liquid_item ) {
         return liquid_item->made_of( LIQUID );
     } );
 
-    const bool dst_item_ok = !m.has_flag( "NOITEM", fdest ) &&
+    const auto dst_item_ok = !m.has_flag( "NOITEM", fdest ) &&
                              !m.has_flag( "SWIMMABLE", fdest ) &&
                              !m.has_flag( "DESTROY_ITEM", fdest );
 
-    const bool src_item_ok = m.furn( fpos ).obj().has_flag( "CONTAINER" ) ||
+    const auto src_item_ok = m.furn( fpos ).obj().has_flag( "CONTAINER" ) ||
                              m.furn( fpos ).obj().has_flag( "FIRE_CONTAINER" ) ||
                              m.furn( fpos ).obj().has_flag( "SEALED" );
 
-    const int fire_intensity = m.get_field_intensity( fpos, fd_fire );
-    time_duration fire_age = m.get_field_age( fpos, fd_fire );
+    const auto fire_intensity = m.get_field_intensity( fpos, fd_fire );
+    auto fire_age = m.get_field_age( fpos, fd_fire );
 
-    int str_req = furntype.move_str_req;
-    // Factor in weight of items contained in the furniture.
-    units::mass furniture_contents_weight = 0_gram;
-    for( auto &contained_item : m.i_at( fpos ) ) {
-        furniture_contents_weight += contained_item->weight();
-    }
-    str_req += furniture_contents_weight / 4_kilogram;
-    int adjusted_str = u.get_str();
-    if( u.is_mounted() ) {
-        auto mons = u.mounted_creature.get();
-        if( mons->has_flag( MF_RIDEABLE_MECH ) && mons->mech_str_addition() != 0 ) {
-            adjusted_str = mons->mech_str_addition();
-        }
-    }
+    const auto effort = furniture_move_effort_for( {
+        .you = u,
+        .here = m,
+        .from = fpos,
+        .to = fdest,
+    } );
     if( !canmove ) {
         // TODO: What is something?
         add_msg( _( "The %s collides with something." ), furntype.name() );
         u.moves -= 50;
         return true;
         ///\EFFECT_STR determines ability to drag furniture
-    } else if( str_req > adjusted_str &&
-               one_in( std::max( 20 - str_req - adjusted_str, 2 ) ) ) {
+    } else if( effort.str_req > effort.adjusted_str &&
+               one_in( std::max( 20 - effort.str_req - effort.adjusted_str, 2 ) ) ) {
         add_msg( m_bad, _( "You strain yourself trying to move the heavy %s!" ),
                  furntype.name() );
         u.moves -= 100;
@@ -12081,12 +12215,13 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
         return true;
     }
 
-    u.moves -= str_req * 10;
+    u.moves -= effort.move_cost;
+    u.mod_stamina( -effort.stamina_cost, false );
     // Additional penalty if we can't comfortably move it.
-    if( str_req > adjusted_str ) {
-        int move_penalty = std::pow( str_req, 2.0 ) + 100.0;
+    if( effort.str_req > effort.adjusted_str ) {
+        auto move_penalty = static_cast<int>( std::pow( effort.str_req, 2.0 ) + 100.0 );
         if( move_penalty <= 1000 ) {
-            if( adjusted_str >= str_req - 3 ) {
+            if( effort.adjusted_str >= effort.str_req - 3 ) {
                 u.moves -= std::max( 3000, move_penalty * 10 );
                 add_msg( m_bad, _( "The %s is really heavy!" ), furntype.name() );
                 if( one_in( 3 ) ) {
@@ -12110,11 +12245,11 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
             }
         }
     }
-    sounds::sound( fdest, furntype.move_str_req * 2, sounds::sound_t::movement,
+    sounds::sound( fdest, effort.str_req * 2, sounds::sound_t::movement,
                    _( "a scraping noise." ), true, "misc", "scraping" );
 
-    active_tile_data *atd = active_tiles::furn_at<active_tile_data>
-                            ( tripoint_abs_ms( m.bub_to_abs( fpos ) ) );
+    auto *atd = active_tiles::furn_at<active_tile_data>
+                ( tripoint_abs_ms( m.bub_to_abs( fpos ) ) );
 
     // Swap furniture vars between tiles beforehand
     // because the furn_set call will clear the vars
@@ -12143,12 +12278,12 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
     if( src_items > 0 ) { // Move the stuff inside.
         if( dst_item_ok && src_item_ok ) {
             // Assume contents of both cells are legal, so we can just swap contents.
-            std::vector<detached_ptr<item>> temp = m.i_clear( fpos );
-            std::vector<detached_ptr<item>> temp2 = m.i_clear( fdest );
-            for( detached_ptr<item> &it : temp ) {
+            auto temp = m.i_clear( fpos );
+            auto temp2 = m.i_clear( fdest );
+            for( auto &it : temp ) {
                 m.i_at( fdest ).insert( std::move( it ) );
             }
-            for( detached_ptr<item> &it : temp2 ) {
+            for( auto &it : temp2 ) {
                 m.i_at( fpos ).insert( std::move( it ) );
             }
         } else {
@@ -12158,7 +12293,7 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
 
     if( shifting_furniture ) {
         // We didn't move
-        auto d_sum = u.grab_point + dp;
+        auto d_sum = fdest - u.bub_pos();
         if( std::abs( d_sum.x() ) < 2 && std::abs( d_sum.y() ) < 2 ) {
             u.grab_point = d_sum; // furniture moved relative to us
         } else { // we pushed furniture out of reach
@@ -12167,6 +12302,9 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
         }
         return true; // We moved furniture but stayed still.
     }
+
+    const auto player_next_pos = tripoint_bub_ms( u.bub_pos() + dp );
+    u.grab_point = fdest - player_next_pos;
 
     if( pushing_furniture && m.impassable( fpos ) ) {
         // Not sure how that chair got into a wall, but don't let player follow.
@@ -12179,14 +12317,15 @@ bool game::grabbed_furn_move( const tripoint_rel_ms &dp )
     return false;
 }
 
-bool game::grabbed_move( const tripoint_rel_ms &dp )
+auto game::grabbed_move( const tripoint_rel_ms &dp, const bool allow_furniture_z_move ) -> bool
 {
     if( u.get_grab_type() == OBJECT_NONE ) {
         return false;
     }
 
-    if( dp.z() != 0 && u.get_grab_type() != OBJECT_VEHICLE ) {
-        // No dragging furniture up/down stairs yet!
+    if( dp.z() != 0 && u.get_grab_type() != OBJECT_VEHICLE &&
+        !( u.get_grab_type() == OBJECT_FURNITURE && allow_furniture_z_move ) ) {
+        // Furniture can only follow z-level movement through explicit ramp dragging.
         return false;
     }
 
@@ -13742,7 +13881,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
     return stairs;
 }
 
-void game::vertical_shift( const int z_after )
+auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
 {
     if( z_after < -OVERMAP_DEPTH || z_after > OVERMAP_HEIGHT ) {
         debugmsg( "Tried to get z-level %d outside allowed range of %d-%d",
@@ -13750,9 +13889,7 @@ void game::vertical_shift( const int z_after )
         return;
     }
 
-    // Vehicle grabs can remain valid across ramp z-level shifts. Other grabs
-    // still lack vertical movement support.
-    if( u.get_grab_type() != OBJECT_VEHICLE ) {
+    if( !keep_grab ) {
         u.grab( OBJECT_NONE );
     }
 
