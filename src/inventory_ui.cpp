@@ -661,6 +661,31 @@ std::vector<inventory_entry *> inventory_column::get_entries(
     return res;
 }
 
+std::vector<inventory_entry *> inventory_column::get_all_entries(
+    const std::function<bool( const inventory_entry &entry )> &filter_func ) const
+{
+    std::vector<inventory_entry *> res;
+
+    for( const auto &elem : entries ) {
+        if( filter_func( elem ) ) {
+            res.push_back( const_cast<inventory_entry *>( &elem ) );
+        }
+    }
+
+    for (const auto& elem : entries_hidden) {
+        if( filter_func( elem ) ) {
+            res.push_back( const_cast<inventory_entry *>( &elem ) );
+        }
+    }
+
+    return res;
+}
+
+std::vector<inventory_entry *> inventory_column::get_all_entries() const
+{
+    auto func = [](const inventory_entry& entry) { return true; };
+    return get_all_entries(func);
+}
 
 void inventory_column::set_stack_favorite( const item *location, bool favorite )
 {
@@ -2524,7 +2549,10 @@ inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
 {
     units::mass weight_carried = u.weight_carried();
     units::volume volume_carried = u.volume_carried();
-    std::vector<inventory_entry*> selected_items = get_selection_column_items();
+    auto func = [](const inventory_entry& entry) {
+        return entry.is_item() && entry.chosen_count > 0;
+    };
+    std::vector<inventory_entry*> selected_items = selection_col->get_all_entries(func);
 
     //Add the weights and volumes of selected items
     //which might be picked up

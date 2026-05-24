@@ -277,6 +277,9 @@ class inventory_column
         std::vector<inventory_entry *> get_all_selected() const;
         std::vector<inventory_entry *> get_entries(
             const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
+        std::vector<inventory_entry *> get_all_entries(
+        const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
+        std::vector<inventory_entry *> get_all_entries() const;
         inventory_entry *find_by_invlet( int invlet ) const;
 
         void draw( const catacurses::window &win, point pos ) const;
