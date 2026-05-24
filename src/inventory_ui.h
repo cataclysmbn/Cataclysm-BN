@@ -343,6 +343,10 @@ class inventory_column
         }
 
         void set_filter( const std::string &filter );
+        
+        std::vector<inventory_entry> entries;
+        std::vector<inventory_entry> entries_hidden;
+        bool paging_is_valid = false;
 
     protected:
         struct entry_cell_cache_t {
@@ -383,13 +387,9 @@ class inventory_column
         
         void refresh_entry_cell_caches();
         const inventory_selector_preset &preset;
-
-        std::vector<inventory_entry> entries;
-        std::vector<inventory_entry> entries_hidden;
         navigation_mode mode = navigation_mode::ITEM;
         bool active = false;
         bool multiselect = false;
-        bool paging_is_valid = false;
         bool visibility = true;
 
         size_t selected_index = 0;
@@ -483,8 +483,8 @@ class inventory_selector
         std::string get_filter() const;
 
         /** Actions you can take from inventory menus */
-        void wield(inventory_entry& entry);
-        void wear(inventory_entry& entry);
+        bool wield(inventory_entry& entry);
+        bool wear(inventory_entry& entry);
 
         // An array of cells for the stat lines. Example: ["Weight (kg)", "10", "/", "20"].
         using stat = std::array<std::string, 4>;
@@ -495,6 +495,8 @@ class inventory_selector
         void add_item( inventory_column &target_column,
                        item *location,
                        const item_category *custom_category = nullptr );
+
+        void remove_item(item* location);
 
     protected:
         player &u;

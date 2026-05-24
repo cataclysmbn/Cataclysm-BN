@@ -810,6 +810,8 @@ void inventory_column::prepare_paging( const std::string &filter )
         return;
     }
 
+    entries_cell_cache.clear();
+
     const auto filter_fn = filter_from_string<inventory_entry>(
     filter, [this]( const std::string & filter ) {
         return preset.get_filter( filter );
@@ -1229,7 +1231,6 @@ void inventory_selector::add_item( inventory_column &target_column,
                custom_category );
 }
 
-[[clang::optnone]]
 void inventory_selector::add_items( inventory_column &target_column,
                                     const std::function<item*( item * )> &locator,
                                     const std::vector<std::list<item *>> &stacks,
@@ -1251,6 +1252,34 @@ void inventory_selector::add_items( inventory_column &target_column,
         add_entry( target_column, std::move( locations ), nat_category );
     }
 }
+
+void inventory_selector::remove_item(item* location)
+{
+    for (auto col_ptr : columns) {
+        std::vector<inventory_entry*> entries = col_ptr->get_all_entries();
+        for (auto entry_ptr : entries) {
+            if (entry_ptr->is_item()) {
+                auto iter = std::remove(entry_ptr->locations.begin(), entry_ptr->locations.end(), location);
+                entry_ptr->locations.erase(iter, entry_ptr->locations.end());
+            }
+        }
+
+        auto remove_func = [](const inventory_entry& e) {
+            return e.locations.empty();
+        };
+
+        auto iter = std::remove_if(col_ptr->entries.begin(), col_ptr->entries.end(), remove_func);
+        col_ptr->entries.erase(iter, col_ptr->entries.end());
+
+        auto iter_hidden = std::remove_if(col_ptr->entries_hidden.begin(), col_ptr->entries_hidden.end(), remove_func);
+        col_ptr->entries_hidden.erase(iter_hidden, col_ptr->entries_hidden.end());
+        
+        col_ptr->paging_is_valid = false;
+        col_ptr->prepare_paging();
+    }
+
+}
+
 
 void inventory_selector::add_character_items( Character &character )
 {
@@ -1669,14 +1698,41 @@ std::string inventory_selector::get_filter() const
     return filter;
 }
 
-void inventory_selector::wield(inventory_entry& entry) 
+bool inventory_selector::wield(inventory_entry& entry) 
 {
-    
+    if (!entry.is_item()) {
+        return false;
+    }
+
+    item* item = entry.any_item();
+    bool wield_result = u.can_wield(*item).success();
+    if( wield_result ) {
+        remove_item(item);
+        u.wield(*item);
+    } else {
+        popup_getkey( u.can_wield( *item ).c_str() );
+    }
+
+    return wield_result;
 }
 
-void inventory_selector::wear(inventory_entry& entry)
+bool inventory_selector::wear(inventory_entry& entry)
 {
+    if (!entry.is_item()) {
+        return false;
+    }
 
+    item* item = entry.any_item();
+    bool wear_result = u.can_wear(*item).success();
+    if( wear_result ) {
+        remove_item(item);
+        auto to_move = item->detach();
+        u.wear_item(std::move(to_move));
+    } else {
+        popup_getkey( u.can_wear( *item ).c_str() );
+    }
+
+    return wear_result;
 }
 
 void inventory_selector::draw_columns( const catacurses::window &w ) const
@@ -1795,9 +1851,12 @@ inventory_selector::inventory_selector( player &u, const inventory_selector_pres
     ctxt.register_action( "HOME", to_translation( "Home" ) );
     ctxt.register_action( "END", to_translation( "End" ) );
     ctxt.register_action( "HELP_KEYBINDINGS" );
-    ctxt.register_action( "ANY_INPUT" ); // For invlets
     ctxt.register_action( "INVENTORY_FILTER" );
     ctxt.register_action( "EXAMINE" );
+    ctxt.register_action( "WIELD" );
+    ctxt.register_action( "WEAR" );
+    ctxt.register_action( "ANY_INPUT" ); // For invlets
+
 
     append_column( own_inv_column );
     append_column( map_column );
@@ -1851,6 +1910,12 @@ void inventory_selector::on_input( const inventory_input &input )
         }
         refresh_active_column(); // Columns can react to actions by losing their activation capacity
         prepare_layout();
+    } else if (input.action == "WIELD") {
+        auto& entry = const_cast<inventory_entry&>(get_selected());
+        wield(entry);
+    } else if (input.action == "WEAR") {
+        auto& entry = const_cast<inventory_entry&>(get_selected());
+        wear(entry);
     } else {
         if( has_available_choices() ) {
             for( inventory_column *elem : columns ) {
