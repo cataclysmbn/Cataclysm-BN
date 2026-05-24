@@ -2143,8 +2143,12 @@ bool game::do_turn()
     Pathfinding::clear_d_maps();
 
     // Drain the OS input buffer so key-repeat events generated during world
-    // processing don't accumulate and drive movement after key release.
-    inp_mngr.pump_events();
+    // processing don't accumulate and drive movement after key release.  Keep
+    // input while activity or auto-move interruption checks are active, so
+    // pause/menu keys can still stop long-running actions.
+    if( !u.activity && !u.has_destination() ) {
+        inp_mngr.pump_events();
+    }
 
     return false;
 }
