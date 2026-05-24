@@ -453,9 +453,9 @@ void map::set_transparency_cache_dirty( const int zlev )
     if( inbounds_z( zlev ) ) {
         get_cache( zlev ).transparency_cache_dirty.set();
         for( const auto p : bubble_submaps() ) {
-                auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
-                if( sm ) { sm->transparency_dirty = true; }
-            }
+            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
+            if( sm ) { sm->transparency_dirty = true; }
+        }
     }
 }
 
@@ -823,8 +823,8 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     m_solar.last_built_hour = -1;
     set_seen_cache_dirty( smz );
 
-    const auto for_clamped_submaps = [&]( const point_bub_sm &range_min,
-                                          const point_bub_sm &range_max, const auto &callback ) {
+    const auto for_clamped_submaps = [&]( const point_bub_sm & range_min,
+    const point_bub_sm & range_max, const auto & callback ) {
         const auto bubble_bounds = bubble_submap_bounds();
         const auto requested = inclusive_rectangle<point_bub_sm>( range_min, range_max );
         if( !bubble_bounds.overlaps( requested ) ) {
@@ -838,7 +838,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
 
     // Mark dirty only the submaps the vehicle actually occupies (union of old
     // and new footprint), rather than the entire z-level.
-    for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm &p ) {
+    for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
         const auto idx = static_cast<size_t>( ch.bidx( p.x(), p.y() ) );
         ch.transparency_cache_dirty.set( idx );
         ch.floor_cache_dirty.set( idx );
@@ -854,7 +854,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     // dirty region by one submap in each direction.
     const auto outside_min = point_bub_sm( sm_min.x() - 1, sm_min.y() - 1 );
     const auto outside_max = point_bub_sm( sm_max.x() + 1, sm_max.y() + 1 );
-    for_clamped_submaps( outside_min, outside_max, [&]( const point_bub_sm &p ) {
+    for_clamped_submaps( outside_min, outside_max, [&]( const point_bub_sm & p ) {
         const auto idx = static_cast<size_t>( ch.bidx( p.x(), p.y() ) );
         ch.outside_cache_dirty.set( idx );
         auto *sm = get_submap_at_grid( tripoint_bub_sm( p, smz ) );
@@ -868,7 +868,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     if( inbounds_z( above_z ) ) {
         auto &ch_above = get_cache( above_z );
         set_seen_cache_dirty( above_z );
-        for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm &p ) {
+        for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
             ch_above.floor_cache_dirty.set(
                 static_cast<size_t>( ch_above.bidx( p.x(), p.y() ) ) );
             auto *sm = get_submap_at_grid( tripoint_bub_sm( p, above_z ) );
@@ -3524,8 +3524,8 @@ void map::decay_fields_and_scent( const time_duration &amount )
             if( to_proc < 0 ) {
                 cur_submap->field_count = 0;
                 dbg( DL::Error ) << "map::decay_fields_and_scent: submap at "
-                                    << bub_to_abs( sm_pos )
-                                    << "has " << to_proc << " field_count";
+                                 << bub_to_abs( sm_pos )
+                                 << "has " << to_proc << " field_count";
             }
             // This submap has no fields
             continue;
@@ -6877,7 +6877,7 @@ void map::update_visibility_cache( const int zlev )
             }
         }
     }
-    
+
     for( const auto p : bubble_submaps() ) {
         if( sm_squares_seen[p.x() * my_MAPSIZE + p.y()] > 36 ) { // 25% of the submap is visible
             const auto abs_sm = bub_to_abs( p );
@@ -9547,7 +9547,7 @@ bool map::build_floor_cache( const int zlev )
             // since a previously no-floor tile may have gained a floor since last build.
             for( int sx = 0; sx < SEEX; ++sx ) {
                 std::fill_n( floor_cache.data() + ch.idx( ms_pos.x() + sx, ms_pos.y() ),
-                                SEEY, '\x01' );
+                             SEEY, '\x01' );
             }
         }
 
@@ -10192,15 +10192,15 @@ auto map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &en
     // start and end are just two points, end can be "before" start
     // Also clip the area to map area
     const auto min = tripoint_bub_ms(
-        std::max( std::min( start.x(), end.x() ), 0 ),
-        std::max( std::min( start.y(), end.y() ), 0 ),
-        std::max( std::min( start.z(), end.z() ), -OVERMAP_DEPTH )
-    );
+                         std::max( std::min( start.x(), end.x() ), 0 ),
+                         std::max( std::min( start.y(), end.y() ), 0 ),
+                         std::max( std::min( start.z(), end.z() ), -OVERMAP_DEPTH )
+                     );
     const auto max = tripoint_bub_ms(
-        std::min( std::max( start.x(), end.x() ), SEEX * my_MAPSIZE - 1 ),
-        std::min( std::max( start.y(), end.y() ), SEEY * my_MAPSIZE - 1 ),
-        std::min( std::max( start.z(), end.z() ), OVERMAP_HEIGHT )
-    );
+                         std::min( std::max( start.x(), end.x() ), SEEX * my_MAPSIZE - 1 ),
+                         std::min( std::max( start.y(), end.y() ), SEEY * my_MAPSIZE - 1 ),
+                         std::min( std::max( start.z(), end.z() ), OVERMAP_HEIGHT )
+                     );
 
     if( min.x() > max.x() || min.y() > max.y() || min.z() > max.z() ) {
         return;
@@ -10211,10 +10211,11 @@ auto map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &en
     const auto max_sm = project_to<coords::sm>( max );
     const auto submap_range = point_range<point_bub_sm>( min_sm, max_sm );
 
-    const auto apply_to_submap = [&]( const tripoint_bub_sm &sm_pos,
-                                      const submap *cur_submap, const point_sm_ms &sm_min,
-                                      const point_sm_ms &sm_max ) -> iteration_state {
-        for( const auto sm_ms : point_range<point_sm_ms>( sm_min, sm_max ) ) {
+    const auto apply_to_submap = [&]( const tripoint_bub_sm & sm_pos,
+                                      const submap * cur_submap, const point_sm_ms & sm_min,
+    const point_sm_ms & sm_max ) -> iteration_state {
+        for( const auto sm_ms : point_range<point_sm_ms>( sm_min, sm_max ) )
+        {
             const auto rval = fun( sm_pos, cur_submap, sm_ms );
             if( rval != ITER_CONTINUE ) {
                 return rval;

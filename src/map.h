@@ -2084,20 +2084,17 @@ class map : public submap_load_listener
         int my_MAPSIZE;
         bool zlevels;
 
-        inline auto bubble_tiles() const -> point_range<point_bub_ms>
-        {
+        inline auto bubble_tiles() const -> point_range<point_bub_ms> {
             return { point_bub_ms::zero(), point_bub_ms(
-                     coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1,
-                     coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1 ) };
+                         coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1,
+                         coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1 ) };
         }
 
-        inline auto bubble_submap_bounds() const -> inclusive_rectangle<point_bub_sm>
-        {
+        inline auto bubble_submap_bounds() const -> inclusive_rectangle<point_bub_sm> {
             return { point_bub_sm::zero(), point_bub_sm( my_MAPSIZE - 1, my_MAPSIZE - 1 ) };
         }
 
-        inline auto bubble_submaps() const -> point_range<point_bub_sm>
-        {
+        inline auto bubble_submaps() const -> point_range<point_bub_sm> {
             const auto bounds = bubble_submap_bounds();
             return { bounds.p_min, bounds.p_max };
         }
