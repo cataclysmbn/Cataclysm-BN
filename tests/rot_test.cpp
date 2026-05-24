@@ -11,6 +11,7 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
+#include "rot.h"
 #include "state_helpers.h"
 #include "units_temperature.h"
 #include "vehicle.h"
@@ -339,6 +340,25 @@ TEST_CASE( "Vehicle storage temperature controls food rot" )
 
         CHECK( fixture.veh->get_items( fixture.part_index ).empty() );
     }
+}
+
+TEST_CASE( "Contained item keeps parent location while temporarily detached" )
+{
+    prepare_map_storage_test();
+
+    auto container = item::spawn( "bag_plastic" );
+    REQUIRE( container->is_container() );
+    REQUIRE( container->contents.insert_item( item::spawn( "sashimi" ) ).success() );
+
+    auto checked = false;
+    container->contents.remove_top_items_with( [&]( detached_ptr<item> &&it ) {
+        checked = true;
+        CHECK( it->parent_item() == &*container );
+        CHECK( rot::temperature_flag_for_location( get_map(), *it ) == temperature_flag::TEMP_NORMAL );
+        return std::move( it );
+    } );
+
+    CHECK( checked );
 }
 
 TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )

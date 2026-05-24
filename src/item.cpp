@@ -11512,7 +11512,8 @@ std::string item::describe_location( const Character *ch ) const
 
 item *item::parent_item() const
 {
-    contents_item_location *cont = dynamic_cast<contents_item_location *>( &*loc );
+    const auto location = loc ? loc : saved_loc;
+    auto *cont = dynamic_cast<contents_item_location *>( location );
     if( !cont ) {
         return nullptr;
     }
