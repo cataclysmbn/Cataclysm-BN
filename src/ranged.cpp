@@ -1883,9 +1883,6 @@ static void do_aim( avatar &you, const item &relevant, const double min_recoil )
         // Increase aim at the cost of moves
         you.mod_moves( -1 );
         you.recoil = std::max( min_recoil, you.recoil - aim_amount );
-    } else {
-        // If aim is already maxed, we're just waiting, so pass the turn.
-        you.set_moves( 0 );
     }
 }
 
