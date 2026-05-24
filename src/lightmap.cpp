@@ -1037,8 +1037,12 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
 lit_level map::apparent_light_at( const tripoint_bub_ms &p,
                                   const visibility_variables &cache ) const
 {
-    const int dist = rl_dist( g->u.bub_pos(), p );
+    return apparent_light_at( p, cache, rl_dist( g->u.bub_pos(), p ) );
+}
 
+lit_level map::apparent_light_at( const tripoint_bub_ms &p,
+                                  const visibility_variables &cache, const int dist ) const
+{
     // Clairvoyance overrides everything.
     if( dist <= cache.u_clairvoyance ) {
         return lit_level::BRIGHT;
@@ -1061,7 +1065,7 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
 
     // Unimpaired range is an override to strictly limit vision range based on various conditions,
     // but the player can still see light sources.
-    if( dist > g->u.unimpaired_range() ) {
+    if( dist > cache.u_unimpaired_range ) {
         if( !a.obstructed && map_cache.sm[map_cache.idx( p.x(), p.y() )] > 0.0 ) {
             return lit_level::BRIGHT_ONLY;
         } else {

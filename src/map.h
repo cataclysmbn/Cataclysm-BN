@@ -129,6 +129,7 @@ struct visibility_variables {
     // Cached values for map visibility calculations
     int g_light_level;
     int u_clairvoyance;
+    int u_unimpaired_range;
     float vision_threshold;
     float visibility_scale_factor;
 };
@@ -616,6 +617,8 @@ class map : public submap_load_listener
          * @param cache Currently cached visibility parameters
          */
         lit_level apparent_light_at( const tripoint_bub_ms &p, const visibility_variables &cache ) const;
+        lit_level apparent_light_at( const tripoint_bub_ms &p, const visibility_variables &cache,
+                                     int dist ) const;
         visibility_type get_visibility( lit_level ll,
                                         const visibility_variables &cache ) const;
 
