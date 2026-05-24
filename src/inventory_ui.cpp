@@ -441,7 +441,6 @@ size_t inventory_column::get_cells_width() const
 
 void inventory_column::set_filter( const std::string &filter )
 {
-
     entries_cell_cache.clear();
     paging_is_valid = false;
     prepare_paging( filter );
@@ -786,23 +785,15 @@ void inventory_column::prepare_paging( const std::string &filter )
     } );
     entries.erase( new_end, entries.end() );
     // Then sort them with respect to categories
-    auto from = entries.begin();
-    while( from != entries.end() ) {
-        auto to = std::next( from );
-        while( to != entries.end() && from->get_category_ptr() == to->get_category_ptr() ) {
-            to->update_cache();
-            std::advance( to, 1 );
+    auto sort_function = [this](const inventory_entry& lhs, const inventory_entry& rhs) {
+        if (*lhs.get_category_ptr() != *rhs.get_category_ptr()) {
+            return *lhs.get_category_ptr() < *rhs.get_category_ptr();
+        } else {
+            return preset.sort_compare( lhs, rhs );
         }
-        if( !ordered_categories.contains( from->get_category_ptr()->get_id().c_str() ) ) {
-            std::sort( from, to, [ this ]( const inventory_entry & lhs, const inventory_entry & rhs ) {
-                if( lhs.is_selectable() != rhs.is_selectable() ) {
-                    return lhs.is_selectable(); // Disabled items always go last
-                }
-                return preset.sort_compare( lhs, rhs );
-            } );
-        }
-        from = to;
-    }
+    };
+    std::sort( entries.begin(), entries.end(), sort_function);
+
     // Recover categories
     const item_category *current_category = nullptr;
     for( auto iter = entries.begin(); iter != entries.end(); ++iter ) {
