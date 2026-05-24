@@ -737,14 +737,12 @@ void inventory_column::on_input( const inventory_input &input )
     } else if( input.action == "END" ) {
         select( entries.size() - 1, scroll_direction::BACKWARD );
     } else if( input.action == "TOGGLE_FAVORITE" ) {
-        if( !get_selected().locations.empty() ) {
-            const item *loc = get_selected().any_item();
+        auto selected_entries = get_all_selected();
+        for (auto& entry_ptr : selected_entries) {
+            const item *loc = entry_ptr->any_item();
             set_stack_favorite( loc, !loc->is_favorite );
-            entries_cell_cache.clear();
-            paging_is_valid = false;
-            prepare_paging();
         }
-
+        refresh_entry_cell_caches();
     } 
 }
 
@@ -1820,6 +1818,14 @@ void inventory_selector::on_input( const inventory_input &input )
         toggle_active_column( scroll_direction::FORWARD );
     } else if ( input.action == "INVENTORY_FILTER" ) {
         set_filter();
+    } else if ( input.action == "TOGGLE_FAVORITE") {
+        if( has_available_choices() ) {
+            for( inventory_column *elem : columns ) {
+                elem->on_input( input );
+            }
+        }
+        refresh_active_column(); // Columns can react to actions by losing their activation capacity
+        prepare_layout();
     } else {
         if( has_available_choices() ) {
             for( inventory_column *elem : columns ) {
