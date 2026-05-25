@@ -75,6 +75,6 @@
     "id": "ENCH_INSECT_WINGS_ACTIVE",
     "has": "HELD",
     "condition": "ACTIVE",
-    "values": [{ "value": "MOVE_COST", "multiply": -0.25 }]
+    "values": [ { "value": "MOVE_COST", "multiply": -0.25 } ]
   }
 ]
