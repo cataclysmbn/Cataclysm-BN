@@ -3327,7 +3327,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 info.screen_row = row;
                 draw_points.push_back( info );
             };
-            const auto seen_through_air_light = [&]( const tripoint_bub_ms &pos ) {
+            const auto seen_through_air_light = [&]( const tripoint_bub_ms & pos ) {
                 const auto &light_cache = here.access_cache( pos.z() );
                 if( light_cache.inbounds( pos.xy() ) &&
                     light_cache.sm[light_cache.idx( pos.x(), pos.y() )] > 0.0f ) {
@@ -3440,7 +3440,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                 here.set_memory_seen_cache_dirty( pos );
                                 min_z = std::min( pos.z(), min_z );
                                 queue_draw_point( tile_render_info( pos, height_3d,
-                                                  seen_through_air_light( pos ), invisible ) );
+                                                                    seen_through_air_light( pos ), invisible ) );
                                 break;
                             }
                             if( has_draw_override( pos ) || has_memory ) {
@@ -3461,12 +3461,12 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                     here.set_memory_seen_cache_dirty( pos );
                                     min_z = std::min( pos.z(), min_z );
                                     queue_draw_point( tile_render_info( pos, height_3d,
-                                                      seen_through_air_light( pos ),
-                                                      invisible ) );
+                                                                        seen_through_air_light( pos ),
+                                                                        invisible ) );
                                 } else {
                                     min_z = std::min( last_vis, min_z );
                                     queue_draw_point( tile_render_info( tripoint_bub_ms( pos.xy(), last_vis ),
-                                                      height_3d, last_vis_ll, invisible ) );
+                                                                        height_3d, last_vis_ll, invisible ) );
                                 }
                             } else if( had_visible_open_air && in_map_bounds ) {
                                 // No vehicle and no solid last_vis — placeholder so cross-z
@@ -3504,7 +3504,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
     };
 
-    const auto draw_zone_overlay_for = [&]( const tile_render_info &p ) {
+    const auto draw_zone_overlay_for = [&]( const tile_render_info & p ) {
         if( p.pos.z() != center.z() ) {
             return;
         }

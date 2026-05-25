@@ -1900,8 +1900,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // Terrain memory is preserved so the ground beneath doesn't go black.
     {
         avatar &you = get_avatar();
-        const auto clear_matching_overlay = [&]( const tripoint_abs_ms &pos,
-                const std::string &tile_id ) {
+        const auto clear_matching_overlay = [&]( const tripoint_abs_ms & pos,
+        const std::string & tile_id ) {
             if( you.get_memorized_tile( pos ).tile == tile_id ) {
                 you.clear_memorized_overlay( pos );
             }
