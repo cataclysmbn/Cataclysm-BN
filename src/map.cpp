@@ -2671,8 +2671,6 @@ bool map::valid_move( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
 {
     // Used to account for the fact that older versions of GCC can trip on the if statement here.
     assert( to.z() > std::numeric_limits<int>::min() );
-    // Note: no need to check inbounds here, because maptile_at will do that
-    // If oob tile is supplied, the maptile_at will be an unpassable "null" tile
     if( std::abs( from.x() - to.x() ) > 1 || std::abs( from.y() - to.y() ) > 1 ||
         std::abs( from.z() - to.z() ) > 1 ) {
         return false;
@@ -2737,6 +2735,11 @@ bool map::valid_move( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
 
     if( bash ) {
         return true;
+    }
+    // get_cache() has no bounds check on z, and maptile_at's mapbuffer fallback
+    // can return non-null terrain for positions outside the reality bubble.
+    if( !inbounds( down_p ) || !inbounds_z( up_p.z() ) ) {
+        return up.get_furn_t().movecost >= 0;
     }
 
     int part_up;
