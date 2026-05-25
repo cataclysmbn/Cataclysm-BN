@@ -1832,8 +1832,8 @@ void options_manager::add_options_interface()
          false );
 
     add( "NEW_PICKUP_MENU", interface,
-         translate_marker( "Use new pickup menu ui" ),
-         translate_marker( "Whether to use the new or old pickup menu ui" ),
+         translate_marker( "Use new pickup menu ui (EXPERIMENTAL)" ),
+         translate_marker( "Whether to use the new or old pickup menu ui. WARNING: Is experimental feature" ),
          false );
 
     add_empty_line();
