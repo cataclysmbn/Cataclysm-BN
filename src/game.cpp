@@ -302,10 +302,12 @@ static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
 static const efftype_id effect_accumulated_mutagen( "accumulated_mutagen" );
 static const efftype_id effect_adrenaline_mycus( "adrenaline_mycus" );
 static const efftype_id effect_ai_controlled( "ai_controlled" );
+static const efftype_id effect_ai_waiting( "ai_waiting" );
 static const efftype_id effect_assisted( "assisted" );
 static const efftype_id effect_blind( "blind" );
 static const efftype_id effect_bouldering( "bouldering" );
 static const efftype_id effect_contacts( "contacts" );
+static const efftype_id effect_docile( "docile" );
 static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_drunk( "drunk" );
 static const efftype_id effect_evil( "evil" );
@@ -5148,43 +5150,92 @@ void game::monmove()
         }
     }
 
-    // Pre-warm both turn_sight_cache_ and skew_vision_cache
-    // for (monster → player), (monster → NPC), and faction-hostile (monster → monster)
-    // pairs before the parallel phase.  prewarm_sight() calls turn_cached_sees(),
-    // which populates turn_sight_cache_ under a unique_lock here (serial, zero
-    // contention).  The parallel phase then hits turn_sight_cache_ under shared_lock
-    // only — zero write contention.
-    //
-    // NPC pairs use a distance pre-cull: monsters beyond max_sight_range of an NPC
-    // can never see them, so the ray trace and cache insert are both skipped entirely.
-    for( monster *mon : plannable ) {
-        mon->prewarm_sight( u );
-        const int mon_max_sight = std::max( mon->type->vision_day, mon->type->vision_night );
-        for( npc *n : npc_snap ) {
-            if( rl_dist( mon->bub_pos(), n->bub_pos() ) <= mon_max_sight ) {
-                mon->prewarm_sight( *n );
+    // Pre-warm directed Creature::sees() jobs before the parallel planning phase.
+    // Worker threads compute raw perception results only; the shared
+    // turn_sight_cache_ is filled serially afterward, avoiding cache write-lock
+    // contention in compute_plan().  map::sees() still supplies symmetric LOS reuse
+    // for the ray traces below Creature::sees().
+    auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>>{};
+    const auto initial_sight_job_capacity =
+        plannable.size() * ( npc_snap.size() + std::min( mon_snap.size(), size_t{ 16 } ) + 1 );
+    sight_jobs.reserve( initial_sight_job_capacity );
+    const auto add_sight_job = [&]( const Creature & seer, const Creature & target ) {
+        sight_jobs.emplace_back( &seer, &target );
+    };
+    {
+        ZoneScopedN( "monmove_build_sight_jobs" );
+        for( auto *mon : plannable ) {
+            const auto mon_max_sight = std::max( mon->type->vision_day, mon->type->vision_night );
+            const auto mon_pos = mon->bub_pos();
+            const auto waiting = mon->has_effect( effect_ai_waiting );
+            const auto docile = mon->friendly != 0 && mon->has_effect( effect_docile );
+            if( !waiting && mon->friendly <= 0 &&
+                rl_dist( mon_pos, u.bub_pos() ) <= mon_max_sight ) {
+                add_sight_job( *mon, u );
+            }
+            for( auto *n : npc_snap ) {
+                const auto faction_att = mon->faction.obj().attitude( n->get_monster_faction() );
+                if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
+                    continue;
+                }
+                if( rl_dist( mon_pos, n->bub_pos() ) <= mon_max_sight ) {
+                    add_sight_job( *mon, *n );
+                }
+            }
+
+            const auto needs_group_sight =
+                mon->lod_tier <= lod_group_morale_max_tier &&
+                ( ( mon->has_flag( MF_GROUP_MORALE ) && mon->morale < mon->type->morale ) ||
+                  mon->has_flag( MF_SWARMS ) );
+            for( auto *target_mon : mon_snap ) {
+                if( target_mon == mon ) {
+                    continue;
+                }
+                if( rl_dist( mon_pos, target_mon->bub_pos() ) > mon_max_sight ) {
+                    continue;
+                }
+                if( mon->friendly != 0 && !docile && !waiting && target_mon->friendly == 0 ) {
+                    add_sight_job( *mon, *target_mon );
+                    continue;
+                }
+                if( mon->friendly == 0 ) {
+                    const auto faction_att = mon->faction.obj().attitude( target_mon->faction );
+                    if( faction_att != MFA_NEUTRAL && faction_att != MFA_FRIENDLY ) {
+                        add_sight_job( *mon, *target_mon );
+                        continue;
+                    }
+                    if( needs_group_sight && mon->faction == target_mon->faction ) {
+                        add_sight_job( *mon, *target_mon );
+                    }
+                }
             }
         }
     }
-
-    // Pre-warm faction-hostile monster pairs within max_sight_range.
-    // Without this, hostile-faction pairs call turn_cached_sees() during the parallel
-    // phase on a cache miss, taking a unique_lock and serialising all workers that
-    // happen to need a faction-hostile LOS result at the same time.
-    // turn_sight_cache_ is directional; map::sees() supplies symmetric LOS reuse.
-    {
-        ZoneScopedN( "monmove_faction_sight_prewarm" );
-        for( const auto i : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
-            monster *mon_a = plannable[i];
-            const auto max_range_a = std::max( mon_a->type->vision_day, mon_a->type->vision_night );
-            for( const auto j : std::views::iota( i + 1, plannable.size() ) ) {
-                monster *mon_b = plannable[j];
-                if( rl_dist( mon_a->bub_pos(), mon_b->bub_pos() ) > max_range_a ) {
-                    continue;
+    TracyPlot( "Monmove Sight Jobs", static_cast<int64_t>( sight_jobs.size() ) );
+    if( !sight_jobs.empty() ) {
+        auto sight_results = std::vector<char>( sight_jobs.size(), 0 );
+        {
+            ZoneScopedN( "monmove_parallel_sight_prewarm" );
+            if( parallel_enabled && parallel_monster_planning && sight_jobs.size() > 1 ) {
+                parallel_for_chunked( 0, static_cast<int>( sight_jobs.size() ),
+                monster_plan_chunk_size, [&]( int i ) {
+                    const auto index = static_cast<size_t>( i );
+                    const auto &[seer, target] = sight_jobs[index];
+                    sight_results[index] = seer->sees( *target ) ? 1 : 0;
+                } );
+            } else {
+                for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
+                    const auto &[seer, target] = sight_jobs[index];
+                    sight_results[index] = seer->sees( *target ) ? 1 : 0;
                 }
-                if( mon_a->faction.obj().attitude( mon_b->faction ) == MFA_HATE ) {
-                    mon_a->prewarm_sight( *mon_b );
-                }
+            }
+        }
+        {
+            ZoneScopedN( "monmove_insert_sight_prewarm" );
+            auto lock = std::unique_lock<std::shared_mutex>( turn_sight_cache_mutex_ );
+            turn_sight_cache_.reserve( sight_jobs.size() );
+            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
+                turn_sight_cache_.emplace( sight_jobs[index], sight_results[index] != 0 );
             }
         }
     }

@@ -334,13 +334,6 @@ static bool turn_cached_sees( const Creature &seer, const Creature &target )
     return result;
 }
 
-void monster::prewarm_sight( const Creature &target ) const
-{
-    // Populate turn_sight_cache_ for this (monster, target) pair serially so
-    // the parallel planning phase hits only the shared_lock read path.
-    turn_cached_sees( *this, target );
-}
-
 float monster::rate_target( Creature &c, float best, bool smart, int precalc_dist ) const
 {
     // Use caller-supplied distance when available to avoid
