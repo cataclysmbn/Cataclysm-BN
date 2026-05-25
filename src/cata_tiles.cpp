@@ -5336,8 +5336,10 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                 veh_part ) ) ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
-        if( here.check_seen_cache( p ) ) {
-            you.memorize_tile( here.bub_to_abs( p ), vpname, subtile, rotation );
+        const auto abs_pos = here.bub_to_abs( p );
+        // Projected rope segments are live draws, not persistent vehicle parts.
+        if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
+            you.clear_memorized_overlay( abs_pos );
         }
         const tile_search_params tile = {vpname, C_VEHICLE_PART, empty_string, subtile, rotation};
         const bool ret = draw_from_id_string(

@@ -1900,13 +1900,33 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // Terrain memory is preserved so the ground beneath doesn't go black.
     {
         avatar &you = get_avatar();
-        for( const vpart_reference &vpr : veh.get_all_parts() ) {
+        const auto clear_matching_overlay = [&]( const tripoint_abs_ms &pos,
+                const std::string &tile_id ) {
+            if( you.get_memorized_tile( pos ).tile == tile_id ) {
+                you.clear_memorized_overlay( pos );
+            }
+        };
+
+        for( const auto &vpr : veh.get_all_parts() ) {
             if( !vpr.part().removed ) {
                 const auto &part = vpr.part();
                 const auto part_offset = tripoint_rel_ms(
                                              part.precalc[0],
                                              part.mount.z() + part.z_terrain[0] );
                 you.clear_memorized_overlay( src + part_offset );
+
+                const auto &part_info = part.info();
+                if( part_info.has_flag( VPFLAG_LADDER ) ) {
+                    const auto ladder_pos = src + part_offset;
+                    const auto rope_tile = "vp_" + part_info.get_id().str();
+                    const auto min_rope_z = std::max( ladder_pos.z() - part_info.ladder_length(),
+                                                      -OVERMAP_DEPTH );
+                    for( const auto z : std::views::iota( min_rope_z, ladder_pos.z() ) ) {
+                        auto rope_pos = ladder_pos;
+                        rope_pos.z() = z;
+                        clear_matching_overlay( rope_pos, rope_tile );
+                    }
+                }
             }
         }
     }
