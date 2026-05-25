@@ -59,6 +59,11 @@ static const efftype_id effect_onfire( "onfire" );
 // render as LOW (dim, visible) rather than BRIGHT (same as direct sunlight).
 static constexpr float SOLAR_SHADOW_SCATTER = 0.09f;
 
+static auto outside_player_3d_z_range( const tripoint_bub_ms &target ) -> bool
+{
+    return fov_3d && std::abs( target.z() - g->u.bub_pos().z() ) > fov_3d_z_range;
+}
+
 void map::add_light_from_items( const tripoint_bub_ms &p, const item_stack::iterator &begin,
                                 const item_stack::iterator &end )
 {
@@ -1093,6 +1098,10 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
         return false;
     }
 
+    if( outside_player_3d_z_range( t ) ) {
+        return false;
+    }
+
     if( max_range >= 0 && square_dist( t, g->u.bub_pos() ) > max_range ) {
         return false;    // Out of range!
     }
@@ -1109,6 +1118,10 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
 bool map::pl_line_of_sight( const tripoint_bub_ms &t, const int max_range ) const
 {
     if( !inbounds( t ) ) {
+        return false;
+    }
+
+    if( outside_player_3d_z_range( t ) ) {
         return false;
     }
 

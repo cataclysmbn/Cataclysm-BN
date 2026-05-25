@@ -27,6 +27,7 @@
 #include "catalua_hooks.h"
 #include "catalua_icallback_actor.h"
 #include "catalua_sol.h"
+#include "cached_options.h"
 #include "character.h"
 #include "character_functions.h"
 #include "color.h"
@@ -2118,9 +2119,19 @@ static int print_ranged_chance( const catacurses::window &w, int line_number,
 }
 
 // Whether player character knows creature's position and can roughly track it with the aim cursor
+static auto outside_visible_z_range( const tripoint_bub_ms &from,
+                                     const tripoint_bub_ms &to ) -> bool
+{
+    return get_map().has_zlevels() && fov_3d &&
+           std::abs( from.z() - to.z() ) > fov_3d_z_range;
+}
+
 static bool pl_sees( const Creature &cr )
 {
     Character &u = get_player_character();
+    if( outside_visible_z_range( u.bub_pos(), cr.bub_pos() ) ) {
+        return false;
+    }
     return u.sees( cr ) || u.sees_with_infrared( cr ) || u.sees_with_specials( cr );
 }
 
@@ -2715,14 +2726,20 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
 {
     const vehicle *veh_from_turret = turret ? turret.get_veh() : nullptr;
     return g->get_creatures_if( [&c, range, veh_from_turret]( const Creature & critter ) -> bool {
-        if( std::round( rl_dist_exact( c.bub_pos(), critter.bub_pos() ) ) > range )
+        const auto shooter_pos = c.bub_pos();
+        const auto critter_pos = critter.bub_pos();
+        if( std::round( rl_dist_exact( shooter_pos, critter_pos ) ) > range )
         {
+            return false;
+        }
+
+        if( outside_visible_z_range( shooter_pos, critter_pos ) ) {
             return false;
         }
 
         // Special case: if range is 1, it's a melee attack.
         // Melee attacks can only target on same z-level or directly up/down, not "z-diagonally".
-        if( range <= 1 && c.bub_pos().z() != critter.bub_pos().z() && c.bub_pos().xy() != critter.bub_pos().xy() )
+        if( range <= 1 && shooter_pos.z() != critter_pos.z() && shooter_pos.xy() != critter_pos.xy() )
         {
             return false;
         }
@@ -2741,8 +2758,8 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
         map &here = get_map();
 
         // TODO: It should use projectile passability checks when finding path, not vision checks.
-        std::vector<tripoint_bub_ms> path = here.find_clear_path( c.bub_pos(), critter.bub_pos() );
-        auto prev_point = c.bub_pos();
+        std::vector<tripoint_bub_ms> path = here.find_clear_path( shooter_pos, critter_pos );
+        auto prev_point = shooter_pos;
         for( const tripoint_bub_ms &point : path )
         {
             if( here.obstructed_by_vehicle_rotation( prev_point, point ) ) {
@@ -3396,7 +3413,7 @@ bool target_ui::try_reacquire_target( bool critter, tripoint_bub_ms &new_dst )
 
     // Try to re-acquire target tile or tile where the target creature used to be
     auto local_lt = get_map().abs_to_bub( *you->last_target_pos );
-    if( dist_fn( local_lt ) <= range ) {
+    if( !outside_visible_z_range( src, local_lt ) && dist_fn( local_lt ) <= range ) {
         new_dst = local_lt;
         // Abort aiming if a creature moved in
         return !critter && !g->critter_at( local_lt, true );
