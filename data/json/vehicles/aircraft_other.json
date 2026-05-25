@@ -636,7 +636,6 @@
           "vehicle_clock",
           "roof",
           "programmable_autopilot",
-          "black_box",
           "tracker"
         ]
       },
@@ -829,7 +828,6 @@
           "vehicle_clock",
           "roof",
           "programmable_autopilot",
-          "black_box",
           "tracker"
         ]
       },
