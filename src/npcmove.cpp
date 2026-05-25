@@ -122,6 +122,10 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_attention( "attention" );
 static const efftype_id effect_feral_infighting_punishment( "feral_infighting_punishment" );
 
+static const trait_id trait_ANIMALDISCORD( "ANIMALDISCORD" );
+static const trait_id trait_ANIMALDISCORD2( "ANIMALDISCORD2" );
+static const trait_id trait_ANIMALEMPATH( "ANIMALEMPATH" );
+static const trait_id trait_ANIMALEMPATH2( "ANIMALEMPATH2" );
 static const trait_id trait_BEE( "BEE" );
 static const trait_id trait_FLOWERS( "FLOWERS" );
 static const trait_id trait_MYCUS_FRIEND( "MYCUS_FRIEND" );
@@ -393,10 +397,21 @@ static auto npc_turn_cached_sees( const Creature &seer, const Creature &target )
 void npc::assess_danger()
 {
     ZoneScoped;
+    auto has_mutation_attitude_rules = false;
+    for( const trait_id &mut : get_mutations() ) {
+        const auto &mutation = mut.obj();
+        if( !mutation.anger_relations.empty() || !mutation.ignored_by.empty() ) {
+            has_mutation_attitude_rules = true;
+            break;
+        }
+    }
     // True if this NPC has traits/effects that cause monster::attitude() to return a
     // result different from what a generic NPC would get.  When false, we can use each
     // monster's per-npcmove-pass cached attitude instead of recomputing it.
-    const bool has_special_attitude_traits = guaranteed_hostile() || is_hallucination() ||
+    const auto has_special_attitude_traits = guaranteed_hostile() || is_hallucination() ||
+            has_mutation_attitude_rules ||
+            has_trait( trait_ANIMALEMPATH ) || has_trait( trait_ANIMALEMPATH2 ) ||
+            has_trait( trait_ANIMALDISCORD ) || has_trait( trait_ANIMALDISCORD2 ) ||
             has_trait( trait_PROF_FERAL ) || has_trait( trait_BEE ) ||
             has_trait( trait_FLOWERS ) || has_trait( trait_THRESH_MYCUS ) ||
             has_trait( trait_MYCUS_FRIEND ) || has_trait( trait_PHEROMONE_MAMMAL ) ||
@@ -501,6 +516,7 @@ void npc::assess_danger()
         }
     };
     {
+        ZoneScopedN( "npc_friend_enemy_scan" );
         const uint32_t current_version = g_npc_friends_dirty_version.load( std::memory_order_relaxed );
         const bool friends_dirty = ( ai_cache.npc_friends_version != current_version );
         if( friends_dirty ) {
@@ -551,9 +567,12 @@ void npc::assess_danger()
             Attitude att;
             if( !has_special_attitude_traits &&
                 critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch ) {
+                ZoneScopedN( "npc_monster_attitude_cache_hit" );
                 att = critter.cached_npc_attitude;
             } else {
-                att = critter.attitude_to( *this );
+                ZoneScopedN( "npc_monster_attitude_cache_miss" );
+                att = has_special_attitude_traits ? critter.attitude_to( *this ) :
+                      critter.generic_npc_attitude_to();
                 if( !has_special_attitude_traits ) {
                     critter.cached_npc_attitude_epoch = g_npcmove_attitude_epoch;
                     critter.cached_npc_attitude = att;

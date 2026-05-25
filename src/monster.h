@@ -405,6 +405,7 @@ class monster : public Creature, public location_visitable<monster>
         // Combat
         bool is_fleeing( Character &who ) const; // True if we're fleeing
         auto attitude( const Character *u = nullptr ) const -> monster_attitude; // See the enum above
+        auto generic_npc_attitude_to() const -> Attitude;
         Attitude attitude_to( const Creature &other ) const override;
         void process_triggers(); // Process things that anger/scare us
 
