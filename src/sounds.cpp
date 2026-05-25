@@ -337,7 +337,7 @@ void sounds::process_sounds()
 
     std::vector<centroid> sound_clusters = cluster_sounds( recent_sounds );
     const int weather_vol = get_weather().weather_id->sound_attn;
-    auto monster_listeners = std::vector<monster *>{};
+    auto monster_listeners = std::vector<monster *> {};
     if( !sound_clusters.empty() ) {
         auto monsters = g->all_monsters();
         monster_listeners.reserve( monsters.items ? monsters.items->size() : 0 );

@@ -36,7 +36,8 @@ static auto lookup_distance( const int dx, const int dy, const int dz,
                std::round( distance ) );
 }
 
-auto rl_dist_lookup_table::matches( const rl_dist_lookup_table_dimensions &dimensions ) const -> bool
+auto rl_dist_lookup_table::matches( const rl_dist_lookup_table_dimensions &dimensions ) const ->
+bool
 {
     return dimensions_.trigdist == dimensions.trigdist &&
            dimensions_.max_dx >= dimensions.max_dx &&
@@ -109,7 +110,7 @@ auto rl_dist_lookup_table::index_3d( const int dx, const int dy, const int dz ) 
 }
 
 auto get_rl_dist_lookup_table( const rl_dist_lookup_table_dimensions &dimensions )
--> const rl_dist_lookup_table &
+- > const rl_dist_lookup_table &
 {
     static std::mutex distance_table_mutex;
     static rl_dist_lookup_table table;

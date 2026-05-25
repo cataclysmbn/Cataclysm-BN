@@ -16,8 +16,8 @@
 
 std::unordered_map< mfaction_str_id, mfaction_id > faction_map;
 std::vector< monfaction > faction_list;
-static auto faction_attitude_table = std::vector<mf_attitude>{};
-static auto faction_attitude_table_width = size_t{ 0 };
+static auto faction_attitude_table = std::vector<mf_attitude> {};
+static auto faction_attitude_table_width = size_t { 0 };
 
 void add_to_attitude_map( const std::set< std::string > &keys, mfaction_att_map &map,
                           mf_attitude value );
@@ -25,7 +25,7 @@ void add_to_attitude_map( const std::set< std::string > &keys, mfaction_att_map 
 void apply_base_faction( const monfaction &base, monfaction &faction );
 
 static auto resolve_attitude_map( const monfaction &source, const mfaction_id &other )
--> mf_attitude;
+- > mf_attitude;
 
 /** @relates int_id */
 template<>
@@ -127,15 +127,15 @@ mf_attitude monfaction::attitude( const mfaction_id &other ) const
         static_cast<size_t>( source_index ) < faction_attitude_table_width &&
         static_cast<size_t>( target_index ) < faction_attitude_table_width ) {
         return faction_attitude_table[static_cast<size_t>( source_index ) *
-                                      faction_attitude_table_width +
-                                      static_cast<size_t>( target_index )];
+                                                           faction_attitude_table_width +
+                                                           static_cast<size_t>( target_index )];
     }
 
     return resolve_attitude_map( *this, other );
 }
 
 static auto resolve_attitude_map( const monfaction &source, const mfaction_id &other )
--> mf_attitude
+- > mf_attitude
 {
     const auto found = source.attitude_map.find( other );
     if( found != source.attitude_map.end() ) {

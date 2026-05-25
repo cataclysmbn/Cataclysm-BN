@@ -4625,7 +4625,8 @@ void game::mon_info_update( )
     };
 
     const auto player_attitude_from = []( const monster_attitude matt ) -> Attitude {
-        switch( matt ) {
+        switch( matt )
+        {
             case MATT_FRIEND:
             case MATT_FPASSIVE:
             case MATT_ZLAVE:
@@ -4682,7 +4683,8 @@ void game::mon_info_update( )
         }
 
         //Safemode monster check
-        const auto safemode_state = get_safemode().check_monster( critter.name(), player_attitude, mon_dist );
+        const auto safemode_state = get_safemode().check_monster( critter.name(), player_attitude,
+                                    mon_dist );
 
         if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
                 ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) ) ) {
@@ -5111,7 +5113,7 @@ void game::monmove()
     // references keeps the pointer snapshots valid if the live lists change later
     // in the turn, while avoiding repeated weak_ptr_fast lock/copy passes.
     auto monster_refs = critter_tracker->get_monsters_list();
-    auto mon_snap = std::vector<monster *>{};
+    auto mon_snap = std::vector<monster *> {};
     mon_snap.reserve( monster_refs.size() );
     for( const shared_ptr_fast<monster> &mon_ptr : monster_refs ) {
         if( mon_ptr && !mon_ptr->is_dead() ) {
@@ -5119,10 +5121,10 @@ void game::monmove()
         }
     }
 
-    auto npc_refs = std::vector<shared_ptr_fast<npc>>{};
+    auto npc_refs = std::vector<shared_ptr_fast<npc>> {};
     npc_refs.reserve( active_npc.size() );
     std::ranges::copy( active_npc, std::back_inserter( npc_refs ) );
-    auto npc_snap = std::vector<npc *>{};
+    auto npc_snap = std::vector<npc *> {};
     npc_snap.reserve( npc_refs.size() );
     for( const shared_ptr_fast<npc> &guy : npc_refs ) {
         if( guy && !guy->is_dead() ) {
@@ -5155,7 +5157,7 @@ void game::monmove()
     // turn_sight_cache_ is filled serially afterward, avoiding cache write-lock
     // contention in compute_plan().  map::sees() still supplies symmetric LOS reuse
     // for the ray traces below Creature::sees().
-    auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>>{};
+    auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>> {};
     const auto initial_sight_job_capacity =
         plannable.size() * ( npc_snap.size() + std::min( mon_snap.size(), size_t{ 16 } ) + 1 );
     sight_jobs.reserve( initial_sight_job_capacity );

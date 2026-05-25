@@ -506,7 +506,7 @@ void npc::assess_danger()
     // NPC friends are cached across turns; only rebuild when faction membership or active NPC
     // list changes (tracked via g_npc_friends_dirty_version).
     std::vector<weak_ptr_fast<Creature>> hostile_guys;
-    auto friend_positions = std::vector<tripoint_bub_ms>{};
+    auto friend_positions = std::vector<tripoint_bub_ms> {};
     const auto remember_friend_position = [&]( const weak_ptr_fast<Creature> &guy ) {
         if( auto ally = guy.lock() ) {
             friend_positions.push_back( ally->bub_pos() );

@@ -6839,18 +6839,19 @@ void map::update_visibility_cache( const int zlev )
 
     auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 
-    const auto min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1, -OVERMAP_DEPTH ) : zlev );
+    const auto min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1,
+                       -OVERMAP_DEPTH ) : zlev );
     const auto max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
     const auto max_delta_z = std::max( std::abs( min_z - player_pos.z() ),
                                        std::abs( max_z - player_pos.z() ) );
     const auto &reference_cache = get_cache_ref( zlev );
     const auto *const distance_table = trigdist ?
-        &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
-            .max_dx = reference_cache.cache_x - 1,
-            .max_dy = reference_cache.cache_y - 1,
-            .max_dz = max_delta_z,
-            .trigdist = trigdist,
-        } ) :
+    &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
+        .max_dx = reference_cache.cache_x - 1,
+        .max_dy = reference_cache.cache_y - 1,
+        .max_dz = max_delta_z,
+        .trigdist = trigdist,
+    } ) :
         nullptr;
 
     for( const auto z : std::views::iota( min_z, max_z + 1 ) ) {

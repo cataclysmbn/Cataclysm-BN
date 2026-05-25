@@ -330,7 +330,7 @@ nc_color faction::food_supply_color()
 }
 
 auto faction::relationship_flags_with( const faction_id &guy_id ) const
--> const std::bitset<npc_factions::rel_types> *
+- > const std::bitset<npc_factions::rel_types> *
 {
     const auto rel_data = relations.find( guy_id.c_str() );
     return rel_data != relations.end() ? &rel_data->second : nullptr;

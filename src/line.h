@@ -224,7 +224,7 @@ class rl_dist_lookup_table
 };
 
 auto get_rl_dist_lookup_table( const rl_dist_lookup_table_dimensions &dimensions )
--> const rl_dist_lookup_table &;
+- > const rl_dist_lookup_table &;
 
 /**
  * Helper type for the return value of dist_fast().

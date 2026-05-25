@@ -1118,7 +1118,7 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
     const auto visibility_scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
     const auto a = apparent_light_helper( map_cache, t, visibility_scale_factor );
     const auto light_at_player = map_cache.lm[map_cache.idx( g->u.bub_pos().x(),
-                                        g->u.bub_pos().y() )].max();
+                                                g->u.bub_pos().y() )].max();
     return !a.obstructed &&
            ( a.apparent_light >= g->u.get_vision_threshold( light_at_player ) ||
              map_cache.sm[map_cache.idx( t.x(), t.y() )] > 0.0 );
