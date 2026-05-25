@@ -2911,9 +2911,13 @@ bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mo
                     return false;
                 }
 
-                const auto action_name = get_default_mode_input_context().get_action_name(
-                                             action_ident( previewed_right_click_action_->action ) );
-                if( !query_yn( _( "Walk to %s and %s?" ), m.name( mouse_target ), action_name ) ) {
+                const auto action_name = previewed_right_click_action_->action_name.empty() ?
+                                         get_default_mode_input_context().get_action_name(
+                                             action_ident( previewed_right_click_action_->action ) ) :
+                                         previewed_right_click_action_->action_name;
+                const auto target_name = previewed_right_click_action_->target_name.empty() ?
+                                         m.name( mouse_target ) : previewed_right_click_action_->target_name;
+                if( !query_yn( _( "Walk to %s and %s?" ), target_name, action_name ) ) {
                     destination_preview.clear();
                     previewed_right_click_action_.reset();
                     invalidate_main_ui_adaptor();
@@ -2942,15 +2946,49 @@ bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mo
     u.clear_destination();
     queued_right_click_action_.reset();
 
-    if( const monster *const mon = critter_at<monster>( mouse_target ); mon != nullptr && u.sees( *mon ) ) {
-        if( !u.primary_weapon().is_gun() ) {
-            add_msg( m_info, _( "You are not wielding a ranged weapon." ) );
-            return false;
+    if( const npc *const np = critter_at<npc>( mouse_target ); np != nullptr && u.sees( *np ) ) {
+        if( square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 1 ) {
+            act = ACTION_EXAMINE;
+            return true;
         }
 
-        // TODO: Add weapon range check. This requires weapon to be reloaded.
+        const auto actions = contextual_actions_for_target( mouse_target, true );
+        const auto examine_action = std::ranges::find_if( actions, []( const auto &contextual_action ) {
+            return contextual_action.action == ACTION_EXAMINE && contextual_action.walk_to;
+        } );
+        if( examine_action != actions.end() ) {
+            for( const tripoint_bub_ms &destination : m.points_in_radius( mouse_target, 1 ) ) {
+                if( !contextual_action_is_valid_from( ACTION_EXAMINE, mouse_target, destination ) ) {
+                    continue;
+                }
 
-        act = ACTION_FIRE;
+                const auto route = m.route( u.bub_pos(), destination, u.get_legacy_pathfinding_settings(),
+                                            u.get_legacy_path_avoid() );
+                if( route.empty() ) {
+                    continue;
+                }
+
+                if( !check_safe_mode_allowed() ) {
+                    return false;
+                }
+
+                destination_preview = route;
+                previewed_right_click_action_ = {
+                    .action = ACTION_EXAMINE,
+                    .target = m.bub_to_abs( mouse_target ),
+                    .target_name = np->disp_name(),
+                    .action_name = _( "interact" ),
+                };
+                invalidate_main_ui_adaptor();
+                return false;
+            }
+        }
+
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
+    } else if( const monster *const mon = critter_at<monster>( mouse_target ); mon != nullptr &&
+               u.sees( *mon ) ) {
+        act = u.primary_weapon().is_gun() ? ACTION_FIRE : ACTION_AUTOATTACK;
     } else {
         const auto actions = contextual_actions_at( mouse_target, true, u.bub_pos() );
         if( !actions.empty() ) {
@@ -2981,6 +3019,8 @@ bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mo
                 previewed_right_click_action_ = {
                     .action = contextual_action.action,
                     .target = m.bub_to_abs( mouse_target ),
+                    .target_name = {},
+                    .action_name = {},
                 };
                 invalidate_main_ui_adaptor();
                 return false;
@@ -7685,6 +7725,27 @@ auto game::describe_tile( const tripoint_bub_ms &target ) -> void
     } else {
         describe_map_part( m.ter( target ).obj() );
     }
+}
+
+auto game::mouse_attack( const tripoint_bub_ms &target ) -> void
+{
+    Creature *const target_critter = critter_at<Creature>( target, true );
+    if( target_critter == nullptr || target_critter == &u || !u.sees( *target_critter ) ) {
+        add_msg( _( "Nothing relevant here." ) );
+        return;
+    }
+
+    if( square_dist( u.bub_pos().xy(), target.xy() ) <= 1 ) {
+        u.melee_attack( *target_critter, true );
+        return;
+    }
+
+    if( rl_dist( u.bub_pos(), target ) <= u.primary_weapon().reach_range( u ) ) {
+        u.reach_attack( target );
+        return;
+    }
+
+    add_msg( m_info, _( "That is too far away to attack." ) );
 }
 
 void game::pickup()

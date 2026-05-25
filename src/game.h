@@ -663,6 +663,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_local_stairs_leading_to( map &mp, const int z_after );
         void suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
         auto describe_tile( const tripoint_bub_ms &target ) -> void;
+        auto mouse_attack( const tripoint_bub_ms &target ) -> void;
 
         void peek();
         void peek( const tripoint_bub_ms &p );
@@ -1239,6 +1240,8 @@ class game : public submap_load_listener
         struct queued_right_click_action {
             action_id action = ACTION_NULL;
             tripoint_abs_ms target = tripoint_abs_ms::zero();
+            std::string target_name;
+            std::string action_name;
         };
 
         std::optional<queued_right_click_action> previewed_right_click_action_;
