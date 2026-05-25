@@ -157,14 +157,26 @@ auto throw_grabbed_creature( avatar &you ) -> bool
         return false;
     }
 
-    const auto target_size = static_cast<int>( target->get_size() );
-    const auto avatar_size = static_cast<int>( you.get_size() );
+    const auto target_size = target->get_size();
+    const auto avatar_size = you.get_size();
+    const auto target_size_value = static_cast<int>( target_size );
+    const auto avatar_size_value = static_cast<int>( avatar_size );
+    if( !creature_throw::can_throw_grabbed_creature_size( avatar_size, you.get_str(), target_size ) ) {
+        if( target_size_value > avatar_size_value ) {
+            add_msg( m_info, _( "You can't throw %s; %s is too large." ), target->disp_name(),
+                     target->disp_name() );
+        } else {
+            add_msg( m_info, _( "You can't muster the strength to throw %s." ), target->disp_name() );
+        }
+        return true;
+    }
+
     const auto stamina_factor = std::max( 0.25f,
                                          static_cast<float>( you.get_stamina() ) / you.get_stamina_max() );
     auto throwforce = ( you.get_str() * ( 1.1f + stamina_factor ) +
                         you.get_skill_level( skill_unarmed ) * 2 +
                         you.get_skill_level( skill_throw ) / 4.0f +
-                        avatar_size - target_size ) * 2.0f;
+                        avatar_size_value - target_size_value ) * 2.0f;
 
     if( get_map().has_flag( TFLAG_DEEP_WATER, target->pos() ) ) {
         throwforce *= 0.25f;

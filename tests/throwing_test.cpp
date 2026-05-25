@@ -54,6 +54,20 @@ TEST_CASE( "grabbed creature throw velocity follows selected distance", "[throwi
     CHECK( creature_throw::grabbed_throw_velocity( 15 ) == 150.0f );
 }
 
+TEST_CASE( "grabbed creature throw eligibility follows size class", "[throwing], [balance]" )
+{
+    const auto player_size = creature_size::medium;
+
+    CHECK( creature_throw::can_throw_grabbed_creature_size( player_size, 8,
+            creature_size::small ) );
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( player_size, 8,
+                 creature_size::medium ) );
+    CHECK( creature_throw::can_throw_grabbed_creature_size( player_size,
+            creature_throw::equal_size_throw_min_str, creature_size::medium ) );
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( player_size, 20,
+                 creature_size::huge ) );
+}
+
 TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]" )
 {
     clear_all_state();
