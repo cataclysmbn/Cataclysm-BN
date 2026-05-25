@@ -2733,7 +2733,8 @@ std::vector<Creature *> targetable_creatures( const Character &c, const int rang
             return false;
         }
 
-        if( outside_visible_z_range( shooter_pos, critter_pos ) ) {
+        if( outside_visible_z_range( shooter_pos, critter_pos ) )
+        {
             return false;
         }
 
