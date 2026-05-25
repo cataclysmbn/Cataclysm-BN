@@ -3298,8 +3298,13 @@ void activity_handlers::repair_item_do_turn( player_activity *act, player *p )
     }
 }
 
-void activity_handlers::butcher_do_turn( player_activity * /*act*/, player *p )
+void activity_handlers::butcher_do_turn( player_activity *act, player *p )
 {
+    if( !act->targets.empty() && act->targets.back().is_destroyed() ) {
+        p->add_msg_if_player( m_bad, _( "The corpse completely rotted away!" ) );
+        act->set_to_null();
+        return;
+    }
     p->mod_stamina( -20 );
 }
 
