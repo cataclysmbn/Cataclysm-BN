@@ -362,7 +362,7 @@
       {
         "x": 0,
         "y": 0,
-        "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "black_box", "roof", "airship_balloon" ]
+        "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "roof", "airship_balloon" ]
       },
       { "x": 0, "y": 1, "parts": [ "xlframe_cross", "aisle_vertical", "roof", "airship_balloon" ] },
       { "x": 0, "y": 2, "parts": [ "xlframe_vertical", "windshield_vertical_right", "airship_balloon" ] },
