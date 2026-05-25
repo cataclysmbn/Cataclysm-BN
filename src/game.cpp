@@ -5085,6 +5085,29 @@ void game::monmove()
     const int effective_budget = std::max( action_budget, tier0_count );
     TracyPlot( "LOD Effective Budget", static_cast<int64_t>( effective_budget ) );
 
+    // Build phase-local actor snapshots once for planning setup. Holding shared
+    // references keeps the pointer snapshots valid if the live lists change later
+    // in the turn, while avoiding repeated weak_ptr_fast lock/copy passes.
+    auto monster_refs = critter_tracker->get_monsters_list();
+    auto mon_snap = std::vector<monster *>{};
+    mon_snap.reserve( monster_refs.size() );
+    for( const shared_ptr_fast<monster> &mon_ptr : monster_refs ) {
+        if( mon_ptr && !mon_ptr->is_dead() ) {
+            mon_snap.push_back( mon_ptr.get() );
+        }
+    }
+
+    auto npc_refs = std::vector<shared_ptr_fast<npc>>{};
+    npc_refs.reserve( active_npc.size() );
+    std::ranges::copy( active_npc, std::back_inserter( npc_refs ) );
+    auto npc_snap = std::vector<npc *>{};
+    npc_snap.reserve( npc_refs.size() );
+    for( const shared_ptr_fast<npc> &guy : npc_refs ) {
+        if( guy && !guy->is_dead() ) {
+            npc_snap.push_back( guy.get() );
+        }
+    }
+
     // OPP-7: Unified disposition map: a single hash lookup in the execution
     // loop suffices:
     //   value >= 0  → index into precomputed[] (monster has a parallel plan)
@@ -5092,15 +5115,16 @@ void game::monmove()
     std::unordered_map<monster *, int> plan_index;
 
     std::vector<monster *> plannable;
-    for( monster &critter : all_monsters() ) {
-        if( !critter.is_dead() &&
-            !critter.has_effect( effect_ai_controlled ) &&
-            critter.moves > 0 &&
-            !critter.has_effect( effect_ridden ) &&
-            critter.lod_tier < 2 &&
-            critter.is_simulated() ) {
+    plannable.reserve( mon_snap.size() );
+    for( monster *critter : mon_snap ) {
+        if( !critter->is_dead() &&
+            !critter->has_effect( effect_ai_controlled ) &&
+            critter->moves > 0 &&
+            !critter->has_effect( effect_ridden ) &&
+            critter->lod_tier < 2 &&
+            critter->is_simulated() ) {
             // Tier-2 monsters skip full planning; they use the macro step.
-            plannable.push_back( &critter );
+            plannable.push_back( critter );
         }
     }
 
@@ -5116,9 +5140,9 @@ void game::monmove()
     for( monster *mon : plannable ) {
         mon->prewarm_sight( u );
         const int mon_max_sight = std::max( mon->type->vision_day, mon->type->vision_night );
-        for( npc &n : all_npcs() ) {
-            if( rl_dist( mon->bub_pos(), n.bub_pos() ) <= mon_max_sight ) {
-                mon->prewarm_sight( n );
+        for( npc *n : npc_snap ) {
+            if( rl_dist( mon->bub_pos(), n->bub_pos() ) <= mon_max_sight ) {
+                mon->prewarm_sight( *n );
             }
         }
     }
@@ -5142,21 +5166,12 @@ void game::monmove()
         }
     }
 
-    // Build creature snapshots for thread-safe compute_plan() access.
+    // Use the actor snapshots for thread-safe compute_plan() access.
     // compute_plan() calls g->all_monsters() / g->all_npcs() to find targets.
     // Those functions iterate weak_ptr_fast<T> objects whose refcounting uses
     // _S_single (non-atomic).  Concurrent lock() calls from worker threads are
-    // a data race.  Building plain pointer snapshots here, serially, avoids
+    // a data race.  Building plain pointer snapshots serially avoids
     // touching any weak_ptr_fast from worker threads.
-    std::vector<monster *> mon_snap;
-    mon_snap.reserve( plannable.size() * 2 );
-    for( monster &mon : all_monsters() ) {
-        mon_snap.push_back( &mon );
-    }
-    std::vector<npc *> npc_snap;
-    for( npc &n : all_npcs() ) {
-        npc_snap.push_back( &n );
-    }
     // Build faction snapshot: group monster pointers by faction so compute_plan()
     // can do group-morale/swarm checks on worker threads without calling
     // weak_ptr_fast::lock() (non-atomic _S_single refcount — data race on Linux).
@@ -5208,7 +5223,8 @@ void game::monmove()
     // budget.  Effect durations, hunger, and field damage tick normally for
     // all monsters.  The budget/tier system gates only the move loop below.
     // -----------------------------------------------------------------------
-    for( monster &critter : all_monsters() ) {
+    for( monster *critter_ptr : mon_snap ) {
+        monster &critter = *critter_ptr;
         // Skip monsters in lazy-border or otherwise non-simulated submaps — their
         // submap has no active caches (transparency, lightmap, fields) and
         // processing them would read stale or missing data.  They will be
@@ -5913,6 +5929,13 @@ void game::use_computer( const tripoint_bub_ms &p )
 template<typename T>
 T *game::critter_at( const tripoint_bub_ms &p, bool allow_hallucination )
 {
+    using lookup_type = std::remove_cv_t<T>;
+    constexpr auto wants_monster = std::is_base_of_v<lookup_type, monster>;
+    constexpr auto wants_player = std::is_base_of_v<lookup_type, avatar>;
+    constexpr auto wants_npc = std::is_base_of_v<lookup_type, npc>;
+    constexpr auto return_ridden_monster = std::is_same_v<lookup_type, monster> ||
+                                           std::is_same_v<lookup_type, Creature>;
+
     if( const shared_ptr_fast<monster> mon_ptr = critter_tracker->find( p ) ) {
         if( !allow_hallucination && mon_ptr->is_hallucination() ) {
             return nullptr;
@@ -5924,20 +5947,24 @@ T *game::critter_at( const tripoint_bub_ms &p, bool allow_hallucination )
         // otherwise, keep looking for the rider.
         // critter_at<creature> or critter_at() with no template will still default to returning monster first,
         // which is ok for the occasions where that happens.
-        if( !mon_ptr->has_effect( effect_ridden ) || ( std::is_same<T, monster>::value ||
-                std::is_same<T, Creature>::value || std::is_same<T, const monster>::value ||
-                std::is_same<T, const Creature>::value ) ) {
-            return dynamic_cast<T *>( mon_ptr.get() );
+        if( !mon_ptr->has_effect( effect_ridden ) || return_ridden_monster ) {
+            if constexpr( wants_monster ) {
+                return dynamic_cast<T *>( mon_ptr.get() );
+            } else {
+                return nullptr;
+            }
         }
     }
-    if( !std::is_same<T, npc>::value && !std::is_same<T, const npc>::value ) {
+    if constexpr( wants_player ) {
         if( p == u.bub_pos() ) {
             return dynamic_cast<T *>( &u );
         }
     }
-    for( auto &cur_npc : active_npc ) {
-        if( cur_npc->bub_pos() == p && !cur_npc->is_dead() ) {
-            return dynamic_cast<T *>( cur_npc.get() );
+    if constexpr( wants_npc ) {
+        for( auto &cur_npc : active_npc ) {
+            if( cur_npc->bub_pos() == p && !cur_npc->is_dead() ) {
+                return dynamic_cast<T *>( cur_npc.get() );
+            }
         }
     }
     return nullptr;

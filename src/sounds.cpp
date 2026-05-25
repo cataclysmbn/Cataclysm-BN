@@ -337,6 +337,14 @@ void sounds::process_sounds()
 
     std::vector<centroid> sound_clusters = cluster_sounds( recent_sounds );
     const int weather_vol = get_weather().weather_id->sound_attn;
+    auto monster_listeners = std::vector<monster *>{};
+    if( !sound_clusters.empty() ) {
+        auto monsters = g->all_monsters();
+        monster_listeners.reserve( monsters.items ? monsters.items->size() : 0 );
+        for( monster &critter : monsters ) {
+            monster_listeners.push_back( &critter );
+        }
+    }
     for( const auto &this_centroid : sound_clusters ) {
         // Since monsters don't go deaf ATM we can just use the weather modified volume
         // If they later get physical effects from loud noises we'll have to change this
@@ -355,12 +363,12 @@ void sounds::process_sounds()
             get_overmapbuffer( get_map().get_bound_dimension() ).signal_hordes( target, sig_power );
         }
         // Alert all monsters (that can hear) to the sound.
-        for( monster &critter : g->all_monsters() ) {
+        for( monster *critter : monster_listeners ) {
             // TODO: Generalize this to Creature::hear_sound
-            const int dist = sound_distance( source, critter.bub_pos() );
+            const int dist = sound_distance( source, critter->bub_pos() );
             if( vol * 2 > dist ) {
                 // Exclude monsters that certainly won't hear the sound
-                critter.hear_sound( source, vol, dist );
+                critter->hear_sound( source, vol, dist );
             }
         }
     }
