@@ -39,7 +39,7 @@
     "type": "COMESTIBLE",
     "comestible_type": "MED",
     "name": "Nerve dampening tablet",
-    "description": "Without a central nervous system, the only thing fungus can feel is rage.  Now you can do the same, though there might be unpleasant effects after it wears off…",
+    "description": "A chemical that surpresses pain response, made from alien fungal tissues.  Without a central nervous system, the only thing fungus can feel is rage.  Seems to be safe from spore infection, though there still might be unpleasant effects after it wears off…",
     "weight": "15 g",
     "volume": "250 ml",
     "price": "400 USD",
@@ -49,7 +49,7 @@
     "color": "red",
     "use_action": {
       "type": "consume_drug",
-      "activation_message": "You pop a rage tablet.",
+      "activation_message": "You pop a nerve dampening tablet.",
       "effects": [ { "id": "fungal_rage", "duration": "20 m" } ]
     }
   },
