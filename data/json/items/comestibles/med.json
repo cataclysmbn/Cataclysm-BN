@@ -35,6 +35,25 @@
     }
   },
   {
+    "id": "fungal_painkiller",
+    "type": "COMESTIBLE",
+    "comestible_type": "MED",
+    "name": "Nerve dampening tablet",
+    "description": "Without a central nervous system, the only thing fungus can feel is rage. Now you can do the same.",
+    "weight": "15 g",
+    "volume": "250 ml",
+    "price": "400 USD",
+    "price_postapoc": "100 USD",
+    "stack_size": 3,
+    "symbol": "!",
+    "color": "red",
+    "use_action": {
+      "type": "consume_drug",
+      "activation_message": "You pop a rage tablet.",
+      "effects": [ { "id": "fungal_rage", "duration": "20 m" } ]
+    }
+  },
+  {
     "id": "adderall",
     "type": "COMESTIBLE",
     "comestible_type": "MED",
