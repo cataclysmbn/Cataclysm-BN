@@ -156,9 +156,7 @@
     "start": "create_ice_lab_console",
     "origins": [ "ORIGIN_SECONDARY" ],
     "followup": "MISSION_SCIENCE_REP_4",
-    "end": {
-      "effect": [ { "u_buy_item": "thermal_outfit" }, { "u_buy_item": "thermal_outfit" } ]
-    },
+    "end": { "effect": [ { "u_buy_item": "thermal_outfit" }, { "u_buy_item": "thermal_outfit" } ] },
     "dialogue": {
       "describe": "We need help…",
       "offer": "So there looks to be months, maybe years of experiments, and that data set must be huge.  Database servers massive enough to house it would overheat running on emergency power.  But I did find communications from a lab that had some kind of freezing portal open during the Cataclysm, sending everything to subzero temperatures.  I bet the archives inside that lab are still working.",
