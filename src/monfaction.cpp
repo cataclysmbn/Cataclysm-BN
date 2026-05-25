@@ -24,8 +24,7 @@ void add_to_attitude_map( const std::set< std::string > &keys, mfaction_att_map 
 
 void apply_base_faction( const monfaction &base, monfaction &faction );
 
-static auto resolve_attitude_map( const monfaction &source, const mfaction_id &other )
-- > mf_attitude;
+static auto resolve_attitude_map( const monfaction &source, const mfaction_id &other ) -> mf_attitude;
 
 /** @relates int_id */
 template<>
@@ -134,8 +133,7 @@ mf_attitude monfaction::attitude( const mfaction_id &other ) const
     return resolve_attitude_map( *this, other );
 }
 
-static auto resolve_attitude_map( const monfaction &source, const mfaction_id &other )
-- > mf_attitude
+static auto resolve_attitude_map( const monfaction &source, const mfaction_id &other ) -> mf_attitude
 {
     const auto found = source.attitude_map.find( other );
     if( found != source.attitude_map.end() ) {
