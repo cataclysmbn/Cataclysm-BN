@@ -305,10 +305,10 @@ void monster::wander_to( const tripoint_bub_ms &p, int f )
     wandf = f;
 }
 
-// P-8: per-turn symmetric sight-result cache wrapper.
+// P-8: per-turn Creature::sees() result cache wrapper.
 // Checks g->turn_sight_cache_ before invoking the full Creature::sees() chain.
-// Key is the sorted (lo-address, hi-address) pointer pair so A→B and B→A share
-// one cache entry (exploiting the symmetry of LOS ray traces).
+// Key is directional because Creature::sees() includes observer and target
+// perception rules.  The symmetric LOS part is handled by map::sees().
 //
 // LOGIC-2 / P-5 note: x_in_y aggro-chance rolls inside compute_plan() run on
 // worker-thread RNG (tl_worker_engine).  This is data-race-free (P-5), but it
@@ -318,9 +318,7 @@ void monster::wander_to( const tripoint_bub_ms &p, int f )
 // into apply_plan() so they execute on the main thread with the shared engine.
 static bool turn_cached_sees( const Creature &seer, const Creature &target )
 {
-    const Creature *lo = &seer < &target ? &seer : &target;
-    const Creature *hi = &seer < &target ? &target : &seer;
-    const auto key = std::make_pair( lo, hi );
+    const auto key = std::make_pair( &seer, &target );
     {
         std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
         const auto it = g->turn_sight_cache_.find( key );
@@ -358,8 +356,8 @@ float monster::rate_target( Creature &c, float best, bool smart, int precalc_dis
         return FLT_MAX;
     }
 
-    // P-8: use the per-turn symmetric cache so symmetric pairs (A checks B,
-    // B checks A) pay for at most one ray trace per turn instead of two.
+    // P-8: use the per-turn cache for repeated Creature::sees() checks in this
+    // direction.  Symmetric LOS reuse happens inside map::sees().
     if( !turn_cached_sees( *this, c ) ) {
         return FLT_MAX;
     }

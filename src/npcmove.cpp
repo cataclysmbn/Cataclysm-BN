@@ -371,14 +371,11 @@ static bool too_close( const tripoint_bub_ms &critter_pos, const tripoint_bub_ms
     return rl_dist( critter_pos, ally_pos ) <= def_radius;
 }
 
-// Per-turn symmetric sight cache wrapper — mirrors turn_cached_sees() in monmove.cpp.
-// Exploits LOS symmetry: if a monster already checked visibility against this NPC during
-// compute_plan(), the result is already cached and this call is a cheap shared_lock read.
+// Per-turn Creature::sees() cache wrapper — mirrors turn_cached_sees() in monmove.cpp.
+// Key is directional; map::sees() handles symmetric LOS reuse below this layer.
 static auto npc_turn_cached_sees( const Creature &seer, const Creature &target ) -> bool
 {
-    const Creature *lo = &seer < &target ? &seer : &target;
-    const Creature *hi = &seer < &target ? &target : &seer;
-    const auto key = std::make_pair( lo, hi );
+    const auto key = std::make_pair( &seer, &target );
     {
         std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
         const auto it = g->turn_sight_cache_.find( key );

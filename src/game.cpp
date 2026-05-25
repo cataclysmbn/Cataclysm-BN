@@ -5171,17 +5171,20 @@ void game::monmove()
     // Without this, hostile-faction pairs call turn_cached_sees() during the parallel
     // phase on a cache miss, taking a unique_lock and serialising all workers that
     // happen to need a faction-hostile LOS result at the same time.
-    // turn_cached_sees is symmetric — one prewarm_sight call covers both directions.
-    for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-        monster *mon_a = plannable[i];
-        const int max_range_a = std::max( mon_a->type->vision_day, mon_a->type->vision_night );
-        for( int j = i + 1; j < static_cast<int>( plannable.size() ); ++j ) {
-            monster *mon_b = plannable[j];
-            if( rl_dist( mon_a->bub_pos(), mon_b->bub_pos() ) > max_range_a ) {
-                continue;
-            }
-            if( mon_a->faction.obj().attitude( mon_b->faction ) == MFA_HATE ) {
-                mon_a->prewarm_sight( *mon_b );
+    // turn_sight_cache_ is directional; map::sees() supplies symmetric LOS reuse.
+    {
+        ZoneScopedN( "monmove_faction_sight_prewarm" );
+        for( const auto i : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+            monster *mon_a = plannable[i];
+            const auto max_range_a = std::max( mon_a->type->vision_day, mon_a->type->vision_night );
+            for( const auto j : std::views::iota( i + 1, plannable.size() ) ) {
+                monster *mon_b = plannable[j];
+                if( rl_dist( mon_a->bub_pos(), mon_b->bub_pos() ) > max_range_a ) {
+                    continue;
+                }
+                if( mon_a->faction.obj().attitude( mon_b->faction ) == MFA_HATE ) {
+                    mon_a->prewarm_sight( *mon_b );
+                }
             }
         }
     }
@@ -5196,20 +5199,26 @@ void game::monmove()
     // can do group-morale/swarm checks on worker threads without calling
     // weak_ptr_fast::lock() (non-atomic _S_single refcount — data race on Linux).
     monster::faction_snap_t faction_snap;
-    std::ranges::for_each( mon_snap, [&]( monster * mon_ptr ) {
-        faction_snap[mon_ptr->faction].push_back( mon_ptr );
-    } );
+    {
+        ZoneScopedN( "monmove_build_faction_snap" );
+        std::ranges::for_each( mon_snap, [&]( monster * mon_ptr ) {
+            faction_snap[mon_ptr->faction].push_back( mon_ptr );
+        } );
+    }
     // Pre-compute per-faction hostile-faction lists once per tick.  compute_plan()
     // iterates only the hostile entries rather than all factions on every call.
     monster::hostile_fac_map_t hostile_fac_map;
-    for( const auto &[fac_id, _m] : faction_snap ) {
-        for( const auto &[other_id, _o] : faction_snap ) {
-            if( fac_id == other_id ) {
-                continue;
-            }
-            const auto att = fac_id.obj().attitude( other_id );
-            if( att != MFA_NEUTRAL && att != MFA_FRIENDLY ) {
-                hostile_fac_map[fac_id].push_back( other_id );
+    {
+        ZoneScopedN( "monmove_build_hostile_fac_map" );
+        for( const auto &[fac_id, _m] : faction_snap ) {
+            for( const auto &[other_id, _o] : faction_snap ) {
+                if( fac_id == other_id ) {
+                    continue;
+                }
+                const auto att = fac_id.obj().attitude( other_id );
+                if( att != MFA_NEUTRAL && att != MFA_FRIENDLY ) {
+                    hostile_fac_map[fac_id].push_back( other_id );
+                }
             }
         }
     }
