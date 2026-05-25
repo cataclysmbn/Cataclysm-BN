@@ -494,6 +494,12 @@ void npc::assess_danger()
     // NPC friends are cached across turns; only rebuild when faction membership or active NPC
     // list changes (tracked via g_npc_friends_dirty_version).
     std::vector<weak_ptr_fast<Creature>> hostile_guys;
+    auto friend_positions = std::vector<tripoint_bub_ms>{};
+    const auto remember_friend_position = [&]( const weak_ptr_fast<Creature> &guy ) {
+        if( auto ally = guy.lock() ) {
+            friend_positions.push_back( ally->bub_pos() );
+        }
+    };
     {
         const uint32_t current_version = g_npc_friends_dirty_version.load( std::memory_order_relaxed );
         const bool friends_dirty = ( ai_cache.npc_friends_version != current_version );
@@ -516,13 +522,18 @@ void npc::assess_danger()
         if( friends_dirty ) {
             ai_cache.npc_friends_version = current_version;
         }
-        std::ranges::copy( ai_cache.cached_npc_friends, std::back_inserter( ai_cache.friends ) );
+        for( const weak_ptr_fast<Creature> &guy : ai_cache.cached_npc_friends ) {
+            ai_cache.friends.emplace_back( guy );
+            remember_friend_position( guy );
+        }
     }
     if( sees( player_character.bub_pos() ) ) {
         if( is_enemy() ) {
             hostile_guys.emplace_back( g->shared_from( player_character ) );
         } else if( is_friendly( player_character ) ) {
-            ai_cache.friends.emplace_back( g->shared_from( player_character ) );
+            auto player_ref = g->shared_from( player_character );
+            friend_positions.push_back( player_character.bub_pos() );
+            ai_cache.friends.emplace_back( player_ref );
         }
     }
 
@@ -550,6 +561,7 @@ void npc::assess_danger()
             }
             if( att == Attitude::A_FRIENDLY ) {
                 ai_cache.friends.emplace_back( g->shared_from( critter ) );
+                friend_positions.push_back( critter.bub_pos() );
                 continue;
             }
             // Skip non-hostile monsters entirely — includes MATT_IGNORE, MATT_FLEE, and
@@ -584,18 +596,11 @@ void npc::assess_danger()
 
             // don't ignore monsters that are too close or too close to an ally if we can move
             bool is_too_close = dist <= def_radius;
-            for( const weak_ptr_fast<Creature> &guy : ai_cache.friends ) {
+            for( const tripoint_bub_ms &ally_pos : friend_positions ) {
                 if( is_too_close || self_defense_only ) {
                     break;
                 }
-                // HACK: Bit of a dirty hack - sometimes shared_from, returns nullptr or bad weak_ptr for
-                // friendly NPC when the NPC is riding a creature - I don't know why.
-                // so this skips the bad weak_ptrs, but this doesn't functionally change the AI Priority
-                // because the horse the NPC is riding is still in the ai_cache.friends vector,
-                // so either one would count as a friendly for this purpose.
-                if( auto ally = guy.lock() ) {
-                    is_too_close |= too_close( critter.bub_pos(), ally->bub_pos(), def_radius );
-                }
+                is_too_close |= too_close( critter.bub_pos(), ally_pos, def_radius );
             }
             // ignore distant monsters that our rules prevent us from attacking
             if( !is_too_close && is_player_ally() && !ok_by_rules( critter, dist, scaled_distance ) ) {

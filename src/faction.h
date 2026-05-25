@@ -109,6 +109,8 @@ class faction : public faction_template
         std::string food_supply_text();
         nc_color food_supply_color();
 
+        auto relationship_flags_with( const faction_id &guy_id ) const
+        -> const std::bitset<npc_factions::rel_types> *;
         bool has_relationship( const faction_id &guy_id, npc_factions::relationship flag ) const;
         void add_to_membership( const character_id &guy_id, const std::string &guy_name, bool known );
         void remove_member( const character_id &guy_id );
@@ -138,5 +140,4 @@ class faction_manager
 
         faction *get( const faction_id &id, bool complain = true );
 };
-
 

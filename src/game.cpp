@@ -4584,160 +4584,180 @@ void game::mon_info_update( )
     const time_duration sm_ignored_time = time_duration::from_turns(
             get_option<int>( "SAFEMODEIGNORETURNS" ) );
 
-    for( Creature *c : u.get_visible_creatures( g_mapsize_x ) ) {
-        monster *m = dynamic_cast<monster *>( c );
-        npc *p = dynamic_cast<npc *>( c );
-        const direction dir_to_mon = direction_from( view.xy(), point_bub_ms( c->bub_pos().x(),
-                                     c->bub_pos().y() ) );
-        const int mx = POSX + ( c->bub_pos().x() - view.x() );
-        const int my = POSY + ( c->bub_pos().y() - view.y() );
-        int index = 8;
+    const auto direction_index = []( const direction dir ) -> int {
+        switch( dir )
+        {
+            // *INDENT-OFF*
+            case direction::ABOVENORTHWEST: case direction::NORTHWEST: case direction::BELOWNORTHWEST: return 7;
+            case direction::ABOVENORTH:     case direction::NORTH:     case direction::BELOWNORTH:     return 0;
+            case direction::ABOVENORTHEAST: case direction::NORTHEAST: case direction::BELOWNORTHEAST: return 1;
+            case direction::ABOVEWEST:      case direction::WEST:      case direction::BELOWWEST:      return 6;
+            case direction::ABOVEEAST:      case direction::EAST:      case direction::BELOWEAST:      return 2;
+            case direction::ABOVESOUTHWEST: case direction::SOUTHWEST: case direction::BELOWSOUTHWEST: return 5;
+            case direction::ABOVESOUTH:     case direction::SOUTH:     case direction::BELOWSOUTH:     return 4;
+            case direction::ABOVESOUTHEAST: case direction::SOUTHEAST: case direction::BELOWSOUTHEAST: return 3;
+            case direction::ABOVECENTER:    case direction::CENTER:    case direction::BELOWCENTER:    return 8;
+            case direction::last: break;
+            // *INDENT-ON*
+        }
+        debugmsg( "invalid direction" );
+        abort();
+        return 8;
+    };
+
+    const auto compass_direction_index = []( const direction dir ) -> int {
+        switch( dir )
+        {
+            // *INDENT-OFF*
+            case direction::ABOVENORTHWEST: case direction::NORTHWEST: case direction::BELOWNORTHWEST: return 7;
+            case direction::ABOVENORTH:     case direction::NORTH:     case direction::BELOWNORTH:     return 0;
+            case direction::ABOVENORTHEAST: case direction::NORTHEAST: case direction::BELOWNORTHEAST: return 1;
+            case direction::ABOVEWEST:      case direction::WEST:      case direction::BELOWWEST:      return 6;
+            case direction::ABOVEEAST:      case direction::EAST:      case direction::BELOWEAST:      return 2;
+            case direction::ABOVESOUTHWEST: case direction::SOUTHWEST: case direction::BELOWSOUTHWEST: return 5;
+            case direction::ABOVESOUTH:     case direction::SOUTH:     case direction::BELOWSOUTH:     return 4;
+            case direction::ABOVESOUTHEAST: case direction::SOUTHEAST: case direction::BELOWSOUTHEAST: return 3;
+            default: return 8;
+            // *INDENT-ON*
+        }
+    };
+
+    const auto player_attitude_from = []( const monster_attitude matt ) -> Attitude {
+        switch( matt ) {
+            case MATT_FRIEND:
+            case MATT_FPASSIVE:
+            case MATT_ZLAVE:
+                return Attitude::A_FRIENDLY;
+            case MATT_ATTACK:
+                return Attitude::A_HOSTILE;
+            case MATT_FLEE:
+            case MATT_FOLLOW:
+            case MATT_IGNORE:
+            case MATT_NULL:
+            case MATT_UNKNOWN:
+            case NUM_MONSTER_ATTITUDES:
+                return Attitude::A_NEUTRAL;
+        }
+        return Attitude::A_NEUTRAL;
+    };
+
+    const auto visible_info = [&]( const tripoint_bub_ms & pos ) {
+        const auto dir_to_mon = direction_from( view.xy(), point_bub_ms( pos.x(), pos.y() ) );
+        const auto mx = POSX + ( pos.x() - view.x() );
+        const auto my = POSY + ( pos.y() - view.y() );
+        auto index = 8;
         if( !is_valid_in_w_terrain( point( mx, my ) ) ) {
             // for compatibility with old code, see diagram below, it explains the values for index,
             // also might need revisiting one z-levels are in.
-            switch( dir_to_mon ) {
-                case direction::ABOVENORTHWEST:
-                case direction::NORTHWEST:
-                case direction::BELOWNORTHWEST:
-                    index = 7;
-                    break;
-                case direction::ABOVENORTH:
-                case direction::NORTH:
-                case direction::BELOWNORTH:
-                    index = 0;
-                    break;
-                case direction::ABOVENORTHEAST:
-                case direction::NORTHEAST:
-                case direction::BELOWNORTHEAST:
-                    index = 1;
-                    break;
-                case direction::ABOVEWEST:
-                case direction::WEST:
-                case direction::BELOWWEST:
-                    index = 6;
-                    break;
-                case direction::ABOVECENTER:
-                case direction::CENTER:
-                case direction::BELOWCENTER:
-                    index = 8;
-                    break;
-                case direction::ABOVEEAST:
-                case direction::EAST:
-                case direction::BELOWEAST:
-                    index = 2;
-                    break;
-                case direction::ABOVESOUTHWEST:
-                case direction::SOUTHWEST:
-                case direction::BELOWSOUTHWEST:
-                    index = 5;
-                    break;
-                case direction::ABOVESOUTH:
-                case direction::SOUTH:
-                case direction::BELOWSOUTH:
-                    index = 4;
-                    break;
-                case direction::ABOVESOUTHEAST:
-                case direction::SOUTHEAST:
-                case direction::BELOWSOUTHEAST:
-                    index = 3;
-                    break;
-                case direction::last:
-                    debugmsg( "invalid direction" );
-                    abort();
-            }
+            index = direction_index( dir_to_mon );
         }
+        const auto compass_dir = direction_from( u.bub_pos().xy(), point_bub_ms( pos.x(), pos.y() ) );
+        return std::pair{ index, compass_direction_index( compass_dir ) };
+    };
+
+    const auto safemode_empty = get_safemode().empty();
+    const auto process_monster = [&]( const shared_ptr_fast<monster> &mon_ptr ) {
+        if( !mon_ptr || mon_ptr->is_dead() ) {
+            return;
+        }
+        monster &critter = *mon_ptr;
+        const auto mon_dist = rl_dist( u.bub_pos(), critter.bub_pos() );
+        if( u.bub_pos() == critter.bub_pos() || mon_dist > g_mapsize_x || !u.sees( critter ) ) {
+            return;
+        }
+        const auto [index, compass_index] = visible_info( critter.bub_pos() );
+        mon_visible.visible_count_by_dir[compass_index]++;
+
+        const auto matt = critter.attitude( &u );
+        const auto player_attitude = player_attitude_from( matt );
 
         // Accumulate hostile counts for danger music and combat bubble.
-        if( u.attitude_to( *c ) == Attitude::A_HOSTILE ) {
+        if( player_attitude == Attitude::A_HOSTILE ) {
             mon_visible.nearby_hostile_count++;
-            if( rl_dist( u.bub_pos(), c->bub_pos() ) <= combat_bubble_range ) {
+            if( mon_dist <= combat_bubble_range ) {
                 mon_visible.combat_hostile_count++;
             }
         }
-        // Per-direction creature count for the compass panel, computed player-relative
-        // (not view-offset-relative) so the compass stays accurate in look-mode.
-        const int compass_index = [&]() -> int {
-            const direction compass_dir = direction_from( u.bub_pos().xy(),
-                    point_bub_ms( c->bub_pos().x(), c->bub_pos().y() ) );
-            switch( compass_dir )
-            {
-                // *INDENT-OFF*
-                case direction::ABOVENORTHWEST: case direction::NORTHWEST: case direction::BELOWNORTHWEST: return 7;
-                case direction::ABOVENORTH:     case direction::NORTH:     case direction::BELOWNORTH:     return 0;
-                case direction::ABOVENORTHEAST: case direction::NORTHEAST: case direction::BELOWNORTHEAST: return 1;
-                case direction::ABOVEWEST:      case direction::WEST:      case direction::BELOWWEST:      return 6;
-                case direction::ABOVEEAST:      case direction::EAST:      case direction::BELOWEAST:      return 2;
-                case direction::ABOVESOUTHWEST: case direction::SOUTHWEST: case direction::BELOWSOUTHWEST: return 5;
-                case direction::ABOVESOUTH:     case direction::SOUTH:     case direction::BELOWSOUTH:     return 4;
-                case direction::ABOVESOUTHEAST: case direction::SOUTHEAST: case direction::BELOWSOUTHEAST: return 3;
-                default: return 8;
-                // *INDENT-ON*
+
+        //Safemode monster check
+        const auto safemode_state = get_safemode().check_monster( critter.name(), player_attitude, mon_dist );
+
+        if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
+                ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) ) ) {
+            if( index < 8 && critter.sees( g->u ) ) {
+                dangerous[index] = true;
             }
-        }();
+
+            if( !safemode_empty || mon_dist <= iProxyDist ) {
+                auto passmon = false;
+                if( critter.ignoring > 0 ) {
+                    if( safe_mode != SAFE_MODE_ON ) {
+                        critter.ignoring = 0;
+                    } else if( ( sm_ignored_time == 0_seconds || ( critter.lastseen_turn &&
+                                 *critter.lastseen_turn > calendar::turn - sm_ignored_time ) ) &&
+                               ( mon_dist > critter.ignoring / 2 || mon_dist < 6 ) ) {
+                        passmon = true;
+                    }
+                    critter.lastseen_turn = calendar::turn;
+                }
+
+                if( !passmon ) {
+                    newseen++;
+                    new_seen_mon.push_back( mon_ptr );
+                }
+            }
+        }
+
+        auto &vec = unique_mons[index];
+        const auto mon_it = std::find_if( vec.begin(), vec.end(),
+        [&]( const std::pair<const mtype *, int> &elem ) {
+            return elem.first == critter.type;
+        } );
+        if( mon_it == vec.end() ) {
+            vec.emplace_back( critter.type, 1 );
+        } else {
+            mon_it->second++;
+        }
+    };
+
+    const auto process_npc = [&]( const shared_ptr_fast<npc> &npc_ptr ) {
+        if( !npc_ptr || npc_ptr->is_dead() ) {
+            return;
+        }
+        npc &guy = *npc_ptr;
+        const auto npc_dist = rl_dist( u.bub_pos(), guy.bub_pos() );
+        if( u.bub_pos() == guy.bub_pos() || npc_dist > g_mapsize_x || !u.sees( guy ) ) {
+            return;
+        }
+        const auto [index, compass_index] = visible_info( guy.bub_pos() );
         mon_visible.visible_count_by_dir[compass_index]++;
 
-        rule_state safemode_state = RULE_NONE;
-        const bool safemode_empty = get_safemode().empty();
-
-        if( m != nullptr ) {
-            //Safemode monster check
-            monster &critter = *m;
-
-            const monster_attitude matt = critter.attitude( &u );
-            const int mon_dist = rl_dist( u.bub_pos(), critter.bub_pos() );
-            safemode_state = get_safemode().check_monster( critter.name(), critter.attitude_to( u ), mon_dist );
-
-            if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
-                    ( MATT_ATTACK == matt || MATT_FOLLOW == matt ) ) ) {
-                if( index < 8 && critter.sees( g->u ) ) {
-                    dangerous[index] = true;
-                }
-
-                if( !safemode_empty || mon_dist <= iProxyDist ) {
-                    bool passmon = false;
-                    if( critter.ignoring > 0 ) {
-                        if( safe_mode != SAFE_MODE_ON ) {
-                            critter.ignoring = 0;
-                        } else if( ( sm_ignored_time == 0_seconds || ( critter.lastseen_turn &&
-                                     *critter.lastseen_turn > calendar::turn - sm_ignored_time ) ) &&
-                                   ( mon_dist > critter.ignoring / 2 || mon_dist < 6 ) ) {
-                            passmon = true;
-                        }
-                        critter.lastseen_turn = calendar::turn;
-                    }
-
-                    if( !passmon ) {
-                        newseen++;
-                        new_seen_mon.push_back( shared_from( critter ) );
-                    }
-                }
+        // Accumulate hostile counts for danger music and combat bubble.
+        if( u.attitude_to( guy ) == Attitude::A_HOSTILE ) {
+            mon_visible.nearby_hostile_count++;
+            if( npc_dist <= combat_bubble_range ) {
+                mon_visible.combat_hostile_count++;
             }
-
-            std::vector<std::pair<const mtype *, int>> &vec = unique_mons[index];
-            const auto mon_it = std::find_if( vec.begin(), vec.end(),
-            [&]( const std::pair<const mtype *, int> &elem ) {
-                return elem.first == critter.type;
-            } );
-            if( mon_it == vec.end() ) {
-                vec.emplace_back( critter.type, 1 );
-            } else {
-                mon_it->second++;
-            }
-        } else if( p != nullptr ) {
-            //Safe mode NPC check
-
-            const int npc_dist = rl_dist( u.bub_pos(), p->bub_pos() );
-            safemode_state = get_safemode().check_monster( get_safemode().npc_type_name(), p->attitude_to( u ),
-                             npc_dist );
-
-            if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
-                    p->get_attitude() == NPCATT_KILL ) ) {
-                if( !safemode_empty || npc_dist <= iProxyDist ) {
-                    newseen++;
-                }
-            }
-            unique_types[index].push_back( p );
         }
+
+        //Safe mode NPC check
+        const auto safemode_state = get_safemode().check_monster( get_safemode().npc_type_name(),
+                                    guy.attitude_to( u ), npc_dist );
+
+        if( ( !safemode_empty && safemode_state == RULE_BLACKLISTED ) || ( safemode_empty &&
+                guy.get_attitude() == NPCATT_KILL ) ) {
+            if( !safemode_empty || npc_dist <= iProxyDist ) {
+                newseen++;
+            }
+        }
+        unique_types[index].push_back( &guy );
+    };
+
+    for( const shared_ptr_fast<monster> &critter : critter_tracker->get_monsters_list() ) {
+        process_monster( critter );
+    }
+    for( const shared_ptr_fast<npc> &guy : active_npc ) {
+        process_npc( guy );
     }
 
     if( newseen > mostseen ) {
