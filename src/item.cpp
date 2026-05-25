@@ -871,8 +871,20 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
 bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
+    const bool split_needs_rot_actualization = goes_bad() && has_position();
+    const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
+    const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+    const auto split_temperature = !split_needs_rot_actualization ? temperature_flag::TEMP_NORMAL :
+                                   vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
+                                   rot::temperature_flag_for_location( get_map(), *this );
     detached_ptr<item> det = unsafe_split( qty );
+    if( det && split_needs_rot_actualization ) {
+        det = actualize_rot( std::move( det ), split_pos, split_temperature, get_weather() );
+    }
     if( !det ) {
+        if( charges == 0 && has_position() ) {
+            detach().release();
+        }
         return false;
     }
     item &after_split = *det;
@@ -6331,6 +6343,7 @@ time_duration item::get_shelf_life() const
 double item::get_relative_rot() const
 {
     if( goes_bad() ) {
+        const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
         return rot / get_shelf_life();
     }
     return 0;
@@ -6435,7 +6448,7 @@ auto item::calc_rot( time_point time, const units::temperature temp ) const -> t
     // always rot away and food rots away at twice the shelf life.  If the food
     // is in a sealed container they won't rot away, this avoids needlessly
     // calculating their rot in that case.
-    if( !is_corpse() && get_relative_rot() > 2.0 ) {
+    if( !is_corpse() && get_shelf_life() != 0_turns && rot / get_shelf_life() > 2.0 ) {
         return 0_seconds;
     }
 
@@ -10068,21 +10081,31 @@ static units::temperature clip_by_temperature_flag( units::temperature temperatu
     return temperature;
 }
 
-detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
-                                       const tripoint_bub_ms &pos,
-                                       player *carrier, const temperature_flag flag,
-                                       const weather_manager &weather )
+void item::update_rot_from_location( const temperature_flag temperature )
 {
-    if( !self ) {
-        return std::move( self );
+    if( !goes_bad() || last_rot_check == calendar::turn ) {
+        return;
     }
+
+    auto pos = tripoint_bub_ms::zero();
+    auto flag = temperature;
+    if( has_position() ) {
+        pos = position();
+        flag = rot::temperature_flag_for_location( get_map(), *this );
+    }
+    update_rot( pos, flag, get_weather() );
+}
+
+void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
+                       const weather_manager &weather )
+{
     const time_point now = calendar::turn;
 
     // if player debug menu'd the time backward it breaks stuff, just reset the
     // last_temp_check and last_rot_check in this case
-    if( now - self->last_rot_check < 0_turns ) {
-        self->last_rot_check = now;
-        return std::move( self );
+    if( now - last_rot_check < 0_turns ) {
+        last_rot_check = now;
+        return;
     }
 
     // process rot at most once every 100_turns (10 min)
@@ -10092,8 +10115,8 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
     units::temperature temp = weather.get_temperature( bub_to_abs( pos ) );
     temp = clip_by_temperature_flag( temp, flag );
 
-    time_point time = self->last_rot_check;
-    item_internal::scoped_goes_bad_cache _cache( &*self );
+    time_point time = last_rot_check;
+    item_internal::scoped_goes_bad_cache _cache( this );
 
     if( now - time > 1_hours ) {
         // This code is for items that were left out of reality bubble for long time
@@ -10125,27 +10148,32 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
             units::temperature env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw, flag );
 
             // Calculate item rot
-            self->rot += self->calc_rot( time, env_temperature_clipped );
-            self->last_rot_check = time;
-
-            if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-                // No need to track item that will be gone
-                return detached_ptr<item>();
-            }
+            rot += calc_rot( time, env_temperature_clipped );
+            last_rot_check = time;
         }
     }
 
     // Remaining <1 h from above
     // and items that are held near the player
     if( now - time > smallest_interval ) {
-        self->rot += self->calc_rot( now, temp );
-        self->last_rot_check = now;
+        rot += calc_rot( now, temp );
+        last_rot_check = now;
+    }
+}
 
-        if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-            return detached_ptr<item>();
-        } else {
-            return std::move( self );
-        }
+detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
+                                       const tripoint_bub_ms &pos,
+                                       player *carrier, const temperature_flag flag,
+                                       const weather_manager &weather )
+{
+    if( !self ) {
+        return std::move( self );
+    }
+
+    self->update_rot( pos, flag, weather );
+
+    if( self->has_rotten_away() && carrier == nullptr && !seals ) {
+        return detached_ptr<item>();
     }
     return std::move( self );
 }
@@ -11484,7 +11512,8 @@ std::string item::describe_location( const Character *ch ) const
 
 item *item::parent_item() const
 {
-    contents_item_location *cont = dynamic_cast<contents_item_location *>( &*loc );
+    const auto location = loc ? loc : saved_loc;
+    auto *cont = dynamic_cast<contents_item_location *>( location );
     if( !cont ) {
         return nullptr;
     }

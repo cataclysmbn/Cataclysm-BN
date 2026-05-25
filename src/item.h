@@ -971,6 +971,13 @@ class item : public location_visitable<item>, public game_object<item>
         /** Get the shelf life of the item*/
         time_duration get_shelf_life() const;
 
+        /** Update @ref rot from current location without removing rotten-away items. */
+        void update_rot_from_location( temperature_flag temperature );
+
+        /** Update @ref rot at the specified location without removing rotten-away items. */
+        void update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
+                         const weather_manager &weather_generator );
+
         /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
         double get_relative_rot() const;
 
@@ -1013,6 +1020,7 @@ class item : public location_visitable<item>, public game_object<item>
         bool has_rotten_away() const;
 
         time_duration get_rot() const {
+            const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
             return rot;
         }
         void mod_rot( const time_duration &val ) {
