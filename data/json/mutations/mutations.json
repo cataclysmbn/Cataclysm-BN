@@ -164,7 +164,7 @@
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
-    "category": [ "MEDICAL" ],
+    "category": [ "MEDICAL", "CHIMERA" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "mending_modifier": 0.5
@@ -214,7 +214,7 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL", "CHIMERA" ]
   },
   {
     "type": "mutation",
@@ -4817,7 +4817,7 @@
     "bodytemp_modifiers": [ 0, 4000 ],
     "description": "You consume three times as much food as the average human to maintain your inefficient body.  All the excess heat it generates could let you survive a snowstorm naked.",
     "prereqs": [ "HUNGER2" ],
-    "leads_to": [ "EATHEALTH" ],
+    "changes_to": [ "EATHEALTH" ],
     "types": [ "METABOLISM" ],
     "category": [ "CHIMERA" ],
     "metabolism_modifier": 2
@@ -5127,8 +5127,8 @@
     "name": { "str": "Genetic Chaos" },
     "points": -4,
     "description": "Your body alters itself rapidly, and without your intervention or conscious control.",
-    "prereqs": [ "UNSTABLE", "MUT_JUNKIE" ],
-    "category": [ "CHIMERA" ]
+    "prereqs": [ "UNSTABLE", "MUT_JUNKIE" ]
+
   },
   {
     "type": "mutation",
@@ -5138,7 +5138,7 @@
     "bodytemp_modifiers": [ 250, 250 ],
     "description": "Your body has become radioactive!  You continuously emit low levels of radiation, which slowly contaminates the world around you.",
     "changes_to": [ "RADIOACTIVE2" ],
-    "category": [ "SLIME" ]
+    "category": [ "SLIME", "CHIMERA" ]
   },
   {
     "type": "mutation",
