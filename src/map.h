@@ -2243,7 +2243,8 @@ class map : public submap_load_listener
         void process_items();
     private:
         // Iterates over every item on the map, passing each item to the provided function.
-        void process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp );
+        auto process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
+                                      std::vector<item *> &active_items ) -> void;
         void process_items_in_vehicles( submap &current_submap );
         void process_items_in_vehicle( vehicle &cur_veh, submap &current_submap );
 

@@ -5871,9 +5871,11 @@ void map::process_items()
             process_items_in_vehicles( *sm );
         } );
     }
-    // Making a copy, in case the original variable gets modified during `process_items_in_submap`
+    // Snapshot because processing can add or remove active submaps.
     ZoneScopedN( "process_items_submaps" );
-    const std::set<tripoint_abs_sm> submaps_with_active_items_copy = submaps_with_active_items;
+    const auto submaps_with_active_items_copy = std::vector<tripoint_abs_sm>(
+                submaps_with_active_items.begin(), submaps_with_active_items.end() );
+    auto active_items = std::vector<item *> {};
     for( const tripoint_abs_sm &abs_pos : submaps_with_active_items_copy ) {
         if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
             continue;
@@ -5884,7 +5886,7 @@ void map::process_items()
             continue;
         }
         if( !current_submap->active_items.empty() ) {
-            process_items_in_submap( *current_submap, local_pos );
+            process_items_in_submap( *current_submap, local_pos, active_items );
         }
     }
 }
@@ -5904,12 +5906,13 @@ static temperature_flag temperature_flag_at_point( const map &m, const tripoint_
     return temperature_flag::TEMP_NORMAL;
 }
 
-void map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp )
+auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
+                                   std::vector<item *> &active_items ) -> void
 {
     // Get a COPY of the active item list for this submap.
     // If more are added as a side effect of processing, they are ignored this turn.
     // If they are destroyed before processing, they don't get processed.
-    std::vector<item *> active_items = current_submap.active_items.get_for_processing();
+    current_submap.active_items.get_for_processing( active_items );
     const point grid_offset( gridp.x() * SEEX, gridp.y() * SEEY );
     for( item *&active_item_ref : active_items ) {
         if( !active_item_ref || !active_item_ref->is_loaded() ) {
