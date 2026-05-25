@@ -361,11 +361,9 @@
     "type": "effect_type",
     "id": "fungal_rage",
     "max_duration": "15 m",
-    "base_mods": { "pain_chance": [ 1 ], "pain_tick": [ 1], "pain_min": [-2]},
-    "effects_on_remove": [
-    {         "effect_type": "shakes", "duration": "10 m"}
-  ], 
-  "blood_analysis_description": "Fungal Rage"
+    "base_mods": { "pain_chance": [ 1 ], "pain_tick": [ 1 ], "pain_min": [ -2 ] },
+    "effects_on_remove": [ { "effect_type": "shakes", "duration": "10 m" } ],
+    "blood_analysis_description": "Fungal Rage"
   },
   {
     "type": "effect_type",

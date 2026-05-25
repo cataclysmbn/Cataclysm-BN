@@ -28,9 +28,7 @@
       [ [ "chem_methanol", 1 ] ],
       [ [ "oxycodone", 1 ], [ "codeine", 2 ] ],
       [ [ "chem_muriatic_acid", 1 ] ],
-      [
-        [ "veggy_tainted", 1 ]
-      ]
+      [ [ "veggy_tainted", 1 ] ]
     ]
   },
   {
