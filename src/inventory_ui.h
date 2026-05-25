@@ -278,7 +278,7 @@ class inventory_column
         std::vector<inventory_entry *> get_entries(
             const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
         std::vector<inventory_entry *> get_all_entries(
-        const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
+            const std::function<bool( const inventory_entry &entry )> &filter_func ) const;
         std::vector<inventory_entry *> get_all_entries() const;
         inventory_entry *find_by_invlet( int invlet ) const;
 
@@ -343,7 +343,7 @@ class inventory_column
         }
 
         void set_filter( const std::string &filter );
-        
+
         std::vector<inventory_entry> entries;
         std::vector<inventory_entry> entries_hidden;
         bool paging_is_valid = false;
@@ -384,7 +384,7 @@ class inventory_column
 
         entry_cell_cache_t make_entry_cell_cache( const inventory_entry &entry ) const;
         const entry_cell_cache_t &get_entry_cell_cache( size_t index ) const;
-        
+
         void refresh_entry_cell_caches();
         const inventory_selector_preset &preset;
         navigation_mode mode = navigation_mode::ITEM;
@@ -483,8 +483,8 @@ class inventory_selector
         std::string get_filter() const;
 
         /** Actions you can take from inventory menus */
-        bool wield(inventory_entry& entry);
-        bool wear(inventory_entry& entry);
+        bool wield( inventory_entry &entry );
+        bool wear( inventory_entry &entry );
 
         // An array of cells for the stat lines. Example: ["Weight (kg)", "10", "/", "20"].
         using stat = std::array<std::string, 4>;
@@ -496,7 +496,7 @@ class inventory_selector
                        item *location,
                        const item_category *custom_category = nullptr );
 
-        void remove_item(item* location);
+        void remove_item( item *location );
 
     protected:
         player &u;
@@ -694,7 +694,7 @@ class inventory_multiselector : public inventory_selector
         void rearrange_columns( size_t client_width ) override;
         size_t query_count( size_t count );
         void set_chosen_count( inventory_entry &entry, size_t count );
-        std::vector<inventory_entry*> get_selection_column_items() const;
+        std::vector<inventory_entry *> get_selection_column_items() const;
         std::unique_ptr<inventory_column> selection_col;
 };
 
@@ -759,7 +759,7 @@ class inventory_drop_selector : public inventory_multiselector
 class inventory_pickup_selector : public inventory_multiselector
 {
     public:
-        inventory_pickup_selector( player &p, const inventory_selector_preset& preset = default_preset);
+        inventory_pickup_selector( player &p, const inventory_selector_preset &preset = default_preset );
         std::vector<pickup::pick_drop_selection> execute();
     protected:
         stats get_raw_stats() const override;

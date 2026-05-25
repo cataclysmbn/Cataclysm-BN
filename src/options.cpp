@@ -1831,6 +1831,11 @@ void options_manager::add_options_interface()
          translate_marker( "If true, Advanced Inventory Manager filters will be reset when leaving the menu" ),
          false );
 
+    add( "NEW_PICKUP_MENU", interface,
+         translate_marker( "Use new pickup menu ui" ),
+         translate_marker( "Whether to use the new or old pickup menu ui" ),
+         false );
+
     add_empty_line();
 
     add( "MOVE_VIEW_OFFSET", interface, translate_marker( "Move view offset" ),

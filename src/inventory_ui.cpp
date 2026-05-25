@@ -495,10 +495,11 @@ const inventory_column::entry_cell_cache_t &inventory_column::get_entry_cell_cac
     return entries_cell_cache[index];
 }
 
-void inventory_column::refresh_entry_cell_caches() {
+void inventory_column::refresh_entry_cell_caches()
+{
     entries_cell_cache.clear();
-    for (size_t i = 0; i < entries.size(); ++i) {
-        entries_cell_cache.push_back(make_entry_cell_cache(entries[i])); 
+    for( size_t i = 0; i < entries.size(); ++i ) {
+        entries_cell_cache.push_back( make_entry_cell_cache( entries[i] ) );
     }
 }
 
@@ -672,7 +673,7 @@ std::vector<inventory_entry *> inventory_column::get_all_entries(
         }
     }
 
-    for (const auto& elem : entries_hidden) {
+    for( const auto &elem : entries_hidden ) {
         if( filter_func( elem ) ) {
             res.push_back( const_cast<inventory_entry *>( &elem ) );
         }
@@ -683,8 +684,8 @@ std::vector<inventory_entry *> inventory_column::get_all_entries(
 
 std::vector<inventory_entry *> inventory_column::get_all_entries() const
 {
-    auto func = [](const inventory_entry& entry) { return true; };
-    return get_all_entries(func);
+    auto func = []( const inventory_entry & entry ) { return true; };
+    return get_all_entries( func );
 }
 
 void inventory_column::set_stack_favorite( const item *location, bool favorite )
@@ -763,12 +764,12 @@ void inventory_column::on_input( const inventory_input &input )
         select( entries.size() - 1, scroll_direction::BACKWARD );
     } else if( input.action == "TOGGLE_FAVORITE" ) {
         auto selected_entries = get_all_selected();
-        for (auto& entry_ptr : selected_entries) {
+        for( auto &entry_ptr : selected_entries ) {
             const item *loc = entry_ptr->any_item();
             set_stack_favorite( loc, !loc->is_favorite );
         }
         refresh_entry_cell_caches();
-    } 
+    }
 }
 
 void inventory_column::add_entry( const inventory_entry &entry )
@@ -1253,27 +1254,28 @@ void inventory_selector::add_items( inventory_column &target_column,
     }
 }
 
-void inventory_selector::remove_item(item* location)
+void inventory_selector::remove_item( item *location )
 {
-    for (auto col_ptr : columns) {
-        std::vector<inventory_entry*> entries = col_ptr->get_all_entries();
-        for (auto entry_ptr : entries) {
-            if (entry_ptr->is_item()) {
-                auto iter = std::remove(entry_ptr->locations.begin(), entry_ptr->locations.end(), location);
-                entry_ptr->locations.erase(iter, entry_ptr->locations.end());
+    for( auto col_ptr : columns ) {
+        std::vector<inventory_entry *> entries = col_ptr->get_all_entries();
+        for( auto entry_ptr : entries ) {
+            if( entry_ptr->is_item() ) {
+                auto iter = std::remove( entry_ptr->locations.begin(), entry_ptr->locations.end(), location );
+                entry_ptr->locations.erase( iter, entry_ptr->locations.end() );
             }
         }
 
-        auto remove_func = [](const inventory_entry& e) {
+        auto remove_func = []( const inventory_entry & e ) {
             return e.locations.empty();
         };
 
-        auto iter = std::remove_if(col_ptr->entries.begin(), col_ptr->entries.end(), remove_func);
-        col_ptr->entries.erase(iter, col_ptr->entries.end());
+        auto iter = std::remove_if( col_ptr->entries.begin(), col_ptr->entries.end(), remove_func );
+        col_ptr->entries.erase( iter, col_ptr->entries.end() );
 
-        auto iter_hidden = std::remove_if(col_ptr->entries_hidden.begin(), col_ptr->entries_hidden.end(), remove_func);
-        col_ptr->entries_hidden.erase(iter_hidden, col_ptr->entries_hidden.end());
-        
+        auto iter_hidden = std::remove_if( col_ptr->entries_hidden.begin(), col_ptr->entries_hidden.end(),
+                                           remove_func );
+        col_ptr->entries_hidden.erase( iter_hidden, col_ptr->entries_hidden.end() );
+
         col_ptr->paging_is_valid = false;
         col_ptr->prepare_paging();
     }
@@ -1698,17 +1700,17 @@ std::string inventory_selector::get_filter() const
     return filter;
 }
 
-bool inventory_selector::wield(inventory_entry& entry) 
+bool inventory_selector::wield( inventory_entry &entry )
 {
-    if (!entry.is_item()) {
+    if( !entry.is_item() ) {
         return false;
     }
 
-    item* item = entry.any_item();
-    bool wield_result = u.can_wield(*item).success();
+    item *item = entry.any_item();
+    bool wield_result = u.can_wield( *item ).success();
     if( wield_result ) {
-        remove_item(item);
-        u.wield(*item);
+        remove_item( item );
+        u.wield( *item );
     } else {
         popup_getkey( u.can_wield( *item ).c_str() );
     }
@@ -1716,18 +1718,18 @@ bool inventory_selector::wield(inventory_entry& entry)
     return wield_result;
 }
 
-bool inventory_selector::wear(inventory_entry& entry)
+bool inventory_selector::wear( inventory_entry &entry )
 {
-    if (!entry.is_item()) {
+    if( !entry.is_item() ) {
         return false;
     }
 
-    item* item = entry.any_item();
-    bool wear_result = u.can_wear(*item).success();
+    item *item = entry.any_item();
+    bool wear_result = u.can_wear( *item ).success();
     if( wear_result ) {
-        remove_item(item);
+        remove_item( item );
         auto to_move = item->detach();
-        u.wear_item(std::move(to_move));
+        u.wear_item( std::move( to_move ) );
     } else {
         popup_getkey( u.can_wear( *item ).c_str() );
     }
@@ -1900,9 +1902,9 @@ void inventory_selector::on_input( const inventory_input &input )
         toggle_active_column( scroll_direction::BACKWARD );
     } else if( input.action == "RIGHT" ) {
         toggle_active_column( scroll_direction::FORWARD );
-    } else if ( input.action == "INVENTORY_FILTER" ) {
+    } else if( input.action == "INVENTORY_FILTER" ) {
         set_filter();
-    } else if ( input.action == "TOGGLE_FAVORITE") {
+    } else if( input.action == "TOGGLE_FAVORITE" ) {
         if( has_available_choices() ) {
             for( inventory_column *elem : columns ) {
                 elem->on_input( input );
@@ -1910,12 +1912,12 @@ void inventory_selector::on_input( const inventory_input &input )
         }
         refresh_active_column(); // Columns can react to actions by losing their activation capacity
         prepare_layout();
-    } else if (input.action == "WIELD") {
-        auto& entry = const_cast<inventory_entry&>(get_selected());
-        wield(entry);
-    } else if (input.action == "WEAR") {
-        auto& entry = const_cast<inventory_entry&>(get_selected());
-        wear(entry);
+    } else if( input.action == "WIELD" ) {
+        auto &entry = const_cast<inventory_entry &>( get_selected() );
+        wield( entry );
+    } else if( input.action == "WEAR" ) {
+        auto &entry = const_cast<inventory_entry &>( get_selected() );
+        wear( entry );
     } else {
         if( has_available_choices() ) {
             for( inventory_column *elem : columns ) {
@@ -2082,7 +2084,7 @@ item *inventory_pick_selector::execute()
             if( selected ) {
                 return selected.any_item();
             }
-        }else if( handle_action( input.action ) ) {
+        } else if( handle_action( input.action ) ) {
             return nullptr;
         } else {
             on_input( input );
@@ -2155,17 +2157,17 @@ size_t inventory_multiselector::query_count( size_t count = 0 )
 
 void inventory_multiselector::set_chosen_count( inventory_entry &entry, size_t count )
 {
-    if (entry.is_item()) {
+    if( entry.is_item() ) {
         entry.chosen_count = std::min( count, entry.get_available_count() );
         on_change( entry );
     }
 }
 
 [[clang::optnone]]
-std::vector<inventory_entry*> inventory_multiselector::get_selection_column_items() const 
+std::vector<inventory_entry *> inventory_multiselector::get_selection_column_items() const
 {
-    auto func = [](const inventory_entry& e){ return e.is_item();};
-    return selection_col->get_entries(func);
+    auto func = []( const inventory_entry & e ) { return e.is_item();};
+    return selection_col->get_entries( func );
 }
 
 inventory_compare_selector::inventory_compare_selector( player &p ) :
@@ -2530,10 +2532,11 @@ inventory_selector::stats inventory_drop_selector::get_raw_stats() const
                u.volume_capacity_reduced_by( 0_ml, dropping ) );
 }
 
-inventory_pickup_selector::inventory_pickup_selector( player &p, const inventory_selector_preset& preset) :
-    inventory_multiselector(p, preset, "ITEMS TO PICKUP") {}
+inventory_pickup_selector::inventory_pickup_selector( player &p,
+        const inventory_selector_preset &preset ) :
+    inventory_multiselector( p, preset, "ITEMS TO PICKUP" ) {}
 
-std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute() 
+std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
 {
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
 
@@ -2582,16 +2585,16 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             }
         } else if( input.action == "CONFIRM" ) {
             std::vector<pickup::pick_drop_selection> result;
-            std::vector<item*> locations;
+            std::vector<item *> locations;
             std::vector<int> counts;
 
-            for (auto entry_ptr : get_selection_column_items()) {
-                for (size_t i = 0; i < entry_ptr->locations.size() && i < entry_ptr->chosen_count; ++i) {
-                    locations.push_back(entry_ptr->locations[i]);
-                    counts.push_back(1);
+            for( auto entry_ptr : get_selection_column_items() ) {
+                for( size_t i = 0; i < entry_ptr->locations.size() && i < entry_ptr->chosen_count; ++i ) {
+                    locations.push_back( entry_ptr->locations[i] );
+                    counts.push_back( 1 );
                 }
             }
-   
+
             result = pickup::optimize_pickup( locations, counts );
             if( result.empty() ) {
                 popup_getkey( _( "No items were selected.  Use %s to select them." ),
@@ -2605,23 +2608,35 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
         } else {
             on_input( input );
         }
+
+        bool no_items = true;
+        for( auto col_ptr : get_visible_columns() ) {
+            if( col_ptr->allows_selecting() && !col_ptr->empty() ) {
+                no_items = false;
+                break;
+            }
+        }
+
+        if( no_items ) {
+            return std::vector<pickup::pick_drop_selection>();
+        }
     }
 
     return std::vector<pickup::pick_drop_selection>();
 }
 
-inventory_selector::stats inventory_pickup_selector::get_raw_stats() const 
+inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
 {
     units::mass weight_carried = u.weight_carried();
     units::volume volume_carried = u.volume_carried();
-    auto func = [](const inventory_entry& entry) {
+    auto func = []( const inventory_entry & entry ) {
         return entry.is_item() && entry.chosen_count > 0;
     };
-    std::vector<inventory_entry*> selected_items = selection_col->get_all_entries(func);
+    std::vector<inventory_entry *> selected_items = selection_col->get_all_entries( func );
 
     //Add the weights and volumes of selected items
     //which might be picked up
-    for (auto entry_ptr : selected_items) {
+    for( auto entry_ptr : selected_items ) {
         weight_carried += entry_ptr->any_item()->weight() * entry_ptr->chosen_count;
         volume_carried += entry_ptr->any_item()->volume() * entry_ptr->chosen_count;
     }
