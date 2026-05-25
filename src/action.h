@@ -10,6 +10,7 @@
 #include "coordinates.h"
 #include "map.h"
 
+class JsonObject;
 struct tripoint;
 struct point;
 
@@ -26,6 +27,8 @@ enum action_id : int {
     ACTION_SELECT,
     /** Click on a point with secondary mouse button (usually right button) */
     ACTION_SEC_SELECT,
+    /** Shift-click on a point with primary mouse button */
+    ACTION_DESCRIBE_TILE,
     /**@}*/
 
     // Character movement actions
@@ -564,6 +567,21 @@ action_id handle_action_menu();
  * @returns action_id ID of action requested by user at menu.
  */
 action_id handle_main_menu();
+
+struct contextual_action {
+    action_id action = ACTION_NULL;
+    int priority = 0;
+    bool walk_to = true;
+};
+
+auto load_contextual_action( const JsonObject &jo ) -> void;
+auto reset_contextual_actions() -> void;
+auto contextual_actions_at( const tripoint_bub_ms &p, bool right_click_only,
+                            const tripoint_bub_ms &from ) -> std::vector<contextual_action>;
+auto contextual_actions_for_target( const tripoint_bub_ms &p,
+                                    bool right_click_only ) -> std::vector<contextual_action>;
+auto contextual_action_is_valid_from( action_id action, const tripoint_bub_ms &target,
+                                      const tripoint_bub_ms &from ) -> bool;
 
 /**
  * Test whether it is possible to perform a given action.

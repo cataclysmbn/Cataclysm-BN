@@ -434,6 +434,7 @@ void input_manager::init_keycode_mapping()
 
     keyname_to_keycode["MOUSE_LEFT"] = MOUSE_BUTTON_LEFT;
     keyname_to_keycode["MOUSE_RIGHT"] = MOUSE_BUTTON_RIGHT;
+    keyname_to_keycode["MOUSE_SHIFT_LEFT"] = MOUSE_BUTTON_SHIFT_LEFT;
     keyname_to_keycode["SCROLL_UP"] = SCROLLWHEEL_UP;
     keyname_to_keycode["SCROLL_DOWN"] = SCROLLWHEEL_DOWN;
     keyname_to_keycode["MOUSE_MOVE"] = MOUSE_MOVE;
@@ -484,6 +485,8 @@ std::string input_manager::get_keyname( int ch, input_event_t inp_type, bool por
             raw = translate_marker_context( "key name", "MOUSE_LEFT" );
         } else if( ch == MOUSE_BUTTON_RIGHT ) {
             raw = translate_marker_context( "key name", "MOUSE_RIGHT" );
+        } else if( ch == MOUSE_BUTTON_SHIFT_LEFT ) {
+            raw = translate_marker_context( "key name", "MOUSE_SHIFT_LEFT" );
         } else if( ch == SCROLLWHEEL_UP ) {
             raw = translate_marker_context( "key name", "SCROLL_UP" );
         } else if( ch == SCROLLWHEEL_DOWN ) {

@@ -2820,6 +2820,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "SEC_SELECT" );
+    ctxt.register_action( "DESCRIBE_TILE" );
     return ctxt;
 }
 
@@ -2897,25 +2898,51 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
 
 bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target )
 {
-    const bool cleared_destination = !destination_preview.empty();
-    u.clear_destination();
-    destination_preview.clear();
+    if( !destination_preview.empty() ) {
+        if( previewed_right_click_action_ ) {
+            const auto target = m.abs_to_bub( previewed_right_click_action_->target );
+            const auto action_position = destination_preview.back();
+            if( target == mouse_target &&
+                contextual_action_is_valid_from( previewed_right_click_action_->action, target, action_position ) ) {
+                if( !check_safe_mode_allowed() ) {
+                    destination_preview.clear();
+                    previewed_right_click_action_.reset();
+                    invalidate_main_ui_adaptor();
+                    return false;
+                }
 
-    if( cleared_destination ) {
-        // Produce no-op if auto-move had just been cleared on this action
-        // e.g. from a previous single left mouse click. This has the effect
-        // of right-click canceling an auto-move before it is initiated.
-        return false;
-    }
+                const auto action_name = get_default_mode_input_context().get_action_name(
+                                             action_ident( previewed_right_click_action_->action ) );
+                if( !query_yn( _( "Walk to %s and %s?" ), m.name( mouse_target ), action_name ) ) {
+                    destination_preview.clear();
+                    previewed_right_click_action_.reset();
+                    invalidate_main_ui_adaptor();
+                    return false;
+                }
 
-    const bool is_adjacent = square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 1;
-    const bool is_self = square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 0;
-    if( const monster *const mon = critter_at<monster>( mouse_target ) ) {
-        if( !u.sees( *mon ) ) {
-            add_msg( _( "Nothing relevant here." ) );
+                queued_right_click_action_ = *previewed_right_click_action_;
+                u.set_destination( destination_preview );
+                destination_preview.clear();
+                previewed_right_click_action_.reset();
+                invalidate_main_ui_adaptor();
+                return false;
+            }
+
+            destination_preview.clear();
+            previewed_right_click_action_.reset();
+            invalidate_main_ui_adaptor();
+        } else {
+            u.clear_destination();
+            destination_preview.clear();
+            queued_right_click_action_.reset();
             return false;
         }
+    }
 
+    u.clear_destination();
+    queued_right_click_action_.reset();
+
+    if( const monster *const mon = critter_at<monster>( mouse_target ); mon != nullptr && u.sees( *mon ) ) {
         if( !u.primary_weapon().is_gun() ) {
             add_msg( m_info, _( "You are not wielding a ranged weapon." ) );
             return false;
@@ -2924,19 +2951,72 @@ bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mo
         // TODO: Add weapon range check. This requires weapon to be reloaded.
 
         act = ACTION_FIRE;
-    } else if( is_adjacent &&
-               m.close_door( tripoint_bub_ms( mouse_target.xy(), u.bub_pos().z() ), !m.is_outside( u.bub_pos() ),
-                             true ) ) {
-        act = ACTION_CLOSE;
-    } else if( is_self ) {
-        act = ACTION_PICKUP;
-    } else if( is_adjacent ) {
-        act = ACTION_EXAMINE;
     } else {
+        const auto actions = contextual_actions_at( mouse_target, true, u.bub_pos() );
+        if( !actions.empty() ) {
+            act = actions.front().action;
+            return true;
+        }
+
+        for( const auto &contextual_action : contextual_actions_for_target( mouse_target, true ) ) {
+            if( !contextual_action.walk_to ) {
+                continue;
+            }
+            for( const tripoint_bub_ms &destination : m.points_in_radius( mouse_target, 1 ) ) {
+                if( !contextual_action_is_valid_from( contextual_action.action, mouse_target, destination ) ) {
+                    continue;
+                }
+
+                const auto route = m.route( u.bub_pos(), destination, u.get_legacy_pathfinding_settings(),
+                                            u.get_legacy_path_avoid() );
+                if( route.empty() ) {
+                    continue;
+                }
+
+                if( !check_safe_mode_allowed() ) {
+                    return false;
+                }
+
+                destination_preview = route;
+                previewed_right_click_action_ = {
+                    .action = contextual_action.action,
+                    .target = m.bub_to_abs( mouse_target ),
+                };
+                invalidate_main_ui_adaptor();
+                return false;
+            }
+        }
+
         add_msg( _( "Nothing relevant here." ) );
         return false;
     }
 
+    return true;
+}
+
+auto game::try_get_queued_right_click_action( action_id &act,
+        std::optional<tripoint_bub_ms> &mouse_target ) -> bool
+{
+    if( !queued_right_click_action_ ) {
+        return false;
+    }
+
+    const auto target = m.abs_to_bub( queued_right_click_action_->target );
+    const auto abs_target = m.bub_to_abs( target );
+    const auto target_has_memory =
+        u.should_show_map_memory() &&
+        ( ter_str_id( u.get_terrain_tile( abs_target ).tile ).is_valid() ||
+          ter_str_id( u.get_memorized_tile( abs_target ).tile ).is_valid() );
+    if( ( !u.sees( target ) && !target_has_memory ) ||
+        !contextual_action_is_valid_from( queued_right_click_action_->action, target, u.bub_pos() ) ) {
+        queued_right_click_action_.reset();
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
+    }
+
+    act = queued_right_click_action_->action;
+    mouse_target = target;
+    queued_right_click_action_.reset();
     return true;
 }
 
@@ -7360,6 +7440,67 @@ static std::string get_fire_fuel_string( const tripoint_bub_ms &examp )
     return {};
 }
 
+namespace
+{
+
+enum class map_examine_target : int {
+    terrain,
+    furniture,
+};
+
+auto describe_map_part( const map_data_common_t &part ) -> void
+{
+    add_msg( _( "That is a %s." ), colorize( part.name(), part.color() ) );
+
+    const auto description = part.description.translated();
+    if( !description.empty() ) {
+        add_msg( "%s", colorize( description, c_light_gray ) );
+    }
+}
+
+auto describe_memorized_terrain( const memorized_terrain_tile &memory ) -> bool
+{
+    if( memory.tile.empty() ) {
+        return false;
+    }
+
+    const auto terrain = ter_str_id( memory.tile );
+    if( !terrain.is_valid() ) {
+        return false;
+    }
+
+    describe_map_part( terrain.obj() );
+    return true;
+}
+
+auto choose_map_examine_target( map &here, const tripoint_bub_ms &examp )
+-> std::optional<map_examine_target>
+{
+    if( !here.has_furn( examp ) ) {
+        return map_examine_target::terrain;
+    }
+
+    const auto &terrain = here.ter( examp ).obj();
+    const auto &furniture = here.furn( examp ).obj();
+    uilist menu;
+    menu.text = _( "Describe what?" );
+    menu.addentry( static_cast<int>( map_examine_target::furniture ), true, 'f',
+                   _( "%s" ), colorize( furniture.name(), furniture.color() ) );
+    menu.addentry( static_cast<int>( map_examine_target::terrain ), true, 't',
+                   _( "%s" ), colorize( terrain.name(), terrain.color() ) );
+    menu.query();
+
+    if( menu.ret == static_cast<int>( map_examine_target::terrain ) ) {
+        return map_examine_target::terrain;
+    }
+    if( menu.ret == static_cast<int>( map_examine_target::furniture ) ) {
+        return map_examine_target::furniture;
+    }
+    return std::nullopt;
+}
+
+} // namespace
+
 void game::examine( const tripoint_bub_ms &examp )
 {
 
@@ -7442,14 +7583,22 @@ void game::examine( const tripoint_bub_ms &examp )
     const auto player_pos = u.bub_pos();
 
     if( m.has_furn( examp ) && !u.is_mounted() ) {
-        xfurn_t.examine( u, examp );
+        if( xfurn_t.examine == &iexamine::none ) {
+            describe_map_part( xfurn_t );
+        } else {
+            xfurn_t.examine( u, examp );
+        }
     } else if( m.has_furn( examp ) && u.is_mounted() ) {
         add_msg( m_warning, _( "You cannot do that while mounted." ) );
     } else {
         if( !u.is_mounted() ) {
-            xter_t.examine( u, examp );
+            if( xter_t.examine == &iexamine::none ) {
+                describe_map_part( xter_t );
+            } else {
+                xter_t.examine( u, examp );
+            }
         } else if( u.is_mounted() && xter_t.examine == &iexamine::none ) {
-            xter_t.examine( u, examp );
+            describe_map_part( xter_t );
         } else {
             add_msg( m_warning, _( "You cannot do that while mounted." ) );
         }
@@ -7508,6 +7657,33 @@ void game::examine( const tripoint_bub_ms &examp )
                 pickup::pick_up( examp, 0 );
             }
         }
+    }
+}
+
+auto game::describe_tile( const tripoint_bub_ms &target ) -> void
+{
+    if( !u.sees( target ) ) {
+        if( u.should_show_map_memory() ) {
+            const auto abs_target = m.bub_to_abs( target );
+            if( describe_memorized_terrain( u.get_terrain_tile( abs_target ) ) ||
+                describe_memorized_terrain( u.get_memorized_tile( abs_target ) ) ) {
+                return;
+            }
+        }
+
+        add_msg( _( "Nothing relevant here." ) );
+        return;
+    }
+
+    const auto map_target = choose_map_examine_target( m, target );
+    if( !map_target ) {
+        return;
+    }
+
+    if( *map_target == map_examine_target::furniture ) {
+        describe_map_part( m.furn( target ).obj() );
+    } else {
+        describe_map_part( m.ter( target ).obj() );
     }
 }
 
