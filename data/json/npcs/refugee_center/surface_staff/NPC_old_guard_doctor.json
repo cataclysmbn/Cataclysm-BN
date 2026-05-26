@@ -172,19 +172,28 @@
   {
     "id": "MISSION_SCIENCE_REP_4",
     "type": "mission_definition",
-    "name": { "str": "Find Lab Tunnels" },
-    "goal": "MGOAL_FIND_ANY_ITEM",
-    "difficulty": 5,
-    "value": 50000,
-    "item": "software_train_data",
-    "start": "reveal_lab_train_depot",
+    "name": { "str": "Obtain Train Network Information" },
+    "goal": "MGOAL_FIND_ITEM",
+    "description": "Find the <color_light_blue>foreman</color> in the <color_red>microlab</color> and obtain info about the train network.",
+    "difficulty": 8,
+    "value": 0,
+    "item": "labmap_mission",
+    "start": {
+      "assign_mission_target": { "om_terrain": "microlab_generic", "om_terrain_match_type": "EXACT", "reveal_radius": 1, "random": true, "search_range": 160, "z": -2 },
+      "update_mapgen": {
+        "place_monster": [
+          { "monster": "mon_zombie_supply_sergeant", "x": 12, "y": 11, "chance": 100 },
+          { "monster": "mon_zombie_foreman", "x": 11, "y": 12, "chance": 100 }
+        ]
+      }
+    },
     "origins": [ "ORIGIN_SECONDARY" ],
     "dialogue": {
       "describe": "We need help…",
-      "offer": "In the data we found a major contract for tunneling and train equipment, ordered a long time ago.  It's the best lead we have.  Here's the address of the government lab where the equipment was delivered.  I want you to go there, find the tunnels that they dug, and download everything you can about the train network.",
+      "offer": "In the data we found a major contract for tunneling and train equipment, ordered a long time ago.  It's the best lead we have.  If these records are correct, it seems this equipment was used to build fully underground 'microlabs' where less hazardous research was carried out.  Luckily, I've identified a microlab that was only just finished before the Cataclysm, enough so that the construction foreman was likely still present.  If anyone carried information about the train networks, it's him.  I want you to go there and retrieve this information.",
       "accepted": "So glad for your help.",
       "rejected": "Can't blame you, but come back if you change your mind.",
-      "advice": "The equipment was rated for 50 feet underground, so that tunnel entrance is going to be deeper inside a lab than a normal subway.  Fifty feet would mean maybe four stories down.  Bring back anything you find on a USB drive.",
+      "advice": "I would recommend finding a subway station or other form of underground access and then navigating along the subway lines until you reach the lab.  Keep in mind that less hazardous research doesn't mean less hazardous for you.  These microlabs are likely crawling with zombies and automated defenses, and their tight and winding corridors mean you'll have to be extra careful.",
       "inquire": "Have you completed your mission?",
       "success": "Fantastic!  I should be able to reconstruct what cargo moved between which labs.  I wonder what was really going on down there.",
       "success_lie": "What good does this do us?",
