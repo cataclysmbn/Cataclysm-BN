@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <list>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
@@ -142,6 +143,10 @@ class submap_load_manager
          */
         void update();
 
+        /** Update the player position used to budget lazy-border preloading. */
+        auto update_lazy_border_focus( const std::string &dim_id,
+                                       const tripoint_abs_ms &pos ) -> void;
+
         /**
          * Block until all in-flight background presave_omt tasks complete.
          *
@@ -275,6 +280,10 @@ class submap_load_manager
         using horizontal_omt_set = std::unordered_set<retained_omt_key,
               coord_pair_hash<point_abs_omt>>;
         using retained_omt_list = std::list<retained_omt_key>;
+        struct lazy_omt_focus {
+            std::string dimension_id;
+            tripoint_abs_ms pos;
+        };
 
         load_request_handle next_handle_ = 1;
         std::map<load_request_handle, submap_load_request> requests_;
@@ -348,6 +357,9 @@ class submap_load_manager
         std::vector<std::pair<load_request_handle, tripoint>> prev_centers_;
 
         point lazy_omt_preload_direction_ = point_zero;
+        std::optional<lazy_omt_focus> lazy_omt_focus_;
+        double lazy_omt_budget_credit_ = 0.0;
+        int lazy_omt_last_credit_turn_ = -1;
 };
 
 extern submap_load_manager submap_loader;

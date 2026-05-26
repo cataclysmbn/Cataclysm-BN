@@ -775,6 +775,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
         ensure_distribution_grid_tracker_for( dim_id );
     }
+    submap_loader.update_lazy_border_focus( new_dim_id, u.abs_pos() );
     submap_loader.update();
     // Destroy trackers for non-primary dimensions that have no remaining tracked submaps.
     for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
@@ -2131,6 +2132,7 @@ bool game::do_turn()
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
         ensure_distribution_grid_tracker_for( dim_id );
     }
+    submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );
     submap_loader.update();
     // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
     for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
@@ -12585,6 +12587,7 @@ void game::resize_reality_bubble_to( int new_size )
     // on_submap_unloaded is safe here: map::on_submap_unloaded guards grid[]
     // writes behind contains_abs_sm(), so old out-of-bubble positions are
     // skipped and only vehicle/active-item tracking is cleaned up.
+    submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );
     submap_loader.update();
 
     // When the bubble grew, submaps outside the old (smaller) bubble just entered.
@@ -14151,6 +14154,7 @@ point_rel_sm game::update_map( int &x, int &y )
         for( const auto &dim_id : submap_loader.active_dimensions() ) {
             ensure_distribution_grid_tracker_for( dim_id );
         }
+        submap_loader.update_lazy_border_focus( m.get_bound_dimension(), u.abs_pos() );
         submap_loader.update();
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {

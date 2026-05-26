@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "calendar.h"
 #include "cata_cartesian_product.h"
 #include "cached_options.h"
 #include "game_constants.h"
@@ -41,6 +42,49 @@ auto divide_round_up_size( const std::size_t numerator, const std::size_t denomi
 auto signum( const int value ) -> int
 {
     return ( value > 0 ) - ( value < 0 );
+}
+
+auto steps_to_omt_edge_axis( const int local, const int direction ) -> std::size_t
+{
+    const auto clamp_steps = []( const int steps ) -> std::size_t {
+        return static_cast<std::size_t>( std::max( 1, steps ) );
+    };
+
+    if( direction > 0 ) {
+        return clamp_steps( static_cast<int>( lazy_border_steps_to_cross_omt ) - local );
+    }
+    if( direction < 0 ) {
+        return clamp_steps( local + 1 );
+    }
+    return lazy_border_steps_to_cross_omt;
+}
+
+struct omt_edge_deadlines {
+    std::size_t x = lazy_border_steps_to_cross_omt;
+    std::size_t y = lazy_border_steps_to_cross_omt;
+    std::size_t next = lazy_border_steps_to_cross_omt;
+};
+
+auto omt_edge_deadlines_for( const tripoint_abs_ms &pos,
+                             const point &direction ) -> omt_edge_deadlines
+{
+    if( direction == point_zero ) {
+        return {};
+    }
+
+    const auto local = project_remain<coords::omt>( pos.xy() ).remainder;
+    auto result = omt_edge_deadlines {
+        .x = steps_to_omt_edge_axis( local.x(), direction.x ),
+        .y = steps_to_omt_edge_axis( local.y(), direction.y ),
+        .next = lazy_border_steps_to_cross_omt
+    };
+    result.next = std::min( result.x, result.y );
+    return result;
+}
+
+auto turns_to_omt_edge( const tripoint_abs_ms &pos, const point &direction ) -> std::size_t
+{
+    return omt_edge_deadlines_for( pos, direction ).next;
 }
 
 auto is_omt_zlevel_loaded( mapbuffer &mb, const tripoint_abs_omt &omt_addr ) -> bool
@@ -81,8 +125,38 @@ void submap_load_manager::update_request( load_request_handle handle,
     it->second.center = new_center;
 }
 
+auto submap_load_manager::update_lazy_border_focus( const std::string &dim_id,
+        const tripoint_abs_ms &pos ) -> void
+{
+    if( lazy_omt_focus_ && lazy_omt_focus_->dimension_id == dim_id ) {
+        const auto delta = point{
+            signum( pos.x() - lazy_omt_focus_->pos.x() ),
+            signum( pos.y() - lazy_omt_focus_->pos.y() )
+        };
+        if( delta != point_zero ) {
+            if( delta != lazy_omt_preload_direction_ ) {
+                lazy_omt_budget_credit_ = 0.0;
+            }
+            lazy_omt_preload_direction_ = delta;
+        }
+    } else {
+        lazy_omt_budget_credit_ = 0.0;
+    }
+
+    lazy_omt_focus_ = lazy_omt_focus{
+        .dimension_id = dim_id,
+        .pos = pos
+    };
+}
+
 void submap_load_manager::release_load( load_request_handle handle )
 {
+    if( const auto it = requests_.find( handle );
+        it != requests_.end() && it->second.source == load_request_source::lazy_border ) {
+        lazy_omt_queue_.clear();
+        lazy_omt_budget_credit_ = 0.0;
+        lazy_omt_last_credit_turn_ = -1;
+    }
     requests_.erase( handle );
 }
 
@@ -379,6 +453,15 @@ auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const
         return 0;
     }
 
+    auto prioritize_x = lazy_omt_preload_direction_.x != 0;
+    auto prioritize_y = lazy_omt_preload_direction_.y != 0;
+    if( lazy_omt_focus_ ) {
+        const auto deadlines = omt_edge_deadlines_for( lazy_omt_focus_->pos,
+                               lazy_omt_preload_direction_ );
+        prioritize_x = prioritize_x && deadlines.x == deadlines.next;
+        prioritize_y = prioritize_y && deadlines.y == deadlines.next;
+    }
+
     auto best = 0;
     const auto &[dim_id, omt_xy] = key;
     std::ranges::for_each( requests_, [&]( const auto & kv ) {
@@ -392,15 +475,15 @@ auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const
         const auto max_omt = project_to<coords::omt>( point_abs_sm{ c.x() + r, c.y() + r } );
 
         auto score = 0;
-        if( lazy_omt_preload_direction_.x > 0 && omt_xy.x() > max_omt.x() ) {
+        if( prioritize_x && lazy_omt_preload_direction_.x > 0 && omt_xy.x() > max_omt.x() ) {
             score += 2;
-        } else if( lazy_omt_preload_direction_.x < 0 && omt_xy.x() < min_omt.x() ) {
+        } else if( prioritize_x && lazy_omt_preload_direction_.x < 0 && omt_xy.x() < min_omt.x() ) {
             score += 2;
         }
 
-        if( lazy_omt_preload_direction_.y > 0 && omt_xy.y() > max_omt.y() ) {
+        if( prioritize_y && lazy_omt_preload_direction_.y > 0 && omt_xy.y() > max_omt.y() ) {
             score += 2;
-        } else if( lazy_omt_preload_direction_.y < 0 && omt_xy.y() < min_omt.y() ) {
+        } else if( prioritize_y && lazy_omt_preload_direction_.y < 0 && omt_xy.y() < min_omt.y() ) {
             score += 2;
         }
 
@@ -457,23 +540,64 @@ auto submap_load_manager::process_lazy_border_preload() -> void
     } ) );
     TracyPlot( "Lazy Border Leading OMTs", static_cast<int64_t>( urgent ) );
 
-    auto budget = divide_round_up_size( queued, lazy_border_steps_to_cross_omt );
-    const auto movement_axes = static_cast<std::size_t>(
-                                   std::abs( lazy_omt_preload_direction_.x ) +
-                                   std::abs( lazy_omt_preload_direction_.y ) );
-    const auto urgent_steps = movement_axes > 1 ? SEEX / movement_axes : SEEX;
-    budget = std::max( budget, divide_round_up_size( urgent, urgent_steps ) );
-    budget = std::max( std::size_t{ 1 }, budget );
+    const auto load_budget_matching = [&]( std::size_t budget, const auto &can_load ) {
+        while( budget > 0 && !lazy_omt_queue_.empty() ) {
+            const auto key = lazy_omt_queue_.front();
+            if( !can_load( key ) ) {
+                return;
+            }
+            lazy_omt_queue_.pop_front();
+            if( is_omt_column_loaded( key ) ) {
+                continue;
+            }
+            load_lazy_omt_column( key );
+            --budget;
+        }
+    };
+
+    if( lazy_omt_preload_direction_ == point_zero ) {
+        auto budget = divide_round_up_size( queued, lazy_border_steps_to_cross_omt );
+        budget = std::max( std::size_t{ 1 }, budget );
+        TracyPlot( "Lazy Border OMT Deadline",
+                   static_cast<int64_t>( lazy_border_steps_to_cross_omt ) );
+        TracyPlot( "Lazy Border Credit x1000", int64_t{ 0 } );
+        TracyPlot( "Lazy Border OMT Budget", static_cast<int64_t>( budget ) );
+        load_budget_matching( budget, []( const retained_omt_key & ) {
+            return true;
+        } );
+        return;
+    }
+
+    const auto current_turn = to_turn<int>( calendar::turn );
+    if( current_turn == lazy_omt_last_credit_turn_ ) {
+        TracyPlot( "Lazy Border OMT Budget", int64_t{ 0 } );
+        return;
+    }
+    lazy_omt_last_credit_turn_ = current_turn;
+
+    const auto deadline = lazy_omt_focus_
+                          ? turns_to_omt_edge( lazy_omt_focus_->pos, lazy_omt_preload_direction_ )
+                          : lazy_border_steps_to_cross_omt;
+    if( urgent == 0 ) {
+        lazy_omt_budget_credit_ = 0.0;
+        TracyPlot( "Lazy Border OMT Deadline", static_cast<int64_t>( deadline ) );
+        TracyPlot( "Lazy Border Credit x1000", int64_t{ 0 } );
+        TracyPlot( "Lazy Border OMT Budget", int64_t{ 0 } );
+        return;
+    }
+
+    lazy_omt_budget_credit_ += static_cast<double>( urgent ) / static_cast<double>( deadline );
+
+    auto budget = std::min( urgent, static_cast<std::size_t>( lazy_omt_budget_credit_ ) );
+    lazy_omt_budget_credit_ -= static_cast<double>( budget );
+    TracyPlot( "Lazy Border OMT Deadline", static_cast<int64_t>( deadline ) );
+    TracyPlot( "Lazy Border Credit x1000",
+               static_cast<int64_t>( lazy_omt_budget_credit_ * 1000.0 ) );
     TracyPlot( "Lazy Border OMT Budget", static_cast<int64_t>( budget ) );
 
-    while( budget > 0 && !lazy_omt_queue_.empty() ) {
-        const auto key = lazy_omt_queue_.front();
-        lazy_omt_queue_.pop_front();
-        if( !is_omt_column_loaded( key ) ) {
-            load_lazy_omt_column( key );
-        }
-        --budget;
-    }
+    load_budget_matching( budget, [&]( const retained_omt_key & key ) {
+        return lazy_omt_priority( key ) > 0;
+    } );
 }
 
 void submap_load_manager::drain_lazy_loads()
@@ -917,6 +1041,10 @@ void submap_load_manager::flush_prev_desired()
     retained_omts_.clear();
     retained_omt_index_.clear();
     lazy_omt_queue_.clear();
+    lazy_omt_preload_direction_ = point_zero;
+    lazy_omt_focus_.reset();
+    lazy_omt_budget_credit_ = 0.0;
+    lazy_omt_last_credit_turn_ = -1;
     dirty_omts_.clear();
 }
 
