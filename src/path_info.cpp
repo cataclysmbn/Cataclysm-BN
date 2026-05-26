@@ -7,6 +7,7 @@
 #include "filesystem.h"
 #include "language.h"
 #include "options.h"
+#include "title_screen.h"
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -370,10 +371,7 @@ std::string PATH_INFO::motd()
 
 std::string PATH_INFO::title( const holiday )
 {
-    std::string theme_basepath = datadir_value + "title/";
-    std::string theme_extension = ".title";
-    std::string theme_fallback = theme_basepath + "en.title";
-    return find_translated_file( theme_basepath, theme_extension, theme_fallback );
+    return title_screen::resolve_path();
 }
 
 std::string PATH_INFO::names()
