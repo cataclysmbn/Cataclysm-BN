@@ -116,7 +116,7 @@ namespace
 
 auto character_has_adjacent_grabbed_target( const Character &who ) -> bool
 {
-    for( const tripoint &p : get_map().points_in_radius( who.pos(), 1, 0 ) ) {
+    for( const auto &p : get_map().points_in_radius( who.bub_pos(), 1, 0 ) ) {
         const Creature *const target = g->critter_at<Creature>( p );
         if( target != nullptr && target != &who && target->has_effect( effect_grabbed ) ) {
             return true;

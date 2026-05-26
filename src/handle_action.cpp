@@ -142,7 +142,7 @@ const flag_id flag_NO_GRAB( "NO_GRAB" );
 
 auto nearby_grabbed_creature( const avatar &you ) -> Creature *
 {
-    for( const tripoint &p : get_map().points_in_radius( you.pos(), 1 ) ) {
+    for( const auto &p : get_map().points_in_radius( you.bub_pos(), 1 ) ) {
         Creature *const target = g->critter_at<Creature>( p, true );
         if( target != nullptr && target != &you && target->has_effect( effect_grabbed ) ) {
             return target;
@@ -683,8 +683,8 @@ static void grab()
     }
     if( Creature *const target = g->critter_at<Creature>( grabp, false ) ) {
         grab_creature( you, *target );
-    } else if( const optional_vpart_position vp = here.veh_at( grabp ) ) {
-        if( !vp->vehicle().handle_potential_theft( get_avatar() ) ) {
+    } else if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
+        if( !target->vp.vehicle().handle_potential_theft( get_avatar() ) ) {
             return;
         }
         you.grab( OBJECT_VEHICLE, target->pos - you.bub_pos() );

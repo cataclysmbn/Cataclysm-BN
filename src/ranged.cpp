@@ -426,7 +426,7 @@ class target_ui
         // Generator of AoE shapes
         std::optional<shape_factory> shape_gen;
         // Preferred initial cursor position.
-        std::optional<tripoint> initial_target;
+        std::optional<tripoint_bub_ms> initial_target;
 
         // Initialize UI and run the event loop
         target_handler::trajectory run();
@@ -676,9 +676,9 @@ target_handler::trajectory target_handler::mode_throw_creature( avatar &you,
     ui.you = &you;
     ui.mode = target_ui::TargetMode::ThrowCreature;
     ui.range = std::max( 1, range );
-    ui.initial_target = thrown_creature.pos();
+    ui.initial_target = thrown_creature.bub_pos();
 
-    restore_on_out_of_scope<tripoint> view_offset_prev( you.view_offset );
+    restore_on_out_of_scope<tripoint_rel_ms> view_offset_prev( you.view_offset );
     return ui.run();
 }
 

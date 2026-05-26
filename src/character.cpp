@@ -1779,7 +1779,7 @@ bool static try_remove_grab( Character &c )
             }
         }
     } else {
-        for( auto&& dest : here.points_in_radius( c.pos(), 1, 0 ) ) { // *NOPAD*
+        for( auto &&dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
             const Creature *const grabber = g->critter_at<Creature>( dest );
             if( grabber != nullptr && grabber != &c && grabber->has_effect( effect_grabbing ) ) {
                 zed_number += grab_strength_from( *grabber );
@@ -1799,7 +1799,7 @@ bool static try_remove_grab( Character &c )
             c.add_msg_player_or_npc( m_good, _( "You break out of the grab!" ),
                                      _( "<npcname> breaks out of the grab!" ) );
             c.remove_effect( effect_grabbed );
-            for( auto&& dest : here.points_in_radius( c.pos(), 1, 0 ) ) { // *NOPAD*
+            for( auto &&dest : here.points_in_radius( c.bub_pos(), 1, 0 ) ) { // *NOPAD*
                 Creature *const grabber = g->critter_at<Creature>( dest );
                 if( grabber != nullptr && grabber != &c && grabber->has_effect( effect_grabbing ) ) {
                     grabber->remove_effect( effect_grabbing );

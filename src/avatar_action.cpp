@@ -125,7 +125,7 @@ auto find_grabbed_creature( const avatar &you ) -> Creature *
         return nullptr;
     }
 
-    for( const tripoint &p : get_map().points_in_radius( you.pos(), 1 ) ) {
+    for( const auto &p : get_map().points_in_radius( you.bub_pos(), 1 ) ) {
         Creature *const target = g->critter_at<Creature>( p, true );
         if( target != nullptr && target != &you && target->has_effect( effect_grabbed ) ) {
             return target;
@@ -178,7 +178,7 @@ auto throw_grabbed_creature( avatar &you ) -> bool
                         you.get_skill_level( skill_throw ) / 4.0f +
                         avatar_size_value - target_size_value ) * 2.0f;
 
-    if( get_map().has_flag( TFLAG_DEEP_WATER, target->pos() ) ) {
+    if( get_map().has_flag( TFLAG_DEEP_WATER, target->bub_pos() ) ) {
         throwforce *= 0.25f;
     }
 
@@ -203,9 +203,9 @@ auto throw_grabbed_creature( avatar &you ) -> bool
         return true;
     }
 
-    const auto distance = std::max( 1, rl_dist( target->pos(), trajectory.back() ) );
+    const auto distance = std::max( 1, rl_dist( target->bub_pos(), trajectory.back() ) );
     const auto fling_velocity = creature_throw::grabbed_throw_velocity( distance );
-    const units::angle target_angle = coord_to_angle( target->pos(), trajectory.back() );
+    const units::angle target_angle = coord_to_angle( target->bub_pos(), trajectory.back() );
 
     target->remove_effect( effect_grabbed );
     you.remove_effect( effect_grabbing );
@@ -833,7 +833,7 @@ static auto prompt_manual_attack_target( avatar &you ) -> void
     const auto target = choose_adjacent_highlight(
                             _( "Attack where?" ),
                             _( "No hostile creature nearby." ),
-                            [&you]( const tripoint & pos ) {
+                            [&you]( const tripoint_bub_ms & pos ) {
         const auto *const critter = g->critter_at( pos );
         return critter != nullptr && is_manual_attack_target( you, *critter );
     } );

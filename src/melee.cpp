@@ -136,11 +136,6 @@ constexpr auto technique_menu_basic_attack = -2;
 constexpr auto technique_menu_automatic = -4;
 
 static const matec_id WBLOCK_3( "WBLOCK_3" );
-static const skill_id skill_stabbing( "stabbing" );
-static const skill_id skill_cutting( "cutting" );
-static const skill_id skill_unarmed( "unarmed" );
-static const skill_id skill_bashing( "bashing" );
-static const skill_id skill_melee( "melee" );
 
 auto with_cross_z_melee_cost( const int base_cost, const tripoint_bub_ms &source,
                               const tripoint_bub_ms &target ) -> int
@@ -156,7 +151,8 @@ auto with_cross_z_melee_cost( const int base_cost, const tripoint_bub_ms &source
 auto technique_move_cost( const Character &self, const Creature &target, const item &weapon,
                           const ma_technique &technique ) -> int
 {
-    auto move_cost = with_cross_z_melee_cost( self.attack_cost( weapon ), self.pos(), target.pos() );
+    auto move_cost = with_cross_z_melee_cost( self.attack_cost( weapon ), self.bub_pos(),
+                                              target.bub_pos() );
     move_cost *= technique.move_cost_multiplier( self );
     move_cost += technique.move_cost_penalty( self );
     return move_cost;
@@ -593,7 +589,7 @@ auto character_requirement_reason( const Character &self, const ma_technique &te
         }
     }
 
-    if( tec.reqs.wall_adjacent && !g->m.is_wall_adjacent( self.pos() ) ) {
+    if( tec.reqs.wall_adjacent && !g->m.is_wall_adjacent( self.bub_pos() ) ) {
         return _( "needs to be near a wall" );
     }
 
@@ -1139,8 +1135,6 @@ melee::technique_prompt_suppression_guard::~technique_prompt_suppression_guard()
 {
     --technique_prompt_suppression_depth;
 }
-
-static const matec_id WBLOCK_3( "WBLOCK_3" );
 
 void player_hit_message( Character *attacker, const std::string &message,
                          Creature &t, int dam, bool crit = false );
@@ -2550,17 +2544,17 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
 
         if( !player_cancelled_throw ) {
             if( trajectory ) {
-                const auto distance = std::max( 1, rl_dist( t.pos(), trajectory->back() ) );
+                const auto distance = std::max( 1, rl_dist( t.bub_pos(), trajectory->back() ) );
                 const float fling_velocity = creature_throw::grabbed_throw_velocity( distance ) *
                                              ( technique.powerful_knockback ? 1.25f : 1.0f );
-                const units::angle throw_angle = coord_to_angle( t.pos(), trajectory->back() );
+                const units::angle throw_angle = coord_to_angle( t.bub_pos(), trajectory->back() );
 
                 g->fling_creature( &t, throw_angle, fling_velocity );
             } else {
                 const int kb_dist = rng( 1, technique.knockback_dist );
                 const float fling_velocity = creature_throw::grabbed_throw_velocity( kb_dist ) *
                                              ( technique.powerful_knockback ? 1.25f : 1.0f );
-                const units::angle throw_angle = coord_to_angle( kb_point, t.pos() );
+                const units::angle throw_angle = coord_to_angle( kb_point, t.bub_pos() );
 
                 g->fling_creature( &t, throw_angle, fling_velocity );
             }
@@ -2569,7 +2563,7 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         if( technique.stun_dur > 0 && !technique.powerful_knockback ) {
             t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
         }
-        if( t.pos() != prev_pos && !t.has_effect( effect_downed ) &&
+        if( t.bub_pos() != prev_pos && !t.has_effect( effect_downed ) &&
             can_be_downed_after_knockback( t ) && !one_in( 4 ) ) {
             t.add_effect( effect_downed, 1_turns );
         }

@@ -288,7 +288,7 @@ auto grabbing_strength_from( const Creature &grabber ) -> int
 auto adjacent_grabbing_strength( Character &you ) -> int
 {
     auto crowd = 0;
-    for( const tripoint &p : g->m.points_in_radius( you.pos(), 1, 0 ) ) {
+    for( const auto &p : g->m.points_in_radius( you.bub_pos(), 1, 0 ) ) {
         const Creature *const grabber = g->critter_at<Creature>( p );
         if( grabber != nullptr && grabber != &you && grabber->has_effect( effect_grabbing ) ) {
             crowd += grabbing_strength_from( *grabber );
