@@ -67,6 +67,7 @@
 #include "construction_group.h"
 #include "coordinates.h"
 #include "crafting.h"
+#include "creature_throw.h"
 #include "creature_tracker.h"
 #include "monster.h"
 #include "monster_action.h"
@@ -290,11 +291,8 @@ namespace
 
 auto fling_bash_damage( const Creature &c, const float flvel ) -> int
 {
-    const auto weight_bonus = std::clamp( static_cast<int>( to_gram( c.get_weight() ) / 100000 ),
-                                          0, 10 );
-    const auto size_bonus = std::max( 0, static_cast<int>( c.get_size() ) -
-                                         static_cast<int>( creature_size::medium ) ) * 4;
-    return std::max( 0, static_cast<int>( flvel ) + weight_bonus + size_bonus );
+    return creature_throw::flung_creature_bash_damage( c.get_size(),
+            static_cast<int>( to_gram( c.get_weight() ) ), flvel );
 }
 
 } // namespace

@@ -68,6 +68,20 @@ TEST_CASE( "grabbed creature throw eligibility follows size class", "[throwing],
                  creature_size::huge ) );
 }
 
+TEST_CASE( "lighter flung creatures are worse at breaking obstacles", "[throwing], [balance]" )
+{
+    constexpr auto velocity = 30.0f;
+
+    const auto squirrel_damage = creature_throw::flung_creature_bash_damage( creature_size::tiny,
+                                 1000, velocity );
+    const auto zombie_damage = creature_throw::flung_creature_bash_damage( creature_size::medium,
+                               80000, velocity );
+
+    CHECK( squirrel_damage < zombie_damage );
+    CHECK( squirrel_damage == 3 );
+    CHECK( zombie_damage == 39 );
+}
+
 TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[throwing][trap]" )
 {
     clear_all_state();
