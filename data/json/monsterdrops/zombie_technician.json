@@ -92,6 +92,7 @@
     "id": "mon_zombie_foreman_death_drops",
     "entries": [
       { "item": "rag", "count": [ 3, 6 ], "prob": 50 },
+      { "item": "hat_hard", "damage": [ 1, 4 ], "prob": 100 },
       { "group": "clothing_work_boots", "damage": [ 1, 4 ] },
       { "group": "clothing_work_pants", "damage": [ 1, 4 ] },
       { "group": "underwear", "damage": [ 1, 4 ] },
