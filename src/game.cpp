@@ -7500,15 +7500,20 @@ auto describe_map_part( const MapPart &part ) -> void
 }
 
 template<typename MapPart>
-auto maybe_play_describe_sound( const MapPart &part ) -> void
+auto maybe_play_describe_sound( const tripoint_bub_ms &target, const MapPart &part ) -> void
 {
-    if( !get_option<bool>( "DESCRIBE_TILE_SOUND" ) || part.bash.sound.empty() ) {
+    if( !get_option<bool>( "DESCRIBE_TILE_SOUND" ) || part.bash.sound_fail.empty() ) {
         return;
     }
 
-    const auto variant = sfx::has_variant_sound( "smash_success", part.id.str() ) ?
-                         part.id.str() : "default";
-    sfx::play_variant_sound( "smash_success", variant, 100 );
+    const auto variant = part.id.str();
+    const auto heard_volume = sfx::get_heard_volume( target );
+
+    if( sfx::has_variant_sound( "smash_fail", variant ) ) {
+        sfx::play_variant_sound( "smash_fail", variant, heard_volume );
+    } else if( sfx::has_variant_sound( "smash_success", variant ) ) {
+        sfx::play_variant_sound( "smash_success", variant, heard_volume );
+    }
 }
 
 auto describe_memorized_terrain( const memorized_terrain_tile &memory ) -> bool
@@ -7735,11 +7740,11 @@ auto game::describe_tile( const tripoint_bub_ms &target ) -> void
 
     if( *map_target == map_examine_target::furniture ) {
         const auto &furniture = m.furn( target ).obj();
-        maybe_play_describe_sound( furniture );
+        maybe_play_describe_sound( target, furniture );
         describe_map_part( furniture );
     } else {
         const auto &terrain = m.ter( target ).obj();
-        maybe_play_describe_sound( terrain );
+        maybe_play_describe_sound( target, terrain );
         describe_map_part( terrain );
     }
 }
