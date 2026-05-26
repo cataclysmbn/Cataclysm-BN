@@ -13,6 +13,7 @@
 #include <locale>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
@@ -5242,20 +5243,21 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         modtext += std::string( pgettext( "Adjective, as in diamond katana", "diamond" ) ) + " ";
     }
 
-    // Collects all flags from the item and its type, then iterates over them, checking if they have
-    // a tag and appending it to the tagtext if they do. This is used to display tags from both the
-    // item and its type, such as (wet), (XL), ect.
-
-    std::vector<flag_id> all_flags;
-
-    all_flags.insert( all_flags.end(), this->get_flags().begin(), this->get_flags().end() );
-
-    all_flags.insert( all_flags.end(), type->item_tags.begin(), type->item_tags.end() );
-
-    for( const flag_id &f : all_flags ) {
-        if( !f->tag().empty() ) {
-            tagtext += " " + f->tag();
-        }
+    // Collects all flags from the item and its type, then appends their display tags to the item
+    // name. This is used to display tags from both the item and its type, such as (wet) or (XL).
+    namespace ranges = std::ranges;
+    const auto display_tags = []( const auto & flags ) {
+        using namespace std::views;
+        const auto get_tag = transform( []( const flag_id & f ) -> const translation & { return f->tag(); } );
+        const auto has_tag = filter( []( const translation & tag ) { return !tag.empty(); } );
+        const auto translate_tag = transform( []( const translation & tag ) { return tag.translated(); } );
+        return flags | get_tag | has_tag | translate_tag;
+    };
+    std::vector<std::string> flag_tags;
+    ranges::copy( display_tags( get_flags() ), std::back_inserter( flag_tags ) );
+    ranges::copy( display_tags( type->item_tags ), std::back_inserter( flag_tags ) );
+    if( !flag_tags.empty() ) {
+        tagtext += " " + enumerate_as_string( flag_tags, enumeration_conjunction::space );
     }
 
     if( is_favorite ) {
