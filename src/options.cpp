@@ -236,7 +236,8 @@ auto options_manager::refresh_title_screen_option() -> void
     const auto old_value = option.getValue();
     option.vItems = title_screen::get_options();
     option.sDefault = title_screen::default_option_id;
-    option.setValue( option.getItemPos( old_value ) != -1 ? old_value : title_screen::default_option_id );
+    option.setValue( option.getItemPos( old_value ) != -1 ? old_value :
+                     title_screen::default_option_id );
 }
 
 void options_manager::addOptionToPage( const std::string &name, const std::string &page )

@@ -48,8 +48,8 @@ auto parent_path( const std::string &path ) -> std::string
 
 auto get_language_priority() -> std::vector<std::string>
 {
-    auto result = std::vector<std::string>{};
-    for ( const auto &language : get_lang_path_substring( get_language().id ) ) {
+    auto result = std::vector<std::string> {};
+    for( const auto &language : get_lang_path_substring( get_language().id ) ) {
         if( !language.empty() && !std::ranges::contains( result, language ) ) {
             result.emplace_back( language );
         }
@@ -62,9 +62,9 @@ auto get_language_priority() -> std::vector<std::string>
 
 auto get_all_languages() -> std::vector<std::string>
 {
-    auto result = std::vector<std::string>{};
-    for ( const auto &info : list_available_languages() ) {
-        for ( const auto &language : get_lang_path_substring( info.id ) ) {
+    auto result = std::vector<std::string> {};
+    for( const auto &info : list_available_languages() ) {
+        for( const auto &language : get_lang_path_substring( info.id ) ) {
             if( !language.empty() && !std::ranges::contains( result, language ) ) {
                 result.emplace_back( language );
             }
@@ -93,7 +93,8 @@ auto directory_title_name( const std::string &directory, const std::string &root
 {
     const auto normalized_directory = normalize_path( directory );
     const auto normalized_root = normalize_path( root );
-    const auto directory_name = std::filesystem::path( normalized_directory ).filename().generic_string();
+    const auto directory_name = std::filesystem::path(
+                                    normalized_directory ).filename().generic_string();
     if( mod_name ) {
         if( normalized_directory == normalized_root || directory_name == "title" ) {
             return *mod_name;
@@ -140,7 +141,7 @@ auto add_candidate_file( std::map<std::string, title_candidate> &candidates,
     }
     if( std::ranges::none_of( candidate.files, [&]( const title_file & file ) {
     return file.language == opts.language && file.path == opts.path;
-    } ) ) {
+} ) ) {
         candidate.files.emplace_back( opts.language, opts.path );
     }
 }
@@ -162,7 +163,7 @@ auto add_title_file( std::map<std::string, title_candidate> &candidates,
     const auto stem = std::filesystem::path( normalized_path ).stem().generic_string();
     const auto normalized_root = normalize_path( opts.root );
 
-    for ( const auto &language : opts.languages ) {
+    for( const auto &language : opts.languages ) {
         if( stem == language ) {
             if( opts.skip_root_language_titles && normalize_path( directory ) == normalized_root ) {
                 return;
@@ -202,14 +203,14 @@ auto get_title_files_from_root( const std::string &root ) -> std::vector<std::st
 auto add_title_files_from_root( std::map<std::string, title_candidate> &candidates,
                                 const title_scan_options &opts ) -> void
 {
-    for ( const auto &path : get_title_files_from_root( opts.root ) ) {
+    for( const auto &path : get_title_files_from_root( opts.root ) ) {
         add_title_file( candidates, opts, path );
     }
 }
 
 auto get_mod_search_roots( const MOD_INFORMATION &mod ) -> std::vector<std::string>
 {
-    auto result = std::vector<std::string>{};
+    auto result = std::vector<std::string> {};
     if( !mod.path.empty() ) {
         result.emplace_back( normalize_path( mod.path ) );
     }
@@ -224,11 +225,11 @@ auto get_mod_search_roots( const MOD_INFORMATION &mod ) -> std::vector<std::stri
 
 auto get_installed_mods() -> std::map<mod_id, MOD_INFORMATION>
 {
-    auto result = std::map<mod_id, MOD_INFORMATION>{};
-    for ( auto &mod : mod_management::load_mods_from( PATH_INFO::moddir() ) ) {
+    auto result = std::map<mod_id, MOD_INFORMATION> {};
+    for( auto &mod : mod_management::load_mods_from( PATH_INFO::moddir() ) ) {
         result[mod.ident] = std::move( mod );
     }
-    for ( auto &mod : mod_management::load_mods_from( PATH_INFO::user_moddir() ) ) {
+    for( auto &mod : mod_management::load_mods_from( PATH_INFO::user_moddir() ) ) {
         result[mod.ident] = std::move( mod );
     }
     return result;
@@ -237,7 +238,7 @@ auto get_installed_mods() -> std::map<mod_id, MOD_INFORMATION>
 auto title_path_for_candidate( const title_candidate &candidate,
                                const std::vector<std::string> &languages ) -> std::optional<std::string>
 {
-    for ( const auto &language : languages ) {
+    for( const auto &language : languages ) {
         const auto iter = std::ranges::find_if( candidate.files, [&]( const title_file & file ) {
             return file.language == language;
         } );
@@ -248,9 +249,10 @@ auto title_path_for_candidate( const title_candidate &candidate,
     return std::nullopt;
 }
 
-auto get_title_candidates( const std::vector<std::string> &languages ) -> std::vector<title_candidate>
+auto get_title_candidates( const std::vector<std::string> &languages ) ->
+std::vector<title_candidate>
 {
-    auto candidates = std::map<std::string, title_candidate>{};
+    auto candidates = std::map<std::string, title_candidate> {};
 
     add_title_files_from_root( candidates, title_scan_options{
         .option_prefix = builtin_option_prefix,
@@ -259,12 +261,12 @@ auto get_title_candidates( const std::vector<std::string> &languages ) -> std::v
         .skip_root_language_titles = true
     } );
 
-    for ( auto &[ident, mod] : get_installed_mods() ) {
+    for( auto &[ident, mod] : get_installed_mods() ) {
         auto mod_name = mod.name();
         if( mod_name.empty() ) {
             mod_name = ident.str();
         }
-        for ( const auto &root : get_mod_search_roots( mod ) ) {
+        for( const auto &root : get_mod_search_roots( mod ) ) {
             add_title_files_from_root( candidates, title_scan_options{
                 .root = root,
                 .languages = languages,
@@ -275,13 +277,13 @@ auto get_title_candidates( const std::vector<std::string> &languages ) -> std::v
         }
     }
 
-    auto result = std::vector<title_candidate>{};
-    for ( auto &[option, candidate] : candidates ) {
+    auto result = std::vector<title_candidate> {};
+    for( auto &[option, candidate] : candidates ) {
         if( title_path_for_candidate( candidate, languages ) ) {
             result.push_back( std::move( candidate ) );
         }
     }
-    std::ranges::sort( result, []( const title_candidate &lhs, const title_candidate &rhs ) {
+    std::ranges::sort( result, []( const title_candidate & lhs, const title_candidate & rhs ) {
         return localized_compare( std::make_pair( lhs.name, lhs.option ),
                                   std::make_pair( rhs.name, rhs.option ) );
     } );
@@ -291,7 +293,7 @@ auto get_title_candidates( const std::vector<std::string> &languages ) -> std::v
 auto get_base_title_path( const std::vector<std::string> &languages ) -> std::string
 {
     const auto title_dir = PATH_INFO::datadir() + "title/";
-    for ( const auto &language : languages ) {
+    for( const auto &language : languages ) {
         const auto path = title_dir + language + title_extension;
         if( file_exist( path ) ) {
             return path;
@@ -324,12 +326,12 @@ namespace title_screen
 auto options_from_candidates( const std::vector<title_candidate> &candidates ) ->
 std::vector<options_manager::id_and_option>
 {
-    auto result = std::vector<options_manager::id_and_option>{
+    auto result = std::vector<options_manager::id_and_option> {
         { default_option_id, to_translation( "Default" ) },
         { random_option_id, to_translation( "Random" ) },
     };
 
-    for ( const auto &candidate : candidates ) {
+    for( const auto &candidate : candidates ) {
         result.emplace_back( candidate.option, no_translation( candidate.name ) );
     }
 
@@ -362,8 +364,8 @@ auto resolve_path() -> std::string
 
     const auto candidates = get_title_candidates( languages );
     if( selected == random_option_id ) {
-        auto random_titles = std::vector<std::string>{ base_title };
-        for ( const auto &entry : candidates ) {
+        auto random_titles = std::vector<std::string> { base_title };
+        for( const auto &entry : candidates ) {
             if( const auto path = title_path_for_candidate( entry, languages ) ) {
                 random_titles.push_back( *path );
             }
@@ -371,7 +373,8 @@ auto resolve_path() -> std::string
         return random_entry( random_titles, base_title );
     }
 
-    const auto candidate = std::ranges::find_if( candidates, [&selected]( const title_candidate &entry ) {
+    const auto candidate = std::ranges::find_if( candidates, [&selected]( const title_candidate &
+    entry ) {
         return entry.option == selected;
     } );
     if( candidate == candidates.end() ) {
