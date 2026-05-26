@@ -7488,7 +7488,8 @@ enum class map_examine_target : int {
     furniture,
 };
 
-auto describe_map_part( const map_data_common_t &part ) -> void
+template<typename MapPart>
+auto describe_map_part( const MapPart &part ) -> void
 {
     add_msg( _( "That is a %s." ), colorize( part.name(), part.color() ) );
 
@@ -7496,6 +7497,18 @@ auto describe_map_part( const map_data_common_t &part ) -> void
     if( !description.empty() ) {
         add_msg( "%s", colorize( description, c_light_gray ) );
     }
+}
+
+template<typename MapPart>
+auto maybe_play_describe_sound( const MapPart &part ) -> void
+{
+    if( !get_option<bool>( "DESCRIBE_TILE_SOUND" ) || part.bash.sound.empty() ) {
+        return;
+    }
+
+    const auto variant = sfx::has_variant_sound( "smash_success", part.id.str() ) ?
+                         part.id.str() : "default";
+    sfx::play_variant_sound( "smash_success", variant, 100 );
 }
 
 auto describe_memorized_terrain( const memorized_terrain_tile &memory ) -> bool
@@ -7721,9 +7734,13 @@ auto game::describe_tile( const tripoint_bub_ms &target ) -> void
     }
 
     if( *map_target == map_examine_target::furniture ) {
-        describe_map_part( m.furn( target ).obj() );
+        const auto &furniture = m.furn( target ).obj();
+        maybe_play_describe_sound( furniture );
+        describe_map_part( furniture );
     } else {
-        describe_map_part( m.ter( target ).obj() );
+        const auto &terrain = m.ter( target ).obj();
+        maybe_play_describe_sound( terrain );
+        describe_map_part( terrain );
     }
 }
 
