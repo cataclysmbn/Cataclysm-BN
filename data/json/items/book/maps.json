@@ -183,13 +183,7 @@
     "color": "blue",
     "use_action": {
       "type": "reveal_map",
-      "terrain": [         
-        "subway",
-        "sub_station",
-        "microlab_sub_connector",
-        "microlab_sub_station",
-        "lab_train_depot"
-      ],
+      "terrain": [ "subway", "sub_station", "microlab_sub_connector", "microlab_sub_station", "lab_train_depot" ],
       "radius": 180,
       "message": "You add the hidden stations to your map"
     },

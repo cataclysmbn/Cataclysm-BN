@@ -1290,13 +1290,10 @@
     "vision_day": 50,
     "vision_night": 12,
     "harvest": "CBM_TECH",
-    "special_attacks": [ 
+    "special_attacks": [
       {
         "type": "spell",
-        "spell_data": {
-          "id": "zombie_foreman_summoning",
-          "hit_self": true
-        },
+        "spell_data": { "id": "zombie_foreman_summoning", "hit_self": true },
         "cooldown": 30,
         "monster_message": "The zombie foreman shouts and points, and spectral workers begin to gather around!"
       }
@@ -1334,7 +1331,7 @@
     "vision_day": 15,
     "vision_night": 15,
     "harvest": "CBM_TECH",
-    "special_attacks": [ [ "SMASH", 20 ], ],
+    "special_attacks": [ [ "SMASH", 20 ] ],
     "death_drops": "mon_zombie_technician_death_drops",
     "death_function": [ "DISINTEGRATE" ],
     "flags": [ "SEES", "HEARS", "SMELLS", "WARM", "BASHES", "GROUP_BASH", "POISON", "NO_BREATHE", "REVIVES" ]

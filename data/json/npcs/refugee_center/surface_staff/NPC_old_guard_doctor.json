@@ -179,7 +179,14 @@
     "value": 0,
     "item": "labmap_mission",
     "start": {
-      "assign_mission_target": { "om_terrain": "microlab_generic", "om_terrain_match_type": "EXACT", "reveal_radius": 1, "random": true, "search_range": 160, "z": -2 },
+      "assign_mission_target": {
+        "om_terrain": "microlab_generic",
+        "om_terrain_match_type": "EXACT",
+        "reveal_radius": 1,
+        "random": true,
+        "search_range": 160,
+        "z": -2
+      },
       "update_mapgen": {
         "place_monster": [
           { "monster": "mon_zombie_supply_sergeant", "x": 12, "y": 11, "chance": 100 },
