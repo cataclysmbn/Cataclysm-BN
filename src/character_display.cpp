@@ -921,7 +921,7 @@ static void draw_skills_info( const catacurses::window &w_info, const Character 
             params["character"] = &you;
             params["skill"] = selectedSkill->ident();
         } );
-        const auto extra_text = hook_results.get_or( "text", std::string() );
+        const auto extra_text = hook_results.results.get_or( "text", std::string() );
         if( !extra_text.empty() ) {
             description += "\n\n" + extra_text;
         }
@@ -1235,7 +1235,7 @@ static bool handle_player_display_action( Character &you, unsigned int &line,
                         params["character"] = &you;
                         params["skill"] = selectedSkill->ident();
                     } );
-                    if( !hook_results.get_or( "handled", false ) ) {
+                    if( !hook_results.results.get_or( "handled", false ) ) {
                         you.get_skill_level_object( selectedSkill->ident() ).toggleTraining();
                     }
                 }

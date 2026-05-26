@@ -1694,10 +1694,10 @@ static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
 
     sol::table cata_tbl = lua.create_table();
     cata_tbl.set_function( "run_hooks", [&state]( const std::string & name ) -> sol::table {
-        return cata::run_hooks( name, nullptr, { .state = &state } );
+        return cata::run_hooks( name, nullptr, { .state = &state } ).results;
     } );
     cata_tbl.set_function( "run_hooks_exit_early", [&state]( const std::string & name ) -> sol::table {
-        return cata::run_hooks( name, nullptr, { .exit_early = true, .state = &state } );
+        return cata::run_hooks( name, nullptr, { .exit_early = true, .state = &state } ).results;
     } );
     lua.globals()["cata"] = cata_tbl;
 }
@@ -1740,6 +1740,17 @@ TEST_CASE( "lua_hooks_order_and_chaining", "[lua]" )
 
     // Ensure hooks can override params.prev and affect downstream hooks.
     CHECK( results_tbl.get<std::string>( "prev_seen" ) == "p5_ret" );
+
+    const auto hook_results = cata::run_hooks( "on_game_load", nullptr, { .state = &state } );
+    CHECK( hook_results.allowed );
+    REQUIRE( hook_results.returns.size() == 3 );
+    CHECK( hook_results.returns[0].mod_id == "m10" );
+    CHECK( hook_results.returns[0].priority == 10 );
+    CHECK( hook_results.returns[0].value.as<std::string>() == "p10_ret" );
+    CHECK( hook_results.returns[1].mod_id == "m5" );
+    CHECK( hook_results.returns[1].priority == 5 );
+    CHECK( hook_results.returns[1].value.as<std::string>() == "p5_ret" );
+    CHECK( hook_results.returns[2].value.as<std::string>() == "legacy_ret" );
 }
 
 TEST_CASE( "lua_hooks_exit_early", "[lua]" )
@@ -1760,6 +1771,12 @@ TEST_CASE( "lua_hooks_exit_early", "[lua]" )
     CHECK( log_tbl.get<std::string>( 1 ) == "p10" );
     CHECK( results_tbl.get<bool>( "allowed" ) == false );
     CHECK( log_tbl.get<sol::optional<std::string>>( 2 ) == sol::nullopt );
+
+    const auto hook_results = cata::run_hooks( "on_game_save", nullptr, { .exit_early = true, .state = &state } );
+    CHECK( !hook_results.allowed );
+    REQUIRE( hook_results.returns.size() == 1 );
+    CHECK( hook_results.returns[0].mod_id == "m10" );
+    CHECK( hook_results.returns[0].value.as<bool>() == false );
 }
 
 // ─── Hook wiring tests ───────────────────────────────────────────────────────

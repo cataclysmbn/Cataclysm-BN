@@ -7916,7 +7916,7 @@ bool game::npc_menu( npc &who, const bool &force )
 {
     if( !force ) {
         const auto allowed = cata::run_hooks( "on_try_npc_interaction",
-        [&]( auto & params ) { params["npc"] = &who; }, { .exit_early = true } ).get_or( "allowed", true );
+        [&]( auto & params ) { params["npc"] = &who; }, { .exit_early = true } ).allowed;
         if( !allowed ) { return false; }
     }
     cata::run_hooks( "on_npc_interaction", [&]( auto & params ) { params["npc"] = &who; } );
@@ -8468,7 +8468,7 @@ void game::examine( const tripoint_bub_ms &examp )
             }
 
             const auto allowed = cata::run_hooks( "on_try_monster_interaction", [&]( auto & params ) { params["monster"] = mon; },
-            { .exit_early = true } ).get_or( "allowed", true );
+            { .exit_early = true } ).allowed;
             if( allowed ) {
                 if( mon->has_effect( effect_pet ) && !u.is_mounted() ) {
                     if( monexamine::pet_menu( *mon ) ) {
@@ -12541,8 +12541,8 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
             }
         } );
 
-        if( !hook_results.get_or( "allowed", true ) ||
-            !char_hook_results.get_or( "allowed", true ) ) {
+        if( !hook_results.allowed ||
+            !char_hook_results.allowed ) {
             return false;
         }
     }

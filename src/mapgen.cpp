@@ -394,8 +394,10 @@ class mapgen_factory
             // Stuff used in lua code only
             // Yes a mod could blow something up...
             // But it makes itself widely known
-            result = cata::run_hooks( "on_make_mapgen_factory_list", [&]( auto & params ) { params["results"] = &result; } ).get_or( "results",
-                    result );
+            const auto hook_results = cata::run_hooks( "on_make_mapgen_factory_list", [&]( auto & params ) {
+                params["results"] = &result;
+            } );
+            result = hook_results.results.get_or( "results", result );
             return result;
         }
 

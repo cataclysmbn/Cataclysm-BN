@@ -1212,9 +1212,11 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
         params["npc"] = this;
         params["next_topic"] = d.topic_stack.back().id;
     } );
-    for( const auto &result : hook_results ) {
-        if( !result.second.is<sol::table>() ) { continue; };
-        auto new_topic = result.second.as<sol::table>().get<std::string>( "result" );
+    for( const auto &hook_return : hook_results.returns ) {
+        if( !hook_return.value.is<std::string>() ) {
+            continue;
+        }
+        const auto new_topic = hook_return.value.as<std::string>();
         if( !new_topic.empty() && new_topic != d.topic_stack.back().id ) {
             d.add_topic( new_topic );
         }
@@ -1245,12 +1247,12 @@ void npc::talk_to_u( bool radio_contact, bool enforce_first_topic )
             params["next_topic"] = next.id;
         } );
         auto final_result = d.topic_stack.back().id;
-        for( const auto &result : hook_results ) {
-            if( !result.second.is<sol::table>() ) { continue; };
-            final_result = result.second.as<sol::table>().get_or<std::string>( "result", final_result );
+        for( const auto &hook_return : hook_results.returns ) {
+            if( hook_return.value.is<std::string>() ) {
+                final_result = hook_return.value.as<std::string>();
+            }
             // Allow higher priority topics to veto, but still trigger subsequent calls?
-            // auto allowed = result.second.as<sol::table>().get<sol::object>( "allowed" );
-            // if ( allowed.is<bool>() && !allowed.as<bool>() ) { break; };
+            // if( !hook_results.allowed ) { break; }
         }
         if( !final_result.empty() && final_result != d.topic_stack.back().id ) {
             next = talk_topic( final_result );

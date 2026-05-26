@@ -1,18 +1,36 @@
 #pragma once
 
 #include <functional>
+#include <string>
 #include <string_view>
+#include <vector>
 
-#include "catalua_sol_fwd.h"
+#include "catalua_sol.h"
 
 namespace cata
 {
 
 struct lua_state;
 
+using hook_init_fn = std::function < auto( sol::table &params ) -> void >;
+
 struct hook_opts {
     bool exit_early = false;
     lua_state *state = nullptr;
+};
+
+/// One Lua callback return value from a hook run.
+struct hook_return {
+    std::string mod_id;
+    int priority = 0;
+    sol::object value;
+};
+
+/// C++ result of running every callback for one hook.
+struct hook_run_result {
+    bool allowed = true;
+    sol::table results;
+    std::vector<hook_return> returns;
 };
 
 /// Run Lua hooks registered with given name.
@@ -25,10 +43,10 @@ struct hook_opts {
 ///
 /// During execution, `params.results` is a table shared by all hooks, and `params.prev`
 /// contains the previous hook's return value.
-/// Returns `params.results`.
-auto run_hooks( std::string_view hook_name,
-                std::function < auto( sol::table &params ) -> void > init = nullptr,
-const hook_opts &opts = {} ) -> sol::table;
+/// Returns a C++ struct with the shared `params.results`, aggregate `allowed` flag, and
+/// each callback return value kept separate.
+auto run_hooks( std::string_view hook_name, hook_init_fn init = nullptr, const hook_opts &opts = {} )
+-> hook_run_result;
 
 /// Return whether a hook currently has registered entries without building params/results tables.
 auto has_hooks( std::string_view hook_name, const hook_opts &opts = {} ) -> bool;

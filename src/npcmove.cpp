@@ -2636,8 +2636,8 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
         }
     } );
 
-    if( !hook_results.get_or( "allowed", true ) ||
-        !char_hook_results.get_or( "allowed", true ) ) {
+    if( !hook_results.allowed ||
+        !char_hook_results.allowed ) {
         return;
     }
 
