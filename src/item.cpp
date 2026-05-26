@@ -5230,9 +5230,9 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         modtext += std::string( pgettext( "Adjective, as in diamond katana", "diamond" ) ) + " ";
     }
 
-    // These two loops go over all flags, static and dynamic, and adds their json-defined "tag" display strings
-    // to the item name. Used for things like (wet) or (XL) that are implemented as flags, but
-    // also for mod-added json flags that might not be known in advance.
+    // Collects all flags from the item and its type, then iterates over them, checking if they have
+    // a tag and appending it to the tagtext if they do. This is used to display tags from both the
+    // item and its type, such as (wet), (XL), ect.
 
     std::vector<flag_id> all_flags;
 
