@@ -1106,7 +1106,8 @@ struct hook_cleanup {
 // Append an entry backed by a C++ callable to a global hook list.
 // Returns the table index so the caller can build a hook_cleanup.
 template<typename Fn>
-static auto push_hook( sol::state &lua, const std::string &name, Fn &&fn ) -> std::pair<sol::table, int>
+static auto push_hook( sol::state &lua, const std::string &name,
+                       Fn &&fn ) -> std::pair<sol::table, int>
 {
     sol::table list = lua["game"]["hooks"][name];
     auto *L = lua.lua_state();
