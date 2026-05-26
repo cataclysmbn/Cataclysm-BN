@@ -4735,7 +4735,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
                       proj.impact.type_damage( DT_STAB ) > 0 ||
                       proj.impact.type_damage( DT_BULLET ) > 0;
     if( const optional_vpart_position vp = veh_at( p ) ) {
-        if( origin.z > p.z && vp->part_with_feature( "ROOF", true ) ) {
+        if( origin.z() > p.z() && vp->part_with_feature( "ROOF", true ) ) {
             const int roof = vp->vehicle().roof_at_part( vp->part_index() );
             dam = vp->vehicle().damage( roof, dam, inc ? DT_HEAT : DT_STAB, hit_items, false );
         } else {
