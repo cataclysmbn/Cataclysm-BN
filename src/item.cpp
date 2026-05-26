@@ -6276,7 +6276,7 @@ int item::get_comestible_fun() const
     if( !is_comestible() ) {
         return 0;
     }
-    int fun = get_comestible()->fun;
+    auto fun = get_comestible()->fun;
     for( const flag_id &flag : item_tags ) {
         fun += flag->taste_mod();
     }
@@ -6284,7 +6284,7 @@ int item::get_comestible_fun() const
         fun += flag->taste_mod();
     }
 
-    return fun;
+    return static_cast<int>( get_var( "comestible_fun", static_cast<double>( fun ) ) );
 }
 
 bool item::goes_bad() const

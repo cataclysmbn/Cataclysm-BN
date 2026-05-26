@@ -20,6 +20,7 @@ gapi.add_on_every_x_hook(TimeDuration.from_turns(300), function(...)
 end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
+game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
 
 -- Mapgen
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end

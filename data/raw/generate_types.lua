@@ -393,6 +393,16 @@ on_monster_try_move = {}
 ---@field mount Creature?
 on_character_try_move = {}
 
+---@class OnCraftResultParams
+---@field crafter Character
+---@field craft Item?
+---@field item Item
+---@field recipe RecipeRaw
+---@field batch_size integer
+---@field hot_result boolean
+---@field dehydrated_result boolean
+on_craft_result = {}
+
 ---@class OnCharacterResetStatsParams
 ---@field character Character
 on_character_reset_stats = {}
