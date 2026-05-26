@@ -56,8 +56,11 @@ void active_item_cache::add( item &it )
 
 bool active_item_cache::empty() const
 {
-    return std::all_of( active_items.begin(), active_items.end(), []( const auto & active_queue ) {
-        return active_queue.second.second.empty();
+    return std::ranges::all_of( active_items, []( const auto & active_queue ) {
+        return std::ranges::none_of( active_queue.second.second, []( const cache_reference<item>
+        &active_item ) {
+            return static_cast<bool>( active_item );
+        } );
     } );
 }
 
@@ -80,7 +83,14 @@ std::vector<item *> active_item_cache::get()
 
 std::vector<item *> active_item_cache::get_for_processing()
 {
-    std::vector<item *> items_to_process;
+    auto items_to_process = std::vector<item *> {};
+    get_for_processing( items_to_process );
+    return items_to_process;
+}
+
+auto active_item_cache::get_for_processing( std::vector<item *> &items_to_process ) -> void
+{
+    items_to_process.clear();
     for( std::pair < const int, std::pair<int, std::vector<cache_reference<item>>>> &kv :
          active_items ) {
         //The algorithm here is a bit weird. We're going to process a fraction of the list at a time, keeping track of where we are in the list with a simple int.
@@ -118,7 +128,6 @@ std::vector<item *> active_item_cache::get_for_processing()
             }
         }
     }
-    return items_to_process;
 }
 
 std::vector<item *> active_item_cache::get_special( special_item_type type )

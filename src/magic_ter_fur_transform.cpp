@@ -167,7 +167,7 @@ std::optional<furn_str_id> ter_furn_transform::next_furn( const std::string &fla
 
 template<class T, class K>
 bool ter_furn_transform::add_message( const std::map<K, ter_furn_data<T>> &list, const K &key,
-                                      const Creature &critter, const tripoint &location ) const
+                                      const Creature &critter, const tripoint_bub_ms &location ) const
 {
     const std::optional<ter_furn_data<T>> result = find_transform( list, key );
     if( result && !result->has_msg() ) {
@@ -179,13 +179,14 @@ bool ter_furn_transform::add_message( const std::map<K, ter_furn_data<T>> &list,
     return false;
 }
 
-void ter_furn_transform::add_all_messages( const Creature &critter, const tripoint &location ) const
+void ter_furn_transform::add_all_messages( const Creature &critter,
+        const tripoint_bub_ms &location ) const
 {
     add_all_messages( get_map(), critter, location );
 }
 
 void ter_furn_transform::add_all_messages( const map &m, const Creature &critter,
-        const tripoint &location ) const
+        const tripoint_bub_ms &location ) const
 {
     const ter_id ter_at_loc = m.ter( location );
     if( !add_message( ter_transform, ter_at_loc->id, critter, location ) ) {
@@ -208,12 +209,12 @@ void ter_furn_transform::add_all_messages( const map &m, const Creature &critter
     }
 }
 
-void ter_furn_transform::transform( const tripoint &location ) const
+void ter_furn_transform::transform( const tripoint_bub_ms &location ) const
 {
     transform( get_map(), location );
 }
 
-void ter_furn_transform::transform( map &m, const tripoint &location ) const
+void ter_furn_transform::transform( map &m, const tripoint_bub_ms &location ) const
 {
     const ter_id ter_at_loc = m.ter( location );
     std::optional<ter_str_id> ter_potential = next_ter( ter_at_loc->id );

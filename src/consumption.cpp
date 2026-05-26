@@ -843,7 +843,7 @@ bool Character::eat( item &food, bool force )
     int charges_used = 0;
     if( food.type->has_use() ) {
         if( !food.type->can_use( "PETFOOD" ) ) {
-            charges_used = food.type->invoke( *this->as_player(), food, pos() );
+            charges_used = food.type->invoke( *this->as_player(), food, bub_pos() );
             if( charges_used <= 0 ) {
                 return false;
             }
@@ -1065,7 +1065,7 @@ void Character::modify_morale( item &food, int nutr )
 
     if( food.has_flag( flag_EATEN_HOT ) ) {
         auto heater = find_food_heater( *this, crafting_inventory(),
-                                        get_map().has_nearby_fire( pos(), PICKUP_RANGE ) );
+                                        get_map().has_nearby_fire( bub_pos(), PICKUP_RANGE ) );
         if( heater && heater->consume( *this ) ) {
             add_msg_player_or_npc( m_good,
                                    _( "You heat up your %1$s using the %2$s." ),
@@ -1231,7 +1231,7 @@ bool Character::consume_effects( item &food )
         mod_pain( 5 );
         int numslime = 1;
         for( int i = 0; i < numslime; i++ ) {
-            if( monster *const slime = g->place_critter_around( mon_player_blob, pos(), 1 ) ) {
+            if( monster *const slime = g->place_critter_around( mon_player_blob, bub_pos(), 1 ) ) {
                 slime->friendly = -1;
             }
         }
@@ -1675,7 +1675,7 @@ bool Character::consume_med( item &target )
 
     int amount_used = 1;
     if( target.type->has_use() ) {
-        amount_used = target.type->invoke( *this->as_player(), target, pos() );
+        amount_used = target.type->invoke( *this->as_player(), target, bub_pos() );
         if( amount_used <= 0 ) {
             return false;
         }

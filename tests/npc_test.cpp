@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "coordinates.h"
 #include "faction.h"
 #include "field.h"
 #include "field_type.h"
@@ -24,8 +25,6 @@
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player_helpers.h"
-#include "point.h"
-#include "reality_bubble_helpers.h"
 #include "state_helpers.h"
 #include "text_snippets.h"
 #include "type_id.h"
@@ -184,14 +183,6 @@ TEST_CASE( "on_load-similar-to-per-turn", "[.]" )
     }
 }
 
-TEST_CASE( "npc_reality_bubble_resize_preserves_zlevel", "[.]" )
-{
-    CHECK( reality_bubble::local_square_from_global( tripoint( 60, 61, 1 ),
-            tripoint( 12, 12, 1 ) ) == tripoint( 48, 49, 1 ) );
-    CHECK( reality_bubble::local_square_from_global( tripoint( 60, 61, -1 ),
-            tripoint( 12, 12, -1 ) ) == tripoint( 48, 49, -1 ) );
-}
-
 TEST_CASE( "snippet-tag-test" )
 {
     clear_all_state();
@@ -246,7 +237,7 @@ constexpr char setup[height][width + 1] = {
     "    #####        ",
 };
 
-static void check_npc_movement( const tripoint &origin )
+static void check_npc_movement( const tripoint_bub_ms &origin )
 {
     const efftype_id effect_bouldering( "bouldering" );
 
@@ -260,7 +251,7 @@ static void check_npc_movement( const tripoint &origin )
                 case 'M':
                 case 'B':
                 case 'C':
-                    tripoint p = origin + point( x, y );
+                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
                     npc *guy = g->critter_at<npc>( p );
                     REQUIRE( guy != nullptr );
                     guy->move();
@@ -273,7 +264,7 @@ static void check_npc_movement( const tripoint &origin )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             if( setup[y][x] == 'A' ) {
-                tripoint p = origin + point( x, y );
+                tripoint_bub_ms p = origin + point_rel_ms( x, y );
                 npc *guy = g->critter_at<npc>( p );
                 REQUIRE( guy != nullptr );
                 CHECK( !guy->has_effect( effect_bouldering ) );
@@ -285,7 +276,7 @@ static void check_npc_movement( const tripoint &origin )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             if( setup[y][x] == 'R' ) {
-                tripoint p = origin + point( x, y );
+                tripoint_bub_ms p = origin + point_rel_ms( x, y );
                 npc *guy = g->critter_at<npc>( p );
                 REQUIRE( guy != nullptr );
                 CHECK( guy->has_effect( effect_bouldering ) );
@@ -300,7 +291,7 @@ static void check_npc_movement( const tripoint &origin )
                 case 'W':
                 case 'M':
                     CAPTURE( setup[y][x] );
-                    tripoint p = origin + point( x, y );
+                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
                     npc *guy = g->critter_at<npc>( p );
                     CHECK( guy != nullptr );
                     break;
@@ -314,7 +305,7 @@ static void check_npc_movement( const tripoint &origin )
             switch( setup[y][x] ) {
                 case 'B':
                 case 'C':
-                    tripoint p = origin + point( x, y );
+                    tripoint_bub_ms p = origin + point_rel_ms( x, y );
                     npc *guy = g->critter_at<npc>( p );
                     CHECK( guy == nullptr );
                     break;
@@ -333,14 +324,14 @@ TEST_CASE( "npc-movement" )
     const vpart_id vpart_frame_vertical( "frame_vertical" );
     const vpart_id vpart_seat( "seat" );
 
-    g->place_player( tripoint( 60, 60, 0 ) );
+    g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
 
     Character &player_character = get_player_character();
     map &here = get_map();
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
-            const tripoint p = player_character.pos() + point( x, y );
+            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms( x, y );
             // create walls
             if( type == '#' ) {
                 here.ter_set( p, t_reinforced_glass );
@@ -368,8 +359,8 @@ TEST_CASE( "npc-movement" )
             if( type == 'V' || type == 'W' || type == 'M' ) {
                 vehicle *veh = here.add_vehicle( vproto_id( "none" ), p, 270_degrees, 0, 0 );
                 REQUIRE( veh != nullptr );
-                veh->install_part( point_zero, vpart_frame_vertical );
-                veh->install_part( point_zero, vpart_seat );
+                veh->install_part( tripoint_mnt_veh::zero(), vpart_frame_vertical );
+                veh->install_part( tripoint_mnt_veh::zero(), vpart_seat );
                 here.add_vehicle_to_cache( veh );
             }
             // spawn npcs
@@ -381,7 +372,8 @@ TEST_CASE( "npc-movement" )
                     guy->randomize();
                     // Repeat until we get an NPC vulnerable to acid
                 } while( guy->is_immune_field( fd_acid ) );
-                guy->spawn_at_precise( {g->get_levx(), g->get_levy()}, p );
+                const auto remain = project_remain<coords::sm>( here.bub_to_abs( p ) );
+                guy->spawn_at_precise( remain.quotient, remain.remainder_tripoint );
                 // Set the shopkeep mission; this means that
                 // the NPC deems themselves to be guarding and stops them
                 // wandering off in search of distant ammo caches, etc.
@@ -401,7 +393,7 @@ TEST_CASE( "npc-movement" )
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const char type = setup[y][x];
-            const tripoint p = player_character.pos() + point( x, y );
+            const tripoint_bub_ms p = player_character.bub_pos() + point_rel_ms( x, y );
             if( type == '#' ) {
                 REQUIRE( !here.passable( p ) );
             } else {
@@ -430,16 +422,16 @@ TEST_CASE( "npc-movement" )
     }
 
     SECTION( "NPCs escape dangerous terrain by pushing other NPCs" ) {
-        check_npc_movement( player_character.pos() );
+        check_npc_movement( player_character.bub_pos() );
     }
 
     SECTION( "Player in vehicle & NPCs escaping dangerous terrain" ) {
-        const tripoint origin = player_character.pos();
+        const auto origin = player_character.bub_pos();
 
         for( int y = 0; y < height; ++y ) {
             for( int x = 0; x < width; ++x ) {
                 if( setup[y][x] == 'V' ) {
-                    g->place_player( player_character.pos() + point( x, y ) );
+                    g->place_player( player_character.bub_pos() + point_rel_ms( x, y ) );
                     break;
                 }
             }
@@ -457,14 +449,14 @@ TEST_CASE( "npc_can_target_player" )
 
     g->faction_manager_ptr->create_if_needed();
 
-    g->place_player( tripoint_zero );
+    g->place_player( tripoint_bub_ms::zero() );
 
     clear_npcs();
     clear_creatures();
 
     Character &player_character = get_player_character();
-    npc &hostile = spawn_npc( player_character.pos().xy() + point_south, "thug" );
-    REQUIRE( rl_dist( player_character.pos(), hostile.pos() ) <= 1 );
+    npc &hostile = spawn_npc( player_character.bub_pos().xy() + point_south, "thug" );
+    REQUIRE( rl_dist( player_character.bub_pos(), hostile.bub_pos() ) <= 1 );
     hostile.set_attitude( NPCATT_KILL );
     hostile.name = "Enemy NPC";
 
@@ -478,17 +470,19 @@ TEST_CASE( "npc_can_target_player" )
 TEST_CASE( "npc_move_through_vehicle_holes" )
 {
     clear_all_state();
-    g->place_player( tripoint( 65, 55, 0 ) );
-    tripoint origin( 60, 60, 0 );
+    map &here = get_map();
+    g->place_player( tripoint_bub_ms( 65, 55, 0 ) );
+    tripoint_bub_ms origin( 60, 60, 0 );
 
     get_map().add_vehicle( vproto_id( "apc" ), origin, -45_degrees, 0, 0 );
     get_map().build_map_cache( 0 );
 
-    tripoint mon_origin = origin + tripoint( -2, 1, 0 );
+    tripoint_bub_ms mon_origin = origin + tripoint_rel_ms( -2, 1, 0 );
 
     shared_ptr_fast<npc> guy = make_shared_fast<npc>();
     guy->randomize();
-    guy->spawn_at_precise( {g->get_levx(), g->get_levy()}, mon_origin );
+    const auto remain = project_remain<coords::sm>( here.bub_to_abs( mon_origin ) );
+    guy->spawn_at_precise( remain.quotient, remain.remainder_tripoint );
 
     ACTIVE_OVERMAP_BUFFER.insert_npc( guy );
     g->load_npcs();

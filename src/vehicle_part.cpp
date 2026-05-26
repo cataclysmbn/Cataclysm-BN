@@ -49,7 +49,8 @@ vehicle_part::vehicle_part( vehicle *veh )
 vehicle_part::vehicle_part()
     : id( vpart_id::NULL_ID() ), base( new fake_item_location() ), items( new fake_item_location() ) {}
 
-vehicle_part::vehicle_part( const vpart_id &vp, point dp, detached_ptr<item> &&obj, vehicle *veh )
+vehicle_part::vehicle_part( const vpart_id &vp, const tripoint_mnt_veh &dp,
+                            detached_ptr<item> &&obj, vehicle *veh )
     : mount( dp ), id( vp ),
       base( new vehicle_base_item_location( veh, hack_id ) ),
       items( new vehicle_item_location( veh, hack_id ) )
@@ -161,16 +162,16 @@ detached_ptr<item> vehicle_part::properties_to_item() const
             tmp->reset_cable();
         } else {
             if( data->intermap_connection() ) {
-                if( data->con1.point.raw() == target.first ) {
+                if( data->con1.point == target.first ) {
                     data->unset_con2( tmp.get() );
-                } else if( data->con2.point.raw() == target.first ) {
+                } else if( data->con2.point == target.first ) {
                     data->unset_con1( tmp.get() );
                 } else {
                     tmp->reset_cable();
                 }
                 if( !has_flag( targets_grid ) ) {
                     map &here = get_map();
-                    const tripoint local_pos = here.getlocal( target.first );
+                    const auto local_pos = here.abs_to_bub( target.first );
                     if( !here.veh_at( local_pos ) ) {
                         // That vehicle ain't there no more.
                         tmp->set_flag( flag_NO_DROP );
@@ -384,7 +385,7 @@ void vehicle_part::ammo_unset()
     }
 }
 
-int vehicle_part::ammo_consume( int qty, const tripoint &pos )
+int vehicle_part::ammo_consume( int qty, const tripoint_bub_ms &pos )
 {
     if( is_tank() && !base->contents.empty() ) {
         const int res = std::min( ammo_remaining(), qty );
@@ -466,7 +467,7 @@ bool vehicle_part::can_reload( const item *obj ) const
     return ammo_remaining() < ammo_capacity();
 }
 
-void vehicle_part::process_contents( const tripoint &pos, const bool e_heater )
+void vehicle_part::process_contents( const tripoint_bub_ms &pos, const bool e_heater )
 {
     // for now we only care about processing food containers since things like
     // fuel don't care about temperature yet
@@ -562,7 +563,7 @@ void vehicle_part::unset_crew()
     crew_id = character_id();
 }
 
-void vehicle_part::reset_target( const tripoint &pos )
+void vehicle_part::reset_target( const tripoint_abs_ms &pos )
 {
     target.first = pos;
     target.second = pos;
@@ -666,8 +667,8 @@ bool vehicle::can_enable( const vehicle_part &pt, bool alert ) const
     }
 
     // Disallow running a planter underground for now
-    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.pos() ) ||
-            global_pos3().z < 0 ) ) {
+    if( pt.info().has_flag( "PLANTER" ) && ( !warm_enough_to_plant( g->u.abs_pos() ) ||
+            bub_ms_location().z() < 0 ) ) {
         if( alert ) {
             add_msg( m_bad, _( "It is too cold to plant anything now." ) );
         }

@@ -35,7 +35,7 @@ void live_view::hide()
     ui = nullptr;
 }
 
-void live_view::show( const tripoint &p )
+void live_view::show( const tripoint_bub_ms &p )
 {
     mouse_position = p;
     if( !ui ) {

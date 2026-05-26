@@ -22,6 +22,7 @@
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "color.h"
+#include "coordinates.h"
 #include "damage.h"
 #include "debug.h"
 #include "debug_menu.h"
@@ -39,7 +40,6 @@
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
-#include "point.h"
 
 class player;
 #include "material.h"
@@ -848,7 +848,7 @@ class iuse_function_wrapper : public iuse_actor
             : iuse_actor( type ), cpp_function( f ) { }
 
         ~iuse_function_wrapper() override = default;
-        int use( player &p, item &it, bool a, const tripoint &pos ) const override {
+        int use( player &p, item &it, bool a, const tripoint_bub_ms &pos ) const override {
             return ( *cpp_function )( &p, &it, a, pos );
         }
         std::unique_ptr<iuse_actor> clone() const override {
@@ -2016,35 +2016,8 @@ void Item_factory::load( islot_armor &slot, const JsonObject &jo, const std::str
     assign( jo, "valid_mods", slot.valid_mods, strict );
 
     if( jo.has_array( "armor_portion_data" ) ) {
-        bool dont_add_first = false;
-        if( !slot.data.empty() ) { // Uses copy-from
-            dont_add_first = true;
-            const JsonObject &obj = *jo.get_array( "armor_portion_data" ).begin();
-
-            if( obj.has_array( "encumbrance" ) ) {
-                slot.data[0].encumber = obj.get_array( "encumbrance" ).get_int( 0 );
-                slot.data[0].max_encumber = obj.get_array( "encumbrance" ).get_int( 1 );
-            } else if( obj.has_int( "encumbrance" ) ) {
-                slot.data[0].encumber = obj.get_int( "encumbrance" );
-                slot.data[0].max_encumber = slot.data[0].encumber;
-            }
-            if( obj.has_int( "coverage" ) ) {
-                slot.data[0].coverage = obj.get_int( "coverage" );
-            }
-            body_part_set temp_cover_data;
-            assign_coverage_from_json( obj, "covers", temp_cover_data, slot.sided );
-            if( temp_cover_data.any() ) {
-                slot.data[0].covers = temp_cover_data;
-            }
-        }
-
+        slot.data.clear();
         for( const JsonObject &obj : jo.get_array( "armor_portion_data" ) ) {
-            // If this item used copy-from, data[0] is already set, so skip adding first data
-            if( dont_add_first ) {
-                obj.allow_omitted_members();
-                dont_add_first = false;
-                continue;
-            }
             armor_portion_data tempData;
             body_part_set temp_cover_data;
             assign_coverage_from_json( obj, "covers", temp_cover_data, slot.sided );

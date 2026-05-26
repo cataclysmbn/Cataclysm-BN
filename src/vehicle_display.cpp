@@ -51,6 +51,28 @@ char vehicle::part_sym( const int p, const bool exact ) const
     }
 }
 
+auto vehicle::part_display_direction( const int p, const bool roof ) const -> units::angle
+{
+    if( p < 0 || p >= static_cast<int>( parts.size() ) || parts[p].removed ) {
+        return face.dir();
+    }
+
+    int displayed_part = -1;
+    if( roof ) {
+        displayed_part = roof_at_part( p );
+    }
+    if( displayed_part < 0 || displayed_part >= static_cast<int>( parts.size() ) ||
+        parts[displayed_part].removed ) {
+        displayed_part = part_displayed_at( parts[p].mount );
+    }
+    if( displayed_part < 0 || displayed_part >= static_cast<int>( parts.size() ) ||
+        parts[displayed_part].removed ) {
+        return face.dir();
+    }
+
+    return normalize( face.dir() + parts[displayed_part].direction );
+}
+
 // similar to part_sym(int p) but for use when drawing SDL tiles. Called only by cata_tiles
 // during draw_vpart vector returns at least 1 element, max of 2 elements. If 2 elements the
 // second denotes if it is open or damaged

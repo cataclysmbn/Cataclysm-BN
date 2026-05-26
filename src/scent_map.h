@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "coordinates.h"
 #include "enums.h" // IWYU pragma: keep
 #include "point.h"
 #include "type_id.h"
@@ -40,7 +41,7 @@ class scent_map
 {
     protected:
         scenttype_id typescent;
-        std::optional<tripoint> player_last_position;
+        std::optional<tripoint_bub_ms> player_last_position;
         time_point player_last_moved = calendar::before_time_starts;
 
         const game &gm;
@@ -50,7 +51,7 @@ class scent_map
         // one non-zero scent value. Keyed by dimension_id to match MAPBUFFER_REGISTRY.
         // Populated by raw_scent_set(); pruned by decay() once all values reach zero.
         // Lets decay() skip the full mapbuffer scan for each dimension.
-        std::map<std::string, std::set<tripoint>> scent_submaps_;
+        std::map<std::string, std::set<tripoint_abs_sm>> scent_submaps_;
 
     public:
         scent_map( const game &g, map &m ) : gm( g ), m_( m ) { }
@@ -58,9 +59,9 @@ class scent_map
         void deserialize( const std::string &data, bool is_type = false );
         std::string serialize( bool is_type = false ) const;
 
-        void draw( const catacurses::window &win, int div, const tripoint &center ) const;
+        void draw( const catacurses::window &win, int div, const tripoint_bub_ms &center ) const;
 
-        void update( const tripoint &center, map &m );
+        void update( const tripoint_bub_ms &center, map &m );
         void reset();
         void decay();
 
@@ -70,17 +71,17 @@ class scent_map
          * The coordinate system is the same as the @ref map (`g->m`) uses.
          */
         /**@{*/
-        void set( const tripoint &p, int value, const scenttype_id &type = scenttype_id() );
-        int get( const tripoint &p ) const;
+        void set( const tripoint_bub_ms &p, int value, const scenttype_id &type = scenttype_id() );
+        int get( const tripoint_bub_ms &p ) const;
         /**@}*/
-        void set_unsafe( const tripoint &p, int value, const scenttype_id &type = scenttype_id() );
-        int get_unsafe( const tripoint &p ) const;
+        void set_unsafe( const tripoint_bub_ms &p, int value, const scenttype_id &type = scenttype_id() );
+        int get_unsafe( const tripoint_bub_ms &p ) const;
 
-        scenttype_id get_type( const tripoint &p ) const;
+        scenttype_id get_type( const tripoint_bub_ms &p ) const;
 
-        bool inbounds( const tripoint &p ) const;
-        bool inbounds( point p ) const {
-            return inbounds( tripoint( p, 0 ) );
+        bool inbounds( const tripoint_bub_ms &p ) const;
+        bool inbounds( point_bub_ms p ) const {
+            return inbounds( tripoint_bub_ms( p, 0 ) );
         }
 
     private:

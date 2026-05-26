@@ -122,7 +122,7 @@ void player_activity::init_all_moves( Character &who )
         speed.assistant_count = assistants().size();
     }
     if( type->bench_affected() ) {
-        speed.find_best_bench( who.pos() );
+        speed.find_best_bench( who.bub_pos() );
     }
     if( actor ) {
         speed.morale_factor_custom_formula = [&]( const Character & who ) {
@@ -172,8 +172,8 @@ std::vector<npc *> player_activity::get_assistants( const Character &who, unsign
         // NPCs can help craft if awake, taking orders, within pickup range and have clear path
         bool ok = guy.is_npc() && &guy != &who && !guy.in_sleep_state() && guy.is_obeying( who ) &&
                   guy.activity->id() != ACT_ASSIST &&
-                  rl_dist( guy.pos(), who.pos() ) < PICKUP_RANGE &&
-                  get_map().clear_path( who.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                  rl_dist( guy.bub_pos(), who.bub_pos() ) < PICKUP_RANGE &&
+                  get_map().clear_path( who.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
         if( ok ) {
             n++;
         }
@@ -207,7 +207,7 @@ static std::string craft_progress_message( const avatar &u, const player_activit
 
     // Horrid copypaste warning! TODO: Functions
     const recipe &rec = craft->get_making();
-    const tripoint bench_pos = get_map().getlocal( act.coords.front() );
+    const auto bench_pos = act.coords.front();
     // Ugly
     const auto bench_t = bench_type( act.values[craft_bench_type_idx] );
 
@@ -330,7 +330,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                                                         speed.moves_per_turn() ) ) );
             }
         } else {
-            if( !targets.empty() && targets.front().is_accessible() ) {
+            if( !targets.empty() && targets.front().is_accessible() && !targets.front().is_destroyed() ) {
                 target = string_format( ": %s", targets.front()->tname( targets.front()->count() ) );
             }
             if( moves_total > 0 ) {

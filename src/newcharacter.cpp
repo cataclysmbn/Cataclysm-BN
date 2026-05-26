@@ -919,11 +919,14 @@ tab_direction set_stats( avatar &u, points_left &points )
     // Setting the position to -1 ensures that the INBOUNDS check in
     // map.cpp is triggered. This check prevents access to invalid position
     // on the map (like -1,0) and instead returns a dummy default value.
-    u.setx( -1 );
+    auto old_pos = u.bub_pos();
+    old_pos.x() = -1;
+    u.setpos( old_pos );
     u.reset();
     // set position back to 0 to prevent out-of-bound access to lightmap
     // array in map::build_seen_cache()
-    u.setx( 0 );
+    old_pos.x() = 0;
+    u.setpos( old_pos );
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w );

@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.24)
 
+if (POLICY CMP0141)
+    cmake_policy(SET CMP0141 NEW)
+endif ()
+
 project(CataclysmBN C CXX)
 
 list(APPEND CMAKE_MODULE_PATH
@@ -10,7 +14,10 @@ if (NOT VCPKG_MANIFEST_MODE)
 endif()
 
 
-include(FormatSource)
+option(CATA_FORMAT_TARGETS "Enable C++ formatting targets" ON)
+if (CATA_FORMAT_TARGETS)
+    include(FormatSource)
+endif ()
 include(FetchContent)
 
 set(CMAKE_TLS_VERIFY ON)
@@ -285,7 +292,7 @@ if (NOT MSVC)
         # Use debug prefix map for ccache compatibility with git worktrees
         # see https://ccache.dev/manual/latest.html#_compiling_in_different_directories
         file(RELATIVE_PATH REL_SRC_PATH "${CMAKE_BINARY_DIR}" "${CMAKE_SOURCE_DIR}")
-        set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -ffile-prefix-map=${REL_SRC_PATH}=.")
+        set(CATA_OTHER_FLAGS "${CATA_OTHER_FLAGS} -ffile-prefix-map=${REL_SRC_PATH}=/")
     endif()
     # Compact the whitespace in the warning string
     string(REGEX REPLACE "[\t ]+" " " CATA_WARNINGS "${CATA_WARNINGS}")

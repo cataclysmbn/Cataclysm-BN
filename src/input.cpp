@@ -386,6 +386,17 @@ void input_manager::init_keycode_mapping()
     add_keycode_pair( KEY_END,       translate_marker_context( "key name", "END" ) );
     add_keycode_pair( '\n',          translate_marker_context( "key name", "RETURN" ) );
     add_keycode_pair( KEY_DC,        translate_marker_context( "key name", "DELETE" ) );
+    add_keycode_pair( NUMPAD_0,      translate_marker_context( "key name", "NUMPAD_0" ) );
+    add_keycode_pair( NUMPAD_1,      translate_marker_context( "key name", "NUMPAD_1" ) );
+    add_keycode_pair( NUMPAD_2,      translate_marker_context( "key name", "NUMPAD_2" ) );
+    add_keycode_pair( NUMPAD_3,      translate_marker_context( "key name", "NUMPAD_3" ) );
+    add_keycode_pair( NUMPAD_4,      translate_marker_context( "key name", "NUMPAD_4" ) );
+    add_keycode_pair( NUMPAD_5,      translate_marker_context( "key name", "NUMPAD_5" ) );
+    add_keycode_pair( NUMPAD_6,      translate_marker_context( "key name", "NUMPAD_6" ) );
+    add_keycode_pair( NUMPAD_7,      translate_marker_context( "key name", "NUMPAD_7" ) );
+    add_keycode_pair( NUMPAD_8,      translate_marker_context( "key name", "NUMPAD_8" ) );
+    add_keycode_pair( NUMPAD_9,      translate_marker_context( "key name", "NUMPAD_9" ) );
+
 
     for( int c = 0; IS_CTRL_CHAR( c ); c++ ) {
         // Some codes fall into this range but have more common names we'd prefer to use.
@@ -1017,33 +1028,35 @@ void rotate_direction_cw( int &dx, int &dy )
     dy = dir_num / 3 - 1;
 }
 
-std::optional<tripoint> input_context::get_direction( const std::string &action ) const
+std::optional<tripoint_rel_ms> input_context::get_direction( const std::string &action ) const
 {
-    static const auto noop = static_cast<tripoint( * )( tripoint )>( []( tripoint p ) {
+    static const auto noop = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( [](
+    tripoint_rel_ms p ) {
         return p;
     } );
-    static const auto rotate = static_cast<tripoint( * )( tripoint )>( []( tripoint p ) {
-        rotate_direction_cw( p.x, p.y );
+    static const auto rotate = static_cast<tripoint_rel_ms( * )( tripoint_rel_ms )>( [](
+    tripoint_rel_ms p ) {
+        rotate_direction_cw( p.x(), p.y() );
         return p;
     } );
     const auto transform = iso_mode && tile_iso && use_tiles ? rotate : noop;
 
     if( action == "UP" ) {
-        return transform( tripoint_north );
+        return transform( tripoint_rel_ms::north() );
     } else if( action == "DOWN" ) {
-        return transform( tripoint_south );
+        return transform( tripoint_rel_ms::south() );
     } else if( action == "LEFT" ) {
-        return transform( tripoint_west );
+        return transform( tripoint_rel_ms::west() );
     } else if( action == "RIGHT" ) {
-        return transform( tripoint_east );
+        return transform( tripoint_rel_ms::east() );
     } else if( action == "LEFTUP" ) {
-        return transform( tripoint_north_west );
+        return transform( tripoint_rel_ms::north_west() );
     } else if( action == "RIGHTUP" ) {
-        return transform( tripoint_north_east );
+        return transform( tripoint_rel_ms::north_east() );
     } else if( action == "LEFTDOWN" ) {
-        return transform( tripoint_south_west );
+        return transform( tripoint_rel_ms::south_west() );
     } else if( action == "RIGHTDOWN" ) {
-        return transform( tripoint_south_east );
+        return transform( tripoint_rel_ms::south_east() );
     } else {
         return std::nullopt;
     }
@@ -1461,7 +1474,8 @@ bool gamepad_available()
     return false;
 }
 
-std::optional<tripoint> input_context::get_coordinates( const catacurses::window &capture_win )
+std::optional<tripoint_bub_ms> input_context::get_coordinates( const catacurses::window
+        &capture_win )
 {
     if( !coordinate_input_received ) {
         return std::nullopt;
@@ -1474,13 +1488,13 @@ std::optional<tripoint> input_context::get_coordinates( const catacurses::window
         return std::nullopt;
     }
 
-    point view_offset;
+    point_bub_ms view_offset;
     if( capture_win == g->w_terrain ) {
         view_offset = g->ter_view_p.xy();
     }
 
-    const point p = view_offset - ( view_size / 2 - coordinate );
-    return tripoint( p, g->get_levz() );
+    const point_bub_ms p = view_offset - ( view_size / 2 - coordinate );
+    return tripoint_bub_ms( p, g->get_levz() );
 }
 #endif
 

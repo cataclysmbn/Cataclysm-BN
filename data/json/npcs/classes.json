@@ -240,6 +240,21 @@
   },
   {
     "type": "npc_class",
+    "id": "NC_SCAVENGER_DOCMISSION",
+    "name": { "str": "Scavenger" },
+    "job_description": "I'm just trying to survive.",
+    "traits": [ { "group": "BG_survival_story_EVACUEE" }, { "group": "NPC_starting_traits" }, { "group": "Appearance_demographics" } ],
+    "common": false,
+    "skills": [
+      { "skill": "ALL", "level": { "sum": [ { "dice": [ 3, 2 ] }, { "constant": -3 } ] } },
+      { "skill": "gun", "bonus": { "rng": [ 2, 4 ] } },
+      { "skill": "pistol", "bonus": { "rng": [ 2, 5 ] } },
+      { "skill": "rifle", "bonus": { "rng": [ 0, 3 ] } },
+      { "skill": "archery", "bonus": { "rng": [ 0, 3 ] } }
+    ]
+  },
+  {
+    "type": "npc_class",
     "id": "NC_WANDERING_SCAVENGER",
     "name": { "str": "Wandering Scavenger" },
     "//": "spawns in the res_lawn_randomnpc nested mapgen",
@@ -277,6 +292,23 @@
       { "skill": "gun", "bonus": { "rng": [ 2, 4 ] } },
       { "skill": "rifle", "bonus": { "rng": [ 2, 4 ] } },
       { "skill": "archery", "bonus": { "rng": [ 2, 4 ] } },
+      { "skill": "barter", "bonus": { "rng": [ 2, 5 ] } }
+    ]
+  },
+  {
+    "type": "npc_class",
+    "id": "NC_EXTERMINATOR",
+    "name": { "str": "Wasp Exterminator" },
+    "job_description": "I'm on a crusade against wasps.",
+    "traits": [ { "group": "NPC_starting_traits" }, { "group": "Appearance_demographics" } ],
+    "common": false,
+    "bonus_per": { "rng": [ 2, 4 ] },
+    "shopkeeper_item_group": "NC_EXTERMINATOR_misc",
+    "weapon_override": "NC_EXTERMINATOR_launcher",
+    "skills": [
+      { "skill": "ALL", "level": { "sum": [ { "dice": [ 3, 2 ] }, { "rng": [ 0, -4 ] } ] } },
+      { "skill": "gun", "bonus": { "rng": [ 2, 4 ] } },
+      { "skill": "launcher", "bonus": { "rng": [ 2, 4 ] } },
       { "skill": "barter", "bonus": { "rng": [ 2, 5 ] } }
     ]
   },

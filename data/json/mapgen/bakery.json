@@ -156,7 +156,7 @@
       ],
       "place_nested": [
         { "chunks": [ [ "roof_2x2_golf", 10 ], [ "null", 80 ] ], "x": 4, "y": 10 },
-        { "chunks": [ [ "roof_16x16_help", 2 ], [ "null", 80 ] ], "x": 4, "y": 5 },
+        { "chunks": [ [ "roof_16x16_help", 2 ], [ "roof_12x12_aircraft", 5 ], [ "null", 80 ] ], "x": 4, "y": 5 },
         {
           "chunks": [ [ "roof_4x4_utility_1", 30 ], [ "roof_4x4_utility", 20 ], [ "roof_5x5_coop", 50 ] ],
           "x": [ 10, 12 ],

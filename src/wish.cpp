@@ -575,7 +575,7 @@ class wish_monster_callback: public uilist_callback
         ~wish_monster_callback() override = default;
 };
 
-void debug_menu::wishmonster( const std::optional<tripoint> &p )
+void debug_menu::wishmonster( const std::optional<tripoint_bub_ms> &p )
 {
     std::vector<const mtype *> mtypes;
 
@@ -605,9 +605,9 @@ void debug_menu::wishmonster( const std::optional<tripoint> &p )
         wmenu.query();
         if( wmenu.ret >= 0 ) {
             const mtype_id &mon_type = mtypes[ wmenu.ret ]->id;
-            if( std::optional<tripoint> spawn = p ? p : g->look_around( LA_MODE_3D ) ) {
+            if( std::optional<tripoint_bub_ms> spawn = p ? p : g->look_around( LA_MODE_3D ) ) {
                 int num_spawned = 0;
-                for( const tripoint &destination : closest_points_first( *spawn, cb.group ) ) {
+                for( const tripoint_bub_ms &destination : closest_points_first( *spawn, cb.group ) ) {
                     monster *const mon = g->place_critter_at( mon_type, destination );
                     if( !mon ) {
                         continue;
@@ -730,19 +730,19 @@ class wish_item_callback: public uilist_callback
 
 void debug_menu::wishitem( Character *who )
 {
-    wishitem( who, tripoint( -1, -1, -1 ) );
+    wishitem( who, tripoint_bub_ms( -1, -1, -1 ) );
 }
 
-void debug_menu::wishitem( Character *who, const tripoint &pos )
+void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
 {
-    if( who == nullptr && pos.x <= 0 ) {
+    if( who == nullptr && pos.x() <= 0 ) {
         debugmsg( "game::wishitem(): invalid parameters" );
         return;
     }
     std::vector<std::pair<std::string, const itype *>> opts;
     for( const itype *i : item_controller->all() ) {
         //TODO!: push up
-        auto it = item::spawn_temporary( i, calendar::start_of_cataclysm );
+        auto it = item::spawn_temporary( i, calendar::turn );
         if( it->has_flag( flag_VARSIZE ) ) {
             it->set_flag( flag_FIT );
         }
@@ -835,7 +835,7 @@ void debug_menu::wishitem( Character *who, const tripoint &pos )
                         }
                     }
                     who->invalidate_crafting_inventory();
-                } else if( pos.x >= 0 && pos.y >= 0 ) {
+                } else if( pos.x() >= 0 && pos.y() >= 0 ) {
                     g->m.add_item_or_charges( pos, item::spawn( *granted ) );
                     wmenu.ret = -1;
                 }

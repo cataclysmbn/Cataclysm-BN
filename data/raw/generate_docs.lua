@@ -149,7 +149,7 @@ local fmt_members = function(typename, members)
   else
     local ret = ""
 
-    local ss = function(a, b) return field_sort_order(a.v) < field_sort_order(b.v) end
+    local ss = function(a, b) return field_sort_less(a.v, b.v) end
 
     local members_sorted = sort_by(wrapped(members), ss)
 

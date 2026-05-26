@@ -12,6 +12,7 @@
 #include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
+#include "coordinates.h"
 #include "creature.h"
 #include "dispersion.h"
 #include "fstream_utils.h"
@@ -23,7 +24,6 @@
 #include "npc.h"
 #include "player.h"
 #include "player_helpers.h"
-#include "point.h"
 #include "ranged.h"
 #include "state_helpers.h"
 #include "test_statistics.h"
@@ -224,7 +224,7 @@ static void assert_encumbrance( npc &shooter, int encumbrance )
     }
 }
 
-static constexpr tripoint shooter_pos( 60, 60, 0 );
+static constexpr tripoint_bub_ms shooter_pos( 60, 60, 0 );
 
 TEST_CASE( "unskilled_shooter_accuracy", "[ranged][balance][slow][!mayfail]" )
 {

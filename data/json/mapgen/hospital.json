@@ -312,7 +312,11 @@
           "x": [ 1, 20 ],
           "y": [ 64, 67 ]
         },
-        { "chunks": [ [ "null", 40 ], [ "roof_16x16_help", 60 ] ], "x": [ 25, 30 ], "y": [ 48, 55 ] }
+        {
+          "chunks": [ [ "null", 40 ], [ "roof_16x16_help", 60 ], [ "roof_12x12_aircraft", 5 ] ],
+          "x": [ 25, 30 ],
+          "y": [ 48, 55 ]
+        }
       ],
       "place_vehicles": [ { "vehicle": "helicopters", "x": 10, "y": 56, "chance": 80, "rotation": 270 } ]
     }

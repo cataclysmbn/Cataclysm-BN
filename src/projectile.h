@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "damage.h"
-#include "point.h"
+#include "coordinates.h"
 #include "string_id.h"
 #include "detached_ptr.h"
 
@@ -84,16 +84,16 @@ struct dealt_projectile_attack {
     projectile proj; // What we used to deal the attack
     Creature *hit_critter; // The critter that stopped the projectile or null
     dealt_damage_instance dealt_dam; // If hit_critter isn't null, hit data is written here
-    tripoint end_point; // Last hit tile (is hit_critter is null, drops should spawn here)
+    tripoint_bub_ms end_point; // Last hit tile (is hit_critter is null, drops should spawn here)
     double missed_by; // Accuracy of dealt attack
-    std::vector<tripoint> trajectory; // Actual simulated path, including source tile
+    std::vector<tripoint_bub_ms> trajectory; // Actual simulated path, including source tile
     bool suppress_damage_message = false;
 };
 
-void apply_ammo_effects( const tripoint &p, const std::set<ammo_effect_str_id> &effects,
+void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<ammo_effect_str_id> &effects,
                          Creature *source );
 // Legacy. TODO: Remove
-void apply_ammo_effects( const tripoint &p, const std::set<std::string> &effects,
+void apply_ammo_effects( const tripoint_bub_ms &p, const std::set<std::string> &effects,
                          Creature *source );
 int max_aoe_size( const std::set<ammo_effect_str_id> &tags );
 int max_aoe_size( const std::set<std::string> &tags );

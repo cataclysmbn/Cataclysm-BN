@@ -116,12 +116,12 @@ bool repair_part( vehicle &veh, vehicle_part &pt, Character &who_c )
                       vp.install_requirements() :
                       vp.repair_requirements() * pt.damage_level( 4 );
 
-    const inventory &inv = who.crafting_inventory( who.pos(), PICKUP_RANGE, !who.is_npc() );
+    const inventory &inv = who.crafting_inventory( who.bub_pos(), PICKUP_RANGE, !who.is_npc() );
     inventory map_inv;
     // allow NPCs to use welding rigs they can't see ( on the other side of a vehicle )
     // as they have the handicap of not being able to use the veh interaction menu
     // or able to drag a welding cart etc.
-    map_inv.form_from_map( who.pos(), PICKUP_RANGE, &who_c, false, !who.is_npc() );
+    map_inv.form_from_map( who.bub_pos(), PICKUP_RANGE, &who_c, false, !who.is_npc() );
     if( !reqs.can_make_with_inventory( inv, is_crafting_component ) ) {
         who.add_msg_if_player( m_info, _( "You don't meet the requirements to repair the %s." ),
                                pt.name() );
@@ -156,9 +156,9 @@ bool repair_part( vehicle &veh, vehicle_part &pt, Character &who_c )
     bool wasbroken = pt.is_broken();
     if( wasbroken ) {
         const units::angle dir = pt.direction;
-        point loc = pt.mount;
+        auto loc = pt.mount;
         auto replacement_id = pt.info().get_id();
-        get_map().spawn_items( who.pos(), pt.pieces_for_broken_part() );
+        get_map().spawn_items( who.bub_pos(), pt.pieces_for_broken_part() );
         veh.remove_part( part_index );
         const int partnum = veh.install_part( loc, replacement_id, std::move( base ) );
         veh.part( partnum ).direction = dir;

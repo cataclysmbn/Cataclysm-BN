@@ -1,10 +1,12 @@
 #pragma once
 
+#include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <functional>
+#include <span>
 #include <string>
 #include <vector>
-#include <algorithm>
 
 #include "math_defines.h"
 #include "point.h"
@@ -193,6 +195,36 @@ inline int rl_dist( point a, point b )
 {
     return rl_dist( tripoint( a, 0 ), tripoint( b, 0 ) );
 }
+
+struct rl_dist_lookup_table_dimensions {
+    int max_dx = 0;
+    int max_dy = 0;
+    int max_dz = 0;
+    bool trigdist = false;
+};
+
+class rl_dist_lookup_table
+{
+    public:
+        auto matches( const rl_dist_lookup_table_dimensions &dimensions ) const -> bool;
+        auto reset( const rl_dist_lookup_table_dimensions &dimensions ) -> void;
+
+        auto distance_2d( int dx, int dy ) const -> int;
+        auto distance_3d( int dx, int dy, int dz ) const -> int;
+        auto row_2d( int dy ) const -> std::span<const uint16_t>;
+        auto row_3d( int dy, int dz ) const -> std::span<const uint16_t>;
+
+    private:
+        auto index_2d( int dx, int dy ) const -> size_t;
+        auto index_3d( int dx, int dy, int dz ) const -> size_t;
+
+        rl_dist_lookup_table_dimensions dimensions_;
+        std::vector<uint16_t> distances_2d_;
+        std::vector<uint16_t> distances_3d_;
+};
+
+auto get_rl_dist_lookup_table( const rl_dist_lookup_table_dimensions &dimensions ) ->
+const rl_dist_lookup_table &;
 
 /**
  * Helper type for the return value of dist_fast().

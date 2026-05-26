@@ -32,25 +32,19 @@
         "......##oo#######oo####.",
         "........................"
       ],
-      "palettes": [ "standard_domestic_palette" ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_landscaping_palette" ],
       "terrain": {
-        "%": [ "t_region_shrub", "t_region_shrub_fruit", "t_region_shrub_decorative" ],
-        "[": [ [ "t_region_tree_fruit", 2 ], [ "t_region_tree_nut", 2 ], "t_region_tree_shade" ],
-        "!": "t_region_groundcover_urban",
+        "&": "t_gates_mech_control",
         "=": "t_door_metal_locked",
-        "_": "t_pavement",
-        "&": "t_gates_control_brick",
         "G": "t_sidewalk",
         "K": "t_sidewalk",
         "~": "t_thconc_floor",
         "q": "t_thconc_floor",
         "A": "t_thconc_floor",
         "N": "t_thconc_floor",
-        "`": "t_concrete",
         "?": "t_fencegate_c",
         "$": "t_fence"
       },
-      "furniture": { "!": "f_region_flower" },
       "place_loot": [
         { "group": "mischw", "x": [ 13, 20 ], "y": [ 2, 11 ], "chance": 80, "repeat": [ 1, 4 ] },
         { "item": "television", "x": 7, "y": 19, "chance": 100 },

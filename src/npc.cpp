@@ -21,7 +21,6 @@
 #include "catalua_hooks.h"
 #include "catalua_sol.h"
 #include "clzones.h"
-#include "coordinate_conversions.h"
 #include "damage.h"
 #include "debug.h"
 #include "detached_ptr.h"
@@ -152,14 +151,11 @@ npc::npc()
     , cbm_fake_active( new fake_item_location( ) )
     , cbm_fake_toggled( new fake_item_location( ) )
 {
-    submap_coords = point_zero;
-    position.x = -1;
-    position.y = -1;
-    position.z = 500;
+    position = tripoint_abs_ms::zero();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_min;
-    guard_pos = tripoint_min;
+    wanted_item_pos = tripoint_bub_ms::min();
+    guard_pos = tripoint_abs_ms::min();
     goal = tripoint_abs_omt( tripoint_min );
     fetching_item = false;
     has_new_items = true;
@@ -190,15 +186,15 @@ npc::npc()
     character_funcs::normalize( *this );
 }
 
-standard_npc::standard_npc( const std::string &name, const tripoint &pos,
+standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
                             const std::vector<std::string> &clothing,
                             int sk_lvl, int s_str, int s_dex, int s_int, int s_per )
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
-    position = ( pos == tripoint_min )
-               ? tripoint( g_half_mapsize_x, g_half_mapsize_y, 0 )
-               : pos;
+    position = ( pos == tripoint_bub_ms::min() )
+               ? get_map().bub_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
+               : get_map().bub_to_abs( pos );
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -749,14 +745,16 @@ void npc::set_known_to_u( bool known )
     }
 }
 
-void npc::setpos( const tripoint &pos )
+void npc::setpos( const tripoint_bub_ms &pos )
 {
-    position = pos;
-    const point_abs_om pos_om_old( sm_to_om_copy( submap_coords ) );
-    submap_coords.x = g->get_levx() + pos.x / SEEX;
-    submap_coords.y = g->get_levy() + pos.y / SEEY;
-    // TODO: fix point types
-    const point_abs_om pos_om_new( sm_to_om_copy( submap_coords ) );
+    setpos( get_map().bub_to_abs( pos ) );
+}
+
+void npc::setpos( const tripoint_abs_ms &new_pos )
+{
+    const point_abs_om pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
+    const point_abs_om pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
+    Character::setpos( new_pos );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
         overmap &om_old = dim_ob.get( pos_om_old );
@@ -771,22 +769,14 @@ void npc::setpos( const tripoint &pos )
     }
 }
 
-void npc::onswapsetpos( const tripoint &pos )
+void npc::travel_overmap( const tripoint_abs_sm &pos )
 {
-    position = pos;
-    submap_coords.x = g->get_levx() + pos.x / SEEX;
-    submap_coords.y = g->get_levy() + pos.y / SEEY;
-}
-
-void npc::travel_overmap( const tripoint &pos )
-{
-    // TODO: fix point types
-    const point_abs_om pos_om_old( sm_to_om_copy( submap_coords ) );
+    const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     spawn_at_sm( pos );
-    const point_abs_om pos_om_new( sm_to_om_copy( submap_coords ) );
-    if( global_omt_location() == goal ) {
+    if( abs_omt_pos() == goal ) {
         reach_omt_destination();
     }
+    const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );
         overmap &om_old = dim_ob.get( pos_om_old );
@@ -794,58 +784,41 @@ void npc::travel_overmap( const tripoint &pos )
         if( const auto ptr = om_old.erase_npc( getID() ) ) {
             om_new.insert_npc( ptr );
         } else {
-            // Don't move the npc pointer around to avoid having two overmaps
-            // with the same npc pointer
             debugmsg( "could not find npc %s on its old overmap", name );
         }
     }
 }
 
-void npc::spawn_at_sm( const tripoint &p )
+void npc::spawn_at_sm( const tripoint_abs_sm &p )
 {
-    spawn_at_precise( p.xy(), tripoint( rng( 0, SEEX - 1 ), rng( 0, SEEY - 1 ), p.z ) );
+    spawn_at_precise( p.xy(), tripoint_sm_ms( rng( 0, SEEX - 1 ), rng( 0, SEEY - 1 ), p.z() ) );
 }
 
-void npc::spawn_at_precise( point submap_offset, const tripoint &square )
+void npc::spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square )
 {
-    submap_coords = submap_offset;
-    submap_coords.x += square.x / SEEX;
-    submap_coords.y += square.y / SEEY;
-    position.x = square.x % SEEX;
-    position.y = square.y % SEEY;
-    position.z = square.z;
-}
-
-tripoint npc::global_square_location() const
-{
-    return sm_to_ms_copy( submap_coords ) + tripoint( posx() % SEEX, posy() % SEEY, position.z );
+    // position is tripoint_abs_ms; combine submap origin with within-submap offset directly.
+    position = project_combine( submap_offset, square );
 }
 
 void npc::place_on_map()
 {
-    // The global absolute position (in map squares) of the npc is *always*
-    // "submap_coords.x * SEEX + posx() % SEEX" (analog for y).
-    // Use get_map() rather than g->m directly so that this function works
-    // correctly when called under a scoped_map_context (e.g. for out-of-bubble
-    // loaded regions whose tinymap is temporarily the active map).
-    const auto map_origin = get_map().get_abs_sub();
-    const point dm( submap_coords + point( -map_origin.x(), -map_origin.y() ) );
-    const point offset( position.x % SEEX, position.y % SEEY );
-    // value of "submap_coords.x * SEEX + posx()" is unchanged
-    setpos( tripoint( offset.x + dm.x * SEEX, offset.y + dm.y * SEEY, posz() ) );
+    // position is the authoritative absolute position; bub_pos() derives from it.
+    // Find an empty tile near the NPC's intended location.
+    const tripoint_bub_ms initial = bub_pos();
 
-    if( g->is_empty( pos() ) || is_mounted() ) {
+    if( g->is_empty( initial ) || is_mounted() ) {
         return;
     }
 
-    for( const tripoint &p : closest_points_first( pos(), SEEX + 1 ) ) {
+    for( const tripoint_bub_ms &p : closest_points_first( initial, SEEX + 1 ) ) {
         if( g->is_empty( p ) ) {
             setpos( p );
             return;
         }
     }
 
-    debugmsg( "Failed to place NPC in a valid location near (%d,%d,%d)", posx(), posy(), posz() );
+    debugmsg( "Failed to place NPC in a valid location near (%d,%d,%d)", initial.x(), initial.y(),
+              initial.z() );
 }
 
 skill_id npc::best_skill() const
@@ -1001,7 +974,8 @@ void npc::finish_read( item *it )
     const skill_id &skill = reading->skill;
     // NPCs don't need to identify the book or learn recipes yet.
     // NPCs don't read to other NPCs yet.
-    const bool display_messages = my_fac->id == faction_id( "your_followers" ) && g->u.sees( pos() );
+    const bool display_messages = my_fac->id == faction_id( "your_followers" ) &&
+                                  g->u.sees( bub_pos() );
     bool continuous = false; //whether to continue reading or not
 
     int book_fun_for = character_funcs::get_book_fun_for( *this, book );
@@ -1125,7 +1099,7 @@ void npc::do_npc_read()
             return;
         }
         if( can_read( *loc, fail_reasons ) ) {
-            if( g->u.sees( pos() ) ) {
+            if( g->u.sees( bub_pos() ) ) {
                 add_msg( m_info, _( "%s starts reading." ), disp_name() );
             }
             start_read( *loc, pl );
@@ -1149,7 +1123,7 @@ void npc::do_npc_craft( const std::optional<tripoint> & )
     menu.query();
 
     if( menu.ret == 0 ) {
-        craft( tripoint_zero );
+        craft( tripoint_bub_ms::zero() );
     } else if( menu.ret == 1 ) {
         struct resume_entry {
             item *it;
@@ -1160,19 +1134,19 @@ void npc::do_npc_craft( const std::optional<tripoint> & )
 
         visit_items( [&]( item * node ) {
             if( node->is_craft() ) {
-                found.push_back( { node, pos(), true } );
+                found.push_back( { node, bub_pos().raw(), true } );
             }
             return VisitResponse::NEXT;
         } );
 
         map &here = get_map();
-        for( const tripoint &adj : here.points_in_radius( pos(), PICKUP_RANGE ) ) {
+        for( const auto &adj : here.points_in_radius( bub_pos(), PICKUP_RANGE ) ) {
             if( !here.inbounds( adj ) || here.dangerous_field_at( adj ) ) {
                 continue;
             }
             for( item *itm : here.i_at( adj ) ) {
                 if( itm->is_craft() ) {
-                    found.push_back( { itm, adj, false } );
+                    found.push_back( { itm, adj.raw(), false } );
                 }
             }
         }
@@ -1195,15 +1169,15 @@ void npc::do_npc_craft( const std::optional<tripoint> & )
         if( pick.ret >= 0 && pick.ret < static_cast<int>( found.size() ) ) {
             const resume_entry &sel = found[pick.ret];
             item *target = sel.it;
-            tripoint target_pos = sel.pos;
+            auto target_pos = tripoint_bub_ms( sel.pos );
 
             if( !sel.in_inventory && can_pick_volume( *sel.it ) &&
                 can_pick_weight( *sel.it, false ) ) {
-                detached_ptr<item> det = here.i_rem( sel.pos, sel.it );
+                detached_ptr<item> det = here.i_rem( target_pos, sel.it );
                 if( det ) {
                     add_msg( _( "%1$s picks up the %2$s." ), name, det->tname() );
                     target = &i_add( std::move( det ) );
-                    target_pos = pos();
+                    target_pos = bub_pos();
                 }
             }
 
@@ -1287,7 +1261,7 @@ void npc::stow_weapon( )
     detached = wear_item( std::move( detached ), false );
     if( !detached ) {
         // Wearing the item was successful, remove weapon and post message.
-        if( g->u.sees( pos() ) ) {
+        if( g->u.sees( bub_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> wears the %s." ), weapon.tname() );
         }
         moves -= 15;
@@ -1298,7 +1272,7 @@ void npc::stow_weapon( )
 
     for( auto &e : worn ) {
         if( e->can_holster( weapon ) ) {
-            if( g->u.sees( pos() ) ) {
+            if( g->u.sees( bub_pos() ) ) {
                 //~ %1$s: weapon name, %2$s: holster name
                 add_msg_if_npc( m_info, _( "<npcname> puts away the %1$s in the %2$s." ),
                                 weapon.tname(), e->tname() );
@@ -1310,16 +1284,16 @@ void npc::stow_weapon( )
         }
     }
     if( volume_carried() + weapon.volume() <= volume_capacity() ) {
-        if( g->u.sees( pos() ) ) {
+        if( g->u.sees( bub_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> puts away the %s." ), weapon.tname() );
         }
         i_add( std::move( detached ) );
         moves -= 15;
     } else { // No room for weapon, so we drop it
-        if( g->u.sees( pos() ) ) {
+        if( g->u.sees( bub_pos() ) ) {
             add_msg_if_npc( m_info, _( "<npcname> drops the %s." ), weapon.tname() );
         }
-        g->m.add_item_or_charges( pos(), std::move( detached ) );
+        g->m.add_item_or_charges( bub_pos(), std::move( detached ) );
     }
 }
 
@@ -1338,7 +1312,7 @@ bool npc::wield( item &it )
     moves -= 15;
     set_primary_weapon( it.detach() );
 
-    if( g->u.sees( pos() ) ) {
+    if( g->u.sees( bub_pos() ) ) {
         add_msg_if_npc( m_info, _( "<npcname> wields a %s." ),  primary_weapon().tname() );
     }
     invalidate_range_cache();
@@ -1374,7 +1348,7 @@ detached_ptr<item> npc::wield( detached_ptr<item> &&target )
     return detached_ptr<item>();
 }
 
-void npc::drop( const drop_locations &what, const tripoint &target,
+void npc::drop( const drop_locations &what, const tripoint_bub_ms &target,
                 bool stash )
 {
     Character::drop( what, target, stash );
@@ -1527,7 +1501,7 @@ void npc::mutiny()
     if( !my_fac || !is_player_ally() ) {
         return;
     }
-    const bool seen = g->u.sees( pos() );
+    const bool seen = g->u.sees( bub_pos() );
     if( seen ) {
         add_msg( m_bad, _( "%s is tired of your incompetent leadership and abuse!" ), disp_name() );
     }
@@ -1552,8 +1526,8 @@ void npc::mutiny()
 
 float npc::vehicle_danger( int radius ) const
 {
-    const tripoint from( posx() - radius, posy() - radius, posz() );
-    const tripoint to( posx() + radius, posy() + radius, posz() );
+    const tripoint_bub_sm from( bub_pos().x() - radius, bub_pos().y() - radius, bub_pos().z() );
+    const tripoint_bub_sm to( bub_pos().x() + radius, bub_pos().y() + radius, bub_pos().z() );
     VehicleList vehicles = g->m.get_vehicles( from, to );
 
     int danger = 0;
@@ -1565,7 +1539,7 @@ float npc::vehicle_danger( int radius ) const
             // FIXME: this can't be the right way to do this
             units::angle facing = wrapped_veh.v->face.dir();
 
-            point a( wrapped_veh.v->global_pos3().xy() );
+            point a( wrapped_veh.v->bub_ms_location().xy().raw() );
             point b( static_cast<int>( a.x + units::cos( facing ) * radius ),
                      static_cast<int>( a.y + units::sin( facing ) * radius ) );
 
@@ -1578,11 +1552,12 @@ float npc::vehicle_danger( int radius ) const
             for( const vpart_reference &vpr : wrapped_veh.v->get_all_parts() ) {
                 last_part = &vpr.part();
             }
-            int size = std::max( last_part->mount.x, last_part->mount.y );
+            int size = std::max( last_part->mount.x(), last_part->mount.y() );
 
             double normal = std::sqrt( static_cast<float>( ( b.x - a.x ) * ( b.x - a.x ) + ( b.y - a.y ) *
                                        ( b.y - a.y ) ) );
-            int closest = static_cast<int>( std::abs( ( posx() - a.x ) * ( b.y - a.y ) - ( posy() - a.y ) *
+            int closest = static_cast<int>( std::abs( ( bub_pos().x() - a.x ) * ( b.y - a.y ) -
+                                            ( bub_pos().y() - a.y ) *
                                             ( b.x - a.x ) ) / normal );
 
             if( size > closest ) {
@@ -1742,10 +1717,10 @@ void npc::say( const std::string &line, const sounds::sound_t spriority ) const
     }
     // Sound happens even if we can't hear it
     if( spriority == sounds::sound_t::order || spriority == sounds::sound_t::alert ) {
-        sounds::sound( pos(), get_shout_volume(), spriority, sound, false, "speech",
+        sounds::sound( bub_pos(), get_shout_volume(), spriority, sound, false, "speech",
                        male ? "NPC_m" : "NPC_f" );
     } else {
-        sounds::sound( pos(), 16, sounds::sound_t::speech, sound, false, "speech",
+        sounds::sound( bub_pos(), 16, sounds::sound_t::speech, sound, false, "speech",
                        male ? "NPC_m_loud" : "NPC_f_loud" );
     }
 }
@@ -1901,7 +1876,7 @@ void npc::shop_restock()
     if( !ret.empty() ) {
         // Pick up nearby items as a free action since we'll be immediately deleting these items
         auto old_moves = moves;
-        for( map_cursor &cursor : map_selector( pos(), 0 ) ) {
+        for( map_cursor &cursor : map_selector( bub_pos(), 0 ) ) {
             cursor.remove_top_items_with( [this]( detached_ptr<item> &&it ) {
                 if( it->is_owned_by( *this ) ) {
                     inv.add_item( std::move( it ), false );
@@ -2287,10 +2262,16 @@ Attitude npc::attitude_to( const Creature &other ) const
     if( other.is_npc() || other.is_player() ) {
         const player &guy = dynamic_cast<const player &>( other );
         // check faction relationships first
-        if( has_faction_relationship( guy, npc_factions::kill_on_sight ) ) {
-            return Attitude::A_HOSTILE;
-        } else if( has_faction_relationship( guy, npc_factions::watch_your_back ) ) {
-            return Attitude::A_FRIENDLY;
+        const auto *guy_fac = guy.get_faction();
+        if( my_fac != nullptr && guy_fac != nullptr ) {
+            const auto rel_data = my_fac->relationship_flags_with( guy_fac->id );
+            if( rel_data != nullptr ) {
+                if( rel_data->test( npc_factions::kill_on_sight ) ) {
+                    return Attitude::A_HOSTILE;
+                } else if( rel_data->test( npc_factions::watch_your_back ) ) {
+                    return Attitude::A_FRIENDLY;
+                }
+            }
         }
     }
 
@@ -2340,8 +2321,8 @@ void npc::npc_dismount()
                  disp_name() );
         return;
     }
-    std::optional<tripoint> pnt;
-    for( const auto &elem : g->m.points_in_radius( pos(), 1 ) ) {
+    std::optional<tripoint_bub_ms> pnt;
+    for( const auto &elem : g->m.points_in_radius( bub_pos(), 1 ) ) {
         if( g->is_empty( elem ) ) {
             pnt = elem;
             break;
@@ -2408,7 +2389,7 @@ bool npc::emergency( float danger ) const
 //Active npcs are the npcs near the player that are actively simulated.
 bool npc::is_active() const
 {
-    return g->critter_at<npc>( pos() ) == this;
+    return g->critter_at<npc>( bub_pos() ) == this;
 }
 
 int npc::follow_distance() const
@@ -2416,8 +2397,8 @@ int npc::follow_distance() const
     // HACK: If the player is standing on stairs, follow closely
     // This makes the stair hack less painful to use
     if( is_walking_with() &&
-        ( g->m.has_flag( TFLAG_GOES_DOWN, g->u.pos() ) ||
-          g->m.has_flag( TFLAG_GOES_UP, g->u.pos() ) ) ) {
+        ( g->m.has_flag( TFLAG_GOES_DOWN, g->u.bub_pos() ) ||
+          g->m.has_flag( TFLAG_GOES_UP, g->u.bub_pos() ) ) ) {
         return 1;
     }
     // Uses ally_rule follow_distance_2 to determine if should follow by 2 or 4 tiles
@@ -2527,7 +2508,7 @@ auto npc::print_info( const catacurses::window &w, int line, int vLines, int col
     }
 
     const int per = g->u.get_per();
-    const int dist = rl_dist( g->u.pos(), pos() );
+    const int dist = rl_dist( g->u.bub_pos(), bub_pos() );
     int visibility_cap;
     if( per <= 1 ) {
         visibility_cap = INT_MAX;
@@ -2625,29 +2606,29 @@ std::string npc::opinion_text() const
     return ret;
 }
 
-static void maybe_shift( std::optional<tripoint> &pos, point d )
+static void maybe_shift( std::optional<tripoint_bub_ms> &pos, point_rel_ms d )
 {
     if( pos ) {
-        *pos += d;
+        *pos = *pos + d;
     }
 }
 
-static void maybe_shift( tripoint &pos, point d )
+static void maybe_shift( tripoint_bub_ms &pos, point_rel_ms d )
 {
-    if( pos != tripoint_min ) {
-        pos += d;
+    if( pos != tripoint_bub_ms::min() ) {
+        pos = pos + d;
     }
 }
 
-void npc::shift( point s )
+void npc::shift( point_rel_sm s )
 {
-    const point shift = sm_to_ms_copy( s );
+    const auto shift = project_to<coords::ms>( s );
 
-    setpos( pos() - shift );
-
-    maybe_shift( wanted_item_pos, point( -shift.x, -shift.y ) );
-    maybe_shift( last_player_seen_pos, point( -shift.x, -shift.y ) );
-    maybe_shift( pulp_location, point( -shift.x, -shift.y ) );
+    // position is absolute and doesn't need adjustment when the bubble shifts.
+    // Bubble-space cached fields still need offsetting.
+    maybe_shift( wanted_item_pos, point_rel_ms( -shift.x(), -shift.y() ) );
+    maybe_shift( last_player_seen_pos, point_rel_ms( -shift.x(), -shift.y() ) );
+    maybe_shift( pulp_location, point_rel_ms( -shift.x(), -shift.y() ) );
     path.clear();
 }
 
@@ -2667,8 +2648,8 @@ void npc::reboot()
     path.clear();
     last_player_seen_pos = std::nullopt;
     last_seen_player_turn = 999;
-    wanted_item_pos = tripoint_min;
-    guard_pos = tripoint_min;
+    wanted_item_pos = tripoint_bub_ms::min();
+    guard_pos = tripoint_abs_ms::min();
     goal = no_goal_point;
     fetching_item = false;
     has_new_items = true;
@@ -2682,7 +2663,7 @@ void npc::reboot()
     ai_cache.ally.reset();
     ai_cache.can_heal.clear_all();
     ai_cache.sound_alerts.clear();
-    ai_cache.s_abs_pos = tripoint_zero;
+    ai_cache.s_abs_pos = tripoint_abs_ms::zero();
     ai_cache.stuck = 0;
     ai_cache.guard_pos = std::nullopt;
     ai_cache.my_weapon_value = 0;
@@ -2707,7 +2688,7 @@ void npc::die( Creature *nkiller )
     // Need to unboard from vehicle before dying, otherwise
     // the vehicle code cannot find us
     if( in_vehicle ) {
-        g->m.unboard_vehicle( pos(), true );
+        g->m.unboard_vehicle( bub_pos(), true );
     }
     if( is_mounted() ) {
         monster *critter = mounted_creature.get();
@@ -2776,7 +2757,7 @@ void npc::die( Creature *nkiller )
 bool npc::is_simulated() const
 {
     return submap_loader.is_simulated( get_dimension(),
-                                       tripoint_abs_sm( global_sm_location() ) );
+                                       tripoint_abs_sm( abs_sm_pos() ) );
 }
 
 void npc::erase()
@@ -2785,7 +2766,7 @@ void npc::erase()
         return;
     }
     if( in_vehicle ) {
-        g->m.unboard_vehicle( pos(), true );
+        g->m.unboard_vehicle( bub_pos(), true );
     }
     if( is_mounted() ) {
         monster *critter = mounted_creature.get();
@@ -2983,16 +2964,16 @@ void npc::on_load()
     last_updated = calendar::turn;
 
     // for spawned npcs
-    if( g->m.has_flag( "UNSTABLE", pos() ) ) {
+    if( g->m.has_flag( "UNSTABLE", bub_pos() ) ) {
         add_effect( effect_bouldering, 1_turns, bodypart_str_id::NULL_ID() );
     } else if( has_effect( effect_bouldering ) ) {
         remove_effect( effect_bouldering );
     }
-    if( g->m.veh_at( pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) && !in_vehicle ) {
-        g->m.board_vehicle( pos(), this );
+    if( g->m.veh_at( bub_pos() ).part_with_feature( VPFLAG_BOARDABLE, true ) && !in_vehicle ) {
+        g->m.board_vehicle( bub_pos(), this );
     }
     if( has_effect( effect_riding ) && !mounted_creature ) {
-        if( const monster *const mon = g->critter_at<monster>( pos() ) ) {
+        if( const monster *const mon = g->critter_at<monster>( bub_pos() ) ) {
             mounted_creature = g->shared_from( *mon );
         } else {
             add_msg( m_debug, "NPC is meant to be riding, though the mount is not found when %s is loaded",
@@ -3051,7 +3032,7 @@ bool npc::dispose_item( item &obj, const std::string & )
                 item_store_cost( obj, *e, false, ptr->draw_cost ),
                 [this, ptr, &e, &obj]{
                     detached_ptr<item> failed = ptr->store( *this, *e, obj.detach() );
-                    g->m.add_item_or_charges( pos(), std::move( failed ) );
+                    g->m.add_item_or_charges( bub_pos(), std::move( failed ) );
                 }
             } );
         }
@@ -3070,7 +3051,7 @@ bool npc::dispose_item( item &obj, const std::string & )
 
     if( opts.empty() ) {
         // Drop it
-        g->m.add_item_or_charges( pos(), obj.detach() );
+        g->m.add_item_or_charges( bub_pos(), obj.detach() );
         return true;
     }
 
@@ -3183,7 +3164,7 @@ void npc::advance_job_progress( int n )
     }
 }
 
-bool npc::invoke_item( item *used, const tripoint &pt )
+bool npc::invoke_item( item *used, const tripoint_bub_ms &pt )
 {
     const auto &use_methods = used->type->use_methods;
 
@@ -3306,22 +3287,22 @@ const pathfinding_settings &npc::get_legacy_pathfinding_settings( bool no_bashin
     return *path_settings;
 }
 
-std::set<tripoint> npc::get_legacy_path_avoid() const
+std::set<tripoint_bub_ms> npc::get_legacy_path_avoid() const
 {
-    std::set<tripoint> ret;
+    std::set<tripoint_bub_ms> ret;
     for( Creature &critter : g->all_creatures() ) {
         // TODO: Cache this somewhere
-        ret.insert( critter.pos() );
+        ret.insert( critter.bub_pos() );
     }
     if( rules.has_flag( ally_rule::avoid_doors ) ) {
-        for( const tripoint &p : g->m.points_in_radius( pos(), 30 ) ) {
+        for( const tripoint_bub_ms &p : g->m.points_in_radius( bub_pos(), 30 ) ) {
             if( g->m.can_open_door( this, p, true ) ) {
                 ret.insert( p );
             }
         }
     }
     if( rules.has_flag( ally_rule::hold_the_line ) ) {
-        for( const tripoint &p : g->m.points_in_radius( g->u.pos(), 1 ) ) {
+        for( const tripoint_bub_ms &p : g->m.points_in_radius( g->u.bub_pos(), 1 ) ) {
             if( g->m.close_door( p, true, true ) || g->m.move_cost( p ) > 2 ) {
                 ret.insert( p );
             }
@@ -3448,7 +3429,7 @@ std::string npc::get_epilogue() const
 
 void npc::set_companion_mission( npc &p, const std::string &mission_id )
 {
-    const tripoint_abs_omt omt_pos = p.global_omt_location();
+    const tripoint_abs_omt omt_pos = p.abs_omt_pos();
     set_companion_mission( omt_pos, p.companion_mission_role_id, mission_id );
 }
 

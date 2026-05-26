@@ -38,7 +38,6 @@
 #include "clothing_mod.h"
 #include "clzones.h"
 #include "color.h"
-#include "coordinate_conversions.h"
 #include "craft_command.h"
 #include "damage.h"
 #include "debug.h"
@@ -626,7 +625,7 @@ void item::deactivate()
             get_map().make_inactive( *this );
             break;
         case item_location_type::vehicle:
-            get_map().veh_at( position() )->vehicle().make_inactive( *this );
+            get_map().veh_at( tripoint_bub_ms( position() ) )->vehicle().make_inactive( *this );
             break;
         default:
             break;
@@ -655,7 +654,7 @@ void item::activate()
             get_map().make_active( *this );
             break;
         case item_location_type::vehicle:
-            get_map().veh_at( position() )->vehicle().make_active( *this );
+            get_map().veh_at( tripoint_bub_ms( position() ) )->vehicle().make_active( *this );
             break;
         default:
             break;
@@ -872,8 +871,20 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
 bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
+    const bool split_needs_rot_actualization = goes_bad() && has_position();
+    const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
+    const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+    const auto split_temperature = !split_needs_rot_actualization ? temperature_flag::TEMP_NORMAL :
+                                   vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
+                                   rot::temperature_flag_for_location( get_map(), *this );
     detached_ptr<item> det = unsafe_split( qty );
+    if( det && split_needs_rot_actualization ) {
+        det = actualize_rot( std::move( det ), split_pos, split_temperature, get_weather() );
+    }
     if( !det ) {
+        if( charges == 0 && has_position() ) {
+            detach().release();
+        }
         return false;
     }
     item &after_split = *det;
@@ -4763,7 +4774,7 @@ void item::on_wear( Character &who )
             }
         }
         if( transform && actor->restricted ) {
-            actor->bypass( *who.as_player(), *this, false, who.pos() );
+            actor->bypass( *who.as_player(), *this, false, who.bub_pos() );
         }
     }
 
@@ -4798,7 +4809,7 @@ void item::on_takeoff( Character &who )
             debugmsg( "iuse_actor type descriptor and actual type mismatch" );
             return;
         }
-        actor->bypass( *who.as_player(), *this, false, who.pos() );
+        actor->bypass( *who.as_player(), *this, false, who.bub_pos() );
     }
 
     if( type->iwearable_callbacks ) {
@@ -4892,8 +4903,8 @@ void item::handle_pickup_ownership( Character &c )
             std::vector<npc *> witnesses;
             for( npc &elem : g->all_npcs() ) {
                 // If they already want to murder you, no point in confronting you about theft
-                if( rl_dist( elem.pos(), you.pos() ) < g_max_view_distance && elem.get_faction() &&
-                    is_owned_by( elem ) && elem.sees( you.pos() ) && !elem.guaranteed_hostile() ) {
+                if( rl_dist( elem.bub_pos(), you.bub_pos() ) < g_max_view_distance && elem.get_faction() &&
+                    is_owned_by( elem ) && elem.sees( you.bub_pos() ) && !elem.guaranteed_hostile() ) {
                     elem.say( "<witnessed_thievery>", 7 );
                     npc *npc_to_add = &elem;
                     witnesses.push_back( npc_to_add );
@@ -4935,7 +4946,7 @@ void item::on_pickup( Character &who )
         handle_pickup_ownership( who );
     }
     if( is_bucket_nonempty() ) {
-        contents.spill_contents( who.pos() );
+        contents.spill_contents( who.bub_pos() );
     }
 
     who.flag_encumbrance();
@@ -4966,12 +4977,12 @@ void item::on_damage( int qty, damage_type )
     }
 }
 
-void item::on_map_placement( const map &m, const tripoint &p )
+void item::on_map_placement( const map &m, const tripoint_bub_ms &p )
 {
 
     // TODO: Move to reveal_map_actor
     if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
-        set_var( "reveal_map_center_omt", ms_to_omt_copy( m.getabs( p ) ) );
+        set_var( "reveal_map_center_omt", project_to<coords::omt>( m.bub_to_abs( p ) ) );
     }
 
     for( const auto &func : type->use_methods | std::views::values ) {
@@ -5398,11 +5409,8 @@ std::string item::display_name( unsigned int quantity ) const
 
     // HACK: This is a hack to prevent possible crashing when displaying maps as items during character creation
     if( is_map() && calendar::turn != calendar::turn_zero ) {
-        // TODO: fix point types
-        tripoint map_pos_omt =
-            get_var( "reveal_map_center_omt", you.global_omt_location().raw() );
-        tripoint_abs_sm map_pos =
-            project_to<coords::sm>( tripoint_abs_omt( map_pos_omt ) );
+        const auto map_pos_omt = get_var( "reveal_map_center_omt", you.abs_omt_pos() );
+        const auto map_pos = project_to<coords::sm>( map_pos_omt );
         const city *c = get_overmapbuffer( you.get_dimension() ).closest_city( map_pos ).city;
         if( c != nullptr ) {
             name = string_format( "%s %s", c->name, name );
@@ -6335,6 +6343,7 @@ time_duration item::get_shelf_life() const
 double item::get_relative_rot() const
 {
     if( goes_bad() ) {
+        const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
         return rot / get_shelf_life();
     }
     return 0;
@@ -6439,7 +6448,7 @@ auto item::calc_rot( time_point time, const units::temperature temp ) const -> t
     // always rot away and food rots away at twice the shelf life.  If the food
     // is in a sealed container they won't rot away, this avoids needlessly
     // calculating their rot in that case.
-    if( !is_corpse() && get_relative_rot() > 2.0 ) {
+    if( !is_corpse() && get_shelf_life() != 0_turns && rot / get_shelf_life() > 2.0 ) {
         return 0_seconds;
     }
 
@@ -6830,7 +6839,7 @@ bool item::can_revive() const
               has_flag( flag_SKINNED ) || has_flag( flag_PULPED ) );
 }
 
-bool item::ready_to_revive( const tripoint &pos ) const
+bool item::ready_to_revive( const tripoint_bub_ms &pos ) const
 {
     if( !can_revive() ) {
         return false;
@@ -6851,7 +6860,7 @@ bool item::ready_to_revive( const tripoint &pos ) const
         // If we're a special revival zombie, wait to get up until the player is nearby.
         const bool isReviveSpecial = has_flag( flag_REVIVE_SPECIAL );
         if( isReviveSpecial ) {
-            const int distance = rl_dist( pos, get_player_character().pos() );
+            const int distance = rl_dist( pos, get_player_character().bub_pos() );
             if( distance > 3 ) {
                 return false;
             }
@@ -7822,27 +7831,6 @@ bool item::is_pocket_dimension_key() const
     return pocket_dim.has_value();
 }
 
-item::pocket_dimension_data *item::get_pocket_dimension_data()
-{
-    if( pocket_dim.has_value() ) {
-        return &pocket_dim.value();
-    }
-    return nullptr;
-}
-
-const item::pocket_dimension_data *item::get_pocket_dimension_data() const
-{
-    if( pocket_dim.has_value() ) {
-        return &pocket_dim.value();
-    }
-    return nullptr;
-}
-
-void item::set_pocket_dimension_data( pocket_dimension_data &&data )
-{
-    pocket_dim = std::move( data );
-}
-
 bool item::is_funnel_container( units::volume &bigger_than ) const
 {
     if( !is_bucket() && !is_watertight_container() ) {
@@ -7981,7 +7969,7 @@ bool item::spill_contents( Character &c )
     }
 
     if( c.is_npc() ) {
-        return spill_contents( c.pos() );
+        return spill_contents( c.bub_pos() );
     }
 
     contents.handle_liquid_or_spill( c );
@@ -7990,7 +7978,7 @@ bool item::spill_contents( Character &c )
     return true;
 }
 
-bool item::spill_contents( const tripoint &pos )
+bool item::spill_contents( const tripoint_bub_ms &pos )
 {
     if( !is_container() || is_container_empty() ) {
         return true;
@@ -8459,7 +8447,7 @@ bool item::ammo_sufficient( int qty ) const
     return ammo_remaining() >= ammo_required() * qty;
 }
 
-int item::ammo_consume( int qty, const tripoint &pos )
+int item::ammo_consume( int qty, const tripoint_bub_ms &pos )
 {
     if( qty < 0 ) {
         debugmsg( "Cannot consume negative quantity of ammo for %s", tname() );
@@ -9231,7 +9219,7 @@ bool item::reload( Character &who, item &loc, int qty )
         if( ammo->has_flag( flag_SPEEDLOADER ) ) {
             curammo = ammo->contents.front().type;
             qty = std::min( qty, ammo->ammo_remaining() );
-            ammo->ammo_consume( qty, tripoint_zero );
+            ammo->ammo_consume( qty, tripoint_bub_ms::zero() );
             charges += qty;
         } else if( ammo->ammo_type() == ammo_plutonium ) {
             curammo = ammo->type;
@@ -9696,7 +9684,7 @@ void item::set_charges( int value )
 
 detached_ptr<item> item::use_charges( detached_ptr<item> &&self, const itype_id &what, int &qty,
                                       std::vector<detached_ptr<item>> &used,
-                                      const tripoint &pos, const std::function<bool( const item & )> &filter )
+                                      const tripoint_bub_ms &pos, const std::function<bool( const item & )> &filter )
 {
 
 
@@ -9847,7 +9835,7 @@ bool item::will_explode_in_fire() const
     return false;
 }
 
-detached_ptr<item> item::detonate( detached_ptr<item> &&self, const tripoint &p,
+detached_ptr<item> item::detonate( detached_ptr<item> &&self, const tripoint_bub_ms &p,
                                    std::vector<detached_ptr<item>> &drops )
 {
     if( self->type->explosion ) {
@@ -9901,7 +9889,7 @@ bool item::has_rotten_away() const
     }
 }
 
-detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoint &pnt,
+detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pnt,
                                         temperature_flag temperature,
                                         const weather_manager &weather )
 {
@@ -10044,7 +10032,7 @@ bool item::needs_processing() const
     return is_active() || has_flag( flag_RADIO_ACTIVATION ) || has_flag( flag_ETHEREAL_ITEM ) ||
            ( !contents.empty() && is_container() && contents.front().needs_processing() ) ||
            ( magazine_current() && magazine_current()->needs_processing() ) ||
-           is_artifact() || is_relic() || is_food();
+           is_artifact() || is_relic() || goes_bad();
 }
 
 int item::processing_speed() const
@@ -10056,7 +10044,7 @@ int item::processing_speed() const
     return 1;
 }
 
-detached_ptr<item> item::process_rot( detached_ptr<item> &&self, const tripoint &pos )
+detached_ptr<item> item::process_rot( detached_ptr<item> &&self, const tripoint_bub_ms &pos )
 {
     return process_rot( std::move( self ), false, pos, nullptr, temperature_flag::TEMP_NORMAL,
                         get_weather() );
@@ -10085,32 +10073,42 @@ static units::temperature clip_by_temperature_flag( units::temperature temperatu
     return temperature;
 }
 
-detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
-                                       const tripoint &pos,
-                                       player *carrier, const temperature_flag flag,
-                                       const weather_manager &weather )
+void item::update_rot_from_location( const temperature_flag temperature )
 {
-    if( !self ) {
-        return std::move( self );
+    if( !goes_bad() || last_rot_check == calendar::turn ) {
+        return;
     }
+
+    auto pos = tripoint_bub_ms::zero();
+    auto flag = temperature;
+    if( is_loaded() && has_position() ) {
+        pos = position();
+        flag = rot::temperature_flag_for_location( get_map(), *this );
+    }
+    update_rot( pos, flag, get_weather() );
+}
+
+void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
+                       const weather_manager &weather )
+{
     const time_point now = calendar::turn;
 
     // if player debug menu'd the time backward it breaks stuff, just reset the
     // last_temp_check and last_rot_check in this case
-    if( now - self->last_rot_check < 0_turns ) {
-        self->last_rot_check = now;
-        return std::move( self );
+    if( now - last_rot_check < 0_turns ) {
+        last_rot_check = now;
+        return;
     }
 
     // process rot at most once every 100_turns (10 min)
     // note we're also gated by item::processing_speed
     constexpr time_duration smallest_interval = 10_minutes;
 
-    units::temperature temp = weather.get_temperature( pos );
+    units::temperature temp = weather.get_temperature( bub_to_abs( pos ) );
     temp = clip_by_temperature_flag( temp, flag );
 
-    time_point time = self->last_rot_check;
-    item_internal::scoped_goes_bad_cache _cache( &*self );
+    time_point time = last_rot_check;
+    item_internal::scoped_goes_bad_cache _cache( this );
 
     if( now - time > 1_hours ) {
         // This code is for items that were left out of reality bubble for long time
@@ -10130,8 +10128,8 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
 
             //Use weather if above ground, use map temp if below
             units::temperature env_temperature_raw;
-            if( pos.z >= 0 ) {
-                tripoint_abs_ms location = tripoint_abs_ms( get_map().getabs( pos ) );
+            if( pos.z() >= 0 ) {
+                tripoint_abs_ms location = tripoint_abs_ms( get_map().bub_to_abs( pos ) );
                 units::temperature weather_temperature = wgen.get_weather_temperature( location, time,
                         calendar::config, seed );
                 env_temperature_raw = weather_temperature + local_mod;
@@ -10142,32 +10140,37 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
             units::temperature env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw, flag );
 
             // Calculate item rot
-            self->rot += self->calc_rot( time, env_temperature_clipped );
-            self->last_rot_check = time;
-
-            if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-                // No need to track item that will be gone
-                return detached_ptr<item>();
-            }
+            rot += calc_rot( time, env_temperature_clipped );
+            last_rot_check = time;
         }
     }
 
     // Remaining <1 h from above
     // and items that are held near the player
     if( now - time > smallest_interval ) {
-        self->rot += self->calc_rot( now, temp );
-        self->last_rot_check = now;
+        rot += calc_rot( now, temp );
+        last_rot_check = now;
+    }
+}
 
-        if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-            return detached_ptr<item>();
-        } else {
-            return std::move( self );
-        }
+detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
+                                       const tripoint_bub_ms &pos,
+                                       player *carrier, const temperature_flag flag,
+                                       const weather_manager &weather )
+{
+    if( !self ) {
+        return std::move( self );
+    }
+
+    self->update_rot( pos, flag, weather );
+
+    if( self->has_rotten_away() && carrier == nullptr && !seals ) {
+        return detached_ptr<item>();
     }
     return std::move( self );
 }
 
-void item::process_artifact( player *carrier, const tripoint & /*pos*/ )
+void item::process_artifact( player *carrier, const tripoint_bub_ms & /*pos*/ )
 {
     if( !is_artifact() ) {
         return;
@@ -10227,7 +10230,7 @@ void item::process_relic( Character *carrier )
 }
 
 detached_ptr<item> item::process_corpse( detached_ptr<item> &&self, player *carrier,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10271,7 +10274,7 @@ detached_ptr<item> item::process_corpse( detached_ptr<item> &&self, player *carr
 }
 
 detached_ptr<item> item::process_fake_mill( detached_ptr<item> &&self, player * /*carrier*/,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10292,7 +10295,7 @@ detached_ptr<item> item::process_fake_mill( detached_ptr<item> &&self, player * 
 }
 
 detached_ptr<item> item::process_fake_cloning_vat( detached_ptr<item> &&self, player * /*carrier*/,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10312,7 +10315,7 @@ detached_ptr<item> item::process_fake_cloning_vat( detached_ptr<item> &&self, pl
 }
 
 detached_ptr<item> item::process_fake_smoke( detached_ptr<item> &&self, player * /*carrier*/,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10333,7 +10336,7 @@ detached_ptr<item> item::process_fake_smoke( detached_ptr<item> &&self, player *
 }
 
 detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carrier,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10372,14 +10375,16 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( ( carrier->has_effect( effect_shakes ) && one_in( 10 ) ) ) {
             carrier->add_msg_if_player( m_bad, _( "Your shaking hand causes you to drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( pos + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
+            here.add_item_or_charges( pos + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
+                                      std::move( self ) );
             return detached_ptr<item>(); // removes the item that has just been added to the map
         }
 
         if( carrier->has_effect( effect_sleep ) ) {
             carrier->add_msg_if_player( m_bad, _( "You fall asleep and drop your %s." ),
                                         it.tname() );
-            here.add_item_or_charges( pos + point( rng( -1, 1 ), rng( -1, 1 ) ), std::move( self ) );
+            here.add_item_or_charges( pos + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ),
+                                      std::move( self ) );
             self = detached_ptr<item>();
         }
     } else {
@@ -10404,7 +10409,8 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
         if( it.has_flag( flag_MARIJUANA ) ) {
             if( carrier != nullptr ) {
                 carrier->add_effect( effect_weed_high, 1_minutes ); // one last puff
-                here.add_field( pos + point( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke, 2 );
+                here.add_field( pos + point_rel_ms( rng( -1, 1 ), rng( -1, 1 ) ), fd_weedsmoke,
+                                2 );
                 weed_msg( *carrier );
             }
         }
@@ -10415,7 +10421,7 @@ detached_ptr<item> item::process_litcig( detached_ptr<item> &&self, player *carr
 }
 
 detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, player *carrier,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10449,7 +10455,8 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, player *
         extinguish = true;
         submerged = true;
     }
-    if( ( !in_inv && here.has_flag( flag_LIQUID, pos ) && !here.veh_at( pos ) ) ||
+    if( ( !in_inv && here.has_flag( flag_LIQUID, pos ) &&
+          !here.veh_at( pos ) ) ||
         ( precipitation && !g->is_sheltered( pos ) ) ) {
         extinguish = true;
     }
@@ -10490,7 +10497,7 @@ detached_ptr<item> item::process_extinguish( detached_ptr<item> &&self, player *
 }
 
 detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carrier,
-                                        const tripoint &pos )
+                                        const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10584,7 +10591,7 @@ detached_ptr<item> item::process_cable( detached_ptr<item> &&self, player *carri
         }
     }
     if( nonchar.map_point() ) {
-        distance = rl_dist( pos, here.getlocal( nonchar.point ) );
+        distance = rl_dist( pos, here.abs_to_bub( nonchar.point ) );
         self->charges = self->type->maximum_charges() - distance;
         if( self->charges < 1 ) {
             if( carrier ) {
@@ -10617,7 +10624,7 @@ void item::reset_cable( Character *who )
 }
 
 detached_ptr<item> item::process_UPS( detached_ptr<item> &&self, player *carrier,
-                                      const tripoint & /*pos*/ )
+                                      const tripoint_bub_ms & /*pos*/ )
 {
     if( !self ) {
         return std::move( self );
@@ -10637,7 +10644,7 @@ detached_ptr<item> item::process_UPS( detached_ptr<item> &&self, player *carrier
     return std::move( self );
 }
 
-bool item::process_wet( player * /*carrier*/, const tripoint & /*pos*/ )
+bool item::process_wet( player * /*carrier*/, const tripoint_bub_ms & /*pos*/ )
 {
     if( item_counter == 0 ) {
         if( is_tool() && type->tool->revert_to ) {
@@ -10651,7 +10658,7 @@ bool item::process_wet( player * /*carrier*/, const tripoint & /*pos*/ )
 }
 
 detached_ptr<item> item::process_tool( detached_ptr<item> &&self, player *carrier,
-                                       const tripoint &pos )
+                                       const tripoint_bub_ms &pos )
 {
     if( !self ) {
         return std::move( self );
@@ -10814,14 +10821,16 @@ detached_ptr<item> item::process_blackpowder_fouling( detached_ptr<item> &&self,
     return std::move( self );
 }
 
-detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier, const tripoint &pos,
+detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
+                                  const tripoint_bub_ms &pos,
                                   bool activate,
                                   temperature_flag flag )
 {
     return process( std::move( self ), carrier, pos, activate, flag, get_weather() );
 }
 
-detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier, const tripoint &pos,
+detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier,
+                                  const tripoint_bub_ms &pos,
                                   bool activate,
                                   temperature_flag flag, const weather_manager &weather_generator )
 {
@@ -10846,7 +10855,7 @@ detached_ptr<item> item::process( detached_ptr<item> &&self, player *carrier, co
 }
 
 detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *carrier,
-        const tripoint &pos, bool activate,
+        const tripoint_bub_ms &pos, bool activate,
         const bool seals, const temperature_flag flag,
         const weather_manager &weather_generator )
 {
@@ -11244,12 +11253,12 @@ skill_id item::contextualize_skill( const skill_id &id ) const
 }
 
 
-bool item::on_drop( const tripoint &pos )
+bool item::on_drop( const tripoint_bub_ms &pos )
 {
     return on_drop( pos, get_map() );
 }
 
-bool item::on_drop( const tripoint &pos, map &m )
+bool item::on_drop( const tripoint_bub_ms &pos, map &m )
 {
     avatar &you = get_avatar();
 
@@ -11495,7 +11504,8 @@ std::string item::describe_location( const Character *ch ) const
 
 item *item::parent_item() const
 {
-    contents_item_location *cont = dynamic_cast<contents_item_location *>( &*loc );
+    const auto location = loc ? loc : saved_loc;
+    auto *cont = dynamic_cast<contents_item_location *>( location );
     if( !cont ) {
         return nullptr;
     }

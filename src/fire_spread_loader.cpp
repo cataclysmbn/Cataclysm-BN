@@ -58,12 +58,12 @@ auto fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_
     if( !in_bubble ) {
         const auto adjacent_to_proper = std::ranges::any_of( cardinal_offsets,
         [&]( const auto & delta ) {
-            const auto nbr = tripoint_abs_sm{ pos.raw() + delta };
+            const auto nbr = pos + delta;
             return submap_loader.is_properly_requested( dim, nbr );
         } );
         const auto adjacent_to_tracked = std::ranges::any_of( cardinal_offsets,
         [&]( const auto & delta ) {
-            const auto nbr_key = dim_pos_key{ dim, tripoint_abs_sm{ pos.raw() + delta } };
+            const auto nbr_key = dim_pos_key{ dim, pos + delta };
             return fire_handles_.contains( nbr_key );
         } );
         if( !adjacent_to_proper && !adjacent_to_tracked ) {
@@ -77,7 +77,7 @@ auto fire_spread_loader::request_for_fire( const std::string &dim, tripoint_abs_
         }
     }
 
-    // Request a single quad (radius 0) — always covers full z-pillar.
+    // Request a single omt (radius 0) — always covers full z-pillar.
     const auto h = submap_loader.request_load(
                        load_request_source::fire_spread,
                        dim,
@@ -97,7 +97,7 @@ auto fire_spread_loader::prune_disconnected( submap_load_manager &loader ) -> vo
     std::ranges::for_each( fire_handles_, [&]( const auto & entry ) {
         const auto &key = entry.first;
         auto &mb = MAPBUFFER_REGISTRY.get( key.first );
-        auto *sm = mb.lookup_submap_in_memory( key.second.raw() );
+        auto *sm = mb.lookup_submap_in_memory( key.second );
         // sm == nullptr means the submap hasn't been loaded yet — keep the handle
         // so submap_loader.update() gets a chance to load it.  Only prune once
         // the submap is resident in memory.
@@ -113,7 +113,7 @@ auto fire_spread_loader::prune_disconnected( submap_load_manager &loader ) -> vo
 
     const auto adjacent_to_live_fire = [&]( const dim_pos_key & key ) {
         return std::ranges::any_of( cardinal_offsets, [&]( const auto & delta ) {
-            const auto nbr_key = dim_pos_key{ key.first, tripoint_abs_sm{ key.second.raw() + delta } };
+            const auto nbr_key = dim_pos_key{ key.first, key.second + delta };
             return live_fire.contains( nbr_key );
         } );
     };
@@ -146,7 +146,7 @@ auto fire_spread_loader::prune_disconnected( submap_load_manager &loader ) -> vo
         }
         const auto adjacent_to_proper = std::ranges::any_of( cardinal_offsets,
         [&]( const auto & delta ) {
-            const auto nbr = tripoint_abs_sm{ key.second.raw() + delta };
+            const auto nbr = key.second + delta;
             return loader.is_properly_requested( key.first, nbr );
         } );
         if( adjacent_to_proper && reachable.insert( key ).second ) {
@@ -159,7 +159,7 @@ auto fire_spread_loader::prune_disconnected( submap_load_manager &loader ) -> vo
         const auto cur = frontier.back();
         frontier.pop_back();
         for( const auto &delta : cardinal_offsets ) {
-            const auto nbr_key = dim_pos_key{ cur.first, tripoint_abs_sm{ cur.second.raw() + delta } };
+            const auto nbr_key = dim_pos_key{ cur.first, cur.second + delta };
             if( fire_handles_.contains( nbr_key ) && reachable.insert( nbr_key ).second ) {
                 frontier.push_back( nbr_key );
             }

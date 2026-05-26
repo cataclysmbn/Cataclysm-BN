@@ -13,6 +13,7 @@
 #include "bodypart.h" // body_part::num_bp
 #include "calendar.h"
 #include "catalua_type_operators.h"
+#include "coordinates.h"
 #include "color.h" // nc_color
 #include "damage.h"
 #include "data_vars.h"
@@ -41,7 +42,6 @@ class lua_imelee_actor;
 class lua_iranged_actor;
 class player;
 class relic;
-struct tripoint;
 template <typename E> struct enum_traits;
 
 enum art_effect_active : int;
@@ -1146,9 +1146,10 @@ struct itype {
         const use_function *get_use( const std::string &iuse_name ) const;
 
         // Here "invoke" means "actively use". "Tick" means "active item working"
-        int invoke( player &p, item &it, const tripoint &pos ) const; // Picks first method or returns 0
-        int invoke( player &p, item &it, const tripoint &pos, const std::string &iuse_name ) const;
-        void tick( player &p, item &it, const tripoint &pos ) const;
+        int invoke( player &p, item &it,
+                    const tripoint_bub_ms &pos ) const; // Picks first method or returns 0
+        int invoke( player &p, item &it, const tripoint_bub_ms &pos, const std::string &iuse_name ) const;
+        void tick( player &p, item &it, const tripoint_bub_ms &pos ) const;
 
         bool is_fuel() const;
         bool is_seed() const;

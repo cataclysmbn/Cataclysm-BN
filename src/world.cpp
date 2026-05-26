@@ -433,6 +433,15 @@ world::~world()
     }
 }
 
+void world::release_player_db()
+{
+    if( save_db ) {
+        sqlite3_close( save_db );
+        save_db = nullptr;
+        last_save_id.clear();
+    }
+}
+
 void world::start_save_tx()
 {
     if( save_tx_start_ts != 0 ) {
@@ -490,17 +499,17 @@ static std::string dim_prefix_path( const std::string &dim_id )
     return "dimensions/" + dim_id + "/";
 }
 
-static std::string get_quad_dirname( const std::string &dim_id, const tripoint &om_addr )
+static std::string get_omt_dirname( const std::string &dim_id, const tripoint_abs_omt &omt_addr )
 {
-    const auto segment_addr = project_to<coords::seg>( tripoint_abs_omt( om_addr ) );
+    const auto segment_addr = project_to<coords::seg>( omt_addr );
     return string_format( "%smaps/%d.%d.%d",
                           dim_prefix_path( dim_id ),
                           segment_addr.x(), segment_addr.y(), segment_addr.z() );
 }
 
-static std::string get_quad_filename( const tripoint &om_addr )
+static std::string get_omt_filename( const tripoint_abs_omt &omt_addr )
 {
-    return string_format( "%d.%d.%d.map", om_addr.x, om_addr.y, om_addr.z );
+    return string_format( "%d.%d.%d.map", omt_addr.x(), omt_addr.y(), omt_addr.z() );
 }
 
 static std::string get_overmap_terrain_filename( const std::string &dim_id,
@@ -515,45 +524,45 @@ static std::string get_overmap_player_filename( const std::string &dim_id,
     return string_format( "%s.seen.%d.%d", dim_prefix_path( dim_id ), p.x(), p.y() );
 }
 
-static std::string get_mm_filename( const std::string &dim_id, const tripoint &p )
+static std::string get_mm_filename( const std::string &dim_id, const tripoint_abs_mmr &p )
 {
-    return string_format( "%s%d.%d.%d.mmr", dim_prefix_path( dim_id ), p.x, p.y, p.z );
+    return string_format( "%s%d.%d.%d.mmr", dim_prefix_path( dim_id ), p.x(), p.y(), p.z() );
 }
 
-bool world::read_map_quad( const std::string &dim_id, const tripoint &om_addr,
-                           file_read_json_fn reader ) const
+bool world::read_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
+                          file_read_json_fn reader ) const
 {
-    const std::string dirname = get_quad_dirname( dim_id, om_addr );
-    std::string quad_path = dirname + "/" + get_quad_filename( om_addr );
+    const std::string dirname = get_omt_dirname( dim_id, omt_addr );
+    std::string omt_path = dirname + "/" + get_omt_filename( omt_addr );
 
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        return read_from_db_json( map_db, quad_path, reader, true );
+        return read_from_db_json( map_db, omt_path, reader, true );
     } else {
-        if( !file_exist( quad_path ) ) {
+        if( !file_exist( omt_path ) ) {
             // Fix for old saves where the path was generated using std::stringstream,
             // which may insert locale-specific thousands separators.
             std::ostringstream buf;
-            buf << dirname << "/" << om_addr.x << "." << om_addr.y << "." << om_addr.z << ".map";
+            buf << dirname << "/" << omt_addr.x() << "." << omt_addr.y() << "." << omt_addr.z() << ".map";
             if( file_exist( buf.str() ) ) {
-                quad_path = buf.str();
+                omt_path = buf.str();
             }
         }
-        return read_from_file_json( quad_path, reader, true );
+        return read_from_file_json( omt_path, reader, true );
     }
 }
 
-bool world::write_map_quad( const std::string &dim_id, const tripoint &om_addr,
-                            file_write_fn writer ) const
+bool world::write_map_omt( const std::string &dim_id, const tripoint_abs_omt &omt_addr,
+                           file_write_fn writer ) const
 {
-    const std::string dirname = get_quad_dirname( dim_id, om_addr );
-    const std::string quad_path = dirname + "/" + get_quad_filename( om_addr );
+    const std::string dirname = get_omt_dirname( dim_id, omt_addr );
+    const std::string omt_path = dirname + "/" + get_omt_filename( omt_addr );
 
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
-        write_to_db( map_db, quad_path, writer );
+        write_to_db( map_db, omt_path, writer );
         return true;
     } else {
         assure_dir_exist( dirname );
-        return write_to_file( quad_path, writer );
+        return write_to_file( omt_path, writer );
     }
 }
 
@@ -615,8 +624,8 @@ bool world::write_overmap_player_visibility( const std::string &dim_id, const po
     }
 }
 
-bool world::read_player_mm_quad( const std::string &dim_id, const tripoint &p,
-                                 file_read_json_fn reader )
+bool world::read_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
+                                file_read_json_fn reader )
 {
     const auto fname = get_mm_filename( dim_id, p );
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
@@ -638,14 +647,14 @@ static std::string legacy_dim_id()
     return g_active_dimension_id;
 }
 
-bool world::read_map_quad( const tripoint &om_addr, file_read_json_fn reader ) const
+bool world::read_map_omt( const tripoint_abs_omt &omt_addr, file_read_json_fn reader ) const
 {
-    return read_map_quad( legacy_dim_id(), om_addr, reader );
+    return read_map_omt( legacy_dim_id(), omt_addr, reader );
 }
 
-bool world::write_map_quad( const tripoint &om_addr, file_write_fn writer ) const
+bool world::write_map_omt( const tripoint_abs_omt &omt_addr, file_write_fn writer ) const
 {
-    return write_map_quad( legacy_dim_id(), om_addr, writer );
+    return write_map_omt( legacy_dim_id(), omt_addr, writer );
 }
 
 /**
@@ -691,13 +700,13 @@ bool world::write_overmap_player_visibility( const point_abs_om &p, file_write_f
  * DOMAIN SPECIFIC: MAP MEMORY
  */
 
-bool world::read_player_mm_quad( const tripoint &p, file_read_json_fn reader )
+bool world::read_player_mm_omt( const tripoint_abs_mmr &p, file_read_json_fn reader )
 {
-    return read_player_mm_quad( legacy_dim_id(), p, reader );
+    return read_player_mm_omt( legacy_dim_id(), p, reader );
 }
 
-bool world::write_player_mm_quad( const std::string &dim_id, const tripoint &p,
-                                  file_write_fn writer )
+bool world::write_player_mm_omt( const std::string &dim_id, const tripoint_abs_mmr &p,
+                                 file_write_fn writer )
 {
     const auto fname = get_mm_filename( dim_id, p );
     if( info->world_save_format == save_format::V2_COMPRESSED_SQLITE3 ) {
@@ -709,14 +718,14 @@ bool world::write_player_mm_quad( const std::string &dim_id, const tripoint &p,
         assure_dir_exist( mm_dir );
         const std::string descr = string_format(
                                       _( "memory map region for (%d,%d,%d)" ),
-                                      p.x, p.y, p.z );
+                                      p.x(), p.y(), p.z() );
         return write_to_player_file( ".mm1/" + fname, writer, descr.c_str() );
     }
 }
 
-bool world::write_player_mm_quad( const tripoint &p, file_write_fn writer )
+bool world::write_player_mm_omt( const tripoint_abs_mmr &p, file_write_fn writer )
 {
-    return write_player_mm_quad( legacy_dim_id(), p, writer );
+    return write_player_mm_omt( legacy_dim_id(), p, writer );
 }
 
 /**

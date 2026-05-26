@@ -26,9 +26,9 @@ static const tripoint_abs_sm FAR_SM_POS{ 200, 200, 0 };
 // Ownership is transferred to @p mb.
 static auto make_blank_submap( mapbuffer &mb, const tripoint_abs_sm &pos ) -> submap *
 {
-    auto sm = std::make_unique<submap>( project_to<coords::ms>( pos ) );
-    mb.add_submap( pos.raw(), sm );
-    return mb.lookup_submap_in_memory( pos.raw() );
+    auto sm = std::make_unique<submap>( pos );
+    mb.add_submap( pos, sm );
+    return mb.lookup_submap_in_memory( pos );
 }
 
 // Add fd_fire to @p sm at @p local and keep field_count / field_cache / is_uniform consistent.
@@ -68,7 +68,7 @@ TEST_CASE( "fire_processes_in_loaded_submap_outside_bubble", "[simulation][field
     REQUIRE( fire != nullptr );
     CHECK( fire->get_field_age() == 1_turns );
 
-    MAPBUFFER.unload_quad( project_to<coords::omt>( FAR_SM_POS ).raw(), false );
+    MAPBUFFER.unload_omt( project_to<coords::omt>( FAR_SM_POS ), false );
 }
 
 // ── Test 2 ────────────────────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ TEST_CASE( "fire_isolated_between_dimensions", "[simulation][field][dimension]" 
     plant_fire( *dim_sm, fire_pt );
 
     // Primary dimension must have no fire at the same absolute position.
-    if( const auto *primary_sm = MAPBUFFER.lookup_submap_in_memory( FAR_SM_POS.raw() ) ) {
+    if( const auto *primary_sm = MAPBUFFER.lookup_submap_in_memory( FAR_SM_POS ) ) {
         REQUIRE( primary_sm->get_field( fire_pt ).find_field( fd_fire ) == nullptr );
     }
 
@@ -153,7 +153,7 @@ TEST_CASE( "fire_isolated_between_dimensions", "[simulation][field][dimension]" 
     CHECK( dim_fire->get_field_age() == 1_turns );
 
     // Primary dimension must still be fire-free — no cross-dimension spread.
-    if( const auto *primary_sm = MAPBUFFER.lookup_submap_in_memory( FAR_SM_POS.raw() ) ) {
+    if( const auto *primary_sm = MAPBUFFER.lookup_submap_in_memory( FAR_SM_POS ) ) {
         CHECK( primary_sm->get_field( fire_pt ).find_field( fd_fire ) == nullptr );
     }
 

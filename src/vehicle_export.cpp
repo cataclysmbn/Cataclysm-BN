@@ -17,13 +17,13 @@ using refs = std::vector<const vehicle_part *>;
 auto grouped_refs( const class vehicle &v ) ->  std::vector<refs>
 {
     std::vector<refs> part_group;
-    std::set<point> locations_checked;
+    std::set<tripoint_mnt_veh> locations_checked;
     for( const auto &p : v.get_all_parts() ) {
         if( locations_checked.contains( p.mount() ) ) {
             continue;
         }
         locations_checked.insert( p.mount() );
-        auto parts = v.get_parts_at( v.mount_to_bubble( p.mount() ).raw(), "", part_status_flag::any );
+        auto parts = v.get_parts_at( v.mount_to_bubble( p.mount() ), "", part_status_flag::any );
         part_group.emplace_back( parts );
     }
     return part_group;
@@ -92,11 +92,11 @@ auto json_export::vehicle( JsonOut &json, const class vehicle &v ) -> void
     json.member( "parts" );
     json.start_array( true );
     for( const auto &parts : part_group ) {
-        const auto [x, y] = ( *parts.begin() )->mount;
+        const auto pos = ( *parts.begin() )->mount;
 
         json.start_object( true );
-        json.member( "x",  x );
-        json.member( "y", y );
+        json.member( "x",  pos.x() );
+        json.member( "y", pos.y() );
         json_parts_write( json, parts );
         json.end_object();
     }

@@ -710,7 +710,7 @@ void diary::new_page()
     page->npc_kills = g->get_kill_tracker().npc_kills;
     avatar *u = &get_avatar();
 
-    page->overmap_position_str = overmap_ui::fmt_omt_coords( u->global_omt_location() );
+    page->overmap_position_str = overmap_ui::fmt_omt_coords( u->abs_omt_pos() );
     page->mission_completed = mission::to_uid_vector( u->get_completed_missions() );
     page->mission_active = mission::to_uid_vector( u->get_active_missions() );
     page->mission_failed = mission::to_uid_vector( u->get_failed_missions() );

@@ -1156,7 +1156,7 @@ void vehicle_prototype::load( const JsonObject &jo )
 
     vgroups[vgroup_id( jo.get_string( "id" ) )].add_vehicle( vproto_id( jo.get_string( "id" ) ), 100 );
 
-    const auto add_part_obj = [&]( const JsonObject & part, point pos ) {
+    const auto add_part_obj = [&]( const JsonObject & part, tripoint_mnt_veh pos ) {
         part_def pt;
         pt.pos = pos;
         pt.part = vpart_id( part.get_string( "part" ) );
@@ -1169,7 +1169,7 @@ void vehicle_prototype::load( const JsonObject &jo )
         vproto.parts.push_back( pt );
     };
 
-    const auto add_part_string = [&]( const std::string & part, point pos ) {
+    const auto add_part_string = [&]( const std::string & part, tripoint_mnt_veh pos ) {
         part_def pt;
         pt.pos = pos;
         pt.part = vpart_id( part );
@@ -1211,6 +1211,7 @@ void vehicle_prototype::load( const JsonObject &jo )
                     }
                 }
             }
+            // TODO: Handle Z coordinates in blueprints
             auto pnt = jo.get_object( "blueprint_origin" );
             int y = -pnt.get_int( "y", 0 );
             for( std::string row : jo.get_array( "blueprint" ) ) {
@@ -1220,7 +1221,7 @@ void vehicle_prototype::load( const JsonObject &jo )
                     if( !veh_palette.contains( character ) ) { continue; }
                     for( auto part : veh_palette.at( character ) ) {
                         part_def pt = part;
-                        pt.pos = point( x, y );
+                        pt.pos = tripoint_mnt_veh( x, y, 0 );
                         vproto.parts.push_back( pt );
                     }
                 }
@@ -1233,7 +1234,8 @@ void vehicle_prototype::load( const JsonObject &jo )
     }
 
     for( JsonObject part : jo.get_array( "parts" ) ) {
-        point pos = point( part.get_int( "x" ), part.get_int( "y" ) );
+        auto pos = tripoint_mnt_veh( part.get_int( "x" ), part.get_int( "y" ),
+                                     part.has_int( "z" ) ? part.get_int( "z" ) : 0 );
 
         if( part.has_string( "part" ) ) {
             add_part_obj( part, pos );
@@ -1252,13 +1254,20 @@ void vehicle_prototype::load( const JsonObject &jo )
 
     for( JsonObject spawn_info : jo.get_array( "items" ) ) {
         vehicle_item_spawn next_spawn;
-        next_spawn.pos.x = spawn_info.get_int( "x" );
-        next_spawn.pos.y = spawn_info.get_int( "y" );
+        const bool do_z = spawn_info.has_int( "z" );
+        next_spawn.pos.x() = spawn_info.get_int( "x" );
+        next_spawn.pos.y() = spawn_info.get_int( "y" );
+        next_spawn.pos.z() = do_z ? spawn_info.get_int( "z" ) : 0;
 
         next_spawn.chance = spawn_info.get_int( "chance" );
         if( next_spawn.chance <= 0 || next_spawn.chance > 100 ) {
-            debugmsg( "Invalid spawn chance in %s (%d, %d): %d%%",
-                      vproto.name, next_spawn.pos.x, next_spawn.pos.y, next_spawn.chance );
+            if( do_z ) {
+                debugmsg( "Invalid spawn chance in %s (%d, %d, %d): %d%%",
+                          vproto.name, next_spawn.pos.x(), next_spawn.pos.y(), next_spawn.pos.z(), next_spawn.chance );
+            } else {
+                debugmsg( "Invalid spawn chance in %s (%d, %d): %d%%",
+                          vproto.name, next_spawn.pos.x(), next_spawn.pos.y(), next_spawn.chance );
+            }
         }
 
         // constrain both with_magazine and with_ammo to [0-100]
@@ -1297,7 +1306,7 @@ void vehicle_prototype::reset()
 void vehicle_prototype::finalize()
 {
     for( auto &vp : vtypes ) {
-        std::unordered_set<point> cargo_spots;
+        std::unordered_set<tripoint_mnt_veh> cargo_spots;
         vehicle_prototype &proto = vp.second;
         const vproto_id &id = vp.first;
 
@@ -1327,7 +1336,7 @@ void vehicle_prototype::finalize()
             if( blueprint.install_part( pt.pos, pt.part, true ) < 0 ) {
                 debugmsg( "init_vehicles: '%s' part '%s'(%d) can't be installed to %d,%d",
                           blueprint.name, pt.part.c_str(),
-                          blueprint.part_count(), pt.pos.x, pt.pos.y );
+                          blueprint.part_count(), pt.pos.x(), pt.pos.y() );
             }
 
             if( !base->gun ) {
@@ -1373,8 +1382,8 @@ void vehicle_prototype::finalize()
 
         for( auto &i : proto.item_spawns ) {
             if( !cargo_spots.contains( i.pos ) ) {
-                debugmsg( "Invalid spawn location (no CARGO vpart) in %s (%d, %d): %d%%",
-                          proto.name, i.pos.x, i.pos.y, i.chance );
+                debugmsg( "Invalid spawn location (no CARGO vpart) in %s (%d, %d, %d): %d%%",
+                          proto.name, i.pos.x(), i.pos.y(), i.pos.z(), i.chance );
             }
             for( auto &j : i.item_ids ) {
                 if( !j.is_valid() ) {

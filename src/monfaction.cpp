@@ -16,11 +16,16 @@
 
 std::unordered_map< mfaction_str_id, mfaction_id > faction_map;
 std::vector< monfaction > faction_list;
+static auto faction_attitude_table = std::vector<mf_attitude> {};
+static auto faction_attitude_table_width = size_t { 0 };
 
 void add_to_attitude_map( const std::set< std::string > &keys, mfaction_att_map &map,
                           mf_attitude value );
 
 void apply_base_faction( const monfaction &base, monfaction &faction );
+
+static auto resolve_attitude_map( const monfaction &source,
+                                  const mfaction_id &other ) -> mf_attitude;
 
 /** @relates int_id */
 template<>
@@ -85,6 +90,8 @@ mfaction_id monfactions::get_or_add_faction( const mfaction_str_id &id )
 {
     auto found = faction_map.find( id );
     if( found == faction_map.end() ) {
+        faction_attitude_table.clear();
+        faction_attitude_table_width = 0;
         monfaction mfact;
         mfact.id = id;
         mfact.loadid = mfaction_id( faction_map.size() );
@@ -113,19 +120,35 @@ static void apply_base_faction( mfaction_id base, mfaction_id faction_id )
 
 mf_attitude monfaction::attitude( const mfaction_id &other ) const
 {
-    const auto &found = attitude_map.find( other );
-    if( found != attitude_map.end() ) {
+    const auto source_index = loadid.to_i();
+    const auto target_index = other.to_i();
+    if( faction_attitude_table_width > 0 &&
+        source_index >= 0 && target_index >= 0 &&
+        static_cast<size_t>( source_index ) < faction_attitude_table_width &&
+        static_cast<size_t>( target_index ) < faction_attitude_table_width ) {
+        return faction_attitude_table[static_cast<size_t>( source_index ) *
+                                                           faction_attitude_table_width +
+                                                           static_cast<size_t>( target_index )];
+    }
+
+    return resolve_attitude_map( *this, other );
+}
+
+static auto resolve_attitude_map( const monfaction &source,
+                                  const mfaction_id &other ) -> mf_attitude
+{
+    const auto found = source.attitude_map.find( other );
+    if( found != source.attitude_map.end() ) {
         return found->second;
     }
 
     const auto base = other.obj().base_faction;
     if( other != base ) {
-        return attitude( base );
+        return resolve_attitude_map( source, base );
     }
-
     // Shouldn't happen
     debugmsg( "Invalid faction relations (no relation found): %s -> %s",
-              id.c_str(), other.obj().id.c_str() );
+              source.id.c_str(), other.obj().id.c_str() );
     return MFA_FRIENDLY;
 }
 
@@ -133,6 +156,8 @@ void monfactions::reset()
 {
     faction_list.clear();
     faction_map.clear();
+    faction_attitude_table.clear();
+    faction_attitude_table_width = 0;
 }
 
 void monfactions::finalize()
@@ -217,6 +242,15 @@ void monfactions::finalize()
     }
 
     faction_list.shrink_to_fit(); // Save a couple of bytes
+
+    faction_attitude_table_width = faction_list.size();
+    faction_attitude_table.clear();
+    faction_attitude_table.reserve( faction_attitude_table_width * faction_attitude_table_width );
+    for( const monfaction &source : faction_list ) {
+        for( const monfaction &target : faction_list ) {
+            faction_attitude_table.push_back( resolve_attitude_map( source, target.loadid ) );
+        }
+    }
 }
 
 // Ensures all those factions exist

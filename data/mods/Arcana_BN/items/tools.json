@@ -1546,7 +1546,7 @@
     "volume": "2 L",
     "price_postapoc": "150 USD",
     "material": [ "leather", "stone", "silver" ],
-    "flags": [ "REACH_ATTACK", "REACH3", "NO_SALVAGE", "DURABLE_MELEE", "COMBAT_NPC_USE" ],
+    "flags": [ "REACH_ATTACK", "REACH3", "NO_SALVAGE", "DURABLE_MELEE", "COMBAT_NPC_USE", "BELT_CLIP" ],
     "techniques": [ "WHIP_DISARM" ],
     "bashing": 3,
     "cutting": 21,

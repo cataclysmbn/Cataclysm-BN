@@ -1,6 +1,7 @@
 #include "catalua_icallback_actor.h"
 
 #include "bionics.h"
+#include "catalua_coord.h"
 #include "catalua_impl.h"
 #include "character.h"
 #include "creature.h"
@@ -25,7 +26,7 @@ void lua_iuse_actor::load( const JsonObject & )
     // TODO: custom data
 }
 
-int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint &pos ) const
+int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint_bub_ms &pos ) const
 {
     if( tick ) {
         // Legacy tick is no longer supported; use game.istate_functions on_tick instead.
@@ -36,7 +37,7 @@ int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint &pos 
         auto params = lua.create_table();
         params["user"] = who.as_character();
         params["item"] = &itm;
-        params["pos"] = pos;
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = use_func( params );
         check_func_result( res );
         int ret = res;
@@ -48,14 +49,14 @@ int lua_iuse_actor::use( player &who, item &itm, bool tick, const tripoint &pos 
 }
 
 ret_val<bool> lua_iuse_actor::can_use( const Character &who, const item &item, bool,
-                                       const tripoint &pos ) const
+                                       const tripoint_bub_ms &pos ) const
 {
     if( can_use_func != sol::lua_nil ) {
         sol::state_view lua( can_use_func.lua_state() );
         auto params = lua.create_table();
         params["user"] = who.as_character();
         params["item"] = &item;
-        params["pos"] = pos;
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = can_use_func( params );
         check_func_result( res );
         const bool ret = res;
@@ -332,25 +333,23 @@ bool lua_istate_actor::has_on_tick() const
     return on_tick_func != sol::lua_nil;
 }
 
-int lua_istate_actor::call_on_tick( Character &who, item &it, const tripoint &pos ) const
+auto lua_istate_actor::call_on_tick( Character &who, item &it,
+                                     const tripoint_bub_ms &pos ) const -> void
 {
     if( on_tick_func == sol::lua_nil ) {
-        return 0;
+        return;
     }
     try {
         sol::state_view lua( on_tick_func.lua_state() );
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &it;
-        params["pos"] = pos;
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = on_tick_func( params );
         check_func_result( res );
-        int ret = res;
-        return ret;
     } catch( std::runtime_error &e ) {
         debugmsg( "Failed to run istate on_tick for '%s': %s", item_id, e.what() );
     }
-    return 0;
 }
 
 void lua_istate_actor::call_on_pickup( Character &who, item &it ) const
@@ -370,7 +369,7 @@ void lua_istate_actor::call_on_pickup( Character &who, item &it ) const
     }
 }
 
-bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint &pos ) const
+bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const
 {
     if( on_drop_func == sol::lua_nil ) {
         return false;
@@ -380,7 +379,7 @@ bool lua_istate_actor::call_on_drop( Character &who, item &it, const tripoint &p
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &it;
-        params["pos"] = pos;
+        params["pos"] = cata::detail::lua_coords::to_lua( pos );
         sol::protected_function_result res = on_drop_func( params );
         check_func_result( res );
         bool ret = res;
@@ -497,7 +496,7 @@ lua_iranged_actor::lua_iranged_actor( const std::string &item_id,
       can_reload_func( std::move( can_reload ) ) {}
 
 bool lua_iranged_actor::call_on_fire( Character &who, item &gun,
-                                      const tripoint &target, int shots ) const
+                                      const tripoint_bub_ms &target, int shots ) const
 {
     if( on_fire_func == sol::lua_nil ) {
         return true;
@@ -507,7 +506,7 @@ bool lua_iranged_actor::call_on_fire( Character &who, item &gun,
         auto params = lua.create_table();
         params["user"] = &who;
         params["item"] = &gun;
-        params["target_pos"] = target;
+        params["target_pos"] = cata::detail::lua_coords::to_lua( target );
         params["shots"] = shots;
         sol::protected_function_result res = on_fire_func( params );
         check_func_result( res );

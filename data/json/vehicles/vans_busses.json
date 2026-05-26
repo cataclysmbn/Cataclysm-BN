@@ -454,6 +454,87 @@
     ]
   },
   {
+    "id": "camper_van",
+    "type": "vehicle",
+    "name": "Camper Van",
+    "blueprint": [
+      [ "o---+-o" ],
+      [ "+TF=#'|" ],
+      [ "+B__#'|" ],
+      [ "o-+++-o" ]
+    ],
+    "color_palette": "car_standard",
+    "parts": [
+      { "x": -3, "y": 1, "parts": [ "frame_vertical", "roof", "bed" ] },
+      { "x": -1, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof", "aisle_curtain" ] },
+      {
+        "x": 2,
+        "y": 2,
+        "parts": [ "frame_ne", "halfboard_ne", "headlight", "wheel_mount_medium_steerable", "wheel" ]
+      },
+      { "x": 0, "y": 2, "parts": [ "frame_vertical", "door", "roof" ] },
+      {
+        "x": 2,
+        "y": -1,
+        "parts": [ "frame_nw", "halfboard_nw", "headlight", "wheel_mount_medium_steerable", "wheel" ]
+      },
+      { "x": -1, "y": -1, "parts": [ "frame_vertical", "board_vertical", "roof" ] },
+      { "x": -2, "y": 2, "parts": [ "frame_vertical", "roof", "door_sliding", "v_curtain" ] },
+      { "x": 1, "y": 0, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": -3, "y": 2, "parts": [ "frame_vertical", "board_vertical", "roof" ] },
+      { "x": -4, "y": 0, "parts": [ "frame_horizontal", "door_trunk", "roof", "v_curtain" ] },
+      { "x": 1, "y": 1, "parts": [ "frame_horizontal", "windshield" ] },
+      { "x": -4, "y": 2, "parts": [ "frame_se", "board_se", "wheel_mount_medium", "wheel", "roof" ] },
+      { "x": -3, "y": 0, "parts": [ "frame_vertical", "muffler", "roof", "veh_table" ] },
+      { "x": -4, "y": -1, "parts": [ "frame_sw", "board_sw", "wheel_mount_medium", "wheel", "roof" ] },
+      { "x": -2, "y": 0, "parts": [ "frame_vertical_2", "roof", "minifridge" ] },
+      {
+        "x": 0,
+        "y": 0,
+        "parts": [
+          "frame_vertical_2",
+          "reclining_seat",
+          "seatbelt",
+          "controls",
+          "dashboard",
+          "vehicle_clock",
+          "vehicle_alarm",
+          "horn_car",
+          "roof"
+        ]
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "parts": [ "frame_horizontal", "halfboard_horizontal", "engine_inline4", "alternator_car", "battery_car" ]
+      },
+      { "x": -1, "y": 0, "parts": [ "frame_vertical_2", "roof", "trunk_floor", "aisle_curtain" ] },
+      { "x": -2, "y": 1, "parts": [ "frame_vertical_2", "aisle_vertical", "roof" ] },
+      { "x": -4, "y": 1, "parts": [ "frame_horizontal", "door_trunk", "roof", "v_curtain" ] },
+      { "x": 0, "y": 1, "parts": [ "frame_vertical_2", "reclining_seat", "seatbelt", "roof" ] },
+      { "x": 0, "y": -1, "parts": [ "frame_vertical", "door", "roof" ] },
+      { "x": -1, "y": 2, "parts": [ "frame_vertical", "roof", "door_sliding", "v_curtain" ] },
+      { "x": 1, "y": 2, "parts": [ "frame_vertical", "windshield" ] },
+      { "x": 2, "y": 1, "parts": [ "frame_horizontal", "halfboard_horizontal" ] },
+      { "x": 1, "y": -1, "parts": [ "frame_vertical", "windshield" ] },
+      { "x": -2, "y": -1, "parts": [ "frame_vertical", "board_vertical", "roof" ] },
+      {
+        "x": -3,
+        "y": -1,
+        "parts": [ "frame_vertical", "board_vertical", { "part": "tank", "fuel": "gasoline" }, "roof" ]
+      }
+    ],
+    "items": [
+      { "x": 0, "y": 0, "chance": 5, "items": [ "sunglasses" ] },
+      { "x": -2, "y": 0, "chance": 12, "item_groups": [ "fridgesnacks" ] },
+      { "x": -2, "y": 0, "chance": 10, "item_groups": [ "fridgesnacks" ] },
+      { "x": -2, "y": 0, "chance": 8, "item_groups": [ "fridgesnacks" ] },
+      { "x": -2, "y": 0, "chance": 5, "item_groups": [ "fridgesnacks" ] },
+      { "x": -3, "y": 0, "chance": 5, "items": [ "gasoline_lantern", "matches" ] },
+      { "x": -3, "y": 1, "chance": 8, "item_groups": [ "bed" ] }
+    ]
+  },
+  {
     "id": "hippie_van_electric",
     "type": "vehicle",
     "name": "Electric Hippie Van",

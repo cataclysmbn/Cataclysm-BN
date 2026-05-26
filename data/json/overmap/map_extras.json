@@ -613,5 +613,16 @@
     "name": { "str": "Sewer Pipes" },
     "description": "Sewer pipes and pumps.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_sewer_pipesJ" }
+  },
+  {
+    "id": "mx_crawler",
+    "type": "map_extra",
+    "name": { "ctxt": "map extra", "str": "Corpses" },
+    "looks_like": "corpse_bloody",
+    "description": "Several corpses are here, along with whatever killed them...",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_crawler" },
+    "sym": "C",
+    "color": "red",
+    "autonote": true
   }
 ]

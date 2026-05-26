@@ -927,7 +927,7 @@ void mtype::load( const JsonObject &jo, const std::string &src )
         if( !mon_spawns.empty() ) {
             on_death.emplace_back( [mon_spawns]( monster & z ) {
                 for( const auto &pair : mon_spawns ) {
-                    g->place_critter_around( pair.second, z.pos(), pair.first );
+                    g->place_critter_around( pair.second, z.bub_pos(), pair.first );
                 }
             } );
         }

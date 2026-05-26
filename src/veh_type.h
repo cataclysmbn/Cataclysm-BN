@@ -12,8 +12,8 @@
 
 #include "calendar.h"
 #include "color.h"
+#include "coordinates.h"
 #include "damage.h"
-#include "point.h"
 #include "hsv_color.h"
 #include "requirements.h"
 #include "string_id.h"
@@ -419,7 +419,7 @@ class vpart_info
 };
 
 struct vehicle_item_spawn {
-    point pos;
+    tripoint_mnt_veh pos;
     int chance = 0;
     /** Chance [0-100%] for items to spawn with ammo (plus default magazine if necessary) */
     int with_ammo = 0;
@@ -435,7 +435,7 @@ struct vehicle_item_spawn {
  */
 struct vehicle_prototype {
     struct part_def {
-        point pos;
+        tripoint_mnt_veh pos;
         vpart_id part;
         int with_ammo = 0;
         std::set<itype_id> ammo_types;

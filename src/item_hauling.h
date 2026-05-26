@@ -5,7 +5,7 @@
 #include "map.h"
 
 // Checks if items at position are haulable
-bool has_haulable_items( const tripoint &pos );
+bool has_haulable_items( const tripoint_bub_ms &pos );
 
 // Checks and returns if an item is haulable
 // (e.g returns false if checked item has tag Liquid)

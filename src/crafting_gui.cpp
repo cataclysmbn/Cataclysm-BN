@@ -518,7 +518,7 @@ static std::vector<std::string> recipe_info(
                           recp.has_flag( flag_BLIND_HARD ) ? _( "Awkward" ) :
                           recp.has_flag( flag_BLIND_NEARLY_IMPOSSIBLE ) ? _( "Very Hard" ) :
                           recp.has_flag( flag_BLIND_IMPOSSIBLE ) ? _( "Impossible" ) :
-                          _( "Reasonabe" ) );
+                          _( "Reasonable" ) );
 
     std::string nearby_string;
     const inventory &crafting_inv = crafter.crafting_inventory();
@@ -1404,8 +1404,8 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                     return !guy.in_sleep_state()
                            && guy.is_obeying( crafter )
                            && ( !guy.activity || guy.activity->is_null() )
-                           && rl_dist( guy.pos(), crafter.pos() ) <= PICKUP_RANGE
-                           && get_map().clear_path( crafter.pos(), guy.pos(), PICKUP_RANGE, 1, 100 );
+                           && rl_dist( guy.bub_pos(), crafter.bub_pos() ) <= PICKUP_RANGE
+                           && get_map().clear_path( crafter.bub_pos(), guy.bub_pos(), PICKUP_RANGE, 1, 100 );
                 } );
                 std::vector<npc *> candidates;
                 bool any_knows = false;
@@ -1428,7 +1428,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                     }
                 } else {
                     std::sort( candidates.begin(), candidates.end(), [&]( const npc * a, const npc * b ) {
-                        return rl_dist( a->pos(), crafter.pos() ) < rl_dist( b->pos(), crafter.pos() );
+                        return rl_dist( a->bub_pos(), crafter.bub_pos() ) < rl_dist( b->bub_pos(), crafter.bub_pos() );
                     } );
                     npc *target = nullptr;
                     if( candidates.size() == 1 ) {
@@ -1448,7 +1448,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                         }
                     }
                     if( target != nullptr ) {
-                        target->make_craft( rec->ident(), bs, target->pos() );
+                        target->make_craft( rec->ident(), bs, target->bub_pos() );
                         add_msg( m_good, _( "%s starts crafting %s." ),
                                  target->get_name(), rec->result_name() );
                         chosen = nullptr;

@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <list>
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -74,7 +76,7 @@ struct submap_load_request {
     tripoint_abs_sm center;
     int radius = 0;  ///< Half-width in submaps.  For reality_bubble this defines the circle
     ///< radius; for other sources a (2*radius+1)^2 square is loaded per z-level.
-    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are
+    ///< Always covers the full z-range (-OVERMAP_DEPTH to OVERMAP_HEIGHT); omts are
     ///< full vertical pillars and cannot be loaded one slice at a time.
 };
 
@@ -98,7 +100,7 @@ class submap_load_manager
 
         /**
          * Register a new load request.  The request always covers all z-levels
-         * (-OVERMAP_DEPTH to OVERMAP_HEIGHT); quads are full vertical pillars.
+         * (-OVERMAP_DEPTH to OVERMAP_HEIGHT); omts are full vertical pillars.
          *
          * @return A handle that identifies this request for future updates/releases.
          */
@@ -132,17 +134,16 @@ class submap_load_manager
          *
          * Simulated positions (reality_bubble, fire_spread, player_base,
          * script) are loaded synchronously and trigger listener notifications.
-         * Lazy-border positions are submitted to the thread pool for
-         * background disk-only loading (preload_quad) and do NOT trigger
-         * listener notifications.  Eviction protects the full set
-         * (simulated + border).
+         * Lazy-border positions, when enabled, are kept resident but do NOT
+         * trigger listener notifications.  OMTs that leave the desired set are
+         * retained briefly in memory, then evicted over a small per-turn budget.
          *
          * Call site: game::do_turn(), game::update_map()
          */
         void update();
 
         /**
-         * Block until all in-flight background presave_quad tasks complete.
+         * Block until all in-flight background presave_omt tasks complete.
          *
          * Must be called before saving the game, switching dimensions, or
          * shutting down the thread pool so that no worker holds raw submap
@@ -196,7 +197,7 @@ class submap_load_manager
          * update(), which runs after world_tick() in the same game turn.
          */
         auto is_in_simulated_set( const std::string &dim_id,
-                                  const tripoint &raw_pos ) const noexcept -> bool {
+                                  const tripoint_abs_sm &raw_pos ) const noexcept -> bool {
             return prev_simulated_.contains( { dim_id, point_abs_sm{ raw_pos.xy() } } );
         }
 
@@ -222,7 +223,7 @@ class submap_load_manager
          *
          * Call this when switching dimensions (in game::load_map) after
          * releasing the old reality-bubble handle.  Without this, the
-         * eviction pass in update() would call unload_quad() on the old
+         * eviction pass in update() would call unload_omt() on the old
          * dimension's positions — which now hold freshly-generated submaps
          * for the new dimension in the primary slot — freeing them while
          * m.grid still holds raw pointers to them (use-after-free crash).
@@ -255,7 +256,7 @@ class submap_load_manager
 
     private:
         using desired_key = std::pair<std::string, point_abs_sm>;
-        using quad_key    = std::pair<std::string, tripoint_abs_omt>;
+        using omt_key    = std::pair<std::string, tripoint_abs_omt>;
 
         /** Hash for pair<string, CoordType> used by unordered containers.
          *  CoordType must be hashable via std::hash (all coord_point specializations are). */
@@ -270,6 +271,10 @@ class submap_load_manager
         };
 
         using key_set = std::unordered_set<desired_key, coord_pair_hash<point_abs_sm>>;
+        using retained_omt_key = std::pair<std::string, point_abs_omt>;
+        using horizontal_omt_set = std::unordered_set<retained_omt_key,
+              coord_pair_hash<point_abs_omt>>;
+        using retained_omt_list = std::list<retained_omt_key>;
 
         load_request_handle next_handle_ = 1;
         std::map<load_request_handle, submap_load_request> requests_;
@@ -283,32 +288,66 @@ class submap_load_manager
 
         std::vector<submap_load_listener *> listeners_;
 
+        /** Non-simulated OMT columns kept resident for short-term backtracking. */
+        retained_omt_list retained_omts_;
+        std::unordered_map<retained_omt_key, retained_omt_list::iterator,
+            coord_pair_hash<point_abs_omt>> retained_omt_index_;
+
+        /** OMT-space lazy-border columns waiting for amortized preload. */
+        retained_omt_list lazy_omt_queue_;
+
         /** Compute the simulated desired set (excludes lazy_border). */
         key_set compute_desired_set() const;
 
+        /** Compute OMT-space lazy-border columns. */
+        auto compute_lazy_border_omts() const -> horizontal_omt_set;
+
         /** Add lazy_border positions into @p target. */
-        void compute_border_into( key_set &target ) const;
+        auto add_lazy_border_into( key_set &target,
+                                   const horizontal_omt_set &border_omts ) const -> void;
+
+        auto current_reality_bubble_radius() const -> int;
+        auto retained_omt_soft_cap() const -> std::size_t;
+        auto retained_omt_hard_cap() const -> std::size_t;
+        auto retained_omt_panic_cap() const -> std::size_t;
+        auto retained_omt_base_budget() const -> std::size_t;
+        auto retain_omt( const retained_omt_key &key ) -> void;
+        auto erase_retained_omt( const retained_omt_key &key ) -> void;
+        auto erase_desired_retained_omts( const key_set &desired ) -> void;
+        auto evict_omt_column( const retained_omt_key &key ) -> void;
+        auto evict_oldest_retained_omts( std::size_t count ) -> void;
+        auto process_retained_omt_eviction() -> void;
+        auto is_omt_column_loaded( const retained_omt_key &key ) -> bool;
+        auto mark_omt_column_dirty( const retained_omt_key &key ) -> void;
+        auto load_lazy_omt_column( const retained_omt_key &key ) -> void;
+        auto lazy_omt_priority( const retained_omt_key &key ) const -> int;
+        auto queue_lazy_border_omts( const horizontal_omt_set &border_omts ) -> void;
+        auto process_lazy_border_preload() -> void;
 
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
 
-        /** In-flight presave_quad futures for dirty quads that left simulation.
-         *  Keyed by quad_key (dim + 3-D OMT address) for O(log N) lookup and erase.
+        /** In-flight presave_omt futures for dirty omts that left simulation.
+         *  Keyed by omt_key (dim + 3-D OMT address) for O(log N) lookup and erase.
          *  Eviction waits for these before freeing the in-memory submaps.
          *  Presence in the map also serves as the in-flight guard. */
-        std::map<quad_key, std::future<void>> presave_futures_;
+        std::map<omt_key, std::future<void>> presave_futures_;
 
         /**
-         * Quads that have entered the simulated zone at least once since they
-         * were last evicted.  Only dirty quads are written to disk on eviction;
-         * border-only quads (never simulated) are discarded without saving because
-         * their in-memory content is identical to what is already on disk.
+         * Omts that have entered the simulated zone at least once since they
+         * were last evicted.  Only dirty omts are written to disk on eviction;
+         * border-only omts loaded from disk are discarded without saving because
+         * their in-memory content is identical to what is already on disk.  Border
+         * omts generated from scratch or restored from pending writes are marked
+         * dirty so eviction preserves that data.
          */
-        std::unordered_set<quad_key, coord_pair_hash<tripoint_abs_omt>> dirty_quads_;
+        std::unordered_set<omt_key, coord_pair_hash<tripoint_abs_omt>> dirty_omts_;
 
         /** Snapshot of all request centers from the previous update().
          *  Used to detect steady-state and skip expensive recomputation. */
         std::vector<std::pair<load_request_handle, tripoint>> prev_centers_;
+
+        point lazy_omt_preload_direction_ = point_zero;
 };
 
 extern submap_load_manager submap_loader;

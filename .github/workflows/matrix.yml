@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [main]
     paths-ignore: [docs/**, scripts/**, "**.md", "**.mdx"]
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 # Cancel all previous instances in favor of latest revision of a PR.
@@ -68,7 +68,7 @@ jobs:
       ZSTD_CLEVEL: 3
       TILES: ${{ matrix.tiles }}
       TEST_STAGE: ${{ matrix.test-stage }}
-      SKIP: ${{ matrix.always-run != true && ( github.event.pull_request.draft == true || needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
+      SKIP: ${{ matrix.always-run != true && ( needs.skip-duplicates.outputs.should_skip_code == true || needs.skip-duplicates.outputs.should_skip_data == true ) }}
 
     steps:
       - name: checkout repository
@@ -142,7 +142,7 @@ jobs:
         uses: lukka/run-cmake@v10
         with:
           configurePreset: ${{ matrix.preset }}
-          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF']"
+          configurePresetAdditionalArgs: "['-DUSE_PREFIX_DATA_DIR=OFF', '-DCATA_FORMAT_TARGETS=OFF']"
           buildPreset: ${{ matrix.preset }}
           buildPresetAdditionalArgs: "['-j', '2']"
 
@@ -199,7 +199,7 @@ jobs:
 
   builds:
     needs: skip-duplicates
-    if: ${{ github.event_name != 'push' && ( github.event_name != 'pull_request' || ( github.event.pull_request.draft != true && needs.skip-duplicates.outputs.should_skip_platform != 'true' ) ) }}
+    if: ${{ github.event_name != 'push' && needs.skip-duplicates.outputs.should_skip_platform != 'true' }}
     uses: ./.github/workflows/build.yml
     with:
       version-label: experimental

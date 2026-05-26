@@ -443,37 +443,39 @@ static int count_charges_in_list( const itype *type, const map_stack &items )
     return 0;
 }
 
-void inventory::form_from_map( const tripoint &origin, int range, const Character *pl,
+void inventory::form_from_map( const tripoint_bub_ms &origin, int range, const Character *pl,
                                bool assign_invlet,
                                bool clear_path )
 {
     form_from_map( g->m, origin, range, pl, assign_invlet, clear_path );
 }
 
-void inventory::form_from_zone( map &m, std::unordered_set<tripoint> &zone_pts, const Character *pl,
+void inventory::form_from_zone( map &m, std::unordered_set<tripoint_abs_ms> &zone_pts,
+                                const Character *pl,
                                 bool assign_invlet )
 {
-    std::vector<tripoint> pts;
+    std::vector<tripoint_bub_ms> pts;
     pts.reserve( zone_pts.size() );
-    for( const tripoint &elem : zone_pts ) {
-        pts.push_back( m.getlocal( elem ) );
+    for( const auto &elem : zone_pts ) {
+        pts.push_back( m.abs_to_bub( elem ) );
     }
     form_from_map( m, pts, pl, assign_invlet );
 }
 
-void inventory::form_from_map( map &m, const tripoint &origin, int range, const Character *pl,
+void inventory::form_from_map( map &m, const tripoint_bub_ms &origin, int range,
+                               const Character *pl,
                                bool assign_invlet,
                                bool clear_path )
 {
     // populate a grid of spots that can be reached
-    std::vector<tripoint> reachable_pts = {};
+    std::vector<tripoint_bub_ms> reachable_pts = {};
     // If we need a clear path we care about the reachability of points
     if( clear_path ) {
         m.reachable_flood_steps( reachable_pts, origin, range, 1, 100 );
     } else {
         // Fill reachable points with points_in_radius
-        tripoint_range<tripoint> in_radius = m.points_in_radius( origin, range );
-        for( const tripoint &p : in_radius ) {
+        tripoint_range<tripoint_bub_ms> in_radius = m.points_in_radius( origin, range );
+        for( const tripoint_bub_ms &p : in_radius ) {
             reachable_pts.emplace_back( p );
         }
     }
@@ -481,7 +483,7 @@ void inventory::form_from_map( map &m, const tripoint &origin, int range, const 
 }
 
 //TODO!: check that not stacking the crafting inventory works ok
-void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Character *pl,
+void inventory::form_from_map( map &m, std::vector<tripoint_bub_ms> pts, const Character *pl,
                                bool assign_invlet )
 {
     const time_point bday = calendar::start_of_cataclysm;
@@ -490,7 +492,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
     bool has_autodoc = false;
     items.clear();
     build_items_type_cache();
-    for( const tripoint &p : pts ) {
+    for( const tripoint_bub_ms &p : pts ) {
         if( m.has_furn( p ) ) {
             const furn_t &f = m.furn( p ).obj();
             const std::vector<itype> tool_list = f.crafting_pseudo_item_types();
@@ -501,7 +503,7 @@ void inventory::form_from_map( map &m, std::vector<tripoint> pts, const Characte
                     const itype_id &ammo = furn_item.ammo_default();
                     if( furn_item.has_flag( flag_USES_GRID_POWER ) ) {
                         // TODO: The grid tracker should correspond to map!
-                        auto &grid = get_distribution_grid_tracker().grid_at( tripoint_abs_ms( m.getabs( p ) ) );
+                        auto &grid = get_distribution_grid_tracker().grid_at( tripoint_abs_ms( m.bub_to_abs( p ) ) );
                         furn_item.charges = grid.get_resource();
                     } else {
                         furn_item.charges = ammo ? count_charges_in_list( &*ammo, m.i_at( p ) ) : 0;
@@ -942,7 +944,7 @@ void inventory::rust_iron_items()
                                     elem_stack_iter->base_volume().value() ) / 250 ) ) ) ) &&
                 //                       ^season length   ^14/5*0.75/pi (from volume of sphere)
                 //Freshwater without oxygen rusts slower than air
-                g->m.water_from( g->u.pos() )->typeId() == itype_salt_water ) {
+                g->m.water_from( g->u.bub_pos() )->typeId() == itype_salt_water ) {
                 elem_stack_iter->inc_damage( DT_ACID ); // rusting never completely destroys an item
                 add_msg( m_bad, _( "Your %s is damaged by rust." ), elem_stack_iter->tname() );
             }

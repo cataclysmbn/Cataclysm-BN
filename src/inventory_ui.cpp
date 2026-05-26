@@ -441,7 +441,6 @@ size_t inventory_column::get_cells_width() const
 
 void inventory_column::set_filter( const std::string &filter )
 {
-    entries = entries_unfiltered;
     entries_cell_cache.clear();
     paging_is_valid = false;
     prepare_paging( filter );
@@ -706,8 +705,8 @@ void inventory_column::on_input( const inventory_input &input )
         item_info_data dummy( highlighed->display_name(), {}, this_item, {} );
         dummy.handle_scrolling = true;
         draw_item_info( []() -> catacurses::window {
-            const int width = std::min( TERMX, FULL_SCREEN_WIDTH );
-            const int height = FULL_SCREEN_HEIGHT;
+            const int width = std::min( TERMX, FULL_SCREEN_WIDTH ) + std::max( 0, TERMX - FULL_SCREEN_WIDTH ) * ( 1.0 / 4 );
+            const int height = std::min( TERMY, FULL_SCREEN_HEIGHT ) + std::max( 0, TERMY - FULL_SCREEN_HEIGHT ) * ( 2.0 / 3 );
             return catacurses::newwin( height, width, point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 ) );
         }, dummy );
 
@@ -769,29 +768,32 @@ void inventory_column::prepare_paging( const std::string &filter )
 
     // FIXME: toggled status of multiselect menu resets when filtering the menu
     // First, remove all non-items
+    for( size_t i = 0; i < entries_hidden.size(); ++i ) {
+        entries.push_back( entries_hidden[i] );
+    }
+
+    entries_hidden.clear();
+    for( size_t i = 0; i < entries.size(); ++i ) {
+        if( entries[i].is_item() && !filter_fn( entries[i] ) ) {
+            entries_hidden.push_back( entries[i] );
+        }
+    }
+
     const auto new_end = std::remove_if( entries.begin(),
     entries.end(), [&filter_fn]( const inventory_entry & entry ) {
         return !entry.is_item() || !filter_fn( entry );
     } );
     entries.erase( new_end, entries.end() );
     // Then sort them with respect to categories
-    auto from = entries.begin();
-    while( from != entries.end() ) {
-        auto to = std::next( from );
-        while( to != entries.end() && from->get_category_ptr() == to->get_category_ptr() ) {
-            to->update_cache();
-            std::advance( to, 1 );
+    auto sort_function = [this]( const inventory_entry & lhs, const inventory_entry & rhs ) {
+        if( *lhs.get_category_ptr() != *rhs.get_category_ptr() ) {
+            return *lhs.get_category_ptr() < *rhs.get_category_ptr();
+        } else {
+            return preset.sort_compare( lhs, rhs );
         }
-        if( !ordered_categories.contains( from->get_category_ptr()->get_id().c_str() ) ) {
-            std::sort( from, to, [ this ]( const inventory_entry & lhs, const inventory_entry & rhs ) {
-                if( lhs.is_selectable() != rhs.is_selectable() ) {
-                    return lhs.is_selectable(); // Disabled items always go last
-                }
-                return preset.sort_compare( lhs, rhs );
-            } );
-        }
-        from = to;
-    }
+    };
+    std::sort( entries.begin(), entries.end(), sort_function );
+
     // Recover categories
     const item_category *current_category = nullptr;
     for( auto iter = entries.begin(); iter != entries.end(); ++iter ) {
@@ -822,9 +824,6 @@ void inventory_column::prepare_paging( const std::string &filter )
     }
     entries_cell_cache.clear();
     paging_is_valid = true;
-    if( entries_unfiltered.empty() ) {
-        entries_unfiltered = entries;
-    }
     // Select the uppermost possible entry
     select( selected_index, selected_index ? scroll_direction::BACKWARD : scroll_direction::FORWARD );
 }
@@ -1114,7 +1113,7 @@ static std::vector<std::list<item *>> restack_items( const std::vector<item *>::
 }
 
 const item_category *inventory_selector::naturalize_category( const item_category &category,
-        const tripoint &pos )
+        const tripoint_bub_ms &pos )
 {
     const auto find_cat_by_id = [ this ]( const item_category_id & id ) {
         const auto iter = std::find_if( categories.begin(),
@@ -1124,10 +1123,10 @@ const item_category *inventory_selector::naturalize_category( const item_categor
         return iter != categories.end() ? &*iter : nullptr;
     };
 
-    const int dist = rl_dist( u.pos(), pos );
+    const int dist = rl_dist( u.bub_pos(), pos );
 
     if( dist != 0 ) {
-        const std::string suffix = direction_suffix( u.pos(), pos );
+        const std::string suffix = direction_suffix( u.bub_pos().raw(), pos.raw() );
         const item_category_id id = item_category_id( string_format( "%s_%s", category.get_id().c_str(),
                                     suffix.c_str() ) );
 
@@ -1225,7 +1224,7 @@ void inventory_selector::add_character_items( Character &character )
     }
 }
 
-void inventory_selector::add_map_items( const tripoint &target )
+void inventory_selector::add_map_items( const tripoint_bub_ms &target )
 {
     if( g->m.accessible_items( target ) ) {
         const auto items = g->m.i_at( target );
@@ -1238,7 +1237,7 @@ void inventory_selector::add_map_items( const tripoint &target )
     }
 }
 
-void inventory_selector::add_vehicle_items( const tripoint &target )
+void inventory_selector::add_vehicle_items( const tripoint_bub_ms &target )
 {
     const std::optional<vpart_reference> vp = g->m.veh_at( target ).part_with_feature( "CARGO", true );
     if( !vp ) {
@@ -1260,9 +1259,10 @@ void inventory_selector::add_vehicle_items( const tripoint &target )
 void inventory_selector::add_nearby_items( int radius )
 {
     if( radius >= 0 ) {
-        for( const tripoint &pos : closest_points_first( u.pos(), radius ) ) {
+        for( const tripoint_bub_ms &pos : closest_points_first( u.bub_pos(), radius ) ) {
             // can not reach this -> can not access its contents
-            if( u.pos() != pos && !g->m.clear_path( u.pos(), pos, rl_dist( u.pos(), pos ), 1, 100 ) ) {
+            if( u.bub_pos() != pos &&
+                !g->m.clear_path( u.bub_pos(), pos, rl_dist( u.bub_pos(), pos ), 1, 100 ) ) {
                 continue;
             }
             add_map_items( pos );
