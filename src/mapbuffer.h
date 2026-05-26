@@ -121,7 +121,7 @@ class mapbuffer
          * Returns true if mapgen actually ran (omt was not fully resident),
          * false if all submaps were already in memory and nothing was generated.
          */
-        bool generate_omt( const tripoint_abs_omt &omt_addr );
+        auto generate_omt( const tripoint_abs_omt &omt_addr ) -> bool;
 
         /**
          * Serialise the OMT at @p omt_addr into the in-memory write-back cache

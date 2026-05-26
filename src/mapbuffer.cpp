@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <utility>
@@ -22,6 +23,8 @@
 #include "game_constants.h"
 #include "json.h"
 #include "map.h"
+#include "mapdata.h"
+#include "overmapbuffer.h"
 #include "output.h"
 #include "popup.h"
 #include "profile.h"
@@ -31,6 +34,49 @@
 #include "translations.h"
 #include "ui_manager.h"
 #include "world.h"
+
+namespace
+{
+
+auto uniform_terrain_for_omt( const std::string &dimension_id,
+                              const tripoint_abs_omt &omt_addr ) -> std::optional<ter_id>
+{
+    static const oter_id rock( "empty_rock" );
+    static const oter_id air( "open_air" );
+
+    const auto terrain_type = get_overmapbuffer( dimension_id ).ter( omt_addr );
+    if( terrain_type == air ) {
+        return t_open_air;
+    }
+    if( terrain_type == rock ) {
+        return t_rock;
+    }
+    return std::nullopt;
+}
+
+auto add_uniform_omt( mapbuffer &dest, const tripoint_abs_sm &base,
+                      const ter_id &terrain_type ) -> bool
+{
+    static constexpr auto offsets = std::array{
+        point_rel_sm::zero(),
+        point_rel_sm::east(),
+        point_rel_sm::south(),
+        point_rel_sm::south_east()
+    };
+
+    auto added_any = false;
+    std::ranges::for_each( offsets, [&]( const auto & offset ) {
+        const auto pos = base + offset;
+        auto sm = std::make_unique<submap>( pos );
+        sm->is_uniform = true;
+        sm->set_all_ter( terrain_type );
+        sm->last_touched = calendar::turn;
+        added_any |= dest.add_submap( pos, sm );
+    } );
+    return added_any;
+}
+
+} // namespace
 
 mapbuffer::mapbuffer() = default;
 mapbuffer::~mapbuffer() = default;
@@ -599,9 +645,9 @@ bool mapbuffer::preload_omt( const tripoint_abs_omt &omt_addr )
     return from_cache;
 }
 
-bool mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr )
+auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr ) -> bool
 {
-    ZoneScoped;
+    ZoneScopedN( "mapbuffer_generate_omt" );
     const auto base = project_to<coords::sm>( omt_addr );
     const bool all_loaded =
         lookup_submap_in_memory( base )
@@ -611,9 +657,18 @@ bool mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr )
     if( all_loaded ) {
         return false;
     }
-    tinymap tmp_map;
-    tmp_map.bind_dimension( dimension_id_ );
-    tmp_map.generate( base, calendar::turn );
+
+    if( const auto uniform_terrain = uniform_terrain_for_omt( dimension_id_, omt_addr ) ) {
+        ZoneScopedN( "mapbuffer_generate_uniform_omt" );
+        return add_uniform_omt( *this, base, *uniform_terrain );
+    }
+
+    {
+        ZoneScopedN( "mapbuffer_generate_tinymap" );
+        tinymap tmp_map;
+        tmp_map.bind_dimension( dimension_id_ );
+        tmp_map.generate( base, calendar::turn );
+    }
     return true;
 }
 
