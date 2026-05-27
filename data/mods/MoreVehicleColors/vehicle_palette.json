@@ -2,7 +2,6 @@
   {
     "type": "vehicle_color_palette",
     "id": "car_standard",
-    "clear": true,
     "palette": [
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
