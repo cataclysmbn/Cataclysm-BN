@@ -19,6 +19,7 @@
 #include "mapbuffer.h"
 #include "clzones.h"
 #include "mapgen_async.h"
+#include "mapgen_functions.h"
 #include "mapbuffer_registry.h"
 #include "point.h"
 #include "profile.h"
@@ -95,6 +96,15 @@ auto is_omt_zlevel_loaded( mapbuffer &mb, const tripoint_abs_omt &omt_addr ) -> 
            && mb.lookup_submap_in_memory( sm_base + point_south )
            && mb.lookup_submap_in_memory( sm_base + point_south_east );
 }
+
+auto is_any_omt_zlevel_loaded( mapbuffer &mb, const tripoint_abs_omt &omt_addr ) -> bool
+{
+    const auto sm_base = project_to<coords::sm>( omt_addr );
+    return mb.lookup_submap_in_memory( sm_base )
+           || mb.lookup_submap_in_memory( sm_base + point_east )
+           || mb.lookup_submap_in_memory( sm_base + point_south )
+           || mb.lookup_submap_in_memory( sm_base + point_south_east );
+}
 } // namespace
 
 submap_load_manager submap_loader;
@@ -153,7 +163,8 @@ void submap_load_manager::release_load( load_request_handle handle )
 {
     if( const auto it = requests_.find( handle );
         it != requests_.end() && it->second.source == load_request_source::lazy_border ) {
-        lazy_omt_queue_.clear();
+        lazy_omt_jobs_.clear();
+        lazy_omt_job_index_.clear();
         lazy_omt_budget_credit_ = 0.0;
         lazy_omt_last_credit_turn_ = -1;
     }
@@ -323,6 +334,7 @@ auto submap_load_manager::evict_omt_column( const retained_omt_key &key ) -> voi
     [&]( const auto z ) {
         const auto omt_addr = tripoint_abs_omt{ omt_xy, z };
         const auto qk = omt_key{ dim_id, omt_addr };
+        finish_lazy_omt_job( qk );
         const auto was_dirty = dirty_omts_.contains( qk );
         if( was_dirty ) {
             if( auto it = presave_futures_.find( qk ); it != presave_futures_.end() ) {
@@ -378,62 +390,83 @@ auto submap_load_manager::process_retained_omt_eviction() -> void
     evict_oldest_retained_omts( budget );
 }
 
-auto submap_load_manager::is_omt_column_loaded( const retained_omt_key &key ) -> bool
+auto submap_load_manager::load_lazy_omt_zlevel_data( mapbuffer &mb,
+        const tripoint_abs_omt &omt_addr ) -> lazy_omt_load_result
 {
-    const auto &[dim_id, omt_xy] = key;
-    auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-    return std::ranges::all_of( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-    [&]( const auto z ) {
-        return is_omt_zlevel_loaded( mb, tripoint_abs_omt{ omt_xy, z } );
-    } );
+    ZoneScopedN( "slm_lazy_load_omt_zlevel_data" );
+    auto result = lazy_omt_load_result {};
+    if( is_omt_zlevel_loaded( mb, omt_addr ) ) {
+        return result;
+    }
+
+    result.dirty = mb.preload_omt( omt_addr );
+    if( !is_omt_zlevel_loaded( mb, omt_addr ) ) {
+        // Partial z-levels are rare, but resolving them can discard duplicate
+        // generated submaps; keep that on the main thread.
+        if( is_pool_worker_thread() && is_any_omt_zlevel_loaded( mb, omt_addr ) ) {
+            return result;
+        }
+        result.generated = mb.generate_omt( omt_addr );
+    }
+    return result;
 }
 
-auto submap_load_manager::mark_omt_column_dirty( const retained_omt_key &key ) -> void
+auto submap_load_manager::erase_lazy_omt_job( const omt_key &key ) -> void
 {
-    const auto &[dim_id, omt_xy] = key;
-    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-    [&]( const auto z ) {
-        dirty_omts_.insert( { dim_id, tripoint_abs_omt{ omt_xy, z } } );
-    } );
+    const auto it = lazy_omt_job_index_.find( key );
+    if( it == lazy_omt_job_index_.end() ) {
+        return;
+    }
+    lazy_omt_jobs_.erase( it->second );
+    lazy_omt_job_index_.erase( it );
 }
 
-auto submap_load_manager::load_lazy_omt_column( const retained_omt_key &key ) -> void
+auto submap_load_manager::apply_lazy_omt_result( const omt_key &key,
+        const lazy_omt_load_result &result ) -> bool
 {
-    ZoneScopedN( "slm_lazy_load_omt_column" );
-    const auto &[dim_id, omt_xy] = key;
-    auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-    auto column_is_dirty = false;
+    MAPBUFFER_REGISTRY.get( key.first ).drain_pending_submap_destroy();
+    if( result.dirty || result.generated ) {
+        dirty_omts_.insert( key );
+    }
+    return result.generated;
+}
 
-    auto preload_futures = std::vector<std::future<bool>> {};
-    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-    [&]( const auto z ) {
-        const auto omt_addr = tripoint_abs_omt{ omt_xy, z };
-        const auto qk = omt_key{ dim_id, omt_addr };
-        if( auto it = presave_futures_.find( qk ); it != presave_futures_.end() ) {
-            it->second.get();
-            presave_futures_.erase( it );
-            column_is_dirty = true;
-        }
-        if( is_omt_zlevel_loaded( mb, omt_addr ) ) {
-            return;
-        }
-        preload_futures.push_back( get_thread_pool().submit_returning( [&mb, omt_addr]() {
-            return mb.preload_omt( omt_addr );
-        } ) );
-    } );
+auto submap_load_manager::finish_lazy_omt_job( const omt_key &key ) -> bool
+{
+    erase_lazy_omt_job( key );
+    const auto it = lazy_omt_futures_.find( key );
+    if( it == lazy_omt_futures_.end() ) {
+        return false;
+    }
 
-    std::ranges::for_each( preload_futures, [&]( auto & future ) {
-        column_is_dirty |= future.get();
-    } );
-    mb.drain_pending_submap_destroy();
+    auto result = lazy_omt_load_result {};
+    {
+        ZoneScopedN( "slm_lazy_z_wait" );
+        result = it->second.get();
+    }
+    const auto generated = apply_lazy_omt_result( key, result );
+    lazy_omt_futures_.erase( it );
+    if( generated ) {
+        run_deferred_mapgen_hooks();
+        flush_deferred_zones();
+        run_deferred_autonotes();
+    }
+    return generated;
+}
 
+auto submap_load_manager::reap_lazy_omt_jobs() -> void
+{
+    ZoneScopedN( "slm_lazy_z_reap" );
     auto generated = false;
-    std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-    [&]( const auto z ) {
-        const auto omt_addr = tripoint_abs_omt{ omt_xy, z };
-        if( !is_omt_zlevel_loaded( mb, omt_addr ) ) {
-            generated |= mb.generate_omt( omt_addr );
+    auto completed = std::size_t{ 0 };
+    std::erase_if( lazy_omt_futures_, [&]( auto & entry ) {
+        auto &[key, future] = entry;
+        if( future.wait_for( std::chrono::seconds( 0 ) ) != std::future_status::ready ) {
+            return false;
         }
+        generated |= apply_lazy_omt_result( key, future.get() );
+        ++completed;
+        return true;
     } );
 
     if( generated ) {
@@ -441,10 +474,51 @@ auto submap_load_manager::load_lazy_omt_column( const retained_omt_key &key ) ->
         flush_deferred_zones();
         run_deferred_autonotes();
     }
+    TracyPlot( "Lazy Border Z Jobs Completed", static_cast<int64_t>( completed ) );
+    TracyPlot( "Lazy Border Z Jobs In-Flight", static_cast<int64_t>( lazy_omt_futures_.size() ) );
+}
 
-    if( column_is_dirty || generated ) {
-        mark_omt_column_dirty( key );
+auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> bool
+{
+    if( lazy_omt_futures_.contains( key ) ) {
+        return false;
     }
+
+    auto &mb = MAPBUFFER_REGISTRY.get( key.first );
+    auto dirty = false;
+    if( auto it = presave_futures_.find( key ); it != presave_futures_.end() ) {
+        it->second.get();
+        presave_futures_.erase( it );
+        dirty = true;
+    }
+
+    if( is_omt_zlevel_loaded( mb, key.second ) ) {
+        if( dirty ) {
+            dirty_omts_.insert( key );
+        }
+        return false;
+    }
+
+    if( get_thread_pool().num_workers() == 0 || is_any_omt_zlevel_loaded( mb, key.second ) ||
+        omt_mapgen_uses_lua( key.first, key.second ) ) {
+        auto result = load_lazy_omt_zlevel_data( mb, key.second );
+        result.dirty |= dirty;
+        const auto generated = apply_lazy_omt_result( key, result );
+        if( generated ) {
+            run_deferred_mapgen_hooks();
+            flush_deferred_zones();
+            run_deferred_autonotes();
+        }
+        return true;
+    }
+
+    lazy_omt_futures_.emplace( key,
+    get_thread_pool().submit_returning( [&mb, omt_addr = key.second, dirty]() {
+        auto result = load_lazy_omt_zlevel_data( mb, omt_addr );
+        result.dirty |= dirty;
+        return result;
+    } ) );
+    return true;
 }
 
 auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const -> int
@@ -492,15 +566,18 @@ auto submap_load_manager::lazy_omt_priority( const retained_omt_key &key ) const
     return best;
 }
 
+auto submap_load_manager::lazy_omt_priority( const omt_key &key ) const -> int
+{
+    return lazy_omt_priority( retained_omt_key{ key.first, key.second.xy() } );
+}
+
 auto submap_load_manager::queue_lazy_border_omts( const horizontal_omt_set &border_omts ) -> void
 {
     ZoneScopedN( "slm_queue_lazy_border_omts" );
 
     auto candidates = std::vector<retained_omt_key> {};
     std::ranges::for_each( border_omts, [&]( const retained_omt_key & key ) {
-        if( !is_omt_column_loaded( key ) ) {
-            candidates.push_back( key );
-        }
+        candidates.push_back( key );
     } );
     std::ranges::sort( candidates, [&]( const retained_omt_key & lhs,
     const retained_omt_key & rhs ) {
@@ -518,41 +595,62 @@ auto submap_load_manager::queue_lazy_border_omts( const horizontal_omt_set &bord
         return lhs.second.y() < rhs.second.y();
     } );
 
-    lazy_omt_queue_.clear();
+    lazy_omt_jobs_.clear();
+    lazy_omt_job_index_.clear();
     std::ranges::for_each( candidates, [&]( const retained_omt_key & key ) {
-        lazy_omt_queue_.push_back( key );
+        const auto &[dim_id, omt_xy] = key;
+        auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
+        std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
+        [&]( const auto z ) {
+            const auto omt_addr = tripoint_abs_omt{ omt_xy, z };
+            const auto job_key = omt_key{ dim_id, omt_addr };
+            if( lazy_omt_futures_.contains( job_key ) || is_omt_zlevel_loaded( mb, omt_addr ) ) {
+                return;
+            }
+            auto it = lazy_omt_jobs_.insert( lazy_omt_jobs_.end(), job_key );
+            lazy_omt_job_index_.emplace( job_key, it );
+        } );
     } );
 }
 
 auto submap_load_manager::process_lazy_border_preload() -> void
 {
     ZoneScopedN( "slm_lazy_border_preload" );
-    const auto queued = lazy_omt_queue_.size();
+    const auto queued = lazy_omt_jobs_.size();
     TracyPlot( "Lazy Border OMT Queue", static_cast<int64_t>( queued ) );
+    TracyPlot( "Lazy Border Z Jobs Queue", static_cast<int64_t>( queued ) );
+    TracyPlot( "Lazy Border Z Jobs In-Flight", static_cast<int64_t>( lazy_omt_futures_.size() ) );
     if( queued == 0 ) {
         TracyPlot( "Lazy Border OMT Budget", int64_t{ 0 } );
+        TracyPlot( "Lazy Border Z Jobs Started", int64_t{ 0 } );
         return;
     }
 
     const auto urgent = static_cast<std::size_t>( std::ranges::count_if(
-    lazy_omt_queue_, [&]( const retained_omt_key & key ) {
+    lazy_omt_jobs_, [&]( const omt_key & key ) {
         return lazy_omt_priority( key ) > 0;
     } ) );
     TracyPlot( "Lazy Border Leading OMTs", static_cast<int64_t>( urgent ) );
+    TracyPlot( "Lazy Border Leading Z Jobs", static_cast<int64_t>( urgent ) );
 
-    const auto load_budget_matching = [&]( std::size_t budget, const auto &can_load ) {
-        while( budget > 0 && !lazy_omt_queue_.empty() ) {
-            const auto key = lazy_omt_queue_.front();
+    const auto load_budget_matching = [&]( std::size_t budget, const auto &can_load ) -> std::size_t {
+        auto started = std::size_t{ 0 };
+        while( budget > 0 && !lazy_omt_jobs_.empty() ) {
+            const auto key = lazy_omt_jobs_.front();
             if( !can_load( key ) ) {
-                return;
+                return started;
             }
-            lazy_omt_queue_.pop_front();
-            if( is_omt_column_loaded( key ) ) {
+            erase_lazy_omt_job( key );
+            auto &mb = MAPBUFFER_REGISTRY.get( key.first );
+            if( is_omt_zlevel_loaded( mb, key.second ) ) {
                 continue;
             }
-            load_lazy_omt_column( key );
-            --budget;
+            if( start_lazy_omt_job( key ) ) {
+                --budget;
+                ++started;
+            }
         }
+        return started;
     };
 
     if( lazy_omt_preload_direction_ == point_zero ) {
@@ -562,15 +660,17 @@ auto submap_load_manager::process_lazy_border_preload() -> void
                    static_cast<int64_t>( lazy_border_steps_to_cross_omt ) );
         TracyPlot( "Lazy Border Credit x1000", int64_t{ 0 } );
         TracyPlot( "Lazy Border OMT Budget", static_cast<int64_t>( budget ) );
-        load_budget_matching( budget, []( const retained_omt_key & ) {
+        const auto started = load_budget_matching( budget, []( const omt_key & ) {
             return true;
         } );
+        TracyPlot( "Lazy Border Z Jobs Started", static_cast<int64_t>( started ) );
         return;
     }
 
     const auto current_turn = to_turn<int>( calendar::turn );
     if( current_turn == lazy_omt_last_credit_turn_ ) {
         TracyPlot( "Lazy Border OMT Budget", int64_t{ 0 } );
+        TracyPlot( "Lazy Border Z Jobs Started", int64_t{ 0 } );
         return;
     }
     lazy_omt_last_credit_turn_ = current_turn;
@@ -583,6 +683,7 @@ auto submap_load_manager::process_lazy_border_preload() -> void
         TracyPlot( "Lazy Border OMT Deadline", static_cast<int64_t>( deadline ) );
         TracyPlot( "Lazy Border Credit x1000", int64_t{ 0 } );
         TracyPlot( "Lazy Border OMT Budget", int64_t{ 0 } );
+        TracyPlot( "Lazy Border Z Jobs Started", int64_t{ 0 } );
         return;
     }
 
@@ -595,14 +696,26 @@ auto submap_load_manager::process_lazy_border_preload() -> void
                static_cast<int64_t>( lazy_omt_budget_credit_ * 1000.0 ) );
     TracyPlot( "Lazy Border OMT Budget", static_cast<int64_t>( budget ) );
 
-    load_budget_matching( budget, [&]( const retained_omt_key & key ) {
+    const auto started = load_budget_matching( budget, [&]( const omt_key & key ) {
         return lazy_omt_priority( key ) > 0;
     } );
+    TracyPlot( "Lazy Border Z Jobs Started", static_cast<int64_t>( started ) );
 }
 
 void submap_load_manager::drain_lazy_loads()
 {
     ZoneScopedN( "drain_lazy_loads" );
+    auto generated = false;
+    std::ranges::for_each( lazy_omt_futures_, [&]( auto & entry ) {
+        generated |= apply_lazy_omt_result( entry.first, entry.second.get() );
+    } );
+    lazy_omt_futures_.clear();
+    if( generated ) {
+        run_deferred_mapgen_hooks();
+        flush_deferred_zones();
+        run_deferred_autonotes();
+    }
+
     // Drain in-flight presave futures so no worker holds raw submap pointers
     // across a dimension switch, shutdown, or full game save.
     // dirty_omts_ is NOT cleared here — the presaved data is in pending_writes_
@@ -637,6 +750,7 @@ void submap_load_manager::update()
             return false;
         } );
     }
+    reap_lazy_omt_jobs();
 
     TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
     TracyPlot( "Thread Pool Queue", static_cast<int64_t>( get_thread_pool().queue_size() ) );
@@ -723,6 +837,7 @@ void submap_load_manager::update()
             for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
                 const tripoint_abs_omt omt_addr{ omt_xy, z };
                 const omt_key qk{ dim_id, omt_addr };
+                finish_lazy_omt_job( qk );
 
                 // If a presave is in-flight for this omt, wait for it before
                 // allowing game logic to modify the submaps.  The worker holds
@@ -1029,7 +1144,7 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
 
 auto submap_load_manager::is_fully_drained() const noexcept -> bool
 {
-    return presave_futures_.empty();
+    return presave_futures_.empty() && lazy_omt_futures_.empty();
 }
 
 void submap_load_manager::flush_prev_desired()
@@ -1040,7 +1155,9 @@ void submap_load_manager::flush_prev_desired()
     prev_centers_.clear();
     retained_omts_.clear();
     retained_omt_index_.clear();
-    lazy_omt_queue_.clear();
+    lazy_omt_jobs_.clear();
+    lazy_omt_job_index_.clear();
+    lazy_omt_futures_.clear();
     lazy_omt_preload_direction_ = point_zero;
     lazy_omt_focus_.reset();
     lazy_omt_budget_credit_ = 0.0;

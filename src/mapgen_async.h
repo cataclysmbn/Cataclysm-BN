@@ -16,7 +16,7 @@ struct lua_state;
  * When map::generate() runs on a worker thread, the Lua
  * on_mapgen_postprocess hook cannot execute in place (Lua is not
  * thread-safe).  Instead, the hook parameters are pushed here and
- * drained on the main thread by map::shift() after drain_completed().
+ * drained on the main thread after worker mapgen completes.
  *
  * The submaps are already in the mapbuffer when the hook runs (saven()
  * is called before the hook), so the main thread reconstructs a
@@ -67,7 +67,7 @@ void refresh_mapgen_postprocess_hook_presence( cata::lua_state &state );
  * from the hook land directly on the mapbuffer-owned submap objects.
  *
  * Must be called on the main thread only (Lua is not thread-safe).
- * Called by map::shift() after drain_completed().
+ * Called by map::shift() and the submap load manager after worker mapgen completes.
  */
 void run_deferred_mapgen_hooks();
 

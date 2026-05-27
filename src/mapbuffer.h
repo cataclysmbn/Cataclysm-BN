@@ -115,8 +115,9 @@ class mapbuffer
          * Generate all submaps in the OMT at @p omt_addr if any are not yet
          * resident in memory.
          *
-         * Must be called on the main thread — mapgen (including Lua mapgen) is
-         * not reentrant and cannot run safely on worker threads.
+         * May be called on a worker thread only when the OMT's mapgen pool is
+         * known not to contain Lua mapgen.  Lua postprocess hooks are deferred
+         * back to the main thread by map::generate().
          *
          * Returns true if mapgen actually ran (omt was not fully resident),
          * false if all submaps were already in memory and nothing was generated.

@@ -265,7 +265,7 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
 
     // Run the Lua on_mapgen_postprocess hook.
     // Main thread: run immediately.  Worker thread: defer (Lua is not thread-safe).
-    // map::shift() drains deferred hooks after drain_completed().
+    // The main thread drains deferred hooks after worker mapgen completes.
     const auto omt_pos( project_to<coords::omt>( p ) );
     {
         ZoneScopedN( "generate_postprocess_hooks" );
