@@ -313,7 +313,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
-        void vertical_shift( int z_after );
+        auto vertical_shift( int z_after, bool keep_grab = false ) -> void;
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
@@ -917,9 +917,9 @@ class game : public submap_load_listener
         /** Check for dangerous stuff at dest_loc, return false if the player decides
         not to step there */
         // Handle pushing during move, returns true if it handled the move
-        bool grabbed_move( const tripoint_rel_ms &dp );
+        auto grabbed_move( const tripoint_rel_ms &dp, bool allow_furniture_z_move = false ) -> bool;
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
-        bool grabbed_furn_move( const tripoint_rel_ms &dp );
+        auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
         void control_vehicle(); // Use vehicle controls  '^'
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
@@ -936,7 +936,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
     public:
         // Places the player at the specified point; hurts feet, lists items etc.
-        point_rel_sm place_player( const tripoint_bub_ms &dest );
+        auto place_player( const tripoint_bub_ms &dest, bool keep_grab = false ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;
@@ -1165,11 +1165,12 @@ class game : public submap_load_listener
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
 
-        // P-8: per-turn symmetric sight-result cache used during parallel monster
-        // planning (monmove()).  Keyed on the sorted (lo, hi) Creature pointer
-        // pair so A→B and B→A share one entry (LOS ray is symmetric).  Cleared
-        // at the start of monmove() before the parallel phase begins.  Workers
-        // hold a shared_lock for hits and upgrade to unique_lock on a miss.
+        // P-8: per-turn Creature::sees() result cache used during parallel monster
+        // planning (monmove()).  Keyed on directional (seer, target) Creature pointer
+        // pairs; Creature::sees() includes observer and target perception rules, while
+        // map::sees() remains the symmetric LOS cache.  Cleared at the start of
+        // monmove() before the parallel phase begins.  Workers hold a shared_lock for
+        // hits and upgrade to unique_lock on a miss.
         // Lives in the public section so turn_cached_sees() in monmove.cpp can
         // access it directly without an additional indirection layer.
         struct TurnSightPairHash {

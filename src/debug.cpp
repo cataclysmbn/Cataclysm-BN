@@ -122,6 +122,7 @@ static std::mutex g_debug_log_mutex;
 static bool capturing = false;
 /** сaptured debug messages */
 static std::string captured;
+static std::ostringstream captured_log;
 
 
 #if defined(_WIN32) && defined(LIBBACKTRACE)
@@ -204,12 +205,14 @@ capture_debugmsg::capture_debugmsg()
 {
     capturing = true;
     captured = "";
+    captured_log.str( "" );
+    captured_log.clear();
 }
 
 std::string capture_debugmsg::dmsg()
 {
     capturing = false;
-    return captured;
+    return captured + captured_log.str();
 }
 
 capture_debugmsg::~capture_debugmsg()
@@ -1560,6 +1563,10 @@ detail::DebugLogGuard detail::realDebugLog( DL lev, DC cl, const char *filename,
 {
     if( lev == DL::Error ) {
         error_observed = true;
+    }
+
+    if( capturing && cl == DC::DebugMsg ) {
+        return DebugLogGuard( captured_log );
     }
 
     if( checkDebugLevelClass( lev, cl ) ) {

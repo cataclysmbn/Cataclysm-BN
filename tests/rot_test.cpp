@@ -1,7 +1,9 @@
 #include "catch/catch.hpp"
 
 #include <memory>
+#include <ranges>
 
+#include "avatar.h"
 #include "calendar.h"
 #include "coordinates.h"
 #include "enums.h"
@@ -9,10 +11,16 @@
 #include "map.h"
 #include "map_helpers.h"
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
+#include "rot.h"
+#include "state_helpers.h"
 #include "units_temperature.h"
+#include "vehicle.h"
+#include "vehicle_part.h"
 #include "weather.h"
 
 static const furn_str_id f_atomic_freezer( "f_atomic_freezer" );
+static const furn_str_id f_test_fridge_on( "f_fridge_on" );
+static const furn_str_id f_test_minifreezer_on( "f_minifreezer_on" );
 
 static void set_map_temperature( weather_manager &weather, units::temperature new_temperature )
 {
@@ -25,6 +33,74 @@ static void ensure_no_temperature_mods( tripoint_bub_ms location )
     REQUIRE( get_heat_radiation( location, false ) == 0 );
     REQUIRE( get_convection_temperature( location ) == 0 );
     REQUIRE( get_map().get_temperature( location ) == 0 );
+}
+
+struct vehicle_storage_fixture {
+    vehicle *veh = nullptr;
+    int part_index = -1;
+    tripoint_bub_ms pos;
+};
+
+static auto make_storage( const vpart_id &storage_part,
+                          const bool enabled ) -> vehicle_storage_fixture
+{
+    clear_all_state();
+    calendar::turn = calendar::start_of_cataclysm + 91_days;
+    set_map_temperature( get_weather(), 18_c );
+
+    auto &here = get_map();
+    const auto vehicle_pos = tripoint_bub_ms( 60, 60, 0 );
+    here.set_temperature( vehicle_pos, 100 );
+    auto *veh = here.add_vehicle( vproto_id( "none" ), vehicle_pos, 0_degrees, 0, 0 );
+    REQUIRE( veh != nullptr );
+    REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "frame_vertical" ), true ) >= 0 );
+    const auto part_index = veh->install_part( tripoint_mnt_veh::zero(), storage_part, true );
+    REQUIRE( part_index >= 0 );
+    veh->part( part_index ).enabled = enabled;
+    here.build_map_cache( vehicle_pos.z(), true );
+
+    return { .veh = veh, .part_index = part_index, .pos = vehicle_pos };
+}
+
+static auto add_sashimi_to_vehicle_part( vehicle &veh, const int part_index ) -> void
+{
+    auto sashimi = item::spawn( "sashimi" );
+    REQUIRE( sashimi->goes_bad() );
+    REQUIRE_FALSE( veh.add_item( part_index, std::move( sashimi ) ) );
+}
+
+static auto move_to_inventory_with_attempt_detach( item &stored ) -> item * // *NOPAD*
+{
+    item *carried = nullptr;
+    stored.attempt_detach( [&carried]( detached_ptr<item> &&it ) {
+        carried = &get_avatar().i_add( std::move( it ) );
+        return detached_ptr<item>();
+    } );
+    return carried;
+}
+
+static auto process_storage_for( const time_duration duration ) -> void
+{
+    constexpr auto interval = 20_minutes;
+    const auto intervals = to_turns<int>( duration ) / to_turns<int>( interval );
+    for( const auto _ : std::views::iota( 0, intervals ) ) {
+        static_cast<void>( _ );
+        calendar::turn += interval;
+        get_map().process_items();
+    }
+}
+
+static auto prepare_map_storage_test() -> void
+{
+    clear_all_state();
+    calendar::turn = calendar::start_of_cataclysm + 91_days;
+    set_map_temperature( get_weather(), 18_c );
+}
+
+static auto add_sashimi_to_map( const tripoint_bub_ms &pos ) -> void
+{
+    get_map().add_item( pos, item::spawn( "sashimi" ) );
+    REQUIRE( get_map().i_at( pos ).size() == 1 );
 }
 
 TEST_CASE( "Rate of rotting" )
@@ -204,4 +280,141 @@ TEST_CASE( "Items don't rot away on map load if in a freezer" )
     REQUIRE( sealed_stack_after.size() == 1 );
     auto normal_stack_after = m.i_at( normal_pnt );
     REQUIRE( normal_stack_after.empty() );
+}
+
+TEST_CASE( "Vehicle storage temperature controls food rot" )
+{
+    SECTION( "powered freezers preserve food when removed after missed processing" ) {
+        auto fixture = make_storage( vpart_id( "minifreezer" ), true );
+        add_sashimi_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        auto freezer_items = fixture.veh->get_items( fixture.part_index );
+        REQUIRE( freezer_items.size() == 1 );
+
+        calendar::turn += 21_days;
+        auto *carried = move_to_inventory_with_attempt_detach( freezer_items.only_item() );
+
+        REQUIRE( carried != nullptr );
+        CHECK( carried->get_rot() == 0_turns );
+
+        get_avatar().process_items();
+
+        CHECK( !carried->rotten() );
+        CHECK( carried->get_rot() == 0_turns );
+    }
+
+    SECTION( "powered fridges catch up partial rot when removed after missed processing" ) {
+        auto fixture = make_storage( vpart_id( "minifridge" ), true );
+        add_sashimi_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        auto fridge_items = fixture.veh->get_items( fixture.part_index );
+        REQUIRE( fridge_items.size() == 1 );
+
+        calendar::turn += 24_hours;
+        auto *carried = move_to_inventory_with_attempt_detach( fridge_items.only_item() );
+
+        REQUIRE( carried != nullptr );
+        CHECK( carried->get_relative_rot() > 0.0 );
+        CHECK( carried->get_relative_rot() < 1.0 );
+
+        const auto rot_after_detach = carried->get_rot();
+        get_avatar().process_items();
+
+        CHECK( carried->get_rot() == rot_after_detach );
+    }
+
+    SECTION( "unpowered freezers do not protect food while it remains stored" ) {
+        auto fixture = make_storage( vpart_id( "minifreezer" ), false );
+        add_sashimi_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        process_storage_for( 25_hours );
+
+        CHECK( fixture.veh->get_items( fixture.part_index ).empty() );
+    }
+
+    SECTION( "vehicle seat storage rots food while it remains stored" ) {
+        auto fixture = make_storage( vpart_id( "seat" ), true );
+        add_sashimi_to_vehicle_part( *fixture.veh, fixture.part_index );
+
+        process_storage_for( 25_hours );
+
+        CHECK( fixture.veh->get_items( fixture.part_index ).empty() );
+    }
+}
+
+TEST_CASE( "Contained item keeps parent location while temporarily detached" )
+{
+    prepare_map_storage_test();
+
+    auto container = item::spawn( "bag_plastic" );
+    REQUIRE( container->is_container() );
+    REQUIRE( container->contents.insert_item( item::spawn( "sashimi" ) ).success() );
+
+    auto checked = false;
+    container->contents.remove_top_items_with( [&]( detached_ptr<item> &&it ) {
+        checked = true;
+        CHECK( it->parent_item() == &*container );
+        CHECK( rot::temperature_flag_for_location( get_map(), *it ) == temperature_flag::TEMP_NORMAL );
+        return std::move( it );
+    } );
+
+    CHECK( checked );
+}
+
+TEST_CASE( "Map powered fridge and freezer furniture controls food rot" )
+{
+    SECTION( "powered freezer furniture preserves food" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_minifreezer_on );
+        add_sashimi_to_map( pos );
+
+        process_storage_for( 25_hours );
+
+        auto items = get_map().i_at( pos );
+        REQUIRE( items.size() == 1 );
+        CHECK( items.only_item().get_rot() == 0_turns );
+        CHECK( !items.only_item().rotten() );
+    }
+
+    SECTION( "powered fridge furniture partially protects food" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        get_map().furn_set( pos, f_test_fridge_on );
+        add_sashimi_to_map( pos );
+
+        process_storage_for( 24_hours );
+
+        auto items = get_map().i_at( pos );
+        REQUIRE( items.size() == 1 );
+        CHECK( items.only_item().get_relative_rot() > 0.0 );
+        CHECK( items.only_item().get_relative_rot() < 1.0 );
+    }
+
+    SECTION( "unprotected map storage reports stale rot when inspected before processing" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        add_sashimi_to_map( pos );
+
+        calendar::turn += 20_days;
+
+        auto items = get_map().i_at( pos );
+        REQUIRE( items.size() == 1 );
+        CHECK( items.only_item().get_rot() > 0_turns );
+        CHECK_FALSE( items.only_item().is_fresh() );
+    }
+
+    SECTION( "unprotected map storage rots food normally" ) {
+        prepare_map_storage_test();
+        const auto pos = tripoint_bub_ms( 60, 60, 0 );
+        get_map().set_temperature( pos, 100 );
+        add_sashimi_to_map( pos );
+
+        process_storage_for( 25_hours );
+
+        CHECK( get_map().i_at( pos ).empty() );
+    }
 }

@@ -303,14 +303,6 @@ class monster : public Creature, public location_visitable<monster>
         monster_action_t decide_action() const;
 
         /**
-         * Pre-warm the per-turn sight cache for the (this, target) pair.
-         * Call serially before the parallel planning phase so that
-         * compute_plan() hits the shared_lock read path instead of taking
-         * a unique_lock insert for every monster-player/NPC pair.
-         */
-        void prewarm_sight( const Creature &target ) const;
-
-        /**
          * Execution pass: applies the action returned by decide_action().
          * Must run on the main thread (or a thread that has exclusive access to
          * this monster's position in the reservation map).
@@ -407,6 +399,7 @@ class monster : public Creature, public location_visitable<monster>
         // Combat
         bool is_fleeing( Character &who ) const; // True if we're fleeing
         auto attitude( const Character *u = nullptr ) const -> monster_attitude; // See the enum above
+        auto generic_npc_attitude_to() const -> Attitude;
         Attitude attitude_to( const Creature &other ) const override;
         void process_triggers(); // Process things that anger/scare us
 

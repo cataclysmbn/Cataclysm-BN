@@ -1,0 +1,12 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "no_vehicle_colors",
+    "name": "No Vehicle Colors",
+    "authors": [ "Wishduck" ],
+    "description": "Limits vehicle colors to standard Cataclysm Red and Green",
+    "category": "graphical",
+    "dependencies": [ "bn" ],
+    "conflicts": [ "vehicle_color_expansion" ]
+  }
+]

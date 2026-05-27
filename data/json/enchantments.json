@@ -69,5 +69,12 @@
     "description": "Fix'em all!",
     "copy-from": "hammer",
     "relic_data": { "passive_effects": [ { "id": "ENCH_WEAPON_DEBUGGY_ACIDIC" } ] }
+  },
+  {
+    "type": "enchantment",
+    "id": "ENCH_INSECT_WINGS_ACTIVE",
+    "has": "HELD",
+    "condition": "ACTIVE",
+    "values": [ { "value": "MOVE_COST", "multiply": -0.25 } ]
   }
 ]

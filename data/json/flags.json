@@ -611,13 +611,15 @@
     "id": "resized_large",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "info": "This gear has been modified to accommodate <info>abnormally large mutated anatomy</info> with some <bad>increase to encumbrance</bad>."
+    "info": "This gear has been modified to accommodate <info>abnormally large mutated anatomy</info> with some <bad>increase to encumbrance</bad>.",
+    "tag": "(XL)"
   },
   {
     "id": "resized_small",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "info": "This gear has been modified to accommodate <info>abnormally small mutants</info> with some <bad>increase to encumbrance</bad>."
+    "info": "This gear has been modified to accommodate <info>abnormally small mutants</info> with some <bad>increase to encumbrance</bad>.",
+    "tag": "(XS)"
   },
   {
     "id": "UNDERSIZE",
@@ -658,14 +660,16 @@
     "type": "json_flag",
     "context": [ "GENERIC" ],
     "//": "This item will spawn friendly. Used for pets and such.",
-    "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
+    "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>.",
+    "tag": "(friendly)"
   },
   {
     "id": "SPAWN_HOSTILE",
     "type": "json_flag",
     "context": [ "GENERIC" ],
     "//": "This item will spawn mean. Used for target dummies and such.",
-    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
+    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>.",
+    "tag": "(hostile)"
   },
   {
     "id": "STAB",
@@ -693,27 +697,30 @@
     "context": [ "GENERIC" ]
   },
   {
-    "id": "RADIOSIGNAL_1",
+    "id": "RADIO_MOD",
     "type": "json_flag",
     "context": [ "TOOL", "TOOL_ARMOR" ]
+  },
+  {
+    "id": "RADIOSIGNAL_1",
+    "type": "json_flag",
+    "context": [ "TOOL", "TOOL_ARMOR" ],
+    "tag": "(radio: R)"
   },
   {
     "id": "RADIOSIGNAL_2",
     "type": "json_flag",
-    "context": [ "TOOL", "TOOL_ARMOR" ]
+    "context": [ "TOOL", "TOOL_ARMOR" ],
+    "tag": "(radio: B)"
   },
   {
     "id": "RADIOSIGNAL_3",
     "type": "json_flag",
-    "context": [ "TOOL", "TOOL_ARMOR" ]
+    "context": [ "TOOL", "TOOL_ARMOR" ],
+    "tag": "(radio: G)"
   },
   {
     "id": "RADIO_ACTIVATION",
-    "type": "json_flag",
-    "context": [ "TOOL", "TOOL_ARMOR" ]
-  },
-  {
-    "id": "RADIO_MOD",
     "type": "json_flag",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
@@ -1007,7 +1014,8 @@
   {
     "id": "WET",
     "type": "json_flag",
-    "context": [ "GENERIC", "ARMOR", "TOOL_ARMOR" ]
+    "context": [ "GENERIC", "ARMOR", "TOOL_ARMOR" ],
+    "tag": "(wet)"
   },
   {
     "id": "POWERARMOR_EXO",

@@ -742,7 +742,7 @@ void debug_menu::wishitem( Character *who, const tripoint_bub_ms &pos )
     std::vector<std::pair<std::string, const itype *>> opts;
     for( const itype *i : item_controller->all() ) {
         //TODO!: push up
-        auto it = item::spawn_temporary( i, calendar::start_of_cataclysm );
+        auto it = item::spawn_temporary( i, calendar::turn );
         if( it->has_flag( flag_VARSIZE ) ) {
             it->set_flag( flag_FIT );
         }
