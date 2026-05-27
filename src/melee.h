@@ -62,7 +62,8 @@ class technique_prompt_suppression_guard
         ~technique_prompt_suppression_guard();
 
         technique_prompt_suppression_guard( const technique_prompt_suppression_guard & ) = delete;
-        technique_prompt_suppression_guard &operator=( const technique_prompt_suppression_guard & ) = delete;
+        technique_prompt_suppression_guard &operator=( const technique_prompt_suppression_guard & ) =
+            delete;
 };
 
 // If average == true, adds expected values of random rolls instead of rolling.

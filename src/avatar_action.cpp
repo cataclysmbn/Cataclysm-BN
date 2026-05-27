@@ -172,7 +172,7 @@ auto throw_grabbed_creature( avatar &you ) -> bool
     }
 
     const auto stamina_factor = std::max( 0.25f,
-                                         static_cast<float>( you.get_stamina() ) / you.get_stamina_max() );
+                                          static_cast<float>( you.get_stamina() ) / you.get_stamina_max() );
     auto throwforce = ( you.get_str() * ( 1.1f + stamina_factor ) +
                         you.get_skill_level( skill_unarmed ) * 2 +
                         you.get_skill_level( skill_throw ) / 4.0f +
@@ -192,7 +192,8 @@ auto throw_grabbed_creature( avatar &you ) -> bool
         return true;
     }
 
-    const target_handler::trajectory trajectory = target_handler::mode_throw_creature( you, *target, range );
+    const target_handler::trajectory trajectory = target_handler::mode_throw_creature( you, *target,
+            range );
     if( trajectory.empty() ) {
         return true;
     }
@@ -833,7 +834,7 @@ static auto prompt_manual_attack_target( avatar &you ) -> void
     const auto target = choose_adjacent_highlight(
                             _( "Attack where?" ),
                             _( "No hostile creature nearby." ),
-                            [&you]( const tripoint_bub_ms & pos ) {
+    [&you]( const tripoint_bub_ms & pos ) {
         const auto *const critter = g->critter_at( pos );
         return critter != nullptr && is_manual_attack_target( you, *critter );
     } );
@@ -877,7 +878,7 @@ auto avatar_action::toggle_manual_combat_mode() -> void
 {
     g->manual_combat_mode = !g->manual_combat_mode;
     add_msg( m_info, g->manual_combat_mode ? _( "Manual combat mode ON!" ) :
-                                          _( "Manual combat mode OFF!" ) );
+             _( "Manual combat mode OFF!" ) );
 }
 
 auto avatar_action::is_manual_combat_mode() -> bool

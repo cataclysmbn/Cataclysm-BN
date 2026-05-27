@@ -2480,7 +2480,7 @@
     "name": "Toggle manual combat mode",
     "category": "DEFAULTMODE",
     "id": "toggle_manual_combat_mode",
-    "bindings": []
+    "bindings": [  ]
   },
   {
     "type": "keybinding",
