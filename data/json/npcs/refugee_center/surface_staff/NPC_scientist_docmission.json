@@ -26,6 +26,7 @@
     "responses": [
       {
         "text": "Come on, there's no reason to lie at this point.",
+        "condition": { "not": { "npc_has_var": "scientist_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } }
         "trial": {
           "type": "PERSUADE",
           "difficulty": 90,
@@ -40,6 +41,7 @@
   {
     "id": [ "TALK_TCLSCIENTIST_PERSUADE_SUCCESS" ],
     "type": "talk_topic",
+    "speaker_effect": { "effect": [ { "npc_add_var": "scientist_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" },
     "dynamic_line": "Oh fine.  We were conducting mutation experiments on the test subjects here in an attempt to unlock the true potential of humanity.  Things didn't always turn out correctly, of course, but our star specimen should still be somewhere upstairs.  He's of no use to me now, obviously, but you may want to watch out for him if you decide to explore the medical wing.",
     "responses": [ { "text": "Wow, was that so hard?", "topic": "TALK_DONE" } ]
   },
