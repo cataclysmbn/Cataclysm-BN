@@ -1170,6 +1170,7 @@ static bool try_start_hacking( player &p, const tripoint_bub_ms &examp )
                            ( std::make_unique<hacking_activity_actor>() ) );
     }
     p.activity->placement = bub_to_abs( examp );
+    return true;
 }
 
 /**

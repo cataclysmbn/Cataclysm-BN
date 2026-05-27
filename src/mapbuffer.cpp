@@ -288,20 +288,6 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
 {
     const int num_total_submaps = static_cast<int>( submaps.size() );
 
-    // Spatial eviction only makes sense for the dimension the player is
-    // currently in — it has a reality bubble whose origin defines which omts
-    // are "near" enough to keep resident.  Non-current dimensions have no
-    // bubble, so their submaps are kept in memory (the submap_load_manager
-    // handles eviction for those independently).
-    const bool is_current_dimension =
-        g != nullptr && dimension_id_ == get_map().get_bound_dimension();
-
-    map &here = get_map();
-    const tripoint_abs_omt map_origin = is_current_dimension
-                                        ? project_to<coords::omt>( here.get_abs_sub() )
-                                        : tripoint_abs_omt{};
-    const bool map_has_zlevels = g != nullptr && here.has_zlevels();
-
     // Serial collection of unique OMT addresses with per-omt delete flags.
     // The UI progress popup runs here on the main thread only (show_progress=true).
     // When save() is dispatched from a worker thread (show_progress=false), the popup
@@ -340,19 +326,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
                 continue;
             }
 
-            bool omt_delete = delete_after_save;
-            /* I don't think this is right
-            if( is_current_dimension ) {
-                // Submaps outside the current map bounds or on wrong z-level
-                // are deleted from memory after saving.
-                const bool zlev_del = !map_has_zlevels && omt_addr.z() != g->get_levz();
-                omt_delete = omt_delete || zlev_del ||
-                              omt_addr.x() < map_origin.x() ||
-                              omt_addr.y() < map_origin.y() ||
-                              omt_addr.x() > map_origin.x() + g_half_mapsize ||
-                              omt_addr.y() > map_origin.y() + g_half_mapsize;
-            }
-            */
+            const bool omt_delete = delete_after_save;
 
             omts_to_process.push_back( { omt_addr, omt_delete } );
         }

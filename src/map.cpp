@@ -1688,9 +1688,9 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
     auto vp = veh_at( pos ).part_with_feature( VPFLAG_BOARDABLE, true );
     if( !vp ) {
         const auto abs_pos = bub_to_abs( pos );
-        std::ranges::find_if( loaded_vehicles, [&]( vehicle * veh ) {
+        for( auto *veh : loaded_vehicles ) {
             if( veh == nullptr ) {
-                return false;
+                continue;
             }
             auto boardable_parts = veh->get_avail_parts( VPFLAG_BOARDABLE );
             const auto part_it = std::ranges::find_if( boardable_parts,
@@ -1698,11 +1698,11 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
                 return veh->abs_part_location( part.part() ) == abs_pos;
             } );
             if( part_it == boardable_parts.end() ) {
-                return false;
+                continue;
             }
             vp = *part_it;
-            return true;
-        } );
+            break;
+        }
     }
     if( !vp ) {
         if( who->grab_point.x() == 0 && who->grab_point.y() == 0 ) {
@@ -10637,8 +10637,6 @@ auto map::get_pf_special( const tripoint_bub_ms &p ) const -> pf_special
         return PF_WALL;
     }
     if( sm->pf_dirty ) {
-        const int smx = divide_round_to_minus_infinity( p.x(), SEEX );
-        const int smy = divide_round_to_minus_infinity( p.y(), SEEY );
         sm->rebuild_pf_cache( *this, project_to<coords::sm>( p ) );
     }
     return sm->pf_special_cache[l.x()][l.y()];

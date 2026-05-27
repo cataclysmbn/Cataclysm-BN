@@ -321,7 +321,6 @@ bool prompt_salvage_single( Character &who, item &target )
         return false;
     }
 
-    map &here = get_map();
     std::string msg;
     msg += string_format( _( "Salvaging the %s may yield:\n" ),
                           colorize( target.tname(), target.color_in_inventory() ) );
@@ -347,7 +346,6 @@ bool prompt_salvage_single( Character &who, item &target )
 
 bool salvage_single( Character &who, item &target )
 {
-    map &here = get_map();
     quality_cache cache = who.crafting_inventory().get_quality_cache();
 
     if( auto res = try_salvage( target, cache ); !res.success() ) {

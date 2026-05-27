@@ -114,9 +114,6 @@ static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
 
 static constexpr int MON_RADIUS = 3;
 
-static void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z,
-                          int rotate );
-
 // (x,y,z) are absolute coordinates of a submap
 // x%2 and y%2 must be 0!
 void map::generate( const tripoint_abs_sm &p, const time_point &when )
