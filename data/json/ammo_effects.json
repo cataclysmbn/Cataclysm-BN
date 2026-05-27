@@ -446,10 +446,7 @@
   {
     "id": "AMMO_40x53_MAKESHIFT_HE",
     "type": "ammo_effect",
-    "explosion": {
-      "damage": 70,
-      "radius": 6
-    }
+    "explosion": { "damage": 70, "radius": 6 }
   },
   {
     "id": "AMMO_M433_HEDP",
@@ -463,9 +460,6 @@
   {
     "id": "AMMO_40x46_MAKESHIFT_HE",
     "type": "ammo_effect",
-    "explosion": {
-      "damage": 60,
-      "radius": 5
-    }
+    "explosion": { "damage": 60, "radius": 5 }
   }
 ]
