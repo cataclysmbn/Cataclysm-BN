@@ -87,32 +87,32 @@ TEST_CASE( "flung creatures only trigger landing traps if they cannot fly", "[th
     clear_all_state();
     clear_map();
 
-    map &here = g->m;
-    const tripoint start = g->u.pos() + tripoint_east;
-    const tripoint landing = start + tripoint_east;
-    const trap_str_id beartrap( "tr_beartrap" );
-    const efftype_id effect_beartrap( "beartrap" );
+    auto &here = g->m;
+    const auto start = g->u.bub_pos() + tripoint_east;
+    const auto landing = start + tripoint_east;
+    const auto beartrap = trap_str_id( "tr_beartrap" );
+    const auto effect_beartrap = efftype_id( "beartrap" );
 
     here.ter_set( start, ter_id( "t_floor" ) );
     here.ter_set( landing, ter_id( "t_floor" ) );
     here.trap_set( landing, beartrap );
 
     SECTION( "non-flying creatures land on traps" ) {
-        monster &zombie = spawn_test_monster( "mon_zombie", start );
+        auto &zombie = spawn_test_monster( "mon_zombie", start );
 
         g->fling_creature( &zombie, coord_to_angle( start, landing ), 10.0f );
 
-        CHECK( zombie.pos() == landing );
+        CHECK( zombie.bub_pos() == landing );
         CHECK( zombie.has_effect( effect_beartrap ) );
     }
 
     SECTION( "flying creatures recover before landing" ) {
-        monster &bat = spawn_test_monster( "mon_bat", start );
+        auto &bat = spawn_test_monster( "mon_bat", start );
         REQUIRE( bat.flies() );
 
         g->fling_creature( &bat, coord_to_angle( start, landing ), 10.0f );
 
-        CHECK( bat.pos() == landing );
+        CHECK( bat.bub_pos() == landing );
         CHECK_FALSE( bat.has_effect( effect_beartrap ) );
     }
 }
@@ -122,24 +122,24 @@ TEST_CASE( "flung creatures take damage when they slam into a wall", "[throwing]
     clear_all_state();
     clear_map();
 
-    map &here = g->m;
-    const tripoint source = { 40, 30, 0 };
-    const tripoint target = { 41, 30, 0 };
-    const tripoint landing = { 42, 30, 0 };
-    const tripoint wall = { 43, 30, 0 };
+    auto &here = g->m;
+    const auto source = tripoint_bub_ms{ 40, 30, 0 };
+    const auto target = tripoint_bub_ms{ 41, 30, 0 };
+    const auto landing = tripoint_bub_ms{ 42, 30, 0 };
+    const auto wall = tripoint_bub_ms{ 43, 30, 0 };
 
     here.ter_set( source, ter_id( "t_floor" ) );
     here.ter_set( target, ter_id( "t_floor" ) );
     here.ter_set( landing, ter_id( "t_floor" ) );
     here.ter_set( wall, ter_id( "t_wall" ) );
-    g->u.setpos( { 10, 10, 0 } );
+    g->u.setpos( tripoint_bub_ms{ 10, 10, 0 } );
 
-    monster &zombie = spawn_test_monster( "mon_zombie", target );
-    const int hp_before = zombie.get_hp();
+    auto &zombie = spawn_test_monster( "mon_zombie", target );
+    const auto hp_before = zombie.get_hp();
 
     g->fling_creature( &zombie, coord_to_angle( source, target ), 30.0f );
 
-    CHECK( zombie.pos() == landing );
+    CHECK( zombie.bub_pos() == landing );
     CHECK( zombie.get_hp() < hp_before );
 }
 

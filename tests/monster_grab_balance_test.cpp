@@ -89,11 +89,11 @@ TEST_CASE( "Avatar drags manually grabbed monster while moving", "[player][melee
     avatar &dummy = g->u;
     clear_character( dummy );
 
-    const efftype_id effect_grabbed( "grabbed" );
-    const efftype_id effect_grabbing( "grabbing" );
-    const tripoint avatar_start = dummy.pos();
-    const tripoint monster_start = avatar_start + tripoint_north;
-    monster &zed = spawn_test_monster( "debug_mon", monster_start );
+    const auto effect_grabbed = efftype_id( "grabbed" );
+    const auto effect_grabbing = efftype_id( "grabbing" );
+    const auto avatar_start = dummy.bub_pos();
+    const auto monster_start = avatar_start + tripoint_north;
+    auto &zed = spawn_test_monster( "debug_mon", monster_start );
 
     dummy.add_effect( effect_grabbing, 1_days, body_part_torso );
     zed.add_effect( effect_grabbed, 1_days );
@@ -102,11 +102,11 @@ TEST_CASE( "Avatar drags manually grabbed monster while moving", "[player][melee
     REQUIRE( zed.has_effect( effect_grabbed ) );
     REQUIRE( g->critter_at<monster>( monster_start ) == &zed );
 
-    const tripoint avatar_destination = avatar_start + tripoint_east;
+    const auto avatar_destination = avatar_start + tripoint_east;
     REQUIRE( g->walk_move( avatar_destination, false ) );
 
-    CHECK( dummy.pos() == avatar_destination );
-    CHECK( zed.pos() == avatar_start );
+    CHECK( dummy.bub_pos() == avatar_destination );
+    CHECK( zed.bub_pos() == avatar_start );
     CHECK( g->critter_at<monster>( avatar_start ) == &zed );
 }
 
@@ -116,21 +116,22 @@ TEST_CASE( "Manually grabbed monster cannot walk away", "[player][melee][grab]" 
     avatar &dummy = g->u;
     clear_character( dummy );
 
-    const efftype_id effect_grabbed( "grabbed" );
-    const efftype_id effect_grabbing( "grabbing" );
+    const auto effect_grabbed = efftype_id( "grabbed" );
+    const auto effect_grabbing = efftype_id( "grabbing" );
 
-    const tripoint avatar_start = dummy.pos();
-    const tripoint monster_start = avatar_start + tripoint_north;
-    const tripoint monster_destination = monster_start + tripoint_north;
-    monster &zed = spawn_test_monster( "debug_mon", monster_start );
+    const auto avatar_start = dummy.bub_pos();
+    const auto monster_start = avatar_start + tripoint_north;
+    const auto monster_destination = monster_start + tripoint_north;
+    auto &zed = spawn_test_monster( "debug_mon", monster_start );
 
     dummy.add_effect( effect_grabbing, 1_days, body_part_torso );
     zed.add_effect( effect_grabbed, 1_days );
 
     REQUIRE( zed.has_effect( effect_grabbed ) );
     CHECK_FALSE( zed.can_move_to( monster_destination ) );
+    CHECK( zed.can_move_to( monster_start ) );
     CHECK_FALSE( zed.move_to( monster_destination ) );
-    CHECK( zed.pos() == monster_start );
+    CHECK( zed.bub_pos() == monster_start );
 }
 
 TEST_CASE( "Crowd crush drains breath while grabbed", "[player][melee][grab]" )
@@ -139,15 +140,15 @@ TEST_CASE( "Crowd crush drains breath while grabbed", "[player][melee][grab]" )
     avatar &dummy = g->u;
     clear_character( dummy );
 
-    const efftype_id effect_grabbed( "grabbed" );
-    const efftype_id effect_grabbing( "grabbing" );
-    const tripoint avatar_start = dummy.pos();
+    const auto effect_grabbed = efftype_id( "grabbed" );
+    const auto effect_grabbing = efftype_id( "grabbing" );
+    const auto avatar_start = dummy.bub_pos();
 
     dummy.add_effect( effect_grabbed, 1_days, body_part_torso );
     dummy.oxygen = 30;
 
-    for( const tripoint &offset : { tripoint_north, tripoint_south, tripoint_east } ) {
-        monster &zed = spawn_test_monster( "debug_mon", avatar_start + offset );
+    for( const auto &offset : { tripoint_north, tripoint_south, tripoint_east } ) {
+        auto &zed = spawn_test_monster( "debug_mon", avatar_start + offset );
         zed.add_effect( effect_grabbing, 1_days );
     }
 

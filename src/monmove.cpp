@@ -284,6 +284,9 @@ bool monster::can_squeeze_to( const tripoint_bub_ms &p ) const
 
 bool monster::can_move_to( const tripoint_bub_ms &p ) const
 {
+    if( p == bub_pos() ) {
+        return true;
+    }
     return !has_effect( effect_grabbed ) && can_reach_to( p ) && will_move_to( p ) &&
            !has_flag( MF_STATIONARY );
 }
