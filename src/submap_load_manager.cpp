@@ -670,9 +670,10 @@ auto submap_load_manager::process_lazy_border_preload() -> void
     TracyPlot( "Lazy Border Leading OMTs", static_cast<int64_t>( urgent ) );
     TracyPlot( "Lazy Border Leading Z Jobs", static_cast<int64_t>( urgent ) );
 
-    const auto load_budget_matching = [&]( std::size_t budget, const auto &can_load ) -> std::size_t {
+    const auto load_budget_matching = [&]( std::size_t budget, const auto & can_load ) -> std::size_t {
         auto started = std::size_t{ 0 };
-        while( budget > 0 && !lazy_omt_jobs_.empty() ) {
+        while( budget > 0 && !lazy_omt_jobs_.empty() )
+        {
             const auto key = lazy_omt_jobs_.front();
             if( !can_load( key ) ) {
                 return started;

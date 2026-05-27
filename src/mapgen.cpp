@@ -3081,7 +3081,7 @@ class jmapgen_nested : public jmapgen_piece
                 return else_entries;
             }
         }
-        auto get_resolved_entries( const mapgendata &dat ) const -> const nested_mapgen_ref_list & {
+        auto get_resolved_entries( const mapgendata &dat ) const -> const nested_mapgen_ref_list& {
             if( neighbor_oters.test( dat ) && neighbor_joins.test( dat ) && neighbor_connections.test( dat ) ) {
                 ensure_resolved( entries, resolved_entries, resolved_entries_valid );
                 return resolved_entries;
@@ -4201,7 +4201,8 @@ void mapgen_function_json::generate( mapgendata &md )
     const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
         {
             ZoneScopedN( "mapgen_json_setmap" );
-            for( auto &elem : setmap_points ) {
+            for( auto &elem : setmap_points )
+            {
                 elem.apply( active_md, point_rel_ms::zero() );
             }
         }
@@ -4258,7 +4259,8 @@ void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms
     const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
         {
             ZoneScopedN( "mapgen_json_nested_setmap" );
-            for( const auto &elem : setmap_points ) {
+            for( const auto &elem : setmap_points )
+            {
                 elem.apply( active_md, offset );
             }
         }

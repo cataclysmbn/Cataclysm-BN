@@ -663,8 +663,8 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
         ZoneScopedN( "mapbuffer_generate_uniform_omt" );
         return {
             .status = add_uniform_omt( *this, base, *uniform_terrain )
-                      ? mapgen_result_status::generated
-                      : mapgen_result_status::not_generated,
+            ? mapgen_result_status::generated
+            : mapgen_result_status::not_generated,
         };
     }
 

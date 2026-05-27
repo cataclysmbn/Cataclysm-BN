@@ -1798,7 +1798,7 @@ class map : public submap_load_listener
 
         // mapgen.cpp functions
         auto generate( const tripoint_abs_sm &p, const time_point &when,
-                       const map_generate_options &options = {} ) -> mapgen_result;
+        const map_generate_options &options = {} ) -> mapgen_result;
         void place_spawns( const mongroup_id &group, int chance,
                            const point_bub_ms &p1, const point_bub_ms &p2, float density,
                            bool individual = false, bool friendly = false, const std::string &name = "NONE",
@@ -2036,7 +2036,7 @@ class map : public submap_load_listener
 
         void copy_grid( const tripoint_bub_sm &to, const tripoint_bub_sm &from );
         auto draw_map( mapgendata &dat,
-                       const map_generate_options &options = {} ) -> mapgen_result;
+        const map_generate_options &options = {} ) -> mapgen_result;
 
         void draw_office_tower( const mapgendata &dat );
         void draw_lab( mapgendata &dat );

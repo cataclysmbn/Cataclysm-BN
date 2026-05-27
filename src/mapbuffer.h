@@ -131,7 +131,7 @@ class mapbuffer
          * main thread with the selected Lua generator.
          */
         auto generate_omt( const tripoint_abs_omt &omt_addr,
-                           const mapbuffer_generate_omt_options &options = {} ) -> mapgen_result;
+        const mapbuffer_generate_omt_options &options = {} ) -> mapgen_result;
 
         /**
          * Destroy submaps that were discarded by preload_omt() because the in-memory
