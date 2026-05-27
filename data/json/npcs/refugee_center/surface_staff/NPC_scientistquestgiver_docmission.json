@@ -84,10 +84,7 @@
         },
         "failure": { "topic": "TALK_TCLHSCIENTIST_INTIMIDATE_FAILURE", "opinion": { "trust": -2, "anger": 2 } }
       },
-      {
-        "text": "How can I earn your trust?",
-        "topic": "TALK_MISSION_LIST"
-      },
+      { "text": "How can I earn your trust?", "topic": "TALK_MISSION_LIST" },
       { "text": "I'll get back to you about it.", "topic": "TALK_DONE" }
     ]
   },
@@ -95,14 +92,24 @@
     "id": [ "TALK_TCLHSCIENTIST_PERSUADE_SUCCESS" ],
     "type": "talk_topic",
     "dynamic_line": "I suppose I can make an exception if it is of such importance.",
-    "speaker_effect": { "effect": [ { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "no" }, { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" } ] },
+    "speaker_effect": {
+      "effect": [
+        { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "no" },
+        { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" }
+      ]
+    },
     "responses": [ { "text": "Thanks.", "topic": "TALK_DONE" } ]
   },
   {
     "id": [ "TALK_TCLHSCIENTIST_INTIMIDATE_SUCCESS" ],
     "type": "talk_topic",
     "dynamic_line": "I have no desire to make an enemy from you, just take it and leave us be, that information is worthless now anyways.",
-    "speaker_effect": { "effect": [ { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "no" }, { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" } ] },
+    "speaker_effect": {
+      "effect": [
+        { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "no" },
+        { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" }
+      ]
+    },
     "responses": [ { "text": "Good.", "topic": "TALK_DONE" } ]
   },
   {
@@ -141,7 +148,7 @@
     "dynamic_line": "Now that you've eliminated the most dangerous threat, I feel confident in staying down here for the foreseeable future.  This is a well-fortified location after all, and there are likely years worth of supplies still left in this facility.",
     "responses": [ { "text": "No worries, I'll be around.", "topic": "TALK_DONE" } ]
   },
-    {
+  {
     "id": [ "TALK_TCLHSCIENTIST_DESCRIBE_NOTSAFE" ],
     "type": "talk_topic",
     "dynamic_line": "Well, you have what you wanted, yes?  Those dangerous adversaries are still present, making any attempt at scavenging much riskier and more difficult.  We will likely be stuck down here for the foreseeable future, though at least we should have a large stockpile of supplies close enough that we need not risk deadly confrontation.",
@@ -162,7 +169,13 @@
     },
     "monster_kill_goal": 1,
     "origins": [ "ORIGIN_SECONDARY" ],
-    "end": { "effect": [ { "u_buy_item": "classified_file_docmission" }, { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "yes" }, { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" } ] },
+    "end": {
+      "effect": [
+        { "u_buy_item": "classified_file_docmission" },
+        { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "yes" },
+        { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" }
+      ]
+    },
     "dialogue": {
       "describe": "We need help to get rid of this threat…",
       "offer": "Ever since the day we were attacked during the evacuation, we have had to operate in fear of whatever it was that attacked us.  The shadowy figures who did it seem to have mostly left the premises since, but every so often we will spot one during a scavenging run and thus be forced to mount a hasty retreat.  Unluckily, the figure seems to be most present in the lab's security zone, where the armories are.  If you will help us by terminating the threat, I will be willing to give you a copy of the information you seek.",

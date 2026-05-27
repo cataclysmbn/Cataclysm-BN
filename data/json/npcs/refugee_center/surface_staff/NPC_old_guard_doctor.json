@@ -218,16 +218,9 @@
     "value": 0,
     "item": "classified_file_docmission",
     "start": {
-      "assign_mission_target": {
-        "om_terrain": "underground_lab_cargo_stationA_sub_station",
-        "reveal_radius": 1,
-        "search_range": 1000,
-        "z": -4
-      },
+      "assign_mission_target": { "om_terrain": "underground_lab_cargo_stationA_sub_station", "reveal_radius": 1, "search_range": 1000, "z": -4 },
       "update_mapgen": {
-        "faction_owner": [
-        { "id": "old_guard", "x": [ 5, 21 ], "y": [ 3, 17 ] }
-        ],
+        "faction_owner": [ { "id": "old_guard", "x": [ 5, 21 ], "y": [ 3, 17 ] } ],
         "rows": [
           "                        ",
           "                        ",
@@ -253,128 +246,38 @@
           "                        ",
           "                        ",
           "                        "
-            ],
-            "terrain": {
-                "l": "t_utility_light"
-            },
-            "furniture": {
-                "t": "f_cardboard_wall",
-                "s": "f_sandbag_half",
-                "c": "f_crate_o",
-                "T": "f_table",
-                "w": "f_table_flipped",
-                "S": "f_safe_l"
-            },
-            "place_npcs": [
-                {
-                    "x": 8,
-                    "y": 8,
-                    "class": "NPC_labguard1_docmission"
-                },
-                {
-                    "x": 14,
-                    "y": 11,
-                    "class": "NPC_labguard2_docmission"
-                },
-                {
-                    "x": 12,
-                    "y": 9,
-                    "class": "NPC_scientist_docmission"
-                },
-                {
-                    "x": 13,
-                    "y": 9,
-                    "class": "NPC_scientistquestgiver_docmission"
-                }
-            ],
-            "mapping": {
-              "T" : { "items": [ { "item": "ammo_swat", "chance": 100 } ] },
-              "S" : { "items": [ { "item": "classified_file_docmission", "chance": 100 } ] }  
-            },
-            "place_items": [
-                {
-                    "item": "bed",
-                    "x": 8,
-                    "y": 8,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "bed",
-                    "x": 10,
-                    "y": 12,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "bed",
-                    "x": 15,
-                    "y": 11,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "bed",
-                    "x": 15,
-                    "y": 8,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "cot",
-                    "x": 8,
-                    "y": 8,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "cot",
-                    "x": 10,
-                    "y": 12,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "cot",
-                    "x": 15,
-                    "y": 11,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "cot",
-                    "x": 15,
-                    "y": 8,
-                    "chance": 100,
-                    "repeat": 1
-                },
-                {
-                    "item": "mil_food_nodrugs",
-                    "x": [
-                        10,
-                        13
-                    ],
-                    "y": 6,
-                    "chance": 100,
-                    "repeat": [
-                        2,
-                        5
-                    ]
-                },
-                {
-                    "item": "mil_food",
-                    "x": [
-                        13,
-                        15
-                    ],
-                    "y": 5,
-                    "chance": 100,
-                    "repeat": [
-                        2,
-                        5
-                    ]
-                }
-            ]
+        ],
+        "terrain": { "l": "t_utility_light" },
+        "furniture": {
+          "t": "f_cardboard_wall",
+          "s": "f_sandbag_half",
+          "c": "f_crate_o",
+          "T": "f_table",
+          "w": "f_table_flipped",
+          "S": "f_safe_l"
+        },
+        "place_npcs": [
+          { "x": 8, "y": 8, "class": "NPC_labguard1_docmission" },
+          { "x": 14, "y": 11, "class": "NPC_labguard2_docmission" },
+          { "x": 12, "y": 9, "class": "NPC_scientist_docmission" },
+          { "x": 13, "y": 9, "class": "NPC_scientistquestgiver_docmission" }
+        ],
+        "mapping": {
+          "T": { "items": [ { "item": "ammo_swat", "chance": 100 } ] },
+          "S": { "items": [ { "item": "classified_file_docmission", "chance": 100 } ] }
+        },
+        "place_items": [
+          { "item": "bed", "x": 8, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "bed", "x": 10, "y": 12, "chance": 100, "repeat": 1 },
+          { "item": "bed", "x": 15, "y": 11, "chance": 100, "repeat": 1 },
+          { "item": "bed", "x": 15, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 8, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 10, "y": 12, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 15, "y": 11, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 15, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "mil_food_nodrugs", "x": [ 10, 13 ], "y": 6, "chance": 100, "repeat": [ 2, 5 ] },
+          { "item": "mil_food", "x": [ 13, 15 ], "y": 5, "chance": 100, "repeat": [ 2, 5 ] }
+        ]
       }
     },
     "origins": [ "ORIGIN_SECONDARY" ],

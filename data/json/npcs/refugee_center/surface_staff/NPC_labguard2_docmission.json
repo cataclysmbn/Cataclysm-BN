@@ -15,10 +15,7 @@
     "type": "talk_topic",
     "dynamic_line": "We're getting out of here, right?",
     "responses": [
-      {
-        "text": "How did you end up here?",
-        "topic": "TALK_LABGUARD2_DESCRIBE",
-      },
+      { "text": "How did you end up here?", "topic": "TALK_LABGUARD2_DESCRIBE" },
       {
         "text": "Can you help me?",
         "topic": "TALK_LABGUARD2_DENY_HELP",
@@ -31,7 +28,7 @@
     "id": [ "TALK_LABGUARD2_DESCRIBE" ],
     "type": "talk_topic",
     "dynamic_line": "There's not much to say...  We were attacked, I ran, I met these guys, and... and that's that.",
-    "responses": [       
+    "responses": [
       {
         "text": "I feel like there's something you're not telling me.",
         "trial": {
@@ -39,10 +36,7 @@
           "difficulty": 40,
           "mod": [ [ "BRAVERY", 1 ], [ "AGGRESSION", -3 ], [ "ALTRUISM", 2 ], [ "FEAR", -2 ], [ "TRUST", 3 ] ]
         },
-        "success": {
-          "topic": "TALK_LABGUARD2_PERSUADE_SUCCESS",
-          "opinion": { "trust": 1, "fear": -1 }
-        },
+        "success": { "topic": "TALK_LABGUARD2_PERSUADE_SUCCESS", "opinion": { "trust": 1, "fear": -1 } },
         "failure": { "topic": "TALK_LABGUARD2_PERSUADE_FAILURE", "opinion": { "trust": -2, "anger": 2 } }
       },
       { "text": "Ok, bye.", "topic": "TALK_DONE" }

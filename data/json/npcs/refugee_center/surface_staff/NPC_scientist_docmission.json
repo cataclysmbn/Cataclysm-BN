@@ -15,10 +15,7 @@
     "type": "talk_topic",
     "dynamic_line": "I hope you're here to help us...",
     "responses": [
-      {
-        "text": "What kind of experiments were you doing here?",
-        "topic": "TALK_TCLSCIENTIST_DESCRIBE",
-      },
+      { "text": "What kind of experiments were you doing here?", "topic": "TALK_TCLSCIENTIST_DESCRIBE" },
       { "text": "Well, bye.", "topic": "TALK_DONE" }
     ]
   },
@@ -26,7 +23,7 @@
     "id": [ "TALK_TCLSCIENTIST_DESCRIBE" ],
     "type": "talk_topic",
     "dynamic_line": "We were simply conducting a, er, health survey of the workers at this facility.",
-    "responses": [       
+    "responses": [
       {
         "text": "Come on, there's no reason to lie at this point.",
         "trial": {
@@ -34,10 +31,7 @@
           "difficulty": 90,
           "mod": [ [ "BRAVERY", 1 ], [ "AGGRESSION", -3 ], [ "ALTRUISM", 2 ], [ "FEAR", -2 ], [ "TRUST", 3 ] ]
         },
-        "success": {
-          "topic": "TALK_TCLSCIENTIST_PERSUADE_SUCCESS",
-          "opinion": { "trust": 1, "fear": -1 }
-        },
+        "success": { "topic": "TALK_TCLSCIENTIST_PERSUADE_SUCCESS", "opinion": { "trust": 1, "fear": -1 } },
         "failure": { "topic": "TALK_TCLSCIENTIST_PERSUADE_FAILURE", "opinion": { "trust": -2, "anger": 2 } }
       },
       { "text": "Ok, bye.", "topic": "TALK_DONE" }

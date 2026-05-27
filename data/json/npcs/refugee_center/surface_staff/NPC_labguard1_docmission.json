@@ -15,10 +15,7 @@
     "type": "talk_topic",
     "dynamic_line": "I hope those damn things don't come back for us...",
     "responses": [
-      {
-        "text": "How did you end up here?",
-        "topic": "TALK_LABGUARD1_DESCRIBE",
-      },
+      { "text": "How did you end up here?", "topic": "TALK_LABGUARD1_DESCRIBE" },
       {
         "text": "Can you help me?",
         "topic": "TALK_LABGUARD1_DENY_HELP",
