@@ -52,7 +52,7 @@
   {
     "id": [ "TALK_LABGUARD2_PERSUADE_SUCCESS" ],
     "type": "talk_topic",
-    "speaker_effect": { "effect": [ { "npc_add_var": "guard2_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" },
+    "speaker_effect": { "effect": [ { "npc_add_var": "guard2_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } ] },
     "dynamic_line": "W-Well, alright.  You're right, I should tell you...  The things that attacked us... They weren't monsters, they were soldiers, special soldiers.  One of them came right up to me, and... and I could faintly see the outline of powered combat armor...  I-It thrust a blade at me, and, and...",
     "responses": [ { "text": "It's ok, thanks for the information.", "topic": "TALK_DONE" } ]
   },
