@@ -26,7 +26,7 @@
     "responses": [
       {
         "text": "Come on, there's no reason to lie at this point.",
-        "condition": { "not": { "npc_has_var": "scientist_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } }
+        "condition": { "not": { "npc_has_var": "scientist_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } },
         "trial": {
           "type": "PERSUADE",
           "difficulty": 90,
