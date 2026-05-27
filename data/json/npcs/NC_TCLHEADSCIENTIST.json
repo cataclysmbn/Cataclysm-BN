@@ -1,0 +1,30 @@
+[
+  {
+    "type": "item_group",
+    "id": "NC_TCLHEADSCIENTIST_eyes",
+    "subtype": "distribution",
+    "entries": [ { "item": "null", "prob": 20 }, { "item": "glasses_safety", "prob": 40 }, { "item": "glasses_eye", "prob": 60 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_TCLHEADSCIENTIST_coat",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "null", "prob": 20 },
+      { "item": "hoodie", "prob": 10 },
+      { "item": "coat_lab", "prob": 60 },
+      { "item": "jacket_light", "prob": 10 },
+      { "item": "jacket_leather", "prob": 10 },
+      { "item": "trenchcoat", "prob": 5 },
+      { "item": "jacket_jean", "prob": 10 },
+      { "item": "jacket_windbreaker", "prob": 5 },
+      { "item": "kevlar", "prob": 5 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "NC_TCLHEADSCIENTIST_rifle",
+    "subtype": "distribution",
+    "entries": [ { "item": "stanag100", "ammo-item": "556", "container-item": "m27iar", "charges": [ 100, 100 ] } ]
+  }
+]
