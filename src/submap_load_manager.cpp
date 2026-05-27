@@ -839,7 +839,7 @@ void submap_load_manager::update()
     // Mark ALL z-levels for newly-simulated horizontal OMTs as dirty: they
     // will receive game logic and must be saved to disk when evicted.
     for( const auto &[dim_id, omt_xy] : new_omts ) {
-        for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+        for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
             dirty_omts_.insert( { dim_id, tripoint_abs_omt{ omt_xy, z } } );
         }
     }
@@ -848,12 +848,14 @@ void submap_load_manager::update()
     // preload_omt() is thread-safe (disk I/O outside submaps_mutex_; add
     // under the lock).  Running multiple omts in parallel hides disk latency.
     // Each horizontal OMT drives a z-level loop internally.
+    auto resident_zlevels = std::size_t{ 0 };
+    auto preloaded_zlevels = std::size_t{ 0 };
     {
         ZoneScopedN( "slm_preload_new_omts" );
         std::vector<std::future<void>> preload_futures;
         for( const auto &[dim_id, omt_xy] : new_omts ) {
             auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-            for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
                 const tripoint_abs_omt omt_addr{ omt_xy, z };
                 const omt_key qk{ dim_id, omt_addr };
                 finish_lazy_omt_job( qk );
@@ -867,8 +869,10 @@ void submap_load_manager::update()
                     && mb.lookup_submap_in_memory( ( sm_base + point_south ) )
                     && mb.lookup_submap_in_memory( ( sm_base + point_south_east ) );
                 if( all_loaded ) {
+                    ++resident_zlevels;
                     continue;
                 }
+                ++preloaded_zlevels;
                 preload_futures.push_back( get_thread_pool().submit_returning(
                 [&mb, omt_addr]() {
                     mb.preload_omt( omt_addr );
@@ -879,6 +883,8 @@ void submap_load_manager::update()
             f.get();
         } );
     } // slm_preload_new_omts
+    TracyPlot( "New Sim OMT Z Resident Hits", static_cast<int64_t>( resident_zlevels ) );
+    TracyPlot( "New Sim OMT Z Preload Attempts", static_cast<int64_t>( preloaded_zlevels ) );
 
     // Drain duplicate submaps created by concurrent preload_omt workers.
     // Must happen on the main thread (safe_reference / cata_arena not thread-safe).
@@ -896,11 +902,12 @@ void submap_load_manager::update()
     // Lua is not reentrant, so this must always run on the main thread.
     // Skip omts already fully resident: preload_omt loaded them from disk or
     // the pending_writes cache, so no generation is needed.
+    auto generated_zlevels = std::size_t{ 0 };
     {
         ZoneScopedN( "slm_generate_new_omts" );
         for( const auto &[dim_id, omt_xy] : new_omts ) {
             auto &mb = MAPBUFFER_REGISTRY.get( dim_id );
-            for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+            for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
                 const tripoint_abs_omt omt_addr{ omt_xy, z };
                 const tripoint_abs_sm sm_base = project_to<coords::sm>( omt_addr );
                 const bool all_loaded =
@@ -909,6 +916,7 @@ void submap_load_manager::update()
                     && mb.lookup_submap_in_memory( ( sm_base + point_south ) )
                     && mb.lookup_submap_in_memory( ( sm_base + point_south_east ) );
                 if( !all_loaded ) {
+                    ++generated_zlevels;
                     mb.generate_omt( omt_addr, {
                         .defer_postprocess_hooks = true,
                     } );
@@ -916,6 +924,7 @@ void submap_load_manager::update()
             }
         }
     }
+    TracyPlot( "New Sim OMT Z Generated", static_cast<int64_t>( generated_zlevels ) );
 
     // Drain Lua postprocess hooks queued by mapgen above.
     {
@@ -932,7 +941,7 @@ void submap_load_manager::update()
         ZoneScopedN( "slm_listener_notifications" );
         for( const desired_key &key : simulated ) {
             if( prev_simulated_.count( key ) == 0 ) {
-                for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
                     const tripoint_abs_sm pos{ key.second, z };
                     for( submap_load_listener *listener : listeners_ ) {
                         listener->on_submap_loaded( pos, key.first );
@@ -943,7 +952,7 @@ void submap_load_manager::update()
 
         for( const desired_key &key : prev_simulated_ ) {
             if( simulated.count( key ) == 0 ) {
-                for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
+                for( const auto z : std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ) ) {
                     const tripoint_abs_sm pos{ key.second, z };
                     for( submap_load_listener *listener : listeners_ ) {
                         listener->on_submap_unloaded( pos, key.first );

@@ -144,7 +144,9 @@ auto map::generate( const tripoint_abs_sm &p, const time_point &when,
             debugmsg( "Submap already exists at (%d, %d, %d)", smp.x(), smp.y(), p.z() );
             continue;
         }
-        setsubmap( grid_pos, new submap( bub_to_abs( tripoint_bub_sm( smp, p.z() ) ) ) );
+        auto *new_submap = new submap( bub_to_abs( tripoint_bub_sm( smp, p.z() ) ) );
+        new_submap->last_touched = when;
+        setsubmap( grid_pos, new_submap );
         // TODO: memory leak if the code below throws before the submaps get stored/deleted!
     }
     const auto discard_unowned_generated_submaps = [&]() {
@@ -523,6 +525,20 @@ std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nes
         nested_mapgen;
 std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> > update_mapgen;
 
+using nested_mapgen_function_list =
+    weighted_int_list<std::shared_ptr<mapgen_function_json_nested>>;
+
+struct nested_mapgen_ref {
+    const nested_mapgen_function_list *functions = nullptr;
+
+    friend auto operator==( const nested_mapgen_ref &lhs,
+                            const nested_mapgen_ref &rhs ) -> bool {
+        return lhs.functions == rhs.functions;
+    }
+};
+
+using nested_mapgen_ref_list = weighted_int_list<nested_mapgen_ref>;
+
 void call_mapgen_function( std::string name, mapgendata &dat, bool nested, const point_rel_ms &pos )
 {
     if( nested ) {
@@ -551,6 +567,7 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
     oter_mapgen.setup();
     // Not really calculate weights, but let's keep it here for now
     for( auto &pr : nested_mapgen ) {
+        pr.second.precalc();
         for( weighted_object<int, std::shared_ptr<mapgen_function_json_nested>> &ptr : pr.second ) {
             ptr.obj->setup();
             inp_mngr.pump_events();
@@ -3038,6 +3055,10 @@ class jmapgen_nested : public jmapgen_piece
     public:
         weighted_int_list<std::string> entries;
         weighted_int_list<std::string> else_entries;
+        mutable nested_mapgen_ref_list resolved_entries;
+        mutable nested_mapgen_ref_list resolved_else_entries;
+        mutable bool resolved_entries_valid = false;
+        mutable bool resolved_else_entries_valid = false;
         neighbor_oter_check neighbor_oters;
         neighbor_join_check neighbor_joins;
         neighbor_connection_check neighbor_connections;
@@ -3060,8 +3081,23 @@ class jmapgen_nested : public jmapgen_piece
                 return else_entries;
             }
         }
+        auto get_resolved_entries( const mapgendata &dat ) const -> const nested_mapgen_ref_list & {
+            if( neighbor_oters.test( dat ) && neighbor_joins.test( dat ) && neighbor_connections.test( dat ) ) {
+                ensure_resolved( entries, resolved_entries, resolved_entries_valid );
+                return resolved_entries;
+            } else {
+                ensure_resolved( else_entries, resolved_else_entries, resolved_else_entries_valid );
+                return resolved_else_entries;
+            }
+        }
         mapgen_phase phase() const override {
             return mapgen_phase::nested_mapgen;
+        }
+        auto finalize() const -> void override {
+            resolved_entries.clear();
+            resolved_else_entries.clear();
+            resolved_entries_valid = false;
+            resolved_else_entries_valid = false;
         }
         void merge_parameters_into( mapgen_parameters &params,
                                     const std::string &outer_context ) const override {
@@ -3090,25 +3126,27 @@ class jmapgen_nested : public jmapgen_piece
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            const std::string *res = get_entries( dat ).pick();
-            if( res == nullptr || res->empty() || *res == "null" ) {
-                // This will be common when neighbors.test(...) is false, since else_entires is often empty.
+            ZoneScopedN( "jmapgen_nested_apply" );
+            const std::shared_ptr<mapgen_function_json_nested> *ptr = nullptr;
+            {
+                ZoneScopedN( "jmapgen_nested_pick" );
+                const nested_mapgen_ref *res = get_resolved_entries( dat ).pick();
+                if( res == nullptr || res->functions == nullptr ) {
+                    // This will be common when neighbors.test(...) is false, since else_entries is often empty.
+                    return;
+                }
+
+                // A second roll? Let's allow it for now
+                ptr = res->functions->pick();
+            }
+            if( ptr == nullptr || !*ptr ) {
                 return;
             }
 
-            const auto iter = nested_mapgen.find( *res );
-            if( iter == nested_mapgen.end() ) {
-                debugmsg( "Unknown nested mapgen function id %s", res->c_str() );
-                return;
+            {
+                ZoneScopedN( "jmapgen_nested_nest" );
+                ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ) );
             }
-
-            // A second roll? Let's allow it for now
-            const auto &ptr = iter->second.pick();
-            if( ptr == nullptr ) {
-                return;
-            }
-
-            ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ) );
         }
 
         void check( const std::string &oter_name, const mapgen_parameters & ) const override {
@@ -3117,21 +3155,17 @@ class jmapgen_nested : public jmapgen_piece
             neighbor_connections.check( oter_name );
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
-            const weighted_int_list<std::string> &selected_entries = get_entries( dat );
+            const nested_mapgen_ref_list &selected_entries = get_resolved_entries( dat );
 
             if( selected_entries.empty() ) {
                 return false;
             }
 
             for( auto &entry : selected_entries ) {
-                if( entry.obj == "null" ) {
+                if( entry.obj.functions == nullptr ) {
                     continue;
                 }
-                const auto iter = nested_mapgen.find( entry.obj );
-                if( iter == nested_mapgen.end() ) {
-                    return false;
-                }
-                for( const auto &nest : iter->second ) {
+                for( const auto &nest : *entry.obj.functions ) {
                     if( nest.obj->has_vehicle_collision( dat, p ) ) {
                         return true;
                     }
@@ -3139,6 +3173,36 @@ class jmapgen_nested : public jmapgen_piece
             }
 
             return false;
+        }
+    private:
+        static auto ensure_resolved( const weighted_int_list<std::string> &source,
+                                     nested_mapgen_ref_list &resolved,
+                                     bool &valid ) -> void {
+            if( valid ) {
+                return;
+            }
+            resolved = resolve_entries( source );
+            valid = true;
+        }
+
+        static auto resolve_entries( const weighted_int_list<std::string> &source )
+        -> nested_mapgen_ref_list {
+            auto resolved = nested_mapgen_ref_list {};
+            for( const auto &entry : source ) {
+                if( entry.obj.empty() || entry.obj == "null" ) {
+                    resolved.add( {}, entry.weight );
+                    continue;
+                }
+                const auto iter = nested_mapgen.find( entry.obj );
+                if( iter == nested_mapgen.end() ) {
+                    debugmsg( "Unknown nested mapgen function id %s", entry.obj.c_str() );
+                    resolved.add( {}, entry.weight );
+                    continue;
+                }
+                resolved.add( { &iter->second }, entry.weight );
+            }
+            resolved.precalc();
+            return resolved;
         }
 };
 
@@ -3889,6 +3953,9 @@ void mapgen_function_json_base::check_common( const std::string &oter_name ) con
 
 void jmapgen_objects::finalize()
 {
+    for( const auto &obj : objects ) {
+        obj.second->finalize();
+    }
     std::stable_sort( objects.begin(), objects.end(),
     []( const jmapgen_obj & l, const jmapgen_obj & r ) {
         return l.second->phase() < r.second->phase();
@@ -4130,23 +4197,35 @@ void mapgen_function_json::generate( mapgendata &md )
         ZoneScopedN( "mapgen_json_get_args" );
         args = get_args( md, mapgen_parameter_scope::omt );
     }
-    mapgendata md_with_params( md, args );
 
-    {
-        ZoneScopedN( "mapgen_json_setmap" );
-        for( auto &elem : setmap_points ) {
-            elem.apply( md_with_params, point_rel_ms::zero() );
+    const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
+        {
+            ZoneScopedN( "mapgen_json_setmap" );
+            for( auto &elem : setmap_points ) {
+                elem.apply( active_md, point_rel_ms::zero() );
+            }
         }
-    }
 
-    {
-        ZoneScopedN( "mapgen_json_objects" );
-        objects.apply( md_with_params, point_rel_ms::zero() );
-    }
+        {
+            ZoneScopedN( "mapgen_json_objects" );
+            objects.apply( active_md, point_rel_ms::zero() );
+        }
 
-    {
-        ZoneScopedN( "mapgen_json_resolve_regional" );
-        resolve_regional_terrain_and_furniture( md_with_params );
+        {
+            ZoneScopedN( "mapgen_json_resolve_regional" );
+            resolve_regional_terrain_and_furniture( active_md );
+        }
+    };
+
+    if( args.map.empty() ) {
+        apply_contents( md );
+    } else {
+        auto md_with_params = std::optional<mapgendata> {};
+        {
+            ZoneScopedN( "mapgen_json_make_param_data" );
+            md_with_params.emplace( md, args );
+        }
+        apply_contents( *md_with_params );
     }
 
     {
@@ -4175,23 +4254,35 @@ void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms
         ZoneScopedN( "mapgen_json_nested_get_args" );
         args = get_args( md, mapgen_parameter_scope::nest );
     }
-    mapgendata md_with_params( md, args );
 
-    {
-        ZoneScopedN( "mapgen_json_nested_setmap" );
-        for( const jmapgen_setmap &elem : setmap_points ) {
-            elem.apply( md_with_params, offset );
+    const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
+        {
+            ZoneScopedN( "mapgen_json_nested_setmap" );
+            for( const auto &elem : setmap_points ) {
+                elem.apply( active_md, offset );
+            }
         }
-    }
 
-    {
-        ZoneScopedN( "mapgen_json_nested_objects" );
-        objects.apply( md_with_params, offset );
-    }
+        {
+            ZoneScopedN( "mapgen_json_nested_objects" );
+            objects.apply( active_md, offset );
+        }
 
-    {
-        ZoneScopedN( "mapgen_json_nested_resolve_regional" );
-        resolve_regional_terrain_and_furniture( md_with_params );
+        {
+            ZoneScopedN( "mapgen_json_nested_resolve_regional" );
+            resolve_regional_terrain_and_furniture( active_md );
+        }
+    };
+
+    if( args.map.empty() ) {
+        apply_contents( md );
+    } else {
+        auto md_with_params = std::optional<mapgendata> {};
+        {
+            ZoneScopedN( "mapgen_json_nested_make_param_data" );
+            md_with_params.emplace( md, args );
+        }
+        apply_contents( *md_with_params );
     }
 }
 

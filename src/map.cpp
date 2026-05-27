@@ -8429,19 +8429,23 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         }
     }
 
-    // Batch-advance field decay, item timers, and vehicle power for any
-    // turns this submap missed while outside the reality bubble.
-    // Runs BEFORE actualize(); the two passes target disjoint effects.
-    if( tmpsub->last_touched < calendar::turn ) {
-        ZoneScopedN( "loadn_batch_turns" );
-        const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
-        run_submap_batch_turns( *tmpsub, missed );
-        tmpsub->last_touched = calendar::turn;
-    }
+    if( tmpsub->last_touched == calendar::turn ) {
+        ZoneScopedN( "loadn_skip_current_turn_actualize" );
+    } else {
+        // Batch-advance field decay, item timers, and vehicle power for any
+        // turns this submap missed while outside the reality bubble.
+        // Runs BEFORE actualize(); the two passes target disjoint effects.
+        if( tmpsub->last_touched < calendar::turn ) {
+            ZoneScopedN( "loadn_batch_turns" );
+            const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
+            run_submap_batch_turns( *tmpsub, missed );
+            tmpsub->last_touched = calendar::turn;
+        }
 
-    {
-        ZoneScopedN( "loadn_actualize" );
-        actualize( grid );
+        {
+            ZoneScopedN( "loadn_actualize" );
+            actualize( grid );
+        }
     }
 
     abs_sub.z() = old_abs_z;
