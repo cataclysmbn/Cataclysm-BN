@@ -33,6 +33,7 @@
 #include "line.h"
 #include "lru_cache.h"
 #include "mapdata.h"
+#include "mapgen_functions.h"
 #include "memory_fast.h"
 #include "shadowcasting.h"
 #include "submap_load_manager.h"
@@ -78,6 +79,13 @@ class vpart_reference;
 struct mongroup;
 struct projectile;
 struct veh_collision;
+
+struct map_generate_options {
+    bool defer_postprocess_hooks = false;
+    bool worker_safe = false;
+    bool use_selected_mapgen = false;
+    std::shared_ptr<mapgen_function> selected_mapgen;
+};
 template<typename T>
 class visitable;
 
@@ -1789,7 +1797,8 @@ class map : public submap_load_listener
         bool is_cornerfloor( const tripoint_bub_ms &p ) const;
 
         // mapgen.cpp functions
-        void generate( const tripoint_abs_sm &p, const time_point &when );
+        auto generate( const tripoint_abs_sm &p, const time_point &when,
+                       const map_generate_options &options = {} ) -> mapgen_result;
         void place_spawns( const mongroup_id &group, int chance,
                            const point_bub_ms &p1, const point_bub_ms &p2, float density,
                            bool individual = false, bool friendly = false, const std::string &name = "NONE",
@@ -2026,7 +2035,8 @@ class map : public submap_load_listener
         void monster_in_field( monster &z );
 
         void copy_grid( const tripoint_bub_sm &to, const tripoint_bub_sm &from );
-        void draw_map( mapgendata &dat );
+        auto draw_map( mapgendata &dat,
+                       const map_generate_options &options = {} ) -> mapgen_result;
 
         void draw_office_tower( const mapgendata &dat );
         void draw_lab( mapgendata &dat );

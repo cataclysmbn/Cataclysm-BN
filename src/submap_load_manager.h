@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <list>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <string>
@@ -14,6 +15,7 @@
 #include <future>
 
 #include "coordinates.h"
+#include "mapgen_functions.h"
 #include "point.h"
 
 class mapbuffer;
@@ -288,7 +290,17 @@ class submap_load_manager
         };
         struct lazy_omt_load_result {
             bool dirty = false;
-            bool generated = false;
+            mapgen_result generation;
+
+            auto generated() const -> bool {
+                return generation.is_generated();
+            }
+        };
+        struct lazy_omt_load_options {
+            bool defer_postprocess_hooks = false;
+            bool worker_safe = false;
+            bool use_selected_mapgen = false;
+            std::shared_ptr<mapgen_function> selected_mapgen;
         };
 
         load_request_handle next_handle_ = 1;
@@ -336,8 +348,11 @@ class submap_load_manager
         auto evict_oldest_retained_omts( std::size_t count ) -> void;
         auto process_retained_omt_eviction() -> void;
         static auto load_lazy_omt_zlevel_data( mapbuffer &mb,
-                                               const tripoint_abs_omt &omt_addr )
+                                               const tripoint_abs_omt &omt_addr,
+                                               const lazy_omt_load_options &options )
         -> lazy_omt_load_result;
+        auto complete_lazy_omt_result_on_main_thread( const omt_key &key,
+                lazy_omt_load_result result ) -> lazy_omt_load_result;
         auto erase_lazy_omt_job( const omt_key &key ) -> void;
         auto apply_lazy_omt_result( const omt_key &key,
                                     const lazy_omt_load_result &result ) -> bool;

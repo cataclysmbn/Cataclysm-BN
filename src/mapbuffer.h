@@ -11,10 +11,18 @@
 #include <vector>
 
 #include "coordinates.h"
+#include "mapgen_functions.h"
 #include "point.h"
 
 class submap;
 class JsonIn;
+
+struct mapbuffer_generate_omt_options {
+    bool defer_postprocess_hooks = false;
+    bool worker_safe = false;
+    bool use_selected_mapgen = false;
+    std::shared_ptr<mapgen_function> selected_mapgen;
+};
 
 /**
  * Store, buffer, save and load the entire world map.
@@ -115,14 +123,15 @@ class mapbuffer
          * Generate all submaps in the OMT at @p omt_addr if any are not yet
          * resident in memory.
          *
-         * May be called on a worker thread only when the OMT's mapgen pool is
-         * known not to contain Lua mapgen.  Lua postprocess hooks are deferred
-         * back to the main thread by map::generate().
+         * When @p options.worker_safe is true, Lua mapgen is reported via
+         * mapgen_result_status::needs_main_thread instead of running on the worker.
+         * Lua postprocess hooks can be deferred for batched main-thread dispatch.
          *
-         * Returns true if mapgen actually ran (omt was not fully resident),
-         * false if all submaps were already in memory and nothing was generated.
+         * Returns whether generation ran, was skipped, or must be retried on the
+         * main thread with the selected Lua generator.
          */
-        auto generate_omt( const tripoint_abs_omt &omt_addr ) -> bool;
+        auto generate_omt( const tripoint_abs_omt &omt_addr,
+                           const mapbuffer_generate_omt_options &options = {} ) -> mapgen_result;
 
         /**
          * Destroy submaps that were discarded by preload_omt() because the in-memory

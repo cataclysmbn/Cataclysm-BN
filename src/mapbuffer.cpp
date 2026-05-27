@@ -645,7 +645,8 @@ bool mapbuffer::preload_omt( const tripoint_abs_omt &omt_addr )
     return from_cache;
 }
 
-auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr ) -> bool
+auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr,
+                              const mapbuffer_generate_omt_options &options ) -> mapgen_result
 {
     ZoneScopedN( "mapbuffer_generate_omt" );
     const auto base = project_to<coords::sm>( omt_addr );
@@ -655,21 +656,36 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr ) -> bool
         && lookup_submap_in_memory( base + point_south )
         && lookup_submap_in_memory( base + point_south_east );
     if( all_loaded ) {
-        return false;
+        return {};
     }
 
     if( const auto uniform_terrain = uniform_terrain_for_omt( dimension_id_, omt_addr ) ) {
         ZoneScopedN( "mapbuffer_generate_uniform_omt" );
-        return add_uniform_omt( *this, base, *uniform_terrain );
+        return {
+            .status = add_uniform_omt( *this, base, *uniform_terrain )
+                      ? mapgen_result_status::generated
+                      : mapgen_result_status::not_generated,
+        };
     }
 
     {
         ZoneScopedN( "mapbuffer_generate_tinymap" );
         tinymap tmp_map;
         tmp_map.bind_dimension( dimension_id_ );
-        tmp_map.generate( base, calendar::turn );
+        const auto generate_result = tmp_map.generate( base, calendar::turn, {
+            .defer_postprocess_hooks = options.defer_postprocess_hooks,
+            .worker_safe = options.worker_safe,
+            .use_selected_mapgen = options.use_selected_mapgen,
+            .selected_mapgen = options.selected_mapgen,
+        } );
+        if( generate_result.needs_main_thread() ) {
+            return generate_result;
+        }
+        if( !generate_result.is_generated() ) {
+            return generate_result;
+        }
     }
-    return true;
+    return { .status = mapgen_result_status::generated };
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void

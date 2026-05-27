@@ -119,7 +119,8 @@ static void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2
 
 // (x,y,z) are absolute coordinates of a submap
 // x%2 and y%2 must be 0!
-void map::generate( const tripoint_abs_sm &p, const time_point &when )
+auto map::generate( const tripoint_abs_sm &p, const time_point &when,
+                    const map_generate_options &options ) -> mapgen_result
 {
     ZoneScopedN( "map_generate" );
     ZoneValue( static_cast<uint64_t>( p.z() + OVERMAP_DEPTH ) );
@@ -146,6 +147,13 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
         setsubmap( grid_pos, new submap( bub_to_abs( tripoint_bub_sm( smp, p.z() ) ) ) );
         // TODO: memory leak if the code below throws before the submaps get stored/deleted!
     }
+    const auto discard_unowned_generated_submaps = [&]() {
+        for( const auto smp : bubble_submaps() ) {
+            const auto grid_pos = get_nonant( tripoint_bub_sm( smp, p.z() ) );
+            delete getsubmap( grid_pos );
+            setsubmap( grid_pos, nullptr );
+        }
+    };
     // x, and y are submap coordinates, convert to overmap terrain coordinates
     // TODO: fix point types
     tripoint_abs_omt abs_omt( project_to<coords::omt>( p ) );
@@ -174,7 +182,11 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     mapgendata dat( abs_omt, *this, density, when, nullptr, omap );
     {
         ZoneScopedN( "generate_draw_map" );
-        draw_map( dat );
+        const auto draw_result = draw_map( dat, options );
+        if( draw_result.needs_main_thread() ) {
+            discard_unowned_generated_submaps();
+            return draw_result;
+        }
     }
 
     {
@@ -248,7 +260,7 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
             const int gridn = get_nonant( pos );
             submap *const sm = getsubmap( gridn );
             if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
-                return;
+                return {};
             }
             // Transfer ownership of the freshly generated submap to the mapbuffer.
             // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
@@ -269,7 +281,7 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     const auto omt_pos( project_to<coords::omt>( p ) );
     {
         ZoneScopedN( "generate_postprocess_hooks" );
-        if( is_pool_worker_thread() ) {
+        if( is_pool_worker_thread() || options.defer_postprocess_hooks ) {
             push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );
         } else {
             cata::run_on_mapgen_postprocess_hooks(
@@ -280,6 +292,7 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
             );
         }
     }
+    return { .status = mapgen_result_status::generated };
 }
 
 void mapgen_function_builtin::generate( mapgendata &mgd )
@@ -319,9 +332,20 @@ class mapgen_basic_container
          */
         bool generate( mapgendata &dat, const int hardcoded_weight ) const {
             ZoneScopedN( "mapgen_container_generate" );
+            const auto ptr = pick( hardcoded_weight );
+            if( !ptr ) {
+                return false;
+            }
+            {
+                ZoneScopedN( "mapgen_container_dispatch" );
+                ptr->generate( dat );
+            }
+            return true;
+        }
+        auto pick( const int hardcoded_weight ) const -> std::shared_ptr<mapgen_function> {
             if( hardcoded_weight > 0 &&
                 rng( 1, weights_.get_weight() + hardcoded_weight ) > weights_.get_weight() ) {
-                return false;
+                return nullptr;
             }
             const std::shared_ptr<mapgen_function> *ptr = nullptr;
             {
@@ -329,18 +353,13 @@ class mapgen_basic_container
                 ptr = weights_.pick();
             }
             if( !ptr ) {
-                return false;
+                return nullptr;
             }
             assert( *ptr );
-            {
-                ZoneScopedN( "mapgen_container_dispatch" );
-                ( *ptr )->generate( dat );
-            }
-            return true;
+            return *ptr;
         }
-        /** Returns true if any generator in the weighted pool is Lua-based. */
-        auto any_lua() const -> bool {
-            bool found = false;
+        auto has_direct_lua_generator() const -> bool {
+            auto found = false;
             weights_.apply( [&]( const std::shared_ptr<mapgen_function> &ptr ) {
                 if( ptr && ptr->is_lua_generator() ) {
                     found = true;
@@ -390,6 +409,7 @@ class mapgen_factory
 {
     private:
         std::map<std::string, mapgen_basic_container> mapgens_;
+        bool any_direct_lua_generator_ = false;
 
         /// Collect all the possible and expected keys that may get used with @ref pick.
         static std::set<std::string> get_usages() {
@@ -415,6 +435,7 @@ class mapgen_factory
     public:
         void reset() {
             mapgens_.clear();
+            any_direct_lua_generator_ = false;
         }
         /// @see mapgen_basic_container::setup
         void setup() {
@@ -425,6 +446,9 @@ class mapgen_factory
             // Dummy entry, overmap terrain null should never appear and is
             // therefore never generated.
             mapgens_.erase( "null" );
+            any_direct_lua_generator_ = std::ranges::any_of( mapgens_, []( const auto & omw ) {
+                return omw.second.has_direct_lua_generator();
+            } );
         }
         void finalize_parameters() {
             for( std::pair<const std::string, mapgen_basic_container> &omw : mapgens_ ) {
@@ -462,15 +486,24 @@ class mapgen_factory
             }
             return iter->second.generate( dat, hardcoded_weight );
         }
-        /// Returns true if any generator registered under @p key is Lua-based.
-        auto has_lua_generator( const std::string &key ) const -> bool {
-            const auto iter = mapgens_.find( key );
+        auto pick( const std::string &key, const int hardcoded_weight = 0 ) const
+        -> std::shared_ptr<mapgen_function> {
+            const auto iter = mapgens_.find( disable_mapgen ? "test" : key );
+            if( iter == mapgens_.end() ) {
+                return nullptr;
+            }
+            return iter->second.pick( hardcoded_weight );
+        }
+        auto has_direct_lua_generator( const std::string &key ) const -> bool {
+            const auto iter = mapgens_.find( disable_mapgen ? "test" : key );
             if( iter == mapgens_.end() ) {
                 return false;
             }
-            return iter->second.any_lua();
+            return iter->second.has_direct_lua_generator();
         }
-
+        auto has_any_direct_lua_generator() const -> bool {
+            return any_direct_lua_generator_;
+        }
         mapgen_parameters get_map_special_params( const std::string &key ) const {
             const auto iter = mapgens_.find( key );
             if( iter == mapgens_.end() ) {
@@ -4218,7 +4251,7 @@ bool jmapgen_objects::has_vehicle_collision( const mapgendata &dat,
 }
 
 /////////////
-void map::draw_map( mapgendata &dat )
+auto map::draw_map( mapgendata &dat, const map_generate_options &options ) -> mapgen_result
 {
     ZoneScopedN( "map_draw_map" );
     const oter_id &terrain_type = dat.terrain_type();
@@ -4228,7 +4261,32 @@ void map::draw_map( mapgendata &dat )
     bool generated = false;
     {
         ZoneScopedN( "draw_map_run_mapgen_func" );
-        generated = run_mapgen_func( function_key, dat );
+        if( options.use_selected_mapgen ) {
+            if( options.selected_mapgen ) {
+                if( options.worker_safe && mapgen_function_needs_main_thread( options.selected_mapgen ) ) {
+                    return {
+                        .status = mapgen_result_status::needs_main_thread,
+                        .selected_mapgen = options.selected_mapgen,
+                    };
+                }
+                options.selected_mapgen->generate( dat );
+                generated = true;
+            }
+        } else if( options.worker_safe ) {
+            const auto selected_mapgen = oter_mapgen.pick( function_key );
+            if( selected_mapgen ) {
+                if( mapgen_function_needs_main_thread( selected_mapgen ) ) {
+                    return {
+                        .status = mapgen_result_status::needs_main_thread,
+                        .selected_mapgen = selected_mapgen,
+                    };
+                }
+                selected_mapgen->generate( dat );
+                generated = true;
+            }
+        } else {
+            generated = run_mapgen_func( function_key, dat );
+        }
     }
 
     if( !generated ) {
@@ -4256,6 +4314,7 @@ void map::draw_map( mapgendata &dat )
         ZoneScopedN( "draw_map_connections" );
         draw_connections( dat );
     }
+    return { .status = mapgen_result_status::generated };
 }
 
 const int SOUTH_EDGE = 2 * SEEY - 1;
@@ -6558,11 +6617,33 @@ bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat )
     return oter_mapgen.generate( dat, mapgen_id );
 }
 
-auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint_abs_omt &omt_addr ) -> bool
+auto pick_mapgen_func( const std::string &mapgen_id ) -> std::shared_ptr<mapgen_function>
 {
-    overmapbuffer &omap = get_overmapbuffer( dim_id );
-    const oter_id terrain_type = omap.ter( omt_addr );
-    return oter_mapgen.has_lua_generator( terrain_type->get_mapgen_id() );
+    ZoneScopedN( "pick_mapgen_func" );
+    return oter_mapgen.pick( mapgen_id );
+}
+
+auto mapgen_function_needs_main_thread( const std::shared_ptr<mapgen_function> &func ) -> bool
+{
+    if( !func ) {
+        return false;
+    }
+    if( func->is_lua_generator() ) {
+        return true;
+    }
+    const auto json_func = std::dynamic_pointer_cast<mapgen_function_json>( func );
+    return json_func && json_func->predecessor_mapgen != oter_str_id::NULL_ID() &&
+           oter_mapgen.has_direct_lua_generator( json_func->predecessor_mapgen.id().str() );
+}
+
+auto mapgen_has_any_direct_lua_generator() -> bool
+{
+    return oter_mapgen.has_any_direct_lua_generator();
+}
+
+auto mapgen_id_has_direct_lua_generator( const std::string &mapgen_id ) -> bool
+{
+    return oter_mapgen.has_direct_lua_generator( mapgen_id );
 }
 
 mapgen_parameters get_map_special_params( const std::string &mapgen_id )
