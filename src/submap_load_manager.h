@@ -150,7 +150,7 @@ class submap_load_manager
                                        const tripoint_abs_ms &pos ) -> void;
 
         /**
-         * Block until all in-flight background presave_omt tasks complete.
+         * Block until all in-flight background lazy-load tasks complete.
          *
          * Must be called before saving the game, switching dimensions, or
          * shutting down the thread pool so that no worker holds raw submap
@@ -238,9 +238,8 @@ class submap_load_manager
         void flush_prev_desired();
 
         /**
-         * Returns true if all background presave work has been drained
-         * (presave_futures_ is empty).  Used by flush_prev_desired() to assert
-         * correct call ordering during dimension switches.
+         * Returns true if all background lazy-load work has been drained. Used by
+         * flush_prev_desired() to assert correct call ordering during dimension switches.
          */
         auto is_fully_drained() const noexcept -> bool;
 
@@ -352,12 +351,6 @@ class submap_load_manager
 
         /** Cached (dx, dy) offsets for the full reality-bubble square footprint. */
         std::vector<point> bubble_offsets_;
-
-        /** In-flight presave_omt futures for dirty omts that left simulation.
-         *  Keyed by omt_key (dim + 3-D OMT address) for O(log N) lookup and erase.
-         *  Eviction waits for these before freeing the in-memory submaps.
-         *  Presence in the map also serves as the in-flight guard. */
-        std::map<omt_key, std::future<void>> presave_futures_;
 
         /**
          * Omts that have entered the simulated zone at least once since they

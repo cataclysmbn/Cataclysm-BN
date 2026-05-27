@@ -337,10 +337,6 @@ auto submap_load_manager::evict_omt_column( const retained_omt_key &key ) -> voi
         finish_lazy_omt_job( qk );
         const auto was_dirty = dirty_omts_.contains( qk );
         if( was_dirty ) {
-            if( auto it = presave_futures_.find( qk ); it != presave_futures_.end() ) {
-                it->second.get();
-                presave_futures_.erase( it );
-            }
             dirty_omts_.erase( qk );
             mb.unload_omt( omt_addr, true );
         } else {
@@ -485,24 +481,13 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> bool
     }
 
     auto &mb = MAPBUFFER_REGISTRY.get( key.first );
-    auto dirty = false;
-    if( auto it = presave_futures_.find( key ); it != presave_futures_.end() ) {
-        it->second.get();
-        presave_futures_.erase( it );
-        dirty = true;
-    }
-
     if( is_omt_zlevel_loaded( mb, key.second ) ) {
-        if( dirty ) {
-            dirty_omts_.insert( key );
-        }
         return false;
     }
 
     if( get_thread_pool().num_workers() == 0 || is_any_omt_zlevel_loaded( mb, key.second ) ||
         omt_mapgen_uses_lua( key.first, key.second ) ) {
         auto result = load_lazy_omt_zlevel_data( mb, key.second );
-        result.dirty |= dirty;
         const auto generated = apply_lazy_omt_result( key, result );
         if( generated ) {
             run_deferred_mapgen_hooks();
@@ -513,10 +498,8 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> bool
     }
 
     lazy_omt_futures_.emplace( key,
-    get_thread_pool().submit_returning( [&mb, omt_addr = key.second, dirty]() {
-        auto result = load_lazy_omt_zlevel_data( mb, omt_addr );
-        result.dirty |= dirty;
-        return result;
+    get_thread_pool().submit_returning( [&mb, omt_addr = key.second]() {
+        return load_lazy_omt_zlevel_data( mb, omt_addr );
     } ) );
     return true;
 }
@@ -715,41 +698,12 @@ void submap_load_manager::drain_lazy_loads()
         flush_deferred_zones();
         run_deferred_autonotes();
     }
-
-    // Drain in-flight presave futures so no worker holds raw submap pointers
-    // across a dimension switch, shutdown, or full game save.
-    // dirty_omts_ is NOT cleared here — the presaved data is in pending_writes_
-    // (in-memory cache), not on disk yet.  flush_prev_desired() clears dirty_omts_
-    // and the subsequent mapbuffer::save() call flushes pending_writes_ to disk.
-    std::ranges::for_each( presave_futures_, []( auto & entry ) {
-        entry.second.get();
-    } );
-    presave_futures_.clear();
 }
 
 void submap_load_manager::update()
 {
     ZoneScoped;
 
-    // Non-blocking reap: collect completed presave futures.  When a presave
-    // finishes we remove it from the in-flight set, but intentionally keep
-    // dirty_omts_ intact.  presave_omt() only writes to the pending-writes
-    // cache (no disk I/O); between the snapshot and eventual eviction, border
-    // submaps can still be modified (e.g. fire spreading in from the bubble).
-    // Keeping the dirty mark ensures eviction re-serialises the current state
-    // rather than silently discarding those post-presave modifications.
-    {
-        ZoneScopedN( "slm_presave_reap" );
-        std::erase_if( presave_futures_, []( auto & entry ) {
-            auto &[key, fut] = entry;
-            if( fut.wait_for( std::chrono::seconds( 0 ) ) == std::future_status::ready ) {
-                fut.get();
-                // dirty_omts_ deliberately NOT cleared here — see comment above.
-                return true;
-            }
-            return false;
-        } );
-    }
     reap_lazy_omt_jobs();
 
     TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
@@ -838,17 +792,6 @@ void submap_load_manager::update()
                 const tripoint_abs_omt omt_addr{ omt_xy, z };
                 const omt_key qk{ dim_id, omt_addr };
                 finish_lazy_omt_job( qk );
-
-                // If a presave is in-flight for this omt, wait for it before
-                // allowing game logic to modify the submaps.  The worker holds
-                // raw submap pointers and reads them for serialization; concurrent
-                // writes would corrupt the save.
-                if( auto it = presave_futures_.find( qk ); it != presave_futures_.end() ) {
-                    it->second.get();
-                    presave_futures_.erase( it );
-                    // dirty_omts_ left intact — omt was re-inserted above and
-                    // must still be saved on eventual eviction.
-                }
 
                 // Skip omts already fully resident (e.g. re-entered from
                 // pending_writes cache).
@@ -942,73 +885,6 @@ void submap_load_manager::update()
             }
         }
     } // slm_listener_notifications
-
-    // ---- Submit async presaves for dirty omts leaving simulation ----
-    // Omts entering the border zone are no longer touched by game logic.
-    // We can serialize them to the pending-writes cache on a worker thread so eviction
-    // (when they later leave the border zone) is just a fast memory free.
-    // The 2-D simulated set means each departing horizontal position drives a
-    // z-level loop; presaved_this_turn prevents duplicate submissions when
-    // multiple submap positions in prev_simulated_ map to the same omt.
-    {
-        ZoneScopedN( "slm_presave_departing" );
-        std::unordered_set<omt_key, coord_pair_hash<tripoint_abs_omt>> presaved_this_turn;
-        for( const desired_key &key : prev_simulated_ ) {
-            if( simulated.count( key ) ) {
-                continue;  // still simulated — not departing
-            }
-            if( !all_desired.count( key ) ) {
-                continue;  // direct sim→evict is handled by departed dirty OMT presave below
-            }
-            for( int z = -OVERMAP_DEPTH; z <= OVERMAP_HEIGHT; z++ ) {
-                const omt_key qk{ key.first,
-                                  tripoint_abs_omt{ project_to<coords::omt>( key.second ), z } };
-                if( presave_futures_.count( qk ) ) {
-                    continue;  // already has an in-flight presave
-                }
-                if( !dirty_omts_.count( qk ) ) {
-                    continue;  // omt was never simulated (guard, shouldn't happen here)
-                }
-                if( !presaved_this_turn.insert( qk ).second ) {
-                    continue;  // multiple SM positions map to same omt — only submit once
-                }
-                auto &mb = MAPBUFFER_REGISTRY.get( qk.first );
-                presave_futures_.emplace( qk,
-                get_thread_pool().submit_returning( [&mb, omt_addr = qk.second]() {
-                    mb.presave_omt( omt_addr );
-                } ) );
-            }
-        }
-        TracyPlot( "Presave Futures In-Flight", static_cast<int64_t>( presave_futures_.size() ) );
-    }
-
-    {
-        ZoneScopedN( "slm_presave_departed_dirty_omts" );
-        auto presaved_columns =
-            std::unordered_set<retained_omt_key, coord_pair_hash<point_abs_omt>> {};
-        for( const desired_key &key : prev_desired_ ) {
-            if( all_desired.count( key ) != 0 ) {
-                continue;
-            }
-            const auto column = retained_omt_key{ key.first, project_to<coords::omt>( key.second ) };
-            if( !presaved_columns.insert( column ).second ) {
-                continue;
-            }
-            auto &mb = MAPBUFFER_REGISTRY.get( column.first );
-            std::ranges::for_each( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
-            [&]( const auto z ) {
-                const auto qk = omt_key{ column.first, tripoint_abs_omt{ column.second, z } };
-                if( presave_futures_.count( qk ) != 0 || dirty_omts_.count( qk ) == 0 ) {
-                    return;
-                }
-                presave_futures_.emplace( qk,
-                get_thread_pool().submit_returning( [&mb, omt_addr = qk.second]() {
-                    mb.presave_omt( omt_addr );
-                } ) );
-            } );
-        }
-        TracyPlot( "Presave Futures In-Flight", static_cast<int64_t>( presave_futures_.size() ) );
-    }
 
     // ---- Retain departed omts (full set: simulated + border) ----
     // prev_desired_ is now 2-D (horizontal SM positions).  Multiple entries
@@ -1144,7 +1020,7 @@ auto submap_load_manager::non_bubble_requests() const -> std::vector<submap_load
 
 auto submap_load_manager::is_fully_drained() const noexcept -> bool
 {
-    return presave_futures_.empty() && lazy_omt_futures_.empty();
+    return lazy_omt_futures_.empty();
 }
 
 void submap_load_manager::flush_prev_desired()

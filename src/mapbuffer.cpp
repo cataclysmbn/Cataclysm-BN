@@ -435,7 +435,7 @@ void mapbuffer::save( bool delete_after_save, bool notify_tracker, bool show_pro
     }
 
     // Flush the pending-writes cache to disk.  These are omts that were
-    // serialised in memory (by presave_omt or unload_omt) but not yet written.
+    // serialised in memory by unload_omt() but not yet written.
     // Omts still resident in submaps were already handled by save_omt() above;
     // only evicted omts need to be written here.
     //
@@ -670,69 +670,6 @@ auto mapbuffer::generate_omt( const tripoint_abs_omt &omt_addr ) -> bool
         tmp_map.generate( base, calendar::turn );
     }
     return true;
-}
-
-void mapbuffer::presave_omt( const tripoint_abs_omt &omt_addr )
-{
-    ZoneScoped;
-    const auto base = project_to<coords::sm>( omt_addr );
-    const std::array<tripoint_abs_sm, 4> addrs = { {
-            base,
-            base + point_rel_sm::east(),
-            base + point_rel_sm::south(),
-            base + point_rel_sm::south_east()
-        }
-    };
-
-    // Collect raw submap pointers under the lock — brief hold only.
-    std::array<submap *, 4> ptrs = {};
-    bool all_uniform = true;
-    {
-        std::lock_guard<std::recursive_mutex> lk( submaps_mutex_ );
-        for( int i = 0; i < 4; ++i ) {
-            const auto it = submaps.find( addrs[i] );
-            if( it != submaps.end() && it->second ) {
-                ptrs[i] = it->second.get();
-                if( !it->second->is_uniform ) {
-                    all_uniform = false;
-                }
-            }
-        }
-    }
-
-    // Uniform omts regenerate faster than a disk round-trip.
-    if( all_uniform || disable_mapgen ) {
-        return;
-    }
-
-    // Serialise into the pending-writes cache outside the lock.  The submap
-    // objects stay alive until after this future resolves (submap_load_manager
-    // withholds eviction until the presave completes).  No disk I/O occurs here;
-    // the cache is flushed to disk only on an explicit save.
-    std::ostringstream buf;
-    {
-        JsonOut jsout( buf );
-        jsout.start_array();
-        for( int i = 0; i < 4; ++i ) {
-            submap *sm = ptrs[i];
-            if( !sm ) {
-                continue;
-            }
-            jsout.start_object();
-            jsout.member( "version", savegame_version );
-            jsout.member( "coordinates" );
-            jsout.start_array();
-            jsout.write( addrs[i].x() );
-            jsout.write( addrs[i].y() );
-            jsout.write( addrs[i].z() );
-            jsout.end_array();
-            sm->store( jsout );
-            jsout.end_object();
-        }
-        jsout.end_array();
-    }
-    std::lock_guard<std::mutex> pw_lk( pending_writes_mutex_ );
-    pending_writes_[omt_addr] = std::move( buf ).str();
 }
 
 auto mapbuffer::drain_pending_submap_destroy() -> void
