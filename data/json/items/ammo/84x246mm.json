@@ -13,14 +13,14 @@
     "volume": "1250 ml",
     "weight": "3200 g",
     "ammo_type": "84x246mm",
-    "damage": { "damage_type": "bullet", "amount": 175, "armor_penetration": 10 },
+    "damage": { "damage_type": "bullet", "amount": 50, "armor_penetration": 10 },
     "range": 120,
     "dispersion": 60,
     "recoil": 45,
     "count": 4,
     "stack_size": 1,
     "loudness": 90,
-    "effects": [ "COOKOFF", "EXPLOSIVE_BIG_PLUS_FRAG", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
+    "effects": [ "COOKOFF", "AMMO_84x246_HE", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -33,11 +33,11 @@
     "volume": "1500 ml",
     "weight": "3300 g",
     "//": "Same damage but more effective armor negation due to being dedicated anti-tank ammo",
-    "damage": { "damage_type": "bullet", "amount": 175, "armor_multiplier": 0.1 },
+    "damage": { "damage_type": "bullet", "amount": 300, "armor_multiplier": 0.1 },
     "range": 100,
     "dispersion": 75,
     "recoil": 60,
-    "effects": [ "COOKOFF", "EXPLOSIVE_HUGE", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
+    "effects": [ "COOKOFF", "AMMO_84x246_HEDP", "NEVER_MISFIRES", "NO_PENETRATE_OBSTACLES" ]
   },
   {
     "type": "AMMO",
@@ -52,6 +52,6 @@
     "range": 140,
     "dispersion": 30,
     "extend": { "effects": [ "SMOKE_BIG", "NO_PENETRATE_OBSTACLES" ] },
-    "delete": { "effects": [ "EXPLOSIVE_BIG_PLUS_FRAG" ] }
+    "delete": { "effects": [ "AMMO_84x246_HE" ] }
   }
 ]
