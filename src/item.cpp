@@ -5156,7 +5156,7 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         if( is_loaded() ) {
             const auto temp = rot::temperature_flag_for_location( get_map(), *this );
             if( temp == temperature_flag::TEMP_FREEZER ) {
-                tagtext += _( " (very cold)" );
+                tagtext += _( " (frozen)" );
             } else if( temp == temperature_flag::TEMP_FRIDGE || temp == temperature_flag::TEMP_ROOT_CELLAR ) {
                 tagtext += _( " (cold)" );
             }
