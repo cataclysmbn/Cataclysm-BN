@@ -777,8 +777,9 @@ void vehicle::init_state( const int init_veh_fuel, const int init_veh_status,
         const size_t p = vp.part_index();
         vehicle_part &pt = vp.part();
 
-        if( vp.has_feature( VPFLAG_REACTOR ) && one_in( 4 ) ) {
-            // De-hardcoded reactors, may or may not start active
+        const auto reactor_is_perpetual = pt.info().has_flag( "PERPETUAL" );
+        if( vp.has_feature( VPFLAG_REACTOR ) && ( reactor_is_perpetual || one_in( 4 ) ) ) {
+            // De-hardcoded reactors may or may not start active, but perpetual reactors are always active.
             pt.enabled = true;
         }
 
@@ -1464,7 +1465,8 @@ bool vehicle::is_engine_on( const int e ) const
 
 bool vehicle::is_part_on( const int p ) const
 {
-    return parts[p].enabled;
+    const auto &pt = parts[p];
+    return pt.enabled || ( pt.is_available() && pt.is_reactor() && pt.info().has_flag( "PERPETUAL" ) );
 }
 
 bool vehicle::is_alternator_on( const int a ) const
