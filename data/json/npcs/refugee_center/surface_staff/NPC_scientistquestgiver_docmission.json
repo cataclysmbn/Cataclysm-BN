@@ -157,7 +157,7 @@
   {
     "id": "MISSION_TCL_CLEANUP_1",
     "type": "mission_definition",
-    "name": { "str": "Kill the Feral Black Ops" },
+    "name": { "str": "Eliminate the Shadowy Threat" },
     "goal": "MGOAL_KILL_MONSTER_TYPE",
     "description": "Find and kill the <color_light_blue>shadowy threat</color>. According to the head scientist, it is likely in the <color_red>security wing</color>.",
     "difficulty": 10,
