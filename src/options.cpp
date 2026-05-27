@@ -2865,6 +2865,10 @@ void options_manager::add_options_world_default()
          translate_marker( "Zombies Always Evolve" ),
          translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
          false );
+    add( "CROWD_CRUSH", world_default,
+         translate_marker( "Crowd crush" ),
+         translate_marker( "When enabled, being grabbed by enough adjacent creatures can drain breath and eventually cause crushing damage." ),
+         false );
 
     add_empty_line();
 

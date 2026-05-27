@@ -13,6 +13,7 @@
 #include "map_helpers.h"
 #include "monster.h"
 #include "mtype.h"
+#include "options_helpers.h"
 #include "player_helpers.h"
 #include "point.h"
 #include "state_helpers.h"
@@ -134,8 +135,33 @@ TEST_CASE( "Manually grabbed monster cannot walk away", "[player][melee][grab]" 
     CHECK( zed.bub_pos() == monster_start );
 }
 
+TEST_CASE( "Crowd crush does not drain breath when disabled", "[player][melee][grab]" )
+{
+    const override_option crowd_crush( "CROWD_CRUSH", "false" );
+    clear_all_state();
+    avatar &dummy = g->u;
+    clear_character( dummy );
+
+    const auto effect_grabbed = efftype_id( "grabbed" );
+    const auto effect_grabbing = efftype_id( "grabbing" );
+    const auto avatar_start = dummy.bub_pos();
+
+    dummy.add_effect( effect_grabbed, 1_days, body_part_torso );
+    dummy.oxygen = 30;
+
+    for( const auto &offset : { tripoint_north, tripoint_south, tripoint_east } ) {
+        auto &zed = spawn_test_monster( "debug_mon", avatar_start + offset );
+        zed.add_effect( effect_grabbing, 1_days );
+    }
+
+    dummy.suffer();
+
+    CHECK( dummy.oxygen == 30 );
+}
+
 TEST_CASE( "Crowd crush drains breath while grabbed", "[player][melee][grab]" )
 {
+    const override_option crowd_crush( "CROWD_CRUSH", "true" );
     clear_all_state();
     avatar &dummy = g->u;
     clear_character( dummy );

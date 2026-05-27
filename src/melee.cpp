@@ -32,6 +32,7 @@
 #include "creature_throw.h"
 #include "damage.h"
 #include "debug.h"
+#include "effect.h"
 #include "enums.h"
 #include "flag.h"
 #include "game.h"
@@ -2447,8 +2448,21 @@ static damage_unit &get_damage_unit( std::vector<damage_unit> &di, const damage_
 static auto can_be_downed_after_knockback( const Creature &target ) -> bool
 {
     const auto *const knocked_monster = dynamic_cast<const monster *>( &target );
-    return !target.is_immune_effect( effect_downed ) &&
+    return !target.is_dead_state() &&
+           !target.is_immune_effect( effect_downed ) &&
            ( knocked_monster == nullptr || !knocked_monster->flies() );
+}
+
+auto apply_thrown_creature_downed_effect( Creature &target ) -> void
+{
+    if( target.has_effect( effect_downed ) ) {
+        auto &downed = target.get_effect( effect_downed );
+        if( downed.get_duration() < creature_throw::thrown_creature_downed_duration ) {
+            downed.set_duration( creature_throw::thrown_creature_downed_duration );
+        }
+        return;
+    }
+    target.add_effect( effect_downed, creature_throw::thrown_creature_downed_duration );
 }
 
 static void print_damage_info( const damage_instance &di )
@@ -2565,9 +2579,12 @@ void Character::perform_technique( const ma_technique &technique, Creature &t, d
         if( technique.stun_dur > 0 && !technique.powerful_knockback ) {
             t.add_effect( effect_stunned, rng( 1_turns, time_duration::from_turns( technique.stun_dur ) ) );
         }
-        if( t.bub_pos() != prev_pos && !t.has_effect( effect_downed ) &&
-            can_be_downed_after_knockback( t ) && !one_in( 4 ) ) {
-            t.add_effect( effect_downed, 1_turns );
+        if( t.bub_pos() != prev_pos && can_be_downed_after_knockback( t ) ) {
+            if( technique.controlled_knockback ) {
+                apply_thrown_creature_downed_effect( t );
+            } else if( !t.has_effect( effect_downed ) && !one_in( 4 ) ) {
+                t.add_effect( effect_downed, 1_turns );
+            }
         }
         // This technique makes the player follow into the tile the target was knocked from
         if( technique.knockback_follow ) {

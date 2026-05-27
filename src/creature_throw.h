@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "calendar.h"
 #include "enums.h"
 
 namespace creature_throw
@@ -14,6 +15,7 @@ constexpr auto equal_size_throw_min_str = 12;
 constexpr auto obstacle_bash_reference_weight_grams = 60000;
 constexpr auto min_obstacle_bash_weight_percent = 10;
 constexpr auto max_obstacle_bash_weight_percent = 200;
+constexpr auto thrown_creature_downed_duration = 3_turns;
 
 inline auto can_throw_grabbed_creature_size( const creature_size thrower_size,
         const int thrower_str, const creature_size target_size ) -> bool

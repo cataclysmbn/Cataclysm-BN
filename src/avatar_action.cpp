@@ -26,6 +26,7 @@
 #include "creature_throw.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "effect.h"
 #include "enums.h"
 #include "flag.h"
 #include "game.h"
@@ -87,6 +88,7 @@ static const efftype_id effect_amigara( "amigara" );
 static const efftype_id effect_glowing( "glowing" );
 static const efftype_id effect_grabbed( "grabbed" );
 static const efftype_id effect_grabbing( "grabbing" );
+static const efftype_id effect_downed( "downed" );
 static const efftype_id effect_harnessed( "harnessed" );
 static const efftype_id effect_hit_by_player( "hit_by_player" );
 static const efftype_id effect_onfire( "onfire" );
@@ -145,6 +147,25 @@ auto throw_descriptor( const float throwforce ) -> std::string
         return _( "hurl" );
     }
     return _( "send flying" );
+}
+
+auto apply_thrown_creature_downed_effect( Creature &target ) -> void
+{
+    if( target.is_dead_state() || target.is_immune_effect( effect_downed ) ) {
+        return;
+    }
+    const auto *const mon = target.as_monster();
+    if( mon != nullptr && mon->flies() ) {
+        return;
+    }
+    if( target.has_effect( effect_downed ) ) {
+        auto &downed = target.get_effect( effect_downed );
+        if( downed.get_duration() < creature_throw::thrown_creature_downed_duration ) {
+            downed.set_duration( creature_throw::thrown_creature_downed_duration );
+        }
+        return;
+    }
+    target.add_effect( effect_downed, creature_throw::thrown_creature_downed_duration );
 }
 
 auto throw_grabbed_creature( avatar &you ) -> bool
@@ -221,6 +242,7 @@ auto throw_grabbed_creature( avatar &you ) -> bool
 
     add_msg( _( "You %1$s %2$s!" ), throw_descriptor( fling_velocity ), target->disp_name() );
     g->fling_creature( target, target_angle, fling_velocity );
+    apply_thrown_creature_downed_effect( *target );
     return true;
 }
 
