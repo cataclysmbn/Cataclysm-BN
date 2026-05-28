@@ -810,14 +810,21 @@ auto memorized_terrain_has_stair_flag( const memorized_terrain_tile &memory,
                              terrain_obj.has_flag( TFLAG_ELEVATOR ) ) );
 }
 
-auto avatar_remembers_stairs_at( const avatar &you, map &mp, const tripoint &candidate,
-                                 const bool going_up, const bool going_down ) -> bool
+struct avatar_remembers_stairs_at_options {
+    const avatar &you;
+    map &here;
+    tripoint_bub_ms candidate;
+    bool going_up = false;
+    bool going_down = false;
+};
+
+auto avatar_remembers_stairs_at( const avatar_remembers_stairs_at_options &opts ) -> bool
 {
-    const auto abs_candidate = mp.getabs( candidate );
-    return memorized_terrain_has_stair_flag( you.get_terrain_tile( abs_candidate ), going_up,
-            going_down ) ||
-           memorized_terrain_has_stair_flag( you.get_memorized_tile( abs_candidate ), going_up,
-                                             going_down );
+    const auto abs_candidate = opts.here.bub_to_abs( opts.candidate );
+    return memorized_terrain_has_stair_flag( opts.you.get_terrain_tile( abs_candidate ), opts.going_up,
+            opts.going_down ) ||
+           memorized_terrain_has_stair_flag( opts.you.get_memorized_tile( abs_candidate ), opts.going_up,
+                                             opts.going_down );
 }
 
 } // namespace
@@ -835,7 +842,8 @@ std::optional<tripoint_bub_ms> game::find_local_stairs_leading_to( map &mp, cons
                                ( going_down && ( mp.has_flag( TFLAG_GOES_DOWN, candidate ) ||
                                                  mp.has_flag( TFLAG_ELEVATOR, candidate ) ) );
         if( ( is_stairs && u.sees( candidate ) ) ||
-            avatar_remembers_stairs_at( u, mp, candidate, going_up, going_down ) ) {
+            avatar_remembers_stairs_at( { .you = u, .here = mp, .candidate = candidate,
+                                          .going_up = going_up, .going_down = going_down } ) ) {
             return candidate;
         }
     }
