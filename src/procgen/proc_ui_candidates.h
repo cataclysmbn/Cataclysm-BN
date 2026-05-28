@@ -1,12 +1,11 @@
 #pragma once
 
+#include "procgen/proc_builder.h"
+
 #include <string>
 #include <vector>
 
-#include "procgen/proc_builder.h"
-
-namespace proc
-{
+namespace proc {
 
 struct candidate_label_entry {
     std::string key;
@@ -29,12 +28,13 @@ struct grouped_candidate_entry {
     int total_count = 0;
 };
 
-auto group_candidate_entries( const std::vector<candidate_label_entry> &entries ) ->
-std::vector<grouped_candidate_entry>;
-auto filter_grouped_candidates( const builder_state &state, const slot_id &slot,
-                                const std::vector<candidate_source_entry> &sources,
-                                const std::string &query ) -> std::vector<grouped_candidate_entry>;
-auto grouped_candidate_label( const grouped_candidate_entry &entry ) -> std::string;
-auto first_grouped_candidate_ix( const grouped_candidate_entry &entry ) -> part_ix;
+auto group_candidate_entries(const std::vector<candidate_label_entry>& entries)
+    -> std::vector<grouped_candidate_entry>;
+auto filter_grouped_candidates(
+    const builder_state& state, const slot_id& slot,
+    const std::vector<candidate_source_entry>& sources,
+    const std::string& query) -> std::vector<grouped_candidate_entry>;
+auto grouped_candidate_label(const grouped_candidate_entry& entry) -> std::string;
+auto first_grouped_candidate_ix(const grouped_candidate_entry& entry) -> part_ix;
 
 } // namespace proc

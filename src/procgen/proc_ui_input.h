@@ -2,8 +2,7 @@
 
 #include <string>
 
-namespace proc
-{
+namespace proc {
 
 enum class builder_focus : int {
     slots,
@@ -54,10 +53,10 @@ struct builder_candidate_navigation_result {
     bool handled = false;
 };
 
-auto handle_builder_search_input( const builder_input_options &opts ) -> builder_input_result;
-auto handle_builder_slot_navigation( const builder_slot_navigation_options &opts ) ->
-builder_slot_navigation_result;
-auto handle_builder_candidate_navigation( const builder_candidate_navigation_options &opts ) ->
-builder_candidate_navigation_result;
+auto handle_builder_search_input(const builder_input_options& opts) -> builder_input_result;
+auto handle_builder_slot_navigation(const builder_slot_navigation_options& opts)
+    -> builder_slot_navigation_result;
+auto handle_builder_candidate_navigation(const builder_candidate_navigation_options& opts)
+    -> builder_candidate_navigation_result;
 
 } // namespace proc

@@ -5,9 +5,8 @@
 
 class item;
 
-namespace proc
-{
+namespace proc {
 
-auto food_tags( const item &it ) -> std::vector<std::string>;
+auto food_tags(const item& it) -> std::vector<std::string>;
 
 } // namespace proc
