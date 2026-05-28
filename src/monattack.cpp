@@ -3620,6 +3620,68 @@ void mattack::tankgun( monster *z, Creature *target )
                             burst ) * tmp->primary_weapon().ammo_required();
 }
 
+void mattack::atgm( monster *z, Creature *target )
+{
+    if( z->type->monster_weapon && z->has_effect( effect_monster_disarmed ) ) {
+        return;
+    }
+    const itype_id ammo_type( "atgm_heat" );
+    // Make sure our ammo isn't weird.
+    if( z->ammo[ammo_type] > 4 ) {
+        debugmsg( "Generated too much ammo (%d) for %s in mattack::atgm", z->ammo[ammo_type],
+                  z->name() );
+        z->ammo[ammo_type] = 4;
+    }
+
+    int dist = rl_dist( z->bub_pos(), target->bub_pos() );
+    if( dist > 50 ) {
+        return;
+    }
+
+    if( !z->has_effect( effect_targeted ) ) {
+        //~ There will be a ATGM HEAT sent at high speed to your location next turn.
+        target->add_msg_if_player( m_warning, _( "You're not sure why you've got a laser dot on you…" ) );
+        //~ Sound of a atgm tube uncovering swiveling into place
+        sounds::sound( z->bub_pos(), 10, sounds::sound_t::combat, _( "whirrrrrclick." ), false, "misc",
+                       "servomotor" );
+        z->add_effect( effect_targeted, 1_minutes );
+        target->add_effect( effect_laserlocked, 1_minutes );
+        z->moves -= 200;
+        // Should give some ability to get behind cover,
+        // even though it's patently unrealistic.
+        return;
+    }
+    std::unique_ptr<npc> tmp = make_fake_npc( z, 12, 8, 8, 8 );
+    tmp->set_skill_level( skill_launcher, 1 );
+    tmp->set_skill_level( skill_gun, 1 );
+    // No need to aim
+    tmp->recoil = 0;
+    // It takes a while
+    z->moves -= 150;
+
+    if( z->ammo[ammo_type] <= 0 ) {
+        if( one_in( 3 ) ) {
+            sounds::sound( z->bub_pos(), 2, sounds::sound_t::combat, _( "a chk!" ), false, "fire_gun",
+                           "empty" );
+        } else if( one_in( 4 ) ) {
+            sounds::sound( z->bub_pos(), 6, sounds::sound_t::combat, _( "clank!" ), false, "fire_gun",
+                           "empty" );
+        }
+        return;
+    }
+    if( g->u.sees( *z ) ) {
+        add_msg( m_warning, _( "The %s's ATGM tube fires!" ), z->name() );
+    }
+
+    detached_ptr<item> gun = item::spawn( "atgm_launcher" );
+    gun->ammo_set( ammo_type, z->ammo[ ammo_type ] );
+    tmp->set_primary_weapon( std::move( gun ) );
+    int burst = std::max( tmp->primary_weapon().gun_get_mode( gun_mode_id( "AUTO" ) ).qty, 1 );
+
+    z->ammo[ ammo_type ] -= ranged::fire_gun( *tmp, target->bub_pos(),
+                            burst ) * tmp->primary_weapon().ammo_required();
+}
+
 bool mattack::searchlight( monster *z )
 {
 
@@ -4134,6 +4196,11 @@ bool mattack::multi_robot( monster *z )
         case 2:
             if( dist <= 30 ) {
                 frag( z, target );
+            }
+            break;
+        case 5:
+            if(dist <= 50 ) {
+                atgm( z, target );
             }
             break;
         default:
