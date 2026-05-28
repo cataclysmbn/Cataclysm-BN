@@ -122,6 +122,10 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_attention( "attention" );
 static const efftype_id effect_feral_infighting_punishment( "feral_infighting_punishment" );
 
+static const trait_id trait_ANIMALDISCORD( "ANIMALDISCORD" );
+static const trait_id trait_ANIMALDISCORD2( "ANIMALDISCORD2" );
+static const trait_id trait_ANIMALEMPATH( "ANIMALEMPATH" );
+static const trait_id trait_ANIMALEMPATH2( "ANIMALEMPATH2" );
 static const trait_id trait_BEE( "BEE" );
 static const trait_id trait_FLOWERS( "FLOWERS" );
 static const trait_id trait_MYCUS_FRIEND( "MYCUS_FRIEND" );
@@ -367,14 +371,11 @@ static bool too_close( const tripoint_bub_ms &critter_pos, const tripoint_bub_ms
     return rl_dist( critter_pos, ally_pos ) <= def_radius;
 }
 
-// Per-turn symmetric sight cache wrapper — mirrors turn_cached_sees() in monmove.cpp.
-// Exploits LOS symmetry: if a monster already checked visibility against this NPC during
-// compute_plan(), the result is already cached and this call is a cheap shared_lock read.
+// Per-turn Creature::sees() cache wrapper — mirrors turn_cached_sees() in monmove.cpp.
+// Key is directional; map::sees() handles symmetric LOS reuse below this layer.
 static auto npc_turn_cached_sees( const Creature &seer, const Creature &target ) -> bool
 {
-    const Creature *lo = &seer < &target ? &seer : &target;
-    const Creature *hi = &seer < &target ? &target : &seer;
-    const auto key = std::make_pair( lo, hi );
+    const auto key = std::make_pair( &seer, &target );
     {
         std::shared_lock<std::shared_mutex> lock( g->turn_sight_cache_mutex_ );
         const auto it = g->turn_sight_cache_.find( key );
@@ -393,10 +394,21 @@ static auto npc_turn_cached_sees( const Creature &seer, const Creature &target )
 void npc::assess_danger()
 {
     ZoneScoped;
+    auto has_mutation_attitude_rules = false;
+    for( const trait_id &mut : get_mutations() ) {
+        const auto &mutation = mut.obj();
+        if( !mutation.anger_relations.empty() || !mutation.ignored_by.empty() ) {
+            has_mutation_attitude_rules = true;
+            break;
+        }
+    }
     // True if this NPC has traits/effects that cause monster::attitude() to return a
     // result different from what a generic NPC would get.  When false, we can use each
     // monster's per-npcmove-pass cached attitude instead of recomputing it.
-    const bool has_special_attitude_traits = guaranteed_hostile() || is_hallucination() ||
+    const auto has_special_attitude_traits = guaranteed_hostile() || is_hallucination() ||
+            has_mutation_attitude_rules ||
+            has_trait( trait_ANIMALEMPATH ) || has_trait( trait_ANIMALEMPATH2 ) ||
+            has_trait( trait_ANIMALDISCORD ) || has_trait( trait_ANIMALDISCORD2 ) ||
             has_trait( trait_PROF_FERAL ) || has_trait( trait_BEE ) ||
             has_trait( trait_FLOWERS ) || has_trait( trait_THRESH_MYCUS ) ||
             has_trait( trait_MYCUS_FRIEND ) || has_trait( trait_PHEROMONE_MAMMAL ) ||
@@ -494,7 +506,14 @@ void npc::assess_danger()
     // NPC friends are cached across turns; only rebuild when faction membership or active NPC
     // list changes (tracked via g_npc_friends_dirty_version).
     std::vector<weak_ptr_fast<Creature>> hostile_guys;
+    auto friend_positions = std::vector<tripoint_bub_ms> {};
+    const auto remember_friend_position = [&]( const weak_ptr_fast<Creature> &guy ) {
+        if( auto ally = guy.lock() ) {
+            friend_positions.push_back( ally->bub_pos() );
+        }
+    };
     {
+        ZoneScopedN( "npc_friend_enemy_scan" );
         const uint32_t current_version = g_npc_friends_dirty_version.load( std::memory_order_relaxed );
         const bool friends_dirty = ( ai_cache.npc_friends_version != current_version );
         if( friends_dirty ) {
@@ -516,13 +535,18 @@ void npc::assess_danger()
         if( friends_dirty ) {
             ai_cache.npc_friends_version = current_version;
         }
-        std::ranges::copy( ai_cache.cached_npc_friends, std::back_inserter( ai_cache.friends ) );
+        for( const weak_ptr_fast<Creature> &guy : ai_cache.cached_npc_friends ) {
+            ai_cache.friends.emplace_back( guy );
+            remember_friend_position( guy );
+        }
     }
     if( sees( player_character.bub_pos() ) ) {
         if( is_enemy() ) {
             hostile_guys.emplace_back( g->shared_from( player_character ) );
         } else if( is_friendly( player_character ) ) {
-            ai_cache.friends.emplace_back( g->shared_from( player_character ) );
+            auto player_ref = g->shared_from( player_character );
+            friend_positions.push_back( player_character.bub_pos() );
+            ai_cache.friends.emplace_back( player_ref );
         }
     }
 
@@ -540,9 +564,12 @@ void npc::assess_danger()
             Attitude att;
             if( !has_special_attitude_traits &&
                 critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch ) {
+                ZoneScopedN( "npc_monster_attitude_cache_hit" );
                 att = critter.cached_npc_attitude;
             } else {
-                att = critter.attitude_to( *this );
+                ZoneScopedN( "npc_monster_attitude_cache_miss" );
+                att = has_special_attitude_traits ? critter.attitude_to( *this ) :
+                      critter.generic_npc_attitude_to();
                 if( !has_special_attitude_traits ) {
                     critter.cached_npc_attitude_epoch = g_npcmove_attitude_epoch;
                     critter.cached_npc_attitude = att;
@@ -550,6 +577,7 @@ void npc::assess_danger()
             }
             if( att == Attitude::A_FRIENDLY ) {
                 ai_cache.friends.emplace_back( g->shared_from( critter ) );
+                friend_positions.push_back( critter.bub_pos() );
                 continue;
             }
             // Skip non-hostile monsters entirely — includes MATT_IGNORE, MATT_FLEE, and
@@ -584,18 +612,11 @@ void npc::assess_danger()
 
             // don't ignore monsters that are too close or too close to an ally if we can move
             bool is_too_close = dist <= def_radius;
-            for( const weak_ptr_fast<Creature> &guy : ai_cache.friends ) {
+            for( const tripoint_bub_ms &ally_pos : friend_positions ) {
                 if( is_too_close || self_defense_only ) {
                     break;
                 }
-                // HACK: Bit of a dirty hack - sometimes shared_from, returns nullptr or bad weak_ptr for
-                // friendly NPC when the NPC is riding a creature - I don't know why.
-                // so this skips the bad weak_ptrs, but this doesn't functionally change the AI Priority
-                // because the horse the NPC is riding is still in the ai_cache.friends vector,
-                // so either one would count as a friendly for this purpose.
-                if( auto ally = guy.lock() ) {
-                    is_too_close |= too_close( critter.bub_pos(), ally->bub_pos(), def_radius );
-                }
+                is_too_close |= too_close( critter.bub_pos(), ally_pos, def_radius );
             }
             // ignore distant monsters that our rules prevent us from attacking
             if( !is_too_close && is_player_ally() && !ok_by_rules( critter, dist, scaled_distance ) ) {

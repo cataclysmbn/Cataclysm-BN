@@ -136,6 +136,21 @@
   },
   {
     "type": "GENERIC",
+    "id": "classified_file_docmission",
+    "name": { "str": "classified lab reports" },
+    "category": "books",
+    "description": "A large stack of papers detailing all manner of classified information regarding the secret labs.",
+    "weight": "400 g",
+    "to_hit": -3,
+    "color": "white",
+    "symbol": ",",
+    "material": [ "paper" ],
+    "looks_like": "record_accounting",
+    "volume": "750 ml",
+    "flags": [ "TRADER_AVOID" ]
+  },
+  {
+    "type": "GENERIC",
     "id": "log_immersion27",
     "copy-from": "file",
     "name": { "str": "INCIDENT REPORT: IMMERSION-27A" },

@@ -6,18 +6,22 @@
       {
         "fuzzy_ids": [ "board", "windshield", "door", "roof", "trunk_flat", "hatch" ],
         "colors": [
-          { "color": "White aluminium", "weight": 8 },
-          { "color": "Silver grey", "weight": 8 },
-          { "color": "Grey aluminium", "weight": 8 },
-          { "color": "Black grey", "weight": 8 },
-          { "color": "Beige", "weight": 8 },
-          { "color": "Blue lilac", "weight": 12 },
-          { "color": "Cataclysm Red", "weight": 20 },
-          { "color": "Orange brown", "weight": 4 },
-          { "color": "Yellow orange", "weight": 4 },
-          { "color": "Green grey", "weight": 4 },
-          { "color": "Telemagenta", "weight": 4 },
-          { "color": "Traffic Purple", "weight": 4 }
+          { "color": "Jet black", "weight": 10 },
+          { "color": "Cataclysm Red", "weight": 10 },
+          { "color": "Cataclysm Green", "weight": 10 },
+          { "color": "Signal brown", "weight": 10 },
+          { "color": "Sapphire blue", "weight": 10 },
+          { "color": "Purple violet", "weight": 10 },
+          { "color": "Azure blue", "weight": 10 },
+          { "color": "Silver grey", "weight": 10 },
+          { "color": "Black grey", "weight": 10 },
+          { "color": "Bright red orange", "weight": 10 },
+          { "color": "Grass green", "weight": 10 },
+          { "color": "Golden yellow", "weight": 10 },
+          { "color": "Light blue", "weight": 10 },
+          { "color": "Telemagenta", "weight": 10 },
+          { "color": "Pastel blue", "weight": 10 },
+          { "color": "Traffic white", "weight": 10 }
         ]
       }
     ]

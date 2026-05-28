@@ -21,6 +21,8 @@
 #include "avatar_functions.h"
 #include "bionics.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "character.h"
 #include "character_functions.h"
@@ -1110,11 +1112,12 @@ void complete_craft( Character &who, item &craft )
 
     const bool should_heat = making.hot_result();
     const bool is_dehydrated = making.dehydrate_result();
+    const auto cooking_kcal_mult = 1.0f + ( who.get_skill_level( skill_cooking ) * 0.02f );
 
     bool first = true;
     size_t newit_counter = 0;
     if( craft.is_comestible() ) {
-        craft.set_kcal_mult( 1 + ( who.get_skill_level( skill_cooking ) * 0.02 ) );
+        craft.set_kcal_mult( cooking_kcal_mult );
     }
     for( detached_ptr<item> &newit : newits ) {
 
@@ -1161,8 +1164,17 @@ void complete_craft( Character &who, item &craft )
         }
 
         if( food_contained.is_comestible() ) {
-            food_contained.set_kcal_mult( 1 + ( who.get_skill_level( skill_cooking ) * 0.02 ) );
+            food_contained.set_kcal_mult( cooking_kcal_mult );
         }
+        cata::run_hooks( "on_craft_result", [&]( auto & params ) {
+            params["crafter"] = &who;
+            params["craft"] = &craft;
+            params["item"] = &food_contained;
+            params["recipe"] = &making;
+            params["batch_size"] = batch_size;
+            params["hot_result"] = should_heat;
+            params["dehydrated_result"] = is_dehydrated;
+        } );
         // Don't store components for things that ignores components (e.g wow 'conjured bread')
         if( ignore_component ) {
             food_contained.set_flag( flag_NUTRIENT_OVERRIDE );

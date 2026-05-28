@@ -1,0 +1,65 @@
+[
+  {
+    "type": "npc",
+    "id": "NPC_labguard2_docmission",
+    "name_suffix": "security guard",
+    "//": "spawns at the survivor holdout from the doctor mission 5",
+    "class": "NC_SUPERLABGUARD",
+    "attitude": 0,
+    "mission": 8,
+    "chat": "TALK_LABGUARD2_DOCMISSION",
+    "faction": "old_guard"
+  },
+  {
+    "id": [ "TALK_LABGUARD2_DOCMISSION" ],
+    "type": "talk_topic",
+    "dynamic_line": "We're getting out of here, right?",
+    "responses": [
+      { "text": "How did you end up here?", "topic": "TALK_LABGUARD2_DESCRIBE" },
+      {
+        "text": "Can you help me?",
+        "topic": "TALK_LABGUARD2_DENY_HELP",
+        "condition": { "u_has_mission": "MISSION_TCL_CLEANUP_1" }
+      },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": [ "TALK_LABGUARD2_DESCRIBE" ],
+    "type": "talk_topic",
+    "dynamic_line": "There's not much to say...  We were attacked, I ran, I met these guys, and... and that's that.",
+    "responses": [
+      {
+        "text": "I feel like there's something you're not telling me.",
+        "condition": { "not": { "npc_has_var": "guard2_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } },
+        "trial": {
+          "type": "PERSUADE",
+          "difficulty": 40,
+          "mod": [ [ "BRAVERY", 1 ], [ "AGGRESSION", -3 ], [ "ALTRUISM", 2 ], [ "FEAR", -2 ], [ "TRUST", 3 ] ]
+        },
+        "success": { "topic": "TALK_LABGUARD2_PERSUADE_SUCCESS", "opinion": { "trust": 1, "fear": -1 } },
+        "failure": { "topic": "TALK_LABGUARD2_PERSUADE_FAILURE", "opinion": { "trust": -2, "anger": 2 } }
+      },
+      { "text": "Ok, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": [ "TALK_LABGUARD2_DENY_HELP" ],
+    "type": "talk_topic",
+    "dynamic_line": "I can't, I'm sorry...",
+    "responses": [ { "text": "Ok, bye.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_LABGUARD2_PERSUADE_SUCCESS" ],
+    "type": "talk_topic",
+    "speaker_effect": { "effect": [ { "npc_add_var": "guard2_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } ] },
+    "dynamic_line": "W-Well, alright.  You're right, I should tell you...  The things that attacked us... They weren't monsters, they were soldiers, special soldiers.  One of them came right up to me, and... and I could faintly see the outline of powered combat armor...  I-It thrust a blade at me, and, and...",
+    "responses": [ { "text": "It's ok, thanks for the information.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_LABGUARD2_PERSUADE_FAILURE" ],
+    "type": "talk_topic",
+    "dynamic_line": "I-I'm serious, that's all there is.",
+    "responses": [ { "text": "Ok, bye.", "topic": "TALK_DONE" } ]
+  }
+]

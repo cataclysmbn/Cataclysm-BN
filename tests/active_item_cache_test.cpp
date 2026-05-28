@@ -24,6 +24,30 @@ TEST_CASE( "active_item_cache_ignores_expired_references", "[item]" )
     CHECK( cache.empty() );
 }
 
+TEST_CASE( "nonperishable_food_does_not_enter_active_item_cache", "[item]" )
+{
+    clear_all_state();
+    const auto loc = tripoint_bub_ms{ 60, 60, 0 };
+    g->m.i_clear( loc );
+    const auto abs_loc = g->m.get_abs_sub() + tripoint_rel_sm( loc.x() / SEEX, loc.y() / SEEY,
+                         loc.z() );
+    const auto baseline_active_submaps = g->m.get_submaps_with_active_items();
+
+    auto sugar = item::spawn( "sugar" );
+    REQUIRE( sugar->is_food() );
+    REQUIRE_FALSE( sugar->goes_bad() );
+    REQUIRE_FALSE( sugar->needs_processing() );
+    g->m.add_item( loc, std::move( sugar ) );
+    CHECK( g->m.get_submaps_with_active_items() == baseline_active_submaps );
+
+    auto sashimi = item::spawn( "sashimi" );
+    REQUIRE( sashimi->is_food() );
+    REQUIRE( sashimi->goes_bad() );
+    REQUIRE( sashimi->needs_processing() );
+    g->m.add_item( loc, std::move( sashimi ) );
+    CHECK( g->m.get_submaps_with_active_items().contains( abs_loc ) );
+}
+
 TEST_CASE( "place_active_item_at_various_coordinates", "[item]" )
 {
     clear_all_state();

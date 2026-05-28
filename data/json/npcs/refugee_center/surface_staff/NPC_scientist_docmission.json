@@ -1,0 +1,54 @@
+[
+  {
+    "type": "npc",
+    "id": "NPC_scientist_docmission",
+    "name_suffix": "scientist",
+    "//": "spawns at the survivor holdout from the doctor mission 5",
+    "class": "NC_SCIENTIST",
+    "attitude": 0,
+    "mission": 3,
+    "chat": "TALK_TCLSCIENTIST_DOCMISSION",
+    "faction": "old_guard"
+  },
+  {
+    "id": [ "TALK_TCLSCIENTIST_DOCMISSION" ],
+    "type": "talk_topic",
+    "dynamic_line": "I hope you're here to help us...",
+    "responses": [
+      { "text": "What kind of experiments were you doing here?", "topic": "TALK_TCLSCIENTIST_DESCRIBE" },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": [ "TALK_TCLSCIENTIST_DESCRIBE" ],
+    "type": "talk_topic",
+    "dynamic_line": "We were simply conducting a, er, health survey of the workers at this facility.",
+    "responses": [
+      {
+        "text": "Come on, there's no reason to lie at this point.",
+        "condition": { "not": { "npc_has_var": "scientist_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } },
+        "trial": {
+          "type": "PERSUADE",
+          "difficulty": 90,
+          "mod": [ [ "BRAVERY", 1 ], [ "AGGRESSION", -3 ], [ "ALTRUISM", 2 ], [ "FEAR", -2 ], [ "TRUST", 3 ] ]
+        },
+        "success": { "topic": "TALK_TCLSCIENTIST_PERSUADE_SUCCESS", "opinion": { "trust": 1, "fear": -1 } },
+        "failure": { "topic": "TALK_TCLSCIENTIST_PERSUADE_FAILURE", "opinion": { "trust": -2, "anger": 2 } }
+      },
+      { "text": "Ok, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": [ "TALK_TCLSCIENTIST_PERSUADE_SUCCESS" ],
+    "type": "talk_topic",
+    "speaker_effect": { "effect": [ { "npc_add_var": "scientist_persuaded", "type": "mission", "context": "docmission_5", "value": "yes" } ] },
+    "dynamic_line": "Oh fine.  We were conducting mutation experiments on the test subjects here in an attempt to unlock the true potential of humanity.  Things didn't always turn out correctly, of course, but our star specimen should still be somewhere upstairs.  He's of no use to me now, obviously, but you may want to watch out for him if you decide to explore the medical wing.",
+    "responses": [ { "text": "Wow, was that so hard?", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_TCLSCIENTIST_PERSUADE_FAILURE" ],
+    "type": "talk_topic",
+    "dynamic_line": "Lie about what?  I am simply an innocent practitioner of science!",
+    "responses": [ { "text": "Ok, bye.", "topic": "TALK_DONE" } ]
+  }
+]

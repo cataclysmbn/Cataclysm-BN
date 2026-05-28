@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 
@@ -9,6 +10,7 @@
 #include "type_id.h"
 
 class map;
+class mapgen_function;
 class mapgendata;
 class mission;
 struct mapgen_parameters;
@@ -18,6 +20,25 @@ struct tripoint;
 using mapgen_id = std::string;
 using mapgen_update_func = std::function<void( const tripoint_abs_omt &map_pos3, mission *miss )>;
 class JsonObject;
+
+enum class mapgen_result_status : int {
+    not_generated,
+    generated,
+    needs_main_thread,
+};
+
+struct mapgen_result {
+    mapgen_result_status status = mapgen_result_status::not_generated;
+    std::shared_ptr<mapgen_function> selected_mapgen;
+
+    auto is_generated() const -> bool {
+        return status == mapgen_result_status::generated;
+    }
+
+    auto needs_main_thread() const -> bool {
+        return status == mapgen_result_status::needs_main_thread;
+    }
+};
 
 /**
  * Calculates the coordinates of a rotated point.
@@ -79,14 +100,10 @@ bool run_mapgen_update_func( const std::string &update_mapgen_id, const tripoint
 bool run_mapgen_update_func( const std::string &update_mapgen_id, mapgendata &dat,
                              bool cancel_on_collision = true );
 bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat );
-/**
- * Returns true if the overmap terrain at @p om_addr in dimension @p dim_id
- * has at least one Lua-based mapgen function in its weighted pool.
- *
- * Used by mapbuffer::generate_omt() to detect whether a omt must be
- * deferred to the main thread (Lua is not reentrant on worker threads).
- */
-auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint_abs_omt &om_addr ) -> bool;
+auto pick_mapgen_func( const std::string &mapgen_id ) -> std::shared_ptr<mapgen_function>;
+auto mapgen_function_needs_main_thread( const std::shared_ptr<mapgen_function> &func ) -> bool;
+auto mapgen_has_any_direct_lua_generator() -> bool;
+auto mapgen_id_has_direct_lua_generator( const std::string &mapgen_id ) -> bool;
 std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_update(
             const std::string &update_mapgen_id );
 mapgen_parameters get_map_special_params( const std::string &mapgen_id );
@@ -99,5 +116,3 @@ namespace mapgen
 bool has_update_id( const mapgen_id &id );
 
 } // namespace mapgen
-
-

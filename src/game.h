@@ -1165,11 +1165,12 @@ class game : public submap_load_listener
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
 
-        // P-8: per-turn symmetric sight-result cache used during parallel monster
-        // planning (monmove()).  Keyed on the sorted (lo, hi) Creature pointer
-        // pair so A→B and B→A share one entry (LOS ray is symmetric).  Cleared
-        // at the start of monmove() before the parallel phase begins.  Workers
-        // hold a shared_lock for hits and upgrade to unique_lock on a miss.
+        // P-8: per-turn Creature::sees() result cache used during parallel monster
+        // planning (monmove()).  Keyed on directional (seer, target) Creature pointer
+        // pairs; Creature::sees() includes observer and target perception rules, while
+        // map::sees() remains the symmetric LOS cache.  Cleared at the start of
+        // monmove() before the parallel phase begins.  Workers hold a shared_lock for
+        // hits and upgrade to unique_lock on a miss.
         // Lives in the public section so turn_cached_sees() in monmove.cpp can
         // access it directly without an additional indirection layer.
         struct TurnSightPairHash {

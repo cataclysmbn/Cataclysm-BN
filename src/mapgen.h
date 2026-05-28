@@ -197,6 +197,8 @@ class jmapgen_piece
         virtual void merge_parameters_into( mapgen_parameters &,
                                             const std::string &/*outer_context*/ ) const {}
 
+        virtual auto finalize() const -> void {}
+
         /** Place something on the map from mapgendata &dat, at (x,y). */
         virtual void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                           ) const = 0;
@@ -566,5 +568,3 @@ void circle( map *m, const ter_id &type, double x, double y, double rad );
 void circle( map *m, const ter_id &type, const point_bub_ms &, int rad );
 void circle_furn( map *m, const furn_id &type, const point_bub_ms &, int rad );
 void add_corpse( map *m, const point_bub_ms & );
-
-

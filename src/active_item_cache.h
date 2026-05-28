@@ -66,10 +66,14 @@ class active_item_cache
          * Relies on the fact that item::processing_speed() is a constant.
          */
         std::vector<item *> get_for_processing();
+        /**
+         * Clears and fills @p items_to_process with the same items as get_for_processing().
+         * Reuses caller-owned vector capacity across submaps.
+         */
+        auto get_for_processing( std::vector<item *> &items_to_process ) -> void;
 
         /**
          * Returns the currently tracked list of special active items.
          */
         std::vector<item *> get_special( special_item_type type );
 };
-

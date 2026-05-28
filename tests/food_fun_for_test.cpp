@@ -304,3 +304,42 @@ TEST_CASE( "fun for bionic bio taste blocker", "[fun_for][food][bionic]" )
         }
     }
 }
+
+TEST_CASE( "fun for food with item-specific fun override", "[fun_for][food]" )
+{
+    auto dummy = avatar{};
+
+    GIVEN( "food with positive fun override" ) {
+        auto &toastem = *item::spawn_temporary( "toastem" );
+        REQUIRE( toastem.is_comestible() );
+
+        const auto toastem_fun = toastem.get_comestible_fun();
+        REQUIRE( toastem_fun > 0 );
+        const auto override_fun = toastem_fun + 3;
+
+        toastem.set_var( "comestible_fun", static_cast<double>( override_fun ) );
+
+        THEN( "it uses the stored override" ) {
+            const auto actual_fun = dummy.fun_for( toastem );
+
+            CHECK( actual_fun.first == override_fun );
+        }
+    }
+
+    GIVEN( "food with negative fun override" ) {
+        auto &garlic = *item::spawn_temporary( "garlic" );
+        REQUIRE( garlic.is_comestible() );
+
+        const auto garlic_fun = garlic.get_comestible_fun();
+        REQUIRE( garlic_fun < 0 );
+        const auto override_fun = garlic_fun + 2;
+
+        garlic.set_var( "comestible_fun", static_cast<double>( override_fun ) );
+
+        THEN( "it uses the stored override" ) {
+            const auto actual_fun = dummy.fun_for( garlic );
+
+            CHECK( actual_fun.first == override_fun );
+        }
+    }
+}

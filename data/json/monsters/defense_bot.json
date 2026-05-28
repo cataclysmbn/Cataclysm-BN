@@ -452,7 +452,7 @@
     "armor_electric": 72,
     "vision_day": 50,
     "revert_to_itype": "bot_tankbot",
-    "starting_ammo": { "556": 1000, "40x46mm_m433": 20 },
+    "starting_ammo": { "556": 1000, "40x46mm_m433": 20, "atgm_heat": 4 },
     "path_settings": { "max_dist": 20 },
     "special_attacks": [ [ "MULTI_ROBOT", 3 ] ],
     "death_drops": { "groups": [ [ "robots", 4 ], [ "tankbot", 1 ] ] },

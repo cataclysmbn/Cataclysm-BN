@@ -452,11 +452,10 @@ void map::set_transparency_cache_dirty( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
         get_cache( zlev ).transparency_cache_dirty.set();
-        for( int smx = 0; smx < my_MAPSIZE; ++smx )
-            for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
-                if( sm ) { sm->transparency_dirty = true; }
-            }
+        for( const auto p : bubble_submaps() ) {
+            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
+            if( sm ) { sm->transparency_dirty = true; }
+        }
     }
 }
 
@@ -479,12 +478,10 @@ void map::set_outside_cache_dirty( const int zlev )
     if( inbounds_z( zlev ) ) {
         level_cache &ch = get_cache( zlev );
         ch.outside_cache_dirty.set();
-        for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
-            for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
-                if( sm ) {
-                    sm->outside_dirty = true;
-                }
+        for( const auto p : bubble_submaps() ) {
+            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
+            if( sm ) {
+                sm->outside_dirty = true;
             }
         }
     }
@@ -545,11 +542,10 @@ void map::set_floor_cache_dirty( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
         get_cache( zlev ).floor_cache_dirty.set();
-        for( int smx = 0; smx < my_MAPSIZE; ++smx )
-            for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
-                if( sm ) { sm->floor_dirty = true; }
-            }
+        for( const auto p : bubble_submaps() ) {
+            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
+            if( sm ) { sm->floor_dirty = true; }
+        }
     }
     // outside_cache and sheltered_cache at z-1 depend on floor_cache at z.
     set_outside_cache_dirty( zlev - 1 );
@@ -613,12 +609,13 @@ maptile map::maptile_at_internal( const tripoint_bub_ms &p ) const
 VehicleList map::get_vehicles()
 {
     if( last_full_vehicle_list_dirty ) {
+        const auto sm_max = bubble_submaps().max();
         if( !zlevels ) {
-            last_full_vehicle_list = get_vehicles( tripoint_bub_sm( 0, 0, abs_sub.z() ),
-                                                   tripoint_bub_sm( my_MAPSIZE, my_MAPSIZE, abs_sub.z() ) );
+            last_full_vehicle_list = get_vehicles( tripoint_bub_sm( point_bub_sm::zero(), abs_sub.z() ),
+                                                   tripoint_bub_sm( sm_max, abs_sub.z() ) );
         } else {
-            last_full_vehicle_list = get_vehicles( tripoint_bub_sm( 0, 0, -OVERMAP_DEPTH ),
-                                                   tripoint_bub_sm( my_MAPSIZE, my_MAPSIZE, OVERMAP_HEIGHT ) );
+            last_full_vehicle_list = get_vehicles( tripoint_bub_sm( point_bub_sm::zero(), -OVERMAP_DEPTH ),
+                                                   tripoint_bub_sm( sm_max, OVERMAP_HEIGHT ) );
         }
 
         last_full_vehicle_list_dirty = false;
@@ -820,59 +817,65 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     if( !inbounds_z( smz ) ) {
         return;
     }
-    level_cache &ch = get_cache( smz );
+
+    auto &ch = get_cache( smz );
     invalidate_lightmap_caches();
     m_solar.last_built_hour = -1;
     set_seen_cache_dirty( smz );
+
+    const auto for_clamped_submaps = [&]( const point_bub_sm & range_min,
+    const point_bub_sm & range_max, const auto & callback ) {
+        const auto bubble_bounds = bubble_submap_bounds();
+        const auto requested = inclusive_rectangle<point_bub_sm>( range_min, range_max );
+        if( !bubble_bounds.overlaps( requested ) ) {
+            return;
+        }
+        for( const auto p : point_range<point_bub_sm>(
+                 clamp( range_min, bubble_bounds ), clamp( range_max, bubble_bounds ) ) ) {
+            callback( p );
+        }
+    };
+
     // Mark dirty only the submaps the vehicle actually occupies (union of old
     // and new footprint), rather than the entire z-level.
-    for( int smx = sm_min.x(); smx <= sm_max.x(); ++smx ) {
-        for( int smy = sm_min.y(); smy <= sm_max.y(); ++smy ) {
-            if( smx < 0 || smy < 0 || smx >= my_MAPSIZE || smy >= my_MAPSIZE ) {
-                continue;
-            }
-            const auto idx = static_cast<size_t>( ch.bidx( smx, smy ) );
-            ch.transparency_cache_dirty.set( idx );
-            ch.floor_cache_dirty.set( idx );
-            auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, smz } );
-            if( sm ) {
-                sm->transparency_dirty = true;
-                sm->floor_dirty        = true;
-                sm->pf_dirty           = true;
-            }
+    for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
+        const auto idx = static_cast<size_t>( ch.bidx( p.x(), p.y() ) );
+        ch.transparency_cache_dirty.set( idx );
+        ch.floor_cache_dirty.set( idx );
+        auto *sm = get_submap_at_grid( tripoint_bub_sm( p, smz ) );
+        if( sm ) {
+            sm->transparency_dirty = true;
+            sm->floor_dirty = true;
+            sm->pf_dirty = true;
         }
-    }
+    } );
 
-    // outside_cache has a 3×3 tile neighbourhood dependency, so expand the
+    // outside_cache has a 3x3 tile neighbourhood dependency, so expand the
     // dirty region by one submap in each direction.
-    const int ox0 = std::max( 0, sm_min.x() - 1 );
-    const int oy0 = std::max( 0, sm_min.y() - 1 );
-    const int ox1 = std::min( my_MAPSIZE - 1, sm_max.x() + 1 );
-    const int oy1 = std::min( my_MAPSIZE - 1, sm_max.y() + 1 );
-    for( int smx = ox0; smx <= ox1; ++smx ) {
-        for( int smy = oy0; smy <= oy1; ++smy ) {
-            const auto idx = static_cast<size_t>( ch.bidx( smx, smy ) );
-            ch.outside_cache_dirty.set( idx );
-            auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, smz } );
-            if( sm ) { sm->outside_dirty = true; }
+    const auto outside_min = point_bub_sm( sm_min.x() - 1, sm_min.y() - 1 );
+    const auto outside_max = point_bub_sm( sm_max.x() + 1, sm_max.y() + 1 );
+    for_clamped_submaps( outside_min, outside_max, [&]( const point_bub_sm & p ) {
+        const auto idx = static_cast<size_t>( ch.bidx( p.x(), p.y() ) );
+        ch.outside_cache_dirty.set( idx );
+        auto *sm = get_submap_at_grid( tripoint_bub_sm( p, smz ) );
+        if( sm ) {
+            sm->outside_dirty = true;
         }
-    }
+    } );
 
     // Vehicles can extend through the floor; mark the level above as well.
-    if( inbounds_z( smz + 1 ) ) {
-        level_cache &ch_above = get_cache( smz + 1 );
-        set_seen_cache_dirty( smz + 1 );
-        for( int smx = sm_min.x(); smx <= sm_max.x(); ++smx ) {
-            for( int smy = sm_min.y(); smy <= sm_max.y(); ++smy ) {
-                if( smx < 0 || smy < 0 || smx >= my_MAPSIZE || smy >= my_MAPSIZE ) {
-                    continue;
-                }
-                ch_above.floor_cache_dirty.set(
-                    static_cast<size_t>( ch_above.bidx( smx, smy ) ) );
-                auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, smz + 1 } );
-                if( sm ) { sm->floor_dirty = true; }
+    const auto above_z = smz + 1;
+    if( inbounds_z( above_z ) ) {
+        auto &ch_above = get_cache( above_z );
+        set_seen_cache_dirty( above_z );
+        for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
+            ch_above.floor_cache_dirty.set(
+                static_cast<size_t>( ch_above.bidx( p.x(), p.y() ) ) );
+            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, above_z ) );
+            if( sm ) {
+                sm->floor_dirty = true;
             }
-        }
+        } );
     }
 }
 
@@ -1604,26 +1607,27 @@ bool map::deregister_vehicle_zone( zone_data &zone )
 
 VehicleList map::get_vehicles( const tripoint_bub_sm &start, const tripoint_bub_sm &end )
 {
-    tripoint_bub_sm chunk_start = start;
+    auto chunk_start = start;
     clip_to_bounds( chunk_start );
-    tripoint_bub_sm chunk_end = end;
+    auto chunk_end = end;
     clip_to_bounds( chunk_end );
-    VehicleList vehs;
+    auto vehs = VehicleList{};
 
-    for( int cx = chunk_start.x(); cx <= chunk_end.x(); ++cx ) {
-        for( int cy = chunk_start.y(); cy <= chunk_end.y(); ++cy ) {
-            for( int cz = chunk_start.z(); cz <= chunk_end.z(); ++cz ) {
-                submap *current_submap = get_submap_at_grid( tripoint_bub_sm{ cx, cy, cz } );
-                if( current_submap == nullptr ) {
-                    continue;
-                }
-                for( const auto &elem : current_submap->vehicles ) {
-                    wrapped_vehicle w;
-                    w.v = elem.get();
-                    w.pos = w.v->bub_ms_location();
-                    vehs.push_back( w );
-                }
-            }
+    if( chunk_start.x() > chunk_end.x() || chunk_start.y() > chunk_end.y() ||
+        chunk_start.z() > chunk_end.z() ) {
+        return vehs;
+    }
+
+    for( const auto sm_pos : tripoint_range<tripoint_bub_sm>( chunk_start, chunk_end ) ) {
+        auto *current_submap = get_submap_at_grid( sm_pos );
+        if( current_submap == nullptr ) {
+            continue;
+        }
+        for( const auto &elem : current_submap->vehicles ) {
+            auto w = wrapped_vehicle{};
+            w.v = elem.get();
+            w.pos = w.v->bub_ms_location();
+            vehs.push_back( w );
         }
     }
 
@@ -1641,8 +1645,8 @@ optional_vpart_position map::veh_at( const tripoint_bub_ms &p ) const
         return optional_vpart_position( std::nullopt );
     }
 
-    int part_num = 1;
-    vehicle *const veh = const_cast<map *>( this )->veh_at_internal( p, part_num );
+    auto part_num = 1;
+    auto *const veh = const_cast<map *>( this )->veh_at_internal( p, part_num );
     if( !veh ) {
         return optional_vpart_position( std::nullopt );
     }
@@ -1684,9 +1688,9 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
     auto vp = veh_at( pos ).part_with_feature( VPFLAG_BOARDABLE, true );
     if( !vp ) {
         const auto abs_pos = bub_to_abs( pos );
-        std::ranges::find_if( loaded_vehicles, [&]( vehicle * veh ) {
+        for( auto *veh : loaded_vehicles ) {
             if( veh == nullptr ) {
-                return false;
+                continue;
             }
             auto boardable_parts = veh->get_avail_parts( VPFLAG_BOARDABLE );
             const auto part_it = std::ranges::find_if( boardable_parts,
@@ -1694,11 +1698,11 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
                 return veh->abs_part_location( part.part() ) == abs_pos;
             } );
             if( part_it == boardable_parts.end() ) {
-                return false;
+                continue;
             }
             vp = *part_it;
-            return true;
-        } );
+            break;
+        }
     }
     if( !vp ) {
         if( who->grab_point.x() == 0 && who->grab_point.y() == 0 ) {
@@ -1900,13 +1904,33 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
     // Terrain memory is preserved so the ground beneath doesn't go black.
     {
         avatar &you = get_avatar();
-        for( const vpart_reference &vpr : veh.get_all_parts() ) {
+        const auto clear_matching_overlay = [&]( const tripoint_abs_ms & pos,
+        const std::string & tile_id ) {
+            if( you.get_memorized_tile( pos ).tile == tile_id ) {
+                you.clear_memorized_overlay( pos );
+            }
+        };
+
+        for( const auto &vpr : veh.get_all_parts() ) {
             if( !vpr.part().removed ) {
                 const auto &part = vpr.part();
                 const auto part_offset = tripoint_rel_ms(
                                              part.precalc[0],
                                              part.mount.z() + part.z_terrain[0] );
                 you.clear_memorized_overlay( src + part_offset );
+
+                const auto &part_info = part.info();
+                if( part_info.has_flag( VPFLAG_LADDER ) ) {
+                    const auto ladder_pos = src + part_offset;
+                    const auto rope_tile = "vp_" + part_info.get_id().str();
+                    const auto min_rope_z = std::max( ladder_pos.z() - part_info.ladder_length(),
+                                                      -OVERMAP_DEPTH );
+                    for( const auto z : std::views::iota( min_rope_z, ladder_pos.z() ) ) {
+                        auto rope_pos = ladder_pos;
+                        rope_pos.z() = z;
+                        clear_matching_overlay( rope_pos, rope_tile );
+                    }
+                }
             }
         }
     }
@@ -2671,8 +2695,6 @@ bool map::valid_move( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
 {
     // Used to account for the fact that older versions of GCC can trip on the if statement here.
     assert( to.z() > std::numeric_limits<int>::min() );
-    // Note: no need to check inbounds here, because maptile_at will do that
-    // If oob tile is supplied, the maptile_at will be an unpassable "null" tile
     if( std::abs( from.x() - to.x() ) > 1 || std::abs( from.y() - to.y() ) > 1 ||
         std::abs( from.z() - to.z() ) > 1 ) {
         return false;
@@ -2737,6 +2759,11 @@ bool map::valid_move( const tripoint_bub_ms &from, const tripoint_bub_ms &to,
 
     if( bash ) {
         return true;
+    }
+    // get_cache() has no bounds check on z, and maptile_at's mapbuffer fallback
+    // can return non-null terrain for positions outside the reality bubble.
+    if( !inbounds( down_p ) || !inbounds_z( up_p.z() ) ) {
+        return up.get_furn_t().movecost >= 0;
     }
 
     int part_up;
@@ -3509,54 +3536,52 @@ void map::decay_fields_and_scent( const time_duration &amount )
     // TODO: Z
     const int smz = abs_sub.z();
     level_cache &smz_cache = get_cache( smz );
-    for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
-        for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            const auto sm_pos = tripoint_bub_sm( smx, smy, smz );
-            const auto cur_submap = get_submap_at_grid( sm_pos );
-            if( cur_submap == nullptr ) {
-                continue;
+    for( const auto p : bubble_submaps() ) {
+        const auto sm_pos = tripoint_bub_sm( p, smz );
+        const auto cur_submap = get_submap_at_grid( sm_pos );
+        if( cur_submap == nullptr ) {
+            continue;
+        }
+        int to_proc = cur_submap->field_count;
+        if( to_proc < 1 ) {
+            if( to_proc < 0 ) {
+                cur_submap->field_count = 0;
+                dbg( DL::Error ) << "map::decay_fields_and_scent: submap at "
+                                 << bub_to_abs( sm_pos )
+                                 << "has " << to_proc << " field_count";
             }
-            int to_proc = cur_submap->field_count;
-            if( to_proc < 1 ) {
-                if( to_proc < 0 ) {
-                    cur_submap->field_count = 0;
-                    dbg( DL::Error ) << "map::decay_fields_and_scent: submap at "
-                                     << bub_to_abs( sm_pos )
-                                     << "has " << to_proc << " field_count";
-                }
-                // This submap has no fields
-                continue;
-            }
+            // This submap has no fields
+            continue;
+        }
 
-            if( to_proc > 0 ) {
-                for( const auto sm_ms : submap_tiles() ) {
-                    const auto ms_pos = project_combine( sm_pos, sm_ms );
+        if( to_proc > 0 ) {
+            for( const auto sm_ms : submap_tiles() ) {
+                const auto ms_pos = project_combine( sm_pos, sm_ms );
 
-                    field &fields = cur_submap->get_field( sm_ms );
-                    if( !smz_cache.outside_cache[smz_cache.idx( ms_pos.x(), ms_pos.y() )] ) {
-                        to_proc -= fields.field_count();
-                    } else {
-                        for( auto &fp : fields ) {
-                            to_proc--;
-                            field_entry &cur = fp.second;
-                            const field_type_id type = cur.get_field_type();
-                            const int decay_amount_factor =  type.obj().decay_amount_factor;
-                            if( decay_amount_factor != 0 ) {
-                                const time_duration decay_amount = amount / decay_amount_factor;
-                                cur.set_field_age( cur.get_field_age() + decay_amount );
-                            }
+                field &fields = cur_submap->get_field( sm_ms );
+                if( !smz_cache.outside_cache[smz_cache.idx( ms_pos.x(), ms_pos.y() )] ) {
+                    to_proc -= fields.field_count();
+                } else {
+                    for( auto &fp : fields ) {
+                        to_proc--;
+                        field_entry &cur = fp.second;
+                        const field_type_id type = cur.get_field_type();
+                        const int decay_amount_factor =  type.obj().decay_amount_factor;
+                        if( decay_amount_factor != 0 ) {
+                            const time_duration decay_amount = amount / decay_amount_factor;
+                            cur.set_field_age( cur.get_field_age() + decay_amount );
                         }
                     }
                 }
             }
+        }
 
-            if( to_proc > 0 ) {
-                cur_submap->field_count = cur_submap->field_count - to_proc;
-                dbg( DL::Warn ) << "map::decay_fields_and_scent: submap at "
-                                << abs_sub + tripoint( smx, smy, 0 )
-                                << "has " << cur_submap->field_count - to_proc << "fields, but "
-                                << cur_submap->field_count << " field_count";
-            }
+        if( to_proc > 0 ) {
+            cur_submap->field_count = cur_submap->field_count - to_proc;
+            dbg( DL::Warn ) << "map::decay_fields_and_scent: submap at "
+                            << bub_to_abs( sm_pos )
+                            << "has " << cur_submap->field_count - to_proc << "fields, but "
+                            << cur_submap->field_count << " field_count";
         }
     }
 }
@@ -5822,17 +5847,16 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
     // shift performance but never registered in submaps_with_active_items.
     const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
-    for( int x = 0; x < my_MAPSIZE; ++x ) {
-        for( int y = 0; y < my_MAPSIZE; ++y ) {
-            for( int z = zmin; z <= zmax; ++z ) {
-                const submap *sm = getsubmap( get_nonant( tripoint_bub_sm{ x, y, z } ) );
-                if( sm == nullptr || sm->active_items.empty() ) {
-                    continue;
-                }
-                const tripoint_abs_sm abs_pos( abs_sub.x() + x, abs_sub.y() + y, z );
-                if( !submaps_with_active_items.contains( abs_pos ) ) {
-                    result.push_back( abs_pos );
-                }
+    for( const auto p : bubble_submaps() ) {
+        for( int z = zmin; z <= zmax; ++z ) {
+            const auto sm_pos = tripoint_bub_sm( p, z );
+            const submap *sm = getsubmap( get_nonant( sm_pos ) );
+            if( sm == nullptr || sm->active_items.empty() ) {
+                continue;
+            }
+            const auto abs_pos = bub_to_abs( sm_pos );
+            if( !submaps_with_active_items.contains( abs_pos ) ) {
+                result.push_back( abs_pos );
             }
         }
     }
@@ -5871,9 +5895,11 @@ void map::process_items()
             process_items_in_vehicles( *sm );
         } );
     }
-    // Making a copy, in case the original variable gets modified during `process_items_in_submap`
+    // Snapshot because processing can add or remove active submaps.
     ZoneScopedN( "process_items_submaps" );
-    const std::set<tripoint_abs_sm> submaps_with_active_items_copy = submaps_with_active_items;
+    const auto submaps_with_active_items_copy = std::vector<tripoint_abs_sm>(
+                submaps_with_active_items.begin(), submaps_with_active_items.end() );
+    auto active_items = std::vector<item *> {};
     for( const tripoint_abs_sm &abs_pos : submaps_with_active_items_copy ) {
         if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
             continue;
@@ -5884,7 +5910,7 @@ void map::process_items()
             continue;
         }
         if( !current_submap->active_items.empty() ) {
-            process_items_in_submap( *current_submap, local_pos );
+            process_items_in_submap( *current_submap, local_pos, active_items );
         }
     }
 }
@@ -5904,12 +5930,13 @@ static temperature_flag temperature_flag_at_point( const map &m, const tripoint_
     return temperature_flag::TEMP_NORMAL;
 }
 
-void map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp )
+auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
+                                   std::vector<item *> &active_items ) -> void
 {
     // Get a COPY of the active item list for this submap.
     // If more are added as a side effect of processing, they are ignored this turn.
     // If they are destroyed before processing, they don't get processed.
-    std::vector<item *> active_items = current_submap.active_items.get_for_processing();
+    current_submap.active_items.get_for_processing( active_items );
     const point grid_offset( gridp.x() * SEEX, gridp.y() * SEEY );
     for( item *&active_item_ref : active_items ) {
         if( !active_item_ref || !active_item_ref->is_loaded() ) {
@@ -6818,41 +6845,63 @@ void map::update_submap_active_item_status( const tripoint_bub_ms &p )
 void map::update_visibility_cache( const int zlev )
 {
     ZoneScopedN( "update_visibility_cache" );
+    const auto player_pos = g->u.bub_pos();
     visibility_variables_cache.variables_set = true; // Not used yet
     visibility_variables_cache.g_light_level = static_cast<int>( g->light_level( zlev ) );
     {
-        const level_cache &plr_ch = get_cache_ref( g->u.bub_pos().z() );
+        const level_cache &plr_ch = get_cache_ref( player_pos.z() );
         visibility_variables_cache.vision_threshold = g->u.get_vision_threshold(
-                    plr_ch.lm[plr_ch.idx( g->u.bub_pos().x(), g->u.bub_pos().y() )].max() );
+                    plr_ch.lm[plr_ch.idx( player_pos.x(), player_pos.y() )].max() );
     }
 
     visibility_variables_cache.u_clairvoyance = g->u.clairvoyance();
+    visibility_variables_cache.u_unimpaired_range = g->u.unimpaired_range();
     visibility_variables_cache.u_sight_impaired = g->u.sight_impaired();
     visibility_variables_cache.u_is_boomered = g->u.has_effect( effect_boomered );
+    visibility_variables_cache.visibility_scale_factor =
+        60.0f / static_cast<float>( g_max_view_distance );
 
     auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 
-    int min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1, -OVERMAP_DEPTH ) : zlev );
-    int max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
+    const auto min_z = fov_3d ? -OVERMAP_DEPTH : ( zlevels ? std::max( zlev - 1,
+                       -OVERMAP_DEPTH ) : zlev );
+    const auto max_z = fov_3d ? OVERMAP_HEIGHT : zlev;
+    const auto max_delta_z = std::max( std::abs( min_z - player_pos.z() ),
+                                       std::abs( max_z - player_pos.z() ) );
+    const auto &reference_cache = get_cache_ref( zlev );
+    const auto *const distance_table = trigdist ?
+    &get_rl_dist_lookup_table( rl_dist_lookup_table_dimensions{
+        .max_dx = reference_cache.cache_x - 1,
+        .max_dy = reference_cache.cache_y - 1,
+        .max_dz = max_delta_z,
+        .trigdist = trigdist,
+    } ) :
+        nullptr;
 
-    for( int z = min_z; z <= max_z; z++ ) {
+    for( const auto z : std::views::iota( min_z, max_z + 1 ) ) {
 
         level_cache &vc_cache = get_cache( z );
         auto &visibility_cache = vc_cache.visibility_cache;
+        const auto dz = std::abs( z - player_pos.z() );
 
         // Fill visibility_cache.  apparent_light_at is read-only per tile.
         if( parallel_enabled && parallel_map_cache ) {
             parallel_for( 0, vc_cache.cache_x, [&]( int x ) {
-                for( int y = 0; y < vc_cache.cache_y; y++ ) {
+                const auto dx = std::abs( x - player_pos.x() );
+                for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
+                    const auto dy = std::abs( y - player_pos.y() );
+                    const auto dist = distance_table != nullptr ?
+                                      distance_table->distance_3d( dx, dy, dz ) :
+                                      std::max( { dx, dy, dz } );
                     visibility_cache[vc_cache.idx( x, y )] =
-                        apparent_light_at( tripoint_bub_ms{ x, y, z }, visibility_variables_cache );
+                        apparent_light_at( tripoint_bub_ms{ x, y, z }, visibility_variables_cache, dist );
                 }
             } );
             // Overmap discovery accumulation: serial, reads from the parallel-filled cache.
             // Kept separate because sm_squares_seen is not thread-safe to write from workers.
             if( z == zlev ) {
-                for( int x = 0; x < vc_cache.cache_x; x++ ) {
-                    for( int y = 0; y < vc_cache.cache_y; y++ ) {
+                for( const auto x : std::views::iota( 0, vc_cache.cache_x ) ) {
+                    for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
                         const auto ll = visibility_cache[vc_cache.idx( x, y )];
                         sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
                             ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
@@ -6863,10 +6912,15 @@ void map::update_visibility_cache( const int zlev )
             // Serial path: merge visibility fill and overmap discovery into one pass,
             // avoiding a second full scan of the cache at the player's z-level.
             const bool count_discovery = ( z == zlev );
-            for( int x = 0; x < vc_cache.cache_x; x++ ) {
-                for( int y = 0; y < vc_cache.cache_y; y++ ) {
+            for( const auto x : std::views::iota( 0, vc_cache.cache_x ) ) {
+                const auto dx = std::abs( x - player_pos.x() );
+                for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
+                    const auto dy = std::abs( y - player_pos.y() );
+                    const auto dist = distance_table != nullptr ?
+                                      distance_table->distance_3d( dx, dy, dz ) :
+                                      std::max( { dx, dy, dz } );
                     const auto ll =
-                        apparent_light_at( tripoint_bub_ms{ x, y, z }, visibility_variables_cache );
+                        apparent_light_at( tripoint_bub_ms{ x, y, z }, visibility_variables_cache, dist );
                     visibility_cache[vc_cache.idx( x, y )] = ll;
                     if( count_discovery ) {
                         sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
@@ -6877,15 +6931,11 @@ void map::update_visibility_cache( const int zlev )
         }
     }
 
-    for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            if( sm_squares_seen[gridx * my_MAPSIZE + gridy] > 36 ) { // 25% of the submap is visible
-                const tripoint sm( gridx, gridy, 0 );
-                const auto abs_sm = map::abs_sub + sm;
-                // TODO: fix point types
-                const tripoint_abs_omt abs_omt( project_to<coords::omt>( abs_sm ) );
-                get_overmapbuffer( bound_dimension_ ).set_seen( abs_omt, true );
-            }
+    for( const auto p : bubble_submaps() ) {
+        if( sm_squares_seen[p.x() * my_MAPSIZE + p.y()] > 36 ) { // 25% of the submap is visible
+            const auto abs_sm = bub_to_abs( p );
+            const auto abs_omt( project_to<coords::omt>( abs_sm ) );
+            get_overmapbuffer( bound_dimension_ ).set_seen( tripoint_abs_omt( abs_omt, 0 ), true );
         }
     }
 
@@ -7891,12 +7941,10 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
     loaded_vehicles.clear();
     funnel_locations_.clear();
     set_abs_sub( w );
-    for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            loadn( point_bub_sm( gridx, gridy ), update_vehicle );
-            if( pump_events ) {
-                inp_mngr.pump_events();
-            }
+    for( const auto p : bubble_submaps() ) {
+        loadn( p, update_vehicle );
+        if( pump_events ) {
+            inp_mngr.pump_events();
         }
     }
     reset_vehicle_cache( );
@@ -8066,8 +8114,8 @@ void map::shift( const point_rel_sm &sp )
 
     const int zmin = zlevels ? -OVERMAP_DEPTH : abs.z();
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs.z();
-    for( int gridz = zmin; gridz <= zmax; gridz++ ) {
-        for( vehicle *veh : get_cache( gridz ).vehicle_list ) {
+    for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
+        for( auto *veh : get_cache( gridz ).vehicle_list ) {
             veh->zones_dirty = true;
         }
     }
@@ -8097,7 +8145,7 @@ void map::shift( const point_rel_sm &sp )
     // absx and absy are our position in the world, for saving/loading purposes.
     {
         ZoneScopedN( "shift_grid_copy_load" );
-        for( int gridz = zmin; gridz <= zmax; gridz++ ) {
+        for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
             clear_vehicle_list( gridz );
             {
                 ZoneScopedN( "shift_cache_arrays" );
@@ -8106,14 +8154,11 @@ void map::shift( const point_rel_sm &sp )
                 // Shift per-submap dirty bitsets so retained submaps stay clean.
                 shift_bitset_cache( gc.transparency_cache_dirty, gc.cache_mapsize, 1, sp );
                 shift_bitset_cache( gc.floor_cache_dirty, gc.cache_mapsize, 1, sp );
-                shift_bitset_cache( gc.outside_cache_dirty, gc.cache_mapsize, 1, sp );
                 // Shift flat cache data so retained submaps' data stays in the
                 // correct tile position.  New edge submaps get stale values that
                 // will be overwritten by the next build_*_cache() call.
                 shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, sp );
                 shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, sp );
-                shift_flat_cache( gc.outside_cache, gc.cache_x, gc.cache_y, sp );
-                shift_flat_cache( gc.sheltered_cache, gc.cache_x, gc.cache_y, sp );
                 if( fov_3d_occlusion ) {
                     shift_flat_cache( gc.angled_sunlight_cache, gc.cache_x, gc.cache_y, sp );
                 }
@@ -8172,23 +8217,24 @@ void map::shift( const point_rel_sm &sp )
     if( zlevels ) {
         ZoneScopedN( "shift_add_roofs" );
         //Go through the generated maps and fill in the roofs
-        for( int gridz = zmin; gridz <= zmax; gridz++ ) {
+        for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
+            const auto axis = std::views::iota( 0, my_MAPSIZE );
             if( sp.x() > 0 ) {
-                for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
+                for( const auto gridy : axis ) {
                     add_roofs( {my_MAPSIZE - 1, gridy, gridz} );
                 }
             } else if( sp.x() < 0 ) {
-                for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
+                for( const auto gridy : axis ) {
                     add_roofs( {0, gridy, gridz} );
                 }
             }
 
             if( sp.y() > 0 ) {
-                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
+                for( const auto gridx : axis ) {
                     add_roofs( {gridx, my_MAPSIZE - 1, gridz} );
                 }
             } else if( sp.y() < 0 ) {
-                for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
+                for( const auto gridx : axis ) {
                     add_roofs( {gridx, 0, gridz} );
                 }
             }
@@ -8207,27 +8253,6 @@ void map::shift( const point_rel_sm &sp )
     }
 
     invalidate_lightmap_caches();
-}
-
-// Optimized mapgen function that only works properly for very simple overmap types
-// Does not create or require a temporary map and does its own saving
-static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_type,
-                              mapbuffer &dest )
-{
-    dbg( DL::Info ) << "generate_uniform p: " << p
-                    << "  terrain_type: " << terrain_type.id().str();
-
-    std::ranges::for_each(
-        cata::views::cartesian_product( std::views::iota( 0, 2 ), std::views::iota( 0, 2 ) ),
-    [&]( const auto & xy ) {
-        const auto [xd, yd] = xy;
-        auto pos = p + point( xd, yd );
-        auto sm = std::make_unique<submap>( pos );
-        sm->is_uniform = true;
-        sm->set_all_ter( terrain_type );
-        sm->last_touched = calendar::turn;
-        dest.add_submap( pos, sm );
-    } );
 }
 
 auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> void
@@ -8264,9 +8289,6 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
 {
     ZoneScopedN( "map_loadn" );
     ZoneValue( static_cast<uint64_t>( grid.z() + OVERMAP_DEPTH ) );
-    // Cache empty overmap types
-    static const oter_id rock( "empty_rock" );
-    static const oter_id air( "open_air" );
 
     const auto grid_abs_sub = bub_to_abs( tripoint_bub_sm( grid ) );
     const size_t gridn = get_nonant( tripoint_bub_sm( grid ) );
@@ -8319,36 +8341,8 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         //  squares divisible by 2.
         // TODO: fix point types
         const auto grid_abs_omt = tripoint_abs_omt( project_to<coords::omt>( grid_abs_sub ) );
-        const auto grid_abs_sub_rounded = tripoint_abs_sm( project_to<coords::sm>( grid_abs_omt ) );
-
-        // Use the dimension-specific overmapbuffer so this path is safe to call from
-        // worker threads that have bound_dimension_ set via bind_dimension().
-        // Reads from the overmapbuffer (ter, get_settings, etc.) are treated as
-        // logically read-only; NPC write operations in generate() are serialised by
-        // overmapbuffer::npc_mutex_.
-        oter_id terrain_type;
-        {
-            ZoneScopedN( "loadn_generate_oter" );
-            terrain_type = get_overmapbuffer( bound_dimension_ ).ter( grid_abs_omt );
-        }
-
-        // Short-circuit if the map tile is uniform
-        // TODO: Replace with json mapgen functions.
         auto &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
-        if( terrain_type == air ) {
-            ZoneScopedN( "loadn_generate_uniform_air" );
-            generate_uniform( grid_abs_sub_rounded, t_open_air, dim_buf );
-        } else if( terrain_type == rock ) {
-            ZoneScopedN( "loadn_generate_uniform_rock" );
-            generate_uniform( grid_abs_sub_rounded, t_rock, dim_buf );
-        } else {
-            ZoneScopedN( "loadn_generate_tinymap" );
-            auto tmp_map = tinymap {};
-            // Bind the tinymap to this map's dimension so generated submaps
-            // land in the correct registry slot via loadn()'s dimension-aware lookup.
-            tmp_map.bind_dimension( bound_dimension_ );
-            tmp_map.generate( grid_abs_sub_rounded, calendar::turn );
-        }
+        dim_buf.generate_omt( grid_abs_omt );
 
         {
             ZoneScopedN( "loadn_generate_lookup" );
@@ -8435,19 +8429,23 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         }
     }
 
-    // Batch-advance field decay, item timers, and vehicle power for any
-    // turns this submap missed while outside the reality bubble.
-    // Runs BEFORE actualize(); the two passes target disjoint effects.
-    if( tmpsub->last_touched < calendar::turn ) {
-        ZoneScopedN( "loadn_batch_turns" );
-        const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
-        run_submap_batch_turns( *tmpsub, missed );
-        tmpsub->last_touched = calendar::turn;
-    }
+    if( tmpsub->last_touched == calendar::turn ) {
+        ZoneScopedN( "loadn_skip_current_turn_actualize" );
+    } else {
+        // Batch-advance field decay, item timers, and vehicle power for any
+        // turns this submap missed while outside the reality bubble.
+        // Runs BEFORE actualize(); the two passes target disjoint effects.
+        if( tmpsub->last_touched < calendar::turn ) {
+            ZoneScopedN( "loadn_batch_turns" );
+            const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
+            run_submap_batch_turns( *tmpsub, missed );
+            tmpsub->last_touched = calendar::turn;
+        }
 
-    {
-        ZoneScopedN( "loadn_actualize" );
-        actualize( grid );
+        {
+            ZoneScopedN( "loadn_actualize" );
+            actualize( grid );
+        }
     }
 
     abs_sub.z() = old_abs_z;
@@ -9183,52 +9181,38 @@ void map::spawn_monsters_submap( const tripoint_bub_sm &gp, bool ignore_sight )
 void map::spawn_monsters( bool ignore_sight )
 {
     ZoneScoped;
-    const int zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
-    const int zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
-    // Does this use an uninitialized value for RNG?
-    tripoint_bub_sm gp;
-    int &gx = gp.x();
-    int &gy = gp.y();
-    int &gz = gp.z();
-    for( gz = zmin; gz <= zmax; gz++ ) {
-        for( gx = 0; gx < my_MAPSIZE; gx++ ) {
-            for( gy = 0; gy < my_MAPSIZE; gy++ ) {
-                spawn_monsters_submap( gp, ignore_sight );
-            }
-        }
+    const auto zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
+    const auto zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
+
+    for( const auto gp : tripoint_range<tripoint_bub_sm>(
+             tripoint_bub_sm( point_bub_sm::zero(), zmin ),
+             tripoint_bub_sm( bubble_submaps().max(), zmax ) ) ) {
+        spawn_monsters_submap( gp, ignore_sight );
     }
 }
 
 auto map::spawn_monsters_new_submaps( const point_rel_sm &shift_amount ) -> void
 {
     ZoneScoped;
-    const auto sx = shift_amount.x();
-    const auto sy = shift_amount.y();
 
-    // If the shift covers the full map in any dimension every submap is new —
+    // If the shift covers the full map in any dimension every submap is new -
     // fall back to the full spawn to avoid an empty or degenerate strip.
-    if( std::abs( sx ) >= my_MAPSIZE || std::abs( sy ) >= my_MAPSIZE ) {
+    if( std::abs( shift_amount.x() ) >= my_MAPSIZE ||
+        std::abs( shift_amount.y() ) >= my_MAPSIZE ) {
         spawn_monsters( false );
         return;
     }
 
     const auto zmin = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
     const auto zmax = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
-    const auto z_range = std::views::iota( zmin, zmax + 1 );
-    const auto xy_range = std::views::iota( 0, my_MAPSIZE );
-
-    std::ranges::for_each(
-        cata::views::cartesian_product( z_range, xy_range, xy_range ),
-    [&]( auto tup ) {
-        auto [gz, gx, gy] = tup;
-        const auto new_x = ( sx > 0 && gx >= my_MAPSIZE - sx ) ||
-                           ( sx < 0 && gx < -sx );
-        const auto new_y = ( sy > 0 && gy >= my_MAPSIZE - sy ) ||
-                           ( sy < 0 && gy < -sy );
-        if( new_x || new_y ) {
-            spawn_monsters_submap( tripoint_bub_sm{ gx, gy, gz }, false );
+    const auto bounds = bubble_submap_bounds();
+    for( const auto gp : tripoint_range<tripoint_bub_sm>(
+             tripoint_bub_sm( point_bub_sm::zero(), zmin ),
+             tripoint_bub_sm( bubble_submaps().max(), zmax ) ) ) {
+        if( !bounds.contains( gp.xy() + shift_amount ) ) {
+            spawn_monsters_submap( gp, false );
         }
-    } );
+    }
 }
 
 void map::clear_spawns()
@@ -9246,11 +9230,8 @@ void map::clear_traps()
         if( smap == nullptr ) {
             continue;
         }
-        for( int x = 0; x < SEEX; x++ ) {
-            for( int y = 0; y < SEEY; y++ ) {
-                const point_sm_ms p( x, y );
-                smap->set_trap( p, tr_null );
-            }
+        for( const auto p : submap_tiles() ) {
+            smap->set_trap( p, tr_null );
         }
     }
 
@@ -9279,7 +9260,7 @@ bool map::is_position_simulated( const tripoint_bub_sm &p ) const
 bool tinymap::inbounds( const tripoint_abs_sm &p ) const
 {
     constexpr tripoint_abs_sm map_boundary_min( 0, 0, -OVERMAP_DEPTH );
-    constexpr tripoint_abs_sm map_boundary_max( SEEY * 2, SEEX * 2, OVERMAP_HEIGHT + 1 );
+    constexpr tripoint_abs_sm map_boundary_max( SEEX * 2, SEEY * 2, OVERMAP_HEIGHT + 1 );
 
     constexpr half_open_cuboid<tripoint_abs_sm> map_boundaries( map_boundary_min, map_boundary_max );
 
@@ -9294,19 +9275,17 @@ fake_map::fake_map( const furn_id &fur_type, const ter_id &ter_type, const trap_
     const tripoint_abs_sm tripoint_below_zero( 0, 0, fake_map_z );
 
     set_abs_sub( tripoint_below_zero );
-    for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            const auto sm_pos = tripoint_bub_sm{ gridx, gridy, fake_map_z };
-            std::unique_ptr<submap> sm = std::make_unique<submap>( bub_to_abs( sm_pos ) );
+    for( const auto p : bubble_submaps() ) {
+        const auto sm_pos = tripoint_bub_sm( p, fake_map_z );
+        std::unique_ptr<submap> sm = std::make_unique<submap>( bub_to_abs( sm_pos ) );
 
-            sm->set_all_ter( ter_type );
-            sm->set_all_furn( fur_type );
-            sm->set_all_traps( trap_type );
+        sm->set_all_ter( ter_type );
+        sm->set_all_furn( fur_type );
+        sm->set_all_traps( trap_type );
 
-            setsubmap( get_nonant( sm_pos ), sm.get() );
+        setsubmap( get_nonant( sm_pos ), sm.get() );
 
-            temp_submaps_.emplace_back( std::move( sm ) );
-        }
+        temp_submaps_.emplace_back( std::move( sm ) );
     }
 }
 
@@ -9415,13 +9394,11 @@ void map::build_outside_cache( const int zlev )
     if( zlev >= OVERMAP_HEIGHT ) {
         // Base case: open sky at the top — every tile is outside, nothing above.
         std::fill( ch.outside_cache.begin(), ch.outside_cache.end(), true );
-        for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
-            for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
-                if( sm ) {
-                    std::ranges::fill( std::span( &sm->outside_cache[0][0], SEEX * SEEY ), true );
-                    sm->outside_dirty = false;
-                }
+        for( const auto p : bubble_submaps() ) {
+            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
+            if( sm ) {
+                std::ranges::fill( std::span( &sm->outside_cache[0][0], SEEX * SEEY ), true );
+                sm->outside_dirty = false;
             }
         }
         ch.outside_cache_dirty.reset();
@@ -9552,34 +9529,33 @@ bool map::build_floor_cache( const int zlev )
     }
 
     // Delegate to per-submap rebuild, then copy into the flat render cache.
-    for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
-        for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            if( !rebuild_all && !ch.floor_cache_dirty.test(
-                    static_cast<size_t>( ch.bidx( smx, smy ) ) ) ) {
-                continue;
-            }
-            submap *cur_submap = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
-            if( cur_submap == nullptr ) {
-                // Null expected for circle corners and bounded-dimension edges.
-                continue;
-            }
-            cur_submap->rebuild_floor_cache( *this, tripoint_bub_sm( smx, smy, zlev ) );
+    for( const auto p : bubble_submaps() ) {
+        if( !rebuild_all && !ch.floor_cache_dirty.test(
+                static_cast<size_t>( ch.bidx( p.x(), p.y() ) ) ) ) {
+            continue;
+        }
+        const auto sm_pos = tripoint_bub_sm( p, zlev );
+        submap *cur_submap = get_submap_at_grid( sm_pos );
+        if( cur_submap == nullptr ) {
+            // Null expected for circle corners and bounded-dimension edges.
+            continue;
+        }
+        cur_submap->rebuild_floor_cache( *this, sm_pos );
 
-            const auto sm_offset = project_to<coords::ms>( point_rel_sm( smx, smy ) );
+        const auto ms_pos = project_to<coords::ms>( p );
 
-            if( !rebuild_all ) {
-                // Reset this submap's region to "has floor" before stamping no-floor tiles,
-                // since a previously no-floor tile may have gained a floor since last build.
-                for( int sx = 0; sx < SEEX; ++sx ) {
-                    std::fill_n( floor_cache.data() + ch.idx( sm_offset.x() + sx, sm_offset.y() ),
-                                 SEEY, '\x01' );
-                }
+        if( !rebuild_all ) {
+            // Reset this submap's region to "has floor" before stamping no-floor tiles,
+            // since a previously no-floor tile may have gained a floor since last build.
+            for( int sx = 0; sx < SEEX; ++sx ) {
+                std::fill_n( floor_cache.data() + ch.idx( ms_pos.x() + sx, ms_pos.y() ),
+                             SEEY, '\x01' );
             }
+        }
 
-            for( const auto sm_ms : submap_tiles() ) {
-                if( !cur_submap->floor_cache[sm_ms.x()][sm_ms.y()] ) {
-                    floor_cache[ch.idx( sm_offset.x() + sm_ms.x(), sm_offset.y() + sm_ms.y() )] = false;
-                }
+        for( const auto sm_ms : submap_tiles() ) {
+            if( !cur_submap->floor_cache[sm_ms.x()][sm_ms.y()] ) {
+                floor_cache[ch.idx( ms_pos.x() + sm_ms.x(), ms_pos.y() + sm_ms.y() )] = false;
             }
         }
     }
@@ -9609,21 +9585,19 @@ void map::update_suspension_cache( const int &z )
     }
     std::list<point_abs_ms> &suspension_cache = ch.suspension_cache;
     if( !ch.suspension_cache_initialized ) {
-        for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
-            for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-                const submap *cur_submap = get_submap_at_grid( tripoint_bub_sm{ smx, smy, z } );
+        for( const auto p : bubble_submaps() ) {
+            const submap *cur_submap = get_submap_at_grid( tripoint_bub_sm( p, z ) );
 
-                if( cur_submap == nullptr ) {
-                    // Null expected for circle corners and bounded-dimension edges.
-                    continue;
-                }
+            if( cur_submap == nullptr ) {
+                // Null expected for circle corners and bounded-dimension edges.
+                continue;
+            }
 
-                for( const auto sm_ms : submap_tiles() ) {
-                    const ter_t &terrain = cur_submap->get_ter( sm_ms ).obj();
-                    if( terrain.has_flag( TFLAG_SUSPENDED ) ) {
-                        auto loc = coords::project_combine( point_bub_sm( smx, smy ), sm_ms );
-                        suspension_cache.emplace_back( bub_to_abs( loc ) );
-                    }
+            for( const auto sm_ms : submap_tiles() ) {
+                const ter_t &terrain = cur_submap->get_ter( sm_ms ).obj();
+                if( terrain.has_flag( TFLAG_SUSPENDED ) ) {
+                    auto loc = coords::project_combine( p, sm_ms );
+                    suspension_cache.emplace_back( bub_to_abs( loc ) );
                 }
             }
         }
@@ -10086,12 +10060,10 @@ void map::draw_fill_background( const ter_id &type )
     set_pathfinding_cache_dirty( abs_sub.z() );
 
     // Fill each submap rather than each tile
-    for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            auto sm = get_submap_at_grid( point_bub_sm{ gridx, gridy } );
-            sm->is_uniform = true;
-            sm->set_all_ter( type );
-        }
+    for( const auto p : bubble_submaps() ) {
+        auto sm = get_submap_at_grid( p );
+        sm->is_uniform = true;
+        sm->set_all_ter( type );
     }
 }
 
@@ -10216,61 +10188,74 @@ void map::creature_on_trap( Creature &c, const bool may_avoid )
 }
 
 template<typename Functor>
-void map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &end,
-                         Functor fun ) const
+auto map::function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &end,
+                         Functor fun ) const -> void
 {
     // start and end are just two points, end can be "before" start
     // Also clip the area to map area
-    const tripoint_bub_ms min(
-        std::max( std::min( start.x(), end.x() ), 0 ),
-        std::max( std::min( start.y(), end.y() ), 0 ),
-        std::max( std::min( start.z(), end.z() ), -OVERMAP_DEPTH )
-    );
-    const tripoint_bub_ms max(
-        std::min( std::max( start.x(), end.x() ), SEEX * my_MAPSIZE - 1 ),
-        std::min( std::max( start.y(), end.y() ), SEEY * my_MAPSIZE - 1 ),
-        std::min( std::max( start.z(), end.z() ), OVERMAP_HEIGHT )
-    );
+    const auto min = tripoint_bub_ms(
+                         std::max( std::min( start.x(), end.x() ), 0 ),
+                         std::max( std::min( start.y(), end.y() ), 0 ),
+                         std::max( std::min( start.z(), end.z() ), -OVERMAP_DEPTH )
+                     );
+    const auto max = tripoint_bub_ms(
+                         std::min( std::max( start.x(), end.x() ), SEEX * my_MAPSIZE - 1 ),
+                         std::min( std::max( start.y(), end.y() ), SEEY * my_MAPSIZE - 1 ),
+                         std::min( std::max( start.z(), end.z() ), OVERMAP_HEIGHT )
+                     );
+
+    if( min.x() > max.x() || min.y() > max.y() || min.z() > max.z() ) {
+        return;
+    }
 
     // Submaps that contain the bounding points
-    const point min_sm( min.x() / SEEX, min.y() / SEEY );
-    const point max_sm( max.x() / SEEX, max.y() / SEEY );
-    // Z outermost, because submaps are flat
-    // Note: smx/smy/z/sx/sy are mutated directly to implement ITER_SKIP_* early exit
-    for( int z = min.z(); z <= max.z(); z++ ) {
-        for( int smx = min_sm.x; smx <= max_sm.x; smx++ ) {
-            for( int smy = min_sm.y; smy <= max_sm.y; smy++ ) {
-                submap const *cur_submap = get_submap_at_grid( tripoint_bub_sm{ smx, smy, z } );
-                if( cur_submap == nullptr ) {
-                    // This can happen in pocket dimensions where out-of-bounds
-                    // submaps are intentionally set to null
-                    continue;
-                }
-                // Bounds on the submap coordinates
-                const point sm_min( smx > min_sm.x ? 0 : min.x() % SEEX, smy > min_sm.y ? 0 : min.y() % SEEY );
-                const point sm_max( smx < max_sm.x ? SEEX - 1 : max.x() % SEEX,
-                                    smy < max_sm.y ? SEEY - 1 : max.y() % SEEY );
+    const auto min_sm = project_to<coords::sm>( min.xy() );
+    const auto max_sm = project_to<coords::sm>( max.xy() );
+    const auto submap_range = point_range<point_bub_sm>( min_sm, max_sm );
 
-                for( int sx = sm_min.x; sx <= sm_max.x; ++sx ) {
-                    for( int sy = sm_min.y; sy <= sm_max.y; ++sy ) {
-                        const iteration_state rval = fun( tripoint_bub_sm{ smx, smy, z }, cur_submap,
-                                                          point_sm_ms{ sx, sy } );
-                        if( rval != ITER_CONTINUE ) {
-                            switch( rval ) {
-                                case ITER_SKIP_ZLEVEL:
-                                    smx = my_MAPSIZE + 1;
-                                    smy = my_MAPSIZE + 1;
-                                // Fall through
-                                case ITER_SKIP_SUBMAP:
-                                    sx = SEEX;
-                                    sy = SEEY;
-                                    break;
-                                default:
-                                    return;
-                            }
-                        }
-                    }
-                }
+    const auto apply_to_submap = [&]( const tripoint_bub_sm & sm_pos,
+                                      const submap * cur_submap, const point_sm_ms & sm_min,
+    const point_sm_ms & sm_max ) -> iteration_state {
+        for( const auto sm_ms : point_range<point_sm_ms>( sm_min, sm_max ) )
+        {
+            const auto rval = fun( sm_pos, cur_submap, sm_ms );
+            if( rval != ITER_CONTINUE ) {
+                return rval;
+            }
+        }
+        return ITER_CONTINUE;
+    };
+
+    // Z outermost, because submaps are flat.
+    for( const auto z : std::views::iota( min.z(), max.z() + 1 ) ) {
+        auto skip_zlevel = false;
+        for( const auto smp : submap_range ) {
+            if( skip_zlevel ) {
+                break;
+            }
+            const auto sm_pos = tripoint_bub_sm( smp, z );
+            const auto *cur_submap = get_submap_at_grid( sm_pos );
+            if( cur_submap == nullptr ) {
+                // This can happen in pocket dimensions where out-of-bounds
+                // submaps are intentionally set to null.
+                continue;
+            }
+            const auto sm_ms_min = project_remain<coords::sm>( min ).remainder;
+            const auto sm_ms_max = project_remain<coords::sm>( max ).remainder;
+
+            const auto sm_min = point_sm_ms( smp.x() > min_sm.x() ? 0 : sm_ms_min.x(),
+                                             smp.y() > min_sm.y() ? 0 : sm_ms_min.y() );
+            const auto sm_max = point_sm_ms( smp.x() < max_sm.x() ? SEEX - 1 : sm_ms_max.x(),
+                                             smp.y() < max_sm.y() ? SEEY - 1 : sm_ms_max.y() );
+            switch( apply_to_submap( sm_pos, cur_submap, sm_min, sm_max ) ) {
+                case ITER_CONTINUE:
+                case ITER_SKIP_SUBMAP:
+                    break;
+                case ITER_SKIP_ZLEVEL:
+                    skip_zlevel = true;
+                    break;
+                case ITER_FINISH:
+                    return;
             }
         }
     }
@@ -10336,12 +10321,13 @@ void map::scent_blockers( std::vector<char> &scent_transfer, int st_sy,
 tripoint_range<tripoint_bub_ms> map::points_in_rectangle( const tripoint_bub_ms &from,
         const tripoint_bub_ms &to ) const
 {
-    const tripoint_bub_ms min( std::max( 0, std::min( from.x(), to.x() ) ), std::max( 0,
-                               std::min( from.y(),
-                                         to.y() ) ), std::max( -OVERMAP_DEPTH, std::min( from.z(), to.z() ) ) );
-    const tripoint_bub_ms max( std::min( SEEX * my_MAPSIZE - 1, std::max( from.x(), to.x() ) ),
-                               std::min( SEEX * my_MAPSIZE - 1, std::max( from.y(), to.y() ) ), std::min( OVERMAP_HEIGHT,
-                                       std::max( from.z(), to.z() ) ) );
+    const auto bubble_max = bubble_tiles().max();
+    const auto min = tripoint_bub_ms( std::max( 0, std::min( from.x(), to.x() ) ),
+                                      std::max( 0, std::min( from.y(), to.y() ) ),
+                                      std::max( -OVERMAP_DEPTH, std::min( from.z(), to.z() ) ) );
+    const auto max = tripoint_bub_ms( std::min( bubble_max.x(), std::max( from.x(), to.x() ) ),
+                                      std::min( bubble_max.y(), std::max( from.y(), to.y() ) ),
+                                      std::min( OVERMAP_HEIGHT, std::max( from.z(), to.z() ) ) );
     if( min.x() > max.x() || min.y() > max.y() || min.z() > max.z() ) {
         return tripoint_range<tripoint_bub_ms>( tripoint_bub_ms::zero(), tripoint_bub_ms( 0, 0, -1 ) );
     }
@@ -10353,12 +10339,13 @@ tripoint_range<tripoint_bub_ms> map::points_in_radius( const tripoint_bub_ms &ce
 {
     const auto xy_radius = static_cast<int>( radius );
     const auto z_radius = static_cast<int>( radiusz );
-    const tripoint_bub_ms min( std::max( 0, center.x() - xy_radius ), std::max( 0,
-                               center.y() - xy_radius ),
-                               clamp( center.z() - z_radius, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
-    const tripoint_bub_ms max( std::min( SEEX * my_MAPSIZE - 1, center.x() + xy_radius ),
-                               std::min( SEEX * my_MAPSIZE - 1, center.y() + xy_radius ), clamp( center.z() + z_radius,
-                                       -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
+    const auto bubble_max = bubble_tiles().max();
+    const auto min = tripoint_bub_ms( std::max( 0, center.x() - xy_radius ),
+                                      std::max( 0, center.y() - xy_radius ),
+                                      clamp( center.z() - z_radius, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
+    const auto max = tripoint_bub_ms( std::min( bubble_max.x(), center.x() + xy_radius ),
+                                      std::min( bubble_max.y(), center.y() + xy_radius ),
+                                      clamp( center.z() + z_radius, -OVERMAP_DEPTH, OVERMAP_HEIGHT ) );
     if( min.x() > max.x() || min.y() > max.y() || min.z() > max.z() ) {
         return tripoint_range<tripoint_bub_ms>( tripoint_bub_ms::zero(), tripoint_bub_ms( 0, 0, -1 ) );
     }
@@ -10577,12 +10564,10 @@ void map::set_pathfinding_cache_dirty( const int zlev )
     if( !inbounds_z( zlev ) ) {
         return;
     }
-    for( int smx = 0; smx < my_MAPSIZE; ++smx ) {
-        for( int smy = 0; smy < my_MAPSIZE; ++smy ) {
-            auto *sm = get_submap_at_grid( tripoint_bub_sm{ smx, smy, zlev } );
-            if( sm ) {
-                sm->pf_dirty = true;
-            }
+    for( const auto p : bubble_submaps() ) {
+        auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
+        if( sm ) {
+            sm->pf_dirty = true;
         }
     }
 }
@@ -10604,8 +10589,6 @@ auto map::get_pf_special( const tripoint_bub_ms &p ) const -> pf_special
         return PF_WALL;
     }
     if( sm->pf_dirty ) {
-        const int smx = divide_round_to_minus_infinity( p.x(), SEEX );
-        const int smy = divide_round_to_minus_infinity( p.y(), SEEY );
         sm->rebuild_pf_cache( *this, project_to<coords::sm>( p ) );
     }
     return sm->pf_special_cache[l.x()][l.y()];
@@ -10743,14 +10726,12 @@ int map::calc_max_populated_zlev()
 
     for( int sz = 1; sz <= OVERMAP_HEIGHT; sz++ ) {
         bool level_done = false;
-        for( int sx = 0; sx < my_MAPSIZE; sx++ ) {
-            for( int sy = 0; sy < my_MAPSIZE; sy++ ) {
-                const submap *sm = get_submap_at_grid( tripoint_bub_sm( sx, sy, sz ) );
-                if( sm == nullptr || !sm->is_uniform ) {
-                    max_z = sz;
-                    level_done = true;
-                    break;
-                }
+        for( const auto p : bubble_submaps() ) {
+            const submap *sm = get_submap_at_grid( tripoint_bub_sm( p, sz ) );
+            if( sm == nullptr || !sm->is_uniform ) {
+                max_z = sz;
+                level_done = true;
+                break;
             }
             if( level_done ) {
                 break;

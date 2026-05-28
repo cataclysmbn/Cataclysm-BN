@@ -33,6 +33,7 @@
 #include "line.h"
 #include "lru_cache.h"
 #include "mapdata.h"
+#include "mapgen_functions.h"
 #include "memory_fast.h"
 #include "shadowcasting.h"
 #include "submap_load_manager.h"
@@ -78,6 +79,13 @@ class vpart_reference;
 struct mongroup;
 struct projectile;
 struct veh_collision;
+
+struct map_generate_options {
+    bool defer_postprocess_hooks = false;
+    bool worker_safe = false;
+    bool use_selected_mapgen = false;
+    std::shared_ptr<mapgen_function> selected_mapgen;
+};
 template<typename T>
 class visitable;
 
@@ -129,7 +137,9 @@ struct visibility_variables {
     // Cached values for map visibility calculations
     int g_light_level;
     int u_clairvoyance;
+    int u_unimpaired_range;
     float vision_threshold;
+    float visibility_scale_factor;
 };
 
 struct bash_params {
@@ -607,7 +617,7 @@ class map : public submap_load_listener
         /** Helper function for light claculation; exposed here for map editor
          */
         static apparent_light_info apparent_light_helper( const level_cache &map_cache,
-                const tripoint_bub_ms &p );
+                const tripoint_bub_ms &p, float visibility_scale_factor );
         /** Determine the visible light level for a tile, based on light_at
          * for the tile, vision distance, etc
          *
@@ -615,6 +625,8 @@ class map : public submap_load_listener
          * @param cache Currently cached visibility parameters
          */
         lit_level apparent_light_at( const tripoint_bub_ms &p, const visibility_variables &cache ) const;
+        lit_level apparent_light_at( const tripoint_bub_ms &p, const visibility_variables &cache,
+                                     int dist ) const;
         visibility_type get_visibility( lit_level ll,
                                         const visibility_variables &cache ) const;
 
@@ -1785,7 +1797,8 @@ class map : public submap_load_listener
         bool is_cornerfloor( const tripoint_bub_ms &p ) const;
 
         // mapgen.cpp functions
-        void generate( const tripoint_abs_sm &p, const time_point &when );
+        auto generate( const tripoint_abs_sm &p, const time_point &when,
+        const map_generate_options &options = {} ) -> mapgen_result;
         void place_spawns( const mongroup_id &group, int chance,
                            const point_bub_ms &p1, const point_bub_ms &p2, float density,
                            bool individual = false, bool friendly = false, const std::string &name = "NONE",
@@ -2022,7 +2035,8 @@ class map : public submap_load_listener
         void monster_in_field( monster &z );
 
         void copy_grid( const tripoint_bub_sm &to, const tripoint_bub_sm &from );
-        void draw_map( mapgendata &dat );
+        auto draw_map( mapgendata &dat,
+        const map_generate_options &options = {} ) -> mapgen_result;
 
         void draw_office_tower( const mapgendata &dat );
         void draw_lab( mapgendata &dat );
@@ -2083,6 +2097,21 @@ class map : public submap_load_listener
 
         int my_MAPSIZE;
         bool zlevels;
+
+        inline auto bubble_tiles() const -> point_range<point_bub_ms> {
+            return { point_bub_ms::zero(), point_bub_ms(
+                         coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1,
+                         coords::map_squares_per( coords::scale::submap ) * my_MAPSIZE - 1 ) };
+        }
+
+        inline auto bubble_submap_bounds() const -> inclusive_rectangle<point_bub_sm> {
+            return { point_bub_sm::zero(), point_bub_sm( my_MAPSIZE - 1, my_MAPSIZE - 1 ) };
+        }
+
+        inline auto bubble_submaps() const -> point_range<point_bub_sm> {
+            const auto bounds = bubble_submap_bounds();
+            return { bounds.p_min, bounds.p_max };
+        }
 
         // stores vision adjustment for the tiles immediately surrounding the player, the order is given by eight_adjacent_offsets in point.h
         // examples of adjustment: crouching
@@ -2239,7 +2268,8 @@ class map : public submap_load_listener
         void process_items();
     private:
         // Iterates over every item on the map, passing each item to the provided function.
-        void process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp );
+        auto process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
+                                      std::vector<item *> &active_items ) -> void;
         void process_items_in_vehicles( submap &current_submap );
         void process_items_in_vehicle( vehicle &cur_veh, submap &current_submap );
 
@@ -2261,7 +2291,8 @@ class map : public submap_load_listener
         */
         /*@{*/
         template<typename Functor>
-        void function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &end, Functor fun ) const;
+        auto function_over( const tripoint_bub_ms &start, const tripoint_bub_ms &end,
+                            Functor fun ) const -> void;
         /*@}*/
 
         /**

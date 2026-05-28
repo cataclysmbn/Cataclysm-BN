@@ -114,12 +114,10 @@ static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
 
 static constexpr int MON_RADIUS = 3;
 
-static void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z,
-                          int rotate );
-
 // (x,y,z) are absolute coordinates of a submap
 // x%2 and y%2 must be 0!
-void map::generate( const tripoint_abs_sm &p, const time_point &when )
+auto map::generate( const tripoint_abs_sm &p, const time_point &when,
+                    const map_generate_options &options ) -> mapgen_result
 {
     ZoneScopedN( "map_generate" );
     ZoneValue( static_cast<uint64_t>( p.z() + OVERMAP_DEPTH ) );
@@ -137,20 +135,24 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     //  function, we save the upper-left 4 submaps, and delete the rest.
     // Mapgen is not z-level aware yet. Only actually initialize current z-level
     //  because other submaps won't be touched.
-    {
-        ZoneScopedN( "generate_create_submaps" );
-        for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-            for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                const size_t grid_pos = get_nonant( tripoint_bub_sm{ gridx, gridy, p.z() } );
-                if( getsubmap( grid_pos ) ) {
-                    debugmsg( "Submap already exists at (%d, %d, %d)", gridx, gridy, p.z() );
-                    continue;
-                }
-                setsubmap( grid_pos, new submap( bub_to_abs( tripoint_bub_sm{ gridx, gridy, p.z() } ) ) );
-                // TODO: memory leak if the code below throws before the submaps get stored/deleted!
-            }
+    for( const auto smp : bubble_submaps() ) {
+        const size_t grid_pos = get_nonant( tripoint_bub_sm( smp, p.z() ) );
+        if( getsubmap( grid_pos ) ) {
+            debugmsg( "Submap already exists at (%d, %d, %d)", smp.x(), smp.y(), p.z() );
+            continue;
         }
+        auto *new_submap = new submap( bub_to_abs( tripoint_bub_sm( smp, p.z() ) ) );
+        new_submap->last_touched = when;
+        setsubmap( grid_pos, new_submap );
+        // TODO: memory leak if the code below throws before the submaps get stored/deleted!
     }
+    const auto discard_unowned_generated_submaps = [&]() {
+        for( const auto smp : bubble_submaps() ) {
+            const auto grid_pos = get_nonant( tripoint_bub_sm( smp, p.z() ) );
+            delete getsubmap( grid_pos );
+            setsubmap( grid_pos, nullptr );
+        }
+    };
     // x, and y are submap coordinates, convert to overmap terrain coordinates
     // TODO: fix point types
     tripoint_abs_omt abs_omt( project_to<coords::omt>( p ) );
@@ -179,7 +181,11 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     mapgendata dat( abs_omt, *this, density, when, nullptr, omap );
     {
         ZoneScopedN( "generate_draw_map" );
-        draw_map( dat );
+        const auto draw_result = draw_map( dat, options );
+        if( draw_result.needs_main_thread() ) {
+            discard_unowned_generated_submaps();
+            return draw_result;
+        }
     }
 
     {
@@ -244,42 +250,37 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     //  (b) When generate() is called from a worker thread, the submaps land
     //      in the mapbuffer before the deferred hook is queued, so the main
     //      thread can reconstruct a tinymap from the mapbuffer to run it.
-    {
-        ZoneScopedN( "generate_store_submaps" );
-        for( int i = 0; i < my_MAPSIZE; i++ ) {
-            for( int j = 0; j < my_MAPSIZE; j++ ) {
-                dbg( DL::Info ) << "map::generate: submap (" << i << "," << j << ")";
+    for( const auto smp : bubble_submaps() ) {
+        dbg( DL::Info ) << "map::generate: submap (" << smp.x() << "," << smp.y() << ")";
 
-                const tripoint_bub_sm pos( i, j, p.z() );
-                if( i <= 1 && j <= 1 ) {
-                    const tripoint_abs_sm grid_abs = bub_to_abs( pos );
-                    const int gridn = get_nonant( pos );
-                    submap *const sm = getsubmap( gridn );
-                    if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
-                        return;
-                    }
-                    // Transfer ownership of the freshly generated submap to the mapbuffer.
-                    // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
-                    auto owned = std::unique_ptr<submap>( sm );
-                    if( !MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs, owned ) ) {
-                        owned.release(); // Already present; don't double-free.
-                    }
-                } else {
-                    const size_t grid_pos = get_nonant( pos );
-                    delete getsubmap( grid_pos );
-                    setsubmap( grid_pos, nullptr );
-                }
+        const tripoint_bub_sm pos( smp, p.z() );
+        if( pos.x() <= 1 && pos.y() <= 1 ) {
+            const tripoint_abs_sm grid_abs = bub_to_abs( pos );
+            const int gridn = get_nonant( pos );
+            submap *const sm = getsubmap( gridn );
+            if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
+                return {};
             }
+            // Transfer ownership of the freshly generated submap to the mapbuffer.
+            // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
+            auto owned = std::unique_ptr<submap>( sm );
+            if( !MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs, owned ) ) {
+                owned.release(); // Already present; don't double-free.
+            }
+        } else {
+            const size_t grid_pos = get_nonant( pos );
+            delete getsubmap( grid_pos );
+            setsubmap( grid_pos, nullptr );
         }
     }
 
     // Run the Lua on_mapgen_postprocess hook.
     // Main thread: run immediately.  Worker thread: defer (Lua is not thread-safe).
-    // map::shift() drains deferred hooks after drain_completed().
+    // The main thread drains deferred hooks after worker mapgen completes.
     const auto omt_pos( project_to<coords::omt>( p ) );
     {
         ZoneScopedN( "generate_postprocess_hooks" );
-        if( is_pool_worker_thread() ) {
+        if( is_pool_worker_thread() || options.defer_postprocess_hooks ) {
             push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );
         } else {
             cata::run_on_mapgen_postprocess_hooks(
@@ -290,6 +291,7 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
             );
         }
     }
+    return { .status = mapgen_result_status::generated };
 }
 
 void mapgen_function_builtin::generate( mapgendata &mgd )
@@ -329,9 +331,20 @@ class mapgen_basic_container
          */
         bool generate( mapgendata &dat, const int hardcoded_weight ) const {
             ZoneScopedN( "mapgen_container_generate" );
+            const auto ptr = pick( hardcoded_weight );
+            if( !ptr ) {
+                return false;
+            }
+            {
+                ZoneScopedN( "mapgen_container_dispatch" );
+                ptr->generate( dat );
+            }
+            return true;
+        }
+        auto pick( const int hardcoded_weight ) const -> std::shared_ptr<mapgen_function> {
             if( hardcoded_weight > 0 &&
                 rng( 1, weights_.get_weight() + hardcoded_weight ) > weights_.get_weight() ) {
-                return false;
+                return nullptr;
             }
             const std::shared_ptr<mapgen_function> *ptr = nullptr;
             {
@@ -339,18 +352,13 @@ class mapgen_basic_container
                 ptr = weights_.pick();
             }
             if( !ptr ) {
-                return false;
+                return nullptr;
             }
             assert( *ptr );
-            {
-                ZoneScopedN( "mapgen_container_dispatch" );
-                ( *ptr )->generate( dat );
-            }
-            return true;
+            return *ptr;
         }
-        /** Returns true if any generator in the weighted pool is Lua-based. */
-        auto any_lua() const -> bool {
-            bool found = false;
+        auto has_direct_lua_generator() const -> bool {
+            auto found = false;
             weights_.apply( [&]( const std::shared_ptr<mapgen_function> &ptr ) {
                 if( ptr && ptr->is_lua_generator() ) {
                     found = true;
@@ -400,6 +408,7 @@ class mapgen_factory
 {
     private:
         std::map<std::string, mapgen_basic_container> mapgens_;
+        bool any_direct_lua_generator_ = false;
 
         /// Collect all the possible and expected keys that may get used with @ref pick.
         static std::set<std::string> get_usages() {
@@ -425,6 +434,7 @@ class mapgen_factory
     public:
         void reset() {
             mapgens_.clear();
+            any_direct_lua_generator_ = false;
         }
         /// @see mapgen_basic_container::setup
         void setup() {
@@ -435,6 +445,9 @@ class mapgen_factory
             // Dummy entry, overmap terrain null should never appear and is
             // therefore never generated.
             mapgens_.erase( "null" );
+            any_direct_lua_generator_ = std::ranges::any_of( mapgens_, []( const auto & omw ) {
+                return omw.second.has_direct_lua_generator();
+            } );
         }
         void finalize_parameters() {
             for( std::pair<const std::string, mapgen_basic_container> &omw : mapgens_ ) {
@@ -472,15 +485,24 @@ class mapgen_factory
             }
             return iter->second.generate( dat, hardcoded_weight );
         }
-        /// Returns true if any generator registered under @p key is Lua-based.
-        auto has_lua_generator( const std::string &key ) const -> bool {
-            const auto iter = mapgens_.find( key );
+        auto pick( const std::string &key, const int hardcoded_weight = 0 ) const
+        -> std::shared_ptr<mapgen_function> {
+            const auto iter = mapgens_.find( disable_mapgen ? "test" : key );
+            if( iter == mapgens_.end() ) {
+                return nullptr;
+            }
+            return iter->second.pick( hardcoded_weight );
+        }
+        auto has_direct_lua_generator( const std::string &key ) const -> bool {
+            const auto iter = mapgens_.find( disable_mapgen ? "test" : key );
             if( iter == mapgens_.end() ) {
                 return false;
             }
-            return iter->second.any_lua();
+            return iter->second.has_direct_lua_generator();
         }
-
+        auto has_any_direct_lua_generator() const -> bool {
+            return any_direct_lua_generator_;
+        }
         mapgen_parameters get_map_special_params( const std::string &key ) const {
             const auto iter = mapgens_.find( key );
             if( iter == mapgens_.end() ) {
@@ -499,6 +521,20 @@ static mapgen_factory oter_mapgen;
 std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nested>> >
         nested_mapgen;
 std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> > update_mapgen;
+
+using nested_mapgen_function_list =
+    weighted_int_list<std::shared_ptr<mapgen_function_json_nested>>;
+
+struct nested_mapgen_ref {
+    const nested_mapgen_function_list *functions = nullptr;
+
+    friend auto operator==( const nested_mapgen_ref &lhs,
+                            const nested_mapgen_ref &rhs ) -> bool {
+        return lhs.functions == rhs.functions;
+    }
+};
+
+using nested_mapgen_ref_list = weighted_int_list<nested_mapgen_ref>;
 
 void call_mapgen_function( std::string name, mapgendata &dat, bool nested, const point_rel_ms &pos )
 {
@@ -528,6 +564,7 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
     oter_mapgen.setup();
     // Not really calculate weights, but let's keep it here for now
     for( auto &pr : nested_mapgen ) {
+        pr.second.precalc();
         for( weighted_object<int, std::shared_ptr<mapgen_function_json_nested>> &ptr : pr.second ) {
             ptr.obj->setup();
             inp_mngr.pump_events();
@@ -3015,6 +3052,10 @@ class jmapgen_nested : public jmapgen_piece
     public:
         weighted_int_list<std::string> entries;
         weighted_int_list<std::string> else_entries;
+        mutable nested_mapgen_ref_list resolved_entries;
+        mutable nested_mapgen_ref_list resolved_else_entries;
+        mutable bool resolved_entries_valid = false;
+        mutable bool resolved_else_entries_valid = false;
         neighbor_oter_check neighbor_oters;
         neighbor_join_check neighbor_joins;
         neighbor_connection_check neighbor_connections;
@@ -3037,8 +3078,24 @@ class jmapgen_nested : public jmapgen_piece
                 return else_entries;
             }
         }
+        auto get_resolved_entries( const mapgendata &dat ) const -> const nested_mapgen_ref_list
+        & { // *NOPAD*
+            if( neighbor_oters.test( dat ) && neighbor_joins.test( dat ) && neighbor_connections.test( dat ) ) {
+                ensure_resolved( entries, resolved_entries, resolved_entries_valid );
+                return resolved_entries;
+            } else {
+                ensure_resolved( else_entries, resolved_else_entries, resolved_else_entries_valid );
+                return resolved_else_entries;
+            }
+        }
         mapgen_phase phase() const override {
             return mapgen_phase::nested_mapgen;
+        }
+        auto finalize() const -> void override {
+            resolved_entries.clear();
+            resolved_else_entries.clear();
+            resolved_entries_valid = false;
+            resolved_else_entries_valid = false;
         }
         void merge_parameters_into( mapgen_parameters &params,
                                     const std::string &outer_context ) const override {
@@ -3067,25 +3124,27 @@ class jmapgen_nested : public jmapgen_piece
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            const std::string *res = get_entries( dat ).pick();
-            if( res == nullptr || res->empty() || *res == "null" ) {
-                // This will be common when neighbors.test(...) is false, since else_entires is often empty.
+            ZoneScopedN( "jmapgen_nested_apply" );
+            const std::shared_ptr<mapgen_function_json_nested> *ptr = nullptr;
+            {
+                ZoneScopedN( "jmapgen_nested_pick" );
+                const nested_mapgen_ref *res = get_resolved_entries( dat ).pick();
+                if( res == nullptr || res->functions == nullptr ) {
+                    // This will be common when neighbors.test(...) is false, since else_entries is often empty.
+                    return;
+                }
+
+                // A second roll? Let's allow it for now
+                ptr = res->functions->pick();
+            }
+            if( ptr == nullptr || !*ptr ) {
                 return;
             }
 
-            const auto iter = nested_mapgen.find( *res );
-            if( iter == nested_mapgen.end() ) {
-                debugmsg( "Unknown nested mapgen function id %s", res->c_str() );
-                return;
+            {
+                ZoneScopedN( "jmapgen_nested_nest" );
+                ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ) );
             }
-
-            // A second roll? Let's allow it for now
-            const auto &ptr = iter->second.pick();
-            if( ptr == nullptr ) {
-                return;
-            }
-
-            ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ) );
         }
 
         void check( const std::string &oter_name, const mapgen_parameters & ) const override {
@@ -3094,21 +3153,17 @@ class jmapgen_nested : public jmapgen_piece
             neighbor_connections.check( oter_name );
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
-            const weighted_int_list<std::string> &selected_entries = get_entries( dat );
+            const nested_mapgen_ref_list &selected_entries = get_resolved_entries( dat );
 
             if( selected_entries.empty() ) {
                 return false;
             }
 
             for( auto &entry : selected_entries ) {
-                if( entry.obj == "null" ) {
+                if( entry.obj.functions == nullptr ) {
                     continue;
                 }
-                const auto iter = nested_mapgen.find( entry.obj );
-                if( iter == nested_mapgen.end() ) {
-                    return false;
-                }
-                for( const auto &nest : iter->second ) {
+                for( const auto &nest : *entry.obj.functions ) {
                     if( nest.obj->has_vehicle_collision( dat, p ) ) {
                         return true;
                     }
@@ -3116,6 +3171,36 @@ class jmapgen_nested : public jmapgen_piece
             }
 
             return false;
+        }
+    private:
+        static auto ensure_resolved( const weighted_int_list<std::string> &source,
+                                     nested_mapgen_ref_list &resolved,
+                                     bool &valid ) -> void {
+            if( valid ) {
+                return;
+            }
+            resolved = resolve_entries( source );
+            valid = true;
+        }
+
+        static auto resolve_entries( const weighted_int_list<std::string> &source )
+        -> nested_mapgen_ref_list {
+            auto resolved = nested_mapgen_ref_list {};
+            for( const auto &entry : source ) {
+                if( entry.obj.empty() || entry.obj == "null" ) {
+                    resolved.add( {}, entry.weight );
+                    continue;
+                }
+                const auto iter = nested_mapgen.find( entry.obj );
+                if( iter == nested_mapgen.end() ) {
+                    debugmsg( "Unknown nested mapgen function id %s", entry.obj.c_str() );
+                    resolved.add( {}, entry.weight );
+                    continue;
+                }
+                resolved.add( { &iter->second }, entry.weight );
+            }
+            resolved.precalc();
+            return resolved;
         }
 };
 
@@ -3866,6 +3951,9 @@ void mapgen_function_json_base::check_common( const std::string &oter_name ) con
 
 void jmapgen_objects::finalize()
 {
+    for( const auto &obj : objects ) {
+        obj.second->finalize();
+    }
     std::stable_sort( objects.begin(), objects.end(),
     []( const jmapgen_obj & l, const jmapgen_obj & r ) {
         return l.second->phase() < r.second->phase();
@@ -4107,23 +4195,36 @@ void mapgen_function_json::generate( mapgendata &md )
         ZoneScopedN( "mapgen_json_get_args" );
         args = get_args( md, mapgen_parameter_scope::omt );
     }
-    mapgendata md_with_params( md, args );
 
-    {
-        ZoneScopedN( "mapgen_json_setmap" );
-        for( auto &elem : setmap_points ) {
-            elem.apply( md_with_params, point_rel_ms::zero() );
+    const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
+        {
+            ZoneScopedN( "mapgen_json_setmap" );
+            for( auto &elem : setmap_points )
+            {
+                elem.apply( active_md, point_rel_ms::zero() );
+            }
         }
-    }
 
-    {
-        ZoneScopedN( "mapgen_json_objects" );
-        objects.apply( md_with_params, point_rel_ms::zero() );
-    }
+        {
+            ZoneScopedN( "mapgen_json_objects" );
+            objects.apply( active_md, point_rel_ms::zero() );
+        }
 
-    {
-        ZoneScopedN( "mapgen_json_resolve_regional" );
-        resolve_regional_terrain_and_furniture( md_with_params );
+        {
+            ZoneScopedN( "mapgen_json_resolve_regional" );
+            resolve_regional_terrain_and_furniture( active_md );
+        }
+    };
+
+    if( args.map.empty() ) {
+        apply_contents( md );
+    } else {
+        auto md_with_params = std::optional<mapgendata> {};
+        {
+            ZoneScopedN( "mapgen_json_make_param_data" );
+            md_with_params.emplace( md, args );
+        }
+        apply_contents( *md_with_params );
     }
 
     {
@@ -4152,23 +4253,36 @@ void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms
         ZoneScopedN( "mapgen_json_nested_get_args" );
         args = get_args( md, mapgen_parameter_scope::nest );
     }
-    mapgendata md_with_params( md, args );
 
-    {
-        ZoneScopedN( "mapgen_json_nested_setmap" );
-        for( const jmapgen_setmap &elem : setmap_points ) {
-            elem.apply( md_with_params, offset );
+    const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
+        {
+            ZoneScopedN( "mapgen_json_nested_setmap" );
+            for( const auto &elem : setmap_points )
+            {
+                elem.apply( active_md, offset );
+            }
         }
-    }
 
-    {
-        ZoneScopedN( "mapgen_json_nested_objects" );
-        objects.apply( md_with_params, offset );
-    }
+        {
+            ZoneScopedN( "mapgen_json_nested_objects" );
+            objects.apply( active_md, offset );
+        }
 
-    {
-        ZoneScopedN( "mapgen_json_nested_resolve_regional" );
-        resolve_regional_terrain_and_furniture( md_with_params );
+        {
+            ZoneScopedN( "mapgen_json_nested_resolve_regional" );
+            resolve_regional_terrain_and_furniture( active_md );
+        }
+    };
+
+    if( args.map.empty() ) {
+        apply_contents( md );
+    } else {
+        auto md_with_params = std::optional<mapgendata> {};
+        {
+            ZoneScopedN( "mapgen_json_nested_make_param_data" );
+            md_with_params.emplace( md, args );
+        }
+        apply_contents( *md_with_params );
     }
 }
 
@@ -4228,7 +4342,7 @@ bool jmapgen_objects::has_vehicle_collision( const mapgendata &dat,
 }
 
 /////////////
-void map::draw_map( mapgendata &dat )
+auto map::draw_map( mapgendata &dat, const map_generate_options &options ) -> mapgen_result
 {
     ZoneScopedN( "map_draw_map" );
     const oter_id &terrain_type = dat.terrain_type();
@@ -4238,7 +4352,32 @@ void map::draw_map( mapgendata &dat )
     bool generated = false;
     {
         ZoneScopedN( "draw_map_run_mapgen_func" );
-        generated = run_mapgen_func( function_key, dat );
+        if( options.use_selected_mapgen ) {
+            if( options.selected_mapgen ) {
+                if( options.worker_safe && mapgen_function_needs_main_thread( options.selected_mapgen ) ) {
+                    return {
+                        .status = mapgen_result_status::needs_main_thread,
+                        .selected_mapgen = options.selected_mapgen,
+                    };
+                }
+                options.selected_mapgen->generate( dat );
+                generated = true;
+            }
+        } else if( options.worker_safe ) {
+            const auto selected_mapgen = oter_mapgen.pick( function_key );
+            if( selected_mapgen ) {
+                if( mapgen_function_needs_main_thread( selected_mapgen ) ) {
+                    return {
+                        .status = mapgen_result_status::needs_main_thread,
+                        .selected_mapgen = selected_mapgen,
+                    };
+                }
+                selected_mapgen->generate( dat );
+                generated = true;
+            }
+        } else {
+            generated = run_mapgen_func( function_key, dat );
+        }
     }
 
     if( !generated ) {
@@ -4266,6 +4405,7 @@ void map::draw_map( mapgendata &dat )
         ZoneScopedN( "draw_map_connections" );
         draw_connections( dat );
     }
+    return { .status = mapgen_result_status::generated };
 }
 
 const int SOUTH_EDGE = 2 * SEEY - 1;
@@ -6568,11 +6708,33 @@ bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat )
     return oter_mapgen.generate( dat, mapgen_id );
 }
 
-auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint_abs_omt &omt_addr ) -> bool
+auto pick_mapgen_func( const std::string &mapgen_id ) -> std::shared_ptr<mapgen_function>
 {
-    overmapbuffer &omap = get_overmapbuffer( dim_id );
-    const oter_id terrain_type = omap.ter( omt_addr );
-    return oter_mapgen.has_lua_generator( terrain_type->get_mapgen_id() );
+    ZoneScopedN( "pick_mapgen_func" );
+    return oter_mapgen.pick( mapgen_id );
+}
+
+auto mapgen_function_needs_main_thread( const std::shared_ptr<mapgen_function> &func ) -> bool
+{
+    if( !func ) {
+        return false;
+    }
+    if( func->is_lua_generator() ) {
+        return true;
+    }
+    const auto json_func = std::dynamic_pointer_cast<mapgen_function_json>( func );
+    return json_func && json_func->predecessor_mapgen != oter_str_id::NULL_ID() &&
+           oter_mapgen.has_direct_lua_generator( json_func->predecessor_mapgen.id().str() );
+}
+
+auto mapgen_has_any_direct_lua_generator() -> bool
+{
+    return oter_mapgen.has_any_direct_lua_generator();
+}
+
+auto mapgen_id_has_direct_lua_generator( const std::string &mapgen_id ) -> bool
+{
+    return oter_mapgen.has_direct_lua_generator( mapgen_id );
 }
 
 mapgen_parameters get_map_special_params( const std::string &mapgen_id )

@@ -215,7 +215,6 @@ static const itype_id itype_rope_makeshift_30( "rope_makeshift_30" );
 static const itype_id itype_splinter( "splinter" );
 static const itype_id itype_stick_long( "stick_long" );
 static const itype_id itype_vine_30( "vine_30" );
-static const itype_id itype_welder( "welder" );
 static const itype_id itype_wool_staple( "wool_staple" );
 
 static const zone_type_id zone_type_FARM_PLOT( "FARM_PLOT" );
@@ -241,7 +240,6 @@ static const bionic_id bio_painkiller( "bio_painkiller" );
 
 static const itype_id itype_UPS( "UPS" );
 
-static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const trait_id trait_NOPAIN( "NOPAIN" );
 static const trait_id trait_SPIRITUAL( "SPIRITUAL" );
 static const trait_id trait_STOCKY_TROGLO( "STOCKY_TROGLO" );
@@ -396,7 +394,7 @@ bool activity_handlers::resume_for_multi_activities( player &p )
     return false;
 }
 
-void activity_handlers::burrow_do_turn( player_activity *act, player *p )
+void activity_handlers::burrow_do_turn( player_activity *act, player * )
 {
     sfx::play_activity_sound( "activity", "burrow",
                               sfx::get_heard_volume( abs_to_bub( act->placement ) ) );
@@ -3298,8 +3296,13 @@ void activity_handlers::repair_item_do_turn( player_activity *act, player *p )
     }
 }
 
-void activity_handlers::butcher_do_turn( player_activity * /*act*/, player *p )
+void activity_handlers::butcher_do_turn( player_activity *act, player *p )
 {
+    if( !act->targets.empty() && act->targets.back().is_destroyed() ) {
+        p->add_msg_if_player( m_bad, _( "The corpse completely rotted away!" ) );
+        act->set_to_null();
+        return;
+    }
     p->mod_stamina( -20 );
 }
 

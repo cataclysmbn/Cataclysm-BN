@@ -359,11 +359,7 @@
     "blueprint_origin": { "x": 10, "y": 3 },
     "palette": { "O": [ "airship_balloon_external" ] },
     "parts": [
-      {
-        "x": 0,
-        "y": 0,
-        "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "black_box", "roof", "airship_balloon" ]
-      },
+      { "x": 0, "y": 0, "parts": [ "xlframe_cross", "seat", "seatbelt", "controls", "dashboard", "roof", "airship_balloon" ] },
       { "x": 0, "y": 1, "parts": [ "xlframe_cross", "aisle_vertical", "roof", "airship_balloon" ] },
       { "x": 0, "y": 2, "parts": [ "xlframe_vertical", "windshield_vertical_right", "airship_balloon" ] },
       { "x": 0, "y": -1, "parts": [ "xlframe_vertical", "windshield_vertical_left", "airship_balloon" ] },
@@ -632,17 +628,7 @@
       {
         "x": 7,
         "y": -1,
-        "parts": [
-          "frame_vertical_2",
-          "seat",
-          "controls",
-          "dashboard",
-          "vehicle_clock",
-          "roof",
-          "programmable_autopilot",
-          "black_box",
-          "tracker"
-        ]
+        "parts": [ "frame_vertical_2", "seat", "controls", "dashboard", "vehicle_clock", "roof", "programmable_autopilot", "tracker" ]
       },
       { "x": 9, "y": -1, "parts": [ "frame_horizontal_2", "halfboard_nw", "headlight" ] },
       { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "roof", "aisle_horizontal" ] },
@@ -825,17 +811,7 @@
       {
         "x": 7,
         "y": -1,
-        "parts": [
-          "frame_vertical_2",
-          "seat",
-          "controls",
-          "dashboard",
-          "vehicle_clock",
-          "roof",
-          "programmable_autopilot",
-          "black_box",
-          "tracker"
-        ]
+        "parts": [ "frame_vertical_2", "seat", "controls", "dashboard", "vehicle_clock", "roof", "programmable_autopilot", "tracker" ]
       },
       { "x": 9, "y": -1, "parts": [ "frame_horizontal_2", "halfboard_nw", "headlight" ] },
       { "x": 0, "y": 0, "parts": [ "frame_vertical_2", "roof", "cargo_space" ] },
