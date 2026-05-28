@@ -11,6 +11,8 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "calendar.h"
+#include "cached_options.h"
+#include "cata_utility.h"
 #include "coordinates.h"
 #include "game.h"
 #include "map.h"
@@ -95,6 +97,39 @@ TEST_CASE( "Aiming at a clearly visible target", "[ranged][aiming]" )
             CHECK( std::count( t.begin(), t.end(), &z2 ) == 0 );
         }
     }
+}
+
+TEST_CASE( "Aiming at a loaded target outside 3D z range", "[ranged][aiming][zlevel]" )
+{
+    clear_all_state();
+
+    const auto restore_fov_3d = restore_on_out_of_scope<bool>( fov_3d );
+    const auto restore_fov_3d_z_range = restore_on_out_of_scope<int>( fov_3d_z_range );
+    fov_3d = true;
+    fov_3d_z_range = 0;
+
+    g->place_player( shooter_pos );
+    auto &shooter = g->u;
+    clear_character( shooter, true );
+    shooter.add_effect( efftype_id( "debug_clairvoyance" ), 1_seconds );
+    shooter.recalc_sight_limits();
+    arm_character( shooter, "glock_19" );
+
+    auto &here = get_map();
+    const auto target_pos = shooter_pos + tripoint_above;
+    here.ter_set( shooter_pos, ter_id( "t_dirt" ) );
+    here.furn_set( shooter_pos, furn_id( "f_null" ) );
+    here.ter_set( target_pos, ter_id( "t_open_air" ) );
+    here.furn_set( target_pos, furn_id( "f_null" ) );
+
+    auto &z = spawn_test_monster( "debug_mon", target_pos );
+    REQUIRE( shooter.sees( z ) );
+
+    const auto max_range = shooter.primary_weapon().gun_range( &shooter );
+    REQUIRE( max_range >= 10 );
+
+    const auto targets = ranged::targetable_creatures( shooter, max_range );
+    CHECK( std::count( targets.begin(), targets.end(), &z ) == 0 );
 }
 
 TEST_CASE( "Aiming at a target behind wall", "[ranged][aiming]" )

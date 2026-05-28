@@ -1678,6 +1678,47 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     return MATT_ATTACK;
 }
 
+auto monster::generic_npc_attitude_to() const -> Attitude
+{
+    auto effective_anger = anger;
+    auto effective_morale = morale;
+
+    if( friendly != 0 ) {
+        if( has_effect( effect_docile ) ) {
+            return Attitude::A_FRIENDLY;
+        }
+        if( !type->in_species( ZOMBIE ) ) {
+            return Attitude::A_FRIENDLY;
+        }
+    }
+    if( effect_cache[FLEEING] ) {
+        return Attitude::A_NEUTRAL;
+    }
+    if( has_effect( effect_pacified ) ) {
+        return Attitude::A_FRIENDLY;
+    }
+
+    if( has_flag( MF_FACTION_MEMORY ) ) {
+        static const mfaction_id player_faction( "player" );
+        effective_anger = get_faction_anger( player_faction );
+    }
+
+    if( effective_morale < 0 ) {
+        return Attitude::A_NEUTRAL;
+    }
+    if( effective_anger <= 0 ) {
+        return Attitude::A_NEUTRAL;
+    }
+    if( effective_anger < 10 ) {
+        return Attitude::A_NEUTRAL;
+    }
+    if( !aggro_character ) {
+        return Attitude::A_NEUTRAL;
+    }
+
+    return Attitude::A_HOSTILE;
+}
+
 int monster::hp_percentage() const
 {
     return get_hp( bodypart_id( "torso" ) ) * 100 / get_hp_max();

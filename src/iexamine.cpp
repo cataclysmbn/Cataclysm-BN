@@ -156,7 +156,6 @@ static const itype_id itype_corpse( "corpse" );
 static const itype_id itype_electrohack( "electrohack" );
 static const auto itype_plumber_toolkit = itype_id( "plumber_toolkit" );
 static const itype_id itype_fake_milling_item( "fake_milling_item" );
-static const itype_id itype_fake_cloning_vat( "fake_cloning_vat_item" );
 static const itype_id itype_fake_smoke_plume( "fake_smoke_plume" );
 static const itype_id itype_fertilizer( "fertilizer" );
 static const itype_id itype_fire( "fire" );
@@ -210,12 +209,10 @@ static const trait_id trait_M_DEFENDER( "M_DEFENDER" );
 static const trait_id trait_M_DEPENDENT( "M_DEPENDENT" );
 static const trait_id trait_M_FERTILE( "M_FERTILE" );
 static const trait_id trait_M_SPORES( "M_SPORES" );
-static const trait_id trait_NOPAIN( "NOPAIN" );
 static const trait_id trait_PROBOSCIS( "PROBOSCIS" );
 static const trait_id trait_THRESH_MARLOSS( "THRESH_MARLOSS" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 static const trait_id trait_WEB_BRIDGE( "WEB_BRIDGE" );
-static const trait_id trait_DEBUG_NOCLIP( "DEBUG_NOCLIP" );
 
 static const quality_id qual_ANESTHESIA( "ANESTHESIA" );
 static const quality_id qual_DIG( "DIG" );
@@ -232,7 +229,6 @@ static const mtype_id mon_spider_widow_giant_s( "mon_spider_widow_giant_s" );
 static const bionic_id bio_fingerhack( "bio_fingerhack" );
 static const bionic_id bio_lighter( "bio_lighter" );
 static const bionic_id bio_lockpick( "bio_lockpick" );
-static const bionic_id bio_painkiller( "bio_painkiller" );
 static const bionic_id bio_tools( "bio_tools" );
 
 static const itype_id itype_toolset( "toolset" );
@@ -1170,6 +1166,7 @@ static bool try_start_hacking( player &p, const tripoint_bub_ms &examp )
                            ( std::make_unique<hacking_activity_actor>() ) );
     }
     p.activity->placement = bub_to_abs( examp );
+    return true;
 }
 
 /**

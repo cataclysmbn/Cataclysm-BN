@@ -197,7 +197,9 @@ static void full_map_test( const std::vector<std::string> &setup,
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
             const auto p = origin + point_rel_ms( x, y );
-            const map::apparent_light_info al = map::apparent_light_helper( cache, p );
+            const auto &visibility_cache = here.get_visibility_variables_cache();
+            const map::apparent_light_info al = map::apparent_light_helper(
+                                                    cache, p, visibility_cache.visibility_scale_factor );
             for( auto &pr : here.field_at( p ) ) {
                 fields << pr.second.name() << ',';
             }

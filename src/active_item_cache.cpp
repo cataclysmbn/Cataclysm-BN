@@ -83,7 +83,14 @@ std::vector<item *> active_item_cache::get()
 
 std::vector<item *> active_item_cache::get_for_processing()
 {
-    std::vector<item *> items_to_process;
+    auto items_to_process = std::vector<item *> {};
+    get_for_processing( items_to_process );
+    return items_to_process;
+}
+
+auto active_item_cache::get_for_processing( std::vector<item *> &items_to_process ) -> void
+{
+    items_to_process.clear();
     for( std::pair < const int, std::pair<int, std::vector<cache_reference<item>>>> &kv :
          active_items ) {
         //The algorithm here is a bit weird. We're going to process a fraction of the list at a time, keeping track of where we are in the list with a simple int.
@@ -121,7 +128,6 @@ std::vector<item *> active_item_cache::get_for_processing()
             }
         }
     }
-    return items_to_process;
 }
 
 std::vector<item *> active_item_cache::get_special( special_item_type type )
