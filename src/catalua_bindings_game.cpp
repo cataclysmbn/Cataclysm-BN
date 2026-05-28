@@ -83,7 +83,8 @@ auto read_optional_string( const sol::table &opts, const char *key ) -> std::opt
     return *value;
 }
 
-auto read_optional_abs_omt( const sol::table &opts, const char *key ) -> std::optional<tripoint_abs_omt>
+auto read_optional_abs_omt( const sol::table &opts,
+                            const char *key ) -> std::optional<tripoint_abs_omt>
 {
     const auto value = opts.get<sol::optional<tripoint_abs_omt>>( key );
     if( !value ) {
@@ -213,7 +214,8 @@ auto place_player_dimension_at( const dimension_travel_options &opts ) -> bool
 
     const auto preload_callback = build_dimension_preload_callback( opts );
     const auto load_pos = get_dimension_load_position( opts.target_omt );
-    if( !g->travel_to_dimension( opts.dimension_id, world_type, pocket_data, load_pos, preload_callback ) ) {
+    if( !g->travel_to_dimension( opts.dimension_id, world_type, pocket_data, load_pos,
+                                 preload_callback ) ) {
         return false;
     }
 
