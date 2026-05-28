@@ -64,6 +64,24 @@ bool active_item_cache::empty() const
     } );
 }
 
+auto active_item_cache::count() const -> active_item_count
+{
+    auto result = active_item_count {};
+    for( const auto &active_entry : active_items ) {
+        const auto &active_queue = active_entry.second;
+        for( const cache_reference<item> &active_item : active_queue.second ) {
+            if( !active_item ) {
+                continue;
+            }
+            ++result.total;
+            if( active_item->goes_bad() ) {
+                ++result.rottable;
+            }
+        }
+    }
+    return result;
+}
+
 std::vector<item *> active_item_cache::get()
 {
     std::vector<item *> all_cached_items;

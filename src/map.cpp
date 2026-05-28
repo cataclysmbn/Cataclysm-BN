@@ -5788,6 +5788,7 @@ void map::update_lum( item &loc, bool add )
 static bool process_map_items( item *item_ref, const tripoint_bub_ms &location,
                                const temperature_flag flag )
 {
+    ZoneScopedN( "process_map_items" );
     return item_ref->attempt_detach( [&location, &flag]( detached_ptr<item> &&it ) {
         return item::process( std::move( it ), nullptr, location, false, flag );
     } );
@@ -5875,6 +5876,9 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
 
 void map::process_items()
 {
+    auto total_active_items = int64_t{ 0 };
+    auto total_rottable_active_items = int64_t{ 0 };
+
     // Process vehicle items from in-bubble submaps via per-z-level caches.
     // Out-of-bubble vehicle items are handled by batch_turns_items().
     {
@@ -5892,27 +5896,53 @@ void map::process_items()
             }
         }
         std::ranges::for_each( veh_submaps, [&]( submap * sm ) {
+            {
+                ZoneScopedN( "process_items_count_vehicle_active_items" );
+                for( const auto &veh : sm->vehicles ) {
+                    if( !veh ) {
+                        continue;
+                    }
+                    const auto counts = veh->active_items.count();
+                    total_active_items += counts.total;
+                    total_rottable_active_items += counts.rottable;
+                }
+            }
             process_items_in_vehicles( *sm );
         } );
     }
     // Snapshot because processing can add or remove active submaps.
     ZoneScopedN( "process_items_submaps" );
-    const auto submaps_with_active_items_copy = std::vector<tripoint_abs_sm>(
-                submaps_with_active_items.begin(), submaps_with_active_items.end() );
+    std::vector<tripoint_abs_sm> submaps_with_active_items_copy;
+    {
+        ZoneScopedN( "process_items_snapshot_active_submaps" );
+        submaps_with_active_items_copy = std::vector<tripoint_abs_sm>(
+                                             submaps_with_active_items.begin(), submaps_with_active_items.end() );
+    }
     auto active_items = std::vector<item *> {};
-    for( const tripoint_abs_sm &abs_pos : submaps_with_active_items_copy ) {
-        if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
-            continue;
-        }
-        const auto local_pos = abs_to_bub( abs_pos );
-        submap *const current_submap = get_submap_at_grid( local_pos );
-        if( current_submap == nullptr ) {
-            continue;
-        }
-        if( !current_submap->active_items.empty() ) {
-            process_items_in_submap( *current_submap, local_pos, active_items );
+    {
+        ZoneScopedN( "process_items_scan_active_submaps" );
+        for( const tripoint_abs_sm &abs_pos : submaps_with_active_items_copy ) {
+            if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
+                continue;
+            }
+            const auto local_pos = abs_to_bub( abs_pos );
+            submap *const current_submap = get_submap_at_grid( local_pos );
+            if( current_submap == nullptr ) {
+                continue;
+            }
+            if( !current_submap->active_items.empty() ) {
+                {
+                    ZoneScopedN( "process_items_count_active_items" );
+                    const auto counts = current_submap->active_items.count();
+                    total_active_items += counts.total;
+                    total_rottable_active_items += counts.rottable;
+                }
+                process_items_in_submap( *current_submap, local_pos, active_items );
+            }
         }
     }
+    TracyPlot( "Total Active Items", total_active_items );
+    TracyPlot( "Total Rottable Active Items", total_rottable_active_items );
 }
 
 static temperature_flag temperature_flag_at_point( const map &m, const tripoint_bub_ms &p )
@@ -5933,20 +5963,27 @@ static temperature_flag temperature_flag_at_point( const map &m, const tripoint_
 auto map::process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,
                                    std::vector<item *> &active_items ) -> void
 {
+    ZoneScopedN( "process_items_in_submap" );
     // Get a COPY of the active item list for this submap.
     // If more are added as a side effect of processing, they are ignored this turn.
     // If they are destroyed before processing, they don't get processed.
-    current_submap.active_items.get_for_processing( active_items );
+    {
+        ZoneScopedN( "process_items_copy_active_items" );
+        current_submap.active_items.get_for_processing( active_items );
+    }
     const point grid_offset( gridp.x() * SEEX, gridp.y() * SEEY );
-    for( item *&active_item_ref : active_items ) {
-        if( !active_item_ref || !active_item_ref->is_loaded() ) {
-            // The item was destroyed, so skip it.
-            continue;
-        }
+    {
+        ZoneScopedN( "process_items_active_items" );
+        for( item *&active_item_ref : active_items ) {
+            if( !active_item_ref || !active_item_ref->is_loaded() ) {
+                // The item was destroyed, so skip it.
+                continue;
+            }
 
-        const auto map_location = active_item_ref->position();
-        temperature_flag flag = temperature_flag_at_point( *this, tripoint_bub_ms( map_location ) );
-        process_map_items( active_item_ref, map_location, flag );
+            const auto map_location = active_item_ref->position();
+            temperature_flag flag = temperature_flag_at_point( *this, tripoint_bub_ms( map_location ) );
+            process_map_items( active_item_ref, map_location, flag );
+        }
     }
 }
 

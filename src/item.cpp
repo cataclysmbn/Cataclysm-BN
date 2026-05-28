@@ -89,6 +89,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
+#include "profile.h"
 #include "ranged.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
@@ -10857,10 +10858,12 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         const bool seals, const temperature_flag flag,
         const weather_manager &weather_generator )
 {
+    ZoneScopedN( "item_process_internal" );
     if( !self ) {
         return std::move( self );
     }
     if( self->has_flag( flag_ETHEREAL_ITEM ) ) {
+        ZoneScopedN( "item_process_ethereal" );
         if( !self->has_var( "ethereal" ) ) {
             return detached_ptr<item>();
         }
@@ -10876,15 +10879,20 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         }
     }
 
-    self->process_artifact( carrier, pos );
-    self->process_relic( carrier );
+    {
+        ZoneScopedN( "item_process_artifact_relic" );
+        self->process_artifact( carrier, pos );
+        self->process_relic( carrier );
+    }
 
     if( self->faults.contains( fault_gun_blackpowder ) ) {
+        ZoneScopedN( "item_process_faults" );
         return process_blackpowder_fouling( std::move( self ), carrier );
     }
 
     avatar &you = get_avatar();
     if( activate ) {
+        ZoneScopedN( "item_process_activate" );
         if( self->type->invoke( carrier != nullptr ? *carrier : you, *self, pos ) > 0 ) {
             return detached_ptr<item>();
         }
@@ -10900,14 +10908,17 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
 
     // Remaining stuff is only done for active items.
     if( !self->is_active() ) {
+        ZoneScopedN( "item_process_inactive_return" );
         return std::move( self );
     }
 
     if( !self->is_food() && self->item_counter > 0 ) {
+        ZoneScopedN( "item_process_counter" );
         self->item_counter--;
     }
 
     if( self->item_counter == 0 && self->type->countdown_action ) {
+        ZoneScopedN( "item_process_countdown" );
         self->type->countdown_action.call( carrier ? *carrier : you, *self, false, pos );
         if( self->type->countdown_destroy ) {
             return detached_ptr<item>();
@@ -10915,69 +10926,86 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
     }
 
     map &here = get_map();
-    for( const emit_id &e : self->type->emits ) {
-        here.emit_field( pos, e );
+    if( !self->type->emits.empty() ) {
+        ZoneScopedN( "item_process_emits" );
+        for( const emit_id &e : self->type->emits ) {
+            here.emit_field( pos, e );
+        }
     }
 
     if( self->has_flag( flag_FAKE_SMOKE ) ) {
+        ZoneScopedN( "item_process_fake_smoke" );
         self = process_fake_smoke( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->has_flag( flag_FAKE_CLONING_VAT ) ) {
+        ZoneScopedN( "item_process_fake_cloning_vat" );
         self = process_fake_cloning_vat( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->has_flag( flag_FAKE_MILL ) ) {
+        ZoneScopedN( "item_process_fake_mill" );
         self = process_fake_mill( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->is_corpse() ) {
+        ZoneScopedN( "item_process_corpse" );
         self = process_corpse( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
-    if( self->has_flag( flag_WET ) && self->process_wet( carrier, pos ) ) {
-        // Drying items are never destroyed, but we want to exit so they don't get processed as tools.
-        return std::move( self );
+    if( self->has_flag( flag_WET ) ) {
+        ZoneScopedN( "item_process_wet" );
+        if( self->process_wet( carrier, pos ) ) {
+            // Drying items are never destroyed, but we want to exit so they don't get processed as tools.
+            return std::move( self );
+        }
     }
     if( self->has_flag( flag_LITCIG ) ) {
+        ZoneScopedN( "item_process_litcig" );
         self = process_litcig( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( ( self->has_flag( flag_WATER_EXTINGUISH ) || self->has_flag( flag_WIND_EXTINGUISH ) ) ) {
+        ZoneScopedN( "item_process_extinguish" );
         self = process_extinguish( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->has_flag( flag_WATER_DISABLE ) && carrier->is_underwater() ) {
+        ZoneScopedN( "item_process_water_disable" );
         carrier->add_msg_if_player( "Your %s gurgles and splutters.", self->tname() );
         self->revert( carrier );
         self->deactivate();
         return std::move( self );
     }
     if( self->has_flag( flag_CABLE_SPOOL ) ) {
+        ZoneScopedN( "item_process_cable" );
         // DO NOT process this as a tool! It really isn't!
         return process_cable( std::move( self ), carrier, pos );
     }
     if( self->has_flag( flag_IS_UPS ) ) {
+        ZoneScopedN( "item_process_ups" );
         // DO NOT process this as a tool! It really isn't!
         return process_UPS( std::move( self ), carrier, pos );
     }
     if( self->is_tool() ) {
+        ZoneScopedN( "item_process_tool" );
         return process_tool( std::move( self ), carrier, pos );
     }
     // All foods that go bad have temperature
     if( ( self->is_food() || self->is_corpse() ) ) {
+        ZoneScopedN( "item_process_rot" );
         item &obj = *self;
         self = process_rot( std::move( self ), seals, pos, carrier, flag, weather_generator );
         // If the item has rotted away, then self becomes a null pointer.

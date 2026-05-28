@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <iosfwd>
 #include <list>
 #include <unordered_map>
@@ -14,6 +15,11 @@ enum class special_item_type : int {
     none,
     corpse,
     explosive
+};
+
+struct active_item_count {
+    int64_t total = 0;
+    int64_t rottable = 0;
 };
 
 namespace std
@@ -50,6 +56,11 @@ class active_item_cache
          * Returns true if the cache is empty
          */
         bool empty() const;
+
+        /**
+         * Counts currently valid cached active item references.
+         */
+        auto count() const -> active_item_count;
 
         /**
          * Returns a vector of all cached active item references.
