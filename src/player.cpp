@@ -45,7 +45,7 @@ player::player()
     set_value( "THIEF_MODE", "THIEF_ASK" );
 
     for( const auto &v : vitamin::all() ) {
-        vitamin_levels[ v.first ] = 0;
+        vitamin_levels[ v.id ] = 0;
     }
 
     if( g != nullptr && json_flag::is_ready() && get_anatomy().is_valid() ) {

@@ -536,10 +536,10 @@ void Character::load( const JsonObject &data )
 
     JsonObject vits = data.get_object( "vitamin_levels" );
     vits.allow_omitted_members();
-    for( const std::pair<const vitamin_id, vitamin> &v : vitamin::all() ) {
-        if( vits.has_member( v.first.str() ) ) {
-            int lvl = vits.get_int( v.first.str() );
-            vitamin_levels[v.first] = clamp( lvl, v.first->min(), v.first->max() );
+    for( const auto &v : vitamin::all() ) {
+        if( vits.has_member( v.id.str() ) ) {
+            int lvl = vits.get_int( v.id.str() );
+            vitamin_levels[v.id] = clamp( lvl, v.id->min(), v.id->max() );
         }
     }
     data.read( "consumption_history", consumption_history );

@@ -992,7 +992,7 @@ void character_edit_menu( Character &c )
 
             const auto &vits = vitamin::all();
             for( const auto &v : vits ) {
-                smenu.addentry( -1, true, 0, "%s: %d", v.second.name(), p.vitamin_get( v.first ) );
+                smenu.addentry( -1, true, 0, "%s: %d", v.name(), p.vitamin_get( v.id ) );
             }
 
             smenu.query();
@@ -1034,8 +1034,8 @@ void character_edit_menu( Character &c )
                         smenu.ret < static_cast<int>( vits.size() + non_vitamin_entries ) ) {
                         auto iter = std::next( vits.begin(), smenu.ret - non_vitamin_entries );
                         if( query_int( value, _( "Set %s to?  Currently: %d" ),
-                                       iter->second.name(), p.vitamin_get( iter->first ) ) ) {
-                            p.vitamin_set( iter->first, value );
+                                       iter->name(), p.vitamin_get( iter->id ) ) ) {
+                            p.vitamin_set( iter->id, value );
                         }
                     }
             }

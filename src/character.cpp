@@ -5520,18 +5520,18 @@ void Character::update_body( const time_duration &duration )
     }
 
     for( const auto &v : vitamin::all() ) {
-        const time_duration rate = vitamin_rate( v.first );
+        const time_duration rate = vitamin_rate( v.id );
         if( rate > 0_turns ) {
             int qty = calendar::ticks_between( duration, rate );
             if( qty > 0 ) {
-                vitamin_mod( v.first, 0 - qty );
+                vitamin_mod( v.id, 0 - qty );
             }
 
         } else if( rate < 0_turns ) {
             // mutations can result in vitamins being generated (but never accumulated)
             int qty = calendar::ticks_between( duration, -rate );
             if( qty > 0 ) {
-                vitamin_mod( v.first, qty );
+                vitamin_mod( v.id, qty );
             }
         }
     }
