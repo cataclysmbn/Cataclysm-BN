@@ -53,14 +53,14 @@ void vitamin::load_vitamin( const JsonObject &jo, const std::string &src )
 void vitamin::load( const JsonObject &jo, const std::string &src )
 {
     const bool strict = is_strict_enabled( src );
-    mandatory( jo, was_loaded, "name", name_ );
-    mandatory( jo, was_loaded, "vit_type", type_ );
-    mandatory( jo, was_loaded, "rate", rate_ );
+    mandatory( jo, false, "name", name_ );
+    mandatory( jo, false, "vit_type", type_ );
+    mandatory( jo, false, "rate", rate_ );
     deficiency_ = jo.has_string( "deficiency" ) ? efftype_id( jo.get_string( "deficiency" ) ) :
                   efftype_id::NULL_ID();
     excess_ = jo.has_string( "excess" ) ? efftype_id( jo.get_string( "excess" ) ) :
               efftype_id::NULL_ID();
-    mandatory( jo, was_loaded, "min", min_ );
+    mandatory( jo, false, "min", min_ );
     assign( jo, "max", max_, strict, 0 );
 
 

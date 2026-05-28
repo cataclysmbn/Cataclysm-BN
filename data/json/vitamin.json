@@ -3,7 +3,6 @@
     "id": "calcium",
     "type": "vitamin",
     "vit_type": "vitamin",
-    "name": { "str": "Calcium" },
     "deficiency": "hypocalcemia",
     "min": -12000,
     "rate": "15 m",
