@@ -9,9 +9,12 @@
 #include "units.h"
 #include "units_serde.h"
 #include "units_utility.h"
+#include "weather/weather.h"
 
+#include <array>
 #include <cstdint>
 #include <limits>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -52,6 +55,48 @@ TEST_CASE("units_have_correct_ratios", "[units]") {
     CHECK(60_arcmin == 1_degrees);
 
     CHECK(1_c == units::from_celsius(1));
+}
+
+
+TEST_CASE("body_temperature_units_preserve_legacy_body_temperature_scale", "[units][bodytemp]") {
+    const auto thresholds = std::to_array<std::pair<units::temperature, int>>({
+        {BODYTEMP_FREEZING, 500},
+        {BODYTEMP_VERY_COLD, 2000},
+        {BODYTEMP_COLD, 3500},
+        {BODYTEMP_NORM, 5000},
+        {BODYTEMP_HOT, 6500},
+        {BODYTEMP_VERY_HOT, 8000},
+        {BODYTEMP_SCORCHING, 9500},
+    });
+
+    for (const auto& [temperature, legacy] : thresholds) {
+        CAPTURE(legacy);
+        CHECK(units::to_legacy_bodypart_temp(temperature) == legacy);
+        CHECK(units::from_legacy_bodypart_temp(legacy) == temperature);
+    }
+
+    const auto hot_delta = BODYTEMP_HOT - BODYTEMP_NORM;
+    CHECK(units::to_legacy_bodypart_temp_delta(hot_delta) == 1500);
+    CHECK(units::from_legacy_bodypart_temp_delta(1500) == hot_delta);
+    CHECK(BODYTEMP_NORM + units::from_legacy_bodypart_temp_delta(1500) == BODYTEMP_HOT);
+    CHECK(units::from_legacy_bodypart_temp(5250) == 37.5_c);
+    CHECK(units::to_legacy_bodypart_temp(37.5_c) == 5250);
+    for (const auto legacy : std::views::iota(-10000, 15001)) {
+        CAPTURE(legacy);
+        CHECK(units::to_legacy_bodypart_temp(units::from_legacy_bodypart_temp(legacy)) == legacy);
+        CHECK(units::to_legacy_bodypart_temp_delta(units::from_legacy_bodypart_temp_delta(legacy))
+              == legacy);
+    }
+}
+
+TEST_CASE("fahrenheit_deltas_preserve_fractional_celsius", "[units][bodytemp]") {
+    CHECK(1_f_delta == units::from_millidegree_celsius_delta(555));
+    CHECK(units::from_fahrenheit_delta(-1) == units::from_millidegree_celsius_delta(-555));
+    CHECK(9_f_delta == 5_c_delta);
+    CHECK(units::from_fahrenheit_delta(0) == 0_c_delta);
+    CHECK(units::to_fahrenheit_delta(2.5_c_delta) == 4);
+    CHECK(units::to_fahrenheit_delta<double>(2.5_c_delta) == Approx(4.5));
+    CHECK(units::to_millidegree_celsius_delta(units::from_fahrenheit_delta(0.9)) == Approx(500));
 }
 
 TEST_CASE("large_volume_json_round_trip", "[units][volume]") {
