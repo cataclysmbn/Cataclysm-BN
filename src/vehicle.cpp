@@ -4865,8 +4865,11 @@ double vehicle::total_thrust( const bool fuelled, const bool safe, const bool id
 
 // get sum of lift from all lifting parts
 double vehicle::total_lift( const bool fuelled, const bool safe, const bool ideal,
-                            const bool unpowered ) const
+                            const bool unpowered, const bool idle ) const
 {
+    if( idle ) {
+        return total_balloon_lift();
+    }
     if( unpowered ) {
         return total_balloon_lift() + total_wing_lift();
     } else {
@@ -4910,9 +4913,9 @@ bool vehicle::has_lift() const
     return has_part( VPFLAG_ROTOR ) || has_part( VPFLAG_BALLOON ) || has_part( VPFLAG_WING );
 }
 
-bool vehicle::has_sufficient_lift( const bool unpowered ) const
+bool vehicle::has_sufficient_lift( const bool unpowered, const bool idle ) const
 {
-    return total_lift( true, false, false, unpowered ) > to_newton( total_mass() );
+    return total_lift( true, false, false, unpowered, idle ) > to_newton( total_mass() );
 }
 
 double vehicle::get_lift_percent( const bool unpowered ) const

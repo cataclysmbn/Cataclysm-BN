@@ -1182,8 +1182,8 @@ class vehicle
          * total lift of all lifters
          */
         double total_lift( bool fuelled, bool safe = false, bool ideal = false,
-                           bool unpowered = false ) const;
-        bool has_sufficient_lift( bool unpowered = false ) const;
+                           bool unpowered = false, bool idle = false ) const;
+        bool has_sufficient_lift( bool unpowered = false, bool idle = false ) const;
         double get_lift_percent( bool unpowered = false ) const;
         int get_z_change() const;
         bool is_flying_in_air() const;
