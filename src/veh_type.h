@@ -328,7 +328,7 @@ class vpart_info
 
         /*Comfort data for sleeping in vehicles*/
         int comfort = 0;
-        int floor_bedding_warmth = 0;
+        units::temperature_delta floor_bedding_warmth = 0_c_delta;
         int bonus_fire_warmth_feet = 300;
 
         /**

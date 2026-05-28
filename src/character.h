@@ -525,10 +525,10 @@ class Character : public Creature, public location_visitable<Character>
 
         /** Getters/setters for body part temperature.
          *  This could go under Creature, but Character is the class with update_bodytemp. */
-        int  get_part_temp_cur( const bodypart_id &id ) const;
-        void set_part_temp_cur( const bodypart_id &id, int temp );
-        std::map<bodypart_id, int> get_temp_cur();
-        void set_temp_cur( int temp );
+        auto get_part_temp_cur( const bodypart_id &id ) const -> units::temperature;
+        auto set_part_temp_cur( const bodypart_id &id, units::temperature temp ) -> void;
+        auto get_temp_cur() -> std::map<bodypart_id, units::temperature>;
+        auto set_temp_cur( units::temperature temp ) -> void;
 
         /** Define blood loss (in percents) */
         int blood_loss( const bodypart_id &bp ) const;
@@ -2035,18 +2035,19 @@ class Character : public Creature, public location_visitable<Character>
          * Warmth from terrain, furniture, vehicle furniture and traps.
          * Can be negative.
          **/
-        static int floor_bedding_warmth( const tripoint_bub_ms &pos );
+        static auto floor_bedding_warmth( const tripoint_bub_ms &pos ) -> units::temperature_delta;
         /** Warmth from clothing on the floor **/
-        static int floor_item_warmth( const tripoint_bub_ms &pos );
+        static auto floor_item_warmth( const tripoint_bub_ms &pos ) -> units::temperature_delta;
         /** Final warmth from the floor **/
-        int floor_warmth( const tripoint_bub_ms &pos ) const;
+        auto floor_warmth( const tripoint_bub_ms &pos ) const -> units::temperature_delta;
 
         /** Correction factor of the body temperature due to traits and mutations **/
-        int bodytemp_modifier_traits( bool overheated ) const;
+        auto bodytemp_modifier_traits( bool overheated ) const -> units::temperature_delta;
         /** Correction factor of the body temperature due to traits and mutations for player lying on the floor **/
-        int bodytemp_modifier_traits_floor() const;
+        auto bodytemp_modifier_traits_floor() const -> units::temperature_delta;
         /** Value of the body temperature corrected by climate control **/
-        int temp_corrected_by_climate_control( int temperature ) const;
+        auto temp_corrected_by_climate_control( units::temperature temperature ) const ->
+        units::temperature;
 
         bool in_sleep_state() const override;
 
@@ -2159,7 +2160,7 @@ class Character : public Creature, public location_visitable<Character>
          * depending on choice of ingredients */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const item &, const recipe_id &,
-            const cata::flat_set<flag_id> &extra_flags = {} ) const;
+        const cata::flat_set<flag_id> &extra_flags = {} ) const;
         /** Same, but across arbitrary recipes */
         std::pair<nutrients, nutrients> compute_nutrient_range(
             const itype_id &, const cata::flat_set<flag_id> &extra_flags = {} ) const;

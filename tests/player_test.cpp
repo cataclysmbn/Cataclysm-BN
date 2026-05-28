@@ -53,8 +53,8 @@ template<> struct hash<body_part_temp> {
 } // namespace std
 
 struct temperature_threshold {
-    constexpr temperature_threshold( int v, const char *n )
-        : value( v )
+    constexpr temperature_threshold( units::temperature v, const char *n )
+        : value( units::to_legacy_bodypart_temp( v ) )
         , name( n )
     {}
 
@@ -125,20 +125,20 @@ static int get_temp_cur( const Character &c, const bodypart_str_id &bp )
         return 0;
     }
 
-    return iter->second.get_temp_cur();
+    return units::to_legacy_bodypart_temp( iter->second.get_temp_cur() );
 }
 
 // Run update_bodytemp() until core body temperature settles.
 static std::vector<int> converge_temperature( player &p, size_t iters,
-        int start_temperature = BODYTEMP_NORM )
+        int start_temperature = units::to_legacy_bodypart_temp( BODYTEMP_NORM ) )
 {
     constexpr size_t n_history = 10;
     REQUIRE( get_weather().weather_id == WEATHER_CLOUDY );
     REQUIRE( get_weather().windspeed == 0 );
 
     for( auto &pr : p.get_body() ) {
-        pr.second.set_temp_cur( start_temperature );
-        pr.second.set_temp_conv( start_temperature );
+        pr.second.set_temp_cur( units::from_legacy_bodypart_temp( start_temperature ) );
+        pr.second.set_temp_conv( units::from_legacy_bodypart_temp( start_temperature ) );
     }
 
     bool converged = false;
@@ -170,7 +170,7 @@ static std::vector<int> converge_temperature( player &p, size_t iters,
     std::vector<int> result;
     std::transform( p.get_body().begin(), p.get_body().end(), std::back_insert_iterator( result ),
     []( const auto & pr ) {
-        return pr.second.get_temp_cur();
+        return units::to_legacy_bodypart_temp( pr.second.get_temp_cur() );
     } );
 
     CAPTURE( iters );
@@ -353,7 +353,7 @@ static std::array<units::temperature, bodytemps.size()> find_temperature_points(
     for( int air_temperature = min_air_temp + 1; air_temperature < max_air_temp; air_temperature++ ) {
         CAPTURE( air_temperature );
         CAPTURE( units::from_fahrenheit( air_temperature ) );
-        size_t index = air_temperature - min_air_temp;
+        const auto index = air_temperature - min_air_temp;
         CAPTURE( all_converged_temperatures[index] );
         CAPTURE( all_converged_temperatures[index - 1] );
         CHECK( all_converged_temperatures[index][0] >= all_converged_temperatures[index - 1][0] );
@@ -414,9 +414,11 @@ TEST_CASE( "Find air temperatures for given body temperatures.", "[.][bodytemp]"
 }
 
 // Ugly pasta, for simplicity
-static int find_converging_water_temp( player &p, int expected_water, int expected_bodytemp )
+static int find_converging_water_temp( player &p, int expected_water,
+                                       units::temperature expected_bodytemp )
 {
     constexpr int tol = 100;
+    const auto legacy_expected_bodytemp = units::to_legacy_bodypart_temp( expected_bodytemp );
     REQUIRE( get_map().has_flag( TFLAG_SWIMMABLE, p.bub_pos() ) );
     REQUIRE( get_map().has_flag( TFLAG_DEEP_WATER, p.bub_pos() ) );
     int actual_water = expected_water;
@@ -425,13 +427,13 @@ static int find_converging_water_temp( player &p, int expected_water, int expect
         step /= 2;
         get_weather().water_temperature = units::from_fahrenheit( actual_water );
         get_weather().clear_temp_cache();
-        const int actual_temperature = units::celsius_to_fahrenheit( get_weather().get_water_temperature(
-                                           p.abs_pos() ).value() );
-        REQUIRE( actual_temperature == actual_water );
+        const auto actual_temperature = static_cast<int>( std::lround( units::to_fahrenheit(
+                                            get_weather().get_water_temperature( p.abs_pos() ) ) ) );
+        REQUIRE( std::abs( actual_temperature - actual_water ) <= 1 );
 
         int converged_temperature = converge_temperature( p, 10000 )[0];
-        bool high_enough = expected_bodytemp - tol <= converged_temperature;
-        bool low_enough  = expected_bodytemp + tol >= converged_temperature;
+        const auto high_enough = legacy_expected_bodytemp - tol <= converged_temperature;
+        const auto low_enough  = legacy_expected_bodytemp + tol >= converged_temperature;
         if( high_enough && low_enough ) {
             return actual_water;
         }
@@ -495,8 +497,9 @@ TEST_CASE( "Player body temperatures in water.", "[.][bodytemp]" )
 }
 
 static void hypothermia_check( player &p, int water_temperature, time_duration expected_time,
-                               int expected_temperature )
+                               units::temperature expected_temperature )
 {
+    const auto legacy_expected_temperature = units::to_legacy_bodypart_temp( expected_temperature );
     get_weather().water_temperature = units::from_fahrenheit( water_temperature );
     get_weather().clear_temp_cache();
     int expected_turns = to_turns<int>( expected_time );
@@ -506,14 +509,14 @@ static void hypothermia_check( player &p, int water_temperature, time_duration e
     int actual_time;
     for( actual_time = 0; actual_time < upper_bound * 2; actual_time++ ) {
         p.update_bodytemp( get_map(), get_weather() );
-        if( get_temp_cur( p, body_part_head ) <= expected_temperature ) {
+        if( get_temp_cur( p, body_part_head ) <= legacy_expected_temperature ) {
             break;
         }
     }
 
     CHECK( actual_time >= lower_bound );
     CHECK( actual_time <= upper_bound );
-    CHECK( get_temp_cur( p, body_part_head ) <= expected_temperature );
+    CHECK( get_temp_cur( p, body_part_head ) <= legacy_expected_temperature );
 }
 
 TEST_CASE( "Water hypothermia check.", "[.][bodytemp]" )

@@ -338,8 +338,8 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
 
     if( jo.has_array( "bodytemp_modifiers" ) ) {
         auto bodytemp_array = jo.get_array( "bodytemp_modifiers" );
-        bodytemp_min = bodytemp_array.get_int( 0 );
-        bodytemp_max = bodytemp_array.get_int( 1 );
+        bodytemp_min = units::from_legacy_bodypart_temp_delta( bodytemp_array.get_int( 0 ) );
+        bodytemp_max = units::from_legacy_bodypart_temp_delta( bodytemp_array.get_int( 1 ) );
         if( bodytemp_max < bodytemp_min ) {
             std::swap( bodytemp_min, bodytemp_max );
             jo.throw_error( _( "First temperature modifier can't be higher than the second" ),
@@ -347,7 +347,9 @@ void mutation_branch::load( const JsonObject &jo, const std::string & )
         }
     }
 
-    optional( jo, was_loaded, "bodytemp_sleep", bodytemp_sleep, 0 );
+    auto legacy_bodytemp_sleep = units::to_legacy_bodypart_temp_delta( bodytemp_sleep );
+    optional( jo, was_loaded, "bodytemp_sleep", legacy_bodytemp_sleep, 0 );
+    bodytemp_sleep = units::from_legacy_bodypart_temp_delta( legacy_bodytemp_sleep );
     optional( jo, was_loaded, "threshold", threshold, false );
     unsigned short tier_default;
     if( jo.has_array( "threshreq" ) ) {

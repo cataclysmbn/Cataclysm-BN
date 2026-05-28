@@ -71,7 +71,7 @@ static nc_color encumb_color( int level )
     return c_red;
 }
 
-static int get_temp_conv( const Character &c, const bodypart_str_id &bp )
+static auto get_temp_conv( const Character &c, const bodypart_str_id &bp ) -> units::temperature
 {
     auto iter = c.get_body().find( bp );
     if( iter == c.get_body().end() ) {
@@ -88,7 +88,7 @@ nc_color warmth::bodytemp_color( const Character &c, const bodypart_str_id &bp )
         return c_light_gray;    // Eyes don't count towards warmth
     }
 
-    int temp_conv = get_temp_conv( c, bp );
+    const auto temp_conv = get_temp_conv( c, bp );
     if( temp_conv > BODYTEMP_SCORCHING ) {
         return c_red;
     } else if( temp_conv > BODYTEMP_VERY_HOT ) {
@@ -108,9 +108,10 @@ nc_color warmth::bodytemp_color( const Character &c, const bodypart_str_id &bp )
 }
 
 // Rescale temperature value to one that the player sees
-static int temperature_print_rescaling( int temp )
+static auto temperature_print_rescaling( units::temperature temp ) -> int
 {
-    return ( temp / 100.0 ) * 2 - 100;
+    const auto legacy_temp = units::to_legacy_bodypart_temp( temp );
+    return ( legacy_temp / 100.0 ) * 2 - 100;
 }
 
 static bool should_combine_bps( const Character &ch,

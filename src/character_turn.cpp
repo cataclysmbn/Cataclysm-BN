@@ -1051,7 +1051,7 @@ void update_body_wetness( Character &who, const w_point &weather )
         int drying_chance = pr.second.get_drench_capacity();
         // Body temperature affects duration of wetness
         // Note: Using temp_conv rather than temp_cur, to better approximate environment
-        int temp_conv = pr.second.get_temp_conv();
+        const auto temp_conv = pr.second.get_temp_conv();
         if( temp_conv >= BODYTEMP_SCORCHING ) {
             drying_chance *= 2;
         } else if( temp_conv >= BODYTEMP_VERY_HOT ) {

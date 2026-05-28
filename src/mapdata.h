@@ -646,7 +646,7 @@ struct furn_t : map_data_common_t {
     std::set<itype_id> crafting_pseudo_items;
     units::volume keg_capacity = 0_ml;
     int comfort = 0;
-    int floor_bedding_warmth = 0;
+    units::temperature_delta floor_bedding_warmth = 0_c_delta;
     /** Emissions of furniture */
     std::set<emit_id> emissions;
 

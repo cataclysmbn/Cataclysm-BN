@@ -488,17 +488,41 @@ void cata::detail::reg_character( sol::state &lua )
 
         SET_FX_T( has_watch, bool() const );
 
-        // These are named with 'BTU' (body temperature units) because other
-        // body temperature measurements might/can/should be added later.
-        DOC( "Gets the current temperature of a specific body part (in Body Temperature Units)." );
-        SET_FX_N_T( get_part_temp_cur, "get_part_temp_btu", int( const bodypart_id & id ) const );
-        DOC( "Sets a specific body part to a given temperature (in Body Temperature Units)." );
-        SET_FX_N_T( set_part_temp_cur, "set_part_temp_btu", void( const bodypart_id & id, int temp ) );
-        DOC( "Gets all bodyparts and their associated temperatures (in Body Temperature Units)." );
-        // May want to remove the 'resolve' call, but it clarifies the type...
-        luna::set_fx( ut, "get_temp_btu", sol::resolve< std::map<bodypart_id, int>() >( &UT_CLASS::get_temp_cur ) );
-        DOC( "Sets ALL body parts on a creature to the given temperature (in Body Temperature Units)." );
-        SET_FX_N_T( set_temp_cur, "set_temp_btu", void( int temp ) );
+        DOC( "Gets the current temperature of a specific body part in Celsius." );
+        SET_FX_N_T( get_part_temp_cur, "get_part_temp_celsius", units::temperature( const bodypart_id & id ) const );
+        DOC( "Sets a specific body part to a temperature in Celsius." );
+        SET_FX_N_T( set_part_temp_cur, "set_part_temp_celsius", void( const bodypart_id & id, units::temperature temp ) );
+        DOC( "Gets all bodyparts and their associated temperatures in Celsius." );
+        luna::set_fx( ut, "get_temp_celsius", sol::resolve< std::map<bodypart_id, units::temperature>() >( &UT_CLASS::get_temp_cur ) );
+        DOC( "Sets ALL body parts on a creature to the given temperature in Celsius." );
+        SET_FX_N_T( set_temp_cur, "set_temp_celsius", void( units::temperature temp ) );
+
+        // These legacy functions are named with 'BTU' (body temperature units).
+        DOC( "Deprecated: use get_part_temp_celsius instead. Gets the current temperature of a specific body part in legacy Body Temperature Units." );
+        luna::set_fx( ut, "get_part_temp_btu", static_cast<int ( * )( const UT_CLASS &, const bodypart_id & )>(
+        []( const UT_CLASS & charac, const bodypart_id & id ) -> int {
+            return units::to_legacy_bodypart_temp( charac.get_part_temp_cur( id ) );
+        } ) );
+        DOC( "Deprecated: use set_part_temp_celsius instead. Sets a specific body part to a given legacy Body Temperature Units value." );
+        luna::set_fx( ut, "set_part_temp_btu", static_cast<void ( * )( UT_CLASS &, const bodypart_id &, int )>(
+        []( UT_CLASS & charac, const bodypart_id & id, int temp ) -> void {
+            charac.set_part_temp_cur( id, units::from_legacy_bodypart_temp( temp ) );
+        } ) );
+        DOC( "Deprecated: use get_temp_celsius instead. Gets all bodyparts and their associated temperatures in legacy Body Temperature Units." );
+        luna::set_fx( ut, "get_temp_btu", static_cast<std::map<bodypart_id, int>( * )( UT_CLASS & )>(
+        []( UT_CLASS & charac ) -> std::map<bodypart_id, int> {
+            auto legacy_temps = std::map<bodypart_id, int>{};
+            for( const auto &[bp, temp] : charac.get_temp_cur() )
+            {
+                legacy_temps.emplace( bp, units::to_legacy_bodypart_temp( temp ) );
+            }
+            return legacy_temps;
+        } ) );
+        DOC( "Deprecated: use set_temp_celsius instead. Sets ALL body parts on a creature to the given legacy Body Temperature Units value." );
+        luna::set_fx( ut, "set_temp_btu", static_cast<void ( * )( UT_CLASS &, int )>(
+        []( UT_CLASS & charac, int temp ) -> void {
+            charac.set_temp_cur( units::from_legacy_bodypart_temp( temp ) );
+        } ) );
 
         SET_FX_T( blood_loss, int( const bodypart_id & bp ) const );
 

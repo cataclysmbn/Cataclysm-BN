@@ -574,8 +574,8 @@ void bodypart::serialize( JsonOut &json ) const
     json.member( "hp_max", hp_max );
     json.member( "damage_bandaged", damage_bandaged );
     json.member( "damage_disinfected", damage_disinfected );
-    json.member( "temp_cur", temp_cur );
-    json.member( "temp_conv", temp_conv );
+    json.member( "temp_cur", units::to_legacy_bodypart_temp( temp_cur ) );
+    json.member( "temp_conv", units::to_legacy_bodypart_temp( temp_conv ) );
     json.member( "frostbite_timer", frostbite_timer );
     json.member( "wetness", wetness );
     json.end_object();
@@ -589,8 +589,12 @@ void bodypart::deserialize( JsonIn &jsin )
     jo.read( "hp_max", hp_max, true );
     jo.read( "damage_bandaged", damage_bandaged, true );
     jo.read( "damage_disinfected", damage_disinfected, true );
-    jo.read( "temp_cur", temp_cur, true );
-    jo.read( "temp_conv", temp_conv, false );
+    if( auto legacy_temp_cur = int{}; jo.read( "temp_cur", legacy_temp_cur, true ) ) {
+        temp_cur = units::from_legacy_bodypart_temp( legacy_temp_cur );
+    }
+    if( auto legacy_temp_conv = int{}; jo.read( "temp_conv", legacy_temp_conv, false ) ) {
+        temp_conv = units::from_legacy_bodypart_temp( legacy_temp_conv );
+    }
     jo.read( "frostbite_timer", frostbite_timer, true );
     jo.read( "wetness", wetness, true );
 }

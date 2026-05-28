@@ -10114,9 +10114,9 @@ void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
         const weather_generator &wgen = weather.get_cur_weather_gen();
         const unsigned int seed = g->get_seed();
         // It's a modifier, so we need to subtract 0_f
-        units::temperature local_mod = units::from_fahrenheit( g->new_game
-                                       ? 0
-                                       : get_map().get_temperature( pos ) ) - 0_f;
+        const auto local_mod = units::from_fahrenheit( g->new_game
+                               ? 0
+                               : get_map().get_temperature( pos ) ) - 0_f;
 
         // Process the past of this item since the last time it was processed
         while( now - time > 1_hours ) {

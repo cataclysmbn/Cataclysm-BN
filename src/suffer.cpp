@@ -387,7 +387,7 @@ void Character::suffer_while_awake( const int current_stim )
     }
 }
 
-static void set_bodytemp( Character &who, int bodytemp )
+static auto set_bodytemp( Character &who, units::temperature bodytemp ) -> void
 {
     for( auto &pr : who.get_body() ) {
         if( pr.first == body_part_eyes ) {
@@ -1871,13 +1871,13 @@ void Character::apply_wetness_morale( const units::temperature &temperature )
             debugmsg( "%s has no body part %s", disp_name().c_str(), elem.first.c_str() );
             continue;
         }
-        int temp_cur = iter->second.get_temp_cur();
+        const auto temp_cur = iter->second.get_temp_cur();
         // Clamp to [COLD,HOT] and cast to double
-        const double part_temperature =
+        const auto part_temperature =
             std::min( BODYTEMP_HOT, std::max( BODYTEMP_COLD, temp_cur ) );
         // 0.0 at COLD, 1.0 at HOT
-        const double part_mod = ( part_temperature - BODYTEMP_COLD ) /
-                                ( BODYTEMP_HOT - BODYTEMP_COLD );
+        const auto part_mod = units::to_celsius_delta( part_temperature - BODYTEMP_COLD ) /
+                              units::to_celsius_delta( BODYTEMP_HOT - BODYTEMP_COLD );
         // Average of global and part temperature modifiers, each in range [-1.0, 1.0]
         double scaled_temperature = ( global_temperature_mod + part_mod ) / 2;
 
