@@ -526,20 +526,12 @@ jobs:
           fi
 
       # Upload artifacts
-      - name: Upload Windows playtest files artifact
-        if: inputs.upload-artifacts && matrix.upload-artifact == true && runner.os == 'Windows'
-        uses: actions/upload-artifact@v4.6.0
-        with:
-          name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
-          path: cataclysmbn-${{ inputs.version-label }}/
-          if-no-files-found: error
-
       - name: Upload packaged build artifact
-        if: inputs.upload-artifacts && matrix.upload-artifact == true && runner.os != 'Windows'
+        if: inputs.upload-artifacts && matrix.upload-artifact == true
         uses: actions/upload-artifact@v4.6.0
         with:
           name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
-          path: cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+          path: ${{ runner.os == 'Windows' && format('cataclysmbn-{0}/', inputs.version-label) || format('cbn-{0}-{1}.{2}', matrix.artifact, inputs.version-label, matrix.ext) }}
           if-no-files-found: error
 
       - name: Run tests (windows msvc)
