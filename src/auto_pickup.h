@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "enums.h"
+#include "item_search.h"
 
 class JsonIn;
 class JsonOut;
@@ -22,52 +23,51 @@ namespace auto_pickup
  * item existing in the game that matches a rule (either white- or blacklist)
  * is added as the key, with RULE_WHITELISTED or RULE_BLACKLISTED as the values.
  */
-class cache : public std::unordered_map<std::string, rule_state>
+class cache : public std::unordered_map<itype_id, rule_state>
 {
     public:
-        /// Defines whether this cache has been filled.
-        bool ready = false;
-
+        rule_list curr_rules;
+        
         /// Temporary data used while filling the cache.
-        std::unordered_map<std::string, const itype *> temp_items;
+        void refresh_map_items();
 };
 
 /**
  * A single entry in the list of auto pickup entries @ref rule_list.
  * The data contained can be edited by the player and determines what to pick/ignore.
  */
-class rule
-{
-    public:
-        std::string sRule;
-        bool bActive = false;
-        bool bExclude = false;
+// class rule
+// {
+//     public:
+//         std::string sRule;
+//         std::function<bool(const itype &)> ruleFunction = [](const itype& item) { return true; };
+//         bool bActive = false;
+//         bool bExclude = false;
 
-        rule() = default;
+//         rule() = default;
 
-        rule( const std::string &r, const bool a, const bool e ) : sRule( r ), bActive( a ), bExclude( e ) {
-        }
+//         rule( const std::string &r, const bool a, const bool e ) : sRule( r ), bActive( a ), bExclude( e ), ruleFunction(itype_filter_from_string(r)){}
 
-        void serialize( JsonOut &jsout ) const;
-        void deserialize( JsonIn &jsin );
+//         void serialize( JsonOut &jsout ) const;
+//         void deserialize( JsonIn &jsin );
 
-        void test_pattern() const;
-};
+//         void test_pattern() const;
+// };
 
 /**
  * A list of rules. This is primarily a container with a few convenient functions (like saving/loading).
  */
-class rule_list : public std::vector<rule>
-{
-    public:
-        void serialize( JsonOut &jsout ) const;
-        void deserialize( JsonIn &jsin );
+// class rule_list : public std::vector<rule>
+// {
+//     public:
+//         void serialize( JsonOut &jsout ) const;
+//         void deserialize( JsonIn &jsin );
 
-        void refresh_map_items( cache &map_items ) const;
+//         void refresh_map_items( cache &map_items ) const;
 
-        void create_rule( cache &map_items, const std::string &to_match );
-        void create_rule( cache &map_items, const item &it );
-};
+//         void create_rule( cache &map_items, const std::string &to_match );
+//         void create_rule( cache &map_items, const item &it );
+// };
 
 class user_interface
 {
@@ -87,6 +87,7 @@ class user_interface
         bool is_autopickup = false;
 
         void show();
+        void test_pattern(const rule& rule) const;
 
         bool bStuffChanged = false;
 };
