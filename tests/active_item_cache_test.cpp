@@ -48,6 +48,29 @@ TEST_CASE( "nonperishable_food_does_not_enter_active_item_cache", "[item]" )
     CHECK( g->m.get_submaps_with_active_items().contains( abs_loc ) );
 }
 
+TEST_CASE( "active_item_cache_slow_items_accrue_elapsed_time", "[item]" )
+{
+    clear_all_state();
+    calendar::turn = calendar::start_of_cataclysm;
+
+    auto cache = active_item_cache();
+    auto sashimi = item::spawn( "sashimi" );
+    REQUIRE( sashimi->processing_speed() == to_turns<int>( 10_minutes ) );
+    auto &sashimi_ref = *sashimi;
+    cache.add( sashimi_ref );
+
+    auto items_to_process = cache.get_for_processing();
+    CHECK( items_to_process.empty() );
+
+    calendar::turn += 20_minutes;
+    items_to_process = cache.get_for_processing();
+    REQUIRE( items_to_process.size() == 1 );
+    CHECK( items_to_process.front() == &sashimi_ref );
+
+    items_to_process = cache.get_for_processing();
+    CHECK( items_to_process.empty() );
+}
+
 TEST_CASE( "place_active_item_at_various_coordinates", "[item]" )
 {
     clear_all_state();
