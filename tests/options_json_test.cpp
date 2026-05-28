@@ -60,6 +60,19 @@ TEST_CASE( "json_option_definitions_are_loaded", "[options][json]" )
         CHECK( option.iDefault == default_value );
     }
 
+    auto &monster_evolve_max_iters = get_options().get_option( "EVOLVE_MAX_ITERS" );
+    CHECK( monster_evolve_max_iters.getType() == "int" );
+
+    auto &zombies_always_evolve = get_options().get_option( "ALWAYS_EVOLVE" );
+    CHECK( zombies_always_evolve.getType() == "bool" );
+
+    auto &prevent_occlusion = get_options().get_option( "PREVENT_OCCLUSION" );
+    CHECK( prevent_occlusion.getType() == "string_select" );
+    CHECK( prevent_occlusion.getItems().size() == 3 );
+
+    auto &retained_omt_cache_multiplier = get_options().get_option( "RETAINED_OMT_CACHE_MULTIPLIER" );
+    CHECK( retained_omt_cache_multiplier.getType() == "int" );
+
     auto &multithreading_enabled = get_options().get_option( "MULTITHREADING_ENABLED" );
     CHECK( multithreading_enabled.getType() == "bool" );
 

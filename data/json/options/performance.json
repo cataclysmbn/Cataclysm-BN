@@ -225,10 +225,72 @@
     "scope": "global",
     "page": "performance",
     "group": "fov_3d",
-    "menu_text": "3D FoV horizontal occlusion",
-    "tooltip": "When enabled, obstacles at other z-levels correctly block horizontal line of sight.  Requires 3D FoV.  Slower than disabled.",
+    "menu_text": "3D FoV shadow casting",
+    "tooltip": "When enabled, obstacles at other z-levels correctly cast 3D shadows. Requires 3D FoV. Significantly slower than disabled.",
     "default": false,
     "deps": [ { "option": "FOV_3D" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "PREVENT_OCCLUSION",
+    "stype": "string_select",
+    "scope": "global",
+    "page": "performance",
+    "group": "fov_3d",
+    "menu_text": "Handle occlusion by high sprites",
+    "tooltip": "Draw tall sprites normal (Off), retracted/transparent (On), or automatically retracting/transparent near the player (Auto).",
+    "default": "auto",
+    "items": [ { "value": "off", "label": "Off" }, { "value": "on", "label": "On" }, { "value": "auto", "label": "Auto" } ]
+  },
+  {
+    "type": "OPTION",
+    "name": "PREVENT_OCCLUSION_TRANSP",
+    "stype": "bool",
+    "scope": "global",
+    "page": "performance",
+    "group": "fov_3d",
+    "menu_text": "Prevent occlusion via transparency",
+    "tooltip": "Prevent high-sprite occlusion by using semi-transparent *_transparent tile variants when available.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "PREVENT_OCCLUSION_RETRACT",
+    "stype": "bool",
+    "scope": "global",
+    "page": "performance",
+    "group": "fov_3d",
+    "menu_text": "Prevent occlusion via retraction",
+    "tooltip": "Prevent high-sprite occlusion by retracting sprites that define retracted offsets.",
+    "default": true
+  },
+  {
+    "type": "OPTION",
+    "name": "PREVENT_OCCLUSION_MIN_DIST",
+    "stype": "float",
+    "scope": "global",
+    "page": "performance",
+    "group": "fov_3d",
+    "menu_text": "Minimum distance for automatic occlusion handling",
+    "tooltip": "Minimum distance for automatic occlusion handling. Values above zero override tileset settings.",
+    "min": 0.0,
+    "max": 60.0,
+    "step": 0.1,
+    "default": 0.0
+  },
+  {
+    "type": "OPTION",
+    "name": "PREVENT_OCCLUSION_MAX_DIST",
+    "stype": "float",
+    "scope": "global",
+    "page": "performance",
+    "group": "fov_3d",
+    "menu_text": "Maximum distance for automatic occlusion handling",
+    "tooltip": "Maximum distance for automatic occlusion handling. Values above zero override tileset settings.",
+    "min": 0.0,
+    "max": 60.0,
+    "step": 0.1,
+    "default": 0.0
   },
   {
     "type": "OPTION_GROUP",
@@ -245,10 +307,10 @@
     "group": "vision_cache",
     "menu_text": "LOS Cache Size",
     "tooltip": "Maximum number of line-of-sight results kept in the skew-vision LRU cache.  Higher values reduce redundant ray traces at the cost of more RAM.  Reduce if memory is tight; increase on machines with spare RAM and many on-screen creatures.",
-    "min": 1000,
-    "max": 500000,
-    "default": 128000,
-    "default_android": 64000
+    "min": 1024,
+    "max": 4194304,
+    "default": 262144,
+    "default_android": 65536
   },
   {
     "type": "OPTION_GROUP",
@@ -334,64 +396,11 @@
     "deps": [ { "option": "MULTITHREADING_ENABLED" } ]
   },
   {
-    "type": "OPTION",
-    "name": "LAZY_BORDER",
-    "stype": "bool",
-    "scope": "global",
-    "page": "performance",
-    "group": "multithreading",
-    "menu_text": "Pre-load Border",
-    "tooltip": "Keep a border of submaps loaded around the reality bubble.  Uses more memory but reduces stalls when the map scrolls.",
-    "default": true,
-    "default_android": false,
-    "deps": [ { "option": "MULTITHREADING_ENABLED" } ]
-  },
-  {
     "type": "OPTION_GROUP",
     "id": "reality_bubble",
     "page": "performance",
     "title": "Reality Bubble",
     "desc": "Configure how submaps are loaded and processed."
-  },
-  {
-    "type": "OPTION",
-    "name": "REALITY_BUBBLE_TICK_INTERVAL",
-    "stype": "int",
-    "scope": "global",
-    "page": "performance",
-    "group": "reality_bubble",
-    "menu_text": "World Tick Interval",
-    "tooltip": "How many turns elapse between out-of-bubble world ticks.",
-    "min": 1,
-    "max": 10,
-    "default": 1
-  },
-  {
-    "type": "OPTION",
-    "name": "REALITY_BUBBLE_FIRE_SPREAD",
-    "stype": "string_select",
-    "scope": "global",
-    "page": "performance",
-    "group": "reality_bubble",
-    "menu_text": "Out-of-Bubble Fire Spread",
-    "tooltip": "Controls whether fire in loaded submaps can spread into adjacent unloaded submaps.",
-    "default": "adjacent",
-    "default_android": "none",
-    "items": [ { "value": "none", "label": "None (pause spread)" }, { "value": "adjacent", "label": "Adjacent (one layer)" } ]
-  },
-  {
-    "type": "OPTION",
-    "name": "FIRE_SPREAD_SUBMAP_CAP",
-    "stype": "int",
-    "scope": "global",
-    "page": "performance",
-    "group": "reality_bubble",
-    "menu_text": "Fire Spread Submap Cap",
-    "tooltip": "Maximum number of submaps that fire spread may keep loaded simultaneously across all dimensions.",
-    "min": 0,
-    "max": 250,
-    "default": 25,
-    "deps": [ { "option": "REALITY_BUBBLE_FIRE_SPREAD", "values": [ "adjacent" ] } ]
   },
   {
     "type": "OPTION",
@@ -401,11 +410,23 @@
     "page": "performance",
     "group": "reality_bubble",
     "menu_text": "Reality Bubble Size",
-    "tooltip": "Submap radius of the reality bubble.  REQUIRES A GAME RESTART to take effect.",
+    "tooltip": "Submap radius of the reality bubble (submaps visible beyond your position). Grid size = 2 × size + 3 submaps per side (size 4 → 11×11, legacy default). Maximum player sight range = 12 × (size + 1) tiles. Larger values increase the loaded area and memory usage; smaller values reduce both.",
     "min": 0,
     "max": 16,
     "default": 6,
     "default_android": 4
+  },
+  {
+    "type": "OPTION",
+    "name": "LAZY_BORDER",
+    "stype": "bool",
+    "scope": "global",
+    "page": "performance",
+    "group": "reality_bubble",
+    "menu_text": "Pre-load Border",
+    "tooltip": "Preload a one-overmap-tile border around the reality bubble over several turns.  This reduces map-shift hitches at the cost of extra per-turn loading work and some additional memory usage.",
+    "default": true,
+    "default_android": false
   },
   {
     "type": "OPTION",
@@ -504,9 +525,24 @@
   },
   {
     "type": "OPTION_GROUP",
-    "id": "power_portal",
+    "id": "submap_loading",
     "page": "performance",
-    "title": "Power Portal"
+    "title": "Submap Loading",
+    "desc": "Configure how submaps are loaded and processed outside of the reality bubble."
+  },
+  {
+    "type": "OPTION",
+    "name": "RETAINED_OMT_CACHE_MULTIPLIER",
+    "stype": "int",
+    "scope": "global",
+    "page": "performance",
+    "group": "submap_loading",
+    "menu_text": "Retained Map Cache",
+    "tooltip": "Keep more map data loaded to reduce lag when moving around the same general area, at the cost of memory usage.",
+    "min": 1,
+    "max": 20,
+    "default": 3,
+    "default_android": 1
   },
   {
     "type": "OPTION",
@@ -514,7 +550,7 @@
     "stype": "int",
     "scope": "global",
     "page": "performance",
-    "group": "power_portal",
+    "group": "submap_loading",
     "menu_text": "Power portal load radius (submaps)",
     "tooltip": "Radius in submaps around each end of a power-portal link that is force-loaded while the link is active.",
     "min": 0,

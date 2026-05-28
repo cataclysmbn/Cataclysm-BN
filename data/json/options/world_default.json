@@ -207,6 +207,30 @@
   },
   {
     "type": "OPTION",
+    "name": "EVOLVE_MAX_ITERS",
+    "stype": "int",
+    "scope": "world",
+    "page": "world_default",
+    "group": "world_scaling",
+    "menu_text": "Maximum Evolution Half Lives",
+    "tooltip": "The maximum number of attempts for a zombie to evolve at the next half life for one evolution stage",
+    "min": 0,
+    "max": 200,
+    "default": 5
+  },
+  {
+    "type": "OPTION",
+    "name": "ALWAYS_EVOLVE",
+    "stype": "bool",
+    "scope": "world",
+    "page": "world_default",
+    "group": "world_scaling",
+    "menu_text": "Zombies Always Evolve",
+    "tooltip": "When reaching the maximum half lives, instead of never evolving they will evolve at that time.",
+    "default": false
+  },
+  {
+    "type": "OPTION",
     "name": "RESTOCK_DELAY_MULT",
     "stype": "float",
     "scope": "world",
@@ -335,7 +359,7 @@
     "page": "world_default",
     "group": "world_progression",
     "menu_text": "Initial time",
-    "tooltip": "Initial starting time of day on character generation.",
+    "tooltip": "Hour of the day at which the player starts the game.",
     "min": 0,
     "max": 23,
     "default": 8
