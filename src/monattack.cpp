@@ -4199,7 +4199,7 @@ bool mattack::multi_robot( monster *z )
             }
             break;
         case 5:
-            if(dist <= 50 ) {
+            if( dist <= 50 ) {
                 atgm( z, target );
             }
             break;
