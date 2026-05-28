@@ -20,6 +20,7 @@
 #include "point.h"
 #include "translations.h"
 #include "type_id.h"
+#include "units/body_temperature.h"
 #include "value_ptr.h"
 
 class Character;
@@ -116,9 +117,9 @@ struct mutation_branch {
         // costs are consumed every cooldown turns,
         int cooldown   = 0;
         // bodytemp elements:
-        int bodytemp_min = 0;
-        int bodytemp_max = 0;
-        int bodytemp_sleep = 0;
+        units::temperature_delta bodytemp_min = 0_c_delta;
+        units::temperature_delta bodytemp_max = 0_c_delta;
+        units::temperature_delta bodytemp_sleep = 0_c_delta;
         // Pain Recovery per turn:
         float pain_recovery = 0.0f;
         // Healing per turn

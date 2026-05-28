@@ -127,6 +127,9 @@ using mass = quantity<std::int64_t, mass_in_milligram_tag>;
 
 class volume_in_milliliter_tag;
 using volume = quantity<int, volume_in_milliliter_tag>;
+
+class temperature_in_millidegree_celsius_tag;
+using temperature = quantity<int, temperature_in_millidegree_celsius_tag>;
 } // namespace units
 
 struct islot_container;
@@ -219,6 +222,7 @@ LUNA_VAL( uilist_entry, "UiListEntry" );
 LUNA_VAL( units::angle, "Angle" );
 LUNA_VAL( units::energy, "Energy" );
 LUNA_VAL( units::mass, "Mass" );
+LUNA_VAL( units::temperature, "Temperature" );
 LUNA_VAL( units::volume, "Volume" );
 LUNA_VAL( relic, "Relic" )
 LUNA_VAL( book_recipe, "BookRecipe" );

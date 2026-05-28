@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "bionics.h"
+#include "bodypart.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_id.h"
@@ -42,8 +43,10 @@
 #include "units_angle.h"
 #include "units_energy.h"
 #include "units_mass.h"
+#include "units_temperature.h"
 #include "units_utility.h"
 #include "units_volume.h"
+#include "weather.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "veh_type.h"
@@ -1527,6 +1530,8 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     const int energy_kilojoules = 128;
     const std::int64_t mass_kilograms = 64;
     const int volume_liters = 16;
+    const auto temperature_celsius = 37.0;
+    const auto temperature_fahrenheit = 104.0;
 
     // Create global table for test
     sol::table test_data = lua.create_table();
@@ -1537,6 +1542,8 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     test_data["energy_kilojoules"] = energy_kilojoules;
     test_data["mass_kilograms"] = mass_kilograms;
     test_data["volume_liters"] = volume_liters;
+    test_data["temperature_celsius"] = temperature_celsius;
+    test_data["temperature_fahrenheit"] = temperature_fahrenheit;
 
     // Run Lua script
     run_lua_test_script( lua, "units_test.lua" );
@@ -1546,12 +1553,94 @@ TEST_CASE( "lua_units_functions", "[lua]" )
     int lua_energy_joules = test_data["energy_joules"];
     std::int64_t lua_mass_grams = test_data["mass_grams"];
     int lua_volume_milliliters = test_data["volume_milliliters"];
+    const auto lua_temperature_fahrenheit_from_celsius =
+        test_data.get<double>( "temperature_fahrenheit_from_celsius" );
+    const auto lua_temperature_celsius_from_fahrenheit =
+        test_data.get<double>( "temperature_celsius_from_fahrenheit" );
+    const auto lua_temperature_kelvin_from_celsius =
+        test_data.get<double>( "temperature_kelvin_from_celsius" );
+    const auto lua_temperature_less_than = test_data.get<bool>( "temperature_less_than" );
+    const auto lua_temperature_equal_to = test_data.get<bool>( "temperature_equal_to" );
 
     // Check if match
     REQUIRE( lua_angle_arcmins == units::to_arcmin( units::from_degrees( angle_degrees ) ) );
     REQUIRE( lua_energy_joules == units::to_joule( units::from_kilojoule( energy_kilojoules ) ) );
     REQUIRE( lua_mass_grams == units::to_gram( units::from_kilogram( mass_kilograms ) ) );
     REQUIRE( lua_volume_milliliters == units::to_milliliter( units::from_liter( volume_liters ) ) );
+    REQUIRE( lua_temperature_fahrenheit_from_celsius == Approx( units::celsius_to_fahrenheit(
+                 temperature_celsius ) ) );
+    REQUIRE( lua_temperature_celsius_from_fahrenheit == Approx( units::fahrenheit_to_celsius(
+                 temperature_fahrenheit ) ) );
+    REQUIRE( lua_temperature_kelvin_from_celsius == Approx( units::celsius_to_kelvin(
+                 temperature_celsius ) ) );
+    REQUIRE( lua_temperature_less_than );
+    REQUIRE( lua_temperature_equal_to );
+}
+
+TEST_CASE( "lua_body_temperature_bindings_preserve_celsius_and_legacy_btu_apis", "[lua][bodytemp]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+    auto &avatar = get_avatar();
+    const auto torso = body_part_torso.id();
+    avatar.set_temp_cur( BODYTEMP_NORM );
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+    test_data["torso"] = torso;
+
+    const auto script_res = lua.safe_script( R"(
+local avatar = gapi.get_avatar()
+local torso = test_data["torso"]
+local cold = gapi.bodytemp_cold()
+local norm = gapi.bodytemp_norm()
+local hot = gapi.bodytemp_hot()
+
+test_data["cold_btu"] = cold
+test_data["norm_btu"] = norm
+test_data["hot_btu"] = hot
+
+avatar:set_part_temp_btu(torso, cold)
+test_data["torso_btu_after_part_btu_set"] = avatar:get_part_temp_btu(torso)
+test_data["torso_celsius_after_part_btu_set"] = avatar:get_part_temp_celsius(torso):to_celsius()
+
+avatar:set_part_temp_celsius(torso, Temperature.from_celsius(40))
+test_data["torso_btu_after_part_celsius_set"] = avatar:get_part_temp_btu(torso)
+test_data["torso_celsius_after_part_celsius_set"] = avatar:get_part_temp_celsius(torso):to_celsius()
+
+avatar:set_temp_btu(hot)
+local all_btu = avatar:get_temp_btu()
+test_data["torso_btu_after_all_btu_set"] = all_btu[torso]
+
+test_data["temperature_celsius_round_trip"] = Temperature.from_fahrenheit(98.6):to_celsius()
+test_data["temperature_fahrenheit_round_trip"] = Temperature.from_celsius(37):to_fahrenheit()
+test_data["temperature_kelvin_round_trip"] = Temperature.from_kelvin(310.15):to_kelvin()
+test_data["temperature_ordering"] = Temperature.from_celsius(34) < Temperature.from_celsius(37)
+test_data["temperature_equality"] = Temperature.from_fahrenheit(32) == Temperature.from_celsius(0)
+
+avatar:set_temp_celsius(Temperature.from_celsius(34))
+local all_celsius = avatar:get_temp_celsius()
+test_data["torso_celsius_after_all_celsius_set"] = all_celsius[torso]:to_celsius()
+)", sol::script_pass_on_error );
+    REQUIRE( script_res.valid() );
+
+    CHECK( test_data.get<int>( "cold_btu" ) == units::to_legacy_bodypart_temp( BODYTEMP_COLD ) );
+    CHECK( test_data.get<int>( "norm_btu" ) == units::to_legacy_bodypart_temp( BODYTEMP_NORM ) );
+    CHECK( test_data.get<int>( "hot_btu" ) == units::to_legacy_bodypart_temp( BODYTEMP_HOT ) );
+    CHECK( test_data.get<int>( "torso_btu_after_part_btu_set" ) == units::to_legacy_bodypart_temp( BODYTEMP_COLD ) );
+    CHECK( test_data.get<double>( "torso_celsius_after_part_btu_set" ) == Approx( 34.0 ) );
+    CHECK( test_data.get<int>( "torso_btu_after_part_celsius_set" ) == units::to_legacy_bodypart_temp( BODYTEMP_HOT ) );
+    CHECK( test_data.get<double>( "torso_celsius_after_part_celsius_set" ) == Approx( 40.0 ) );
+    CHECK( test_data.get<int>( "torso_btu_after_all_btu_set" ) == units::to_legacy_bodypart_temp( BODYTEMP_HOT ) );
+    CHECK( test_data.get<double>( "temperature_celsius_round_trip" ) == Approx( 37.0 ).margin( 0.01 ) );
+    CHECK( test_data.get<double>( "temperature_fahrenheit_round_trip" ) == Approx( 98.6 ).margin( 0.01 ) );
+    CHECK( test_data.get<double>( "temperature_kelvin_round_trip" ) == Approx( 310.15 ).margin( 0.01 ) );
+    CHECK( test_data.get<bool>( "temperature_ordering" ) );
+    CHECK( test_data.get<bool>( "temperature_equality" ) );
+    CHECK( test_data.get<double>( "torso_celsius_after_all_celsius_set" ) == Approx( 34.0 ) );
+    CHECK( avatar.get_part_temp_cur( torso ) == BODYTEMP_COLD );
+
+    avatar.set_temp_cur( BODYTEMP_NORM );
 }
 
 TEST_CASE( "lua_require_relative", "[lua]" )

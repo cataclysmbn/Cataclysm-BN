@@ -51,9 +51,10 @@ TEST_CASE( "default season temperatures", "[weather]" )
 
     // Shouldn't require this 4_c extra
     // TODO: Find a reason for why it fails without it
-    const units::temperature max_offset = 4_c
-                                          + generator.temperature_daily_amplitude
-                                          + generator.temperature_noise_amplitude;
+    const auto max_offset = units::from_celsius_delta(
+                                units::to_celsius( 4_c ) +
+                                units::to_celsius( generator.temperature_daily_amplitude ) +
+                                units::to_celsius( generator.temperature_noise_amplitude ) );
     for( size_t current_season = 0;
          current_season < static_cast<size_t>( NUM_SEASONS );
          current_season++ ) {
