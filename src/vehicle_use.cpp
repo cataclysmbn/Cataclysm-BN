@@ -116,8 +116,8 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
     using namespace std::views;
     namespace ranges = std::ranges;
 
-    const auto is_toggleable = [&flag]( const vpart_reference & vp ) {
-        return flag != "REACTOR" || !vp.part().info().has_flag( "PERPETUAL" );
+    const auto is_toggleable = []( const vpart_reference & vp ) {
+        return !vp.part().info().has_flag( "PERPETUAL" );
     };
     auto found = get_avail_parts( flag )
                  | filter( is_toggleable )

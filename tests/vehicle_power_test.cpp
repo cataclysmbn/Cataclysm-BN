@@ -69,7 +69,7 @@ TEST_CASE( "vehicle power with reactor and solar panels", "[vehicle][power]" )
         }
     }
 
-    SECTION( "vehicle with minireactor and plutonium generator" ) {
+    SECTION( "vehicle with reactor and perpetual plutonium generator" ) {
         const auto reactor_origin = tripoint_bub_ms( 15, 15, 0 );
         auto *veh_ptr = here.add_vehicle( vproto_id( "reactor_plutonium_generator_test" ), reactor_origin,
                                           0_degrees, 0, 0 );
@@ -91,6 +91,9 @@ TEST_CASE( "vehicle power with reactor and solar panels", "[vehicle][power]" )
 
         const auto minireactor_index = *minireactor_iter;
         const auto plut_generator_index = *plut_generator_iter;
+
+        CHECK( veh_ptr->part_info( plut_generator_index ).has_flag( "PERPETUAL" ) );
+        CHECK_FALSE( veh_ptr->part_info( plut_generator_index ).has_flag( VPFLAG_REACTOR ) );
 
         auto &minireactor = veh_ptr->part( minireactor_index );
         auto &plut_generator = veh_ptr->part( plut_generator_index );
