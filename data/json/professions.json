@@ -746,18 +746,7 @@
     "points": 0,
     "items": {
       "both": {
-        "items": [
-          "jeans",
-          "longshirt",
-          "socks",
-          "sneakers",
-          "mbag",
-          "pockknife",
-          "water_clean",
-          "smart_phone",
-          "matches",
-          "wristwatch"
-        ],
+        "items": [ "jeans", "longshirt", "socks", "sneakers", "mbag", "pockknife", "water_clean", "smart_phone", "wristwatch" ],
         "entries": [ { "item": "lighter", "charges": 25 } ]
       },
       "male": [ "boxer_shorts" ],
@@ -821,9 +810,9 @@
           "sneakers",
           "multitool",
           "water_clean",
-          "matches",
           "wristwatch"
-        ]
+        ],
+        "entries": [ { "item": "lighter", "charges": 25 } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -6829,18 +6818,7 @@
     "traits": [ "PROF_FERAL" ],
     "items": {
       "both": {
-        "items": [
-          "jeans",
-          "longshirt",
-          "socks",
-          "sneakers",
-          "mbag",
-          "pockknife",
-          "water_clean",
-          "smart_phone",
-          "matches",
-          "wristwatch"
-        ],
+        "items": [ "jeans", "longshirt", "socks", "sneakers", "mbag", "pockknife", "water_clean", "smart_phone", "wristwatch" ],
         "entries": [ { "item": "lighter", "charges": 25 }, { "item": "makeshift_crowbar", "custom-flags": [ "auto_wield" ] } ]
       },
       "male": [ "boxer_shorts" ],
