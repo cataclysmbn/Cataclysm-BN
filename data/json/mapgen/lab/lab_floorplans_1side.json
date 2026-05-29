@@ -94,7 +94,7 @@
           "name": "Library Entrance",
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
@@ -157,7 +157,7 @@
           "name": "Hardware Storage",
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
@@ -222,7 +222,7 @@
           "name": "Chemical Storage",
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
@@ -311,7 +311,7 @@
           "name": "Barracks Entrance",
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
@@ -319,7 +319,7 @@
           "name": "Magazine Entrance",
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
@@ -393,7 +393,7 @@
           "name": "Prisoner Containment Entrance",
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
@@ -401,7 +401,7 @@
           "name": "Containment Control",
           "options": [
             { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
