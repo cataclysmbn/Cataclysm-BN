@@ -588,8 +588,8 @@
     "id": "labpass",
     "type": "GENERIC",
     "category": "valuables",
-    "name": { "str": "lab admin password" },
-    "description": "This printout contains a one-time use admin override password for any locked door in a science lab.",
+    "name": { "str": "lab door override code" },
+    "description": "This printout contains a one-time use admin override code for any locked door in a science lab.",
     "weight": "5 g",
     "volume": "4 ml",
     "price": "0 cent",
@@ -600,7 +600,7 @@
     "symbol": ";",
     "color": "white",
     "flags": [ "TRADER_AVOID" ],
-    "looks_like": "recipe_labchem"
+    "looks_like": "survnote"
   },
   {
     "id": "small_space_heater",
