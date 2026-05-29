@@ -397,6 +397,63 @@
     }
   },
   {
+    "//": "admin office + two lab rooms (filled in with '.' in order to ensure a normal t_thconc_floor inside)",
+    "type": "mapgen",
+    "method": "json",
+    "om_terrain": [ "lab_1side" ],
+    "weight": 50,
+    "object": {
+      "fill_ter": "t_floor",
+      "rows": [
+        "|----------..----------|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........+..+.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|.........|..|.........|",
+        "|---------|..|---------|",
+        "|---------|CC|---------|",
+        "|^,h,h,h,,,,,,,,h,h,h,^|",
+        "|,,'''''''''''''''''',,|",
+        "|,,,,,ddxdd,,,,,,,,,,,,|",
+        "|^,,,,d,h,,,,,,,,,,,,,^|",
+        "|----------CC----------|",
+        "|^,,,,,,,,,,,,,,,,,,,,^|",
+        "|],'''''''''''''''''',]|",
+        "|],'''''''H''H'''''';,]|",
+        "|],,,,,,,DDDDDD,,,,,,,]|",
+        "|],,,,,,,x,a,,D,,,,,,,]|",
+        "|^,,,,,,,,,ii,,,,,,,,,^|",
+        "|----------------------|"
+      ],
+      "palettes": [ "lab_palette" ],
+      "furniture": { "^": "f_indoor_plant", "a": "f_armchair", "H": "f_chair", "D": "f_desk" },
+      "terrain": { "^": "t_floor", ",": "t_floor", "C": "t_door_c", "'": "t_carpet_red", "]": "t_floor", "H": "t_carpet_red" },
+      "mapping": {
+        "]": { "items": [ { "item": "manuals", "chance": 15 }, { "item": "textbooks", "chance": 15 } ] },
+        "D": { "items": [ { "item": "SUS_office_desk", "chance": 50 } ] },
+        "i": { "items": [ { "item": "SUS_office_filing_cabinet", "chance": 100 } ] }
+      },
+      "place_monster": [
+        {
+          "monster": [ "mon_zombie_scientist_admin" ],
+          "x": [ 11, 12 ],
+          "y": [ 18, 20 ],
+          "chance": 100
+        }
+      ],
+      "place_nested": [
+        { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 1, "y": 1 },
+        { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 14, "y": 1 },
+        { "chunks": [ "lab_1side_border_doors" ], "x": 0, "y": 0 }
+      ]
+    }
+  },
+  {
     "//": "Adds a hulk and smashes to rubble the doors for barracks and human containment.",
     "type": "mapgen",
     "method": "json",
