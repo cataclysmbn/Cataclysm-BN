@@ -5403,19 +5403,19 @@ void game::monmove()
     // (no ray traces) immediately pull the next chunk rather than sitting idle
     // while a thread blocked on a costly monster finishes its oversized slice.
     std::vector<monster_plan_t> precomputed( plannable.size() );
-        {
-            ZoneScopedN( "monmove_compute_plans" );
-            if( parallel_enabled && parallel_monster_planning ) {
-                ZoneScopedN( "monmove_compute_plans_parallel" );
-                parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
-                monster_plan_chunk_size, [&]( int i ) {
-                    precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-                } );
-            } else {
-                ZoneScopedN( "monmove_compute_plans_serial" );
-                for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-                    precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-                }
+    {
+        ZoneScopedN( "monmove_compute_plans" );
+        if( parallel_enabled && parallel_monster_planning ) {
+            ZoneScopedN( "monmove_compute_plans_parallel" );
+            parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
+            monster_plan_chunk_size, [&]( int i ) {
+                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            } );
+        } else {
+            ZoneScopedN( "monmove_compute_plans_serial" );
+            for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            }
         }
     }
 
@@ -5678,7 +5678,8 @@ void game::monmove()
                     const monster_action_t action = [&critter]() {
                         ZoneScopedN( "monmove_decide_action" );
                         return critter.decide_action();
-                    }();
+                    }
+                    ();
                     {
                         ZoneScopedN( "monmove_execute_action" );
                         critter.execute_action( action );

@@ -190,7 +190,7 @@ TEST_CASE( "Preserving containers stop contained food rot" )
         prepare_map_storage_test();
 
         auto sealed_jar = item::in_container( itype_id( "jar_glass_sealed" ),
-                                             item::spawn( "meat_cooked" ) );
+                                              item::spawn( "meat_cooked" ) );
         REQUIRE( sealed_jar->goes_bad_after_opening( true ) );
         REQUIRE( !sealed_jar->contents.empty() );
 
