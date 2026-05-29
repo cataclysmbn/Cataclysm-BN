@@ -86,14 +86,14 @@
     "id": "lab_loot_home_office",
     "mapping": {
       "c": {
-        "items": [ { "item": "office", "chance": 30 }, { "item": "science", "chance": 2 }, { "item": "labpass", "chance": 2 } ]
+        "items": [ { "item": "office", "chance": 30 }, { "item": "science", "chance": 2 }, { "item": "labpass", "chance": 1 } ]
       },
       "d": {
         "items": [
           { "item": "office", "chance": 25 },
           { "item": "stash_drugs", "chance": 5 },
           { "item": "science", "chance": 3 },
-          { "item": "labpass", "chance": 2 }
+          { "item": "labpass", "chance": 1 }
         ]
       },
       "f": { "items": [ { "item": "fridge", "chance": 60, "repeat": 2 } ] },
