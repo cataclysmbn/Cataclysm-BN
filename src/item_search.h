@@ -144,6 +144,7 @@ std::function<bool( const itype & )> itype_filter_from_string( const std::string
 std::function<bool( const itype_id & )> itype_id_filter_from_string( const std::string &filter );
 
 //Used for autopickup
+std::function<bool( const itype & )> itype_filter_from_string_wildcard( const std::string &filter );
 std::function<bool( const itype_id & )> itype_id_filter_from_string_wildcard( const std::string &filter );
 
 

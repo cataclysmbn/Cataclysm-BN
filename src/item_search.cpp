@@ -176,6 +176,16 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
                     return lcmatch( mat->name(), filter );
                 } );
             };
+        case 'M':
+            return [filter]( const item & i ) {
+                bool pure_material = true;
+                for (auto& mat : i.made_of()) {
+                    if (!lcmatch( mat->name(), filter )) {
+                        pure_material = false;
+                    }
+                }
+                return pure_material;
+            };
         // qualities
         case 'q':
             return [filter]( const item & i ) {
@@ -248,6 +258,16 @@ std::function<bool( const itype & )> basic_itype_filter( std::string filter )
                 [&filter]( const material_id & mat ) {
                     return lcmatch( mat->name(), filter );
                 } );
+            };
+        case 'M':
+            return [filter]( const itype & i ) {
+                bool pure_material = true;
+                for (auto& mat : i.materials) {
+                    if (!lcmatch( mat->name(), filter )) {
+                        pure_material = false;
+                    }
+                }
+                return pure_material;
             };
         // qualities
         case 'q':
@@ -325,6 +345,17 @@ std::function<bool( const itype & )> basic_itype_filter_wildcard( std::string fi
                     return lcmatch( mat->name(), filter );
                 } );
             };
+        // Only of 1 material
+        case 'M':
+            return [filter]( const itype & i ) {
+                bool pure_material = true;
+                for (auto& mat : i.materials) {
+                    if (!lcmatch( mat->name(), filter )) {
+                        pure_material = false;
+                    }
+                }
+                return pure_material;
+            };
         // qualities
         case 'q':
             return [filter]( const itype & i ) {
@@ -337,8 +368,8 @@ std::function<bool( const itype & )> basic_itype_filter_wildcard( std::string fi
         case 'b':
             return [filter]( const itype & i ) {
                 auto pair = get_both( filter );
-                return itype_filter_from_string( pair.first )( i )
-                       && itype_filter_from_string( pair.second )( i );
+                return itype_filter_from_string_wildcard( pair.first )( i )
+                       && itype_filter_from_string_wildcard( pair.second )( i );
             };
         // disassembled components
         // TODO: Move dissambled components into itype so we can implement this
@@ -388,6 +419,11 @@ std::function<bool( const itype & )> itype_filter_from_string( const std::string
 std::function<bool( const itype_id & )> itype_id_filter_from_string( const std::string &filter )
 {
     return filter_from_string<itype_id>(filter, basic_itype_id_filter );
+}
+
+std::function<bool( const itype & )> itype_filter_from_string_wildcard( const std::string &filter )
+{
+    return filter_from_string<itype>(filter, basic_itype_filter_wildcard );
 }
 
 std::function<bool( const itype_id & )> itype_id_filter_from_string_wildcard( const std::string &filter )

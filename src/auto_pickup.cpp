@@ -287,7 +287,7 @@ void user_interface::show()
                 const auto init_help_window = [&]( ui_adaptor & help_ui ) {
                     const point iOffset( TERMX > FULL_SCREEN_WIDTH ? ( TERMX - FULL_SCREEN_WIDTH ) / 2 : 0,
                                          TERMY > FULL_SCREEN_HEIGHT ? ( TERMY - FULL_SCREEN_HEIGHT ) / 2 : 0 );
-                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT / 2 + 2,
+                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT * (2.0/3) + 2,
                                                  FULL_SCREEN_WIDTH * 3 / 4,
                                                  iOffset + point( 19 / 2, 7 + FULL_SCREEN_HEIGHT / 2 / 2 ) );
                     help_ui.position_from_window( w_help );
@@ -307,10 +307,15 @@ void user_interface::show()
                                         "*avy fle*fi*arrow     multiple * are allowed\n"
                                         "heAVY*woOD*arrOW      case insensitive search\n"
                                         "\n"
-                                        "Pickup based on item materials:\n"
+                                        "Pickup using:\n"
+                                        "c:food          matches item in category food\n"
                                         "m:kevlar        matches items made of Kevlar\n"
                                         "M:copper        matches items made purely of copper\n"
-                                        "M:steel,iron    multiple materials allowed (OR search)" )
+                                        "q:drilling      matches items with drilling qualites\n"
+                                        "k:fabrication   matches books that teach fabrication\n"
+                                        "b:c:food;*meat* matches items that are foods and *meat*"
+
+                                    )
                                   );
 
                     draw_border( w_help );
