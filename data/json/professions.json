@@ -801,17 +801,7 @@
     ],
     "items": {
       "both": {
-        "items": [
-          "pants",
-          "tshirt",
-          "socks",
-          "smart_phone",
-          "sweater",
-          "sneakers",
-          "multitool",
-          "water_clean",
-          "wristwatch"
-        ],
+        "items": [ "pants", "tshirt", "socks", "smart_phone", "sweater", "sneakers", "multitool", "water_clean", "wristwatch" ],
         "entries": [ { "item": "lighter", "charges": 25 } ]
       },
       "male": [ "boxer_shorts" ],
