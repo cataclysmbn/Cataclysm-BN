@@ -4894,7 +4894,7 @@ void overmap::place_cities()
     }
 }
 
-overmap_special_id overmap::pick_random_building_to_place( int town_dist,
+overmap_special_id overmap::pick_random_building_to_place( int town_dist, int town_size,
         bool attempt_finale_place ) const
 {
     const city_settings &city_spec = settings->city_spec;
@@ -4921,7 +4921,12 @@ overmap_special_id overmap::pick_random_building_to_place( int town_dist,
     } else if( park_normal > town_dist ) {
         return city_spec.pick_park();
     } else {
-        return city_spec.pick_house();
+        if ( town.size > 4 ) {
+            return city_spec.pick_urban_house();
+        }
+        else {
+            return city_spec.pick_house();
+        }
     }
 }
 
@@ -4934,7 +4939,7 @@ bool overmap::place_building( const tripoint_om_omt &p, om_direction::type dir, 
     const int town_dist = ( trig_dist( building_pos.xy(), town.pos ) * 100 ) / std::max( town.size, 1 );
 
     for( size_t retries = 10; retries > 0; --retries ) {
-        const overmap_special_id building_tid = pick_random_building_to_place( town_dist,
+        const overmap_special_id building_tid = pick_random_building_to_place( town_dist, town.size,
                                                 attempt_finale_place );
 
         if( !building_tid.is_valid() ) {
