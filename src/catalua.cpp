@@ -501,7 +501,7 @@ auto has_hooks( std::string_view hook_name, const hook_opts &opts ) -> bool
 }
 
 auto run_hooks( std::string_view hook_name,
-                std::function<auto( sol::table &params ) -> void> init,
+                std::function < auto( sol::table &params ) -> void > init,
                 const hook_opts &opts ) -> sol::table
 {
     auto &state = opts.state ? *opts.state : *DynamicDataLoader::get_instance().lua;

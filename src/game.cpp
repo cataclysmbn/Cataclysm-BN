@@ -2278,7 +2278,7 @@ auto game::has_activity_skip_blocking_npc_state() -> bool
 
 auto game::has_activity_skip_relevant_vehicle() -> bool
 {
-    return std::ranges::any_of( m.get_vehicles(), []( const wrapped_vehicle &wrapped ) {
+    return std::ranges::any_of( m.get_vehicles(), []( const wrapped_vehicle & wrapped ) {
         const vehicle *veh = wrapped.v;
         return veh != nullptr &&
                ( veh->is_moving() || veh->vertical_velocity != 0 || veh->skidding ||
@@ -2352,7 +2352,8 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
     if( new_game || queue_screenshot || uquit == QUIT_WATCH ) {
         return false;
     }
-    if( duration <= 0_turns || !get_weather().weather_id || get_weather().nextweather <= calendar::turn ) {
+    if( duration <= 0_turns || !get_weather().weather_id ||
+        get_weather().nextweather <= calendar::turn ) {
         return false;
     }
     if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
@@ -5666,7 +5667,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
 
     auto activity_lod_restore_local = std::vector<std::pair<monster *, int8_t>> {};
     const std::vector<std::pair<monster *, int8_t>> *activity_lod_restore =
-        &activity_lod_restore_local;
+                &activity_lod_restore_local;
     auto activity_ai_paused_local = std::unordered_set<monster *> {};
     const std::unordered_set<monster *> *activity_ai_paused = &activity_ai_paused_local;
     if( activity_skip_ai ) {
@@ -5890,7 +5891,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
         }
     }
     const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,
-        hostile_fac_map_for_plan };
+            hostile_fac_map_for_plan };
 
     // parallel_for_chunked with a small chunk size gives the
     // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
@@ -6216,7 +6217,8 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
                     const monster_action_t action = [&critter]() {
                         ZoneScopedN( "monmove_decide_action" );
                         return critter.decide_action();
-                    }();
+                    }
+                    ();
                     {
                         ZoneScopedN( "monmove_execute_action" );
                         critter.execute_action( action );
