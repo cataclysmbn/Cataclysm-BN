@@ -1520,7 +1520,7 @@ void computer_session::action_unlock_labpass()
     Character &player_character = g->u;
 
     if( !player_character.has_amount( itype_labpass, 1 ) ) {
-        print_error( _( "Admin password required!\n\n" ) );
+        query_any( _( "Override code required!  Press any key…" ) );
     } else {
         player_character.use_amount( itype_labpass, 1 );
         action_unlock_disarm();
