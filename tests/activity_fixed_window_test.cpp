@@ -1,23 +1,26 @@
 #include "catch/catch.hpp"
 
+#include <string>
 #include <utility>
 
 #include "activity_time_cadence.h"
 #include "avatar.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "coordinates.h"
 #include "field_type.h"
 #include "game.h"
+#include "game_constants.h"
 #include "item.h"
 #include "itype.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "monster.h"
+#include "npc.h"
 #include "options_helpers.h"
 #include "player_activity.h"
 #include "player_helpers.h"
 #include "state_helpers.h"
-#include "submap_load_manager.h"
 #include "timed_event.h"
 #include "units_temperature.h"
 #include "vehicle.h"
@@ -42,9 +45,6 @@ static auto prepare_fixed_window_wait( const time_duration &duration ) -> void
     g->m.invalidate_map_cache( g->get_levz() );
     g->m.build_map_cache( g->get_levz(), true );
 
-    submap_loader.update_lazy_border_focus( "", g->u.abs_pos() );
-    submap_loader.update();
-
     g->new_game = false;
     g->u.set_moves( 100 );
     g->u.assign_activity( act_wait, to_moves<int>( duration ), 0 );
@@ -55,8 +55,19 @@ static auto prepare_fixed_window_wait( const time_duration &duration ) -> void
 
 static auto expect_fixed_window_skip_blocked_by( auto setup_blocker ) -> void
 {
+    const auto no_autosave = override_option( "AUTOSAVE", "false" );
+    const auto normal_bubble_size = override_option( "REALITY_BUBBLE_SIZE",
+                                    std::to_string( g_reality_bubble_size ) );
+    const auto no_mobile_bubble = override_option( "ACTIVITY_MOBILE_BUBBLE_SIZE", "0" );
+    const auto no_idle_bubble = override_option( "ACTIVITY_IDLE_BUBBLE_SIZE", "0" );
+    const auto no_underground_bubble = override_option( "UNDERGROUND_BUBBLE_SIZE", "0" );
+    const auto no_vehicle_bubble = override_option( "VEHICLE_BUBBLE_SIZE", "0" );
+    const auto no_combat_bubble = override_option( "COMBAT_BUBBLE_SIZE", "0" );
     const auto duration = activity_time_cadence::fixed_window();
     prepare_fixed_window_wait( duration );
+    const auto cleanup = on_out_of_scope( []() {
+        clear_all_state();
+    } );
     setup_blocker();
 
     const auto start_turn = calendar::turn;
@@ -66,11 +77,22 @@ static auto expect_fixed_window_skip_blocked_by( auto setup_blocker ) -> void
     CHECK( static_cast<bool>( g->u.activity ) );
 }
 
-TEST_CASE( "fixed window activity skip completes a short wait", "[activity][fixed_window]" )
+TEST_CASE( "fixed window activity skip completes a short wait with active creatures",
+           "[activity][fixed_window]" )
 {
     const auto no_autosave = override_option( "AUTOSAVE", "false" );
+    const auto normal_bubble_size = override_option( "REALITY_BUBBLE_SIZE",
+                                    std::to_string( g_reality_bubble_size ) );
+    const auto no_mobile_bubble = override_option( "ACTIVITY_MOBILE_BUBBLE_SIZE", "0" );
+    const auto no_idle_bubble = override_option( "ACTIVITY_IDLE_BUBBLE_SIZE", "0" );
+    const auto no_underground_bubble = override_option( "UNDERGROUND_BUBBLE_SIZE", "0" );
+    const auto no_vehicle_bubble = override_option( "VEHICLE_BUBBLE_SIZE", "0" );
+    const auto no_combat_bubble = override_option( "COMBAT_BUBBLE_SIZE", "0" );
     const auto duration = 30_seconds;
     prepare_fixed_window_wait( duration );
+    const auto cleanup = on_out_of_scope( []() {
+        clear_all_state();
+    } );
 
     const auto item_pos = g->u.bub_pos() + point_east;
     auto timer = item::spawn( "gasbomb_act" );
@@ -82,6 +104,8 @@ TEST_CASE( "fixed window activity skip completes a short wait", "[activity][fixe
     REQUIRE( g->m.i_at( item_pos ).size() == 1 );
 
     spawn_test_monster( "mon_zombie", g->u.bub_pos() + tripoint_rel_ms( 30, 0, 0 ) );
+    auto &talker = spawn_npc( g->u.bub_pos().xy() + point( 5, 0 ), "test_talker" );
+    talker.mission = NPC_MISSION_SHOPKEEP;
 
     const auto start_turn = calendar::turn;
 
@@ -109,12 +133,6 @@ TEST_CASE( "fixed window activity skip hard blockers fall back to normal turns",
     SECTION( "active fire in simulated submap" ) {
         expect_fixed_window_skip_blocked_by( [] {
             g->m.add_field( g->u.bub_pos() + point_east, fd_fire, 1 );
-        } );
-    }
-
-    SECTION( "active npc" ) {
-        expect_fixed_window_skip_blocked_by( [] {
-            spawn_npc( g->u.bub_pos().xy() + point( 5, 0 ), "test_talker" );
         } );
     }
 

@@ -1026,7 +1026,7 @@ class game : public submap_load_listener
         auto activity_fixed_window_duration() -> time_duration;
         auto execute_activity_fixed_window_skip( const time_duration &duration ) -> int;
         auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
-        auto has_activity_skip_relevant_npc() -> bool;
+        auto has_activity_skip_blocking_npc_state() -> bool;
         auto has_activity_skip_relevant_vehicle() -> bool;
         auto has_activity_skip_active_fire() -> bool;
         auto run_activity_skip_batch_turns( int skipped_turns ) -> void;

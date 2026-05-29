@@ -1888,6 +1888,9 @@ bool game::do_turn()
         if( new_game ) {
             new_game = false;
         } else {
+            if( !gamemode ) {
+                gamemode = std::make_unique<special_game>();
+            }
             gamemode->per_turn();
             calendar::turn += 1_turns;
         }
@@ -2268,17 +2271,9 @@ auto game::activity_fixed_window_duration() -> time_duration
     return duration;
 }
 
-auto game::has_activity_skip_relevant_npc() -> bool
+auto game::has_activity_skip_blocking_npc_state() -> bool
 {
-    if( npcs_dirty ) {
-        return true;
-    }
-    if( std::ranges::any_of( active_npc, []( const shared_ptr_fast<npc> &guy ) {
-        return guy && !guy->is_dead();
-    } ) ) {
-        return true;
-    }
-    return false;
+    return npcs_dirty;
 }
 
 auto game::has_activity_skip_relevant_vehicle() -> bool
@@ -2296,7 +2291,39 @@ auto game::has_activity_skip_relevant_vehicle() -> bool
 
 auto game::has_activity_skip_active_fire() -> bool
 {
+    const auto submap_has_active_fire = []( submap & sm ) {
+        if( sm.field_count == 0 ) {
+            return false;
+        }
+        for( const auto &local : sm.field_cache ) {
+            auto &curfield = sm.get_field( local );
+            for( auto &field_pair : curfield ) {
+                auto &cur = field_pair.second;
+                if( cur.is_field_alive() && cur.get_field_type().obj().has_fire ) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : m.get_abs_sub().z();
+    const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : m.get_abs_sub().z();
+    const auto axis = std::views::iota( 0, m.getmapsize() );
+    for( const auto x : axis ) {
+        for( const auto y : axis ) {
+            const auto p = point_bub_sm( x, y );
+            for( const auto z : std::views::iota( zmin, zmax + 1 ) ) {
+                auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
+                if( sm != nullptr && submap_has_active_fire( *sm ) ) {
+                    return true;
+                }
+            }
+        }
+    }
+
     auto has_fire = false;
+    const auto current_dim = m.get_bound_dimension();
     MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
         if( has_fire || ( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) ) {
             return;
@@ -2306,19 +2333,14 @@ auto game::has_activity_skip_active_fire() -> bool
                 return;
             }
             auto &[pos_sm, sm_ptr] = entry;
-            if( !sm_ptr || sm_ptr->field_count == 0 ||
+            if( ( dim == current_dim && m.contains_abs_sm( pos_sm ) ) ||
+                !sm_ptr ||
                 !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
                 return;
             }
-            for( const point_sm_ms &local : sm_ptr->field_cache ) {
-                field &curfield = sm_ptr->get_field( local );
-                for( auto &field_pair : curfield ) {
-                    field_entry &cur = field_pair.second;
-                    if( cur.is_field_alive() && cur.get_field_type().obj().has_fire ) {
-                        has_fire = true;
-                        return;
-                    }
-                }
+            if( submap_has_active_fire( *sm_ptr ) ) {
+                has_fire = true;
+                return;
             }
         } );
     } );
@@ -2358,7 +2380,7 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
         event_time && *event_time <= calendar::turn + duration ) {
         return false;
     }
-    if( has_activity_skip_relevant_npc() ) {
+    if( has_activity_skip_blocking_npc_state() ) {
         return false;
     }
     return true;
@@ -2396,6 +2418,9 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             break;
         }
 
+        if( !gamemode ) {
+            gamemode = std::make_unique<special_game>();
+        }
         gamemode->per_turn();
         calendar::turn += 1_turns;
         ++skipped_turns;
@@ -2458,13 +2483,26 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         tick_vehicle_portal_taps();
         fluid_grid::update( calendar::turn );
 
-        if( critter_tracker->size() > 0 ) {
+        const auto has_active_npcs = std::ranges::any_of( active_npc,
+        []( const shared_ptr_fast<npc> &guy ) {
+            return guy && !guy->is_dead();
+        } );
+        if( critter_tracker->size() > 0 || has_active_npcs ) {
             sounds::process_sounds();
             m.build_map_cache( get_levz(), true );
-            monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
-            if( critter_tracker->size() != monster_count ) {
-                activity_fixed_window_force_normal_turn_ = true;
-                break;
+            if( critter_tracker->size() > 0 ) {
+                monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
+                if( critter_tracker->size() != monster_count ) {
+                    activity_fixed_window_force_normal_turn_ = true;
+                    break;
+                }
+            }
+            if( has_active_npcs ) {
+                npcmove();
+                if( npcs_dirty || critter_tracker->size() != monster_count ) {
+                    activity_fixed_window_force_normal_turn_ = true;
+                    break;
+                }
             }
         }
 
@@ -2503,13 +2541,32 @@ auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
 
     {
         ZoneScopedN( "activity_fixed_window_batch_submaps" );
+        const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : m.get_abs_sub().z();
+        const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : m.get_abs_sub().z();
+        const auto axis = std::views::iota( 0, m.getmapsize() );
+        for( const auto x : axis ) {
+            for( const auto y : axis ) {
+                const auto p = point_bub_sm( x, y );
+                for( const auto z : std::views::iota( zmin, zmax + 1 ) ) {
+                    auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
+                    if( sm == nullptr ) {
+                        continue;
+                    }
+                    run_submap_batch_turns( *sm, skipped_turns );
+                    sm->last_touched = calendar::turn;
+                }
+            }
+        }
+
+        const auto current_dim = m.get_bound_dimension();
         MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
             if( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) {
                 return;
             }
             mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
                 auto &[pos_sm, sm_ptr] = entry;
-                if( !sm_ptr || !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+                if( ( dim == current_dim && m.contains_abs_sm( pos_sm ) ) ||
+                    !sm_ptr || !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
                     return;
                 }
                 run_submap_batch_turns( *sm_ptr, skipped_turns );
