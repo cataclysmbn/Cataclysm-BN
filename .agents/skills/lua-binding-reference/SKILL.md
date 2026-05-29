@@ -1,5 +1,6 @@
 ---
-description: Quick reference guide for Cataclysm-BN Lua binding patterns and macros
+name: lua-binding-reference
+description: Quick reference for Cataclysm-BN Lua binding macros, Luna usertypes, libraries, documentation, type patterns, build steps, and common errors.
 ---
 
 # Lua Binding Quick Reference

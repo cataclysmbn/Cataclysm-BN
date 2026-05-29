@@ -1,8 +1,13 @@
+---
+name: deno-script
+description: Write or modify Cataclysm-BN Deno/TypeScript scripts. Use for scripts, tools, migrations, generators, git hooks, and CLI utilities.
+---
+
 # Deno Script Development
 
 Write Deno/TypeScript scripts following Cataclysm: Bright Nights conventions.
 
-## Trigger Phrases
+## Use When
 
 - "create deno script"
 - "write deno script"
