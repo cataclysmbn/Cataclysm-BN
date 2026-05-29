@@ -3073,7 +3073,8 @@ static void CheckMessages()
                         }
 
                         // Check for actions that work on nearby tiles and own tile
-                        if( can_interact_at( ACTION_PICKUP, pos ) ) {
+                        if( can_interact_at( ACTION_PICKUP, pos ) &&
+                            !examine_action_can_pickup_items_at( pos ) ) {
                             actions.insert( ACTION_PICKUP );
                         }
                     }

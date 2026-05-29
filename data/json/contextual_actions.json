@@ -4,7 +4,6 @@
     "id": "contextual_pickup",
     "action": "pickup",
     "target": "self_or_adjacent",
-    "priority": 280,
     "right_click": true,
     "action_menu": true,
     "walk_to": true
@@ -14,7 +13,6 @@
     "id": "contextual_butcher",
     "action": "butcher",
     "target": "self",
-    "priority": 260,
     "right_click": true,
     "action_menu": true,
     "walk_to": true
@@ -24,7 +22,6 @@
     "id": "contextual_open",
     "action": "open",
     "target": "adjacent",
-    "priority": 240,
     "right_click": true,
     "action_menu": true,
     "walk_to": true
@@ -34,7 +31,6 @@
     "id": "contextual_close",
     "action": "close",
     "target": "adjacent",
-    "priority": 240,
     "right_click": true,
     "action_menu": true,
     "walk_to": true
@@ -44,7 +40,6 @@
     "id": "contextual_move_up",
     "action": "LEVEL_UP",
     "target": "self",
-    "priority": 230,
     "right_click": true,
     "action_menu": true,
     "walk_to": true
@@ -54,7 +49,6 @@
     "id": "contextual_move_down",
     "action": "LEVEL_DOWN",
     "target": "self",
-    "priority": 230,
     "right_click": true,
     "action_menu": true,
     "walk_to": true
@@ -64,7 +58,6 @@
     "id": "contextual_examine",
     "action": "examine",
     "target": "self_or_adjacent",
-    "priority": 200,
     "right_click": true,
     "action_menu": true,
     "walk_to": true

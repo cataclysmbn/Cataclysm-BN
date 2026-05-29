@@ -791,6 +791,34 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
 namespace
 {
 
+auto contextual_action_display_name( const action_id action ) -> std::string
+{
+    return get_default_mode_input_context().get_action_name( action_ident( action ) );
+}
+
+auto choose_contextual_action( const std::vector<contextual_action> &actions,
+                               const std::string &title ) -> std::optional<contextual_action>
+{
+    if( actions.empty() ) {
+        return std::nullopt;
+    }
+    if( actions.size() == 1 ) {
+        return actions.front();
+    }
+
+    uilist menu;
+    menu.settext( title );
+    for( size_t i = 0; i < actions.size(); ++i ) {
+        menu.addentry( static_cast<int>( i ), true, MENU_AUTOASSIGN,
+                       contextual_action_display_name( actions[i].action ) );
+    }
+    menu.query();
+    if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= actions.size() ) {
+        return std::nullopt;
+    }
+    return actions[menu.ret];
+}
+
 auto memorized_terrain_has_stair_flag( const memorized_terrain_tile &memory,
                                        const bool going_up, const bool going_down ) -> bool
 {
@@ -2991,42 +3019,60 @@ bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mo
     u.clear_destination();
     queued_right_click_action_.reset();
 
+    const auto preview_contextual_action = [&]( const contextual_action &selected,
+                                                const std::optional<std::string> &target_name ) -> bool {
+        if( !selected.walk_to ) {
+            act = selected.action;
+            return true;
+        }
+
+        for( const tripoint_bub_ms &destination : m.points_in_radius( mouse_target, 1 ) ) {
+            if( !contextual_action_is_valid_from( selected.action, mouse_target, destination ) ) {
+                continue;
+            }
+
+            const auto route = m.route( u.bub_pos(), destination, u.get_legacy_pathfinding_settings(),
+                                        u.get_legacy_path_avoid() );
+            if( route.empty() ) {
+                continue;
+            }
+
+            if( !check_safe_mode_allowed() ) {
+                return false;
+            }
+
+            destination_preview = route;
+            previewed_right_click_action_ = {
+                .action = selected.action,
+                .target = m.bub_to_abs( mouse_target ),
+                .target_name = target_name.value_or( std::string{} ),
+                .action_name = contextual_action_display_name( selected.action ),
+            };
+            invalidate_main_ui_adaptor();
+            return false;
+        }
+
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
+    };
+
     if( const npc *const np = critter_at<npc>( mouse_target ); np != nullptr && u.sees( *np ) ) {
+        const auto actions = contextual_actions_for_target( mouse_target, true );
+        if( actions.size() > 1 ) {
+            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
+            if( !selected ) {
+                return false;
+            }
+            return preview_contextual_action( *selected, np->disp_name() );
+        }
+
         if( square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 1 ) {
             act = ACTION_EXAMINE;
             return true;
         }
 
-        const auto actions = contextual_actions_for_target( mouse_target, true );
-        const auto examine_action = std::ranges::find_if( actions, []( const auto &contextual_action ) {
-            return contextual_action.action == ACTION_EXAMINE && contextual_action.walk_to;
-        } );
-        if( examine_action != actions.end() ) {
-            for( const tripoint_bub_ms &destination : m.points_in_radius( mouse_target, 1 ) ) {
-                if( !contextual_action_is_valid_from( ACTION_EXAMINE, mouse_target, destination ) ) {
-                    continue;
-                }
-
-                const auto route = m.route( u.bub_pos(), destination, u.get_legacy_pathfinding_settings(),
-                                            u.get_legacy_path_avoid() );
-                if( route.empty() ) {
-                    continue;
-                }
-
-                if( !check_safe_mode_allowed() ) {
-                    return false;
-                }
-
-                destination_preview = route;
-                previewed_right_click_action_ = {
-                    .action = ACTION_EXAMINE,
-                    .target = m.bub_to_abs( mouse_target ),
-                    .target_name = np->disp_name(),
-                    .action_name = _( "interact" ),
-                };
-                invalidate_main_ui_adaptor();
-                return false;
-            }
+        if( !actions.empty() ) {
+            return preview_contextual_action( actions.front(), np->disp_name() );
         }
 
         add_msg( _( "Nothing relevant here." ) );
@@ -3036,40 +3082,30 @@ bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mo
         act = u.primary_weapon().is_gun() ? ACTION_FIRE : ACTION_AUTOATTACK;
     } else {
         const auto actions = contextual_actions_at( mouse_target, true, u.bub_pos() );
+        if( actions.size() > 1 ) {
+            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
+            if( !selected ) {
+                return false;
+            }
+            return preview_contextual_action( *selected, std::nullopt );
+        }
+
         if( !actions.empty() ) {
             act = actions.front().action;
             return true;
         }
 
-        for( const auto &contextual_action : contextual_actions_for_target( mouse_target, true ) ) {
-            if( !contextual_action.walk_to ) {
-                continue;
-            }
-            for( const tripoint_bub_ms &destination : m.points_in_radius( mouse_target, 1 ) ) {
-                if( !contextual_action_is_valid_from( contextual_action.action, mouse_target, destination ) ) {
-                    continue;
-                }
-
-                const auto route = m.route( u.bub_pos(), destination, u.get_legacy_pathfinding_settings(),
-                                            u.get_legacy_path_avoid() );
-                if( route.empty() ) {
-                    continue;
-                }
-
-                if( !check_safe_mode_allowed() ) {
-                    return false;
-                }
-
-                destination_preview = route;
-                previewed_right_click_action_ = {
-                    .action = contextual_action.action,
-                    .target = m.bub_to_abs( mouse_target ),
-                    .target_name = {},
-                    .action_name = {},
-                };
-                invalidate_main_ui_adaptor();
+        const auto walk_to_actions = contextual_actions_for_target( mouse_target, true );
+        if( walk_to_actions.size() > 1 ) {
+            const auto selected = choose_contextual_action( walk_to_actions, _( "Choose action" ) );
+            if( !selected ) {
                 return false;
             }
+            return preview_contextual_action( *selected, std::nullopt );
+        }
+
+        if( !walk_to_actions.empty() ) {
+            return preview_contextual_action( walk_to_actions.front(), std::nullopt );
         }
 
         add_msg( _( "Nothing relevant here." ) );

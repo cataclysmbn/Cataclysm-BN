@@ -5,7 +5,6 @@
     "//": "Makes examine win over pickup/open/close when the target can be examined.",
     "action": "examine",
     "target": "self_or_adjacent",
-    "priority": 500,
     "right_click": true,
     "action_menu": true,
     "walk_to": true
@@ -16,7 +15,6 @@
     "//": "Adds a right-click pickup entry without affecting the keyboard action menu.",
     "action": "pickup",
     "target": "self_or_adjacent",
-    "priority": 490,
     "right_click": true,
     "action_menu": false,
     "walk_to": true
@@ -27,7 +25,6 @@
     "//": "Adds an action-menu entry that will not be chosen by right-click.",
     "action": "open",
     "target": "adjacent",
-    "priority": 480,
     "right_click": false,
     "action_menu": true,
     "walk_to": false
@@ -38,7 +35,6 @@
     "//": "Self-only actions require the player to stand on the target tile first.",
     "action": "butcher",
     "target": "self",
-    "priority": 470,
     "right_click": true,
     "action_menu": true,
     "walk_to": true

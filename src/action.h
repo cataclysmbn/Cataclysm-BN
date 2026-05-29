@@ -570,7 +570,6 @@ action_id handle_main_menu();
 
 struct contextual_action {
     action_id action = ACTION_NULL;
-    int priority = 0;
     bool walk_to = true;
 };
 
@@ -597,6 +596,17 @@ auto contextual_action_is_valid_from( action_id action, const tripoint_bub_ms &t
  * @returns true if movement is possible in the indicated direction
  */
 bool can_interact_at( action_id action, const tripoint_bub_ms &p );
+
+/**
+ * Test whether ACTION_PICKUP is redundant with ACTION_EXAMINE at this point.
+ *
+ * Checks whether examining this tile would proceed to the item pickup prompt after any tile
+ * interaction, making a separate pickup action unnecessary for contextual UI.
+ *
+ * @param p Point to perform the test at
+ * @returns true if examine would offer to pick up items at this point, otherwise false
+ */
+auto examine_action_can_pickup_items_at( const tripoint_bub_ms &p ) -> bool;
 
 /**
  * Test whether it is possible to perform butcher action
