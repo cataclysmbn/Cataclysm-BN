@@ -6616,7 +6616,7 @@ void vehicle::refresh()
         if( vpi.has_flag( VPFLAG_ENGINE ) ) {
             engines.push_back( p );
         }
-        if( vpi.has_flag( VPFLAG_REACTOR ) || ( vpi.has_flag( str_PERPETUAL ) && vpi.epower > 0 ) ) {
+        if( vp.part().is_reactor() || vp.part().is_perpetual_power_source() ) {
             reactors.push_back( p );
         }
         if( vpi.has_flag( VPFLAG_SOLAR_PANEL ) ) {
