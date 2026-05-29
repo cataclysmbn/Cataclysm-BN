@@ -1,0 +1,102 @@
+[
+  {
+    "type": "vehicle_color_palette",
+    "id": "car_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "cargo_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "visibility_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_fighter",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_heli",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "military_boat",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "police_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "swat_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "construction_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "farm_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "firetruck_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "ems_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "bus_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "wienermobile_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "limo_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "sneaky_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "aircraft_standard",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "aircraft_commercial",
+    "clear": true
+  },
+  {
+    "type": "vehicle_color_palette",
+    "id": "wooden_standard",
+    "clear": true
+  }
+]

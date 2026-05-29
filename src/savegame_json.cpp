@@ -3247,6 +3247,8 @@ void vehicle::deserialize( JsonIn &jsin )
     data.read( "follow_distance", follow_distance );
     data.read( "is_patrolling", is_patrolling );
     data.read( "autodrive_local_target", autodrive_local_target );
+    data.read( "min_autodrive_speed", min_autodrive_speed );
+    data.read( "max_autodrive_speed", max_autodrive_speed );
     data.read( "summon_time_limit", summon_time_limit );
     data.read( "magic", magic );
 
@@ -3428,6 +3430,8 @@ void vehicle::serialize( JsonOut &json ) const
     json.member( "follow_distance", follow_distance );
     json.member( "is_patrolling", is_patrolling );
     json.member( "autodrive_local_target", autodrive_local_target );
+    json.member( "min_autodrive_speed", min_autodrive_speed );
+    json.member( "max_autodrive_speed", max_autodrive_speed );
     json.member( "summon_time_limit", summon_time_limit );
     json.member( "magic", magic );
     json.end_object();

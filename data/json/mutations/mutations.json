@@ -3599,7 +3599,7 @@
     "active": true,
     "cost": 100,
     "stamina": true,
-    "movecost_modifier": 0.75,
+    "enchantments": [ "ENCH_INSECT_WINGS_ACTIVE" ],
     "falling_damage_multiplier": 0.75
   },
   {

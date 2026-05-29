@@ -1703,7 +1703,11 @@
     "name": "Pause",
     "category": "DEFAULTMODE",
     "id": "pause",
-    "bindings": [ { "input_method": "keyboard", "key": "." }, { "input_method": "keyboard", "key": "5" } ]
+    "bindings": [
+      { "input_method": "keyboard", "key": "." },
+      { "input_method": "keyboard", "key": "5" },
+      { "input_method": "keyboard", "key": "NUMPAD_5" }
+    ]
   },
   {
     "type": "keybinding",

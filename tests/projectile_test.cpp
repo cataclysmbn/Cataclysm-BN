@@ -10,6 +10,7 @@
 #include "damage.h"
 #include "dispersion.h"
 #include "game.h"
+#include "game_constants.h"
 #include "item.h"
 #include "map.h"
 #include "map_helpers.h"
@@ -116,6 +117,38 @@ TEST_CASE( "projectiles_stop_at_reality_bubble_edge", "[projectile][ballistics]"
                             test_proj, shooter_pos, target_pos, dispersion_sources {}, &shooter, &gun );
 
     CHECK( here.inbounds( attack.end_point ) );
+}
+
+TEST_CASE( "projectiles_stop_at_z_bounds", "[projectile][ballistics]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto shooter_pos = tripoint_bub_ms( 2, 2, OVERMAP_HEIGHT );
+    const auto target_pos = tripoint_bub_ms( 2, 2, OVERMAP_HEIGHT + 1 );
+
+    REQUIRE( here.inbounds( shooter_pos ) );
+    here.ter_set( shooter_pos, ter_id( "t_dirt" ) );
+    here.furn_set( shooter_pos, furn_id( "f_null" ) );
+
+    auto &shooter = get_avatar();
+    shooter.setpos( shooter_pos );
+    shooter.set_body();
+
+    auto gun_ptr = item::spawn( itype_id( "m1a" ) );
+    gun_ptr->ammo_set( itype_id( "308" ), 1 );
+    auto &gun = *gun_ptr;
+
+    auto test_proj = projectile {};
+    test_proj.speed = gun.gun_speed();
+    test_proj.range = 20;
+    test_proj.impact = gun.gun_damage();
+
+    const auto attack = projectile_attack(
+                            test_proj, shooter_pos, target_pos, dispersion_sources {}, &shooter, &gun );
+
+    CHECK( here.inbounds( attack.end_point ) );
+    CHECK( attack.end_point == shooter_pos );
 }
 
 TEST_CASE( "adjacent_friendly_fire_prevention", "[projectile][ballistics]" )

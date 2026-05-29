@@ -301,9 +301,9 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
 
     Creature *target_critter = g->critter_at( target_arg );
     map &here = get_map();
-    const double target_size = target_critter != nullptr ?
-                               target_critter->ranged_target_size() :
-                               here.ranged_target_size( target_arg );
+    const auto target_size = target_critter != nullptr ?
+                             target_critter->ranged_target_size() :
+                             here.inbounds( target_arg ) ? here.ranged_target_size( target_arg ) : 0.0;
     projectile_attack_aim const aim = projectile_attack_roll( dispersion, range, target_size );
 
     // TODO: move to-hit roll back in here

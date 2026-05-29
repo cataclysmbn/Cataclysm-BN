@@ -183,10 +183,6 @@ tripoint_abs_omt abs_pos_again = project_combine( overmap, omt_within_overmap );
 assert( abs_pos == abs_pos_again );
 ```
 
-The functions in `coordinate_conversions.h` (e.g. `ms_to_sm_copy`, `sm_to_omt_remain`, `omt_to_sm`)
-are **legacy**. Replace them with the three template functions from `coordinates.h`. These only
-require you to state the _destination_ scale; the source is baked into the input type.
-
 ### Changing origin
 
 `project_remain` and `project_combine` facilitate some changes of origin, but only those origins

@@ -359,6 +359,14 @@
   },
   {
     "type": "effect_type",
+    "id": "fungal_rage",
+    "max_duration": "15 m",
+    "base_mods": { "pain_chance": [ 1 ], "pain_tick": [ 1 ], "pain_min": [ -2 ] },
+    "effects_on_remove": [ { "effect_type": "shakes", "duration": "10 m" } ],
+    "blood_analysis_description": "Fungal Rage"
+  },
+  {
+    "type": "effect_type",
     "id": "dazed",
     "name": [ "Dazed" ],
     "desc": [ "You're visibly shaken up, and are having a hard time focusing on what's going on around you." ],
@@ -1211,7 +1219,7 @@
   {
     "type": "effect_type",
     "id": "hallu",
-    "max_duration": "30 m",
+    "max_duration": "6 h",
     "blood_analysis_description": "Hallucinations"
   },
   {

@@ -4,7 +4,7 @@
     "id": "vehicle_color_expansion",
     "name": "Vehicle Color Expansion",
     "authors": [ "Wishduck" ],
-    "description": "Greatly randomizes default vehicle colors. WARNING: May cause increased memory consumption",
+    "description": "Adds a greatly extended color list for painting, and expands vehicle palettes",
     "category": "graphical",
     "dependencies": [ "bn" ]
   }

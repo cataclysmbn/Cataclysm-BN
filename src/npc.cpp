@@ -2262,10 +2262,16 @@ Attitude npc::attitude_to( const Creature &other ) const
     if( other.is_npc() || other.is_player() ) {
         const player &guy = dynamic_cast<const player &>( other );
         // check faction relationships first
-        if( has_faction_relationship( guy, npc_factions::kill_on_sight ) ) {
-            return Attitude::A_HOSTILE;
-        } else if( has_faction_relationship( guy, npc_factions::watch_your_back ) ) {
-            return Attitude::A_FRIENDLY;
+        const auto *guy_fac = guy.get_faction();
+        if( my_fac != nullptr && guy_fac != nullptr ) {
+            const auto rel_data = my_fac->relationship_flags_with( guy_fac->id );
+            if( rel_data != nullptr ) {
+                if( rel_data->test( npc_factions::kill_on_sight ) ) {
+                    return Attitude::A_HOSTILE;
+                } else if( rel_data->test( npc_factions::watch_your_back ) ) {
+                    return Attitude::A_FRIENDLY;
+                }
+            }
         }
     }
 

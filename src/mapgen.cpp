@@ -137,19 +137,14 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     //  function, we save the upper-left 4 submaps, and delete the rest.
     // Mapgen is not z-level aware yet. Only actually initialize current z-level
     //  because other submaps won't be touched.
-    {
-        ZoneScopedN( "generate_create_submaps" );
-        for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-            for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-                const size_t grid_pos = get_nonant( tripoint_bub_sm{ gridx, gridy, p.z() } );
-                if( getsubmap( grid_pos ) ) {
-                    debugmsg( "Submap already exists at (%d, %d, %d)", gridx, gridy, p.z() );
-                    continue;
-                }
-                setsubmap( grid_pos, new submap( bub_to_abs( tripoint_bub_sm{ gridx, gridy, p.z() } ) ) );
-                // TODO: memory leak if the code below throws before the submaps get stored/deleted!
-            }
+    for( const auto smp : bubble_submaps() ) {
+        const size_t grid_pos = get_nonant( tripoint_bub_sm( smp, p.z() ) );
+        if( getsubmap( grid_pos ) ) {
+            debugmsg( "Submap already exists at (%d, %d, %d)", smp.x(), smp.y(), p.z() );
+            continue;
         }
+        setsubmap( grid_pos, new submap( bub_to_abs( tripoint_bub_sm( smp, p.z() ) ) ) );
+        // TODO: memory leak if the code below throws before the submaps get stored/deleted!
     }
     // x, and y are submap coordinates, convert to overmap terrain coordinates
     // TODO: fix point types
@@ -244,32 +239,27 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     //  (b) When generate() is called from a worker thread, the submaps land
     //      in the mapbuffer before the deferred hook is queued, so the main
     //      thread can reconstruct a tinymap from the mapbuffer to run it.
-    {
-        ZoneScopedN( "generate_store_submaps" );
-        for( int i = 0; i < my_MAPSIZE; i++ ) {
-            for( int j = 0; j < my_MAPSIZE; j++ ) {
-                dbg( DL::Info ) << "map::generate: submap (" << i << "," << j << ")";
+    for( const auto smp : bubble_submaps() ) {
+        dbg( DL::Info ) << "map::generate: submap (" << smp.x() << "," << smp.y() << ")";
 
-                const tripoint_bub_sm pos( i, j, p.z() );
-                if( i <= 1 && j <= 1 ) {
-                    const tripoint_abs_sm grid_abs = bub_to_abs( pos );
-                    const int gridn = get_nonant( pos );
-                    submap *const sm = getsubmap( gridn );
-                    if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
-                        return;
-                    }
-                    // Transfer ownership of the freshly generated submap to the mapbuffer.
-                    // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
-                    auto owned = std::unique_ptr<submap>( sm );
-                    if( !MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs, owned ) ) {
-                        owned.release(); // Already present; don't double-free.
-                    }
-                } else {
-                    const size_t grid_pos = get_nonant( pos );
-                    delete getsubmap( grid_pos );
-                    setsubmap( grid_pos, nullptr );
-                }
+        const tripoint_bub_sm pos( smp, p.z() );
+        if( pos.x() <= 1 && pos.y() <= 1 ) {
+            const tripoint_abs_sm grid_abs = bub_to_abs( pos );
+            const int gridn = get_nonant( pos );
+            submap *const sm = getsubmap( gridn );
+            if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
+                return;
             }
+            // Transfer ownership of the freshly generated submap to the mapbuffer.
+            // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
+            auto owned = std::unique_ptr<submap>( sm );
+            if( !MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs, owned ) ) {
+                owned.release(); // Already present; don't double-free.
+            }
+        } else {
+            const size_t grid_pos = get_nonant( pos );
+            delete getsubmap( grid_pos );
+            setsubmap( grid_pos, nullptr );
         }
     }
 

@@ -705,8 +705,8 @@ void inventory_column::on_input( const inventory_input &input )
         item_info_data dummy( highlighed->display_name(), {}, this_item, {} );
         dummy.handle_scrolling = true;
         draw_item_info( []() -> catacurses::window {
-            const int width = std::min( TERMX, FULL_SCREEN_WIDTH );
-            const int height = FULL_SCREEN_HEIGHT;
+            const int width = std::min( TERMX, FULL_SCREEN_WIDTH ) + std::max( 0, TERMX - FULL_SCREEN_WIDTH ) * ( 1.0 / 4 );
+            const int height = std::min( TERMY, FULL_SCREEN_HEIGHT ) + std::max( 0, TERMY - FULL_SCREEN_HEIGHT ) * ( 2.0 / 3 );
             return catacurses::newwin( height, width, point( ( TERMX - width ) / 2, ( TERMY - height ) / 2 ) );
         }, dummy );
 
