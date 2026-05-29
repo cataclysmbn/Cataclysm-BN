@@ -3828,7 +3828,6 @@ bool npc::item_name_whitelisted( const std::string &to_match )
         return false;
     }
 
-    wlist.create_rule( to_match );
     return wlist.check_item( to_match ) == RULE_WHITELISTED;
 }
 

@@ -36,48 +36,6 @@ using namespace auto_pickup;
 static bool check_special_rule( const std::vector<material_id> &materials,
                                 const std::string &rule );
 
-void cache::refresh_map_items()
-{
-    for (const itype* e : item_controller->all()) {
-        if (curr_rules(*e)) {
-            (*this)[e->get_id()] = RULE_WHITELISTED;
-        } else {
-            (*this)[e->get_id()] = RULE_BLACKLISTED;
-        }
-    }
-
-    // for( const rule &elem : *this ) {
-    //     if( elem.sRule.empty() || !elem.bActive ) {
-    //         continue;
-    //     }
-
-    //     if( !elem.bExclude ) {
-    //         //Check include patterns against all itemfactory items
-    //         for( const itype *e : item_controller->all() ) {
-                
-    //             if( !elem.ruleFunction(*e) ) {
-    //                 continue;
-    //             }
-                
-    //             const std::string &cur_item = e->nname( 1 );
-    //             map_items[ cur_item ] = RULE_WHITELISTED;
-    //             map_items.temp_items[ cur_item ] = e;
-    //         }
-    //     } else {
-    //         //only re-exclude items from the existing mapping for now
-    //         //new exclusions will process during pickup attempts
-    //         for( auto &map_item : map_items ) {
-    //             if( !check_special_rule( map_items.temp_items[ map_item.first ]->materials, elem.sRule ) &&
-    //                 !wildcard_match( map_item.first, elem.sRule ) ) {
-    //                 continue;
-    //             }
-
-    //             map_items[ map_item.first ] = RULE_BLACKLISTED;
-    //         }
-    //     }
-    // }
-}
-
 auto_pickup::player_settings &get_auto_pickup()
 {
     static auto_pickup::player_settings single_instance;
@@ -367,7 +325,7 @@ void user_interface::show()
                 // (2) Explicitly entered an empty rule- which isn't allowed since "*" should be used
                 // to include/exclude everything
                 if( !r.empty() ) {
-                    cur_rules[iLine].sRule = wildcard_trim_rule( r );
+                    cur_rules[iLine].set_rule_string(r);
                     bStuffChanged = true;
                 } else if( action == "ADD_RULE" ) {
                     cur_rules.pop_back();
@@ -564,7 +522,8 @@ void player_settings::show()
     if( !g->u.name.empty() ) {
         save_character();
     }
-    invalidate();
+
+    refresh_map_items(map_items);
 }
 
 bool player_settings::has_rule( const item *it )
@@ -581,7 +540,7 @@ bool player_settings::has_rule( const item *it )
 void player_settings::add_rule( const item *it )
 {
     character_rules.push_back( rule( it->tname( 1, false ), true, false ) );
-    create_rule( it );
+    invalidate();
 
     if( !get_option<bool>( "AUTO_PICKUP" ) &&
         query_yn( _( "Autopickup is not enabled in the options.  Enable it now?" ) ) ) {
@@ -640,42 +599,36 @@ bool check_special_rule( const std::vector<material_id> &materials, const std::s
     return false;
 }
 
-//Special case. Required for NPC harvest autopickup. Ignores material rules.
-void npc_settings::create_rule( const std::string &to_match )
-{
-    map_items.add_rule(to_match);
-}
-
-
-
-void player_settings::create_rule( const item *it )
-{
-    // TODO: change it to be a reference
-    global_rules.create_rule( map_items, *it );
-    character_rules.create_rule( map_items, *it );
-}
-
-void player_settings::refresh_map_items( cache &map_items ) const
+void player_settings::refresh_map_items( item_search_cache &map_items ) const
 {
     //process include/exclude in order of rules, global first, then character specific
     //if a specific item is being added, all the rules need to be checked now
     //may have some performance issues since exclusion needs to check all items also
-    global_rules.refresh_map_items( map_items );
-    character_rules.refresh_map_items( map_items );
+    map_items.clear_items();
+    map_items.apply_rules(global_rules);
+    map_items.apply_rules(character_rules);
+
 }
 
-rule_state base_settings::check_item( const std::string &sItemName ) const
+[[clang::optnone]]
+rule_state base_settings::check_item( const item& item )
 {
-    if( !map_items.ready ) {
-        recreate();
+    if (!cache_is_valid) {
+        refresh_map_items(map_items);
+        cache_is_valid = true;
     }
 
-    const auto iter = map_items.find( sItemName );
+    const auto iter = map_items.find( item.typeId() );
     if( iter != map_items.end() ) {
         return iter->second;
     }
 
     return RULE_NONE;
+}
+
+void base_settings::invalidate()
+{
+    cache_is_valid = false;
 }
 
 void player_settings::clear_character_rules()
@@ -717,6 +670,7 @@ bool player_settings::save( const bool bCharacter )
 void player_settings::load_character()
 {
     load( true );
+
 }
 
 void player_settings::load_global()
@@ -735,7 +689,7 @@ void player_settings::load( const bool bCharacter )
             ( bCharacter ? character_rules : global_rules ).deserialize( jsin );
         }, true );
     }
-    invalidate();
+    refresh_map_items(map_items);
 }
 
 void npc_settings::show( const std::string &name )
@@ -761,9 +715,10 @@ void npc_settings::deserialize( JsonIn &jsin )
     rules.deserialize( jsin );
 }
 
-void npc_settings::refresh_map_items( cache &map_items ) const
+void npc_settings::refresh_map_items( item_search_cache &map_items ) const
 {
-    rules.refresh_map_items( map_items );
+    map_items.clear_items();
+    map_items.apply_rules(rules);
 }
 
 bool npc_settings::empty() const
@@ -773,14 +728,7 @@ bool npc_settings::empty() const
 
 void base_settings::recreate() const
 {
-    map_items.clear();
-    map_items.temp_items.clear();
+    map_items.clear_items();
     refresh_map_items( map_items );
-    map_items.ready = true;
-    map_items.temp_items.clear();
 }
 
-void base_settings::invalidate()
-{
-    map_items.ready = false;
-}
