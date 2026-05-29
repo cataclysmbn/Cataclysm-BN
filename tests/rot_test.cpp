@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include <array>
 #include <memory>
 #include <ranges>
 
@@ -8,6 +9,7 @@
 #include "coordinates.h"
 #include "enums.h"
 #include "item.h"
+#include "itype.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "game.h" // Just for get_convection_temperature(), TODO: Remove
@@ -101,6 +103,87 @@ static auto add_sashimi_to_map( const tripoint_bub_ms &pos ) -> void
 {
     get_map().add_item( pos, item::spawn( "sashimi" ) );
     REQUIRE( get_map().i_at( pos ).size() == 1 );
+}
+
+static auto contained_food( item &container ) -> item & // *NOPAD*
+{
+    REQUIRE_FALSE( container.contents.empty() );
+    auto &food = container.contents.front();
+    REQUIRE( food.goes_bad() );
+    return food;
+}
+
+TEST_CASE( "Preserving containers keep contents fresh when queried" )
+{
+    clear_all_state();
+    set_map_temperature( get_weather(), 18_c );
+
+    SECTION( "preserving containers suppress stale rot on content freshness queries" ) {
+        const auto preserving_containers = std::array {
+            itype_id( "can_food" ),
+            itype_id( "jar_glass_sealed" ),
+            itype_id( "plastic_bag_vac" ),
+        };
+
+        for( const auto &container_type : preserving_containers ) {
+            INFO( container_type.c_str() );
+            calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+            auto sealed_food = item::in_container( container_type, item::spawn( "offal_canned" ) );
+            REQUIRE( sealed_food->type->container );
+            REQUIRE( sealed_food->type->container->preserves );
+            auto &food = contained_food( *sealed_food );
+
+            calendar::turn += 365_days;
+
+            CHECK_FALSE( food.rotten() );
+            CHECK( food.get_relative_rot() == 0.0 );
+            CHECK( food.get_rot() == 0_turns );
+            CHECK( food.is_fresh() );
+        }
+    }
+
+    SECTION( "sealed but non-preserving containers still allow contained food to rot" ) {
+        calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+        auto sealed_food = item::in_container( itype_id( "jar_glass" ), item::spawn( "offal_canned" ) );
+        REQUIRE( sealed_food->type->container );
+        REQUIRE( sealed_food->type->container->seals );
+        REQUIRE_FALSE( sealed_food->type->container->preserves );
+        auto &food = contained_food( *sealed_food );
+
+        calendar::turn += 365_days;
+
+        CHECK( food.rotten() );
+        CHECK( food.get_rot() > food.get_shelf_life() );
+    }
+
+    SECTION( "map load actualization keeps preserving container contents fresh" ) {
+        calendar::turn = calendar::start_of_cataclysm + 1_minutes;
+        auto sealed_food = item::in_its_container( item::spawn( "offal_canned" ) );
+        auto &food = contained_food( *sealed_food );
+        REQUIRE( food.get_rot() == 0_turns );
+
+        auto m = tinymap();
+        constexpr auto test_location = tripoint_abs_sm( 100, 100, 0 );
+        constexpr auto non_tested_location = tripoint_abs_sm( 0, 0, 0 );
+        const auto pos = tripoint_bub_ms( 14, 13, 0 );
+        m.load( test_location, false );
+        m.ter_set( pos, t_grass );
+        m.i_clear( pos );
+        m.add_item( pos, std::move( sealed_food ) );
+
+        m.load( non_tested_location, false );
+        calendar::turn += 365_days;
+        m.load( test_location, false );
+
+        auto sealed_stack = m.i_at( pos );
+        REQUIRE( sealed_stack.size() == 1 );
+        auto &sealed_item = sealed_stack.only_item();
+        REQUIRE( sealed_item.type->container );
+        REQUIRE( sealed_item.type->container->preserves );
+        auto &stored_food = contained_food( sealed_item );
+        CHECK_FALSE( stored_food.rotten() );
+        CHECK( stored_food.get_rot() == 0_turns );
+    }
 }
 
 TEST_CASE( "Rate of rotting" )
