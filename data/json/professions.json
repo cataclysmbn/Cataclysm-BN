@@ -59,6 +59,17 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "temporal_soldier_garand",
+    "entries": [
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 },
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 },
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 },
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 }
+ ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "army_mags_mp5",
     "entries": [ { "item": "mp5mag", "ammo-item": "9mm", "charges": 30 }, { "item": "mp5mag", "ammo-item": "9mm", "charges": 30 } ]
   },
@@ -746,7 +757,8 @@
           "smart_phone",
           "matches",
           "wristwatch"
-        ]
+        ],
+        "entries": [ { "item": "lighter", "charges": 25 } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -1482,6 +1494,42 @@
       "male": [ "boxer_shorts" ],
       "female": [ "boy_shorts", "sports_bra" ]
     }
+  },
+  {
+    "type": "profession",
+    "id": "soldier_wwii",
+    "copy-from": "soldier",
+    "name": "Army Infantry",
+    "description": "One moment you were scrambling for cover in a shell crater, on some burnt-out island in the Pacific.  Then a bright flash, and next thing you know you're stateside again.  Except the cities don't look anything like how you remember them, and the smell of death hangs in the air like it followed you home",
+    "traits": [ "PROF_MILITARY" ],
+    "//": "About as close as we can get with current existing items.",
+    "items": {
+      "both": {
+        "items": [
+          "pants",
+          "tshirt",
+          "jacket_army",
+          "helmet_liner",
+          "helmet_steel",
+          "socks",
+          "boots",
+          "wristwatch",
+          "canteen",
+          "mess_tin",
+          "shovel_short",
+          "rucksack"
+        ],
+        "entries": [
+          { "item": "chestrig", "contents-group": "temporal_soldier_garand" },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
+          { "item": "garand", "ammo-item": "3006", "charges": 8, "contents-item": [ "shoulder_strap" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "boy_shorts", "sports_bra" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
   },
   {
     "type": "profession",
@@ -3430,6 +3478,19 @@
   },
   {
     "type": "profession",
+    "id": "wolfpack_mutant",
+    "name": "Mutant Pack Leader",
+    "description": "They treated you like an animal in that lab.  Now that you're free, you wonder if they had the right idea.  Your new friends don't seem afraid of you like they are of humans, after all.",
+    "starting_cash": 0,
+    "points": 4,
+    "skills": [ { "level": 1, "name": "survival" } ],
+    "traits": [ "LUPINE_FUR", "TAIL_FLUFFY", "LUPINE_EARS", "THRESH_LUPINE" ],
+    "pets": [ { "name": "mon_wolf", "amount": 2 } ],
+    "items": { "both": [ "subsuit_xl" ], "male": [ "briefs" ], "female": [ "bra", "panties" ] },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
     "id": "broken_cyborg",
     "name": "Defective Cyborg",
     "description": "You were normal once.  Before the tests, before the procedures, before they stripped away every outward sign of your humanity.  You're more machine than man now, but that might prove an advantage against the horrors that await.",
@@ -4205,6 +4266,35 @@
         ]
       },
       "male": [ "briefs" ],
+      "female": [ "bra", "panties" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "rioter",
+    "name": "Rioter",
+    "description": "The first protest you were at started peaceful, until they hosed the crowd down with machinegun fire instead of water cannons.  You escaped, and came prepared for a fight next time.  You weren't prepared for the cops and protesters to tear themselves apart in a cannibalistic frenzy.",
+    "points": 0,
+    "items": {
+      "both": {
+        "items": [
+          "jeans",
+          "longshirt",
+          "socks",
+          "sneakers",
+          "mbag",
+          "mask_rioter",
+          "helmet_bike",
+          "sunglasses",
+          "pockknife",
+          "wristwatch"
+        ],
+        "entries": [
+          { "item": "molotov", "count": 2 },
+          { "item": "lighter", "charges": 25 }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
     }
   },
@@ -6113,7 +6203,7 @@
         "items": [
           "hat_ball",
           "knit_scarf",
-          "tshirt",
+          "alohashirt",
           "jacket_light",
           "gloves_light",
           "pants",
@@ -6736,7 +6826,7 @@
           "matches",
           "wristwatch"
         ],
-        "entries": [ { "item": "makeshift_crowbar", "custom-flags": [ "auto_wield" ] } ]
+        "entries": [ { "item": "lighter", "charges": 25 }, { "item": "makeshift_crowbar", "custom-flags": [ "auto_wield" ] } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
