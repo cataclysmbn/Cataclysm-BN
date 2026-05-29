@@ -558,6 +558,18 @@
         "trailerpark_city": 15,
         "railroad_city": 10
       },
+      "urban_houses": {
+        "emptyresidentiallot": 20,
+        "house_vacant": 20,
+        "house_vacant2": 20,
+        "apartments_con_new": 10,
+        "apartments_mod_new": 10,
+        "school": 15,
+        "motel_city": 10,
+        "fishing_pond_city": 10,
+        "trailerpark_city": 15,
+        "railroad_city": 10
+      },
       "parks": {
         "park": 400,
         "pool": 100,
