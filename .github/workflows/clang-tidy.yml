@@ -95,6 +95,9 @@ jobs:
       - uses: denoland/setup-deno@v2
         with: { cache: true }
 
+      - name: cache affected-files dependencies
+        run: deno cache --frozen scripts/affected_files.ts
+
       - name: build clang-tidy plugin
         run: |
           pip install --break-system-packages lit
@@ -106,7 +109,7 @@ jobs:
       #     clang-tidy --version
 
       - name: gather affected files
-        run: deno task affected-files ${{ github.event.pull_request.number }} --output "$AFFECTED_FILES"
+        run: deno run --cached-only -RWEN --allow-run scripts/affected_files.ts ${{ github.event.pull_request.number }} --output "$AFFECTED_FILES"
 
       - name: run clang-tidy
         run: bash ./build-scripts/run-clang-tidy-plugin.sh

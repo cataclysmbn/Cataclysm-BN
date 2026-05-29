@@ -9,7 +9,7 @@
 import { walk, type WalkEntry, type WalkOptions } from "jsr:@std/fs"
 import { MuxAsyncIterator } from "jsr:@std/async"
 import { partition } from "jsr:@std/collections"
-import { Octokit, type RestEndpointMethodTypes } from "https://esm.sh/@octokit/rest@21.0.2"
+import { Octokit, type RestEndpointMethodTypes } from "npm:@octokit/rest@21.0.2"
 import { Command } from "@cliffy/command"
 
 const paths = ["src", "tests"]
@@ -19,8 +19,8 @@ type ListFileResponse = RestEndpointMethodTypes["pulls"]["listFiles"]["response"
 const ACMRT: Set<ListFileResponse["status"]> = new Set(
   ["added", "copied", "modified", "renamed", "changed"],
 )
-const octokit = new Octokit({ auth: Deno.env.get("GITHUB_TOKEN") })
 const getDiffs = async (pr: number) => {
+  const octokit = new Octokit({ auth: Deno.env.get("GITHUB_TOKEN") })
   const res = await octokit.paginate(
     octokit.rest.pulls.listFiles,
     { owner: "cataclysmbn", repo: "Cataclysm-BN", pull_number: pr },
