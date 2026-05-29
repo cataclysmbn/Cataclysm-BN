@@ -92,7 +92,10 @@
       "computers": {
         "6": {
           "name": "Library Entrance",
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
+            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },
@@ -152,7 +155,10 @@
       "computers": {
         "6": {
           "name": "Hardware Storage",
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
+            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },
@@ -214,7 +220,10 @@
       "computers": {
         "6": {
           "name": "Chemical Storage",
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
+            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "8": {
@@ -300,12 +309,18 @@
       "computers": {
         "6": {
           "name": "Barracks Entrance",
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 },
+            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "7": {
           "name": "Magazine Entrance",
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 },
+            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },
@@ -376,12 +391,18 @@
       "computers": {
         "6": {
           "name": "Prisoner Containment Entrance",
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
+          "options": [
+            { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 },
+            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "7": {
           "name": "Containment Control",
-          "options": [ { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
+          "options": [
+            { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 },
+            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "8": {
@@ -438,14 +459,7 @@
         "D": { "items": [ { "item": "SUS_office_desk", "chance": 50 } ] },
         "i": { "items": [ { "item": "SUS_office_filing_cabinet", "chance": 100 } ] }
       },
-      "place_monster": [
-        {
-          "monster": [ "mon_zombie_scientist_admin" ],
-          "x": [ 11, 12 ],
-          "y": [ 18, 20 ],
-          "chance": 100
-        }
-      ],
+      "place_monster": [ { "monster": [ "mon_zombie_scientist_admin" ], "x": [ 11, 12 ], "y": [ 18, 20 ], "chance": 100 } ],
       "place_nested": [
         { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 1, "y": 1 },
         { "chunks": [ "lab_spawn_9x9_crossdoors" ], "x": 14, "y": 1 },
