@@ -134,7 +134,7 @@
       [ "raft", 100 ],
       [ "boat_motor_single", 200 ],
       [ "fishing_boat", 100 ],
-      [ "boat_motor_smuggler", 100 ],
+      [ "boat_motor_smuggler", 125 ],
       [ "boat_motor_police", 125 ],
       [ "CG_patrol_boat", 25 ],
       [ "sailboat", 150 ],
