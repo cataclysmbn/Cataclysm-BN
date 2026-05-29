@@ -86,7 +86,6 @@ struct pickup_count {
     bool all_children_picked = false;
 };
 
-[[clang::optnone]]
 static bool select_autopickup_items( const std::vector<std::list<item_stack::iterator>> &here,
                                      std::vector<pickup_count> &getitem )
 {
@@ -107,7 +106,7 @@ static bool select_autopickup_items( const std::vector<std::list<item_stack::ite
                 if( get_auto_pickup().check_item( *begin ) == RULE_WHITELISTED ) {
                     do_pickup = true;
                 } else if( begin->is_container() && !begin->is_container_empty() &&
-                           get_auto_pickup().check_item( begin->get_contained()) == RULE_WHITELISTED ) {
+                           get_auto_pickup().check_item( begin->get_contained() ) == RULE_WHITELISTED ) {
                     do_pickup = true;
                 } else if( get_auto_pickup().check_item( *begin ) != RULE_BLACKLISTED ) {
                     //No prematched pickup rule found

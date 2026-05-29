@@ -13,10 +13,10 @@
 #include "string_id.h"
 #include "type_id.h"
 
-rule::rule( const std::string &rule_str, bool active, bool exclude) : 
+rule::rule( const std::string &rule_str, bool active, bool exclude ) :
     sRule( rule_str ), bActive( active ), bExclude( exclude )
 {
-    ruleFunction = itype_id_filter_from_string_wildcard(rule_str);
+    ruleFunction = itype_id_filter_from_string_wildcard( rule_str );
 }
 
 void rule::serialize( JsonOut &jsout ) const
@@ -30,25 +30,25 @@ void rule::serialize( JsonOut &jsout ) const
 void rule::deserialize( JsonIn &jsin )
 {
     JsonObject jo = jsin.get_object();
-    set_rule_string(jo.get_string( "rule" ));
+    set_rule_string( jo.get_string( "rule" ) );
     bActive = jo.get_bool( "active" );
     bExclude = jo.get_bool( "exclude" );
 }
 
-void rule::set_rule_string(const std::string& filter)
+void rule::set_rule_string( const std::string &filter )
 {
     sRule = filter;
-    ruleFunction = itype_id_filter_from_string_wildcard(filter);
+    ruleFunction = itype_id_filter_from_string_wildcard( filter );
 }
 
-rule_state rule::operator()(const itype_id& item_type) const
+rule_state rule::operator()( const itype_id &item_type ) const
 {
-    if (bActive) {
-        bool in_filter = ruleFunction(item_type);
-        if (!in_filter) {
+    if( bActive ) {
+        bool in_filter = ruleFunction( item_type );
+        if( !in_filter ) {
             return RULE_NONE;
         } else {
-            if (bExclude ) {
+            if( bExclude ) {
                 return RULE_BLACKLISTED;
             } else {
                 return RULE_WHITELISTED;
@@ -59,14 +59,14 @@ rule_state rule::operator()(const itype_id& item_type) const
     }
 }
 
-rule_state rule::operator()(const itype& item_type) const
+rule_state rule::operator()( const itype &item_type ) const
 {
-    return (*this)(item_type.get_id());
+    return ( *this )( item_type.get_id() );
 }
 
-rule_state rule::operator()(const item& item) const
+rule_state rule::operator()( const item &item ) const
 {
-    return (*this)(item.typeId());
+    return ( *this )( item.typeId() );
 }
 
 void rule_list::serialize( JsonOut &jsout ) const
@@ -91,14 +91,14 @@ void rule_list::deserialize( JsonIn &jsin )
 }
 
 
-rule_state rule_list::operator()(const itype_id& item_type) const
+rule_state rule_list::operator()( const itype_id &item_type ) const
 {
     rule_state curr_state = RULE_NONE;
-    for (size_t i = 0; i < size(); ++i) {
-        if ((*this)[i].bActive) {
-            if (!(*this)[i].bExclude && (*this)[i](item_type)) {
+    for( size_t i = 0; i < size(); ++i ) {
+        if( ( *this )[i].bActive ) {
+            if( !( *this )[i].bExclude && ( *this )[i]( item_type ) ) {
                 curr_state = RULE_WHITELISTED;
-            } else if ((*this)[i].bExclude && (*this)[i](item_type)) {
+            } else if( ( *this )[i].bExclude && ( *this )[i]( item_type ) ) {
                 curr_state = RULE_BLACKLISTED;
             }
         }
@@ -107,45 +107,45 @@ rule_state rule_list::operator()(const itype_id& item_type) const
     return curr_state;
 }
 
-rule_state rule_list::operator()(const itype& item_type) const
+rule_state rule_list::operator()( const itype &item_type ) const
 {
-    return (*this)(item_type.get_id());
+    return ( *this )( item_type.get_id() );
 
 }
-rule_state rule_list::operator()(const item& item) const
+rule_state rule_list::operator()( const item &item ) const
 {
-    return (*this)(item.typeId());
+    return ( *this )( item.typeId() );
 }
 
-item_search_cache::item_search_cache() 
+item_search_cache::item_search_cache()
 {
     clear_items();
 }
 
 
-void item_search_cache::apply_rules(const rule_list& curr_rules)
+void item_search_cache::apply_rules( const rule_list &curr_rules )
 {
-    for (size_t i = 0; i < curr_rules.size(); ++i) {
-        apply_rules(curr_rules[i]);
+    for( size_t i = 0; i < curr_rules.size(); ++i ) {
+        apply_rules( curr_rules[i] );
     }
 }
 
-void item_search_cache::apply_rules(const rule& curr_rules)
+void item_search_cache::apply_rules( const rule &curr_rules )
 {
-    for (const itype* e : item_controller->all()) {
-        const itype_id& id = e->get_id();
-        rule_state result = curr_rules(*e);
-        if (result != RULE_NONE) {
-            (*this)[id] = result;
+    for( const itype *e : item_controller->all() ) {
+        const itype_id &id = e->get_id();
+        rule_state result = curr_rules( *e );
+        if( result != RULE_NONE ) {
+            ( *this )[id] = result;
         }
     }
 }
 
-void item_search_cache::clear_items() 
+void item_search_cache::clear_items()
 {
-    for (const itype* e : item_controller->all()) {
-        const itype_id& id = e->get_id();
-        (*this)[id] = RULE_BLACKLISTED;
+    for( const itype *e : item_controller->all() ) {
+        const itype_id &id = e->get_id();
+        ( *this )[id] = RULE_BLACKLISTED;
     }
 }
 
@@ -179,8 +179,8 @@ std::function<bool( const item & )> basic_item_filter( std::string filter )
         case 'M':
             return [filter]( const item & i ) {
                 bool pure_material = true;
-                for (auto& mat : i.made_of()) {
-                    if (!lcmatch( mat->name(), filter )) {
+                for( auto &mat : i.made_of() ) {
+                    if( !lcmatch( mat->name(), filter ) ) {
                         pure_material = false;
                     }
                 }
@@ -262,8 +262,8 @@ std::function<bool( const itype & )> basic_itype_filter( std::string filter )
         case 'M':
             return [filter]( const itype & i ) {
                 bool pure_material = true;
-                for (auto& mat : i.materials) {
-                    if (!lcmatch( mat->name(), filter )) {
+                for( auto &mat : i.materials ) {
+                    if( !lcmatch( mat->name(), filter ) ) {
                         pure_material = false;
                     }
                 }
@@ -299,7 +299,7 @@ std::function<bool( const itype & )> basic_itype_filter( std::string filter )
         // skill taught
         case 'k':
             return [filter]( const itype & i ) {
-                if( i.book != NULL) {
+                if( i.book != NULL ) {
                     const islot_book &book = *i.book;
                     return lcmatch( book.skill->name(), filter );
                 }
@@ -308,15 +308,15 @@ std::function<bool( const itype & )> basic_itype_filter( std::string filter )
         // by name
         default:
             return [filter]( const itype & a ) {
-                return lcmatch( a.nname(1), filter );
+                return lcmatch( a.nname( 1 ), filter );
             };
     }
 }
 
-std::function<bool( const itype_id & )> basic_itype_id_filter( const std::string& filter )
+std::function<bool( const itype_id & )> basic_itype_id_filter( const std::string &filter )
 {
-    return [filter](const itype_id& id) {
-        return basic_itype_filter(filter)(id.obj());
+    return [filter]( const itype_id & id ) {
+        return basic_itype_filter( filter )( id.obj() );
     };
 }
 
@@ -349,8 +349,8 @@ std::function<bool( const itype & )> basic_itype_filter_wildcard( std::string fi
         case 'M':
             return [filter]( const itype & i ) {
                 bool pure_material = true;
-                for (auto& mat : i.materials) {
-                    if (!lcmatch( mat->name(), filter )) {
+                for( auto &mat : i.materials ) {
+                    if( !lcmatch( mat->name(), filter ) ) {
                         pure_material = false;
                     }
                 }
@@ -386,7 +386,7 @@ std::function<bool( const itype & )> basic_itype_filter_wildcard( std::string fi
         // skill taught
         case 'k':
             return [filter]( const itype & i ) {
-                if( i.book != NULL) {
+                if( i.book != NULL ) {
                     const islot_book &book = *i.book;
                     return lcmatch( book.skill->name(), filter );
                 }
@@ -395,15 +395,15 @@ std::function<bool( const itype & )> basic_itype_filter_wildcard( std::string fi
         // by name
         default:
             return [filter]( const itype & a ) {
-                return wildcard_match(a.nname(1), filter);
+                return wildcard_match( a.nname( 1 ), filter );
             };
     }
 }
 
-std::function<bool( const itype_id & )> basic_itype_id_filter_wildcard(std::string filter )
+std::function<bool( const itype_id & )> basic_itype_id_filter_wildcard( std::string filter )
 {
-    return [filter](const itype_id& id) {
-        return basic_itype_filter_wildcard(filter)(id.obj());
+    return [filter]( const itype_id & id ) {
+        return basic_itype_filter_wildcard( filter )( id.obj() );
     };
 }
 
@@ -414,21 +414,22 @@ std::function<bool( const item & )> item_filter_from_string( const std::string &
 
 std::function<bool( const itype & )> itype_filter_from_string( const std::string &filter )
 {
-    return filter_from_string<itype>(filter, basic_itype_filter );
+    return filter_from_string<itype>( filter, basic_itype_filter );
 }
 std::function<bool( const itype_id & )> itype_id_filter_from_string( const std::string &filter )
 {
-    return filter_from_string<itype_id>(filter, basic_itype_id_filter );
+    return filter_from_string<itype_id>( filter, basic_itype_id_filter );
 }
 
 std::function<bool( const itype & )> itype_filter_from_string_wildcard( const std::string &filter )
 {
-    return filter_from_string<itype>(filter, basic_itype_filter_wildcard );
+    return filter_from_string<itype>( filter, basic_itype_filter_wildcard );
 }
 
-std::function<bool( const itype_id & )> itype_id_filter_from_string_wildcard( const std::string &filter )
+std::function<bool( const itype_id & )> itype_id_filter_from_string_wildcard(
+    const std::string &filter )
 {
-    return filter_from_string<itype_id>(filter, basic_itype_id_filter_wildcard );
+    return filter_from_string<itype_id>( filter, basic_itype_id_filter_wildcard );
 }
 std::pair<std::string, std::string> get_both( const std::string &a )
 {

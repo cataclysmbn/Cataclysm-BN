@@ -615,7 +615,6 @@ void player_settings::refresh_map_items( item_search_cache &map_items ) const
 
 }
 
-[[clang::optnone]]
 rule_state base_settings::check_item( const item& item )
 {
     if (!cache_is_valid) {

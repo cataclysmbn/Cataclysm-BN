@@ -35,7 +35,7 @@ class user_interface
         bool is_autopickup = false;
 
         void show();
-        void test_pattern(const rule& rule) const;
+        void test_pattern( const rule &rule ) const;
 
         bool bStuffChanged = false;
 };
@@ -49,8 +49,8 @@ class base_settings
         virtual void refresh_map_items( item_search_cache &map_items ) const = 0;
 
         void recreate() const;
-        
-        public:
+
+    public:
         virtual ~base_settings() = default;
         rule_state check_item( const item &item );
         void invalidate();
