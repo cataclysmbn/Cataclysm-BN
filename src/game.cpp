@@ -626,6 +626,7 @@ void game::setup( bool load_world_modfiles )
     next_mission_id = 1;
     new_game = true;
     next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
     saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
     bVMonsterLookFire = true;
@@ -856,6 +857,7 @@ bool game::start_game()
     new_game = true;
     saving_blocked_by_failed_load = false;
     next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
     start_calendar();
     get_weather().nextweather = calendar::turn;
     safe_mode = ( get_option<bool>( "SAFEMODE" ) ? SAFE_MODE_ON : SAFE_MODE_OFF );
@@ -2266,7 +2268,7 @@ auto game::activity_fixed_window_duration() -> time_duration
     return duration;
 }
 
-auto game::has_activity_skip_relevant_creature() -> bool
+auto game::has_activity_skip_relevant_npc() -> bool
 {
     if( npcs_dirty ) {
         return true;
@@ -2275,33 +2277,6 @@ auto game::has_activity_skip_relevant_creature() -> bool
         return guy && !guy->is_dead();
     } ) ) {
         return true;
-    }
-
-    const auto monster_lod_gate = activity_skip_monster_lod_gate;
-    if( !monster_lod_enabled || monster_lod_gate <= 0 ) {
-        return std::ranges::any_of( all_monsters(), []( const monster & critter ) {
-            return !critter.is_dead_state() && !critter.is_hallucination();
-        } );
-    }
-
-    const auto player_pos = u.bub_pos();
-    const auto gate_distance = monster_lod_gate == 1 ? lod_tier_full_dist : lod_tier_coarse_dist;
-    for( monster &critter : all_monsters() ) {
-        if( critter.is_dead_state() || critter.is_hallucination() ) {
-            continue;
-        }
-        const auto distance = rl_dist( critter.bub_pos(), player_pos );
-        const auto attitude = critter.attitude_to( u );
-        if( critter.has_effect( effect_pet ) && distance <= DANGEROUS_PROXIMITY ) {
-            return true;
-        }
-        if( attitude == Attitude::A_HOSTILE && distance <= DANGEROUS_PROXIMITY ) {
-            return true;
-        }
-        if( attitude == Attitude::A_HOSTILE && distance <= gate_distance &&
-            ( u.sees( critter ) || critter.sees( u ) ) ) {
-            return true;
-        }
     }
     return false;
 }
@@ -2314,8 +2289,40 @@ auto game::has_activity_skip_relevant_vehicle() -> bool
                ( veh->is_moving() || veh->vertical_velocity != 0 || veh->skidding ||
                  veh->is_falling || veh->engine_on || veh->is_autodriving ||
                  veh->is_following || veh->is_patrolling || veh->autopilot_on ||
-                 veh->is_alarm_on || veh->check_environmental_effects );
+                 veh->is_alarm_on || veh->check_environmental_effects ||
+                 veh->total_accessory_epower_w() < 0 );
     } );
+}
+
+auto game::has_activity_skip_active_fire() -> bool
+{
+    auto has_fire = false;
+    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+        if( has_fire || ( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) ) {
+            return;
+        }
+        mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
+            if( has_fire ) {
+                return;
+            }
+            auto &[pos_sm, sm_ptr] = entry;
+            if( !sm_ptr || sm_ptr->field_count == 0 ||
+                !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+                return;
+            }
+            for( const point_sm_ms &local : sm_ptr->field_cache ) {
+                field &curfield = sm_ptr->get_field( local );
+                for( auto &field_pair : curfield ) {
+                    field_entry &cur = field_pair.second;
+                    if( cur.is_field_alive() && cur.get_field_type().obj().has_fire ) {
+                        has_fire = true;
+                        return;
+                    }
+                }
+            }
+        } );
+    } );
+    return has_fire;
 }
 
 auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bool
@@ -2338,7 +2345,10 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
     if( u.in_vehicle && u.controlling_vehicle ) {
         return false;
     }
-    if( m.has_field_at( u.bub_pos() ) ) {
+    if( m.field_at( u.bub_pos() ).field_count() > 0 ) {
+        return false;
+    }
+    if( has_activity_skip_active_fire() ) {
         return false;
     }
     if( has_activity_skip_relevant_vehicle() ) {
@@ -2348,7 +2358,7 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
         event_time && *event_time <= calendar::turn + duration ) {
         return false;
     }
-    if( has_activity_skip_relevant_creature() ) {
+    if( has_activity_skip_relevant_npc() ) {
         return false;
     }
     return true;
@@ -2393,6 +2403,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
         perhaps_add_random_npc();
         if( npcs_dirty || critter_tracker->size() != monster_count ) {
+            activity_fixed_window_force_normal_turn_ = true;
             break;
         }
 
@@ -2408,6 +2419,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             break;
         }
         if( npcs_dirty || critter_tracker->size() != monster_count ) {
+            activity_fixed_window_force_normal_turn_ = true;
             break;
         }
         const auto activity_continues = u.activity && *u.activity &&
@@ -2425,6 +2437,12 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         tick_temporary_pocket_dimensions();
         tick_vehicle_portal_taps();
         fluid_grid::update( calendar::turn );
+
+        if( critter_tracker->size() > 0 ) {
+            sounds::process_sounds();
+            m.build_map_cache( get_levz(), true );
+            monmove( monster_activity_ai_mode::activity_skip );
+        }
 
         {
             ZoneScopedN( "do_turn_player_process_turn" );
@@ -2504,6 +2522,10 @@ auto game::run_activity_cadence_boundary() -> void
 auto game::try_activity_fixed_window_skip() -> bool
 {
     ZoneScopedN( "activity_fixed_window_try" );
+    if( activity_fixed_window_force_normal_turn_ ) {
+        activity_fixed_window_force_normal_turn_ = false;
+        return false;
+    }
     if( !u.activity || !*u.activity || calendar::turn < next_activity_fixed_window_check_ ) {
         return false;
     }
@@ -5448,9 +5470,11 @@ void game::world_tick()
     }
 }
 
-void game::monmove()
+auto game::monmove( const monster_activity_ai_mode mode ) -> void
 {
     ZoneScopedN( "game::monmove" );
+    const auto activity_skip_ai = mode == monster_activity_ai_mode::activity_skip &&
+                                  monster_lod_enabled;
     {
         ZoneScopedN( "monmove_cleanup_initial" );
         cleanup_dead();
@@ -5529,6 +5553,25 @@ void game::monmove()
         }
     }
 
+    auto activity_lod_restore = std::vector<std::pair<monster *, int8_t>> {};
+    auto activity_ai_paused = std::unordered_set<monster *> {};
+    if( activity_skip_ai ) {
+        ZoneScopedN( "monmove_activity_demote_lod" );
+        activity_lod_restore.reserve( mon_snap.size() );
+        activity_ai_paused.reserve( mon_snap.size() );
+        for( monster *critter : mon_snap ) {
+            const auto real_lod_tier = critter->lod_tier;
+            activity_lod_restore.emplace_back( critter, real_lod_tier );
+            if( real_lod_tier > activity_skip_monster_lod_gate ) {
+                activity_ai_paused.insert( critter );
+            } else {
+                critter->lod_tier = static_cast<int8_t>( std::min<int>( 2, real_lod_tier + 1 ) );
+            }
+        }
+        TracyPlot( "Activity Skip Monster AI Paused",
+                   static_cast<int64_t>( activity_ai_paused.size() ) );
+    }
+
     // OPP-7: Unified disposition map: a single hash lookup in the execution
     // loop suffices:
     //   value >= 0  → index into precomputed[] (monster has a parallel plan)
@@ -5541,6 +5584,7 @@ void game::monmove()
         plannable.reserve( mon_snap.size() );
         for( monster *critter : mon_snap ) {
             if( !critter->is_dead() &&
+                !activity_ai_paused.contains( critter ) &&
                 !critter->has_effect( effect_ai_controlled ) &&
                 critter->moves > 0 &&
                 !critter->has_effect( effect_ridden ) &&
@@ -5708,6 +5752,9 @@ void game::monmove()
     }
     // -----------------------------------------------------------------------
 
+    const auto player_pos = u.bub_pos();
+    const int current_turn = to_turn<int>( calendar::turn );
+
     // -----------------------------------------------------------------------
     // LOD-B: Lifecycle loop — runs for EVERY monster regardless of tier or
     // budget.  Effect durations, hunger, and field damage tick normally for
@@ -5760,6 +5807,10 @@ void game::monmove()
                 }
                 critter.try_reproduce();
             }
+            if( activity_ai_paused.contains( critter_ptr ) ) {
+                critter.moves = 0;
+                critter.next_turn = current_turn + 1;
+            }
         }
     }
 
@@ -5776,9 +5827,6 @@ void game::monmove()
     // skipped by the budget retain their current next_turn value so they
     // are guaranteed to run on the following turn.
     // -----------------------------------------------------------------------
-    const auto player_pos = u.bub_pos();
-    const int current_turn   = to_turn<int>( calendar::turn );
-
     // Build eligible list paired with pre-computed distances so each monster's
     // distance is calculated exactly once.  The pair is (dist, monster*) so
     // the default comparator orders by distance first.
@@ -5789,6 +5837,7 @@ void game::monmove()
         eligible.reserve( monsters.items ? monsters.items->size() : 0 );
         for( monster &critter : monsters ) {
             if( !critter.is_dead() &&
+                !activity_ai_paused.contains( &critter ) &&
                 !critter.has_effect( effect_ridden ) &&
                 critter.moves > 0 &&
                 critter.next_turn <= current_turn &&
@@ -5992,6 +6041,15 @@ void game::monmove()
     TracyPlot( "Monmove Fallback Plans", monmove_fallback_plans );
     TracyPlot( "Monmove Serial Replans", monmove_serial_replans );
     TracyPlot( "Monmove Controlled Moves", monmove_controlled_moves );
+
+    if( activity_skip_ai ) {
+        ZoneScopedN( "monmove_activity_restore_lod" );
+        for( const auto &[critter, real_lod_tier] : activity_lod_restore ) {
+            if( critter != nullptr ) {
+                critter->lod_tier = real_lod_tier;
+            }
+        }
+    }
 
     {
         ZoneScopedN( "monmove_cleanup_post_execute" );

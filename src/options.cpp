@@ -2397,11 +2397,12 @@ void options_manager::add_options_performance()
              0, 1, 0 );
         add( "ACTIVITY_SKIP_MONSTER_LOD_GATE", page_id,
              translate_marker( "Activity Skip Monster Gate" ),
-             translate_marker( "Highest monster LOD tier that can block broad activity turn skipping.  "
-                               "0 disables monster pausing during activity skips.  "
-                               "1 checks only Tier-0 monsters.  2 checks Tier-0 and Tier-1 monsters, "
-                               "which is the default conservative performance mode." ),
-             0, 2, 2 );
+             translate_marker( "Highest real monster LOD tier allowed to run activity-skip AI.  "
+                               "Allowed monsters act one LOD tier less detailed than normal.  "
+                               "0 lets only Tier-0 monsters act as Tier-1.  "
+                               "1 lets Tier-0 and Tier-1 monsters act as Tier-1 and Tier-2, "
+                               "which is the default.  2 also lets Tier-2 monsters run macro AI." ),
+             0, 2, 1 );
     } );
 
     get_option( "LOD_ACTION_BUDGET" ).setPrerequisite( "MONSTER_LOD_ENABLED" );

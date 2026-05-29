@@ -79,6 +79,11 @@ enum class dump_mode {
     HTML
 };
 
+enum class monster_activity_ai_mode : int {
+    normal,
+    activity_skip
+};
+
 enum quit_status {
     QUIT_NO = 0,    // Still playing
     QUIT_SUICIDE,   // Quit with 'Q'
@@ -1005,7 +1010,7 @@ class game : public submap_load_listener
         void perhaps_add_random_npc();
 
         // Routine loop functions, approximately in order of execution
-        void monmove();          // Monster movement
+        auto monmove( monster_activity_ai_mode mode = monster_activity_ai_mode::normal ) -> void;
         void npcmove();          // NPC movement (split from monmove for per-option sleep-skip)
         void sleep_skip_npc_process(); // Sleep-only NPC processing when SLEEP_SKIP_NPC is active
         int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
@@ -1018,8 +1023,9 @@ class game : public submap_load_listener
         auto activity_fixed_window_duration() -> time_duration;
         auto execute_activity_fixed_window_skip( const time_duration &duration ) -> int;
         auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
-        auto has_activity_skip_relevant_creature() -> bool;
+        auto has_activity_skip_relevant_npc() -> bool;
         auto has_activity_skip_relevant_vehicle() -> bool;
+        auto has_activity_skip_active_fire() -> bool;
         auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
         auto handle_wait_activity_redraw( bool force = false ) -> void;
         auto run_activity_cadence_boundary() -> void;
@@ -1321,6 +1327,7 @@ class game : public submap_load_listener
         // Avoid paying the fixed-window proof cost every turn when a long activity is
         // currently ineligible because of nearby simulation state.
         time_point next_activity_fixed_window_check_ = calendar::turn_zero;
+        bool activity_fixed_window_force_normal_turn_ = false;
 
         // Consecutive turns each dynamic condition has been continuously met.
         // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately
