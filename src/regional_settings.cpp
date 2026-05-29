@@ -1074,6 +1074,11 @@ overmap_special_id city_settings::pick_house() const
     return houses.pick()->id;
 }
 
+overmap_special_id city_settings::pick_urban_house() const
+{
+    return urban_houses.pick()->id;
+}
+
 overmap_special_id city_settings::pick_shop() const
 {
     return shops.pick()->id;
