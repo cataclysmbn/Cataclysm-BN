@@ -589,7 +589,7 @@
     "type": "GENERIC",
     "category": "valuables",
     "name": { "str": "lab door override code" },
-    "description": "This printout contains a one-time use admin override code for any locked door in a science lab.",
+    "description": "This printout contains a one-time use emergency override code for any locked door in a science lab.",
     "weight": "5 g",
     "volume": "4 ml",
     "price": "0 cent",
