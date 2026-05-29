@@ -1019,7 +1019,8 @@ class game : public submap_load_listener
         auto execute_activity_fixed_window_skip( const time_duration &duration ) -> int;
         auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
         auto has_activity_skip_relevant_creature() -> bool;
-        auto can_skip_activity_world_tick( const time_duration &duration ) -> bool;
+        auto has_activity_skip_relevant_vehicle() -> bool;
+        auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
         auto handle_wait_activity_redraw( bool force = false ) -> void;
         auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.

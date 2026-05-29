@@ -46,6 +46,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
+#include "batch_turns.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -2257,24 +2258,6 @@ void game::process_activity()
     }
 }
 
-static auto submap_has_field_emitter( submap &sm ) -> bool
-{
-    static const auto flag_EMITTER = std::string( "EMITTER" );
-    if( !sm.emitter_cache.has_value() ) {
-        auto &positions = sm.emitter_cache.emplace();
-        std::ranges::for_each(
-            cata::views::cartesian_product( std::views::iota( 0, SEEX ),
-                                            std::views::iota( 0, SEEY ) ),
-        [&]( const auto & xy ) {
-            const point_sm_ms p( std::get<0>( xy ), std::get<1>( xy ) );
-            if( sm.get_furn( p ).obj().has_flag( flag_EMITTER ) ) {
-                positions.emplace_back( p );
-            }
-        } );
-    }
-    return !sm.emitter_cache->empty();
-}
-
 auto game::activity_fixed_window_duration() -> time_duration
 {
     auto duration = activity_time_cadence::fixed_window();
@@ -2296,49 +2279,45 @@ auto game::has_activity_skip_relevant_creature() -> bool
         return true;
     }
 
+    const auto monster_lod_gate = activity_skip_monster_lod_gate;
+    if( !monster_lod_enabled || monster_lod_gate <= 0 ) {
+        return std::ranges::any_of( all_monsters(), []( const monster & critter ) {
+            return !critter.is_dead_state() && !critter.is_hallucination();
+        } );
+    }
+
     const auto player_pos = u.bub_pos();
+    const auto gate_distance = monster_lod_gate == 1 ? lod_tier_full_dist : lod_tier_coarse_dist;
     for( monster &critter : all_monsters() ) {
         if( critter.is_dead_state() || critter.is_hallucination() ) {
             continue;
         }
         const auto distance = rl_dist( critter.bub_pos(), player_pos );
-        if( critter.has_effect( effect_pet ) || distance <= DANGEROUS_PROXIMITY ) {
+        const auto attitude = critter.attitude_to( u );
+        if( critter.has_effect( effect_pet ) && distance <= DANGEROUS_PROXIMITY ) {
             return true;
         }
-        if( critter.bub_pos().z() == player_pos.z() && distance <= 20 ) {
+        if( attitude == Attitude::A_HOSTILE && distance <= DANGEROUS_PROXIMITY ) {
             return true;
         }
-        if( distance <= g_max_view_distance && ( u.sees( critter ) || critter.sees( u ) ) ) {
+        if( attitude == Attitude::A_HOSTILE && distance <= gate_distance &&
+            ( u.sees( critter ) || critter.sees( u ) ) ) {
             return true;
         }
     }
     return false;
 }
 
-auto game::can_skip_activity_world_tick( const time_duration & ) -> bool
+auto game::has_activity_skip_relevant_vehicle() -> bool
 {
-    auto can_skip = true;
-    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
-        if( !can_skip ) {
-            return;
-        }
-        if( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) {
-            return;
-        }
-        mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
-            if( !can_skip ) {
-                return;
-            }
-            auto &[pos_sm, sm_ptr] = entry;
-            if( !sm_ptr || !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
-                return;
-            }
-            if( sm_ptr->field_count > 0 || submap_has_field_emitter( *sm_ptr ) ) {
-                can_skip = false;
-            }
-        } );
+    return std::ranges::any_of( m.get_vehicles(), []( const wrapped_vehicle &wrapped ) {
+        const vehicle *veh = wrapped.v;
+        return veh != nullptr &&
+               ( veh->is_moving() || veh->vertical_velocity != 0 || veh->skidding ||
+                 veh->is_falling || veh->engine_on || veh->is_autodriving ||
+                 veh->is_following || veh->is_patrolling || veh->autopilot_on ||
+                 veh->is_alarm_on || veh->check_environmental_effects );
     } );
-    return can_skip;
 }
 
 auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bool
@@ -2350,15 +2329,21 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
         return false;
     }
     if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
-        u.in_sleep_state() || u.is_mounted() ) {
+        u.is_mounted() ) {
         return false;
     }
     if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
         !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
-        u.activity->light_affected() || !u.activity->assistants().empty() ) {
+        !u.activity->assistants().empty() ) {
         return false;
     }
     if( u.in_vehicle && u.controlling_vehicle ) {
+        return false;
+    }
+    if( m.has_field_at( u.bub_pos() ) ) {
+        return false;
+    }
+    if( has_activity_skip_relevant_vehicle() ) {
         return false;
     }
     if( const std::optional<time_point> event_time = timed_events.next_event_time();
@@ -2368,10 +2353,7 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
     if( has_activity_skip_relevant_creature() ) {
         return false;
     }
-    if( !m.can_skip_item_processing_for( duration ) ) {
-        return false;
-    }
-    return can_skip_activity_world_tick( duration );
+    return true;
 }
 
 auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -> int
@@ -2424,9 +2406,14 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         }
 
         process_activity();
-        if( is_game_over() || !u.activity || u.activity->id() != starting_activity ) {
+        if( is_game_over() ) {
             break;
         }
+        if( npcs_dirty || critter_tracker->size() != monster_count ) {
+            break;
+        }
+        const auto activity_continues = u.activity && *u.activity &&
+                                        u.activity->id() == starting_activity;
 
         if( m.has_field_at( u.bub_pos() ) ) {
             m.creature_in_field( u );
@@ -2460,12 +2447,44 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         u.apply_wetness_morale( weather.temperature );
         u.volume = 0;
 
-        if( !u.activity || !*u.activity || u.activity->id() != starting_activity ||
-            u.activity->complete() ) {
+        if( !activity_continues || u.activity->complete() ) {
             break;
         }
     }
+    run_activity_skip_batch_turns( skipped_turns );
     return skipped_turns;
+}
+
+auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
+{
+    if( skipped_turns <= 0 ) {
+        return;
+    }
+
+    {
+        ZoneScopedN( "activity_fixed_window_batch_submaps" );
+        MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+            if( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) {
+                return;
+            }
+            mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
+                auto &[pos_sm, sm_ptr] = entry;
+                if( !sm_ptr || !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+                    return;
+                }
+                run_submap_batch_turns( *sm_ptr, skipped_turns );
+                sm_ptr->last_touched = calendar::turn;
+            } );
+        } );
+    }
+
+    {
+        ZoneScopedN( "activity_fixed_window_flush_items" );
+        m.process_items();
+    }
+    explosion_handler::get_explosion_queue().execute();
+    cleanup_dead();
+    Pathfinding::clear_d_maps();
 }
 
 auto game::run_activity_cadence_boundary() -> void
@@ -2500,9 +2519,12 @@ auto game::try_activity_fixed_window_skip() -> bool
         next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
         return false;
     }
-    next_activity_fixed_window_check_ = calendar::turn;
     TracyPlot( "Activity Fixed Window Skipped Turns", int64_t{ skipped_turns } );
-    run_activity_cadence_boundary();
+    next_activity_fixed_window_check_ = calendar::turn;
+    const auto full_window_turns = to_turns<int>( activity_time_cadence::fixed_window() );
+    if( skipped_turns >= full_window_turns || get_weather().nextweather <= calendar::turn ) {
+        run_activity_cadence_boundary();
+    }
     return true;
 }
 

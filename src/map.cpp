@@ -5874,54 +5874,6 @@ std::vector<tripoint_abs_sm> map::check_submap_active_item_consistency()
     return result;
 }
 
-static auto activity_skip_allows_item_processing_delay( const item &active_item,
-        const int skipped_turns ) -> bool
-{
-    if( active_item.processing_speed() <= skipped_turns ) {
-        return false;
-    }
-    if( active_item.is_active() || active_item.has_explicit_turn_timer() ||
-        active_item.can_revive() || active_item.get_use( "explosion" ) != nullptr ) {
-        return false;
-    }
-    return true;
-}
-
-auto map::can_skip_item_processing_for( const time_duration &duration ) -> bool
-{
-    const auto skipped_turns = to_turns<int>( duration );
-    for( wrapped_vehicle &veh : get_vehicles() ) {
-        vehicle *const cur_veh = veh.v;
-        if( cur_veh == nullptr ) {
-            continue;
-        }
-        if( cur_veh->has_cargo_recharge || !cur_veh->active_items.empty() ) {
-            return false;
-        }
-    }
-
-    auto submaps_with_active_items_copy = std::vector<tripoint_abs_sm>(
-            submaps_with_active_items.begin(), submaps_with_active_items.end() );
-    for( const tripoint_abs_sm &abs_pos : submaps_with_active_items_copy ) {
-        if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
-            continue;
-        }
-        const auto local_pos = abs_to_bub( abs_pos );
-        submap *const current_submap = get_submap_at_grid( local_pos );
-        if( current_submap == nullptr ) {
-            continue;
-        }
-        for( const item *active_item : current_submap->active_items.get() ) {
-            if( active_item == nullptr ||
-                !activity_skip_allows_item_processing_delay( *active_item, skipped_turns ) ) {
-                return false;
-            }
-        }
-    }
-
-    return true;
-}
-
 void map::process_items()
 {
     auto total_active_items = int64_t{ 0 };
