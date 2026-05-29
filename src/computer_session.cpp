@@ -1523,7 +1523,7 @@ void computer_session::action_unlock_labpass()
         print_error( _( "Admin password required!\n\n" ) );
     } else {
         player_character.use_amount( itype_labpass, 1 );
-        action_unlock_disarm()
+        action_unlock_disarm();
     }
 }
 
