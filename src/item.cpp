@@ -6330,6 +6330,17 @@ time_duration item::get_shelf_life() const
     return 0_turns;
 }
 
+namespace
+{
+
+auto is_in_preserving_container( const item &it ) -> bool
+{
+    const auto *parent = it.parent_item();
+    return parent != nullptr && parent->type->container && parent->type->container->preserves;
+}
+
+} // namespace
+
 double item::get_relative_rot() const
 {
     if( goes_bad() ) {
@@ -9904,6 +9915,12 @@ detached_ptr<item> item::actualize_rot( detached_ptr<item> &&self, const tripoin
         return process_rot( std::move( self ), false, pnt, nullptr, temperature, weather );
     } else if( self->type->container && self->type->container->preserves ) {
         // Containers like tin cans preserves all items inside, they do not rot at all.
+        self->visit_items( []( item * it, item * parent ) {
+            if( parent != nullptr && it->goes_bad() ) {
+                it->last_rot_check = calendar::turn;
+            }
+            return VisitResponse::NEXT;
+        } );
         return std::move( self );
     } else if( self->type->container && self->type->container->seals ) {
         // Items inside rot but do not vanish as the container seals them in.
@@ -10074,6 +10091,10 @@ static units::temperature clip_by_temperature_flag( units::temperature temperatu
 void item::update_rot_from_location( const temperature_flag temperature )
 {
     if( !goes_bad() || last_rot_check == calendar::turn ) {
+        return;
+    }
+    if( is_in_preserving_container( *this ) ) {
+        last_rot_check = calendar::turn;
         return;
     }
 
