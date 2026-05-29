@@ -90,14 +90,12 @@
       "computers": {
         "6": {
           "name": "Alien Containment Entrance",
-          "security": 4,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "7": {
           "name": "Containment Control",
-          "security": 4,
-          "options": [ { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 } ],
+          "options": [ { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "8": {
