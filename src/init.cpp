@@ -1055,9 +1055,19 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         std::cout << string_format( "Checking mod %s [%s]\n", id->name(), id );
 
         // Load all dependencies first
-        std::vector<mod_id> mods_list = tree.get_dependencies_of_X_as_strings( id );
+        auto mods_list = tree.get_dependencies_of_X_as_strings( id );
         // Load the mod itself
         mods_list.push_back( id );
+
+        // Dependency traversal can return the core content pack after other dependencies.
+        // The normal world loader forces core content to the front before loading data;
+        // mirror that here so dependency checks validate mod data against loaded core ids.
+        const auto core_pack = mod_management::get_default_core_content_pack();
+        const auto core_iter = std::ranges::find( mods_list, core_pack );
+        if( core_iter != mods_list.end() ) {
+            mods_list.erase( core_iter );
+        }
+        mods_list.insert( mods_list.begin(), core_pack );
 
         try {
             load_and_finalize_packs( ui, _( "Checking mods" ), mods_list );
