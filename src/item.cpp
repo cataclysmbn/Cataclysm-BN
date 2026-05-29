@@ -826,12 +826,19 @@ void item::set_damage( int qty )
 
 detached_ptr<item> item::split( int qty )
 {
+    const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
+    if( split_from_preserving_container ) {
+        mark_rot_checked_now();
+    }
     if( qty <= 0 || !count_by_charges() || qty >= charges ) {
         return detach();
     }
     detached_ptr<item> res = item::spawn( *this );
     res->charges = qty;
     charges -= qty;
+    if( split_from_preserving_container ) {
+        res->mark_rot_checked_now();
+    }
     return res;
 }
 
@@ -864,6 +871,9 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
     if( is_null() ) {
         return false;
     }
+    if( goes_bad() && is_in_preserving_container() ) {
+        mark_rot_checked_now();
+    }
     if( count_by_charges() ) {
         return attempt_split( 0, cb );
     }
@@ -873,13 +883,21 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
 bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
-    const bool split_needs_rot_actualization = goes_bad() && has_position();
+    const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
+    if( split_from_preserving_container ) {
+        mark_rot_checked_now();
+    }
+    const bool split_needs_rot_actualization = goes_bad() && has_position() &&
+            !split_from_preserving_container;
     const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
     const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
     const auto split_temperature = !split_needs_rot_actualization ? temperature_flag::TEMP_NORMAL :
                                    vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
                                    rot::temperature_flag_for_location( get_map(), *this );
     detached_ptr<item> det = unsafe_split( qty );
+    if( det && split_from_preserving_container ) {
+        det->mark_rot_checked_now();
+    }
     if( det && split_needs_rot_actualization ) {
         det = actualize_rot( std::move( det ), split_pos, split_temperature, get_weather() );
     }
@@ -2041,28 +2059,34 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
         if( parts->test( iteminfo_parts::FOOD_ROT_STORAGE ) ) {
             const char *temperature_description;
             bool print_freshness_duration = false;
+            const bool preserved_by_container = food_item->is_in_preserving_container();
             // There should be a better way to do this...
-            switch( temperature ) {
-                case temperature_flag::TEMP_NORMAL:
-                case temperature_flag::TEMP_HEATER: {
-                    temperature_description = _( "* Current storage conditions <bad>do not</bad> "
-                                                 "protect this item from rot." );
-                }
-                break;
-                case temperature_flag::TEMP_FRIDGE:
-                case temperature_flag::TEMP_ROOT_CELLAR: {
-                    temperature_description = _( "* Current storage conditions <neutral>partially</neutral> "
-                                                 "protect this item from rot.  It will stay fresh at least <info>%s</info>." );
-                    print_freshness_duration = true;
-                }
-                break;
-                case temperature_flag::TEMP_FREEZER: {
-                    temperature_description = _( "* Current storage conditions <good>fully</good> "
-                                                 "protect this item from rot.  It will stay fresh indefinitely." );
-                }
-                break;
-                default: {
-                    temperature_description = "BUGGED TEMPERATURE INFO";
+            if( preserved_by_container ) {
+                temperature_description = _( "* Current storage conditions <good>fully</good> "
+                                             "protect this item from rot.  It will stay fresh indefinitely." );
+            } else {
+                switch( temperature ) {
+                    case temperature_flag::TEMP_NORMAL:
+                    case temperature_flag::TEMP_HEATER: {
+                        temperature_description = _( "* Current storage conditions <bad>do not</bad> "
+                                                     "protect this item from rot." );
+                    }
+                    break;
+                    case temperature_flag::TEMP_FRIDGE:
+                    case temperature_flag::TEMP_ROOT_CELLAR: {
+                        temperature_description = _( "* Current storage conditions <neutral>partially</neutral> "
+                                                     "protect this item from rot.  It will stay fresh at least <info>%s</info>." );
+                        print_freshness_duration = true;
+                    }
+                    break;
+                    case temperature_flag::TEMP_FREEZER: {
+                        temperature_description = _( "* Current storage conditions <good>fully</good> "
+                                                     "protect this item from rot.  It will stay fresh indefinitely." );
+                    }
+                    break;
+                    default: {
+                        temperature_description = "BUGGED TEMPERATURE INFO";
+                    }
                 }
             }
 
@@ -6319,6 +6343,21 @@ bool item::goes_bad_after_opening( bool strict ) const
                            !contents.empty() && contents.front().goes_bad() );
 }
 
+auto item::is_in_preserving_container() const -> bool
+{
+    for( const item *parent = parent_item(); parent != nullptr; parent = parent->parent_item() ) {
+        if( parent->type && parent->type->container && parent->type->container->preserves ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto item::mark_rot_checked_now() -> void
+{
+    last_rot_check = calendar::turn;
+}
+
 time_duration item::get_shelf_life() const
 {
     if( goes_bad() ) {
@@ -6488,6 +6527,9 @@ auto temperature_flag_to_highest_temperature( temperature_flag temperature ) -> 
 
 time_duration item::minimum_freshness_duration( temperature_flag temperature ) const
 {
+    if( is_in_preserving_container() ) {
+        return calendar::INDEFINITELY_LONG_DURATION;
+    }
     const units::temperature temp = temperature_flag_to_highest_temperature( temperature );
     unsigned long long rot_per_hour = get_hourly_rotpoints_at_temp( temp );
 
@@ -10077,6 +10119,10 @@ void item::update_rot_from_location( const temperature_flag temperature )
     if( !goes_bad() || last_rot_check == calendar::turn ) {
         return;
     }
+    if( is_in_preserving_container() ) {
+        mark_rot_checked_now();
+        return;
+    }
 
     auto pos = tripoint_bub_ms::zero();
     auto flag = temperature;
@@ -10158,6 +10204,10 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
                                        const weather_manager &weather )
 {
     if( !self ) {
+        return std::move( self );
+    }
+    if( self->is_in_preserving_container() ) {
+        self->mark_rot_checked_now();
         return std::move( self );
     }
 
