@@ -1014,6 +1014,14 @@ class game : public submap_load_listener
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
+        auto try_activity_fixed_window_skip() -> bool;
+        auto activity_fixed_window_duration() -> time_duration;
+        auto execute_activity_fixed_window_skip( const time_duration &duration ) -> int;
+        auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
+        auto has_activity_skip_relevant_creature() -> bool;
+        auto can_skip_activity_world_tick( const time_duration &duration ) -> bool;
+        auto handle_wait_activity_redraw( bool force = false ) -> void;
+        auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
         bool handle_action();
@@ -1308,6 +1316,10 @@ class game : public submap_load_listener
         // until the activity ends regardless of remaining time.
         // Cleared by resize_reality_bubble() so an explicit option change always wins.
         bool in_activity_bubble_ = false;
+
+        // Avoid paying the fixed-window proof cost every turn when a long activity is
+        // currently ineligible because of nearby simulation state.
+        time_point next_activity_fixed_window_check_ = calendar::turn_zero;
 
         // Consecutive turns each dynamic condition has been continuously met.
         // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately

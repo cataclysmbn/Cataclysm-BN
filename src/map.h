@@ -2256,6 +2256,7 @@ class map : public submap_load_listener
         ter_id get_roof( const tripoint_bub_ms &p, bool allow_air ) const;
 
         void process_items();
+        auto can_skip_item_processing_for( const time_duration &duration ) -> bool;
     private:
         // Iterates over every item on the map, passing each item to the provided function.
         auto process_items_in_submap( submap &current_submap, const tripoint_bub_sm &gridp,

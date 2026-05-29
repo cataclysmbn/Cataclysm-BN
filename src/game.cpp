@@ -34,6 +34,7 @@
 
 #include "achievement.h"
 #include "action.h"
+#include "activity_time_cadence.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
@@ -623,6 +624,7 @@ void game::setup( bool load_world_modfiles )
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
     new_game = true;
+    next_activity_fixed_window_check_ = calendar::turn_zero;
     saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
     bVMonsterLookFire = true;
@@ -851,6 +853,7 @@ bool game::start_game()
     seed = rng_bits();
     new_game = true;
     saving_blocked_by_failed_load = false;
+    next_activity_fixed_window_check_ = calendar::turn_zero;
     start_calendar();
     get_weather().nextweather = calendar::turn;
     safe_mode = ( get_option<bool>( "SAFEMODE" ) ? SAFE_MODE_ON : SAFE_MODE_OFF );
@@ -1851,6 +1854,9 @@ bool game::do_turn()
             return cleanup_at_end();
         }
     }
+    if( try_activity_fixed_window_skip() ) {
+        return false;
+    }
     const bool asleep = u.in_sleep_state();
     const auto vehperf = asleep && !character_funcs::is_driving( u ) &&
                          get_option<bool>( "SLEEP_SKIP_VEH" );
@@ -2122,51 +2128,7 @@ bool game::do_turn()
         handle_weather_effects( weather.weather_id );
     }
 
-    const bool player_is_sleeping = u.has_effect( effect_sleep );
-    bool wait_redraw = false;
-    std::string wait_message;
-    time_duration wait_refresh_rate;
-    if( player_is_sleeping ) {
-        wait_redraw = true;
-        wait_message = _( "Wait till you wake up…" );
-        wait_refresh_rate = 30_minutes;
-        if( calendar::once_every( 1_hours ) ) {
-            add_artifact_dreams();
-        }
-    } else if( u.has_destination() ) {
-        wait_redraw = true;
-        wait_message = _( "Travelling…" );
-        wait_refresh_rate = 15_turns;
-    } else if( const std::optional<std::string> progress = u.activity->get_progress_message( u ) ) {
-        wait_redraw = true;
-        wait_message = *progress;
-        if( u.activity->id() == ACT_AUTODRIVE ) {
-            wait_refresh_rate = 1_turns;
-        } else {
-            wait_refresh_rate = 5_minutes;
-        }
-    }
-    if( wait_redraw ) {
-        ZoneScopedN( "wait_redraw" );
-        if( first_redraw_since_waiting_started ||
-            calendar::once_every( std::min( 1_minutes, wait_refresh_rate ) ) ) {
-            if( first_redraw_since_waiting_started || calendar::once_every( wait_refresh_rate ) ) {
-                ui_manager::redraw();
-            }
-
-            // Avoid redrawing the main UI every time due to invalidation
-            ui_adaptor dummy( ui_adaptor::disable_uis_below {} );
-            wait_popup = std::make_unique<static_popup>();
-            wait_popup->on_top( true ).wait_message( "%s", wait_message );
-            ui_manager::redraw();
-            refresh_display();
-            first_redraw_since_waiting_started = false;
-        }
-    } else {
-        // Nothing to wait for now
-        wait_popup.reset();
-        first_redraw_since_waiting_started = true;
-    }
+    handle_wait_activity_redraw();
 
     {
         u.update_bodytemp( m, weather );
@@ -2292,6 +2254,301 @@ void game::process_activity()
 
     while( u.moves > 0 && *u.activity ) {
         u.activity->do_turn( u );
+    }
+}
+
+static auto submap_has_field_emitter( submap &sm ) -> bool
+{
+    static const auto flag_EMITTER = std::string( "EMITTER" );
+    if( !sm.emitter_cache.has_value() ) {
+        auto &positions = sm.emitter_cache.emplace();
+        std::ranges::for_each(
+            cata::views::cartesian_product( std::views::iota( 0, SEEX ),
+                                            std::views::iota( 0, SEEY ) ),
+        [&]( const auto & xy ) {
+            const point_sm_ms p( std::get<0>( xy ), std::get<1>( xy ) );
+            if( sm.get_furn( p ).obj().has_flag( flag_EMITTER ) ) {
+                positions.emplace_back( p );
+            }
+        } );
+    }
+    return !sm.emitter_cache->empty();
+}
+
+auto game::activity_fixed_window_duration() -> time_duration
+{
+    auto duration = activity_time_cadence::fixed_window();
+    const weather_manager &weather = get_weather();
+    if( weather.weather_id && weather.nextweather > calendar::turn ) {
+        duration = std::min( duration, weather.nextweather - calendar::turn );
+    }
+    return duration;
+}
+
+auto game::has_activity_skip_relevant_creature() -> bool
+{
+    if( npcs_dirty ) {
+        return true;
+    }
+    if( std::ranges::any_of( active_npc, []( const shared_ptr_fast<npc> &guy ) {
+        return guy && !guy->is_dead();
+    } ) ) {
+        return true;
+    }
+
+    const auto player_pos = u.bub_pos();
+    for( monster &critter : all_monsters() ) {
+        if( critter.is_dead_state() || critter.is_hallucination() ) {
+            continue;
+        }
+        const auto distance = rl_dist( critter.bub_pos(), player_pos );
+        if( critter.has_effect( effect_pet ) || distance <= DANGEROUS_PROXIMITY ) {
+            return true;
+        }
+        if( critter.bub_pos().z() == player_pos.z() && distance <= 20 ) {
+            return true;
+        }
+        if( distance <= g_max_view_distance && ( u.sees( critter ) || critter.sees( u ) ) ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto game::can_skip_activity_world_tick( const time_duration & ) -> bool
+{
+    auto can_skip = true;
+    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+        if( !can_skip ) {
+            return;
+        }
+        if( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) {
+            return;
+        }
+        mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
+            if( !can_skip ) {
+                return;
+            }
+            auto &[pos_sm, sm_ptr] = entry;
+            if( !sm_ptr || !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+                return;
+            }
+            if( sm_ptr->field_count > 0 || submap_has_field_emitter( *sm_ptr ) ) {
+                can_skip = false;
+            }
+        } );
+    } );
+    return can_skip;
+}
+
+auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bool
+{
+    if( new_game || queue_screenshot || uquit == QUIT_WATCH ) {
+        return false;
+    }
+    if( duration <= 0_turns || !get_weather().weather_id || get_weather().nextweather <= calendar::turn ) {
+        return false;
+    }
+    if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
+        u.in_sleep_state() || u.is_mounted() ) {
+        return false;
+    }
+    if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
+        !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
+        u.activity->light_affected() || !u.activity->assistants().empty() ) {
+        return false;
+    }
+    if( u.in_vehicle && u.controlling_vehicle ) {
+        return false;
+    }
+    if( const std::optional<time_point> event_time = timed_events.next_event_time();
+        event_time && *event_time <= calendar::turn + duration ) {
+        return false;
+    }
+    if( has_activity_skip_relevant_creature() ) {
+        return false;
+    }
+    if( !m.can_skip_item_processing_for( duration ) ) {
+        return false;
+    }
+    return can_skip_activity_world_tick( duration );
+}
+
+auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -> int
+{
+    ZoneScopedN( "activity_fixed_window_execute" );
+    auto skipped_turns = 0;
+    weather_manager &weather = get_weather();
+    const auto starting_activity = u.activity->id();
+    for( const auto turn_index : std::views::iota( 0, to_turns<int>( duration ) ) ) {
+        static_cast<void>( turn_index );
+        if( is_game_over() || !u.activity || !*u.activity ) {
+            break;
+        }
+
+        gamemode->per_turn();
+        calendar::turn += 1_turns;
+        ++skipped_turns;
+        swapping_dimensions = false;
+        weather.clear_temp_cache();
+        reset_light_level();
+
+        const auto monster_count = critter_tracker->size();
+        timed_events.process();
+        mission::process_all();
+        if( calendar::once_every( 1_days ) ) {
+            get_overmapbuffer( current_dimension_id_ ).process_mongroups();
+        }
+        if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
+            get_overmapbuffer( current_dimension_id_ ).move_hordes();
+            if( u.has_trait( trait_HAS_NEMESIS ) ) {
+                get_overmapbuffer( current_dimension_id_ ).move_nemesis();
+            }
+            m.spawn_monsters( false );
+        }
+        if( get_option<bool>( "AUTOSAVE" ) &&
+            calendar::once_every( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
+            !u.is_dead_state() ) {
+            autosave();
+        }
+        perhaps_add_random_npc();
+        if( npcs_dirty || critter_tracker->size() != monster_count ) {
+            break;
+        }
+
+        debug_hour_timer.print_time();
+        u.update_body();
+        process_voluntary_act_interrupt();
+        if( !u.activity || !*u.activity ) {
+            break;
+        }
+
+        process_activity();
+        if( is_game_over() || !u.activity || u.activity->id() != starting_activity ) {
+            break;
+        }
+
+        if( m.has_field_at( u.bub_pos() ) ) {
+            m.creature_in_field( u );
+        }
+        for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
+            if( tracker_ptr ) {
+                tracker_ptr->update( calendar::turn );
+            }
+        }
+        tick_portal_links();
+        tick_temporary_pocket_dimensions();
+        tick_vehicle_portal_taps();
+        fluid_grid::update( calendar::turn );
+
+        {
+            ZoneScopedN( "do_turn_player_process_turn" );
+            u.process_turn();
+        }
+        {
+            ZoneScopedN( "do_turn_lua_every_x" );
+            cata::run_on_every_x_hooks( *DynamicDataLoader::get_instance().lua );
+        }
+        explosion_handler::get_explosion_queue().execute();
+        cleanup_dead();
+
+        if( get_levz() >= 0 && !u.is_underwater() ) {
+            handle_weather_effects( weather.weather_id );
+        }
+        u.update_bodytemp( m, weather );
+        character_funcs::update_body_wetness( u, get_weather().get_precise() );
+        u.apply_wetness_morale( weather.temperature );
+        u.volume = 0;
+
+        if( !u.activity || !*u.activity || u.activity->id() != starting_activity ||
+            u.activity->complete() ) {
+            break;
+        }
+    }
+    return skipped_turns;
+}
+
+auto game::run_activity_cadence_boundary() -> void
+{
+    ZoneScopedN( "activity_cadence_boundary" );
+    weather_manager &weather = get_weather();
+    weather.clear_temp_cache();
+    weather.update_weather();
+    reset_light_level();
+    m.invalidate_lightmap_caches();
+    m.invalidate_visibility_caches();
+    if( calendar::once_every( activity_time_cadence::fixed_window() ) ) {
+        overmap_npc_move();
+    }
+    Pathfinding::clear_d_maps();
+    handle_wait_activity_redraw( true );
+}
+
+auto game::try_activity_fixed_window_skip() -> bool
+{
+    ZoneScopedN( "activity_fixed_window_try" );
+    if( !u.activity || !*u.activity || calendar::turn < next_activity_fixed_window_check_ ) {
+        return false;
+    }
+    const auto duration = activity_fixed_window_duration();
+    if( !can_activity_fixed_window_skip( duration ) ) {
+        next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        return false;
+    }
+    const auto skipped_turns = execute_activity_fixed_window_skip( duration );
+    if( skipped_turns <= 0 ) {
+        next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        return false;
+    }
+    next_activity_fixed_window_check_ = calendar::turn;
+    TracyPlot( "Activity Fixed Window Skipped Turns", int64_t{ skipped_turns } );
+    run_activity_cadence_boundary();
+    return true;
+}
+
+auto game::handle_wait_activity_redraw( const bool force ) -> void
+{
+    const auto player_is_sleeping = u.has_effect( effect_sleep );
+    auto wait_redraw = false;
+    auto wait_message = std::string {};
+    auto wait_refresh_rate = 0_turns;
+    if( player_is_sleeping ) {
+        wait_redraw = true;
+        wait_message = _( "Wait till you wake up…" );
+        wait_refresh_rate = 30_minutes;
+        if( calendar::once_every( 1_hours ) ) {
+            add_artifact_dreams();
+        }
+    } else if( u.has_destination() ) {
+        wait_redraw = true;
+        wait_message = _( "Travelling…" );
+        wait_refresh_rate = 15_turns;
+    } else if( u.activity ) {
+        if( const std::optional<std::string> progress = u.activity->get_progress_message( u ) ) {
+            wait_redraw = true;
+            wait_message = *progress;
+            wait_refresh_rate = u.activity->id() == ACT_AUTODRIVE ? 1_turns :
+                                activity_time_cadence::activity_render_refresh();
+        }
+    }
+    if( wait_redraw ) {
+        ZoneScopedN( "wait_redraw" );
+        if( force || first_redraw_since_waiting_started ||
+            calendar::once_every( std::min( 1_minutes, wait_refresh_rate ) ) ) {
+            if( force || first_redraw_since_waiting_started || calendar::once_every( wait_refresh_rate ) ) {
+                ui_manager::redraw();
+            }
+
+            ui_adaptor dummy( ui_adaptor::disable_uis_below {} );
+            wait_popup = std::make_unique<static_popup>();
+            wait_popup->on_top( true ).wait_message( "%s", wait_message );
+            ui_manager::redraw();
+            refresh_display();
+            first_redraw_since_waiting_started = false;
+        }
+    } else {
+        wait_popup.reset();
+        first_redraw_since_waiting_started = true;
     }
 }
 
