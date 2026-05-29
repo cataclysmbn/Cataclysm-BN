@@ -2364,12 +2364,32 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
     return true;
 }
 
+struct activity_monmove_cache {
+    // Activity skips reuse these monmove inputs for one fixed-window batch.
+    // Normal monmove rebuilds them every turn.
+    bool valid = false;
+    int monster_count = 0;
+    int tier0_count = 0;
+    int effective_budget = 0;
+    std::vector<shared_ptr_fast<monster>> monster_refs;
+    std::vector<monster *> mon_snap;
+    std::vector<shared_ptr_fast<npc>> npc_refs;
+    std::vector<npc *> npc_snap;
+    std::vector<std::pair<monster *, int8_t>> real_lod;
+    std::unordered_set<monster *> ai_paused;
+    std::vector<monster *> plannable_candidates;
+    std::vector<std::pair<int, monster *>> eligible_order;
+    monster::faction_snap_t faction_snap;
+    monster::hostile_fac_map_t hostile_fac_map;
+};
+
 auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -> int
 {
     ZoneScopedN( "activity_fixed_window_execute" );
     auto skipped_turns = 0;
     weather_manager &weather = get_weather();
     const auto starting_activity = u.activity->id();
+    auto activity_monsters = activity_monmove_cache {};
     for( const auto turn_index : std::views::iota( 0, to_turns<int>( duration ) ) ) {
         static_cast<void>( turn_index );
         if( is_game_over() || !u.activity || !*u.activity ) {
@@ -2441,7 +2461,11 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         if( critter_tracker->size() > 0 ) {
             sounds::process_sounds();
             m.build_map_cache( get_levz(), true );
-            monmove( monster_activity_ai_mode::activity_skip );
+            monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
+            if( critter_tracker->size() != monster_count ) {
+                activity_fixed_window_force_normal_turn_ = true;
+                break;
+            }
         }
 
         {
@@ -5470,11 +5494,14 @@ void game::world_tick()
     }
 }
 
-auto game::monmove( const monster_activity_ai_mode mode ) -> void
+auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache ) -> void
 {
     ZoneScopedN( "game::monmove" );
     const auto activity_skip_ai = mode == monster_activity_ai_mode::activity_skip &&
                                   monster_lod_enabled;
+    if( !activity_skip_ai ) {
+        cache = nullptr;
+    }
     {
         ZoneScopedN( "monmove_cleanup_initial" );
         cleanup_dead();
@@ -5487,11 +5514,19 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
         turn_sight_cache_.clear();
     }
 
+    auto use_activity_cache = cache != nullptr && cache->valid &&
+                              cache->monster_count == static_cast<int>( critter_tracker->size() );
+    if( cache != nullptr && cache->valid && !use_activity_cache ) {
+        cache->valid = false;
+    }
+
     // LOD-A: assign tier 0/1/2 to every monster based on distance from player.
     // Must run before the plannable collection so Tier-2 monsters are excluded
     // from the parallel planning pass (they use the macro step instead).
     int tier0_count = 0;
-    {
+    if( use_activity_cache ) {
+        tier0_count = cache->tier0_count;
+    } else {
         ZoneScopedN( "monmove_assign_lod_tiers" );
         tier0_count = tier_assign_all();
     }
@@ -5523,53 +5558,90 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
 
     // Dynamic budget: at least the floor, but expanded to cover all Tier-0
     // monsters so the cap never defers a full-AI monster.
-    // tier0_count is from this turn's tier_assign_all(), so it is current.
-    const int effective_budget = std::max( action_budget, tier0_count );
+    // Activity skip cache reuse keeps this budget fixed from the first pass in
+    // the window; normal monmove computes it from the current LOD tiers.
+    const int effective_budget = use_activity_cache ? cache->effective_budget :
+                                 std::max( action_budget, tier0_count );
     TracyPlot( "LOD Effective Budget", static_cast<int64_t>( effective_budget ) );
 
-    // Build phase-local actor snapshots once for planning setup. Holding shared
-    // references keeps the pointer snapshots valid if the live lists change later
-    // in the turn, while avoiding repeated weak_ptr_fast lock/copy passes.
-    auto mon_snap = std::vector<monster *> {};
-    auto npc_snap = std::vector<npc *> {};
-    {
+    // Build actor snapshots for planning setup. Holding shared references keeps
+    // pointer snapshots valid if live lists change later in the turn. Activity
+    // skip mode can reuse the first snapshot across the fixed-window batch.
+    auto mon_snap_local = std::vector<monster *> {};
+    const std::vector<monster *> *mon_snap = &mon_snap_local;
+    auto npc_snap_local = std::vector<npc *> {};
+    const std::vector<npc *> *npc_snap = &npc_snap_local;
+    if( use_activity_cache ) {
+        mon_snap = &cache->mon_snap;
+        npc_snap = &cache->npc_snap;
+    } else {
         ZoneScopedN( "monmove_build_actor_snapshots" );
         auto monster_refs = critter_tracker->get_monsters_list();
-        mon_snap.reserve( monster_refs.size() );
+        mon_snap_local.reserve( monster_refs.size() );
         for( const shared_ptr_fast<monster> &mon_ptr : monster_refs ) {
             if( mon_ptr && !mon_ptr->is_dead() ) {
-                mon_snap.push_back( mon_ptr.get() );
+                mon_snap_local.push_back( mon_ptr.get() );
             }
         }
 
         auto npc_refs = std::vector<shared_ptr_fast<npc>> {};
         npc_refs.reserve( active_npc.size() );
         std::ranges::copy( active_npc, std::back_inserter( npc_refs ) );
-        npc_snap.reserve( npc_refs.size() );
+        npc_snap_local.reserve( npc_refs.size() );
         for( const shared_ptr_fast<npc> &guy : npc_refs ) {
             if( guy && !guy->is_dead() ) {
-                npc_snap.push_back( guy.get() );
+                npc_snap_local.push_back( guy.get() );
             }
+        }
+
+        if( cache != nullptr ) {
+            cache->monster_refs = std::move( monster_refs );
+            cache->mon_snap = std::move( mon_snap_local );
+            cache->npc_refs = std::move( npc_refs );
+            cache->npc_snap = std::move( npc_snap_local );
+            cache->monster_count = static_cast<int>( critter_tracker->size() );
+            cache->tier0_count = tier0_count;
+            cache->effective_budget = effective_budget;
+            mon_snap = &cache->mon_snap;
+            npc_snap = &cache->npc_snap;
         }
     }
 
-    auto activity_lod_restore = std::vector<std::pair<monster *, int8_t>> {};
-    auto activity_ai_paused = std::unordered_set<monster *> {};
+    auto activity_lod_restore_local = std::vector<std::pair<monster *, int8_t>> {};
+    const std::vector<std::pair<monster *, int8_t>> *activity_lod_restore =
+        &activity_lod_restore_local;
+    auto activity_ai_paused_local = std::unordered_set<monster *> {};
+    const std::unordered_set<monster *> *activity_ai_paused = &activity_ai_paused_local;
     if( activity_skip_ai ) {
         ZoneScopedN( "monmove_activity_demote_lod" );
-        activity_lod_restore.reserve( mon_snap.size() );
-        activity_ai_paused.reserve( mon_snap.size() );
-        for( monster *critter : mon_snap ) {
-            const auto real_lod_tier = critter->lod_tier;
-            activity_lod_restore.emplace_back( critter, real_lod_tier );
-            if( real_lod_tier > activity_skip_monster_lod_gate ) {
-                activity_ai_paused.insert( critter );
-            } else {
-                critter->lod_tier = static_cast<int8_t>( std::min<int>( 2, real_lod_tier + 1 ) );
+        if( use_activity_cache ) {
+            activity_lod_restore = &cache->real_lod;
+            activity_ai_paused = &cache->ai_paused;
+        } else {
+            activity_lod_restore_local.reserve( mon_snap->size() );
+            activity_ai_paused_local.reserve( mon_snap->size() );
+            for( monster *critter : *mon_snap ) {
+                const auto real_lod_tier = critter->lod_tier;
+                activity_lod_restore_local.emplace_back( critter, real_lod_tier );
+                if( real_lod_tier > activity_skip_monster_lod_gate ) {
+                    activity_ai_paused_local.insert( critter );
+                }
+            }
+            if( cache != nullptr ) {
+                cache->real_lod = std::move( activity_lod_restore_local );
+                cache->ai_paused = std::move( activity_ai_paused_local );
+                activity_lod_restore = &cache->real_lod;
+                activity_ai_paused = &cache->ai_paused;
             }
         }
+        for( const auto &[critter, real_lod_tier] : *activity_lod_restore ) {
+            if( activity_ai_paused->contains( critter ) ) {
+                continue;
+            }
+            critter->lod_tier = static_cast<int8_t>( std::min<int>( 2, real_lod_tier + 1 ) );
+        }
         TracyPlot( "Activity Skip Monster AI Paused",
-                   static_cast<int64_t>( activity_ai_paused.size() ) );
+                   static_cast<int64_t>( activity_ai_paused->size() ) );
     }
 
     // OPP-7: Unified disposition map: a single hash lookup in the execution
@@ -5581,10 +5653,33 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
     std::vector<monster *> plannable;
     {
         ZoneScopedN( "monmove_build_plannable" );
-        plannable.reserve( mon_snap.size() );
-        for( monster *critter : mon_snap ) {
+        auto plannable_candidates_local = std::vector<monster *> {};
+        const std::vector<monster *> *plannable_candidates = mon_snap;
+        if( activity_skip_ai ) {
+            if( use_activity_cache ) {
+                plannable_candidates = &cache->plannable_candidates;
+            } else {
+                plannable_candidates_local.reserve( mon_snap->size() );
+                for( monster *critter : *mon_snap ) {
+                    if( !critter->is_dead() &&
+                        !activity_ai_paused->contains( critter ) &&
+                        critter->lod_tier < 2 &&
+                        critter->is_simulated() ) {
+                        plannable_candidates_local.push_back( critter );
+                    }
+                }
+                if( cache != nullptr ) {
+                    cache->plannable_candidates = std::move( plannable_candidates_local );
+                    plannable_candidates = &cache->plannable_candidates;
+                } else {
+                    plannable_candidates = &plannable_candidates_local;
+                }
+            }
+        }
+        plannable.reserve( plannable_candidates->size() );
+        for( monster *critter : *plannable_candidates ) {
             if( !critter->is_dead() &&
-                !activity_ai_paused.contains( critter ) &&
+                !activity_ai_paused->contains( critter ) &&
                 !critter->has_effect( effect_ai_controlled ) &&
                 critter->moves > 0 &&
                 !critter->has_effect( effect_ridden ) &&
@@ -5603,7 +5698,7 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
     // for the ray traces below Creature::sees().
     auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>> {};
     const auto initial_sight_job_capacity =
-        plannable.size() * ( npc_snap.size() + std::min( mon_snap.size(), size_t{ 16 } ) + 1 );
+        plannable.size() * ( npc_snap->size() + std::min( mon_snap->size(), size_t{ 16 } ) + 1 );
     sight_jobs.reserve( initial_sight_job_capacity );
     const auto add_sight_job = [&]( const Creature & seer, const Creature & target ) {
         sight_jobs.emplace_back( &seer, &target );
@@ -5619,7 +5714,7 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
                 rl_dist( mon_pos, u.bub_pos() ) <= mon_max_sight ) {
                 add_sight_job( *mon, u );
             }
-            for( auto *n : npc_snap ) {
+            for( auto *n : *npc_snap ) {
                 const auto faction_att = mon->faction.obj().attitude( n->get_monster_faction() );
                 if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
                     continue;
@@ -5633,7 +5728,7 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
                 mon->lod_tier <= lod_group_morale_max_tier &&
                 ( ( mon->has_flag( MF_GROUP_MORALE ) && mon->morale < mon->type->morale ) ||
                   mon->has_flag( MF_SWARMS ) );
-            for( auto *target_mon : mon_snap ) {
+            for( auto *target_mon : *mon_snap ) {
                 if( target_mon == mon ) {
                     continue;
                 }
@@ -5696,19 +5791,31 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
     // can do group-morale/swarm checks on worker threads without calling
     // weak_ptr_fast::lock() (non-atomic _S_single refcount — data race on Linux).
     monster::faction_snap_t faction_snap;
-    {
+    const monster::faction_snap_t *faction_snap_for_plan = nullptr;
+    if( use_activity_cache ) {
+        faction_snap_for_plan = &cache->faction_snap;
+    } else {
         ZoneScopedN( "monmove_build_faction_snap" );
-        std::ranges::for_each( mon_snap, [&]( monster * mon_ptr ) {
+        std::ranges::for_each( *mon_snap, [&]( monster * mon_ptr ) {
             faction_snap[mon_ptr->faction].push_back( mon_ptr );
         } );
+        if( cache != nullptr ) {
+            cache->faction_snap = faction_snap;
+            faction_snap_for_plan = &cache->faction_snap;
+        } else {
+            faction_snap_for_plan = &faction_snap;
+        }
     }
     // Pre-compute per-faction hostile-faction lists once per tick.  compute_plan()
     // iterates only the hostile entries rather than all factions on every call.
     monster::hostile_fac_map_t hostile_fac_map;
-    {
+    const monster::hostile_fac_map_t *hostile_fac_map_for_plan = nullptr;
+    if( use_activity_cache ) {
+        hostile_fac_map_for_plan = &cache->hostile_fac_map;
+    } else {
         ZoneScopedN( "monmove_build_hostile_fac_map" );
-        for( const auto &[fac_id, _m] : faction_snap ) {
-            for( const auto &[other_id, _o] : faction_snap ) {
+        for( const auto &[fac_id, _m] : *faction_snap_for_plan ) {
+            for( const auto &[other_id, _o] : *faction_snap_for_plan ) {
                 if( fac_id == other_id ) {
                     continue;
                 }
@@ -5718,8 +5825,15 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
                 }
             }
         }
+        if( cache != nullptr ) {
+            cache->hostile_fac_map = hostile_fac_map;
+            hostile_fac_map_for_plan = &cache->hostile_fac_map;
+        } else {
+            hostile_fac_map_for_plan = &hostile_fac_map;
+        }
     }
-    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap, &faction_snap, &hostile_fac_map };
+    const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,
+        hostile_fac_map_for_plan };
 
     // parallel_for_chunked with a small chunk size gives the
     // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
@@ -5736,8 +5850,8 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
             } );
         } else {
             ZoneScopedN( "monmove_compute_plans_serial" );
-            for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+                precomputed[index] = plannable[index]->compute_plan( plan_ctx );
             }
         }
     }
@@ -5746,8 +5860,8 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
     {
         ZoneScopedN( "monmove_build_plan_index" );
         plan_index.reserve( plannable.size() );
-        for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-            plan_index[plannable[i]] = i;
+        for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+            plan_index[plannable[index]] = static_cast<int>( index );
         }
     }
     // -----------------------------------------------------------------------
@@ -5762,7 +5876,7 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
     // -----------------------------------------------------------------------
     {
         ZoneScopedN( "monmove_lifecycle" );
-        for( monster *critter_ptr : mon_snap ) {
+        for( monster *critter_ptr : *mon_snap ) {
             monster &critter = *critter_ptr;
             // Skip monsters in lazy-border or otherwise non-simulated submaps — their
             // submap has no active caches (transparency, lightmap, fields) and
@@ -5807,7 +5921,7 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
                 }
                 critter.try_reproduce();
             }
-            if( activity_ai_paused.contains( critter_ptr ) ) {
+            if( activity_ai_paused->contains( critter_ptr ) ) {
                 critter.moves = 0;
                 critter.next_turn = current_turn + 1;
             }
@@ -5823,51 +5937,90 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
     // is alive and has moves this turn).
     //
     // Sort ascending by Chebyshev distance to player so the budget cap
-    // removes the farthest monsters rather than arbitrary ones.  Monsters
-    // skipped by the budget retain their current next_turn value so they
-    // are guaranteed to run on the following turn.
+    // removes the farthest monsters rather than arbitrary ones. Activity skip
+    // mode sorts once and reuses that ordering through the fixed-window batch.
+    // Monsters skipped by the budget retain their current next_turn value so
+    // they are guaranteed to run on the following turn.
     // -----------------------------------------------------------------------
     // Build eligible list paired with pre-computed distances so each monster's
     // distance is calculated exactly once.  The pair is (dist, monster*) so
     // the default comparator orders by distance first.
     std::vector<std::pair<int, monster *>> eligible;
-    {
+    if( activity_skip_ai && cache != nullptr ) {
         ZoneScopedN( "monmove_build_eligible" );
-        auto monsters = all_monsters();
-        eligible.reserve( monsters.items ? monsters.items->size() : 0 );
-        for( monster &critter : monsters ) {
-            if( !critter.is_dead() &&
-                !activity_ai_paused.contains( &critter ) &&
-                !critter.has_effect( effect_ridden ) &&
-                critter.moves > 0 &&
-                critter.next_turn <= current_turn &&
-                critter.is_simulated() ) {
-                eligible.emplace_back( rl_dist( critter.bub_pos(), player_pos ), &critter );
+        if( !use_activity_cache ) {
+            auto eligible_order = std::vector<std::pair<int, monster *>> {};
+            eligible_order.reserve( mon_snap->size() );
+            for( monster *critter : *mon_snap ) {
+                if( !critter->is_dead() &&
+                    !activity_ai_paused->contains( critter ) &&
+                    critter->is_simulated() ) {
+                    eligible_order.emplace_back( rl_dist( critter->bub_pos(), player_pos ), critter );
+                }
+            }
+            std::ranges::sort( eligible_order );
+            cache->eligible_order = std::move( eligible_order );
+            cache->valid = true;
+            use_activity_cache = true;
+        }
+        eligible.reserve( cache->eligible_order.size() );
+        auto accepted = 0;
+        for( const auto &[distance, critter] : cache->eligible_order ) {
+            if( critter == nullptr || critter->is_dead() ||
+                activity_ai_paused->contains( critter ) ||
+                critter->has_effect( effect_ridden ) ||
+                critter->moves <= 0 ||
+                critter->next_turn > current_turn ||
+                !critter->is_simulated() ) {
+                continue;
+            }
+            if( effective_budget <= 0 || accepted < effective_budget ) {
+                eligible.emplace_back( distance, critter );
+                ++accepted;
+            } else {
+                critter->moves = 0;
             }
         }
-    }
-
-    // Apply the budget cap.  Excess monsters (farthest) are not processed
-    // this turn; next_turn is NOT advanced for them so they are highest-
-    // priority next turn (no starvation).
-    //
-    // nth_element is O(M) average — it partitions the N closest to the front
-    // without fully ordering them, which is all we need for the budget cut.
-    // Only pay the ordering cost when the budget actually fires.
-    if( effective_budget > 0 &&
-        static_cast<int>( eligible.size() ) > effective_budget ) {
-        ZoneScopedN( "monmove_apply_budget" );
-        std::nth_element( eligible.begin(),
-                          eligible.begin() + effective_budget,
-                          eligible.end() );
-        // Drain moves for budget-cut monsters to prevent accumulation.
-        // Without this, a monster deferred for N turns accumulates N turns
-        // of moves from process_turn(), then bursts through N actions when
-        // it finally gets a slot — no net savings at the budget boundary.
-        for( int i = effective_budget; i < static_cast<int>( eligible.size() ); ++i ) {
-            eligible[i].second->moves = 0;
+    } else {
+        {
+            ZoneScopedN( "monmove_build_eligible" );
+            auto monsters = all_monsters();
+            eligible.reserve( monsters.items ? monsters.items->size() : 0 );
+            for( monster &critter : monsters ) {
+                if( !critter.is_dead() &&
+                    !activity_ai_paused->contains( &critter ) &&
+                    !critter.has_effect( effect_ridden ) &&
+                    critter.moves > 0 &&
+                    critter.next_turn <= current_turn &&
+                    critter.is_simulated() ) {
+                    eligible.emplace_back( rl_dist( critter.bub_pos(), player_pos ), &critter );
+                }
+            }
         }
-        eligible.resize( effective_budget );
+
+        // Apply the budget cap.  Excess monsters (farthest) are not processed
+        // this turn; next_turn is NOT advanced for them so they are highest-
+        // priority next turn (no starvation).
+        //
+        // nth_element is O(M) average — it partitions the N closest to the front
+        // without fully ordering them, which is all we need for the budget cut.
+        // Only pay the ordering cost when the budget actually fires.
+        if( effective_budget > 0 &&
+            static_cast<int>( eligible.size() ) > effective_budget ) {
+            ZoneScopedN( "monmove_apply_budget" );
+            std::nth_element( eligible.begin(),
+                              eligible.begin() + effective_budget,
+                              eligible.end() );
+            // Drain moves for budget-cut monsters to prevent accumulation.
+            // Without this, a monster deferred for N turns accumulates N turns
+            // of moves from process_turn(), then bursts through N actions when
+            // it finally gets a slot — no net savings at the budget boundary.
+            for( auto &entry : eligible |
+                 std::views::drop( static_cast<size_t>( effective_budget ) ) ) {
+                entry.second->moves = 0;
+            }
+            eligible.resize( effective_budget );
+        }
     }
 
     // How many monsters will actually enter the move loop this turn (after cap).
@@ -5943,8 +6096,8 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
     auto monmove_controlled_moves = int64_t{ 0 };
     {
         ZoneScopedN( "monmove_execute_eligible" );
-        for( int i = 0; i < static_cast<int>( eligible.size() ); ++i ) {
-            monster &critter = *eligible[i].second;
+        for( const auto &entry : eligible ) {
+            monster &critter = *entry.second;
             if( critter.is_dead() ) {
                 continue;
             }
@@ -6044,7 +6197,7 @@ auto game::monmove( const monster_activity_ai_mode mode ) -> void
 
     if( activity_skip_ai ) {
         ZoneScopedN( "monmove_activity_restore_lod" );
-        for( const auto &[critter, real_lod_tier] : activity_lod_restore ) {
+        for( const auto &[critter, real_lod_tier] : *activity_lod_restore ) {
             if( critter != nullptr ) {
                 critter->lod_tier = real_lod_tier;
             }

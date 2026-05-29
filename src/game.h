@@ -84,6 +84,8 @@ enum class monster_activity_ai_mode : int {
     activity_skip
 };
 
+struct activity_monmove_cache;
+
 enum quit_status {
     QUIT_NO = 0,    // Still playing
     QUIT_SUICIDE,   // Quit with 'Q'
@@ -1010,7 +1012,8 @@ class game : public submap_load_listener
         void perhaps_add_random_npc();
 
         // Routine loop functions, approximately in order of execution
-        auto monmove( monster_activity_ai_mode mode = monster_activity_ai_mode::normal ) -> void;
+        auto monmove( monster_activity_ai_mode mode = monster_activity_ai_mode::normal,
+                      activity_monmove_cache *cache = nullptr ) -> void;
         void npcmove();          // NPC movement (split from monmove for per-option sleep-skip)
         void sleep_skip_npc_process(); // Sleep-only NPC processing when SLEEP_SKIP_NPC is active
         int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
