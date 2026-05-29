@@ -1688,9 +1688,9 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
     auto vp = veh_at( pos ).part_with_feature( VPFLAG_BOARDABLE, true );
     if( !vp ) {
         const auto abs_pos = bub_to_abs( pos );
-        std::ranges::find_if( loaded_vehicles, [&]( vehicle * veh ) {
+        for( auto *veh : loaded_vehicles ) {
             if( veh == nullptr ) {
-                return false;
+                continue;
             }
             auto boardable_parts = veh->get_avail_parts( VPFLAG_BOARDABLE );
             const auto part_it = std::ranges::find_if( boardable_parts,
@@ -1698,11 +1698,11 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *who )
                 return veh->abs_part_location( part.part() ) == abs_pos;
             } );
             if( part_it == boardable_parts.end() ) {
-                return false;
+                continue;
             }
             vp = *part_it;
-            return true;
-        } );
+            break;
+        }
     }
     if( !vp ) {
         if( who->grab_point.x() == 0 && who->grab_point.y() == 0 ) {
@@ -8292,27 +8292,6 @@ void map::shift( const point_rel_sm &sp )
     invalidate_lightmap_caches();
 }
 
-// Optimized mapgen function that only works properly for very simple overmap types
-// Does not create or require a temporary map and does its own saving
-static void generate_uniform( const tripoint_abs_sm &p, const ter_id &terrain_type,
-                              mapbuffer &dest )
-{
-    dbg( DL::Info ) << "generate_uniform p: " << p
-                    << "  terrain_type: " << terrain_type.id().str();
-
-    std::ranges::for_each(
-        cata::views::cartesian_product( std::views::iota( 0, 2 ), std::views::iota( 0, 2 ) ),
-    [&]( const auto & xy ) {
-        const auto [xd, yd] = xy;
-        auto pos = p + point( xd, yd );
-        auto sm = std::make_unique<submap>( pos );
-        sm->is_uniform = true;
-        sm->set_all_ter( terrain_type );
-        sm->last_touched = calendar::turn;
-        dest.add_submap( pos, sm );
-    } );
-}
-
 auto map::apply_boundary_overlay( submap &sm, const tripoint_abs_sm &pos ) -> void
 {
     if( !pocket_info_ ) {
@@ -8347,9 +8326,6 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
 {
     ZoneScopedN( "map_loadn" );
     ZoneValue( static_cast<uint64_t>( grid.z() + OVERMAP_DEPTH ) );
-    // Cache empty overmap types
-    static const oter_id rock( "empty_rock" );
-    static const oter_id air( "open_air" );
 
     const auto grid_abs_sub = bub_to_abs( tripoint_bub_sm( grid ) );
     const size_t gridn = get_nonant( tripoint_bub_sm( grid ) );
@@ -8402,36 +8378,8 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         //  squares divisible by 2.
         // TODO: fix point types
         const auto grid_abs_omt = tripoint_abs_omt( project_to<coords::omt>( grid_abs_sub ) );
-        const auto grid_abs_sub_rounded = tripoint_abs_sm( project_to<coords::sm>( grid_abs_omt ) );
-
-        // Use the dimension-specific overmapbuffer so this path is safe to call from
-        // worker threads that have bound_dimension_ set via bind_dimension().
-        // Reads from the overmapbuffer (ter, get_settings, etc.) are treated as
-        // logically read-only; NPC write operations in generate() are serialised by
-        // overmapbuffer::npc_mutex_.
-        oter_id terrain_type;
-        {
-            ZoneScopedN( "loadn_generate_oter" );
-            terrain_type = get_overmapbuffer( bound_dimension_ ).ter( grid_abs_omt );
-        }
-
-        // Short-circuit if the map tile is uniform
-        // TODO: Replace with json mapgen functions.
         auto &dim_buf = MAPBUFFER_REGISTRY.get( bound_dimension_ );
-        if( terrain_type == air ) {
-            ZoneScopedN( "loadn_generate_uniform_air" );
-            generate_uniform( grid_abs_sub_rounded, t_open_air, dim_buf );
-        } else if( terrain_type == rock ) {
-            ZoneScopedN( "loadn_generate_uniform_rock" );
-            generate_uniform( grid_abs_sub_rounded, t_rock, dim_buf );
-        } else {
-            ZoneScopedN( "loadn_generate_tinymap" );
-            auto tmp_map = tinymap {};
-            // Bind the tinymap to this map's dimension so generated submaps
-            // land in the correct registry slot via loadn()'s dimension-aware lookup.
-            tmp_map.bind_dimension( bound_dimension_ );
-            tmp_map.generate( grid_abs_sub_rounded, calendar::turn );
-        }
+        dim_buf.generate_omt( grid_abs_omt );
 
         {
             ZoneScopedN( "loadn_generate_lookup" );
@@ -8518,19 +8466,23 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
         }
     }
 
-    // Batch-advance field decay, item timers, and vehicle power for any
-    // turns this submap missed while outside the reality bubble.
-    // Runs BEFORE actualize(); the two passes target disjoint effects.
-    if( tmpsub->last_touched < calendar::turn ) {
-        ZoneScopedN( "loadn_batch_turns" );
-        const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
-        run_submap_batch_turns( *tmpsub, missed );
-        tmpsub->last_touched = calendar::turn;
-    }
+    if( tmpsub->last_touched == calendar::turn ) {
+        ZoneScopedN( "loadn_skip_current_turn_actualize" );
+    } else {
+        // Batch-advance field decay, item timers, and vehicle power for any
+        // turns this submap missed while outside the reality bubble.
+        // Runs BEFORE actualize(); the two passes target disjoint effects.
+        if( tmpsub->last_touched < calendar::turn ) {
+            ZoneScopedN( "loadn_batch_turns" );
+            const int missed = to_turns<int>( calendar::turn - tmpsub->last_touched );
+            run_submap_batch_turns( *tmpsub, missed );
+            tmpsub->last_touched = calendar::turn;
+        }
 
-    {
-        ZoneScopedN( "loadn_actualize" );
-        actualize( grid );
+        {
+            ZoneScopedN( "loadn_actualize" );
+            actualize( grid );
+        }
     }
 
     abs_sub.z() = old_abs_z;
@@ -10674,8 +10626,6 @@ auto map::get_pf_special( const tripoint_bub_ms &p ) const -> pf_special
         return PF_WALL;
     }
     if( sm->pf_dirty ) {
-        const int smx = divide_round_to_minus_infinity( p.x(), SEEX );
-        const int smy = divide_round_to_minus_infinity( p.y(), SEEY );
         sm->rebuild_pf_cache( *this, project_to<coords::sm>( p ) );
     }
     return sm->pf_special_cache[l.x()][l.y()];

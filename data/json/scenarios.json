@@ -277,7 +277,7 @@
     "description": "A temporal distortion has hurled you into this collapsing world. You arrive carrying only the few items that mattered most to you - the things tied to who you are, or who you were meant to become.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
-    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder" ],
+    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder", "soldier_wwii" ],
     "forbids_bionics": true,
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
@@ -471,6 +471,7 @@
     "flags": [ "WIN_START", "LONE_START" ],
     "add_professions": true,
     "professions": [
+      "wolfpack_mutant",
       "sheltered_survivor",
       "sheltered_militia",
       "winter_scavenger",
@@ -511,6 +512,7 @@
     "flags": [ "SUM_ADV_START", "LONE_START" ],
     "add_professions": true,
     "professions": [
+      "wolfpack_mutant",
       "sheltered_survivor",
       "sheltered_militia",
       "winter_scavenger",
@@ -622,7 +624,16 @@
     "description": "Since birth, your sole purpose in life has been the advancement of genetic science, willingly or not.  Once the Cataclysm struck, you left the lab, and wandered aimlessly, ending up in a forest.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
-    "professions": [ "unemployed", "mutant_patient", "mutant_volunteer", "broken_cyborg", "faulty_bionic", "cykotic", "convict_political" ],
+    "professions": [
+      "unemployed",
+      "mutant_patient",
+      "mutant_volunteer",
+      "wolfpack_mutant",
+      "broken_cyborg",
+      "faulty_bionic",
+      "cykotic",
+      "convict_political"
+    ],
     "traits": [
       "ELFAEYES",
       "NIGHTVISION2",
