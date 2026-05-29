@@ -4746,6 +4746,7 @@
     "name": "World's Greatest Athlete",
     "description": "Your name reverberated across the world as you set record after record in the Olympics, becoming the greatest of all time. Alas, even with your face plastered across billboards and cereals, the zombies are still more interested in turning you into gold medalist goulash.",
     "points": 8,
+    "traits": [ "GOODCARDIO" ],
     "skills": [
       { "level": 10, "name": "swimming" },
       { "level": 2, "name": "dodge" },
