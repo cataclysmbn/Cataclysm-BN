@@ -61,6 +61,7 @@ static const itype_id itype_mininuke( "mininuke" );
 static const itype_id itype_mininuke_act( "mininuke_act" );
 static const itype_id itype_radio_repeater_mod( "radio_repeater_mod" );
 static const itype_id itype_sarcophagus_access_code( "sarcophagus_access_code" );
+static const itype_id itype_labpass( "labpass" );
 static const itype_id itype_sewage( "sewage" );
 static const itype_id itype_usb_drive( "usb_drive" );
 static const itype_id itype_vacutainer( "vacutainer" );
