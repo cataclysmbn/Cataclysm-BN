@@ -91,6 +91,7 @@
 #include "popup.h"
 #include "recipe_dictionary.h"
 #include "rng.h"
+#include "save/save_tools.h"
 #include "sounds.h"
 #include "stomach.h"
 #include "string_formatter.h"
@@ -206,6 +207,7 @@ enum debug_menu_index {
     DEBUG_VEHICLE_EXPORT_JSON,
     DEBUG_HOUR_TIMER,
     DEBUG_NESTED_MAPGEN,
+    DEBUG_PRUNE_MAP_OUTSIDE_BUBBLE,
     DEBUG_RESET_IGNORED_MESSAGES,
     DEBUG_RELOAD_TILES,
     DEBUG_SWAP_CHAR,
@@ -350,6 +352,7 @@ static int map_uilist()
         { uilist_entry( DEBUG_OM_EDITOR, true, 'O', _( "Overmap editor" ) ) },
         { uilist_entry( DEBUG_MAP_EXTRA, true, 'm', _( "Spawn map extra" ) ) },
         { uilist_entry( DEBUG_NESTED_MAPGEN, true, 'n', _( "Spawn nested mapgen" ) ) },
+        { uilist_entry( DEBUG_PRUNE_MAP_OUTSIDE_BUBBLE, true, 'u', _( "Prune map outside overmap tile bubble" ) ) },
     };
 
     return uilist( _( "Map…" ), uilist_initializer );
@@ -1514,6 +1517,78 @@ static std::optional<tripoint_range<tripoint_bub_ms>> select_area()
                first.position.value(), second.position.value() );
 }
 
+static auto append_limited_name_list( std::string &message, const std::string &title,
+                                      const std::vector<std::string> &names ) -> void
+{
+    message += string_format( "%s (%zu):\n", title.c_str(), names.size() );
+    auto shown = 0;
+    for( const auto &name : names ) {
+        if( shown >= 20 ) {
+            message += string_format( _( "  …and %zu more.\n" ), names.size() - shown );
+            return;
+        }
+        message += "  ";
+        message += name;
+        message += "\n";
+        shown++;
+    }
+    if( names.empty() ) {
+        message += _( "  none\n" );
+    }
+}
+
+static auto prune_map_outside_overmap_tile_bubble() -> void
+{
+    const auto keep_level = string_input_popup()
+                            .title( _( "Prune map area" ) )
+                            .description( _( "Enter how many overmap tiles to keep from the center tile.\n"
+                                          "1 keeps only your current overmap tile.\n"
+                                          "2 keeps a 3x3 area.  3 keeps a 5x5 area." ) )
+                            .width( 64 )
+                            .text( "1" )
+                            .only_digits( true )
+                            .query_int();
+    if( keep_level < 1 ) {
+        return;
+    }
+
+    const auto center = get_avatar().abs_omt_pos().xy();
+    const auto bubble = save_tools::save_prune_bubble{ .center = center, .radius = keep_level - 1 };
+    const auto keep_width = bubble.radius * 2 + 1;
+
+    add_msg( _( "Saving current game before previewing saved map pruning." ) );
+    if( !g->save( false ) ) {
+        popup( _( "Saving failed. Map prune aborted." ) );
+        return;
+    }
+    g->get_active_world()->release_player_db();
+
+    try {
+        const auto world_path = std::filesystem::path( g->get_active_world()->info->folder_path() );
+        const auto preview = save_tools::preview_prune_world_outside_bubble( world_path, bubble );
+        auto message = string_format(
+                           _( "This will keep a %dx%d overmap-tile bubble, preserve %zu map-related SQLite rows, and prune %zu rows outside it.\nIgnored non-map rows: %zu.\n\nSafe bubble contents detected in saved data:\n" ),
+                           keep_width, keep_width, preview.kept_rows, preview.pruned_rows,
+                           preview.ignored_rows );
+        append_limited_name_list( message, _( "Vehicles" ), preview.vehicles );
+        append_limited_name_list( message, _( "NPCs" ), preview.npcs );
+        message +=
+            _( "\nA backup world will be created and the world seed will be changed before pruning. Continue?" );
+        if( !query_yn( "%s", message.c_str() ) ) {
+            return;
+        }
+
+        const auto result = save_tools::prune_world_outside_bubble( world_path, bubble );
+        popup( _( "Pruned %zu saved map rows outside the safe bubble. World seed changed from %u to %u. Backup created at:\n%s\n\nThe game will now return to the main menu without saving again." ),
+               result.preview.pruned_rows, result.old_seed, result.new_seed,
+               result.backup_path.string().c_str() );
+        g->u.moves = 0;
+        g->uquit = QUIT_NOSAVED;
+    } catch( const std::exception &err ) {
+        popup( _( "Map prune failed: %s" ), err.what() );
+    }
+}
+
 void debug()
 {
     bool debug_menu_has_hotkey = hotkey_for_action( ACTION_DEBUG, false ) != -1;
@@ -2167,6 +2242,9 @@ void debug()
         }
         case DEBUG_NESTED_MAPGEN:
             debug_menu::spawn_nested_mapgen();
+            break;
+        case DEBUG_PRUNE_MAP_OUTSIDE_BUBBLE:
+            prune_map_outside_overmap_tile_bubble();
             break;
         case DEBUG_DISPLAY_NPC_PATH:
             g->debug_pathfinding = !g->debug_pathfinding;
