@@ -599,7 +599,8 @@
     "material": "paper",
     "symbol": ";",
     "color": "white",
-    "flags": [ "TRADER_AVOID" ]
+    "flags": [ "TRADER_AVOID" ],
+    "looks_like": "recipe_labchem"
   },
   {
     "id": "small_space_heater",
