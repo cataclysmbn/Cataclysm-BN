@@ -92,8 +92,7 @@
       "computers": {
         "6": {
           "name": "Library Entrance",
-          "security": 2,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },
@@ -153,8 +152,7 @@
       "computers": {
         "6": {
           "name": "Hardware Storage",
-          "security": 2,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },
@@ -216,8 +214,7 @@
       "computers": {
         "6": {
           "name": "Chemical Storage",
-          "security": 3,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "8": {
@@ -303,14 +300,12 @@
       "computers": {
         "6": {
           "name": "Barracks Entrance",
-          "security": 4,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "7": {
           "name": "Magazine Entrance",
-          "security": 6,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         }
       },
@@ -381,14 +376,12 @@
       "computers": {
         "6": {
           "name": "Prisoner Containment Entrance",
-          "security": 4,
-          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 } ],
+          "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "7": {
           "name": "Containment Control",
-          "security": 4,
-          "options": [ { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 } ],
+          "options": [ { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
         "8": {
