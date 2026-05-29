@@ -609,7 +609,7 @@
         "options": [
           { "name": "MANIFEST", "action": "list_bionics", "security": 0 },
           { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 },
-          { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
         ],
         "failures": [ { "action": "damage" }, { "action": "secubots" }, { "action": "shutdown" } ]
       }
@@ -625,7 +625,7 @@
         "name": "Advanced PE012 Samples",
         "options": [
           { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 5 },
-          { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+          { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
         ],
         "failures": [ { "action": "damage" }, { "action": "manhacks" }, { "action": "shutdown" } ]
       }
