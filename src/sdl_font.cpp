@@ -430,7 +430,7 @@ BitmapFont::BitmapFont(
                                        glyph_h, font_w, font_h );
 
         auto new_surf = create_surface_32( font_w * 16, font_h * 16 );
-        const auto new_fmt = SDL_GetPixelFormatDetails( glyphs->format );
+        const auto new_fmt = SDL_GetPixelFormatDetails( new_surf->format );
         const Uint32 new_key = SDL_MapRGB( new_fmt, nullptr, 0xFF, 0, 0xFF );
         SDL_FillSurfaceRect( new_surf.get(), nullptr, new_key );
 
