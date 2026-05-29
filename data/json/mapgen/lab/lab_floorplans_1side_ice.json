@@ -92,7 +92,7 @@
           "name": "Alien Containment Entrance",
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
@@ -100,7 +100,7 @@
           "name": "Containment Control",
           "options": [
             { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 },
-            { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" }
+            { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
           ],
           "failures": [ { "action": "damage" }, { "action": "shutdown" } ]
         },
