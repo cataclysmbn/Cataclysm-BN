@@ -92,6 +92,7 @@
       "computers": {
         "6": {
           "name": "Library Entrance",
+          "security": 1,
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
@@ -155,6 +156,7 @@
       "computers": {
         "6": {
           "name": "Hardware Storage",
+          "security": 1,
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
@@ -220,6 +222,7 @@
       "computers": {
         "6": {
           "name": "Chemical Storage",
+          "security": 1,
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 3 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
@@ -309,6 +312,7 @@
       "computers": {
         "6": {
           "name": "Barracks Entrance",
+          "security": 1,
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 6 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
@@ -317,6 +321,7 @@
         },
         "7": {
           "name": "Magazine Entrance",
+          "security": 1,
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
@@ -391,6 +396,7 @@
       "computers": {
         "6": {
           "name": "Prisoner Containment Entrance",
+          "security": 1,
           "options": [
             { "name": "UNLOCK ENTRANCE", "action": "unlock", "security": 4 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
@@ -399,6 +405,7 @@
         },
         "7": {
           "name": "Containment Control",
+          "security": 1,
           "options": [
             { "name": "EMERGENCY CONTAINMENT RELEASE", "action": "open", "security": 5 },
             { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
