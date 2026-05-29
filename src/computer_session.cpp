@@ -300,6 +300,7 @@ computer_session::computer_action_functions = {
     { COMPACT_TOWER_UNRESPONSIVE, &computer_session::action_tower_unresponsive },
     { COMPACT_UNLOCK, &computer_session::action_unlock },
     { COMPACT_UNLOCK_DISARM, &computer_session::action_unlock_disarm },
+    { COMPACT_UNLOCK_LABPASS, &computer_session::action_unlock_labpass },
 };
 
 void computer_session::activate_function( computer_action action )
@@ -1512,6 +1513,18 @@ void computer_session::action_emerg_ref_center()
 
     query_any( _( "Press any key to continue…" ) );
     reset_terminal();
+}
+
+void computer_session::action_unlock_labpass()
+{
+    Character &player_character = g->u;
+
+    if( !player_character.has_amount( itype_labpass, 1 ) ) {
+        print_error( _( "Admin password required!\n\n" ) );
+    } else {
+        player_character.use_amount( itype_labpass, 1 );
+        action_unlock_disarm()
+    }
 }
 
 template<typename ...Args>
