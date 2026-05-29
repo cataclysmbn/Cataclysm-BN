@@ -623,7 +623,6 @@
     "computers": {
       "6": {
         "name": "Advanced PE012 Samples",
-        "security": 3,
         "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 5 }, { "name": "ENTER ADMIN PASSWORD", "action": "unlock_labpass" } ],
         "failures": [ { "action": "damage" }, { "action": "manhacks" }, { "action": "shutdown" } ]
       }
