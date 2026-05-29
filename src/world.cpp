@@ -32,7 +32,8 @@ static sqlite3 *open_db( const std::string &path )
         throw std::runtime_error( "Failed to initialize sqlite3" );
     }
 
-    ret = sqlite3_open_v2( path.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL );
+    ret = sqlite3_open_v2( path.c_str(), &db,
+                           SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL );
     if( ret != SQLITE_OK ) {
         dbg( DL::Error ) << "Failed to open db" << path << " (Error " << ret << ")";
         throw std::runtime_error( "Failed to open db" );
