@@ -8569,6 +8569,7 @@ void Character::cough( bool harmful, int loudness )
 
 void Character::wake_up()
 {
+    remove_value( "sleep_skip_time_disabled" );
     remove_effect( effect_slept_through_alarm );
     remove_effect( effect_lying_down );
     remove_effect( effect_alarm_clock );
@@ -10435,6 +10436,7 @@ void Character::fall_asleep( const time_duration &duration )
             cancel_activity();
         }
     }
+    remove_value( "sleep_skip_time_disabled" );
     add_effect( effect_sleep, duration );
 }
 
