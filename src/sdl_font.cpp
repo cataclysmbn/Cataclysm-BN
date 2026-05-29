@@ -420,59 +420,61 @@ BitmapFont::BitmapFont(
     const auto font_w = width;
     const auto font_h = height;
 
-    if ( glyph_h == font_h && glyph_w == font_w ) {
+    if( glyph_h == font_h && glyph_w == font_w ) {
         /* Do Nothing */
     } else {
         /* Remap Glyphs to expected size */
         /* TODO: Maybe scale if pixel perfect (eg 16x16 to 32x32) */
-        dbg( DL::Warn ) << string_format("Bitmap font glyph size (%d x %d) does not match game glyph size (%d x %d)", glyph_w, glyph_h, font_w, font_h );
+        dbg( DL::Warn ) <<
+                        string_format( "Bitmap font glyph size (%d x %d) does not match game glyph size (%d x %d)", glyph_w,
+                                       glyph_h, font_w, font_h );
 
-        auto new_surf = create_surface_32(font_w * 16, font_h * 16);
+        auto new_surf = create_surface_32( font_w * 16, font_h * 16 );
         const auto new_fmt = SDL_GetPixelFormatDetails( glyphs->format );
         const Uint32 new_key = SDL_MapRGB( new_fmt, nullptr, 0xFF, 0, 0xFF );
-        SDL_FillSurfaceRect(new_surf.get(), nullptr, new_key);
+        SDL_FillSurfaceRect( new_surf.get(), nullptr, new_key );
 
-        const auto dx = (font_w - glyph_w) / 2;
-        const auto dy = (font_h - glyph_h) / 2;
+        const auto dx = ( font_w - glyph_w ) / 2;
+        const auto dy = ( font_h - glyph_h ) / 2;
 
-        for (int yy = 0; yy < 16; ++yy) {
-            for (int xx = 0; xx < 16; ++xx) {
+        for( int yy = 0; yy < 16; ++yy ) {
+            for( int xx = 0; xx < 16; ++xx ) {
                 const auto srcRect = SDL_Rect { xx * glyph_w, yy * glyph_h, glyph_w, glyph_h };
-                const auto dstRect = SDL_Rect {xx * font_w + dx, yy * font_h + dy, font_w, font_h};
-                SDL_BlitSurface(glyphs.get(), &srcRect, new_surf.get(), &dstRect );
+                const auto dstRect = SDL_Rect {xx *font_w + dx, yy *font_h + dy, font_w, font_h};
+                SDL_BlitSurface( glyphs.get(), &srcRect, new_surf.get(), &dstRect );
             }
         }
 
         glyphs.swap( new_surf );
     }
 
-    constexpr auto COLORS = std::tuple_size_v<decltype(ascii)>;
+    constexpr auto COLORS = std::tuple_size_v<decltype( ascii )>;
 
     const auto fmt = SDL_GetPixelFormatDetails( glyphs->format );
     const Uint32 key = SDL_MapRGB( fmt, nullptr, 0xFF, 0, 0xFF );
     SDL_SetSurfaceColorKey( glyphs.get(), true, key );
 
     std::array<SDL_Surface_Ptr, COLORS> ascii_surf {};
-    ascii_surf[0] = std::move(glyphs);
+    ascii_surf[0] = std::move( glyphs );
     for( size_t a = 1; a < COLORS; ++a ) {
         ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format ) );
     }
 
     for( size_t a = 0; a < COLORS; ++a ) {
         const auto surf = ascii_surf[a].get();
-        if (SDL_MUSTLOCK(surf)) {
+        if( SDL_MUSTLOCK( surf ) ) {
             SDL_LockSurface( surf );
         }
 
         const int pixel_count = ascii_surf[a]->h * ascii_surf[a]->w;
-        const auto raw_pixels = static_cast<SDL_Color*>(ascii_surf[a]->pixels);
-        const auto pixels = std::span(raw_pixels, pixel_count);
-        constexpr auto key_col = RGBColor(255,0,255, 255);
-        const auto dst_col = RGBColor(windowsPalette[a].r ,windowsPalette[a].g, windowsPalette[a].b, 255);
+        const auto raw_pixels = static_cast<SDL_Color *>( ascii_surf[a]->pixels );
+        const auto pixels = std::span( raw_pixels, pixel_count );
+        constexpr auto key_col = RGBColor( 255, 0, 255, 255 );
+        const auto dst_col = RGBColor( windowsPalette[a].r, windowsPalette[a].g, windowsPalette[a].b, 255 );
 
-        for (auto& pixel : pixels) {
+        for( auto &pixel : pixels ) {
             auto src_col = RGBColor{pixel};
-            if (src_col == key_col) {
+            if( src_col == key_col ) {
                 continue;
             }
 
@@ -483,7 +485,7 @@ BitmapFont::BitmapFont(
             pixel = src_col;
         }
 
-        if (SDL_MUSTLOCK(surf)) {
+        if( SDL_MUSTLOCK( surf ) ) {
             SDL_UnlockSurface( ascii_surf[a].get() );
         }
     }

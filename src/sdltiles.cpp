@@ -3848,7 +3848,7 @@ void catacurses::init_interface()
         overmap_font = std::make_unique<FontFallbackList>( renderer, format, fl.overmap_fontwidth,
                        fl.overmap_fontheight,
                        windowsPalette, fl.overmap_typeface, fl.overmap_fontsize, fl.fontblending );
-    }catch ( std::exception & e ) {
+    } catch( std::exception &e ) {
         font.reset();
         map_font.reset();
         overmap_font.reset();
