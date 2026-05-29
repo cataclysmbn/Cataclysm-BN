@@ -954,6 +954,21 @@ TEST_CASE( "lua_require_dotted", "[lua]" )
     REQUIRE( result_mul == 21 );  // 3 * 7
 }
 
+TEST_CASE( "lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]" )
+{
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "cooking_enjoy_bonus_test.lua" );
+
+    CHECK( test_data.get<std::string>( "high_skill_var_name" ) == "comestible_fun" );
+    CHECK( test_data.get<int>( "high_skill_fun" ) == 15 );
+    CHECK( test_data.get<int>( "high_skill_bad_fun" ) == -5 );
+    CHECK( test_data.get<std::string>( "zero_skill_var_name" ) == "comestible_fun" );
+    CHECK( test_data.get<int>( "zero_skill_fun" ) == 10 );
+}
+
 static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
 {
     state.lua = make_lua_state();

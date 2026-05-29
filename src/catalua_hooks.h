@@ -27,8 +27,8 @@ struct hook_opts {
 /// contains the previous hook's return value.
 /// Returns `params.results`.
 auto run_hooks( std::string_view hook_name,
-                std::function<auto( sol::table &params ) -> void> init = nullptr,
-                const hook_opts &opts = {} ) -> sol::table;
+                std::function < auto( sol::table &params ) -> void > init = nullptr,
+const hook_opts &opts = {} ) -> sol::table;
 
 /// Return whether a hook currently has registered entries without building params/results tables.
 auto has_hooks( std::string_view hook_name, const hook_opts &opts = {} ) -> bool;

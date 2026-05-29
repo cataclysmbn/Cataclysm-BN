@@ -778,6 +778,7 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
     for( const auto &dim_id : submap_loader.active_dimensions() ) {
         ensure_distribution_grid_tracker_for( dim_id );
     }
+    submap_loader.update_lazy_border_focus( new_dim_id, u.abs_pos() );
     submap_loader.update();
     // Destroy trackers for non-primary dimensions that have no remaining tracked submaps.
     for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
@@ -2158,14 +2159,11 @@ bool game::do_turn()
     // the desired set and load/unload as needed.
     // Ensure trackers exist for all active dimensions before update() fires
     // on_submap_loaded events (mirrors the logic in load_map / update_map).
-    {
-        for( const auto &dim_id : submap_loader.active_dimensions() ) {
-            ensure_distribution_grid_tracker_for( dim_id );
-        }
+    for( const auto &dim_id : submap_loader.active_dimensions() ) {
+        ensure_distribution_grid_tracker_for( dim_id );
     }
-    {
-        submap_loader.update();
-    }
+    submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );
+    submap_loader.update();
     // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
     {
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
@@ -5684,19 +5682,19 @@ void game::monmove()
     // (no ray traces) immediately pull the next chunk rather than sitting idle
     // while a thread blocked on a costly monster finishes its oversized slice.
     std::vector<monster_plan_t> precomputed( plannable.size() );
-        {
-            ZoneScopedN( "monmove_compute_plans" );
-            if( parallel_enabled && parallel_monster_planning ) {
-                ZoneScopedN( "monmove_compute_plans_parallel" );
-                parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
-                monster_plan_chunk_size, [&]( int i ) {
-                    precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-                } );
-            } else {
-                ZoneScopedN( "monmove_compute_plans_serial" );
-                for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-                    precomputed[i] = plannable[i]->compute_plan( plan_ctx );
-                }
+    {
+        ZoneScopedN( "monmove_compute_plans" );
+        if( parallel_enabled && parallel_monster_planning ) {
+            ZoneScopedN( "monmove_compute_plans_parallel" );
+            parallel_for_chunked( 0, static_cast<int>( plannable.size() ),
+            monster_plan_chunk_size, [&]( int i ) {
+                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            } );
+        } else {
+            ZoneScopedN( "monmove_compute_plans_serial" );
+            for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
+                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            }
         }
     }
 
@@ -13086,6 +13084,7 @@ void game::resize_reality_bubble_to( int new_size )
     // on_submap_unloaded is safe here: map::on_submap_unloaded guards grid[]
     // writes behind contains_abs_sm(), so old out-of-bubble positions are
     // skipped and only vehicle/active-item tracking is cleaned up.
+    submap_loader.update_lazy_border_focus( current_dimension_id_, u.abs_pos() );
     submap_loader.update();
 
     // When the bubble grew, submaps outside the old (smaller) bubble just entered.
@@ -14652,6 +14651,7 @@ point_rel_sm game::update_map( int &x, int &y )
         for( const auto &dim_id : submap_loader.active_dimensions() ) {
             ensure_distribution_grid_tracker_for( dim_id );
         }
+        submap_loader.update_lazy_border_focus( m.get_bound_dimension(), u.abs_pos() );
         submap_loader.update();
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {

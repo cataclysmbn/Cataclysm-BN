@@ -195,6 +195,7 @@
       }
     },
     "origins": [ "ORIGIN_SECONDARY" ],
+    "followup": "MISSION_SCIENCE_REP_5",
     "dialogue": {
       "describe": "We need help…",
       "offer": "In the data we found a major contract for tunneling and train equipment, ordered a long time ago.  It's the best lead we have.  If these records are correct, it seems this equipment was used to build fully underground 'microlabs' where less hazardous research was carried out.  Luckily, I've identified a microlab that was only just finished before the Cataclysm, enough so that the construction foreman was likely still present.  If anyone carried information about the train networks, it's him.  I want you to go there and retrieve this information.",
@@ -203,6 +204,91 @@
       "advice": "I would recommend finding a subway station or other form of underground access and then navigating along the subway lines until you reach the lab.  Keep in mind that less hazardous research doesn't mean less hazardous for you.  These microlabs are likely crawling with zombies and automated defenses, and their tight and winding corridors mean you'll have to be extra careful.",
       "inquire": "Have you completed your mission?",
       "success": "Fantastic!  I should be able to reconstruct what cargo moved between which labs.  I wonder what was really going on down there.",
+      "success_lie": "What good does this do us?",
+      "failure": "It was a lost cause anyways…"
+    }
+  },
+  {
+    "id": "MISSION_SCIENCE_REP_5",
+    "type": "mission_definition",
+    "name": { "str": "Investigate the Logistics Center" },
+    "goal": "MGOAL_FIND_ITEM",
+    "description": "Find and obtain the <color_light_blue>classified lab reports</color> in the <color_red>trans-coast logistics center</color>.",
+    "difficulty": 10,
+    "value": 0,
+    "item": "classified_file_docmission",
+    "start": {
+      "assign_mission_target": { "om_terrain": "underground_lab_cargo_stationA_sub_station", "reveal_radius": 1, "search_range": 1000, "z": -4 },
+      "update_mapgen": {
+        "faction_owner": [ { "id": "old_guard", "x": [ 5, 21 ], "y": [ 3, 17 ] } ],
+        "rows": [
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "            ss          ",
+          "      l   ss  sss  l    ",
+          "        ttccc TTTss     ",
+          "       s           t    ",
+          "      t   sssss    t    ",
+          "      t   sS  s    w    ",
+          "       w  sssss   s     ",
+          "       s          s     ",
+          "       s      TTT s     ",
+          "       s      sswt      ",
+          "      l s  sss    l     ",
+          "         tt             ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        ",
+          "                        "
+        ],
+        "terrain": { "l": "t_utility_light" },
+        "furniture": {
+          "t": "f_cardboard_wall",
+          "s": "f_sandbag_half",
+          "c": "f_crate_o",
+          "T": "f_table",
+          "w": "f_table_flipped",
+          "S": "f_safe_l"
+        },
+        "place_npcs": [
+          { "x": 8, "y": 8, "class": "NPC_labguard1_docmission" },
+          { "x": 14, "y": 11, "class": "NPC_labguard2_docmission" },
+          { "x": 12, "y": 9, "class": "NPC_scientist_docmission" },
+          { "x": 13, "y": 9, "class": "NPC_scientistquestgiver_docmission" }
+        ],
+        "mapping": {
+          "T": { "items": [ { "item": "ammo_swat", "chance": 100 } ] },
+          "S": { "items": [ { "item": "classified_file_docmission", "chance": 100 } ] }
+        },
+        "place_items": [
+          { "item": "bed", "x": 8, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "bed", "x": 10, "y": 12, "chance": 100, "repeat": 1 },
+          { "item": "bed", "x": 15, "y": 11, "chance": 100, "repeat": 1 },
+          { "item": "bed", "x": 15, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 8, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 10, "y": 12, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 15, "y": 11, "chance": 100, "repeat": 1 },
+          { "item": "cot", "x": 15, "y": 8, "chance": 100, "repeat": 1 },
+          { "item": "mil_food_nodrugs", "x": [ 10, 13 ], "y": 6, "chance": 100, "repeat": [ 2, 5 ] },
+          { "item": "mil_food", "x": [ 13, 15 ], "y": 5, "chance": 100, "repeat": [ 2, 5 ] }
+        ]
+      }
+    },
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "dialogue": {
+      "describe": "We need help…",
+      "offer": "The train network information revealed a completely separate secret train network deeper than the normal subway system that seems to be used exclusively for transport between labs.  Not only that, but it also revealed a network of logistics centers.  You know those trans-coast logistics centers, the big warehouses from the company that promised you same-day shipping?  It turns out those are actually fronts used to facilitate the mass shipment of supplies and the conduction of classified research!  If any place holds the key to unlocking the mystery of how and why this all happened, it is almost certainly locked within one of those centers!  I've identified the center that seems to have been the most critical for the region, and I need you to travel to it and find any information that points you to what could possibly have caused all of this!",
+      "accepted": "So glad for your help.",
+      "rejected": "Can't blame you, but come back if you change your mind.",
+      "advice": "This may be the most dangerous lab you've visited yet.  If I recall correctly, the main entrance is heavily defended by rifle caliber turrets and robots, not to mention the swarms of zombies and other abominations you'll likely find inside.  An intelligent course of action may be to find an entrance to this secret train network, likely located in a lab or microlab at a depth equivalent to the fourth basement floor, and navigate to the logistics center along it.",
+      "inquire": "Have you completed your mission?",
+      "success": "Fantastic!  This is exactly the data I needed, and I have a feeling that we will soon uncover a way to finally halt this Cataclysm...",
       "success_lie": "What good does this do us?",
       "failure": "It was a lost cause anyways…"
     }

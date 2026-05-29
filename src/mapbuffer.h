@@ -11,10 +11,18 @@
 #include <vector>
 
 #include "coordinates.h"
+#include "mapgen_functions.h"
 #include "point.h"
 
 class submap;
 class JsonIn;
+
+struct mapbuffer_generate_omt_options {
+    bool defer_postprocess_hooks = false;
+    bool worker_safe = false;
+    bool use_selected_mapgen = false;
+    std::shared_ptr<mapgen_function> selected_mapgen;
+};
 
 /**
  * Store, buffer, save and load the entire world map.
@@ -115,33 +123,15 @@ class mapbuffer
          * Generate all submaps in the OMT at @p omt_addr if any are not yet
          * resident in memory.
          *
-         * Must be called on the main thread — mapgen (including Lua mapgen) is
-         * not reentrant and cannot run safely on worker threads.
+         * When @p options.worker_safe is true, Lua mapgen is reported via
+         * mapgen_result_status::needs_main_thread instead of running on the worker.
+         * Lua postprocess hooks can be deferred for batched main-thread dispatch.
          *
-         * Returns true if mapgen actually ran (omt was not fully resident),
-         * false if all submaps were already in memory and nothing was generated.
+         * Returns whether generation ran, was skipped, or must be retried on the
+         * main thread with the selected Lua generator.
          */
-        bool generate_omt( const tripoint_abs_omt &omt_addr );
-
-        /**
-         * Serialise the OMT at @p omt_addr into the in-memory write-back cache
-         * (@c pending_writes_) without evicting submaps or touching disk.  Intended
-         * to be called from a background worker thread while the omt is in the border
-         * zone (not simulated), so that the subsequent eviction only needs to free the
-         * in-memory objects without an I/O stall.  The cached data is flushed to disk
-         * only on an explicit save; discarding it (via @c clear()) lets the player
-         * revert to the pre-session state.
-         *
-         * Thread-safety contract:
-         * - Briefly acquires @c submaps_mutex_ to collect raw submap pointers.
-         * - Releases the lock before serialization, so concurrent @c preload_omt()
-         *   or @c add_submap() calls on other omts are not blocked.
-         * - The caller (submap_load_manager) guarantees the submaps remain alive
-         *   in memory for the duration of this call by withholding eviction until
-         *   the returned future is resolved.
-         * - Writes to @c pending_writes_ under @c pending_writes_mutex_ (brief hold).
-         */
-        void presave_omt( const tripoint_abs_omt &omt_addr );
+        auto generate_omt( const tripoint_abs_omt &omt_addr,
+        const mapbuffer_generate_omt_options &options = {} ) -> mapgen_result;
 
         /**
          * Destroy submaps that were discarded by preload_omt() because the in-memory
@@ -192,8 +182,8 @@ class mapbuffer
         mutable std::mutex pending_destroy_mutex_;
         std::vector<std::unique_ptr<submap>> pending_destroy_submaps_;
 
-        /// Serialised omts awaiting disk flush.  Written by presave_omt() (worker
-        /// threads) and the save=true branch of unload_omt() (main thread); read back
+        /// Serialised omts awaiting disk flush.  Written by the save=true branch of
+        /// unload_omt() (main thread); read back
         /// by preload_omt() (worker threads) before falling through to disk.  Flushed
         /// to disk by save() and discarded by clear(), leaving disk files untouched so
         /// the player can revert to the pre-session state by quitting without saving.

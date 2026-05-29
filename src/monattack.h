@@ -129,6 +129,8 @@ void rifle( monster *z, Creature *target );
 void frag( monster *z, Creature *target );
 /// Tankbot primary
 void tankgun( monster *z, Creature *target );
+/// ATGM for Beagle
+void atgm( monster *z, Creature *target );
 void flame( monster *z, Creature *target );
 
 bool dodge_check( monster *z, Creature *target );
