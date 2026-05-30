@@ -1292,9 +1292,8 @@ void spell_effect::bash( const spell &sp, Creature &caster, const tripoint_bub_m
 
 void spell_effect::dash( const spell &sp, Creature &caster, const tripoint_bub_ms &target )
 {
-    ::map &here = get_map();
     const auto start = caster.abs_pos();
-    std::vector<tripoint_abs_ms> trajectory = line_to( start, here.bub_to_abs( target ) );
+    std::vector<tripoint_abs_ms> trajectory = line_to( start, bub_to_abs( target ) );
     avatar *caster_you = caster.as_avatar();
     auto walk_point = trajectory.begin();
     if( *walk_point == start ) {
@@ -1307,11 +1306,11 @@ void spell_effect::dash( const spell &sp, Creature &caster, const tripoint_bub_m
     while( walk_point != trajectory.end() ) {
         if( caster_you != nullptr ) {
             if( g->critter_at( *walk_point ) ||
-                !g->walk_move( here.abs_to_bub( *walk_point ), false ) ) {
+                !g->walk_move( abs_to_bub( *walk_point ), false ) ) {
                 --walk_point;
                 break;
             } else {
-                sp.create_field( here.abs_to_bub( *( walk_point - 1 ) ) );
+                sp.create_field( abs_to_bub( *( walk_point - 1 ) ) );
                 g->draw_ter();
             }
         }

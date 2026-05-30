@@ -510,7 +510,7 @@ void iexamine::gaspump( player &p, const tripoint_bub_ms &examp )
 void iexamine::translocator( player &, const tripoint_bub_ms &examp )
 {
     // TODO: fix point types
-    const tripoint_abs_omt omt_loc( project_to<coords::omt>( get_map().bub_to_abs( examp ) ) );
+    const tripoint_abs_omt omt_loc( project_to<coords::omt>( bub_to_abs( examp ) ) );
     avatar &player_character = get_avatar();
     const bool activated = player_character.translocators->knows_translocator( omt_loc );
     if( !activated ) {
@@ -1194,9 +1194,8 @@ void iexamine::cardreader( player &p, const tripoint_bub_ms &examp )
         }
         for( monster &critter : g->all_monsters() ) {
             // Check 1) same overmap coords, 2) turret, 3) hostile
-            if( project_to<coords::omt>( critter.abs_pos() ) == project_to<coords::omt>
-                ( here.bub_to_abs(
-                      examp ) ) &&
+            if( project_to<coords::omt>( critter.abs_pos() ) == project_to<coords::omt>(
+                    bub_to_abs( examp ) ) &&
                 critter.has_flag( MF_ID_CARD_DESPAWN ) &&
                 critter.attitude_to( p ) == Attitude::A_HOSTILE ) {
                 g->remove_zombie( critter );
@@ -1761,7 +1760,7 @@ static bool pick_lock( player &p, const tripoint_bub_ms &examp )
             p.mod_power_level( -bio_lockpick->power_activate );
             p.add_msg_if_player( m_info, _( "You activate your %s." ), bio_lockpick->name );
             p.assign_activity( std::make_unique<player_activity>( lockpick_activity_actor::use_bionic(
-                                   item::spawn( bio_lockpick->fake_item ), here.bub_to_abs( examp ) ) ) );
+                                   item::spawn( bio_lockpick->fake_item ), bub_to_abs( examp ) ) ) );
             return true;
         } else {
             p.add_msg_if_player( m_info, _( "You don't have enough power to activate your %s." ),
@@ -2592,7 +2591,7 @@ void iexamine::plant_seed( player &p, const tripoint_bub_ms &examp, const itype_
 {
     std::unique_ptr<player_activity> act = std::make_unique<player_activity>( ACT_PLANT_SEED,
                                            to_moves<int>( 30_seconds ) );
-    act->placement = get_map().bub_to_abs( examp );
+    act->placement = bub_to_abs( examp );
     act->str_values.emplace_back( seed_id );
     p.assign_activity( std::move( act ) );
 }
@@ -3665,7 +3664,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
     const auto can_disconnect_tank = disconnected_variant && p.has_amount( itype_plumber_toolkit, 1 );
     const auto notify_contents_changed = [&]( const tripoint_bub_ms & where ) {
         if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
-            fluid_grid::on_contents_changed( here.bub_to_abs( where ) );
+            fluid_grid::on_contents_changed( bub_to_abs( where ) );
         }
     };
     const auto tank_contains_only_water = [&]( const tripoint_bub_ms & where ) -> bool {
@@ -3683,7 +3682,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
         return true;
     };
     const auto transfer_tank_liquid_to_grid = [&]( const tripoint_bub_ms & where ) {
-        const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( where ) );
+        const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( where ) );
         auto items = here.i_at( where );
         std::ranges::for_each( items, [&]( item * it ) {
             if( it != nullptr && it->made_of( LIQUID ) ) {
@@ -3694,7 +3693,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
     };
 
     if( is_plumbed_tank ) {
-        const auto pos_abs_ms = here.bub_to_abs( examp );
+        const auto pos_abs_ms = bub_to_abs( examp );
         const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
         const auto clean_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water_clean );
         const auto dirty_available = fluid_grid::liquid_charges_at( pos_abs_omt, itype_water );
@@ -3933,22 +3932,22 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                 if( !connected_variant ) {
                     return;
                 }
-                const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
+                const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( examp ) );
                 if( !confirm_fluid_grid_contamination_for_items( pos_abs_omt, here.i_at( examp ) ) ) {
                     return;
                 }
                 here.furn_set( examp, *connected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 transfer_tank_liquid_to_grid( examp );
                 add_msg( m_info, _( "You connect the %s to the fluid grid." ), keg_name );
                 return;
             } else if( selectmenu.ret == DISCONNECT_FROM_FLUID_GRID ) {
-                fluid_grid::disconnect_tank( here.bub_to_abs( examp ) );
+                fluid_grid::disconnect_tank( bub_to_abs( examp ) );
                 if( !disconnected_variant ) {
                     return;
                 }
                 here.furn_set( examp, *disconnected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 add_msg( m_info, _( "You disconnect the %s from the fluid grid." ), keg_name );
                 return;
             } else if( selectmenu.ret < 0 ) {
@@ -4058,7 +4057,7 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
         selectmenu.text = _( "Select an action" );
         selectmenu.query();
 
-        const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
+        const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( examp ) );
         switch( selectmenu.ret ) {
             case DISPENSE:
                 if( liquid_handler::handle_liquid( **items.begin() ) ) {
@@ -4120,19 +4119,19 @@ void iexamine::keg( player &p, const tripoint_bub_ms &examp )
                     return;
                 }
                 here.furn_set( examp, *connected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 transfer_tank_liquid_to_grid( examp );
                 add_msg( m_info, _( "You connect the %s to the fluid grid." ), keg_name );
                 return;
             }
 
             case DISCONNECT_FROM_FLUID_GRID:
-                fluid_grid::disconnect_tank( here.bub_to_abs( examp ) );
+                fluid_grid::disconnect_tank( bub_to_abs( examp ) );
                 if( !disconnected_variant ) {
                     return;
                 }
                 here.furn_set( examp, *disconnected_variant );
-                fluid_grid::on_structure_changed( here.bub_to_abs( examp ) );
+                fluid_grid::on_structure_changed( bub_to_abs( examp ) );
                 add_msg( m_info, _( "You disconnect the %s from the fluid grid." ), keg_name );
                 return;
 
@@ -4158,7 +4157,7 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos,
     const auto is_plumbed = is_fluid_grid_tank( here.furn( pos ).obj() );
     const auto notify_contents_changed = [&]( const tripoint_bub_ms & where ) {
         if( is_fluid_grid_tank( here.furn( where ).obj() ) ) {
-            fluid_grid::on_contents_changed( here.bub_to_abs( where ) );
+            fluid_grid::on_contents_changed( bub_to_abs( where ) );
         }
     };
     const auto keg_name = here.name( pos );
@@ -4169,7 +4168,7 @@ detached_ptr<item> iexamine::pour_into_keg( const tripoint_bub_ms &pos,
             add_msg( _( "The %s only accepts water." ), keg_name );
             return std::move( liquid );
         }
-        const auto pos_abs_omt = project_to<coords::omt>( here.bub_to_abs( pos ) );
+        const auto pos_abs_omt = project_to<coords::omt>( bub_to_abs( pos ) );
         if( !confirm_fluid_grid_contamination( pos_abs_omt, liquid->typeId() ) ) {
             return std::move( liquid );
         }
@@ -4471,7 +4470,7 @@ void iexamine::shrub_wildveggies( player &p, const tripoint_bub_ms &examp )
     ///\EFFECT_PER randomly speeds up foraging
     move_cost /= rng( std::max( 4, p.per_cur ), 4 + p.per_cur * 2 );
     p.assign_activity( ACT_FORAGE, move_cost, 0 );
-    p.activity->placement = here.bub_to_abs( examp );
+    p.activity->placement = bub_to_abs( examp );
     p.activity->auto_resume = true;
     return;
 }
@@ -4619,7 +4618,7 @@ void iexamine::trap( player &p, const tripoint_bub_ms &examp )
                 }
             } else {
                 p.assign_activity( std::make_unique<player_activity>( std::make_unique<construction_activity_actor>
-                                   ( here.bub_to_abs( examp ) ) ) );
+                                   ( bub_to_abs( examp ) ) ) );
                 return;
             }
         } else {
@@ -4694,7 +4693,7 @@ auto iexamine::fluid_grid_fixture( player &p, const tripoint_bub_ms &examp ) -> 
         return;
     }
 
-    const auto pos_abs_ms = here.bub_to_abs( examp );
+    const auto pos_abs_ms = bub_to_abs( examp );
     const auto pos_abs_omt = project_to<coords::omt>( pos_abs_ms );
 
     const auto available_liquid = std::ranges::find_if( fluid_grid.allowed_liquids,
@@ -4963,7 +4962,7 @@ void iexamine::reload_furniture( player &p, const tripoint_bub_ms &examp )
 void iexamine::use_furn_fake_item( player &p, const tripoint_bub_ms &examp )
 {
     map &m = get_map();
-    const tripoint_abs_ms abspos( m.bub_to_abs( examp ) );
+    const tripoint_abs_ms abspos( bub_to_abs( examp ) );
 
     if( !m.has_furn( examp ) ) {
         debugmsg( "lost furniture at %s", examp.to_string() );
@@ -7537,7 +7536,7 @@ void iexamine::dimensional_portal( player &p, const tripoint_bub_ms &examp )
 
 void iexamine::check_power( player &, const tripoint_bub_ms &examp )
 {
-    tripoint_abs_ms abspos( g->m.bub_to_abs( examp ) );
+    tripoint_abs_ms abspos( bub_to_abs( examp ) );
     battery_tile *battery = active_tiles::furn_at<battery_tile>( abspos );
     if( battery != nullptr ) {
         add_msg( m_info, _( "This battery stores %d kJ of electric power." ), battery->get_resource() );
@@ -7548,7 +7547,7 @@ void iexamine::check_power( player &, const tripoint_bub_ms &examp )
 
 void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 {
-    const tripoint_abs_ms abs_pos( g->m.bub_to_abs( examp ) );
+    const tripoint_abs_ms abs_pos( bub_to_abs( examp ) );
     const std::string local_dim = g->m.get_bound_dimension();
 
     // Look up the grid_link_tile for this portal.  Access through the correct
@@ -7737,7 +7736,7 @@ void iexamine::power_portal( player &p, const tripoint_bub_ms &examp )
 
 void iexamine::portal( player &p, const tripoint_bub_ms &examp )
 {
-    const tripoint_abs_ms abs_pos( get_map().bub_to_abs( examp ) );
+    const tripoint_abs_ms abs_pos( bub_to_abs( examp ) );
 
     portal_tile *pt = active_tiles::furn_at<portal_tile>( abs_pos );
     if( pt == nullptr ) {
@@ -7867,7 +7866,7 @@ void iexamine::multicooker( player &p, const tripoint_bub_ms &pos )
     map &here = get_map();
     const furn_id furniture = here.furn( pos );
     data_vars::data_set *vars = here.furn_vars( pos );
-    const tripoint_abs_ms abspos( here.bub_to_abs( pos ) );
+    const tripoint_abs_ms abspos( bub_to_abs( pos ) );
     auto grid = get_distribution_grid_tracker().grid_at( abspos );
     int battery = grid.get_resource();
     enum {
