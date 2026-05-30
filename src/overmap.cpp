@@ -4917,7 +4917,11 @@ overmap_special_id overmap::pick_random_building_to_place( int town_dist, int to
         //return overmap_special_id( "megastore" );
         return city_spec.pick_finale();
     } else if( shop_normal > town_dist ) {
-        return city_spec.pick_shop();
+        if( town_size > 10 ) {
+            return city_spec.pick_urban_shop();
+        } else {
+            return city_spec.pick_shop();
+        }
     } else if( park_normal > town_dist ) {
         return city_spec.pick_park();
     } else {
