@@ -3,7 +3,7 @@ name: PR Artifact Publisher
 on:
   workflow_run:
     workflows: [matrix]
-    types: [completed]
+    types: [requested, completed]
 
 permissions:
   actions: read
@@ -62,3 +62,4 @@ jobs:
           run-url: ${{ github.event.workflow_run.html_url }}
           head-sha: ${{ github.event.workflow_run.head_sha }}
           token: ${{ github.token }}
+          watch: ${{ github.event.action == 'requested' }}

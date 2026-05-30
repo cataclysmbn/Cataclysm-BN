@@ -21,12 +21,19 @@ inputs:
   token:
     description: GitHub token with actions:read and pull-requests:write
     required: true
+  watch:
+    description: Keep publishing until the workflow run completes
+    required: false
+    default: "false"
+  poll-interval-seconds:
+    description: Seconds to wait between watched updates
+    required: false
+    default: "120"
 
 runs:
   using: composite
   steps:
-    - name: Build artifact block
-      id: body
+    - name: Publish Build Artifacts block
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
@@ -35,6 +42,8 @@ runs:
         RUN_ID: ${{ inputs.run-id }}
         RUN_URL: ${{ inputs.run-url }}
         HEAD_SHA: ${{ inputs.head-sha }}
+        WATCH: ${{ inputs.watch }}
+        POLL_INTERVAL_SECONDS: ${{ inputs.poll-interval-seconds }}
       run: |
         set -euo pipefail
 
@@ -70,34 +79,65 @@ runs:
           fi
         }
 
-        run_status=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.status')
-        sha_short=${HEAD_SHA:0:7}
-        commit_subject=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.head_commit.message // "" | split("\n")[0]')
-        timestamp=$(date -u "+%F %T")
+        publish_once() {
+          local current_head
+          current_head=$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '.head.sha')
+          if [ "$current_head" != "$HEAD_SHA" ]; then
+            echo "Pull request head changed; stopping artifact body updates."
+            exit 0
+          fi
 
-        artifact_label="pr-${PR_NUMBER}"
-        linux_url=$(artifact_url "linux-tiles-x64-${artifact_label}")
-        windows_url=$(artifact_url "windows-tiles-x64-msvc-${artifact_label}")
-        macos_url=$(artifact_url "osx-tiles-x64-${artifact_label}")
-        android_url=$(artifact_url "android-x64-${artifact_label}")
+          run_status=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.status')
+          sha_short=${HEAD_SHA:0:7}
+          commit_subject=$(gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" --jq '.head_commit.message // "" | split("\n")[0]')
+          timestamp=$(date -u "+%F %T")
 
-        {
-          echo 'content<<EOF'
-          echo '## Build Artifacts'
-          echo
-          echo "PR build for commit [${sha_short}](https://github.com/${REPOSITORY}/commit/${HEAD_SHA}) (${commit_subject}) on ${timestamp}"
-          echo
-          artifact_line 'Linux tiles' "$linux_url"
-          artifact_line 'Windows tiles' "$windows_url"
-          artifact_line 'macOS tiles' "$macos_url"
-          artifact_line 'Android tiles' "$android_url"
-          echo 'EOF'
-        } >> "$GITHUB_OUTPUT"
+          artifact_label="pr-${PR_NUMBER}"
+          linux_url=$(artifact_url "linux-tiles-x64-${artifact_label}")
+          windows_url=$(artifact_url "windows-tiles-x64-msvc-${artifact_label}")
+          macos_url=$(artifact_url "osx-tiles-x64-${artifact_label}")
+          android_url=$(artifact_url "android-x64-${artifact_label}")
 
-    - name: Update pull request body
-      uses: ./.github/actions/update-pr-artifact-body
-      with:
-        repository: ${{ inputs.repository }}
-        pr-number: ${{ inputs.pr-number }}
-        content: ${{ steps.body.outputs.content }}
-        token: ${{ inputs.token }}
+          content=$(
+            {
+              echo '## Build Artifacts'
+              echo
+              echo "PR build for commit [${sha_short}](https://github.com/${REPOSITORY}/commit/${HEAD_SHA}) (${commit_subject}) on ${timestamp}"
+              echo
+              artifact_line 'Linux tiles' "$linux_url"
+              artifact_line 'Windows tiles' "$windows_url"
+              artifact_line 'macOS tiles' "$macos_url"
+              artifact_line 'Android tiles' "$android_url"
+            }
+          )
+
+          block=$(cat <<EOF
+        <!-- BEGIN artifact comment -->
+
+        ${content}
+        <!-- END artifact comment -->
+        EOF
+          )
+
+          body=$(gh api "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --jq '.body // ""')
+          clean_body=$(printf '%s' "$body" | perl -0pe 's/\n*<!-- BEGIN artifact comment -->.*?<!-- END artifact comment -->\s*//sg; s/[ \t]+\n/\n/g; s/\s+\z//')
+
+          if [ -n "$clean_body" ]; then
+            printf -v new_body '%s\n\n%s' "$clean_body" "$block"
+          else
+            new_body="$block"
+          fi
+
+          jq -n --arg body "$new_body" '{body: $body}' > "$RUNNER_TEMP/pr-body.json"
+          gh api -X PATCH "repos/${REPOSITORY}/pulls/${PR_NUMBER}" --input "$RUNNER_TEMP/pr-body.json" >/dev/null
+          echo "Published artifact links for ${run_status} workflow run ${RUN_ID}."
+        }
+
+        publish_once
+
+        if [ "$WATCH" = "true" ]; then
+          while [ "$run_status" != "completed" ]; do
+            sleep "$POLL_INTERVAL_SECONDS"
+            publish_once
+          done
+        fi
