@@ -35,6 +35,8 @@ bool assign( const JsonObject &jo, const std::string &name, units::volume &val,
 {
     const auto parse = [&name]( const JsonObject & obj, units::volume & out ) {
         if( obj.has_int( name ) ) {
+            obj.show_warning( "legacy volume values used, support will be removed eventually.",
+                              name );
             out = obj.get_int( name ) * units::legacy_volume_factor;
             return true;
         }
@@ -111,6 +113,8 @@ bool assign( const JsonObject &jo,
 {
     const auto parse = [&name]( const JsonObject & obj, units::mass & out ) {
         if( obj.has_int( name ) ) {
+            obj.show_warning( "legacy mass values used, support will be removed eventually.",
+                              name );
             out = units::from_gram<std::int64_t>( obj.get_int( name ) );
             return true;
         }
@@ -239,6 +243,8 @@ bool assign( const JsonObject &jo,
 {
     const auto parse = [&name]( const JsonObject & obj, units::energy & out ) {
         if( obj.has_int( name ) ) {
+            obj.show_warning( "legacy energy values used, support will be removed eventually.",
+                              name );
             const std::int64_t tmp = obj.get_int( name );
             if( tmp > units::to_kilojoule( units::energy_max ) ) {
                 out = units::energy_max;
@@ -455,7 +461,7 @@ bool assign( const JsonObject &jo,
             load_damage_instance( proportional.get_array( name ) ), strict );
     } else if( relative.has_member( name ) || relative.has_member( "pierce" )
                || relative.has_member( "prop_damage" ) ) {
-        // Legacy: Remove after 0.F
+        // // Legacy: Remove after 0.F
         // It is valid for relative to adjust any of pierce, prop_damage, or
         // damage So check for what it's modifying, and modify that
         float amt = 0.0f;
@@ -478,7 +484,7 @@ bool assign( const JsonObject &jo,
     } else if( proportional.has_member( name )
                || proportional.has_member( "pierce" )
                || proportional.has_member( "prop_damage" ) ) {
-        // Legacy: Remove after 0.F
+        // // Legacy: Remove after 0.F
         // It is valid for proportional to adjust any of pierce, prop_damage, or
         // damage So check if it's modifying any of the things before going on
         // to modify it
