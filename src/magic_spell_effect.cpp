@@ -1306,7 +1306,7 @@ void spell_effect::dash( const spell &sp, Creature &caster, const tripoint_bub_m
     caster.add_effect( dashing_effect, 1_turns );
     while( walk_point != trajectory.end() ) {
         if( caster_you != nullptr ) {
-            if( g->critter_at( here.abs_to_bub( *walk_point ) ) ||
+            if( g->critter_at( *walk_point ) ||
                 !g->walk_move( here.abs_to_bub( *walk_point ), false ) ) {
                 --walk_point;
                 break;

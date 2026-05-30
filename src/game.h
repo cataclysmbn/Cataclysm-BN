@@ -335,6 +335,10 @@ class game : public submap_load_listener
         T * critter_at( const tripoint_bub_ms &p, bool allow_hallucination = false );
         template<typename T = Creature>
         const T * critter_at( const tripoint_bub_ms &p, bool allow_hallucination = false ) const;
+        template<typename T = Creature>
+        auto critter_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) -> T *;
+        template<typename T = Creature>
+        auto critter_at( const tripoint_abs_ms &p, bool allow_hallucination = false ) const -> const T *;
         /**
         * Returns a shared pointer to the given critter (which can be of any of the subclasses of
         * @ref Creature). The function may return an empty pointer if the given critter

@@ -70,6 +70,7 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
     CHECK( abs_to_bub( player_abs ) == expected_bub );
     CHECK( bub_to_abs( expected_bub ) == player_abs );
     CHECK( you.bub_pos() == expected_bub );
+    CHECK( g->critter_at<avatar>( player_abs ) == &you );
 
     const auto moved_bub = tripoint_bub_ms( g_half_mapsize_x + 1, g_half_mapsize_y + 2,
                                            player_abs.z() );
@@ -133,11 +134,13 @@ TEST_CASE( "monster_tracker_uses_absolute_positions" )
 
     CHECK( mon->bub_pos() == monster_start );
     CHECK( g->critter_at<monster>( monster_start ) == mon );
+    CHECK( g->critter_at<monster>( monster_abs ) == mon );
 
     you.setpos( you.abs_pos() + tripoint_rel_ms( SEEX, 0, 0 ) );
     const auto player_shifted_monster_pos = abs_to_bub( monster_abs );
     CHECK( mon->abs_pos() == monster_abs );
     CHECK( mon->bub_pos() == player_shifted_monster_pos );
+    CHECK( g->critter_at<monster>( monster_abs ) == mon );
     CHECK( g->critter_at<monster>( player_shifted_monster_pos ) == mon );
     CHECK( g->critter_at<monster>( monster_start ) == nullptr );
 

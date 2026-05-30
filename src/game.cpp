@@ -6280,6 +6280,49 @@ const T *game::critter_at( const tripoint_bub_ms &p, bool allow_hallucination ) 
     return const_cast<game *>( this )->critter_at<T>( p, allow_hallucination );
 }
 
+template<typename T>
+auto game::critter_at( const tripoint_abs_ms &p, bool allow_hallucination ) -> T *
+{
+    using lookup_type = std::remove_cv_t<T>;
+    constexpr auto wants_monster = std::is_base_of_v<lookup_type, monster>;
+    constexpr auto wants_player = std::is_base_of_v<lookup_type, avatar>;
+    constexpr auto wants_npc = std::is_base_of_v<lookup_type, npc>;
+    constexpr auto return_ridden_monster = std::is_same_v<lookup_type, monster> ||
+                                           std::is_same_v<lookup_type, Creature>;
+
+    if( const shared_ptr_fast<monster> mon_ptr = critter_tracker->find( p ) ) {
+        if( !allow_hallucination && mon_ptr->is_hallucination() ) {
+            return nullptr;
+        }
+        if( !mon_ptr->has_effect( effect_ridden ) || return_ridden_monster ) {
+            if constexpr( wants_monster ) {
+                return dynamic_cast<T *>( mon_ptr.get() );
+            } else {
+                return nullptr;
+            }
+        }
+    }
+    if constexpr( wants_player ) {
+        if( p == u.abs_pos() ) {
+            return dynamic_cast<T *>( &u );
+        }
+    }
+    if constexpr( wants_npc ) {
+        for( auto &cur_npc : active_npc ) {
+            if( cur_npc->abs_pos() == p && !cur_npc->is_dead() ) {
+                return dynamic_cast<T *>( cur_npc.get() );
+            }
+        }
+    }
+    return nullptr;
+}
+
+template<typename T>
+auto game::critter_at( const tripoint_abs_ms &p, bool allow_hallucination ) const -> const T *
+{
+    return const_cast<game *>( this )->critter_at<T>( p, allow_hallucination );
+}
+
 template const monster *game::critter_at<monster>( const tripoint_bub_ms &, bool ) const;
 template const npc *game::critter_at<npc>( const tripoint_bub_ms &, bool ) const;
 template const player *game::critter_at<player>( const tripoint_bub_ms &, bool ) const;
@@ -6288,6 +6331,18 @@ template avatar *game::critter_at<avatar>( const tripoint_bub_ms &, bool );
 template const Character *game::critter_at<Character>( const tripoint_bub_ms &, bool ) const;
 template Character *game::critter_at<Character>( const tripoint_bub_ms &, bool );
 template const Creature *game::critter_at<Creature>( const tripoint_bub_ms &, bool ) const;
+template const monster *game::critter_at<monster>( const tripoint_abs_ms &, bool ) const;
+template monster *game::critter_at<monster>( const tripoint_abs_ms &, bool );
+template const npc *game::critter_at<npc>( const tripoint_abs_ms &, bool ) const;
+template npc *game::critter_at<npc>( const tripoint_abs_ms &, bool );
+template const player *game::critter_at<player>( const tripoint_abs_ms &, bool ) const;
+template player *game::critter_at<player>( const tripoint_abs_ms &, bool );
+template const avatar *game::critter_at<avatar>( const tripoint_abs_ms &, bool ) const;
+template avatar *game::critter_at<avatar>( const tripoint_abs_ms &, bool );
+template const Character *game::critter_at<Character>( const tripoint_abs_ms &, bool ) const;
+template Character *game::critter_at<Character>( const tripoint_abs_ms &, bool );
+template const Creature *game::critter_at<Creature>( const tripoint_abs_ms &, bool ) const;
+template Creature *game::critter_at<Creature>( const tripoint_abs_ms &, bool );
 
 template<typename T>
 shared_ptr_fast<T> game::shared_from( const T &critter )
@@ -6297,7 +6352,7 @@ shared_ptr_fast<T> game::shared_from( const T &critter )
         return std::dynamic_pointer_cast<T>( u_shared_ptr );
     }
     if( critter.is_monster() ) {
-        if( const shared_ptr_fast<monster> mon_ptr = critter_tracker->find( critter.bub_pos() ) ) {
+        if( const shared_ptr_fast<monster> mon_ptr = critter_tracker->find( critter.abs_pos() ) ) {
             if( static_cast<const Creature *>( mon_ptr.get() ) == static_cast<const Creature *>( &critter ) ) {
                 return std::dynamic_pointer_cast<T>( mon_ptr );
             }

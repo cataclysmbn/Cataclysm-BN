@@ -1470,8 +1470,8 @@ void activity_handlers::shear_finish( player_activity *act, player *p )
     }
     item *shears = &*loc;
     map &here = get_map();
-    const auto source_pos = here.abs_to_bub( act->coords.at( 0 ) );
-    monster *source_mon = g->critter_at<monster>( source_pos );
+    const auto source_pos = act->coords.at( 0 );
+    auto *source_mon = g->critter_at<monster>( source_pos );
     if( source_mon == nullptr ) {
         debugmsg( "could not find source creature for shearing" );
         return;
@@ -1497,8 +1497,7 @@ void activity_handlers::milk_finish( player_activity *act, player *p )
         debugmsg( "milking activity with no position of monster stored" );
         return;
     }
-    map &here = get_map();
-    monster *source_mon = g->critter_at<monster>( here.abs_to_bub( act->coords.at( 0 ) ) );
+    auto *source_mon = g->critter_at<monster>( act->coords.at( 0 ) );
     if( source_mon == nullptr ) {
         debugmsg( "could not find source creature for liquid transfer" );
         return;
