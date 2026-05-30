@@ -287,7 +287,7 @@ void user_interface::show()
                 const auto init_help_window = [&]( ui_adaptor & help_ui ) {
                     const point iOffset( TERMX > FULL_SCREEN_WIDTH ? ( TERMX - FULL_SCREEN_WIDTH ) / 2 : 0,
                                          TERMY > FULL_SCREEN_HEIGHT ? ( TERMY - FULL_SCREEN_HEIGHT ) / 2 : 0 );
-                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT * (2.0/3) + 2,
+                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT * ( 2.0 / 3 ) + 2,
                                                  FULL_SCREEN_WIDTH * 3 / 4,
                                                  iOffset + point( 19 / 2, 7 + FULL_SCREEN_HEIGHT / 2 / 2 ) );
                     help_ui.position_from_window( w_help );
@@ -330,7 +330,7 @@ void user_interface::show()
                 // (2) Explicitly entered an empty rule- which isn't allowed since "*" should be used
                 // to include/exclude everything
                 if( !r.empty() ) {
-                    cur_rules[iLine].set_rule_string(r);
+                    cur_rules[iLine].set_rule_string( r );
                     bStuffChanged = true;
                 } else if( action == "ADD_RULE" ) {
                     cur_rules.pop_back();
@@ -371,7 +371,7 @@ void user_interface::show()
                 iColumn = 1;
             }
         } else if( action == "TEST_RULE" && currentPageNonEmpty && !g->u.name.empty() ) {
-            test_pattern(cur_rules[iLine]);
+            test_pattern( cur_rules[iLine] );
         } else if( action == "SWITCH_AUTO_PICKUP_OPTION" ) {
             // TODO: Now that NPCs use this function, it could be used for them too
             get_options().get_option( "AUTO_PICKUP" ).setNext();
@@ -393,7 +393,7 @@ void user_interface::show()
 }
 
 
-void user_interface::test_pattern(const rule& rule) const
+void user_interface::test_pattern( const rule &rule ) const
 {
     std::vector<std::string> vMatchingItems;
 
@@ -404,7 +404,7 @@ void user_interface::test_pattern(const rule& rule) const
     //Loop through all itemfactory items
     //APU now ignores prefixes, bottled items and suffix combinations still not generated
     for( const itype *e : item_controller->all() ) {
-        if( rule(*e)) {
+        if( rule( *e ) ) {
             vMatchingItems.push_back( e->nname( 1 ) );
         }
     }
@@ -528,7 +528,7 @@ void player_settings::show()
         save_character();
     }
 
-    refresh_map_items(map_items);
+    refresh_map_items( map_items );
 }
 
 bool player_settings::has_rule( const item *it )
@@ -610,15 +610,15 @@ void player_settings::refresh_map_items( item_search_cache &map_items ) const
     //if a specific item is being added, all the rules need to be checked now
     //may have some performance issues since exclusion needs to check all items also
     map_items.clear_items();
-    map_items.apply_rules(global_rules);
-    map_items.apply_rules(character_rules);
+    map_items.apply_rules( global_rules );
+    map_items.apply_rules( character_rules );
 
 }
 
-rule_state base_settings::check_item( const item& item )
+rule_state base_settings::check_item( const item &item )
 {
-    if (!cache_is_valid) {
-        refresh_map_items(map_items);
+    if( !cache_is_valid ) {
+        refresh_map_items( map_items );
         cache_is_valid = true;
     }
 
@@ -693,7 +693,7 @@ void player_settings::load( const bool bCharacter )
             ( bCharacter ? character_rules : global_rules ).deserialize( jsin );
         }, true );
     }
-    refresh_map_items(map_items);
+    refresh_map_items( map_items );
 }
 
 void npc_settings::show( const std::string &name )
@@ -722,7 +722,7 @@ void npc_settings::deserialize( JsonIn &jsin )
 void npc_settings::refresh_map_items( item_search_cache &map_items ) const
 {
     map_items.clear_items();
-    map_items.apply_rules(rules);
+    map_items.apply_rules( rules );
 }
 
 bool npc_settings::empty() const
