@@ -266,7 +266,7 @@ void DynamicDataLoader::initialize()
     add( "world_type", &world_types::load );
     add( "ammo_effect", &ammo_effects::load );
     add( "emit", &emit::load_emit );
-    add( "activity_type", &activity_type::load );
+    add( "activity_type", &activity_type::load_activities );
     add( "vitamin", &vitamin::load_vitamin );
     add( "material", &materials::load );
     add( "bionic", &bionic_data::load_bionic );

@@ -67,13 +67,15 @@ struct activity_req {
     activity_req( const character_stat &req )
         : req( req ), mod( 1.0f ), threshold( 8 ) {
     }
+    activity_req operator=( const activity_req &orig ) {
+        return activity_req( orig.req, orig.mod, orig.threshold );
+    }
 };
 
 /** A class that stores constant information that doesn't differ between activities of the same type */
 class activity_type
 {
     private:
-        activity_id id_;
         bool rooted_ = false;
         translation verb_ = to_translation( "THIS IS A BUG" );
         bool suspendable_ = true;
@@ -96,13 +98,11 @@ class activity_type
         activity_bubble_effect bubble_effect_ = activity_bubble_effect::none;
 
     public:
+        activity_id id;
         std::vector<activity_req<character_stat>> stats;
         std::vector<activity_req<skill_id>> skills;
         std::vector<activity_req<quality_id>> qualities;
 
-        const activity_id &id() const {
-            return id_;
-        }
         bool rooted() const {
             return rooted_;
         }
@@ -184,10 +184,15 @@ class activity_type
         bool call_finish( player_activity *, player * ) const;
 
         /** JSON stuff */
-        static void load( const JsonObject &jo );
+        static void load_activities( const JsonObject &jo, const std::string &src );
+        void load( const JsonObject &jo, const std::string &src );
         static void check_consistency();
+        void check() const;
         static void reset();
 
-        LUA_TYPE_OPS( activity_type, id_ );
+        bool was_loaded;
+
+
+        LUA_TYPE_OPS( activity_type, id );
 };
 
