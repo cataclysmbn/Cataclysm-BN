@@ -14304,8 +14304,9 @@ void game::vertical_notes( int z_before, int z_after )
 
 point_rel_sm game::update_map( Character &who )
 {
-    int x = who.bub_pos().x();
-    int y = who.bub_pos().y();
+    const auto map_local_pos = m.abs_to_bub( who.abs_pos() );
+    int x = map_local_pos.x();
+    int y = map_local_pos.y();
     return update_map( x, y );
 }
 

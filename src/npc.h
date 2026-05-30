@@ -782,9 +782,7 @@ class npc : public player
         /** Place the NPC at an exact absolute position (submap + within-submap tile). */
         void spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm_ms &square );
         /**
-         * Places the NPC on the @ref map. This update its
-         * pos values to fit the current offset of
-         * map (g->levx, g->levy).
+         * Places the NPC on the active @ref map context.
          * If the square on the map where the NPC would go is not empty
          * a spiral search for an empty square around it is performed.
          */

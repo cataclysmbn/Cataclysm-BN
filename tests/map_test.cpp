@@ -49,6 +49,45 @@ TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
     CHECK( get_map().check_submap_active_item_consistency().empty() );
 }
 
+TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
+{
+    clear_all_state();
+
+    avatar &you = get_avatar();
+    const auto player_sm = tripoint_abs_sm( 100, 200, 2 );
+    const auto player_offset = tripoint_rel_ms( 3, 4, 0 );
+    const auto player_abs = project_to<coords::ms>( player_sm ) + player_offset;
+    you.setpos( player_abs );
+
+    const auto expected_origin = player_sm -
+                                 tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+    const auto expected_bub = tripoint_bub_ms( g_half_mapsize_x + player_offset.x(),
+                              g_half_mapsize_y + player_offset.y(), player_abs.z() );
+
+    CHECK( player_reality_bubble_origin() == expected_origin );
+    CHECK( abs_to_bub( player_abs ) == expected_bub );
+    CHECK( bub_to_abs( expected_bub ) == player_abs );
+}
+
+TEST_CASE( "update_map_uses_avatar_absolute_position" )
+{
+    clear_all_state();
+
+    map &here = get_map();
+    avatar &you = get_avatar();
+    const auto old_origin = here.get_abs_sub();
+    const auto destination = tripoint_bub_ms( g_half_mapsize_x + SEEX, g_half_mapsize_y, 0 );
+    const auto destination_abs = here.bub_to_abs( destination );
+
+    you.setpos( destination );
+    const auto shift = g->update_map( you );
+
+    CHECK( shift == point_rel_sm( 1, 0 ) );
+    CHECK( here.get_abs_sub() == old_origin + tripoint_rel_sm( 1, 0, 0 ) );
+    CHECK( you.abs_pos() == destination_abs );
+    CHECK( you.bub_pos() == tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) );
+}
+
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )
 {
     os << tid.id().c_str();

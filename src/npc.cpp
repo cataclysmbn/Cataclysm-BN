@@ -802,9 +802,10 @@ void npc::spawn_at_precise( const point_abs_sm &submap_offset, const tripoint_sm
 
 void npc::place_on_map()
 {
-    // position is the authoritative absolute position; bub_pos() derives from it.
+    map &here = get_map();
+    // position is the authoritative absolute position; convert through the active map context.
     // Find an empty tile near the NPC's intended location.
-    const tripoint_bub_ms initial = bub_pos();
+    const auto initial = here.abs_to_bub( position );
 
     if( g->is_empty( initial ) || is_mounted() ) {
         return;
@@ -812,7 +813,7 @@ void npc::place_on_map()
 
     for( const tripoint_bub_ms &p : closest_points_first( initial, SEEX + 1 ) ) {
         if( g->is_empty( p ) ) {
-            setpos( p );
+            setpos( here.bub_to_abs( p ) );
             return;
         }
     }
