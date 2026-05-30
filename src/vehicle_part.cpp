@@ -171,7 +171,7 @@ detached_ptr<item> vehicle_part::properties_to_item() const
                 }
                 if( !has_flag( targets_grid ) ) {
                     map &here = get_map();
-                    const auto local_pos = here.abs_to_bub( target.first );
+                    const auto local_pos = abs_to_bub( target.first );
                     if( !here.veh_at( local_pos ) ) {
                         // That vehicle ain't there no more.
                         tmp->set_flag( flag_NO_DROP );

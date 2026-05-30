@@ -2564,11 +2564,11 @@ void Creature::setpos( const tripoint_abs_ms &pos )
 bool Creature::is_loaded() const
 {
     map &here = get_map();
-    return here.get_submap_at( here.abs_to_bub( abs_pos() ) ) != nullptr;
+    return here.get_submap_at( abs_to_bub( abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const
 {
     map &here = get_map();
-    return here.is_position_simulated( here.abs_to_bub( abs_pos() ) );
+    return here.is_position_simulated( abs_to_bub( abs_pos() ) );
 }

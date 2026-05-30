@@ -721,11 +721,11 @@ void game::chat()
             const auto &to = p.value();
             if( npcselect == follower_count ) {
                 for( npc *them : followers ) {
-                    them->goto_to_this_pos = here.bub_to_abs( to );
+                    them->goto_to_this_pos = bub_to_abs( to );
                 }
                 yell_msg = _( "Everyone move there!" );
             } else {
-                followers[npcselect]->goto_to_this_pos = here.bub_to_abs( to );
+                followers[npcselect]->goto_to_this_pos = bub_to_abs( to );
                 yell_msg = string_format( _( "Move there, %s!" ), followers[npcselect]->get_name() );
             }
             break;
@@ -872,8 +872,7 @@ void game::chat()
 void npc::handle_sound( const sounds::sound_t spriority, const std::string &description,
                         int heard_volume, const tripoint_bub_ms &spos )
 {
-    map &here = get_map();
-    const auto s_abs_pos = here.bub_to_abs( spos );
+    const auto s_abs_pos = bub_to_abs( spos );
     const auto my_abs_pos = abs_pos();
 
     add_msg( m_debug, "%s heard '%s', priority %d at volume %d from %d:%d, my pos %d:%d",

@@ -207,25 +207,25 @@ auto player_reality_bubble_origin() -> tripoint_abs_sm
 auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
 {
     const auto origin = project_to<coords::ms>( player_reality_bubble_origin() );
-    return tripoint_abs_ms( tripoint( origin.x() + p.x(), origin.y() + p.y(), p.z() ) );
+    return ( p + origin.xy().raw() ).reinterpret_as<tripoint_abs_ms>();
 }
 
 auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms
 {
     const auto origin = project_to<coords::ms>( player_reality_bubble_origin() );
-    return tripoint_bub_ms( tripoint( p.x() - origin.x(), p.y() - origin.y(), p.z() ) );
+    return ( p - origin.xy() ).reinterpret_as<tripoint_bub_ms>();
 }
 
 auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms
 {
     const auto origin = project_to<coords::ms>( player_reality_bubble_origin() ).xy();
-    return origin + point_rel_ms( p.raw() );
+    return origin + p.raw();
 }
 
 auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms
 {
     const auto origin = project_to<coords::ms>( player_reality_bubble_origin() ).xy();
-    return point_bub_ms( ( p - origin ).raw() );
+    return ( p - origin ).reinterpret_as<point_bub_ms>();;
 }
 
 scoped_map_context::scoped_map_context( map &m ) noexcept
