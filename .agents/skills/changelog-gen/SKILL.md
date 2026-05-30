@@ -26,6 +26,8 @@ compatibility: Requires git, gh, internet access, and write access to this repo.
 - Crawl PR bodies, comments, and reviews with `gh api`.
 - Crawl every screenshot so the user can curate later.
 - If a featured PR has multiple screenshots, include all.
+- In `## Featured`, keep media visible unless a feature group has 9 or more images; if hiding 9+ images, use one media `<details>` block for the whole feature group instead of one `<details>` block per PR.
+- Format 2+ images as a markdown table.
 - If a PR body has before/after shots, preserve them as-is in a markdown table: `| {NAME} before | {NAME} after |`.
 - Refer to `docs/en/game/changelog/11.stable-0.11.1.md` for example.
 - Keep it terse and player-facing. No corpo phrasing, hype, filler, or adverbs (NEVER `it's not just A but B`)
