@@ -18,4 +18,5 @@ repo:
 
 extra_head: |
   <link rel="stylesheet" href="/prism.css">
+  <link rel="stylesheet" href="/media.css">
   <script type="module" src="/redirect.js"></script>
