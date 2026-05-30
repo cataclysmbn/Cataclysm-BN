@@ -423,7 +423,7 @@ void activity_handlers::burrow_finish( player_activity *act, player *p )
     }
     act->set_to_null();
     p->add_msg_if_player( m_good, _( "You finish burrowing." ) );
-    here.destroy( here.abs_to_bub( pos ), true );
+    here.destroy( abs_to_bub( pos ), true );
 }
 
 static bool check_butcher_cbm( const int roll )
@@ -1544,7 +1544,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
             detached_ptr<item> source;
             switch( source_type ) {
                 case LST_INFINITE_MAP:
-                    source = here.water_from( here.abs_to_bub( pos ) );
+                    source = here.water_from( abs_to_bub( pos ) );
                     charges = std::max( 1, source->charges_per_volume( volume_per_second ) );
                     source->charges = charges;
                     source = cb( std::move( source ) );
@@ -1579,7 +1579,7 @@ void activity_handlers::fill_liquid_do_turn( player_activity *act, player *p )
                 }
                 break;
             case LTT_MAP: {
-                const auto bub_loc = here.abs_to_bub( act_ref.coords.at( 1 ) );
+                const auto bub_loc = abs_to_bub( act_ref.coords.at( 1 ) );
                 if( iexamine::has_keg( bub_loc ) ) {
                     finished = transfer( [&bub_loc]( detached_ptr<item> &&it ) {
                         return iexamine::pour_into_keg( bub_loc, std::move( it ) );
@@ -1656,7 +1656,7 @@ void activity_handlers::forage_finish( player_activity *act, player *p )
     bool next_to_bush = false;
     map &here = get_map();
     for( const auto &pnt : here.points_in_radius( p->bub_pos(), 1 ) ) {
-        if( here.bub_to_abs( pnt ) == act->placement ) {
+        if( bub_to_abs( pnt ) == act->placement ) {
             next_to_bush = true;
             break;
         }
@@ -1694,7 +1694,7 @@ void activity_handlers::forage_finish( player_activity *act, player *p )
             debugmsg( "Invalid season" );
     }
 
-    here.ter_set( here.abs_to_bub( act->placement ), next_ter );
+    here.ter_set( abs_to_bub( act->placement ), next_ter );
 
     // Survival gives a bigger boost, and Perception is leveled a bit.
     // Both survival and perception affect time to forage
@@ -1864,7 +1864,7 @@ void activity_handlers::make_zlave_finish( player_activity *act, player *p )
 
 void activity_handlers::pickaxe_do_turn( player_activity *act, player * )
 {
-    const auto &pos = get_map().abs_to_bub( act->placement );
+    const auto pos = abs_to_bub( act->placement );
     sfx::play_activity_sound( "tool", "pickaxe", sfx::get_heard_volume( pos ) );
     // each turn is too much
     if( calendar::once_every( 1_minutes ) ) {
@@ -1876,7 +1876,7 @@ void activity_handlers::pickaxe_do_turn( player_activity *act, player * )
 void activity_handlers::pickaxe_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const tripoint_bub_ms pos( here.abs_to_bub( act->placement ) );
+    const auto pos = abs_to_bub( act->placement );
     if( p->is_avatar() ) {
         int act_exertion = act->moves_total;
         // Troglodyte mutants can dig longer before tiring
@@ -1914,7 +1914,7 @@ void activity_handlers::pickaxe_finish( player_activity *act, player *p )
 void activity_handlers::pulp_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
-    const auto &pos = here.abs_to_bub( act->placement );
+    const auto pos = abs_to_bub( act->placement );
 
     // Stabbing weapons are a lot less effective at pulping
     const auto cut_power = std::max( p->primary_weapon().damage_melee( DT_CUT ),
@@ -2102,14 +2102,14 @@ void activity_handlers::start_fire_finish( player_activity *act, player *p )
     p->practice( skill_survival, act->index, 5 );
 
     map &here = get_map();
-    firestarter_actor::resolve_firestarter_use( *p, here.abs_to_bub( act->placement ) );
+    firestarter_actor::resolve_firestarter_use( *p, abs_to_bub( act->placement ) );
     act->set_to_null();
 }
 
 void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
 {
     map &here = get_map();
-    const auto bub_loc = here.abs_to_bub( act->placement );
+    const auto bub_loc = abs_to_bub( act->placement );
     item &firestarter = *act->get_tools().front();
     // Try fueling the fire if we don't already have fuel, OR if the tool needs to look for tinder to work
     if( !here.is_flammable( bub_loc ) || ( firestarter.has_flag( flag_REQUIRES_TINDER ) &&
@@ -2438,7 +2438,7 @@ void activity_handlers::cracking_finish( player_activity *act, player *p )
 {
     auto &here = get_map();
     p->add_msg_if_player( m_good, _( "With a satisfying click, the lock on the safe opens!" ) );
-    here.furn_set( here.abs_to_bub( act->placement ), f_safe_c );
+    here.furn_set( abs_to_bub( act->placement ), f_safe_c );
     act->set_to_null();
 }
 
@@ -2552,7 +2552,7 @@ item *get_fake_tool( hack_type_t hack_type, const player_activity &activity )
 
             for( const itype &item_type : item_type_list ) {
                 if( item_type.get_id() == static_cast<itype_id>( activity.str_values[1] ) ) {
-                    const tripoint_abs_ms abspos = m.bub_to_abs( position );
+                    const auto abspos = activity.coords.at( 0 );
                     const distribution_grid &grid = get_distribution_grid_tracker().grid_at( abspos );
                     fake_item = item::spawn_temporary( item_type.get_id(), calendar::turn, 0 );
                     fake_item->charges = grid.get_resource( true );
@@ -2594,7 +2594,7 @@ void discharge_real_power_source(
             break;
         }
         case hack_type_t::furniture: {
-            const tripoint_abs_ms abspos = m.bub_to_abs( position );
+            const auto abspos = bub_to_abs( position );
             distribution_grid &grid = get_distribution_grid_tracker().grid_at( abspos );
             unfulfilled_demand = grid.mod_resource( -used_charges );
             break;
@@ -3080,7 +3080,7 @@ void activity_handlers::clear_rubble_finish( player_activity *act, player *p )
 {
     const auto &pos = act->placement;
     map &here = get_map();
-    const auto bub_pos = here.abs_to_bub( pos );
+    const auto bub_pos = abs_to_bub( pos );
     const map_bash_info &bash = here.furn( bub_pos ).obj().bash;
     p->add_msg_if_player( m_info, _( "You clear up the %s." ),
                           here.furnname( bub_pos ) );
@@ -3155,7 +3155,7 @@ void activity_handlers::travel_do_turn( player_activity *act, player *p )
         }
         map &here = get_map();
         // TODO: fix point types
-        auto centre_sub = here.abs_to_bub( waypoint );
+        auto centre_sub = abs_to_bub( waypoint );
         if( !here.passable( centre_sub ) ) {
             tripoint_range<tripoint_bub_ms> candidates = here.points_in_radius( centre_sub, 2 );
             for( const auto &elem : candidates ) {
@@ -3712,7 +3712,7 @@ void activity_handlers::churn_finish( player_activity *act, player *p )
 {
     map &here = get_map();
     p->add_msg_if_player( _( "You finish churning up the earth here." ) );
-    here.ter_set( here.abs_to_bub( act->placement ), t_dirtmound );
+    here.ter_set( abs_to_bub( act->placement ), t_dirtmound );
     // Go back to what we were doing before
     // could be player zone activity, or could be NPC multi-farming
     act->set_to_null();
@@ -3722,7 +3722,7 @@ void activity_handlers::churn_finish( player_activity *act, player *p )
 void activity_handlers::plant_seed_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    auto examp = here.abs_to_bub( act->placement );
+    auto examp = abs_to_bub( act->placement );
     const itype_id seed_id( act->str_values[0] );
     std::vector<detached_ptr<item>> used_seed;
     if( item::count_by_charges( seed_id ) ) {
@@ -3899,7 +3899,7 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
         act->targets.front()->detach();
         if( is_long ) {
             if( p->making_would_work( p->lastrecipe, craft_copy->charges ) ) {
-                p->last_craft->execute( get_map().abs_to_bub( bench_pos ) );
+                p->last_craft->execute( abs_to_bub( bench_pos ) );
             }
         }
     } else if( craft->get_counter() >= craft->get_next_failure_point() ) {
@@ -3943,15 +3943,14 @@ void activity_handlers::eat_menu_finish( player_activity *, player * )
 
 void activity_handlers::pry_nails_do_turn( player_activity *act, player * )
 {
-    map &here = get_map();
-    const auto bub_loc = here.abs_to_bub( act->placement );
+    const auto bub_loc = abs_to_bub( act->placement );
     sfx::play_activity_sound( "tool", "hammer", sfx::get_heard_volume( bub_loc ) );
 }
 
 void activity_handlers::pry_nails_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const auto bub_loc = here.abs_to_bub( act->placement );
+    const auto bub_loc = abs_to_bub( act->placement );
     const ter_id type = here.ter( bub_loc );
 
     p->add_msg_if_player( _( "You pry out the nails from the terrain." ) );
@@ -3965,19 +3964,19 @@ void activity_handlers::pry_nails_finish( player_activity *act, player *p )
 
 void activity_handlers::chop_tree_do_turn( player_activity *act, player * )
 {
-    map &here = get_map();
+    const auto pos = abs_to_bub( act->placement );
     sfx::play_activity_sound( "tool", "axe",
-                              sfx::get_heard_volume( here.abs_to_bub( act->placement ) ) );
+                              sfx::get_heard_volume( pos ) );
     if( calendar::once_every( 1_minutes ) ) {
         //~ Sound of a wood chopping tool at work!
-        sounds::sound( here.abs_to_bub( act->placement ), 15, sounds::sound_t::activity, _( "CHK!" ) );
+        sounds::sound( pos, 15, sounds::sound_t::activity, _( "CHK!" ) );
     }
 }
 
 void activity_handlers::chop_tree_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const auto &pos = here.abs_to_bub( act->placement );
+    const auto pos = abs_to_bub( act->placement );
 
     tripoint_rel_ms direction;
     if( !p->is_npc() ) {
@@ -4041,7 +4040,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
     here.collapse_at( pos, false, true, false );
     // sound of falling tree
     sfx::play_variant_sound( "misc", "timber",
-                             sfx::get_heard_volume( here.abs_to_bub( act->placement ) ) );
+                             sfx::get_heard_volume( pos ) );
     act->set_to_null();
 
     // Quality of tool used and assistants can together both reduce intensity of work.
@@ -4075,7 +4074,7 @@ void activity_handlers::chop_tree_finish( player_activity *act, player *p )
 void activity_handlers::chop_logs_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const auto &pos = here.abs_to_bub( act->placement );
+    const auto pos = abs_to_bub( act->placement );
     int log_quan;
     int stick_quan;
     int splint_quan;
@@ -4143,11 +4142,11 @@ void activity_handlers::chop_planks_finish( player_activity *act, player *p )
 
     map &here = get_map();
     if( planks > 0 ) {
-        here.spawn_item( here.abs_to_bub( act->placement ), itype_2x4, planks, 0, calendar::turn );
+        here.spawn_item( abs_to_bub( act->placement ), itype_2x4, planks, 0, calendar::turn );
         p->add_msg_if_player( m_good, _( "You produce %d planks." ), planks );
     }
     if( scraps > 0 ) {
-        here.spawn_item( here.abs_to_bub( act->placement ), itype_splinter, scraps, 0, calendar::turn );
+        here.spawn_item( abs_to_bub( act->placement ), itype_splinter, scraps, 0, calendar::turn );
         p->add_msg_if_player( m_good, _( "You produce %d splinters." ), scraps );
     }
     if( planks < max_planks / 2 ) {
@@ -4159,11 +4158,11 @@ void activity_handlers::chop_planks_finish( player_activity *act, player *p )
 
 void activity_handlers::jackhammer_do_turn( player_activity *act, player * )
 {
-    map &here = get_map();
+    const auto pos = abs_to_bub( act->placement );
     sfx::play_activity_sound( "tool", "jackhammer",
-                              sfx::get_heard_volume( here.abs_to_bub( act->placement ) ) );
+                              sfx::get_heard_volume( pos ) );
     if( calendar::once_every( 1_minutes ) ) {
-        sounds::sound( here.abs_to_bub( act->placement ), 15, sounds::sound_t::destructive_activity,
+        sounds::sound( pos, 15, sounds::sound_t::destructive_activity,
                        //~ Sound of a jackhammer at work!
                        _( "TATATATATATATAT!" ) );
     }
@@ -4172,7 +4171,7 @@ void activity_handlers::jackhammer_do_turn( player_activity *act, player * )
 void activity_handlers::jackhammer_finish( player_activity *act, player *p )
 {
     map &here = get_map();
-    const auto &pos = here.abs_to_bub( act->placement );
+    const auto pos = abs_to_bub( act->placement );
 
     if( here.has_flag_furn( TFLAG_MINEABLE, pos ) ) {
         here.destroy_furn( pos, true );
@@ -4214,7 +4213,7 @@ void activity_handlers::fill_pit_do_turn( player_activity *act, player * )
     sfx::play_activity_sound( "tool", "shovel", 100 );
     if( calendar::once_every( 1_minutes ) ) {
         //~ Sound of a shovel filling a pit or mound at work!
-        sounds::sound( get_map().abs_to_bub( act->placement ), 10, sounds::sound_t::activity, _( "hsh!" ) );
+        sounds::sound( abs_to_bub( act->placement ), 10, sounds::sound_t::activity, _( "hsh!" ) );
     }
 }
 
@@ -4222,7 +4221,7 @@ void activity_handlers::fill_pit_finish( player_activity *act, player *p )
 {
     const auto &pos = act->placement;
     map &here = get_map();
-    const auto bub_pos = here.abs_to_bub( pos );
+    const auto bub_pos = abs_to_bub( pos );
     const ter_id ter = here.ter( bub_pos );
     const ter_id old_ter = ter;
 
@@ -4335,11 +4334,10 @@ template<typename fn>
 static void cleanup_tiles( std::unordered_set<tripoint_abs_ms> &tiles, fn &cleanup )
 {
     auto it = tiles.begin();
-    map &here = get_map();
     while( it != tiles.end() ) {
         auto current = it++;
 
-        if( cleanup( here.abs_to_bub( *current ) ) ) {
+        if( cleanup( abs_to_bub( *current ) ) ) {
             tiles.erase( current );
         }
     }
@@ -4362,7 +4360,7 @@ static void perform_zone_activity_turn( player *p,
     const std::vector<tripoint_abs_ms> &tiles = get_sorted_tiles_by_distance( abspos, unsorted_tiles );
 
     for( const auto &tile : tiles ) {
-        const tripoint_bub_ms &tile_loc = here.abs_to_bub( tile );
+        const auto tile_loc = abs_to_bub( tile );
 
         auto route = here.route( p->bub_pos(), tile_loc,
                                  p->get_legacy_pathfinding_settings(),
