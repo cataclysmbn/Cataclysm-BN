@@ -79,6 +79,25 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
     CHECK( you.bub_pos() == moved_bub );
 }
 
+TEST_CASE( "map_local_conversions_preserve_absolute_z" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto map_origin = tripoint_abs_sm( here.get_abs_sub().xy(), 2 );
+    here.set_abs_sub( map_origin );
+
+    const auto local = tripoint_bub_ms( SEEX + 3, SEEY + 4, -1 );
+    const auto origin_ms = project_to<coords::ms>( map_origin );
+    const auto expected_abs = tripoint_abs_ms( tripoint( origin_ms.x() + local.x(),
+                              origin_ms.y() + local.y(), local.z() ) );
+
+    CHECK( here.local_to_abs( local ) == expected_abs );
+    CHECK( here.abs_to_local( expected_abs ) == local );
+    CHECK( here.bub_to_abs( local ) == expected_abs );
+    CHECK( here.abs_to_bub( expected_abs ) == local );
+}
+
 TEST_CASE( "update_map_uses_avatar_absolute_position" )
 {
     clear_all_state();

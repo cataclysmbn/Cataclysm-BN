@@ -327,7 +327,7 @@ monster::~monster() = default;
 
 auto monster::setpos( const tripoint_bub_ms &p ) -> void
 {
-    setpos( get_map().bub_to_abs( p ) );
+    setpos( get_map().local_to_abs( p ) );
 }
 
 auto monster::setpos( const tripoint_abs_ms &p ) -> void
@@ -654,7 +654,7 @@ void monster::refill_udders()
 
 auto monster::spawn( const tripoint_bub_ms &p ) -> void
 {
-    pos_abs = get_map().bub_to_abs( p );
+    pos_abs = get_map().local_to_abs( p );
     unset_dest();
 }
 

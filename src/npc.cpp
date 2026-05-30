@@ -192,9 +192,10 @@ standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
+    auto &here = get_map();
     position = ( pos == tripoint_bub_ms::min() )
-               ? get_map().bub_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
-               : get_map().bub_to_abs( pos );
+               ? here.local_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
+               : here.local_to_abs( pos );
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -747,7 +748,7 @@ void npc::set_known_to_u( bool known )
 
 auto npc::setpos( const tripoint_bub_ms &pos ) -> void
 {
-    setpos( get_map().bub_to_abs( pos ) );
+    setpos( get_map().local_to_abs( pos ) );
 }
 
 auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
@@ -805,7 +806,7 @@ void npc::place_on_map()
     map &here = get_map();
     // position is the authoritative absolute position; convert through the active map context.
     // Find an empty tile near the NPC's intended location.
-    const auto initial = here.abs_to_bub( position );
+    const auto initial = here.abs_to_local( position );
 
     if( g->is_empty( initial ) || is_mounted() ) {
         return;
@@ -813,7 +814,7 @@ void npc::place_on_map()
 
     for( const tripoint_bub_ms &p : closest_points_first( initial, SEEX + 1 ) ) {
         if( g->is_empty( p ) ) {
-            setpos( here.bub_to_abs( p ) );
+            setpos( here.local_to_abs( p ) );
             return;
         }
     }

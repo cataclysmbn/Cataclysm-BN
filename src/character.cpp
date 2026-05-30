@@ -425,7 +425,7 @@ Character::Character() :
     last_climate_control_ret( false )
 {
     if( g != nullptr ) {
-        position = get_map().bub_to_abs( tripoint_bub_ms::zero() );
+        position = get_map().local_to_abs( tripoint_bub_ms::zero() );
     }
 
     str_max = 0;
@@ -840,7 +840,7 @@ tripoint_abs_ms Character::abs_pos() const
 
 auto Character::setpos( const tripoint_bub_ms &p ) -> void
 {
-    position = get_map().bub_to_abs( p );
+    position = get_map().local_to_abs( p );
 }
 
 auto Character::setpos( const tripoint_abs_ms &p ) -> void
