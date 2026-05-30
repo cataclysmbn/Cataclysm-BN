@@ -449,25 +449,17 @@ BitmapFont::BitmapFont(
     }
 
     constexpr auto COLORS = std::tuple_size_v<decltype( ascii )>;
-
-    const auto fmt = SDL_GetPixelFormatDetails( glyphs->format );
-    const Uint32 key = SDL_MapRGB( fmt, nullptr, 0xFF, 0, 0xFF );
-    SDL_SetSurfaceColorKey( glyphs.get(), true, key );
-
-    std::array<SDL_Surface_Ptr, COLORS> ascii_surf {};
-    ascii_surf[0] = std::move( glyphs );
-    for( size_t a = 1; a < COLORS; ++a ) {
-        ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format ) );
-    }
+    const auto fnt_fmt = SDL_GetPixelFormatDetails( format );
+    const Uint32 fnt_key = SDL_MapRGB( fnt_fmt, nullptr, 0xFF, 0, 0xFF );
 
     for( size_t a = 0; a < COLORS; ++a ) {
-        const auto surf = ascii_surf[a].get();
-        if( SDL_MUSTLOCK( surf ) ) {
-            SDL_LockSurface( surf );
+        const auto sdl_surf = SDL_Surface_Ptr { SDL_DuplicateSurface( glyphs.get() ) };
+        if( SDL_MUSTLOCK( sdl_surf.get() ) ) {
+            SDL_LockSurface( sdl_surf.get() );
         }
 
-        const int pixel_count = ascii_surf[a]->h * ascii_surf[a]->w;
-        const auto raw_pixels = static_cast<SDL_Color *>( ascii_surf[a]->pixels );
+        const int pixel_count = sdl_surf->h * sdl_surf->w;
+        const auto raw_pixels = static_cast<SDL_Color *>( sdl_surf->pixels );
         const auto pixels = std::span( raw_pixels, pixel_count );
         constexpr auto key_col = RGBColor( 255, 0, 255, 255 );
         const auto dst_col = RGBColor( windowsPalette[a].r, windowsPalette[a].g, windowsPalette[a].b, 255 );
@@ -485,17 +477,18 @@ BitmapFont::BitmapFont(
             pixel = src_col;
         }
 
-        if( SDL_MUSTLOCK( surf ) ) {
-            SDL_UnlockSurface( ascii_surf[a].get() );
+        if( SDL_MUSTLOCK( sdl_surf.get() ) ) {
+            SDL_UnlockSurface( sdl_surf.get() );
+        }
+
+        {
+            auto fnt_surf = SDL_Surface_Ptr { SDL_ConvertSurface( sdl_surf.get(), format ) };
+            SDL_SetSurfaceColorKey( fnt_surf.get(), true, fnt_key );
+            SDL_SetSurfaceRLE( fnt_surf.get(), true );
+            ascii[a] = CreateTextureFromSurface( renderer, fnt_surf );
         }
     }
-    tilewidth = ascii_surf[0]->w / width;
-
-    //convert ascii_surf to SDL_Texture
-    for( size_t a = 0; a < COLORS; ++a ) {
-        SDL_SetSurfaceRLE( ascii_surf[a].get(), true );
-        ascii[a] = CreateTextureFromSurface( renderer, ascii_surf[a] );
-    }
+    tilewidth = glyphs->w / width;
 }
 
 void BitmapFont::draw_ascii_lines( const SDL_Renderer_Ptr &renderer,
