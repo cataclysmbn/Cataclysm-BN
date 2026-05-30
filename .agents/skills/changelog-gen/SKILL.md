@@ -16,6 +16,11 @@ compatibility: Requires git, gh, internet access, and write access to this repo.
 - Translate every user-visible heading, summary label, table label, and caption in localized docs. `Featured`, `Credits`, `screenshots`, `before`, and `after` must be localized.
 - Keep section order, media blocks, PR grouping, and tables synced to English, but never copy English labels back into localized docs.
 - Do not use subagents for glossary lookup. Korean title is `안정판`, not `Stable`.
+- Korean glossary trap: Cataclysm is `카타클리즘`, never `대격변`.
+- After writing every changelog file and before committing/opening/updating a PR, MUST run the `reviewer` subagent against the generated docs.
+  - Primary agent must first gather glossary evidence directly with `rg -C2 -i '<term>' lang/po/{lang}.po | head`; pass that evidence to the reviewer instead of asking the reviewer to perform glossary lookup.
+  - Reviewer prompt must ask for issues only, not rewrites, and must cover: meme/joke/irrelevant images, Tracy/perf graphs, buggy screenshots, too many inline images that should be under `<details>`, spoilers, non-player-facing items in `## Featured`, wrong JSON/Lua/Bugfix section placement, unsynced language sections/media/labels, missing coauthors, bot/AI authors, and localized glossary mistakes.
+  - Treat reviewer output as a gate: fix every valid issue, then rerun reviewer or explicitly document why remaining findings are not applied before finalizing.
 - Group related PRs into one section and link every PR + author in `<details><summary>Credits</summary>`.
 - Crawl PR bodies, comments, and reviews with `gh api`.
 - Crawl every screenshot so the user can curate later.
