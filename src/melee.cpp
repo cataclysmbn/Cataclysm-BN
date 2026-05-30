@@ -1003,6 +1003,7 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
 
     uilist menu;
     menu.desc_enabled = true;
+    menu.textwidth = 80;
     const auto weapon_name = self.is_armed() ? weapon.tname() : _( "unarmed attack" );
     menu.text = string_format( _( "Attack %s with %s (%s)" ),
                                target.disp_name(), weapon_name,
