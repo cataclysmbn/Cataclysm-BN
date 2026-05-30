@@ -1887,7 +1887,7 @@ static std::vector<std::tuple<tripoint_bub_ms, itype_id, int>> requirements_map(
         already_there_spots.push_back( elem );
         combined_spots.push_back( elem );
     }
-    for( const auto &elem : mgr.get_point_set_loot( here.bub_to_abs( p.bub_pos() ), distance,
+    for( const auto &elem : mgr.get_point_set_loot( p.abs_pos(), distance,
             p.is_npc() ) ) {
         const auto bub_loc = here.abs_to_bub( elem );
         // if there is a loot zone that's already near the work spot, we don't want it to be added twice.
@@ -2364,7 +2364,7 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
     int &num_processed = act.values[ 0 ];
 
     map &here = get_map();
-    const auto abspos = here.bub_to_abs( p.bub_pos() );
+    const auto abspos = p.abs_pos();
     auto &mgr = zone_manager::get_manager();
     if( here.check_vehicle_zones( g->get_levz() ) ) {
         mgr.cache_vzones();
@@ -3341,7 +3341,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
 {
     map &here = get_map();
     zone_manager &mgr = zone_manager::get_manager();
-    const auto abspos = here.bub_to_abs( p.bub_pos() );
+    const auto abspos = p.abs_pos();
     // NOLINTNEXTLINE(performance-unnecessary-copy-initialization)
     activity_id activity_to_restore = act.id();
     const bool is_multi_construction = activity_to_restore == ACT_MULTIPLE_CONSTRUCTION;

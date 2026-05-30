@@ -11,6 +11,7 @@
 #include "avatar.h"
 #include "cata_utility.h"
 #include "coordinates.h"
+#include "creature_tracker.h"
 #include "damage.h"
 #include "debug.h"
 #include "enums.h"
@@ -48,8 +49,7 @@ struct horde_vehicle_spawn_fixture {
 
 auto point_has_monster( const tripoint_abs_ms &p ) -> bool
 {
-    const auto &here = get_map();
-    return g->critter_at<monster>( here.abs_to_bub( p ) ) != nullptr;
+    return g->critter_tracker->find( p ) != nullptr;
 }
 
 auto vehicle_points_contain_monster( const std::set<tripoint_abs_ms> &vehicle_points ) -> bool

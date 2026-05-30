@@ -336,11 +336,10 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
         return;
     }
 
-    const auto new_bub_pos = get_map().abs_to_bub( p );
     const auto wandering = is_wandering();
-    g->update_zombie_pos( *this, new_bub_pos );
+    g->update_zombie_pos( *this, p );
     pos_abs = p;
-    if( has_effect( effect_ridden ) && mounted_player && mounted_player->bub_pos() != bub_pos() ) {
+    if( has_effect( effect_ridden ) && mounted_player && mounted_player->abs_pos() != pos_abs ) {
         add_msg( m_debug, "Ridden monster %s moved independently and dumped player", get_name() );
         mounted_player->forced_dismount();
     }
@@ -349,9 +348,9 @@ auto monster::setpos( const tripoint_abs_ms &p ) -> void
     }
 }
 
-tripoint_bub_ms monster::bub_pos() const
+auto monster::bub_pos() const -> tripoint_bub_ms
 {
-    return get_map().abs_to_bub( pos_abs );
+    return abs_to_bub( pos_abs );
 }
 
 auto monster::abs_pos() const -> tripoint_abs_ms
@@ -3119,7 +3118,7 @@ void monster::die( Creature *nkiller )
     if( !is_hallucination() && has_flag( MF_QUEEN ) ) {
         // The submap coordinates of this monster, monster groups coordinates are
         // submap coordinates.
-        const auto abssub = project_to<coords::sm>( g->m.bub_to_abs( bub_pos() ) );
+        const auto abssub = project_to<coords::sm>( abs_pos() );
         // Do it for overmap above/below too
         for( const auto &p : points_in_radius( abssub, g_half_mapsize, 1 ) ) {
             // TODO: fix point types

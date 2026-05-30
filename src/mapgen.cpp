@@ -6235,7 +6235,7 @@ void map::rotate( int turns, const bool setpos_safe )
         const auto new_pos = project_combine( abs_omt, proj.remainder.rotate( turns, { SEEX * 2, SEEY * 2 } ) );
 
         if( setpos_safe ) {
-            np.setpos( get_map().abs_to_bub( new_pos ) );
+            np.setpos( new_pos );
         } else {
             shared_ptr_fast<npc> npc_ptr = omap.remove_npc( np.getID() );
             const auto split = project_remain<coords::sm>( new_pos );

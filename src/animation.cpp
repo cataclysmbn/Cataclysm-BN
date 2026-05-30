@@ -909,6 +909,11 @@ void draw_line_of( const draw_sprite_line_options &options )
         draw_line_curses( *g, options.points );
         return;
     }
+
+    if( test_mode || !tilecontext ) {
+        return;
+    }
+
     std::vector<tripoint_bub_ms> ps;
     std::vector<std::string> ids;
     std::vector<int> rots;

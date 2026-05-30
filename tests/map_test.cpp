@@ -10,6 +10,8 @@
 #include "game_constants.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "monster.h"
+#include "npc.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -53,7 +55,7 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
 {
     clear_all_state();
 
-    avatar &you = get_avatar();
+    auto &you = get_avatar();
     const auto player_sm = tripoint_abs_sm( 100, 200, 2 );
     const auto player_offset = tripoint_rel_ms( 3, 4, 0 );
     const auto player_abs = project_to<coords::ms>( player_sm ) + player_offset;
@@ -67,25 +69,65 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
     CHECK( player_reality_bubble_origin() == expected_origin );
     CHECK( abs_to_bub( player_abs ) == expected_bub );
     CHECK( bub_to_abs( expected_bub ) == player_abs );
+    CHECK( you.bub_pos() == expected_bub );
+
+    const auto moved_bub = tripoint_bub_ms( g_half_mapsize_x + 1, g_half_mapsize_y + 2,
+                                           player_abs.z() );
+    const auto moved_abs = bub_to_abs( moved_bub );
+    you.setpos( moved_abs );
+    CHECK( you.abs_pos() == moved_abs );
+    CHECK( you.bub_pos() == moved_bub );
 }
 
 TEST_CASE( "update_map_uses_avatar_absolute_position" )
 {
     clear_all_state();
 
-    map &here = get_map();
-    avatar &you = get_avatar();
+    auto &here = get_map();
+    auto &you = get_avatar();
     const auto old_origin = here.get_abs_sub();
     const auto destination = tripoint_bub_ms( g_half_mapsize_x + SEEX, g_half_mapsize_y, 0 );
     const auto destination_abs = here.bub_to_abs( destination );
 
-    you.setpos( destination );
+    you.setpos( destination_abs );
     const auto shift = g->update_map( you );
 
     CHECK( shift == point_rel_sm( 1, 0 ) );
     CHECK( here.get_abs_sub() == old_origin + tripoint_rel_sm( 1, 0, 0 ) );
     CHECK( you.abs_pos() == destination_abs );
     CHECK( you.bub_pos() == tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) );
+}
+
+TEST_CASE( "monster_tracker_uses_absolute_positions" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    auto &you = get_avatar();
+    const auto player_center = tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 );
+    you.setpos( here.bub_to_abs( player_center ) );
+
+    const auto monster_start = player_center + point_rel_ms( 2, 0 );
+    auto *const mon = g->place_critter_at( mtype_id( "mon_zombie" ), monster_start );
+    REQUIRE( mon != nullptr );
+    const auto monster_abs = mon->abs_pos();
+
+    CHECK( mon->bub_pos() == monster_start );
+    CHECK( g->critter_at<monster>( monster_start ) == mon );
+
+    you.setpos( you.abs_pos() + tripoint_rel_ms( SEEX, 0, 0 ) );
+    const auto player_shifted_monster_pos = abs_to_bub( monster_abs );
+    CHECK( mon->abs_pos() == monster_abs );
+    CHECK( mon->bub_pos() == player_shifted_monster_pos );
+    CHECK( g->critter_at<monster>( player_shifted_monster_pos ) == mon );
+    CHECK( g->critter_at<monster>( monster_start ) == nullptr );
+
+    const auto moved_abs = monster_abs + tripoint_rel_ms( 1, 0, 0 );
+    mon->setpos( moved_abs );
+    const auto moved_bub = abs_to_bub( moved_abs );
+    CHECK( mon->abs_pos() == moved_abs );
+    CHECK( g->critter_at<monster>( moved_bub ) == mon );
+    CHECK( g->critter_at<monster>( player_shifted_monster_pos ) == nullptr );
 }
 
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )

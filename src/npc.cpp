@@ -745,15 +745,15 @@ void npc::set_known_to_u( bool known )
     }
 }
 
-void npc::setpos( const tripoint_bub_ms &pos )
+auto npc::setpos( const tripoint_bub_ms &pos ) -> void
 {
     setpos( get_map().bub_to_abs( pos ) );
 }
 
-void npc::setpos( const tripoint_abs_ms &new_pos )
+auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
 {
-    const point_abs_om pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
-    const point_abs_om pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
+    const auto pos_om_old = project_to<coords::om>( project_to<coords::sm>( position ).xy() );
+    const auto pos_om_new = project_to<coords::om>( project_to<coords::sm>( new_pos ).xy() );
     Character::setpos( new_pos );
     if( !is_fake() && pos_om_old != pos_om_new ) {
         auto &dim_ob = get_overmapbuffer( get_dimension() );

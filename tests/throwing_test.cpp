@@ -92,8 +92,8 @@ static void test_throwing_player_versus(
     const int range, const throw_test_pstats &pstats,
     const epsilon_threshold &hit_thresh, const epsilon_threshold &dmg_thresh )
 {
-    const tripoint_bub_ms monster_start = { 30 + range, 30, 0 };
-    const tripoint_bub_ms player_start = { 30, 30, 0 };
+    const auto player_start = tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 );
+    const auto monster_start = player_start + tripoint_rel_ms( range, 0, 0 );
     bool hit_thresh_met = false;
     bool dmg_thresh_met = false;
     throw_test_data data;

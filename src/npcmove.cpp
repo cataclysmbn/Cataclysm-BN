@@ -4494,7 +4494,7 @@ void npc::go_to_omt_destination()
 void npc::guard_current_pos()
 {
     goal = abs_omt_pos();
-    guard_pos = get_map().bub_to_abs( bub_pos() );
+    guard_pos = abs_pos();
 }
 
 std::string npc_action_name( npc_action action )

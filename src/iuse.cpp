@@ -4383,7 +4383,7 @@ void iuse::cut_log_into_planks( player &p )
     p.add_msg_if_player( _( "You cut the log into planks." ) );
 
     p.assign_activity( ACT_CHOP_PLANKS, moves, -1 );
-    p.activity->placement = g->m.bub_to_abs( p.bub_pos() );
+    p.activity->placement = p.abs_pos();
 }
 
 int iuse::lumber( player *p, item *it, bool t, const tripoint_bub_ms & )
@@ -8491,7 +8491,7 @@ int iuse::weather_tool( player *p, item *it, bool, const tripoint_bub_ms & )
         // TODO: Don't output air temp if we aren't near air
         if( g->m.has_flag( TFLAG_SWIMMABLE, p->bub_pos() ) ) {
             const units::temperature water_temp = weather.get_cur_weather_gen().get_water_temperature(
-                    tripoint_abs_ms( here.bub_to_abs( p->bub_pos() ) ),
+                    tripoint_abs_ms( p->abs_pos() ),
                     calendar::turn, calendar::config, g->get_seed() );
             p->add_msg_if_player( m_neutral, _( "Water temperature: %s." ),
                                   print_temperature( water_temp ) );

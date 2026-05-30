@@ -384,7 +384,7 @@ class game : public submap_load_listener
          */
         size_t num_creatures() const;
         /** Redirects to the creature_tracker update_pos() function. */
-        bool update_zombie_pos( const monster &critter, const tripoint_bub_ms &pos );
+        auto update_zombie_pos( const monster &critter, const tripoint_abs_ms &pos ) -> bool;
         void remove_zombie( const monster &critter );
         /** Redirects to the creature_tracker clear() function. */
         void clear_zombies();

@@ -1210,11 +1210,12 @@ class npc : public player
         // Because they can't run yet
         float speed_rating() const override;
         /**
-         * Note: this places NPC on a given position in CURRENT MAP coordinates.
-         * Do not use when placing a NPC in mapgen.
+         * Places the NPC in the active map's local coordinates.
+         * Use the absolute overload for mapgen when the active map context is
+         * not the map being generated.
          */
-        void setpos( const tripoint_bub_ms &pos ) override;
-        void setpos( const tripoint_abs_ms &pos ) override;
+        auto setpos( const tripoint_bub_ms &pos ) -> void override;
+        auto setpos( const tripoint_abs_ms &pos ) -> void override;
         void travel_overmap( const tripoint_abs_sm &pos );
         npc_attitude get_attitude() const;
         void set_attitude( npc_attitude new_attitude );

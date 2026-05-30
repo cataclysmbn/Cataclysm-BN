@@ -2299,7 +2299,7 @@ void game::autopilot_vehicles()
     for( wrapped_vehicle &veh : m.get_vehicles() ) {
         vehicle *&v = veh.v;
         if( v->is_following ) {
-            v->drive_to_local_target( m.bub_to_abs( u.bub_pos() ), true );
+            v->drive_to_local_target( u.abs_pos(), true );
         } else if( v->is_patrolling ) {
             v->autopilot_patrol();
         }
@@ -6443,7 +6443,7 @@ size_t game::num_creatures() const
     return critter_tracker->size() + active_npc.size() + 1; // 1 == g->u
 }
 
-bool game::update_zombie_pos( const monster &critter, const tripoint_bub_ms &pos )
+auto game::update_zombie_pos( const monster &critter, const tripoint_abs_ms &pos ) -> bool
 {
     return critter_tracker->update_pos( critter, pos );
 }
@@ -8363,7 +8363,7 @@ void game::zones_manager()
         if( show_all_zones ) {
             zones = mgr.get_zones();
         } else {
-            const auto &u_abs_pos = m.bub_to_abs( u.bub_pos() );
+            const auto &u_abs_pos = u.abs_pos();
             for( zone_manager::ref_zone_data &ref : mgr.get_zones() ) {
                 const auto &zone_abs_pos = ref.get().get_center_point();
                 if( u_abs_pos.z() == zone_abs_pos.z() && rl_dist( u_abs_pos, zone_abs_pos ) <= 50 ) {
@@ -8504,7 +8504,7 @@ void game::zones_manager()
 
             int iNum = 0;
 
-            auto player_absolute_pos = m.bub_to_abs( u.bub_pos() );
+            auto player_absolute_pos = u.abs_pos();
 
             //Display saved zones
             for( auto &i : zones ) {
@@ -12784,8 +12784,8 @@ void game::resize_reality_bubble_to( int new_size )
 
     // Adjust surviving monsters' local navigation state to the new coordinate origin.
     // Monster positions are absolute; only cached bubble-coordinate goals and paths
-    // need re-anchoring here. The tracker cache must be rebuilt after load_map()
-    // changes abs_sub, because monster::bub_pos() is derived from absolute position.
+    // need re-anchoring here. Tracker keys are absolute, but rebuilding after the
+    // bulk update keeps any stale edge-case entries normalized.
     if( grid_origin_delta_in_sm != 0 ) {
         for( monster &critter : all_monsters() ) {
             critter.shift( { grid_origin_delta_in_sm, grid_origin_delta_in_sm } );
@@ -14312,6 +14312,7 @@ point_rel_sm game::update_map( Character &who )
 
 point_rel_sm game::update_map( int &x, int &y )
 {
+    const auto target_abs = m.bub_to_abs( tripoint_bub_ms( x, y, get_levz() ) );
     point_rel_sm shift;
 
     while( x < g_half_mapsize_x ) {
@@ -14333,7 +14334,7 @@ point_rel_sm game::update_map( int &x, int &y )
 
     if( shift == point_rel_sm::zero() ) {
         // adjust player position
-        u.setpos( tripoint_bub_ms( x, y, get_levz() ) );
+        u.setpos( target_abs );
         // Update what parts of the world map we can see
         // We need this call because even if the map hasn't shifted we may have changed z-level and can now see farther
         // TODO: only make this call if we changed z-level
@@ -14351,6 +14352,8 @@ point_rel_sm game::update_map( int &x, int &y )
         m.shift( this_shift );
         remaining_shift -= this_shift;
     }
+
+    u.setpos( target_abs );
 
     // Keep the reality bubble request center in sync with the shifted map.
     // Distribution-grid tracker updates are fully incremental via
@@ -14415,11 +14418,6 @@ point_rel_sm game::update_map( int &x, int &y )
 
     // scent.shift() removed — scent values live on per-submap arrays,
     // which move with the submap grid automatically on scroll.
-
-    // Also ensure the player is on current z-level
-    // get_levz() should later be removed, when there is no longer such a thing
-    // as "current z-level"
-    u.setpos( tripoint_bub_ms( x, y, get_levz() ) );
 
     // Only do the loading after all coordinates have been shifted.
 
@@ -14739,8 +14737,8 @@ void game::shift_monsters( const tripoint_rel_sm &shift )
         // landed on a null corner slot — save and remove it.
         despawn_monster( critter );
     }
-    // The order in which zombies are shifted may cause zombies to briefly exist on
-    // the same square. This messes up the mon_at cache, so we need to rebuild it.
+    // Tracker keys are absolute, but rebuilding after a bulk shift/despawn pass
+    // keeps any stale edge-case entries normalized.
     critter_tracker->rebuild_cache();
 }
 

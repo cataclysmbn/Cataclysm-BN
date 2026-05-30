@@ -1190,11 +1190,11 @@ void vehicle::drive_to_local_target( const tripoint_abs_ms &target, bool follow_
     }
     if( follow_protocol ) {
         if( ( ( turn_x > 0 || turn_x < 0 ) && velocity > safe_player_follow_speed ) ||
-            rl_dist( vehpos, g->m.bub_to_abs( g->u.bub_pos() ) ) < 7 + ( ( mount_max.y() * 3 ) + 4 ) ) {
+            rl_dist( vehpos, g->u.abs_pos() ) < 7 + ( ( mount_max.y() * 3 ) + 4 ) ) {
             accel_y = 1;
         }
         if( ( velocity < std::min( safe_velocity(), safe_player_follow_speed ) && turn_x == 0 &&
-              rl_dist( vehpos, g->m.bub_to_abs( g->u.bub_pos() ) ) > 8 + ( ( mount_max.y() * 3 ) + 4 ) ) ||
+              rl_dist( vehpos, g->u.abs_pos() ) > 8 + ( ( mount_max.y() * 3 ) + 4 ) ) ||
             velocity < 45 ) {
             accel_y = -1;
         }

@@ -1194,7 +1194,7 @@ void iexamine::cardreader( player &p, const tripoint_bub_ms &examp )
         }
         for( monster &critter : g->all_monsters() ) {
             // Check 1) same overmap coords, 2) turret, 3) hostile
-            if( project_to<coords::omt>( here.bub_to_abs( critter.bub_pos() ) ) == project_to<coords::omt>
+            if( project_to<coords::omt>( critter.abs_pos() ) == project_to<coords::omt>
                 ( here.bub_to_abs(
                       examp ) ) &&
                 critter.has_flag( MF_ID_CARD_DESPAWN ) &&
@@ -7829,8 +7829,7 @@ void iexamine::portal( player &p, const tripoint_bub_ms &examp )
 
     g->travel_to_dimension( pt->target_dim_id, wt_id, std::nullopt, dest_sm );
 
-    auto entry_local = get_map().abs_to_bub( pt->target_pos );
-    p.setpos( entry_local );
+    p.setpos( pt->target_pos );
     g->update_map( p );
 }
 

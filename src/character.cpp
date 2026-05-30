@@ -830,7 +830,7 @@ std::string Character::skin_name() const
 
 tripoint_bub_ms Character::bub_pos() const
 {
-    return get_map().abs_to_bub( position );
+    return abs_to_bub( position );
 }
 
 tripoint_abs_ms Character::abs_pos() const
@@ -11500,13 +11500,13 @@ std::vector<Creature *> Character::get_hostile_creatures( int range ) const
 
 bool Character::knows_trap( const tripoint_bub_ms &pos ) const
 {
-    const auto p = get_map().bub_to_abs( pos );
+    const auto p = bub_to_abs( pos );
     return known_traps.contains( p );
 }
 
 void Character::add_known_trap( const tripoint_bub_ms &pos, const trap &t )
 {
-    const auto p = get_map().bub_to_abs( pos );
+    const auto p = bub_to_abs( pos );
     if( t.is_null() ) {
         known_traps.erase( p );
     } else {
@@ -11751,7 +11751,7 @@ void Character::set_destination( const std::vector<tripoint_bub_ms> &route,
 {
     auto_move_route = route;
     set_destination_activity( std::move( new_destination_activity ) );
-    destination_point.emplace( get_map().bub_to_abs( route.back() ) );
+    destination_point.emplace( bub_to_abs( route.back() ) );
 }
 
 std::unique_ptr<player_activity> Character::clear_destination()
