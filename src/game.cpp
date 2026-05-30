@@ -14351,9 +14351,8 @@ point_rel_sm game::update_map( int &x, int &y )
     // Distribution-grid tracker updates are fully incremental via
     // on_submap_loaded/unloaded; the old full-rebuild has been removed.
     if( reality_bubble_handle_ != 0 ) {
-        const auto &origin = m.get_abs_sub();
-        const tripoint_abs_sm new_center(
-            origin.x() + reality_bubble_radius_, origin.y() + reality_bubble_radius_, origin.z() );
+        const auto new_center = player_reality_bubble_origin() +
+                                tripoint_rel_sm( reality_bubble_radius_, reality_bubble_radius_, 0 );
         submap_loader.update_request( reality_bubble_handle_, new_center );
         // Dynamically manage lazy border based on cached option.
         if( lazy_border_enabled ) {
@@ -15619,8 +15618,7 @@ int game::get_levz() const
 
 overmap &game::get_cur_om() const
 {
-    // The player is located in the middle submap of the map.
-    const tripoint_abs_sm sm = m.get_abs_sub() + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+    const auto sm = project_to<coords::sm>( u.abs_pos() );
     const tripoint_abs_om pos_om = project_to<coords::om>( sm );
     // TODO: fix point types
     return get_overmapbuffer( current_dimension_id_ ).get( pos_om.xy() );

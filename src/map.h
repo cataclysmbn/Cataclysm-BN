@@ -2441,22 +2441,12 @@ class map : public submap_load_listener
 
 map &get_map();
 
-inline auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
-{
-    return get_map().bub_to_abs( p );
-}
-inline auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms
-{
-    return get_map().abs_to_bub( p );
-}
-inline auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms
-{
-    return get_map().bub_to_abs( p );
-}
-inline auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms
-{
-    return get_map().abs_to_bub( p );
-}
+auto player_reality_bubble_origin() -> tripoint_abs_sm;
+
+auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms;
+auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms;
+auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms;
+auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms;
 
 /**
  * RAII guard that temporarily redirects get_map() to a different map object

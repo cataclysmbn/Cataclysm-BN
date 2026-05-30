@@ -198,6 +198,36 @@ map &get_map()
     return tl_map_context ? *tl_map_context : g->m;
 }
 
+auto player_reality_bubble_origin() -> tripoint_abs_sm
+{
+    const auto player_sm = project_to<coords::sm>( get_avatar().abs_pos() );
+    return player_sm - tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+}
+
+auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() );
+    return tripoint_abs_ms( tripoint( origin.x() + p.x(), origin.y() + p.y(), p.z() ) );
+}
+
+auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() );
+    return tripoint_bub_ms( tripoint( p.x() - origin.x(), p.y() - origin.y(), p.z() ) );
+}
+
+auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() ).xy();
+    return origin + point_rel_ms( p.raw() );
+}
+
+auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms
+{
+    const auto origin = project_to<coords::ms>( player_reality_bubble_origin() ).xy();
+    return point_bub_ms( ( p - origin ).raw() );
+}
+
 scoped_map_context::scoped_map_context( map &m ) noexcept
     : prev_( tl_map_context )
 {
