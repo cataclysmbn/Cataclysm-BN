@@ -606,10 +606,11 @@
       "6": {
         "name": "Bionic Vault",
         "access_denied": "ERROR!  Access denied!  Unauthorized access will be met with lethal force!",
-        "security": 3,
+        "security": 1,
         "options": [
           { "name": "MANIFEST", "action": "list_bionics", "security": 0 },
-          { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 }
+          { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 7 },
+          { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
         ],
         "failures": [ { "action": "damage" }, { "action": "secubots" }, { "action": "shutdown" } ]
       }
@@ -623,8 +624,11 @@
     "computers": {
       "6": {
         "name": "Advanced PE012 Samples",
-        "security": 3,
-        "options": [ { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 5 } ],
+        "security": 1,
+        "options": [
+          { "name": "UNLOCK ENTRANCE", "action": "unlock_disarm", "security": 5 },
+          { "name": "ENTER EMERGENCY OVERRIDE CODE", "action": "unlock_labpass" }
+        ],
         "failures": [ { "action": "damage" }, { "action": "manhacks" }, { "action": "shutdown" } ]
       }
     }

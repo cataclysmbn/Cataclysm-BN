@@ -26,6 +26,7 @@ site
     formats: { HUMAN_DATE: "yyyy-MM-dd", HUMAN_DATETIME: "yyyy-MM-dd ppp" },
   }))
   .add("prism.css")
+  .copy("media.css")
   .copy("tools")
   .copy("redirect.js")
 

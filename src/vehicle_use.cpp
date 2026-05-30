@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <ranges>
 #include <array>
 #include <cmath>
 #include <cstdlib>
@@ -112,24 +113,32 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
                                   std::vector<std::function<void()>> &actions, const std::string &name, char key,
                                   const std::string &flag )
 {
-    // fetch matching parts and abort early if none found
-    const auto found = get_avail_parts( flag );
+    using namespace std::views;
+    namespace ranges = std::ranges;
+
+    const auto is_toggleable = []( const vpart_reference & vp ) {
+        return !vp.part().info().has_flag( "PERPETUAL" );
+    };
+    auto found = get_avail_parts( flag )
+                 | filter( is_toggleable )
+                 | transform( &vpart_position::part_index )
+                 | ranges::to<std::vector>();
     if( found.empty() ) {
         return;
     }
 
     // can this menu option be selected by the user?
-    bool allow = true;
+    auto allow = true;
 
     // determine target state - currently parts of similar type are all switched concurrently
-    bool state = std::none_of( found.begin(), found.end(), []( const vpart_reference & vp ) {
-        return vp.part().enabled;
+    const auto state = ranges::none_of( found, [this]( const auto p ) {
+        return parts[p].enabled;
     } );
 
     // if toggled part potentially usable check if could be enabled now (sufficient fuel etc.)
     if( state ) {
-        allow = std::any_of( found.begin(), found.end(), []( const vpart_reference & vp ) {
-            return vp.vehicle().can_enable( vp.part() );
+        allow = ranges::any_of( found, [this]( const auto p ) {
+            return can_enable( parts[p] );
         } );
     }
 
@@ -140,9 +149,9 @@ void vehicle::add_toggle_to_opts( std::vector<uilist_entry> &options,
     options.emplace_back( -1, allow, key, msg );
 
     actions.emplace_back( [ =, this ] {
-        for( const vpart_reference &vp : found )
+        for( const auto p : found )
         {
-            vehicle_part &e = vp.part();
+            auto &e = parts[p];
             if( e.enabled != state ) {
                 add_msg( state ? _( "Turned on %s" ) : _( "Turned off %s." ), e.name() );
                 e.enabled = state;
@@ -704,7 +713,7 @@ void vehicle::use_controls( const tripoint_bub_ms &pos )
     bool has_electronic_controls = false;
     avatar &you = get_avatar();
     const auto confirm_stop_driving = [this] {
-        return !is_flying_in_air() || !has_part( VPFLAG_WING ) || query_yn(
+        return !is_flying_in_air() || has_sufficient_lift( true, true ) || !has_part( VPFLAG_WING ) || query_yn(
             _( "Really let go of controls while flying?  This will result in a crash." ) );
     };
 

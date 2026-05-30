@@ -531,8 +531,20 @@ jobs:
         uses: actions/upload-artifact@v4.6.0
         with:
           name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
-          path: cbn-${{ matrix.artifact }}-${{ inputs.version-label }}.${{ matrix.ext }}
+          path: ${{ runner.os == 'Windows' && format('cataclysmbn-{0}/', inputs.version-label) || format('cbn-{0}-{1}.{2}', matrix.artifact, inputs.version-label, matrix.ext) }}
           if-no-files-found: error
+
+      - name: Publish platform artifact link
+        if: github.event_name == 'pull_request' && inputs.upload-artifacts && matrix.upload-artifact == true
+        continue-on-error: true
+        uses: ./.github/actions/publish-pr-artifact-body
+        with:
+          repository: ${{ github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+          run-id: ${{ github.run_id }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          token: ${{ github.token }}
 
       - name: Run tests (windows msvc)
         if: runner.os == 'Windows' && inputs.run-tests

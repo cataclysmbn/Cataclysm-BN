@@ -1,15 +1,15 @@
 # 1行の最大長は78文字です。以下の行は参照用
 # 長い行は自動的に折り返されます
 ##############################################################################
-<color_white>プロジェクト管理者:</color>
-<color_yellow>Coolthulhu</color>
+<color_white>リポジトリオーナー:</color>
+<color_yellow>scarf005, RobbieNeko, chaosvolt, Oren Audeles</color>
 
 <color_white>オリジナルの作者:</color>
 <color_yellow>Whales, TheDarklingWolf, GlyphGryph</color> (<color_dark_gray>引退</color>)    
 <color_yellow>KevinGranade</color> (<color_dark_gray>DDAフォークより</color>)
 
 <color_white>スペシャルサンクス:</color>
-<color_yellow>Coolthulhu</color> - プロジェクトの再スタートをした方。
+<color_yellow>Coolthulhu</color> - プロジェクトの再スタートをした方。 (<color_dark_gray>引退</color>)
 <color_yellow>貢献者達</color> - 開発に協力してくれた方々。
 <color_yellow>翻訳者達</color> - 翻訳に協力してくれた方々。
 <color_yellow>コミュニティ</color> - 私たちへのサポートをしてくれた方々。

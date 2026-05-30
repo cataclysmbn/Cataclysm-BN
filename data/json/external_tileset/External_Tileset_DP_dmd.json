@@ -37,7 +37,9 @@
           { "id": "mon_mutant_elfa_decoy", "fg": 29, "bg": 30 },
           { "id": "mon_mutant_elfa", "fg": 31, "bg": 30 },
           { "id": "mon_zombie_foreman", "fg": 32, "bg": 30 },
-          { "id": "mon_zombie_foreman_minion", "fg": 33, "bg": 30 }
+          { "id": "mon_zombie_foreman_minion", "fg": 33, "bg": 30 },
+          { "id": "mon_zombie_scientist_admin", "fg": 34, "bg": 30 },
+          { "id": "corpse_mon_zombie_scientist_admin", "fg": 35 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

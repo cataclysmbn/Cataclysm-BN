@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <string>
 #include "json.h"
 #include "options.h"
@@ -9,6 +10,7 @@
 #include "fstream_utils.h"
 
 class avatar;
+class sqlite_map_db;
 class sqlite3;
 
 class save_t
@@ -207,11 +209,10 @@ class world
         std::string overmap_player_filename( const point_abs_om &p ) const;
         std::string get_player_path() const;
 
-        sqlite3 *map_db = nullptr;
+        std::unique_ptr<sqlite_map_db> map_db;
 
         sqlite3 *save_db = nullptr;
         std::string last_save_id = "";
         sqlite3 *get_player_db();
 };
-
 

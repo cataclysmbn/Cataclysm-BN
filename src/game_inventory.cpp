@@ -64,6 +64,7 @@
 #include "units_utility.h"
 #include "value_ptr.h"
 #include "salvage.h"
+#include "inventory_ui.h"
 
 static const activity_id ACT_EAT_MENU( "ACT_EAT_MENU" );
 static const activity_id ACT_CONSUME_FOOD_MENU( "ACT_CONSUME_FOOD_MENU" );
@@ -460,29 +461,6 @@ item *game_menus::inv::container_for( avatar &you, const item &liquid, int radiu
                          string_format( _( "You don't have a suitable container for carrying %s." ),
                                         liquid.tname() ) );
 }
-
-class pickup_inventory_preset : public inventory_selector_preset
-{
-    public:
-        pickup_inventory_preset( const player &p ) : p( p ) {}
-
-        std::string get_denial( const item *loc ) const override {
-            if( !p.has_item( *loc ) ) {
-                if( loc->made_of( LIQUID ) ) {
-                    return _( "Can't pick up spilt liquids" );
-                } else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
-                    return _( "Too big to pick up" );
-                } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
-                    return _( "Too heavy to pick up" );
-                }
-            }
-
-            return std::string();
-        }
-
-    private:
-        const player &p;
-};
 
 class disassemble_inventory_preset : public pickup_inventory_preset
 {
@@ -1706,6 +1684,58 @@ drop_locations game_menus::inv::multidrop( player &p )
         } else {
             return result;
         }
+    }
+}
+
+std::vector<pickup::pick_drop_selection> game_menus::inv::pickup_from_tile( player &p,
+        const tripoint_bub_ms &target )
+{
+    p.inv_restack( );
+
+    pickup_inventory_preset preset( p );
+    inventory_pickup_selector inv_s( p, preset );
+
+    inv_s.set_title( _( "Multipickup" ) );
+    inv_s.set_hint( _( "To pickup x items, type a number before selecting." ) );
+
+    while( true ) {
+        p.inv_restack( );
+        inv_s.clear_items();
+        inv_s.add_map_items( target );
+        inv_s.add_vehicle_items( target );
+
+        if( inv_s.empty() ) {
+            popup( std::string( _( "You have nothing to pickup." ) ), PF_GET_KEY );
+            return std::vector<pickup::pick_drop_selection>();
+        }
+
+        std::vector<pickup::pick_drop_selection> result = inv_s.execute();
+        return result;
+    }
+}
+
+std::vector<pickup::pick_drop_selection> game_menus::inv::pickup_nearby( player &p )
+{
+    p.inv_restack( );
+
+    pickup_inventory_preset preset( p );
+    inventory_pickup_selector inv_s( p, preset );
+
+    inv_s.set_title( _( "Multipickup" ) );
+    inv_s.set_hint( _( "To pickup x items, type a number before selecting." ) );
+
+    while( true ) {
+        p.inv_restack( );
+        inv_s.clear_items();
+        inv_s.add_nearby_items();
+
+        if( inv_s.empty() ) {
+            popup( std::string( _( "You have nothing to pickup." ) ), PF_GET_KEY );
+            return std::vector<pickup::pick_drop_selection>();
+        }
+
+        std::vector<pickup::pick_drop_selection> result = inv_s.execute();
+        return result;
     }
 }
 

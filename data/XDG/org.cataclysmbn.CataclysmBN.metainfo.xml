@@ -68,6 +68,23 @@
         <content_attribute id="language-discrimination">intense</content_attribute>
     </content_rating>
     <releases>
+            <release version="0.12.0" date="2026-05-30">
+            <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.12.0</url>
+            <description>
+                <p>Notable Changes</p>
+                <ul>
+                    <li>Map overhaul with code support for exploring new dimensions</li>
+                    <li>Multiple performance refactors</li>
+                    <li>Expanded variety of laboratory finales, smaller yet denser lab generation</li>
+                    <li>New vehicles such as jets and harriers, Tankmod tanks and artillery now part of vanilla</li>
+                    <li>Vehicle, terrain, and item palettes; vehicles spawn in a variety of colors and can be repainted</li>
+                    <li>Shotguns fire multiple pellets that can hit multiple targets</li>
+                    <li>Monsters with weapons can now be disarmed</li>
+                    <li>Ability to assign crafting tasks to companion NPCs from dialogue or crafting menus</li>
+                    <li>Rest of the changes can be found in the github repo</li>
+                </ul>
+            </description>
+        </release>
         <release version="0.11.1" date="2026-03-16">
             <url type="details">https://github.com/cataclysmbn/Cataclysm-BN/releases/tag/v0.11.1</url>
             <description>

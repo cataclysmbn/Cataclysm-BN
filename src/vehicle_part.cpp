@@ -609,6 +609,11 @@ bool vehicle_part::is_reactor() const
     return info().has_flag( VPFLAG_REACTOR );
 }
 
+auto vehicle_part::is_perpetual_power_source() const -> bool
+{
+    return info().has_flag( "PERPETUAL" ) && info().epower > 0;
+}
+
 bool vehicle_part::is_leaking() const
 {
     return  health_percent() <= 0.5 && ( is_tank() || is_battery() || is_reactor() );

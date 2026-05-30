@@ -145,38 +145,6 @@
   },
   {
     "type": "vehicle_part",
-    "id": "programmable_autopilot",
-    "name": { "str": "programmable autopilot" },
-    "symbol": "A",
-    "color": "light_blue",
-    "broken_symbol": "#",
-    "broken_color": "red",
-    "damage_modifier": 80,
-    "durability": 100,
-    "description": "A computer system hooked up to the steering and engine of the vehicle to allow it to follow simple paths.",
-    "item": "programmable_autopilot",
-    "difficulty": 5,
-    "looks_like": "cam_control",
-    "epower": -15,
-    "flags": [ "ENABLED_DRAINS_EPOWER", "AUTOPILOT", "SHOCK_RESISTANT" ],
-    "requirements": {
-      "install": {
-        "time": "12 m",
-        "skills": [ [ "mechanics", 5 ], [ "electronics", 5 ], [ "computer", 5 ] ],
-        "qualities": [ { "id": "SCREW", "level": 1 } ]
-      },
-      "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "3 m", "using": [ [ "adhesive", 1 ], [ "vehicle_repair_electronics", 1 ] ] },
-      "removal": { "skills": [ [ "mechanics", 3 ] ], "qualities": [ { "id": "SCREW", "level": 1 } ] }
-    },
-    "breaks_into": [
-      { "item": "steel_lump", "prob": 50 },
-      { "item": "steel_chunk", "count": [ 1, 2 ] },
-      { "item": "scrap", "count": [ 0, 3 ] }
-    ],
-    "damage_reduction": { "all": 8 }
-  },
-  {
-    "type": "vehicle_part",
     "id": "drive_by_wire_controls",
     "name": { "str": "drive by wire controls" },
     "symbol": "$",
