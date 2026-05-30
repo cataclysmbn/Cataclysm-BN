@@ -109,8 +109,8 @@ class mapbuffer
          * Thread-safety note: the dim-aware @c world::read_map_omt overload is
          * used, so no global (g_active_dimension_id) is read at worker-thread
          * execution time.  For SQLite-backed saves, the connection must be opened
-         * in SQLITE_THREADSAFE ≥ 1 (serialised or multi-thread) mode — the
-         * default for all supported SQLite builds.
+         * with SQLITE_OPEN_FULLMUTEX so concurrent worker-thread reads use the
+         * same handle in SQLite's serialized mode.
          */
         /**
          * Returns true if data was loaded from the in-memory write-back cache

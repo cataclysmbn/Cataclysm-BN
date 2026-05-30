@@ -1507,8 +1507,35 @@ void veh_interact::calc_overview()
         trim_and_print( w, point( 1, y ), getmaxx( w ) - 2, c_light_gray, batt );
         right_print( w, y, 1, c_light_gray, _( "Capacity  Status" ) );
     };
+    overview_headers["POWER_GENERATOR"] = [this]( const catacurses::window & w, int y ) {
+        auto generator_epower_w = 0;
+        for( const auto &vpr : veh->get_all_parts() ) {
+            if( vpr.part().is_available() && vpr.part().is_perpetual_power_source() &&
+                !vpr.part().is_reactor() ) {
+                generator_epower_w += static_cast<int>( vpr.part().info().epower * vpr.part().health_percent() );
+            }
+        }
+        std::string generator;
+        if( generator_epower_w == 0 ) {
+            generator = _( "Power generators" );
+        } else if( generator_epower_w < 10000 ) {
+            generator = string_format( _( "Power generators: %s%+4d W</color>" ),
+                                       health_color( generator_epower_w ), generator_epower_w );
+        } else {
+            generator = string_format( _( "Power generators: %s%+4.1f kW</color>" ),
+                                       health_color( generator_epower_w ), generator_epower_w / 1000.0 );
+        }
+        trim_and_print( w, point( 1, y ), getmaxx( w ) - 2, c_light_gray, generator );
+        right_print( w, y, 1, c_light_gray, _( "Output  Status" ) );
+    };
     overview_headers["REACTOR"] = [this, epower_w]( const catacurses::window & w, int y ) {
-        int reactor_epower_w = veh->max_reactor_epower_w();
+        auto reactor_epower_w = 0;
+        for( const auto &vpr : veh->get_all_parts() ) {
+            if( vpr.part().is_available() && vpr.part().is_reactor() &&
+                veh->is_part_on( vpr.part_index() ) ) {
+                reactor_epower_w += static_cast<int>( vpr.part().info().epower * vpr.part().health_percent() );
+            }
+        }
         if( reactor_epower_w > 0 && epower_w < 0 ) {
             reactor_epower_w += epower_w;
         }
@@ -1632,6 +1659,20 @@ void veh_interact::calc_overview()
                              string_format( fmtstring, pt.ammo_capacity(), pct ) );
             };
             overview_opts.emplace_back( "BATTERY", &vpr.part(), next_hotkey( vpr.part(), hotkey ), details );
+        }
+    }
+
+    auto details_power_generator = []( const vehicle_part & pt, const catacurses::window & w, int y ) {
+        right_print( w, y, 1, c_light_gray,
+                     string_format( _( "%+d W     %s" ), static_cast<int>( pt.info().epower * pt.health_percent() ),
+                                    pgettext( "vehicle part enabled value", "Yes" ) ) );
+    };
+
+    for( const vpart_reference &vpr : veh->get_all_parts() ) {
+        if( vpr.part().is_perpetual_power_source() && !vpr.part().is_reactor() &&
+            vpr.part().is_available() ) {
+            overview_opts.emplace_back( "POWER_GENERATOR", &vpr.part(), next_hotkey( vpr.part(), hotkey ),
+                                        details_power_generator );
         }
     }
 

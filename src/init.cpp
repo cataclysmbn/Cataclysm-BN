@@ -1,11 +1,13 @@
 #include "init.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <exception>
 #include <fstream>
 #include <iterator>
 #include <memory>
+#include <set>
 #include <sstream> // for throwing errors
 #include <stdexcept>
 #include <string>
@@ -951,6 +953,29 @@ static void clear_loaded_data()
     DynamicDataLoader::get_instance().unload_data();
 }
 
+static auto normalize_mod_load_order( std::vector<mod_id> mods ) -> std::vector<mod_id>
+{
+    auto found = std::set<mod_id> {};
+    mods.erase( std::remove_if( mods.begin(), mods.end(), [&found]( const auto & e ) {
+        if( found.contains( e ) ) {
+            return true;
+        }
+        found.insert( e );
+        return false;
+    } ), mods.end() );
+
+    const auto core_iter = std::ranges::find_if( mods, []( const auto & e ) { return e->core; } );
+    if( core_iter != mods.end() ) {
+        const auto core_pack = *core_iter;
+        mods.erase( core_iter );
+        mods.insert( mods.begin(), core_pack );
+    } else {
+        mods.insert( mods.begin(), mod_management::get_default_core_content_pack() );
+    }
+
+    return mods;
+}
+
 void init::load_core_bn_modfiles()
 {
     clear_loaded_data();
@@ -967,25 +992,8 @@ void init::load_world_modfiles( loading_ui &ui, const world *world,
 {
     clear_loaded_data();
 
-    mod_management::t_mod_list &mods = world->info->active_mod_order;
-
-    // remove any duplicates whilst preserving order (fixes #19385)
-    std::set<mod_id> found;
-    mods.erase( std::remove_if( mods.begin(), mods.end(), [&found]( const mod_id & e ) {
-        if( found.contains( e ) ) {
-            return true;
-        } else {
-            found.insert( e );
-            return false;
-        }
-    } ), mods.end() );
-
-    // require at least one core mod (saves before version 6 may implicitly require dda pack)
-    if( std::none_of( mods.begin(), mods.end(), []( const mod_id & e ) {
-    return e->core;
-} ) ) {
-        mods.insert( mods.begin(), mod_management::get_default_core_content_pack() );
-    }
+    auto &mods = world->info->active_mod_order;
+    mods = normalize_mod_load_order( mods );
 
     // TODO: get rid of artifacts
     load_artifacts( world, artifacts_file );
@@ -1055,9 +1063,11 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         std::cout << string_format( "Checking mod %s [%s]\n", id->name(), id );
 
         // Load all dependencies first
-        std::vector<mod_id> mods_list = tree.get_dependencies_of_X_as_strings( id );
+        auto mods_list = tree.get_dependencies_of_X_as_strings( id );
         // Load the mod itself
         mods_list.push_back( id );
+
+        mods_list = normalize_mod_load_order( mods_list );
 
         try {
             load_and_finalize_packs( ui, _( "Checking mods" ), mods_list );

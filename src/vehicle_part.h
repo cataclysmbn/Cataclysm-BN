@@ -196,6 +196,9 @@ struct vehicle_part {
         /** Is this part a reactor? */
         bool is_reactor() const;
 
+        /** Does this part provide always-on electrical power? */
+        auto is_perpetual_power_source() const -> bool;
+
         /** is this part currently unable to retain to fluid/charge?
          *  this doesn't take into account whether or not the part has any contents
          *  remaining to leak

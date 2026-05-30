@@ -585,6 +585,24 @@
     "flags": [ "MISSION_ITEM" ]
   },
   {
+    "id": "labpass",
+    "type": "GENERIC",
+    "category": "valuables",
+    "name": { "str": "lab door override code" },
+    "description": "This printout contains a one-time use emergency override code for any locked door in a science lab.",
+    "weight": "5 g",
+    "volume": "4 ml",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "to_hit": -1,
+    "bashing": 1,
+    "material": "paper",
+    "symbol": ";",
+    "color": "white",
+    "flags": [ "TRADER_AVOID" ],
+    "looks_like": "survnote"
+  },
+  {
     "id": "small_space_heater",
     "type": "TOOL",
     "category": "deployables",

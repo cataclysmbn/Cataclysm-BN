@@ -59,6 +59,17 @@
   {
     "type": "item_group",
     "subtype": "collection",
+    "id": "temporal_soldier_garand",
+    "entries": [
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 },
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 },
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 },
+      { "item": "garandclip", "ammo-item": "3006", "charges": 8 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
     "id": "army_mags_mp5",
     "entries": [ { "item": "mp5mag", "ammo-item": "9mm", "charges": 30 }, { "item": "mp5mag", "ammo-item": "9mm", "charges": 30 } ]
   },
@@ -735,18 +746,8 @@
     "points": 0,
     "items": {
       "both": {
-        "items": [
-          "jeans",
-          "longshirt",
-          "socks",
-          "sneakers",
-          "mbag",
-          "pockknife",
-          "water_clean",
-          "smart_phone",
-          "matches",
-          "wristwatch"
-        ]
+        "items": [ "jeans", "longshirt", "socks", "sneakers", "mbag", "pockknife", "water_clean", "smart_phone", "wristwatch" ],
+        "entries": [ { "item": "lighter", "charges": 25 } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -800,18 +801,8 @@
     ],
     "items": {
       "both": {
-        "items": [
-          "pants",
-          "tshirt",
-          "socks",
-          "smart_phone",
-          "sweater",
-          "sneakers",
-          "multitool",
-          "water_clean",
-          "matches",
-          "wristwatch"
-        ]
+        "items": [ "pants", "tshirt", "socks", "smart_phone", "sweater", "sneakers", "multitool", "water_clean", "wristwatch" ],
+        "entries": [ { "item": "lighter", "charges": 25 } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -1441,6 +1432,7 @@
     "id": "soldier",
     "name": "Military Rifleman",
     "description": "You were hoping to see some action, only to get more than you bargained for deployed stateside responding to a national emergency.  As far as you can tell, military command abandoned you to this hellhole.",
+    "age": { "min": 17, "max": 35 },
     "points": 4,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1485,9 +1477,46 @@
   },
   {
     "type": "profession",
+    "id": "soldier_wwii",
+    "copy-from": "soldier",
+    "name": "Army Infantry",
+    "description": "One moment you were scrambling for cover in a shell crater, on some burnt-out island in the Pacific.  Then a bright flash, and next thing you know you're stateside again.  Except the cities don't look anything like how you remember them, and the smell of death hangs in the air like it followed you home",
+    "traits": [ "PROF_MILITARY" ],
+    "//": "About as close as we can get with current existing items.",
+    "items": {
+      "both": {
+        "items": [
+          "pants",
+          "tshirt",
+          "jacket_army",
+          "helmet_liner",
+          "helmet_steel",
+          "socks",
+          "boots",
+          "wristwatch",
+          "canteen",
+          "mess_tin",
+          "e_tool",
+          "rucksack"
+        ],
+        "entries": [
+          { "item": "chestrig", "contents-group": "temporal_soldier_garand" },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] },
+          { "item": "garand", "ammo-item": "3006", "charges": 8, "contents-item": [ "shoulder_strap" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "boy_shorts", "sports_bra" ]
+    },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
     "id": "mil_auto_rifleman",
     "name": "Military Automatic Rifleman",
     "description": "You were trained to lay down suppressing fire, and are armed accordingly.  But they just seem to keep coming without end, you're not sure you have the firepower for this.",
+    "age": { "min": 17, "max": 35 },
     "points": 5,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1537,6 +1566,7 @@
     "id": "mil_grenadier",
     "name": "Military Grenadier",
     "description": "You were the one assigned the team's grenade launcher, something you thought was overkill for a stateside deployment at first.  Now you're starting to wish you joined the Field Artillery Branch.",
+    "age": { "min": 17, "max": 35 },
     "points": 5,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1586,6 +1616,7 @@
     "id": "mil_marksman",
     "name": "Military Designated Marksman",
     "description": "You aren't a dedicated sniper, but every squad needs someone who can handle targets beyond their effective range.  Without the rest of your squad, things are getting too close quarters for your liking.",
+    "age": { "min": 17, "max": 35 },
     "points": 5,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1640,6 +1671,7 @@
     "id": "prof_combat_engineer",
     "name": "Combat Engineer",
     "description": "Your military training focused on field fortifications and demolitions, along with the basics on modern autonomous defenses.  You never expected to need that training on the home front, not that it's helped so far given the bots are all on free-fire mode.",
+    "age": { "min": 20, "max": 40 },
     "points": 6,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1695,6 +1727,7 @@
     "id": "specops",
     "name": "Special Operator",
     "description": "You were the best of the best, the military's finest.  That's why you're still alive, even after all your comrades fell to the undead.  As far as you can tell, military command abandoned you in this hellhole when you missed the emergency evac.",
+    "age": { "min": 20, "max": 40 },
     "points": 5,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1745,6 +1778,7 @@
     "id": "specops_frogman",
     "name": "Spec Ops Combat Diver",
     "description": "You were the best of the best, the military's finest.  Trained in underwater sabotage and boarding operations, you've survived where others became shark bait.  As far as you can tell, military command has left you high and dry.",
+    "age": { "min": 20, "max": 40 },
     "points": 5,
     "traits": [ "PROF_MILITARY", "PROF_SWIMMER" ],
     "skills": [
@@ -1794,6 +1828,7 @@
     "id": "military_saboteur",
     "name": "Military Saboteur",
     "description": "You were transferred to the lab's security department in an advisory position.  In actuality, in the event things went wrong your orders were to locate and disable some sort of portal experiment, and issued a backpack nuke.  Unfortunately, you discovered too late that this facility doesn't contain the equipment you were looking for.",
+    "age": { "min": 20, "max": 40 },
     "points": 4,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1842,6 +1877,7 @@
     "id": "power_armor_soldier",
     "name": "Power Armor Soldier",
     "description": "Those new plutonium power banks they were rolling out never arrived, nevermind the experimental new weapons, but at least your unit received the latest generation of powered armor.  The rest of your squad has fallen, but your gear might see you through.",
+    "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -1917,6 +1953,7 @@
     "id": "combat_mech_pilot",
     "name": "Combat Mech Pilot",
     "description": "You were field-testing the latest in military firepower, with Mechanical Exoskeleton Suits planned to fill the niche left after power armor development shifted to lighter models.  Your mech's built to lay down heavy fire support, but the power cell the technicians provided has been mostly depleted from earlier tests.",
+    "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
     "pets": [ { "name": "mon_mech_combat", "amount": 1 } ],
@@ -1966,6 +2003,7 @@
     "id": "recon_mech_pilot",
     "name": "Recon Mech Pilot",
     "description": "You were field-testing the latest in military firepower, with Mechanical Exoskeleton Suits planned to fill the niche left after power armor development shifted to lighter models.  Your mech's built for scouting and sniping, but the power cell the technicians provided has been mostly depleted from earlier tests.",
+    "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
     "pets": [ { "name": "mon_mech_recon", "amount": 1 } ],
@@ -3430,6 +3468,19 @@
   },
   {
     "type": "profession",
+    "id": "wolfpack_mutant",
+    "name": "Mutant Pack Leader",
+    "description": "They treated you like an animal in that lab.  Now that you're free, you wonder if they had the right idea.  Your new friends don't seem afraid of you like they are of humans, after all.",
+    "starting_cash": 0,
+    "points": 4,
+    "skills": [ { "level": 1, "name": "survival" } ],
+    "traits": [ "LUPINE_FUR", "TAIL_FLUFFY", "LUPINE_EARS", "THRESH_LUPINE" ],
+    "pets": [ { "name": "mon_wolf", "amount": 2 } ],
+    "items": { "both": [ "subsuit_xl" ], "male": [ "briefs" ], "female": [ "bra", "panties" ] },
+    "flags": [ "SCEN_ONLY" ]
+  },
+  {
+    "type": "profession",
     "id": "broken_cyborg",
     "name": "Defective Cyborg",
     "description": "You were normal once.  Before the tests, before the procedures, before they stripped away every outward sign of your humanity.  You're more machine than man now, but that might prove an advantage against the horrors that await.",
@@ -3651,6 +3702,7 @@
     "id": "bio_soldier",
     "name": "Bionic Soldier",
     "description": "You are the result of one of the military's latest and final research programs, a prototype cyborg soldier.  You're still alive thanks to your augmentations, even after all your comrades fell to the undead.",
+    "age": { "min": 20, "max": 40 },
     "points": 6,
     "CBMs": [
       "bio_targeting",
@@ -3714,6 +3766,7 @@
     "name": "Bionic Sniper",
     "description": "Your bionics, equipment, and extensive field training enable you to drop targets from implausible distances, even after weeks of total isolation in enemy territory.",
     "points": 8,
+    "age": { "min": 20, "max": 40 },
     "CBMs": [
       "bio_eye_enhancer",
       "bio_targeting",
@@ -3781,6 +3834,7 @@
     "id": "bio_specops",
     "name": "Bionic Operator",
     "description": "You were the best of the best, the military's finest, and your bionics have only enhanced your abilities.  Specializing in close quarters combat, you were sent on the most dangerous and critical missions.",
+    "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY" ],
     "CBMs": [ "bio_cqb", "bio_carbon", "bio_night_vision", "bio_torsionratchet", "bio_claws", "bio_power_storage_mkII" ],
@@ -4205,6 +4259,32 @@
         ]
       },
       "male": [ "briefs" ],
+      "female": [ "bra", "panties" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "rioter",
+    "name": "Rioter",
+    "description": "The first protest you were at started peaceful, until they hosed the crowd down with machinegun fire instead of water cannons.  You escaped, and came prepared for a fight next time.  You weren't prepared for the cops and protesters to tear themselves apart in a cannibalistic frenzy.",
+    "points": 0,
+    "items": {
+      "both": {
+        "items": [
+          "jeans",
+          "longshirt",
+          "socks",
+          "sneakers",
+          "mbag",
+          "mask_rioter",
+          "helmet_bike",
+          "sunglasses",
+          "pockknife",
+          "wristwatch"
+        ],
+        "entries": [ { "item": "molotov", "count": 2 }, { "item": "lighter", "charges": 25 } ]
+      },
+      "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
     }
   },
@@ -4649,7 +4729,7 @@
     "points": 8,
     "traits": [ "PROF_MA_BLACK" ],
     "skills": [
-      { "level": 2, "name": "swimming" },
+      { "level": 5, "name": "swimming" },
       { "level": 8, "name": "melee" },
       { "level": 8, "name": "unarmed" },
       { "level": 8, "name": "dodge" }
@@ -4658,6 +4738,25 @@
       "both": [ "karate_gi", "judo_belt_black", "mouthpiece", "geta" ],
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boy_shorts" ]
+    }
+  },
+  {
+    "type": "profession",
+    "id": "worlds_greatest",
+    "name": "World's Greatest Athlete",
+    "description": "Your name reverberated across the world as you set record after record in the Olympics, becoming the greatest of all time. Alas, even with your face plastered across billboards and cereals, the zombies are still more interested in turning you into gold medalist goulash.",
+    "points": 8,
+    "traits": [ "GOODCARDIO" ],
+    "skills": [
+      { "level": 10, "name": "swimming" },
+      { "level": 2, "name": "dodge" },
+      { "level": 2, "name": "melee" },
+      { "level": 2, "name": "throw" }
+    ],
+    "items": {
+      "both": [ "tshirt", "sneakers", "jacket_light" ],
+      "male": [ "briefs", "socks", "pants" ],
+      "female": [ "bra", "panties", "stockings", "skirt" ]
     }
   },
   {
@@ -4864,6 +4963,7 @@
     "id": "national_guard",
     "name": "National Guard",
     "description": "Your National Guard unit was activated when the epidemic struck.  Despite your best efforts you did not manage to meet up with them before all communications ceased and you found yourself alone amongst the dead.",
+    "age": { "min": 17, "max": 35 },
     "points": 3,
     "traits": [ "PROF_MILITARY" ],
     "skills": [ { "level": 1, "name": "swimming" }, { "level": 1, "name": "gun" }, { "level": 1, "name": "firstaid" } ],
@@ -5114,6 +5214,7 @@
     "id": "winter_army",
     "name": "Military Holdout",
     "description": "You must have paid attention to your survival training in boot camp, otherwise you would never have lived long enough to outlast the chain of command and find yourself in this predicament.  The only mission left now is to survive.",
+    "age": { "min": 18, "max": 36 },
     "points": 6,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -6113,7 +6214,7 @@
         "items": [
           "hat_ball",
           "knit_scarf",
-          "tshirt",
+          "alohashirt",
           "jacket_light",
           "gloves_light",
           "pants",
@@ -6522,6 +6623,7 @@
     "id": "mili_pilot",
     "name": "Military Pilot",
     "description": "You got to see things fall apart from the sky, transporting soldiers and survivors from one holdout to the next.  You knew it was only a matter of time before the horrors patrolling the skies shot you down.",
+    "age": { "min": 20, "max": 40 },
     "points": 5,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -6572,6 +6674,7 @@
     "id": "fighter_pilot",
     "name": "Fighter Pilot",
     "description": "They had you pushing your aircraft to the breaking point dropping ordinance on the undead.  After a mid-air collision forced you to eject, you were picked up by the unit you were providing air support for only for them to be wiped out to the last man.",
+    "age": { "min": 20, "max": 40 },
     "points": 6,
     "traits": [ "PROF_MILITARY" ],
     "skills": [
@@ -6724,19 +6827,8 @@
     "traits": [ "PROF_FERAL" ],
     "items": {
       "both": {
-        "items": [
-          "jeans",
-          "longshirt",
-          "socks",
-          "sneakers",
-          "mbag",
-          "pockknife",
-          "water_clean",
-          "smart_phone",
-          "matches",
-          "wristwatch"
-        ],
-        "entries": [ { "item": "makeshift_crowbar", "custom-flags": [ "auto_wield" ] } ]
+        "items": [ "jeans", "longshirt", "socks", "sneakers", "mbag", "pockknife", "water_clean", "smart_phone", "wristwatch" ],
+        "entries": [ { "item": "lighter", "charges": 25 }, { "item": "makeshift_crowbar", "custom-flags": [ "auto_wield" ] } ]
       },
       "male": [ "boxer_shorts" ],
       "female": [ "bra", "panties" ]
@@ -6980,6 +7072,7 @@
     "name": "Feral Soldier",
     "//": "Contains a Full Metal Jacket reference.  One higher point cost due to added gear.",
     "description": "As far as you can tell, command abandoned you to this hellhole.  How can you take care of a bunch of panicked civilians in need of assistance with no backup?  Easy, you just don't lead 'em so much.",
+    "age": { "min": 17, "max": 35 },
     "points": 5,
     "traits": [ "PROF_MILITARY", "PROF_FERAL" ],
     "skills": [
@@ -7453,6 +7546,7 @@
     "id": "mili_burner",
     "name": "Military Corpse Disposal",
     "description": "In response to the outbreak, you were dispatched to contain the infection by burning the corpses.  With command consumed by the undead, your priorities have shifted to basic survival.",
+    "age": { "min": 17, "max": 35 },
     "points": 6,
     "skills": [
       { "level": 3, "name": "gun" },
@@ -7499,6 +7593,7 @@
     "id": "major-general",
     "name": "Major General",
     "description": "You worked your way up through the ranks from a no-name private to a big shot Major General, respected and decorated.  On the downside, years of desk duty have left your shooting skills rusty, and all the medals in the world won't protect you now.",
+    "age": { "min": 30, "max": 62 },
     "points": 4,
     "skills": [
       { "level": 1, "name": "swimming" },
@@ -7851,6 +7946,7 @@
     "id": "elite_specops",
     "name": "Elite Operator",
     "description": "You were the best of the best, the military's finest, and among them you were better still.  Movies have been made about the missions you went on, and that's only the declassified ones. After getting back from yet another top secret mission, all you wanted to do was relax. Unfortunately, the Cataclysm had other plans, and now, stuck without your gear, you'll just have to show them what makes you tier one.",
+    "age": { "min": 20, "max": 40 },
     "points": 8,
     "traits": [ "PROF_MILITARY", "PROF_SWIMMER" ],
     "skills": [

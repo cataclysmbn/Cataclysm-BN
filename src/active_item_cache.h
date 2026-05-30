@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <iosfwd>
 #include <list>
 #include <unordered_map>
@@ -16,6 +17,18 @@ enum class special_item_type : int {
     explosive
 };
 
+struct active_item_count {
+    int64_t total = 0;
+    int64_t rottable = 0;
+};
+
+struct active_item_queue {
+    int cursor = 0;
+    int64_t processing_credit = 0;
+    int last_processed_turn = 0;
+    std::vector<cache_reference<item>> items;
+};
+
 namespace std
 {
 template <>
@@ -29,7 +42,7 @@ struct hash<special_item_type> {
 class active_item_cache
 {
     private:
-        std::unordered_map<int, std::pair<int, std::vector<cache_reference<item>>>> active_items;
+        std::unordered_map<int, active_item_queue> active_items;
         std::unordered_map<special_item_type, std::vector<cache_reference<item>>> special_items;
 
     public:
@@ -52,15 +65,20 @@ class active_item_cache
         bool empty() const;
 
         /**
+         * Counts currently valid cached active item references.
+         */
+        auto count() const -> active_item_count;
+
+        /**
          * Returns a vector of all cached active item references.
          * Broken references are removed from the cache.
          */
         std::vector<item *> get();
 
         /**
-         * Returns the first size() / processing_speed() elements of each list, rounded up.
-         * Items returned are rotated to the back of their respective lists, otherwise only the
-         * first n items will ever be processed.
+         * Returns items from each list at the average rate requested by item::processing_speed().
+         * Items returned are rotated through their respective lists, otherwise only the first
+         * n items will ever be processed.
          * Broken references encountered when collecting the items to be processed are removed from
          * the cache.
          * Relies on the fact that item::processing_speed() is a constant.

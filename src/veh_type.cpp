@@ -804,7 +804,7 @@ void vpart_info::check()
         static const std::vector<std::string> handled = {{
                 "ENABLED_DRAINS_EPOWER", "SECURITY", "ENGINE",
                 "ALTERNATOR", "SOLAR_PANEL", "POWER_TRANSFER",
-                "REACTOR", "WIND_TURBINE", "WATER_WHEEL"
+                "PERPETUAL", "REACTOR", "WIND_TURBINE", "WATER_WHEEL"
             }
         };
         if( part.epower != 0 &&

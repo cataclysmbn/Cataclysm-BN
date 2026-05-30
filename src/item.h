@@ -2414,6 +2414,8 @@ class item : public location_visitable<item>, public game_object<item>
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
                 const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
+        auto is_in_preserving_container() const -> bool;
+        auto mark_rot_checked_now() -> void;
 
         /** Helper for checking reloadability. **/
         bool is_reloadable_helper( const itype_id &ammo, bool now ) const;
@@ -2790,4 +2792,3 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-

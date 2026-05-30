@@ -1044,6 +1044,22 @@ static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
     lua.globals()["cata"] = cata_tbl;
 }
 
+TEST_CASE( "lua_has_hooks_tracks_registered_entries", "[lua]" )
+{
+    cata::lua_state state;
+    init_test_lua_hook_state( state );
+    sol::state &lua = state.lua;
+
+    auto hook_list = lua.create_table();
+    lua.globals()["game"]["hooks"]["on_creature_do_turn"] = hook_list;
+
+    CHECK_FALSE( cata::has_hooks( "on_creature_do_turn", { .state = &state } ) );
+    CHECK_FALSE( cata::has_hooks( "on_invalid_hook_for_test", { .state = &state } ) );
+
+    hook_list[1] = []( sol::table ) {};
+    CHECK( cata::has_hooks( "on_creature_do_turn", { .state = &state } ) );
+}
+
 TEST_CASE( "lua_hooks_order_and_chaining", "[lua]" )
 {
     cata::lua_state state;

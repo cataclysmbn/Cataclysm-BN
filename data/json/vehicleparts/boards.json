@@ -839,13 +839,6 @@
   {
     "id": "aluminum_halfboard_ne",
     "looks_like": "halfboard_ne",
-    "copy-from": "carbon_halfboard",
-    "type": "vehicle_part",
-    "symbol": "u"
-  },
-  {
-    "id": "aluminum_halfboard_ne",
-    "looks_like": "halfboard_ne",
     "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "u"
@@ -898,6 +891,34 @@
     "copy-from": "aluminum_halfboard",
     "type": "vehicle_part",
     "symbol": "H"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_2_left",
+    "looks_like": "halfboard_vertical_2_left",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_2_right",
+    "looks_like": "halfboard_vertical_2_right",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "H"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_T_right",
+    "looks_like": "halfboard_vertical_T_right",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "]"
+  },
+  {
+    "id": "aluminum_halfboard_vertical_T_left",
+    "looks_like": "halfboard_vertical_T_left",
+    "copy-from": "aluminum_halfboard",
+    "type": "vehicle_part",
+    "symbol": "["
   },
   {
     "id": "aluminum_board_horizontal",
