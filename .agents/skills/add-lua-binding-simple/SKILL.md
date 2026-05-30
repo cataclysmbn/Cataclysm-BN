@@ -1,11 +1,13 @@
 ---
-description: Add a simple Lua binding for a C++ type (string_id, enums, or simple classes)
-argument-hint: TypeName [output-file]
+name: add-lua-binding-simple
+description: Add simple Cataclysm-BN Lua bindings for string_id types, enums, and basic read-only C++ types. Use when exposing straightforward C++ types to Lua.
+metadata:
+  argument-hint: TypeName [output-file]
 ---
 
 # Add Simple Lua Binding
 
-This command helps you add Lua bindings for simple C++ types like `string_id`, enums, or basic classes.
+This skill helps you add Lua bindings for simple C++ types like `string_id`, enums, or basic classes.
 
 ## What You'll Do
 

@@ -1,11 +1,13 @@
 ---
-description: Add Lua API bindings for global game functions (game state, RNG, sounds, etc.)
-argument-hint: api-domain
+name: add-lua-binding-api
+description: Add Cataclysm-BN Lua API bindings for global game functions, utility libraries, constants, callbacks, and domain-specific Lua namespaces.
+metadata:
+  argument-hint: api-domain
 ---
 
 # Add Lua API Bindings
 
-This command helps you expose global game functions and utilities to Lua through the game API.
+This skill helps you expose global game functions and utilities to Lua through the game API.
 
 ## API Organization
 
