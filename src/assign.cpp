@@ -179,6 +179,8 @@ bool assign( const JsonObject &jo,
 {
     const auto parse = [&name]( const JsonObject & obj, units::money & out ) {
         if( obj.has_int( name ) ) {
+            obj.show_warning( "legacy money values used, support will be removed eventually.",
+                              name );
             out = units::from_cent( obj.get_int( name ) );
             return true;
         }
