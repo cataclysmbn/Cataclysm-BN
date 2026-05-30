@@ -312,8 +312,8 @@
     "to_hit": -1,
     "color": "light_gray",
     "covers": [ "hand_either" ],
-    "price": 6000,
-    "price_postapoc": 100,
+    "price": "60 USD",
+    "price_postapoc": "1 USD",
     "material": [ "plastic" ],
     "flags": [
       "WATCH",
@@ -3247,8 +3247,8 @@
     "to_hit": -1,
     "color": "light_gray",
     "covers": [ "eyes" ],
-    "price": 6000,
-    "price_postapoc": 100,
+    "price": "60 USD",
+    "price_postapoc": "1 USD",
     "material": [ "plastic" ],
     "flags": [
       "WATCH",

@@ -6,7 +6,7 @@
     "description": "This strangely shaped rock was once a part of an owlbear's complex digestive system, creating a link between owl throat and bear stomach.  It is possible that it could serve a similar purpose in alchemy, helping to bind together two disparate halves.",
     "weight": "2 kg",
     "volume": "750 ml",
-    "price": 0,
+    "price": "0 cent",
     "bashing": 9,
     "to_hit": -1,
     "material": "stone",
