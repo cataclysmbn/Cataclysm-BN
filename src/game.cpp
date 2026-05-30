@@ -946,6 +946,7 @@ bool game::start_game()
     // The player is centered in the map, but lev[xyz] refers to the top left point of the map
     lev.x() -= g_half_mapsize;
     lev.y() -= g_half_mapsize;
+    u.setpos( project_to<coords::ms>( lev + tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 ) ) );
     load_map( lev, /*pump_events=*/true );
 
     m.invalidate_map_cache( get_levz() );
@@ -13842,7 +13843,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
 
     // Snapshot the old dimension state before any mutation.
     const std::string old_dim_id = here.get_bound_dimension();
-    const tripoint_abs_sm current_abs_sm( here.get_abs_sub() );
+    const auto current_abs_sm = player_reality_bubble_origin();
 
     {
         ZoneScopedN( "travel_unload" );
@@ -13973,7 +13974,10 @@ bool game::travel_to_dimension( const std::string &dim_id,
         // Load at the destination position if provided; fall back to the old position.
         // Loading at the destination avoids a costly incremental map shift in update_map()
         // when the destination is far from the current position.
-        load_map( load_pos.value_or( current_abs_sm ), false );
+        const auto target_load_origin = load_pos.value_or( current_abs_sm );
+        player.setpos( project_to<coords::ms>( target_load_origin + tripoint_rel_sm( g_half_mapsize,
+                       g_half_mapsize, 0 ) ) );
+        load_map( target_load_origin, false );
 
         add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
 
@@ -14230,8 +14234,8 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
 
     scent.reset();
 
-    u.setpos( tripoint_bub_ms( u.bub_pos().xy(), z_after ) );
     const int z_before = get_levz();
+    u.setpos( tripoint_bub_ms( u.bub_pos().xy(), z_after ) );
     if( !m.has_zlevels() ) {
         m.clear_vehicle_cache( );
         m.access_cache( z_before ).vehicle_list.clear();
@@ -14243,7 +14247,7 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
         shift_monsters( tripoint_rel_sm( 0, 0, z_after - z_before ) );
         reload_npcs();
     } else {
-        // Adjust the map's z-reference so get_levz() returns the new z-level.
+        // Keep the map-local cache z-reference aligned with the avatar z-level.
         // All z-levels are loaded simultaneously in z-level builds; no map load
         // or unload is required for vertical movement.
         m.set_abs_sub( tripoint_abs_sm( m.get_abs_sub().xy(), z_after ) );
@@ -15601,19 +15605,19 @@ void game::add_artifact_dreams( )
     }
 }
 
-int game::get_levx() const
+auto game::get_levx() const -> int
 {
-    return m.get_abs_sub().x();
+    return player_reality_bubble_origin().x();
 }
 
-int game::get_levy() const
+auto game::get_levy() const -> int
 {
-    return m.get_abs_sub().y();
+    return player_reality_bubble_origin().y();
 }
 
-int game::get_levz() const
+auto game::get_levz() const -> int
 {
-    return m.get_abs_sub().z();
+    return u.abs_pos().z();
 }
 
 overmap &game::get_cur_om() const

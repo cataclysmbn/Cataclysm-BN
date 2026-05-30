@@ -22,6 +22,7 @@
 #include "drop_token.h"
 #include "enum_conversions.h"
 #include "faction.h"
+#include "game_constants.h"
 #include "hash_utils.h"
 #include "int_id.h"
 #include "json.h"
@@ -97,13 +98,14 @@ void game::serialize( std::ostream &fout )
     json.member( "mostseen", mostseen );
     json.member( "show_zone_overlay", show_zone_overlay );
     // current map coordinates
-    auto pos_sm = m.get_abs_sub();
+    auto pos_sm = player_reality_bubble_origin();
     const auto pos_decomp = project_remain<coords::om>( pos_sm );
     json.member( "levx", pos_decomp.remainder.x() );
     json.member( "levy", pos_decomp.remainder.y() );
     json.member( "levz", pos_sm.z() );
     json.member( "om_x", pos_decomp.quotient.x() );
     json.member( "om_y", pos_decomp.quotient.y() );
+    json.member( "reality_bubble_size", g_reality_bubble_size );
 
     // Save the current dimension ID (replaces the old world_type + pocket_instance_id pair)
     json.member( "current_dimension_id", current_dimension_id_ );
@@ -317,10 +319,11 @@ auto game::unserialize( std::istream &fin ) -> bool
             get_overmapbuffer( current_dimension_id_ ).set_pocket_info( pocket_info );
         }
 
-        load_map(
-            tripoint_abs_sm( lev.x + com.x * OMAPX * 2, lev.y + com.y * OMAPY * 2, lev.z ),
-            /*pump_events=*/true
-        );
+        const auto load_origin = tripoint_abs_sm( lev.x + com.x * OMAPX * 2,
+                                 lev.y + com.y * OMAPY * 2, lev.z );
+        u.setpos( project_to<coords::ms>( load_origin + tripoint_rel_sm( g_half_mapsize,
+                  g_half_mapsize, 0 ) ) );
+        load_map( load_origin, /*pump_events=*/true );
 
         safe_mode = static_cast<safe_mode_type>( tmprun );
         if( get_option<bool>( "SAFEMODE" ) && safe_mode == SAFE_MODE_OFF ) {
