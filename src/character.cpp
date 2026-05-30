@@ -11306,8 +11306,13 @@ int Character::run_cost( int base_cost, bool diag ) const
         }
 
         // Linearly increase move cost relative to individual leg hp.
+		if( static_cast<float>( get_part_hp_cur( bodypart_id( "leg_l" ) ) ) <=
+						   static_cast<float>( get_part_hp_max( bodypart_id( "leg_l" ) ) ) ) {
         movecost += 50 * ( 1 - static_cast<float>( get_part_hp_cur( bodypart_id( "leg_l" ) ) ) /
                            static_cast<float>( get_part_hp_max( bodypart_id( "leg_l" ) ) ) );
+		}
+		if( static_cast<float>( get_part_hp_cur( bodypart_id( "leg_r" ) ) ) <=				   
+						   static_cast<float>( get_part_hp_max( bodypart_id( "leg_r" ) ) ) ) {
         movecost += 50 * ( 1 - static_cast<float>( get_part_hp_cur( bodypart_id( "leg_r" ) ) ) /
                            static_cast<float>( get_part_hp_max( bodypart_id( "leg_r" ) ) ) );
         movecost *= mutation_value( "movecost_modifier" );
