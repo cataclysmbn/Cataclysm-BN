@@ -843,7 +843,7 @@
         "cs_city_dump_small": 100,
         "cs_open_sewer": 100
       },
-            "shops": {
+      "shops": {
         "bus_station": 200,
         "abandoned_textile_mill": 20,
         "town_hall": 150,
