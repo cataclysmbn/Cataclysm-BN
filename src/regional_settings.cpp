@@ -555,6 +555,7 @@ void load_region_settings( const JsonObject &jo )
             }
         };
         load_building_types( "houses", new_region.city_spec.houses );
+        load_building_types( "urban_houses", new_region.city_spec.urban_houses );
         load_building_types( "shops", new_region.city_spec.shops );
         load_building_types( "parks", new_region.city_spec.parks );
         if( cjo.has_member( "finales" ) ) {
@@ -761,6 +762,7 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
         }
     };
     load_building_types( "houses", region.city_spec.houses );
+    load_building_types( "urban_houses", region.city_spec.urban_houses );
     load_building_types( "shops", region.city_spec.shops );
     load_building_types( "parks", region.city_spec.parks );
     if( cityjo.has_member( "finales" ) ) {
@@ -1097,6 +1099,7 @@ overmap_special_id city_settings::pick_finale() const
 void city_settings::finalize()
 {
     houses.finalize();
+    urban_houses.finalize();
     shops.finalize();
     parks.finalize();
     if( !finales.unfinalized_buildings.empty() ) {
