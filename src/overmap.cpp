@@ -4921,7 +4921,7 @@ overmap_special_id overmap::pick_random_building_to_place( int town_dist, int to
     } else if( park_normal > town_dist ) {
         return city_spec.pick_park();
     } else {
-        if( town_size > 4 ) {
+        if( town_size > 6 ) {
             return city_spec.pick_urban_house();
         } else {
             return city_spec.pick_house();
