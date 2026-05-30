@@ -509,7 +509,8 @@
       "houses": { "Pond": 0 },
       "urban_houses": { "Pond": 0 },
       "parks": { "Pond": 0 },
-      "shops": { "Pond": 0 }
+      "shops": { "Pond": 0 },
+      "urban_shops": { "Pond": 0 }
     },
     "weather": {
       "spring_temp": 8,
