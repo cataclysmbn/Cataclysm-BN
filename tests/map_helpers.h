@@ -7,13 +7,9 @@
 #include "coordinates.h"
 #include "type_id.h"
 
-class map;
 class monster;
 class time_point;
 
-auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms;
-auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm;
-auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms;
 void wipe_map_terrain();
 void clear_creatures();
 void clear_npcs();

@@ -142,19 +142,6 @@ class monfaction;
 void starting_clothes( npc &who, const npc_class_id &type, bool male );
 void starting_inv( npc &who, const npc_class_id &type );
 
-static auto active_map_local_to_abs( const tripoint_bub_ms &local ) -> tripoint_abs_ms
-{
-    const auto origin = project_to<coords::ms>( get_map().get_abs_sub() );
-    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(),
-                                      local.z() ) );
-}
-
-static auto abs_to_active_map_local( const tripoint_abs_ms &abs ) -> tripoint_bub_ms
-{
-    const auto origin = project_to<coords::ms>( get_map().get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
 npc::npc()
     : restock( calendar::turn_zero )
     , companion_mission_time( calendar::before_time_starts )
@@ -205,9 +192,10 @@ standard_npc::standard_npc( const std::string &name, const tripoint_bub_ms &pos,
 {
     this->name = name;
     // Resolve tripoint_min sentinel to the runtime bubble center.
-    position = ( pos == tripoint_bub_ms::min() )
-               ? active_map_local_to_abs( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 ) )
-               : active_map_local_to_abs( pos );
+    const auto map_local_pos = ( pos == tripoint_bub_ms::min() )
+                               ? tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 )
+                               : pos;
+    position = map_local_to_abs( get_map(), map_local_pos );
 
     str_cur = std::max( s_str, 0 );
     str_max = std::max( s_str, 0 );
@@ -760,7 +748,7 @@ void npc::set_known_to_u( bool known )
 
 auto npc::setpos( const tripoint_bub_ms &pos ) -> void
 {
-    setpos( active_map_local_to_abs( pos ) );
+    setpos( map_local_to_abs( get_map(), pos ) );
 }
 
 auto npc::setpos( const tripoint_abs_ms &new_pos ) -> void
@@ -817,7 +805,7 @@ void npc::place_on_map()
 {
     map &here = get_map();
     // Find an empty tile near the NPC's intended location.
-    const auto initial = abs_to_active_map_local( position );
+    const auto initial = abs_to_map_local( here, position );
 
     if( g->is_empty( initial ) || is_mounted() ) {
         return;
@@ -825,7 +813,7 @@ void npc::place_on_map()
 
     for( const tripoint_bub_ms &p : closest_points_first( initial, SEEX + 1 ) ) {
         if( g->is_empty( p ) ) {
-            setpos( active_map_local_to_abs( p ) );
+            setpos( map_local_to_abs( here, p ) );
             return;
         }
     }

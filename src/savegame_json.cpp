@@ -122,12 +122,6 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 
-static auto map_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
-}
-
 static const efftype_id effect_riding( "riding" );
 
 static const itype_id itype_battery( "battery" );
@@ -477,7 +471,7 @@ void Character::load( const JsonObject &data )
         if( !data.read( "posz", legacy_bub.z() ) && g != nullptr ) {
             legacy_bub.z() = g->get_levz();
         }
-        position = map_local_to_abs_ms( get_map(), legacy_bub );
+        position = map_local_to_abs( get_map(), legacy_bub );
     }
     // stats
     data.read( "str_cur", str_cur );
@@ -2010,7 +2004,7 @@ auto monster::load( const JsonObject &data,
             const auto legacy_remainder = project_remain<coords::sm>( legacy_bub_pos );
             pos_abs = project_combine( abs_sm_pos, legacy_remainder.remainder );
         } else {
-            pos_abs = map_local_to_abs_ms( get_map(), legacy_bub_pos );
+            pos_abs = map_local_to_abs( get_map(), legacy_bub_pos );
         }
     }
 

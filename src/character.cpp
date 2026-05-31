@@ -414,13 +414,6 @@ Character &get_player_character()
     return g->u;
 }
 
-static auto active_map_local_to_abs( const tripoint_bub_ms &local ) -> tripoint_abs_ms
-{
-    const auto origin = project_to<coords::ms>( get_map().get_abs_sub() );
-    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(),
-                                      local.z() ) );
-}
-
 // *INDENT-OFF*
 Character::Character() :
     location_visitable<Character>(),
@@ -847,7 +840,7 @@ tripoint_abs_ms Character::abs_pos() const
 
 auto Character::setpos( const tripoint_bub_ms &p ) -> void
 {
-    position = active_map_local_to_abs( p );
+    position = map_local_to_abs( get_map(), p );
 }
 
 auto Character::setpos( const tripoint_abs_ms &p ) -> void

@@ -271,47 +271,50 @@ auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm
     return ( p - origin ).reinterpret_as<point_bub_sm>();
 }
 
-static auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
+auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
 {
     const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(),
-                                      local.z() ) );
+    return ( local + origin.xy().raw() ).reinterpret_as<tripoint_abs_ms>();
 }
 
-static auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
 {
     const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+    return ( abs - origin.xy() ).reinterpret_as<tripoint_bub_ms>();
 }
 
-static auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm
+auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm
 {
     const auto origin = m.get_abs_sub();
-    return tripoint_abs_sm( tripoint( origin.x() + local.x(), origin.y() + local.y(),
-                                      local.z() ) );
+    return ( local + origin.xy().raw() ).reinterpret_as<tripoint_abs_sm>();
 }
 
-static auto abs_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm
+auto abs_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm
 {
     const auto origin = m.get_abs_sub();
-    return tripoint_bub_sm( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+    return ( abs - origin.xy() ).reinterpret_as<tripoint_bub_sm>();
 }
 
-static auto map_local_to_abs( const map &m, const point_bub_ms &local ) -> point_abs_ms
+auto map_local_to_abs( const map &m, const point_bub_ms &local ) -> point_abs_ms
 {
     const auto origin = project_to<coords::ms>( m.get_abs_sub() ).xy();
     return origin + local.raw();
 }
 
-static auto abs_to_map_local( const map &m, const point_abs_ms &abs ) -> point_bub_ms
+auto abs_to_map_local( const map &m, const point_abs_ms &abs ) -> point_bub_ms
 {
     const auto origin = project_to<coords::ms>( m.get_abs_sub() ).xy();
     return ( abs - origin ).reinterpret_as<point_bub_ms>();
 }
 
-static auto map_local_to_abs( const map &m, const point_bub_sm &local ) -> point_abs_sm
+auto map_local_to_abs( const map &m, const point_bub_sm &local ) -> point_abs_sm
 {
     return m.get_abs_sub().xy() + local.raw();
+}
+
+auto abs_to_map_local( const map &m, const point_abs_sm &abs ) -> point_bub_sm
+{
+    return ( abs - m.get_abs_sub().xy() ).reinterpret_as<point_bub_sm>();
 }
 
 scoped_map_context::scoped_map_context( map &m ) noexcept
@@ -6374,9 +6377,7 @@ static void use_charges_from_furn( const furn_t &f, const itype_id &type, int &q
     static const flag_id json_flag_USES_GRID_POWER( flag_USES_GRID_POWER );
     for( const itype &itt : item_list ) {
         if( itt.has_flag( json_flag_USES_GRID_POWER ) ) {
-            const auto origin = project_to<coords::ms>( m->get_abs_sub() );
-            const auto abspos = tripoint_abs_ms( tripoint( origin.x() + p.x(), origin.y() + p.y(),
-                                                 p.z() ) );
+            const auto abspos = map_local_to_abs( *m, p );
             auto &grid = get_distribution_grid_tracker().grid_at( abspos );
             detached_ptr<item> furn_item = item::spawn( itt.get_id(), calendar::start_of_cataclysm,
                                            grid.get_resource() );

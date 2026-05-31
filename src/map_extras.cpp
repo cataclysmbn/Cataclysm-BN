@@ -66,12 +66,6 @@
 #include "vpart_range.h"
 #include "weighted_list.h"
 
-static auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
 static const std::string flag_FLAT( "FLAT" );
 static const std::string flag_FLOWER( "FLOWER" );
 static const std::string flag_FUNGUS( "FUNGUS" );
@@ -422,7 +416,7 @@ static bool mx_helicopter( map &m, const tripoint_abs_sm &abs_sub )
     // During mapgen, m may be a tinymap while vpart_position::pos() uses get_map().
     const auto local_part_pos = [&m]( const vehicle & wreckage,
     const vpart_reference & vp ) {
-        return abs_ms_to_map_local( m, wreckage.abs_part_location( vp.part() ) );
+        return abs_to_map_local( m, wreckage.abs_part_location( vp.part() ) );
     };
 
     const auto controls_at = []( vehicle * wreckage, const tripoint_mnt_veh & mount ) {
@@ -606,7 +600,7 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
     // During mapgen, m may be a tinymap while vpart_position::pos() uses get_map().
     const auto local_part_pos = [&m]( const vehicle & wreckage,
     const vpart_reference & vp ) {
-        return abs_ms_to_map_local( m, wreckage.abs_part_location( vp.part() ) );
+        return abs_to_map_local( m, wreckage.abs_part_location( vp.part() ) );
     };
 
     const auto controls_at = []( vehicle * wreckage, const tripoint_mnt_veh & mount ) {
@@ -2037,7 +2031,7 @@ static void burned_ground_parser( map &m, const tripoint_bub_ms &loc )
         vehicles.push_back( vehicle.v );
         std::set<tripoint_abs_ms> occupied = vehicle.v->get_points();
         for( const tripoint_abs_ms &t : occupied ) {
-            points.push_back( abs_ms_to_map_local( m, t ) );
+            points.push_back( abs_to_map_local( m, t ) );
         }
     }
     for( vehicle *vrem : vehicles ) {
@@ -2164,7 +2158,7 @@ static bool mx_burned_ground( map &m, const tripoint_abs_sm &abs_sub )
         vehicles.push_back( vehicle.v );
         std::set<tripoint_abs_ms> occupied = vehicle.v->get_points();
         for( const tripoint_abs_ms &t : occupied ) {
-            points.push_back( abs_ms_to_map_local( m, t ) );
+            points.push_back( abs_to_map_local( m, t ) );
         }
     }
     for( vehicle *vrem : vehicles ) {

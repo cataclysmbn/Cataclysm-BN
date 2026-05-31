@@ -1371,8 +1371,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
         return;
     }
     const auto origin = project_to<coords::ms>( target_map.get_abs_sub() );
-    const auto a_start = tripoint_abs_ms( tripoint( origin.x(), origin.y(), 0 ) );
-    const auto a_end = tripoint_abs_ms( tripoint( origin.x() + 23, origin.y() + 23, 0 ) );
+    const auto a_start = map_local_to_abs( target_map, tripoint_bub_ms( 0, 0, 0 ) );
+    const auto a_end = map_local_to_abs( target_map, tripoint_bub_ms( 23, 23, 0 ) );
     const point dim( 24, 24 );
     for( zone_data &zone : zones ) {
         const auto z_start = zone.get_start_point();
@@ -1383,10 +1383,8 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             ( a_end.x() >= z_end.x() && a_end.y() >= z_end.y() ) &&
             ( a_start.z() == z_start.z() )
           ) {
-            auto z_l_start3 = tripoint_bub_ms( tripoint( z_start.x() - origin.x(),
-                                               z_start.y() - origin.y(), z_start.z() ) );
-            auto z_l_end3 = tripoint_bub_ms( tripoint( z_end.x() - origin.x(),
-                                             z_end.y() - origin.y(), z_end.z() ) );
+            const auto z_l_start3 = abs_to_map_local( target_map, z_start );
+            const auto z_l_end3 = abs_to_map_local( target_map, z_end );
             // don't rotate centered squares
             if( z_l_start3.x() == z_l_start3.y() && z_l_end3.x() == z_l_end3.y() &&
                 z_l_start3.x() + z_l_end3.x() == 23 ) {

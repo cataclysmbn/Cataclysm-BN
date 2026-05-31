@@ -266,24 +266,6 @@ static void init_bubble_config()
     init_bubble_config( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
-static auto map_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
-}
-
-static auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
-static auto abs_sm_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm
-{
-    const auto origin = m.get_abs_sub();
-    return tripoint_bub_sm( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
 static auto debug_assert_player_map_origin( const char *context, const bool check_z = true ) -> void
 {
     const auto expected = player_reality_bubble_origin();
@@ -1208,7 +1190,7 @@ vehicle *game::place_vehicle_nearby(
                            id, tinymap_center, random_entry( angles ), rng( 50, 80 ),
                            0, false, false, true );
         if( veh ) {
-            auto abs = map_local_to_abs_ms( target_map, tinymap_center );
+            auto abs = map_local_to_abs( target_map, tinymap_center );
             const auto proj = project_remain<coords::sm>( abs );
             veh->abs_sm_pos = proj.quotient_tripoint;
             veh->sm_ms_pos = proj.remainder;
@@ -1300,7 +1282,7 @@ void game::load_npcs()
                 temp->place_on_map();
                 const auto sm_loc = project_to<coords::sm>( temp->abs_pos() );
                 if( !req_map.inbounds( sm_loc )
-                    || req_map.get_submap_at_grid( abs_sm_to_map_local( req_map, sm_loc ) ) == nullptr ) {
+                    || req_map.get_submap_at_grid( abs_to_map_local( req_map, sm_loc ) ) == nullptr ) {
                     continue;
                 }
                 if( temp->marked_for_death ) {
@@ -5135,7 +5117,7 @@ void game::world_tick()
                     if( !sm_ptr->emitter_cache->empty() ) {
                         ++total_emitter_active_submaps;
                         ZoneScopedN( "field_emits" );
-                        const auto bub_sm_origin = abs_ms_to_map_local( m, project_to<coords::ms>( pos_sm ) );
+                        const auto bub_sm_origin = abs_to_map_local( m, project_to<coords::ms>( pos_sm ) );
                         std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms & lp ) {
                             const tripoint_bub_ms local_pos = bub_sm_origin + tripoint_rel_ms( lp.x(), lp.y(), 0 );
                             std::ranges::for_each(
@@ -12126,7 +12108,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
                             vp1 ) ) {
         u.stop_hauling();
     }
-    u.setpos( map_local_to_abs_ms( m, dest_loc ) );
+    u.setpos( map_local_to_abs( m, dest_loc ) );
     m.invalidate_lightmap_caches();
     if( u.is_mounted() ) {
         monster *mon = u.mounted_creature.get();
@@ -14156,7 +14138,7 @@ void game::start_hauling( const tripoint_bub_ms &pos )
 
 std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bool peeking )
 {
-    const auto bub_pos = abs_ms_to_map_local( mp, u.abs_pos() );
+    const auto bub_pos = abs_to_map_local( mp, u.abs_pos() );
     const auto movez = tripoint_rel_ms( 0, 0, z_after - get_levz() );
     // If there are stairs on the same x and y as we currently are, use those
     if( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, bub_pos + movez ) ) {
@@ -14175,7 +14157,7 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
     int best = INT_MAX;
     if( !stairs.has_value() ) {
         for( const auto &rel : overmap_terrain_tiles() ) {
-            const auto dest = abs_ms_to_map_local( mp, project_combine( omt_start, rel ) ) + movez;
+            const auto dest = abs_to_map_local( mp, project_combine( omt_start, rel ) ) + movez;
             if( rl_dist( bub_pos, dest ) <= best &&
                 ( ( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, dest ) ) ||
                   ( ( movez.z() == 1 && ( mp.has_flag( TFLAG_GOES_DOWN, dest ) &&
@@ -14219,7 +14201,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
         bool &rope_ladder,
         bool peeking )
 {
-    const auto bub_pos = abs_ms_to_map_local( mp, u.abs_pos() );
+    const auto bub_pos = abs_to_map_local( mp, u.abs_pos() );
     const int movez = z_after - bub_pos.z();
 
     // Try to find the stairs.
@@ -14413,7 +14395,7 @@ void game::vertical_notes( int z_before, int z_after )
 
 point_rel_sm game::update_map( Character &who )
 {
-    const auto map_local_pos = abs_ms_to_map_local( m, who.abs_pos() );
+    const auto map_local_pos = abs_to_map_local( m, who.abs_pos() );
     int x = map_local_pos.x();
     int y = map_local_pos.y();
     return update_map( x, y );
@@ -14421,7 +14403,7 @@ point_rel_sm game::update_map( Character &who )
 
 point_rel_sm game::update_map( int &x, int &y )
 {
-    const auto target_abs = map_local_to_abs_ms( m, tripoint_bub_ms( x, y, get_levz() ) );
+    const auto target_abs = map_local_to_abs( m, tripoint_bub_ms( x, y, get_levz() ) );
     point_rel_sm shift;
 
     while( x < g_half_mapsize_x ) {

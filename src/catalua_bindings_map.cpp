@@ -43,30 +43,6 @@ struct is_container<map_stack> : std::false_type {};
 namespace
 {
 
-auto map_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
-}
-
-auto map_local_to_abs_sm( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm
-{
-    const auto origin = m.get_abs_sub();
-    return tripoint_abs_sm( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
-}
-
-auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
-auto abs_sm_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm
-{
-    const auto origin = m.get_abs_sub();
-    return tripoint_bub_sm( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
 struct replace_vehicle_options {
     units::angle orientation = 0_degrees;
     int status = -1;
@@ -336,30 +312,30 @@ void cata::detail::reg_map( sol::state &lua )
         DOC( "[Deprecated] Convert local ms -> absolute ms" );
         luna::set_fx( ut, "get_abs_ms", []( const map & m,
         const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return map_local_to_abs_ms( m, pos );
+            return map_local_to_abs( m, pos );
         } );
         DOC( "Convert local bubble coordinates to absolute coordinates." );
         luna::set_fx( ut, "bub_to_abs",
                       sol::overload(
         []( const map & m, const tripoint_bub_ms & pos ) -> tripoint_abs_ms {
-            return map_local_to_abs_ms( m, pos );
+            return map_local_to_abs( m, pos );
         },
         []( const map & m, const tripoint_bub_sm & pos ) -> tripoint_abs_sm {
-            return map_local_to_abs_sm( m, pos );
+            return map_local_to_abs( m, pos );
         } ) );
         DOC( "[Deprecated] Convert absolute ms -> local ms" );
         luna::set_fx( ut, "get_local_ms", []( const map & m,
         const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return abs_ms_to_map_local( m, pos );
+            return abs_to_map_local( m, pos );
         } );
         DOC( "Convert absolute coordinates to local bubble coordinates." );
         luna::set_fx( ut, "abs_to_bub",
                       sol::overload(
         []( const map & m, const tripoint_abs_ms & pos ) -> tripoint_bub_ms {
-            return abs_ms_to_map_local( m, pos );
+            return abs_to_map_local( m, pos );
         },
         []( const map & m, const tripoint_abs_sm & pos ) -> tripoint_bub_sm {
-            return abs_sm_to_map_local( m, pos );
+            return abs_to_map_local( m, pos );
         } ) );
 
         luna::set_fx( ut, "get_map_size_in_submaps", &map::getmapsize );

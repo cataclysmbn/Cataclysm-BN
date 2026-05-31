@@ -910,6 +910,8 @@ void draw_line_of( const draw_sprite_line_options &options )
         return;
     }
 
+    // TODO: This code was added to prevent a crash during projectile tests. Why didn't it crash before?
+    // Please fix.
     if( test_mode || !tilecontext ) {
         return;
     }

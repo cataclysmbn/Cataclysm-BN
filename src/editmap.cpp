@@ -1910,9 +1910,7 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
 
                     //TODO!: move this into the submap swap
                     for( auto &veh : destsm->vehicles ) {
-                        const auto origin = here.get_abs_sub();
-                        veh->abs_sm_pos = tripoint_abs_sm( tripoint( origin.x() + dest_pos.x(),
-                                                           origin.y() + dest_pos.y(), dest_pos.z() ) );
+                        veh->abs_sm_pos = map_local_to_abs( here, dest_pos );
                     }
 
                     if( !destsm->spawns.empty() ) {                              // trigger spawnpoints

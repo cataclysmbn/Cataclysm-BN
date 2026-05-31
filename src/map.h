@@ -2456,6 +2456,16 @@ auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms;
 auto bub_to_abs( const point_bub_sm &p ) -> point_abs_sm;
 auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm;
 
+// Convert against a specific map object's loaded-grid origin, not the player bubble origin.
+auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms;
+auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms;
+auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm;
+auto abs_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm;
+auto map_local_to_abs( const map &m, const point_bub_ms &local ) -> point_abs_ms;
+auto abs_to_map_local( const map &m, const point_abs_ms &abs ) -> point_bub_ms;
+auto map_local_to_abs( const map &m, const point_bub_sm &local ) -> point_abs_sm;
+auto abs_to_map_local( const map &m, const point_abs_sm &abs ) -> point_bub_sm;
+
 /**
  * RAII guard that temporarily redirects get_map() to a different map object
  * for the duration of its lifetime on the calling thread.

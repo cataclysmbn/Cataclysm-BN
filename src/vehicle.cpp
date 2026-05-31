@@ -77,12 +77,6 @@
 #include "weather.h"
 #include "ui.h"
 
-static auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
 /*
  * Speed up all those if ( blarg == "structure" ) statements that are used everywhere;
  *   assemble "structure" once here instead of repeatedly later.
@@ -263,7 +257,7 @@ class MapgenRemovePartHandler : public RemovePartHandler
             // TODO: *if* this actually happens: create a spawn point for the animal instead.
         }
         auto part_location( const vehicle &veh, const int part ) const -> tripoint_bub_ms override {
-            return abs_ms_to_map_local( m, veh.abs_part_location( part ) );
+            return abs_to_map_local( m, veh.abs_part_location( part ) );
         }
 };
 
@@ -1026,7 +1020,7 @@ void vehicle::autopilot_patrol()
             autodrive_local_target = tripoint_abs_ms::zero();
             return;
         }
-        if( !g->m.inbounds( abs_ms_to_map_local( g->m, autodrive_local_target ) ) ) {
+        if( !g->m.inbounds( abs_to_map_local( g->m, autodrive_local_target ) ) ) {
             autodrive_local_target = tripoint_abs_ms::zero();
             is_patrolling = false;
             return;
@@ -2510,7 +2504,7 @@ bool vehicle::remove_carried_vehicle( const std::vector<int> &carried_parts )
             std::string id_string = carry_names.top().substr( 0, 1 );
             if( id_string == "X" || id_string == "Y" ) {
                 veh_record = carry_names.top();
-                nbp = abs_ms_to_map_local( g->m, abs_part_location( carried_part ) );
+                nbp = abs_to_map_local( g->m, abs_part_location( carried_part ) );
                 x_aligned = id_string == "X";
                 break;
             }
@@ -2743,7 +2737,7 @@ bool vehicle::split_vehicles( const std::vector<std::vector <int>> &new_vehs,
                     }
                 }
             }
-            nvp = abs_ms_to_map_local( g->m, abs_part_location( parts[ split_part0 ] ) );
+            nvp = abs_to_map_local( g->m, abs_part_location( parts[ split_part0 ] ) );
             mnt_offset = parts[ split_part0 ].mount;
             new_vehicle = g->m.add_vehicle( vproto_id( "none" ), nvp, face.dir() );
             if( new_vehicle == nullptr ) {
@@ -8167,7 +8161,7 @@ std::set<int> vehicle::advance_precalc_mounts( const tripoint_abs_ms &src )
 {
     map &here = get_map();
     std::set<int> smzs;
-    const auto src_local = abs_ms_to_map_local( here, src );
+    const auto src_local = abs_to_map_local( here, src );
     for( vehicle_part &prt : parts ) {
         here.clear_vehicle_point_from_cache( this, src_local +
                                              tripoint_rel_ms( prt.precalc[0].x(), prt.precalc[0].y(),

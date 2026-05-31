@@ -7366,18 +7366,6 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
     it.pocket_dim = pd;
 }
 
-static auto map_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
-}
-
-static auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
 // Helper function to find a safe, passable position near the target
 static tripoint_bub_ms find_safe_spawn( const tripoint_bub_ms &target )
 {
@@ -7456,8 +7444,8 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     // No sneaky teleporting shenaneigans.
     if( new_pd ) {
         const auto &here = get_map();
-        const auto safe = find_safe_spawn( abs_ms_to_map_local( here, pd.entry_point ) );
-        pd.entry_point = map_local_to_abs_ms( here, safe );
+        const auto safe = find_safe_spawn( abs_to_map_local( here, pd.entry_point ) );
+        pd.entry_point = map_local_to_abs( here, safe );
     }
 
     p.setpos( pd.entry_point );
@@ -7608,8 +7596,8 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
                             return_preload_point );
 
     const auto &here = get_map();
-    const auto safe = find_safe_spawn( abs_ms_to_map_local( here, return_point ) );
-    p.setpos( map_local_to_abs_ms( here, safe ) );
+    const auto safe = find_safe_spawn( abs_to_map_local( here, return_point ) );
+    p.setpos( map_local_to_abs( here, safe ) );
 
     // Single update_map call at the final position
     g->update_map( p );

@@ -19,12 +19,6 @@
 #include "overmapbuffer_registry.h"
 #include "profile.h"
 
-static auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
-{
-    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
-    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-}
-
 distribution_grid::distribution_grid( const std::vector<tripoint_abs_sm> &global_submap_coords,
                                       mapbuffer &buffer ) :
     submap_coords( global_submap_coords ),
