@@ -260,9 +260,8 @@ void mission::assign( avatar &u )
         type->start( this );
         status = mission_status::in_progress;
         cata::run_hooks( "on_mission_start", [&]( auto & params ) {
-            params["mission_type_id"] = this->type->id;
-            params["mission_id"] = this->get_id();
-            params["target_omt"] = this->get_target();
+            params["mission_type"] = this->type;
+            params["mission"] = this;
         } );
     }
 }
@@ -276,10 +275,8 @@ void mission::fail()
 
     type->fail( this );
     cata::run_hooks( "on_mission_end", [&]( auto & params ) {
-        params["mission_type_id"] = this->type->id;
-        params["mission_id"] = this->get_id();
-        params["target_omt"] = this->get_target();
-        params["success"] = false;
+        params["mission_type"] = this->type;
+        params["mission"] = this;
     } );
 
 }
@@ -379,10 +376,8 @@ void mission::wrap_up()
 
     type->end( this );
     cata::run_hooks( "on_mission_end", [&]( auto & params ) {
-        params["mission_type_id"] = this->type->id;
-        params["mission_id"] = this->get_id();
-        params["target_omt"] = this->get_target();
-        params["success"] = true;
+        params["mission_type"] = this->type;
+        params["mission"] = this;
     } );
 }
 
