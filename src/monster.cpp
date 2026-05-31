@@ -141,6 +141,13 @@ static const trait_id trait_PROF_FERAL( "PROF_FERAL" );
 static const trait_id trait_TERRIFYING( "TERRIFYING" );
 static const trait_id trait_THRESH_MYCUS( "THRESH_MYCUS" );
 
+static auto active_map_local_to_abs( const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( get_map().get_abs_sub() );
+    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(),
+                                      local.z() ) );
+}
+
 struct pathfinding_settings;
 
 // Limit the number of iterations for next upgrade_time calculations.
@@ -327,7 +334,7 @@ monster::~monster() = default;
 
 auto monster::setpos( const tripoint_bub_ms &p ) -> void
 {
-    setpos( get_map().local_to_abs( p ) );
+    setpos( active_map_local_to_abs( p ) );
 }
 
 auto monster::setpos( const tripoint_abs_ms &p ) -> void
@@ -654,7 +661,7 @@ void monster::refill_udders()
 
 auto monster::spawn( const tripoint_bub_ms &p ) -> void
 {
-    pos_abs = get_map().local_to_abs( p );
+    pos_abs = active_map_local_to_abs( p );
     unset_dest();
 }
 

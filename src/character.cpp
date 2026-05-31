@@ -414,6 +414,13 @@ Character &get_player_character()
     return g->u;
 }
 
+static auto active_map_local_to_abs( const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( get_map().get_abs_sub() );
+    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(),
+                                      local.z() ) );
+}
+
 // *INDENT-OFF*
 Character::Character() :
     location_visitable<Character>(),
@@ -425,7 +432,7 @@ Character::Character() :
     last_climate_control_ret( false )
 {
     if( g != nullptr ) {
-        position = get_map().local_to_abs( tripoint_bub_ms::zero() );
+        position = bub_to_abs( tripoint_bub_ms::zero() );
     }
 
     str_max = 0;
@@ -840,7 +847,7 @@ tripoint_abs_ms Character::abs_pos() const
 
 auto Character::setpos( const tripoint_bub_ms &p ) -> void
 {
-    position = get_map().local_to_abs( p );
+    position = active_map_local_to_abs( p );
 }
 
 auto Character::setpos( const tripoint_abs_ms &p ) -> void
@@ -1247,8 +1254,8 @@ bool Character::check_outbounds_activity( player_activity &act )
 {
     map &here = get_map();
     if( ( act.placement != tripoint_abs_ms::zero() && act.placement != tripoint_abs_ms::min() &&
-          !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
-                  !here.inbounds( here.abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
+          !here.inbounds( abs_to_bub( tripoint_abs_ms( act.placement ) ) ) ) || ( !act.coords.empty() &&
+                  !here.inbounds( abs_to_bub( tripoint_abs_ms( act.coords.back() ) ) ) ) ) {
 
         add_msg( m_debug,
                  "npc %s at pos %d %d, activity target is not inbounds at %d %d therefore activity was stashed",

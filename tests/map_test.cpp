@@ -69,6 +69,12 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
     CHECK( player_reality_bubble_origin() == expected_origin );
     CHECK( abs_to_bub( player_abs ) == expected_bub );
     CHECK( bub_to_abs( expected_bub ) == player_abs );
+    CHECK( abs_to_bub( player_sm ) == tripoint_bub_sm( g_half_mapsize, g_half_mapsize,
+            player_abs.z() ) );
+    CHECK( bub_to_abs( tripoint_bub_sm( g_half_mapsize, g_half_mapsize, player_abs.z() ) ) ==
+           player_sm );
+    CHECK( abs_to_bub( player_sm.xy() ) == point_bub_sm( g_half_mapsize, g_half_mapsize ) );
+    CHECK( bub_to_abs( point_bub_sm( g_half_mapsize, g_half_mapsize ) ) == player_sm.xy() );
     CHECK( you.bub_pos() == expected_bub );
     CHECK( g->critter_at<avatar>( player_abs ) == &you );
 
@@ -80,25 +86,6 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
     CHECK( you.bub_pos() == moved_bub );
 }
 
-TEST_CASE( "map_local_conversions_preserve_absolute_z" )
-{
-    clear_all_state();
-
-    auto &here = get_map();
-    const auto map_origin = tripoint_abs_sm( here.get_abs_sub().xy(), 2 );
-    here.set_abs_sub( map_origin );
-
-    const auto local = tripoint_bub_ms( SEEX + 3, SEEY + 4, -1 );
-    const auto origin_ms = project_to<coords::ms>( map_origin );
-    const auto expected_abs = tripoint_abs_ms( tripoint( origin_ms.x() + local.x(),
-                              origin_ms.y() + local.y(), local.z() ) );
-
-    CHECK( here.local_to_abs( local ) == expected_abs );
-    CHECK( here.abs_to_local( expected_abs ) == local );
-    CHECK( here.bub_to_abs( local ) == expected_abs );
-    CHECK( here.abs_to_bub( expected_abs ) == local );
-}
-
 TEST_CASE( "update_map_uses_avatar_absolute_position" )
 {
     clear_all_state();
@@ -107,7 +94,7 @@ TEST_CASE( "update_map_uses_avatar_absolute_position" )
     auto &you = get_avatar();
     const auto old_origin = here.get_abs_sub();
     const auto destination = tripoint_bub_ms( g_half_mapsize_x + SEEX, g_half_mapsize_y, 0 );
-    const auto destination_abs = here.bub_to_abs( destination );
+    const auto destination_abs = map_local_to_abs( here, destination );
 
     you.setpos( destination_abs );
     const auto shift = g->update_map( you );
@@ -125,7 +112,7 @@ TEST_CASE( "monster_tracker_uses_absolute_positions" )
     auto &here = get_map();
     auto &you = get_avatar();
     const auto player_center = tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, 0 );
-    you.setpos( here.bub_to_abs( player_center ) );
+    you.setpos( map_local_to_abs( here, player_center ) );
 
     const auto monster_start = player_center + point_rel_ms( 2, 0 );
     auto *const mon = g->place_critter_at( mtype_id( "mon_zombie" ), monster_start );

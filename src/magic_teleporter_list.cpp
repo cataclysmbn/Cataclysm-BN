@@ -42,6 +42,12 @@ static bool popup_string( std::string &result, std::string &title )
     return true;
 }
 
+static auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 bool teleporter_list::activate_teleporter( const tripoint_abs_omt &omt_pt, const tripoint_bub_ms & )
 {
     std::string point_name;
@@ -66,9 +72,10 @@ static std::optional<tripoint_abs_ms> find_valid_teleporters_omt( const tripoint
     const tripoint_abs_sm sm_pt = project_to<coords::sm>( omt_pt );
     tinymap checker;
     checker.load( sm_pt, true );
+    const auto origin = project_to<coords::ms>( checker.get_abs_sub() );
     for( const auto &p : checker.points_on_zlevel() ) {
         if( checker.has_flag_furn( "TRANSLOCATOR", p ) ) {
-            return checker.bub_to_abs( p );
+            return tripoint_abs_ms( tripoint( origin.x() + p.x(), origin.y() + p.y(), p.z() ) );
         }
     }
     return std::nullopt;
@@ -84,7 +91,7 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     if( !global_dest ) {
         return false;
     }
-    auto local_dest = omt_dest.abs_to_bub( *global_dest ) + point( 60, 60 );
+    const auto local_dest = abs_ms_to_map_local( omt_dest, *global_dest ) + point( 60, 60 );
     you.add_effect( efftype_id( "ignore_fall_damage" ), 1_seconds, bodypart_str_id::NULL_ID(), 0,
                     true );
     g->place_player_overmap( omt_pt );

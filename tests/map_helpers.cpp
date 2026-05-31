@@ -26,6 +26,26 @@
 #include "submap.h"
 #include "type_id.h"
 
+auto map_local_to_abs( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(),
+                                      local.z() ) );
+}
+
+auto map_local_to_abs( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm
+{
+    const auto origin = m.get_abs_sub();
+    return tripoint_abs_sm( tripoint( origin.x() + local.x(), origin.y() + local.y(),
+                                      local.z() ) );
+}
+
+auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 // Remove all vehicles from the map
 void clear_vehicles()
 {
@@ -156,7 +176,8 @@ void clear_map()
 void put_player_underground()
 {
     // Make sure the player doesn't block the path of the monster being tested.
-    g->u.setpos( tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, -2 ) );
+    g->u.setpos( map_local_to_abs( get_map(),
+                 tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, -2 ) ) );
 }
 
 monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start )

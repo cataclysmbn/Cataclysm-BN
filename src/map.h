@@ -1865,75 +1865,6 @@ class map : public submap_load_listener
         /** return @ref abs_sub */
         tripoint_abs_sm get_abs_sub() const { return abs_sub; }
 
-        // Transitional map-local conversion helpers. These preserve the existing
-        // local x/y plus absolute z-level semantics used by map and tinymap callers.
-        auto local_to_abs( const tripoint_bub_ms &local ) const -> tripoint_abs_ms {
-            const auto origin = project_to<coords::ms>( abs_sub );
-            return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(),
-                                              local.z() ) );
-        }
-
-        auto abs_to_local( const tripoint_abs_ms &abs ) const -> tripoint_bub_ms {
-            const auto origin = project_to<coords::ms>( abs_sub );
-            return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
-        }
-
-        auto local_to_abs( const tripoint_bub_sm &local ) const -> tripoint_abs_sm {
-            return tripoint_abs_sm( tripoint( abs_sub.x() + local.x(), abs_sub.y() + local.y(),
-                                              local.z() ) );
-        }
-
-        auto abs_to_local( const tripoint_abs_sm &abs ) const -> tripoint_bub_sm {
-            return tripoint_bub_sm( tripoint( abs.x() - abs_sub.x(), abs.y() - abs_sub.y(), abs.z() ) );
-        }
-
-        auto local_to_abs( const point_bub_ms &local ) const -> point_abs_ms {
-            return project_to<coords::ms>( abs_sub ).xy() + local.reinterpret_as<point_rel_ms>();
-        }
-
-        auto abs_to_local( const point_abs_ms &abs ) const -> point_bub_ms {
-            return ( abs - project_to<coords::ms>( abs_sub ).xy() ).reinterpret_as<point_bub_ms>();
-        }
-
-        auto local_to_abs( const point_bub_sm &local ) const -> point_abs_sm {
-            return abs_sub.xy() + local.reinterpret_as<point_rel_sm>();
-        }
-
-        auto abs_to_local( const point_abs_sm &abs ) const -> point_bub_sm {
-            return ( abs - abs_sub.xy() ).reinterpret_as<point_bub_sm>();
-        }
-
-        auto bub_to_abs( const tripoint_bub_ms &bub ) const -> tripoint_abs_ms {
-            return local_to_abs( bub );
-        }
-
-        auto abs_to_bub( const tripoint_abs_ms &abs ) const -> tripoint_bub_ms {
-            return abs_to_local( abs );
-        }
-
-        auto bub_to_abs( const tripoint_bub_sm &bub ) const -> tripoint_abs_sm {
-            return local_to_abs( bub );
-        }
-
-        auto abs_to_bub( const tripoint_abs_sm &abs ) const -> tripoint_bub_sm {
-            return abs_to_local( abs );
-        }
-
-        auto bub_to_abs( const point_bub_ms &bub ) const -> point_abs_ms {
-            return local_to_abs( bub );
-        }
-
-        auto abs_to_bub( const point_abs_ms &abs ) const -> point_bub_ms {
-            return abs_to_local( abs );
-        }
-
-        auto bub_to_abs( const point_bub_sm &bub ) const -> point_abs_sm {
-            return local_to_abs( bub );
-        }
-
-        auto abs_to_bub( const point_abs_sm &abs ) const -> point_bub_sm {
-            return abs_to_local( abs );
-        }
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
         }
@@ -2496,8 +2427,12 @@ auto player_reality_bubble_origin() -> tripoint_abs_sm;
 
 auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms;
 auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms;
+auto bub_to_abs( const tripoint_bub_sm &p ) -> tripoint_abs_sm;
+auto abs_to_bub( const tripoint_abs_sm &p ) -> tripoint_bub_sm;
 auto bub_to_abs( const point_bub_ms &p ) -> point_abs_ms;
 auto abs_to_bub( const point_abs_ms &p ) -> point_bub_ms;
+auto bub_to_abs( const point_bub_sm &p ) -> point_abs_sm;
+auto abs_to_bub( const point_abs_sm &p ) -> point_bub_sm;
 
 /**
  * RAII guard that temporarily redirects get_map() to a different map object

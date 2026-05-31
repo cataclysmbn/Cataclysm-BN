@@ -7366,6 +7366,18 @@ void iuse_pocket_dimension::initialize_pocket( item &it ) const
     it.pocket_dim = pd;
 }
 
+static auto map_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
+}
+
+static auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 // Helper function to find a safe, passable position near the target
 static tripoint_bub_ms find_safe_spawn( const tripoint_bub_ms &target )
 {
@@ -7443,8 +7455,9 @@ void iuse_pocket_dimension::enter_pocket( player &p, item &it ) const
     // Only make the first entrance safe. If the player makes it dangerous later, that's on them.
     // No sneaky teleporting shenaneigans.
     if( new_pd ) {
-        const auto safe = find_safe_spawn( get_map().abs_to_bub( pd.entry_point ) );
-        pd.entry_point = get_map().bub_to_abs( safe );
+        const auto &here = get_map();
+        const auto safe = find_safe_spawn( abs_ms_to_map_local( here, pd.entry_point ) );
+        pd.entry_point = map_local_to_abs_ms( here, safe );
     }
 
     p.setpos( pd.entry_point );
@@ -7486,7 +7499,7 @@ auto iuse_portal_link::use( player &p, item &it, bool, const tripoint_bub_ms & )
     if( !required_portal_flag.empty() ) {
         portal_tile *nearby_portal = nullptr;
         for( const tripoint_bub_ms &adj : get_map().points_in_radius( p.bub_pos(), 1 ) ) {
-            auto abs = tripoint_abs_ms( get_map().bub_to_abs( adj ) );
+            auto abs = bub_to_abs( adj );
             auto *candidate = active_tiles::furn_at<portal_tile>( abs );
             if( candidate && candidate->linkable_item_flag == required_portal_flag &&
                 candidate->linked ) {
@@ -7594,8 +7607,9 @@ void iuse_pocket_dimension::exit_pocket( player &p, item &it ) const
     g->travel_to_dimension( return_dimension_id, return_world_type, std::nullopt,
                             return_preload_point );
 
-    const auto safe = find_safe_spawn( get_map().abs_to_bub( return_point ) );
-    p.setpos( get_map().bub_to_abs( safe ) );
+    const auto &here = get_map();
+    const auto safe = find_safe_spawn( abs_ms_to_map_local( here, return_point ) );
+    p.setpos( map_local_to_abs_ms( here, safe ) );
 
     // Single update_map call at the final position
     g->update_map( p );

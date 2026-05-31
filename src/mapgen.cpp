@@ -91,6 +91,31 @@
 #include "vpart_range.h"
 #include "weighted_list.h"
 
+static auto mapgen_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
+}
+
+static auto mapgen_local_to_abs_sm( const map &m, const tripoint_bub_sm &local ) -> tripoint_abs_sm
+{
+    const auto origin = m.get_abs_sub();
+    return tripoint_abs_sm( tripoint( origin.x() + local.x(), origin.y() + local.y(),
+                                      local.z() ) );
+}
+
+static auto abs_ms_to_mapgen_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
+static auto abs_sm_to_mapgen_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm
+{
+    const auto origin = m.get_abs_sub();
+    return tripoint_bub_sm( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 static const itype_id itype_avgas( "avgas" );
 static const itype_id itype_diesel( "diesel" );
 static const itype_id itype_gasoline( "gasoline" );
@@ -141,7 +166,8 @@ auto map::generate( const tripoint_abs_sm &p, const time_point &when,
             debugmsg( "Submap already exists at (%d, %d, %d)", smp.x(), smp.y(), p.z() );
             continue;
         }
-        auto *new_submap = new submap( bub_to_abs( tripoint_bub_sm( smp, p.z() ) ) );
+        const auto new_submap_abs = mapgen_local_to_abs_sm( *this, tripoint_bub_sm( smp, p.z() ) );
+        auto *new_submap = new submap( new_submap_abs );
         new_submap->last_touched = when;
         setsubmap( grid_pos, new_submap );
         // TODO: memory leak if the code below throws before the submaps get stored/deleted!
@@ -255,7 +281,7 @@ auto map::generate( const tripoint_abs_sm &p, const time_point &when,
 
         const tripoint_bub_sm pos( smp, p.z() );
         if( pos.x() <= 1 && pos.y() <= 1 ) {
-            const tripoint_abs_sm grid_abs = bub_to_abs( pos );
+            const tripoint_abs_sm grid_abs = mapgen_local_to_abs_sm( *this, pos );
             const int gridn = get_nonant( pos );
             submap *const sm = getsubmap( gridn );
             if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
@@ -2069,7 +2095,8 @@ class jmapgen_liquid_item : public jmapgen_piece
                 const auto &furn = dat.m.furn( target.xy() ).obj();
                 if( furn.fluid_grid && furn.fluid_grid->role == fluid_grid_role::tank &&
                     furn.fluid_grid->allowed_liquids.contains( migrated ) ) {
-                    const auto target_abs_omt = project_to<coords::omt>( dat.m.bub_to_abs( target ) );
+                    const auto target_abs_omt = project_to<coords::omt>( mapgen_local_to_abs_ms( dat.m,
+                                                target ) );
                     const auto added = fluid_grid::seed_liquid_charges_for_mapgen( target_abs_omt, migrated,
                                        newliquid->charges );
                     if( added > 0 ) {
@@ -2896,8 +2923,8 @@ class jmapgen_zone : public jmapgen_piece
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            const auto start = dat.m.bub_to_abs( tripoint_bub_ms( x.val, y.val, 0 ) );
-            const auto end = dat.m.bub_to_abs( tripoint_bub_ms( x.valmax, y.valmax, 0 ) );
+            const auto start = mapgen_local_to_abs_ms( dat.m, tripoint_bub_ms( x.val, y.val, 0 ) );
+            const auto end = mapgen_local_to_abs_ms( dat.m, tripoint_bub_ms( x.valmax, y.valmax, 0 ) );
             defer_zone_add( name, zone_type.get( dat ), faction.get( dat ), false, true, start,
                             end );
         }
@@ -5801,7 +5828,8 @@ character_id map::place_npc( const point_bub_ms &p, const string_id<npc_template
         return character_id(); //Do not generate an npc.
     }
     shared_ptr_fast<npc> temp = make_shared_fast<npc>();
-    const auto proj = project_remain<coords::sm>( bub_to_abs( tripoint_bub_ms( p, abs_sub.z() ) ) );
+    const auto proj = project_remain<coords::sm>( mapgen_local_to_abs_ms( *this,
+                      tripoint_bub_ms( p, abs_sub.z() ) ) );
     temp->load_npc_template( type );
     temp->spawn_at_precise( proj.quotient, proj.remainder_tripoint );
     temp->toggle_trait( trait_NPC_STATIC_NPC );
@@ -6055,7 +6083,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
     // debugmsg("n=%d x=%d y=%d MAPSIZE=%d ^2=%d", nonant, x, y, MAPSIZE, MAPSIZE*MAPSIZE);
     auto veh = std::make_unique<vehicle>( type, veh_fuel, veh_status, locked, has_keys );
     auto proj = project_remain<coords::sm>( p );
-    veh->abs_sm_pos = bub_to_abs( proj.quotient_tripoint );
+    veh->abs_sm_pos = mapgen_local_to_abs_sm( *this, proj.quotient_tripoint );
     veh->sm_ms_pos = proj.remainder;
     veh->place_spawn_items();
     // for backwards compatibility, we always spawn with a pivot point of (0,0) so
@@ -6067,7 +6095,7 @@ vehicle *map::add_vehicle( const std::variant<vgroup_id, vproto_id> &type_,
     vehicle *placed_vehicle = placed_vehicle_up.get();
 
     if( placed_vehicle != nullptr ) {
-        const auto placed_vehicle_sm = abs_to_bub( placed_vehicle->abs_sm_pos );
+        const auto placed_vehicle_sm = abs_sm_to_mapgen_local( *this, placed_vehicle->abs_sm_pos );
         auto *place_on_submap = get_submap_at_grid( placed_vehicle_sm );
         place_on_submap->vehicles.push_back( std::move( placed_vehicle_up ) );
         place_on_submap->is_uniform = false;
@@ -6111,11 +6139,11 @@ std::unique_ptr<vehicle> map::add_vehicle_to_map(
 
     for( std::vector<int>::const_iterator part = frame_indices.begin();
          part != frame_indices.end(); part++ ) {
-        // Use abs_part_location + this map's abs_to_bub so that during mapgen
+        // Use abs_part_location + explicit map-local conversion so that during mapgen
         // (where get_map() is the player map, not this tinymap) the position
         // checks reference the correct submap grid.
         const auto abs_pos = veh->abs_part_location( *part );
-        const auto bub_pos = abs_to_bub( abs_pos );
+        const auto bub_pos = abs_ms_to_mapgen_local( *this, abs_pos );
 
         //Don't spawn anything in water
         if( has_flag_ter( TFLAG_DEEP_WATER, bub_pos ) && !can_float ) {
@@ -6284,7 +6312,7 @@ void map::rotate( int turns, const bool setpos_safe )
             sm->rotate( turns );
 
             for( auto &veh : sm->vehicles ) {
-                veh->abs_sm_pos = bub_to_abs( p );
+                veh->abs_sm_pos = mapgen_local_to_abs_sm( *this, p );
             }
 
             update_vehicle_list( sm, abs_sub.z() );

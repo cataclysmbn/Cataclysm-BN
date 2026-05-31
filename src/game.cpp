@@ -266,6 +266,24 @@ static void init_bubble_config()
     init_bubble_config( get_option<int>( "REALITY_BUBBLE_SIZE" ) );
 }
 
+static auto map_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
+}
+
+static auto abs_ms_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
+static auto abs_sm_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> tripoint_bub_sm
+{
+    const auto origin = m.get_abs_sub();
+    return tripoint_bub_sm( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 static auto discard_monster_map_for_loaded_bubble( map &here,
         const std::string &dimension_id ) -> void
 {
@@ -1177,7 +1195,7 @@ vehicle *game::place_vehicle_nearby(
                            id, tinymap_center, random_entry( angles ), rng( 50, 80 ),
                            0, false, false, true );
         if( veh ) {
-            auto abs = target_map.bub_to_abs( tinymap_center );
+            auto abs = map_local_to_abs_ms( target_map, tinymap_center );
             const auto proj = project_remain<coords::sm>( abs );
             veh->abs_sm_pos = proj.quotient_tripoint;
             veh->sm_ms_pos = proj.remainder;
@@ -1269,7 +1287,7 @@ void game::load_npcs()
                 temp->place_on_map();
                 const auto sm_loc = project_to<coords::sm>( temp->abs_pos() );
                 if( !req_map.inbounds( sm_loc )
-                    || req_map.get_submap_at_grid( req_map.abs_to_bub( sm_loc ) ) == nullptr ) {
+                    || req_map.get_submap_at_grid( abs_sm_to_map_local( req_map, sm_loc ) ) == nullptr ) {
                     continue;
                 }
                 if( temp->marked_for_death ) {
@@ -5104,7 +5122,7 @@ void game::world_tick()
                     if( !sm_ptr->emitter_cache->empty() ) {
                         ++total_emitter_active_submaps;
                         ZoneScopedN( "field_emits" );
-                        const tripoint_bub_ms bub_sm_origin = m.abs_to_bub( project_to<coords::ms>( pos_sm ) );
+                        const auto bub_sm_origin = abs_ms_to_map_local( m, project_to<coords::ms>( pos_sm ) );
                         std::ranges::for_each( *sm_ptr->emitter_cache, [&]( const point_sm_ms & lp ) {
                             const tripoint_bub_ms local_pos = bub_sm_origin + tripoint_rel_ms( lp.x(), lp.y(), 0 );
                             std::ranges::for_each(
@@ -8036,8 +8054,7 @@ void game::print_terrain_info( const tripoint_bub_ms &lp, const catacurses::wind
     const auto &terrain = m.ter( lp ).obj();
     const auto terrain_color = terrain.color();
     const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt(
-                                   project_to<coords::omt>( m.bub_to_abs(
-                                           lp ) ) ) );
+                                   project_to<coords::omt>( bub_to_abs( lp ) ) ) );
     const auto location_color = cur_ter_m->get_color( uistate.overmap_show_land_use_codes );
     const auto terrain_desc = terrain.description.translated();
     const std::string tile = m.tername( lp );
@@ -8247,12 +8264,12 @@ void game::print_graffiti_info( const tripoint_bub_ms &lp, const catacurses::win
 
 bool game::check_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const
 {
-    return zone_manager::get_manager().has( type, m.bub_to_abs( where ) );
+    return zone_manager::get_manager().has( type, bub_to_abs( where ) );
 }
 
 bool game::check_near_zone( const zone_type_id &type, const tripoint_bub_ms &where ) const
 {
-    return zone_manager::get_manager().has_near( type, m.bub_to_abs( where ) );
+    return zone_manager::get_manager().has_near( type, bub_to_abs( where ) );
 }
 
 bool game::is_zones_manager_open() const
@@ -8520,12 +8537,12 @@ void game::zones_manager()
             const look_around_result second = look_around( /*show_window=*/false, center, *first.position,
                     true, true, false );
             if( second.position ) {
-                auto first_abs = m.bub_to_abs( tripoint_bub_ms( std::min( first.position->x(),
+                auto first_abs = bub_to_abs( tripoint_bub_ms( std::min( first.position->x(),
                                                second.position->x() ),
                                                std::min( first.position->y(), second.position->y() ),
                                                std::min( first.position->z(),
                                                        second.position->z() ) ) );
-                auto second_abs = m.bub_to_abs( tripoint_bub_ms( std::max( first.position->x(),
+                auto second_abs = bub_to_abs( tripoint_bub_ms( std::max( first.position->x(),
                                                 second.position->x() ),
                                                 std::max( first.position->y(), second.position->y() ),
                                                 std::max( first.position->z(),
@@ -8730,16 +8747,16 @@ void game::zones_manager()
                         static_popup message_pop;
                         message_pop.on_top( true );
                         message_pop.message( "%s", _( "Moving zone." ) );
-                        const auto zone_local_start_point = m.abs_to_bub( zone.get_start_point() );
-                        const auto zone_local_end_point = m.abs_to_bub( zone.get_end_point() );
+                        const auto zone_local_start_point = abs_to_bub( zone.get_start_point() );
+                        const auto zone_local_end_point = abs_to_bub( zone.get_end_point() );
                         // local position of the zone center, used to calculate the u.view_offset,
                         // could center the screen to the position it represents
-                        auto view_center = m.abs_to_bub( zone.get_center_point() );
+                        auto view_center = abs_to_bub( zone.get_center_point() );
                         const look_around_result result_local = look_around( false, view_center,
                                                                 zone_local_start_point, false, false,
                                                                 false, true, zone_local_end_point );
                         if( result_local.position ) {
-                            const auto new_start_point = m.bub_to_abs( *result_local.position );
+                            const auto new_start_point = bub_to_abs( *result_local.position );
                             if( new_start_point == zone.get_start_point() ) {
                                 break; // Nothing changed, don't save
                             }
@@ -8839,7 +8856,7 @@ void game::pre_print_all_tile_info( const tripoint_bub_ms &lp, const catacurses:
     // get global area info according to look_around caret position
     // TODO: fix point types
     const oter_id &cur_ter_m = get_overmapbuffer( current_dimension_id_ ).ter( tripoint_abs_omt(
-                                   project_to<coords::omt>( m.bub_to_abs( lp ) ) ) );
+                                   project_to<coords::omt>( bub_to_abs( lp ) ) ) );
     // we only need the area name and then pass it to print_all_tile_info() function below
     const std::string area_name = cur_ter_m->get_name();
     print_all_tile_info( lp, w_info, area_name, 1, first_line, last_line, cache );
@@ -12074,7 +12091,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
                             vp1 ) ) {
         u.stop_hauling();
     }
-    u.setpos( dest_loc );
+    u.setpos( map_local_to_abs_ms( m, dest_loc ) );
     m.invalidate_lightmap_caches();
     if( u.is_mounted() ) {
         monster *mon = u.mounted_creature.get();
@@ -12145,7 +12162,7 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
                     if( maybe_corpse->is_corpse() && maybe_corpse->can_revive() &&
                         !maybe_corpse->get_mtype()->bloodType().obj().has_acid ) {
                         u.assign_activity( activity_id( "ACT_PULP" ), calendar::INDEFINITELY_LONG, 0 );
-                        u.activity->placement = m.bub_to_abs( pos );
+                        u.activity->placement = bub_to_abs( pos );
                         u.activity->auto_resume = true;
                         u.activity->str_values.emplace_back( "auto_pulp_no_acid" );
                         return;
@@ -12638,8 +12655,7 @@ auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
     sounds::sound( fdest, effort.str_req * 2, sounds::sound_t::movement,
                    _( "a scraping noise." ), true, "misc", "scraping" );
 
-    auto *atd = active_tiles::furn_at<active_tile_data>
-                ( tripoint_abs_ms( m.bub_to_abs( fpos ) ) );
+    auto *atd = active_tiles::furn_at<active_tile_data>( bub_to_abs( fpos ) );
 
     // Swap furniture vars between tiles beforehand
     // because the furn_set call will clear the vars
@@ -12652,7 +12668,7 @@ auto game::grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool
     // Ignore grab destroy checks
     m.furn_set( fdest, m.furn( fpos ), atd ? atd->clone() : nullptr, true );
     m.furn_set( fpos, f_null, nullptr, true );
-    u.clear_memorized_overlay( m.bub_to_abs( tripoint_bub_ms( fpos ) ) );
+    u.clear_memorized_overlay( bub_to_abs( tripoint_bub_ms( fpos ) ) );
 
     if( fire_intensity == 1 && !pulling_furniture ) {
         m.remove_field( fpos, fd_fire );
@@ -14103,7 +14119,7 @@ void game::start_hauling( const tripoint_bub_ms &pos )
 
 std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bool peeking )
 {
-    const auto bub_pos = mp.abs_to_bub( u.abs_pos() );
+    const auto bub_pos = abs_ms_to_map_local( mp, u.abs_pos() );
     const auto movez = tripoint_rel_ms( 0, 0, z_after - get_levz() );
     // If there are stairs on the same x and y as we currently are, use those
     if( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, bub_pos + movez ) ) {
@@ -14122,7 +14138,7 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
     int best = INT_MAX;
     if( !stairs.has_value() ) {
         for( const auto &rel : overmap_terrain_tiles() ) {
-            const auto dest = mp.abs_to_bub( project_combine( omt_start, rel ) ) + movez;
+            const auto dest = abs_ms_to_map_local( mp, project_combine( omt_start, rel ) ) + movez;
             if( rl_dist( bub_pos, dest ) <= best &&
                 ( ( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, dest ) ) ||
                   ( ( movez.z() == 1 && ( mp.has_flag( TFLAG_GOES_DOWN, dest ) &&
@@ -14166,7 +14182,7 @@ std::optional<tripoint_bub_ms> game::find_or_make_stairs( map &mp, const int z_a
         bool &rope_ladder,
         bool peeking )
 {
-    const auto bub_pos = mp.abs_to_bub( u.abs_pos() );
+    const auto bub_pos = abs_ms_to_map_local( mp, u.abs_pos() );
     const int movez = z_after - bub_pos.z();
 
     // Try to find the stairs.
@@ -14359,7 +14375,7 @@ void game::vertical_notes( int z_before, int z_after )
 
 point_rel_sm game::update_map( Character &who )
 {
-    const auto map_local_pos = m.abs_to_bub( who.abs_pos() );
+    const auto map_local_pos = abs_ms_to_map_local( m, who.abs_pos() );
     int x = map_local_pos.x();
     int y = map_local_pos.y();
     return update_map( x, y );
@@ -14367,7 +14383,7 @@ point_rel_sm game::update_map( Character &who )
 
 point_rel_sm game::update_map( int &x, int &y )
 {
-    const auto target_abs = m.bub_to_abs( tripoint_bub_ms( x, y, get_levz() ) );
+    const auto target_abs = map_local_to_abs_ms( m, tripoint_bub_ms( x, y, get_levz() ) );
     point_rel_sm shift;
 
     while( x < g_half_mapsize_x ) {

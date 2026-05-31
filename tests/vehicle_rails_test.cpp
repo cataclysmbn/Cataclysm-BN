@@ -233,7 +233,7 @@ static void test_rail_movement( const test_case &t,
             REQUIRE( !veh.skidding );
         }
         for( const tripoint_abs_ms &pos : veh.get_points() ) {
-            ter_id ter_here = here.ter( here.abs_to_bub( pos ) );
+            ter_id ter_here = here.ter( abs_to_map_local( here, pos ) );
             if( !ter_here ) {
                 // 'REQUIRE' here is behind an if check to reduce impact on Catch statistics
                 REQUIRE( ter_here );

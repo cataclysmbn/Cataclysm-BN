@@ -66,7 +66,7 @@ auto make_horde_vehicle_spawn_fixture(
     auto &here = get_map();
     auto &you = get_avatar();
     const auto target_submap = tripoint_bub_sm( here.getmapsize() / 2, here.getmapsize() / 2, 0 );
-    const auto target_submap_abs = here.bub_to_abs( target_submap );
+    const auto target_submap_abs = map_local_to_abs( here, target_submap );
     const auto target_submap_origin = project_to<coords::ms>( target_submap );
     const auto target_submap_end = target_submap_origin + tripoint( SEEX - 1, SEEY - 1, 0 );
     const auto vehicle_origin = target_submap_origin + tripoint( SEEX / 2, SEEY / 2, 0 );
@@ -101,7 +101,7 @@ auto make_horde_vehicle_spawn_fixture(
     const auto horde_spawn_blocking_terrain = ter_id( "t_wall" );
     std::ranges::for_each( here.points_in_rectangle( target_submap_origin, target_submap_end ),
     [&]( const auto & p ) {
-        if( !vehicle_points.contains( here.bub_to_abs( p ) ) ) {
+        if( !vehicle_points.contains( map_local_to_abs( here, p ) ) ) {
             here.ter_set( p, horde_spawn_blocking_terrain );
         }
     } );

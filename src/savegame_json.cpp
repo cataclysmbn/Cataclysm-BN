@@ -77,6 +77,7 @@
 #include "lru_cache.h"
 #include "magic.h"
 #include "magic_teleporter_list.h"
+#include "map.h"
 #include "map_memory.h"
 #include "mapdata.h"
 #include "mattack_common.h"
@@ -120,6 +121,12 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+
+static auto map_local_to_abs_ms( const map &m, const tripoint_bub_ms &local ) -> tripoint_abs_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_abs_ms( tripoint( origin.x() + local.x(), origin.y() + local.y(), local.z() ) );
+}
 
 static const efftype_id effect_riding( "riding" );
 
@@ -461,8 +468,7 @@ void Character::load( const JsonObject &data )
 
     if( !data.read( "abs_pos", position ) ) {
         // Legacy: posx/posy/posz were bubble-space at save time.
-        // The map is always restored to the same abs_sub before characters load,
-        // so bub_to_abs conversion here recovers the correct absolute position.
+        // The map is always restored to the same abs_sub before characters load.
         tripoint_bub_ms legacy_bub;
         if( !data.read( "posx", legacy_bub.x() ) ) {
             debugmsg( "BAD PLAYER/NPC JSON: no 'abs_pos' or 'posx'?" );
@@ -471,7 +477,7 @@ void Character::load( const JsonObject &data )
         if( !data.read( "posz", legacy_bub.z() ) && g != nullptr ) {
             legacy_bub.z() = g->get_levz();
         }
-        position = get_map().bub_to_abs( legacy_bub );
+        position = map_local_to_abs_ms( get_map(), legacy_bub );
     }
     // stats
     data.read( "str_cur", str_cur );
@@ -2004,17 +2010,17 @@ auto monster::load( const JsonObject &data,
             const auto legacy_remainder = project_remain<coords::sm>( legacy_bub_pos );
             pos_abs = project_combine( abs_sm_pos, legacy_remainder.remainder );
         } else {
-            pos_abs = get_map().bub_to_abs( legacy_bub_pos );
+            pos_abs = map_local_to_abs_ms( get_map(), legacy_bub_pos );
         }
     }
 
     wandf = 0;
-    wander_pos = get_map().abs_to_bub( pos_abs );
+    wander_pos = abs_to_bub( pos_abs );
     if( !legacy_context ) {
         auto stored_wander_pos_abs = tripoint_abs_ms::zero();
         if( data.read( "wander_pos_abs", stored_wander_pos_abs ) ) {
             data.read( "wandf", wandf );
-            wander_pos = get_map().abs_to_bub( stored_wander_pos_abs );
+            wander_pos = abs_to_bub( stored_wander_pos_abs );
         } else {
             const auto has_legacy_wander_x = data.read( "wandx", wander_pos.x() );
             const auto has_legacy_wander_y = data.read( "wandy", wander_pos.y() );
@@ -2121,7 +2127,7 @@ auto monster::load( const JsonObject &data,
     tripoint destination;
     data.read( "destination", destination );
     const auto load_bub_pos = has_legacy_x &&
-                              has_legacy_y ? legacy_bub_pos : get_map().abs_to_bub( pos_abs );
+                              has_legacy_y ? legacy_bub_pos : abs_to_bub( pos_abs );
     goal = load_bub_pos + destination;
 
     upgrades = data.get_bool( "upgrades", type->upgrades );
@@ -2193,7 +2199,7 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     json.member( "unique_name", unique_name );
     json.member( "pos_abs", pos_abs );
     if( include_local_state ) {
-        json.member( "wander_pos_abs", get_map().bub_to_abs( wander_pos ) );
+        json.member( "wander_pos_abs", bub_to_abs( wander_pos ) );
         json.member( "wandf", wandf );
     }
     json.member( "hp", hp );

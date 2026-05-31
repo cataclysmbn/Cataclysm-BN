@@ -19,6 +19,12 @@
 #include "overmapbuffer_registry.h"
 #include "profile.h"
 
+static auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 distribution_grid::distribution_grid( const std::vector<tripoint_abs_sm> &global_submap_coords,
                                       mapbuffer &buffer ) :
     submap_coords( global_submap_coords ),
@@ -738,10 +744,11 @@ void grid_furn_transform_queue::apply( mapbuffer &mb, distribution_grid_tracker 
 
         const furn_t &old_t = sm->get_furn( p_within_sm ).obj();
         const furn_t &new_t = qt.id.obj();
-        const auto pos_local = m.abs_to_bub( qt.p );
+        const auto pos_player = abs_to_bub( qt.p );
+        const auto pos_local = abs_to_map_local( m, qt.p );
 
         if( !qt.msg.empty() ) {
-            if( u.sees( pos_local ) ) {
+            if( u.sees( pos_player ) ) {
                 add_msg( "%s", _( qt.msg ) );
             }
         }
@@ -790,4 +797,3 @@ void distribution_grid_tracker::update( time_point to )
     transform_queue.apply( mb, *this, get_player_character(), get_map() );
     transform_queue.clear();
 }
-

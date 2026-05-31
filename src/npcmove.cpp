@@ -242,7 +242,7 @@ tripoint_bub_ms npc::good_escape_direction( bool include_pos )
         std::optional<tripoint_abs_ms> retreat_target = mgr.get_nearest( retreat_zone, abs_pos(), 60,
                 fac_id );
         if( retreat_target && *retreat_target != abs_pos() ) {
-            update_path( here.abs_to_bub( tripoint_abs_ms( *retreat_target ) ) );
+            update_path( abs_to_bub( tripoint_abs_ms( *retreat_target ) ) );
             if( !path.empty() ) {
                 return path[0];
             }
@@ -768,7 +768,7 @@ void npc::regen_ai_cache()
     map &here = get_map();
     auto i = std::begin( ai_cache.sound_alerts );
     while( i != std::end( ai_cache.sound_alerts ) ) {
-        if( sees( here.abs_to_bub( i->abs_pos ) ) ) {
+        if( sees( abs_to_bub( i->abs_pos ) ) ) {
             i = ai_cache.sound_alerts.erase( i );
             if( ai_cache.sound_alerts.size() == 1 ) {
                 path.clear();
@@ -1002,7 +1002,7 @@ void npc::move()
         if( !activity_route.empty() && !has_destination_activity() ) {
             tripoint_bub_ms final_destination;
             if( destination_point ) {
-                final_destination = here.abs_to_bub( *destination_point );
+                final_destination = abs_to_bub( *destination_point );
             } else {
                 final_destination = activity_route.back();
             }
@@ -1116,7 +1116,7 @@ void npc::execute_action( npc_action action )
 
         case npc_investigate_sound: {
             auto cur_pos = bub_pos();
-            update_path( here.abs_to_bub( ai_cache.s_abs_pos ) );
+            update_path( abs_to_bub( ai_cache.s_abs_pos ) );
             move_to_next();
             if( bub_pos() == cur_pos ) {
                 ai_cache.stuck += 1;
@@ -1125,7 +1125,7 @@ void npc::execute_action( npc_action action )
         break;
 
         case npc_return_to_guard_pos: {
-            const auto local_guard_pos = here.abs_to_bub( *ai_cache.guard_pos );
+            const auto local_guard_pos = abs_to_bub( *ai_cache.guard_pos );
             update_path( local_guard_pos );
             if( bub_pos() == local_guard_pos || path.empty() ) {
                 move_pause();
@@ -1432,7 +1432,7 @@ void npc::execute_action( npc_action action )
                 debugmsg( "npc_goto_to_this_pos set to true, but no target set" );
                 break;
             }
-            update_path( get_map().abs_to_bub( goto_to_this_pos.value() ) );
+            update_path( abs_to_bub( goto_to_this_pos.value() ) );
             move_to_next();
 
             if( abs_pos() == goto_to_this_pos.value() ) {
@@ -2608,7 +2608,7 @@ void npc::move_to( const tripoint_bub_ms &pt, bool no_bashing, std::set<tripoint
                 if( !activity_route.empty() && !np->has_destination_activity() ) {
                     tripoint_bub_ms final_destination;
                     if( destination_point ) {
-                        final_destination = here.abs_to_bub( *destination_point );
+                        final_destination = abs_to_bub( *destination_point );
                     } else {
                         final_destination = activity_route.back();
                     }
@@ -3532,7 +3532,7 @@ bool npc::do_pulp()
     // TODO: Don't recreate the activity every time
     int old_moves = moves;
     assign_activity( ACT_PULP, calendar::INDEFINITELY_LONG, 0 );
-    activity->placement = get_map().bub_to_abs( *pulp_location );
+    activity->placement = bub_to_abs( *pulp_location );
     activity->do_turn( *this );
     return moves != old_moves;
 }
@@ -4319,7 +4319,7 @@ void npc::reach_omt_destination()
         // No point recalculating the path to get home
         move_to_next();
     } else if( guard_pos != tripoint_abs_ms::min() ) {
-        update_path( here.abs_to_bub( guard_pos ) );
+        update_path( abs_to_bub( guard_pos ) );
         move_to_next();
     } else {
         guard_pos = abs_pos();
@@ -4469,7 +4469,7 @@ void npc::go_to_omt_destination()
     }
     // TODO: fix point types
     auto sm_tri =
-        here.abs_to_bub( project_to<coords::ms>( omt_path.back() ) );
+        abs_to_bub( project_to<coords::ms>( omt_path.back() ) );
     auto centre_sub = sm_tri + point( SEEX, SEEY );
     if( !here.passable( centre_sub ) ) {
         auto candidates = here.points_in_radius( centre_sub, 2 );

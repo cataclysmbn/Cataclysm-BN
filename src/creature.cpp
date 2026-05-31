@@ -98,6 +98,12 @@ static const efftype_id effect_zapped( "zapped" );
 
 static const skill_id skill_throw( "throw" );
 
+static auto abs_to_active_map_local( const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( get_map().get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 const std::map<std::string, creature_size> Creature::size_map = {
     {"TINY",   creature_size::tiny},
     {"SMALL",  creature_size::small},
@@ -2564,11 +2570,11 @@ void Creature::setpos( const tripoint_abs_ms &pos )
 bool Creature::is_loaded() const
 {
     map &here = get_map();
-    return here.get_submap_at( abs_to_bub( abs_pos() ) ) != nullptr;
+    return here.get_submap_at( abs_to_active_map_local( abs_pos() ) ) != nullptr;
 }
 
 bool Creature::is_simulated() const
 {
     map &here = get_map();
-    return here.is_position_simulated( abs_to_bub( abs_pos() ) );
+    return here.is_position_simulated( abs_to_active_map_local( abs_pos() ) );
 }

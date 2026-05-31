@@ -32,6 +32,12 @@ const item *cost_split_helper( const item *it, int qty )
     return split;
 }
 
+auto abs_to_map_local( const map &m, const tripoint_abs_ms &abs ) -> tripoint_bub_ms
+{
+    const auto origin = project_to<coords::ms>( m.get_abs_sub() );
+    return tripoint_bub_ms( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
+}
+
 } // namespace
 
 
@@ -264,7 +270,7 @@ tile_item_location::tile_item_location( const tripoint_abs_ms &position )
 detached_ptr<item> tile_item_location::detach( item *it )
 {
     map &here = get_map();
-    const auto local = abs_to_bub( pos );
+    const auto local = abs_to_map_local( here, pos );
     map_stack items = here.i_at( local );
     for( auto iter = items.begin(); iter != items.end(); iter++ ) {
         if( *iter == it ) {
@@ -280,19 +286,19 @@ detached_ptr<item> tile_item_location::detach( item *it )
 void tile_item_location::attach( detached_ptr<item> &&obj )
 {
     map &here = get_map();
-    map_stack items = here.i_at( abs_to_bub( pos ) );
+    map_stack items = here.i_at( abs_to_map_local( here, pos ) );
     items.insert( std::move( obj ) );
 }
 
 bool tile_item_location::is_loaded( const item * ) const
 {
     map &here = get_map();
-    return here.inbounds( pos );
+    return here.inbounds( project_to<coords::sm>( pos ) );
 }
 
 tripoint_bub_ms tile_item_location::position( const item * ) const
 {
-    return abs_to_bub( pos );
+    return abs_to_map_local( get_map(), pos );
 }
 
 item_location_type tile_item_location::where() const
@@ -312,10 +318,10 @@ int tile_item_location::obtain_cost( const Character &ch, int qty, const item *i
 std::string tile_item_location::describe( const Character *ch, const item * ) const
 {
     map &here = get_map();
-    const auto local = abs_to_bub( pos );
+    const auto local = abs_to_map_local( here, pos );
     std::string res = here.name( local );
     if( ch ) {
-        res += std::string( " " ) += direction_suffix( ch->bub_pos().raw(), local.raw() );
+        res += std::string( " " ) += direction_suffix( ch->bub_pos().raw(), abs_to_bub( pos ).raw() );
     }
     return res;
 }
