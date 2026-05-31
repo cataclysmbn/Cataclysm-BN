@@ -617,7 +617,7 @@
     "//": "I'm not sure if 105mm and 120mm electric primers are interchangeable, but as with most in-game primers they're represented in abstract.",
     "category": "spare_parts",
     "price": "30 USD",
-    "price_postapoc": 1500,
+    "price_postapoc": "15 USD",
     "name": { "str_sp": "electric primer" },
     "symbol": "=",
     "color": "dark_gray",

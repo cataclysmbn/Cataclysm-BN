@@ -85,5 +85,31 @@
       { "item": "id_industrial", "prob": 20 },
       { "group": "recycle_steel", "count": [ 4, 8 ] }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_zombie_foreman_death_drops",
+    "entries": [
+      { "item": "rag", "count": [ 3, 6 ], "prob": 50 },
+      { "item": "hat_hard", "damage": [ 1, 4 ], "prob": 100 },
+      { "group": "clothing_work_boots", "damage": [ 1, 4 ] },
+      { "group": "clothing_work_pants", "damage": [ 1, 4 ] },
+      { "group": "underwear", "damage": [ 1, 4 ] },
+      {
+        "distribution": [
+          { "item": "ear_plugs", "prob": 50, "damage": [ 1, 4 ] },
+          { "item": "attached_ear_plugs_off", "prob": 50, "damage": [ 1, 4 ] }
+        ],
+        "prob": 100
+      },
+      { "group": "supplies_electronics", "prob": 100 },
+      { "item": "toolbox_workshop", "prob": 100 },
+      { "item": "sewermap", "prob": 100 },
+      { "item": "id_industrial", "prob": 100 },
+      { "item": "id_science", "prob": 100 },
+      { "item": "id_military", "prob": 100 },
+      { "item": "labmap_mission", "prob": 100 }
+    ]
   }
 ]

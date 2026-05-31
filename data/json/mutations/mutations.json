@@ -164,7 +164,7 @@
     "starting_trait": true,
     "types": [ "HEALING" ],
     "changes_to": [ "FASTHEALER2" ],
-    "category": [ "MEDICAL" ],
+    "category": [ "MEDICAL", "CHIMERA" ],
     "healing_awake": 0.2,
     "healing_resting": 0.5,
     "mending_modifier": 0.5
@@ -214,7 +214,7 @@
     "starting_trait": true,
     "valid": false,
     "cancels": [ "MORE_PAIN", "MORE_PAIN2", "MORE_PAIN3" ],
-    "category": [ "MEDICAL" ]
+    "category": [ "MEDICAL", "CHIMERA" ]
   },
   {
     "type": "mutation",
@@ -1967,8 +1967,59 @@
     "armor": [ { "parts": "ALL", "physical": 5 } ],
     "category": [ "CHIMERA" ],
     "types": [ "SKIN" ],
+    "changes_to": [ "SUBDERMALARMOR" ],
     "prereqs": [ "PATCHSKIN1" ],
     "flags": [ "FURRY" ]
+  },
+  {
+    "type": "mutation",
+    "id": "SUBDERMALARMOR",
+    "name": { "str": "Keratinous subdermal layer" },
+    "points": 4,
+    "visibility": 1,
+    "ugliness": 1,
+    "purifiable": false,
+    "valid": false,
+    "bodytemp_modifiers": [ 150, 250 ],
+    "bodytemp_sleep": 20,
+    "encumbrance_always": [ [ "torso", 10 ], [ "arm_l", 10 ], [ "arm_r", 10 ], [ "leg_l", 10 ], [ "leg_r", 10 ], [ "head", 10 ] ],
+    "description": "Your chaotic skin has wholly compressed all the different traits of animals into a thin, subdermal layer of armor. Not as good as fur for keeping you warm, but highly protective and you once more can blend in with the hairless apes. Though you are slightly heavier.",
+    "armor": [ { "parts": "ALL", "physical": 12 } ],
+    "passive_mods": { "dex_mod": -2 },
+    "category": [ "CHIMERA" ],
+    "types": [ "SKIN" ],
+    "prevents": [ "DEFORMED", "DEFORMED2", "DEFORMED3", "HOOVES", "UNSTABLE" ],
+    "transform": { "target": "CHIMERAARMOR", "msg_transform": "Your skin morphs into a hideous armor of... Something!", "moves": 100 },
+    "prereqs": [ "PATCHSKIN2" ]
+  },
+  {
+    "type": "mutation",
+    "id": "CHIMERAARMOR",
+    "name": { "str": "Chimera Shell" },
+    "points": 0,
+    "visibility": 10,
+    "ugliness": 80,
+    "purifiable": false,
+    "valid": false,
+    "bodytemp_modifiers": [ 250, 500 ],
+    "bodytemp_sleep": 100,
+    "prevents": [ "DEFORMED", "DEFORMED2", "DEFORMED3", "HOOVES" ],
+    "description": "Your subdermal armor has unfolded, providing a grotesque layer of protection against bullets, blades and human interaction. You shouldn't bother trying to do precise actions though, your hands are I'll suited for those things. Your metabolism has also massively accelerated, burning calories at a fast rate for increased regeneration speed.",
+    "movecost_swim_modifier": 0.8,
+    "restricts_gear": [ "TORSO", "HEAD", "leg_l", "leg_r", "arm_l", "arm_r" ],
+    "allow_soft_gear": true,
+    "metabolism_modifier": 3,
+    "mending_modifier": 2,
+    "healing_awake": 2,
+    "crafting_speed_modifier": 0.5,
+    "construction_speed_modifier": 0.5,
+    "speed_modifier": 1.2,
+    "armor": [ { "parts": "ALL", "physical": 20 } ],
+    "transform": {
+      "target": "SUBDERMALARMOR",
+      "msg_transform": "Your armor retracts, reverting you to your old, inferior look.",
+      "moves": 100
+    }
   },
   {
     "type": "mutation",
@@ -2970,6 +3021,7 @@
     "mixed_effect": true,
     "description": "Your fangs have grown extremely large and incredibly sharp.  They make it impossible to wear mouthgear and difficult to eat… but leave nasty wounds when you bite.",
     "types": [ "TEETH" ],
+    "prevents": [ "MOUTH_FLAPS" ],
     "prereqs": [ "FANGS" ],
     "threshreq": [ "THRESH_FELINE", "THRESH_CHIMERA" ],
     "category": [ "FELINE", "CHIMERA" ],
@@ -4817,7 +4869,7 @@
     "bodytemp_modifiers": [ 0, 4000 ],
     "description": "You consume three times as much food as the average human to maintain your inefficient body.  All the excess heat it generates could let you survive a snowstorm naked.",
     "prereqs": [ "HUNGER2" ],
-    "leads_to": [ "EATHEALTH" ],
+    "changes_to": [ "EATHEALTH" ],
     "types": [ "METABOLISM" ],
     "category": [ "CHIMERA" ],
     "metabolism_modifier": 2
@@ -5127,8 +5179,7 @@
     "name": { "str": "Genetic Chaos" },
     "points": -4,
     "description": "Your body alters itself rapidly, and without your intervention or conscious control.",
-    "prereqs": [ "UNSTABLE", "MUT_JUNKIE" ],
-    "category": [ "CHIMERA" ]
+    "prereqs": [ "UNSTABLE", "MUT_JUNKIE" ]
   },
   {
     "type": "mutation",

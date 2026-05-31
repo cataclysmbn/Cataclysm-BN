@@ -589,11 +589,12 @@ class monster : public Creature, public location_visitable<monster>
         // eligible on the first turn, which is correct).
         int next_turn = 0;
 
-        // LOD tier assigned by game::tier_assign_all() each monmove() pass.
+        // LOD tier assigned by game::tier_assign_all() on normal monmove passes.
         //   0 = Full   (≤20 tiles from player, or has an active target)
         //   1 = Coarse (20–60 tiles: reuse cached path, skip faction queries)
         //   2 = Macro  (>60 tiles: single Manhattan step every MACRO_INTERVAL)
-        // Transient — not saved or loaded; recalculated each monmove().
+        // Transient — not saved or loaded; activity skips may reuse stale tiers
+        // within one fixed-window batch.
         int8_t lod_tier     = 0;
         int     lod_cooldown = 0;  // turns remaining before demotion is allowed
 

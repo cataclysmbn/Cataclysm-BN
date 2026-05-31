@@ -1,0 +1,39 @@
+[
+  {
+    "type": "npc",
+    "id": "NPC_labguard1_docmission",
+    "name_suffix": "security guard",
+    "//": "spawns at the survivor holdout from the doctor mission 5",
+    "class": "NC_SUPERLABGUARD",
+    "attitude": 0,
+    "mission": 8,
+    "chat": "TALK_LABGUARD1_DOCMISSION",
+    "faction": "old_guard"
+  },
+  {
+    "id": [ "TALK_LABGUARD1_DOCMISSION" ],
+    "type": "talk_topic",
+    "dynamic_line": "I hope those damn things don't come back for us...",
+    "responses": [
+      { "text": "How did you end up here?", "topic": "TALK_LABGUARD1_DESCRIBE" },
+      {
+        "text": "Can you help me?",
+        "topic": "TALK_LABGUARD1_DENY_HELP",
+        "condition": { "u_has_mission": "MISSION_TCL_CLEANUP_1" }
+      },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": [ "TALK_LABGUARD1_DESCRIBE" ],
+    "type": "talk_topic",
+    "dynamic_line": "Was just another day at work, was about to go on my patrol when someone came over the loudspeaker and announced an emergency evacuation.  'Course, I couldn't leave till we got all the eggheads out, so I was going to my station when I heard gunfire in the halls.  I peeked my head out and... and these things, these black things were tearing everyone up.  I don't know who or what they were, but they were surrounded by shadow, and I saw one of em shrug off a hit from a soldier's M4.  At that point, I knew this was above my paygrade, and I ran like hell, which is how I met up with the rest of the group, and we took shelter down here.",
+    "responses": [ { "text": "Ok, bye.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_LABGUARD1_DENY_HELP" ],
+    "type": "talk_topic",
+    "dynamic_line": "Sorry, I'm not going out there again.  Besides, these \"geniuses\" are the only way I'm getting out of here, and they couldn't shoot if their life depended upon it.",
+    "responses": [ { "text": "Ok, bye.", "topic": "TALK_DONE" } ]
+  }
+]

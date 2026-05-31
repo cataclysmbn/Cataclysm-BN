@@ -103,17 +103,16 @@ static bool select_autopickup_items( const std::vector<std::list<item_stack::ite
                 const std::string item_name = begin->tname( 1, false );
 
                 //Check the Pickup Rules
-                if( get_auto_pickup().check_item( item_name ) == RULE_WHITELISTED ) {
+                if( get_auto_pickup().check_item( *begin ) == RULE_WHITELISTED ) {
                     do_pickup = true;
                 } else if( begin->is_container() && !begin->is_container_empty() &&
-                           get_auto_pickup().check_item( begin->get_contained().tname( 1, false ) ) == RULE_WHITELISTED ) {
+                           get_auto_pickup().check_item( begin->get_contained() ) == RULE_WHITELISTED ) {
                     do_pickup = true;
-                } else if( get_auto_pickup().check_item( item_name ) != RULE_BLACKLISTED ) {
+                } else if( get_auto_pickup().check_item( *begin ) != RULE_BLACKLISTED ) {
                     //No prematched pickup rule found
                     //check rules in more detail
-                    get_auto_pickup().create_rule( begin );
 
-                    if( get_auto_pickup().check_item( item_name ) == RULE_WHITELISTED ) {
+                    if( get_auto_pickup().check_item( *begin ) == RULE_WHITELISTED ) {
                         do_pickup = true;
                     }
                 }
@@ -126,7 +125,7 @@ static bool select_autopickup_items( const std::vector<std::list<item_stack::ite
                     if( weight_limit && volume_limit ) {
                         if( begin->volume() <= units::from_milliliter( volume_limit * 50 ) &&
                             begin->weight() <= weight_limit * 50_gram &&
-                            get_auto_pickup().check_item( item_name ) != RULE_BLACKLISTED ) {
+                            get_auto_pickup().check_item( *begin ) != RULE_BLACKLISTED ) {
                             do_pickup = true;
                         }
                     }

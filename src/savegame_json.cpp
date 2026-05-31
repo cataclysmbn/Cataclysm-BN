@@ -933,9 +933,9 @@ void Character::store( JsonOut &json ) const
     if( power_level < 1_kJ ) {
         json.member( "power_level", std::to_string( units::to_joule( power_level ) ) + " J" );
     } else {
-        json.member( "power_level", units::to_kilojoule( power_level ) );
+        json.member( "power_level", std::to_string( units::to_kilojoule( power_level ) ) + " kJ" );
     }
-    json.member( "max_power_level", units::to_kilojoule( max_power_level ) );
+    json.member( "max_power_level", std::to_string( units::to_kilojoule( max_power_level ) ) + " kJ" );
 
     if( !overmap_time.empty() ) {
         json.member( "overmap_time" );

@@ -168,6 +168,50 @@ TEST_CASE( "Rate of rotting" )
     }
 }
 
+TEST_CASE( "Preserving containers stop contained food rot" )
+{
+    SECTION( "direct rot queries do not age food in a sealed can" ) {
+        prepare_map_storage_test();
+
+        auto sealed_can = item::in_its_container( item::spawn( "offal_canned" ) );
+        REQUIRE( sealed_can->goes_bad_after_opening( true ) );
+        REQUIRE( !sealed_can->contents.empty() );
+
+        item &food = sealed_can->contents.front();
+        REQUIRE( food.goes_bad() );
+
+        calendar::turn += 20_days;
+
+        CHECK( food.get_rot() == 0_turns );
+        CHECK( !food.rotten() );
+    }
+
+    SECTION( "removed food starts rotting when opened" ) {
+        prepare_map_storage_test();
+
+        auto sealed_jar = item::in_container( itype_id( "jar_glass_sealed" ),
+                                              item::spawn( "meat_cooked" ) );
+        REQUIRE( sealed_jar->goes_bad_after_opening( true ) );
+        REQUIRE( !sealed_jar->contents.empty() );
+
+        calendar::turn += 20_days;
+
+        auto removed = detached_ptr<item>();
+        sealed_jar->contents.front().attempt_detach( [&removed]( detached_ptr<item> &&it ) {
+            removed = std::move( it );
+            return detached_ptr<item>();
+        } );
+
+        REQUIRE( removed );
+        REQUIRE( removed->goes_bad() );
+        CHECK( removed->get_rot() == 0_turns );
+
+        calendar::turn += 20_minutes;
+
+        CHECK( removed->get_rot() > 0_turns );
+    }
+}
+
 TEST_CASE( "Items rot away" )
 {
     SECTION( "Item in reality bubble rots away" ) {

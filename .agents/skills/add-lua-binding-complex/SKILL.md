@@ -1,11 +1,13 @@
 ---
-description: Add comprehensive Lua bindings for complex C++ classes with methods, inheritance, and constructors
-argument-hint: ClassName [binding-file]
+name: add-lua-binding-complex
+description: Add comprehensive Cataclysm-BN Lua bindings for complex C++ classes with methods, inheritance, constructors, properties, operators, and ownership rules.
+metadata:
+  argument-hint: ClassName [binding-file]
 ---
 
 # Add Complex Lua Binding
 
-This command helps you create comprehensive Lua bindings for complex C++ classes including:
+This skill helps you create comprehensive Lua bindings for complex C++ classes including:
 
 - Classes with methods and properties
 - Inheritance hierarchies

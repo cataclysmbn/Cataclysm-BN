@@ -63,7 +63,7 @@
     "to_hit": 1,
     "loudness": 2,
     "range": 6,
-    "dispersion": 150,
+    "dispersion": 6000,
     "durability": 8
   },
   {

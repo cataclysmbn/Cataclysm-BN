@@ -954,6 +954,21 @@ TEST_CASE( "lua_require_dotted", "[lua]" )
     REQUIRE( result_mul == 21 );  // 3 * 7
 }
 
+TEST_CASE( "lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]" )
+{
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "cooking_enjoy_bonus_test.lua" );
+
+    CHECK( test_data.get<std::string>( "high_skill_var_name" ) == "comestible_fun" );
+    CHECK( test_data.get<int>( "high_skill_fun" ) == 15 );
+    CHECK( test_data.get<int>( "high_skill_bad_fun" ) == -5 );
+    CHECK( test_data.get<std::string>( "zero_skill_var_name" ) == "comestible_fun" );
+    CHECK( test_data.get<int>( "zero_skill_fun" ) == 10 );
+}
+
 static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
 {
     state.lua = make_lua_state();
@@ -1027,6 +1042,22 @@ static auto init_test_lua_hook_state( cata::lua_state &state ) -> void
         return cata::run_hooks( name, nullptr, { .exit_early = true, .state = &state } );
     } );
     lua.globals()["cata"] = cata_tbl;
+}
+
+TEST_CASE( "lua_has_hooks_tracks_registered_entries", "[lua]" )
+{
+    cata::lua_state state;
+    init_test_lua_hook_state( state );
+    sol::state &lua = state.lua;
+
+    auto hook_list = lua.create_table();
+    lua.globals()["game"]["hooks"]["on_creature_do_turn"] = hook_list;
+
+    CHECK_FALSE( cata::has_hooks( "on_creature_do_turn", { .state = &state } ) );
+    CHECK_FALSE( cata::has_hooks( "on_invalid_hook_for_test", { .state = &state } ) );
+
+    hook_list[1] = []( sol::table ) {};
+    CHECK( cata::has_hooks( "on_creature_do_turn", { .state = &state } ) );
 }
 
 TEST_CASE( "lua_hooks_order_and_chaining", "[lua]" )

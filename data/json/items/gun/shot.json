@@ -292,7 +292,7 @@
     "clip_size": 2,
     "ascii_picture": "db_pipe_gun",
     "modes": [ [ "DEFAULT", "single", 1 ], [ "DOUBLE", "double", 2 ] ],
-    "relative": { "weight": 500, "volume": 1, "price": 5000 },
+    "relative": { "weight": "500 g", "volume": "250 ml", "price": "50 USD" },
     "barrel_volume": "750 ml",
     "valid_mod_locations": [
       [ "accessories", 2 ],

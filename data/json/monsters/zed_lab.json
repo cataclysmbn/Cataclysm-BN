@@ -121,6 +121,20 @@
     "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
   },
   {
+    "id": "mon_zombie_scientist_admin",
+    "copy-from": "mon_zombie_scientist",
+    "looks_like": "mon_zombie_nullfield",
+    "type": "MONSTER",
+    "name": { "str": "zombie lab administrator" },
+    "description": "Clad in a lab coat adorned prominently with an array of badges, this zombie was likely some sort of supervisor or administrator for the lab.  Though most of its IDs are useless now that the lab is on lockdown, it likely still carries a useful door override code.",
+    "relative": { "hp": 50, "speed": -10, "melee_dice": 1 },
+    "special_attacks": [ [ "scratch", 20 ] ],
+    "death_drops": "mon_zombie_scientist_admin_death_drops",
+    "special_when_hit": [ "ZAPBACK", 100 ],
+    "harvest": "CBM_SCI",
+    "delete": { "upgrades": { "half_life": 28, "into_group": "GROUP_ZOMBIE_SCIENCE_UPGRADE" } }
+  },
+  {
     "id": "mon_zombie_labsecurity",
     "type": "MONSTER",
     "name": { "str": "zombie security guard" },

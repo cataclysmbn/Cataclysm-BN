@@ -1,8 +1,10 @@
 #include "catch/catch.hpp"
 
 #include <cstdlib>
+#include <functional>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <vector>
 
 #include "avatar.h"
@@ -16,13 +18,21 @@
 #include "map_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
+#include "ui.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
 #include "vehicle_selector.h"
+#include "veh_type.h"
 #include "weather.h"
 
-static const itype_id fuel_type_battery( "battery" );
-static const itype_id fuel_type_plut_cell( "plut_cell" );
+namespace
+{
+const auto fuel_type_battery = itype_id( "battery" );
+const auto fuel_type_plut_cell = itype_id( "plut_cell" );
+const auto vpart_minireactor = vpart_id( "minireactor" );
+const auto vpart_plut_generator = vpart_id( "vp_plut_generator" );
+
+} // namespace
 
 TEST_CASE( "vehicle power with reactor and solar panels", "[vehicle][power]" )
 {
@@ -55,6 +65,104 @@ TEST_CASE( "vehicle power with reactor and solar panels", "[vehicle][power]" )
                         CHECK( veh_ptr->fuel_left( fuel_type_battery ) == 100 );
                     }
                 }
+            }
+        }
+    }
+
+    SECTION( "vehicle with reactor and perpetual plutonium generator" ) {
+        const auto reactor_origin = tripoint_bub_ms( 15, 15, 0 );
+        auto *veh_ptr = here.add_vehicle( vproto_id( "reactor_plutonium_generator_test" ), reactor_origin,
+                                          0_degrees, 0, 0 );
+        REQUIRE( veh_ptr != nullptr );
+
+        namespace ranges = std::ranges;
+
+        const auto reactor_part_matches = [veh_ptr]( const auto & id ) {
+            return [veh_ptr, &id]( const auto part_index ) {
+                return veh_ptr->part_info( part_index ).get_id() == id;
+            };
+        };
+        const auto minireactor_iter = ranges::find_if( veh_ptr->reactors,
+                                      reactor_part_matches( vpart_minireactor ) );
+        const auto plut_generator_iter = ranges::find_if( veh_ptr->reactors,
+                                         reactor_part_matches( vpart_plut_generator ) );
+        REQUIRE( minireactor_iter != veh_ptr->reactors.end() );
+        REQUIRE( plut_generator_iter != veh_ptr->reactors.end() );
+
+        const auto minireactor_index = *minireactor_iter;
+        const auto plut_generator_index = *plut_generator_iter;
+
+        CHECK( veh_ptr->part_info( plut_generator_index ).has_flag( "PERPETUAL" ) );
+        CHECK_FALSE( veh_ptr->part_info( plut_generator_index ).has_flag( VPFLAG_REACTOR ) );
+
+        auto &minireactor = veh_ptr->part( minireactor_index );
+        auto &plut_generator = veh_ptr->part( plut_generator_index );
+        CHECK( plut_generator.is_perpetual_power_source() );
+        CHECK_FALSE( plut_generator.is_reactor() );
+        minireactor.enabled = true;
+        plut_generator.enabled = true;
+
+        WHEN( "the reactor electronics menu action is used" ) {
+            auto options = std::vector<uilist_entry> {};
+            auto actions = std::vector<std::function<void()>> {};
+            veh_ptr->add_toggle_to_opts( options, actions, "reactor", 'r', "REACTOR" );
+            REQUIRE( options.size() == 1 );
+            REQUIRE( actions.size() == 1 );
+            actions.front()();
+
+            THEN( "the minireactor is toggled but the plutonium generator stays enabled" ) {
+                CHECK_FALSE( minireactor.enabled );
+                CHECK( plut_generator.enabled );
+            }
+        }
+
+        WHEN( "the plutonium generator enabled flag is false" ) {
+            minireactor.enabled = false;
+            plut_generator.enabled = false;
+
+            THEN( "the plutonium generator still provides reactor power" ) {
+                CHECK( veh_ptr->is_part_on( plut_generator_index ) );
+                CHECK( veh_ptr->max_reactor_epower_w() == veh_ptr->part_info( plut_generator_index ).epower );
+            }
+        }
+    }
+
+    SECTION( "vehicle with perpetual plutonium generator" ) {
+        const auto plut_generator_origin = tripoint_bub_ms( 20, 20, 0 );
+        auto *veh_ptr = here.add_vehicle( vproto_id( "plutonium_generator_test" ), plut_generator_origin,
+                                          0_degrees, 0, 0 );
+        REQUIRE( veh_ptr != nullptr );
+
+        namespace ranges = std::ranges;
+
+        const auto is_plut_generator = [veh_ptr]( const auto part_index ) {
+            return veh_ptr->part_info( part_index ).get_id() == vpart_plut_generator;
+        };
+        const auto plut_generator_iter = ranges::find_if( veh_ptr->reactors, is_plut_generator );
+        REQUIRE( plut_generator_iter != veh_ptr->reactors.end() );
+
+        const auto plut_generator_index = *plut_generator_iter;
+        auto &plut_generator = veh_ptr->part( plut_generator_index );
+        plut_generator.enabled = false;
+
+        CHECK( plut_generator.is_perpetual_power_source() );
+        CHECK_FALSE( plut_generator.is_reactor() );
+        CHECK( veh_ptr->is_part_on( plut_generator_index ) );
+        CHECK( veh_ptr->max_reactor_epower_w() == veh_ptr->part_info( plut_generator_index ).epower );
+
+        veh_ptr->discharge_battery( veh_ptr->fuel_left( fuel_type_battery ) );
+        REQUIRE( veh_ptr->fuel_left( fuel_type_battery ) == 0 );
+
+        WHEN( "the plutonium generator charges the battery without fuel or enabled state" ) {
+            for( const auto ignored : std::views::iota( 0, 100 ) ) {
+                ( void )ignored;
+                veh_ptr->power_parts();
+            }
+
+            THEN( "the battery gains charge while the generator remains untoggled" ) {
+                CHECK( veh_ptr->fuel_left( fuel_type_battery ) > 0 );
+                CHECK_FALSE( plut_generator.enabled );
+                CHECK( veh_ptr->is_part_on( plut_generator_index ) );
             }
         }
     }
