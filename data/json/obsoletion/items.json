@@ -634,7 +634,7 @@
     "description": "This is a small improvised wood stove, made from a metal can or similar container of the right size.  Useful for defrosting and reheating food, uses simple tinder.",
     "weight": "500 g",
     "volume": "250 ml",
-    "price": "0 cent",
+    "price": "0 USD",
     "to_hit": -1,
     "bashing": 2,
     "material": "steel",

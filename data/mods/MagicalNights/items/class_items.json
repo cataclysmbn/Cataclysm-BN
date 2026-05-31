@@ -226,7 +226,7 @@
     "storage": "1 L",
     "symbol": "[",
     "description": "A custom-built leather utility belt that instantly creates any tool that you reach for.  Activate to sheathe/draw a weapon.",
-    "price": "5 kUSD",
+    "price": "5000 USD",
     "material": [ "leather", "steel" ],
     "volume": "4 L",
     "flags": [ "VARSIZE", "WATER_FRIENDLY", "STURDY", "WAIST", "OVERSIZE" ],

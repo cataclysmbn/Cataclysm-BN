@@ -109,7 +109,7 @@
     "price": "6200 USD",
     "durability": 9,
     "modes": [ [ "DEFAULT", "low auto", 3 ], [ "AUTO", "high auto", 14 ] ],
-    "relative": { "weight": "2 kg", "volume": "1750 ml", "dispersion": 50 },
+    "relative": { "weight": "2000 g", "volume": "1750 ml", "dispersion": 50 },
     "magazines": [ [ "223", [ "lw223mag", "lw223bigmag", "belt223" ] ] ],
     "built_in_mods": [ "lead_acog_scope", "lead_barrel_heavy_duty", "lead_bipod", "lead_grip", "lead_stabilizer" ],
     "valid_mod_locations": [

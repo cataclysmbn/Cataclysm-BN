@@ -7743,10 +7743,6 @@ void game::pickup()
     pickup( *examp_ );
 }
 
-void game::pickup_all()
-{
-    pickup::pick_up_all_nearby();
-}
 
 void game::pickup( const tripoint_bub_ms &p )
 {
@@ -7756,12 +7752,38 @@ void game::pickup( const tripoint_bub_ms &p )
     } );
     add_draw_callback( hilite_cb );
 
-    pickup::pick_up( p, 0 );
+    if( get_option<bool>( "NEW_PICKUP_MENU" ) ) {
+        std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_from_tile( g->u, p );
+        g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                              ( pickup_list, g->u.bub_pos() ) ) );
+    } else {
+        pickup::pick_up( p, 0 );
+    }
+
+}
+
+void game::pickup_all()
+{
+    if( get_option<bool>( "NEW_PICKUP_MENU" ) ) {
+        std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_nearby( g->u );
+        g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                              ( pickup_list, g->u.bub_pos() ) ) );
+    } else {
+        pickup::pick_up_all_nearby();
+    }
+
 }
 
 void game::pickup_feet()
 {
-    pickup::pick_up( u.bub_pos(), 1 );
+    if( get_option<bool>( "NEW_PICKUP_MENU" ) ) {
+        std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_from_tile( g->u,
+                g->u.bub_pos() );
+        g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                              ( pickup_list, g->u.bub_pos() ) ) );
+    } else {
+        pickup::pick_up( u.bub_pos(), 1 );
+    }
 }
 
 //Shift player by one tile, look_around(), then restore previous position.

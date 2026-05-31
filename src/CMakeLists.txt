@@ -23,6 +23,14 @@ file(GLOB_RECURSE CATACLYSM_BN_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src
 list(FILTER CATACLYSM_BN_HEADERS EXCLUDE REGEX "/src/(lua|sol|third-party)/")
 
 add_subdirectory(lua)
+if (UNIX)
+    target_compile_definitions(liblua PUBLIC LUA_USE_LINUX)
+elseif (APPLE)
+    target_compile_definitions(liblua PUBLIC LUA_USE_MACOSX)
+elseif (WIN32)
+    target_compile_definitions(liblua PUBLIC LUA_USE_WINDOWS)
+endif()
+
 add_subdirectory(sol)
 
 # Get GIT version strings

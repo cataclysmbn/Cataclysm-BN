@@ -204,7 +204,7 @@
     "ammo": "essence_blood_type",
     "coverage": 95,
     "encumbrance": 9,
-    "storage": "0 ml",
+    "storage": "0 L",
     "environmental_protection": 10,
     "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_wyrmskin_acid", "no_fail": true, "level": 0, "need_worn": true } ],
     "relative": { "weight": "722 g", "volume": "1500 ml" },
@@ -564,8 +564,8 @@
           "has": "WORN",
           "condition": "ACTIVE",
           "values": [
-            { "value": "ARMOR_HEAT", "multiply": -1 },
-            { "value": "ARMOR_STAB", "multiply": -1 },
+            { "value": "ARMOR_HEAT", "multiply": -1.0 },
+            { "value": "ARMOR_STAB", "multiply": -1.0 },
             { "value": "ARMOR_BULLET", "multiply": -0.9 }
           ]
         }

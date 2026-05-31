@@ -5,7 +5,7 @@
     "name": { "str": "Wraitheon executive's smartphone" },
     "copy-from": "afs_atomic_smartphone",
     "description": "Your custom crafted atomic smartphone.  Most notably a confidential executive-level override program allows you to remotely control most robots.",
-    "price": "200 kUSD",
+    "price": "200000 USD",
     "price_postapoc": "2500 USD",
     "material": [ "superalloy", "aluminum" ],
     "use_action": [
