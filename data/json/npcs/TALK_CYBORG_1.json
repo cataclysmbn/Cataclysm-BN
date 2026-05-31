@@ -23,7 +23,7 @@
         "default": true,
         "text": "That's because I saved you.  Listen, I could use your help…",
         "trial": { "type": "PERSUADE", "difficulty": 0 },
-        "success": { "topic": "TALK_CYBORG_FRIENDLY", "opinion": { "trust": 1, "value": 1 } },
+        "success": { "topic": "TALK_CYBORG_FRIENDLY", "opinion": { "trust": 3, "fear", -2, "value": 1 } },
         "failure": { "topic": "TALK_CYBORG_WARY", "opinion": { "anger": 1, "fear": 1 } }
       },
       {
@@ -63,7 +63,7 @@
     "responses": [
       {
         "text": "I wouldn't have pulled your chip out if I didn't want you to think for yourself.",
-        "trial": { "type": "PERSUADE", "difficulty": 5, "mod": [ [ "TRUST", 2 ], [ "VALUE", 2 ] ] },
+        "trial": { "type": "PERSUADE", "difficulty": 5, "mod": [ [ "TRUST", 3 ], [ "FEAR", -2], [ "VALUE", 2 ] ] },
         "success": { "topic": "TALK_CYBORG_FRIENDLY", "opinion": { "trust": 1, "value": 1 } },
         "failure": { "topic": "TALK_CYBORG_LEAVES" }
       },
