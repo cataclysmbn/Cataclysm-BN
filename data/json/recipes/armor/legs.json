@@ -166,7 +166,20 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 1 ], [ "tailor_portfolio", 1 ], [ "manual_tailor", 1 ], [ "survival_book", 1 ] ],
     "using": [ [ "sewing_standard", 10 ] ],
-    "components": [ [ [ "rag", 6 ] ] ]
+    "components": [ [ [ "rag", 8 ] ] ]
+  },
+  {
+    "result": "pants",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_LEGS",
+    "skill_used": "tailor",
+    "difficulty": 2,
+    "time": "35 m",
+    "autolearn": true,
+    "book_learn": [ [ "textbook_tailor", 1 ], [ "tailor_portfolio", 1 ], [ "manual_tailor", 1 ], [ "survival_book", 1 ] ],
+    "using": [ [ "sewing_standard", 10 ] ],
+    "components": [ [ [ "rag", 7 ] ] ]
   },
   {
     "result": "kilt",
