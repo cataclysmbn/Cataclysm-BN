@@ -32,7 +32,7 @@
 #include "requirements.h"
 #include "string_formatter.h"
 #include "translations.h"
-#include "sol/sol.hpp"
+#include "catalua_sol.h"
 
 mission mission_type::create( const character_id &npc_id ) const
 {
