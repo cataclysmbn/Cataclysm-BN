@@ -4846,14 +4846,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         dam = 0;
     }
 
-    for( const ammo_effect_str_id &ae_id : proj.get_ammo_effects() ) {
-        const ammo_effect &ae = *ae_id;
-        if( ae.trail_field_type ) {
-            if( x_in_y( ae.trail_chance, 100 ) ) {
-                add_field( p, ae.trail_field_type, rng( ae.trail_intensity_min, ae.trail_intensity_max ) );
-            }
-        }
-    }
+    apply_ammo_trail_effects( p, proj.get_ammo_effects(), 1.0 );
 
     // Check fields?
     const field_entry *fieldhit = get_field( p, fd_web );
