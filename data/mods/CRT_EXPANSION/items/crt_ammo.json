@@ -68,7 +68,7 @@
     "material": "steel",
     "symbol": "=",
     "color": "dark_gray",
-    "relative": { "price": 300, "damage": { "damage_type": "bullet", "amount": 6, "armor_penetration": 1 }, "dispersion": -20 }
+    "relative": { "price": "3 USD", "damage": { "damage_type": "bullet", "amount": 6, "armor_penetration": 1 }, "dispersion": -20 }
   },
   {
     "id": "crt_hp_pellet",
@@ -80,7 +80,7 @@
     "material": "steel",
     "symbol": "=",
     "color": "dark_gray",
-    "relative": { "price": 200, "damage": { "damage_type": "bullet", "amount": 3, "armor_penetration": 3 } }
+    "relative": { "price": "2 USD", "damage": { "damage_type": "bullet", "amount": 3, "armor_penetration": 3 } }
   },
   {
     "id": "crt_alloy_pellet",
@@ -91,7 +91,7 @@
     "material": "steel",
     "symbol": "=",
     "color": "dark_gray",
-    "relative": { "price": 500, "damage": { "damage_type": "bullet", "armor_penetration": 2 }, "loudness": 25, "dispersion": 20 }
+    "relative": { "price": "5 USD", "damage": { "damage_type": "bullet", "armor_penetration": 2 }, "loudness": 25, "dispersion": 20 }
   },
   {
     "type": "AMMO",

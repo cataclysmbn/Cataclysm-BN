@@ -1178,5 +1178,20 @@
     "tools": [ [ [ "steyr_aug", -1 ], [ "large_repairkit", 25 ], [ "small_repairkit", 45 ] ], [ [ "mold_plastic", -1 ] ] ],
     "using": [ [ "3d_printing_standard", 3 ] ],
     "components": [ [ [ "plastic_chunk", 8 ] ], [ [ "sheet_metal_small", 1 ] ] ]
+  },
+  {
+    "type": "recipe",
+    "result": "40x53mm_conversion_kit",
+    "category": "CC_WEAPON",
+    "subcategory": "CSC_WEAPON_MODS",
+    "skill_used": "fabrication",
+    "skills_required": [ [ "mechanics", 3 ], [ "launcher", 3 ] ],
+    "difficulty": 8,
+    "time": "45 m",
+    "book_learn": [ [ "manual_launcher", 6 ], [ "mag_launcher", 8 ] ],
+    "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ],
+    "qualities": [ { "id": "SAW_M", "level": 1 } ],
+    "tools": [ [ [ "large_repairkit", 20 ], [ "small_repairkit", 40 ] ] ],
+    "components": [ [ [ "pipe", 1 ] ] ]
   }
 ]

@@ -19,5 +19,26 @@
     "ammo_modifier": [ "300blk" ],
     "magazine_adaptor": [ [ "300blk", [ "stanag30", "stanag50", "survivor223mag" ] ] ],
     "flags": [ "IRREMOVABLE" ]
+  },
+  {
+    "id": "40x53mm_conversion_kit",
+    "type": "GUNMOD",
+    "name": { "str": "40x53mm grenade launcher conversion kit" },
+    "description": "Given the varied total length of different 40x46mm loads, many launchers can TECHNICALLY fit 40x53mm high-pressure rounds.  This set of reinforcement parts allows doing so without it blowing up in your face.",
+    "weight": "500 g",
+    "volume": "250 ml",
+    "integral_volume": "0 ml",
+    "price": "500 USD",
+    "price_postapoc": "10 USD",
+    "material": "steel",
+    "symbol": ":",
+    "color": "green",
+    "location": "bore",
+    "acceptable_ammo": [ "40x46mm" ],
+    "install_time": "5 m",
+    "//": "Expands ammo selection instead of fully replacing it.",
+    "ammo_modifier": [ "40x46mm", "40x53mm" ],
+    "min_skills": [ [ "weapon", 3 ], [ "mechanics", 2 ] ],
+    "flags": [ "IRREMOVABLE" ]
   }
 ]

@@ -206,11 +206,12 @@ jobs:
         if: runner.os == 'Windows'
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: windows-${{ matrix.artifact }}-${{ github.ref_name }}
+          # Build mode changes MSVC compiler inputs.
+          key: windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
           restore-keys: |
-            windows-${{ matrix.artifact }}-${{ github.ref_name }}
-            windows-${{ matrix.artifact }}-main
-            windows-${{ matrix.artifact }}-
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-main
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-
           max-size: 3G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
@@ -533,6 +534,18 @@ jobs:
           name: ${{ inputs.artifact-label != '' && format('{0}-{1}', matrix.artifact, inputs.artifact-label) || matrix.artifact }}
           path: ${{ runner.os == 'Windows' && format('cataclysmbn-{0}/', inputs.version-label) || format('cbn-{0}-{1}.{2}', matrix.artifact, inputs.version-label, matrix.ext) }}
           if-no-files-found: error
+
+      - name: Publish platform artifact link
+        if: github.event_name == 'pull_request' && inputs.upload-artifacts && matrix.upload-artifact == true
+        continue-on-error: true
+        uses: ./.github/actions/publish-pr-artifact-body
+        with:
+          repository: ${{ github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+          run-id: ${{ github.run_id }}
+          run-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          head-sha: ${{ github.event.pull_request.head.sha }}
+          token: ${{ github.token }}
 
       - name: Run tests (windows msvc)
         if: runner.os == 'Windows' && inputs.run-tests
