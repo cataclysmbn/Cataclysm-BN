@@ -2205,10 +2205,7 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     json.member( "friendly", friendly );
     json.member( "training_level", training_level );
     json.member( "pet_bond_level", pet_bond_level );
-
-    if ( bonded_character != nullptr ) {
-        json.member( "bonded_character_id", bonded_character->getID());
-    }
+    json.member( "bonded_character_id", bonded_character_id);
 
     json.member( "fish_population", fish_population );
     json.member( "faction", faction.id().str() );

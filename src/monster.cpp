@@ -3586,15 +3586,6 @@ bool monster::is_pet() const
     return ( friendly == -1 && has_effect( effect_pet ) );
 }
 
-Character *monster::get_bonded_character() {
-    if ( bonded_character != nullptr ) { return bonded_character; }
-    if ( bonded_character_id.is_valid()) {
-        bonded_character = g->critter_by_id<Character>( bonded_character_id );
-        return bonded_character;
-    }
-    return nullptr;
-}
-
 void monster::on_pet_bonding( Character *ch ) {
     if (has_effect(effect_pet_bonding)) {
         // Prevent spamming bond, this should raise over time.
@@ -3608,7 +3599,6 @@ void monster::on_pet_bonding( Character *ch ) {
     add_effect( effect_pet_bonding, time_duration::from_hours(8) );
     pet_bond_level = std::clamp(pet_bond_level + 1, 0, pet_bond_max_level);
     if (pet_bond_level == pet_bond_max_level) {
-        bonded_character = ch;
         bonded_character_id = ch->getID();
         ch->add_msg_if_player( m_good, _( "%s has bonded with you!" ), get_name() );
     }
