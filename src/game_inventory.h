@@ -8,6 +8,7 @@
 
 #include "coordinates.h"
 #include "item_handling_util.h"
+#include "pickup_token.h"
 
 struct tripoint;
 
@@ -56,7 +57,9 @@ void swap_letters( player &p );
  * @return A list of pairs of item_location, quantity.
  */
 drop_locations multidrop( player &p );
-
+std::vector<pickup::pick_drop_selection> pickup_from_tile( player &p,
+        const tripoint_bub_ms &target );
+std::vector<pickup::pick_drop_selection> pickup_nearby( player &p );
 
 /** Consuming an item. */
 item *consume( player &p );
