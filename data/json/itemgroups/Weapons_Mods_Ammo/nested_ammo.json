@@ -57,9 +57,7 @@
     "type": "item_group",
     "//": "a collection of ammo that would be found with a loaded gun.",
     "subtype": "distribution",
-    "entries": [
-      { "item": "flintlock_ammo", "prob": 100, "charges": [ 15, 30 ] },
-    ]
+    "entries": [ { "item": "flintlock_ammo", "prob": 100, "charges": [ 15, 30 ] } ]
   },
   {
     "id": "on_hand_flintlock",
