@@ -423,6 +423,28 @@
   },
   {
     "type": "item_group",
+    "id": "vending_items_genemod",
+    "items": [
+      { "group": "genome_drive_mutant_kitten_prism", "prob": 100 },
+      { "group": "genome_drive_cat_void_kitten", "prob": 100 },
+      { "group": "genome_drive_black_rat", "prob": 100 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "vending_genemod",
+    "entries": [
+      { "group": "vending_items_genemod", "prob": 100 },
+      { "group": "vending_items_genemod", "prob": 100 },
+      { "group": "vending_items_genemod", "prob": 100 },
+      { "group": "vending_items_genemod", "prob": 60 },
+      { "group": "vending_items_genemod", "prob": 60 },
+      { "group": "vending_items_genemod", "prob": 60 }
+    ]
+  },
+  {
+    "type": "item_group",
     "subtype": "collection",
     "id": "vending_clothes",
     "entries": [

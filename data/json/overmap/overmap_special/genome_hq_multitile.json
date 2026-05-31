@@ -1,0 +1,400 @@
+[
+    {
+        "type": "monstergroup",
+        "name": "GROUP_GENEMOD_CLINIC",
+        "default": "mon_dog_mutant_mongrel",
+        "monsters": [
+        { "monster": "mon_cat_void", "freq": 100, "cost_multiplier": 0 },
+        { "monster": "mon_cat_mutant_prism", "freq": 100, "cost_multiplier": 0 },
+        { "monster": "mon_cat_chonker", "freq": 100, "cost_multiplier": 0 },
+        { "monster": "mon_dog_mutant_mongrel", "freq": 250, "cost_multiplier": 0 },
+        { "monster": "mon_cockatrice", "freq": 100, "cost_multiplier": 0 }
+        
+        ]
+    },
+    {
+        "type": "monstergroup",
+        "name": "GROUP_GENEMOD_CLINIC_ZOMBIES",
+        "default": "mon_zombie",
+        "monsters": [
+        { "monster": "mon_zombie", "freq": 100, "cost_multiplier": 0 },
+        { "monster": "mon_zombie_technician", "freq": 25, "cost_multiplier": 0 },
+        { "monster": "mon_zombie_nurse", "freq": 50, "cost_multiplier": 0 }
+        ]
+    },
+    {
+        "type": "item_group",
+        "id": "genemod_clinic_vatroom",
+        "//": "copied from mut_lab, removed raw mutagen and added more cloning-related stuff",
+        "//2": "lab will ALWAYS spawn with genome workstation, so no need to add it here",
+        "ammo": 50,
+        "magazine": 100,
+        "items": [
+        [ "gelbox", 3 ],
+        [ "microcentrifuge", 3 ],
+        [ "genome_drive_black_rat", 5 ],
+        [ "genome_drive_wolf_mutant_huge", 5 ],
+        [ "genome_drive_mutant_kitten_prism", 5 ],
+        [ "genome_drive_cat_void_kitten", 5 ],
+        [ "biomaterial", 10 ],
+        [ "embryo_empty", 10 ],
+        [ "genome_sampler", 5 ],
+        [ "beaker", 5 ],
+        [ "gradcylinder", 5 ],
+        [ "flask_glass", 2 ],
+        [ "rotovap", 2 ],
+        [ "spectrophotometer", 5 ],
+        [ "balance_small", 5 ],
+        [ "ph_meter", 5 ],
+        { "item": "bleach", "prob": 20, "charges-min": 1 },
+        { "item": "ammonia", "prob": 24, "charges-min": 10 },
+        [ "lye_powder", 10 ],
+        [ "oxy_powder", 12 ],
+        [ "chemistry_set", 5 ],
+        [ "royal_jelly", 8 ],
+        [ "meat_tainted", 10 ],
+        [ "veggy_tainted", 10 ],
+        [ "slime_scrap", 10 ],
+        [ "chem_nitric_acid", 5 ]
+        ]
+    },
+    {
+        "type": "item_group",
+        "id": "crate_genemod_clinic",
+        "ammo": 50,
+        "magazine": 100,
+        "items": [
+            { "group": "genemod_clinic_vatroom", "prob": 50 },
+            { "group": "genemod_clinic_counters", "prob": 50 },
+            { "group": "genemod_clinic_bulk_storage", "prob": 20 },
+            { "group": "SUS_office_filing_cabinet", "prob": 20 }
+
+        
+        ]
+    },
+    {
+        "type": "item_group",
+        "id": "genemod_clinic_bulk_storage",
+        "ammo": 50,
+        "magazine": 100,
+        "items": [
+            { "group": "tools_cleaning_common", "prob": 50 },
+            { "group": "tools_common", "prob": 25 },
+            { "group": "supplies_mechanics", "prob": 25 },
+            { "group": "petstore_shelves", "prob": 10 },
+            { "group": "animalshelter_utility", "prob": 10 }
+        
+        ]
+    },
+    {
+        "type": "item_group",
+        "id": "genemod_clinic_counters",
+        "ammo": 50,
+        "magazine": 100,
+        "items": [
+            { "group": "supplies_reagents_lab", "prob": 50 },
+            [ "genome_sampler", 10 ],
+            [ "usb_drive", 20 ]
+        ]
+    },
+    {
+        "type": "item_group",
+        "id": "genemod_clinic_vault",
+        "ammo": 50,
+        "magazine": 100,
+        "items": [
+            { "group": "hospital_medical_items", "prob": 90 },
+            [ "genome_sampler", 10 ],
+            [ "biomaterial", 10 ]
+        ]
+    },
+    {
+        "type": "overmap_special",
+        "id": "genemod_clinic",
+        "overmaps": [
+            {
+                "point": [
+                    0,
+                    0,
+                    0
+                ],
+                "overmap": "genemod_clinic_0_0_north"
+            },
+            {
+                "point": [
+                    1,
+                    0,
+                    0
+                ],
+                "overmap": "genemod_clinic_0_1_north"
+            },
+            {
+                "point": [
+                    0,
+                    1,
+                    0
+                ],
+                "overmap": "genemod_clinic_1_0_north"
+            },
+            {
+                "point": [
+                    1,
+                    1,
+                    0
+                ],
+                "overmap": "genemod_clinic_1_1_north"
+            }
+        ],
+        "locations": [
+            "wilderness"
+        ],
+        "city_distance": [
+            10,
+            -1
+        ],
+        "city_sizes": [
+            0,
+            20
+        ],
+        "occurrences": [
+            1,
+            5
+        ],
+        "flags": [
+            "CLASSIC"
+        ]
+    },
+    {
+        "type": "mapgen",
+        "method": "json",
+        "om_terrain": [
+            [
+                "genemod_clinic_0_0",
+                "genemod_clinic_0_1"
+            ],
+            [
+                "genemod_clinic_1_0",
+                "genemod_clinic_1_1"
+            ]
+        ],
+        "weight": 100,
+        "object": {
+            "fill_ter": "t_strconc_floor",
+            "rows": [
+                "..???????????????????????????????????????????...",
+                "..???????????????????????????????????????????...",
+                "..???????????????????????????????????????????...",
+                "..??................................???????.....",
+                "..??|AAAAAAAAAAAAAA|||||AAAA|||||AAAADD|DDAAA...",
+                "..??ApfffffffffffffffffDffff@#$$affffffpffffA...",
+                "..??AffffffffffffffffffDffffffffffffffffffffA...",
+                "..??Afffffffff||||||||||pffffffffffffffffffa|...",
+                "..??Afffffhfhp|pffffffI|fffsffsffsffsffffff$|...",
+                "..??AffffRRRR||wffC|fhdRfffsffsffsffsffffff$|...",
+                "..??AfffhRdddp|IffC|ffdRfffTffTffTffTfffpff$|...",
+                "..??AffffRdfhI|IffC|ffdRfffsffsffsffsfff|||||...",
+                "..??AfffhRdhfI|IffC|fhdRfffsffsffsffsfffcfff|...",
+                "..??|ffff|wfff|fffffffI|pffffffffffffffp|fkt|...",
+                "..??|ffff|||OO|cc|||||||||LL|||||||||||||||||...",
+                "..??cffff|&fffffffffffffffff|Cfp|Cfp|Cfp|Cfp|...",
+                "..??cffff|&fffffffffffffffff|Cff|Cff|Cff|Cff|...",
+                "....|ffffLfffffff|WW||||||ff|Cfb|Cfb|Cfb|Cfb|...",
+                "....|pfffLfffffffWphWoICCWff|kfb|kfb|kfb|kfb|...",
+                "....||c|||WWWW|ffWffWffhfWff|off|off|off|off|...",
+                "....|fff|pTsswWffWhfWffffWff|ffh|ffh|ffh|ffh|...",
+                "....|ffk|sfffBWff|ff|WDDW|ff||D|||D|||D|||D||...",
+                "....|fff|sffffDfffffffffffffffffffffffffffffR...",
+                "....|ftf|pTssfDfffffffffffffffffffffffffffffR...",
+                "....|||||||||||fffffffffpfffffffffffffffffffR...",
+                "....|uuoFffFffWff|ff|WDDW|ff||D|||D|||D|||D||...",
+                "....|uffFffFffWffW&fWIffo|ff|ffh|ffh|ffh|ffh|...",
+                "....RfhfFffFffWffW&fWCffo|ff|off|off|off|off|...",
+                "....RddfFlFFlFWff|ffWChfo|ff|kfb|kfb|kfb|kfb|...",
+                "....RfffffffffDfffffDffffWff|Cfb|Cfb|Cfb|Cfb|...",
+                "....RpffffffffDfffffDffffWff|Cff|Cff|Cff|Cff|...",
+                "....|fffffffffDfffpfDfoooWff|Cfp|Cfp|Cfp|Cfp|...",
+                "....|FlFFlFFlFWff|WW||||||ff|||||||||||||||||...",
+                "....|ffFfffFffWfffffffffffffffOffffffffffffp|...",
+                "....|ffFfffFffWfffffffffffffffOfffffffffffff|...",
+                "....|||||||||||OO|||||||||cc||||RRRRRRRRR|cc|...",
+                "...q|fffXXXffXXff|XXffff|ffffp|fffffffffffff|...",
+                "....LffffXfffffff|XXfUUf|fffffRfVfVfVfVfSfff|...",
+                "....LMMMMMMMMffXf|XffUUf|fHfNfRfffffffffffff|...",
+                "....LMMMMMMMMffff|fffUUf|fHfNfRfVfVfVfVfSfff|...",
+                "....LMMMMMMMMfXffOffffffOfffff|fffffffffffff|...",
+                "....LMMMMMMMMfXXfOffffffOff________ff*CCCChf|...",
+                "....LMMMMMMMMffff|offUUf|ff_UrZZzMLff*rrZCff|...",
+                "....LffffffffffXX|offUUf|ef_UMMMMMLfffffffff|...",
+                "....|uuuuuuuufXXX|oofUUf|ef________ofookCCvf|...",
+                "....|||RRR||RRR||||||||||||||||||||||||||||||...",
+                "................................................",
+                "................................................"
+            ],
+            "terrain": {
+                ".": "t_grass",
+                "?": "t_sidewalk",
+                "|": "t_concrete_wall",
+                "A": "t_wall_glass_alarm",
+                "D": "t_door_glass_c",
+                "f": "t_strconc_floor",
+                "a": "t_atm",
+                "R": "t_reinforced_glass",
+                "c": "t_door_metal_c",
+                "L": "t_door_metal_locked",
+                "W": "t_wall_glass",
+                "F": "t_chainfence",
+                "l": "t_chaingate_l",
+                "O": "t_door_metal_o",
+                "q": "t_gates_mech_control",
+                "M": "t_metal_floor",
+                "_": "t_wall_metal"
+            },
+            "furniture": {
+                "p": "f_indoor_plant",
+                "#": "f_vending_c",
+                "$": "f_vending_reinforced",
+                "h": "f_chair",
+                "I": "f_filing_cabinet",
+                "s": "f_sofa",
+                "w": "f_water_dispenser",
+                "C": "f_counter",
+                "d": "f_desk",
+                "T": "f_table",
+                "k": "f_sink",
+                "t": "f_toilet",
+                "&": "f_bench",
+                "b": "f_bed",
+                "o": "f_locker",
+                "B": "f_bigmirror",
+                "u": "f_utility_shelf",
+                "X": "f_crate_c",
+                "U": "f_warehouse_shelf",
+                "V": "f_cloning_vat",
+                "S": "f_shower",
+                "H": "f_water_heater",
+                "N": "f_standing_tank",
+                "*": "f_standing_tank",
+                "r": "f_glass_fridge",
+                "Z": "f_sample_freezer",
+                "z": "f_freezer_industrial_off",
+                "e": "f_electrical_conduit",
+                "v": "f_gridautoclave"
+            },
+            "liquids": { "*": { "liquid": "biomaterial", "amount": [ 20, 100 ] }, "N": { "liquid": "water_clean", "amount": [ 100, 1000 ] } },
+            "place_monster": [
+                { "monster": "mon_secubot", "chance": 50, "x": 13, "y": 13 },
+                { "monster": "mon_secubot", "chance": 50, "x": 42, "y": 38 },
+                { "monster": "mon_mutant_experimental", "chance": 80, "x": 29, "y": 43 },
+                { "monster": "mon_nursebot_defective", "x": 23, "y": 20 }
+            ],
+            "place_monsters": [
+                { "monster": "GROUP_GENEMOD_CLINIC", "x": 9, "y": 34 },
+                { "monster": "GROUP_GENEMOD_CLINIC", "x": 12, "chance": 80, "y": 26 },
+                { "monster": "GROUP_GENEMOD_CLINIC", "x": 5, "chance": 50, "y": 34 },
+                { "monster": "GROUP_GENEMOD_CLINIC", "x": 13, "chance": 50, "y": 26 },
+                { "monster": "GROUP_GENEMOD_CLINIC_ZOMBIES", "x": 27, "y": 40, "repeat": [ 1, 2 ] },
+                { "monster": "GROUP_GENEMOD_CLINIC_ZOMBIES", "x": 20, "y": 10, "repeat": [ 1, 2 ] },
+                { "monster": "GROUP_GENEMOD_CLINIC_ZOMBIES", "x": 22, "y": 27, "repeat": [ 1, 2 ] },
+                { "monster": "GROUP_ZOMBIE", "x": 28, "y": 10, "repeat": [ 1, 3 ] },
+                { "monster": "GROUP_ZOMBIE", "x": 37, "y": 10, "repeat": [ 1, 3 ] }
+            ],
+            "items": {
+                "X": { "item": "crate_genemod_clinic", "chance": 80 }
+            },
+            "vendingmachines": {
+                "$": { "item_group": "vending_genemod", "reinforced": true },
+                "#": { "item_group": "vending_food" },
+                "@": { "item_group": "vending_drink" }
+            },
+            "place_item": [ 
+                { "item": "microwave", "x": 18, "y": 10 },
+                { "item": "dna_editor", "x": 41, "y": 42 },
+                { "item": "embryo_empty", "x": 40, "y": 44 }
+            ],
+            "place_items": [ 
+                { "item": "everyday_gear", "x": 18, "y": [ 9, 12 ], "chance": 30, "repeat": [ 1, 4 ] },
+                { "item": "genemod_clinic_notes", "x": 15, "y": [ 10, 12 ], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_notes", "x": 15, "y": [ 10, 12 ], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_notes", "x": 22, "y": 13, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_notes", "x": 22, "y": 8, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 15, "y": [ 10, 12 ], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 15, "y": [ 10, 12 ], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 22, "y": 13, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 22, "y": 18, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 22, "y": 8, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_notes", "x": 13, "y": [11, 12], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 13, "y": [11, 12], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_notes", "x": 22, "y": 18, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 22, "y": 18, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_notes", "x": 21, "y": 26, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_filing_cabinet", "x": 21, "y": 26, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_desk", "x": 22, "y": [9, 12], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_desk", "x": 10, "y": [10, 12], "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_office_desk", "x": [10, 12], "y": 10, "chance": 90, "repeat": [ 1, 2 ] },
+                { "item": "SUS_bathroom_sink", "x": 7, "y": 21, "chance": 50, "repeat": [ 1, 3 ] },
+                { "item": "SUS_bathroom_sink", "x": 42, "y": 13, "chance": 50, "repeat": [ 1, 3 ] },
+                { "item": "waitingroom", "x": 27, "y": [ 8, 12 ], "chance": 20, "repeat": [ 1, 4 ] },
+                { "item": "waitingroom", "x": 30, "y": [ 8, 12 ], "chance": 20, "repeat": [ 1, 4 ] },
+                { "item": "waitingroom", "x": 33, "y": [ 8, 12 ], "chance": 20, "repeat": [ 1, 4 ] },
+                { "item": "waitingroom", "x": 36, "y": [ 8, 12 ], "chance": 20, "repeat": [ 1, 4 ] },
+                { "item": "waitingroom", "x": [ 10, 12 ], "y": 20, "chance": 30, "repeat": [ 1, 4 ] },
+                { "item": "waitingroom", "x": [ 10, 12 ], "y": 23, "chance": 30, "repeat": [ 1, 4 ] },
+                { "item": "genemod_clinic_counters", "x": 29, "y": [ 15, 17], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_counters", "x": 37, "y": [ 15, 17], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_counters", "x": 33, "y": [ 15, 17], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_counters", "x": 41, "y": [ 15, 17], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_counters", "x": 29, "y": [ 29, 31], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_counters", "x": 37, "y": [ 29, 31], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_counters", "x": 33, "y": [ 29, 31], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_counters", "x": 41, "y": [ 29, 31], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "hospital_lab", "x": 29, "y": 19, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 33, "y": 19, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 37, "y": 19, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 41, "y": 19, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 29, "y": 27, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 33, "y": 27, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 37, "y": 27, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 41, "y": 27, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "genemod_clinic_vatroom", "x": [ 38, 41 ], "y": 41, "chance": 95, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_vatroom", "x": [ 40, 41 ], "y": 44, "chance": 95, "repeat": [ 1, 2 ] },
+                { "item": "genemod_clinic_vatroom", "x": [ 38, 41 ], "y": 41, "chance": 95, "repeat": [ 1, 2 ] },
+                { "item": "animalshelter_utility", "x": 5, "y": 25, "chance": 95, "repeat": [ 2, 3 ] },
+                { "item": "animalshelter_utility", "x": 6, "y": 25, "chance": 95, "repeat": [ 2, 3 ] },
+                { "item": "animalshelter_utility", "x": 5, "y": 26, "chance": 95, "repeat": [ 2, 3 ] },
+                { "item": "animalshelter_softdrug", "x": 7, "y": 25, "chance": 95, "repeat": [ 2, 3 ] },
+                { "item": "genemod_clinic_bulk_storage", "x": [ 21, 22 ], "y": [ 37, 39 ], "chance": 95, "repeat": [ 5, 10 ] },
+                { "item": "genemod_clinic_bulk_storage", "x": [ 21, 22 ], "y": [ 42, 44 ], "chance": 95, "repeat": [ 5, 10 ] },
+                { "item": "hospital_lab", "x": 18, "y": [ 42, 44 ], "chance": 95, "repeat": [ 3, 4 ] },
+                { "item": "hospital_lab", "x": 21, "y": 18, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": 24, "y": [26, 28 ], "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": [ 22, 23 ], "y": 31, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_lab", "x": [ 37, 38 ], "y": 44, "chance": 30, "repeat": [ 3, 5 ] },
+                { "item": "hospital_bed", "x": 31, "y": [ 28, 29 ], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "hospital_bed", "x": 35, "y": [ 28, 29 ], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "hospital_bed", "x": 43, "y": [ 28, 29 ], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "hospital_bed", "x": 31, "y": [ 17, 18 ], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "hospital_bed", "x": 35, "y": [ 17, 18 ], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "hospital_bed", "x": 43, "y": [ 17, 18 ], "chance": 25, "repeat": [ 1, 2 ] },
+                { "item": "supplies_mechanics", "x": [5, 12], "y": 44, "chance": 80, "repeat": [ 5, 10 ] },
+                { "item": "genemod_clinic_vault", "x": [29, 32], "y": 42, "chance": 80, "repeat": [ 2, 4 ] },
+                { "item": "genemod_clinic_vault", "x": 28, "y": [42, 43], "chance": 80, "repeat": [ 1, 2 ] }
+         ],
+        "place_vehicles": [ { "vehicle": "animalctrl", "x": 8, "y": 41, "chance": 80, "rotation": 180 } ]
+        }
+    },
+    {
+        "type": "overmap_terrain",
+        "id": [
+            "genemod_clinic_0_0",
+            "genemod_clinic_0_1",
+            "genemod_clinic_1_0",
+            "genemod_clinic_1_1"
+        ],
+        "name": "genemod_clinic",
+        "sym": "H",
+        "color": "red",
+        "see_cost": 5,
+        "extras": "build",
+        "mondensity": 3
+    }
+]
