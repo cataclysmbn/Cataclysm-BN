@@ -21,7 +21,7 @@
 #include "item.h"
 namespace
 {
-generic_factory<activity_type> all_activities( "Vehicle Palettes" );
+generic_factory<activity_type> all_activities( "Activity Types" );
 }
 
 /** @relates string_id */
