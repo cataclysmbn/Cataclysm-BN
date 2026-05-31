@@ -49,9 +49,9 @@
     "responses": [
       {
         "text": "Come with me.  We can help each other out.",
-        "trial": { "type": "PERSUADE", "difficulty": 0, "mod": [ [ "value", 2 ] ] },
-        "success": { "topic": "TALK_AGREE_FOLLOW", "effect": "follow", "opinion": { "trust": 1, "value": 1 } },
-        "failure": { "topic": "TALK_DENY_FOLLOW", "effect": "deny_follow", "opinion": { "trust": -1, "fear": 1 } }
+        "topic": "TALK_AGREE_FOLLOW", 
+        "effect": "follow", 
+        "opinion": { "trust": 1, "value": 1 },
       },
       { "text": "We both go our separate ways.  Enjoy your freedom.", "topic": "TALK_DONE" }
     ]
