@@ -1032,13 +1032,13 @@ std::string monster::extended_description() const
         ss += std::string( _( "It has a head." ) ) + "\n";
     }
 
-    if ( bonded_character_id == g->u.getID() ) {
+    if( bonded_character_id == g->u.getID() ) {
         ss += std::string( _( "It regards you as family." ) ) + "\n";
-    } else if ( pet_bond_level > 5) {
+    } else if( pet_bond_level > 5 ) {
         ss += std::string( _( "It really likes you." ) ) + "\n";
-    } else if ( pet_bond_level > 2) {
+    } else if( pet_bond_level > 2 ) {
         ss += std::string( _( "It likes you." ) ) + "\n";
-    } else if ( pet_bond_level > 0) {
+    } else if( pet_bond_level > 0 ) {
         ss += std::string( _( "It is curious about you." ) ) + "\n";
     } else {
         ss += std::string( _( "It is unsure about you." ) ) + "\n";
@@ -3586,19 +3586,20 @@ bool monster::is_pet() const
     return ( friendly == -1 && has_effect( effect_pet ) );
 }
 
-void monster::on_pet_bonding( Character *ch ) {
-    if (has_effect(effect_pet_bonding)) {
+void monster::on_pet_bonding( Character *ch )
+{
+    if( has_effect( effect_pet_bonding ) ) {
         // Prevent spamming bond, this should raise over time.
         return;
     }
 
-    if (pet_bond_level >= pet_bond_max_level) {
+    if( pet_bond_level >= pet_bond_max_level ) {
         return;
     }
 
-    add_effect( effect_pet_bonding, time_duration::from_hours(8) );
-    pet_bond_level = std::clamp(pet_bond_level + 1, 0, pet_bond_max_level);
-    if (pet_bond_level == pet_bond_max_level) {
+    add_effect( effect_pet_bonding, time_duration::from_hours( 8 ) );
+    pet_bond_level = std::clamp( pet_bond_level + 1, 0, pet_bond_max_level );
+    if( pet_bond_level == pet_bond_max_level ) {
         bonded_character_id = ch->getID();
         ch->add_msg_if_player( m_good, _( "%s has bonded with you!" ), get_name() );
     }

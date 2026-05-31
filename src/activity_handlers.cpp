@@ -4265,7 +4265,7 @@ void activity_handlers::train_pet_finish( player_activity *act, player *p )
     mon->remove_effect( effect_ai_waiting );
     auto const bonded = p->getID() == mon->bonded_character_id;
     auto skill_rating = 10 * p->get_skill_level( skill_survival );
-    if (bonded) { skill_rating *= 2; }
+    if( bonded ) { skill_rating *= 2; }
     if( skill_rating >= 100 || skill_rating >= rng( 0, 100 ) ) {
         if( mon && mon->type->pet_training ) {
             mon->training_level = std::min( mon->training_level + 1, mon->type->pet_training->max_level );

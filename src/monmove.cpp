@@ -874,7 +874,7 @@ monster_plan_t monster::compute_plan( const monster::compute_plan_context &ctx )
         if( distance_from_friend < 12 ) {
             const bool is_bonded = bonded_character_id == u.getID();
             const int rally_chance = ( is_bonded ) ? distance_from_friend * 3 : distance_from_friend * 2;
-            const int morale_bonus = (is_bonded ) ? 2 : 1;
+            const int morale_bonus = ( is_bonded ) ? 2 : 1;
             if( one_in( rally_chance ) ) {
                 if( local_morale != type->morale ) {
                     local_morale += ( local_morale < type->morale ) ? morale_bonus : -1;
