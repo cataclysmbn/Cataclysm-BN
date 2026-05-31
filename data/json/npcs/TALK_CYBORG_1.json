@@ -49,9 +49,9 @@
     "responses": [
       {
         "text": "Come with me.  We can help each other out.",
-        "topic": "TALK_AGREE_FOLLOW", 
-        "effect": "follow", 
-        "opinion": { "trust": 1, "value": 1 },
+        "topic": "TALK_AGREE_FOLLOW",
+        "effect": "follow",
+        "opinion": { "trust": 1, "value": 1 }
       },
       { "text": "We both go our separate ways.  Enjoy your freedom.", "topic": "TALK_DONE" }
     ]
