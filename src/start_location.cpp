@@ -271,7 +271,9 @@ void start_location::prepare_map( const tripoint_abs_omt &omtstart ) const
 {
     // Now prepare the initial map (change terrain etc.)
     const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
-    tinymap player_start;
+    // Multi-z so load() pulls the z+1 roof into this throwaway map and is_outside() is correct
+    // for BOARDED starts (one-time at game start; add_roofs is idempotent, so it is cheap).
+    tinymap player_start( 2, true );
     // TODO: fix point types
     player_start.load( player_location, false );
     prepare_map( player_start );
