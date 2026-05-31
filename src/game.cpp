@@ -7545,9 +7545,11 @@ enum class map_examine_target : int {
 };
 
 template<typename MapPart>
-auto describe_map_part( const MapPart &part ) -> void
+auto describe_map_part( const MapPart &part, const tripoint_bub_ms &target ) -> void
 {
-    add_msg( _( "That is a %s." ), colorize( part.name(), part.color() ) );
+    const auto distance = rl_dist( get_player_character().bub_pos(), target );
+    add_msg( _( "That is a %s. It's about %d tiles away." ),
+             colorize( part.name(), part.color() ), distance );
 
     const auto description = part.description.translated();
     if( !description.empty() ) {
@@ -7555,9 +7557,11 @@ auto describe_map_part( const MapPart &part ) -> void
     }
 }
 
-auto describe_monster( const monster &mon ) -> void
+auto describe_monster( const monster &mon, const tripoint_bub_ms &target ) -> void
 {
-    add_msg( _( "That is a %s." ), colorize( mon.name(), mon.symbol_color() ) );
+    const auto distance = rl_dist( get_player_character().bub_pos(), target );
+    add_msg( _( "That is a %s. It's about %d tiles away." ),
+             colorize( mon.name(), mon.symbol_color() ), distance );
 
     const auto description = mon.type->get_description();
     if( !description.empty() ) {
@@ -7582,7 +7586,8 @@ auto maybe_play_describe_sound( const tripoint_bub_ms &target, const MapPart &pa
     }
 }
 
-auto describe_memorized_terrain( const memorized_terrain_tile &memory ) -> bool
+auto describe_memorized_terrain( const memorized_terrain_tile &memory,
+                                 const tripoint_bub_ms &target ) -> bool
 {
     if( memory.tile.empty() ) {
         return false;
@@ -7593,7 +7598,7 @@ auto describe_memorized_terrain( const memorized_terrain_tile &memory ) -> bool
         return false;
     }
 
-    describe_map_part( terrain.obj() );
+    describe_map_part( terrain.obj(), target );
     return true;
 }
 
@@ -7783,8 +7788,8 @@ auto game::describe_tile( const tripoint_bub_ms &target ) -> void
     if( !u.sees( target ) ) {
         if( u.should_show_map_memory() ) {
             const auto abs_target = m.bub_to_abs( target );
-            if( describe_memorized_terrain( u.get_terrain_tile( abs_target ) ) ||
-                describe_memorized_terrain( u.get_memorized_tile( abs_target ) ) ) {
+            if( describe_memorized_terrain( u.get_terrain_tile( abs_target ), target ) ||
+                describe_memorized_terrain( u.get_memorized_tile( abs_target ), target ) ) {
                 return;
             }
         }
@@ -7794,7 +7799,7 @@ auto game::describe_tile( const tripoint_bub_ms &target ) -> void
     }
 
     if( const auto *const mon = critter_at<monster>( target ); mon != nullptr && u.sees( *mon ) ) {
-        describe_monster( *mon );
+        describe_monster( *mon, target );
         return;
     }
 
@@ -7806,11 +7811,11 @@ auto game::describe_tile( const tripoint_bub_ms &target ) -> void
     if( *map_target == map_examine_target::furniture ) {
         const auto &furniture = m.furn( target ).obj();
         maybe_play_describe_sound( target, furniture );
-        describe_map_part( furniture );
+        describe_map_part( furniture, target );
     } else {
         const auto &terrain = m.ter( target ).obj();
         maybe_play_describe_sound( target, terrain );
-        describe_map_part( terrain );
+        describe_map_part( terrain, target );
     }
 }
 
