@@ -235,8 +235,8 @@ monster::monster() : corpse_components( new monster_component_item_location( thi
 monster::monster( const mtype_id &id ) : monster()
 {
     type = &id.obj();
-    moves = type->speed;
     Creature::set_speed_base( type->speed );
+    add_action_move_credit( type->speed, action_move_percent() );
     hp = type->hp;
     for( auto &sa : type->special_attacks ) {
         auto &entry = special_attacks[sa.first];
@@ -2931,6 +2931,11 @@ void monster::process_turn()
     }
 
     Creature::process_turn();
+}
+
+auto monster::action_move_percent() const -> int
+{
+    return get_option<int>( "MONSTER_SPEED" );
 }
 
 void monster::batch_turns( int n )

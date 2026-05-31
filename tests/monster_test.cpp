@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -29,6 +30,31 @@
 #include "vpart_position.h"
 
 using move_statistics = statistics<int>;
+
+TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
+{
+    clear_all_state();
+
+    const auto monster_speed_percent = 33;
+    const auto monster_speed_option = override_option( "MONSTER_SPEED",
+                                      std::to_string( monster_speed_percent ) );
+
+    auto &test_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms::zero() );
+    const auto base_speed = test_monster.get_speed_base();
+    REQUIRE( base_speed == test_monster.type->speed );
+    CHECK( test_monster.get_moves() == base_speed * monster_speed_percent / 100 );
+
+    const auto turn_count = 10;
+    for ( const auto turn : std::views::iota( 0, turn_count ) ) {
+        static_cast<void>( turn );
+        test_monster.process_turn();
+    }
+
+    CHECK( test_monster.get_moves() == base_speed * monster_speed_percent *
+           ( turn_count + 1 ) / 100 );
+    CHECK( test_monster.get_speed_base() == base_speed );
+    CHECK( test_monster.type->speed == base_speed );
+}
 
 static int moves_to_destination( const std::string &monster_type,
                                  const tripoint_bub_ms &start, const tripoint_bub_ms &end )

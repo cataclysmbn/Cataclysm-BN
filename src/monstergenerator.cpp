@@ -386,7 +386,6 @@ void MonsterGenerator::finalize_mtypes()
 
         if( !mon.has_flag( MF_RIDEABLE_MECH ) ) {
             // adjust for worldgen difficulty parameters
-            mon.speed *= get_option<int>( "MONSTER_SPEED" )      / 100.0;
             mon.hp    *= get_option<int>( "MONSTER_RESILIENCE" ) / 100.0;
         }
 

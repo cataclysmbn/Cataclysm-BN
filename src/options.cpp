@@ -3117,7 +3117,7 @@ void options_manager::add_options_world_default()
     add_empty_line();
 
     add( "MONSTER_SPEED", world_default, translate_marker( "Monster speed percentage" ),
-         translate_marker( "Determines the movement rate of monsters.  A higher value increases monster speed and a lower reduces it.  Requires world reset." ),
+         translate_marker( "Determines the movement rate of monsters.  A higher value increases monster speed and a lower reduces it." ),
          1, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 

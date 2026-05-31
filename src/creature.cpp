@@ -156,6 +156,7 @@ Creature::Creature( const Creature &source )
     speed_base = source.speed_base;
 
     speed_bonus = source.speed_bonus;
+    move_credit_remainder = source.move_credit_remainder;
     speed_mult = source.speed_mult;
     dodge_bonus = source.dodge_bonus;
     block_bonus = source.block_bonus;
@@ -244,8 +245,20 @@ void Creature::process_turn()
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
-        moves += get_speed();
+        add_action_move_credit( get_speed(), action_move_percent() );
     }
+}
+
+auto Creature::add_action_move_credit( const int base_moves, const int action_percent ) -> void
+{
+    const auto move_credit = base_moves * action_percent + move_credit_remainder;
+    moves += move_credit / 100;
+    move_credit_remainder = move_credit % 100;
+}
+
+auto Creature::action_move_percent() const -> int
+{
+    return 100;
 }
 
 void Creature::batch_turns( int n )
