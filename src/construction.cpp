@@ -2098,7 +2098,7 @@ void construct::done_digormine_stair( const tripoint_bub_ms &p, bool dig )
     tmpmap.load( pos_sm + tripoint_rel_sm::below(), false );
     const auto tmp_origin = project_to<coords::ms>( tmpmap.get_abs_sub() );
     const auto local_tmp = tripoint_bub_ms( tripoint( abs_pos.x() - tmp_origin.x(),
-                           abs_pos.y() - tmp_origin.y(), abs_pos.z() ) );
+                                            abs_pos.y() - tmp_origin.y(), abs_pos.z() ) );
 
     bool dig_muts = g->u.has_trait( trait_PAINRESIST_TROGLO ) || g->u.has_trait( trait_STOCKY_TROGLO );
 
@@ -2154,7 +2154,7 @@ void construct::done_mine_upstair( const tripoint_bub_ms &p )
     tmpmap.load( pos_sm + tripoint_rel_sm::above(), false );
     const auto tmp_origin = project_to<coords::ms>( tmpmap.get_abs_sub() );
     const auto local_tmp = tripoint_bub_ms( tripoint( abs_pos.x() - tmp_origin.x(),
-                           abs_pos.y() - tmp_origin.y(), abs_pos.z() ) );
+                                            abs_pos.y() - tmp_origin.y(), abs_pos.z() ) );
 
     if( tmpmap.ter( local_tmp ) == t_lava ) {
         here.ter_set( p.xy(), t_rock_floor ); // You dug a bit before discovering the problem

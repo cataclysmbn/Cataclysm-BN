@@ -1912,7 +1912,7 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
                     for( auto &veh : destsm->vehicles ) {
                         const auto origin = here.get_abs_sub();
                         veh->abs_sm_pos = tripoint_abs_sm( tripoint( origin.x() + dest_pos.x(),
-                                          origin.y() + dest_pos.y(), dest_pos.z() ) );
+                                                           origin.y() + dest_pos.y(), dest_pos.z() ) );
                     }
 
                     if( !destsm->spawns.empty() ) {                              // trigger spawnpoints

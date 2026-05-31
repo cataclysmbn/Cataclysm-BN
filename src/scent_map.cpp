@@ -198,8 +198,8 @@ bool scent_map::inbounds( const tripoint_bub_ms &p ) const
     const auto local_sm = project_to<coords::sm>( p );
     const auto abs_sub = m_.get_abs_sub();
     const auto abs_sm = tripoint_abs_sm( tripoint( abs_sub.x() + local_sm.x(),
-                                      abs_sub.y() + local_sm.y(),
-                                      local_sm.z() ) );
+                                         abs_sub.y() + local_sm.y(),
+                                         local_sm.z() ) );
     return MAPBUFFER_REGISTRY.get( m_.get_bound_dimension() ).lookup_submap_in_memory(
                abs_sm ) != nullptr;
 }

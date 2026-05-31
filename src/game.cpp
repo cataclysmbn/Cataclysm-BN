@@ -8573,14 +8573,14 @@ void game::zones_manager()
                     true, true, false );
             if( second.position ) {
                 auto first_abs = bub_to_abs( tripoint_bub_ms( std::min( first.position->x(),
-                                               second.position->x() ),
-                                               std::min( first.position->y(), second.position->y() ),
-                                               std::min( first.position->z(),
+                                             second.position->x() ),
+                                             std::min( first.position->y(), second.position->y() ),
+                                             std::min( first.position->z(),
                                                        second.position->z() ) ) );
                 auto second_abs = bub_to_abs( tripoint_bub_ms( std::max( first.position->x(),
-                                                second.position->x() ),
-                                                std::max( first.position->y(), second.position->y() ),
-                                                std::max( first.position->z(),
+                                              second.position->x() ),
+                                              std::max( first.position->y(), second.position->y() ),
+                                              std::max( first.position->z(),
                                                         second.position->z() ) ) );
                 return std::pair<tripoint_abs_ms, tripoint_abs_ms>( first_abs, second_abs );
             }
@@ -14083,7 +14083,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
         // when the destination is far from the current position.
         const auto target_load_origin = load_pos.value_or( current_abs_sm );
         player.setpos( project_to<coords::ms>( target_load_origin + tripoint_rel_sm( g_half_mapsize,
-                       g_half_mapsize, 0 ) ) );
+                                               g_half_mapsize, 0 ) ) );
         load_map( target_load_origin, false );
         debug_assert_player_map_origin( "travel_to_dimension" );
 

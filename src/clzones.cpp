@@ -1384,9 +1384,9 @@ void zone_manager::rotate_zones( map &target_map, const int turns )
             ( a_start.z() == z_start.z() )
           ) {
             auto z_l_start3 = tripoint_bub_ms( tripoint( z_start.x() - origin.x(),
-                              z_start.y() - origin.y(), z_start.z() ) );
+                                               z_start.y() - origin.y(), z_start.z() ) );
             auto z_l_end3 = tripoint_bub_ms( tripoint( z_end.x() - origin.x(),
-                            z_end.y() - origin.y(), z_end.z() ) );
+                                             z_end.y() - origin.y(), z_end.z() ) );
             // don't rotate centered squares
             if( z_l_start3.x() == z_l_start3.y() && z_l_end3.x() == z_l_end3.y() &&
                 z_l_start3.x() + z_l_end3.x() == 23 ) {

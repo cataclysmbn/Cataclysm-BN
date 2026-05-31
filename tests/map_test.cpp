@@ -80,7 +80,7 @@ TEST_CASE( "free_bubble_conversions_follow_avatar_position" )
     CHECK( g->critter_at<avatar>( player_abs ) == &you );
 
     const auto moved_bub = tripoint_bub_ms( g_half_mapsize_x + 1, g_half_mapsize_y + 2,
-                                           player_abs.z() );
+                                            player_abs.z() );
     const auto moved_abs = bub_to_abs( moved_bub );
     you.setpos( moved_abs );
     CHECK( you.abs_pos() == moved_abs );

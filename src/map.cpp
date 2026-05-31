@@ -1013,7 +1013,7 @@ void map::vehmove()
                 veh->gain_moves();
                 veh->slow_leak();
                 vehicle_list.push_back( wrapped_vehicle{ .pos = abs_to_map_local( *this,
-                        veh->abs_ms_location() ), .v = veh } );
+                                        veh->abs_ms_location() ), .v = veh } );
             }
         }
     }
@@ -1704,7 +1704,7 @@ void map::register_vehicle_zone( vehicle *veh, const int zlev )
 bool map::deregister_vehicle_zone( zone_data &zone )
 {
     if( const std::optional<vpart_reference> vp = veh_at( abs_to_map_local( *this,
-                tripoint_abs_ms( zone.get_start_point() ) ) ).part_with_feature( "CARGO", false ) ) {
+            tripoint_abs_ms( zone.get_start_point() ) ) ).part_with_feature( "CARGO", false ) ) {
         const auto bounds = vp->vehicle().loot_zones.equal_range( vp->mount() );
         const auto it = std::ranges::find_if( std::ranges::subrange( bounds.first, bounds.second ),
         [&zone]( const auto & entry ) {
@@ -1972,8 +1972,8 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
             // Place passenger on the new part location.  Z must include mount
             // and terrain-topology offsets — precalc[1] is XY-only.
             auto psgp = abs_to_map_local( *this, dest + tripoint_rel_ms( veh_part.precalc[1].x(),
-                                            veh_part.precalc[1].y(),
-                                            veh_part.mount.z() + veh_part.z_terrain[1] ) );
+                                          veh_part.precalc[1].y(),
+                                          veh_part.mount.z() + veh_part.z_terrain[1] ) );
             // someone is in the way so try again
             if( g->critter_at( psgp ) ) {
                 complete = false;
@@ -1998,7 +1998,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
         const auto p = abs_to_map_local( *this, project_to<coords::sm>( base + tripoint_rel_ms(
-                                       prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) ) );
+                                             prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) ) );
         veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
         veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
         veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
@@ -5779,7 +5779,8 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     }
 
     if( new_item->is_map() && !new_item->has_var( "reveal_map_center_omt" ) ) {
-        new_item->set_var( "reveal_map_center_omt", project_to<coords::omt>( map_local_to_abs( *this, p ) ) );
+        new_item->set_var( "reveal_map_center_omt", project_to<coords::omt>( map_local_to_abs( *this,
+                           p ) ) );
     }
 
     current_submap->is_uniform = false;
@@ -6375,7 +6376,7 @@ static void use_charges_from_furn( const furn_t &f, const itype_id &type, int &q
         if( itt.has_flag( json_flag_USES_GRID_POWER ) ) {
             const auto origin = project_to<coords::ms>( m->get_abs_sub() );
             const auto abspos = tripoint_abs_ms( tripoint( origin.x() + p.x(), origin.y() + p.y(),
-                                             p.z() ) );
+                                                 p.z() ) );
             auto &grid = get_distribution_grid_tracker().grid_at( abspos );
             detached_ptr<item> furn_item = item::spawn( itt.get_id(), calendar::start_of_cataclysm,
                                            grid.get_resource() );

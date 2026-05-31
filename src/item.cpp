@@ -5010,7 +5010,7 @@ void item::on_map_placement( const map &m, const tripoint_bub_ms &p )
     if( is_map() && !has_var( "reveal_map_center_omt" ) ) {
         const auto origin = project_to<coords::ms>( m.get_abs_sub() );
         const auto abs_pos = tripoint_abs_ms( tripoint( origin.x() + p.x(), origin.y() + p.y(),
-                                             p.z() ) );
+                                              p.z() ) );
         set_var( "reveal_map_center_omt", project_to<coords::omt>( abs_pos ) );
     }
 

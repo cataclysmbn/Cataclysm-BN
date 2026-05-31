@@ -177,7 +177,7 @@ void put_player_underground()
 {
     // Make sure the player doesn't block the path of the monster being tested.
     g->u.setpos( map_local_to_abs( get_map(),
-                 tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, -2 ) ) );
+                                   tripoint_bub_ms( g_half_mapsize_x, g_half_mapsize_y, -2 ) ) );
 }
 
 monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start )

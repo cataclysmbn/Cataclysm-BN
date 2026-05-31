@@ -347,7 +347,7 @@ auto game::unserialize( std::istream &fin ) -> bool
             load_origin = player_reality_bubble_origin();
         } else {
             u.setpos( project_to<coords::ms>( saved_origin + tripoint_rel_sm( g_half_mapsize,
-                      g_half_mapsize, 0 ) ) );
+                                              g_half_mapsize, 0 ) ) );
         }
         load_map( load_origin, /*pump_events=*/true );
 
