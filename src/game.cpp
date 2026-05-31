@@ -357,6 +357,7 @@ static const trait_id trait_WEB_ROPE( "WEB_ROPE" );
 static const trait_id trait_INATTENTIVE( "INATTENTIVE" );
 static const trait_id trait_WAYFARER( "WAYFARER" );
 static const trait_id trait_HAS_NEMESIS( "HAS_NEMESIS" );
+static const trait_id trait_DEBUG_INFINITE_SPEED( "DEBUG_INFINITE_SPEED" );
 
 static const trait_flag_str_id trait_flag_MUTATION_FLIGHT( "MUTATION_FLIGHT" );
 static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
@@ -2270,8 +2271,46 @@ void game::process_activity()
     }
 
     while( u.moves > 0 && *u.activity ) {
+        const auto before_activity_id = u.activity->id();
+        const auto before_activity_moves_left = u.activity->get_moves_left();
+        const auto before_avatar_moves = u.moves;
+        const auto freeze_non_calendar_activity = debug_infinite_speed_can_freeze_time() &&
+                !activity_uses_calendar_duration_progress( before_activity_id );
+
         u.activity->do_turn( u );
+
+        if( !freeze_non_calendar_activity ) {
+            continue;
+        }
+
+        const auto activity_finished = !u.activity || !*u.activity;
+        const auto activity_changed = !activity_finished && u.activity->id() != before_activity_id;
+        const auto activity_progressed = !activity_finished &&
+                                         u.activity->get_moves_left() < before_activity_moves_left;
+        if( activity_finished || activity_changed || activity_progressed ) {
+            restore_debug_infinite_speed_moves( before_avatar_moves );
+        }
     }
+}
+
+auto game::debug_infinite_speed_can_freeze_time() const -> bool
+{
+    if( !u.has_trait( trait_DEBUG_INFINITE_SPEED ) ) {
+        return false;
+    }
+    if( !u.activity || !*u.activity ) {
+        return true;
+    }
+    return !activity_uses_calendar_duration_progress( u.activity->id() );
+}
+
+auto game::restore_debug_infinite_speed_moves( const int minimum_moves ) -> void
+{
+    if( !debug_infinite_speed_can_freeze_time() ) {
+        return;
+    }
+    const auto minimum_turn_moves = std::max( minimum_moves, action_time_scale::base_moves_per_turn );
+    u.moves = std::max( u.moves, minimum_turn_moves );
 }
 
 auto game::activity_fixed_window_duration() -> time_duration
@@ -2367,6 +2406,9 @@ auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bo
     }
     if( duration <= 0_turns || !get_weather().weather_id ||
         get_weather().nextweather <= calendar::turn ) {
+        return false;
+    }
+    if( debug_infinite_speed_can_freeze_time() ) {
         return false;
     }
     if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||

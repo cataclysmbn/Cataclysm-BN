@@ -1022,6 +1022,8 @@ class game : public submap_load_listener
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
+        auto debug_infinite_speed_can_freeze_time() const -> bool;
+        auto restore_debug_infinite_speed_moves( int minimum_moves ) -> void;
         auto advance_time_action_tick() -> int;
         auto try_activity_fixed_window_skip() -> bool;
         auto activity_fixed_window_duration() -> time_duration;

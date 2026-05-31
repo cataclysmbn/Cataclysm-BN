@@ -1821,7 +1821,7 @@ bool game::handle_action()
 
     int soffset = get_option<int>( "MOVE_VIEW_OFFSET" );
 
-    int before_action_moves = u.moves;
+    const auto before_action_moves = u.moves;
 
     // These actions are allowed while deathcam is active. Registered in game::get_player_input
     if( uquit == QUIT_WATCH || !u.is_dead_state() ) {
@@ -2866,8 +2866,14 @@ bool game::handle_action()
         u.mod_moves( -current_turn.moves_elapsed() );
     }
     gamemode->post_action( act );
+    const auto moves_before_debug_restore = u.moves;
+    if( act != ACTION_PAUSE ) {
+        restore_debug_infinite_speed_moves( before_action_moves );
+    }
 
-    u.movecounter = ( !u.is_dead_state() ? ( before_action_moves - u.moves ) : 0 );
+    const auto action_moves_spent = u.moves > moves_before_debug_restore ? 0 :
+                                    before_action_moves - u.moves;
+    u.movecounter = ( !u.is_dead_state() ? action_moves_spent : 0 );
     dbg( DL::Info ) << string_format( "%s: [%d] %d - %d = %d", action_ident( act ),
                                       to_turn<int>( calendar::turn ), before_action_moves, u.movecounter, u.moves );
     return ( !u.is_dead_state() );
