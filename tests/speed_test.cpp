@@ -18,8 +18,11 @@
 #include "state_helpers.h"
 
 static const trait_id trait_DEBUG_WEIGHTLESSNESS( "DEBUG_WEIGHTLESSNESS" );
+static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_debug_clairvoyance( "debug_clairvoyance" );
 static const auto act_repair_item = activity_id( "ACT_REPAIR_ITEM" );
+static const auto act_socialize = activity_id( "ACT_SOCIALIZE" );
+static const auto act_try_sleep = activity_id( "ACT_TRY_SLEEP" );
 static const auto act_wait = activity_id( "ACT_WAIT" );
 
 static void advance_turn( Character &guy )
@@ -95,7 +98,7 @@ TEST_CASE( "Activity progress scale modifies non-complex activity progress", "[s
     auto &guy = *get_player_character().as_player();
     clear_character( guy, true );
     guy.set_moves( 100 );
-    guy.assign_activity( act_wait, 1000 );
+    guy.assign_activity( act_socialize, 1000 );
 
     REQUIRE( guy.activity );
     REQUIRE( guy.activity->get_moves_left() == 1000 );
@@ -114,9 +117,50 @@ TEST_CASE( "Activity progress scale modifies complex activity base progress", "[
 
     auto speed = activity_speed();
     CHECK( speed.moves_per_turn() == 50 );
+    CHECK( speed.calendar_moves_per_turn() == 25 );
 
     speed.player_speed = 2.0f;
     CHECK( speed.moves_per_turn() == 100 );
+    CHECK( speed.calendar_moves_per_turn() == 50 );
+}
+
+TEST_CASE( "Calendar wait progress consumes elapsed tick duration", "[speed][activity][wait]" )
+{
+    clear_all_state();
+
+    auto &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.set_moves( 100 );
+    guy.assign_activity( act_wait, to_moves<int>( 1_minutes ) );
+    const auto tick_scope = action_time_scale::scoped_calendar_turns_this_tick( 10 );
+
+    REQUIRE( guy.activity );
+    REQUIRE( guy.activity->get_moves_left() == to_moves<int>( 1_minutes ) );
+
+    guy.activity->do_turn( guy );
+
+    CHECK( guy.activity->get_moves_left() == to_moves<int>( 50_seconds ) );
+    CHECK( guy.get_moves() == 0 );
+}
+
+TEST_CASE( "Trying to sleep progress consumes elapsed tick duration", "[speed][activity][sleep]" )
+{
+    clear_all_state();
+
+    auto &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.add_effect( effect_sleep, 1_minutes );
+    guy.set_moves( 100 );
+    guy.assign_activity( act_try_sleep, to_moves<int>( 1_minutes ) );
+    const auto tick_scope = action_time_scale::scoped_calendar_turns_this_tick( 10 );
+
+    REQUIRE( guy.activity );
+    REQUIRE( guy.activity->get_moves_left() == to_moves<int>( 1_minutes ) );
+
+    guy.activity->do_turn( guy );
+
+    CHECK( guy.activity->get_moves_left() == to_moves<int>( 50_seconds ) );
+    CHECK( guy.get_moves() == 0 );
 }
 
 TEST_CASE( "Activity progress scale modifies progress time estimates", "[speed][activity]" )
@@ -257,7 +301,7 @@ TEST_CASE( "NPC activity catch-up uses activity progress scale", "[speed][activi
     const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
 
     auto guy = standard_npc( "activity catch-up npc" );
-    guy.assign_activity( act_wait, 1000 );
+    guy.assign_activity( act_socialize, 1000 );
 
     REQUIRE( guy.activity );
     REQUIRE( guy.activity->get_moves_left() == 1000 );
@@ -265,6 +309,23 @@ TEST_CASE( "NPC activity catch-up uses activity progress scale", "[speed][activi
     guy.advance_job_progress( 10 );
 
     CHECK( guy.activity->get_moves_left() == 750 );
+}
+
+TEST_CASE( "NPC calendar wait catch-up uses elapsed turns", "[speed][activity][npc][wait]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
+
+    auto guy = standard_npc( "calendar wait catch-up npc" );
+    guy.assign_activity( act_wait, to_moves<int>( 10_seconds ) );
+
+    REQUIRE( guy.activity );
+    REQUIRE( guy.activity->get_moves_left() == to_moves<int>( 10_seconds ) );
+
+    guy.advance_job_progress( 10 );
+
+    CHECK( guy.activity->get_moves_left() == 0 );
 }
 
 static void pain_penalty_test( player &guy, int pain, int speed_exp )

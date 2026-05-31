@@ -1741,7 +1741,7 @@ auto process_fields_in_submap( submap &sm,
             }
 
             // ---- Aging + half-life decay --------------------------------
-            cur.set_field_age( cur.get_field_age() + 1_turns );
+            cur.set_field_age( cur.get_field_age() + action_time_scale::calendar_duration_this_tick() );
             const auto &fdata = cur.get_field_type().obj();
             if( fdata.half_life > 0_turns && cur.get_field_age() > 0_turns &&
                 dice( 2, to_turns<int>( cur.get_field_age() ) ) >

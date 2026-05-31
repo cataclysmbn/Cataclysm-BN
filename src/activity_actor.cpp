@@ -2378,7 +2378,7 @@ act_progress_message craft_activity_actor::get_progress_message(
     const auto total_mult = act.speed.total();
     const auto remaining_moves = static_cast<int>( std::ceil( remaining_pct * base_total_moves ) );
     const auto remaining_turns = action_time_scale::turns_for_progress( remaining_moves,
-                                 act.speed.moves_per_turn() );
+                                  act.speed.calendar_moves_per_turn() );
 
     const std::string time_desc = string_format( _( "Time left: %s" ),
                                   to_string( time_duration::from_turns( remaining_turns ) ) );

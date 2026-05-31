@@ -59,6 +59,13 @@ auto activity_speed::moves_per_turn() const -> int
                          std::roundf( total() * action_time_scale::activity_progress_per_tick() ) ) );
 }
 
+auto activity_speed::calendar_moves_per_turn() const -> int
+{
+    return std::max( 1, static_cast<int>(
+                         std::roundf( total() *
+                                      action_time_scale::activity_progress_per_calendar_turn() ) ) );
+}
+
 void activity_speed::calc_moves( const Character &who )
 {
     if( type->light_affected() ) {

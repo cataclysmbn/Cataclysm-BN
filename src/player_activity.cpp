@@ -66,7 +66,31 @@ static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 static const activity_id ACT_VEHICLE( "ACT_VEHICLE" );
+static const activity_id ACT_TRY_SLEEP( "ACT_TRY_SLEEP" );
+static const activity_id ACT_WAIT( "ACT_WAIT" );
+static const activity_id ACT_WAIT_NPC( "ACT_WAIT_NPC" );
 static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
+static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
+
+auto activity_uses_calendar_duration_progress( const activity_id &id ) -> bool
+{
+    return id == ACT_TRY_SLEEP || id == ACT_WAIT || id == ACT_WAIT_NPC ||
+           id == ACT_WAIT_STAMINA || id == ACT_WAIT_WEATHER;
+}
+
+static auto progress_per_calendar_turn_for( const player_activity &activity ) -> int
+{
+    return activity_uses_calendar_duration_progress( activity.id() ) ?
+           action_time_scale::base_moves_per_turn :
+           activity.speed.calendar_moves_per_turn();
+}
+
+static auto progress_per_tick_for( const player_activity &activity ) -> int
+{
+    return activity_uses_calendar_duration_progress( activity.id() ) ?
+           action_time_scale::calendar_progress_per_tick() :
+           action_time_scale::activity_progress_per_tick();
+}
 
 player_activity::player_activity() : type( activity_id::NULL_ID() ) { }
 
@@ -294,6 +318,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
         */
         std::string target = "";
         std::string progress_desc = "Progress: ";
+        const auto progress_per_calendar_turn = progress_per_calendar_turn_for( *this );
 
         /*
          * TODO progress for targets
@@ -318,7 +343,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += string_format( _( "  - Estimated time: %s\n" ),
                                                     to_string( time_duration::from_turns(
                                                             action_time_scale::turns_for_progress( actor->progress.get_moves_left(),
-                                                                    speed.moves_per_turn() ) ) ) );
+                                                                    progress_per_calendar_turn ) ) ) );
                     progress_desc += " - Current: ";
                 }
                 progress_desc += string_format( "%.1f%%\n",
@@ -330,7 +355,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                 progress_desc += string_format( _( "Time left: %s\n" ),
                                                 to_string( time_duration::from_turns(
                                                         action_time_scale::turns_for_progress( actor->progress.front().moves_left,
-                                                                speed.moves_per_turn() ) ) ) );
+                                                                progress_per_calendar_turn ) ) ) );
             }
         } else {
             if( !targets.empty() && targets.front().is_accessible() && !targets.front().is_destroyed() ) {
@@ -343,7 +368,8 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
             if( moves_left > 0 ) {
                 progress_desc += string_format( _( "Time left: %s\n" ),
                                                 to_string( time_duration::from_turns(
-                                                        action_time_scale::turns_for_progress( moves_left, speed.moves_per_turn() ) ) ) );
+                                                        action_time_scale::turns_for_progress( moves_left,
+                                                                progress_per_calendar_turn ) ) ) );
             }
             if( moves_total <= 0 && moves_left <= 0 ) {
                 progress_desc = "";
@@ -504,58 +530,46 @@ void player_activity::do_turn( player &p )
     /*
      * Moves block
      * This might finish the activity (set it to null)
-     * Leave as is till full migration to actors for "NEITHER"
+    * Leave as is till full migration to actors for "NEITHER"
     */
     if( !type->special() ) {
-        if( type->complex_moves() ) {
-            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
-                calc_moves( p );
-            }
-
-            const auto moves_total = speed.moves_per_turn();
-
-            //fancy new system
-            if( actor ) {
-                if( actor->progress.get_moves_left() >= moves_total ) {
-                    actor->progress.mod_moves_left( - moves_total );
-                    p.moves = 0;
-                } else {
-                    p.moves -= std::round( ( moves_total - actor->progress.get_moves_left() ) * 100.0f / moves_total );
-                    actor->progress.mod_moves_left( -actor->progress.get_moves_left() );
-                }
-            }
-            //old one
-            else {
-                if( moves_left >= moves_total ) {
-                    moves_left -= moves_total;
-                    p.moves = 0;
-                } else {
-                    p.moves -= std::round( ( moves_total - moves_left ) * 100.0f / moves_total );
-                    moves_left = 0;
-                }
-            }
-        } else {
-            const auto moves_total = action_time_scale::activity_progress_per_tick();
-            //fancy new system
+        const auto consume_activity_progress = [&]( const int moves_total,
+                const bool complex_partial_cost ) {
             if( actor ) {
                 if( actor->progress.get_moves_left() >= moves_total ) {
                     actor->progress.mod_moves_left( -moves_total );
                     p.moves = 0;
                 } else {
-                    p.moves -= std::round( actor->progress.get_moves_left() * 100.0f / moves_total );
+                    const auto progress_cost = complex_partial_cost ?
+                                               moves_total - actor->progress.get_moves_left() :
+                                               actor->progress.get_moves_left();
+                    p.moves -= std::round( progress_cost * 100.0f / moves_total );
                     actor->progress.mod_moves_left( -actor->progress.get_moves_left() );
                 }
-            }
-            //old one
-            else {
+            } else {
                 if( moves_left >= moves_total ) {
                     moves_left -= moves_total;
                     p.moves = 0;
                 } else {
-                    p.moves -= std::round( moves_left * 100.0f / moves_total );
+                    const auto progress_cost = complex_partial_cost ?
+                                               moves_total - moves_left :
+                                               moves_left;
+                    p.moves -= std::round( progress_cost * 100.0f / moves_total );
                     moves_left = 0;
                 }
             }
+        };
+
+        if( activity_uses_calendar_duration_progress( id() ) ) {
+            consume_activity_progress( progress_per_tick_for( *this ), false );
+        } else if( type->complex_moves() ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
+                calc_moves( p );
+            }
+
+            consume_activity_progress( speed.moves_per_turn(), true );
+        } else {
+            consume_activity_progress( progress_per_tick_for( *this ), false );
         }
     }
 

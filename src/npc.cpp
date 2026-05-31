@@ -3164,7 +3164,9 @@ void npc::advance_job_progress( int n )
         // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
         // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
         // are zeroed on the very first step and the catchup never happens.
-        const auto progress = action_time_scale::activity_progress_for_turns( n );
+        const auto progress = activity_uses_calendar_duration_progress( activity->id() ) ?
+                              action_time_scale::calendar_progress_for_turns( n ) :
+                              action_time_scale::activity_progress_for_turns( n );
         activity->moves_left = std::max( 0, activity->moves_left - progress );
     } else if( has_destination() ) {
         // Destination movement: grant extra moves so the NPC takes additional path

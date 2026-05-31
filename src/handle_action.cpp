@@ -1062,7 +1062,7 @@ static void wait()
         }
 
         u.assign_activity( std::make_unique<player_activity>( actType,
-                           100 * ( to_turns<int>( time_to_wait ) ), 0 ), false );
+                           to_moves<int>( time_to_wait ), 0 ), false );
     }
 }
 

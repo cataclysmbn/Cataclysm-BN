@@ -16,6 +16,8 @@ inline constexpr auto factor_denominator = percent_denominator * percent_denomin
 inline constexpr auto triple_factor_denominator = factor_denominator * percent_denominator;
 inline constexpr auto base_moves_per_turn = 100;
 
+inline auto calendar_turns_this_tick() -> int;
+
 inline auto scaled_action_factor( const char *option_id ) -> int
 {
     return get_option<int>( "TIME_ACTION_SCALE" ) * get_option<int>( option_id );
@@ -128,6 +130,20 @@ inline auto activity_progress_per_tick() -> int
 inline auto activity_progress_per_calendar_turn() -> int
 {
     return scaled_moves( base_moves_per_turn, activity_progress_factor() );
+}
+
+inline auto calendar_progress_per_tick() -> int
+{
+    const auto progress = static_cast<int64_t>( base_moves_per_turn ) *
+                          calendar_turns_this_tick();
+    return static_cast<int>( std::min<int64_t>( progress, std::numeric_limits<int>::max() ) );
+}
+
+inline auto calendar_progress_for_turns( const int turns ) -> int
+{
+    const auto progress = static_cast<int64_t>( std::max( 0, turns ) ) *
+                          base_moves_per_turn;
+    return static_cast<int>( std::min<int64_t>( progress, std::numeric_limits<int>::max() ) );
 }
 
 inline auto activity_progress_for_turns( const int turns ) -> int

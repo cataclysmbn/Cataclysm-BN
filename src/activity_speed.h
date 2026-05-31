@@ -88,6 +88,7 @@ class activity_speed
 
         //Returns total amonut of moves based on factors
         auto moves_per_turn() const -> int;
+        auto calendar_moves_per_turn() const -> int;
 
         //Calculates all factors
         void calc_all_moves( Character &who );
