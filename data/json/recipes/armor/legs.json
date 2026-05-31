@@ -166,7 +166,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 1 ], [ "tailor_portfolio", 1 ], [ "manual_tailor", 1 ], [ "survival_book", 1 ] ],
     "using": [ [ "sewing_standard", 10 ] ],
-    "components": [ [ [ "rag", 6 ] ] ]
+    "components": [ [ [ "rag", 8 ] ] ]
   },
   {
     "result": "pants",
