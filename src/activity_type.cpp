@@ -10,7 +10,6 @@
 #include "debug.h"
 #include "flag.h"
 #include "enum_conversions.h"
-#include "generic_factory.h"
 #include "json.h"
 #include "sounds.h"
 #include "string_formatter.h"
@@ -19,23 +18,28 @@
 #include "game.h"
 #include "player_activity.h"
 #include "item.h"
-namespace
-{
-generic_factory<activity_type> all_activities( "Activity Types" );
-}
+// activity_type functions
+static std::map< activity_id, activity_type > activity_type_all;
 
 /** @relates string_id */
 template<>
 const activity_type &string_id<activity_type>::obj() const
 {
-    all_activities.obj( *this );
+    const auto found = activity_type_all.find( *this );
+    if( found == activity_type_all.end() ) {
+        debugmsg( "Tried to get invalid activity_type: %s", c_str() );
+        static const activity_type null_activity_type {};
+        return null_activity_type;
+    }
+    return found->second;
 }
 
 /** @relates string_id */
 template<>
 bool string_id<activity_type>::is_valid() const
 {
-    return all_activities.is_valid( *this );
+    const auto found = activity_type_all.find( *this );
+    return found != activity_type_all.end();
 }
 
 namespace io
@@ -57,40 +61,44 @@ std::string enum_to_string<activity_bubble_effect>( activity_bubble_effect data 
 } // namespace io
 
 
-void activity_type::load_activities( const JsonObject &jo, const std::string &src )
-{
-    all_activities.load( jo, src );
-}
 
-void activity_type::load( const JsonObject &jo, const std::string &src )
+void activity_type::load( const JsonObject &jo )
 {
-    assign( jo, "rooted", rooted_, true );
-    assign( jo, "verb", verb_, true );
-    assign( jo, "suspendable", suspendable_, true );
-    assign( jo, "no_resume", no_resume_, true );
-    assign( jo, "special", special_, false );
-    assign( jo, "multi_activity", multi_activity_, false );
-    assign( jo, "refuel_fires", refuel_fires, false );
-    assign( jo, "auto_needs", auto_needs, false );
-    assign( jo, "morale_blocked", morale_blocked_, false );
-    assign( jo, "verbose_tooltip", verbose_tooltip_, false );
-    bubble_effect_ = jo.get_enum_value<activity_bubble_effect>( "bubble_size_effect",
-                     activity_bubble_effect::none );
+    activity_type result;
+
+    result.id_ = activity_id( jo.get_string( "id" ) );
+    assign( jo, "rooted", result.rooted_, true );
+    assign( jo, "verb", result.verb_, true );
+    assign( jo, "suspendable", result.suspendable_, true );
+    assign( jo, "no_resume", result.no_resume_, true );
+    assign( jo, "special", result.special_, false );
+    assign( jo, "multi_activity", result.multi_activity_, false );
+    assign( jo, "refuel_fires", result.refuel_fires, false );
+    assign( jo, "auto_needs", result.auto_needs, false );
+    assign( jo, "morale_blocked", result.morale_blocked_, false );
+    assign( jo, "verbose_tooltip", result.verbose_tooltip_, false );
+    result.bubble_effect_ = jo.get_enum_value<activity_bubble_effect>( "bubble_size_effect",
+                            activity_bubble_effect::none );
     if( jo.has_member( "complex_moves" ) ) {
-        complex_moves_ = true;
+        result.complex_moves_ = true;
         auto c_moves = jo.get_object( "complex_moves" );
-        bench_affected_ = c_moves.get_bool( "bench", false );
-        light_affected_ = c_moves.get_bool( "light", false );
-        speed_affected_ = c_moves.get_bool( "speed", false );
-        morale_affected_ = c_moves.get_bool( "morale", false );
+        result.bench_affected_ = c_moves.get_bool( "bench", false );
+        result.light_affected_ = c_moves.get_bool( "light", false );
+        result.speed_affected_ = c_moves.get_bool( "speed", false );
+        result.morale_affected_ = c_moves.get_bool( "morale", false );
 
-        max_assistants_ = c_moves.get_int( "max_assistants", 0 );
+        int jvalue = c_moves.get_int( "max_assistants", 0 );
+        if( jvalue >= 0 || jvalue > 32 ) {
+            result.max_assistants_ = jvalue;
+        } else {
+            debugmsg( "Forbidden value of max_assistants - %s. Value sould be between 0 and 32", jvalue );
+        }
 
         c_moves.allow_omitted_members();
         if( c_moves.has_bool( "skills" ) ) {
-            assign( c_moves, "skills", skill_affected_, false );
+            assign( c_moves, "skills", result.skill_affected_, false );
         } else if( c_moves.has_array( "skills" ) ) {
-            skill_affected_ = true;
+            result.skill_affected_ = true;
             for( JsonArray skillobj : c_moves.get_array( "skills" ) ) {
                 std::string skill_s = skillobj.get_string( 0 );
                 auto skill = skill_id( skill_s );
@@ -102,16 +110,16 @@ void activity_type::load( const JsonObject &jo, const std::string &src )
                 if( skillobj.size() > 2 ) {
                     threshold = skillobj.get_int( 2 );
                 }
-                skills.emplace_back(
+                result.skills.emplace_back(
                     activity_req<skill_id>( skill, mod, threshold )
                 );
             }
         }
 
         if( c_moves.has_bool( "qualities" ) ) {
-            assign( c_moves, "qualities", tools_affected_, false );
+            assign( c_moves, "qualities", result.tools_affected_, false );
         } else if( c_moves.has_array( "qualities" ) ) {
-            tools_affected_ = true;
+            result.tools_affected_ = true;
             for( JsonArray q_obj : c_moves.get_array( "qualities" ) ) {
                 std::string quality_s = q_obj.get_string( 0 );
                 auto quality = quality_id( quality_s );
@@ -123,16 +131,16 @@ void activity_type::load( const JsonObject &jo, const std::string &src )
                 if( q_obj.size() > 2 ) {
                     threshold = q_obj.get_int( 2 );
                 }
-                qualities.emplace_back(
+                result.qualities.emplace_back(
                     activity_req<quality_id>( quality, mod, threshold )
                 );
             }
         }
 
         if( c_moves.has_bool( "stats" ) ) {
-            assign( c_moves, "stats", stats_affected_, false );
+            assign( c_moves, "stats", result.stats_affected_, false );
         } else if( c_moves.has_array( "stats" ) ) {
-            stats_affected_ = true;
+            result.stats_affected_ = true;
             for( JsonArray stat_obj : c_moves.get_array( "stats" ) ) {
                 auto stat = io::string_to_enum_fallback( stat_obj.get_string( 0 ), character_stat::DUMMY_STAT );
                 if( stat == character_stat::DUMMY_STAT ) {
@@ -146,54 +154,55 @@ void activity_type::load( const JsonObject &jo, const std::string &src )
                     if( stat_obj.size() > 2 ) {
                         threshold = stat_obj.get_int( 2 );
                     }
-                    stats.emplace_back(
+                    result.stats.emplace_back(
                         activity_req<character_stat>( stat, mod, threshold )
                     );
                 }
+
             }
         }
+    }
+
+    if( activity_type_all.contains( result.id_ ) ) {
+        debugmsg( "Redefinition of %s", result.id_.c_str() );
+    } else {
+        activity_type_all.insert( { result.id_, result } );
     }
 }
 
 void activity_type::check_consistency()
 {
-    all_activities.check();
-}
-void activity_type::check() const
-{
-    if( max_assistants_ < 0 || max_assistants_ > 32 ) {
-        debugmsg( "Forbidden value of max_assistants - %s. Value sould be between 0 and 32",
-                  max_assistants_ );
-    }
-    if( verb_.empty() ) {
-        debugmsg( "%s doesn't have a verb", id.c_str() );
-    }
-    const bool has_actor = activity_actors::deserialize_functions.contains( id );
-    const bool has_turn_func = activity_handlers::do_turn_functions.contains( id );
+    for( const auto &pair : activity_type_all ) {
+        if( pair.second.verb_.empty() ) {
+            debugmsg( "%s doesn't have a verb", pair.first.c_str() );
+        }
+        const bool has_actor = activity_actors::deserialize_functions.contains( pair.second.id_ );
+        const bool has_turn_func = activity_handlers::do_turn_functions.contains( pair.second.id_ );
 
-    if( special_ && !( has_turn_func || has_actor ) ) {
-        debugmsg( "%s needs a do_turn function or activity actor if it expects a special behaviour.",
-                  id.c_str() );
-    }
-    for( auto &skill : skills ) {
-        if( !skill.req.is_valid() ) {
-            debugmsg( "Unknown skill id %s", skill.req.str() );
+        if( pair.second.special_ && !( has_turn_func || has_actor ) ) {
+            debugmsg( "%s needs a do_turn function or activity actor if it expects a special behaviour.",
+                      pair.second.id_.c_str() );
         }
+        for( auto &skill : pair.second.skills )
+            if( !skill.req.is_valid() ) {
+                debugmsg( "Unknown skill id %s", skill.req.str() );
+            }
+
+        for( auto &quality : pair.second.qualities )
+            if( !quality.req.is_valid() ) {
+                debugmsg( "Unknown quality id %s", quality.req.str() );
+            }
     }
-    for( auto &quality : qualities ) {
-        if( !quality.req.is_valid() ) {
-            debugmsg( "Unknown quality id %s", quality.req.str() );
-        }
-    }
+
     for( const auto &pair : activity_handlers::do_turn_functions ) {
-        if( !pair.first.is_valid() ) {
+        if( !activity_type_all.contains( pair.first ) ) {
             debugmsg( "The do_turn function %s doesn't correspond to a valid activity_type.",
                       pair.first.c_str() );
         }
     }
 
     for( const auto &pair : activity_handlers::finish_functions ) {
-        if( !pair.first.is_valid() ) {
+        if( !activity_type_all.contains( pair.first ) ) {
             debugmsg( "The finish_function %s doesn't correspond to a valid activity_type",
                       pair.first.c_str() );
         }
@@ -202,7 +211,7 @@ void activity_type::check() const
 
 void activity_type::call_do_turn( player_activity *act, player *p ) const
 {
-    const auto &pair = activity_handlers::do_turn_functions.find( id );
+    const auto &pair = activity_handlers::do_turn_functions.find( id_ );
     if( pair != activity_handlers::do_turn_functions.end() ) {
         pair->second( act, p );
     }
@@ -210,7 +219,7 @@ void activity_type::call_do_turn( player_activity *act, player *p ) const
 
 bool activity_type::call_finish( player_activity *act, player *p ) const
 {
-    const auto &pair = activity_handlers::finish_functions.find( id );
+    const auto &pair = activity_handlers::finish_functions.find( id_ );
     if( pair != activity_handlers::finish_functions.end() ) {
         pair->second( act, p );
         // kill activity sounds at finish
@@ -228,7 +237,7 @@ bool activity_type::call_finish( player_activity *act, player *p ) const
 
 void activity_type::reset()
 {
-    all_activities.reset();
+    activity_type_all.clear();
 }
 
 std::string activity_type::stop_phrase() const
