@@ -203,10 +203,36 @@ static bool SetupRenderTarget()
     return true;
 }
 
+namespace
+{
+
+auto get_sdl_error_or_unknown() -> std::string
+{
+    const auto error = std::string{ SDL_GetError() };
+    return error.empty() ? _( "unknown SDL error" ) : error;
+}
+
+auto reset_display_buffer_render_target() -> bool
+{
+    display_buffer.reset();
+    return SetupRenderTarget();
+}
+
+auto show_software_renderer_fallback_warning( const std::string &reason ) -> void
+{
+    popup( _( "The accelerated renderer failed, so Cataclysm is now using software rendering.\n\n%s" ),
+           reason );
+}
+
+auto pending_software_renderer_fallback_warning = std::optional<std::string> {};
+
+} // namespace
+
 //Registers, creates, and shows the Window!!
 static void WinCreate()
 {
-    std::string version = string_format( "Cataclysm: Bright Nights - %s", getVersionString() );
+    auto software_fallback_warning = std::optional<std::string> {};
+    auto version = string_format( "Cataclysm: Bright Nights - %s", getVersionString() );
 
     // Common flags used for fulscreen and for windowed
     int window_flags = 0;
@@ -318,16 +344,22 @@ static void WinCreate()
 
         const char *renderer_driver = renderer_id >= 0 ? SDL_GetRenderDriver( renderer_id ) : nullptr;
         renderer.reset( SDL_CreateRenderer( ::window.get(), renderer_driver ) );
-        if( printErrorIf( !renderer,
-                          "Failed to initialize accelerated renderer, falling back to software rendering" ) ) {
+        if( !renderer ) {
+            software_fallback_warning = string_format(
+                                            _( "Failed to initialize accelerated renderer: %s" ), get_sdl_error_or_unknown() );
+            printErrorIf( true,
+                          "Failed to initialize accelerated renderer, falling back to software rendering" );
             software_renderer = true;
         } else {
             if( get_option<bool>( "VSYNC" ) ) {
                 SDL_SetRenderVSync( renderer.get(), 1 );
             }
             if( !SetupRenderTarget() ) {
+                software_fallback_warning = string_format(
+                                                _( "Failed to initialize display buffer under accelerated rendering: %s" ),
+                                                get_sdl_error_or_unknown() );
                 dbg( DL::Error ) << "Failed to initialize display buffer under accelerated rendering, "
-                                 "falling back to software rendering.";
+                                 "falling back to software rendering: " << *software_fallback_warning;
                 software_renderer = true;
                 display_buffer.reset();
                 renderer.reset();
@@ -394,6 +426,10 @@ static void WinCreate()
         geometry = std::make_unique<ColorModulatedGeometryRenderer>( renderer );
     } else {
         geometry = std::make_unique<DefaultGeometryRenderer>();
+    }
+
+    if( software_fallback_warning.has_value() ) {
+        pending_software_renderer_fallback_warning = std::move( software_fallback_warning );
     }
 }
 
@@ -522,7 +558,15 @@ void refresh_display()
     draw_quick_shortcuts();
     draw_virtual_joystick();
 #endif
-    SDL_RenderPresent( renderer.get() );
+    if( !SDL_RenderPresent( renderer.get() ) ) {
+        const auto present_error = get_sdl_error_or_unknown();
+        dbg( DL::Error ) << "SDL_RenderPresent failed: " << present_error;
+        const auto setup_error_message = string_format(
+                                             "SetupRenderTarget failed after SDL_RenderPresent failed: %s", present_error );
+        throwErrorIf( !reset_display_buffer_render_target(), setup_error_message.c_str() );
+        needupdate = true;
+        return;
+    }
     SetRenderTarget( renderer, display_buffer );
 }
 
@@ -2111,7 +2155,7 @@ bool handle_resize( int w, int h )
         TERMINAL_HEIGHT = WindowHeight / fontheight / scaling_factor;
         need_invalidate_framebuffers = true;
         catacurses::stdscr = catacurses::newwin( TERMINAL_HEIGHT, TERMINAL_WIDTH, point_zero );
-        throwErrorIf( !SetupRenderTarget(), "SetupRenderTarget failed" );
+        throwErrorIf( !reset_display_buffer_render_target(), "SetupRenderTarget failed" );
         game_ui::init_ui();
         ui_manager::screen_resized();
         return true;
@@ -3260,6 +3304,8 @@ static void CheckMessages()
                 resize_dims = point( ev.window.data1, ev.window.data2 );
                 break;
             case SDL_EVENT_RENDER_TARGETS_RESET:
+            case SDL_EVENT_RENDER_DEVICE_RESET:
+            case SDL_EVENT_RENDER_DEVICE_LOST:
                 render_target_reset = true;
                 break;
             case SDL_EVENT_KEY_DOWN: {
@@ -3597,7 +3643,7 @@ static void CheckMessages()
     }
     // resizing already reinitializes the render target
     if( !resized && render_target_reset ) {
-        throwErrorIf( !SetupRenderTarget(), "SetupRenderTarget failed" );
+        throwErrorIf( !reset_display_buffer_render_target(), "SetupRenderTarget failed" );
         reinitialize_framebuffer( true );
         needupdate = true;
         restore_on_out_of_scope<input_event> prev_last_input( last_input );
@@ -3857,6 +3903,11 @@ void catacurses::init_interface()
 
     stdscr = newwin( get_terminal_height(), get_terminal_width(), point_zero );
     //newwin calls `new WINDOW`, and that will throw, but not return nullptr.
+
+    if( pending_software_renderer_fallback_warning.has_value() ) {
+        show_software_renderer_fallback_warning( *pending_software_renderer_fallback_warning );
+        pending_software_renderer_fallback_warning.reset();
+    }
 
 #if defined(__ANDROID__)
     // Make sure we initialize preview_terminal_width/height to sensible values
