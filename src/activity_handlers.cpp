@@ -207,28 +207,15 @@ static auto actor_action_factor_for_activity( const player &who ) -> int
 
 static auto activity_progress_from_actor_moves( const player &who ) -> double
 {
-    if( who.get_moves() <= 0 ) {
-        return 0.0;
-    }
-
-    const auto actor_moves_per_turn = action_time_scale::scaled_moves(
-                                          100, actor_action_factor_for_activity( who ) );
-    return who.get_moves() * static_cast<double>( action_time_scale::activity_progress_per_turn() ) /
-           actor_moves_per_turn;
+    return action_time_scale::activity_progress_from_actor_moves(
+               who.get_moves(), actor_action_factor_for_activity( who ) );
 }
 
 static auto actor_moves_for_activity_progress( const player &who,
         const double progress_moves ) -> int
 {
-    if( progress_moves <= 0.0 ) {
-        return 0;
-    }
-
-    const auto actor_moves_per_turn = action_time_scale::scaled_moves(
-                                          100, actor_action_factor_for_activity( who ) );
-    const auto cost = std::ceil( progress_moves * actor_moves_per_turn /
-                                 action_time_scale::activity_progress_per_turn() );
-    return cost > INT_MAX ? INT_MAX : static_cast<int>( cost );
+    return action_time_scale::actor_moves_for_activity_progress(
+               progress_moves, actor_action_factor_for_activity( who ) );
 }
 
 static const fault_id fault_bionic_nonsterile( "fault_bionic_nonsterile" );

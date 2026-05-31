@@ -2296,14 +2296,9 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     const double base_total_moves = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
     const double cur_total_moves = std::max( 1, making.batch_time( batch_size, crafting_speed,
                                    assistants ) );
-    const auto activity_factor = action_time_scale::activity_progress_factor();
-    const auto actor_factor = actor_action_factor_for_activity( who );
-    const auto scaled_moves = who.get_moves() > 0
-                              ? who.get_moves() * static_cast<double>( activity_factor ) / actor_factor
-                              : 0.0;
-    const auto delta_progress = scaled_moves > 0.0
-                                ? scaled_moves * base_total_moves / cur_total_moves
-                                : 0.0;
+    const auto scaled_moves = action_time_scale::activity_progress_from_actor_moves(
+                                  who.get_moves(), actor_action_factor_for_activity( who ) );
+    const auto delta_progress = scaled_moves * base_total_moves / cur_total_moves;
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
     const int new_counter = std::min(
                                 static_cast<int>( std::round( current_progress / base_total_moves * 10'000'000.0 ) ),

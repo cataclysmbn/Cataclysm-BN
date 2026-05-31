@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 
@@ -84,6 +85,30 @@ inline auto activity_progress_for_turns( const int turns ) -> int
     const auto progress = static_cast<int64_t>( std::max( 0, turns ) ) *
                           activity_progress_per_turn();
     return static_cast<int>( std::min<int64_t>( progress, std::numeric_limits<int>::max() ) );
+}
+
+inline auto activity_progress_from_actor_moves( const int actor_moves, const int actor_factor ) -> double
+{
+    if( actor_moves <= 0 ) {
+        return 0.0;
+    }
+
+    const auto actor_moves_per_turn = scaled_moves( 100, actor_factor );
+    return actor_moves * static_cast<double>( activity_progress_per_turn() ) / actor_moves_per_turn;
+}
+
+inline auto actor_moves_for_activity_progress( const double progress_moves,
+        const int actor_factor ) -> int
+{
+    if( progress_moves <= 0.0 ) {
+        return 0;
+    }
+
+    const auto actor_moves_per_turn = scaled_moves( 100, actor_factor );
+    const auto cost = std::ceil( progress_moves * actor_moves_per_turn /
+                                 activity_progress_per_turn() );
+    return static_cast<int>( std::clamp( cost, 1.0,
+                                         static_cast<double>( std::numeric_limits<int>::max() ) ) );
 }
 
 inline auto turns_for_progress( const int progress_moves, const int progress_per_turn ) -> int

@@ -1,9 +1,12 @@
 #include "catch/catch.hpp"
 
 #include "action_time_scale.h"
+#include "activity_handlers.h"
 #include "activity_speed.h"
 #include "avatar.h"
+#include "calendar.h"
 #include "character_effects.h"
+#include "character_functions.h"
 #include "npc.h"
 #include "options_helpers.h"
 #include "player_activity.h"
@@ -13,6 +16,8 @@
 #include "state_helpers.h"
 
 static const trait_id trait_DEBUG_WEIGHTLESSNESS( "DEBUG_WEIGHTLESSNESS" );
+static const efftype_id effect_debug_clairvoyance( "debug_clairvoyance" );
+static const auto act_repair_item = activity_id( "ACT_REPAIR_ITEM" );
 static const auto act_wait = activity_id( "ACT_WAIT" );
 
 static void advance_turn( Character &guy )
@@ -121,6 +126,66 @@ TEST_CASE( "Activity progress scale modifies progress time estimates", "[speed][
     CHECK( action_time_scale::activity_turns_for_progress( 100 ) == 4 );
     CHECK( action_time_scale::turns_for_progress( 101, 25 ) == 5 );
     CHECK( action_time_scale::turns_for_progress( 0, 25 ) == 0 );
+}
+
+TEST_CASE( "Activity progress conversion uses realized actor move budget", "[speed][activity]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "33" );
+    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "101" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "100" );
+
+    const auto actor_factor = action_time_scale::player_action_factor();
+    const auto actor_moves = action_time_scale::scaled_moves( 100, actor_factor );
+
+    REQUIRE( actor_moves == 33 );
+    REQUIRE( action_time_scale::activity_progress_per_turn() == 33 );
+
+    CHECK( action_time_scale::activity_progress_from_actor_moves( actor_moves,
+            actor_factor ) == Approx( 33.0 ) );
+    CHECK( action_time_scale::actor_moves_for_activity_progress( 16.5, actor_factor ) == 17 );
+}
+
+TEST_CASE( "Repair item progress uses activity scale", "[speed][activity][repair]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "100" );
+
+    auto &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.add_effect( effect_debug_clairvoyance, 1_minutes );
+    REQUIRE( character_funcs::fine_detail_vision_mod( guy ) == Approx( 1.0f ) );
+
+    guy.set_moves( 25 );
+    auto repair_activity = player_activity( act_repair_item, 100 );
+
+    activity_handlers::repair_item_do_turn( &repair_activity, &guy );
+
+    CHECK( repair_activity.get_moves_left() == 50 );
+    CHECK( guy.get_moves() == 0 );
+}
+
+TEST_CASE( "Repair item partial completion refunds scaled actor moves", "[speed][activity][repair]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "100" );
+
+    auto &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.add_effect( effect_debug_clairvoyance, 1_minutes );
+    REQUIRE( character_funcs::fine_detail_vision_mod( guy ) == Approx( 1.0f ) );
+
+    guy.set_moves( 25 );
+    auto repair_activity = player_activity( act_repair_item, 25 );
+
+    activity_handlers::repair_item_do_turn( &repair_activity, &guy );
+
+    CHECK( repair_activity.get_moves_left() == 0 );
+    CHECK( guy.get_moves() == 12 );
 }
 
 TEST_CASE( "Overmap horde scale modifies horde speed", "[speed][monster][horde]" )
