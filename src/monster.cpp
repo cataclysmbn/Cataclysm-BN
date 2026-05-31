@@ -1040,6 +1040,8 @@ std::string monster::extended_description() const
         ss += std::string( _( "It likes you." ) ) + "\n";
     } else if ( pet_bond_level > 0) {
         ss += std::string( _( "It is curious about you." ) ) + "\n";
+    } else {
+        ss += std::string( _( "It is unsure about you." ) ) + "\n";
     }
 
     if( training_level > 0 && type->pet_training ) {
