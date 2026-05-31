@@ -137,7 +137,8 @@ auto battery_charge_level( const vehicle_part &part ) -> int
         return 0;
     }
 
-    return ( part.ammo_remaining() * 100 ) / capacity;
+    const auto percent = ( static_cast<int64_t>( part.ammo_remaining() ) * 100 ) / capacity;
+    return static_cast<int>( std::clamp<int64_t>( percent, 0, 100 ) );
 }
 
 auto make_chargeable_battery_buckets( const vehicle &veh ) -> battery_charge_buckets
@@ -6319,41 +6320,33 @@ auto vehicle::get_cargo_recharge_targets() -> std::vector<cargo_recharge_target>
     if( cargo_recharge_targets_dirty ) {
         cargo_recharge_targets_.clear();
         for( const vpart_reference &vp : get_parts_including_carried( VPFLAG_CARGO ) ) {
-            for( item *&outer : get_items( static_cast<int>( vp.part_index() ) ) ) {
+            for( item*&outer : get_items( static_cast<int>( vp.part_index() ) ) ) {
                 outer->visit_items( [this, &vp]( item * it ) {
-                    if( is_cargo_recharge_candidate( *it ) ) {
-                        cargo_recharge_targets_.push_back( cargo_recharge_target{
-                            .target = safe_reference<item>( *it ),
-                            .cargo_part = static_cast<int>( vp.part_index() ),
-                        } );
+                    if( !is_cargo_recharge_candidate( *it ) ) {
+                        return VisitResponse::NEXT;
                     }
-                    return VisitResponse::NEXT;
+                    cargo_recharge_targets_.push_back( cargo_recharge_target{
+                        .target = safe_reference<item>( *it ),
+                        .cargo_part = static_cast<int>( vp.part_index() ),
+                    } );
+                    return VisitResponse::SKIP;
                 } );
             }
         }
         cargo_recharge_targets_dirty = false;
     }
 
-    auto targets = std::vector<cargo_recharge_target>();
-    targets.reserve( cargo_recharge_targets_.size() );
-    for( auto it = cargo_recharge_targets_.begin(); it != cargo_recharge_targets_.end(); ) {
-        if( !it->target || it->cargo_part < 0 ||
-            static_cast<size_t>( it->cargo_part ) >= parts.size() ) {
-            it = cargo_recharge_targets_.erase( it );
-            continue;
+    std::erase_if( cargo_recharge_targets_, [this]( const cargo_recharge_target & entry ) {
+        if( !entry.target || entry.cargo_part < 0 ||
+            static_cast<size_t>( entry.cargo_part ) >= parts.size() ) {
+            return true;
         }
 
-        item &target = *it->target;
-        if( !is_cargo_recharge_candidate( target ) ) {
-            it = cargo_recharge_targets_.erase( it );
-            continue;
-        }
+        item &target = *entry.target;
+        return !is_cargo_recharge_candidate( target );
+    } );
 
-        targets.push_back( *it );
-        ++it;
-    }
-
-    return targets;
+    return cargo_recharge_targets_;
 }
 
 detached_ptr<item> vehicle::add_charges( int part, detached_ptr<item> &&itm )

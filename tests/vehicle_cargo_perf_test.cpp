@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "calendar.h"
+#include "coordinates.h"
 #include "flag.h"
 #include "item.h"
 #include "map.h"
@@ -86,9 +87,9 @@ auto make_cargo_benchmark_fixture( const cargo_benchmark_options &opts ) -> carg
     build_test_map( ter_id( "t_pavement" ) );
 
     auto &u = get_avatar();
-    u.setpos( tripoint( 10, 10, 0 ) );
+    u.setpos( tripoint_bub_ms( 10, 10, 0 ) );
 
-    vehicle *const veh = get_map().add_vehicle( vproto_id( "aapc-mg" ), u.pos(), 0_degrees, 100,
+    vehicle *const veh = get_map().add_vehicle( vproto_id( "aapc-mg" ), u.bub_pos(), 0_degrees, 100,
                          0 );
     REQUIRE( veh != nullptr );
     veh->update_time( calendar::turn_zero );
@@ -130,18 +131,19 @@ auto make_solar_benchmark_fixture( const solar_benchmark_options &opts ) -> sola
     build_test_map( ter_id( "t_pavement" ) );
 
     auto &u = get_avatar();
-    u.setpos( tripoint( 10, 10, 0 ) );
+    u.setpos( tripoint_bub_ms( 10, 10, 0 ) );
 
-    vehicle *const veh = get_map().add_vehicle( vproto_id( "none" ), u.pos(), 0_degrees, 100, 0,
+    vehicle *const veh = get_map().add_vehicle( vproto_id( "none" ), u.bub_pos(), 0_degrees, 100, 0,
                          false );
     REQUIRE( veh != nullptr );
 
     for( int i = 0; i < opts.solar_panel_count; ++i ) {
-        REQUIRE( veh->install_part( point_zero, vpart_id( "solar_panel" ), true ) >= 0 );
+        REQUIRE( veh->install_part( tripoint_mnt_veh::zero(), vpart_id( "solar_panel" ), true ) >= 0 );
     }
 
     for( int i = 0; i < opts.storage_battery_count; ++i ) {
-        const auto battery_part = veh->install_part( point_zero, vpart_id( "storage_battery" ), true );
+        const auto battery_part = veh->install_part( tripoint_mnt_veh::zero(),
+                                  vpart_id( "storage_battery" ), true );
         REQUIRE( battery_part >= 0 );
         veh->part( battery_part ).ammo_unset();
     }
