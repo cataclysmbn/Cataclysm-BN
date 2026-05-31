@@ -198,10 +198,29 @@ map &get_map()
     return tl_map_context ? *tl_map_context : g->m;
 }
 
+static auto checked_reality_bubble_size( const int reality_bubble_size ) -> int
+{
+    return std::clamp( reality_bubble_size, 0, REALITY_BUBBLE_SIZE_MAX );
+}
+
+auto reality_bubble_origin_from_player( const tripoint_abs_ms &player_pos,
+                                        const int reality_bubble_size ) -> tripoint_abs_sm
+{
+    const auto player_sm = project_to<coords::sm>( player_pos );
+    const auto half_mapsize = checked_reality_bubble_size( reality_bubble_size ) + 1;
+    return player_sm - tripoint_rel_sm( half_mapsize, half_mapsize, 0 );
+}
+
+auto reality_bubble_center_from_origin( const tripoint_abs_sm &origin,
+                                        const int reality_bubble_size ) -> tripoint_abs_sm
+{
+    const auto half_mapsize = checked_reality_bubble_size( reality_bubble_size ) + 1;
+    return origin + tripoint_rel_sm( half_mapsize, half_mapsize, 0 );
+}
+
 auto player_reality_bubble_origin() -> tripoint_abs_sm
 {
-    const auto player_sm = project_to<coords::sm>( get_avatar().abs_pos() );
-    return player_sm - tripoint_rel_sm( g_half_mapsize, g_half_mapsize, 0 );
+    return reality_bubble_origin_from_player( get_avatar().abs_pos(), g_reality_bubble_size );
 }
 
 auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms

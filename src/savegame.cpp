@@ -237,6 +237,15 @@ auto game::unserialize( std::istream &fin ) -> bool
         data.read( "levz", lev.z );
         data.read( "om_x", com.x );
         data.read( "om_y", com.y );
+        auto saved_reality_bubble_size = g_reality_bubble_size;
+        const auto has_saved_reality_bubble_size = data.read( "reality_bubble_size",
+                saved_reality_bubble_size );
+        auto saved_player_abs = tripoint_abs_ms::zero();
+        auto has_saved_player_abs = false;
+        if( data.has_object( "player" ) ) {
+            auto player_data = data.get_object( "player" );
+            has_saved_player_abs = player_data.read( "abs_pos", saved_player_abs );
+        }
 
         // Load the current dimension ID before load_map so get_dimension_prefix()
         // returns the correct value.  Fall back to reconstructing it from legacy
@@ -319,10 +328,26 @@ auto game::unserialize( std::istream &fin ) -> bool
             get_overmapbuffer( current_dimension_id_ ).set_pocket_info( pocket_info );
         }
 
-        const auto load_origin = tripoint_abs_sm( lev.x + com.x * OMAPX * 2,
-                                 lev.y + com.y * OMAPY * 2, lev.z );
-        u.setpos( project_to<coords::ms>( load_origin + tripoint_rel_sm( g_half_mapsize,
-                  g_half_mapsize, 0 ) ) );
+        // Absolute player position is authoritative when present.  Saves with
+        // reality_bubble_size can reconstruct the player submap from their saved
+        // bubble origin.  Older saves keep levx/levy/levz as the authoritative
+        // legacy origin so remaining bubble-space fields still decode against
+        // that offset.
+        const auto saved_origin = tripoint_abs_sm( lev.x + com.x * OMAPX * 2,
+                                  lev.y + com.y * OMAPY * 2, lev.z );
+        auto load_origin = saved_origin;
+        if( has_saved_player_abs ) {
+            u.setpos( saved_player_abs );
+            load_origin = player_reality_bubble_origin();
+        } else if( has_saved_reality_bubble_size ) {
+            const auto saved_player_sm = reality_bubble_center_from_origin( saved_origin,
+                                         saved_reality_bubble_size );
+            u.setpos( project_to<coords::ms>( saved_player_sm ) );
+            load_origin = player_reality_bubble_origin();
+        } else {
+            u.setpos( project_to<coords::ms>( saved_origin + tripoint_rel_sm( g_half_mapsize,
+                      g_half_mapsize, 0 ) ) );
+        }
         load_map( load_origin, /*pump_events=*/true );
 
         safe_mode = static_cast<safe_mode_type>( tmprun );

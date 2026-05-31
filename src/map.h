@@ -1862,8 +1862,25 @@ class map : public submap_load_listener
         bool pl_line_of_sight( const tripoint_bub_ms &t, int max_range ) const;
         std::set<vehicle *> dirty_vehicle_list;
 
-        /** return @ref abs_sub */
-        tripoint_abs_sm get_abs_sub() const { return abs_sub; }
+        /**
+         * Legacy accessor for the loaded-grid origin.
+         *
+         * This is the absolute submap coordinate backing map-local grid slot
+         * (0,0).  For the player map it should match the player-derived reality
+         * bubble origin after map transitions settle.  Detached maps, including
+         * tinymaps and mapgen maps, keep an explicit loaded-grid origin here.
+         */
+        auto get_abs_sub() const -> tripoint_abs_sm {
+            return abs_sub;
+        }
+
+        /**
+         * Adjust only the z-level of the loaded-grid origin.  This is for player
+         * map vertical transitions where x/y remain player-derived.
+         */
+        auto set_loaded_submap_z( int z ) -> void {
+            abs_sub.z() = z;
+        }
 
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
@@ -2126,20 +2143,21 @@ class map : public submap_load_listener
         solar_params m_solar;
 
         /**
-         * Absolute coordinates of first submap (get_submap_at(0,0))
-         * This is in submap coordinates (see overmapbuffer for explanation).
-         * It is set upon:
-         * - loading submap at grid[0],
-         * - generating submaps (@ref generate)
-         * - shifting the map with @ref shift
+         * Absolute submap coordinate of loaded grid slot (0,0).
+         *
+         * This is a loaded-grid/cache origin, not the definition of player
+         * reality-bubble space.  The player map's value is synchronized with
+         * player_reality_bubble_origin() by load, shift, resize, and vertical
+         * transition code.  Detached maps use this as their explicit local
+         * anchor.
          */
         tripoint_abs_sm abs_sub;
 
+        auto set_abs_sub( const tripoint_abs_sm &p ) -> void {
+            abs_sub = p;
+        }
+
     public:
-        /**
-         * Sets @ref abs_sub, see there. Uses the same coordinate system as @ref abs_sub.
-         */
-        void set_abs_sub( const tripoint_abs_sm &p ) { abs_sub = p; }
 
         field &get_field( const tripoint_bub_ms &p );
 
@@ -2346,7 +2364,7 @@ class map : public submap_load_listener
         visibility_variables visibility_variables_cache;
 
         // caches the highest zlevel above which all zlevels are uniform
-        // !value || value->first != map::abs_sub means cache is invalid
+        // !value || value->first != the loaded-grid origin means cache is invalid
         std::optional<std::pair<tripoint_abs_sm, int>> max_populated_zlev = std::nullopt;
 
         // Dimension info for bounded pocket dimensions (nullopt for infinite dimensions)
@@ -2424,6 +2442,10 @@ class map : public submap_load_listener
 map &get_map();
 
 auto player_reality_bubble_origin() -> tripoint_abs_sm;
+auto reality_bubble_origin_from_player( const tripoint_abs_ms &player_pos,
+                                        int reality_bubble_size ) -> tripoint_abs_sm;
+auto reality_bubble_center_from_origin( const tripoint_abs_sm &origin,
+                                        int reality_bubble_size ) -> tripoint_abs_sm;
 
 auto bub_to_abs( const tripoint_bub_ms &p ) -> tripoint_abs_ms;
 auto abs_to_bub( const tripoint_abs_ms &p ) -> tripoint_bub_ms;

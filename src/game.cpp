@@ -284,6 +284,18 @@ static auto abs_sm_to_map_local( const map &m, const tripoint_abs_sm &abs ) -> t
     return tripoint_bub_sm( tripoint( abs.x() - origin.x(), abs.y() - origin.y(), abs.z() ) );
 }
 
+static auto debug_assert_player_map_origin( const char *context, const bool check_z = true ) -> void
+{
+    const auto expected = player_reality_bubble_origin();
+    const auto actual = g->m.get_abs_sub();
+    const auto matches = check_z ? actual == expected : actual.xy() == expected.xy();
+    if( !matches ) {
+        debugmsg( "%s: player map loaded-grid origin %s does not match player reality-bubble "
+                  "origin %s",
+                  context, actual.to_string(), expected.to_string() );
+    }
+}
+
 static auto discard_monster_map_for_loaded_bubble( map &here,
         const std::string &dimension_id ) -> void
 {
@@ -971,6 +983,7 @@ bool game::start_game()
     m.build_map_cache( get_levz() );
     // Do this after the map cache has been built!
     start_loc.place_player( u );
+    update_map( u );
     // ...but then rebuild it, because we want visibility cache to avoid spawning monsters in sight
     m.invalidate_map_cache( get_levz() );
     m.build_map_cache( get_levz() );
@@ -12852,6 +12865,7 @@ void game::resize_reality_bubble_to( int new_size )
     // Reload the map around the player; this fills grid[], recreates load handles,
     // rebuilds distribution_grid_tracker and fluid_grid.
     load_map( new_abs_sub, /*pump_events=*/false );
+    debug_assert_player_map_origin( "resize_reality_bubble_to" );
 
     // Adjust surviving monsters' local navigation state to the new coordinate origin.
     // Monster positions are absolute; only cached bubble-coordinate goals and paths
@@ -14049,6 +14063,7 @@ bool game::travel_to_dimension( const std::string &dim_id,
         player.setpos( project_to<coords::ms>( target_load_origin + tripoint_rel_sm( g_half_mapsize,
                        g_half_mapsize, 0 ) ) );
         load_map( target_load_origin, false );
+        debug_assert_player_map_origin( "travel_to_dimension" );
 
         add_msg( m_debug, "[DIM] Loaded new dimension '%s' map", dim_id );
 
@@ -14321,8 +14336,9 @@ auto game::vertical_shift( const int z_after, const bool keep_grab ) -> void
         // Keep the map-local cache z-reference aligned with the avatar z-level.
         // All z-levels are loaded simultaneously in z-level builds; no map load
         // or unload is required for vertical movement.
-        m.set_abs_sub( tripoint_abs_sm( m.get_abs_sub().xy(), z_after ) );
+        m.set_loaded_submap_z( z_after );
     }
+    debug_assert_player_map_origin( "vertical_shift" );
 
     m.spawn_monsters( true );
     // this may be required after a vertical shift if z-levels are not enabled
@@ -14410,6 +14426,9 @@ point_rel_sm game::update_map( int &x, int &y )
         // We need this call because even if the map hasn't shifted we may have changed z-level and can now see farther
         // TODO: only make this call if we changed z-level
         update_overmap_seen();
+        // update_map() can run during a pending vertical vehicle transition;
+        // vertical_shift() settles the loaded-grid z anchor afterward.
+        debug_assert_player_map_origin( "update_map", false );
         // Not actually shifting the submaps, all the stuff below would do nothing
         return point_rel_sm::zero();
     }
@@ -14504,6 +14523,9 @@ point_rel_sm game::update_map( int &x, int &y )
 
     // Update what parts of the world map we can see
     update_overmap_seen();
+    // update_map() is an x/y recentering path; vertical movement settles in
+    // vertical_shift().
+    debug_assert_player_map_origin( "update_map", false );
 
     return shift;
 }
