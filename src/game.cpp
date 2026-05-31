@@ -2971,148 +2971,123 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
 
 bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target )
 {
+    namespace ranges = std::ranges;
+    using namespace std::views;
+
     if( !destination_preview.empty() ) {
-        if( previewed_right_click_action_ ) {
-            const auto target = m.abs_to_bub( previewed_right_click_action_->target );
-            const auto action_position = destination_preview.back();
-            if( target == mouse_target &&
-                contextual_action_is_valid_from( previewed_right_click_action_->action, target, action_position ) ) {
-                if( !check_safe_mode_allowed() ) {
-                    destination_preview.clear();
-                    previewed_right_click_action_.reset();
-                    invalidate_main_ui_adaptor();
-                    return false;
-                }
-
-                const auto action_name = previewed_right_click_action_->action_name.empty() ?
-                                         get_default_mode_input_context().get_action_name(
-                                             action_ident( previewed_right_click_action_->action ) ) :
-                                         previewed_right_click_action_->action_name;
-                const auto target_name = previewed_right_click_action_->target_name.empty() ?
-                                         m.name( mouse_target ) : previewed_right_click_action_->target_name;
-                if( !query_yn( _( "Walk to %s and %s?" ), target_name, action_name ) ) {
-                    destination_preview.clear();
-                    previewed_right_click_action_.reset();
-                    invalidate_main_ui_adaptor();
-                    return false;
-                }
-
-                queued_right_click_action_ = *previewed_right_click_action_;
-                u.set_destination( destination_preview );
-                destination_preview.clear();
-                previewed_right_click_action_.reset();
-                invalidate_main_ui_adaptor();
+        const auto action_position = destination_preview.back();
+        const auto select_action = [&]( const std::vector<contextual_action> &actions,
+                                        const std::optional<std::string> &target_name ) -> bool {
+            const auto walk_to_actions = actions
+                                         | filter( []( const auto &entry ) { return entry.walk_to; } )
+                                         | ranges::to<std::vector>();
+            if( walk_to_actions.empty() )
+            {
                 return false;
             }
 
+            const auto selected = choose_contextual_action( walk_to_actions, _( "Choose action" ) );
+            if( !selected )
+            {
+                return true;
+            }
+
+            if( !contextual_action_is_valid_from( selected->action, mouse_target, action_position ) )
+            {
+                add_msg( _( "Nothing relevant here." ) );
+                return true;
+            }
+
+            if( !check_safe_mode_allowed() )
+            {
+                destination_preview.clear();
+                previewed_right_click_action_.reset();
+                invalidate_main_ui_adaptor();
+                return true;
+            }
+
+            const auto action_name = contextual_action_display_name( selected->action );
+            const auto action_target_name = target_name.value_or( m.name( mouse_target ) );
+            if( !query_yn( _( "Walk to %s and %s?" ), action_target_name, action_name ) )
+            {
+                destination_preview.clear();
+                previewed_right_click_action_.reset();
+                invalidate_main_ui_adaptor();
+                return true;
+            }
+
+            queued_right_click_action_ = {
+                .action = selected->action,
+                .target = m.bub_to_abs( mouse_target ),
+                .target_name = action_target_name,
+                .action_name = action_name,
+            };
+            u.set_destination( destination_preview );
             destination_preview.clear();
             previewed_right_click_action_.reset();
             invalidate_main_ui_adaptor();
+            return true;
+        };
+
+        if( const auto *const np = critter_at<npc>( mouse_target ); np != nullptr && u.sees( *np ) ) {
+            if( select_action( contextual_actions_at( mouse_target, true, action_position ),
+                               np->disp_name() ) ) {
+                return false;
+            }
         } else {
-            u.clear_destination();
-            destination_preview.clear();
-            queued_right_click_action_.reset();
-            return false;
+            if( select_action( contextual_actions_at( mouse_target, true, action_position ),
+                               std::nullopt ) ) {
+                return false;
+            }
         }
+
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
     }
 
     u.clear_destination();
     queued_right_click_action_.reset();
 
-    const auto preview_contextual_action = [&]( const contextual_action &selected,
-                                                const std::optional<std::string> &target_name ) -> bool {
-        if( !selected.walk_to ) {
-            act = selected.action;
-            return true;
-        }
-
-        for( const tripoint_bub_ms &destination : m.points_in_radius( mouse_target, 1 ) ) {
-            if( !contextual_action_is_valid_from( selected.action, mouse_target, destination ) ) {
-                continue;
-            }
-
-            const auto route = m.route( u.bub_pos(), destination, u.get_legacy_pathfinding_settings(),
-                                        u.get_legacy_path_avoid() );
-            if( route.empty() ) {
-                continue;
-            }
-
-            if( !check_safe_mode_allowed() ) {
-                return false;
-            }
-
-            destination_preview = route;
-            previewed_right_click_action_ = {
-                .action = selected.action,
-                .target = m.bub_to_abs( mouse_target ),
-                .target_name = target_name.value_or( std::string{} ),
-                .action_name = contextual_action_display_name( selected.action ),
-            };
-            invalidate_main_ui_adaptor();
-            return false;
-        }
-
-        add_msg( _( "Nothing relevant here." ) );
-        return false;
-    };
-
-    if( const npc *const np = critter_at<npc>( mouse_target ); np != nullptr && u.sees( *np ) ) {
-        const auto actions = contextual_actions_for_target( mouse_target, true );
-        if( actions.size() > 1 ) {
-            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
-            if( !selected ) {
-                return false;
-            }
-            return preview_contextual_action( *selected, np->disp_name() );
-        }
-
-        if( square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 1 ) {
-            act = ACTION_EXAMINE;
-            return true;
-        }
-
+    if( const auto *const np = critter_at<npc>( mouse_target ); np != nullptr && u.sees( *np ) ) {
+        const auto actions = contextual_actions_at( mouse_target, true, u.bub_pos() );
         if( !actions.empty() ) {
-            return preview_contextual_action( actions.front(), np->disp_name() );
+            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
+            if( selected ) {
+                act = selected->action;
+                return true;
+            }
         }
 
-        add_msg( _( "Nothing relevant here." ) );
-        return false;
-    } else if( const monster *const mon = critter_at<monster>( mouse_target ); mon != nullptr &&
+    } else if( const auto *const mon = critter_at<monster>( mouse_target ); mon != nullptr &&
                u.sees( *mon ) ) {
         act = u.primary_weapon().is_gun() ? ACTION_FIRE : ACTION_AUTOATTACK;
+        return true;
     } else {
         const auto actions = contextual_actions_at( mouse_target, true, u.bub_pos() );
-        if( actions.size() > 1 ) {
-            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
-            if( !selected ) {
-                return false;
-            }
-            return preview_contextual_action( *selected, std::nullopt );
-        }
-
         if( !actions.empty() ) {
-            act = actions.front().action;
-            return true;
-        }
-
-        const auto walk_to_actions = contextual_actions_for_target( mouse_target, true );
-        if( walk_to_actions.size() > 1 ) {
-            const auto selected = choose_contextual_action( walk_to_actions, _( "Choose action" ) );
-            if( !selected ) {
-                return false;
+            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
+            if( selected ) {
+                act = selected->action;
+                return true;
             }
-            return preview_contextual_action( *selected, std::nullopt );
         }
+    }
 
-        if( !walk_to_actions.empty() ) {
-            return preview_contextual_action( walk_to_actions.front(), std::nullopt );
-        }
-
+    if( square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 1 ) {
         add_msg( _( "Nothing relevant here." ) );
         return false;
     }
 
-    return true;
+    destination_preview = m.route( u.bub_pos(), mouse_target, u.get_legacy_pathfinding_settings(),
+                                   u.get_legacy_path_avoid() );
+    if( destination_preview.empty() ) {
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
+    }
+
+    previewed_right_click_action_.reset();
+    invalidate_main_ui_adaptor();
+    return false;
 }
 
 auto game::try_get_queued_right_click_action( action_id &act,
@@ -7580,6 +7555,16 @@ auto describe_map_part( const MapPart &part ) -> void
     }
 }
 
+auto describe_monster( const monster &mon ) -> void
+{
+    add_msg( _( "That is a %s." ), colorize( mon.name(), mon.symbol_color() ) );
+
+    const auto description = mon.type->get_description();
+    if( !description.empty() ) {
+        add_msg( "%s", colorize( description, c_light_gray ) );
+    }
+}
+
 template<typename MapPart>
 auto maybe_play_describe_sound( const tripoint_bub_ms &target, const MapPart &part ) -> void
 {
@@ -7722,23 +7707,17 @@ void game::examine( const tripoint_bub_ms &examp )
     const auto player_pos = u.bub_pos();
 
     if( m.has_furn( examp ) && !u.is_mounted() ) {
-        if( xfurn_t.examine == &iexamine::none ) {
-            describe_map_part( xfurn_t );
-        } else {
+        if( xfurn_t.examine != &iexamine::none ) {
             xfurn_t.examine( u, examp );
         }
     } else if( m.has_furn( examp ) && u.is_mounted() ) {
         add_msg( m_warning, _( "You cannot do that while mounted." ) );
     } else {
         if( !u.is_mounted() ) {
-            if( xter_t.examine == &iexamine::none ) {
-                describe_map_part( xter_t );
-            } else {
+            if( xter_t.examine != &iexamine::none ) {
                 xter_t.examine( u, examp );
             }
-        } else if( u.is_mounted() && xter_t.examine == &iexamine::none ) {
-            describe_map_part( xter_t );
-        } else {
+        } else if( xter_t.examine != &iexamine::none ) {
             add_msg( m_warning, _( "You cannot do that while mounted." ) );
         }
     }
@@ -7811,6 +7790,11 @@ auto game::describe_tile( const tripoint_bub_ms &target ) -> void
         }
 
         add_msg( _( "Nothing relevant here." ) );
+        return;
+    }
+
+    if( const auto *const mon = critter_at<monster>( target ); mon != nullptr && u.sees( *mon ) ) {
+        describe_monster( *mon );
         return;
     }
 

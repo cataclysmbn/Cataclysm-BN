@@ -83,8 +83,27 @@ auto contextual_action_entries() -> std::vector<contextual_action_entry> & // *N
     return entries;
 }
 
-auto remove_redundant_pickup_action( std::vector<contextual_action> &actions,
-                                     const tripoint_bub_ms &p ) -> void
+auto examine_action_has_non_item_effect_at( const tripoint_bub_ms &p ) -> bool
+{
+    auto &here = get_map();
+    auto &u = get_player_character();
+    if( here.veh_at( p ) || here.has_flag( flag_CONSOLE, p ) ) {
+        return true;
+    }
+
+    const auto &xfurn_t = here.furn( p ).obj();
+    const auto &xter_t = here.ter( p ).obj();
+    if( ( here.has_furn( p ) && xfurn_t.examine != &iexamine::none ) ||
+        xter_t.examine != &iexamine::none ) {
+        return true;
+    }
+
+    const auto *const creature = g->critter_at( p );
+    return ( creature != nullptr && p != u.bub_pos() ) || here.can_see_trap_at( p, u );
+}
+
+auto remove_redundant_item_action( std::vector<contextual_action> &actions,
+                                   const tripoint_bub_ms &p ) -> void
 {
     namespace ranges = std::ranges;
     const auto has_examine = ranges::any_of( actions, []( const auto & entry ) {
@@ -94,8 +113,10 @@ auto remove_redundant_pickup_action( std::vector<contextual_action> &actions,
         return;
     }
 
-    std::erase_if( actions, []( const auto & entry ) {
-        return entry.action == ACTION_PICKUP;
+    const auto redundant_action = examine_action_has_non_item_effect_at( p ) ? ACTION_PICKUP :
+                                  ACTION_EXAMINE;
+    std::erase_if( actions, [redundant_action]( const auto & entry ) {
+        return entry.action == redundant_action;
     } );
 }
 
@@ -170,7 +191,7 @@ auto contextual_actions_for_target( const tripoint_bub_ms &p,
         return ( !right_click_only || entry.right_click ) && can_interact_at( entry.action, p );
     } ) | std::views::transform( []( const auto & entry ) { return make_contextual_action( entry ); } );
     std::ranges::copy( matching_entries, std::back_inserter( actions ) );
-    remove_redundant_pickup_action( actions, p );
+    remove_redundant_item_action( actions, p );
     return actions;
 }
 
@@ -186,7 +207,7 @@ auto contextual_actions_at( const tripoint_bub_ms &p, const bool right_click_onl
                contextual_target_matches( entry.target, p, from );
     } ) | std::views::transform( []( const auto & entry ) { return make_contextual_action( entry ); } );
     std::ranges::copy( matching_entries, std::back_inserter( actions ) );
-    remove_redundant_pickup_action( actions, p );
+    remove_redundant_item_action( actions, p );
     return actions;
 }
 
