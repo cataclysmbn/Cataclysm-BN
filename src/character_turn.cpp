@@ -1,5 +1,6 @@
 #include "character_turn.h"
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -355,6 +356,11 @@ void Character::process_turn()
             it++;
         }
     }
+}
+
+auto Character::action_move_factor() const -> int
+{
+    return action_time_scale::player_action_factor();
 }
 
 void Character::process_one_effect( effect &it, bool is_new )

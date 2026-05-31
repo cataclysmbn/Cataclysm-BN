@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <map>
 #include <memory>
 #include <optional>
 
+#include "action_time_scale.h"
 #include "anatomy.h"
 #include "avatar.h"
 #include "calendar.h"
@@ -245,20 +247,21 @@ void Creature::process_turn()
 
     // add an appropriate number of moves
     if( !has_effect( effect_ridden ) ) {
-        add_action_move_credit( get_speed(), action_move_percent() );
+        add_action_move_credit( get_speed(), action_move_factor() );
     }
 }
 
-auto Creature::add_action_move_credit( const int base_moves, const int action_percent ) -> void
+auto Creature::add_action_move_credit( const int base_moves, const int action_factor ) -> void
 {
-    const auto move_credit = base_moves * action_percent + move_credit_remainder;
-    moves += move_credit / 100;
-    move_credit_remainder = move_credit % 100;
+    const auto move_credit = static_cast<int64_t>( base_moves ) * action_factor +
+                             move_credit_remainder;
+    moves += move_credit / action_time_scale::factor_denominator;
+    move_credit_remainder = move_credit % action_time_scale::factor_denominator;
 }
 
-auto Creature::action_move_percent() const -> int
+auto Creature::action_move_factor() const -> int
 {
-    return 100;
+    return action_time_scale::factor_denominator;
 }
 
 void Creature::batch_turns( int n )
@@ -1887,6 +1890,7 @@ void Creature::mod_moves( int nmoves )
 void Creature::set_moves( int nmoves )
 {
     moves = nmoves;
+    move_credit_remainder = 0;
 }
 
 bool Creature::in_sleep_state() const

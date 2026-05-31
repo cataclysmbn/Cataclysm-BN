@@ -3116,8 +3116,23 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
+    add( "TIME_ACTION_SCALE", world_default, translate_marker( "Global action speed percentage" ),
+         translate_marker( "Determines the baseline action rate for creatures and activities.  A higher value allows more actions per in-game second, while a lower value makes calendar time pass faster relative to actions." ),
+         1, 1000, 100, COPT_NO_HIDE, "%i%%"
+       );
+
+    add( "PLAYER_ACTION_SCALE", world_default, translate_marker( "Player action speed percentage" ),
+         translate_marker( "Determines the player's action rate as a percentage of the global action speed.  A higher value allows more player actions per in-game second and a lower value allows fewer." ),
+         1, 1000, 100, COPT_NO_HIDE, "%i%%"
+       );
+
+    add( "NPC_ACTION_SCALE", world_default, translate_marker( "NPC action speed percentage" ),
+         translate_marker( "Determines NPC action rate as a percentage of the global action speed.  A higher value allows more NPC actions per in-game second and a lower value allows fewer." ),
+         1, 1000, 100, COPT_NO_HIDE, "%i%%"
+       );
+
     add( "MONSTER_SPEED", world_default, translate_marker( "Monster speed percentage" ),
-         translate_marker( "Determines the movement rate of monsters.  A higher value increases monster speed and a lower reduces it." ),
+         translate_marker( "Determines monster action rate as a percentage of the global action speed.  A higher value allows more monster actions per in-game second and a lower value allows fewer." ),
          1, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 

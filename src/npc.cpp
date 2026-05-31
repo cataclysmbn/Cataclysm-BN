@@ -9,6 +9,7 @@
 #include <limits>
 #include <memory>
 
+#include "action_time_scale.h"
 #include "auto_pickup.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -3090,6 +3091,11 @@ void npc::process_turn()
 
     // TODO: Add decreasing trust/value/etc. here when player doesn't provide food
     // TODO: Make NPCs leave the player if there's a path out of map and player is sleeping/unseen/etc.
+}
+
+auto npc::action_move_factor() const -> int
+{
+    return action_time_scale::npc_action_factor();
 }
 
 void npc::batch_turns( int n )

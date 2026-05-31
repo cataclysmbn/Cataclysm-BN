@@ -35,14 +35,18 @@ TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
 {
     clear_all_state();
 
-    const auto monster_speed_percent = 33;
+    const auto global_speed_percent = 50;
+    const auto monster_speed_percent = 66;
+    const auto global_speed_option = override_option( "TIME_ACTION_SCALE",
+                                     std::to_string( global_speed_percent ) );
     const auto monster_speed_option = override_option( "MONSTER_SPEED",
                                       std::to_string( monster_speed_percent ) );
 
     auto &test_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms::zero() );
     const auto base_speed = test_monster.get_speed_base();
     REQUIRE( base_speed == test_monster.type->speed );
-    CHECK( test_monster.get_moves() == base_speed * monster_speed_percent / 100 );
+    CHECK( test_monster.get_moves() == base_speed * global_speed_percent *
+           monster_speed_percent / 10'000 );
 
     const auto turn_count = 10;
     for ( const auto turn : std::views::iota( 0, turn_count ) ) {
@@ -50,8 +54,8 @@ TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
         test_monster.process_turn();
     }
 
-    CHECK( test_monster.get_moves() == base_speed * monster_speed_percent *
-           ( turn_count + 1 ) / 100 );
+    CHECK( test_monster.get_moves() == base_speed * global_speed_percent *
+           monster_speed_percent * ( turn_count + 1 ) / 10'000 );
     CHECK( test_monster.get_speed_base() == base_speed );
     CHECK( test_monster.type->speed == base_speed );
 }

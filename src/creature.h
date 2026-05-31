@@ -972,8 +972,8 @@ class Creature
          * Processes one effect on the Creature.
          */
         virtual void process_one_effect( effect &e, bool is_new ) = 0;
-        auto add_action_move_credit( int base_moves, int action_percent ) -> void;
-        virtual auto action_move_percent() const -> int;
+        auto add_action_move_credit( int base_moves, int action_factor ) -> void;
+        virtual auto action_move_factor() const -> int;
 
         pimpl<effects_map> effects;
         // Miscellaneous key/value pairs.

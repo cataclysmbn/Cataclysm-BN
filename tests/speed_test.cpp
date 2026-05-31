@@ -2,6 +2,8 @@
 
 #include "avatar.h"
 #include "character_effects.h"
+#include "npc.h"
+#include "options_helpers.h"
 #include "player_helpers.h"
 #include "map.h"
 #include "map_helpers.h"
@@ -40,6 +42,37 @@ TEST_CASE( "Character regains moves each turn", "[speed]" )
     advance_turn( guy );
 
     CHECK( guy.get_moves() == 100 );
+}
+
+TEST_CASE( "Player action scale modifies move gain", "[speed]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
+
+    player &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.set_moves( 0 );
+
+    advance_turn( guy );
+
+    CHECK( guy.get_speed() == 100 );
+    CHECK( guy.get_moves() == 25 );
+}
+
+TEST_CASE( "NPC action scale modifies move gain", "[speed][npc]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto npc_scale = override_option( "NPC_ACTION_SCALE", "50" );
+
+    standard_npc guy( "action scale npc" );
+    guy.set_moves( 0 );
+
+    advance_turn( guy );
+
+    CHECK( guy.get_speed() == 100 );
+    CHECK( guy.get_moves() == 25 );
 }
 
 static void pain_penalty_test( player &guy, int pain, int speed_exp )

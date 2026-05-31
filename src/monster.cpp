@@ -8,6 +8,7 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "catalua_hooks.h"
@@ -236,7 +237,7 @@ monster::monster( const mtype_id &id ) : monster()
 {
     type = &id.obj();
     Creature::set_speed_base( type->speed );
-    add_action_move_credit( type->speed, action_move_percent() );
+    add_action_move_credit( type->speed, action_move_factor() );
     hp = type->hp;
     for( auto &sa : type->special_attacks ) {
         auto &entry = special_attacks[sa.first];
@@ -2933,9 +2934,9 @@ void monster::process_turn()
     Creature::process_turn();
 }
 
-auto monster::action_move_percent() const -> int
+auto monster::action_move_factor() const -> int
 {
-    return get_option<int>( "MONSTER_SPEED" );
+    return action_time_scale::monster_action_factor();
 }
 
 void monster::batch_turns( int n )
