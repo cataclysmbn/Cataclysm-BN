@@ -766,7 +766,7 @@
         "school": 15,
         "railroad_city": 10
       },
-      "_houses": {
+      "urban_houses": {
         "city_block_2": 300,
         "urban_13_dense_house_apt_house": 300,
         "urban_29_dense_row": 100,
