@@ -244,6 +244,7 @@ auto game::unserialize( std::istream &fin ) -> bool
         auto has_saved_player_abs = false;
         if( data.has_object( "player" ) ) {
             auto player_data = data.get_object( "player" );
+            player_data.allow_omitted_members();
             has_saved_player_abs = player_data.read( "abs_pos", saved_player_abs );
         }
 
