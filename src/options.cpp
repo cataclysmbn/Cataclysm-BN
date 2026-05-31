@@ -3141,6 +3141,11 @@ void options_manager::add_options_world_default()
          1, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 
+    add( "OVERMAP_HORDE_SCALE", world_default, translate_marker( "Overmap horde speed percentage" ),
+         translate_marker( "Determines overmap horde movement speed as a percentage of global action speed and monster speed.  A higher value makes hordes travel faster over the overmap and a lower value makes them slower." ),
+         1, 1000, 100, COPT_NO_HIDE, "%i%%"
+       );
+
     add( "MONSTER_SPEED", world_default, translate_marker( "Monster speed percentage" ),
          translate_marker( "Determines monster action rate as a percentage of the global action speed.  A higher value allows more monster actions per in-game second and a lower value allows fewer." ),
          1, 1000, 100, COPT_NO_HIDE, "%i%%"

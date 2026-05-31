@@ -123,6 +123,16 @@ TEST_CASE( "Activity progress scale modifies progress time estimates", "[speed][
     CHECK( action_time_scale::turns_for_progress( 0, 25 ) == 0 );
 }
 
+TEST_CASE( "Overmap horde scale modifies horde speed", "[speed][monster][horde]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto monster_scale = override_option( "MONSTER_SPEED", "50" );
+    const auto horde_scale = override_option( "OVERMAP_HORDE_SCALE", "50" );
+
+    CHECK( action_time_scale::scaled_overmap_horde_speed( 100.0 ) == Approx( 12.5 ) );
+}
+
 TEST_CASE( "NPC activity catch-up uses activity progress scale", "[speed][activity][npc]" )
 {
     clear_all_state();

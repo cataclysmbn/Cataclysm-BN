@@ -87,6 +87,7 @@
 #include "weather.h"
 #include "weather_gen.h"
 #include "active_tile_data_def.h"
+#include "action_time_scale.h"
 #include "distribution_grid.h"
 
 static const activity_id ACT_OPERATION( "ACT_OPERATION" );
@@ -208,6 +209,12 @@ namespace
 {
 generic_factory<bionic_data> bionic_factory( "bionic" );
 std::vector<bionic_id> faulty_bionics;
+
+auto scaled_operation_duration( const int difficulty ) -> time_duration
+{
+    return time_duration::from_turns(
+               action_time_scale::activity_turns_for_progress( to_moves<int>( difficulty * 20_minutes ) ) );
+}
 } //namespace
 
 /** @relates string_id */
@@ -2298,6 +2305,7 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
     activity->values.push_back( success );
     activity->values.push_back( units::to_kilojoule( b_id->capacity ) );
     activity->values.push_back( pl_skill );
+    activity->values.push_back( 0 );
     activity->str_values.emplace_back( "uninstall" );
     activity->str_values.push_back( b_id.str() );
     activity->str_values.emplace_back( "" ); // installer_name is unused for uninstall
@@ -2306,8 +2314,9 @@ bool Character::uninstall_bionic( const bionic_id &b_id, Character &installer, b
     } else {
         activity->str_values.emplace_back( "false" );
     }
+    const auto operation_duration = scaled_operation_duration( difficulty );
     for( const std::pair<const bodypart_str_id, int> &elem : b_id->occupied_bodyparts ) {
-        add_effect( effect_under_op, difficulty * 20_minutes, elem.first, difficulty );
+        add_effect( effect_under_op, operation_duration, elem.first, difficulty );
     }
 
     return true;
@@ -2585,6 +2594,7 @@ bool Character::install_bionics( const itype &type, Character &installer, bool a
     activity->values.push_back( success );
     activity->values.push_back( units::to_joule( bioid->capacity ) );
     activity->values.push_back( pl_skill );
+    activity->values.push_back( 0 );
     activity->str_values.emplace_back( "install" );
     activity->str_values.push_back( bioid.str() );
 
@@ -2598,8 +2608,9 @@ bool Character::install_bionics( const itype &type, Character &installer, bool a
     } else {
         activity->str_values.emplace_back( "false" );
     }
+    const auto operation_duration = scaled_operation_duration( difficulty );
     for( const std::pair<const bodypart_str_id, int> &elem : bioid->occupied_bodyparts ) {
-        add_effect( effect_under_op, difficulty * 20_minutes, elem.first, difficulty );
+        add_effect( effect_under_op, operation_duration, elem.first, difficulty );
     }
 
     return true;

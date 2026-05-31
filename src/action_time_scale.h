@@ -11,6 +11,7 @@ namespace action_time_scale
 
 inline constexpr auto percent_denominator = 100;
 inline constexpr auto factor_denominator = percent_denominator * percent_denominator;
+inline constexpr auto triple_factor_denominator = factor_denominator * percent_denominator;
 
 inline auto scaled_action_factor( const char *option_id ) -> int
 {
@@ -35,6 +36,18 @@ inline auto monster_action_factor() -> int
 inline auto vehicle_control_factor() -> int
 {
     return scaled_action_factor( "VEHICLE_CONTROL_SCALE" );
+}
+
+inline auto overmap_horde_factor() -> int64_t
+{
+    return static_cast<int64_t>( monster_action_factor() ) *
+           get_option<int>( "OVERMAP_HORDE_SCALE" );
+}
+
+inline auto scaled_overmap_horde_speed( const double base_speed ) -> double
+{
+    return base_speed * static_cast<double>( overmap_horde_factor() ) /
+           triple_factor_denominator;
 }
 
 inline auto activity_progress_factor() -> int
