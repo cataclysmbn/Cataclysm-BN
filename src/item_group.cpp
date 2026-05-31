@@ -129,9 +129,7 @@ void Single_item_creator::check_consistency( const std::string &context ) const
             debugmsg( "item id %s is unknown (in %s)", id, context );
         }
     } else if( type == S_ITEM_GROUP ) {
-        // if( std::ranges::contains( rec, id ) ) {
-        //     debugmsg( "recursion in item spawn list %s", id.c_str() );
-        // }
+        // Need to figure out a way to check for itemgroup recursion here
         if( !item_group::group_is_defined( item_group_id( id ) ) ) {
             debugmsg( "item group id %s is unknown (in %s)", id, context );
         }
