@@ -1,5 +1,7 @@
 #include "catch/catch.hpp"
 
+#include <ranges>
+
 #include "action_time_scale.h"
 #include "activity_handlers.h"
 #include "activity_speed.h"
@@ -66,7 +68,7 @@ TEST_CASE( "Player action scale modifies move gain", "[speed]" )
     advance_turn( guy );
 
     CHECK( guy.get_speed() == 100 );
-    CHECK( guy.get_moves() == 25 );
+    CHECK( guy.get_moves() == 50 );
 }
 
 TEST_CASE( "NPC action scale modifies move gain", "[speed][npc]" )
@@ -81,7 +83,7 @@ TEST_CASE( "NPC action scale modifies move gain", "[speed][npc]" )
     advance_turn( guy );
 
     CHECK( guy.get_speed() == 100 );
-    CHECK( guy.get_moves() == 25 );
+    CHECK( guy.get_moves() == 50 );
 }
 
 TEST_CASE( "Activity progress scale modifies non-complex activity progress", "[speed][activity]" )
@@ -100,7 +102,7 @@ TEST_CASE( "Activity progress scale modifies non-complex activity progress", "[s
 
     guy.activity->do_turn( guy );
 
-    CHECK( guy.activity->get_moves_left() == 975 );
+    CHECK( guy.activity->get_moves_left() == 950 );
     CHECK( guy.get_moves() == 0 );
 }
 
@@ -111,10 +113,10 @@ TEST_CASE( "Activity progress scale modifies complex activity base progress", "[
     const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
 
     auto speed = activity_speed();
-    CHECK( speed.moves_per_turn() == 25 );
+    CHECK( speed.moves_per_turn() == 50 );
 
     speed.player_speed = 2.0f;
-    CHECK( speed.moves_per_turn() == 50 );
+    CHECK( speed.moves_per_turn() == 100 );
 }
 
 TEST_CASE( "Activity progress scale modifies progress time estimates", "[speed][activity]" )
@@ -135,15 +137,65 @@ TEST_CASE( "Activity progress conversion uses realized actor move budget", "[spe
     const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "101" );
     const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "100" );
 
-    const auto actor_factor = action_time_scale::player_action_factor();
-    const auto actor_moves = action_time_scale::scaled_moves( 100, actor_factor );
+    const auto actor_factor = action_time_scale::player_tick_action_factor();
+    const auto actor_moves = action_time_scale::scaled_moves(
+                                  action_time_scale::base_moves_per_turn, actor_factor );
 
-    REQUIRE( actor_moves == 33 );
-    REQUIRE( action_time_scale::activity_progress_per_turn() == 33 );
+    REQUIRE( actor_moves == 101 );
+    REQUIRE( action_time_scale::activity_progress_per_tick() == 100 );
+    REQUIRE( action_time_scale::activity_progress_per_calendar_turn() == 33 );
 
     CHECK( action_time_scale::activity_progress_from_actor_moves( actor_moves,
-            actor_factor ) == Approx( 33.0 ) );
-    CHECK( action_time_scale::actor_moves_for_activity_progress( 16.5, actor_factor ) == 17 );
+            actor_factor ) == Approx( 100.0 ) );
+    CHECK( action_time_scale::actor_moves_for_activity_progress( 50.0, actor_factor ) == 51 );
+}
+
+TEST_CASE( "Global action scale below 100 advances calendar by larger ticks", "[speed]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "33" );
+
+    auto remainder = 0;
+    auto elapsed_turns = 0;
+    for( const auto unused : std::views::iota( 0, 33 ) ) {
+        static_cast<void>( unused );
+        elapsed_turns += action_time_scale::calendar_turns_for_next_tick( remainder );
+    }
+
+    CHECK( elapsed_turns == 100 );
+    CHECK( remainder == 0 );
+
+    remainder = 1;
+    const auto peeked_turns = action_time_scale::calendar_turns_for_remainder( remainder );
+    CHECK( remainder == 1 );
+    CHECK( action_time_scale::calendar_turns_for_next_tick( remainder ) == peeked_turns );
+}
+
+TEST_CASE( "Calendar tick helpers expose elapsed turn boundaries", "[speed]" )
+{
+    clear_all_state();
+
+    calendar::turn = calendar::turn_zero + 12_turns;
+    const auto tick_scope = action_time_scale::scoped_calendar_turns_this_tick( 3 );
+
+    CHECK( action_time_scale::calendar_duration_this_tick() == 3_turns );
+    CHECK( action_time_scale::calendar_ticks_crossed_this_tick( 10_turns ) == 1 );
+    CHECK( action_time_scale::once_every_this_tick( 10_turns ) );
+    CHECK_FALSE( action_time_scale::once_every_this_tick( 7_turns ) );
+}
+
+TEST_CASE( "Effect decay consumes elapsed calendar turns", "[speed][effect]" )
+{
+    clear_all_state();
+
+    auto &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.add_effect( effect_debug_clairvoyance, 1_minutes );
+    const auto tick_scope = action_time_scale::scoped_calendar_turns_this_tick( 10 );
+
+    guy.process_effects();
+
+    CHECK( to_turns<int>( guy.get_effect_dur( effect_debug_clairvoyance ) ) == 50 );
 }
 
 TEST_CASE( "Repair item progress uses activity scale", "[speed][activity][repair]" )

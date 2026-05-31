@@ -469,7 +469,7 @@ void player_activity::do_turn( player &p )
     if( *this && type->will_refuel_fires() ) {
         try_fuel_fire( *this, p );
     }
-    if( calendar::once_every( 30_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
         no_food_nearby_for_auto_consume = false;
         no_drink_nearby_for_auto_consume = false;
     }
@@ -508,7 +508,7 @@ void player_activity::do_turn( player &p )
     */
     if( !type->special() ) {
         if( type->complex_moves() ) {
-            if( calendar::once_every( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                 calc_moves( p );
             }
 
@@ -535,7 +535,7 @@ void player_activity::do_turn( player &p )
                 }
             }
         } else {
-            const auto moves_total = action_time_scale::activity_progress_per_turn();
+            const auto moves_total = action_time_scale::activity_progress_per_tick();
             //fancy new system
             if( actor ) {
                 if( actor->progress.get_moves_left() >= moves_total ) {

@@ -34,6 +34,7 @@
 
 #include "achievement.h"
 #include "action.h"
+#include "action_time_scale.h"
 #include "activity_time_cadence.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
@@ -1847,11 +1848,23 @@ void game::calc_driving_offset( vehicle *veh )
     set_driving_view_offset( point( offset.x, offset.y ) );
 }
 
+auto game::advance_time_action_tick() -> int
+{
+    const auto calendar_turns = action_time_scale::calendar_turns_for_next_tick(
+                                    time_action_scale_turn_remainder );
+    action_time_scale::set_calendar_turns_this_tick( calendar_turns );
+    calendar::turn += time_duration::from_turns( calendar_turns );
+    return calendar_turns;
+}
+
 // MAIN GAME LOOP
 // Returns true if game is over (death, saved, quit, etc)
 bool game::do_turn()
 {
     ZoneScopedN( "game::do_turn" );
+    const auto reset_time_action_tick = on_out_of_scope( []() {
+        action_time_scale::set_calendar_turns_this_tick( 1 );
+    } );
     {
         cleanup_arenas();
         if( is_game_over() ) {
@@ -1892,7 +1905,7 @@ bool game::do_turn()
                 gamemode = std::make_unique<special_game>();
             }
             gamemode->per_turn();
-            calendar::turn += 1_turns;
+            advance_time_action_tick();
         }
     }
     // Reset dimension swap flag now that the map is fully loaded and turn is processing
@@ -1932,12 +1945,12 @@ bool game::do_turn()
     if( u.is_mounted() ) {
         u.check_mount_is_spooked();
     }
-    if( calendar::once_every( 1_days ) ) {
+    if( action_time_scale::once_every_this_tick( 1_days ) ) {
         get_overmapbuffer( current_dimension_id_ ).process_mongroups();
     }
 
     // Move hordes every 2.5 min
-    if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
+    if( action_time_scale::once_every_this_tick( time_duration::from_minutes( 2.5 ) ) ) {
         get_overmapbuffer( current_dimension_id_ ).move_hordes();
         if( u.has_trait( trait_HAS_NEMESIS ) ) {
             get_overmapbuffer( current_dimension_id_ ).move_nemesis();
@@ -1955,7 +1968,7 @@ bool game::do_turn()
 
     // Auto-save if autosave is enabled
     if( get_option<bool>( "AUTOSAVE" ) &&
-        calendar::once_every( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
+        action_time_scale::once_every_this_tick( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
         !u.is_dead_state() ) {
         autosave();
     }
@@ -2103,7 +2116,7 @@ bool game::do_turn()
     } else {
         sleep_skip_npc_process();
     }
-    if( calendar::once_every( 5_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 5_minutes ) ) {
         overmap_npc_move();
     }
 
@@ -2413,9 +2426,15 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
     weather_manager &weather = get_weather();
     const auto starting_activity = u.activity->id();
     auto activity_monsters = activity_monmove_cache {};
-    for( const auto turn_index : std::views::iota( 0, to_turns<int>( duration ) ) ) {
-        static_cast<void>( turn_index );
+    const auto requested_turns = to_turns<int>( duration );
+    while( skipped_turns < requested_turns ) {
         if( is_game_over() || !u.activity || !*u.activity ) {
+            break;
+        }
+
+        const auto calendar_turns = action_time_scale::calendar_turns_for_remainder(
+                                        time_action_scale_turn_remainder );
+        if( skipped_turns > 0 && skipped_turns + calendar_turns > requested_turns ) {
             break;
         }
 
@@ -2423,8 +2442,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             gamemode = std::make_unique<special_game>();
         }
         gamemode->per_turn();
-        calendar::turn += 1_turns;
-        ++skipped_turns;
+        skipped_turns += advance_time_action_tick();
         swapping_dimensions = false;
         weather.clear_temp_cache();
         reset_light_level();
@@ -2432,10 +2450,10 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
         const auto monster_count = critter_tracker->size();
         timed_events.process();
         mission::process_all();
-        if( calendar::once_every( 1_days ) ) {
+        if( action_time_scale::once_every_this_tick( 1_days ) ) {
             get_overmapbuffer( current_dimension_id_ ).process_mongroups();
         }
-        if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
+        if( action_time_scale::once_every_this_tick( time_duration::from_minutes( 2.5 ) ) ) {
             get_overmapbuffer( current_dimension_id_ ).move_hordes();
             if( u.has_trait( trait_HAS_NEMESIS ) ) {
                 get_overmapbuffer( current_dimension_id_ ).move_nemesis();
@@ -2443,7 +2461,7 @@ auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -
             m.spawn_monsters( false );
         }
         if( get_option<bool>( "AUTOSAVE" ) &&
-            calendar::once_every( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
+            action_time_scale::once_every_this_tick( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
             !u.is_dead_state() ) {
             autosave();
         }
@@ -2594,7 +2612,7 @@ auto game::run_activity_cadence_boundary() -> void
     reset_light_level();
     m.invalidate_lightmap_caches();
     m.invalidate_visibility_caches();
-    if( calendar::once_every( activity_time_cadence::fixed_window() ) ) {
+    if( action_time_scale::once_every_this_tick( activity_time_cadence::fixed_window() ) ) {
         overmap_npc_move();
     }
     Pathfinding::clear_d_maps();
@@ -2640,7 +2658,7 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
         wait_redraw = true;
         wait_message = _( "Wait till you wake up…" );
         wait_refresh_rate = 30_minutes;
-        if( calendar::once_every( 1_hours ) ) {
+        if( action_time_scale::once_every_this_tick( 1_hours ) ) {
             add_artifact_dreams();
         }
     } else if( u.has_destination() ) {
@@ -2658,8 +2676,9 @@ auto game::handle_wait_activity_redraw( const bool force ) -> void
     if( wait_redraw ) {
         ZoneScopedN( "wait_redraw" );
         if( force || first_redraw_since_waiting_started ||
-            calendar::once_every( std::min( 1_minutes, wait_refresh_rate ) ) ) {
-            if( force || first_redraw_since_waiting_started || calendar::once_every( wait_refresh_rate ) ) {
+            action_time_scale::once_every_this_tick( std::min( 1_minutes, wait_refresh_rate ) ) ) {
+            if( force || first_redraw_since_waiting_started ||
+                action_time_scale::once_every_this_tick( wait_refresh_rate ) ) {
                 ui_manager::redraw();
             }
 
@@ -5403,7 +5422,7 @@ void game::world_tick()
     TracyPlot( "Active Dimensions", static_cast<int64_t>( loaded_dimensions_.size() ) );
 
     const auto fire_spread = reality_bubble_fire_spread;
-    const auto do_emits = calendar::once_every( 10_seconds );
+    const auto do_emits = action_time_scale::once_every_this_tick( 10_seconds );
 
     if( !fire_spread ) {
         fire_loader.clear( submap_loader );
@@ -5973,7 +5992,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             }
 
             m.creature_in_field( critter );
-            if( calendar::once_every( 1_days ) ) {
+            if( action_time_scale::once_every_this_tick( 1_days ) ) {
                 if( critter.has_flag( MF_MILKABLE ) ) {
                     critter.refill_udders();
                 }
@@ -6377,7 +6396,7 @@ void game::sleep_skip_npc_process()
     // Every ~30 in-game minutes, re-examine sleeping NPCs and wake any whose
     // sleep need is satisfied or whose player has woken up.  Otherwise, renew
     // their lying-down effect for another 30-minute window.
-    if( calendar::once_every( 30_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
         for( npc &guy : g->all_npcs() ) {
             if( guy.is_dead() || !guy.in_sleep_state() ) {
                 continue;
@@ -15325,7 +15344,7 @@ void game::perhaps_add_random_npc()
 {
     ZoneScoped;
     static constexpr time_duration spawn_interval = 1_hours;
-    if( !calendar::once_every( spawn_interval ) ) {
+    if( !action_time_scale::once_every_this_tick( spawn_interval ) ) {
         return;
     }
     // Create a new NPC?
@@ -15491,7 +15510,7 @@ void game::debug_hour_timer::toggle()
 void game::debug_hour_timer::print_time()
 {
     if( enabled ) {
-        if( calendar::once_every( time_duration::from_hours( 1 ) ) ) {
+        if( action_time_scale::once_every_this_tick( time_duration::from_hours( 1 ) ) ) {
             const IRLTimeMs now = std::chrono::time_point_cast<std::chrono::milliseconds>(
                                       std::chrono::system_clock::now() );
             if( start_time ) {
@@ -15637,7 +15656,8 @@ void game::process_artifact( item &it, Character &who )
 
     if( it.is_tool() ) {
         // Recharge it if necessary
-        if( it.ammo_remaining() < it.ammo_capacity() && calendar::once_every( 1_minutes ) ) {
+        if( it.ammo_remaining() < it.ammo_capacity() &&
+            action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //Before incrementing charge, check that any extra requirements are met
             if( check_art_charge_req( it ) ) {
                 switch( it.type->artifact->charge_type ) {
@@ -15646,12 +15666,12 @@ void game::process_artifact( item &it, Character &who )
                         break; // dummy entries
                     case ARTC_TIME:
                         // Once per hour
-                        if( calendar::once_every( 1_hours ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_hours ) ) {
                             it.charges++;
                         }
                         break;
                     case ARTC_SOLAR:
-                        if( calendar::once_every( 10_minutes ) &&
+                        if( action_time_scale::once_every_this_tick( 10_minutes ) &&
                             is_in_sunlight( who.bub_pos() ) ) {
                             it.charges++;
                         }
@@ -15660,21 +15680,21 @@ void game::process_artifact( item &it, Character &who )
                     // Some weird Lovecraftian thing.  ;P
                     // (So DON'T route them through mod_pain!)
                     case ARTC_PAIN:
-                        if( calendar::once_every( 1_minutes ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                             add_msg( m_bad, _( "You suddenly feel sharp pain for no reason." ) );
                             who.mod_pain_noresist( 3 * rng( 1, 3 ) );
                             it.charges++;
                         }
                         break;
                     case ARTC_HP:
-                        if( calendar::once_every( 1_minutes ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                             add_msg( m_bad, _( "You feel your body decaying." ) );
                             who.hurtall( 1, nullptr );
                             it.charges++;
                         }
                         break;
                     case ARTC_FATIGUE:
-                        if( calendar::once_every( 1_minutes ) ) {
+                        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                             add_msg( m_bad, _( "You feel fatigue seeping into your body." ) );
                             u.mod_fatigue( 3 * rng( 1, 3 ) );
                             u.mod_stamina( -90 * rng( 1, 3 ) * rng( 1, 3 ) * rng( 2, 3 ), false );
@@ -15875,7 +15895,8 @@ bool check_art_charge_req( item &it )
                 return elem.second.get_wetness() != 0;
             } );
             if( !reqsmet &&
-                sum_conditions( calendar::turn - 1_turns, calendar::turn, p.abs_pos() ).rain_amount > 0
+                sum_conditions( calendar::turn - action_time_scale::calendar_duration_this_tick(),
+                                calendar::turn, p.abs_pos() ).rain_amount > 0
                 && !( p.in_vehicle && here.veh_at( p.bub_pos() )->is_inside() ) ) {
                 reqsmet = true;
             }

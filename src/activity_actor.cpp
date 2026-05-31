@@ -497,7 +497,7 @@ void dig_activity_actor::do_turn( player_activity &/*act*/, Character & )
         return;
     }
     sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
         sounds::sound( location, 10, sounds::sound_t::activity, _( "hsh!" ) );
     }
@@ -603,7 +603,7 @@ void dig_channel_activity_actor::do_turn( player_activity &/*act*/, Character & 
         return;
     }
     sfx::play_activity_sound( "tool", "shovel", sfx::get_heard_volume( location ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel digging a pit at work!
         sounds::sound( location, 10, sounds::sound_t::activity, _( "hsh!" ) );
     }
@@ -1213,7 +1213,7 @@ void hacksaw_activity_actor::do_turn( player_activity &/* act */, Character &who
     if( tool->ammo_sufficient() ) {
         tool->ammo_consume( tool->ammo_required(), tool->position() );
         sfx::play_activity_sound( "tool", "hacksaw", sfx::get_heard_volume( target ) );
-        if( calendar::once_every( 1_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             //~ Sound of a metal sawing tool at work!
             sounds::sound( target, 15, sounds::sound_t::destructive_activity, _( "grnd grnd grnd" ) );
         }
@@ -1775,7 +1775,7 @@ void oxytorch_activity_actor::do_turn( player_activity &/*act*/, Character &who 
     if( tool->ammo_sufficient() ) {
         tool->ammo_consume( tool->ammo_required(), tool->position() );
         sfx::play_activity_sound( "tool", "oxytorch", sfx::get_heard_volume( target ) );
-        if( calendar::once_every( 2_turns ) ) {
+        if( action_time_scale::once_every_this_tick( 2_turns ) ) {
             sounds::sound( target, 10, sounds::sound_t::destructive_activity, _( "hissssssssss!" ) );
         }
     } else {
@@ -2078,12 +2078,6 @@ std::unique_ptr<activity_actor> throw_activity_actor::deserialize( JsonIn &jsin 
 
 // ---- craft_activity_actor ----
 
-static auto actor_action_factor_for_activity( const Character &who ) -> int
-{
-    return who.is_npc() ? action_time_scale::npc_action_factor() :
-           action_time_scale::player_action_factor();
-}
-
 craft_activity_actor::craft_activity_actor(
     const recipe *rec,
     int batch_size,
@@ -2296,8 +2290,7 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     const double base_total_moves = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
     const double cur_total_moves = std::max( 1, making.batch_time( batch_size, crafting_speed,
                                    assistants ) );
-    const auto scaled_moves = action_time_scale::activity_progress_from_actor_moves(
-                                  who.get_moves(), actor_action_factor_for_activity( who ) );
+    const auto scaled_moves = action_time_scale::activity_progress_from_actor_moves( who );
     const auto delta_progress = scaled_moves * base_total_moves / cur_total_moves;
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
     const int new_counter = std::min(

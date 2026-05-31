@@ -11,6 +11,7 @@
 #include <memory>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "coordinates.h"
 #include "game.h"
@@ -44,9 +45,12 @@ TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
 
     auto &test_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms::zero() );
     const auto base_speed = test_monster.get_speed_base();
+    const auto monster_tick_factor = action_time_scale::monster_tick_action_factor();
     REQUIRE( base_speed == test_monster.type->speed );
-    CHECK( test_monster.get_moves() == base_speed * global_speed_percent *
-           monster_speed_percent / 10'000 );
+    CHECK( action_time_scale::monster_action_factor() == global_speed_percent *
+           monster_speed_percent );
+    CHECK( test_monster.get_moves() == base_speed * monster_tick_factor /
+           action_time_scale::factor_denominator );
 
     const auto turn_count = 10;
     for ( const auto turn : std::views::iota( 0, turn_count ) ) {
@@ -54,8 +58,8 @@ TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
         test_monster.process_turn();
     }
 
-    CHECK( test_monster.get_moves() == base_speed * global_speed_percent *
-           monster_speed_percent * ( turn_count + 1 ) / 10'000 );
+    CHECK( test_monster.get_moves() == base_speed * monster_tick_factor * ( turn_count + 1 ) /
+           action_time_scale::factor_denominator );
     CHECK( test_monster.get_speed_base() == base_speed );
     CHECK( test_monster.type->speed == base_speed );
 }

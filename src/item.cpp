@@ -20,6 +20,7 @@
 #include <tuple>
 #include <unordered_set>
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "ammo.h"
 #include "ascii_art.h"
@@ -6880,7 +6881,7 @@ bool item::ready_to_revive( const tripoint_bub_ms &pos ) const
     if( get_map().veh_at( pos ) ) {
         return false;
     }
-    if( !calendar::once_every( 1_seconds ) ) {
+    if( !action_time_scale::once_every_this_tick( 1_seconds ) ) {
         return false;
     }
     int age_in_hours = to_hours<int>( age() );

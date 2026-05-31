@@ -2952,8 +2952,12 @@ void npc::on_unload()
 // A throtled version of player::update_body since npc's don't need to-the-turn updates.
 void npc::npc_update_body()
 {
-    if( calendar::once_every( 10_seconds ) ) {
-        update_body( 10_seconds );
+    const auto elapsed = calendar::turn - last_updated;
+    if( elapsed <= 0_turns ) {
+        return;
+    }
+    if( elapsed >= 10_seconds || action_time_scale::once_every_this_tick( 10_seconds ) ) {
+        update_body( elapsed );
         last_updated = calendar::turn;
     }
 }
@@ -3069,7 +3073,7 @@ void npc::process_turn()
 {
     player::process_turn();
 
-    if( is_player_ally() && calendar::once_every( 1_hours ) &&
+    if( is_player_ally() && action_time_scale::once_every_this_tick( 1_hours ) &&
         get_kcal_percent() > 0.95 && get_thirst() < thirst_levels::very_thirsty && op_of_u.trust < 5 ) {
         // Friends who are well fed will like you more
         // 24 checks per day, best case chance at trust 0 is 1 in 48 for +1 trust per 2 days
@@ -3095,7 +3099,7 @@ void npc::process_turn()
 
 auto npc::action_move_factor() const -> int
 {
-    return action_time_scale::npc_action_factor();
+    return action_time_scale::npc_tick_action_factor();
 }
 
 void npc::batch_turns( int n )

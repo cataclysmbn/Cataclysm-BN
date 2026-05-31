@@ -2818,7 +2818,7 @@ void monster::decrement_summon_timer()
     if( *summon_time_limit <= 0_turns ) {
         die( nullptr );
     } else {
-        *summon_time_limit -= 1_turns;
+        *summon_time_limit -= action_time_scale::calendar_duration_this_tick();
     }
 }
 
@@ -2829,7 +2829,7 @@ void monster::process_turn()
     decrement_summon_timer();
     if( !is_hallucination() ) {
         for( const std::pair<const emit_id, time_duration> &e : type->emit_fields ) {
-            if( !calendar::once_every( e.second ) ) {
+            if( !action_time_scale::once_every_this_tick( e.second ) ) {
                 continue;
             }
             const emit_id emid = e.first;
@@ -2858,9 +2858,8 @@ void monster::process_turn()
             continue;
         }
 
-        if( local_attack_data.cooldown > 0 ) {
-            local_attack_data.cooldown--;
-        }
+        local_attack_data.cooldown = std::max( 0, local_attack_data.cooldown -
+                                               action_time_scale::calendar_turns_this_tick() );
     }
     // Persist grabs as long as there's an adjacent target.
     if( has_effect( effect_grabbing ) ) {
@@ -2874,7 +2873,7 @@ void monster::process_turn()
     // We update electrical fields here since they act every turn.
     if( has_flag( MF_ELECTRIC_FIELD ) ) {
         if( has_effect( effect_emp ) ) {
-            if( calendar::once_every( 10_turns ) ) {
+            if( action_time_scale::once_every_this_tick( 10_turns ) ) {
                 sounds::sound( bub_pos(), 5, sounds::sound_t::combat, _( "hummmmm." ), false, "humming",
                                "electric" );
             }
@@ -2924,7 +2923,8 @@ void monster::process_turn()
                     g->u.add_effect( effect_blind, rng( 1_minutes, 2_minutes ) );
                 }
                 add_effect( effect_supercharged, 12_hours );
-            } else if( has_effect( effect_supercharged ) && calendar::once_every( 5_turns ) ) {
+            } else if( has_effect( effect_supercharged ) &&
+                       action_time_scale::once_every_this_tick( 5_turns ) ) {
                 sounds::sound( bub_pos(), 20, sounds::sound_t::combat, _( "VMMMMMMMMM!" ), false, "humming",
                                "electric" );
             }
@@ -2936,7 +2936,7 @@ void monster::process_turn()
 
 auto monster::action_move_factor() const -> int
 {
-    return action_time_scale::monster_action_factor();
+    return action_time_scale::monster_tick_action_factor();
 }
 
 void monster::batch_turns( int n )

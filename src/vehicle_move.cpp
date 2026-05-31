@@ -63,25 +63,6 @@ static const efftype_id effect_stunned( "stunned" );
 
 static const std::string part_location_structure( "structure" );
 
-static auto driver_action_factor_for_vehicle_control( const Character &driver ) -> int
-{
-    return driver.is_npc() ? action_time_scale::npc_action_factor() :
-           action_time_scale::player_action_factor();
-}
-
-static auto vehicle_control_turn_moves( const Character &driver ) -> int
-{
-    return action_time_scale::scaled_moves( driver.get_speed(),
-                                            driver_action_factor_for_vehicle_control( driver ) );
-}
-
-static auto vehicle_control_cost( const Character &driver, const int base_cost ) -> int
-{
-    return action_time_scale::scaled_relative_cost(
-               base_cost, driver_action_factor_for_vehicle_control( driver ),
-               action_time_scale::vehicle_control_factor() );
-}
-
 // tile height in meters
 static const float tile_height = 4;
 // Conversion constant for Impulse Ns to damage for vehicle collisions. Fine tune to desired damage.
@@ -1247,7 +1228,7 @@ bool vehicle::check_heli_ascend( Character &who )
 void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
 {
     if( p.z() != 0 && is_aircraft() ) {
-        driver.moves -= vehicle_control_cost( driver, 100 );
+        driver.moves -= action_time_scale::vehicle_control_cost( driver, 100 );
         thrust( 0, p.z() );
     }
     units::angle turn_delta = 15_degrees * p.x();
@@ -1273,7 +1254,7 @@ void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
 
         // If you've got more moves than one normal scaled turn, it's most likely time stop.
         // Let's get rid of that.
-        driver.moves = std::min( driver.moves, vehicle_control_turn_moves( driver ) );
+        driver.moves = std::min( driver.moves, action_time_scale::character_moves_per_tick( driver ) );
 
         ///\EFFECT_DEX reduces chance of losing control of vehicle when turning
 
@@ -1310,7 +1291,8 @@ void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
         turn( turn_delta );
 
         // At most 3 turns per turn, because otherwise it looks really weird and jumpy
-        driver.moves -= vehicle_control_cost( driver, std::max( cost, driver.get_speed() / 3 + 1 ) );
+        driver.moves -= action_time_scale::vehicle_control_cost( driver,
+                        std::max( cost, driver.get_speed() / 3 + 1 ) );
     }
 
     if( p.y() != 0 ) {
@@ -1320,7 +1302,7 @@ void vehicle::pldrive( Character &driver, tripoint_rel_veh p )
         } else {
             thrust( -p.y() );
         }
-        driver.moves -= vehicle_control_cost( driver, 100 );
+        driver.moves -= action_time_scale::vehicle_control_cost( driver, 100 );
     }
 
     // TODO: Actually check if we're on land on water (or disable water-skidding)

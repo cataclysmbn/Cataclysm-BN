@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "action.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
@@ -3827,7 +3828,7 @@ void iuse::play_music( player &p, const tripoint_bub_ms &source, const int volum
     // the other characters around should be able to profit as well.
     const bool do_effects = p.can_hear( source, volume ) && !p.has_effect( effect_sleep );
     std::string sound = "music";
-    if( calendar::once_every( 1_hours ) ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
         // Every 5 minutes, describe the music
         const std::string music = get_music_description();
         if( !music.empty() ) {
@@ -5971,7 +5972,7 @@ int iuse::einktabletpc( player *p, item *it, bool t, const tripoint_bub_ms &pos 
 {
     if( t ) {
         if( !it->get_var( "EIPC_MUSIC_ON" ).empty() && ( it->ammo_remaining() > 0 ) ) {
-            if( calendar::once_every( 5_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 5_minutes ) ) {
                 it->ammo_consume( 1, p->bub_pos() );
             }
 
@@ -7502,7 +7503,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
             }
         }
 
-        if( calendar::once_every( 1_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             sounds::sound( pos, 10, sounds::sound_t::alarm, _( "a police siren, whoop WHOOP." ), true,
                            "environment", "police_siren" );
         }
@@ -7558,7 +7559,7 @@ int iuse::ehandcuffs( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 int iuse::foodperson( player *p, item *it, bool t, const tripoint_bub_ms &pos )
 {
     if( t ) {
-        if( calendar::once_every( 1_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
             const SpeechBubble &speech = get_speech( "foodperson_mask" );
             sounds::sound( pos, speech.volume, sounds::sound_t::alarm, speech.text.translated(), true, "speech",
                            "foodperson_mask" );
@@ -9309,7 +9310,7 @@ int iuse::bullet_vibe_on( player *p, item *it, bool t, const tripoint_bub_ms & )
     if( t ) { // Normal use
         if( p->has_item( *it ) ) {
             // Only triggers every 1 minute so that fatigue isn't ridiculous
-            if( calendar::once_every( 1_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
                 p->add_morale( MORALE_FEELING_GOOD, 1, 30, 20_minutes, 10_minutes, true );
                 p->mod_fatigue( 1 );
             }

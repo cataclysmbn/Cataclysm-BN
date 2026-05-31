@@ -23,6 +23,7 @@
 #include <vector>
 #include <ranges>
 
+#include "action_time_scale.h"
 #include "active_tile_data_def.h"
 #include "avatar.h"
 #include "avatar_functions.h"
@@ -6498,7 +6499,7 @@ bool vehicle::decrement_summon_timer()
         g->m.destroy_vehicle( this );
         return true;
     } else {
-        *summon_time_limit -= 1_turns;
+        *summon_time_limit -= action_time_scale::calendar_duration_this_tick();
     }
     return false;
 }

@@ -15,6 +15,7 @@
 #include <utility>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bionics.h"
@@ -3243,7 +3244,7 @@ bool mattack::check_money_left( monster *z )
     } else {
         const time_duration time_left = z->get_effect_dur( effect_paid );
         if( time_left < 1_minutes ) {
-            if( calendar::once_every( 20_seconds ) ) {
+            if( action_time_scale::once_every_this_tick( 20_seconds ) ) {
                 const SpeechBubble &speech_time_low = get_speech( "mon_grocerybot_running_out_of_friendship" );
                 sounds::sound( z->bub_pos(), speech_time_low.volume,
                                sounds::sound_t::electronic_speech, speech_time_low.text );
@@ -3251,7 +3252,7 @@ bool mattack::check_money_left( monster *z )
         }
     }
     if( z->friendly == -1 && !z->has_effect( effect_paid ) ) {
-        if( calendar::once_every( 3_hours ) ) {
+        if( action_time_scale::once_every_this_tick( 3_hours ) ) {
             const SpeechBubble &speech_override_start = get_speech( "mon_grocerybot_hacked" );
             sounds::sound( z->bub_pos(), speech_override_start.volume,
                            sounds::sound_t::electronic_speech, speech_override_start.text );
@@ -3734,7 +3735,7 @@ bool mattack::searchlight( monster *z )
     }
 
     //battery charge from the generator is enough for some time of work
-    if( calendar::once_every( 10_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 10_minutes ) ) {
 
         bool generator_ok = false;
 
@@ -4249,7 +4250,7 @@ bool mattack::ratking( monster *z )
 bool mattack::generator( monster *z )
 {
     sounds::sound( z->bub_pos(), 100, sounds::sound_t::activity, "hmmmm" );
-    if( calendar::once_every( 1_minutes ) && z->get_hp() < z->get_hp_max() ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) && z->get_hp() < z->get_hp_max() ) {
         z->heal( 1 );
     }
 
@@ -5000,7 +5001,7 @@ bool mattack::riotbot( monster *z )
 
     player *foe = dynamic_cast<player *>( target );
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         for( const tripoint_bub_ms &dest : here.points_in_radius( z->bub_pos(), 4 ) ) {
             if( here.passable( dest ) &&
                 here.clear_path( z->bub_pos(), dest, 3, 1, 100 ) ) {
@@ -5015,7 +5016,7 @@ bool mattack::riotbot( monster *z )
         ( foe->primary_weapon().typeId() == itype_e_handcuffs || !foe->has_two_arms() ) ) {
         z->anger = 0;
 
-        if( calendar::once_every( 25_turns ) ) {
+        if( action_time_scale::once_every_this_tick( 25_turns ) ) {
             sounds::sound( z->bub_pos(), 10, sounds::sound_t::electronic_speech,
                            _( "Halt and submit to arrest, citizen!  The police will be here any moment." ), false, "speech",
                            z->type->id.str() );
@@ -5153,7 +5154,7 @@ bool mattack::riotbot( monster *z )
         return true;
     }
 
-    if( calendar::once_every( 5_turns ) ) {
+    if( action_time_scale::once_every_this_tick( 5_turns ) ) {
         sounds::sound( z->bub_pos(), 25, sounds::sound_t::electronic_speech,
                        _( "Empty your hands and hold your position, citizen!" ), false, "speech", z->type->id.str() );
     }

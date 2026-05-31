@@ -199,25 +199,6 @@ static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_under_op( "under_operation" );
 static const efftype_id effect_well_fed( "well_fed" );
 
-static auto actor_action_factor_for_activity( const player &who ) -> int
-{
-    return who.is_npc() ? action_time_scale::npc_action_factor() :
-           action_time_scale::player_action_factor();
-}
-
-static auto activity_progress_from_actor_moves( const player &who ) -> double
-{
-    return action_time_scale::activity_progress_from_actor_moves(
-               who.get_moves(), actor_action_factor_for_activity( who ) );
-}
-
-static auto actor_moves_for_activity_progress( const player &who,
-        const double progress_moves ) -> int
-{
-    return action_time_scale::actor_moves_for_activity_progress(
-               progress_moves, actor_action_factor_for_activity( who ) );
-}
-
 static const fault_id fault_bionic_nonsterile( "fault_bionic_nonsterile" );
 
 static const itype_id itype_2x4( "2x4" );
@@ -418,7 +399,7 @@ void activity_handlers::burrow_do_turn( player_activity *act, player * )
 {
     sfx::play_activity_sound( "activity", "burrow",
                               sfx::get_heard_volume( abs_to_bub( act->placement ) ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         sounds::sound( abs_to_bub( act->placement ), 10, sounds::sound_t::movement,
                        //~ Sound of a Rat mutant burrowing!
                        _( "ScratchCrunchScrabbleScurry." ) );
@@ -1758,7 +1739,7 @@ void activity_handlers::forage_finish( player_activity *act, player *p )
 
 void activity_handlers::generic_game_do_turn( player_activity * /*act*/, player *p )
 {
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         // So 30 points per play
         p->add_morale( MORALE_GAME, 2, 60, 2_hours, 30_minutes, true );
         return;
@@ -1770,7 +1751,7 @@ void activity_handlers::game_do_turn( player_activity *act, player *p )
     item &game_item = *act->targets.front();
 
     // Consume battery charges for every minute spent playing
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         int energy = game_item.ammo_required();
         energy -= game_item.ammo_consume( energy, p->bub_pos() );
         if( energy > 0 && game_item.has_flag( flag_USE_UPS ) ) {
@@ -1888,7 +1869,7 @@ void activity_handlers::pickaxe_do_turn( player_activity *act, player * )
     const auto &pos = get_map().abs_to_bub( act->placement );
     sfx::play_activity_sound( "tool", "pickaxe", sfx::get_heard_volume( pos ) );
     // each turn is too much
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a Pickaxe at work!
         sounds::sound( pos, 30, sounds::sound_t::destructive_activity, _( "CHNK!  CHNK!  CHNK!" ) );
     }
@@ -2161,7 +2142,7 @@ void activity_handlers::start_fire_do_turn( player_activity *act, player *p )
     p->mod_moves( -p->moves );
     const firestarter_actor *actor = dynamic_cast<const firestarter_actor *>( usef->get_actor_ptr() );
     const float light = actor->light_mod( p->bub_pos() );
-    act->moves_left -= light * action_time_scale::activity_progress_per_turn();
+    act->moves_left -= light * action_time_scale::activity_progress_per_tick();
     if( light < 0.1 ) {
         add_msg( m_bad, _( "There is not enough sunlight to start a fire now.  You stop trying." ) );
         p->cancel_activity();
@@ -2324,7 +2305,7 @@ void activity_handlers::hand_crank_do_turn( player_activity *act, player *p )
         charge_interval = 144_seconds;
     }
 
-    if( calendar::once_every( charge_interval ) ) {
+    if( action_time_scale::once_every_this_tick( charge_interval ) ) {
         p->mod_fatigue( fatigue_amount );
         if( hand_crank_item.ammo_capacity() > hand_crank_item.ammo_remaining() ) {
             const auto current = hand_crank_item.ammo_remaining();
@@ -2359,7 +2340,7 @@ void activity_handlers::vibe_do_turn( player_activity *act, player *p )
         add_msg( m_bad, _( "You have trouble breathing, and stop." ) );
     }
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         p->mod_fatigue( 1 );
         if( vibrator_item.ammo_remaining() > 0 ) {
             vibrator_item.ammo_consume( 1, p->bub_pos() );
@@ -2716,7 +2697,7 @@ void activity_handlers::train_skill_do_turn( player_activity *act, player *p )
         return;
     }
 
-    if( calendar::once_every( 1_minutes * training_skill_interval ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes * training_skill_interval ) ) {
         // pull metadata. this is probably the easiest way to get this data from the JSON definition
         std::string training_skill = p->get_value( "training_iuse_skill" );
         if( training_skill.empty() ) {
@@ -3276,7 +3257,7 @@ void activity_handlers::fish_do_turn( player_activity *act, player *p )
         caught.add( {"fish", 1}, 1 ); //Hardcoded for now, but can be expanded for magnet fishing or smthn
         rod_fish( p, caught );
     }
-    if( calendar::once_every( 60_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 60_minutes ) ) {
         p->practice( skill_survival, rng( 1, 3 ) );
     }
 
@@ -3306,12 +3287,14 @@ void activity_handlers::repair_item_do_turn( player_activity *act, player *p )
 {
     // Moves are decremented based on a combination of speed and good vision (not in the dark, farsighted, etc)
     const float vision_mod = character_funcs::fine_detail_vision_mod( *p );
-    const auto effective_moves = static_cast<int>( activity_progress_from_actor_moves( *p ) / vision_mod );
+    const auto effective_moves = static_cast<int>(
+                                     action_time_scale::activity_progress_from_actor_moves( *p ) / vision_mod );
     if( effective_moves <= act->moves_left ) {
         act->moves_left -= effective_moves;
         p->moves = 0;
     } else {
-        p->moves -= actor_moves_for_activity_progress( *p, act->moves_left * vision_mod );
+        p->moves -= action_time_scale::actor_moves_for_activity_progress( *p,
+                    act->moves_left * vision_mod );
         act->moves_left = 0;
     }
 }
@@ -3340,7 +3323,7 @@ void activity_handlers::read_do_turn( player_activity *act, player *p )
         p->moves = 0;
     }
 
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         safe_reference<item> &loc = act->targets[0];
         if( !loc || !loc->is_book() ) {
             p->add_msg_if_player( m_bad, _( "You lost your book!  You stop reading." ) );
@@ -3479,7 +3462,7 @@ void activity_handlers::try_sleep_do_turn( player_activity *act, player *p )
         } else if( one_in( 1000 ) ) {
             p->add_msg_if_player( _( "You toss and turn…" ) );
         }
-        if( calendar::once_every( 30_minutes ) ) {
+        if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
             try_sleep_query( act, p );
         }
     }
@@ -3598,7 +3581,7 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     if( act->moves_left > half_op_moves ) {
         if( !bps.empty() ) {
             for( const bodypart_id &bp : bps ) {
-                if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+                if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
                     p->add_msg_player_or_npc( m_info,
                                               _( "The Autodoc is meticulously cutting your %s open." ),
                                               _( "The Autodoc is meticulously cutting <npcname>'s %s open." ),
@@ -3606,7 +3589,7 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
                 }
             }
         } else {
-            if( calendar::once_every( message_freq ) && u_see ) {
+            if( action_time_scale::once_every_this_tick( message_freq ) && u_see ) {
                 p->add_msg_player_or_npc( m_info,
                                           _( "The Autodoc is meticulously cutting you open." ),
                                           _( "The Autodoc is meticulously cutting <npcname> open." ) );
@@ -3645,7 +3628,7 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
     } else if( act->values[success_value] > 0 ) {
         if( !bps.empty() ) {
             for( const bodypart_id &bp : bps ) {
-                if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+                if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
                     p->add_msg_player_or_npc( m_info,
                                               _( "The Autodoc is stitching your %s back up." ),
                                               _( "The Autodoc is stitching <npcname>'s %s back up." ),
@@ -3653,14 +3636,14 @@ void activity_handlers::operation_do_turn( player_activity *act, player *p )
                 }
             }
         } else {
-            if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+            if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
                 p->add_msg_player_or_npc( m_info,
                                           _( "The Autodoc is stitching you back up." ),
                                           _( "The Autodoc is stitching <npcname> back up." ) );
             }
         }
     } else {
-        if( calendar::once_every( message_freq ) && u_see && autodoc ) {
+        if( action_time_scale::once_every_this_tick( message_freq ) && u_see && autodoc ) {
             p->add_msg_player_or_npc( m_bad,
                                       _( "The Autodoc is moving erratically through the rest of its program, not actually stitching your wounds." ),
                                       _( "The Autodoc is moving erratically through the rest of its program, not actually stitching <npcname>'s wounds." ) );
@@ -3908,8 +3891,8 @@ void activity_handlers::craft_do_turn( player_activity *act, player *p )
     const double cur_total_moves = std::max( 1, rec.batch_time( craft->charges, crafting_speed,
                                    assistants ) );
     // Delta progress in moves adjusted for current crafting speed
-    const double delta_progress = activity_progress_from_actor_moves( *p ) * base_total_moves /
-                                  cur_total_moves;
+    const double delta_progress = action_time_scale::activity_progress_from_actor_moves( *p ) *
+                                  base_total_moves / cur_total_moves;
     // Current progress in moves
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
     // Current progress as a percent of base_total_moves to 2 decimal places
@@ -4003,7 +3986,7 @@ void activity_handlers::chop_tree_do_turn( player_activity *act, player * )
     map &here = get_map();
     sfx::play_activity_sound( "tool", "axe",
                               sfx::get_heard_volume( here.abs_to_bub( act->placement ) ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a wood chopping tool at work!
         sounds::sound( here.abs_to_bub( act->placement ), 15, sounds::sound_t::activity, _( "CHK!" ) );
     }
@@ -4197,7 +4180,7 @@ void activity_handlers::jackhammer_do_turn( player_activity *act, player * )
     map &here = get_map();
     sfx::play_activity_sound( "tool", "jackhammer",
                               sfx::get_heard_volume( here.abs_to_bub( act->placement ) ) );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         sounds::sound( here.abs_to_bub( act->placement ), 15, sounds::sound_t::destructive_activity,
                        //~ Sound of a jackhammer at work!
                        _( "TATATATATATATAT!" ) );
@@ -4247,7 +4230,7 @@ void activity_handlers::jackhammer_finish( player_activity *act, player *p )
 void activity_handlers::fill_pit_do_turn( player_activity *act, player * )
 {
     sfx::play_activity_sound( "tool", "shovel", 100 );
-    if( calendar::once_every( 1_minutes ) ) {
+    if( action_time_scale::once_every_this_tick( 1_minutes ) ) {
         //~ Sound of a shovel filling a pit or mound at work!
         sounds::sound( get_map().abs_to_bub( act->placement ), 10, sounds::sound_t::activity, _( "hsh!" ) );
     }
@@ -4568,7 +4551,7 @@ void activity_handlers::tree_communion_do_turn( player_activity *act, player *p 
         return;
     }
     // Information is received every minute.
-    if( !calendar::once_every( 1_minutes ) ) {
+    if( !action_time_scale::once_every_this_tick( 1_minutes ) ) {
         return;
     }
     // Breadth-first search forest tiles until one reveals new overmap tiles.
