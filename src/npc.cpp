@@ -3156,12 +3156,12 @@ void npc::advance_job_progress( int n )
         return;
     }
     if( activity && *activity ) {
-        // Directly reduce moves_left by n turns' worth (100 moves per turn).
+        // Directly reduce moves_left by n turns' worth of scaled activity progress.
         // The mod_moves() approach is wrong here: activity->do_turn() unconditionally
         // sets p.moves = 0 after each step, so any extra moves granted via mod_moves()
         // are zeroed on the very first step and the catchup never happens.
-        // Direct reduction is speed-independent, matching the design intent.
-        activity->moves_left = std::max( 0, activity->moves_left - n * 100 );
+        const auto progress = action_time_scale::activity_progress_for_turns( n );
+        activity->moves_left = std::max( 0, activity->moves_left - progress );
     } else if( has_destination() ) {
         // Destination movement: grant extra moves so the NPC takes additional path
         // steps toward its goal.  mod_moves() is correct here because path-following

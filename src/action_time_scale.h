@@ -1,5 +1,9 @@
 #pragma once
 
+#include <algorithm>
+#include <cstdint>
+#include <limits>
+
 #include "options.h"
 
 namespace action_time_scale
@@ -26,6 +30,30 @@ inline auto npc_action_factor() -> int
 inline auto monster_action_factor() -> int
 {
     return scaled_action_factor( "MONSTER_SPEED" );
+}
+
+inline auto activity_progress_factor() -> int
+{
+    return scaled_action_factor( "ACTIVITY_PROGRESS_SCALE" );
+}
+
+inline auto scaled_moves( const int base_moves, const int action_factor ) -> int
+{
+    const auto scaled = static_cast<int64_t>( base_moves ) * action_factor;
+    return std::max( 1, static_cast<int>( ( scaled + factor_denominator / 2 ) /
+                                          factor_denominator ) );
+}
+
+inline auto activity_progress_per_turn() -> int
+{
+    return scaled_moves( 100, activity_progress_factor() );
+}
+
+inline auto activity_progress_for_turns( const int turns ) -> int
+{
+    const auto progress = static_cast<int64_t>( std::max( 0, turns ) ) *
+                          activity_progress_per_turn();
+    return static_cast<int>( std::min<int64_t>( progress, std::numeric_limits<int>::max() ) );
 }
 
 } // namespace action_time_scale

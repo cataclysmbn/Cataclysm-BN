@@ -1,15 +1,18 @@
 #include "catch/catch.hpp"
 
+#include "activity_speed.h"
 #include "avatar.h"
 #include "character_effects.h"
 #include "npc.h"
 #include "options_helpers.h"
+#include "player_activity.h"
 #include "player_helpers.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "state_helpers.h"
 
 static const trait_id trait_DEBUG_WEIGHTLESSNESS( "DEBUG_WEIGHTLESSNESS" );
+static const auto act_wait = activity_id( "ACT_WAIT" );
 
 static void advance_turn( Character &guy )
 {
@@ -19,7 +22,7 @@ static void advance_turn( Character &guy )
 
 static player &prepare_player()
 {
-    player &guy = *get_player_character().as_player();
+    auto &guy = *get_player_character().as_player();
     clear_character( *guy.as_player(), true );
     guy.set_moves( 0 );
 
@@ -50,7 +53,7 @@ TEST_CASE( "Player action scale modifies move gain", "[speed]" )
     const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
     const auto player_scale = override_option( "PLAYER_ACTION_SCALE", "50" );
 
-    player &guy = *get_player_character().as_player();
+    auto &guy = *get_player_character().as_player();
     clear_character( guy, true );
     guy.set_moves( 0 );
 
@@ -66,13 +69,63 @@ TEST_CASE( "NPC action scale modifies move gain", "[speed][npc]" )
     const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
     const auto npc_scale = override_option( "NPC_ACTION_SCALE", "50" );
 
-    standard_npc guy( "action scale npc" );
+    auto guy = standard_npc( "action scale npc" );
     guy.set_moves( 0 );
 
     advance_turn( guy );
 
     CHECK( guy.get_speed() == 100 );
     CHECK( guy.get_moves() == 25 );
+}
+
+TEST_CASE( "Activity progress scale modifies non-complex activity progress", "[speed][activity]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
+
+    auto &guy = *get_player_character().as_player();
+    clear_character( guy, true );
+    guy.set_moves( 100 );
+    guy.assign_activity( act_wait, 1000 );
+
+    REQUIRE( guy.activity );
+    REQUIRE( guy.activity->get_moves_left() == 1000 );
+
+    guy.activity->do_turn( guy );
+
+    CHECK( guy.activity->get_moves_left() == 975 );
+    CHECK( guy.get_moves() == 0 );
+}
+
+TEST_CASE( "Activity progress scale modifies complex activity base progress", "[speed][activity]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
+
+    auto speed = activity_speed();
+    CHECK( speed.moves_per_turn() == 25 );
+
+    speed.player_speed = 2.0f;
+    CHECK( speed.moves_per_turn() == 50 );
+}
+
+TEST_CASE( "NPC activity catch-up uses activity progress scale", "[speed][activity][npc]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
+
+    auto guy = standard_npc( "activity catch-up npc" );
+    guy.assign_activity( act_wait, 1000 );
+
+    REQUIRE( guy.activity );
+    REQUIRE( guy.activity->get_moves_left() == 1000 );
+
+    guy.advance_job_progress( 10 );
+
+    CHECK( guy.activity->get_moves_left() == 750 );
 }
 
 static void pain_penalty_test( player &guy, int pain, int speed_exp )

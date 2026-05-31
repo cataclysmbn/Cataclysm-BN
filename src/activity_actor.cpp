@@ -7,6 +7,7 @@
 #include <string>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "activity_handlers.h" // put_into_vehicle_or_drop and drop_on_map
 #include "activity_speed.h"
 #include "advanced_inv.h"
@@ -2077,6 +2078,12 @@ std::unique_ptr<activity_actor> throw_activity_actor::deserialize( JsonIn &jsin 
 
 // ---- craft_activity_actor ----
 
+static auto actor_action_factor_for_activity( const Character &who ) -> int
+{
+    return who.is_npc() ? action_time_scale::npc_action_factor() :
+           action_time_scale::player_action_factor();
+}
+
 craft_activity_actor::craft_activity_actor(
     const recipe *rec,
     int batch_size,
@@ -2143,8 +2150,8 @@ void craft_activity_actor::calc_all_moves( player_activity &act, Character &who 
         if( craft_item ) {
             const int elapsed_turns = current_turn - last_turn_nr;
             const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
-            // 100 moves per turn at base speed (no modifiers applied while outside bubble)
-            const double moves_elapsed = elapsed_turns * 100.0;
+            // No live crafting modifiers are applied while outside the reality bubble.
+            const auto moves_elapsed = action_time_scale::activity_progress_for_turns( elapsed_turns );
             const int old_counter = craft_item->get_counter();
             const int new_counter = std::min(
                                         static_cast<int>( old_counter + moves_elapsed / base_total_moves * 10'000'000.0 ),
@@ -2289,9 +2296,14 @@ void craft_activity_actor::do_turn( player_activity &act, Character &who )
     const double base_total_moves = std::max( 1, making.batch_time( batch_size, 1.0f, 0 ) );
     const double cur_total_moves = std::max( 1, making.batch_time( batch_size, crafting_speed,
                                    assistants ) );
-    const double delta_progress = who.get_moves() > 0
-                                  ? who.get_moves() * base_total_moves / cur_total_moves
-                                  : 0.0;
+    const auto activity_factor = action_time_scale::activity_progress_factor();
+    const auto actor_factor = actor_action_factor_for_activity( who );
+    const auto scaled_moves = who.get_moves() > 0
+                              ? who.get_moves() * static_cast<double>( activity_factor ) / actor_factor
+                              : 0.0;
+    const auto delta_progress = scaled_moves > 0.0
+                                ? scaled_moves * base_total_moves / cur_total_moves
+                                : 0.0;
     const double current_progress = old_counter * base_total_moves / 10'000'000.0 + delta_progress;
     const int new_counter = std::min(
                                 static_cast<int>( std::round( current_progress / base_total_moves * 10'000'000.0 ) ),

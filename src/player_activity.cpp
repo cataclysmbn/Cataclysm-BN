@@ -6,6 +6,7 @@
 #include <memory>
 #include <utility>
 
+#include "action_time_scale.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
@@ -508,7 +509,7 @@ void player_activity::do_turn( player &p )
                 calc_moves( p );
             }
 
-            int moves_total = speed.moves_per_turn();
+            const auto moves_total = speed.moves_per_turn();
 
             //fancy new system
             if( actor ) {
@@ -531,23 +532,24 @@ void player_activity::do_turn( player &p )
                 }
             }
         } else {
+            const auto moves_total = action_time_scale::activity_progress_per_turn();
             //fancy new system
             if( actor ) {
-                if( actor->progress.get_moves_left() >= 100 ) {
-                    actor->progress.mod_moves_left( - 100 );
+                if( actor->progress.get_moves_left() >= moves_total ) {
+                    actor->progress.mod_moves_left( -moves_total );
                     p.moves = 0;
                 } else {
-                    p.moves -= actor->progress.get_moves_left();
+                    p.moves -= std::round( actor->progress.get_moves_left() * 100.0f / moves_total );
                     actor->progress.mod_moves_left( -actor->progress.get_moves_left() );
                 }
             }
             //old one
             else {
-                if( moves_left >= 100 ) {
-                    moves_left -= 100;
+                if( moves_left >= moves_total ) {
+                    moves_left -= moves_total;
                     p.moves = 0;
                 } else {
-                    p.moves -= moves_left;
+                    p.moves -= std::round( moves_left * 100.0f / moves_total );
                     moves_left = 0;
                 }
             }
