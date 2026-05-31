@@ -16,6 +16,7 @@
 #include "action.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
+#include "action_time_scale.h"
 // TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that include after repair_activity_actor.
 #include "activity_handlers.h"
@@ -5939,7 +5940,8 @@ void iexamine::autodoc( player &p, const tripoint_bub_ms &examp )
         }
     } else if( patient.activity->id() == activity_id( "ACT_OPERATION" ) ) {
         popup( _( "Operation underway.  Please wait until the end of the current procedure.  Estimated time remaining: %s." ),
-               to_string( time_duration::from_turns( patient.activity->moves_left / 100 ) ) );
+               to_string( time_duration::from_turns(
+                              action_time_scale::activity_turns_for_progress( patient.activity->moves_left ) ) ) );
         p.add_msg_if_player( m_info, _( "The autodoc is working on %s." ), patient.disp_name() );
         return;
     }

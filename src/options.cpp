@@ -3136,6 +3136,11 @@ void options_manager::add_options_world_default()
          1, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 
+    add( "VEHICLE_CONTROL_SCALE", world_default, translate_marker( "Vehicle control speed percentage" ),
+         translate_marker( "Determines driver control action rate as a percentage of the global action speed without changing physical vehicle movement.  A higher value allows more steering, braking, and throttle inputs per in-game second and a lower value allows fewer." ),
+         1, 1000, 100, COPT_NO_HIDE, "%i%%"
+       );
+
     add( "MONSTER_SPEED", world_default, translate_marker( "Monster speed percentage" ),
          translate_marker( "Determines monster action rate as a percentage of the global action speed.  A higher value allows more monster actions per in-game second and a lower value allows fewer." ),
          1, 1000, 100, COPT_NO_HIDE, "%i%%"

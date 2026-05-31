@@ -2387,9 +2387,10 @@ act_progress_message craft_activity_actor::get_progress_message(
     const int assistants = who.available_assistant_count( *rec );
     const double base_total_moves = std::max( 1, rec->batch_time( batch_size, 1.0f, 0 ) );
     const double remaining_pct = 1.0 - craft_counter / 10'000'000.0;
-    const float total_mult = act.speed.total();
-    const int remaining_turns = static_cast<int>( remaining_pct * base_total_moves / 100 /
-                                std::max( 0.01f, total_mult ) );
+    const auto total_mult = act.speed.total();
+    const auto remaining_moves = static_cast<int>( std::ceil( remaining_pct * base_total_moves ) );
+    const auto remaining_turns = action_time_scale::turns_for_progress( remaining_moves,
+                                 act.speed.moves_per_turn() );
 
     const std::string time_desc = string_format( _( "Time left: %s" ),
                                   to_string( time_duration::from_turns( remaining_turns ) ) );

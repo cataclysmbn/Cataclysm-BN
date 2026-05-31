@@ -1,5 +1,6 @@
 #include "catch/catch.hpp"
 
+#include "action_time_scale.h"
 #include "activity_speed.h"
 #include "avatar.h"
 #include "character_effects.h"
@@ -109,6 +110,17 @@ TEST_CASE( "Activity progress scale modifies complex activity base progress", "[
 
     speed.player_speed = 2.0f;
     CHECK( speed.moves_per_turn() == 50 );
+}
+
+TEST_CASE( "Activity progress scale modifies progress time estimates", "[speed][activity]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );
+    const auto activity_scale = override_option( "ACTIVITY_PROGRESS_SCALE", "50" );
+
+    CHECK( action_time_scale::activity_turns_for_progress( 100 ) == 4 );
+    CHECK( action_time_scale::turns_for_progress( 101, 25 ) == 5 );
+    CHECK( action_time_scale::turns_for_progress( 0, 25 ) == 0 );
 }
 
 TEST_CASE( "NPC activity catch-up uses activity progress scale", "[speed][activity][npc]" )

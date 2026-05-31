@@ -316,8 +316,9 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += string_format( _( "  - Processing %s out of %s\n" ), actor->progress.get_index(),
                                                     actor->progress.get_total_tasks() );
                     progress_desc += string_format( _( "  - Estimated time: %s\n" ),
-                                                    to_string( time_duration::from_turns( actor->progress.get_moves_left() /
-                                                            speed.moves_per_turn() ) ) );
+                                                    to_string( time_duration::from_turns(
+                                                            action_time_scale::turns_for_progress( actor->progress.get_moves_left(),
+                                                                    speed.moves_per_turn() ) ) ) );
                     progress_desc += " - Current: ";
                 }
                 progress_desc += string_format( "%.1f%%\n",
@@ -327,8 +328,9 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                     progress_desc += "  - ";
                 }
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( actor->progress.front().moves_left /
-                                                        speed.moves_per_turn() ) ) );
+                                                to_string( time_duration::from_turns(
+                                                        action_time_scale::turns_for_progress( actor->progress.front().moves_left,
+                                                                speed.moves_per_turn() ) ) ) );
             }
         } else {
             if( !targets.empty() && targets.front().is_accessible() && !targets.front().is_destroyed() ) {
@@ -340,7 +342,8 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
             }
             if( moves_left > 0 ) {
                 progress_desc += string_format( _( "Time left: %s\n" ),
-                                                to_string( time_duration::from_turns( moves_left / speed.moves_per_turn() ) ) );
+                                                to_string( time_duration::from_turns(
+                                                        action_time_scale::turns_for_progress( moves_left, speed.moves_per_turn() ) ) ) );
             }
             if( moves_total <= 0 && moves_left <= 0 ) {
                 progress_desc = "";
