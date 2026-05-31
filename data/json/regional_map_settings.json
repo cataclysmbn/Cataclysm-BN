@@ -766,7 +766,7 @@
         "school": 15,
         "railroad_city": 10
       },
-      "urban_houses": {
+      "_houses": {
         "city_block_2": 300,
         "urban_13_dense_house_apt_house": 300,
         "urban_29_dense_row": 100,
@@ -1034,13 +1034,13 @@
       "urban_shops": {
         "bus_station": 200,
         "abandoned_textile_mill": 20,
-        "urban_14_dense_house_mart_food": 200,
-        "urban_23_dense_office_theater": 100,
-        "urban_24_dense_bank_house": 100,
-        "urban_25_dense_diner_apt": 100,
-        "urban_26_dense_club": 100,
-        "urban_27_dense_barber_apt": 100,
-        "urban_28_dense_cafe_laundry": 100,
+        "urban_14_dense_house_mart_food": 400,
+        "urban_23_dense_office_theater": 400,
+        "urban_24_dense_bank_house": 200,
+        "urban_25_dense_diner_apt": 400,
+        "urban_26_dense_club": 200,
+        "urban_27_dense_barber_apt": 400,
+        "urban_28_dense_cafe_laundry": 400,
         "urban_31_police_station": 150,
         "urban_32_fire_station": 150,
         "urban_33_hotel": 150,
