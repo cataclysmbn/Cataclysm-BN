@@ -12,6 +12,7 @@
 #include "item.h"
 #include "item_factory.h"
 #include "itype.h"
+#include "iuse_actor.h"
 #include "json.h"
 #include "rng.h"
 #include "type_id.h"
@@ -128,6 +129,9 @@ void Single_item_creator::check_consistency( const std::string &context ) const
             debugmsg( "item id %s is unknown (in %s)", id, context );
         }
     } else if( type == S_ITEM_GROUP ) {
+        // if( std::ranges::contains( rec, id ) ) {
+        //     debugmsg( "recursion in item spawn list %s", id.c_str() );
+        // }
         if( !item_group::group_is_defined( item_group_id( id ) ) ) {
             debugmsg( "item group id %s is unknown (in %s)", id, context );
         }
@@ -138,6 +142,141 @@ void Single_item_creator::check_consistency( const std::string &context ) const
     }
     if( modifier ) {
         modifier->check_consistency( context );
+        for( auto itypeId : every_item() ) {
+            if( modifier && modifier->ammo != nullptr ) {
+                if( itypeId->gun ) {
+                    for( auto ammoType : modifier->ammo->every_item() ) {
+                        if( !ammoType ) {
+                            continue;
+                        }
+                        if( !itypeId->gun->default_mods.empty() ) {
+                            for( auto mod : itypeId->gun->default_mods ) {
+                                if( !mod->mod->ammo_modifier.empty() && !itypeId->gun->ammo.contains( ammoType->ammo->type ) &&
+                                    !mod->mod->ammo_modifier.contains( ammoType->ammo->type ) ) {
+                                    debugmsg( "Incompatible gun ammo: %s in ( %s %s )", ammoType->get_id().str(),
+                                              itypeId->get_id().str(), context );
+                                }
+                            }
+                        } else if( !itypeId->gun->ammo.contains( ammoType->ammo->type ) ) {
+                            debugmsg( "Incompatible gun ammo: %s in ( %s %s )", ammoType->get_id().str(),
+                                      itypeId->get_id().str(), context );
+                        }
+                    }
+                } else if( itypeId->tool ) {
+                    for( auto ammoType : modifier->ammo->every_item() ) {
+                        // I feel like there is some ammotype error here for the second check
+                        // But this isn't the right place for it
+                        // TODO: determine if the second check should be errored
+                        if( !ammoType || !ammoType->ammo ) {
+                            continue;
+                        }
+                        if( !itypeId->tool->ammo_id.contains( ammoType->ammo->type ) ) {
+                            debugmsg( "Incompatible tool ammo: %s in ( %s %s )", ammoType->get_id().str(),
+                                      itypeId->get_id().str(), context );
+                        }
+                    }
+                } else if( itypeId->magazine ) {
+                    for( auto ammoType : modifier->ammo->every_item() ) {
+                        if( !ammoType ) {
+                            continue;
+                        }
+                        if( !itypeId->magazine->type.contains( ammoType->ammo->type ) ) {
+                            debugmsg( "Incompatible magazine ammo: %s in ( %s %s )", ammoType->get_id().str(),
+                                      itypeId->get_id().str(), context );
+                        }
+                    }
+                }
+            }
+            if( modifier && modifier->container != nullptr ) {
+                for( auto containerType : modifier->container->every_item() ) {
+                    if( containerType->container ) {
+                        units::volume vol;
+                        // If the item is count by charges in a container
+                        // It always has only one charge in the container
+                        if( itypeId->count_by_charges() ) {
+                            if( itypeId->volume % itypeId->stack_size == 0_ml ) {
+                                vol = itypeId->volume / itypeId->stack_size;
+                            } else {
+                                vol = itypeId->volume / itypeId->stack_size + 1_ml;
+                            }
+                        } else {
+                            vol = itypeId->volume;
+                        }
+                        if( containerType->container->contains < vol ) {
+                            debugmsg( "Oversized contained object: ( %s %s ) in %s", itypeId->get_id().str(), context,
+                                      containerType->get_id().str() );
+                        }
+                    } else if( containerType->can_use( "holster" ) ) {
+                        const auto *ptr = dynamic_cast<const holster_actor *>
+                                          ( containerType->get_use( "holster" )->get_actor_ptr() );
+                        units::volume vol;
+                        if( itypeId->count_by_charges() ) {
+                            if( itypeId->volume % itypeId->stack_size == 0_ml ) {
+                                vol = itypeId->volume / itypeId->stack_size;
+                            } else {
+                                vol = itypeId->volume / itypeId->stack_size + 1_ml;
+                            }
+                        } else {
+                            vol = itypeId->volume;
+                        }
+                        if( ptr->max_volume < vol || ptr->min_volume > vol ) {
+                            debugmsg( "Improperly sized holstered object object: ( %s %s ) in %s", itypeId->get_id().str(),
+                                      context,
+                                      containerType->get_id().str() );
+                        }
+                    }
+                }
+            }
+            if( modifier && modifier->contents != nullptr ) {
+                for( auto contentsType : modifier->contents->every_item() ) {
+                    if( itypeId->container ) {
+                        units::volume vol;
+                        // If the item is count by charges in a container
+                        // It always has only one charge in the container
+                        if( contentsType->count_by_charges() ) {
+                            auto maxmult = std::max( modifier->charges.second, modifier->count.second );
+                            if( contentsType->volume % contentsType->stack_size == 0_ml ) {
+                                vol = contentsType->volume / contentsType->stack_size * maxmult;
+                            } else {
+                                vol = ( contentsType->volume / contentsType->stack_size + 1_ml ) * maxmult;
+                            }
+                        } else {
+                            vol = contentsType->volume;
+                        }
+                        if( itypeId->container->contains < vol ) {
+                            debugmsg( "Oversized contained object: ( %s %s ) in %s", contentsType->get_id().str(), context,
+                                      itypeId->get_id().str() );
+                        }
+                    } else if( itypeId->can_use( "holster" ) ) {
+                        const auto *ptr = dynamic_cast<const holster_actor *>
+                                          ( itypeId->get_use( "holster" )->get_actor_ptr() );
+                        units::volume vol;
+                        if( contentsType->count_by_charges() ) {
+                            if( contentsType->volume % contentsType->stack_size == 0_ml ) {
+                                vol = contentsType->volume / contentsType->stack_size;
+                            } else {
+                                vol = contentsType->volume / contentsType->stack_size + 1_ml;
+                            }
+                        } else {
+                            vol = contentsType->volume;
+                        }
+                        if( ptr->max_volume < vol || ptr->min_volume > vol ) {
+                            debugmsg( "Improperly sized holstered object object: ( %s %s ) in %s", contentsType->get_id().str(),
+                                      context,
+                                      itypeId->get_id().str() );
+                        }
+                    } else if( itypeId->magazine ) {
+                        if( !contentsType ) {
+                            continue;
+                        }
+                        if( !itypeId->magazine->type.contains( contentsType->ammo->type ) ) {
+                            debugmsg( "Incompatible magazine ammo: %s in ( %s %s )", contentsType->get_id().str(),
+                                      itypeId->get_id().str(), context );
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
