@@ -94,7 +94,7 @@
     "bashing": 4,
     "category": "veh_parts",
     "price": "9000 USD",
-    "price_postapoc": 7500,
+    "price_postapoc": "7500 cent",
     "flags": [ "NO_SALVAGE" ]
   }
 ]

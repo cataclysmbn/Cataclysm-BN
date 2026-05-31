@@ -822,18 +822,21 @@ auto vehicle::part_collision( const vehicle_part_collision_options &options ) ->
             // analysis.
             assert( critter );
 
-            // No blood from hallucinations
-            if( !critter->is_hallucination() ) {
-                // Get critter health for determining max damage to apply
-                critter_health = critter->get_hp_max();
-                if( part_flag( ret.part, "SHARP" ) ) {
-                    parts[ret.part].blood += ( 20 + obj_dmg ) * 5;
-                } else if( obj_dmg > rng( 10, 30 ) ) {
-                    parts[ret.part].blood += ( 10 + obj_dmg / 2 ) * 5;
-                }
-
-                check_environmental_effects = true;
+            if( critter->is_hallucination() ) {
+                critter->die( driver );
+                smashed = true;
+                break;
             }
+
+            // Get critter health for determining max damage to apply
+            critter_health = critter->get_hp_max();
+            if( part_flag( ret.part, "SHARP" ) ) {
+                parts[ret.part].blood += ( 20 + obj_dmg ) * 5;
+            } else if( obj_dmg > rng( 10, 30 ) ) {
+                parts[ret.part].blood += ( 10 + obj_dmg / 2 ) * 5;
+            }
+
+            check_environmental_effects = true;
 
             time_stunned = time_duration::from_turns( ( rng( 0, obj_dmg ) > 10 ) + ( rng( 0, obj_dmg ) > 40 ) );
             if( time_stunned > 0_turns ) {
