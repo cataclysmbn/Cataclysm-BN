@@ -72,7 +72,8 @@
     "type": "vehicle_part",
     "name": { "str": "sea scooter motor" },
     "item": "motor_small",
-    "energy_consumption": 1500
+    "energy_consumption": 1500,
+    "extend": { "flags": [ "NOINSTALL" ] }
   },
   {
     "id": "engine_electric",

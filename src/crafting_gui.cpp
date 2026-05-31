@@ -14,6 +14,8 @@
 #include "avatar.h"
 #include "cached_options.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -292,6 +294,13 @@ auto update_nested_can_craft( Character &crafter,
     return can_craft;
 }
 
+struct craft_result_hook_options {
+    Character &crafter;
+    const recipe &rec;
+    item &result;
+    int batch_size;
+};
+
 struct expanded_list_options {
     std::unordered_map<const recipe *, availability> &availability_cache;
     std::unordered_map<recipe_id, bool> &nested_can_craft_cache;
@@ -302,6 +311,20 @@ struct expanded_list_options {
     bool highlight_unread_recipes = false;
     bool show_unavailable = false;
 };
+
+auto apply_craft_result_hooks( const craft_result_hook_options &opts ) -> void
+{
+    auto &food_contained = ( opts.result.is_container() && !opts.result.contents.empty() ) ?
+                           opts.result.contents.back() : opts.result;
+    cata::run_hooks( "on_craft_result", [&]( auto & params ) {
+        params["crafter"] = &opts.crafter;
+        params["item"] = &food_contained;
+        params["recipe"] = &opts.rec;
+        params["batch_size"] = opts.batch_size;
+        params["hot_result"] = opts.rec.hot_result();
+        params["dehydrated_result"] = opts.rec.dehydrate_result();
+    } );
+}
 
 auto expand_nested_recipes( std::vector<const recipe *> &out_current,
                             std::vector<int> &out_indent,
@@ -669,6 +692,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 
     struct {
         const recipe *last_recipe = nullptr;
+        int batch_size = 0;
         detached_ptr<item> dummy;
     } item_info_cache;
     int item_info_scroll = 0;
@@ -676,10 +700,17 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 
     const auto item_info_data_from_recipe =
     [&]( const recipe * rec, const int count, int &scroll_pos ) {
-        if( item_info_cache.last_recipe != rec ) {
+        if( item_info_cache.last_recipe != rec || item_info_cache.batch_size != count ) {
             item_info_cache.last_recipe = rec;
+            item_info_cache.batch_size = count;
             item_info_cache.dummy = rec->create_result();
             item_info_cache.dummy->set_var( "recipe_exemplar", rec->ident().str() );
+            apply_craft_result_hooks( {
+                .crafter = crafter,
+                .rec = *rec,
+                .result = *item_info_cache.dummy,
+                .batch_size = count
+            } );
             item_info_scroll = 0;
             item_info_scroll_popup = 0;
         }
@@ -1480,6 +1511,13 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
             }
             auto crafted_item = current[line]->create_result();
             crafted_item->set_var( "recipe_exemplar", current[line]->ident().str() );
+            const auto compare_batch_size = batch ? line + 1 : 1;
+            apply_craft_result_hooks( {
+                .crafter = crafter,
+                .rec = *current[line],
+                .result = *crafted_item,
+                .batch_size = compare_batch_size
+            } );
             item *selected = game_menus::inv::titled_menu(
                                  get_avatar(), _( "Compare to which item?" ), _( "Your inventory is empty." ) );
             if( selected != nullptr ) {

@@ -3,6 +3,8 @@
 #include "output.h"
 #include "platform_win.h"
 #include "string_utils.h"
+#include "hsv_color.h"
+#include "sdl_utils.h"
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 
@@ -402,7 +404,6 @@ void CachedTTFFont::OutputChar( const SDL_Renderer_Ptr &renderer, const Geometry
     }
 }
 
-
 BitmapFont::BitmapFont(
     SDL_Renderer_Ptr &renderer, SDL_PixelFormat format,
     const int w, const int h,
@@ -411,41 +412,83 @@ BitmapFont::BitmapFont(
     : Font( w, h, palette )
 {
     dbg( DL::Info ) << "Loading bitmap font [" + typeface_path + "].";
-    SDL_Surface_Ptr asciiload = load_image( typeface_path.c_str() );
-    assert( asciiload );
-    if( asciiload->w * asciiload->h < ( width * height * 256 ) ) {
-        throw std::runtime_error( "bitmap for font is to small" );
-    }
-    Uint32 key = SDL_MapRGB( SDL_GetPixelFormatDetails( asciiload->format ), nullptr, 0xFF, 0, 0xFF );
-    SDL_SetSurfaceColorKey( asciiload.get(), true, key );
-    SDL_Surface_Ptr ascii_surf[std::tuple_size<decltype( ascii )>::value];
-    ascii_surf[0].reset( SDL_ConvertSurface( asciiload.get(), format ) );
-    SDL_SetSurfaceRLE( ascii_surf[0].get(), true );
-    asciiload.reset();
+    SDL_Surface_Ptr glyphs = load_image( typeface_path.c_str() );
+    assert( glyphs );
 
-    for( size_t a = 1; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
-        ascii_surf[a].reset( SDL_ConvertSurface( ascii_surf[0].get(), format ) );
-        SDL_SetSurfaceRLE( ascii_surf[a].get(), true );
-    }
+    const auto glyph_w = glyphs->w / 16;
+    const auto glyph_h = glyphs->h / 16;
+    const auto font_w = width;
+    const auto font_h = height;
 
-    for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value - 1; ++a ) {
-        SDL_LockSurface( ascii_surf[a].get() );
-        int size = ascii_surf[a]->h * ascii_surf[a]->w;
-        Uint32 *pixels = static_cast<Uint32 *>( ascii_surf[a]->pixels );
-        Uint32 color = ( windowsPalette[a].r << 16 ) | ( windowsPalette[a].g << 8 ) | windowsPalette[a].b;
-        for( int i = 0; i < size; i++ ) {
-            if( pixels[i] == 0xFFFFFF ) {
-                pixels[i] = color;
+    if( glyph_h == font_h && glyph_w == font_w ) {
+        /* Do Nothing */
+    } else {
+        /* Remap Glyphs to expected size */
+        /* TODO: Maybe scale if pixel perfect (eg 16x16 to 32x32) */
+        dbg( DL::Warn ) <<
+                        string_format( "Bitmap font glyph size (%d x %d) does not match game glyph size (%d x %d)", glyph_w,
+                                       glyph_h, font_w, font_h );
+
+        auto new_surf = create_surface_32( font_w * 16, font_h * 16 );
+        const auto new_fmt = SDL_GetPixelFormatDetails( new_surf->format );
+        const Uint32 new_key = SDL_MapRGB( new_fmt, nullptr, 0xFF, 0, 0xFF );
+        SDL_FillSurfaceRect( new_surf.get(), nullptr, new_key );
+
+        const auto dx = ( font_w - glyph_w ) / 2;
+        const auto dy = ( font_h - glyph_h ) / 2;
+
+        for( int yy = 0; yy < 16; ++yy ) {
+            for( int xx = 0; xx < 16; ++xx ) {
+                const auto srcRect = SDL_Rect { xx * glyph_w, yy * glyph_h, glyph_w, glyph_h };
+                const auto dstRect = SDL_Rect {xx *font_w + dx, yy *font_h + dy, font_w, font_h};
+                SDL_BlitSurface( glyphs.get(), &srcRect, new_surf.get(), &dstRect );
             }
         }
-        SDL_UnlockSurface( ascii_surf[a].get() );
-    }
-    tilewidth = ascii_surf[0]->w / width;
 
-    //convert ascii_surf to SDL_Texture
-    for( size_t a = 0; a < std::tuple_size<decltype( ascii )>::value; ++a ) {
-        ascii[a] = CreateTextureFromSurface( renderer, ascii_surf[a] );
+        glyphs.swap( new_surf );
     }
+
+    constexpr auto COLORS = std::tuple_size_v<decltype( ascii )>;
+    const auto fnt_fmt = SDL_GetPixelFormatDetails( format );
+    const Uint32 fnt_key = SDL_MapRGB( fnt_fmt, nullptr, 0xFF, 0, 0xFF );
+
+    for( size_t a = 0; a < COLORS; ++a ) {
+        const auto sdl_surf = SDL_Surface_Ptr { SDL_DuplicateSurface( glyphs.get() ) };
+        if( SDL_MUSTLOCK( sdl_surf.get() ) ) {
+            SDL_LockSurface( sdl_surf.get() );
+        }
+
+        const int pixel_count = sdl_surf->h * sdl_surf->w;
+        const auto raw_pixels = static_cast<SDL_Color *>( sdl_surf->pixels );
+        const auto pixels = std::span( raw_pixels, pixel_count );
+        constexpr auto key_col = RGBColor( 255, 0, 255, 255 );
+        const auto dst_col = RGBColor( windowsPalette[a].r, windowsPalette[a].g, windowsPalette[a].b, 255 );
+
+        for( auto &pixel : pixels ) {
+            auto src_col = RGBColor{pixel};
+            if( src_col == key_col ) {
+                continue;
+            }
+
+            src_col.r = src_col.r * dst_col.r / 255;
+            src_col.g = src_col.g * dst_col.g / 255;
+            src_col.b = src_col.b * dst_col.b / 255;
+
+            pixel = src_col;
+        }
+
+        if( SDL_MUSTLOCK( sdl_surf.get() ) ) {
+            SDL_UnlockSurface( sdl_surf.get() );
+        }
+
+        {
+            auto fnt_surf = SDL_Surface_Ptr { SDL_ConvertSurface( sdl_surf.get(), format ) };
+            SDL_SetSurfaceColorKey( fnt_surf.get(), true, fnt_key );
+            SDL_SetSurfaceRLE( fnt_surf.get(), true );
+            ascii[a] = CreateTextureFromSurface( renderer, fnt_surf );
+        }
+    }
+    tilewidth = glyphs->w / width;
 }
 
 void BitmapFont::draw_ascii_lines( const SDL_Renderer_Ptr &renderer,

@@ -64,7 +64,7 @@
     "charges_per_use": 30,
     "ammo": "essence_dull_type",
     "use_action": { "type": "cast_spell", "spell_id": "arcana_item_gilded_aegis_healing", "no_fail": true, "level": 0, "need_worn": true },
-    "relative": { "weight": 3020, "material_thickness": 3 },
+    "relative": { "weight": "3020 g", "material_thickness": 3 },
     "extend": { "flags": [ "NO_SALVAGE", "HELMET_COMPAT", "FANCY" ] }
   },
   {
@@ -204,7 +204,7 @@
     "ammo": "essence_blood_type",
     "coverage": 95,
     "encumbrance": 9,
-    "storage": 0,
+    "storage": "0 L",
     "environmental_protection": 10,
     "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_wyrmskin_acid", "no_fail": true, "level": 0, "need_worn": true } ],
     "relative": { "weight": "722 g", "volume": "1500 ml" },
@@ -307,7 +307,7 @@
         "type": "transform"
       }
     ],
-    "relative": { "weight": 616, "volume": -1 },
+    "relative": { "weight": "616 g", "volume": "-250 ml" },
     "extend": { "flags": [ "NO_SALVAGE", "COMBAT_NPC_USE" ] }
   },
   {
@@ -412,7 +412,7 @@
         "need_worn": true
       }
     ],
-    "relative": { "weight": 210, "material_thickness": 1 },
+    "relative": { "weight": "210 g", "material_thickness": 1 },
     "extend": { "flags": [ "NO_SALVAGE" ] }
   },
   {
@@ -441,7 +441,7 @@
         "need_worn": true
       }
     ],
-    "relative": { "weight": 120, "material_thickness": 1 },
+    "relative": { "weight": "120 g", "material_thickness": 1 },
     "extend": { "flags": [ "NO_SALVAGE", "ALLOWS_NATURAL_ATTACKS", "OVERSIZE", "OUTER" ] }
   },
   {
@@ -590,7 +590,7 @@
         "need_worn": true
       }
     ],
-    "relative": { "weight": 3020, "price": "550 USD", "material_thickness": 1 },
+    "relative": { "weight": "3020 g", "price": "550 USD", "material_thickness": 1 },
     "extend": { "flags": [ "NO_SALVAGE", "USE_PLAYER_ENERGY", "ELECTRIC_IMMUNE", "RAINPROOF", "COMBAT_NPC_USE" ] },
     "qualities": [ [ "HV_INSULATION", 1 ] ]
   },

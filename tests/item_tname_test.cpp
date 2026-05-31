@@ -9,6 +9,7 @@
 #include "flag.h"
 #include "item.h"
 #include "itype.h"
+#include "map.h"
 #include "options_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
@@ -101,6 +102,19 @@ TEST_CASE( "wet item", "[item][tname][wet]" )
     CHECK( rag.tname() == "rag (wet)" );
 }
 
+TEST_CASE( "food in freezer", "[item][tname][freezer]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    const auto pos = get_avatar().bub_pos();
+    here.furn_set( pos, furn_str_id( "f_freezer_on" ) );
+    here.add_item( pos, item::spawn( "mushroom" ) );
+
+    auto &mushroom = here.i_at( pos ).only_item();
+
+    CHECK( mushroom.tname() == "mushroom (fresh) (frozen)" );
+}
 
 TEST_CASE( "diamond item", "[item][tname][diamond]" )
 {

@@ -44,7 +44,7 @@
     "damage": { "damage_type": "bullet", "amount": 145, "armor_penetration": 45 },
     "casing": "40x53mm_m169_casing",
     "loudness": 100,
-    "extend": { "effects": [ "FRAG", "NO_PENETRATE_OBSTACLES" ] }
+    "extend": { "effects": [ "AMMO_M430A1_HEDP", "NO_PENETRATE_OBSTACLES" ] }
   },
   {
     "id": "40x53mm_buckshot_m169",
@@ -80,7 +80,7 @@
     "name": { "str": "improvised 40x53mm HE" },
     "description": "A high velocity 40x53mm HEDP grenade, loaded with a homemade explosive round.  Packs quite a punch, though less effective against armor than proper HEDP.",
     "proportional": { "price_postapoc": 0.8, "damage": { "damage_type": "bullet", "amount": 0.6, "armor_penetration": 0.4 } },
-    "extend": { "effects": [ "EXPLOSIVE" ] },
-    "delete": { "effects": [ "FRAG" ] }
+    "extend": { "effects": [ "AMMO_40x53_MAKESHIFT_HE" ] },
+    "delete": { "effects": [ "AMMO_M430A1_HEDP" ] }
   }
 ]

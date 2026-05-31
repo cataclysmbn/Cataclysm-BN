@@ -485,6 +485,21 @@ auto get_hook_entries( sol::state_view lua, std::string_view hook_name,
 
 } // namespace
 
+auto has_hooks( std::string_view hook_name, const hook_opts &opts ) -> bool
+{
+    auto &state = opts.state ? *opts.state : *DynamicDataLoader::get_instance().lua;
+    auto &lua = state.lua;
+
+    const auto maybe_hooks = lua.globals()["game"]["hooks"][hook_name].get<sol::optional<sol::table>>();
+    if( !maybe_hooks ) {
+        return false;
+    }
+
+    const auto &hooks = *maybe_hooks;
+    const auto &entries = get_hook_entries( lua, hook_name, hooks );
+    return !entries.empty();
+}
+
 auto run_hooks( std::string_view hook_name,
                 std::function < auto( sol::table &params ) -> void > init,
                 const hook_opts &opts ) -> sol::table
