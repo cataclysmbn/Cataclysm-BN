@@ -3588,8 +3588,9 @@ bool monster::is_pet() const
 
 void monster::on_pet_bonding( Character *ch )
 {
-    if( has_effect( effect_pet_bonding ) ) {
+    if( has_effect( effect_pet_bonding ) && !one_in(3) ) {
         // Prevent spamming bond, this should raise over time.
+        // Still give a chance to increase as it may not be obvious.
         return;
     }
 
