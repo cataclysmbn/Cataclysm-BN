@@ -5093,7 +5093,7 @@
         ],
         "entries": [
           { "item": "tool_belt", "contents-item": [ "knife_combat", "pliers", "wrench", "hacksaw" ] },
-          { "item": "survivor_vest", "contents-group": "shotgun_d_roadwarrior" },
+          { "item": "XL_holster", "contents-group": "shotgun_d_roadwarrior" },
           { "item": "bandolier_shotgun", "contents-group": "bandolier_roadwarrior" },
           { "item": "medium_battery_cell", "ammo-item": "battery", "charges": 500, "container-item": "mess_kit" }
         ]

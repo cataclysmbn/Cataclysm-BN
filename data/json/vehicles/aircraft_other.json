@@ -779,8 +779,8 @@
     "items": [
       {
         "distribution": [
-          { "item": "box_medium", "contents-group": [ "crate_stack", "crate_stack" ], "prob": 100 },
-          { "item": "box_large", "contents-group": [ "crate_stack", "crate_stack" ], "prob": 100 }
+          { "item": "box_huge", "contents-group": [ "crate_stack_smaller", "crate_stack_smaller" ], "prob": 100 },
+          { "item": "box_huge", "contents-group": [ "crate_stack_smaller", "crate_stack_smaller" ], "prob": 100 }
         ],
         "prob": 80
       }
