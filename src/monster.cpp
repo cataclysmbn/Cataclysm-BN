@@ -1033,15 +1033,15 @@ std::string monster::extended_description() const
     }
 
     if( bonded_character_id == g->u.getID() ) {
-        ss += std::string( _( "It regards you as family." ) ) + "\n";
+        ss += string_format( _( "It regards you as family. (%s)\n"), pet_bond_level );
     } else if( pet_bond_level > 5 ) {
-        ss += std::string( _( "It really likes you." ) ) + "\n";
+        ss += string_format( _( "It really likes you. (%s)\n"), pet_bond_level );;
     } else if( pet_bond_level > 2 ) {
-        ss += std::string( _( "It likes you." ) ) + "\n";
+        ss += string_format( _( "It likes you. (%s)\n"), pet_bond_level );
     } else if( pet_bond_level > 0 ) {
-        ss += std::string( _( "It is curious about you." ) ) + "\n";
+        ss += string_format( _( "It is curious about you. (%s)\n"), pet_bond_level );
     } else {
-        ss += std::string( _( "It is unsure about you." ) ) + "\n";
+        ss += string_format( _( "It is unsure about you. (%s)\n"), pet_bond_level );
     }
 
     if( training_level > 0 && type->pet_training ) {

@@ -2091,6 +2091,7 @@ auto monster::load( const JsonObject &data,
     data.read( "friendly", friendly );
     data.read( "training_level", training_level );
     data.read( "pet_bond_level", pet_bond_level );
+    data.read( "bonded_character_id", bonded_character_id );
     data.read( "mission_id", mission_id );
     data.read( "no_extra_death_drops", no_extra_death_drops );
     data.read( "dead", dead );

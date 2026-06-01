@@ -1551,10 +1551,6 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
         if( mon.is_pet() && mon.has_effect( effect_well_fed ) ) {
             if( !query_yn( _( "The %s is already well-fed.  Feed it anyway?" ), mon.get_name() ) ) {
                 p->add_msg_if_player( _( "Never mind." ) );
-                if( one_in( 3 ) ) {
-                    // Harder to bond when overfeeding but not impossible.
-                    mon.on_pet_bonding( p->as_character() );
-                }
                 return 0;
             }
         }
@@ -1583,10 +1579,10 @@ int iuse::petfood( player *p, item *it, bool, const tripoint_bub_ms & )
             p->add_msg_if_player( m_good,
                                   _( "The %s looks healthier and more productive." ),
                                   mon.get_name() );
-            mon.on_pet_bonding( p->as_character() );
         }
 
         p->consume_charges( *it, 1 );
+        mon.on_pet_bonding( p->as_character() );
         return 0;
     }
 
