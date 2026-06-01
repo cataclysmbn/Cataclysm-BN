@@ -541,10 +541,8 @@ class monster : public Creature, public location_visitable<monster>
         // check if this monster is a pet of the player
         bool is_pet() const;
 
-        Character *bonded_character = nullptr;
         character_id bonded_character_id; // id of bonded character ( for save/load )
         void on_pet_bonding(Character *ch);
-        Character *get_bonded_character();
 
         // Add an item to inventory
         void add_item( detached_ptr<item> &&it );
