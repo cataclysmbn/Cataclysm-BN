@@ -2601,8 +2601,8 @@ void sounds::process_sound_markers( Character *who )
     // Deafening is based on the loudest volume at that tile.
     // hear the deafening sound but still suffer additional hearing loss.
     // The threshold for pain is generally taken as 140dB spl. The NIOSH daily safe exposure for 115dB sounds is ~28 seconds, 120dB sounds have a daily safe exposure of less than 2 seconds.
-    // Threshold for instant hearing loss is 1200mdB
-    // Volume for garunteed deafening is 1700mdB
+    // Threshold for instant hearing loss is 12000mdB
+    // Volume for garunteed deafening is 17000mdB
     const short deafening_threshold = std::max( 0.0f,
                                       std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
     const short deafening_garuntee = std::max( 0.0f,

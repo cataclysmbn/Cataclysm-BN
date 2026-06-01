@@ -4189,17 +4189,14 @@ static bool furn_is_supported( const map &m, const tripoint_bub_ms &p )
     return false;
 }
 
-static int get_sound_volume( const map_bash_info &bash )
+static auto get_sound_volume( const map_bash_info &bash, const bash_params &params ) -> int
 {
-    int smin = bash.str_min;
-    int smax = bash.str_max;
     // Just take the minimum/base volume at 20dB.
-    int minvol = 20;
-    // Set maxvol to 160dB, which is deafening.
-    int maxvol = 160;
-    // TODO: Consider setting this in finalize instead of calculating here
-    return bash.sound_vol.value_or( std::min( maxvol, std::max( ( minvol + ( smax * 2 ) ),
-                                    ( ( smin * 3 ) + minvol ) ) ) );
+    const auto minvol = 20;
+    // Set maxvol to 140dB, which can be deafening for extreme impacts.
+    const auto maxvol = 140;
+    const auto impact_strength = params.destroy ? bash.str_max : params.strength;
+    return bash.sound_vol.value_or( std::clamp( minvol + impact_strength, minvol, maxvol ) );
 }
 
 bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params &params )
@@ -4242,7 +4239,7 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
 
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
-        int sound_volume = get_sound_volume( bash );
+        const auto sound_volume = get_sound_volume( bash, params );
         sound_event se;
         se.origin = p;
         se.volume = sound_volume;
@@ -4432,7 +4429,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
 
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
-        int sound_volume = get_sound_volume( bash );
+        const auto sound_volume = get_sound_volume( bash, params );
         sound_event se;
         se.origin = p;
         se.volume = sound_volume;
