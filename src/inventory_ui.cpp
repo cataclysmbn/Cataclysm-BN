@@ -141,11 +141,12 @@ std::string pickup_inventory_preset::get_denial( const item *loc ) const
     if( !p.has_item( *loc ) ) {
         if( loc->made_of( LIQUID ) ) {
             return _( "Can't pick up spilt liquids" );
-        } else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
-            return _( "Too big to pick up" );
-        } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
-            return _( "Too heavy to pick up" );
-        }
+        } 
+        // else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
+        //     return _( "Too big to pick up" );
+        // } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
+        //     return _( "Too heavy to pick up" );
+        // }
     }
 
     return std::string();
