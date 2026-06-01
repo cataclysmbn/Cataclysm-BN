@@ -11,6 +11,7 @@
 #include "enums.h"
 #include "flag.h"
 #include "flat_set.h"
+#include "game_constants.h"
 #include "item.h"
 #include "item_factory.h"
 #include "itype.h"
@@ -134,7 +135,8 @@ void Single_item_creator::check_consistency( const std::string &context ) const
             debugmsg( "item id %s is unknown (in %s)", id, context );
         }
     } else if( type == S_ITEM_GROUP ) {
-        // Need to figure out a way to check for itemgroup recursion here
+        // TODO: figure out a way to check for itemgroup recursion here
+        // Beyond the fact that your game wil ljust stall...
         if( !item_group::group_is_defined( item_group_id( id ) ) ) {
             debugmsg( "item group id %s is unknown (in %s)", id, context );
         }
@@ -150,12 +152,20 @@ void Single_item_creator::check_consistency( const std::string &context ) const
                 for( auto &ammo : modifier->ammo->every_item_modified() ) {
                     if( item->is_tool() ) {
                         if( item->magazine_integral() ) {
-                            if( !item->ammo_types().contains( ammo->ammo_type() ) ) {
+                            if( !item->ammo_types().contains( ammo->ammo_type() ) &&
+                                !item->ammo_types().contains( ammo->ammo_default()->ammo->type ) ) {
                                 debugmsg( "Incompatible ammo: %s in ( %s %s )", ammo->type->get_id().str(),
                                           item->type->get_id().str(), context );
                             }
-                        } else {
-                            debugmsg( "I am not a working tool %s", item->type->get_id().str() );
+                        } else if( !item->ammo_types().empty() ) {
+                            if( !item->ammo_types().contains( ammo->ammo_type() ) &&
+                                !item->ammo_types().contains( ammo->ammo_default()->ammo->type ) ) {
+                                debugmsg( "Incompatible ammo: %s in ( %s %s )", ammo->type->get_id().str(),
+                                          item->type->get_id().str(), context );
+                            }
+                        } else if( item->ammo_default() != ammo->type->get_id() ) {
+                            debugmsg( "Incompatible ammo: %s in ( %s %s )", ammo->type->get_id().str(),
+                                      item->type->get_id().str(), context );
                         }
                     }
                     if( item->is_magazine() || item->is_gun() ) {
@@ -191,7 +201,16 @@ void Single_item_creator::check_consistency( const std::string &context ) const
                             debugmsg( "Liquid %s in solid container ( %s %s )", item->type->get_id().str(),
                                       container->type->get_id().str(), context );
                         }
-                        if( container->get_container_capacity() < item->volume() ) {
+                        auto volume = item->volume();
+                        if( item->count_by_charges() ) {
+                            volume /= item->charges;
+                        }
+                        auto maxmult = std::max( modifier->charges.second, modifier->count.second );
+                        // If autofill put to 1
+                        if( maxmult == -1 ) {
+                            maxmult = 1;
+                        }
+                        if( container->get_container_capacity() < volume ) {
                             debugmsg( "Incompatible contents size: %s in ( %s %s )", item->type->get_id().str(),
                                       container->type->get_id().str(), context );
 
@@ -199,6 +218,26 @@ void Single_item_creator::check_consistency( const std::string &context ) const
                     } else if( container->is_holster() && !container->can_holster( *item ) ) {
                         debugmsg( "Incorrect holstered object object: ( %s %s ) in %s", item->type->get_id().str(),
                                   context, container->type->get_id().str() );
+                    } else if( container->is_bandolier() && !container->can_put_in_bandolier( *item ) ) {
+                        debugmsg( "Incorrect bandoliered object object: ( %s %s ) in %s", item->type->get_id().str(),
+                                  context, container->type->get_id().str() );
+                    } else if( container->is_tool() ) {
+                        if( container->magazine_integral() ) {
+                            if( !container->ammo_types().contains( item->ammo_type() ) &&
+                                !container->ammo_types().contains( item->ammo_default()->ammo->type ) ) {
+                                debugmsg( "Incompatible ammo: %s in ( %s %s )", item->type->get_id().str(),
+                                          container->type->get_id().str(), context );
+                            }
+                        } else if( !container->ammo_types().empty() ) {
+                            if( !container->ammo_types().contains( item->ammo_type() ) &&
+                                !container->ammo_types().contains( item->ammo_default()->ammo->type ) ) {
+                                debugmsg( "Incompatible ammo: %s in ( %s %s )", item->type->get_id().str(),
+                                          container->type->get_id().str(), context );
+                            }
+                        } else if( container->ammo_default() != item->type->get_id() ) {
+                            debugmsg( "Incompatible ammo: %s in ( %s %s )", item->type->get_id().str(),
+                                      container->type->get_id().str(), context );
+                        }
                     }
                 }
             }
@@ -216,14 +255,59 @@ void Single_item_creator::check_consistency( const std::string &context ) const
                                           item->type->get_id().str(), context );
                             }
                         }
+                        auto volume = contents->volume();
+                        if( contents->count_by_charges() ) {
+                            volume /= contents->charges;
+                        }
                         auto maxmult = std::max( modifier->charges.second, modifier->count.second );
-                        if( item->get_container_capacity() < contents->volume() * maxmult ) {
+                        // If autofill put to 1
+                        if( maxmult == -1 ) {
+                            maxmult = 1;
+                        }
+                        if( item->get_container_capacity() < volume * maxmult ) {
                             debugmsg( "Incompatible contained size: %s in ( %s %s )", contents->type->get_id().str(),
                                       item->type->get_id().str(), context );
                         }
-                    } else if( item->is_holster() && !item->can_holster( *contents ) ) {
-                        debugmsg( "Incorrect holstered object object: ( %s %s ) in %s", contents->type->get_id().str(),
-                                  context, item->type->get_id().str() );
+                    } else if( item->is_holster() ) {
+                        // Need to keep these if statements seperate for ordering purposes
+                        if( !item->can_holster( *contents ) ) {
+                            debugmsg( "Incorrect holstered object object: ( %s %s ) in %s", contents->type->get_id().str(),
+                                      context, item->type->get_id().str() );
+                        }
+                    } else if( item->is_bandolier() ) {
+                        if( !item->can_put_in_bandolier( *contents ) ) {
+                            debugmsg( "Incorrect bandoliered object object: ( %s %s ) in %s", contents->type->get_id().str(),
+                                      context, item->type->get_id().str() );
+                        }
+                    } else if( item->is_gun() ) {
+                        if( !item->is_gunmod_compatible( *contents ).success() ) {
+                            debugmsg( "Incompatible gunmod: %s in ( %s %s )", contents->type->get_id().str(),
+                                      item->type->get_id().str(), context );
+                        }
+                    } else if( item->is_tool() ) {
+                        // TODO: Make a unified check in item
+                        // This is taken from iuse.cpp iuse::toolmod_attach
+                        if( contents->is_toolmod() ) {
+                            bool is_acceptable_ammo_mod = std::any_of( contents->type->mod->acceptable_ammo.begin(),
+                            contents->type->mod->acceptable_ammo.end(), [&]( const ammotype & at ) {
+                                return item->ammo_types( false ).count( at );
+                            } );
+                            if( ( contents->has_flag( flag_USE_UPS ) &&
+                                  ( item->has_flag( flag_IS_UPS ) || item->has_flag( flag_USE_UPS ) ) ) ||
+                                !item->toolmods().empty()  || !is_acceptable_ammo_mod ) {
+                                debugmsg( "Incompatible toolmod: %s in ( %s %s )", contents->type->get_id().str(),
+                                          item->type->get_id().str(), context );
+                            }
+                            if( item->magazine_current() ) {
+                                debugmsg( "Tried to put a toolmod in a magazine containing item %s in ( %s %s )",
+                                          contents->type->get_id().str(),
+                                          item->type->get_id().str(), context );
+                            }
+                        } else {
+                            debugmsg( "Tried to put %s in ( %s %s ) as a toolmod while it wasn't",
+                                      contents->type->get_id().str(),
+                                      item->type->get_id().str(), context );
+                        }
                     }
                 }
             }
@@ -522,6 +606,9 @@ void Item_modifier::check_consistency( const std::string &context ) const
     }
     if( container != nullptr ) {
         container->check_consistency( "container of " + context );
+    }
+    if( contents != nullptr ) {
+        contents->check_consistency( "contents of " + context );
     }
     if( with_ammo < 0 || with_ammo > 100 ) {
         debugmsg( "Item modifier's ammo chance %d is out of range", with_ammo );
