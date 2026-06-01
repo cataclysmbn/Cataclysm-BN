@@ -51,6 +51,7 @@ struct rule_list : public std::vector<rule> {
  * time access to the rule_state of the item
  */
 struct item_search_cache : public std::unordered_map<itype_id, rule_state> {
+    
     //Edits the cache according to the rules of curr_rules
     item_search_cache();
     void clear_items();
