@@ -53,7 +53,7 @@ TEST_CASE( "MONSTER_SPEED scales monster move credit", "[monster][speed]" )
            action_time_scale::factor_denominator );
 
     const auto turn_count = 10;
-    for ( const auto turn : std::views::iota( 0, turn_count ) ) {
+    for( const auto turn : std::views::iota( 0, turn_count ) ) {
         static_cast<void>( turn );
         test_monster.process_turn();
     }

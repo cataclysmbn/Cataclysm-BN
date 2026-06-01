@@ -153,7 +153,8 @@ inline auto activity_progress_for_turns( const int turns ) -> int
     return static_cast<int>( std::min<int64_t>( progress, std::numeric_limits<int>::max() ) );
 }
 
-inline auto activity_progress_from_actor_moves( const int actor_moves, const int actor_factor ) -> double
+inline auto activity_progress_from_actor_moves( const int actor_moves,
+        const int actor_factor ) -> double
 {
     if( actor_moves <= 0 ) {
         return 0.0;
@@ -247,7 +248,8 @@ class scoped_calendar_turns_this_tick
         }
 
         scoped_calendar_turns_this_tick( const scoped_calendar_turns_this_tick & ) = delete;
-        auto operator=( const scoped_calendar_turns_this_tick & ) -> scoped_calendar_turns_this_tick & = delete;
+        auto operator=( const scoped_calendar_turns_this_tick & ) -> scoped_calendar_turns_this_tick & =
+            delete;
 };
 
 inline auto calendar_duration_this_tick() -> time_duration

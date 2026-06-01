@@ -797,7 +797,7 @@ bool effect::decay( const time_point &time, const bool player )
     // TODO: Remove effects that would decay to 0 intensity?
     if( intensity > 1 && eff_type->int_decay_tick != 0 &&
         action_time_scale::calendar_ticks_crossed_this_tick( time,
-            time_duration::from_turns( eff_type->int_decay_tick ) ) > 0 &&
+                time_duration::from_turns( eff_type->int_decay_tick ) ) > 0 &&
         get_max_duration() > get_duration() ) {
         set_intensity( intensity + eff_type->int_decay_step, player );
     }

@@ -183,7 +183,7 @@ TEST_CASE( "Activity progress conversion uses realized actor move budget", "[spe
 
     const auto actor_factor = action_time_scale::player_tick_action_factor();
     const auto actor_moves = action_time_scale::scaled_moves(
-                                  action_time_scale::base_moves_per_turn, actor_factor );
+                                 action_time_scale::base_moves_per_turn, actor_factor );
 
     REQUIRE( actor_moves == 101 );
     REQUIRE( action_time_scale::activity_progress_per_tick() == 100 );
@@ -263,7 +263,8 @@ TEST_CASE( "Repair item progress uses activity scale", "[speed][activity][repair
     CHECK( guy.get_moves() == 0 );
 }
 
-TEST_CASE( "Repair item partial completion refunds scaled actor moves", "[speed][activity][repair]" )
+TEST_CASE( "Repair item partial completion refunds scaled actor moves",
+           "[speed][activity][repair]" )
 {
     clear_all_state();
     const auto global_scale = override_option( "TIME_ACTION_SCALE", "50" );

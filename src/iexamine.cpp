@@ -6049,7 +6049,7 @@ void iexamine::autodoc( player &p, const tripoint_bub_ms &examp )
             if( patient.can_install_bionics( ( *itemtype ), installer, true, has_install_program ? 10 : -1 ) ) {
                 const auto duration = time_duration::from_turns(
                                           action_time_scale::activity_turns_for_progress(
-                                                  to_moves<int>( itemtype->bionic->difficulty * 20_minutes ) ) );
+                                              to_moves<int>( itemtype->bionic->difficulty * 20_minutes ) ) );
                 patient.introduce_into_anesthesia( duration, installer, needs_anesthesia );
                 bionic->detach();
                 if( needs_anesthesia ) {
@@ -6123,7 +6123,7 @@ void iexamine::autodoc( player &p, const tripoint_bub_ms &examp )
             if( patient.can_uninstall_bionic( bid, installer, true ) ) {
                 const auto duration = time_duration::from_turns(
                                           action_time_scale::activity_turns_for_progress(
-                                                  to_moves<int>( difficulty * 20_minutes ) ) );
+                                              to_moves<int>( difficulty * 20_minutes ) ) );
                 patient.introduce_into_anesthesia( duration, installer, needs_anesthesia );
                 if( needs_anesthesia ) {
                     p.consume_tools( anesth_kit, volume_anesth );

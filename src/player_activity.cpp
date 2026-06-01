@@ -534,7 +534,7 @@ void player_activity::do_turn( player &p )
     */
     if( !type->special() ) {
         const auto consume_activity_progress = [&]( const int moves_total,
-                const bool complex_partial_cost ) {
+        const bool complex_partial_cost ) {
             if( actor ) {
                 if( actor->progress.get_moves_left() >= moves_total ) {
                     actor->progress.mod_moves_left( -moves_total );
