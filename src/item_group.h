@@ -144,6 +144,9 @@ class Item_spawn_data
 
         /** probability, used by the parent object. */
         int probability;
+
+        // Weather it was checked already
+        bool checked;
 };
 
 using ItemFn = std::function < detached_ptr<item> ( detached_ptr<item> &&it ) >;
