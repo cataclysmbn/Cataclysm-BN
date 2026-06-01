@@ -154,6 +154,18 @@
     "components": [ [ [ "water_clean", 1 ] ], [ [ "salt", 10 ] ] ]
   },
   {
+    "type": "recipe",
+    "result": "eyedrops",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_MEDICAL",
+    "skill_used": "firstaid",
+    "time": "9 s",
+    "autolearn": true,
+    "charges": 2,
+    "components": [ [ [ "saline", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
     "result": "anesthetic",
     "type": "recipe",
     "category": "CC_OTHER",
@@ -358,5 +370,49 @@
     ],
     "tools": [ [ [ "vac_sealer", 15 ], [ "makeshift_sealer", 30 ] ] ],
     "components": [ [ [ "bag_plastic", 1 ], [ "bag_zipper", 1 ] ], [ [ "paper", 2 ] ] ]
+  },
+  {
+    "result": "ampoule",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "firstaid",
+    "difficulty": 8,
+    "skills_required": [ "cooking", 6 ],
+    "time": "15 m",
+    "charges": 1,
+    "book_learn": [ [ "recipe_caseless", 6 ], [ "recipe_labchem", 8 ] ],
+    "using": [ [ "surface_heat", 5 ] ],
+    "qualities": [ { "id": "CHEM", "level": 2 } ],
+    "components": [
+      [ [ "test_tube", 1 ] ],
+      [ [ "saline", 1 ] ],
+      [ [ "quikclot", 2 ] ],
+      [ [ "strong_antibiotic", 1 ], [ "antibiotics", 2 ] ],
+      [ [ "nanomaterial", 1 ] ]
+    ],
+    "flags": [ "SECRET" ]
+  },
+  {
+    "result": "stimpack_ammo",
+    "type": "recipe",
+    "category": "CC_OTHER",
+    "subcategory": "CSC_OTHER_OTHER",
+    "skill_used": "firstaid",
+    "difficulty": 8,
+    "skills_required": [ "cooking", 6 ],
+    "time": "15 m",
+    "charges": 1,
+    "book_learn": [ [ "recipe_caseless", 6 ], [ "recipe_labchem", 8 ] ],
+    "using": [ [ "surface_heat", 5 ] ],
+    "qualities": [ { "id": "CHEM", "level": 2 } ],
+    "components": [
+      [ [ "test_tube", 1 ] ],
+      [ [ "saline", 1 ] ],
+      [ [ "adderall", 2 ], [ "caffeine", 4 ] ],
+      [ [ "diazepam", 1 ], [ "ghb", 2 ] ],
+      [ [ "nanomaterial", 1 ] ]
+    ],
+    "flags": [ "SECRET" ]
   }
 ]
