@@ -1721,9 +1721,9 @@ void load_optional_enum_array( std::vector<E> &vec, const JsonObject &jo,
 
 bool Item_factory::load_definition( const JsonObject &jo, const std::string &src, itype &def )
 {
-    if( !frozen ) {
-        debugmsg( "Tried to load item definitions before finalization. This is bad, very bad" );
-        assert( frozen );
+    if( frozen ) {
+        debugmsg( "Tried to load item definitions after finalization. This is bad, very bad" );
+        assert( !frozen );
     }
 
     if( !jo.has_string( "copy-from" ) ) {
