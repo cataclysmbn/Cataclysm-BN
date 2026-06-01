@@ -186,7 +186,16 @@ void Single_item_creator::check_consistency( const std::string &context ) const
                             debugmsg( "Incompatible contained item: %s in ( %s %s )", ammo->type->get_id().str(),
                                       item->type->get_id().str(), context );
                         }
-                        if( item->get_container_capacity() < ammo->volume() ) {
+                        auto volume = ammo->volume();
+                        if( ammo->count_by_charges() ) {
+                            volume /= ammo->charges;
+                        }
+                        auto maxmult = std::max( modifier->charges.second, modifier->count.second );
+                        // If autofill put to 1
+                        if( maxmult == -1 ) {
+                            maxmult = 1;
+                        }
+                        if( item->get_container_capacity() < volume * maxmult ) {
                             debugmsg( "Incompatible contained size: %s in ( %s %s )", ammo->type->get_id().str(),
                                       item->type->get_id().str(), context );
                         }
@@ -210,10 +219,9 @@ void Single_item_creator::check_consistency( const std::string &context ) const
                         if( maxmult == -1 ) {
                             maxmult = 1;
                         }
-                        if( container->get_container_capacity() < volume ) {
-                            debugmsg( "Incompatible contents size: %s in ( %s %s )", item->type->get_id().str(),
+                        if( container->get_container_capacity() < volume * maxmult ) {
+                            debugmsg( "Incompatible individual contents size: %s in ( %s %s )", item->type->get_id().str(),
                                       container->type->get_id().str(), context );
-
                         }
                     } else if( container->is_holster() && !container->can_holster( *item ) ) {
                         debugmsg( "Incorrect holstered object object: ( %s %s ) in %s", item->type->get_id().str(),
