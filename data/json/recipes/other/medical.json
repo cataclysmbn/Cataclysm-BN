@@ -161,7 +161,7 @@
     "skill_used": "firstaid",
     "time": "9 s",
     "autolearn": true,
-    "charges": 1,
+    "charges": 2,
     "components": [ [ [ "saline", 1 ] ] ],
     "flags": [ "BLIND_EASY" ]
   },
