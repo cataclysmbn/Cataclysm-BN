@@ -37,6 +37,7 @@ class options_manager
 
         void enable_json( const std::string &var );
         void add_retry( const std::string &var, const std::string &val );
+        auto refresh_title_screen_option() -> void;
 
         std::map<std::string, std::string> post_json_verify;
 
@@ -373,5 +374,3 @@ inline T get_option( const std::string &name )
 {
     return get_options().get_option( name ).value_as<T>();
 }
-
-

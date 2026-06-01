@@ -36,6 +36,7 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
+#include "title_screen.h"
 #include "translations.h"
 #include "ui_manager.h"
 #include "worldfactory.h"
@@ -222,6 +223,21 @@ void options_manager::add_value( const std::string &lvar, const std::string &lva
         }
 
     }
+}
+
+auto options_manager::refresh_title_screen_option() -> void
+{
+    auto iter = options.find( title_screen::option_id );
+    if( iter == options.end() || iter->second.sType != "string_select" ) {
+        return;
+    }
+
+    auto &option = iter->second;
+    const auto old_value = option.getValue();
+    option.vItems = title_screen::get_options();
+    option.sDefault = title_screen::default_option_id;
+    option.setValue( option.getItemPos( old_value ) != -1 ? old_value :
+                     title_screen::default_option_id );
 }
 
 void options_manager::addOptionToPage( const std::string &name, const std::string &page )
@@ -1551,6 +1567,12 @@ void options_manager::add_options_interface()
 
     add( "USE_LANG", interface, translate_marker( "Language" ),
          translate_marker( "Switch Language." ), lang_options, "" );
+
+    add_empty_line();
+
+    add( title_screen::option_id, interface, translate_marker( "Title screen" ),
+         translate_marker( "Title screen ASCII art to display on the main menu." ),
+         title_screen::get_all_options(), title_screen::default_option_id );
 
     add_empty_line();
 
@@ -3697,6 +3719,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
     options_container &ACTIVE_WORLD_OPTIONS = world_options.has_value() ?
             *world_options.value() :
             OPTIONS;
+
+    if( !world_options_only ) {
+        refresh_title_screen_option();
+    }
 
     auto OPTIONS_OLD = OPTIONS;
     auto WOPTIONS_OLD = ACTIVE_WORLD_OPTIONS;

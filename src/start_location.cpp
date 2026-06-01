@@ -400,20 +400,27 @@ void start_location::place_player( player &u ) const
     }
 }
 
-void start_location::burn( const tripoint_abs_omt &omtstart, const size_t count,
+void start_location::burn( const tripoint_abs_omt &/*omtstart*/, const size_t count,
                            const int rad ) const
 {
-    const tripoint_abs_sm player_location = project_to<coords::sm>( omtstart );
-    tinymap m;
-    m.load( player_location, false );
-    m.build_outside_cache( m.get_abs_sub().z() );
-    const point u( g->u.bub_pos().x() % g_half_mapsize_x, g->u.bub_pos().y() % g_half_mapsize_y );
+    // Ignite flammable interior tiles on the live reality-bubble map (g->m). A
+    // throwaway single-z tinymap cannot model the z+1 roof level its outside cache
+    // depends on, so build_outside_cache() ends up marking every tile "outside" and
+    // burn() selects nothing (see #9169). g->m is a full multi-z map, so its outside
+    // cache is computed correctly here, mirroring how the sibling place_player() works.
+    map &m = get_map();
+    const tripoint_bub_ms u = g->u.bub_pos();
+    // Make sure the outside cache is current for the player's z (a no-op if already built).
+    m.build_outside_cache( u.z() );
+    const tripoint_bub_ms from( u.x() - SEEX, u.y() - SEEY, u.z() );
+    const tripoint_bub_ms to( u.x() + SEEX, u.y() + SEEY, u.z() );
     std::vector<tripoint_bub_ms> valid;
-    for( const tripoint_bub_ms &p : m.points_on_zlevel() ) {
+    for( const tripoint_bub_ms &p : m.points_in_rectangle( from, to ) ) {
         if( !( m.has_flag_ter( "DOOR", p ) ||
                m.has_flag_ter( "OPENCLOSE_INSIDE", p ) ||
                m.is_outside( p ) ||
-               ( p.x() >= u.x - rad && p.x() <= u.x + rad && p.y() >= u.y - rad && p.y() <= u.y + rad ) ) ) {
+               ( p.x() >= u.x() - rad && p.x() <= u.x() + rad &&
+                 p.y() >= u.y() - rad && p.y() <= u.y() + rad ) ) ) {
             if( m.has_flag( "FLAMMABLE", p ) || m.has_flag( "FLAMMABLE_ASH", p ) ) {
                 valid.push_back( p );
             }
