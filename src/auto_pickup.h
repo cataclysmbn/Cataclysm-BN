@@ -45,15 +45,15 @@ class base_settings
     protected:
         mutable item_search_cache map_items;
         bool cache_is_valid = false;
-    private:
-        virtual void refresh_map_items( item_search_cache &map_items ) const = 0;
-
-        void recreate() const;
-
+    
     public:
         virtual ~base_settings() = default;
+
         rule_state check_item( const item &item );
-        void invalidate();
+
+        virtual void refresh_cache() = 0;
+        inline bool get_cache_valid() const { return cache_is_valid; };
+        inline void set_cache_valid(bool valid) { cache_is_valid = valid; };
 };
 
 class player_settings : public base_settings
@@ -64,12 +64,14 @@ class player_settings : public base_settings
 
         rule_list global_rules;
         rule_list character_rules;
-
-        void refresh_map_items( item_search_cache &map_items ) const override;
-
     public:
         ~player_settings() override = default;
         bool has_rule( const item *it );
+        /**
+         * TODO: Convert from item* to a string or itype_id for add_rule and remove_rule
+         * 
+         * @param it 
+         */
         void add_rule( const item *it );
         void remove_rule( const item *it );
 
@@ -80,6 +82,13 @@ class player_settings : public base_settings
         bool save_global();
         void load_character();
         void load_global();
+        /**
+         * Create the actual autopickup std::map<itype_id, rule_state> for all the items in the game for
+         * 
+         * WARNING: Must be loaded after a world is loaded, as mods that add items to the world must be
+         * handled first before the cache is created. Essentially just a call to refresh_cache()
+         */
+        void refresh_cache() override;
 
         bool empty() const;
 };
@@ -88,18 +97,16 @@ class npc_settings : public base_settings
 {
     private:
         rule_list rules;
-
-        void refresh_map_items( item_search_cache &map_items ) const override;
-
     public:
         ~npc_settings() override = default;
-
+        
         void show( const std::string &name );
-
+        
         void serialize( JsonOut &jsout ) const;
         void deserialize( JsonIn &jsin );
-
+        
         bool empty() const;
+        void refresh_cache() override;
 };
 
 } // namespace auto_pickup

@@ -404,7 +404,8 @@ void user_interface::test_pattern(const rule& rule) const
     //Loop through all itemfactory items
     //APU now ignores prefixes, bottled items and suffix combinations still not generated
     for( const itype *e : item_controller->all() ) {
-        if( rule(*e)) {
+        rule_state result = rule(*e);
+        if( result == RULE_WHITELISTED || result == RULE_BLACKLISTED) {
             vMatchingItems.push_back( e->nname( 1 ) );
         }
     }
@@ -527,8 +528,7 @@ void player_settings::show()
     if( !g->u.name.empty() ) {
         save_character();
     }
-
-    refresh_map_items(map_items);
+    set_cache_valid(false);
 }
 
 bool player_settings::has_rule( const item *it )
@@ -545,7 +545,7 @@ bool player_settings::has_rule( const item *it )
 void player_settings::add_rule( const item *it )
 {
     character_rules.push_back( rule( it->tname( 1, false ), true, false ) );
-    invalidate();
+    set_cache_valid(false);
 
     if( !get_option<bool>( "AUTO_PICKUP" ) &&
         query_yn( _( "Autopickup is not enabled in the options.  Enable it now?" ) ) ) {
@@ -562,7 +562,7 @@ void player_settings::remove_rule( const item *it )
         if( sRule.length() == candidate->sRule.length() &&
             ci_find_substr( sRule, candidate->sRule ) != -1 ) {
             character_rules.erase( candidate );
-            invalidate();
+            set_cache_valid(false);
             break;
         }
     }
@@ -604,7 +604,7 @@ bool check_special_rule( const std::vector<material_id> &materials, const std::s
     return false;
 }
 
-void player_settings::refresh_map_items( item_search_cache &map_items ) const
+void player_settings::refresh_cache()
 {
     //process include/exclude in order of rules, global first, then character specific
     //if a specific item is being added, all the rules need to be checked now
@@ -615,30 +615,26 @@ void player_settings::refresh_map_items( item_search_cache &map_items ) const
 
 }
 
+[[clang::optnone]]
 rule_state base_settings::check_item( const item& item )
 {
-    if (!cache_is_valid) {
-        refresh_map_items(map_items);
-        cache_is_valid = true;
+    if (!get_cache_valid()) {
+        refresh_cache();
+        set_cache_valid(true);
     }
 
     const auto iter = map_items.find( item.typeId() );
     if( iter != map_items.end() ) {
         return iter->second;
-    }
+    } 
 
     return RULE_NONE;
-}
-
-void base_settings::invalidate()
-{
-    cache_is_valid = false;
 }
 
 void player_settings::clear_character_rules()
 {
     character_rules.clear();
-    invalidate();
+    set_cache_valid(false);
 }
 
 bool player_settings::save_character()
@@ -674,12 +670,13 @@ bool player_settings::save( const bool bCharacter )
 void player_settings::load_character()
 {
     load( true );
-
+    set_cache_valid(false);
 }
 
 void player_settings::load_global()
 {
     load( false );
+    set_cache_valid(false);
 }
 
 void player_settings::load( const bool bCharacter )
@@ -693,7 +690,6 @@ void player_settings::load( const bool bCharacter )
             ( bCharacter ? character_rules : global_rules ).deserialize( jsin );
         }, true );
     }
-    refresh_map_items(map_items);
 }
 
 void npc_settings::show( const std::string &name )
@@ -706,7 +702,7 @@ void npc_settings::show( const std::string &name )
     if( !ui.bStuffChanged ) {
         return;
     }
-    invalidate();
+    set_cache_valid(false);
 }
 
 void npc_settings::serialize( JsonOut &jsout ) const
@@ -719,7 +715,7 @@ void npc_settings::deserialize( JsonIn &jsin )
     rules.deserialize( jsin );
 }
 
-void npc_settings::refresh_map_items( item_search_cache &map_items ) const
+void npc_settings::refresh_cache()
 {
     map_items.clear_items();
     map_items.apply_rules(rules);
@@ -728,11 +724,5 @@ void npc_settings::refresh_map_items( item_search_cache &map_items ) const
 bool npc_settings::empty() const
 {
     return rules.empty();
-}
-
-void base_settings::recreate() const
-{
-    map_items.clear_items();
-    refresh_map_items( map_items );
 }
 
