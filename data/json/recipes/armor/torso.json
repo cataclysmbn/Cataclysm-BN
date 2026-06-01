@@ -515,7 +515,7 @@
     "difficulty": 6,
     "time": "2 h",
     "autolearn": true,
-    "book_learn": [ [ "textbook_tailor", 5 ], [ "tailor_portfolio", 5 ]  ],
+    "book_learn": [ [ "textbook_tailor", 5 ], [ "tailor_portfolio", 5 ] ],
     "using": [ [ "sewing_standard", 35 ] ],
     "components": [ [ [ "rag", 8 ] ], [ [ "nylon", 13 ] ] ]
   },
