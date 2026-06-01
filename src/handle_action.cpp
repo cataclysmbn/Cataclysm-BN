@@ -1294,7 +1294,7 @@ static void loot()
         menu.addentry_desc( MultiMining, true, 'M', _( "Mine Area" ),
                             _( "Auto-mine anything in mining zone - auto-fetch tools." ) );
     }
-    
+
 
     menu.query();
     flags = ( menu.ret >= 0 ) ? menu.ret : None;
@@ -2224,7 +2224,7 @@ bool game::handle_action()
                 }
                 break;
 
-            case ACTION_BUTCHER:  
+            case ACTION_BUTCHER:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
                     add_msg( m_info, _( "You can't butcher while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
@@ -2234,7 +2234,7 @@ bool game::handle_action()
                 }
                 break;
 
-            case ACTION_DISSECT:  
+            case ACTION_DISSECT:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
                     add_msg( m_info, _( "You can't dissect while you're in your shell." ) );
                 } else if( u.is_mounted() ) {
@@ -2243,7 +2243,7 @@ bool game::handle_action()
                     dissect();
                 }
                 break;
-            
+
 
             case ACTION_CHAT:
                 chat();

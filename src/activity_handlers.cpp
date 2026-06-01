@@ -1103,7 +1103,8 @@ static void butchery_drops_harvest( item *corpse_item, const mtype &mt, player &
                 for( const fault_id &flt : entry.faults ) {
                     obj.faults.emplace( flt );
                 }
-                if( !p.backlog.empty() && ( p.backlog.front()->id() == ACT_MULTIPLE_BUTCHER || p.backlog.front()->id() == ACT_MULTIPLE_DISSECT ) ) {
+                if( !p.backlog.empty() && ( p.backlog.front()->id() == ACT_MULTIPLE_BUTCHER ||
+                                            p.backlog.front()->id() == ACT_MULTIPLE_DISSECT ) ) {
                     obj.set_var( "activity_var", p.name );
                 }
                 here.add_item_or_charges( p.bub_pos(), std::move( it ) );
@@ -1119,7 +1120,8 @@ static void butchery_drops_harvest( item *corpse_item, const mtype &mt, player &
                 for( const fault_id &flt : entry.faults ) {
                     obj.faults.emplace( flt );
                 }
-                if( !p.backlog.empty() && ( p.backlog.front()->id() == ACT_MULTIPLE_BUTCHER || p.backlog.front()->id() == ACT_MULTIPLE_DISSECT ) ) {
+                if( !p.backlog.empty() && ( p.backlog.front()->id() == ACT_MULTIPLE_BUTCHER ||
+                                            p.backlog.front()->id() == ACT_MULTIPLE_DISSECT ) ) {
                     obj.set_var( "activity_var", p.name );
                 }
                 for( int i = 0; i != roll; ++i ) {
