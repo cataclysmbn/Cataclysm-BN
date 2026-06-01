@@ -8134,7 +8134,7 @@
     "type": "profession",
     "id": "RNG_SURVIVOR",
     "name": "RANDOMISED: Melee survivor",
-    "description": "You've looted a random assortment of intact armors and a pristine weapon from the overly hungry folks, but will it be enough? (Note: What you see in character creator IS NOT what you get in game!)",
+    "description": "You've looted a random assortment of intact armor and a pristine weapon from the overly hungry folk, but will it be enough?  (Note: What you see in character creator IS NOT what you get in game!)",
     "skills": [ { "level": 3, "name": "swimming" }, { "level": 3, "name": "dodge" }, { "level": 3, "name": "melee" } ],
     "points": 5,
     "items": {
