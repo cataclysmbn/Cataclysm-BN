@@ -37,7 +37,7 @@ NOTE: Please read your emails. Anyone mentioned on Github with an @ will receive
 <!-- please remove checkboxes unrelated to this PR. -->
 
 - [ ] This PR used AI assistance.
-  - [ ] I disclosed it in the PR description and added an [`Assisted-by:` trailer](https://docs.cataclysmbn.org/contribute/contributing/#ai-assisted-pull-requests) to every AI-assisted commit in the [Linux kernel format](https://docs.kernel.org/process/coding-assistants.html).
+  - [ ] I added an [`Assisted-by:` trailer](https://docs.cataclysmbn.org/contribute/contributing/#ai-assisted-pull-requests) to every AI-assisted commit in the [Linux kernel format](https://docs.kernel.org/process/coding-assistants.html).
 - [ ] This PR ports someone else's contribution (e.g from DDA or other fork).
   - [ ] I have added [`port` scope](https://docs.cataclysmbn.org/contribute/changelog_guidelines/#port%3A-ports-from-dda-or-other-forks) to the PR title.
   - [ ] I have attributed original authors in the commit messages adding [`Co-Authored-By`](https://docs.github.com/pull-requests/committing-changes-to-your-project/creating-and-editing-commits/creating-a-commit-with-multiple-authors) in the commit message.

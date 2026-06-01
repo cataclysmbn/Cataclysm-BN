@@ -97,6 +97,7 @@
     "subtype": "collection",
     "items": [
       { "item": "1st_aid" },
+      { "item": "1st_aid_deluxe" },
       { "item": "water" },
       { "item": "energy_drink" },
       { "item": "whiskey" },

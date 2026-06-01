@@ -34,6 +34,7 @@
 
 #include "achievement.h"
 #include "action.h"
+#include "activity_time_cadence.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
@@ -45,6 +46,7 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "avatar_functions.h"
+#include "batch_turns.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -623,6 +625,8 @@ void game::setup( bool load_world_modfiles )
     next_npc_id = character_id( 1 );
     next_mission_id = 1;
     new_game = true;
+    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
     saving_blocked_by_failed_load = false;
     uquit = QUIT_NO;   // We haven't quit the game
     bVMonsterLookFire = true;
@@ -852,6 +856,8 @@ bool game::start_game()
     seed = rng_bits();
     new_game = true;
     saving_blocked_by_failed_load = false;
+    next_activity_fixed_window_check_ = calendar::turn_zero;
+    activity_fixed_window_force_normal_turn_ = false;
     start_calendar();
     get_weather().nextweather = calendar::turn;
     safe_mode = ( get_option<bool>( "SAFEMODE" ) ? SAFE_MODE_ON : SAFE_MODE_OFF );
@@ -1852,6 +1858,9 @@ bool game::do_turn()
             return cleanup_at_end();
         }
     }
+    if( try_activity_fixed_window_skip() ) {
+        return false;
+    }
     const bool asleep = u.in_sleep_state();
     const auto vehperf = asleep && !character_funcs::is_driving( u ) &&
                          get_option<bool>( "SLEEP_SKIP_VEH" );
@@ -1879,6 +1888,9 @@ bool game::do_turn()
         if( new_game ) {
             new_game = false;
         } else {
+            if( !gamemode ) {
+                gamemode = std::make_unique<special_game>();
+            }
             gamemode->per_turn();
             calendar::turn += 1_turns;
         }
@@ -2123,51 +2135,7 @@ bool game::do_turn()
         handle_weather_effects( weather.weather_id );
     }
 
-    const bool player_is_sleeping = u.has_effect( effect_sleep );
-    bool wait_redraw = false;
-    std::string wait_message;
-    time_duration wait_refresh_rate;
-    if( player_is_sleeping ) {
-        wait_redraw = true;
-        wait_message = _( "Wait till you wake up…" );
-        wait_refresh_rate = 30_minutes;
-        if( calendar::once_every( 1_hours ) ) {
-            add_artifact_dreams();
-        }
-    } else if( u.has_destination() ) {
-        wait_redraw = true;
-        wait_message = _( "Travelling…" );
-        wait_refresh_rate = 15_turns;
-    } else if( const std::optional<std::string> progress = u.activity->get_progress_message( u ) ) {
-        wait_redraw = true;
-        wait_message = *progress;
-        if( u.activity->id() == ACT_AUTODRIVE ) {
-            wait_refresh_rate = 1_turns;
-        } else {
-            wait_refresh_rate = 5_minutes;
-        }
-    }
-    if( wait_redraw ) {
-        ZoneScopedN( "wait_redraw" );
-        if( first_redraw_since_waiting_started ||
-            calendar::once_every( std::min( 1_minutes, wait_refresh_rate ) ) ) {
-            if( first_redraw_since_waiting_started || calendar::once_every( wait_refresh_rate ) ) {
-                ui_manager::redraw();
-            }
-
-            // Avoid redrawing the main UI every time due to invalidation
-            ui_adaptor dummy( ui_adaptor::disable_uis_below {} );
-            wait_popup = std::make_unique<static_popup>();
-            wait_popup->on_top( true ).wait_message( "%s", wait_message );
-            ui_manager::redraw();
-            refresh_display();
-            first_redraw_since_waiting_started = false;
-        }
-    } else {
-        // Nothing to wait for now
-        wait_popup.reset();
-        first_redraw_since_waiting_started = true;
-    }
+    handle_wait_activity_redraw();
 
     {
         u.update_bodytemp( m, weather );
@@ -2290,6 +2258,421 @@ void game::process_activity()
 
     while( u.moves > 0 && *u.activity ) {
         u.activity->do_turn( u );
+    }
+}
+
+auto game::activity_fixed_window_duration() -> time_duration
+{
+    auto duration = activity_time_cadence::fixed_window();
+    const weather_manager &weather = get_weather();
+    if( weather.weather_id && weather.nextweather > calendar::turn ) {
+        duration = std::min( duration, weather.nextweather - calendar::turn );
+    }
+    return duration;
+}
+
+auto game::has_activity_skip_blocking_npc_state() -> bool
+{
+    return npcs_dirty;
+}
+
+auto game::has_activity_skip_relevant_vehicle() -> bool
+{
+    return std::ranges::any_of( m.get_vehicles(), []( const wrapped_vehicle & wrapped ) {
+        const vehicle *veh = wrapped.v;
+        return veh != nullptr &&
+               ( veh->is_moving() || veh->vertical_velocity != 0 || veh->skidding ||
+                 veh->is_falling || veh->engine_on || veh->is_autodriving ||
+                 veh->is_following || veh->is_patrolling || veh->autopilot_on ||
+                 veh->is_alarm_on || veh->check_environmental_effects ||
+                 veh->total_accessory_epower_w() < 0 );
+    } );
+}
+
+auto game::has_activity_skip_active_fire() -> bool
+{
+    const auto submap_has_active_fire = []( submap & sm ) {
+        if( sm.field_count == 0 ) {
+            return false;
+        }
+        for( const auto &local : sm.field_cache ) {
+            auto &curfield = sm.get_field( local );
+            for( auto &field_pair : curfield ) {
+                auto &cur = field_pair.second;
+                if( cur.is_field_alive() && cur.get_field_type().obj().has_fire ) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+
+    const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : m.get_abs_sub().z();
+    const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : m.get_abs_sub().z();
+    const auto axis = std::views::iota( 0, m.getmapsize() );
+    for( const auto x : axis ) {
+        for( const auto y : axis ) {
+            const auto p = point_bub_sm( x, y );
+            for( const auto z : std::views::iota( zmin, zmax + 1 ) ) {
+                auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
+                if( sm != nullptr && submap_has_active_fire( *sm ) ) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    auto has_fire = false;
+    const auto current_dim = m.get_bound_dimension();
+    MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+        if( has_fire || ( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) ) {
+            return;
+        }
+        mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
+            if( has_fire ) {
+                return;
+            }
+            auto &[pos_sm, sm_ptr] = entry;
+            if( ( dim == current_dim && m.contains_abs_sm( pos_sm ) ) ||
+                !sm_ptr ||
+                !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+                return;
+            }
+            if( submap_has_active_fire( *sm_ptr ) ) {
+                has_fire = true;
+                return;
+            }
+        } );
+    } );
+    return has_fire;
+}
+
+auto game::can_activity_fixed_window_skip( const time_duration &duration ) -> bool
+{
+    if( new_game || queue_screenshot || uquit == QUIT_WATCH ) {
+        return false;
+    }
+    if( duration <= 0_turns || !get_weather().weather_id ||
+        get_weather().nextweather <= calendar::turn ) {
+        return false;
+    }
+    if( !u.activity || !*u.activity || u.activity->complete() || u.has_destination() ||
+        u.is_mounted() ) {
+        return false;
+    }
+    if( u.activity->id() == ACT_AUTODRIVE || !u.activity->rooted() ||
+        !u.activity->has_idle_bubble_effect() || u.activity->has_special_turns() ||
+        !u.activity->assistants().empty() ) {
+        return false;
+    }
+    if( u.in_vehicle && u.controlling_vehicle ) {
+        return false;
+    }
+    if( m.field_at( u.bub_pos() ).field_count() > 0 ) {
+        return false;
+    }
+    if( has_activity_skip_active_fire() ) {
+        return false;
+    }
+    if( has_activity_skip_relevant_vehicle() ) {
+        return false;
+    }
+    if( const std::optional<time_point> event_time = timed_events.next_event_time();
+        event_time && *event_time <= calendar::turn + duration ) {
+        return false;
+    }
+    if( has_activity_skip_blocking_npc_state() ) {
+        return false;
+    }
+    return true;
+}
+
+struct activity_monmove_cache {
+    // Activity skips reuse these monmove inputs for one fixed-window batch.
+    // Normal monmove rebuilds them every turn.
+    bool valid = false;
+    int monster_count = 0;
+    int tier0_count = 0;
+    int effective_budget = 0;
+    std::vector<shared_ptr_fast<monster>> monster_refs;
+    std::vector<monster *> mon_snap;
+    std::vector<shared_ptr_fast<npc>> npc_refs;
+    std::vector<npc *> npc_snap;
+    std::vector<std::pair<monster *, int8_t>> real_lod;
+    std::unordered_set<monster *> ai_paused;
+    std::vector<monster *> plannable_candidates;
+    std::vector<std::pair<int, monster *>> eligible_order;
+    monster::faction_snap_t faction_snap;
+    monster::hostile_fac_map_t hostile_fac_map;
+};
+
+auto game::execute_activity_fixed_window_skip( const time_duration &duration ) -> int
+{
+    ZoneScopedN( "activity_fixed_window_execute" );
+    auto skipped_turns = 0;
+    weather_manager &weather = get_weather();
+    const auto starting_activity = u.activity->id();
+    auto activity_monsters = activity_monmove_cache {};
+    for( const auto turn_index : std::views::iota( 0, to_turns<int>( duration ) ) ) {
+        static_cast<void>( turn_index );
+        if( is_game_over() || !u.activity || !*u.activity ) {
+            break;
+        }
+
+        if( !gamemode ) {
+            gamemode = std::make_unique<special_game>();
+        }
+        gamemode->per_turn();
+        calendar::turn += 1_turns;
+        ++skipped_turns;
+        swapping_dimensions = false;
+        weather.clear_temp_cache();
+        reset_light_level();
+
+        const auto monster_count = critter_tracker->size();
+        timed_events.process();
+        mission::process_all();
+        if( calendar::once_every( 1_days ) ) {
+            get_overmapbuffer( current_dimension_id_ ).process_mongroups();
+        }
+        if( calendar::once_every( time_duration::from_minutes( 2.5 ) ) ) {
+            get_overmapbuffer( current_dimension_id_ ).move_hordes();
+            if( u.has_trait( trait_HAS_NEMESIS ) ) {
+                get_overmapbuffer( current_dimension_id_ ).move_nemesis();
+            }
+            m.spawn_monsters( false );
+        }
+        if( get_option<bool>( "AUTOSAVE" ) &&
+            calendar::once_every( 1_turns * get_option<int>( "AUTOSAVE_TURNS" ) ) &&
+            !u.is_dead_state() ) {
+            autosave();
+        }
+        perhaps_add_random_npc();
+        if( npcs_dirty || critter_tracker->size() != monster_count ) {
+            activity_fixed_window_force_normal_turn_ = true;
+            break;
+        }
+
+        debug_hour_timer.print_time();
+        u.update_body();
+        process_voluntary_act_interrupt();
+        if( !u.activity || !*u.activity ) {
+            break;
+        }
+
+        process_activity();
+        if( is_game_over() ) {
+            break;
+        }
+        if( npcs_dirty || critter_tracker->size() != monster_count ) {
+            activity_fixed_window_force_normal_turn_ = true;
+            break;
+        }
+        const auto activity_continues = u.activity && *u.activity &&
+                                        u.activity->id() == starting_activity;
+
+        if( m.has_field_at( u.bub_pos() ) ) {
+            m.creature_in_field( u );
+        }
+        for( auto &[dim_id, tracker_ptr] : grid_trackers_ ) {
+            if( tracker_ptr ) {
+                tracker_ptr->update( calendar::turn );
+            }
+        }
+        tick_portal_links();
+        tick_temporary_pocket_dimensions();
+        tick_vehicle_portal_taps();
+        fluid_grid::update( calendar::turn );
+
+        const auto has_active_npcs = std::ranges::any_of( active_npc,
+        []( const shared_ptr_fast<npc> &guy ) {
+            return guy && !guy->is_dead();
+        } );
+        if( critter_tracker->size() > 0 || has_active_npcs ) {
+            sounds::process_sounds();
+            m.build_map_cache( get_levz(), true );
+            if( critter_tracker->size() > 0 ) {
+                monmove( monster_activity_ai_mode::activity_skip, &activity_monsters );
+                if( critter_tracker->size() != monster_count ) {
+                    activity_fixed_window_force_normal_turn_ = true;
+                    break;
+                }
+            }
+            if( has_active_npcs ) {
+                npcmove();
+                if( npcs_dirty || critter_tracker->size() != monster_count ) {
+                    activity_fixed_window_force_normal_turn_ = true;
+                    break;
+                }
+            }
+        }
+
+        {
+            ZoneScopedN( "do_turn_player_process_turn" );
+            u.process_turn();
+        }
+        {
+            ZoneScopedN( "do_turn_lua_every_x" );
+            cata::run_on_every_x_hooks( *DynamicDataLoader::get_instance().lua );
+        }
+        explosion_handler::get_explosion_queue().execute();
+        cleanup_dead();
+
+        if( get_levz() >= 0 && !u.is_underwater() ) {
+            handle_weather_effects( weather.weather_id );
+        }
+        u.update_bodytemp( m, weather );
+        character_funcs::update_body_wetness( u, get_weather().get_precise() );
+        u.apply_wetness_morale( weather.temperature );
+        u.volume = 0;
+
+        if( !activity_continues || u.activity->complete() ) {
+            break;
+        }
+    }
+    run_activity_skip_batch_turns( skipped_turns );
+    return skipped_turns;
+}
+
+auto game::run_activity_skip_batch_turns( const int skipped_turns ) -> void
+{
+    if( skipped_turns <= 0 ) {
+        return;
+    }
+
+    {
+        ZoneScopedN( "activity_fixed_window_batch_submaps" );
+        const auto zmin = m.has_zlevels() ? -OVERMAP_DEPTH : m.get_abs_sub().z();
+        const auto zmax = m.has_zlevels() ? OVERMAP_HEIGHT : m.get_abs_sub().z();
+        const auto axis = std::views::iota( 0, m.getmapsize() );
+        for( const auto x : axis ) {
+            for( const auto y : axis ) {
+                const auto p = point_bub_sm( x, y );
+                for( const auto z : std::views::iota( zmin, zmax + 1 ) ) {
+                    auto *sm = m.get_submap_at_grid( tripoint_bub_sm( p, z ) );
+                    if( sm == nullptr ) {
+                        continue;
+                    }
+                    run_submap_batch_turns( *sm, skipped_turns );
+                    sm->last_touched = calendar::turn;
+                }
+            }
+        }
+
+        const auto current_dim = m.get_bound_dimension();
+        MAPBUFFER_REGISTRY.for_each( [&]( const std::string & dim, mapbuffer & mb ) {
+            if( pocket_simulation_level == pocket_sim_level::off && !dim.empty() ) {
+                return;
+            }
+            mb.for_each_submap( [&]( std::pair<const tripoint_abs_sm, std::unique_ptr<submap>> &entry ) {
+                auto &[pos_sm, sm_ptr] = entry;
+                if( ( dim == current_dim && m.contains_abs_sm( pos_sm ) ) ||
+                    !sm_ptr || !submap_loader.is_in_simulated_set( dim, pos_sm ) ) {
+                    return;
+                }
+                run_submap_batch_turns( *sm_ptr, skipped_turns );
+                sm_ptr->last_touched = calendar::turn;
+            } );
+        } );
+    }
+
+    {
+        ZoneScopedN( "activity_fixed_window_flush_items" );
+        m.process_items();
+    }
+    explosion_handler::get_explosion_queue().execute();
+    cleanup_dead();
+    Pathfinding::clear_d_maps();
+}
+
+auto game::run_activity_cadence_boundary() -> void
+{
+    ZoneScopedN( "activity_cadence_boundary" );
+    weather_manager &weather = get_weather();
+    weather.clear_temp_cache();
+    weather.update_weather();
+    reset_light_level();
+    m.invalidate_lightmap_caches();
+    m.invalidate_visibility_caches();
+    if( calendar::once_every( activity_time_cadence::fixed_window() ) ) {
+        overmap_npc_move();
+    }
+    Pathfinding::clear_d_maps();
+    handle_wait_activity_redraw( true );
+}
+
+auto game::try_activity_fixed_window_skip() -> bool
+{
+    ZoneScopedN( "activity_fixed_window_try" );
+    if( activity_fixed_window_force_normal_turn_ ) {
+        activity_fixed_window_force_normal_turn_ = false;
+        return false;
+    }
+    if( !u.activity || !*u.activity || calendar::turn < next_activity_fixed_window_check_ ) {
+        return false;
+    }
+    const auto duration = activity_fixed_window_duration();
+    if( !can_activity_fixed_window_skip( duration ) ) {
+        next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        return false;
+    }
+    const auto skipped_turns = execute_activity_fixed_window_skip( duration );
+    if( skipped_turns <= 0 ) {
+        next_activity_fixed_window_check_ = calendar::turn + 1_minutes;
+        return false;
+    }
+    TracyPlot( "Activity Fixed Window Skipped Turns", int64_t{ skipped_turns } );
+    next_activity_fixed_window_check_ = calendar::turn;
+    const auto full_window_turns = to_turns<int>( activity_time_cadence::fixed_window() );
+    if( skipped_turns >= full_window_turns || get_weather().nextweather <= calendar::turn ) {
+        run_activity_cadence_boundary();
+    }
+    return true;
+}
+
+auto game::handle_wait_activity_redraw( const bool force ) -> void
+{
+    const auto player_is_sleeping = u.has_effect( effect_sleep );
+    auto wait_redraw = false;
+    auto wait_message = std::string {};
+    auto wait_refresh_rate = 0_turns;
+    if( player_is_sleeping ) {
+        wait_redraw = true;
+        wait_message = _( "Wait till you wake up…" );
+        wait_refresh_rate = 30_minutes;
+        if( calendar::once_every( 1_hours ) ) {
+            add_artifact_dreams();
+        }
+    } else if( u.has_destination() ) {
+        wait_redraw = true;
+        wait_message = _( "Travelling…" );
+        wait_refresh_rate = 15_turns;
+    } else if( u.activity ) {
+        if( const std::optional<std::string> progress = u.activity->get_progress_message( u ) ) {
+            wait_redraw = true;
+            wait_message = *progress;
+            wait_refresh_rate = u.activity->id() == ACT_AUTODRIVE ? 1_turns :
+                                activity_time_cadence::activity_render_refresh();
+        }
+    }
+    if( wait_redraw ) {
+        ZoneScopedN( "wait_redraw" );
+        if( force || first_redraw_since_waiting_started ||
+            calendar::once_every( std::min( 1_minutes, wait_refresh_rate ) ) ) {
+            if( force || first_redraw_since_waiting_started || calendar::once_every( wait_refresh_rate ) ) {
+                ui_manager::redraw();
+            }
+
+            ui_adaptor dummy( ui_adaptor::disable_uis_below {} );
+            wait_popup = std::make_unique<static_popup>();
+            wait_popup->on_top( true ).wait_message( "%s", wait_message );
+            ui_manager::redraw();
+            refresh_display();
+            first_redraw_since_waiting_started = false;
+        }
+    } else {
+        wait_popup.reset();
+        first_redraw_since_waiting_started = true;
     }
 }
 
@@ -5169,9 +5552,14 @@ void game::world_tick()
     }
 }
 
-void game::monmove()
+auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache ) -> void
 {
     ZoneScopedN( "game::monmove" );
+    const auto activity_skip_ai = mode == monster_activity_ai_mode::activity_skip &&
+                                  monster_lod_enabled;
+    if( !activity_skip_ai ) {
+        cache = nullptr;
+    }
     {
         ZoneScopedN( "monmove_cleanup_initial" );
         cleanup_dead();
@@ -5184,11 +5572,19 @@ void game::monmove()
         turn_sight_cache_.clear();
     }
 
+    auto use_activity_cache = cache != nullptr && cache->valid &&
+                              cache->monster_count == static_cast<int>( critter_tracker->size() );
+    if( cache != nullptr && cache->valid && !use_activity_cache ) {
+        cache->valid = false;
+    }
+
     // LOD-A: assign tier 0/1/2 to every monster based on distance from player.
     // Must run before the plannable collection so Tier-2 monsters are excluded
     // from the parallel planning pass (they use the macro step instead).
     int tier0_count = 0;
-    {
+    if( use_activity_cache ) {
+        tier0_count = cache->tier0_count;
+    } else {
         ZoneScopedN( "monmove_assign_lod_tiers" );
         tier0_count = tier_assign_all();
     }
@@ -5220,34 +5616,90 @@ void game::monmove()
 
     // Dynamic budget: at least the floor, but expanded to cover all Tier-0
     // monsters so the cap never defers a full-AI monster.
-    // tier0_count is from this turn's tier_assign_all(), so it is current.
-    const int effective_budget = std::max( action_budget, tier0_count );
+    // Activity skip cache reuse keeps this budget fixed from the first pass in
+    // the window; normal monmove computes it from the current LOD tiers.
+    const int effective_budget = use_activity_cache ? cache->effective_budget :
+                                 std::max( action_budget, tier0_count );
     TracyPlot( "LOD Effective Budget", static_cast<int64_t>( effective_budget ) );
 
-    // Build phase-local actor snapshots once for planning setup. Holding shared
-    // references keeps the pointer snapshots valid if the live lists change later
-    // in the turn, while avoiding repeated weak_ptr_fast lock/copy passes.
-    auto mon_snap = std::vector<monster *> {};
-    auto npc_snap = std::vector<npc *> {};
-    {
+    // Build actor snapshots for planning setup. Holding shared references keeps
+    // pointer snapshots valid if live lists change later in the turn. Activity
+    // skip mode can reuse the first snapshot across the fixed-window batch.
+    auto mon_snap_local = std::vector<monster *> {};
+    const std::vector<monster *> *mon_snap = &mon_snap_local;
+    auto npc_snap_local = std::vector<npc *> {};
+    const std::vector<npc *> *npc_snap = &npc_snap_local;
+    if( use_activity_cache ) {
+        mon_snap = &cache->mon_snap;
+        npc_snap = &cache->npc_snap;
+    } else {
         ZoneScopedN( "monmove_build_actor_snapshots" );
         auto monster_refs = critter_tracker->get_monsters_list();
-        mon_snap.reserve( monster_refs.size() );
+        mon_snap_local.reserve( monster_refs.size() );
         for( const shared_ptr_fast<monster> &mon_ptr : monster_refs ) {
             if( mon_ptr && !mon_ptr->is_dead() ) {
-                mon_snap.push_back( mon_ptr.get() );
+                mon_snap_local.push_back( mon_ptr.get() );
             }
         }
 
         auto npc_refs = std::vector<shared_ptr_fast<npc>> {};
         npc_refs.reserve( active_npc.size() );
         std::ranges::copy( active_npc, std::back_inserter( npc_refs ) );
-        npc_snap.reserve( npc_refs.size() );
+        npc_snap_local.reserve( npc_refs.size() );
         for( const shared_ptr_fast<npc> &guy : npc_refs ) {
             if( guy && !guy->is_dead() ) {
-                npc_snap.push_back( guy.get() );
+                npc_snap_local.push_back( guy.get() );
             }
         }
+
+        if( cache != nullptr ) {
+            cache->monster_refs = std::move( monster_refs );
+            cache->mon_snap = std::move( mon_snap_local );
+            cache->npc_refs = std::move( npc_refs );
+            cache->npc_snap = std::move( npc_snap_local );
+            cache->monster_count = static_cast<int>( critter_tracker->size() );
+            cache->tier0_count = tier0_count;
+            cache->effective_budget = effective_budget;
+            mon_snap = &cache->mon_snap;
+            npc_snap = &cache->npc_snap;
+        }
+    }
+
+    auto activity_lod_restore_local = std::vector<std::pair<monster *, int8_t>> {};
+    const std::vector<std::pair<monster *, int8_t>> *activity_lod_restore =
+                &activity_lod_restore_local;
+    auto activity_ai_paused_local = std::unordered_set<monster *> {};
+    const std::unordered_set<monster *> *activity_ai_paused = &activity_ai_paused_local;
+    if( activity_skip_ai ) {
+        ZoneScopedN( "monmove_activity_demote_lod" );
+        if( use_activity_cache ) {
+            activity_lod_restore = &cache->real_lod;
+            activity_ai_paused = &cache->ai_paused;
+        } else {
+            activity_lod_restore_local.reserve( mon_snap->size() );
+            activity_ai_paused_local.reserve( mon_snap->size() );
+            for( monster *critter : *mon_snap ) {
+                const auto real_lod_tier = critter->lod_tier;
+                activity_lod_restore_local.emplace_back( critter, real_lod_tier );
+                if( real_lod_tier > activity_skip_monster_lod_gate ) {
+                    activity_ai_paused_local.insert( critter );
+                }
+            }
+            if( cache != nullptr ) {
+                cache->real_lod = std::move( activity_lod_restore_local );
+                cache->ai_paused = std::move( activity_ai_paused_local );
+                activity_lod_restore = &cache->real_lod;
+                activity_ai_paused = &cache->ai_paused;
+            }
+        }
+        for( const auto &[critter, real_lod_tier] : *activity_lod_restore ) {
+            if( activity_ai_paused->contains( critter ) ) {
+                continue;
+            }
+            critter->lod_tier = static_cast<int8_t>( std::min<int>( 2, real_lod_tier + 1 ) );
+        }
+        TracyPlot( "Activity Skip Monster AI Paused",
+                   static_cast<int64_t>( activity_ai_paused->size() ) );
     }
 
     // OPP-7: Unified disposition map: a single hash lookup in the execution
@@ -5259,9 +5711,33 @@ void game::monmove()
     std::vector<monster *> plannable;
     {
         ZoneScopedN( "monmove_build_plannable" );
-        plannable.reserve( mon_snap.size() );
-        for( monster *critter : mon_snap ) {
+        auto plannable_candidates_local = std::vector<monster *> {};
+        const std::vector<monster *> *plannable_candidates = mon_snap;
+        if( activity_skip_ai ) {
+            if( use_activity_cache ) {
+                plannable_candidates = &cache->plannable_candidates;
+            } else {
+                plannable_candidates_local.reserve( mon_snap->size() );
+                for( monster *critter : *mon_snap ) {
+                    if( !critter->is_dead() &&
+                        !activity_ai_paused->contains( critter ) &&
+                        critter->lod_tier < 2 &&
+                        critter->is_simulated() ) {
+                        plannable_candidates_local.push_back( critter );
+                    }
+                }
+                if( cache != nullptr ) {
+                    cache->plannable_candidates = std::move( plannable_candidates_local );
+                    plannable_candidates = &cache->plannable_candidates;
+                } else {
+                    plannable_candidates = &plannable_candidates_local;
+                }
+            }
+        }
+        plannable.reserve( plannable_candidates->size() );
+        for( monster *critter : *plannable_candidates ) {
             if( !critter->is_dead() &&
+                !activity_ai_paused->contains( critter ) &&
                 !critter->has_effect( effect_ai_controlled ) &&
                 critter->moves > 0 &&
                 !critter->has_effect( effect_ridden ) &&
@@ -5280,7 +5756,7 @@ void game::monmove()
     // for the ray traces below Creature::sees().
     auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>> {};
     const auto initial_sight_job_capacity =
-        plannable.size() * ( npc_snap.size() + std::min( mon_snap.size(), size_t{ 16 } ) + 1 );
+        plannable.size() * ( npc_snap->size() + std::min( mon_snap->size(), size_t{ 16 } ) + 1 );
     sight_jobs.reserve( initial_sight_job_capacity );
     const auto add_sight_job = [&]( const Creature & seer, const Creature & target ) {
         sight_jobs.emplace_back( &seer, &target );
@@ -5296,7 +5772,7 @@ void game::monmove()
                 rl_dist( mon_pos, u.bub_pos() ) <= mon_max_sight ) {
                 add_sight_job( *mon, u );
             }
-            for( auto *n : npc_snap ) {
+            for( auto *n : *npc_snap ) {
                 const auto faction_att = mon->faction.obj().attitude( n->get_monster_faction() );
                 if( faction_att == MFA_NEUTRAL || faction_att == MFA_FRIENDLY ) {
                     continue;
@@ -5310,7 +5786,7 @@ void game::monmove()
                 mon->lod_tier <= lod_group_morale_max_tier &&
                 ( ( mon->has_flag( MF_GROUP_MORALE ) && mon->morale < mon->type->morale ) ||
                   mon->has_flag( MF_SWARMS ) );
-            for( auto *target_mon : mon_snap ) {
+            for( auto *target_mon : *mon_snap ) {
                 if( target_mon == mon ) {
                     continue;
                 }
@@ -5373,19 +5849,31 @@ void game::monmove()
     // can do group-morale/swarm checks on worker threads without calling
     // weak_ptr_fast::lock() (non-atomic _S_single refcount — data race on Linux).
     monster::faction_snap_t faction_snap;
-    {
+    const monster::faction_snap_t *faction_snap_for_plan = nullptr;
+    if( use_activity_cache ) {
+        faction_snap_for_plan = &cache->faction_snap;
+    } else {
         ZoneScopedN( "monmove_build_faction_snap" );
-        std::ranges::for_each( mon_snap, [&]( monster * mon_ptr ) {
+        std::ranges::for_each( *mon_snap, [&]( monster * mon_ptr ) {
             faction_snap[mon_ptr->faction].push_back( mon_ptr );
         } );
+        if( cache != nullptr ) {
+            cache->faction_snap = faction_snap;
+            faction_snap_for_plan = &cache->faction_snap;
+        } else {
+            faction_snap_for_plan = &faction_snap;
+        }
     }
     // Pre-compute per-faction hostile-faction lists once per tick.  compute_plan()
     // iterates only the hostile entries rather than all factions on every call.
     monster::hostile_fac_map_t hostile_fac_map;
-    {
+    const monster::hostile_fac_map_t *hostile_fac_map_for_plan = nullptr;
+    if( use_activity_cache ) {
+        hostile_fac_map_for_plan = &cache->hostile_fac_map;
+    } else {
         ZoneScopedN( "monmove_build_hostile_fac_map" );
-        for( const auto &[fac_id, _m] : faction_snap ) {
-            for( const auto &[other_id, _o] : faction_snap ) {
+        for( const auto &[fac_id, _m] : *faction_snap_for_plan ) {
+            for( const auto &[other_id, _o] : *faction_snap_for_plan ) {
                 if( fac_id == other_id ) {
                     continue;
                 }
@@ -5395,8 +5883,15 @@ void game::monmove()
                 }
             }
         }
+        if( cache != nullptr ) {
+            cache->hostile_fac_map = hostile_fac_map;
+            hostile_fac_map_for_plan = &cache->hostile_fac_map;
+        } else {
+            hostile_fac_map_for_plan = &hostile_fac_map;
+        }
     }
-    const monster::compute_plan_context plan_ctx{ &mon_snap, &npc_snap, &faction_snap, &hostile_fac_map };
+    const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,
+            hostile_fac_map_for_plan };
 
     // parallel_for_chunked with a small chunk size gives the
     // pool a queue of fine-grained tasks.  Workers that finish a cheap monster
@@ -5413,8 +5908,8 @@ void game::monmove()
             } );
         } else {
             ZoneScopedN( "monmove_compute_plans_serial" );
-            for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-                precomputed[i] = plannable[i]->compute_plan( plan_ctx );
+            for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+                precomputed[index] = plannable[index]->compute_plan( plan_ctx );
             }
         }
     }
@@ -5423,11 +5918,14 @@ void game::monmove()
     {
         ZoneScopedN( "monmove_build_plan_index" );
         plan_index.reserve( plannable.size() );
-        for( int i = 0; i < static_cast<int>( plannable.size() ); ++i ) {
-            plan_index[plannable[i]] = i;
+        for( const auto index : std::views::iota( size_t{ 0 }, plannable.size() ) ) {
+            plan_index[plannable[index]] = static_cast<int>( index );
         }
     }
     // -----------------------------------------------------------------------
+
+    const auto player_pos = u.bub_pos();
+    const int current_turn = to_turn<int>( calendar::turn );
 
     // -----------------------------------------------------------------------
     // LOD-B: Lifecycle loop — runs for EVERY monster regardless of tier or
@@ -5436,7 +5934,7 @@ void game::monmove()
     // -----------------------------------------------------------------------
     {
         ZoneScopedN( "monmove_lifecycle" );
-        for( monster *critter_ptr : mon_snap ) {
+        for( monster *critter_ptr : *mon_snap ) {
             monster &critter = *critter_ptr;
             // Skip monsters in lazy-border or otherwise non-simulated submaps — their
             // submap has no active caches (transparency, lightmap, fields) and
@@ -5481,6 +5979,10 @@ void game::monmove()
                 }
                 critter.try_reproduce();
             }
+            if( activity_ai_paused->contains( critter_ptr ) ) {
+                critter.moves = 0;
+                critter.next_turn = current_turn + 1;
+            }
         }
     }
 
@@ -5493,53 +5995,90 @@ void game::monmove()
     // is alive and has moves this turn).
     //
     // Sort ascending by Chebyshev distance to player so the budget cap
-    // removes the farthest monsters rather than arbitrary ones.  Monsters
-    // skipped by the budget retain their current next_turn value so they
-    // are guaranteed to run on the following turn.
+    // removes the farthest monsters rather than arbitrary ones. Activity skip
+    // mode sorts once and reuses that ordering through the fixed-window batch.
+    // Monsters skipped by the budget retain their current next_turn value so
+    // they are guaranteed to run on the following turn.
     // -----------------------------------------------------------------------
-    const auto player_pos = u.bub_pos();
-    const int current_turn   = to_turn<int>( calendar::turn );
-
     // Build eligible list paired with pre-computed distances so each monster's
     // distance is calculated exactly once.  The pair is (dist, monster*) so
     // the default comparator orders by distance first.
     std::vector<std::pair<int, monster *>> eligible;
-    {
+    if( activity_skip_ai && cache != nullptr ) {
         ZoneScopedN( "monmove_build_eligible" );
-        auto monsters = all_monsters();
-        eligible.reserve( monsters.items ? monsters.items->size() : 0 );
-        for( monster &critter : monsters ) {
-            if( !critter.is_dead() &&
-                !critter.has_effect( effect_ridden ) &&
-                critter.moves > 0 &&
-                critter.next_turn <= current_turn &&
-                critter.is_simulated() ) {
-                eligible.emplace_back( rl_dist( critter.bub_pos(), player_pos ), &critter );
+        if( !use_activity_cache ) {
+            auto eligible_order = std::vector<std::pair<int, monster *>> {};
+            eligible_order.reserve( mon_snap->size() );
+            for( monster *critter : *mon_snap ) {
+                if( !critter->is_dead() &&
+                    !activity_ai_paused->contains( critter ) &&
+                    critter->is_simulated() ) {
+                    eligible_order.emplace_back( rl_dist( critter->bub_pos(), player_pos ), critter );
+                }
+            }
+            std::ranges::sort( eligible_order );
+            cache->eligible_order = std::move( eligible_order );
+            cache->valid = true;
+            use_activity_cache = true;
+        }
+        eligible.reserve( cache->eligible_order.size() );
+        auto accepted = 0;
+        for( const auto &[distance, critter] : cache->eligible_order ) {
+            if( critter == nullptr || critter->is_dead() ||
+                activity_ai_paused->contains( critter ) ||
+                critter->has_effect( effect_ridden ) ||
+                critter->moves <= 0 ||
+                critter->next_turn > current_turn ||
+                !critter->is_simulated() ) {
+                continue;
+            }
+            if( effective_budget <= 0 || accepted < effective_budget ) {
+                eligible.emplace_back( distance, critter );
+                ++accepted;
+            } else {
+                critter->moves = 0;
             }
         }
-    }
-
-    // Apply the budget cap.  Excess monsters (farthest) are not processed
-    // this turn; next_turn is NOT advanced for them so they are highest-
-    // priority next turn (no starvation).
-    //
-    // nth_element is O(M) average — it partitions the N closest to the front
-    // without fully ordering them, which is all we need for the budget cut.
-    // Only pay the ordering cost when the budget actually fires.
-    if( effective_budget > 0 &&
-        static_cast<int>( eligible.size() ) > effective_budget ) {
-        ZoneScopedN( "monmove_apply_budget" );
-        std::nth_element( eligible.begin(),
-                          eligible.begin() + effective_budget,
-                          eligible.end() );
-        // Drain moves for budget-cut monsters to prevent accumulation.
-        // Without this, a monster deferred for N turns accumulates N turns
-        // of moves from process_turn(), then bursts through N actions when
-        // it finally gets a slot — no net savings at the budget boundary.
-        for( int i = effective_budget; i < static_cast<int>( eligible.size() ); ++i ) {
-            eligible[i].second->moves = 0;
+    } else {
+        {
+            ZoneScopedN( "monmove_build_eligible" );
+            auto monsters = all_monsters();
+            eligible.reserve( monsters.items ? monsters.items->size() : 0 );
+            for( monster &critter : monsters ) {
+                if( !critter.is_dead() &&
+                    !activity_ai_paused->contains( &critter ) &&
+                    !critter.has_effect( effect_ridden ) &&
+                    critter.moves > 0 &&
+                    critter.next_turn <= current_turn &&
+                    critter.is_simulated() ) {
+                    eligible.emplace_back( rl_dist( critter.bub_pos(), player_pos ), &critter );
+                }
+            }
         }
-        eligible.resize( effective_budget );
+
+        // Apply the budget cap.  Excess monsters (farthest) are not processed
+        // this turn; next_turn is NOT advanced for them so they are highest-
+        // priority next turn (no starvation).
+        //
+        // nth_element is O(M) average — it partitions the N closest to the front
+        // without fully ordering them, which is all we need for the budget cut.
+        // Only pay the ordering cost when the budget actually fires.
+        if( effective_budget > 0 &&
+            static_cast<int>( eligible.size() ) > effective_budget ) {
+            ZoneScopedN( "monmove_apply_budget" );
+            std::nth_element( eligible.begin(),
+                              eligible.begin() + effective_budget,
+                              eligible.end() );
+            // Drain moves for budget-cut monsters to prevent accumulation.
+            // Without this, a monster deferred for N turns accumulates N turns
+            // of moves from process_turn(), then bursts through N actions when
+            // it finally gets a slot — no net savings at the budget boundary.
+            for( auto &entry : eligible |
+                 std::views::drop( static_cast<size_t>( effective_budget ) ) ) {
+                entry.second->moves = 0;
+            }
+            eligible.resize( effective_budget );
+        }
     }
 
     // How many monsters will actually enter the move loop this turn (after cap).
@@ -5615,8 +6154,8 @@ void game::monmove()
     auto monmove_controlled_moves = int64_t{ 0 };
     {
         ZoneScopedN( "monmove_execute_eligible" );
-        for( int i = 0; i < static_cast<int>( eligible.size() ); ++i ) {
-            monster &critter = *eligible[i].second;
+        for( const auto &entry : eligible ) {
+            monster &critter = *entry.second;
             if( critter.is_dead() ) {
                 continue;
             }
@@ -5714,6 +6253,15 @@ void game::monmove()
     TracyPlot( "Monmove Fallback Plans", monmove_fallback_plans );
     TracyPlot( "Monmove Serial Replans", monmove_serial_replans );
     TracyPlot( "Monmove Controlled Moves", monmove_controlled_moves );
+
+    if( activity_skip_ai ) {
+        ZoneScopedN( "monmove_activity_restore_lod" );
+        for( const auto &[critter, real_lod_tier] : *activity_lod_restore ) {
+            if( critter != nullptr ) {
+                critter->lod_tier = real_lod_tier;
+            }
+        }
+    }
 
     {
         ZoneScopedN( "monmove_cleanup_post_execute" );
@@ -7743,10 +8291,6 @@ void game::pickup()
     pickup( *examp_ );
 }
 
-void game::pickup_all()
-{
-    pickup::pick_up_all_nearby();
-}
 
 void game::pickup( const tripoint_bub_ms &p )
 {
@@ -7756,12 +8300,38 @@ void game::pickup( const tripoint_bub_ms &p )
     } );
     add_draw_callback( hilite_cb );
 
-    pickup::pick_up( p, 0 );
+    if( get_option<bool>( "NEW_PICKUP_MENU" ) ) {
+        std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_from_tile( g->u, p );
+        g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                              ( pickup_list, g->u.bub_pos() ) ) );
+    } else {
+        pickup::pick_up( p, 0 );
+    }
+
+}
+
+void game::pickup_all()
+{
+    if( get_option<bool>( "NEW_PICKUP_MENU" ) ) {
+        std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_nearby( g->u );
+        g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                              ( pickup_list, g->u.bub_pos() ) ) );
+    } else {
+        pickup::pick_up_all_nearby();
+    }
+
 }
 
 void game::pickup_feet()
 {
-    pickup::pick_up( u.bub_pos(), 1 );
+    if( get_option<bool>( "NEW_PICKUP_MENU" ) ) {
+        std::vector<pickup::pick_drop_selection> pickup_list = game_menus::inv::pickup_from_tile( g->u,
+                g->u.bub_pos() );
+        g->u.assign_activity( std::make_unique<player_activity>( std::make_unique<pickup_activity_actor>
+                              ( pickup_list, g->u.bub_pos() ) ) );
+    } else {
+        pickup::pick_up( u.bub_pos(), 1 );
+    }
 }
 
 //Shift player by one tile, look_around(), then restore previous position.

@@ -3839,14 +3839,22 @@ void catacurses::init_interface()
     // initialize sound set
     load_soundset();
 
-    font = std::make_unique<FontFallbackList>( renderer, format, fl.fontwidth, fl.fontheight,
-            windowsPalette, fl.typeface, fl.fontsize, fl.fontblending );
-    map_font = std::make_unique<FontFallbackList>( renderer, format, fl.map_fontwidth,
-               fl.map_fontheight,
-               windowsPalette, fl.map_typeface, fl.map_fontsize, fl.fontblending );
-    overmap_font = std::make_unique<FontFallbackList>( renderer, format, fl.overmap_fontwidth,
-                   fl.overmap_fontheight,
-                   windowsPalette, fl.overmap_typeface, fl.overmap_fontsize, fl.fontblending );
+    try {
+        font = std::make_unique<FontFallbackList>( renderer, format, fl.fontwidth, fl.fontheight,
+                windowsPalette, fl.typeface, fl.fontsize, fl.fontblending );
+        map_font = std::make_unique<FontFallbackList>( renderer, format, fl.map_fontwidth,
+                   fl.map_fontheight,
+                   windowsPalette, fl.map_typeface, fl.map_fontsize, fl.fontblending );
+        overmap_font = std::make_unique<FontFallbackList>( renderer, format, fl.overmap_fontwidth,
+                       fl.overmap_fontheight,
+                       windowsPalette, fl.overmap_typeface, fl.overmap_fontsize, fl.fontblending );
+    } catch( std::exception &e ) {
+        font.reset();
+        map_font.reset();
+        overmap_font.reset();
+        throw;
+    }
+
     stdscr = newwin( get_terminal_height(), get_terminal_width(), point_zero );
     //newwin calls `new WINDOW`, and that will throw, but not return nullptr.
 

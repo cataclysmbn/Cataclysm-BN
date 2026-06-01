@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "activity_time_cadence.h"
 #include "assign.h"
 #include "avatar.h"
 #include "bodypart.h"
@@ -1146,7 +1147,7 @@ void weather_manager::update_weather()
     lightning_active = false;
     // Check weather every few turns, instead of every turn.
     // TODO: predict when the weather changes and use that time.
-    nextweather = calendar::turn + 5_minutes;
+    nextweather = calendar::turn + activity_time_cadence::weather_refresh();
     if( weather_id != old_weather && weather_id->dangerous &&
         g->get_levz() >= 0 && get_map().is_outside( g->u.bub_pos() )
         && !g->u.has_activity( ACT_WAIT_WEATHER ) ) {

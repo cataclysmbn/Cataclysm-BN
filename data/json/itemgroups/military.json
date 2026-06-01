@@ -207,9 +207,18 @@
     "id": "infantry_medical_gear",
     "subtype": "collection",
     "entries": [
-      { "item": "1st_aid", "prob": 80 },
+      { "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ], "prob": 80 },
       { "item": "quikclot", "prob": 70 },
-      { "collection": [ { "item": "morphine" }, { "item": "syringe" } ], "prob": 40 }
+      { "collection": [ { "item": "morphine" }, { "item": "syringe" } ], "prob": 40 },
+      {
+        "distribution": [
+          { "item": "rx12_injector", "charges": [ 0, 2 ], "prob": 10 },
+          { "item": "ampoule", "charges": 2, "prob": 40 },
+          { "item": "rx11_stimpack", "charges": [ 0, 5 ], "prob": 10 },
+          { "item": "stimpack_ammo", "charges": 5, "prob": 40 }
+        ],
+        "prob": 5
+      }
     ]
   },
   {
@@ -237,6 +246,7 @@
       { "item": "red_dot_sight", "prob": 100 },
       { "item": "pistol_grip", "prob": 100 },
       { "item": "m203", "prob": 50 },
+      { "item": "40x53mm_conversion_kit", "prob": 25 },
       { "item": "cheek_pad", "prob": 100 },
       { "item": "masterkey", "prob": 100 },
       { "item": "laser_sight", "prob": 100 },
@@ -348,6 +358,7 @@
       { "item": "m320_mod", "prob": 10 },
       { "item": "ugl_buttstock", "prob": 10 },
       { "item": "mgl", "prob": 6 },
+      { "item": "40x53mm_conversion_kit", "prob": 3 },
       { "item": "rm802", "prob": 6 },
       { "item": "suppressor", "prob": 15 },
       { "item": "shot_suppressor", "prob": 1 },
@@ -649,7 +660,8 @@
       { "item": "neccowafers", "prob": 30 },
       { "item": "can_beans", "prob": 40 },
       { "item": "pork_beans", "prob": 40 },
-      { "item": "1st_aid", "prob": 35 },
+      { "item": "1st_aid", "prob": 28 },
+      { "item": "1st_aid_deluxe", "prob": 7 },
       { "item": "saline", "prob": 10 },
       { "item": "con_milk", "prob": 10 },
       { "item": "milk_UHT", "prob": 25 },
