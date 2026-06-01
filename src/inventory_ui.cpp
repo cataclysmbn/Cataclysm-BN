@@ -2652,8 +2652,11 @@ inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
             int needed_count = std::max(0, chosen_count - count);
             int to_add = std::min(needed_count, item->count());
             count += to_add;
-            weight_carried += (item->weight() / item->count()) * to_add;
-            volume_carried += (item->volume() / item->count()) * to_add;
+            //WARNING: This specific order of operations and casts are needed
+            //to ensure volume and weight are accurate, because of the fact the game
+            //works in base volumes of 1ml and 1mg
+            weight_carried += item->weight() * (static_cast<double>(to_add) / item->count());
+            volume_carried += item->volume() * (static_cast<double>(to_add) / item->count());
         }
     }
 
