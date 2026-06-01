@@ -8139,9 +8139,16 @@
     "points": 5,
     "items": {
       "both": {
-        "items": [ "socks", "smart_phone", "wristwatch"],
-        "entries": [ { "group": "RNGweapon" }, { "group": "survivorzed_suits" }, { "group": "survivorzed_boots" }, { "group": "survivorzed_head" }, { "group": "survivorzed_extra" }, { "group": "survivorzed_gloves" } ]
-        },
+        "items": [ "socks", "smart_phone", "wristwatch" ],
+        "entries": [
+          { "group": "RNGweapon" },
+          { "group": "survivorzed_suits" },
+          { "group": "survivorzed_boots" },
+          { "group": "survivorzed_head" },
+          { "group": "survivorzed_extra" },
+          { "group": "survivorzed_gloves" }
+        ]
+      },
       "male": [ "briefs" ],
       "female": [ "bra", "panties" ]
     }
