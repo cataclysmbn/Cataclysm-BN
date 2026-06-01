@@ -192,7 +192,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 4 ], [ "tailor_portfolio", 4 ] ],
     "using": [ [ "sewing_standard", 25 ] ],
-    "components": [ [ [ "rag", 20 ] ] ]
+    "components": [ [ [ "rag", 14 ] ] ]
   },
   {
     "result": "kilt",

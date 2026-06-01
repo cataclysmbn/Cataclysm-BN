@@ -517,7 +517,7 @@
     "autolearn": true,
     "book_learn": [ [ "textbook_tailor", 5 ], [ "tailor_portfolio", 5 ]  ],
     "using": [ [ "sewing_standard", 35 ] ],
-    "components": [ [ [ "rag", 15 ] ], [ [ "nylon", 15 ] ] ]
+    "components": [ [ [ "rag", 8 ] ], [ [ "nylon", 13 ] ] ]
   },
   {
     "result": "coat_lab",
