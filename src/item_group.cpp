@@ -3,9 +3,11 @@
 #include <algorithm>
 #include <cassert>
 #include <set>
+#include <vector>
 
 #include "calendar.h"
 #include "debug.h"
+#include "detached_ptr.h"
 #include "enums.h"
 #include "flag.h"
 #include "flat_set.h"
@@ -17,6 +19,9 @@
 #include "rng.h"
 #include "type_id.h"
 
+// FIXME: Somehow we cant get item_groups from their ids
+// Only can get Item_spawn_data
+// Either that or it is not clear how to access it from item_factory
 /** @relates string_id */
 template<>
 bool string_id<Item_group>::is_valid() const
@@ -140,137 +145,85 @@ void Single_item_creator::check_consistency( const std::string &context ) const
     }
     if( modifier ) {
         modifier->check_consistency( context );
-        for( auto itypeId : every_item() ) {
+        for( auto &item : every_item_modified( false ) ) {
             if( modifier && modifier->ammo != nullptr ) {
-                if( itypeId->gun ) {
-                    for( auto ammoType : modifier->ammo->every_item() ) {
-                        if( !ammoType ) {
-                            continue;
-                        }
-                        if( !itypeId->gun->default_mods.empty() ) {
-                            for( auto mod : itypeId->gun->default_mods ) {
-                                if( !mod->mod->ammo_modifier.empty() && !itypeId->gun->ammo.contains( ammoType->ammo->type ) &&
-                                    !mod->mod->ammo_modifier.contains( ammoType->ammo->type ) ) {
-                                    debugmsg( "Incompatible gun ammo: %s in ( %s %s )", ammoType->get_id().str(),
-                                              itypeId->get_id().str(), context );
-                                }
+                for( auto &ammo : modifier->ammo->every_item_modified() ) {
+                    if( item->is_tool() ) {
+                        if( item->magazine_integral() ) {
+                            if( !item->ammo_types().contains( ammo->ammo_type() ) ) {
+                                debugmsg( "Incompatible ammo: %s in ( %s %s )", ammo->type->get_id().str(),
+                                          item->type->get_id().str(), context );
                             }
-                        } else if( !itypeId->gun->ammo.contains( ammoType->ammo->type ) ) {
-                            debugmsg( "Incompatible gun ammo: %s in ( %s %s )", ammoType->get_id().str(),
-                                      itypeId->get_id().str(), context );
+                        } else {
+                            debugmsg( "I am not a working tool %s", item->type->get_id().str() );
                         }
                     }
-                } else if( itypeId->tool ) {
-                    for( auto ammoType : modifier->ammo->every_item() ) {
-                        // I feel like there is some ammotype error here for the second check
-                        // But this isn't the right place for it
-                        // TODO: determine if the second check should be errored
-                        if( !ammoType || !ammoType->ammo ) {
-                            continue;
-                        }
-                        if( !itypeId->tool->ammo_id.contains( ammoType->ammo->type ) ) {
-                            debugmsg( "Incompatible tool ammo: %s in ( %s %s )", ammoType->get_id().str(),
-                                      itypeId->get_id().str(), context );
+                    if( item->is_magazine() || item->is_gun() ) {
+                        if( item->magazine_integral() ) {
+                            if( !item->ammo_types().contains( ammo->ammo_type() ) ) {
+                                debugmsg( "Incompatible ammo: %s in ( %s %s )", ammo->type->get_id().str(),
+                                          item->type->get_id().str(), context );
+                            }
+                        } else if( !item->ammo_types().contains( ammo->ammo_type() ) ) {
+                            debugmsg( "Incompatible ammo: %s in ( %s %s )", ammo->type->get_id().str(),
+                                      item->type->get_id().str(), context );
                         }
                     }
-                } else if( itypeId->magazine ) {
-                    for( auto ammoType : modifier->ammo->every_item() ) {
-                        if( !ammoType ) {
-                            continue;
+                    // Exception as can_reload_with does not work for containers
+                    // As it always returns true regardless of volume
+                    else if( item->is_container() ) {
+                        if( !item->is_reloadable_with( ammo->type->get_id() ) ) {
+                            debugmsg( "Incompatible contained item: %s in ( %s %s )", ammo->type->get_id().str(),
+                                      item->type->get_id().str(), context );
                         }
-                        if( !itypeId->magazine->type.contains( ammoType->ammo->type ) ) {
-                            debugmsg( "Incompatible magazine ammo: %s in ( %s %s )", ammoType->get_id().str(),
-                                      itypeId->get_id().str(), context );
+                        if( item->get_container_capacity() < ammo->volume() ) {
+                            debugmsg( "Incompatible contained size: %s in ( %s %s )", ammo->type->get_id().str(),
+                                      item->type->get_id().str(), context );
                         }
                     }
                 }
             }
             if( modifier && modifier->container != nullptr ) {
-                for( auto containerType : modifier->container->every_item() ) {
-                    if( containerType->container ) {
-                        units::volume vol;
-                        // If the item is count by charges in a container
-                        // It always has only one charge in the container
-                        if( itypeId->count_by_charges() ) {
-                            if( itypeId->volume % itypeId->stack_size == 0_ml ) {
-                                vol = itypeId->volume / itypeId->stack_size;
-                            } else {
-                                vol = itypeId->volume / itypeId->stack_size + 1_ml;
-                            }
-                        } else {
-                            vol = itypeId->volume;
+                for( auto &container : modifier->container->every_item_modified() ) {
+                    if( container->is_container() ) {
+                        if( container->is_container() && !container->type->container->watertight &&
+                            item->type->phase == LIQUID ) {
+                            debugmsg( "Liquid %s in solid container ( %s %s )", item->type->get_id().str(),
+                                      container->type->get_id().str(), context );
                         }
-                        if( containerType->container->contains < vol ) {
-                            debugmsg( "Oversized contained object: ( %s %s ) in %s", itypeId->get_id().str(), context,
-                                      containerType->get_id().str() );
+                        if( container->get_container_capacity() < item->volume() ) {
+                            debugmsg( "Incompatible contents size: %s in ( %s %s )", item->type->get_id().str(),
+                                      container->type->get_id().str(), context );
+
                         }
-                    } else if( containerType->can_use( "holster" ) ) {
-                        const auto *ptr = dynamic_cast<const holster_actor *>
-                                          ( containerType->get_use( "holster" )->get_actor_ptr() );
-                        units::volume vol;
-                        if( itypeId->count_by_charges() ) {
-                            if( itypeId->volume % itypeId->stack_size == 0_ml ) {
-                                vol = itypeId->volume / itypeId->stack_size;
-                            } else {
-                                vol = itypeId->volume / itypeId->stack_size + 1_ml;
-                            }
-                        } else {
-                            vol = itypeId->volume;
-                        }
-                        if( ptr->max_volume < vol || ptr->min_volume > vol ) {
-                            debugmsg( "Improperly sized holstered object object: ( %s %s ) in %s", itypeId->get_id().str(),
-                                      context,
-                                      containerType->get_id().str() );
-                        }
+                    } else if( container->is_holster() && !container->can_holster( *item ) ) {
+                        debugmsg( "Incorrect holstered object object: ( %s %s ) in %s", item->type->get_id().str(),
+                                  context, container->type->get_id().str() );
                     }
                 }
             }
             if( modifier && modifier->contents != nullptr ) {
-                for( auto contentsType : modifier->contents->every_item() ) {
-                    if( itypeId->container ) {
-                        units::volume vol;
-                        // If the item is count by charges in a container
-                        // It always has only one charge in the container
-                        if( contentsType->count_by_charges() ) {
-                            auto maxmult = std::max( modifier->charges.second, modifier->count.second );
-                            if( contentsType->volume % contentsType->stack_size == 0_ml ) {
-                                vol = contentsType->volume / contentsType->stack_size * maxmult;
-                            } else {
-                                vol = ( contentsType->volume / contentsType->stack_size + 1_ml ) * maxmult;
+                for( auto &contents : modifier->contents->every_item_modified() ) {
+                    // Exception as can_reload_with does not work for containers
+                    // As it always returns true regardless of volume
+                    if( item->is_container() ) {
+                        if( !item->is_reloadable_with( contents->type->get_id() ) ) {
+                            // Okay if we cant contain it first try nesting it
+                            // Then if still failing enter debugmsg
+                            contents = item::in_its_container( std::move( contents ) );
+                            if( !item->is_reloadable_with( contents->type->get_id() ) ) {
+                                debugmsg( "Incompatible contained item: %s in ( %s %s )", contents->type->get_id().str(),
+                                          item->type->get_id().str(), context );
                             }
-                        } else {
-                            vol = contentsType->volume;
                         }
-                        if( itypeId->container->contains < vol ) {
-                            debugmsg( "Oversized contained object: ( %s %s ) in %s", contentsType->get_id().str(), context,
-                                      itypeId->get_id().str() );
+                        auto maxmult = std::max( modifier->charges.second, modifier->count.second );
+                        if( item->get_container_capacity() < contents->volume() * maxmult ) {
+                            debugmsg( "Incompatible contained size: %s in ( %s %s )", contents->type->get_id().str(),
+                                      item->type->get_id().str(), context );
                         }
-                    } else if( itypeId->can_use( "holster" ) ) {
-                        const auto *ptr = dynamic_cast<const holster_actor *>
-                                          ( itypeId->get_use( "holster" )->get_actor_ptr() );
-                        units::volume vol;
-                        if( contentsType->count_by_charges() ) {
-                            if( contentsType->volume % contentsType->stack_size == 0_ml ) {
-                                vol = contentsType->volume / contentsType->stack_size;
-                            } else {
-                                vol = contentsType->volume / contentsType->stack_size + 1_ml;
-                            }
-                        } else {
-                            vol = contentsType->volume;
-                        }
-                        if( ptr->max_volume < vol || ptr->min_volume > vol ) {
-                            debugmsg( "Improperly sized holstered object object: ( %s %s ) in %s", contentsType->get_id().str(),
-                                      context,
-                                      itypeId->get_id().str() );
-                        }
-                    } else if( itypeId->magazine ) {
-                        if( !contentsType ) {
-                            continue;
-                        }
-                        if( !itypeId->magazine->type.contains( contentsType->ammo->type ) ) {
-                            debugmsg( "Incompatible magazine ammo: %s in ( %s %s )", contentsType->get_id().str(),
-                                      itypeId->get_id().str(), context );
-                        }
+                    } else if( item->is_holster() && !item->can_holster( *contents ) ) {
+                        debugmsg( "Incorrect holstered object object: ( %s %s ) in %s", contents->type->get_id().str(),
+                                  context, item->type->get_id().str() );
                     }
                 }
             }
@@ -339,6 +292,50 @@ std::set<const itype *> Single_item_creator::every_item() const
                 return isd->every_item();
             }
             return {};
+        }
+        case S_NONE:
+            return {};
+    }
+    assert( !"Unexpected type" );
+    return {};
+}
+
+std::vector<detached_ptr<item>> Single_item_creator::every_item_modified( bool modify ) const
+{
+    std::vector<detached_ptr<item>> items;
+    switch( type ) {
+        case S_ITEM: {
+            detached_ptr<item> itm = item::spawn( itype_id( id ) );
+            if( modifier && modify ) {
+                items.push_back( modifier->modify( std::move( itm ) ) );
+            } else {
+                items.push_back( std::move( itm ) );
+            }
+            return items;
+        }
+        case S_ITEM_GROUP: {
+            auto group_id = item_group_id( id );
+            // Check consistency so we get the consistency errors not the
+            // I failed to place it right errors
+            Item_spawn_data *isd = item_controller->get_group( group_id );
+            if( !isd ) {
+                debugmsg( "Invalid item group %s", id );
+                return {};
+            }
+            if( isd && !isd->checked ) {
+                isd->check_consistency( "" );
+                isd->checked = true;
+            }
+            std::vector<detached_ptr<item>> item_group_items = isd->every_item_modified( true );
+            items.reserve( items.size() + item_group_items.size() );
+            for( auto &itm : item_group_items ) {
+                if( modifier && modify ) {
+                    items.push_back( modifier->modify( std::move( itm ) ) );
+                } else {
+                    items.push_back( std::move( itm ) );
+                }
+            }
+            return items;
         }
         case S_NONE:
             return {};
@@ -749,6 +746,19 @@ std::set<const itype *> Item_group::every_item() const
     for( const auto &spawn_data : items ) {
         std::set<const itype *> these_items = spawn_data->every_item();
         result.insert( these_items.begin(), these_items.end() );
+    }
+    return result;
+}
+
+std::vector<detached_ptr<item>> Item_group::every_item_modified( bool modify ) const
+{
+    std::vector<detached_ptr<item>> result;
+    for( const auto &spawn_data : items ) {
+        auto these_items = spawn_data->every_item_modified();
+        result.reserve( result.size() + these_items.size() );
+        for( auto &itm : these_items ) {
+            result.push_back( std::move( itm ) );
+        }
     }
     return result;
 }
