@@ -1166,7 +1166,7 @@ void melee::roll_cut_damage( const Character &c, bool crit, damage_instance &di,
     }
 
     int arpen = attack.damage.get_armor_pen( DT_CUT );
-    if (weap.has_flag(flag_DIAMOND)) {
+    if (weap.has_flag(flag_DIAMOND) ) {
         arpen += 35;
     }
     float armor_mult = attack.damage.get_armor_mult( DT_CUT );
@@ -1250,7 +1250,7 @@ void melee::roll_stab_damage( const Character &c, bool crit, damage_instance &di
     float armor_mult = attack.damage.get_armor_mult( DT_STAB );
     int arpen = attack.damage.get_armor_pen( DT_STAB );
     arpen += c.mabuff_arpen_bonus( DT_STAB );
-    if (weap.has_flag(flag_DIAMOND)) {
+    if (weap.has_flag(flag_DIAMOND) ) {
         arpen += 35;
     }
     armor_mult *= c.mabuff_tg_armor_mult( DT_STAB );
