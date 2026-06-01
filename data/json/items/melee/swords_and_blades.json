@@ -2322,9 +2322,8 @@
     "id": "radiant_blade",
     "type": "GENERIC",
     "category": "weapons",
-    "weapon_category": [ "JAPANESE_SWORDS", "2H_SWORDS", "MEDIEVAL_SWORDS", "1H_SWORDS" ],
     "name": { "str": "radiant blade" },
-    "description": "Trails of brilliant light snake across the blade of this masterwork sword. Integrated with the remains of a mutant triffid, it is light and versatile enough to be easily adapted to most sword fighting styles.",
+    "description": "Trails of brilliant light snake across the blade of this masterwork sword. Integrated with the remains of a mutant triffid, it is lightweight and versatile.  However, it's chaotic nature prevents it from being effectively used with almost any martial art.",
     "weight": "350 g",
     "volume": "2500 ml",
     "attacks": [
