@@ -44,13 +44,6 @@ class base_settings
 {
     protected:
         mutable item_search_cache map_items;
-        /**
-         * Unlike item_search_cache, sometimes we want to search by display name rather than necessarily by items.
-         * Example: A plastic water bottle item containg 2 units of water is structured as a
-         * "plastic bottle" container with a "water" item with 2 charges inside the "plastic bottle"
-         * and displayed as "plastic bottle (water 2/2)" which isn't actually a single item, but 
-         * we still want to be able to grab items with such a display name so we search this set for such a name
-         */
         bool cache_is_valid = false;
     
     public:
