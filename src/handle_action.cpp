@@ -794,7 +794,17 @@ static void smash()
             return;
         }
     }
-    didit = here.bash( smashp, smashskill, false, false, smash_floor ).did_bash;
+    const auto bash = bash_params{
+        .strength = smashskill,
+        .silent = false,
+        .destroy = false,
+        .bash_floor = smash_floor,
+        .roll = static_cast<float>( rng_float( 0, 1.0f ) ),
+        .bashing_from_above = false,
+        .do_recurse = true,
+        .caused_by_player = true
+    };
+    didit = here.bash( smashp, bash ).did_bash;
     if( didit ) {
         if( !mech_smash ) {
             u.handle_melee_wear( weapon );

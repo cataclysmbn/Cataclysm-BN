@@ -172,6 +172,8 @@ struct bash_params {
      * TODO: Remove, properly unwrap the calls instead
      */
     bool do_recurse = true;
+    // Was this bash action directly caused by the avatar?
+    bool caused_by_player = false;
 };
 
 struct bash_results {
@@ -1595,6 +1597,8 @@ class map : public submap_load_listener
          */
         bash_results bash( const tripoint_bub_ms &p, int str, bool silent = false,
                            bool destroy = false, bool bash_floor = false,
+                           const vehicle *bashing_vehicle = nullptr );
+        bash_results bash( const tripoint_bub_ms &p, const bash_params &params,
                            const vehicle *bashing_vehicle = nullptr );
 
         bash_results bash_vehicle( const tripoint_bub_ms &p, const bash_params &params );

@@ -2009,12 +2009,30 @@ bool game::do_turn()
                     queue_screenshot = false;
                 }
 
-                if( handle_action() ) {
+                const auto moves_before_action = u.moves;
+                const auto handled_action = handle_action();
+                if( handled_action ) {
                     ++moves_since_last_save;
+                }
+
+                if( !soundperf && u.moves != moves_before_action ) {
+                    sounds::reset_markers();
+                    u.volume = 0;
                 }
 
                 if( is_game_over() ) {
                     return cleanup_at_end();
+                }
+
+                if( !soundperf && u.moves <= 0 ) {
+                    const auto is_unheard_by_player = []( const auto &sound ) {
+                        return !sound.heard_by_player;
+                    };
+                    const auto has_unheard_player_sounds = std::ranges::any_of(
+                                m.m_sound_cache.sound_instances, is_unheard_by_player );
+                    if( has_unheard_player_sounds ) {
+                        sounds::process_sound_markers( &u );
+                    }
                 }
 
                 if( uquit == QUIT_WATCH ) {
@@ -2024,9 +2042,6 @@ bool game::do_turn()
                     process_activity();
                 }
             }
-            // Reset displayed sound markers now that the turn is over.
-            // We only want this to happen if the player had a chance to examine the sounds.
-            sounds::reset_markers();
         }
     }
 
@@ -2173,9 +2188,6 @@ bool game::do_turn()
         sfx::do_vehicle_exterior_engine_sfx();
         sfx::do_fatigue();
     }
-
-    // reset player noise
-    u.volume = 0;
 
     // Tick all loaded submaps: fields for every submap, items/vehicles for batch-eligible ones.
     world_tick();

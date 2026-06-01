@@ -4199,6 +4199,18 @@ static auto get_sound_volume( const map_bash_info &bash, const bash_params &para
     return bash.sound_vol.value_or( std::clamp( minvol + impact_strength, minvol, maxvol ) );
 }
 
+static void set_bash_sound_source( sound_event &se, const bash_params &params )
+{
+    if( !params.caused_by_player ) {
+        return;
+    }
+
+    auto &player_character = get_avatar();
+    se.from_player = true;
+    se.faction = player_character.get_faction()->id;
+    se.monfaction = player_character.get_faction()->mon_faction;
+}
+
 bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params &params )
 {
     bash_results result;
@@ -4247,6 +4259,7 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
         se.description = bash.sound.translated();
         se.id = soundfxid;
         se.variant = soundfxvariant;
+        set_bash_sound_source( se, params );
         sounds::sound( se );
     }
 
@@ -4437,6 +4450,7 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
         se.description = bash.sound.translated();
         se.id = soundfxid;
         se.variant = soundfxvariant;
+        set_bash_sound_source( se, params );
         sounds::sound( se );
     }
 
@@ -4519,6 +4533,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
                 se.description = _( "thump!" );
                 se.id = "smash_fail";
                 se.variant = "default";
+                set_bash_sound_source( se, params );
                 sounds::sound( se );
             }
 
@@ -4578,6 +4593,7 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
             se.description = bash->sound_fail.translated();
             se.id = "smash_fail";
             se.variant = soundfxvariant;
+            set_bash_sound_source( se, params );
             sounds::sound( se );
         }
 
@@ -4622,14 +4638,26 @@ bash_results map::bash( const tripoint_bub_ms &p, const int str,
                         bool silent, bool destroy, bool bash_floor,
                         const vehicle *bashing_vehicle )
 {
-    bash_params bsh{
-        str, silent, destroy, bash_floor, static_cast<float>( rng_float( 0, 1.0f ) ), false, true
+    const auto bsh = bash_params{
+        .strength = str,
+        .silent = silent,
+        .destroy = destroy,
+        .bash_floor = bash_floor,
+        .roll = static_cast<float>( rng_float( 0, 1.0f ) ),
+        .bashing_from_above = false,
+        .do_recurse = true
     };
+    return bash( p, bsh, bashing_vehicle );
+}
+
+bash_results map::bash( const tripoint_bub_ms &p, const bash_params &bsh,
+                        const vehicle *bashing_vehicle )
+{
     bash_results result;
 
     // Dimension bounds cannot be bashed - show message from boundary terrain
     if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
-        if( !silent && pocket_info_ ) {
+        if( !bsh.silent && pocket_info_ ) {
             const ter_t &boundary_ter = pocket_info_->bounds.boundary_terrain.obj();
             if( !boundary_ter.bash.sound_fail.empty() ) {
                 add_msg( m_info, boundary_ter.bash.sound_fail.translated() );
@@ -4700,6 +4728,7 @@ bash_results map::bash_items( const tripoint_bub_ms &p, const bash_params &param
         se.description = _( "glass shattering" );
         se.id = "smash_success";
         se.variant = "smash_glass_contents";
+        set_bash_sound_source( se, params );
         sounds::sound( se );
     }
     return result;
@@ -4719,6 +4748,7 @@ bash_results map::bash_vehicle( const tripoint_bub_ms &p, const bash_params &par
             se.description = _( "crash!" );
             se.id = "smash_success";
             se.variant = "hit_vehicle";
+            set_bash_sound_source( se, params );
             sounds::sound( se );
         }
 
