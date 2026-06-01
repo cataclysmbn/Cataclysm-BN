@@ -1968,7 +1968,9 @@ bool game::handle_action()
                     if( ladder ) {
                         const bool can_use_ladder =
                             mon->has_flag( MF_MOUNTABLE_LADDER ) ||
-                            mon->has_flag( MF_FLIES );
+                            mon->has_flag( MF_FLIES ) ||
+                            mon->has_flag( MF_CLIMBS ) ||
+                            mon->has_flag( MF_CLIMBS_WALLS );
 
                         if( !can_use_ladder ) {
                             add_msg( m_info, _( "Your mount can't go downstairs while riding." ) );
@@ -2023,7 +2025,9 @@ bool game::handle_action()
                     if( ladder ) {
                         const bool can_use_ladder =
                             mon->has_flag( MF_MOUNTABLE_LADDER ) ||
-                            mon->has_flag( MF_FLIES );
+                            mon->has_flag( MF_FLIES ) ||
+                            mon->has_flag( MF_CLIMBS ) ||
+                            mon->has_flag( MF_CLIMBS_WALLS );
 
                         if( !can_use_ladder ) {
                             add_msg( m_info, _( "Your mount can't go upstairs or climb while riding." ) );

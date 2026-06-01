@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "avatar.h"
+#include "cached_options.h"
 #include "coordinates.h"
 #include "game.h"
 #include "map.h"
@@ -411,4 +412,58 @@ TEST_CASE( "monster_vertical_melee_respects_floors", "[monster][z-level]" )
         CHECK( here.veh_at( you.bub_pos() ).part_with_feature( "BOARDABLE", true ).has_value() );
         CHECK_FALSE( grabber.attack_at( you.bub_pos() ) );
     }
+}
+
+TEST_CASE( "wall_climbing_monsters_can_climb_down_from_roof_edges", "[monster][z-level]" )
+{
+    clear_all_state();
+    clear_map();
+    put_player_underground();
+
+    auto &here = get_map();
+    const auto roof_pos = tripoint_bub_ms{ 60, 60, 1 };
+    const auto ground_pos = roof_pos + tripoint_below;
+
+    here.ter_set( roof_pos, ter_id( "t_open_air" ) );
+    here.ter_set( ground_pos, ter_id( "t_floor" ) );
+    here.ter_set( ground_pos + tripoint_west, ter_id( "t_wall" ) );
+    auto &you = get_avatar();
+    you.setpos( ground_pos + tripoint_east );
+
+    monster &spider = spawn_test_monster( "mon_spider_cellar_giant_s", roof_pos );
+    spider.set_moves( 1000 );
+    spider.anger = 100;
+    spider.set_dest( you.bub_pos() );
+    REQUIRE( spider.can_wall_climb_to( ground_pos ) );
+
+    const auto old_fov_3d = fov_3d;
+    fov_3d = false;
+    spider.move();
+    fov_3d = old_fov_3d;
+
+    CHECK( spider.bub_pos() == ground_pos );
+}
+
+TEST_CASE( "wall_climbing_monsters_do_not_climb_down_into_interiors", "[monster][z-level]" )
+{
+    clear_all_state();
+    clear_map();
+    put_player_underground();
+
+    auto &here = get_map();
+    const auto roof_pos = tripoint_bub_ms{ 60, 60, 1 };
+    const auto interior_pos = roof_pos + tripoint_below;
+
+    for( const auto &pos : points_in_radius( roof_pos, 1 ) ) {
+        here.ter_set( pos, ter_id( "t_flat_roof" ) );
+    }
+    here.ter_set( interior_pos, ter_id( "t_floor" ) );
+    here.ter_set( interior_pos + tripoint_west, ter_id( "t_wall" ) );
+    here.build_map_cache( interior_pos.z(), true );
+
+    monster &spider = spawn_test_monster( "mon_spider_cellar_giant_s", roof_pos );
+
+    REQUIRE( here.is_outside( roof_pos ) );
+    REQUIRE_FALSE( here.is_outside( interior_pos ) );
+    CHECK_FALSE( spider.can_wall_climb_to( interior_pos ) );
 }

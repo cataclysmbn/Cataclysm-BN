@@ -2808,8 +2808,8 @@ int map::climb_difficulty( const tripoint_bub_ms &p ) const
         return INT_MAX;
     }
 
-    int best_difficulty = INT_MAX;
-    int blocks_movement = 0;
+    auto best_difficulty = INT_MAX;
+    auto blocks_movement = 0;
     if( has_flag( "LADDER", p ) ) {
         // Really easy, but you have to stand on the tile
         return 1;
@@ -2819,7 +2819,17 @@ int map::climb_difficulty( const tripoint_bub_ms &p ) const
         best_difficulty = 7;
     }
 
-    for( const auto &pt : points_in_radius( p, 1 ) ) {
+    const auto neighbor_range = points_in_radius( p, 1 );
+    auto climb_points = std::vector<tripoint_bub_ms>( neighbor_range.begin(), neighbor_range.end() );
+
+    if( has_flag( TFLAG_NO_FLOOR, p ) ) {
+        const auto below = p + tripoint_below;
+        const auto below_range = points_in_radius( below, 1 );
+        const auto below_points = std::vector<tripoint_bub_ms>( below_range.begin(), below_range.end() );
+        climb_points.insert( climb_points.end(), below_points.begin(), below_points.end() );
+    }
+
+    for( const auto &pt : climb_points ) {
         if( impassable_ter_furn( pt ) ) {
             // TODO: Non-hardcoded climbability
             best_difficulty = std::min( best_difficulty, 10 );
