@@ -65,8 +65,7 @@
             "collection": [
               { "item": "extinguisher", "prob": 70 },
               {
-                "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ],
-                "count": [ 1, 3 ],
+                "distribution": [ { "item": "1st_aid", "count": [ 1, 3 ], "prob": 80 }, { "item": "1st_aid_deluxe", "count": [ 1, 3 ], "prob": 20 } ],
                 "prob": 50
               },
               { "item": "two_way_radio", "prob": 65 },
