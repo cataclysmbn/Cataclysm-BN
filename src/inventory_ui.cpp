@@ -2591,7 +2591,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             for( auto entry_ptr : get_selection_column_items() ) {
                 for( size_t i = 0; i < entry_ptr->locations.size() && i < entry_ptr->chosen_count; ++i ) {
                     locations.push_back( entry_ptr->locations[i] );
-                    counts.push_back( 1 );
+                    counts.push_back( entry_ptr->chosen_count );
                 }
             }
 
