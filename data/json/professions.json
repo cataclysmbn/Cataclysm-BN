@@ -8142,7 +8142,8 @@
         "items": [ "socks", "smart_phone", "wristwatch" ],
         "entries": [
           { "group": "RNGweapon" },
-          { "group": "survivorzed_suits" },
+          { "group": "survivorzed_tops" },
+          { "group": "survivorzed_bottoms" },
           { "group": "survivorzed_boots" },
           { "group": "survivorzed_head" },
           { "group": "survivorzed_extra" },
