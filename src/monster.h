@@ -542,7 +542,7 @@ class monster : public Creature, public location_visitable<monster>
         bool is_pet() const;
 
         character_id bonded_character_id; // id of bonded character ( for save/load )
-        void on_pet_bonding(Character *ch);
+        void on_pet_bonding( Character *ch );
 
         // Add an item to inventory
         void add_item( detached_ptr<item> &&it );

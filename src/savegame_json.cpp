@@ -2091,7 +2091,7 @@ auto monster::load( const JsonObject &data,
     data.read( "friendly", friendly );
     data.read( "training_level", training_level );
     data.read( "pet_bond_level", pet_bond_level );
-    if (data.read("bonded_character_id", bonded_character_id)) {
+    if( data.read( "bonded_character_id", bonded_character_id ) ) {
 
     }
     data.read( "mission_id", mission_id );
@@ -2205,7 +2205,7 @@ auto monster::store( JsonOut &json, bool include_local_state ) const -> void
     json.member( "friendly", friendly );
     json.member( "training_level", training_level );
     json.member( "pet_bond_level", pet_bond_level );
-    json.member( "bonded_character_id", bonded_character_id);
+    json.member( "bonded_character_id", bonded_character_id );
 
     json.member( "fish_population", fish_population );
     json.member( "faction", faction.id().str() );
