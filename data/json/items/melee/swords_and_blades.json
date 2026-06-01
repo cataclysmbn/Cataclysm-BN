@@ -2322,8 +2322,9 @@
     "id": "radiant_blade",
     "type": "GENERIC",
     "category": "weapons",
-    "name": { "str": "radiant blade" },
-    "description": "Trails of brilliant light snake across the blade of this masterwork sword. Integrated with the remains of a mutant triffid, it is lightweight and versatile.  However, it's chaotic nature prevents it from being effectively used with almost any martial art.",
+    "weapon_category": [ "1H_SWORDS" ],
+    "name": { "str": "radiant blade (one-handed)" },
+    "description": "Trails of brilliant light snake across the blade of this masterwork sword. Integrated with the remains of a mutant triffid, it is light and versatile enough to be easily adapted to most sword fighting styles.  Activate to change to a two-handed grip.",
     "weight": "350 g",
     "volume": "2500 ml",
     "attacks": [
@@ -2339,10 +2340,49 @@
         }
       }
     ],
+    "use_action": {
+      "type": "transform",
+      "msg": "You change to a two-handed grip.",
+      "target": "radiant_blade_twohand"
+    },
     "material": "steel",
     "symbol": "/",
     "color": "light_gray",
-    "techniques": [ "RAPID", "WBLOCK_2", "WIDE", "BRUTAL" ],
+    "techniques": [ "RAPID", "WBLOCK_2" ],
+    "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 9 ] ],
+    "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NONCONDUCTIVE", "TRADER_AVOID", "LIGHT_240" ]
+  },
+  {
+    "id": "radiant_blade_twohand",
+    "type": "GENERIC",
+    "category": "weapons",
+    "weapon_category": [ "2H_SWORDS" ],
+    "name": { "str": "radiant blade (two-handed)" },
+    "description": "Trails of brilliant light snake across the blade of this masterwork sword. Integrated with the remains of a mutant triffid, it is light and versatile enough to be easily adapted to most sword fighting styles.  Activate to change to a one-handed grip.",
+    "weight": "350 g",
+    "volume": "2500 ml",
+    "attacks": [
+      {
+        "id": "SLASH",
+        "to_hit": 3,
+        "damage": {
+          "values": [
+            { "damage_type": "bash", "amount": 4 },
+            { "damage_type": "cut", "amount": 4 },
+            { "damage_type": "light", "amount": 30 }
+          ]
+        }
+      }
+    ],
+    "use_action": {
+      "type": "transform",
+      "msg": "You change to a one-handed grip.",
+      "target": "radiant_blade"
+    },
+    "material": "steel",
+    "symbol": "/",
+    "color": "light_gray",
+    "techniques": [ "WIDE", "BRUTAL" ],
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 9 ] ],
     "flags": [ "DURABLE_MELEE", "SHEATH_SWORD", "NONCONDUCTIVE", "TRADER_AVOID", "LIGHT_240" ]
   }
