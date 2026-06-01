@@ -2340,11 +2340,7 @@
         }
       }
     ],
-    "use_action": {
-      "type": "transform",
-      "msg": "You change to a two-handed grip.",
-      "target": "radiant_blade_twohand"
-    },
+    "use_action": { "type": "transform", "msg": "You change to a two-handed grip.", "target": "radiant_blade_twohand" },
     "material": "steel",
     "symbol": "/",
     "color": "light_gray",
@@ -2374,11 +2370,7 @@
         }
       }
     ],
-    "use_action": {
-      "type": "transform",
-      "msg": "You change to a one-handed grip.",
-      "target": "radiant_blade"
-    },
+    "use_action": { "type": "transform", "msg": "You change to a one-handed grip.", "target": "radiant_blade" },
     "material": "steel",
     "symbol": "/",
     "color": "light_gray",
