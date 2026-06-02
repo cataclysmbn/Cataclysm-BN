@@ -4,7 +4,7 @@ local ui = require("lib.ui")
 
 local robofac_faction = FactionId.new("robofac")
 local robofac_auxiliaries = FactionId.new("robofac_auxiliaries")
-local robofac_authorized_monster_faction = MonsterFactionId.new("robofac_authorized"):int_id()
+local get_robofac_authorized_monster_faction = function() return MonsterFactionId.new("robofac_authorized"):int_id() end
 local legacy_light_turret = "mon_turret_light"
 local hub01_turret = "mon_robofac_turret_light"
 local hub01_turret_id = MonsterTypeId.new(hub01_turret)
@@ -60,22 +60,23 @@ M.authorize_hub01_turret = function(params)
   if monster_type ~= hub01_turret and monster_type ~= legacy_light_turret then return true end
 
   local player = gapi.get_avatar()
-  if not has_hub01_clearance(player) or not is_in_hub01(player) then return true end
+  if not has_hub01_clearance(player) then return true end
 
   if monster_type == legacy_light_turret then
+    if not is_in_hub01(player) then return true end
     local pos = monster:get_pos_ms()
     monster:erase()
     monster = gapi.place_monster_at(hub01_turret_id, pos)
     if not monster then return true end
   end
-  monster.faction = robofac_authorized_monster_faction
+  monster.faction = get_robofac_authorized_monster_faction()
   monster.friendly = 100
   return true
 end
 
 M.authorize_active_hub01_turrets = function()
   local player = gapi.get_avatar()
-  if not has_hub01_clearance(player) or not is_in_hub01(player) then return true end
+  if not has_hub01_clearance(player) then return true end
   for _, monster in ipairs(gapi.get_all_monsters()) do
     M.authorize_hub01_turret({ monster = monster })
   end
