@@ -92,13 +92,22 @@
     "id": "onyx_eye",
     "type": "TOOL",
     "name": { "str": "onyx eye" },
-    "description": "A small, light gemstone made of an unknown pitch black material.  The gem's surface is lined with cracks, through which a brilliant white light shines through.  Holding it seems to give you profound, indescribable perspective.",
+    "description": "A small, light gemstone made of an unknown pitch black material.  The gem's surface is lined with cracks, through which a brilliant white light shines through.  Holding it seems to give you profound, indescribable perspective.  Other things might be able to see through it, however…",
     "weight": "5 g",
     "volume": "10 ml",
     "material": [ "gemstone" ],
     "symbol": ".",
     "color": "light_gray",
     "flags": [ "TRADER_AVOID" ],
-    "artifact_data": { "effects_wielded": [ "AEP_CLAIRVOYANCE_PLUS", "AEP_ATTENTION" ] }
+    "relic_data": {
+      "passive_effects": [
+        {
+          "has": "WIELD",
+          "condition": "ALWAYS",
+          "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_ATTENTION_SPELL" } ] } ] },
+          "ench_effects": [ { "effect": "clairvoyance_plus", "intensity": 1 } ]
+        }
+      ]
+    }
   }
 ]
