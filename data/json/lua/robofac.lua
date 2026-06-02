@@ -53,6 +53,13 @@ end
 
 ---@param params table
 ---@return boolean?
+M.authorize_active_hub01_security = function()
+  for _, npc in ipairs(gapi.get_all_npcs()) do
+    M.authorize_hub01_security({ npc = npc })
+  end
+  return true
+end
+
 M.authorize_hub01_turret = function(params)
   local monster = params.monster
   if not monster then return true end
@@ -83,8 +90,8 @@ M.authorize_active_hub01_turrets = function()
   return true
 end
 
-M.authorize_hub01_after_dialogue = function(params)
-  M.authorize_hub01_security(params)
+M.authorize_hub01_after_dialogue = function()
+  M.authorize_active_hub01_security()
   M.authorize_active_hub01_turrets()
 end
 
