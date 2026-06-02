@@ -883,11 +883,5 @@
       "NOGIB",
       "STUN_IMMUNE"
     ]
-  },
-  {
-    "type": "item_group",
-    "subtype": "collection",
-    "id": "mon_kraken_boss_death_drops",
-    "entries": [ { "item": "onyx_eye", "prob": 100 } ]
   }
 ]
