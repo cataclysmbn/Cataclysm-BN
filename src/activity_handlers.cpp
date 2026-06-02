@@ -2083,28 +2083,9 @@ void activity_handlers::reload_finish( player_activity *act, player *p )
             }
         }
         if( reloadable.type->gun->reload_noise_volume > 0 ) {
-            // This is a work around for mods that have their gun reload noise set to tiles instead of dB.
-            // A volume of less than 20 is considered valid for update. 0-2 ~20dB, 3-4 ~30dB, 5-6 ~40dB, 7-10 ~50dB, 10-15 ~60dB, 15-20 ~70dB
-            int reload_volume = reloadable.type->gun->reload_noise_volume;
-            if( reload_volume < 20 ) {
-                if( reload_volume <= 2 ) {
-                    reload_volume = 20;
-                } else if( reload_volume <= 4 ) {
-                    reload_volume = 30;
-                } else if( reload_volume <= 6 ) {
-                    reload_volume = 40;
-                } else if( reload_volume <= 10 ) {
-                    reload_volume = 50;
-                } else if( reload_volume <= 15 ) {
-                    reload_volume = 60;
-                } else {
-                    reload_volume = 70;
-                }
-            }
-
             sound_event se;
             se.origin = p->bub_pos();
-            se.volume = reload_volume;
+            se.volume = reloadable.type->gun->reload_noise_volume;
             se.category = sounds::sound_t::activity;
             se.description = reloadable.type->gun->reload_noise;
             se.id = "reload";
