@@ -648,14 +648,7 @@
         "**~~~~~~~~~~~~~~~~~~****",
         "****~~**~~~~~~~~~~~*****"
       ],
-      "terrain": {
-        "*": "t_water_cube",
-        "~": "t_rock",
-        ".": "t_rock_floor",
-        "#": "t_rock_wall",
-        "<": "t_stairs_up",
-        "r": "t_rock_floor"
-      },
+      "terrain": { "*": "t_water_cube", "~": "t_rock", ".": "t_rock_floor", "#": "t_rock_wall", "<": "t_stairs_up", "r": "t_rock_floor" },
       "furniture": { "r": "f_rack" },
       "items": {
         "r": [
