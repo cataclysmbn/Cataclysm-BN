@@ -36,6 +36,7 @@ int  lod_action_budget = 128;
 int  lod_macro_interval = 3;
 int  lod_coarse_scent_interval = 3;
 int  lod_group_morale_max_tier = 0;
+int  activity_skip_monster_lod_gate = 1;
 
 bool reality_bubble_fire_spread = false;
 bool lazy_border_enabled        = false;

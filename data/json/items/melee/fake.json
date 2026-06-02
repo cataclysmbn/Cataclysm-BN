@@ -6,14 +6,20 @@
     "weapon_category": [ "BIONIC_WEAPONRY", "FIST_WEAPONS" ],
     "name": { "str_sp": "bionic claws" },
     "description": "Short and sharp claws made from a high-tech metal and edged with bonded nanocrystals.",
-    "to_hit": 3,
     "color": "light_gray",
     "symbol": "{",
     "material": [ "superalloy" ],
     "volume": "250 ml",
-    "bashing": 10,
-    "cutting": 20,
-    "flags": [ "STAB", "UNARMED_WEAPON", "NO_DROP", "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID" ],
+    "attacks": [
+      {
+        "id": "STRIKE",
+        "to_hit": 3,
+        "damage": {
+          "values": [ { "damage_type": "bash", "amount": 10 }, { "damage_type": "stab", "amount": 20, "armor_penetration": 15 } ]
+        }
+      }
+    ],
+    "flags": [ "UNARMED_WEAPON", "NO_DROP", "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID" ],
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 12 ] ]
   },
   {
@@ -24,13 +30,18 @@
     "name": { "str": "monomolecular blade" },
     "description": "A 30cm-long blade made from high-tech alloy and edged with bonded nanocrystals.",
     "weight": "100 g",
-    "to_hit": 3,
     "color": "dark_gray",
     "symbol": "{",
     "material": [ "superalloy" ],
     "techniques": [ "WBLOCK_2" ],
     "volume": "750 ml",
-    "cutting": 36,
+    "attacks": [
+      {
+        "id": "STRIKE",
+        "to_hit": 3,
+        "damage": { "values": [ { "damage_type": "cut", "amount": 36, "armor_penetration": 28 } ] }
+      }
+    ],
     "flags": [ "UNARMED_WEAPON", "NO_DROP", "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID" ],
     "qualities": [ [ "CUT", 1 ], [ "BUTCHER", 22 ] ]
   },
@@ -42,13 +53,18 @@
     "name": { "str": "monofilament whip" },
     "description": "A long, sharp thread of high-tech material, with a small counterweight at the end.",
     "weight": "100 g",
-    "to_hit": 3,
     "color": "dark_gray",
     "symbol": "{",
     "material": [ "superalloy" ],
     "techniques": [ "WIDE" ],
     "volume": "250 ml",
-    "cutting": 28,
+    "attacks": [
+      {
+        "id": "STRIKE",
+        "to_hit": 3,
+        "damage": { "values": [ { "damage_type": "cut", "amount": 28, "armor_penetration": 24 } ] }
+      }
+    ],
     "flags": [ "REACH_ATTACK", "NO_DROP", "NO_UNWIELD", "UNBREAKABLE_MELEE", "TRADER_AVOID", "WHIP" ],
     "qualities": [ [ "SAW_M", 1 ], [ "SAW_W", 1 ] ],
     "use_action": [ "HACKSAW" ]

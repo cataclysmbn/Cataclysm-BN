@@ -114,6 +114,7 @@ extern int  lod_action_budget;
 extern int  lod_macro_interval;
 extern int  lod_coarse_scent_interval;
 extern int  lod_group_morale_max_tier;
+extern int  activity_skip_monster_lod_gate;
 
 /** Out-of-bubble world-tick options. */
 extern bool reality_bubble_fire_spread;

@@ -47,12 +47,16 @@ struct city_settings {
     int park_sigma = 100 - park_radius;
 
     building_bin houses;
+    building_bin urban_houses;
     building_bin shops;
+    building_bin urban_shops;
     building_bin parks;
     building_bin finales;
 
     overmap_special_id pick_house() const;
+    overmap_special_id pick_urban_house() const;
     overmap_special_id pick_shop() const;
+    overmap_special_id pick_urban_shop() const;
     overmap_special_id pick_park() const;
     overmap_special_id pick_finale() const;
 

@@ -1630,7 +1630,10 @@ void Item_factory::check_definitions() const
 //Returns the template with the given identification tag
 const itype *Item_factory::find_template( const itype_id &id ) const
 {
-    assert( frozen );
+    if( !frozen ) {
+        debugmsg( "Tried to load item definitions before finalization. This is bad, very bad" );
+        assert( frozen );
+    }
 
     auto found = m_templates.find( id );
     if( found != m_templates.end() ) {
@@ -1718,7 +1721,10 @@ void load_optional_enum_array( std::vector<E> &vec, const JsonObject &jo,
 
 bool Item_factory::load_definition( const JsonObject &jo, const std::string &src, itype &def )
 {
-    assert( !frozen );
+    if( frozen ) {
+        debugmsg( "Tried to load item definitions after finalization. This is bad, very bad" );
+        assert( !frozen );
+    }
 
     if( !jo.has_string( "copy-from" ) ) {
         // if this is a new definition ensure we start with a clean itype
@@ -3684,7 +3690,10 @@ bool Item_factory::has_template( const itype_id &id ) const
 
 std::vector<const itype *> Item_factory::all() const
 {
-    assert( frozen );
+    if( !frozen ) {
+        debugmsg( "Tried to load item definitions before finalization. This is bad, very bad" );
+        assert( frozen );
+    }
 
     std::vector<const itype *> res;
     res.reserve( m_templates.size() + m_runtimes.size() );
@@ -3713,7 +3722,10 @@ std::vector<const itype *> Item_factory::get_runtime_types() const
 /** Find all templates matching the UnaryPredicate function */
 std::vector<const itype *> Item_factory::find( const std::function<bool( const itype & )> &func )
 {
-    assert( frozen );
+    if( !frozen ) {
+        debugmsg( "Tried to load item definitions before finalization. This is bad, very bad" );
+        assert( frozen );
+    }
 
     std::vector<const itype *> res;
 

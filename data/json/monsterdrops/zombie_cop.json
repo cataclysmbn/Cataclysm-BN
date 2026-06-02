@@ -41,7 +41,8 @@
     "type": "item_group",
     "id": "cop_gear",
     "items": [
-      [ "1st_aid", 30 ],
+      [ "1st_aid", 24 ],
+      [ "1st_aid_deluxe", 6 ],
       [ "gasbomb", 5 ],
       [ "airhorn", 5 ],
       [ "bandages", 20 ],
@@ -169,7 +170,16 @@
     "id": "swat_zombie_gear",
     "subtype": "collection",
     "entries": [
-      { "collection": [ { "item": "bandages", "prob": 60 }, { "item": "1st_aid", "prob": 20 } ], "prob": 25 },
+      {
+        "collection": [
+          { "item": "bandages", "prob": 60 },
+          {
+            "distribution": [ { "item": "1st_aid", "prob": 80 }, { "item": "1st_aid_deluxe", "prob": 20 } ],
+            "prob": 20
+          }
+        ],
+        "prob": 25
+      },
       {
         "collection": [ { "item": "swat_armor", "prob": 50 }, { "item": "kevlar", "prob": 25 }, { "item": "tacvest", "prob": 5 } ],
         "prob": 75

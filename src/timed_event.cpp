@@ -1,5 +1,6 @@
 #include "timed_event.h"
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <optional>
@@ -337,6 +338,19 @@ void timed_event_manager::add( const timed_event_type type, const time_point &wh
 bool timed_event_manager::queued( const timed_event_type type ) const
 {
     return const_cast<timed_event_manager &>( *this ).get( type ) != nullptr;
+}
+
+auto timed_event_manager::next_event_time() const -> std::optional<time_point>
+{
+    if( events.empty() ) {
+        return std::nullopt;
+    }
+
+    auto next_time = events.front().when;
+    for( const timed_event &event : events ) {
+        next_time = std::min( next_time, event.when );
+    }
+    return next_time;
 }
 
 timed_event *timed_event_manager::get( const timed_event_type type )

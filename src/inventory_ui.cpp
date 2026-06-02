@@ -141,11 +141,12 @@ std::string pickup_inventory_preset::get_denial( const item *loc ) const
     if( !p.has_item( *loc ) ) {
         if( loc->made_of( LIQUID ) ) {
             return _( "Can't pick up spilt liquids" );
-        } else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
-            return _( "Too big to pick up" );
-        } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
-            return _( "Too heavy to pick up" );
         }
+        // else if( !p.can_pick_volume( *loc ) && p.is_armed() ) {
+        //     return _( "Too big to pick up" );
+        // } else if( !p.can_pick_weight( *loc, !get_option<bool>( "DANGEROUS_PICKUPS" ) ) ) {
+        //     return _( "Too heavy to pick up" );
+        // }
     }
 
     return std::string();
@@ -2589,9 +2590,17 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             std::vector<int> counts;
 
             for( auto entry_ptr : get_selection_column_items() ) {
-                for( size_t i = 0; i < entry_ptr->locations.size() && i < entry_ptr->chosen_count; ++i ) {
-                    locations.push_back( entry_ptr->locations[i] );
-                    counts.push_back( 1 );
+                int count = 0;
+                int chosen_count = entry_ptr->chosen_count;
+                for( size_t i = 0; i < entry_ptr->locations.size() && count < chosen_count &&
+                     count < max_chosen_count; ++i ) {
+                    item *item = entry_ptr->locations[i];
+                    int needed_count = std::max( 0, chosen_count - count );
+                    int to_add = std::min( needed_count, item->count() );
+                    if( to_add > 0 ) {
+                        locations.push_back( entry_ptr->locations[i] );
+                        counts.push_back( to_add );
+                    }
                 }
             }
 
@@ -2625,6 +2634,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
     return std::vector<pickup::pick_drop_selection>();
 }
 
+[[clang::optnone]]
 inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
 {
     units::mass weight_carried = u.weight_carried();
@@ -2637,8 +2647,20 @@ inventory_selector::stats inventory_pickup_selector::get_raw_stats() const
     //Add the weights and volumes of selected items
     //which might be picked up
     for( auto entry_ptr : selected_items ) {
-        weight_carried += entry_ptr->any_item()->weight() * entry_ptr->chosen_count;
-        volume_carried += entry_ptr->any_item()->volume() * entry_ptr->chosen_count;
+        int count = 0;
+        int chosen_count = entry_ptr->chosen_count;
+        for( size_t i = 0; i < entry_ptr->locations.size() && count < chosen_count &&
+             count < max_chosen_count; ++i ) {
+            item *item = entry_ptr->locations[i];
+            int needed_count = std::max( 0, chosen_count - count );
+            int to_add = std::min( needed_count, item->count() );
+            count += to_add;
+            //WARNING: This specific order of operations and casts are needed
+            //to ensure volume and weight are accurate, because of the fact the game
+            //works in base volumes of 1ml and 1mg
+            weight_carried += item->weight() * ( static_cast<double>( to_add ) / item->count() );
+            volume_carried += item->volume() * ( static_cast<double>( to_add ) / item->count() );
+        }
     }
 
     return get_weight_and_volume_stats(

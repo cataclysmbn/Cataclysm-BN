@@ -36,6 +36,7 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
+#include "title_screen.h"
 #include "translations.h"
 #include "ui_manager.h"
 #include "worldfactory.h"
@@ -222,6 +223,21 @@ void options_manager::add_value( const std::string &lvar, const std::string &lva
         }
 
     }
+}
+
+auto options_manager::refresh_title_screen_option() -> void
+{
+    auto iter = options.find( title_screen::option_id );
+    if( iter == options.end() || iter->second.sType != "string_select" ) {
+        return;
+    }
+
+    auto &option = iter->second;
+    const auto old_value = option.getValue();
+    option.vItems = title_screen::get_options();
+    option.sDefault = title_screen::default_option_id;
+    option.setValue( option.getItemPos( old_value ) != -1 ? old_value :
+                     title_screen::default_option_id );
 }
 
 void options_manager::addOptionToPage( const std::string &name, const std::string &page )
@@ -1554,6 +1570,12 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( title_screen::option_id, interface, translate_marker( "Title screen" ),
+         translate_marker( "Title screen ASCII art to display on the main menu." ),
+         title_screen::get_all_options(), title_screen::default_option_id );
+
+    add_empty_line();
+
     add( "HEALTH_STYLE", interface, translate_marker( "Health Display Style" ),
     translate_marker( "Switch health-related display styling such as HP and hunger" ), {
         {"number", translate_marker( "Numerical" ) },
@@ -2400,6 +2422,14 @@ void options_manager::add_options_performance()
                                "0 = Tier-0 only (default, cheapest).  1 = Tier-0 and Tier-1 monsters also "
                                "run group-morale/swarm checks. " ),
              0, 1, 0 );
+        add( "ACTIVITY_SKIP_MONSTER_LOD_GATE", page_id,
+             translate_marker( "Activity Skip Monster Gate" ),
+             translate_marker( "Highest real monster LOD tier allowed to run activity-skip AI.  "
+                               "Allowed monsters act one LOD tier less detailed than normal.  "
+                               "0 lets only Tier-0 monsters act as Tier-1.  "
+                               "1 lets Tier-0 and Tier-1 monsters act as Tier-1 and Tier-2, "
+                               "which is the default.  2 also lets Tier-2 monsters run macro AI." ),
+             0, 2, 1 );
     } );
 
     get_option( "LOD_ACTION_BUDGET" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
@@ -2409,6 +2439,7 @@ void options_manager::add_options_performance()
     get_option( "LOD_DEMOTION_COOLDOWN" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
     get_option( "LOD_COARSE_SCENT_INTERVAL" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
     get_option( "LOD_GROUP_MORALE_MAX_TIER" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "ACTIVITY_SKIP_MONSTER_LOD_GATE" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
 
     add_empty_line();
 
@@ -3689,6 +3720,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             *world_options.value() :
             OPTIONS;
 
+    if( !world_options_only ) {
+        refresh_title_screen_option();
+    }
+
     auto OPTIONS_OLD = OPTIONS;
     auto WOPTIONS_OLD = ACTIVE_WORLD_OPTIONS;
     if( world_generator->active_world == nullptr ) {
@@ -4292,6 +4327,7 @@ void options_manager::cache_to_globals()
     lod_macro_interval        = ::get_option<int>( "LOD_MACRO_INTERVAL" );
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
+    activity_skip_monster_lod_gate = ::get_option<int>( "ACTIVITY_SKIP_MONSTER_LOD_GATE" );
 
     // Temporary fix for #8726: force out-of-bubble fire spread off while the
     // corresponding options are commented out above.
