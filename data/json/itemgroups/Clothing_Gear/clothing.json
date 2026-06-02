@@ -655,7 +655,8 @@
       { "item": "aspirin", "prob": 30 },
       { "item": "water_clean", "prob": 30 },
       { "item": "sports_drink", "prob": 30 },
-      { "item": "1st_aid", "prob": 20 }
+      { "item": "1st_aid", "prob": 16 },
+      { "item": "1st_aid_deluxe", "prob": 4 }
     ]
   },
   {
@@ -2382,6 +2383,7 @@
       [ "jacket_leather", 12 ],
       [ "jacket_leather_mod", 12 ],
       [ "cuirass_scrap", 12 ],
+      [ "armor_trench", 4 ],
       [ "armor_lamellar", 6 ],
       [ "chainmail_vest", 2 ],
       [ "cuirass_lightplate", 2 ],
@@ -2503,6 +2505,7 @@
       [ "chainmail_hood", 1 ],
       [ "helmet_kabuto", 1 ],
       [ "helmet_scrap", 12 ],
+      [ "helm_trench", 4 ],
       [ "survivor_goggles", 10 ],
       [ "carbon_helmet", 1 ]
     ]
