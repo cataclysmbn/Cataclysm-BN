@@ -22,6 +22,8 @@ end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
 game.add_hook("on_elevator_try_use", function(...) return mod.robofac.on_elevator_try_use(...) end)
+game.add_hook("on_dialogue_option", function(...) return mod.robofac.authorize_hub01_after_dialogue(...) end)
+game.add_hook("on_dialogue_end", function(...) return mod.robofac.authorize_hub01_after_dialogue(...) end)
 game.add_hook("on_npc_spawn", function(...) return mod.robofac.authorize_hub01_security(...) end)
 game.add_hook("on_npc_loaded", function(...) return mod.robofac.authorize_hub01_security(...) end)
 game.add_hook("on_npc_do_turn", function(...) return mod.robofac.authorize_hub01_security(...) end)

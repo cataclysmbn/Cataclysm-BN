@@ -82,4 +82,9 @@ M.authorize_active_hub01_turrets = function()
   return true
 end
 
+M.authorize_hub01_after_dialogue = function(params)
+  M.authorize_hub01_security(params)
+  M.authorize_active_hub01_turrets()
+end
+
 return M
