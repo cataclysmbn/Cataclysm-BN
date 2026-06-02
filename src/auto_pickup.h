@@ -44,12 +44,30 @@ class base_settings
 {
     protected:
         mutable item_search_cache map_items;
+        /**
+         * Used to store item names that don't correspond to itypes like
+         * "clean water (plastic bottles) (2/2)." This map is appended to 
+         * when an unrecognized name is added
+         */
+        mutable std::unordered_map<std::string, rule_state> map_names;
+        /**
+         * Flag that says whether the map_items and map_names
+         * are valid 
+         */
         bool cache_is_valid = false;
-    
     public:
         virtual ~base_settings() = default;
 
-        rule_state check_item( const item &item );
+        /**
+         * This returns whether the item should be picked up or not
+         * 
+         * WARNING: This may modify the map_items and map_names.
+         * 
+         * @param item 
+         * @return rule_state 
+         */
+        rule_state check_item_by_type( const item &item );
+        virtual rule_state check_item( const item &item ) = 0;
 
         virtual void refresh_cache() = 0;
         inline bool get_cache_valid() const { return cache_is_valid; };
@@ -82,6 +100,8 @@ class player_settings : public base_settings
         bool save_global();
         void load_character();
         void load_global();
+        rule_state check_item( const item &item ) override;
+
         /**
          * Create the actual autopickup std::map<itype_id, rule_state> for all the items in the game for
          * 
@@ -106,6 +126,8 @@ class npc_settings : public base_settings
         void deserialize( JsonIn &jsin );
         
         bool empty() const;
+
+        rule_state check_item( const item &item ) override;
         void refresh_cache() override;
 };
 

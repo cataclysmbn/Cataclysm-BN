@@ -610,23 +610,33 @@ void player_settings::refresh_cache()
     //if a specific item is being added, all the rules need to be checked now
     //may have some performance issues since exclusion needs to check all items also
     map_items.clear_items();
+    map_names.clear();
     map_items.apply_rules(global_rules);
     map_items.apply_rules(character_rules);
 
 }
 
 [[clang::optnone]]
-rule_state base_settings::check_item( const item& item )
+rule_state base_settings::check_item_by_type( const item& item )
 {
     if (!get_cache_valid()) {
         refresh_cache();
         set_cache_valid(true);
     }
 
-    const auto iter = map_items.find( item.typeId() );
-    if( iter != map_items.end() ) {
-        return iter->second;
-    } 
+    rule_state result = RULE_NONE;
+    const auto iter1 = map_items.find( item.typeId() );
+    //Search by item type
+    if( iter1 != map_items.end() ) {
+        result = iter1->second;
+    }
+
+    //Try to see if item name is in map_names, if so it overrites the result 
+    //from item type
+    auto iter2 = map_names.find(item.tname(1));
+    if (iter2 != map_names.end()) {
+        return iter2->second;
+    }
 
     return RULE_NONE;
 }
@@ -692,6 +702,29 @@ void player_settings::load( const bool bCharacter )
     }
 }
 
+rule_state player_settings::check_item(const item& item) 
+{
+    rule_state result = check_item_by_type(item);
+    if (result == RULE_NONE) {
+        std::string to_match = item.tname(1);
+        for (auto& elem : character_rules) {
+            if( elem.bActive && wildcard_match( to_match, elem.sRule ) ) {
+                map_names[ to_match ] = elem.bExclude ? RULE_BLACKLISTED : RULE_WHITELISTED;
+            }
+        }
+
+        for (auto& elem : character_rules) {
+            if( elem.bActive && wildcard_match( to_match, elem.sRule ) ) {
+                map_names[ to_match ] = elem.bExclude ? RULE_BLACKLISTED : RULE_WHITELISTED;
+            }
+        }
+
+        return map_names[ to_match ];
+    } else {
+        return result;
+    }
+}
+
 void npc_settings::show( const std::string &name )
 {
     user_interface ui;
@@ -718,7 +751,24 @@ void npc_settings::deserialize( JsonIn &jsin )
 void npc_settings::refresh_cache()
 {
     map_items.clear_items();
+    map_names.clear();
     map_items.apply_rules(rules);
+}
+
+rule_state npc_settings::check_item(const item& item) 
+{
+    rule_state result = check_item_by_type(item);
+    if (result == RULE_NONE) {
+        std::string to_match = item.tname(1);
+        for (auto& elem : rules) {
+            if( elem.bActive && wildcard_match( to_match, elem.sRule ) ) {
+                map_names[ to_match ] = elem.bExclude ? RULE_BLACKLISTED : RULE_WHITELISTED;
+            }
+        }
+        return map_names[ to_match ];
+    } else {
+        return result;
+    }
 }
 
 bool npc_settings::empty() const
