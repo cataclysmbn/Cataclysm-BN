@@ -8482,6 +8482,7 @@ void map::shift( const point_rel_sm &sp )
     if( !support_cache_dirty.empty() ) {
         shift_tripoint_set( support_cache_dirty, shift_offset_pt, boundaries_2d );
     }
+    sounds::shift_sound_positions( shift_offset_pt );
 
     invalidate_lightmap_caches();
 }

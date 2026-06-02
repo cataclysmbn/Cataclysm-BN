@@ -62,6 +62,8 @@ void sound( const sound_event &soundevent );
 void reset_sounds();
 /* Clear our floodfill que. */
 void clear_floodfill_que( const bool &soundperf );
+// Shift bubble-coordinate sound caches after a map shift.
+auto shift_sound_positions( const point_rel_ms &offset ) -> void;
 /* Reset the sound markers in the player UI so sounds do not blot out everything else. Call this after processing player input, not at the end of every turn. */
 void reset_markers();
 

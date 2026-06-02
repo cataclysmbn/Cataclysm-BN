@@ -2871,6 +2871,46 @@ void sounds::reset_sounds()
     sound_batch_floodfill_que.clear();
 }
 
+auto sounds::shift_sound_positions( const point_rel_ms &offset ) -> void
+{
+    if( offset == point_rel_ms::zero() ) {
+        return;
+    }
+
+    const auto sound_bounds = half_open_rectangle<point_bub_ms>(
+                                  point_bub_ms::zero(), point_bub_ms( g_mapsize_x, g_mapsize_y ) );
+    auto &sound_cache = get_map().m_sound_cache;
+
+    for( auto &sound : sound_cache.sound_instances ) {
+        sound.origin = sound.origin + offset;
+        sound.sound.origin = sound.sound.origin + offset;
+        sound.envelope_index_point = sound.envelope_index_point + offset;
+        sound.offset_x += offset.x();
+        sound.offset_y += offset.y();
+    }
+    std::erase_if( sound_cache.sound_instances, [&]( const auto & sound ) {
+        return !sound_bounds.contains( sound.origin.xy() );
+    } );
+    sound_cache.sound_list_filtered.clear();
+
+    for( auto &sound : sound_batch_floodfill_que ) {
+        sound.origin = sound.origin + offset;
+    }
+    std::erase_if( sound_batch_floodfill_que, [&]( const auto & sound ) {
+        return !sound_bounds.contains( sound.origin.xy() );
+    } );
+
+    auto shifted_markers = std::unordered_map<tripoint_bub_ms, sound_event>();
+    for( auto &marker : sound_markers ) {
+        const auto shifted_marker_pos = marker.first + offset;
+        if( sound_bounds.contains( shifted_marker_pos.xy() ) ) {
+            marker.second.origin = marker.second.origin + offset;
+            shifted_markers.emplace( shifted_marker_pos, std::move( marker.second ) );
+        }
+    }
+    sound_markers = std::move( shifted_markers );
+}
+
 void sounds::clear_floodfill_que( const bool &soundperf )
 {
     auto &map = get_map();
