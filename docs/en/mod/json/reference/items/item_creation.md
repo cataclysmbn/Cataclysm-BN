@@ -66,6 +66,7 @@
   "damage": 10,                              // Damage the explosion deals to player at epicenter. Damage is halved above 50% radius.
   "radius": 8,                               // Radius of the explosion. 0 means only the epicenter is affected.
   "fire": true,                              // Should the explosion leave fire
+  "incend_shrapnel": true,                   // Should the shrapnel apply the onfire status effect to targets
   "fragment": {                              // Projectile data of "shrapnel". This projectile will hit every target in its range and field of view exactly once.
     "damage": {                              // Damage data of the shrapnel projectile.  Uses damage_instance syntax (see below)
       "damage_type": "acid",                 // Type of damage dealt.

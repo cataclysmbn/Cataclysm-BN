@@ -81,6 +81,7 @@ static const efftype_id effect_deaf( "deaf" );
 static const efftype_id effect_emp( "emp" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_teleglow( "teleglow" );
+static const efftype_id effect_onfire( "onfire" );
 
 static const species_id ROBOT( "ROBOT" );
 
@@ -159,6 +160,7 @@ explosion_data load_explosion_data( const JsonObject &jo )
     }
 
     ret.fire = jo.get_bool( "fire", false );
+    ret.incend_shrapnel = jo.get_bool( "incend_shrapnel", false );
 
     return ret;
 }
@@ -324,6 +326,9 @@ class ExplosionProcess
         // Is the fire created by the explosion actually left behind?
         const bool is_fiery;
 
+        // Will the shrapnel inflict onfire
+        const bool incend_shrapnel;
+
         // Shrapnel data, nullopt to disable
         const std::optional<projectile> shrapnel;
 
@@ -363,11 +368,13 @@ class ExplosionProcess
             const int blast_radius,
             const std::optional<projectile> &proj = std::nullopt,
             const bool is_fiery = false,
+            const bool incend_shrapnel = false,
             const std::optional<Creature *> responsible = std::nullopt
         ) : center( blast_center ),
             blast_power( blast_power ),
             blast_radius( blast_radius ),
             is_fiery( is_fiery ),
+            incend_shrapnel( incend_shrapnel ),
             shrapnel( proj ),
             emitter( responsible ),
             player_flung( std::nullopt ),
@@ -640,6 +647,15 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
             }
             critter->check_dead_state();
         }
+
+        if( incend_shrapnel ) {
+            if( critter->made_of( material_id( "veggy" ) ) || critter->made_of_any( critter->cmat_flammable ) ) {
+                critter->add_effect( effect_onfire, rng( 4_turns, 8_turns ), bps[0]->id );
+            } else if( critter->made_of_any( critter->cmat_flesh ) && one_in( 2 ) ) {
+                critter->add_effect( effect_onfire, rng( 4_turns, 6_turns ), bps[0]->id );
+            }
+        }
+
         mobs_shrapneled[critter] = damage_taken;
     }
 
@@ -1591,7 +1607,7 @@ void explosion_funcs::regular( const queued_explosion &qe )
         }
         damaged_by_blast = legacy_blast( p, ex.damage, ex.radius, ex.fire, qe.source );
     } else {
-        ExplosionProcess process( p, ex.damage, ex.radius, shr, ex.fire, std::make_optional( qe.source ) );
+        ExplosionProcess process( p, ex.damage, ex.radius, shr, ex.fire, ex.incend_shrapnel, std::make_optional( qe.source ) );
         process.run();
         damaged_by_blast = process.get_blasted();
         damaged_by_shrapnel = process.get_shrapneled();

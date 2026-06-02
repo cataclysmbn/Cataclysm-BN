@@ -14,6 +14,7 @@ struct explosion_data {
     int damage              = 0;
     float radius            = 0;
     bool fire               = false;
+    bool incend_shrapnel    = false;
     std::optional<projectile> fragment = std::nullopt;
 
     /** Returns the range at which blast damage is 0 and shrapnel is out of range. */
