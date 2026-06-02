@@ -87,5 +87,20 @@
     "qualities": [ [ "BUTCHER", 5 ] ],
     "use_action": { "target": "chaos_dagger", "msg": "The chaos dagger goes still", "menu_text": "Turn off", "type": "transform" },
     "flags": [ "STAB", "TRADER_AVOID" ]
+  },
+  {
+    "id": "onyx_eye",
+    "type": "TOOL",
+    "name": { "str": "onyx eye" },
+    "description": "A small, light gemstone made of an unknown pitch black material.  The gem's surface is lined with cracks, through which a brilliant white light shines through.",
+    "weight": "5 g",
+    "volume": "10 ml",
+    "material": [ "gemstone" ],
+    "symbol": ".",
+    "color": "light_gray",
+    "flags": [ "TRADER_AVOID" ],
+    "artifact_data": {
+      "effects_wielded": [ "AEP_CLAIRVOYANCE_PLUS", "AEP_ATTENTION" ]
+    }
   }
 ]
