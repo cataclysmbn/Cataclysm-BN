@@ -40,6 +40,7 @@
 #include "item_group.h"
 #include "iuse_actor.h"
 #include "json.h"
+#include "sounds.h"
 
 class player;
 #include "material.h"
@@ -1939,8 +1940,7 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "loudness", slot.loudness, strict );
     assign( jo, "clip_size", slot.clip, strict, 0 );
     assign( jo, "reload", slot.reload_time, strict, 0 );
-    assign( jo, "reload_noise", slot.reload_noise, strict );
-    assign( jo, "reload_noise_volume", slot.reload_noise_volume, strict, 0 );
+    assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0 ,191);
     // Depreciated alias, use barrel_volume instead.
     assign( jo, "barrel_length", slot.barrel_volume, strict, 0_ml );
     assign( jo, "barrel_volume", slot.barrel_volume, strict, 0_ml );
@@ -1960,7 +1960,12 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
             slot.valid_mod_locations.emplace( curr.get_string( 0 ), curr.get_int( 1 ) );
         }
     }
-
+    // Depreciated alias, use reload_noise_dB_volume instead.
+    if( jo.has_int( "reload_noise_volume" ) ) {
+        int volume = jo.get_int( "reload_noise_volume" );
+        volume = approximate_dB_volume_from_legacy_tile_distance_vol(volume);
+        slot.reload_noise_volume = volume;
+    }
     assign( jo, "modes", slot.modes );
 }
 
@@ -2031,8 +2036,8 @@ void Item_factory::load( islot_armor &slot, const JsonObject &jo, const std::str
     assign( jo, "storage", slot.storage, strict, 0_ml );
     assign( jo, "weight_capacity_modifier", slot.weight_capacity_modifier );
     assign( jo, "weight_capacity_bonus", slot.weight_capacity_bonus, strict, 0_gram );
-    assign( jo, "hearing_protection", slot.hearing_protection, strict, 0 );
-    assign( jo, "adv_hearing_protection", slot.adv_hearing_protection, strict, 0 );
+    assign( jo, "hearing_protection", slot.hearing_protection, strict, 0 , 191 ); // Limited from 0 to 191 dB spl
+    assign( jo, "adv_hearing_protection", slot.adv_hearing_protection, strict, 0 , 191 ); // Limited from 0 to 191 dB spl
     assign( jo, "valid_mods", slot.valid_mods, strict );
 
     if( jo.has_array( "armor_portion_data" ) ) {

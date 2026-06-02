@@ -151,8 +151,10 @@ Armor can be defined like this:
 "coverage" : 80,      // What percentage of body part
 "material_thickness" : 1,  // Thickness of material, in millimeter units (approximately).  Generally ranges between 1 - 5, more unusual armor types go up to 10 or more
 "power_armor" : false, // If this is a power armor item (those are special).
-"valid_mods" : ["steel_padded"] // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
-"resistance": { "cut": 0, "bullet": 1000 } // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
+"valid_mods" : ["steel_padded"], // List of valid clothing mods. Note that if the clothing mod doesn't have "restricted" listed, this isn't needed.
+"resistance": { "cut": 0, "bullet": 1000 }, // If set, overrides usual resistance calculation. Values are for undamaged item, thickness affects scaling with damage - 1 thickness means no reduction from damage, 2 means it's halved on first damage, 10 means each level of damage decreases armor by 10%
+"hearing_protection": 0,    // How much does this armor dampen sound hear by the wearer, in dB spl. 0 - 191. This will make all sounds harder to hear for the wearer, but increases the deafening volume threshold by twice its given amount. At a hearing_ability multiplier of one, heard sounds of 120dB+ can deafen the player, with garunteed temporary deafness at 140dB+. Use this instead of the "DEAF" or "PARTIAL_DEAF" flags. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
+"adv_hearing_protection": 0 // How much does this armor dampen deafening sounds heard by the wearer, in dB spl. 0 - 191. This will increase the deafening volume threshold by its given amount without dampening other sounds. Very high end foam earplugs sit between 23 ~ 33 dB spl total protection. Cumulative with other items with this quality.
 ```
 
 Alternately, every item (book, tool, gun, even food) can be used as armor if it has armor_data:
@@ -516,6 +518,8 @@ Guns can be defined like this:
 "ammo_to_fire" 1,          // Amount of ammo used per shot, separate from any UPS cost that may be given to the weapon.
 // The legacy item flags `FIRE_20`, `FIRE_50`, and `FIRE_100` are still permitted and will override `ammo_to_fire` if present.
 "reload": 450,             // Amount of time to reload, 100 = 1 second = 1 "turn". Default 100.
+"reload_noise_volume": 6   // [DEPRECIATED] How loud is reloading the gun, in tile distance. This is depreciated, use reload_noise_volume_dB instead. This value will be converted to an appropiate dB volume if provided.
+"reload_noise_volume_dB": 40, // How loud is reloading the gun, in dB spl @1 meter reference. Default 40dB. Normal conversation is ~60dB, deafening sounds are 120dB+
 "built_in_mods": ["m203"], // An array of mods that will be integrated in the weapon using the IRREMOVABLE tag.
 "default_mods": ["m203"]   // An array of mods that will be added to a weapon on spawn.
 "barrel_volume": "30 mL",  // Amount of volume lost when the barrel is sawn. Approximately 250 ml per IRL inch is a decent approximation.

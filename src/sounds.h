@@ -96,6 +96,60 @@ struct enum_traits<sounds::sound_t> {
     static constexpr auto last = sounds::sound_t::_LAST;
 };
 
+// The base "unit" is the Bel, 10 deciBels to the Bel, 100 centibels to the Bel, 1000 milliBels to the Bel and finially 100 millibels to the deciBel.
+static constexpr short dBspl_to_mdBspl_coeff = 100;
+static constexpr double mdBspl_to_dBspl_coeff = 0.01;
+
+// Converts decibels sound pressure level to milli-decibels sound pressure level.
+// We do this often enough its worth it to have a constexpr even though its just *100
+static constexpr short dBspl_to_mdBspl( const short &dB )
+{
+    return ( dBspl_to_mdBspl_coeff * dB );
+}
+// Converts milli-decibels sound pressure level to decibels sound pressure level.
+static constexpr short mdBspl_to_dBspl( const short &mdB )
+{
+    return ( mdBspl_to_dBspl_coeff * mdB );
+}
+// Maximum mdB spl value a sound can have in atmosphere.
+static constexpr short MAXIMUM_VOLUME_ATMOSPHERE = 19100;
+// Sounds are not valid to be properly flood filled below this threshold.
+// The sound will be only flooded to the adjacent tiles if below this threshold, and no further.
+// We also take this as our approximate minimum audible volume for filtering purposes.
+static constexpr short SOUND_MINIMUM_VOLUME_FOR_PROPAGATION = 2000;
+// Volume loss in mdB spl per underground zlevel difference.
+// Cache this because we call it every time we check a sound to see if a monster hears it, which adds up quickly.
+static constexpr short SOUND_ABSORPTION_PER_ZLEV = 4200;
+// The base ambient volume above ground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
+static constexpr short AMBIENT_VOLUME_ABOVEGROUND = 4500;
+// The base ambient volume underground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
+static constexpr short AMBIENT_VOLUME_UNDERGROUND = 3500;
+
+// Well made residential walls with sound proofing materials can have transmission loss values of upwards of 63 dB.
+// STC ratings (in dB of sound reduction) range from 25 to 55+
+// We dont have a good way of differentiating walls, so we take an average of 40dB
+// Applies to more than just walls, applies to any terrain with the block_wind flag.
+// Only applies when sound is being cast if it has at least two adjacent terrain of equivalent sound absorption, and all have a roof.
+// In mdB spl, 100ths of a dB spl
+static constexpr short SOUND_ABSORPTION_WALL = 4000;
+// This is equivalent to a well designed highway sound barrier. 20dB spl, 2000mdB spl
+// If a wind blocking wall does not have a roof, it gets this.
+static constexpr short SOUND_ABSORPTION_THICK_BARRIER = 2000;
+// This is what sealed connect_to_wall terrain offers. 5dB spl, 500mdB spl
+static constexpr short SOUND_ABSORPTION_BARRIER = 500;
+// If a block_wind terrain is completely alone, it does nothing to block sound.
+// This is the default for most terrain.
+// Maybe silly to cache this, but we call this frequently.
+static constexpr short SOUND_ABSORPTION_OPEN_FIELD = 0;
+// Per tile sound attenuation in mdB spl of light vegitation tiles such as farmland and swamps
+static constexpr short SOUND_ABSORPTION_LIGHT_VEGITATION = 6;
+// Per tile sound attenuation in mdB spl of forests during the autumn/fall season.
+static constexpr short SOUND_ABSORPTION_FOREST_FALL = 9;
+// Per tile sound attenuation in mdB spl of forests or other heavy vegitation tiles
+static constexpr short SOUND_ABSORPTION_FOREST = 20;
+// Per tile sound attenuation bonus in mdB spl provided by snow.
+static constexpr short SOUND_ABSORPTION_SNOW_BONUS = 128;
+
 // Use these to tweak sound floodfilling.
 // Only here for completeness and characters with super hearing or bionic ears in an anechoic chamber.
 static constexpr uint8_t flood_radius_SILENT = 1; // 3x3 flood.
@@ -550,44 +604,6 @@ struct sound_event {
     mfaction_str_id monfaction = mfaction_str_id( "" );
 };
 
-// Maximum mdB spl value a sound can have in atmosphere.
-static constexpr short MAXIMUM_VOLUME_ATMOSPHERE = 19100;
-// Sounds are not valid to be properly flood filled below this threshold.
-// The sound will be only flooded to the adjacent tiles if below this threshold, and no further.
-// We also take this as our approximate minimum audible volume for filtering purposes.
-static constexpr short SOUND_MINIMUM_VOLUME_FOR_PROPAGATION = 2000;
-// Volume loss in mdB spl per underground zlevel difference.
-// Cache this because we call it every time we check a sound to see if a monster hears it, which adds up quickly.
-static constexpr short SOUND_ABSORPTION_PER_ZLEV = 4200;
-// The base ambient volume above ground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
-static constexpr short AMBIENT_VOLUME_ABOVEGROUND = 4500;
-// The base ambient volume underground in mdB spl. Called frequently enough to warrant caching, and to avoid magic number usage.
-static constexpr short AMBIENT_VOLUME_UNDERGROUND = 3500;
-
-// Well made residential walls with sound proofing materials can have transmission loss values of upwards of 63 dB.
-// STC ratings (in dB of sound reduction) range from 25 to 55+
-// We dont have a good way of differentiating walls, so we take an average of 40dB
-// Applies to more than just walls, applies to any terrain with the block_wind flag.
-// Only applies when sound is being cast if it has at least two adjacent terrain of equivalent sound absorption, and all have a roof.
-// In mdB spl, 100ths of a dB spl
-static constexpr short SOUND_ABSORPTION_WALL = 4000;
-// This is equivalent to a well designed highway sound barrier. 20dB spl, 2000mdB spl
-// If a wind blocking wall does not have a roof, it gets this.
-static constexpr short SOUND_ABSORPTION_THICK_BARRIER = 2000;
-// This is what sealed connect_to_wall terrain offers. 5dB spl, 500mdB spl
-static constexpr short SOUND_ABSORPTION_BARRIER = 500;
-// If a block_wind terrain is completely alone, it does nothing to block sound.
-// This is the default for most terrain.
-// Maybe silly to cache this, but we call this frequently.
-static constexpr short SOUND_ABSORPTION_OPEN_FIELD = 0;
-// Per tile sound attenuation in mdB spl of light vegitation tiles such as farmland and swamps
-static constexpr short SOUND_ABSORPTION_LIGHT_VEGITATION = 6;
-// Per tile sound attenuation in mdB spl of forests during the autumn/fall season.
-static constexpr short SOUND_ABSORPTION_FOREST_FALL = 9;
-// Per tile sound attenuation in mdB spl of forests or other heavy vegitation tiles
-static constexpr short SOUND_ABSORPTION_FOREST = 20;
-// Per tile sound attenuation bonus in mdB spl provided by snow.
-static constexpr short SOUND_ABSORPTION_SNOW_BONUS = 128;
 
 // Volume loss for moving to a new distance, in 100ths of dB (mdB). Nominal calc is 100 * (20 * Log10( dist / ( dist - 1 )))
 // dist_vol_loss[2] provides the dB loss moving from 1m to 2m, dist_vol_loss[5] provides the dB loss moving from 4m to 5m, etc.
@@ -595,6 +611,8 @@ static constexpr short SOUND_ABSORPTION_SNOW_BONUS = 128;
 // Mathmatically it should theoretically be somewhere around 20dB, though the rules for calcing sound pressure break down at very small distances
 // And finding the actual answer is the realm of neat pressure calc tricks or L'Hopital's shenanagins. Just take 15dB.
 //
+// Yes, this does make the assumption that 1 tile is 1 meter. 
+// 
 // Store this so we dont have to calc distance loss every time we floodfill a tile for sound.
 // These values will be used very frequently, probably a couple hundred times per sound cast for anything but very quiet sounds.
 // Doing the calc out every time for those would bog things down.
@@ -914,12 +932,12 @@ static constexpr short get_cumulative_vol_dist_loss( const int &dist1, const int
 }
 
 /** Returns an int tile distance before the volume in question drops to out minimum volume for propagation, or a seperate optional volume. Will approximate for terrain sound absorption if given a value.
-    @param dist1: tile distance for our guidline measurment. Usually flood radius.
-    @param vol1: mdB spl volume that is being used as the basis for the estimate.
-    @param t_absorp: mdB spl sound absorption of the terrain. Defaults to zero, use a non zero value if you want to approximate for terrain absorption.
-    @param vol2: This defaults to the minimum volume for sound propagation, 20dB spl, as a guestimate cutoff threshold
-
-    If we ever get a dist2 that is less than dist1, we just return dist1.
+*    @param dist1: tile distance for our guidline measurment. Usually flood radius.
+*    @param vol1: mdB spl volume that is being used as the basis for the estimate.
+*    @param t_absorp: mdB spl sound absorption of the terrain. Defaults to zero, use a non zero value if you want to approximate for terrain absorption.
+*    @param vol2: This defaults to the minimum volume for sound propagation, 20dB spl, as a guestimate cutoff threshold
+*
+*    If we ever get a dist2 that is less than dist1, we just return dist1.
 */
 static constexpr int average_minvol_distance( const int &dist1, const short &vol1,
         const short t_absorp = 0, const short &vol2 = SOUND_MINIMUM_VOLUME_FOR_PROPAGATION )
@@ -940,4 +958,35 @@ static constexpr int average_minvol_distance( const int &dist1, const short &vol
         delta_vol_req -= ( dist_vol_loss[check_dist] + t_absorp );
     }
     return approx_dist;
+}
+/** Returns an approximated source volume in dB or mdB given a legacy volume in tile distance.
+*   @param legacy_dist: The legacy volume in tile distance that we want to approximate
+*   @param return_mdB: Do we want our answers back in mdB instead of dB.
+*    We make the wild assumption that the legacy distance is to an approximate minvol of 20dB.
+*/
+static constexpr short approximate_dB_volume_from_legacy_tile_distance_vol( const int &legacy_dist, const bool &return_mdB = false )
+{
+    // All sounds are taken at a base measurment distance of 1 meter, and tile distances are taken at one meter.
+    // If different distance assumptions are desired, the math used to make these functions is in the various function comments.
+    // If our desired distance is 0 or 1, just return 20dB.
+    if( legacy_dist <= MINIMUM_DISTANCE_FOR_SOUND_PROPAGATION){
+        return (return_mdB) ? SOUND_MINIMUM_VOLUME_FOR_PROPAGATION : mdBspl_to_dBspl(SOUND_MINIMUM_VOLUME_FOR_PROPAGATION); // 20dB is quiet enough that the only people who MIGHT hear it are the people in that tile.
+    }
+    // So long as our desired minvol distance is greater than one, we can just step through the dist_vol_loss table adding volume instead of subtracting it until we have our desired distance.
+    // To account for some potential terrain absorption from shrubbery, add 1 free tile distance to the volume calc for every multiple of 12 legacy distance.
+    // We can safely divide because we have already dealt with a potential legacy_dist of zero.
+    const int total_dist = legacy_dist + legacy_dist / 12;
+    // We want a vol incase we somehow run over what a short can hold. Somehow.
+    // We are working in mdB spl, will need to convert out of this if we are asked for dB.
+    int approx_vol = SOUND_MINIMUM_VOLUME_FOR_PROPAGATION;
+    uint8_t check_dist = MINIMUM_DISTANCE_FOR_SOUND_PROPAGATION;
+    int approx_dist = MINIMUM_DISTANCE_FOR_SOUND_PROPAGATION;
+
+    while ( approx_dist < total_dist ){
+        approx_dist++;
+        check_dist = get_distance_for_volume_loss(check_dist, false);
+        approx_vol += dist_vol_loss[check_dist];
+    }
+    approx_vol = std::min(static_cast<int>(MAXIMUM_VOLUME_ATMOSPHERE),approx_vol);
+    return (return_mdB) ? approx_vol : mdBspl_to_dBspl(approx_vol);
 }

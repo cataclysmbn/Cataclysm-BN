@@ -108,22 +108,6 @@ static constexpr auto tile_base_sound_absorption_tier = std::array<short, 4>
 {
     {SOUND_ABSORPTION_OPEN_FIELD, SOUND_ABSORPTION_LIGHT_VEGITATION, SOUND_ABSORPTION_FOREST_FALL, SOUND_ABSORPTION_FOREST}
 };
-// The base "unit" is the Bel, 10 deciBels to the Bel, 100 centibels to the Bel, 1000 milliBels to the Bel and finially 100 millibels to the deciBel.
-static constexpr short dBspl_to_mdBspl_coeff = 100;
-static constexpr double mdBspl_to_dBspl_coeff = 0.01;
-
-// Converts decibels sound pressure level to milli-decibels sound pressure level.
-// We do this often enough its worth it to have a constexpr even though its just *100
-static constexpr short dBspl_to_mdBspl( const short &dB )
-{
-    return ( dBspl_to_mdBspl_coeff * dB );
-}
-// Converts milli-decibels sound pressure level to decibels sound pressure level.
-static constexpr short mdBspl_to_dBspl( const short &mdB )
-{
-    return ( mdBspl_to_dBspl_coeff * mdB );
-}
-
 
 static constexpr auto tile_absorp_from_index( const uint8_t &index )
 {
@@ -2458,10 +2442,18 @@ void sounds::process_sounds_npc()
             const auto &loc = who.bub_pos();
             const auto &level_cache = map.get_cache_ref( loc.z() );
             const float volume_multiplier = who.hearing_ability();
+            // Deafening is based on the loudest volume at that tile.
+            // A deaf npc might not "hear" the deafening sound but still suffer additional hearing loss.
+            // The average pain threshold is generally taken as 120dB.
+            // The maximum threshold for pain and garunteed instant hearing loss is generally taken as 140dB spl
+            // The NIOSH daily safe exposure for 115dB sounds is ~28 seconds, 120dB sounds have a daily safe exposure of less than 2 seconds.
+            // Deafening in game is temporary, and effectively simulates the ear being unable to distinguish any sound due to spontaneous damage.
+            // Threshold for instant hearing loss is 12000mdB
+            // Volume for garunteed deafening is 14000mdB
             const short deafening_threshold = std::max( 0.0f,
-                                              std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
+                                            std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
             const short deafening_garuntee = std::max( 0.0f,
-                                             std::floor( 17000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
+                                            std::floor( 14000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
             // How far below ambient can this character hear? Default of 20dB, caps out at 30dB below ambient for sanity.
             // The player character gets a better calc, but these are NPCs and we dont love them enough.
             const short below_ambient = std::min( 3000.0f,
@@ -2599,14 +2591,17 @@ void sounds::process_sound_markers( Character *who )
     who->volume = std::max( static_cast<int>( mdBspl_to_dBspl( ambient_vol ) ), who->volume );
 
     // Deafening is based on the loudest volume at that tile.
-    // hear the deafening sound but still suffer additional hearing loss.
-    // The threshold for pain is generally taken as 140dB spl. The NIOSH daily safe exposure for 115dB sounds is ~28 seconds, 120dB sounds have a daily safe exposure of less than 2 seconds.
+    // A deaf player might not "hear" the deafening sound but still suffer additional hearing loss.
+    // The average pain threshold is generally taken as 120dB.
+    // The maximum threshold for pain and garunteed instant hearing loss is generally taken as 140dB spl
+    // The NIOSH daily safe exposure for 115dB sounds is ~28 seconds, 120dB sounds have a daily safe exposure of less than 2 seconds.
+    // Deafening in game is temporary, and effectively simulates the ear being unable to distinguish any sound due to spontaneous damage.
     // Threshold for instant hearing loss is 12000mdB
-    // Volume for garunteed deafening is 17000mdB
+    // Volume for garunteed deafening is 14000mdB
     const short deafening_threshold = std::max( 0.0f,
                                       std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
     const short deafening_garuntee = std::max( 0.0f,
-                                     std::floor( 17000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
+                                     std::floor( 14000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
 
     // Lets figure out our loudest volume in tile, and a few other bits of diagnostic information.
     short loudest_vol = 0;

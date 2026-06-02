@@ -1683,9 +1683,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
     draw_explosion( p, 8, c_white, qe.graphics_name );
     int dist = rl_dist( g->u.bub_pos(), p );
     if( dist <= 8 && qe.affects_player ) {
-        if( !g->u.has_bionic( bio_ears ) && !g->u.is_wearing( itype_rm13_armor_on ) ) {
-            g->u.add_effect( effect_deaf, time_duration::from_turns( 40 - dist * 4 ) );
-        }
+        // Deafening is now handled by the sound code. 
         if( here.sees( g->u.bub_pos(), p, 8 ) ) {
             int flash_mod = 0;
             if( g->u.has_trait( trait_PER_SLIME ) ) {
