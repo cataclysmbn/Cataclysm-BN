@@ -852,7 +852,7 @@ auto avatar_remembers_stairs_at( const avatar_remembers_stairs_at_options &opts 
     return memorized_terrain_has_stair_flag( opts.you.get_terrain_tile( abs_candidate ), opts.going_up,
             opts.going_down ) ||
            memorized_terrain_has_stair_flag( opts.you.get_memorized_tile( abs_candidate ), opts.going_up,
-                                             opts.going_down );
+                   opts.going_down );
 }
 
 } // namespace
@@ -868,8 +868,8 @@ std::optional<tripoint_bub_ms> game::find_local_stairs_leading_to( map &mp, cons
         const bool is_stairs = ( going_up && ( mp.has_flag( TFLAG_GOES_UP, candidate ) ||
                                                mp.has_flag( TFLAG_ELEVATOR, candidate ) ) ) ||
                                ( going_down && ( mp.has_flag( TFLAG_GOES_DOWN, candidate ) ||
-                                                 mp.has_flag( TFLAG_ELEVATOR, candidate ) ) );
-        if( ( is_stairs && u.sees( candidate ) ) ||
+                                       mp.has_flag( TFLAG_ELEVATOR, candidate ) ) );
+        if( is_stairs ||
             avatar_remembers_stairs_at( { .you = u, .here = mp, .candidate = candidate,
                                           .going_up = going_up, .going_down = going_down } ) ) {
             return candidate;
@@ -2977,10 +2977,10 @@ bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mo
     if( !destination_preview.empty() ) {
         const auto action_position = destination_preview.back();
         const auto select_action = [&]( const std::vector<contextual_action> &actions,
-                                        const std::optional<std::string> &target_name ) -> bool {
+        const std::optional<std::string> &target_name ) -> bool {
             const auto walk_to_actions = actions
-                                         | filter( []( const auto &entry ) { return entry.walk_to; } )
-                                         | ranges::to<std::vector>();
+            | filter( []( const auto & entry ) { return entry.walk_to; } )
+            | ranges::to<std::vector>();
             if( walk_to_actions.empty() )
             {
                 return false;
@@ -13302,10 +13302,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         // Climbing
         if( m.has_floor_or_support( stairs ) ) {
             add_msg( m_info, _( "You can't climb here - there's a ceiling above your head." ) );
-            // Don't prompt the player if they're already standing on stairs, they might've just hit the wrong key
-            if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "up" );
-            }
+            suggest_auto_walk_to_stairs( u, m, "up" );
             return;
         }
 
@@ -13341,9 +13338,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
             } else {
                 add_msg( m_info, _( "You can't climb here - you need walls and/or furniture to brace against." ) );
-                if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                    suggest_auto_walk_to_stairs( u, m, "up" );
-                }
+                suggest_auto_walk_to_stairs( u, m, "up" );
             }
             return;
 
@@ -13352,9 +13347,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         if( pts.empty() ) {
             add_msg( m_info,
                      _( "You can't climb here - there is no terrain above you that would support your weight." ) );
-            if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "up" );
-            }
+            suggest_auto_walk_to_stairs( u, m, "up" );
             return;
         } else {
             // TODO: Make it an extended action
@@ -13380,6 +13373,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
         if( !can_fly ) {
             add_msg( m_info, _( "You can't go up here!" ) );
+            suggest_auto_walk_to_stairs( u, m, "up" );
             return;
         }
 
@@ -13423,18 +13417,14 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
         if( !can_fly ) {
             add_msg( m_info, _( "You can't go down here!" ) );
-            if( !m.has_flag( "GOES_UP", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "down" );
-            }
+            suggest_auto_walk_to_stairs( u, m, "down" );
             return;
         }
 
         if( m.impassable( dest ) || !standing_on_air ) {
             if( !can_noclip ) {
                 add_msg( m_info, _( "You can't go down here!" ) );
-                if( !m.has_flag( "GOES_UP", u.bub_pos() ) ) {
-                    suggest_auto_walk_to_stairs( u, m, "down" );
-                }
+                suggest_auto_walk_to_stairs( u, m, "down" );
                 return;
             } else {
                 if( dest.z() < -OVERMAP_DEPTH ) {
