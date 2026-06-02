@@ -425,9 +425,7 @@
     "explosion": {
       "damage": 50,
       "radius": 2,
-      "fragment_effect": [
-          { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 }
-        ],
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
       "fragment": { "impact": { "damage_type": "bullet", "amount": 70, "armor_multiplier": 1 }, "range": 5 }
     }
   },
@@ -437,9 +435,7 @@
     "explosion": {
       "damage": 10,
       "radius": 1,
-      "fragment_effect": [
-          { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 }
-        ],
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
       "fragment": { "impact": { "damage_type": "bullet", "amount": 5, "armor_multiplier": 1 }, "range": 2 }
     }
   },
