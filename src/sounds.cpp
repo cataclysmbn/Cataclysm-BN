@@ -2451,9 +2451,9 @@ void sounds::process_sounds_npc()
             // Threshold for instant hearing loss is 12000mdB
             // Volume for garunteed deafening is 14000mdB
             const short deafening_threshold = std::max( 0.0f,
-                                            std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
+                                              std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
             const short deafening_garuntee = std::max( 0.0f,
-                                            std::floor( 14000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
+                                             std::floor( 14000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
             // How far below ambient can this character hear? Default of 20dB, caps out at 30dB below ambient for sanity.
             // The player character gets a better calc, but these are NPCs and we dont love them enough.
             const short below_ambient = std::min( 3000.0f,

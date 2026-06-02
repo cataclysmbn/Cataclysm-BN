@@ -1683,7 +1683,7 @@ void explosion_funcs::flashbang( const queued_explosion &qe )
     draw_explosion( p, 8, c_white, qe.graphics_name );
     int dist = rl_dist( g->u.bub_pos(), p );
     if( dist <= 8 && qe.affects_player ) {
-        // Deafening is now handled by the sound code. 
+        // Deafening is now handled by the sound code.
         if( here.sees( g->u.bub_pos(), p, 8 ) ) {
             int flash_mod = 0;
             if( g->u.has_trait( trait_PER_SLIME ) ) {

@@ -611,8 +611,8 @@ struct sound_event {
 // Mathmatically it should theoretically be somewhere around 20dB, though the rules for calcing sound pressure break down at very small distances
 // And finding the actual answer is the realm of neat pressure calc tricks or L'Hopital's shenanagins. Just take 15dB.
 //
-// Yes, this does make the assumption that 1 tile is 1 meter. 
-// 
+// Yes, this does make the assumption that 1 tile is 1 meter.
+//
 // Store this so we dont have to calc distance loss every time we floodfill a tile for sound.
 // These values will be used very frequently, probably a couple hundred times per sound cast for anything but very quiet sounds.
 // Doing the calc out every time for those would bog things down.
@@ -964,13 +964,15 @@ static constexpr int average_minvol_distance( const int &dist1, const short &vol
 *   @param return_mdB: Do we want our answers back in mdB instead of dB.
 *    We make the wild assumption that the legacy distance is to an approximate minvol of 20dB.
 */
-static constexpr short approximate_dB_volume_from_legacy_tile_distance_vol( const int &legacy_dist, const bool &return_mdB = false )
+static constexpr short approximate_dB_volume_from_legacy_tile_distance_vol( const int &legacy_dist,
+        const bool &return_mdB = false )
 {
     // All sounds are taken at a base measurment distance of 1 meter, and tile distances are taken at one meter.
     // If different distance assumptions are desired, the math used to make these functions is in the various function comments.
     // If our desired distance is 0 or 1, just return 20dB.
-    if( legacy_dist <= MINIMUM_DISTANCE_FOR_SOUND_PROPAGATION){
-        return (return_mdB) ? SOUND_MINIMUM_VOLUME_FOR_PROPAGATION : mdBspl_to_dBspl(SOUND_MINIMUM_VOLUME_FOR_PROPAGATION); // 20dB is quiet enough that the only people who MIGHT hear it are the people in that tile.
+    if( legacy_dist <= MINIMUM_DISTANCE_FOR_SOUND_PROPAGATION ) {
+        return ( return_mdB ) ? SOUND_MINIMUM_VOLUME_FOR_PROPAGATION : mdBspl_to_dBspl(
+                   SOUND_MINIMUM_VOLUME_FOR_PROPAGATION ); // 20dB is quiet enough that the only people who MIGHT hear it are the people in that tile.
     }
     // So long as our desired minvol distance is greater than one, we can just step through the dist_vol_loss table adding volume instead of subtracting it until we have our desired distance.
     // To account for some potential terrain absorption from shrubbery, add 1 free tile distance to the volume calc for every multiple of 12 legacy distance.
@@ -982,11 +984,11 @@ static constexpr short approximate_dB_volume_from_legacy_tile_distance_vol( cons
     uint8_t check_dist = MINIMUM_DISTANCE_FOR_SOUND_PROPAGATION;
     int approx_dist = MINIMUM_DISTANCE_FOR_SOUND_PROPAGATION;
 
-    while ( approx_dist < total_dist ){
+    while( approx_dist < total_dist ) {
         approx_dist++;
-        check_dist = get_distance_for_volume_loss(check_dist, false);
+        check_dist = get_distance_for_volume_loss( check_dist, false );
         approx_vol += dist_vol_loss[check_dist];
     }
-    approx_vol = std::min(static_cast<int>(MAXIMUM_VOLUME_ATMOSPHERE),approx_vol);
-    return (return_mdB) ? approx_vol : mdBspl_to_dBspl(approx_vol);
+    approx_vol = std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), approx_vol );
+    return ( return_mdB ) ? approx_vol : mdBspl_to_dBspl( approx_vol );
 }
