@@ -215,6 +215,20 @@ TEST_CASE( "Global action scale below 100 advances calendar by larger ticks", "[
     CHECK( action_time_scale::calendar_turns_for_next_tick( remainder ) == peeked_turns );
 }
 
+TEST_CASE( "Calendar tick reset exposes the next global action turn", "[speed]" )
+{
+    clear_all_state();
+    const auto global_scale = override_option( "TIME_ACTION_SCALE", "20" );
+
+    action_time_scale::set_calendar_turns_this_tick( 1 );
+    action_time_scale::set_calendar_turns_this_tick_to_next_tick( 0 );
+
+    CHECK( action_time_scale::calendar_turns_this_tick() == 5 );
+    CHECK( action_time_scale::calendar_duration_this_tick() == 5_turns );
+
+    action_time_scale::set_calendar_turns_this_tick( 1 );
+}
+
 TEST_CASE( "Calendar tick helpers expose elapsed turn boundaries", "[speed]" )
 {
     clear_all_state();

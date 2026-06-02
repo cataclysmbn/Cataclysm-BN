@@ -287,6 +287,11 @@ inline auto calendar_turns_for_remainder( const int turn_remainder ) -> int
     return std::max( 1, turns );
 }
 
+inline auto set_calendar_turns_this_tick_to_next_tick( const int turn_remainder ) -> void
+{
+    set_calendar_turns_this_tick( calendar_turns_for_remainder( turn_remainder ) );
+}
+
 inline auto calendar_turns_for_next_tick( int &turn_remainder ) -> int
 {
     const auto global_scale = get_option<int>( "TIME_ACTION_SCALE" );

@@ -1863,8 +1863,9 @@ auto game::advance_time_action_tick() -> int
 bool game::do_turn()
 {
     ZoneScopedN( "game::do_turn" );
-    const auto reset_time_action_tick = on_out_of_scope( []() {
-        action_time_scale::set_calendar_turns_this_tick( 1 );
+    const auto reset_time_action_tick = on_out_of_scope( [this]() {
+        action_time_scale::set_calendar_turns_this_tick_to_next_tick(
+            time_action_scale_turn_remainder );
     } );
     {
         cleanup_arenas();
