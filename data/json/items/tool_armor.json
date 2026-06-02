@@ -1089,7 +1089,6 @@
       "SWIM_GOGGLES",
       "SUN_GLASSES",
       "ELECTRIC_IMMUNE",
-      "PARTIAL_DEAF",
       "GAS_PROOF",
       "TRADER_AVOID",
       "PSYSHIELD_PARTIAL",
@@ -1097,7 +1096,8 @@
       "CLIMATE_CONTROL",
       "COMBAT_NPC_USE",
       "COMBAT_NPC_ON"
-    ]
+    ],
+    "adv_hearing_protection": 48
   },
   {
     "id": "rebreather",
@@ -2784,7 +2784,7 @@
     "color": "green",
     "name": { "str_sp": "tactical headset" },
     "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.  The headset is currently off.",
-    "flags": [ "DEAF", "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "SKINTIGHT" ],
+    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "SKINTIGHT" ],
     "price": "250 USD",
     "price_postapoc": "15 USD",
     "material": [ "plastic" ],
@@ -2805,6 +2805,7 @@
     "encumbrance": 5,
     "coverage": 10,
     "material_thickness": 2,
+    "hearing_protection": 12,
     "magazines": [
       [
         "battery",
@@ -2832,8 +2833,9 @@
     "power_draw": 60,
     "revert_to": "army_powered_earmuffs",
     "use_action": { "type": "transform", "menu_text": "Turn off", "msg": "The %s flicks off.", "target": "army_powered_earmuffs" },
-    "extend": { "flags": [ "PARTIAL_DEAF", "COMBAT_NPC_ON", "TWO_WAY_RADIO" ] },
-    "delete": { "flags": [ "DEAF" ] }
+    "extend": { "flags": [ "COMBAT_NPC_ON", "TWO_WAY_RADIO" ] },
+    "hearing_protection": 6,
+    "adv_hearing_protection": 24
   },
   {
     "id": "stethoscope",
