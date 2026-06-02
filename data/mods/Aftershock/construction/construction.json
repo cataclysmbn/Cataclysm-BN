@@ -1,0 +1,16 @@
+[
+  {
+    "type": "construction",
+    "id": "constr_grid_afs_kitchen_rig",
+    "group": "place_afs_kitchen_rig",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "electronics", 1 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
+    "using": [ [ "soldering_standard", 20 ] ],
+    "components": [ [ [ "afs_kitchen_rig", 1 ] ], [ [ "cable", 5 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_afs_kitchen_rig"
+  }
+]

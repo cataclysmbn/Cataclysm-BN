@@ -1,0 +1,55 @@
+[
+  {
+    "type": "furniture",
+    "id": "f_afs_kitchen_rig",
+    "looks_like": "f_craftrig",
+    "name": "grid KitchenMaster cooking buddy",
+    "symbol": "&",
+    "color": "blue",
+    "description": "An all-in-one kitchen unit, chemistry lab, and food preparation area, wired into the building's electric grid.  If you attempt to craft an item that needs one of its functions, it will automatically be selected as a tool.",
+    "move_cost_mod": -1,
+    "coverage": 60,
+    "required_str": -1,
+    "crafting_pseudo_item": [
+      "fake_oven",
+      "fake_chemistry_set",
+      "fake_gridelectrolysis_kit",
+      "fake_griddehydrator",
+      "fake_gridvac_sealer",
+      "fake_gridfood_processor",
+      "fake_gridwater_purifier",
+      "pot",
+      "pan",
+      "press"
+    ],
+    "flags": [ "BLOCKSDOOR", "MINEABLE", "EASY_DECONSTRUCT", "TRANSPARENT" ],
+    "deconstruct": {
+      "items": [
+        { "item": "solder_wire", "charges": 20 },
+        { "item": "afs_kitchen_rig", "count": 1 },
+        { "item": "cable", "charges": 5 }
+      ]
+    },
+    "bash": {
+      "str_min": 22,
+      "str_max": 60,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "solder_wire", "charges": [ 10, 20 ] },
+        { "count": [ 9, 18 ], "item": "steel_lump" },
+        { "count": [ 9, 18 ], "item": "steel_chunk" },
+        { "count": [ 9, 18 ], "item": "scrap" },
+        { "charges": 0, "item": "water_purifier", "prob": 50 },
+        { "charges": 0, "item": "vac_sealer", "prob": 50 },
+        { "charges": 0, "item": "dehydrator", "prob": 50 },
+        { "charges": 0, "item": "food_processor", "prob": 50 },
+        { "charges": 0, "item": "press", "prob": 50 },
+        { "charges": 0, "item": "hotplate", "prob": 50 },
+        { "charges": 0, "item": "chemistry_set", "prob": 50 }
+      ],
+      "//": "Variable reduction since might hit more or less material.",
+      "ranged": { "reduction": [ 11, 22 ], "destroy_threshold": 50, "block_unaimed_chance": "50%" }
+    }
+  }
+]
