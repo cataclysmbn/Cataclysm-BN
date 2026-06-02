@@ -845,7 +845,7 @@
     "luminance": 0,
     "vision_day": 15,
     "vision_night": 15,
-    "harvest": "zombie_tooth_leather",
+    "harvest": "exempt",
     "regenerates": 10,
     "special_attacks": [
       [ "SMASH", 15 ],
