@@ -34,17 +34,17 @@
 
 using namespace auto_pickup;
 
-bool auto_pickup::test_pattern_function(const itype& type, std::string filter) 
+bool auto_pickup::test_pattern_function( const itype &type, std::string filter )
 {
     auto func = filter_from_string<itype>( filter, wildcard_itype_filter );
-    return func(type);
-} 
+    return func( type );
+}
 
-bool auto_pickup::autopickup_item_function(const item& object, std::string filter) 
+bool auto_pickup::autopickup_item_function( const item &object, std::string filter )
 {
-    auto func = filter_from_string<item>( filter, wildcard_item_filter);
-    return func(object);
-} 
+    auto func = filter_from_string<item>( filter, wildcard_item_filter );
+    return func( object );
+}
 
 auto_pickup::player_settings &get_auto_pickup()
 {
@@ -323,7 +323,7 @@ void user_interface::show()
                                         "M:copper        matches items made purely of copper\n"
                                         "q:drilling      matches items with drilling qualites\n"
                                         "k:fabrication   matches books that teach fabrication\n"
-                                        "b:c:food;*meat* matches conditions c:food and *meat*")
+                                        "b:c:food;*meat* matches conditions c:food and *meat*" )
                                   );
 
                     draw_border( w_help );
@@ -653,7 +653,7 @@ void rule_list::refresh_map_items( cache &map_items ) const
             //only re-exclude items from the existing mapping for now
             //new exclusions will process during pickup attempts
             for( auto &map_item : map_items ) {
-                if( !test_pattern_function( *(map_items.temp_items[ map_item.first ]), elem.sRule ) &&
+                if( !test_pattern_function( *( map_items.temp_items[ map_item.first ] ), elem.sRule ) &&
                     !wildcard_match( map_item.first, elem.sRule ) ) {
                     continue;
                 }
