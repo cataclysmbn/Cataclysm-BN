@@ -14,7 +14,7 @@ if (RELEASE)
     endif()
 endif()
 
-# Custom targets for JSON formatting - equivalent to Makefile's style-json targets
+# Custom targets for JSON formatting.
 # Note: These targets only work on Unix-like systems with find, grep, xargs
 
 if (UNIX)

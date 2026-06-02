@@ -10,9 +10,13 @@ if (BUILD_TESTING)
     # This needs to include catch.h with different macro switch
     set_source_files_properties(test_main.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
+    # Catch2 v2 uses __COUNTER__, which Clang 22 reports under -Wpedantic.
+    set(CATCH2_COMPILE_OPTIONS $<$<CXX_COMPILER_ID:Clang>:-Wno-c2y-extensions>)
+
     if (TILES)
         add_executable(cata_test-tiles ${CATACLYSM_BN_TEST_SOURCES})
         target_link_libraries(cata_test-tiles PRIVATE cataclysm-bn-tiles-common)
+        target_compile_options(cata_test-tiles PRIVATE ${CATCH2_COMPILE_OPTIONS})
 
         add_test(
             NAME test-tiles
@@ -30,6 +34,7 @@ if (BUILD_TESTING)
     if (CURSES)
         add_executable(cata_test ${CATACLYSM_BN_TEST_SOURCES})
         target_link_libraries(cata_test PRIVATE cataclysm-bn-common)
+        target_compile_options(cata_test PRIVATE ${CATCH2_COMPILE_OPTIONS})
 
         add_test(
             NAME test

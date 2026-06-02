@@ -12,8 +12,13 @@ class cata_arena
         std::set<T *> pending_deletion;
 
         static cata_arena<T> &get_instance() {
-            static cata_arena<T> instance;
-            return instance;
+            // Heap-allocated and never deleted — intentional. This avoids the static
+            // destruction order fiasco where MAPBUFFER_REGISTRY (a global) calls
+            // mark_for_destruction() during its own destruction, after a function-local
+            // static cata_arena would already be destroyed. The OS reclaims all process
+            // memory on exit, so not running ~cata_arena() is harmless.
+            static cata_arena<T> *instance = new cata_arena<T>();
+            return *instance;
         }
 
         void mark_for_destruction_internal( T *alloc ) {

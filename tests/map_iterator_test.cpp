@@ -2,12 +2,13 @@
 
 #include <algorithm>
 #include <array>
+#include <ranges>
 
 #include "coordinates.h"
 #include "map_iterator.h"
 #include "point.h"
 
-std::array<tripoint, 9> range_1_2d_centered = {
+static std::array<tripoint, 9> range_1_2d_centered = {
     {   {tripoint_north_west}, { tripoint_north}, { tripoint_north_east},
         {tripoint_west}, { tripoint_zero}, { tripoint_east},
         {tripoint_south_west}, { tripoint_south}, { tripoint_south_east}
@@ -18,12 +19,11 @@ TEST_CASE( "Radius one 2D square centered at origin." )
 {
     for( const tripoint &candidate :
          tripoint_range<tripoint>( tripoint_north_west, tripoint_south_east ) ) {
-        REQUIRE( std::find( range_1_2d_centered.begin(), range_1_2d_centered.end(), candidate ) !=
-                 range_1_2d_centered.end() );
+        REQUIRE( std::ranges::contains( range_1_2d_centered, candidate ) );
     }
 }
 
-std::array<tripoint, 9> range_1_2d_offset = {
+static std::array<tripoint, 9> range_1_2d_offset = {
     {   {-5, -5, 0}, {-4, -5, 0}, {-3, -5, 0},
         {-5, -4, 0}, {-4, -4, 0}, {-3, -4, 0},
         {-5, -3, 0}, {-4, -3, 0}, {-3, -3, 0}
@@ -33,8 +33,7 @@ std::array<tripoint, 9> range_1_2d_offset = {
 TEST_CASE( "Radius one 2D square centered at -4/-4/0." )
 {
     for( const tripoint &candidate : tripoint_range<tripoint>( {-5, -5, 0}, {-3, -3, 0} ) ) {
-        REQUIRE( std::find( range_1_2d_offset.begin(), range_1_2d_offset.end(), candidate ) !=
-                 range_1_2d_offset.end() );
+        REQUIRE( std::ranges::contains( range_1_2d_offset, candidate ) );
     }
 }
 
@@ -42,12 +41,11 @@ TEST_CASE( "Radius one 2D square centered at -4/-4/0 in abs_omt coords." )
 {
     for( const tripoint_abs_omt &candidate :
          tripoint_range<tripoint_abs_omt>( {-5, -5, 0}, {-3, -3, 0} ) ) {
-        REQUIRE( std::find( range_1_2d_offset.begin(), range_1_2d_offset.end(), candidate.raw() ) !=
-                 range_1_2d_offset.end() );
+        REQUIRE( std::ranges::contains( range_1_2d_offset, candidate.raw() ) );
     }
 }
 
-std::array<tripoint, 343> range_3_3d_offset = {
+static std::array<tripoint, 343> range_3_3d_offset = {
     {   { 5, 5, -2}, { 6, 5, -2}, { 7, 5, -2}, { 8, 5, -2}, { 9, 5, -2}, {10, 5, -2}, {11, 5, -2},
         { 5, 6, -2}, { 6, 6, -2}, { 7, 6, -2}, { 8, 6, -2}, { 9, 6, -2}, {10, 6, -2}, {11, 6, -2},
         { 5, 7, -2}, { 6, 7, -2}, { 7, 7, -2}, { 8, 7, -2}, { 9, 7, -2}, {10, 7, -2}, {11, 7, -2},
@@ -109,7 +107,96 @@ std::array<tripoint, 343> range_3_3d_offset = {
 TEST_CASE( "Radius three 3D square centered at 8/8/1." )
 {
     for( const tripoint &candidate : tripoint_range<tripoint>( {5, 5, -2}, {11, 11, 4} ) ) {
-        REQUIRE( std::find( range_3_3d_offset.begin(), range_3_3d_offset.end(), candidate ) !=
-                 range_3_3d_offset.end() );
+        REQUIRE( std::ranges::contains( range_3_3d_offset, candidate ) );
     }
+}
+
+TEST_CASE( "tripoint_range is a C++20 forward_range" )
+{
+    STATIC_REQUIRE( std::forward_iterator<tripoint_range<tripoint>::iterator> );
+    STATIC_REQUIRE( std::ranges::forward_range<tripoint_range<tripoint>> );
+    STATIC_REQUIRE( std::ranges::view<tripoint_range<tripoint>> );
+}
+
+TEST_CASE( "tripoint_range works with std::ranges algorithms" )
+{
+    auto range = tripoint_range<tripoint>( tripoint_north_west, tripoint_south_east );
+
+    // Test std::ranges::find
+    auto it = std::ranges::find( range, tripoint_zero );
+    REQUIRE( it != range.end() );
+    REQUIRE( *it == tripoint_zero );
+
+    // Test std::ranges::count
+    auto count = std::ranges::count( range, tripoint_north );
+    REQUIRE( count == 1 );
+
+    // Test std::ranges::any_of
+    bool has_zero = std::ranges::any_of( range, []( const tripoint & p ) {
+        return p == tripoint_zero;
+    } );
+    REQUIRE( has_zero );
+
+    // Test std::ranges::distance
+    auto dist = std::ranges::distance( range );
+    REQUIRE( dist == 9 );
+}
+
+TEST_CASE( "tripoint_range iterator is default constructible and copyable" )
+{
+    tripoint_range<tripoint>::iterator default_iter;
+    tripoint_range<tripoint>::iterator another_iter;
+
+    auto range = tripoint_range<tripoint>( tripoint_north_west, tripoint_south_east );
+    default_iter = range.begin();
+    another_iter = default_iter;
+
+    REQUIRE( default_iter == another_iter );
+    REQUIRE( *default_iter == *another_iter );
+}
+
+TEST_CASE( "tripoint_range works with std::ranges::views" )
+{
+    auto range = tripoint_range<tripoint>( {-1, -1, 0}, {1, 1, 0} );
+
+    // Test with filter view
+    auto filtered = range | std::views::filter( []( const tripoint & p ) { return p.x >= 0 && p.y >= 0; } );
+
+    int filtered_count = 0;
+    for( const auto &p : filtered ) {
+        ( void )p;
+        filtered_count++;
+    }
+    REQUIRE( filtered_count == 4 ); // (0,0), (1,0), (0,1), (1,1)
+
+    // Test with transform view
+    auto transformed = range | std::views::transform( []( const tripoint & p ) { return p.x + p.y; } );
+
+    REQUIRE( std::ranges::distance( transformed ) == 9 );
+}
+
+TEST_CASE( "tripoint_range iterator survives temporary range (no dangling)" )
+{
+    // Critical safety test: Iterator must store bounds by value, not pointer to parent
+    // This would crash with old implementation storing range*
+    auto it = points_in_radius( tripoint_zero, 1 ).begin();
+    // points_in_radius returns temporary, destroyed after this line
+    // Iterator must still be valid
+    REQUIRE( *it == tripoint( -1, -1, 0 ) );
+    ++it; // Would crash if iterator stored dangling pointer
+    REQUIRE( *it == tripoint( 0, -1, 0 ) );
+}
+
+TEST_CASE( "tripoint_range copied iterator remains valid" )
+{
+    auto range = tripoint_range<tripoint>( tripoint_zero, tripoint( 2, 2, 0 ) );
+    auto it1 = range.begin();
+    auto it2 = it1; // Copy iterator
+
+    ++it1;
+    REQUIRE( *it1 == tripoint( 1, 0, 0 ) );
+    REQUIRE( *it2 == tripoint( 0, 0, 0 ) ); // Original position
+
+    ++it2;
+    REQUIRE( *it2 == tripoint( 1, 0, 0 ) );
 }

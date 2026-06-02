@@ -229,7 +229,7 @@
         { "item": "sheet_metal", "count": [ 2, 6 ] },
         { "item": "hose", "count": [ 0, 2 ] },
         { "item": "cu_pipe", "count": [ 1, 4 ] },
-        { "item": "reinforced_glass_pane", "count": 2 },
+        { "item": "reinforced_glass_sheet", "count": 2 },
         { "item": "motor_small", "count": 1 }
       ]
     },

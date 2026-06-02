@@ -170,7 +170,8 @@
     "encumbrance": 30,
     "warmth": 10,
     "material_thickness": 4,
-    "flags": [ "VARSIZE", "OUTER", "STURDY" ]
+    "flags": [ "VARSIZE", "OUTER", "STURDY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "armor_lightplate_superalloy",
@@ -263,7 +264,8 @@
     "encumbrance": 45,
     "warmth": 10,
     "material_thickness": 5,
-    "flags": [ "VARSIZE", "OUTER", "FANCY" ]
+    "flags": [ "VARSIZE", "OUTER", "FANCY" ],
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ]
   },
   {
     "id": "armor_plate_superalloy",
@@ -846,5 +848,28 @@
     "color": "green",
     "material_thickness": 5,
     "environmental_protection": 4
+  },
+  {
+    "id": "oldguard_armor",
+    "repairs_like": "survivor_suit",
+    "type": "ARMOR",
+    "name": { "str": "old guard IOTV suit" },
+    "description": "A heavy full-protection kit IOTV combined with a kevlar-lined uniform and several refitted shoulder and groin protectors made and used by military remnants to provide robust protection against the new threats of the cataclysm.",
+    "weight": "11200 g",
+    "volume": "13 L",
+    "price": "1000 USD",
+    "price_postapoc": "20 USD",
+    "to_hit": -3,
+    "bashing": 6,
+    "material": [ "kevlar", "nylon" ],
+    "symbol": "[",
+    "color": "light_gray",
+    "armor_portion_data": [ { "covers": [ "torso", "legs", "arms" ], "coverage": 95, "encumbrance": 35 } ],
+    "storage": "5 L",
+    "warmth": 45,
+    "material_thickness": 10,
+    "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
+    "environmental_protection": 4,
+    "flags": [ "POCKETS", "STURDY" ]
   }
 ]

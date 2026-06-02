@@ -11,7 +11,7 @@
     },
     "docs:gen:cli": "deno run --allow-run=$CATA_EXE --allow-env=CATA_EXE --allow-write=docs ./scripts/gen_cli_docs.ts --output docs/en/dev/reference/cli_options.md",
     "docs:gen:lua": "$CATA_EXE --lua-doc docs/en/mod/lua/reference/lua.md --lua-types lua_annotations.lua",
-    "migrate-unit": "deno run -A scripts/migrate_legacy_unit.ts --path data/json; deno run -A scripts/migrate_legacy_unit.ts --path data/mods; make style-all-json-parallel",
+    "migrate-unit": "deno run -A scripts/migrations/3312.migrate_legacy_unit.ts --paths data/json data/mods",
     "dprint": "deno run -A npm:dprint",
     "changelog:reddit": {
       "description": "creates a weekly reddit changelog template",

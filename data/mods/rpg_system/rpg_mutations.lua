@@ -1,8 +1,54 @@
 gdebug.log_info("RPG System: Loading Mutations")
 
+---@class MutationRequirements
+---@field level integer?
+---@field stats table<string, integer>?
+---@field skills table<string, integer>?
+
+---@class MutationStatBonuses
+---@field str number?
+---@field dex number?
+---@field int number?
+---@field per number?
+---@field speed number?
+
+---@class MutationPeriodicBonuses
+---@field fatigue number?
+---@field stamina number?
+---@field thirst number?
+---@field rad number?
+---@field healthy_mod number?
+---@field power_level number?
+
+---@class MutationKillMonsterBonuses
+---@field heal_percent number?
+
+---@class RpgMutationConfig
+---@field id string
+---@field type string
+---@field symbol string?
+---@field is_prestige boolean?
+---@field requirements MutationRequirements?
+---@field stat_bonuses MutationStatBonuses?
+---@field periodic_bonuses MutationPeriodicBonuses?
+---@field kill_monster_bonuses MutationKillMonsterBonuses?
+---@field base_class string?
+
+---@class Mutation
+---@field id string
+---@field type string
+---@field symbol string
+---@field is_prestige boolean
+---@field requirements MutationRequirements
+---@field stat_bonuses MutationStatBonuses
+---@field periodic_bonuses MutationPeriodicBonuses
+---@field kill_monster_bonuses MutationKillMonsterBonuses
+---@field base_class string?
 local Mutation = {}
 Mutation.__index = Mutation
 
+---@param config RpgMutationConfig
+---@return Mutation
 function Mutation.new(config)
   local self = setmetatable({}, Mutation)
   self.id = config.id
@@ -19,6 +65,7 @@ end
 
 function Mutation:get_mutation_id() return MutationBranchId.new(self.id) end
 
+---@type table<string, Mutation?>
 local MUTATIONS = {
   -- Base Classes
   RPG_WARRIOR = Mutation.new({
@@ -373,7 +420,7 @@ local function register_mutation(mutation)
 end
 
 -- Register all built-in mutations
-for id, mutation in pairs(MUTATIONS) do
+for _id, mutation in pairs(MUTATIONS) do
   register_mutation(mutation)
 end
 

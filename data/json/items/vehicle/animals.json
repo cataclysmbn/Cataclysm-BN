@@ -14,8 +14,8 @@
     "material": [ "leather", "wood" ],
     "symbol": "H",
     "color": "yellow",
-    "diameter": 8,
-    "width": 4,
+    "diameter": "200 mm",
+    "width": "100 mm",
     "looks_like": "foldframe"
   }
 ]

@@ -4,10 +4,10 @@
 
 #include <string>
 
+#include "coordinates.h"
 #include "type_id.h"
 
 class monster;
-struct tripoint;
 class time_point;
 
 void wipe_map_terrain();
@@ -18,7 +18,7 @@ void clear_items( int zlevel );
 void clear_map();
 void clear_overmap();
 void put_player_underground();
-monster &spawn_test_monster( const std::string &monster_type, const tripoint &start );
+monster &spawn_test_monster( const std::string &monster_type, const tripoint_bub_ms &start );
 void clear_vehicles();
 void build_test_map( const ter_id &terrain );
 void build_water_test_map( const ter_id &surface, const ter_id &mid, const ter_id &bottom );

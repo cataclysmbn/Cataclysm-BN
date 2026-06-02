@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "calendar.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "game_constants.h"
 #include "numeric_interval.h"
@@ -13,7 +14,6 @@
 #include "overmap_special.h"
 #include "overmap_types.h"
 #include "overmapbuffer.h"
-#include "point.h"
 #include "rng.h"
 #include "state_helpers.h"
 #include "type_id.h"

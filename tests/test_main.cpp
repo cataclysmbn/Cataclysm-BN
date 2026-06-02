@@ -35,6 +35,7 @@
 #include "calendar.h"
 #include "catch/catch.hpp"
 #include "color.h"
+#include "coordinates.h"
 #include "debug.h"
 #include "distribution_grid.h"
 #include "filesystem.h"
@@ -51,7 +52,6 @@
 #include "overmapbuffer.h"
 #include "path_info.h"
 #include "pldata.h"
-#include "point.h"
 #include "rng.h"
 #include "state_helpers.h"
 #include "string_utils.h"
@@ -164,7 +164,7 @@ static void init_global_game_state( const std::vector<mod_id> &mods,
     g->m = map();
     disable_mapgen = true;
 
-    g->m.load( tripoint( g->get_levx(), g->get_levy(), g->get_levz() ), false );
+    g->m.load( g->m.get_abs_sub(), false );
 
     get_weather().update_weather();
 }

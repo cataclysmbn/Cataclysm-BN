@@ -10,6 +10,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "coordinates.h"
 #include "game_constants.h"
 #include "point.h"
 #include "rng.h"
@@ -60,7 +61,7 @@ struct PathfindingSettings {
     bool can_climb_stairs = false;
 
     // A map of tiles that have an extra G-cost assigned to them. Used for potential fields, preclosed tiles, etc.
-    std::unordered_map<point, float> extra_g_costs;
+    std::unordered_map<point_bub_ms, float> extra_g_costs;
 
     bool operator==( const PathfindingSettings &rhs ) const = default;
     int z_move_type() const;
@@ -116,8 +117,8 @@ struct RouteSettings {
     */
     float search_radius_coeff = INFINITY;
     // Test if `pos` is in the circle of radius distance from `start` to `end` by `search_radius_coeff` centered at `end`
-    constexpr bool is_in_search_radius( const point start, const point pos,
-                                        const point end ) const;
+    constexpr bool is_in_search_radius( const point_bub_ms start, const point_bub_ms pos,
+                                        const point_bub_ms end ) const;
 
     /*
     ```plain
@@ -142,8 +143,8 @@ struct RouteSettings {
     */
     float search_cone_angle = 180.0;
     // Test if `pos` is in the cone of `search_cone_angle` projected from `start` to `end`
-    constexpr bool is_in_search_cone( const point start, const point pos,
-                                      const point end ) const;
+    constexpr bool is_in_search_cone( const point_bub_ms start, const point_bub_ms pos,
+                                      const point_bub_ms end ) const;
 
     /* Limit our search area such that a path will contain steps only up to this coefficient multiplied by chebyshev distance between start and end.
     In other words, it limits the amount of tiles to step through for any given path.
@@ -174,7 +175,7 @@ struct RouteSettings {
 class Pathfinding
 {
     private:
-        using val_pair = std::pair<float, point>;
+        using val_pair = std::pair<float, point_bub_ms>;
 
         enum class State {
             UNVISITED, // Tile has not been expanded to yet
@@ -203,8 +204,8 @@ class Pathfinding
                 OPEN_AIR
             };
 
-            tripoint from;
-            tripoint to;
+            tripoint_bub_ms from;
+            tripoint_bub_ms to;
             Type type;
         };
         struct ZLevelChangeOpenAirPair {
@@ -232,15 +233,15 @@ class Pathfinding
         // `ZLevelChange`s that only remain in 1 will be removed
         // `ZLevelChange`s that remain in both 1 and 2 will be shifted so their local coords match square 2
         // and points that are only in 2 will be scanned for new Z-changes.
-        static point z_area;
+        static point_abs_ms z_area;
 
         // Global state: Z-level transitions for each z-level (does not include OPEN_AIR due to being numerous, requiring a different approach)
         static std::array<std::vector<ZLevelChange>, OVERMAP_LAYERS> z_caches;
         // Global state: OPEN_AIR type z-level transitions for each z-level
-        static std::array<std::unordered_map<point, ZLevelChangeOpenAirPair>, OVERMAP_LAYERS>
+        static std::array<std::unordered_map<point_bub_ms, ZLevelChangeOpenAirPair>, OVERMAP_LAYERS>
         z_caches_open_air;
         // Global state: We cache `z_path` information taken to prevent multiple iterations for the same target
-        static std::map<std::tuple<bool, int, tripoint>, ZLevelChange> cached_closest_z_changes;
+        static std::map<std::tuple<bool, int, tripoint_bub_ms>, ZLevelChange> cached_closest_z_changes;
 
         // Runtime map dimensions (default MAPSIZE_X / MAPSIZE_Y; updated when bubble size changes)
         int map_x_;
@@ -255,12 +256,12 @@ class Pathfinding
         std::vector<State> tile_state;
 
         // Which points in maps have we modified thus far? Used for resetting.
-        std::vector<point> map_modify_set;
+        std::vector<point_bub_ms> map_modify_set;
         // Which points in tile state have we modified thus far? Used for resetting.
-        std::vector<point> tile_state_modify_set;
+        std::vector<point_bub_ms> tile_state_modify_set;
 
         // `dest`ination of this map [2D]
-        point dest;
+        point_bub_ms dest;
         // `z` level of this map
         int z;
         // `settings` which were used to spawn this map
@@ -273,10 +274,10 @@ class Pathfinding
 
         // We don't want to calculate dijikstra of the whole map every time,
         //   so we store wave `frontier` to proceed from later if needed
-        std::vector<point> unbiased_frontier;
+        std::vector<point_bub_ms> unbiased_frontier;
 
         // Moves we don't allow to happen
-        std::set<std::pair<point, point>> forbidden_moves;
+        std::set<std::pair<point_bub_ms, point_bub_ms>> forbidden_moves;
 
         // Possibly shift or move all Z-changes if our `z_area` moved
         //   and scan for new changes.
@@ -286,57 +287,58 @@ class Pathfinding
 
         // Get a reference to ZCache for this level
         static std::vector<ZLevelChange> &get_z_cache( const int z );
-        static std::unordered_map<point, ZLevelChangeOpenAirPair> &get_z_cache_open_air( const int z );
+        static std::unordered_map<point_bub_ms, ZLevelChangeOpenAirPair> &get_z_cache_open_air(
+            const int z );
 
-        static void produce_d_map( point dest, int z, PathfindingSettings settings );
+        static void produce_d_map( point_bub_ms dest, int z, PathfindingSettings settings );
 
         // Get `p`-value at `p`
-        float &p_at( const point &p );
+        float &p_at( const point_bub_ms &p );
         // Get `g`-value at `p`
-        float &g_at( const point &p );
+        float &g_at( const point_bub_ms &p );
         // f0 = p + g
-        float get_f_unbiased( const point &p );
+        float get_f_unbiased( const point_bub_ms &p );
         // f1 = p + g + `h_coeff` * [distance between `start` and `p`]
-        float get_f_biased( const point &p, const point &start, float h_coeff );
+        float get_f_biased( const point_bub_ms &p, const point_bub_ms &start, float h_coeff );
 
         void reset_maps();
         void reset_tile_state();
-        State &tile_state_at( const point &p );
-        bool in_bounds( const point &p );
+        State &tile_state_at( const point_bub_ms &p );
+        bool in_bounds( const point_bub_ms &p );
 
         // Determine if `start` is surrounded by already visited tiles in `d_map` or tiles allowed by `route_settings`
         //   and if so, clear and fill `out` with all unexplored tiles left.
-        void detect_culled_frontier( const point &start,
+        void detect_culled_frontier( const point_bub_ms &start,
                                      const RouteSettings &route_settings,
-                                     std::unordered_set<point> &out );
+                                     std::unordered_set<point_bub_ms> &out );
 
         // Test if `p` is in our limited domain defined by `route_settings` relative to `start`
-        bool is_in_limited_domain( const point &start, const point &p,
+        bool is_in_limited_domain( const point_bub_ms &start, const point_bub_ms &p,
                                    const RouteSettings &route_settings );
 
         // See `Pathfinding::route`
-        static std::vector<tripoint> get_route_2d(
-            const point from, const point to, const int z,
+        static std::vector<tripoint_bub_ms> get_route_2d(
+            const point_bub_ms from, const point_bub_ms to, const int z,
             const PathfindingSettings path_settings,
             const RouteSettings route_settings );
         // See `Pathfinding::route`
-        static std::vector<tripoint> get_route_3d(
-            const tripoint from, const tripoint to,
+        static std::vector<tripoint_bub_ms> get_route_3d(
+            const tripoint_bub_ms from, const tripoint_bub_ms to,
             const PathfindingSettings path_settings,
             const RouteSettings route_settings
         );
 
         // Continue expanding the dijikstra map until we reach `origin` or nothing remains of the frontier. Returns whether a route is present.
-        ExpansionOutcome expand_2d_up_to( const point &start, const RouteSettings &route_settings );
+        ExpansionOutcome expand_2d_up_to( const point_bub_ms &start, const RouteSettings &route_settings );
     public:
         // Allocates flat arrays for a map of size mx × my.
         explicit Pathfinding( int mx, int my );
 
         // get `route` from `from` to `to` if available in accordance to `route_settings` while `path_settings` defines our capabilities, otherwise empty vector.
         // Found route will include `from` and `to`.
-        static std::vector<tripoint> route( tripoint from, tripoint to,
-                                            const std::optional<PathfindingSettings> path_settings = std::nullopt,
-                                            const std::optional<RouteSettings> route_settings = std::nullopt );
+        static std::vector<tripoint_bub_ms> route( tripoint_bub_ms from, tripoint_bub_ms to,
+                const std::optional<PathfindingSettings> path_settings = std::nullopt,
+                const std::optional<RouteSettings> route_settings = std::nullopt );
 
         // Reset whole pathfinding pretty much
         static void clear_d_maps();

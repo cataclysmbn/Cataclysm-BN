@@ -24,11 +24,7 @@
     "requirements": {
       "install": { "skills": [ [ "mechanics", 4 ] ], "time": "40 m", "using": [ [ "welding_standard", 20 ] ] },
       "removal": { "skills": [ [ "mechanics", 4 ] ], "qualities": [ { "id": "SAW_M", "level": 1 } ] },
-      "repair": {
-        "skills": [ [ "mechanics", 5 ] ],
-        "time": "10 m",
-        "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_aluminium", 1 ] ]
-      }
+      "repair": { "skills": [ [ "mechanics", 5 ] ], "time": "10 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
     "flags": [ "WING", "SHOCK_RESISTANT" ],
     "damage_reduction": { "all": 28 }

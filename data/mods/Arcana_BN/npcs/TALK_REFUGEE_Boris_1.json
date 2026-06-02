@@ -1,0 +1,140 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Boris_Work1",
+    "responses": [
+      {
+        "text": "What if there was another holdout in need of labor, that might have space to expand?",
+        "topic": "TALK_REFUGEE_Boris_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            {
+              "not": { "npc_has_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Boris_CF_REP_MISSION_4",
+    "dynamic_line": {
+      "u_has_var": "tacoma_started",
+      "type": "knowledge",
+      "context": "flag",
+      "value": "yes",
+      "yes": "If you mean the commune they're started up, I appreciate the suggestion.  But I don't think I would be cut out for another long trip, with all those things out there.  Plus, there are people who need me already, and I wouldn't be able to live with myself if they got hurt or killed trying to move with me.",
+      "no": "I'll work something out.  Anything is better than braving the ungodly horrors out there, and I have people here who I don't want to risk losing if we ventured out to some unknown settlement."
+    },
+    "responses": [
+      {
+        "text": "It's a different community actually.  Smaller, but fortified and starting to become self-sufficient.",
+        "topic": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_UNKNOWN",
+        "condition": { "u_has_var": "tacoma_started", "type": "knowledge", "context": "flag", "value": "yes" }
+      },
+      {
+        "text": "Understandable.  Know anyone else who might be able to make the trip?",
+        "topic": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_HELP"
+      },
+      { "text": "Oh, okay.  Never mind then.", "topic": "TALK_REFUGEE_Boris_1" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_UNKNOWN",
+    "dynamic_line": "I can't afford to gamble my life, and the life of those I still have left, on a place I know nothing about.  I'm sorry.",
+    "responses": [
+      { "text": "Do you know if anyone else might be able to help?", "topic": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_HELP" },
+      { "text": "It's fine.  I'd better get going.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_HELP",
+    "dynamic_line": "As bad as everything is, most of the people here would prefer it to risking the journey someplace else.  Every so often other people stop by, people who aren't afraid of what's out there.  I guess that might work?",
+    "responses": [
+      {
+        "text": "If you get the chance, could you help spread the word that another place is looking for people to work for them?",
+        "topic": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_OFFER"
+      },
+      { "text": "I'll see if I can figure something out.", "topic": "TALK_REFUGEE_Boris_1" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_OFFER",
+    "dynamic_line": "I guess I can try.  Gives me something to do at least.  What sort of settlement are they supposed to be looking for?",
+    "responses": [
+      {
+        "text": "A local group of monster hunters operating out of a roadside parish church, that they've started fortifying and building additional buildings near.",
+        "topic": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_DEAL"
+      },
+      { "text": "On second thought, I might be able to work something else out.", "topic": "TALK_REFUGEE_Boris_1" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_REFUGEE_Boris_CF_REP_MISSION_4_DEAL",
+    "dynamic_line": "Alright.  I hope this works out for you.  I'm guessing you should talk to some of the others here, if you can't talk the others into going there, they might at least be able to help get the word out of another community out there.",
+    "responses": [
+      {
+        "text": "I've asked a couple others already, hopefully that should help.  I should probably check on the outpost.",
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_wasteland_scavengers_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "Thank you.  I'll keep at it for now.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_2", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "condition": { "u_has_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+        "switch": true,
+        "topic": "TALK_DONE"
+      },
+      {
+        "text": "Thank you.  I'll keep asking around to see where this goes.",
+        "effect": [
+          { "u_add_var": "sofia_ally_seeking_1", "type": "mission", "context": "flag", "value": "yes" },
+          { "npc_add_var": "sofia_refugee_convinced", "type": "mission", "context": "rural_church", "value": "yes" }
+        ],
+        "switch": true,
+        "default": true,
+        "topic": "TALK_DONE"
+      }
+    ]
+  }
+]

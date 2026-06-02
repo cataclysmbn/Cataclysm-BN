@@ -1,0 +1,76 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
+    "tiles-new": [
+      {
+        "file": "external_tileset/armor.png",
+        "tiles": [
+          { "id": "overlay_wielded_power_armor_helmet_basic", "fg": 16, "bg": 0, "rotates": true },
+          { "id": "power_armor_helmet_basic", "fg": 16, "bg": 0, "rotates": true },
+          { "id": "overlay_worn_power_armor_helmet_basic", "fg": 17, "bg": 1, "rotates": true },
+          { "id": "overlay_wielded_power_armor_helmet_heavy", "fg": 18, "bg": 2, "rotates": true },
+          { "id": "power_armor_helmet_heavy", "fg": 18, "bg": 2, "rotates": true },
+          { "id": "overlay_worn_power_armor_helmet_heavy", "fg": 19, "bg": 3, "rotates": true },
+          { "id": "overlay_wielded_power_armor_helmet_light", "fg": 20, "bg": 4, "rotates": true },
+          { "id": "power_armor_helmet_light", "fg": 20, "bg": 4, "rotates": true },
+          { "id": "overlay_worn_power_armor_helmet_light", "fg": 21, "bg": 5, "rotates": true },
+          { "id": "overlay_wielded_rm13_armor", "fg": 22, "bg": 6, "rotates": true },
+          { "id": "rm13_armor", "fg": 22, "bg": 6, "rotates": true },
+          { "id": "overlay_worn_rm13_armor", "fg": 23, "bg": 7, "rotates": true },
+          { "id": "overlay_wielded_rm13_armor_on", "fg": 24, "bg": 8, "rotates": true },
+          { "id": "rm13_armor_on", "fg": 24, "bg": 8, "rotates": true },
+          { "id": "overlay_worn_rm13_armor_on", "fg": 25, "bg": 9, "rotates": true },
+          { "id": "goggles_ir", "fg": 10, "masks": [ { "type": "tint", "fg": 26 } ], "rotates": true },
+          { "id": "overlay_wielded_goggles_ir", "fg": 10, "masks": [ { "type": "tint", "fg": 26 } ], "rotates": true },
+          { "id": "overlay_worn_goggles_ir", "fg": 11, "masks": [ { "type": "tint", "fg": 27 } ], "rotates": true },
+          { "id": "goggles_ir_on", "fg": 12, "masks": [ { "type": "tint", "fg": 28 } ], "rotates": true },
+          {
+            "id": "overlay_wielded_goggles_ir_on",
+            "fg": 12,
+            "masks": [ { "type": "tint", "fg": 28 } ],
+            "rotates": true
+          },
+          { "id": "overlay_worn_goggles_ir_on", "fg": 13, "masks": [ { "type": "tint", "fg": 29 } ], "rotates": true },
+          { "id": "goggles_nv", "fg": 14, "masks": [ { "type": "tint", "fg": 30 } ], "rotates": true },
+          { "id": "overlay_wielded_goggles_nv", "fg": 14, "masks": [ { "type": "tint", "fg": 30 } ], "rotates": true },
+          { "id": "overlay_worn_goggles_nv", "fg": 15, "masks": [ { "type": "tint", "fg": 31 } ], "rotates": true },
+          { "id": "goggles_nv_on", "fg": 32, "masks": [ { "type": "tint", "fg": 48 } ], "rotates": true },
+          {
+            "id": "overlay_wielded_goggles_nv_on",
+            "fg": 32,
+            "masks": [ { "type": "tint", "fg": 48 } ],
+            "rotates": true
+          },
+          { "id": "overlay_worn_goggles_nv_on", "fg": 33, "masks": [ { "type": "tint", "fg": 49 } ], "rotates": true },
+          { "id": "goggles_nv_enhanced", "fg": 34, "masks": [ { "type": "tint", "fg": 50 } ], "rotates": true },
+          {
+            "id": "overlay_wielded_goggles_nv_enhanced",
+            "fg": 34,
+            "masks": [ { "type": "tint", "fg": 50 } ],
+            "rotates": true
+          },
+          {
+            "id": "overlay_worn_goggles_nv_enhanced",
+            "fg": 35,
+            "masks": [ { "type": "tint", "fg": 51 } ],
+            "rotates": true
+          },
+          { "id": "goggles_nv_enhanced_on", "fg": 36, "masks": [ { "type": "tint", "fg": 52 } ], "rotates": true },
+          {
+            "id": "overlay_wielded_goggles_nv_enhanced_on",
+            "fg": 36,
+            "masks": [ { "type": "tint", "fg": 52 } ],
+            "rotates": true
+          },
+          {
+            "id": "overlay_worn_goggles_nv_enhanced_on",
+            "fg": 37,
+            "masks": [ { "type": "tint", "fg": 53 } ],
+            "rotates": true
+          }
+        ]
+      }
+    ]
+  }
+]

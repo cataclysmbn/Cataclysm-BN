@@ -13,6 +13,18 @@
     "components": [ [ [ "rag", 4 ] ] ]
   },
   {
+    "result": "makeshift_headwrap",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "survival",
+    "time": "48 s",
+    "reversible": true,
+    "autolearn": true,
+    "components": [ [ [ "sheet", 1 ], [ "blanket", 1 ], [ "electric_blanket", 1 ] ] ],
+    "flags": [ "BLIND_EASY" ]
+  },
+  {
     "result": "helmet_liner",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -1112,7 +1124,7 @@
     "reversible": true,
     "autolearn": true,
     "components": [ [ [ "tshirt", 1 ], [ "flag_shirt", 1 ], [ "linuxtshirt", 1 ], [ "tshirt_text", 1 ] ] ],
-    "flags": [ "BLIND_HARD", "NO_RESIZE" ]
+    "flags": [ "NO_RESIZE" ]
   },
   {
     "result": "mask_ski",
@@ -1213,8 +1225,21 @@
     "time": "2 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 4 ] ], [ [ "pot", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 4 ] ], [ [ "pot", 1 ] ] ]
+  },
+  {
+    "result": "bucket_helmet",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "2 m",
+    "//": "Not reversible because you just banged a bunch of holes in it.",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER", "level": 1 } ],
+    "tools": [ [ [ "nail", -1 ], [ "spike", -1 ], [ "sharp_rock", -1 ], [ "rebar", -1 ], [ "spear_rebar", -1 ] ] ],
+    "components": [ [ [ "rag", 4 ] ], [ [ "bucket", 1 ] ] ]
   },
   {
     "result": "rebreather",
@@ -1454,8 +1479,7 @@
     "time": "1 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 8 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 8 ] ] ]
   },
   {
     "result": "welding_mask_crude",
@@ -1530,8 +1554,7 @@
     "time": "2 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 10 ] ], [ [ "pot_canning", 1 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 10 ] ], [ [ "pot_canning", 1 ] ] ]
   },
   {
     "result": "helmet_corinthian",
@@ -1544,6 +1567,18 @@
     "book_learn": [ [ "textbook_armwest", 5 ] ],
     "using": [ [ "forging_standard", 3 ], [ "bronzesmithing_tools", 1 ] ],
     "components": [ [ [ "scrap_bronze", 7 ] ], [ [ "fabric_hides_proper", 4, "LIST" ] ] ]
+  },
+  {
+    "result": "ear_plugs",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_HEAD",
+    "skill_used": "fabrication",
+    "difficulty": 1,
+    "time": "10 m",
+    "autolearn": true,
+    "tools": [ [ [ "mold_plastic", -1 ] ], [ [ "surface_heat", 15, "LIST" ] ] ],
+    "components": [ [ [ "chunk_rubber", 1 ], [ "wax", 1 ] ] ]
   },
   {
     "result": "attached_ear_plugs_off",

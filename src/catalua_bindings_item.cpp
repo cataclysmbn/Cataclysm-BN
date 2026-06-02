@@ -333,6 +333,16 @@ void reg_item( sol::state &lua )
         SET_FX( erase_var );
         DOC( "Erase all variables" );
         SET_FX( clear_vars );
+        DOC( "Returns all stored item vars as a table" );
+        luna::set_fx( ut, "vars_table", []( const item & it, sol::this_state state )
+        {
+            sol::state_view lua( state );
+            sol::table vars = lua.create_table();
+            std::ranges::for_each( it.item_vars(), [&]( const auto & entry ) {
+                vars[entry.first] = entry.second;
+            } );
+            return vars;
+        } );
 
         DOC( "Spawns a new item. Same as gapi.create_item " );
         luna::set_fx( ut, "spawn", []( const itype_id & itype, int count )
@@ -982,10 +992,10 @@ void reg_islot( sol::state &lua )
     {
         sol::usertype<UT_CLASS> ut = luna::new_usertype<UT_CLASS>( lua, luna::no_bases, luna::no_constructor );
 
-        DOC( "Diameter of wheel in inches" );
+        DOC( "Diameter of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( diameter );
 
-        DOC( "Width of wheel in inches" );
+        DOC( "Width of wheel in millimeters.  Integer JSON values are legacy inches." );
         SET_MEMB_RO( width );
     }
 #undef UT_CLASS

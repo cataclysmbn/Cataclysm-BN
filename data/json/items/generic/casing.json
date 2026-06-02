@@ -71,6 +71,16 @@
     "volume": "9ml"
   },
   {
+    "id": "277_casing",
+    "copy-from": "casing",
+    "looks_like": "223_casing",
+    "type": "GENERIC",
+    "name": { "str": "6.8x51mm 'Fury' casing" },
+    "description": "An empty casing from a 6.8x51mm 'Fury' round.",
+    "weight": "6 g",
+    "volume": "9ml"
+  },
+  {
     "id": "762_51_casing",
     "copy-from": "casing",
     "looks_like": "223_casing",

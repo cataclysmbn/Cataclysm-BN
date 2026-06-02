@@ -75,7 +75,7 @@
       "nitwit",
       "piece of an ass",
       "piece of shit",
-      "punk",
+      { "text": { "ctxt": "insult", "str": "punk" } },
       "scumbag",
       "shit-brained <name_b>",
       "shit-eater",

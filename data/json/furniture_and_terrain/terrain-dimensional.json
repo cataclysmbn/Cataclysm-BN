@@ -8,7 +8,7 @@
     "color": "magenta",
     "move_cost": 0,
     "coverage": 100,
-    "flags": [ "NOITEM", "NO_SIGHT", "NO_SCENT", "BLOCK_WIND", "FLAT", "INDOORS" ],
+    "flags": [ "NOITEM", "NO_SIGHT", "NO_SCENT", "BLOCK_WIND", "FLAT" ],
     "connects_to": "WALL",
     "bash": {
       "str_min": -1,
@@ -30,7 +30,7 @@
     "color": "white",
     "move_cost": 0,
     "coverage": 100,
-    "flags": [ "NOITEM", "NO_SIGHT", "NO_SCENT", "BLOCK_WIND", "FLAT", "INDOORS" ],
+    "flags": [ "NOITEM", "NO_SIGHT", "NO_SCENT", "BLOCK_WIND", "FLAT" ],
     "connects_to": "WALL",
     "bash": { "str_min": -1, "str_max": -1, "sound": "whump!", "sound_fail": "whump!", "sound_vol": 2, "sound_fail_vol": 2 }
   }

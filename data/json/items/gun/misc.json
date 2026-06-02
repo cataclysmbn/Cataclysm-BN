@@ -66,5 +66,93 @@
     "clip_size": 1,
     "reload": 200,
     "flags": [ "PRIMITIVE_RANGED_WEAPON", "NON_FOULING", "NEVER_JAMS" ]
+  },
+  {
+    "id": "oldguard_rifle",
+    "copy-from": "rifle_auto",
+    "type": "GUN",
+    "name": { "str": "old guard NTSR" },
+    "description": "The new threat service rifle, an M4A1 modified by military remnants to fire and accept magazines for most common military rifle calibers at the cost of higher weight and worsened ballistics and handling. Designed for a new battlefield where scavenging ammo is a neccesity and logistics are difficult.",
+    "weight": "3760 g",
+    "volume": "1850 ml",
+    "barrel_volume": "250 ml",
+    "price": "2400 USD",
+    "price_postapoc": "50 USD",
+    "ascii_picture": "m4a1",
+    "looks_like": "m4a1",
+    "material": [ "steel", "plastic" ],
+    "color": "dark_gray",
+    "ammo": [ "223", "308", "300blk", "3006", "277" ],
+    "ranged_damage": { "damage_type": "bullet", "amount": -5 },
+    "dispersion": 220,
+    "durability": 6,
+    "min_cycle_recoil": 1550,
+    "reload": 200,
+    "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
+    "magazines": [
+      [
+        "223",
+        [
+          "stanag30",
+          "stanag5",
+          "stanag10",
+          "stanag20",
+          "stanag40",
+          "stanag50",
+          "stanag60",
+          "stanag60drum",
+          "stanag90",
+          "stanag100",
+          "stanag100drum",
+          "stanag150",
+          "carbonmag_223",
+          "survivor223mag"
+        ]
+      ],
+      [ "277", [ "ar10mag_20rd" ] ],
+      [
+        "308",
+        [
+          "falbigmag",
+          "falmag",
+          "fal_makeshiftmag",
+          "g3bigmag",
+          "g3mag",
+          "g3_makeshiftmag",
+          "m14mag",
+          "m14smallmag",
+          "m14_makeshiftmag",
+          "scarhbigmag",
+          "scarhmag_30rd",
+          "scarhmag",
+          "scarh_makeshiftmag",
+          "hk417mag_20rd",
+          "hk417mag_10rd",
+          "hk417_makeshiftmag",
+          "ar10mag_20rd",
+          "ar10_makeshiftmag"
+        ]
+      ],
+      [
+        "300blk",
+        [
+          "stanag30",
+          "stanag5",
+          "stanag10",
+          "stanag20",
+          "stanag40",
+          "stanag50",
+          "stanag60",
+          "stanag60drum",
+          "stanag90",
+          "stanag100",
+          "stanag100drum",
+          "stanag150",
+          "carbonmag_223",
+          "survivor223mag"
+        ]
+      ],
+      [ "3006", [ "m1918bigmag", "m1918mag", "blrmag" ] ]
+    ]
   }
 ]

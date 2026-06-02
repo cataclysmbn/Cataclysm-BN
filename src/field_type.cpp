@@ -44,6 +44,7 @@ std::string enum_to_string<description_affix>( description_affix data )
         // *INDENT-OFF*
         case description_affix::DESCRIPTION_AFFIX_IN: return "in";
         case description_affix::DESCRIPTION_AFFIX_COVERED_IN: return "covered_in";
+        case description_affix::DESCRIPTION_AFFIX_COVERED_IN_A: return "covered_in_a";
         case description_affix::DESCRIPTION_AFFIX_ON: return "on";
         case description_affix::DESCRIPTION_AFFIX_UNDER: return "under";
         case description_affix::DESCRIPTION_AFFIX_ILLUMINTED_BY: return "illuminated_by";

@@ -163,6 +163,21 @@
   },
   {
     "type": "monstergroup",
+    "name": "GROUP_VANILLA_NO_DOG_CHILD",
+    "default": "mon_zombie",
+    "monsters": [
+      { "monster": "mon_zombie_fat", "freq": 266, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_tough", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_rot", "freq": 60, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_crawler", "freq": 30, "cost_multiplier": 0 },
+      { "monster": "mon_feral_human_pipe", "freq": 40, "starts": 250, "cost_multiplier": 0 },
+      { "monster": "mon_feral_human_crowbar", "freq": 40, "starts": 250, "cost_multiplier": 0 },
+      { "monster": "mon_feral_human_axe", "freq": 20, "starts": 250, "cost_multiplier": 0 },
+      { "monster": "mon_zombie_brainless", "freq": 30, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "type": "monstergroup",
     "name": "GROUP_POLICE",
     "//": "+30% cops",
     "default": "mon_zombie",

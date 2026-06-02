@@ -1,0 +1,173 @@
+[
+  {
+    "type": "item_group",
+    "id": "mon_demon_spiderling_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence", "prob": 10 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_demon_spider_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "dermatik_sting", "prob": 50 }, { "item": "iridescent_plate", "prob": 50 } ], "prob": 10 },
+      { "item": "essence", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_demon_spider_queen_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "dermatik_sting", "prob": 50 }, { "item": "iridescent_plate", "prob": 50 } ] },
+      { "item": "essence", "count": [ 2, 5 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_dragon_black_wyrmling_death_drops",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "graboid_fang", "prob": 40 },
+          { "item": "monster_fang", "prob": 10 },
+          { "item": "wyrmskin_piece", "prob": 40 },
+          { "item": "iridescent_plate", "prob": 10 }
+        ],
+        "prob": 5
+      },
+      { "item": "essence", "prob": 10 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_dragon_black_young_death_drops",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "graboid_fang", "prob": 40 },
+          { "item": "monster_fang", "prob": 10 },
+          { "item": "wyrmskin_piece", "prob": 40 },
+          { "item": "iridescent_plate", "prob": 10 }
+        ],
+        "prob": 10
+      },
+      { "item": "essence", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_dragon_black_adult_death_drops",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          { "item": "graboid_fang", "prob": 40 },
+          { "item": "monster_fang", "prob": 10 },
+          { "item": "wyrmskin_piece", "prob": 40 },
+          { "item": "iridescent_plate", "prob": 10 }
+        ],
+        "prob": 25
+      },
+      { "item": "essence", "prob": 50 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_claygolem_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "engraved_stone", "prob": 50 }, { "item": "monster_tear", "prob": 50 } ], "prob": 10 },
+      { "item": "essence_dull", "prob": 25, "count": [ 10, 20 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_plasticgolem_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "monster_tear", "prob": 10 }, { "item": "essence_dull", "prob": 25, "count": [ 10, 20 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_stonegolem_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "engraved_stone", "prob": 50 }, { "item": "monster_tear", "prob": 50 } ], "prob": 10 },
+      { "item": "essence_dull", "prob": 25, "count": [ 10, 20 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_irongolem_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "iron_thorn", "prob": 50 }, { "item": "monster_tear", "prob": 50 } ], "prob": 10 },
+      { "item": "essence_dull", "prob": 25, "count": [ 10, 20 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_owlbear_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "prob": 25, "count": [ 2, 4 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_black_pudding_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "blob_gem", "prob": 50 }, { "item": "wyrmskin_piece", "prob": 50 } ], "prob": 10 },
+      { "item": "essence", "prob": 25 }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_krabgek_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "monster_tear", "prob": 10 }, { "item": "essence", "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_owlbear_cub_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence_blood", "prob": 10, "count": [ 2, 4 ] } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_bulette_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "iridescent_plate", "prob": 50 }, { "item": "wyrmskin_piece", "prob": 50 } ], "prob": 10 },
+      { "item": "essence_blood", "prob": 25, "count": [ 2, 4 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_troll_death_drops",
+    "subtype": "collection",
+    "entries": [
+      { "distribution": [ { "item": "monster_fang", "prob": 25 }, { "item": "bone_twisted", "prob": 75 } ], "prob": 10 },
+      { "item": "essence_blood", "prob": 25, "count": [ 2, 4 ] }
+    ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_stirge_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence", "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_shrieker_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "inflorescent_root", "prob": 10 }, { "item": "essence", "prob": 25 } ]
+  },
+  {
+    "type": "item_group",
+    "id": "mon_lemure_death_drops",
+    "subtype": "collection",
+    "entries": [ { "item": "essence", "prob": 25 } ]
+  }
+]

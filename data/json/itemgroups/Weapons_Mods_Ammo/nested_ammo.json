@@ -186,6 +186,16 @@
     ]
   },
   {
+    "id": "on_hand_277",
+    "type": "item_group",
+    "//": "a collection of ammo that would be found with a loaded gun.",
+    "subtype": "distribution",
+    "entries": [
+      { "item": "277_fmj", "prob": 100, "charges": [ 15, 20 ] },
+      { "item": "277_hybrid", "prob": 80, "charges": [ 15, 20 ] }
+    ]
+  },
+  {
     "id": "on_hand_223",
     "type": "item_group",
     "//": "a collection of ammo that would be found with a loaded gun.",

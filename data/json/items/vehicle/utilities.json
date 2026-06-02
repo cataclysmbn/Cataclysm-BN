@@ -35,6 +35,22 @@
   },
   {
     "type": "GENERIC",
+    "id": "compact_reactor_assembly",
+    "name": { "str": "compact reactor assembly" },
+    "description": "A heavily shielded, vehicle-sized reactor package salvaged from a much larger nuclear core.  With enough supporting electronics and fuel, it could become the heart of a minireactor or plutonium generator.",
+    "weight": "38 kg",
+    "to_hit": -4,
+    "color": "light_cyan",
+    "symbol": ":",
+    "material": [ "superalloy", "ceramic", "lead" ],
+    "volume": "60 L",
+    "bashing": 6,
+    "category": "veh_parts",
+    "price": "2 kUSD",
+    "price_postapoc": "100 USD"
+  },
+  {
+    "type": "GENERIC",
     "id": "mountable_cooler",
     "name": { "str": "vehicle cooler" },
     "description": "A vehicle-mounted area cooler.",

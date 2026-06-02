@@ -22,7 +22,7 @@
 TEST_CASE( "reload_on_vehicle_cargo", "[magazine] [visitable] [item] [item_location]" )
 {
     clear_all_state();
-    const tripoint vehicle_center = tripoint( 65, 65, 0 );
+    const tripoint_bub_ms vehicle_center = tripoint_bub_ms( 65, 65, 0 );
     put_player_underground();
 
     map &here = get_map();

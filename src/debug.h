@@ -173,7 +173,7 @@ inline void realDebugmsg( const char *const filename, const char *const line,
     do { return false ? ( ret ) : ( abort(), ( ret ) ); } while(false)
 #else
 #define constexpr_fatal(ret, ...) \
-    do { debugmsg(__VA_ARGS__); abort(); } while(false)
+    do { debugmsg(__VA_ARGS__); abort(); return ( ret ); } while(false)
 #endif
 
 /** Initializes the debugging system, called exactly once from main() */
@@ -289,7 +289,13 @@ DebugLogGuard realDebugLog( DL lev, DC cl, const char *filename,
  * Write a stack backtrace to the given ostream
  */
 void debug_write_backtrace( std::ostream &out );
+#if defined(_WIN32)
+/**
+ * Sets the CONTEXT* from the crash's EXCEPTION_POINTERS for accurate stack
+ * walking. Pass nullptr to clear. Must be called before debug_write_backtrace.
+ */
+void set_crash_exception_context( void *context );
+#endif
 #endif
 
 // vim:tw=72:sw=4:fdm=marker:fdl=0:
-

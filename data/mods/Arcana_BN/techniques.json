@@ -1,0 +1,239 @@
+[
+  {
+    "type": "technique",
+    "id": "tec_cleansingflame_interial_sweep",
+    "name": "Inertial Sweep",
+    "messages": [ "You drive your weapon's momentum into a sweeping strike at %s", "<npcname> delivers a sweeping strike to %s" ],
+    "skill_requirements": [ { "name": "bashing", "level": 4 } ],
+    "weapon_categories_allowed": [ "CLUBS", "1H_HAMMERS", "2H_HAMMERS", "MACES", "MORNINGSTARS", "FLAILS" ],
+    "melee_allowed": true,
+    "req_buffs": [ "buff_cleansingflame_onattack" ],
+    "aoe": "wide",
+    "crit_tec": true,
+    "weighting": 3,
+    "down_dur": 2,
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.8 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_cleansingflame_blade_flare",
+    "name": "Blade Flare",
+    "messages": [
+      "You drive your momentum into %s and send a pulse of energy through them",
+      "<npcname> drives their weapon hard into %s"
+    ],
+    "skill_requirements": [ { "name": "cutting", "level": 4 }, { "name": "magic", "level": 5 } ],
+    "weapon_categories_allowed": [ "SHORT_SWORDS", "1H_SWORDS", "MEDIEVAL_SWORDS", "BIONIC_SWORDS" ],
+    "melee_allowed": true,
+    "req_buffs": [ "buff_cleansingflame_onattack" ],
+    "aoe": "impale",
+    "crit_tec": true,
+    "weighting": 3,
+    "stun_dur": 2,
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.8 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_cleansingflame_sundering_strike",
+    "name": "Sundering Strike",
+    "messages": [ "You channel your momentum into a disarming blow towards %s", "<npcname> delivers a disarming blow to %s" ],
+    "skill_requirements": [ { "name": "melee", "level": 5 } ],
+    "melee_allowed": true,
+    "req_buffs": [ "buff_cleansingflame_onattack" ],
+    "crit_ok": true,
+    "weighting": 3,
+    "stun_dur": 1,
+    "disarms": true,
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.8 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_cleansingflame_break",
+    "name": "Grab Break",
+    "messages": [ "The %s tries to grab you, but you slip away!", "The %s tries to grab <npcname>, but they slip away!" ],
+    "skill_requirements": [ { "name": "melee", "level": 3 } ],
+    "melee_allowed": true,
+    "unarmed_allowed": true,
+    "defensive": true,
+    "grab_break": true
+  },
+  {
+    "type": "technique",
+    "id": "tec_cleansingflame_illusory_counter",
+    "name": "Illusory Counter",
+    "messages": [ "You fluidly sidestep and counter %s", "<npcname> sidesteps and counters %s" ],
+    "skill_requirements": [ { "name": "bashing", "level": 3 }, { "name": "melee", "level": 4 }, { "name": "magic", "level": 6 } ],
+    "weapon_categories_allowed": [ "CLUBS", "1H_HAMMERS", "2H_HAMMERS", "MACES", "MORNINGSTARS", "FLAILS" ],
+    "melee_allowed": true,
+    "dodge_counter": true,
+    "crit_ok": true,
+    "stun_dur": 2,
+    "flat_bonuses": [ { "stat": "arpen", "type": "bash", "scale": 5 } ],
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.0 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_cleansingflame_lightning_riposte",
+    "name": "Lightning Riposte",
+    "messages": [ "You deftly parry and riposte %s", "<npcname> parries and ripostes %s" ],
+    "skill_requirements": [ { "name": "cutting", "level": 3 }, { "name": "melee", "level": 4 }, { "name": "magic", "level": 6 } ],
+    "weapon_categories_allowed": [ "SHORT_SWORDS", "1H_SWORDS", "MEDIEVAL_SWORDS", "BIONIC_SWORDS" ],
+    "melee_allowed": true,
+    "block_counter": true,
+    "crit_ok": true,
+    "stun_dur": 2,
+    "flat_bonuses": [ { "stat": "arpen", "type": "cut", "scale": 5 } ],
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.0 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_cleansingflame_shifting_takedown",
+    "name": "Shifting Takedown",
+    "messages": [ "You pivot and floor %s with careful use of momentum", "<npcname> pivots and floors %s" ],
+    "skill_requirements": [ { "name": "unarmed", "level": 3 }, { "name": "melee", "level": 4 }, { "name": "magic", "level": 6 } ],
+    "unarmed_allowed": true,
+    "dodge_counter": true,
+    "unarmed_weapons_allowed": false,
+    "crit_ok": true,
+    "stun_dur": 2,
+    "down_dur": 2,
+    "flat_bonuses": [ { "stat": "arpen", "type": "bash", "scale": 5 } ],
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.0 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_shrike_crit",
+    "name": "Harrying Blow",
+    "messages": [ "You stagger %s with your strike", "<npcname> staggers %s with their strike" ],
+    "skill_requirements": [ { "name": "melee", "level": 3 } ],
+    "melee_allowed": true,
+    "unarmed_allowed": true,
+    "unarmed_weapons_allowed": false,
+    "req_buffs": [ "buff_shrike_onattack1" ],
+    "crit_tec": true,
+    "stun_dur": 2
+  },
+  {
+    "type": "technique",
+    "id": "tec_shrike_counter",
+    "name": "Deflection",
+    "messages": [ "You deflect the strike and send %s to the ground with their momentum", "<npcname> blocks and floors %s" ],
+    "skill_requirements": [ { "name": "melee", "level": 5 } ],
+    "melee_allowed": true,
+    "block_counter": true,
+    "unarmed_allowed": true,
+    "unarmed_weapons_allowed": false,
+    "crit_ok": true,
+    "down_dur": 2,
+    "stun_dur": 2,
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.0 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_shrike_finisher",
+    "name": "Sundering Talons",
+    "messages": [ "You lash out at %s with a vicious strike", "<npcname> lashes out at %s with a vicious strike" ],
+    "skill_requirements": [ { "name": "melee", "level": 5 }, { "name": "magic", "level": 4 } ],
+    "melee_allowed": true,
+    "unarmed_allowed": true,
+    "unarmed_weapons_allowed": false,
+    "req_buffs": [ "buff_shrike_oncrit" ],
+    "stunned_target": true,
+    "crit_ok": true,
+    "weighting": 3,
+    "flat_bonuses": [
+      { "stat": "arpen", "type": "cut", "scaling-stat": "dex", "scale": 1.0 },
+      { "stat": "arpen", "type": "stab", "scaling-stat": "dex", "scale": 1.0 }
+    ],
+    "mult_bonuses": [ { "stat": "damage", "type": "cut", "scale": 1.5 }, { "stat": "damage", "type": "stab", "scale": 1.5 } ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_shrike_break",
+    "name": "Grab Break",
+    "messages": [
+      "The %s tries to grab you, but you force your way out!",
+      "The %s tries to grab <npcname>, but they force their way out!"
+    ],
+    "skill_requirements": [ { "name": "melee", "level": 4 } ],
+    "melee_allowed": true,
+    "unarmed_allowed": true,
+    "defensive": true,
+    "grab_break": true
+  },
+  {
+    "type": "technique",
+    "id": "tec_weapon_incorruptible_slash",
+    "name": "Flame Strike",
+    "unarmed_allowed": true,
+    "melee_allowed": true,
+    "flat_bonuses": [ { "stat": "damage", "type": "heat", "scale": 30 } ],
+    "crit_ok": true,
+    "weighting": -25,
+    "messages": [ "Your blade sears through %s with a brilliant glow", "<npcname>'s blade sears through %s with a brilliant glow" ],
+    "description": "+30 fire damage, crit only"
+  },
+  {
+    "type": "technique",
+    "id": "tec_weapon_stormbringer_slash",
+    "name": "Shadow Cleave",
+    "unarmed_allowed": true,
+    "melee_allowed": true,
+    "flat_bonuses": [ { "stat": "damage", "type": "cold", "scale": 40 } ],
+    "crit_ok": true,
+    "weighting": -30,
+    "messages": [ "The runes on your blade shimmer as you hack into %s", "<npcname>'s blade shimmers as they hack into %s" ],
+    "description": "+40 cold damage, crit only"
+  },
+  {
+    "type": "technique",
+    "id": "tec_weapon_kinetic_knockback",
+    "name": "Kinetic Knockback",
+    "unarmed_allowed": true,
+    "melee_allowed": true,
+    "flat_bonuses": [
+      { "stat": "damage", "type": "bash", "scaling-stat": "str", "scale": 0.5 },
+      { "stat": "arpen", "type": "bash", "scaling-stat": "str", "scale": 0.5 }
+    ],
+    "knockback_dist": 3,
+    "powerful_knockback": true,
+    "down_dur": 1,
+    "crit_tec": true,
+    "weighting": 2,
+    "messages": [ "Your impact blasts %s back", "<npcname> blasts %s back" ],
+    "description": "+0.5 bash damage and armor penetration per point of strength, down 1 turn, knockback 3 tiles, crit only"
+  },
+  {
+    "type": "technique",
+    "id": "tec_veil_chosen_enervation",
+    "name": "Enervation",
+    "melee_allowed": true,
+    "req_buffs": [ "buff_veil_chosen_onpause" ],
+    "flat_bonuses": [
+      { "stat": "arpen", "type": "bash", "scaling-stat": "per", "scale": 0.5 },
+      { "stat": "arpen", "type": "cut", "scaling-stat": "per", "scale": 0.5 },
+      { "stat": "arpen", "type": "stab", "scaling-stat": "per", "scale": 0.5 }
+    ],
+    "crit_ok": true,
+    "weighting": -10,
+    "stun_dur": 2,
+    "messages": [ "Your strike resonates through %s", "<npcname>'s strike resonates through %s" ]
+  },
+  {
+    "type": "technique",
+    "id": "tec_veil_chosen_dimension_cutter",
+    "name": "Dimension-Cutter",
+    "weapon_damage_requirements": [ { "type": "bash", "min": 15 }, { "type": "cut", "min": 35 } ],
+    "melee_allowed": true,
+    "req_buffs": [ "buff_veil_chosen_ondodge" ],
+    "mult_bonuses": [ { "stat": "movecost", "scale": 0.75 } ],
+    "flat_bonuses": [
+      { "stat": "damage", "type": "cut", "scaling-stat": "per", "scale": 1.0 },
+      { "stat": "arpen", "type": "cut", "scaling-stat": "per", "scale": 0.75 }
+    ],
+    "crit_tec": true,
+    "weighting": 2,
+    "down_dur": 2,
+    "messages": [ "Your blade flickers and sunders through %s", "<npcname>'s blade flickers and sunders through %s" ]
+  }
+]

@@ -244,7 +244,9 @@ class ui_adaptor
 class background_pane
 {
     public:
-        background_pane();
+        using background_redraw_cb_t = std::function<void()>;
+
+        explicit background_pane( background_redraw_cb_t redraw_cb = {} );
     private:
         ui_adaptor ui;
 };
@@ -276,5 +278,4 @@ void redraw_invalidated();
  **/
 void screen_resized();
 } // namespace ui_manager
-
 

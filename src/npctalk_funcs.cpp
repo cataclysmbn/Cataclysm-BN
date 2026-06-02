@@ -195,7 +195,7 @@ void talk_function::buy_cow( npc &p )
 
 void spawn_animal( npc &p, const mtype_id &mon )
 {
-    if( monster *const mon_ptr = g->place_critter_around( mon, p.pos(), 1 ) ) {
+    if( monster *const mon_ptr = g->place_critter_around( mon, p.bub_pos(), 1 ) ) {
         mon_ptr->friendly = -1;
         mon_ptr->add_effect( effect_pet, 1_turns, bodypart_str_id::NULL_ID() );
     } else {
@@ -292,6 +292,11 @@ void talk_function::revert_activity( npc &p )
     p.revert_after_activity();
 }
 
+void talk_function::do_craft( npc &p )
+{
+    p.do_npc_craft();
+}
+
 void talk_function::goto_location( npc &p )
 {
     int i = 0;
@@ -308,11 +313,11 @@ void talk_function::goto_location( npc &p )
         return;
     }
     if( index == 1 ) {
-        destination = g->u.global_omt_location();
+        destination = g->u.abs_omt_pos();
     }
     p.goal = destination;
     p.omt_path = get_overmapbuffer( p.get_dimension() ).get_travel_path(
-                     p.global_omt_location(), p.goal, overmap_path_params::for_npc() );
+                     p.abs_omt_pos(), p.goal, overmap_path_params::for_npc() );
     if( destination == tripoint_abs_omt() || destination == overmap::invalid_tripoint ||
         p.omt_path.empty() ) {
         p.goal = npc::no_goal_point;
@@ -322,7 +327,7 @@ void talk_function::goto_location( npc &p )
     }
     p.set_mission( NPC_MISSION_TRAVELLING );
     p.chatbin.first_topic = "TALK_FRIEND_GUARD";
-    p.guard_pos = tripoint_min;
+    p.guard_pos = tripoint_abs_ms::min();
     p.set_attitude( NPCATT_NULL );
 }
 
@@ -358,7 +363,7 @@ void talk_function::stop_guard( npc &p )
     }
     p.chatbin.first_topic = "TALK_FRIEND";
     p.goal = npc::no_goal_point;
-    p.guard_pos = tripoint_min;
+    p.guard_pos = tripoint_abs_ms::min();
 }
 
 void talk_function::wake_up( npc &p )
@@ -428,7 +433,7 @@ void talk_function::bionic_remove( npc &p )
     std::vector<itype_id> bionic_types;
     std::vector<std::string> bionic_names;
     for( const bionic &bio : all_bio ) {
-        if( std::ranges::find( bionic_types, bio.info().itype() ) == bionic_types.end() ) {
+        if( !std::ranges::contains( bionic_types, bio.info().itype() ) ) {
             bionic_types.push_back( bio.info().itype() );
             if( bio.info().itype().is_valid() ) {
                 item *tmp = item::spawn_temporary( bio.id.str(), calendar::start_of_cataclysm );
@@ -518,7 +523,7 @@ void talk_function::give_all_aid( npc &p )
 
     give_aid_to( get_player_character() );
     for( npc &guy : g->all_npcs() ) {
-        if( guy.is_walking_with() && rl_dist( guy.pos(), u.pos() ) < PICKUP_RANGE ) {
+        if( guy.is_walking_with() && rl_dist( guy.bub_pos(), u.bub_pos() ) < PICKUP_RANGE ) {
             give_aid_to( guy );
         }
     }
@@ -611,8 +616,9 @@ void talk_function::buy_10_logs( npc &p )
     find_params.search_range = { 0, 1 };
     find_params.search_layers = { 0, 0 };
 
-    std::vector<tripoint_abs_omt> places = ACTIVE_OVERMAP_BUFFER.find_all(
-            get_player_character().global_omt_location(), find_params );
+    std::vector<tripoint_abs_omt> places = get_overmapbuffer(
+            get_player_character().get_dimension() ).find_all(
+                    get_player_character().abs_omt_pos(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -620,7 +626,8 @@ void talk_function::buy_10_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( const tripoint_abs_omt &i : places ) {
-        if( &cur_om == ACTIVE_OVERMAP_BUFFER.get_existing_om_global( i ).om ) {
+        if( &cur_om == get_overmapbuffer( get_player_character().get_dimension() ).get_existing_om_global(
+                i ).om ) {
             places_om.push_back( i );
         }
     }
@@ -628,8 +635,7 @@ void talk_function::buy_10_logs( npc &p )
     const tripoint_abs_omt site = random_entry( places_om );
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point( 7, 15 ), "log", 10 );
-    bay.save();
+    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 10 );
 
     p.add_effect( effect_currently_busy, 1_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -643,7 +649,8 @@ void talk_function::buy_100_logs( npc &p )
     find_params.search_layers = { 0, 0 };
 
     std::vector<tripoint_abs_omt> places =
-        ACTIVE_OVERMAP_BUFFER.find_all( get_player_character().global_omt_location(), find_params );
+        get_overmapbuffer( get_player_character().get_dimension() ).find_all(
+            get_player_character().abs_omt_pos(), find_params );
     if( places.empty() ) {
         debugmsg( "Couldn't find %s", "ranch_camp_67" );
         return;
@@ -651,7 +658,8 @@ void talk_function::buy_100_logs( npc &p )
     const auto &cur_om = g->get_cur_om();
     std::vector<tripoint_abs_omt> places_om;
     for( auto &i : places ) {
-        if( &cur_om == ACTIVE_OVERMAP_BUFFER.get_existing_om_global( i ).om ) {
+        if( &cur_om == get_overmapbuffer( get_player_character().get_dimension() ).get_existing_om_global(
+                i ).om ) {
             places_om.push_back( i );
         }
     }
@@ -659,8 +667,7 @@ void talk_function::buy_100_logs( npc &p )
     const tripoint_abs_omt site = random_entry( places_om );
     tinymap bay;
     bay.load( project_to<coords::sm>( site ), false );
-    bay.spawn_item( point( 7, 15 ), "log", 100 );
-    bay.save();
+    bay.spawn_item( point_bub_ms( 7, 15 ), "log", 100 );
 
     p.add_effect( effect_currently_busy, 7_days );
     add_msg( m_good, _( "%s drops the logs off in the garage…" ), p.name );
@@ -772,7 +779,7 @@ void talk_function::drop_stolen_item( npc &p )
             detached_ptr<item> to_drop = elem->detach( );
             to_drop->remove_old_owner();
             to_drop->set_owner( p );
-            here.add_item_or_charges( g->u.pos(), std::move( to_drop ) );
+            here.add_item_or_charges( g->u.bub_pos(), std::move( to_drop ) );
         }
     }
     if( g->u.is_hauling() ) {
@@ -803,7 +810,7 @@ void talk_function::drop_weapon( npc &p )
     if( p.is_hallucination() ) {
         return;
     }
-    get_map().add_item_or_charges( p.pos(), p.remove_primary_weapon() );
+    get_map().add_item_or_charges( p.bub_pos(), p.remove_primary_weapon() );
 }
 
 void talk_function::player_weapon_away( npc &/*p*/ )
@@ -816,7 +823,7 @@ void talk_function::player_weapon_drop( npc &/*p*/ )
     for( item *weapon : g->u.wielded_items() ) {
         const auto ret = g->u.can_unwield( *weapon );
         if( ret.success() ) {
-            get_map().add_item_or_charges( g->u.pos(), g->u.remove_primary_weapon() );
+            get_map().add_item_or_charges( g->u.bub_pos(), g->u.remove_primary_weapon() );
         }
     }
 
@@ -911,12 +918,12 @@ void talk_function::start_training( npc &p )
 npc *pick_follower()
 {
     std::vector<npc *> followers;
-    std::vector<tripoint> locations;
+    std::vector<tripoint_bub_ms> locations;
 
     for( npc &guy : g->all_npcs() ) {
         if( guy.is_player_ally() && g->u.sees( guy ) ) {
             followers.push_back( &guy );
-            locations.push_back( guy.pos() );
+            locations.push_back( guy.bub_pos() );
         }
     }
 

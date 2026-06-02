@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstdint>
 
 /**
  * Runtime localization system for Cataclysm: Bright Nights.

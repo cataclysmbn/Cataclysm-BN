@@ -109,11 +109,22 @@
   {
     "id": "mx_military",
     "type": "map_extra",
-    "name": "Military",
+    "name": { "ctxt": "map extra", "str": "Military" },
     "looks_like": "mon_zombie_soldier",
     "description": "Several corpses of soldiers are here.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_military" },
     "sym": "m",
+    "color": "light_red",
+    "autonote": true
+  },
+  {
+    "id": "mx_survivor",
+    "type": "map_extra",
+    "name": { "ctxt": "map extra", "str": "Dead Survivors" },
+    "looks_like": "mon_zombie_survivor_elite",
+    "description": "Several corpses of survivors are here.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_survivor" },
+    "sym": "s",
     "color": "light_red",
     "autonote": true
   },
@@ -124,6 +135,17 @@
     "looks_like": "small_helicopter_rotor",
     "description": "A helicopter crashed here.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_helicopter" },
+    "sym": "X",
+    "color": "light_blue",
+    "autonote": true
+  },
+  {
+    "id": "mx_aircraft",
+    "type": "map_extra",
+    "name": "Aircraft Crash",
+    "looks_like": "jet_thruster",
+    "description": "An aircraft crashed here.",
+    "generator": { "generator_method": "map_extra_function", "generator_id": "mx_aircraft" },
     "sym": "X",
     "color": "light_blue",
     "autonote": true
@@ -224,6 +246,17 @@
     "description": "This area is covered with a single type of trees.",
     "generator": { "generator_method": "map_extra_function", "generator_id": "mx_grove" },
     "sym": "F",
+    "color": "light_green",
+    "autonote": true
+  },
+  {
+    "id": "mx_elfa",
+    "type": "map_extra",
+    "name": "Strange Figure",
+    "looks_like": "mon_mutant_elfa",
+    "description": "These woods seem to contain a strange figure.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_elfa" },
+    "sym": "E",
     "color": "light_green",
     "autonote": true
   },
@@ -405,6 +438,17 @@
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_prison_bus" }
   },
   {
+    "id": "mx_surrounded_vehicle",
+    "type": "map_extra",
+    "name": "Surrounded Vehicle",
+    "looks_like": "wheel_armor",
+    "description": "A vehicle surrounded by zombies.",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_surrounded_vehicle" },
+    "sym": "S",
+    "color": "light_red",
+    "autonote": true
+  },
+  {
     "id": "mx_mass_grave",
     "type": "map_extra",
     "name": "Mass Grave",
@@ -569,5 +613,16 @@
     "name": { "str": "Sewer Pipes" },
     "description": "Sewer pipes and pumps.",
     "generator": { "generator_method": "update_mapgen", "generator_id": "mx_sewer_pipesJ" }
+  },
+  {
+    "id": "mx_crawler",
+    "type": "map_extra",
+    "name": { "ctxt": "map extra", "str": "Corpses" },
+    "looks_like": "corpse_bloody",
+    "description": "Several corpses are here, along with whatever killed them...",
+    "generator": { "generator_method": "update_mapgen", "generator_id": "mx_crawler" },
+    "sym": "C",
+    "color": "red",
+    "autonote": true
   }
 ]

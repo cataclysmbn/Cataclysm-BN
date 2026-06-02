@@ -237,7 +237,7 @@ void relic::serialize( JsonOut &jsout ) const
     jsout.end_object();
 }
 
-int relic::activate( Creature &caster, const tripoint &target ) const
+int relic::activate( Creature &caster, const tripoint_bub_ms &target ) const
 {
     caster.moves -= moves;
     for( const fake_spell &sp : active_effects ) {
@@ -368,7 +368,7 @@ bool check_recharge_reqs( const item &itm, const relic_recharge &rech, const Cha
             return soaked;
         }
         case relic_recharge_req::sky: {
-            return itm.position().z > 0;
+            return itm.position().z() > 0;
         }
         default: {
             std::abort();
@@ -429,7 +429,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         case relic_recharge_type::field: {
             bool consumed = false;
-            for( const tripoint &dest : here.points_in_radius( itm.position(), 1 ) ) {
+            for( const tripoint_bub_ms &dest : here.points_in_radius( itm.position(), 1 ) ) {
                 field_entry *field_at = here.field_at( dest ).find_field( rech.field_type );
                 if( !field_at ) {
                     continue;
@@ -448,7 +448,7 @@ bool process_recharge_entry( item &itm, const relic_recharge &rech, Character *c
         }
         case relic_recharge_type::trap: {
             bool consumed = false;
-            for( const tripoint &dest : here.points_in_radius( itm.position(), 1 ) ) {
+            for( const tripoint_bub_ms &dest : here.points_in_radius( itm.position(), 1 ) ) {
                 if( here.tr_at( dest ).id == rech.trap_type ) {
                     here.remove_trap( dest );
                     consumed = true;

@@ -340,8 +340,7 @@
     "time": "1 m",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "rag", 6 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "rag", 6 ] ] ]
   },
   {
     "result": "footrags_fur",
@@ -454,8 +453,7 @@
     "skill_used": "survival",
     "time": "1 m",
     "autolearn": true,
-    "components": [ [ [ "plastic_shopping_bag", 2 ] ] ],
-    "flags": [ "BLIND_HARD" ]
+    "components": [ [ [ "plastic_shopping_bag", 2 ] ] ]
   },
   {
     "result": "socks_wool",

@@ -1,0 +1,17 @@
+[
+  {
+    "type": "construction_group",
+    "id": "place_afs_cooking_rig",
+    "name": "Place cooking rig"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_afs_kitchen_rig",
+    "name": "Place KitchenMaster Cooking Buddy"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_afs_metal_rig",
+    "name": "Place MetalMaster forge buddy"
+  }
+]

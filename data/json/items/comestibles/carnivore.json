@@ -579,7 +579,15 @@
     "fun": -50,
     "flags": [ "IS_BLOOD" ],
     "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
-    "vitamins": [ [ "meat_allergen", 1 ], [ "human_flesh_vitamin", 100 ] ]
+    "vitamins": [
+      [ "meat_allergen", 1 ],
+      [ "human_flesh_vitamin", 100 ],
+      [ "vitA", 26 ],
+      [ "vitC", 12 ],
+      [ "calcium", 1 ],
+      [ "iron", 4 ],
+      [ "vitB", 6 ]
+    ]
   },
   {
     "type": "COMESTIBLE",
@@ -603,7 +611,7 @@
     "fun": -50,
     "flags": [ "IS_BLOOD", "NO_COOKING_BUFF" ],
     "drop_action": { "type": "emit_actor", "emits": [ "emit_drop_blood" ], "scale_qty": true },
-    "vitamins": [ [ "meat_allergen", 1 ] ]
+    "vitamins": [ [ "meat_allergen", 1 ], [ "vitA", 26 ], [ "vitC", 12 ], [ "calcium", 1 ], [ "iron", 4 ], [ "vitB", 6 ] ]
   },
   {
     "type": "COMESTIBLE",

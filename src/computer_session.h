@@ -124,6 +124,7 @@ class computer_session
         void action_tower_unresponsive();
         void action_unlock();
         void action_unlock_disarm();
+        void action_unlock_labpass();
         static const std::map<computer_action, void( computer_session::* )()> computer_action_functions;
 
         void failure_alarm();

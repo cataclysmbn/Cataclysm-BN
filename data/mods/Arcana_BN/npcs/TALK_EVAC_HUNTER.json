@@ -1,0 +1,50 @@
+[
+  {
+    "type": "talk_topic",
+    "id": "TALK_EVAC_HUNTER",
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_EVAC_HUNTER_GM_PRELUDE"
+      }
+    ]
+  },
+  {
+    "id": "TALK_EVAC_HUNTER_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "Lost half a hunting party a few days ago, along the edge of one of the old towns.  Thought nothing of it at first, but now that you mention it things sounded fishy.  Guess I'll lay out how things went down, see if that helps whatever you're trying to do."
+  },
+  {
+    "id": "TALK_EVAC_HUNTER_DO",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "[MISSION] I've been asked to help attract work for another community of survivors.  Know of anyone who could help with that?",
+        "topic": "TALK_FREE_MERCHANT_STOCKS_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "TALK_EVAC_HUNTER_LIFE",
+    "type": "talk_topic",
+    "dynamic_line": "You're talking to the wrong person for that.  If you're hitting up hunters and scavengers for work, best person to talk to would be the broker.  They arrange the contracts and such, should be in that room over there.",
+    "responses": [ { "text": "…", "topic": "TALK_DONE" } ]
+  }
+]

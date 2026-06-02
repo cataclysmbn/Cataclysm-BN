@@ -67,10 +67,10 @@ class player_activity
         std::vector<safe_reference<item>> targets;
         std::vector<int> values;
         std::vector<std::string> str_values;
-        std::vector<tripoint> coords;
-        std::unordered_set<tripoint> coord_set;
+        std::vector<tripoint_abs_ms> coords;
+        std::unordered_set<tripoint_abs_ms> coord_set;
         std::vector<weak_ptr_fast<monster>> monsters;
-        tripoint placement;
+        tripoint_abs_ms placement;
 
         bool no_drink_nearby_for_auto_consume = false;
         bool no_food_nearby_for_auto_consume = false;
@@ -143,6 +143,16 @@ class player_activity
         }
         bool rooted() const {
             return type != activity_id::NULL_ID() && type->rooted();
+        }
+        auto has_idle_bubble_effect() const -> bool {
+            return type != activity_id::NULL_ID() &&
+                   type->bubble_effect() == activity_bubble_effect::idle;
+        }
+        auto has_special_turns() const -> bool {
+            return type != activity_id::NULL_ID() && type->special();
+        }
+        auto light_affected() const -> bool {
+            return type != activity_id::NULL_ID() && type->light_affected();
         }
 
         // Question to ask when the activity is to be stopped,
@@ -222,5 +232,4 @@ class player_activity
     private:
         std::vector<safe_reference<item>> tools_;
 };
-
 

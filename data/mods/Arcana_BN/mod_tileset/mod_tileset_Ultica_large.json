@@ -1,0 +1,16 @@
+[
+  {
+    "type": "mod_tileset",
+    "compatibility": [ "UltimateCataclysm", "UltimateCataclysmDemo" ],
+    "tiles-new": [
+      {
+        "file": "mod_tileset/arcana_expan_ultica_large.png",
+        "tiles": [ { "id": "mon_moruboru", "fg": 0 }, { "id": "mon_spirit_of_fire", "fg": 1 }, { "id": "mon_dracolich", "fg": 2 } ],
+        "sprite_width": 64,
+        "sprite_height": 64,
+        "sprite_offset_x": -16,
+        "sprite_offset_y": -32
+      }
+    ]
+  }
+]

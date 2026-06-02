@@ -89,8 +89,15 @@ jobs:
           draft: false
           prerelease: true
 
-  builds:
+  build-translations:
     needs: [metadata, release]
+    if: ${{ needs.release.outputs.release_already_exists == 'false' }}
+    uses: ./.github/workflows/build-translations.yml
+    secrets:
+      TX_TOKEN: ${{ secrets.TX_TOKEN }}
+
+  builds:
+    needs: [metadata, release, build-translations]
     if: ${{ needs.release.outputs.release_already_exists == 'false' }}
     uses: ./.github/workflows/build.yml
     with:

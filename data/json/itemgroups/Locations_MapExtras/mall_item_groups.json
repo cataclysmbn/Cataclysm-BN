@@ -70,7 +70,8 @@
     "type": "item_group",
     "items": [
       [ "bandages", 25 ],
-      [ "1st_aid", 20 ],
+      [ "1st_aid", 16 ],
+      [ "1st_aid_deluxe", 4 ],
       [ "vitamins", 75 ],
       [ "calcium_tablet", 75 ],
       [ "aspirin", 45 ],

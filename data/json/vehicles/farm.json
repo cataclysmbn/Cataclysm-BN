@@ -8,6 +8,7 @@
       [ "&&#==&" ],
       [ " O  O " ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_vertical", "seat", "controls", "dashboard" ] },
       {
@@ -39,6 +40,7 @@
       [ "8|=x|" ],
       [ "O-+-O" ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": 0, "y": 1, "part": "frame_vertical" },
       { "x": 0, "y": 1, "part": "door_opaque" },
@@ -102,6 +104,7 @@
       [ "+O  O" ],
       [ "&    " ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": 2, "y": 0, "part": "frame_horizontal" },
       { "x": 2, "y": 0, "part": "halfboard_vertical" },
@@ -147,6 +150,7 @@
       [ "+O  O" ],
       [ "&    " ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": 2, "y": 0, "part": "frame_horizontal" },
       { "x": 2, "y": 0, "part": "halfboard_vertical" },
@@ -189,6 +193,7 @@
       [ "+O  O" ],
       [ "&    " ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": 2, "y": 0, "part": "frame_horizontal" },
       { "x": 2, "y": 0, "part": "halfboard_vertical" },
@@ -231,6 +236,7 @@
       [ "oHo" ],
       [ "oHo" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },
@@ -260,6 +266,7 @@
       [ "oHo" ],
       [ "oHo" ]
     ],
+    "color_palette": "wooden_standard",
     "parts": [
       { "x": 0, "y": 0, "parts": [ "frame_wood_cross", "wooden_aisle_vertical" ] },
       { "x": 0, "y": 1, "parts": [ "frame_wood_cross", "wood box" ] },
@@ -301,6 +308,7 @@
       [ "H|-+'||" ],
       [ "&ooooo " ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": -2, "y": -2, "parts": [ "frame_horizontal", "tread1" ] },
       { "x": -1, "y": -2, "parts": [ "frame_horizontal", "tread1" ] },
@@ -353,6 +361,7 @@
       [ "H|-+'||" ],
       [ "&ooooo " ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": -2, "y": -2, "parts": [ "frame_horizontal", "tread1" ] },
       { "x": -1, "y": -2, "parts": [ "frame_horizontal", "tread1" ] },
@@ -405,6 +414,7 @@
       [ "H|-+'||" ],
       [ "&ooooo " ]
     ],
+    "color_palette": "farm_standard",
     "parts": [
       { "x": -2, "y": -2, "parts": [ "frame_horizontal", "tread1" ] },
       { "x": -1, "y": -2, "parts": [ "frame_horizontal", "tread1" ] },

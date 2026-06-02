@@ -82,7 +82,7 @@ void mapbuffer_registry::save_all( bool delete_after_save )
     const std::vector<std::string> dim_ids = active_dimension_ids();
 
     // Dispatch all dimension saves concurrently. Each buffer's save() is internally
-    // parallelised over OMT quads, so this gives a second level of parallelism when
+    // parallelised over OMTs, so this gives a second level of parallelism when
     // multiple dimensions are loaded.  show_progress=false suppresses UI popup calls
     // that are not safe off the main thread.
     parallel_for( 0, static_cast<int>( dim_ids.size() ), [&]( int i ) {

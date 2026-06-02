@@ -70,7 +70,7 @@ struct sdl_render_state {
         ( Flags & sdl_render_state_flags::blend_mode ) == sdl_render_state_flags::blend_mode;
 
     using tRT = std::conditional_t<has_render_target, std::tuple<SDL_Texture *>, std::tuple<>>;
-    using tCR = std::conditional_t<has_clip_rect, std::tuple<SDL_Rect, SDL_bool>, std::tuple<>>;
+    using tCR = std::conditional_t<has_clip_rect, std::tuple<SDL_Rect, bool>, std::tuple<>>;
     using tVP = std::conditional_t<has_viewport, std::tuple<SDL_Rect>, std::tuple<>>;
     using tDC = std::conditional_t<has_draw_color, std::tuple<SDL_Color>, std::tuple<>>;
     using tBM = std::conditional_t<has_blend_mode, std::tuple<SDL_BlendMode>, std::tuple<>>;
@@ -118,12 +118,12 @@ auto sdl_save_render_state( SDL_Renderer *r ) -> sdl_render_state<Flags>
     }
     if constexpr( type::has_clip_rect ) {
         SDL_Rect &v = std::get<type::clip_rect_idx>( res );
-        SDL_RenderGetClipRect( r, &v );
-        std::get<type::clip_enabled_idx>( res ) = SDL_RenderIsClipEnabled( r );
+        SDL_GetRenderClipRect( r, &v );
+        std::get<type::clip_enabled_idx>( res ) = SDL_RenderClipEnabled( r );
     }
     if constexpr( type::has_viewport ) {
         SDL_Rect &v = std::get<type::viewport_idx>( res );
-        SDL_RenderGetViewport( r, &v );
+        SDL_GetRenderViewport( r, &v );
     }
     if constexpr( type::has_draw_color ) {
         SDL_Color &v = std::get<type::draw_color_idx>( res );
@@ -148,17 +148,17 @@ auto sdl_restore_render_state( SDL_Renderer *r, const sdl_render_state<Flags> &s
         SDL_SetRenderTarget( r, v );
     }
     if constexpr( type::has_clip_rect ) {
-        const SDL_bool clip_enabled = std::get<type::clip_enabled_idx>( t );
+        const bool clip_enabled = std::get<type::clip_enabled_idx>( t );
         if( clip_enabled ) {
             const SDL_Rect &v = std::get<type::clip_rect_idx>( t );
-            SDL_RenderSetClipRect( r, &v );
+            SDL_SetRenderClipRect( r, &v );
         } else {
-            SDL_RenderSetClipRect( r, nullptr );
+            SDL_SetRenderClipRect( r, nullptr );
         }
     }
     if constexpr( type::has_viewport ) {
         const SDL_Rect &v = std::get<type::viewport_idx>( t );
-        SDL_RenderSetViewport( r, &v );
+        SDL_SetRenderViewport( r, &v );
     }
     if constexpr( type::has_draw_color ) {
         const SDL_Color &v = std::get<type::draw_color_idx>( t );
@@ -197,9 +197,9 @@ SDL_Color color_pixel_z_overlay( const SDL_Color &color );
 SDL_Color curses_color_to_SDL( const nc_color &color );
 
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-constexpr static int sdl_color_format = SDL_PIXELFORMAT_RGBA8888;
+constexpr static SDL_PixelFormat sdl_color_pixel_format = SDL_PIXELFORMAT_RGBA8888;
 #else
-constexpr static int sdl_color_pixel_format = SDL_PIXELFORMAT_ABGR8888;
+constexpr static SDL_PixelFormat sdl_color_pixel_format = SDL_PIXELFORMAT_ABGR8888;
 #endif
 
 ///@throws std::exception upon errors.

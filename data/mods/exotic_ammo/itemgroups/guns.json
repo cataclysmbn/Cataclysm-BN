@@ -198,5 +198,17 @@
       { "group": "everyday_lcar223", "prob": 3 },
       { "group": "everyday_lmp9mm", "prob": 4 }
     ]
+  },
+  {
+    "type": "item_group",
+    "id": "guns_surplus",
+    "subtype": "distribution",
+    "entries": [
+      { "collection": [ { "item": "makarov" }, { "item": "makarovmag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "tokarev" }, { "item": "tokarevmag", "count": [ 1, 2 ] } ], "prob": 5 },
+      { "collection": [ { "item": "ppsh" }, { "group": "display_ppsh_mag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "ak74" }, { "group": "display_ak74_mag", "count": [ 1, 2 ] } ], "prob": 10 },
+      { "collection": [ { "item": "an94" }, { "group": "display_ak74_mag", "count": [ 1, 2 ] } ], "prob": 5 }
+    ]
   }
 ]

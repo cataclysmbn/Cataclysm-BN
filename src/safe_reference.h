@@ -112,9 +112,9 @@ class safe_reference
 
         inline static rbp_type records_by_pointer;
         inline static rbi_type records_by_id;
-        // Atomic so that concurrent save_quad() workers can call serialize() without
+        // Atomic so that concurrent save_omt() workers can call serialize() without
         // racing on ID generation.  Reads/writes to individual record fields are safe
-        // across workers because each item belongs to exactly one quad (distinct records).
+        // across workers because each item belongs to exactly one omt (distinct records).
         inline static std::atomic<uint32_t> next_id = 1;
 
         auto fill( T *obj ) -> void {
@@ -372,7 +372,7 @@ class cache_reference
         using ref_map_it = typename ref_map::iterator;
 
         inline static ref_map reference_map;
-        // Guards all access to reference_map.  Needed because preload_quad() deserialises
+        // Guards all access to reference_map.  Needed because preload_omt() deserialises
         // submaps (including their active_item_cache) on worker threads, which constructs
         // cache_reference objects concurrently.  Uncontended on the main thread so the
         // cost during normal gameplay is a single atomic CAS per lock/unlock.

@@ -743,5 +743,22 @@
     "material_thickness": 3,
     "valid_mods": [ "steel_padded", "hard_steel_padded", "alloy_padded" ],
     "flags": [ "VARSIZE", "OUTER", "POCKETS", "HOOD" ]
+  },
+  {
+    "id": "alohashirt",
+    "type": "ARMOR",
+    "name": { "str": "hawaiian shirt" },
+    "description": "A colorful short-sleeved button-up shirt.  Fashionable and comfortable for a day out at the beach.",
+    "weight": "110 g",
+    "volume": "500 ml",
+    "price": "10 USD",
+    "price_postapoc": "50 cent",
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "color": "blue",
+    "armor_portion_data": [ { "covers": [ "torso" ], "coverage": 90 }, { "covers": [ "arms" ], "coverage": 30 } ],
+    "warmth": 5,
+    "material_thickness": 1,
+    "flags": [ "VARSIZE", "FANCY" ]
   }
 ]

@@ -1,0 +1,191 @@
+[
+  {
+    "type": "npc",
+    "id": "NPC_scientistquestgiver_docmission",
+    "name_suffix": "head scientist",
+    "//": "spawns at the survivor holdout from the doctor mission 5",
+    "class": "NC_TCLHEADSCIENTIST",
+    "attitude": 0,
+    "mission": 3,
+    "chat": "TALK_TCLHSCIENTIST_DOCMISSION",
+    "faction": "old_guard",
+    "mission_offered": "MISSION_TCL_CLEANUP_1"
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_DOCMISSION" ],
+    "type": "talk_topic",
+    "dynamic_line": "You look like you're very capable.",
+    "responses": [
+      {
+        "text": "What are you all doing here?",
+        "topic": "TALK_TCLHSCIENTIST_DESCRIBE",
+        "condition": { "not": { "npc_has_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" } }
+      },
+      {
+        "text": "What's your story?",
+        "topic": "TALK_TCLHSCIENTIST_STORY",
+        "condition": { "not": { "npc_has_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" } }
+      },
+      {
+        "text": "So what will your group do now?",
+        "topic": "TALK_TCLHSCIENTIST_DESCRIBE_SAFE",
+        "condition": { "npc_has_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "yes" }
+      },
+      {
+        "text": "So what will your group do now?",
+        "topic": "TALK_TCLHSCIENTIST_DESCRIBE_NOTSAFE",
+        "condition": { "npc_has_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "no" }
+      },
+      {
+        "text": "Lets trade.",
+        "condition": { "npc_has_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "yes" },
+        "topic": "TALK_TCLHSCIENTIST_DOCMISSION",
+        "effect": "start_trade"
+      },
+      { "text": "Well, bye.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_DESCRIBE" ],
+    "type": "talk_topic",
+    "dynamic_line": "As far as I know, we are the last survivors of this trans-coast logistics center.  We were attacked during our evacuation, and we have barricaded ourselves here to survive.  I am the head scientist of this facility.",
+    "responses": [ { "text": "Do you know where I could find some classified information?", "topic": "TALK_TCLHSCIENTIST_CHECK" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_CHECK" ],
+    "type": "talk_topic",
+    "dynamic_line": "Very direct are we?  Yes, I in fact hold the only copy of the information you are likely looking for.  However, they are not for a stranger's eyes.",
+    "responses": [
+      {
+        "text": "Please, this information could be the key to stopping the Cataclysm.",
+        "trial": {
+          "type": "PERSUADE",
+          "difficulty": 1,
+          "mod": [ [ "BRAVERY", 1 ], [ "AGGRESSION", -3 ], [ "ALTRUISM", 2 ], [ "FEAR", -2 ], [ "TRUST", 3 ] ]
+        },
+        "success": {
+          "topic": "TALK_TCLHSCIENTIST_PERSUADE_SUCCESS",
+          "effect": { "u_buy_item": "classified_file_docmission" },
+          "opinion": { "trust": 1, "fear": -1 }
+        },
+        "failure": { "topic": "TALK_TCLHSCIENTIST_PERSUADE_FAILURE", "opinion": { "trust": -2, "anger": 2 } }
+      },
+      {
+        "text": "You can give it to me or I'll take it.",
+        "trial": {
+          "type": "INTIMIDATE",
+          "difficulty": 1,
+          "mod": [ [ "BRAVERY", 1 ], [ "AGGRESSION", -3 ], [ "ALTRUISM", 2 ], [ "FEAR", -2 ], [ "TRUST", 3 ] ]
+        },
+        "success": {
+          "topic": "TALK_TCLHSCIENTIST_INTIMIDATE_SUCCESS",
+          "effect": { "u_buy_item": "classified_file_docmission" },
+          "opinion": { "trust": -2, "fear": 1, "anger": 1 }
+        },
+        "failure": { "topic": "TALK_TCLHSCIENTIST_INTIMIDATE_FAILURE", "opinion": { "trust": -2, "anger": 2 } }
+      },
+      { "text": "How can I earn your trust?", "topic": "TALK_MISSION_LIST" },
+      { "text": "I'll get back to you about it.", "topic": "TALK_DONE" }
+    ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_PERSUADE_SUCCESS" ],
+    "type": "talk_topic",
+    "dynamic_line": "I suppose I can make an exception if it is of such importance.",
+    "speaker_effect": {
+      "effect": [
+        { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "no" },
+        { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" }
+      ]
+    },
+    "responses": [ { "text": "Thanks.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_INTIMIDATE_SUCCESS" ],
+    "type": "talk_topic",
+    "dynamic_line": "I have no desire to make an enemy from you, just take it and leave us be, that information is worthless now anyways.",
+    "speaker_effect": {
+      "effect": [
+        { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "no" },
+        { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" }
+      ]
+    },
+    "responses": [ { "text": "Good.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_PERSUADE_FAILURE" ],
+    "type": "talk_topic",
+    "dynamic_line": "Sorry, I have clear orders and protocols as head scientist, even in these extenuating circumstances.",
+    "responses": [ { "text": "Ok, bye.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_INTIMIDATE_FAILURE" ],
+    "type": "talk_topic",
+    "dynamic_line": "Aggression would be a poor choice of action for you.",
+    "responses": [ { "text": "Ok, bye.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_STORY" ],
+    "type": "talk_topic",
+    "dynamic_line": "I am the head scientist of this lab, though that is likely inconsequential now.  I was instructed by the federal government to perform an emergency evacuation of this facility, and I was preparing to evacuate when we came under attack from unknown adversaries.  Our security team tried their best, but alas many are not much more than civilians given a gun, though how these adversaries bested our military contingent I am still unsure.  Regardless, I was able to convene with the people around me, and we fortified this cargo area to survive.",
+    "responses": [ { "text": "How long have you been down here?", "topic": "TALK_TCLHSCIENTIST_STORY_2" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_STORY_2" ],
+    "type": "talk_topic",
+    "dynamic_line": "At this point, I am unsure.  We have survived so far by the good grace of ending up in the cargo zone, where some opportunistic scavenging has provided us with large supplies of sustenance and some military equipment.",
+    "responses": [ { "text": "Why don't you leave?", "topic": "TALK_TCLHSCIENTIST_STORY_3" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_STORY_3" ],
+    "type": "talk_topic",
+    "dynamic_line": "We are backed into a corner, and we do not have the ammunition to fight our way out.  Behind us is the dark train network, which stretches for miles and could contain unimaginable horrors, and in front of us is our former facility, now infested by zombies and shoot-on-sight automatons.  It is no great way to live, trapped in a cargo zone, but I believe it is our only choice.",
+    "responses": [ { "text": "Interesting.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_DESCRIBE_SAFE" ],
+    "type": "talk_topic",
+    "dynamic_line": "Now that you've eliminated the most dangerous threat, I feel confident in staying down here for the foreseeable future.  This is a well-fortified location after all, and there are likely years worth of supplies still left in this facility.",
+    "responses": [ { "text": "No worries, I'll be around.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": [ "TALK_TCLHSCIENTIST_DESCRIBE_NOTSAFE" ],
+    "type": "talk_topic",
+    "dynamic_line": "Well, you have what you wanted, yes?  Those dangerous adversaries are still present, making any attempt at scavenging much riskier and more difficult.  We will likely be stuck down here for the foreseeable future, though at least we should have a large stockpile of supplies close enough that we need not risk deadly confrontation.",
+    "responses": [ { "text": "Well, good luck.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "id": "MISSION_TCL_CLEANUP_1",
+    "type": "mission_definition",
+    "name": { "str": "Eliminate the Shadowy Threat" },
+    "goal": "MGOAL_KILL_MONSTER_TYPE",
+    "description": "Find and kill the <color_light_blue>shadowy threat</color>. According to the head scientist, it is likely in the <color_red>security wing</color>.",
+    "difficulty": 10,
+    "value": 0,
+    "monster_type": "mon_feral_blackops_boss_bioop",
+    "start": {
+      "assign_mission_target": { "om_terrain": "lab_security_z-5", "reveal_radius": 1, "search_range": 10, "z": -5 },
+      "effect": [ { "u_buy_item": "id_science" }, { "u_buy_item": "id_science" }, { "u_buy_item": "id_science" } ]
+    },
+    "monster_kill_goal": 1,
+    "origins": [ "ORIGIN_SECONDARY" ],
+    "end": {
+      "effect": [
+        { "u_buy_item": "classified_file_docmission" },
+        { "npc_add_var": "cleanup_killed", "type": "mission", "context": "docmission_5", "value": "yes" },
+        { "npc_add_var": "docs_obtained", "type": "mission", "context": "docmission_5", "value": "yes" }
+      ]
+    },
+    "dialogue": {
+      "describe": "We need help to get rid of this threat…",
+      "offer": "Ever since the day we were attacked during the evacuation, we have had to operate in fear of whatever it was that attacked us.  The shadowy figures who did it seem to have mostly left the premises since, but every so often we will spot one during a scavenging run and thus be forced to mount a hasty retreat.  Unluckily, the figure seems to be most present in the lab's security zone, where the armories are.  If you will help us by terminating the threat, I will be willing to give you a copy of the information you seek.",
+      "accepted": "Excellent.  Here is the location of the lab's security zone, along with the floor we last encountered the figure on.  This facility is heavily secured with ID scanners, you will find these IDs useful for navigating this facility, and more can be easily found if you run out.  I wish you good luck, for all our sakes.",
+      "rejected": "Very well, but do not expect to receive the information you seek…",
+      "advice": "I have so far been unable to ascertain the nature of this threat, whether it be mutant, zombie, or even human.  All that is known is that it is a fast and deadly fighter that possesses a field of shadow capable of snuffing out even the brightest lights, as well as incredible durability, effortlessly ignoring small caliber weapons and being barely fazed by a full-auto M4 burst.  Even night vision seems to be unable to spot it within its darkness, but infrared might be able to.",
+      "inquire": "Is it dead yet?",
+      "success": "This is brilliant news indeed!  You have earned my trust and my admiration.  Please take the information with my thanks.  Furthermore, with the threat removed, we can become more bold with our scavenging, and can perhaps even sell you some surplus equipment we find!",
+      "success_lie": "A likely story...",
+      "failure": "It was hopeless anyways..."
+    }
+  }
+]

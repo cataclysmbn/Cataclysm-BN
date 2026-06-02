@@ -41,5 +41,21 @@
         "prob": 50
       }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_shade_boss_death_drops",
+    "entries": [
+      { "item": "phase_immersion_suit", "count": 1, "prob": 100 },
+      { "item": "armored_helmet_liner", "count": 1, "prob": 100 },
+      { "item": "id_science", "count": 1, "prob": 100 },
+      { "item": "sample_t_substrate", "count": 1, "prob": 100 },
+      { "item": "plut_cell", "count": [ 1, 2 ], "prob": 100 },
+      { "item": "slime_scrap", "count": [ 12, 28 ], "prob": 100 },
+      { "group": "mil_food_nodrugs", "count": [ 1, 2 ], "prob": 100 },
+      { "group": "underwear", "damage": [ 1, 2 ] },
+      { "group": "rare", "count": 1, "prob": 100 }
+    ]
   }
 ]

@@ -817,16 +817,17 @@ void location_visitable<map_cursor>::remove_items_with( const
         std::function < VisitResponse( detached_ptr<item> &&e ) > &filter )
 {
     auto cur = static_cast<map_cursor *>( this );
+    const auto cur_pos = tripoint_bub_ms( *cur );
 
     map &here = get_map();
-    if( !here.inbounds( *cur ) ) {
+    if( !here.inbounds( cur_pos ) ) {
         debugmsg( "cannot remove items from map: cursor out-of-bounds" );
         return;
     }
 
     // fetch the appropriate item stack
-    point offset;
-    submap *sub = here.get_submap_at( *cur, offset );
+    point_sm_ms offset;
+    submap *sub = here.get_submap_at( cur_pos, offset );
 
     visit_internal( [&filter, sub, offset]( detached_ptr<item> &&e ) {
         item &obj = *e;

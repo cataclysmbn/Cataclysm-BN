@@ -7,6 +7,8 @@
 #include "map_helpers.h"
 #include "state_helpers.h"
 
+static const trait_id trait_DEBUG_WEIGHTLESSNESS( "DEBUG_WEIGHTLESSNESS" );
+
 static void advance_turn( Character &guy )
 {
     guy.process_turn();
@@ -99,6 +101,21 @@ static void carry_weight_test( Character &guy, int load_kg, int speed_exp )
     }
 }
 
+static auto equip_carried_weight( Character &guy ) -> units::mass
+{
+    auto backpack = item::spawn( "test_backpack" );
+    auto inventory_item = item::spawn( "test_1kg_cube" );
+    auto wielded_item = item::spawn( "test_1kg_cube" );
+
+    const auto carried_weight = backpack->weight() + inventory_item->weight() + wielded_item->weight();
+
+    guy.wear_item( std::move( backpack ), false );
+    guy.i_add( std::move( inventory_item ) );
+    guy.wield( std::move( wielded_item ) );
+
+    return carried_weight;
+}
+
 TEST_CASE( "Character is slowed down while overburdened", "[speed]" )
 {
     clear_all_state();
@@ -124,5 +141,36 @@ TEST_CASE( "Character is slowed down while overburdened", "[speed]" )
     SECTION( "Carry weight significantly over carry capacity" ) {
         // 228% gives -32 speed (25 * 1.28)
         carry_weight_test( guy, 102, 68 );
+    }
+}
+
+TEST_CASE( "Debug weightlessness ignores carried item weight", "[speed][debug]" )
+{
+    clear_all_state();
+    player &guy = *get_player_character().as_player();
+
+    SECTION( "Normal carrying adds to character weight" ) {
+        clear_character( guy, false );
+        const auto base_weight = guy.get_weight();
+        const auto carried_weight = equip_carried_weight( guy );
+
+        CHECK( guy.get_weight() - base_weight == carried_weight );
+    }
+
+    SECTION( "Debug carrying capacity still adds to character weight" ) {
+        clear_character( guy, true );
+        const auto base_weight = guy.get_weight();
+        const auto carried_weight = equip_carried_weight( guy );
+
+        CHECK( guy.get_weight() - base_weight == carried_weight );
+    }
+
+    SECTION( "Debug weightlessness zeroes character weight" ) {
+        clear_character( guy, true );
+        guy.set_mutation( trait_DEBUG_WEIGHTLESSNESS );
+        const auto carried_weight = equip_carried_weight( guy );
+        CAPTURE( carried_weight );
+
+        CHECK( guy.get_weight() == 0_gram );
     }
 }

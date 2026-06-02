@@ -113,7 +113,7 @@ static inline local_translation_cache<std::string> get_local_translation_cache(
 // Note: in case of std::string argument, the result is copied, this is intended (for safety)
 #define _( msg ) \
     ( ( []( const auto & arg ) { \
-        static auto cache = detail::get_local_translation_cache( arg ); \
+        static auto cache = ::detail::get_local_translation_cache( arg ); \
         return cache( arg ); \
     } )( msg ) )
 

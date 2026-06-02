@@ -1,7 +1,8 @@
 #pragma once
 
-#include "iuse.h"
 #include "catalua_sol.h"
+#include "coordinates.h"
+#include "iuse.h"
 #include "ret_val.h"
 #include "type_id.h"
 
@@ -27,8 +28,9 @@ class lua_iuse_actor : public iuse_actor
                         sol::protected_function &&can_use_func );
         ~lua_iuse_actor() override;
         void load( const JsonObject &obj ) override;
-        int use( player &who, item &itm, bool tick, const tripoint &pos ) const override;
-        ret_val<bool> can_use( const Character &, const item &, bool, const tripoint & ) const override;
+        int use( player &who, item &itm, bool tick, const tripoint_bub_ms &pos ) const override;
+        ret_val<bool> can_use( const Character &, const item &, bool,
+                               const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
 };
 
@@ -128,9 +130,9 @@ class lua_istate_actor : public lua_icallback_actor_base
                           sol::protected_function &&on_drop );
 
         bool has_on_tick() const;
-        int call_on_tick( Character &who, item &it, const tripoint &pos ) const;
+        auto call_on_tick( Character &who, item &it, const tripoint_bub_ms &pos ) const -> void;
         void call_on_pickup( Character &who, item &it ) const;
-        bool call_on_drop( Character &who, item &it, const tripoint &pos ) const;
+        bool call_on_drop( Character &who, item &it, const tripoint_bub_ms &pos ) const;
 };
 
 /** Lua callbacks for melee combat events. */
@@ -176,7 +178,7 @@ class lua_iranged_actor : public lua_icallback_actor_base
 
         /** Called after firing. Returns false to force all shots to miss. */
         bool call_on_fire( Character &who, item &gun,
-                           const tripoint &target, int shots ) const;
+                           const tripoint_bub_ms &target, int shots ) const;
         void call_on_reload( Character &who, item &it ) const;
         /** Returns false to block firing entirely (before any ammo is consumed). */
         bool call_can_fire( const Character &who, const item &gun ) const;

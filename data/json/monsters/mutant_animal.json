@@ -15,6 +15,7 @@
       "feed": "The %s seems to like you!  Or maybe it just tolerates your presence better.  It's hard to tell with felines.",
       "pet": "The %s sofly purrs as you pet it.  It demands more."
     },
+    "pet_training": { "hp_mult": 1.1, "melee_mult": 1.15, "dodge_mult": 1.25, "max_level": 2 },
     "flags": [
       "SEES",
       "HEARS",
@@ -433,6 +434,7 @@
       "feed": "The %s seems to like you!  It lets you pat its head and seems friendly.",
       "pet": "The %s happily wags its tail while you pat their head."
     },
+    "pet_training": { "hp_mult": 1.2, "melee_mult": 1.15, "dodge_mult": 1.15, "max_level": 3 },
     "flags": [
       "ANIMAL",
       "CANPLAY",
@@ -449,6 +451,78 @@
       "SMELLS",
       "SWARMS",
       "WARM"
+    ]
+  },
+  {
+    "id": "mon_mutant_crawler",
+    "type": "MONSTER",
+    "//": "Underrail reference!!!!",
+    "name": { "str": "shadow stinger" },
+    "description": "This giant scorpion-like creature is the result of wanton experimentation combined with the conditions of the cataclysm.  It seems to be shrouded in a cloak of darkness, and a menacing stinger hangs over its beady black eyes.",
+    "default_faction": "factionless",
+    "bodytype": "spider",
+    "species": [ "MUTANT" ],
+    "volume": "90000 ml",
+    "weight": "90000 g",
+    "hp": 350,
+    "speed": 120,
+    "material": [ "flesh" ],
+    "symbol": "C",
+    "color": "dark_gray",
+    "aggression": -10,
+    "morale": 100,
+    "melee_skill": 6,
+    "melee_dice": 3,
+    "melee_dice_sides": 6,
+    "melee_cut": 6,
+    "melee_damage": [ { "damage_type": "stab", "amount": 15, "armor_penetration": 10 } ],
+    "special_attacks": [
+      [ "GRAB_DRAG", 12 ],
+      [ "EAT_FOOD", 2400 ],
+      {
+        "type": "bite",
+        "cooldown": 5,
+        "move_cost": 100,
+        "damage_max_instance": [ { "damage_type": "stab", "amount": 10, "armor_penetration": 5 } ],
+        "min_mul": 0.8,
+        "max_mul": 1.1,
+        "no_infection_chance": 30,
+        "effects": [ { "id": "venom_dmg", "duration": 750, "affect_hit_bp": true } ]
+      },
+      { "type": "leap", "cooldown": 10, "max_range": 5, "allow_no_target": true },
+      {
+        "id": "sting",
+        "cooldown": 5,
+        "move_cost": 200,
+        "damage_max_instance": [ { "damage_type": "stab", "amount": 25, "armor_penetration": 20 } ],
+        "min_mul": 1,
+        "max_mul": 2,
+        "effects": [ { "id": "venom_weaken", "duration": 600 }, { "id": "downed", "duration": 1, "chance": 75 } ]
+      }
+    ],
+    "dodge": 4,
+    "armor_bash": 5,
+    "armor_bullet": 8,
+    "armor_cut": 10,
+    "armor_stab": 5,
+    "vision_day": 5,
+    "vision_night": 15,
+    "harvest": "mutant_mammal_leather_and_chitin",
+    "path_settings": { "max_dist": 10 },
+    "anger_triggers": [ "PLAYER_CLOSE", "STALK", "PLAYER_WEAK", "HURT" ],
+    "death_function": [ "NORMAL" ],
+    "flags": [
+      "SEES",
+      "HEARS",
+      "GOODHEARING",
+      "SMELLS",
+      "KEENNOSE",
+      "CLIMBS",
+      "PATH_AVOID_DANGER_1",
+      "WARM",
+      "NIGHT_INVISIBILITY",
+      "BADVENOM",
+      "HIT_AND_RUN"
     ]
   }
 ]

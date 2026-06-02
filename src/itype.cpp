@@ -170,7 +170,7 @@ const use_function *itype::get_use( const std::string &iuse_name ) const
     return iter != use_methods.end() ? &iter->second : nullptr;
 }
 
-void itype::tick( player &p, item &it, const tripoint &pos ) const
+void itype::tick( player &p, item &it, const tripoint_bub_ms &pos ) const
 {
     // If istate_callbacks defines on_tick, use it instead of legacy use_methods loop
     if( istate_callbacks && istate_callbacks->has_on_tick() ) {
@@ -184,7 +184,7 @@ void itype::tick( player &p, item &it, const tripoint &pos ) const
     }
 }
 
-int itype::invoke( player &p, item &it, const tripoint &pos ) const
+int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos ) const
 {
     if( !has_use() ) {
         return 0;
@@ -192,7 +192,8 @@ int itype::invoke( player &p, item &it, const tripoint &pos ) const
     return invoke( p, it, pos, use_methods.begin()->first );
 }
 
-int itype::invoke( player &p, item &it, const tripoint &pos, const std::string &iuse_name ) const
+int itype::invoke( player &p, item &it, const tripoint_bub_ms &pos,
+                   const std::string &iuse_name ) const
 {
     const use_function *use = get_use( iuse_name );
     if( use == nullptr ) {

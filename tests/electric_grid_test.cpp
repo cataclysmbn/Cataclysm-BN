@@ -5,7 +5,6 @@
 #include "active_tile_data.h"
 #include "active_tile_data_def.h"
 #include "cata_utility.h"
-#include "coordinate_conversions.h"
 #include "distribution_grid.h"
 #include "map.h"
 #include "mapbuffer.h"
@@ -86,17 +85,17 @@ static inline void test_grid_veh( distribution_grid &grid, vehicle &veh, battery
     }
 }
 
-static void connect_grid_vehicle( map &m, vehicle &veh, vehicle_connector_tile &connector,
+static void connect_grid_vehicle( vehicle &veh, vehicle_connector_tile &connector,
                                   const tripoint_abs_ms &connector_abs_pos )
 {
-    const point cable_part_pos;
+    const tripoint_mnt_veh cable_part_pos;
     vehicle_part source_part( vpart_id( "jumper_cable" ), cable_part_pos,
                               item::spawn( "jumper_cable" ), &veh );
-    source_part.target.first = connector_abs_pos.raw();
-    source_part.target.second = connector_abs_pos.raw();
+    source_part.target.first = connector_abs_pos;
+    source_part.target.second = connector_abs_pos;
     source_part.set_flag( vehicle_part::targets_grid );
     connector.connected_vehicles.clear();
-    connector.connected_vehicles.emplace_back( m.getabs( veh.global_pos3() ) );
+    connector.connected_vehicles.emplace_back( veh.abs_ms_location() );
     int part_index = veh.install_part( cable_part_pos, std::move( source_part ) );
 
     REQUIRE( part_index >= 0 );
@@ -121,11 +120,11 @@ static grid_setup set_up_grid( map &m )
     // TODO: clear_grids()
     clear_grid_connections( m );
 
-    const tripoint vehicle_local_pos = tripoint( 10, 10, 0 );
-    const tripoint connector_local_pos = tripoint( 13, 10, 0 );
-    const tripoint battery_local_pos = tripoint( 14, 10, 0 );
-    const tripoint_abs_ms connector_abs_pos( m.getabs( connector_local_pos ) );
-    const tripoint_abs_ms battery_abs_pos( m.getabs( battery_local_pos ) );
+    const tripoint_bub_ms vehicle_local_pos = tripoint_bub_ms( 10, 10, 0 );
+    const tripoint_bub_ms connector_local_pos = tripoint_bub_ms( 13, 10, 0 );
+    const tripoint_bub_ms battery_local_pos = tripoint_bub_ms( 14, 10, 0 );
+    const tripoint_abs_ms connector_abs_pos( m.bub_to_abs( connector_local_pos ) );
+    const tripoint_abs_ms battery_abs_pos( m.bub_to_abs( battery_local_pos ) );
     m.furn_set( connector_local_pos, f_cable_connector );
     m.furn_set( battery_local_pos, f_battery );
     vehicle *veh = m.add_vehicle( vproto_id( "car" ), vehicle_local_pos, 0_degrees, 0, 0, false );
@@ -139,7 +138,7 @@ static grid_setup set_up_grid( map &m )
     REQUIRE( grid_connector );
     REQUIRE( battery );
 
-    connect_grid_vehicle( m, *veh, *grid_connector, connector_abs_pos );
+    connect_grid_vehicle( *veh, *grid_connector, connector_abs_pos );
 
     distribution_grid &grid = get_distribution_grid_tracker().grid_at( connector_abs_pos );
     REQUIRE( !grid.empty() );
@@ -162,14 +161,13 @@ TEST_CASE( "grid_and_vehicle_outside_bubble", "[grids][vehicle]" )
     clear_all_state();
     put_player_underground();
     map &m = get_map();
-    const tripoint old_abs_sub = m.get_abs_sub();
+    const auto old_abs_sub = m.get_abs_sub();
     // Ugly: we move the real map instead of the tinymap to reuse clear_map() results
     m.load( m.get_abs_sub() + point( m.getmapsize(), 0 ), true );
     GIVEN( "vehicle and battery are on one grid" ) {
         tinymap tm;
         tm.load( old_abs_sub, false );
         auto setup = set_up_grid( tm );
-        tm.save();
         test_grid_veh( setup.grid, setup.veh, setup.battery );
     }
 }
@@ -194,10 +192,10 @@ static S set_up_grid_with_consumer( map &m, const furn_str_id &act_tile_id )
     // TODO: clear_grids()
     clear_grid_connections( m );
 
-    const tripoint act_local_pos = tripoint( 13, 10, 0 );
-    const tripoint battery_local_pos = tripoint( 14, 10, 0 );
-    const tripoint_abs_ms act_abs_pos( m.getabs( act_local_pos ) );
-    const tripoint_abs_ms battery_abs_pos( m.getabs( battery_local_pos ) );
+    const tripoint_bub_ms act_local_pos = tripoint_bub_ms( 13, 10, 0 );
+    const tripoint_bub_ms battery_local_pos = tripoint_bub_ms( 14, 10, 0 );
+    const tripoint_abs_ms act_abs_pos( m.bub_to_abs( act_local_pos ) );
+    const tripoint_abs_ms battery_abs_pos( m.bub_to_abs( battery_local_pos ) );
     m.furn_set( act_local_pos, act_tile_id );
     m.furn_set( battery_local_pos, f_battery );
     T *act_tile = active_tiles::furn_at<T>( act_abs_pos );
@@ -393,8 +391,8 @@ TEST_CASE( "grid_furn_transform_queue_in_bubble", "[grids]" )
     calendar::turn = calendar::turn_zero;
     put_player_underground();
 
-    tripoint pos_local( 22, 7, 0 );
-    tripoint_abs_ms pos_abs( get_map().getabs( pos_local ) );
+    tripoint_bub_ms pos_local( 22, 7, 0 );
+    tripoint_abs_ms pos_abs( get_map().bub_to_abs( pos_local ) );
 
     grid_furn_transform_queue tf_queue;
     tf_queue.add( pos_abs, f_floor_lamp_on, "" );
@@ -415,8 +413,8 @@ TEST_CASE( "grid_furn_transform_queue_outside_bubble", "[grids]" )
     calendar::turn = calendar::turn_zero;
     put_player_underground();
 
-    tripoint pos_local( 22, 7, 0 );
-    tripoint_abs_ms pos_abs( get_map().getabs( pos_local ) );
+    tripoint_bub_ms pos_local( 22, 7, 0 );
+    tripoint_abs_ms pos_abs( get_map().bub_to_abs( pos_local ) );
     tripoint_abs_sm pos_abs_sm;
     point_sm_ms pos_in_sm;
     std::tie( pos_abs_sm, pos_in_sm ) = project_remain<coords::sm>( pos_abs );
@@ -434,14 +432,14 @@ TEST_CASE( "grid_furn_transform_queue_outside_bubble", "[grids]" )
 
     sm = MAPBUFFER.lookup_submap( pos_abs_sm );
     REQUIRE( sm );
-    REQUIRE( sm->get_furn( pos_in_sm.raw() ).id() != f_floor_lamp_on );
+    REQUIRE( sm->get_furn( pos_in_sm ).id() != f_floor_lamp_on );
     REQUIRE( active_tiles::furn_at<active_tile_data>( pos_abs ) == nullptr );
 
     tf_queue.apply( MAPBUFFER, get_distribution_grid_tracker(), get_player_character(), get_map() );
 
     sm = MAPBUFFER.lookup_submap( pos_abs_sm );
     REQUIRE( sm );
-    REQUIRE( sm->get_furn( pos_in_sm.raw() ).id() == f_floor_lamp_on );
+    REQUIRE( sm->get_furn( pos_in_sm ).id() == f_floor_lamp_on );
     REQUIRE( active_tiles::furn_at<steady_consumer_tile>( pos_abs ) != nullptr );
 }
 
@@ -452,11 +450,11 @@ TEST_CASE( "grid_power_stats", "[grids]" )
     clear_grid_connections( get_map() );
 
     GIVEN( "battery, solar panel and consumer on one grid" ) {
-        const auto solar_local = tripoint( 15, 10, 0 );
-        const auto consumer_local = tripoint( 13, 10, 0 );
-        const auto battery_local = tripoint( 14, 10, 0 );
-        const auto solar_abs =  tripoint_abs_ms( get_map().getabs( solar_local ) );
-        const auto consumer_abs =  tripoint_abs_ms( get_map().getabs( consumer_local ) );
+        const auto solar_local = tripoint_bub_ms( 15, 10, 0 );
+        const auto consumer_local = tripoint_bub_ms( 13, 10, 0 );
+        const auto battery_local = tripoint_bub_ms( 14, 10, 0 );
+        const auto solar_abs =  tripoint_abs_ms( get_map().bub_to_abs( solar_local ) );
+        const auto consumer_abs =  tripoint_abs_ms( get_map().bub_to_abs( consumer_local ) );
 
         get_map().furn_set( consumer_local, f_floor_lamp_on );
         get_map().furn_set( battery_local, f_battery );

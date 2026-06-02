@@ -148,6 +148,36 @@
     "info": "When thrown and it hits a creature's head, it can <bad>blind</bad> them."
   },
   {
+    "id": "BLIND_NO_EFFECT",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "Light levels have no effect."
+  },
+  {
+    "id": "BLIND_EASY",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is easy to do in the dark."
+  },
+  {
+    "id": "BLIND_HARD",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is difficult to do in the dark."
+  },
+  {
+    "id": "BLIND_NEARLY_IMPOSSIBLE",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is incredibly difficult to do in the dark, and impossible if you cannot see."
+  },
+  {
+    "id": "BLIND_IMPOSSIBLE",
+    "context": [  ],
+    "type": "json_flag",
+    "info": "This is cannot be done if you cannot see."
+  },
+  {
     "id": "EFFECT_NIGHT_VISION",
     "context": [  ],
     "type": "json_flag"
@@ -504,6 +534,18 @@
     "type": "json_flag"
   },
   {
+    "id": "NATURE_CAMO",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>natural environments</info>."
+  },
+  {
+    "id": "URBAN_CAMO",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly reduces your detection range</good> when worn in <info>urban and rocky environments</info>."
+  },
+  {
     "id": "NO_CVD",
     "type": "json_flag",
     "context": [ "GENERIC", "TOOL" ],
@@ -569,13 +611,15 @@
     "id": "resized_large",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "info": "This gear has been modified to accommodate <info>abnormally large mutated anatomy</info> with some <bad>increase to encumbrance</bad>."
+    "info": "This gear has been modified to accommodate <info>abnormally large mutated anatomy</info> with some <bad>increase to encumbrance</bad>.",
+    "tag": "(XL)"
   },
   {
     "id": "resized_small",
     "type": "json_flag",
     "context": [ "ARMOR", "TOOL_ARMOR" ],
-    "info": "This gear has been modified to accommodate <info>abnormally small mutants</info> with some <bad>increase to encumbrance</bad>."
+    "info": "This gear has been modified to accommodate <info>abnormally small mutants</info> with some <bad>increase to encumbrance</bad>.",
+    "tag": "(XS)"
   },
   {
     "id": "UNDERSIZE",
@@ -616,14 +660,16 @@
     "type": "json_flag",
     "context": [ "GENERIC" ],
     "//": "This item will spawn friendly. Used for pets and such.",
-    "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>."
+    "info": "Any creature spawned from this item will <info>always</info> emerge <good>friendly to you</good>.",
+    "tag": "(friendly)"
   },
   {
     "id": "SPAWN_HOSTILE",
     "type": "json_flag",
     "context": [ "GENERIC" ],
     "//": "This item will spawn mean. Used for target dummies and such.",
-    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>."
+    "info": "Any creature spawned from this item will <info>always</info> emerge <bad>against you</good>.",
+    "tag": "(hostile)"
   },
   {
     "id": "STAB",
@@ -651,27 +697,30 @@
     "context": [ "GENERIC" ]
   },
   {
-    "id": "RADIOSIGNAL_1",
+    "id": "RADIO_MOD",
     "type": "json_flag",
     "context": [ "TOOL", "TOOL_ARMOR" ]
+  },
+  {
+    "id": "RADIOSIGNAL_1",
+    "type": "json_flag",
+    "context": [ "TOOL", "TOOL_ARMOR" ],
+    "tag": "(radio: R)"
   },
   {
     "id": "RADIOSIGNAL_2",
     "type": "json_flag",
-    "context": [ "TOOL", "TOOL_ARMOR" ]
+    "context": [ "TOOL", "TOOL_ARMOR" ],
+    "tag": "(radio: B)"
   },
   {
     "id": "RADIOSIGNAL_3",
     "type": "json_flag",
-    "context": [ "TOOL", "TOOL_ARMOR" ]
+    "context": [ "TOOL", "TOOL_ARMOR" ],
+    "tag": "(radio: G)"
   },
   {
     "id": "RADIO_ACTIVATION",
-    "type": "json_flag",
-    "context": [ "TOOL", "TOOL_ARMOR" ]
-  },
-  {
-    "id": "RADIO_MOD",
     "type": "json_flag",
     "context": [ "TOOL", "TOOL_ARMOR" ]
   },
@@ -965,7 +1014,8 @@
   {
     "id": "WET",
     "type": "json_flag",
-    "context": [ "GENERIC", "ARMOR", "TOOL_ARMOR" ]
+    "context": [ "GENERIC", "ARMOR", "TOOL_ARMOR" ],
+    "tag": "(wet)"
   },
   {
     "id": "POWERARMOR_EXO",
@@ -1651,6 +1701,12 @@
     "type": "json_flag",
     "context": [  ],
     "info": "This gear <good>enhances your vision</good> when worn, and <info>tints your field of view</info>."
+  },
+  {
+    "id": "GNVE_EFFECT",
+    "type": "json_flag",
+    "context": [  ],
+    "info": "This gear <good>greatly enhances your vision</good> when worn, and <info>tints your field of view</info>."
   },
   {
     "id": "RECON_VISION",
@@ -2546,5 +2602,10 @@
     "id": "TRACKED",
     "type": "json_flag",
     "context": [ "vehicle_part" ]
+  },
+  {
+    "id": "NO_PAINT",
+    "type": "json_flag",
+    "context": [  ]
   }
 ]

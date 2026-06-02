@@ -266,5 +266,15 @@
     "price": "400 USD",
     "price_postapoc": "0 cent",
     "category": "valuables"
+  },
+  {
+    "id": "software_cryptow",
+    "copy-from": "software",
+    "type": "GENERIC",
+    "name": { "str_sp": "undeclared crypto wallet" },
+    "description": "A cryptocoin fortune equivalent to $250,000 that someone really didn't want to report to Uncle Sam. A pity it's useless now...",
+    "price": "250000 USD",
+    "price_postapoc": "0 cent",
+    "category": "valuables"
   }
 ]

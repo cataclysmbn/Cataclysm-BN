@@ -5,27 +5,27 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <shared_mutex>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 #include <mutex>
-#include <shared_mutex>
 
 #include "coordinates.h"
-#include "dimension_bounds.h"
+#include "dimension_info.h"
 #include "enums.h"
 #include "json.h"
 #include "memory_fast.h"
 #include "overmap_types.h"
-#include "point.h"
 #include "string_id.h"
 #include "type_id.h"
 
 class character_id;
 enum class cube_direction : int;
 class map_extra;
+class mapgendata;
 class monster;
 class npc;
 class overmap;
@@ -190,10 +190,6 @@ class overmapbuffer
          */
         void save( const std::string &dim_id );
 
-        /** Legacy overload — delegates to save(g_active_dimension_id).
-         *  Do NOT call from background threads. */
-        void save();
-
         void clear();
         void create_custom_overmap( const point_abs_om &, overmap_special_batch &specials );
 
@@ -201,11 +197,11 @@ class overmapbuffer
          * Set dimension bounds for pocket dimension overmap rendering.
          * When set, tiles outside the bounds return boundary overmap terrain.
          */
-        void set_dimension_bounds( const dimension_bounds &bounds );
+        void set_pocket_info( const pocket_dimension_data &info );
         /**
          * Clear dimension bounds (e.g. when exiting a pocket dimension).
          */
-        void clear_dimension_bounds();
+        void clear_pocket_info();
 
         /**
         * Generates overmap tiles, if missing
@@ -225,6 +221,15 @@ class overmapbuffer
         void ter_set( const tripoint_abs_omt &p, const oter_id &id );
         std::string *join_used_at( const std::pair<tripoint_abs_omt, cube_direction> & );
         std::optional<mapgen_arguments> *mapgen_args( const tripoint_abs_omt & );
+        /**
+         * Thread-safe lazy initializer for overmap_special mapgen arguments.
+         * Returns the arguments for @p p, initializing them from the special's
+         * parameter definitions (using @p md as context) if not yet set.
+         * Returns std::nullopt if no args are defined for this position.
+         */
+        std::optional<mapgen_arguments> get_or_init_mapgen_args(
+            const tripoint_abs_omt &p, const mapgendata &md,
+            const std::string &terrain_type_id );
         /**
          * Uses global overmap terrain coordinates.
          */
@@ -290,7 +295,7 @@ class overmapbuffer
          * used to remove the vehicle from the old overmap if the new position is
          * on another overmap.
          */
-        void move_vehicle( vehicle *veh, const point_abs_ms &old_msp );
+        void move_vehicle( vehicle *veh, const point_abs_omt &old_omt );
         /**
          * Add the vehicle to be tracked in the overmap.
          */
@@ -595,6 +600,16 @@ class overmapbuffer
          */
         mutable std::mutex extras_mutex_;
         /**
+         * Protects lazy initialization of overmap_special mapgen arguments stored in
+         * overmap::mapgen_arg_storage.  Must be acquired AFTER any @ref mutex operation
+         * completes — in practice get_om_global() acquires+releases @ref mutex internally,
+         * so mapgen_args_mutex_ is acquired only after that returns.
+         *
+         * Separate from @ref mutex so that generation workers can initialize args
+         * concurrently without blocking unrelated overmapbuffer reads.
+         */
+        mutable std::mutex mapgen_args_mutex_;
+        /**
          * Common function used by the find_closest/all/random to determine if the location is
          * findable based on the specified criteria.
          * @param location Location of search
@@ -612,7 +627,7 @@ class overmapbuffer
         std::set<point_abs_om> known_non_existing;
 
         // Optional dimension bounds for pocket dimension rendering
-        std::optional<dimension_bounds> current_bounds_;
+        std::optional<pocket_dimension_data> pocket_info_;
         // Cached resolved overmap terrain id for out-of-bounds tiles
         oter_id bounds_oter_id_;
 

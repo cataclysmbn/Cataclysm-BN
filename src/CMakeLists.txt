@@ -2,7 +2,8 @@ set(MAIN_CPP ${CMAKE_SOURCE_DIR}/src/main.cpp)
 set(MESSAGES_CPP ${CMAKE_SOURCE_DIR}/src/messages.cpp)
 set(RESOURCE_RC ${CMAKE_SOURCE_DIR}/src/resource.rc)
 
-file(GLOB CATACLYSM_BN_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
+file(GLOB_RECURSE CATACLYSM_BN_SOURCES CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.cpp)
+list(FILTER CATACLYSM_BN_SOURCES EXCLUDE REGEX "/src/(lua|sol|third-party)/")
 
 list(REMOVE_ITEM CATACLYSM_BN_SOURCES ${MAIN_CPP} ${MESSAGES_CPP})
 
@@ -18,9 +19,18 @@ foreach (catalua_src IN LISTS CATALUA_BINDINGS_SOURCES)
     set_source_files_properties(${catalua_src} PROPERTIES COMPILE_OPTIONS "${CATALUA_BINDINGS_COMPILE_OPTIONS}")
 endforeach ()
 
-file(GLOB CATACLYSM_BN_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.h)
+file(GLOB_RECURSE CATACLYSM_BN_HEADERS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*.h)
+list(FILTER CATACLYSM_BN_HEADERS EXCLUDE REGEX "/src/(lua|sol|third-party)/")
 
 add_subdirectory(lua)
+if (UNIX)
+    target_compile_definitions(liblua PUBLIC LUA_USE_LINUX)
+elseif (APPLE)
+    target_compile_definitions(liblua PUBLIC LUA_USE_MACOSX)
+elseif (WIN32)
+    target_compile_definitions(liblua PUBLIC LUA_USE_WINDOWS)
+endif()
+
 add_subdirectory(sol)
 
 # Get GIT version strings
@@ -45,7 +55,7 @@ function(setup_common_target_properties target_name)
 
     # Add common libraries
     target_link_libraries(${target_name} PUBLIC ZLIB::ZLIB)
-    target_link_libraries(${target_name} PUBLIC SQLite::SQLite3)
+    target_link_libraries(${target_name} PUBLIC SQLite3::SQLite3)
 
     # Setup threading
     if (CMAKE_USE_PTHREADS_INIT)
@@ -142,26 +152,26 @@ if (TILES)
 
     if (NOT DYNAMIC_LINKING)
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL2::SDL2-static
-            SDL2_image::SDL2_image-static
-            SDL2_ttf::SDL2_ttf-static
+            SDL3::SDL3-static
+            SDL3_image::SDL3_image-static
+            SDL3_ttf::SDL3_ttf-static
         )
     else()
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL2::SDL2
-            SDL2_image::SDL2_image
-            SDL2_ttf::SDL2_ttf
+            SDL3::SDL3
+            SDL3_image::SDL3_image
+            SDL3_ttf::SDL3_ttf
         )
     endif ()
 
     if (SOUND)
         if (NOT DYNAMIC_LINKING)
             target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL2_mixer::SDL2_mixer-static
+                SDL3_mixer::SDL3_mixer-static
             )
         else()
             target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL2_mixer::SDL2_mixer
+                SDL3_mixer::SDL3_mixer
             )
         endif()
         add_definitions(-DSDL_SOUND)

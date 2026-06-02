@@ -1,12 +1,24 @@
 #pragma once
 
+#include "coordinates.h"
+
 class Creature;
 class item;
 class dispersion_sources;
 class vehicle;
 struct dealt_projectile_attack;
 struct projectile;
-struct tripoint;
+
+class scoped_projectile_animation_suppression
+{
+    public:
+        scoped_projectile_animation_suppression();
+        ~scoped_projectile_animation_suppression();
+
+        scoped_projectile_animation_suppression( const scoped_projectile_animation_suppression & ) = delete;
+        auto operator=( const scoped_projectile_animation_suppression & ) ->
+        scoped_projectile_animation_suppression & = delete; // *NOPAD*
+};
 
 /// Aim result for a single projectile attack
 struct projectile_attack_aim {
@@ -25,10 +37,11 @@ auto projectile_attack_roll( const dispersion_sources &dispersion, double range,
 /// Fires a projectile at the target point from the source point with total_dispersion
 /// dispersion.
 /// Returns the rolled dispersion of the shot and the actually hit point.
-auto projectile_attack( const projectile &proj_arg, const tripoint &source,
-                        const tripoint &target_arg, const dispersion_sources &dispersion,
+auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &source,
+                        const tripoint_bub_ms &target_arg, const dispersion_sources &dispersion,
                         Creature *origin = nullptr, item *source_weapon = nullptr,
-                        const vehicle *in_veh = nullptr ) -> dealt_projectile_attack;
+                        const vehicle *in_veh = nullptr,
+                        bool suppress_damage_messages = false ) -> dealt_projectile_attack;
 
 namespace ranged
 {
@@ -43,5 +56,3 @@ auto hit_chance( const dispersion_sources &dispersion, double range, double targ
                  double missed_by = 1.0 ) -> double;
 
 } // namespace ranged
-
-

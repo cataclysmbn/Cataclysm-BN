@@ -239,15 +239,15 @@ bool enchantment::is_active( const Character &guy, const bool active ) const
     }
 
     if( active_conditions.second == condition::UNDERGROUND ) {
-        return guy.pos().z < 0;
+        return guy.bub_pos().z() < 0;
     }
 
     if( active_conditions.second == condition::ABOVEGROUND ) {
-        return guy.pos().z > -1;
+        return guy.bub_pos().z() > -1;
     }
 
     if( active_conditions.second == condition::UNDERWATER ) {
-        return get_map().is_divable( guy.pos() );
+        return get_map().is_divable( guy.bub_pos() );
     }
     return false;
 }
@@ -505,7 +505,7 @@ int enchantment::mult_bonus( enchant_vals::mod value_type, int base_value ) cons
 void enchantment::activate_passive( Character &guy ) const
 {
     if( emitter ) {
-        get_map().emit_field( guy.pos(), *emitter );
+        get_map().emit_field( guy.bub_pos(), *emitter );
     }
     for( const std::pair<efftype_id, int> eff : ench_effects ) {
         guy.add_effect( eff.first, 1_seconds, bodypart_str_id::NULL_ID(), eff.second );
@@ -515,7 +515,7 @@ void enchantment::activate_passive( Character &guy ) const
         // a random approximation!
         if( one_in( to_seconds<int>( activation.first ) ) ) {
             for( const fake_spell &fake : activation.second ) {
-                fake.get_spell( 0 ).cast_all_effects( guy, guy.pos() );
+                fake.get_spell( 0 ).cast_all_effects( guy, guy.bub_pos() );
             }
         }
     }
@@ -548,12 +548,12 @@ void enchantment::cast_enchantment_spell( Character &caster, const Creature *tar
                                       sp.trigger_message,
                                       sp.npc_trigger_message,
                                       caster.name );
-        sp.get_spell( sp.level ).cast_all_effects( caster, caster.pos() );
+        sp.get_spell( sp.level ).cast_all_effects( caster, caster.bub_pos() );
     } else  if( target != nullptr ) {
         const Creature &trg_crtr = *target;
         const spell &spell_lvl = sp.get_spell( sp.level );
-        if( !spell_lvl.is_valid_target( caster, trg_crtr.pos() ) ||
-            !spell_lvl.is_target_in_range( caster, trg_crtr.pos() ) ) {
+        if( !spell_lvl.is_valid_target( caster, trg_crtr.bub_pos() ) ||
+            !spell_lvl.is_target_in_range( caster, trg_crtr.bub_pos() ) ) {
             return;
         }
 
@@ -562,7 +562,7 @@ void enchantment::cast_enchantment_spell( Character &caster, const Creature *tar
                                       sp.npc_trigger_message,
                                       caster.name, trg_crtr.disp_name() );
 
-        spell_lvl.cast_all_effects( caster, trg_crtr.pos() );
+        spell_lvl.cast_all_effects( caster, trg_crtr.bub_pos() );
     }
 }
 

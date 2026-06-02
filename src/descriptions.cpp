@@ -38,7 +38,7 @@ static bool debug_vision()
     return debug_mode || get_player_character().has_trait( trait_DEBUG_NIGHTVISION );
 }
 
-static const Creature *seen_critter( const game &g, const tripoint &p )
+static const Creature *seen_critter( const game &g, const tripoint_bub_ms &p )
 {
     const Creature *critter = g.critter_at( p, true );
     if( critter != nullptr && g.u.sees( *critter ) ) {
@@ -48,7 +48,7 @@ static const Creature *seen_critter( const game &g, const tripoint &p )
     return nullptr;
 }
 
-void game::extended_description( const tripoint &p )
+void game::extended_description( const tripoint_bub_ms &p )
 {
     ui_adaptor ui;
     const int top = 3;

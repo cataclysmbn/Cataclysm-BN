@@ -1,5 +1,6 @@
 #pragma once
 
+#include "coordinates.h"
 #include "cursesdef.h"
 #include "detached_ptr.h"
 #include "type_id.h"
@@ -59,7 +60,7 @@ struct character_preview_window {
         std::vector<trait_id> spells;
         bool show_clothes = true;
 
-        auto calc_character_pos() const -> point ;
+        auto calc_character_pos() const -> point_bub_ms ;
 };
 
 

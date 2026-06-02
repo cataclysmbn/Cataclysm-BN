@@ -8,7 +8,7 @@
     "color": "cyan",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -32,7 +32,7 @@
     "looks_like": "t_wall_y",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -56,7 +56,7 @@
     "move_cost": 2,
     "light_emitted": 120,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT", "ROAD" ],
     "bash": {
       "str_min": 4,
       "str_max": 12,
@@ -79,7 +79,7 @@
     "light_emitted": 120,
     "roof": "t_flat_roof",
     "looks_like": "t_floor",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -103,7 +103,7 @@
     "move_cost": 2,
     "light_emitted": 120,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
     "bash": {
       "sound": "thump",
       "ter_set": "t_null",
@@ -146,7 +146,7 @@
     "color": "cyan",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -186,7 +186,7 @@
     "symbol": ".",
     "color": "cyan",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -209,7 +209,7 @@
     "color": "light_gray",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "INDOORS", "COLLAPSES", "SUPPORTS_ROOF", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "COLLAPSES", "SUPPORTS_ROOF", "FLAT", "ROAD" ],
     "bash": { "ter_set": "t_null", "str_min": 75, "str_max": 400, "str_min_supported": 100, "bash_below": true }
   },
   {
@@ -221,7 +221,7 @@
     "color": "light_cyan",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAT", "ROAD" ],
     "bash": {
       "sound": "thump",
       "ter_set": "t_null",
@@ -268,7 +268,7 @@
     "color": "cyan",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -287,7 +287,7 @@
     "color": "brown",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -310,7 +310,7 @@
     "color": "cyan",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "str_min": 50,
       "str_max": 400,
@@ -329,7 +329,7 @@
     "color": "light_red",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -348,7 +348,7 @@
     "color": "brown",
     "move_cost": 2,
     "roof": "t_shingle_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": {
       "sound": "SMASH!",
@@ -368,7 +368,7 @@
     "color": "brown",
     "move_cost": 2,
     "roof": "t_thatch_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": {
       "sound": "SMASH!",
@@ -400,7 +400,7 @@
     "move_cost": 4,
     "roof": "t_flat_roof",
     "light_emitted": 240,
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "INDOORS", "FLAT", "MINEABLE" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "FLAT", "MINEABLE" ],
     "deconstruct": {
       "ter_set": "t_concrete",
       "items": [
@@ -446,7 +446,7 @@
     "color": "white",
     "move_cost": 4,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "INDOORS", "FLAT", "MINEABLE" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "FLAT", "MINEABLE" ],
     "examine_action": "transform",
     "transforms_into": "t_utility_light",
     "prompt": "Switch on the utility light",
@@ -479,7 +479,7 @@
     "color": "magenta",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "INDOORS", "TRANSPARENT", "FLAT", "ELEVATOR", "ROAD" ]
+    "flags": [ "TRANSPARENT", "FLAT", "ELEVATOR", "ROAD" ]
   },
   {
     "type": "terrain",
@@ -489,7 +489,7 @@
     "symbol": ".",
     "color": "red",
     "move_cost": 2,
-    "flags": [ "INDOORS", "TRANSPARENT", "FLAT" ]
+    "flags": [ "TRANSPARENT", "FLAT" ]
   },
   {
     "type": "terrain",
@@ -499,7 +499,7 @@
     "symbol": ".",
     "color": "green",
     "move_cost": 2,
-    "flags": [ "INDOORS", "TRANSPARENT", "FLAT" ]
+    "flags": [ "TRANSPARENT", "FLAT" ]
   },
   {
     "type": "terrain",
@@ -509,7 +509,7 @@
     "symbol": ".",
     "color": "blue",
     "move_cost": 2,
-    "flags": [ "INDOORS", "TRANSPARENT", "FLAT" ]
+    "flags": [ "TRANSPARENT", "FLAT" ]
   },
   {
     "type": "terrain",
@@ -520,7 +520,7 @@
     "color": "red",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "EASY_DECONSTRUCT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "EASY_DECONSTRUCT" ],
     "deconstruct": { "ter_set": "t_floor", "items": [ { "item": "r_carpet", "charges": 1 }, { "item": "nail", "charges": 4 } ] },
     "bash": {
       "sound": "rrrrip!",
@@ -607,7 +607,7 @@
     "color": "white",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -626,7 +626,7 @@
     "symbol": ".",
     "color": "light_gray",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "sound": "SMASH!",
       "ter_set": "t_null",
@@ -653,7 +653,7 @@
       "sound": "SMASH!",
       "items": [ { "item": "wax", "count": [ 1, 3 ] } ]
     },
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ]
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ]
   },
   {
     "type": "terrain",
@@ -699,7 +699,7 @@
     "symbol": "`",
     "color": "dark_gray",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT" ],
     "bash": {
       "str_min": 30,
       "str_max": 200,
@@ -721,7 +721,7 @@
     "move_cost": 2,
     "looks_like": "t_dirt",
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD", "PLOWABLE" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD", "PLOWABLE" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true }
   },
@@ -736,7 +736,7 @@
     "looks_like": "t_sand",
     "move_cost": 2,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60, "items": "digging_sand_200L" },
     "bash": {
       "sound": "thump",
@@ -758,7 +758,7 @@
     "color": "brown",
     "move_cost": 3,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "SUPPORTS_ROOF", "FLAT" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 50, "str_max": 100, "str_min_supported": 100, "bash_below": true }
   },
@@ -773,7 +773,7 @@
     "symbol": ".",
     "color": "light_green",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "FLAT", "SUPPORTS_ROOF", "INDOORS" ],
+    "flags": [ "TRANSPARENT", "FLAT", "SUPPORTS_ROOF" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60 },
     "bash": { "sound": "thump", "ter_set": "t_null", "str_min": 40, "str_max": 100, "str_min_supported": 100, "bash_below": true }
   },
@@ -787,7 +787,7 @@
     "color": "light_red",
     "move_cost": 2,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "FLAT", "SUPPORTS_ROOF", "INDOORS" ],
+    "flags": [ "TRANSPARENT", "FLAT", "SUPPORTS_ROOF" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60, "items": "digging_clay_200L" },
     "bash": {
       "sound": "thump",
@@ -808,7 +808,7 @@
     "color": "brown",
     "move_cost": 5,
     "roof": "t_rock_roof",
-    "flags": [ "TRANSPARENT", "BURROWABLE", "SUPPORTS_ROOF", "INDOORS" ],
+    "flags": [ "TRANSPARENT", "BURROWABLE", "SUPPORTS_ROOF" ],
     "digging_results": { "digging_min": 1, "result_ter": "t_pit_shallow", "num_minutes": 60, "items": "digging_clay_mound_200L" },
     "bash": {
       "sound": "thump",
@@ -829,7 +829,7 @@
     "color": "white",
     "move_cost": 2,
     "roof": "t_roof_paper",
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "SUPPORTS_ROOF", "COLLAPSES", "FLAT", "ROAD" ],
     "bash": {
       "str_min": 1,
       "str_max": 6,
@@ -849,7 +849,7 @@
     "looks_like": "t_dirt",
     "color": "white",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "INDOORS", "FLAT", "ROAD" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "FLAT", "ROAD" ],
     "bash": {
       "str_min": 1,
       "str_max": 6,
@@ -869,7 +869,7 @@
     "looks_like": "t_floor_paper",
     "color": "light_gray",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "INDOORS", "FLAT" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_HARD", "FLAT" ],
     "bash": {
       "str_min": 15,
       "str_max": 150,
@@ -890,7 +890,7 @@
     "symbol": ".",
     "color": "white",
     "move_cost": 2,
-    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "INDOORS", "NO_FLOOR" ],
+    "flags": [ "TRANSPARENT", "FLAMMABLE_ASH", "NO_FLOOR" ],
     "bash": {
       "str_min": 1,
       "str_max": 6,
@@ -983,7 +983,7 @@
     "color": "dark_gray",
     "move_cost": 2,
     "roof": "t_flat_roof",
-    "flags": [ "TRANSPARENT", "INDOORS" ]
+    "flags": [ "TRANSPARENT" ]
   },
   {
     "type": "terrain",

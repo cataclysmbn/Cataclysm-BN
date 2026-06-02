@@ -1,0 +1,20 @@
+[
+  {
+    "id": "spray_paint",
+    "type": "AMMO",
+    "name": { "str": "spray paint" },
+    "description": "A refill for spray paint cans, of non-descript color.",
+    "weight": "10 g",
+    "volume": "250 ml",
+    "price": "24 USD",
+    "price_postapoc": "5 USD",
+    "material": [ "hydrocarbons" ],
+    "symbol": "=",
+    "color": "red",
+    "count": 100,
+    "stack_size": 100,
+    "ammo_type": "spray_paint",
+    "phase": "liquid",
+    "flags": [ "NO_DROP", "IRREMOVABLE" ]
+  }
+]

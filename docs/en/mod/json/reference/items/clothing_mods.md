@@ -12,6 +12,7 @@ title: Clothing Modifications
 "implement_prompt": "Pad with leather",      // prompt to show when implement mod.
 "destroy_prompt": "Destroy leather padding", // prompt to show when destroy mod.
 "restricted": true,       // (optional) If true, clothing must list this mod's flag in "valid_mods" list to use it. Defaults to false.
+"use_base_material": true,       // (optional) If true, Clothing mod uses one of the base materials of the clothing to apply instead of whatever is within the item field. Defaults to false.
 "mod_value": [            // List of mod effect.
     {
         "type": "bash",   // "bash", "cut", "bullet", "fire", "acid", "warmth", "storage", and "encumbrance" is available.

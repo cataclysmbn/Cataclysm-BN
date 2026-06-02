@@ -13,6 +13,8 @@ on:
         "**.ts",
         "**.lua",
       ]
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
 
 permissions:
   contents: read
@@ -22,14 +24,18 @@ env:
 
 jobs:
   autofix:
-    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-slim
     permissions:
       contents: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - run: sudo apt-get install astyle ninja-build gettext ccache
+      - env: { DEBIAN_FRONTEND: noninteractive }
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends astyle clang-format cmake ninja-build gettext ccache
 
       - uses: denoland/setup-deno@v2
         with: { cache: true }
@@ -44,7 +50,7 @@ jobs:
         run: cmake --preset lint
 
       - name: format C++ files
-        run: cmake --build build --target astyle
+        run: cmake --build build --target format
 
       - name: format Markdown and TypeScript files
         run: deno fmt
@@ -91,3 +97,58 @@ jobs:
           # deno lint
           deno test --allow-read --allow-env=npm_package_config_libvips,TILESET_PYTHON --allow-ffi
           deno run --allow-read --allow-write scripts/semantic.ts
+
+  lint:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-slim
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+
+    steps:
+      - if: >-
+          github.event.action == 'opened' ||
+          github.event.action == 'edited' ||
+          github.event.action == 'reopened'
+        uses: scarf005/conventional-prs@v0.5.1
+
+      - name: Comment and close pull request
+        if: >-
+          always() &&
+          ( github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' ) &&
+          github.event.pull_request.head.ref == github.event.repository.default_branch
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          body="$(cat <<\BODY
+          <!-- reject-main-branch-pr -->
+          This pull request was opened from `main`, which can cause conflicts when updating your fork's `main` branch later. Please open a new pull request from a [feature branch](https://docs.cataclysmbn.org/contribute/contributing/#make-your-changes) instead.
+
+          <details>
+          <summary>How to open a new PR from a branch</summary>
+
+          If your changes are already committed on `main`, create a branch at the same commit and push it:
+
+          ```sh
+          git switch main
+          git switch -c your-branch-name
+          git push -u origin your-branch-name
+          ```
+
+          Then open a new pull request from `your-branch-name` and close this one.
+
+          If `main` should go back to the upstream branch after that, update it separately after confirming your work is safely on the new branch.
+          </details>
+          BODY
+          )"
+          gh pr close "${{ github.event.pull_request.number }}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --comment "$body"
+          exit 1
+
+      - uses: actions/labeler@v6
+        if: >-
+          always() &&
+          ( github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' )
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

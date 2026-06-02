@@ -101,6 +101,7 @@ std::string enum_to_string<spell_flag>( spell_flag data )
         case spell_flag::DIVIDE_DAMAGE: return "DIVIDE_DAMAGE";
         case spell_flag::RANDOM_DURATION: return "RANDOM_DURATION";
         case spell_flag::RANDOM_TARGET: return "RANDOM_TARGET";
+        case spell_flag::MUTATE_THRESH: return "MUTATE_THRESH";
         case spell_flag::MUTATE_TRAIT: return "MUTATE_TRAIT";
         case spell_flag::PAIN_NORESIST: return "PAIN_NORESIST";
         case spell_flag::NO_FAIL: return "NO_FAIL";
@@ -217,7 +218,7 @@ static std::string moves_to_string( const int moves )
 void spell_type::load( const JsonObject &jo, const std::string & )
 {
     static const
-    std::map<std::string, std::function<void( const spell &, Creature &, const tripoint & )>>
+    std::map<std::string, std::function<void( const spell &, Creature &, const tripoint_bub_ms & )>>
     effect_map{
         { "pain_split", spell_effect::pain_split },
         { "target_attack", spell_effect::target_attack },
@@ -626,7 +627,7 @@ int spell::aoe() const
     }
 }
 
-bool spell::in_aoe( const tripoint &source, const tripoint &target ) const
+bool spell::in_aoe( const tripoint_bub_ms &source, const tripoint_bub_ms &target ) const
 {
     if( has_flag( spell_flag::RANDOM_AOE ) ) {
         return rl_dist( source, target ) <= type->max_aoe;
@@ -797,7 +798,7 @@ bool spell::is_spell_class( const trait_id &mid ) const
 bool spell::can_cast( Character &guy ) const
 {
     if( !type->spell_components.is_empty() &&
-        !type->spell_components->can_make_with_inventory( guy.crafting_inventory( guy.pos(), 0 ),
+        !type->spell_components->can_make_with_inventory( guy.crafting_inventory( guy.bub_pos(), 0 ),
                 return_true<item> ) ) {
         return false;
     }
@@ -1092,7 +1093,7 @@ bool spell::bp_is_affected( body_part bp ) const
     return type->affected_bps.contains( convert_bp( bp ) );
 }
 
-void spell::create_field( const tripoint &at ) const
+void spell::create_field( const tripoint_bub_ms &at ) const
 {
     if( !type->field ) {
         return;
@@ -1113,7 +1114,7 @@ void spell::create_field( const tripoint &at ) const
     }
 }
 
-void spell::make_sound( const tripoint &target ) const
+void spell::make_sound( const tripoint_bub_ms &target ) const
 {
     if( !has_flag( spell_flag::SILENT ) ) {
         int loudness = std::abs( damage() ) / 3;
@@ -1124,7 +1125,7 @@ void spell::make_sound( const tripoint &target ) const
     }
 }
 
-void spell::make_sound( const tripoint &target, int loudness ) const
+void spell::make_sound( const tripoint_bub_ms &target, int loudness ) const
 {
     sounds::sound( target, loudness, type->sound_type, type->sound_description.translated(),
                    type->sound_ambient, type->sound_id, type->sound_variant );
@@ -1140,9 +1141,9 @@ energy_type spell::energy_source() const
     return type->energy_source;
 }
 
-bool spell::is_target_in_range( const Creature &caster, const tripoint &p ) const
+bool spell::is_target_in_range( const Creature &caster, const tripoint_bub_ms &p ) const
 {
-    return rl_dist( caster.pos(), p ) <= range();
+    return rl_dist( caster.bub_pos(), p ) <= range();
 }
 
 bool spell::is_valid_target( valid_target t ) const
@@ -1150,15 +1151,15 @@ bool spell::is_valid_target( valid_target t ) const
     return type->valid_targets[t];
 }
 
-bool spell::is_valid_target( const Creature &caster, const tripoint &p ) const
+bool spell::is_valid_target( const Creature &caster, const tripoint_bub_ms &p ) const
 {
     bool valid = false;
     if( Creature *const cr = g->critter_at<Creature>( p ) ) {
         Attitude cr_att = cr->attitude_to( caster );
         valid = valid || ( cr_att != Attitude::A_FRIENDLY && is_valid_target( target_hostile ) );
         valid = valid || ( cr_att == Attitude::A_FRIENDLY && is_valid_target( target_ally ) &&
-                           p != caster.pos() );
-        valid = valid || ( is_valid_target( target_self ) && p == caster.pos() );
+                           p != caster.bub_pos() );
+        valid = valid || ( is_valid_target( target_self ) && p == caster.bub_pos() );
         valid = valid && target_by_monster_id( p );
     } else {
         valid = is_valid_target( target_ground );
@@ -1171,7 +1172,7 @@ bool spell::is_valid_effect_target( valid_target t ) const
     return type->effect_targets[t];
 }
 
-bool spell::target_by_monster_id( const tripoint &p ) const
+bool spell::target_by_monster_id( const tripoint_bub_ms &p ) const
 {
     if( type->targeted_monster_ids.empty() ) {
         return true;
@@ -1418,7 +1419,7 @@ vproto_id spell::summon_vehicle_id() const
     return vproto_id( type->effect_str );
 }
 
-int spell::heal( const tripoint &target ) const
+int spell::heal( const tripoint_bub_ms &target ) const
 {
     monster *const mon = g->critter_at<monster>( target );
     if( mon ) {
@@ -1432,12 +1433,12 @@ int spell::heal( const tripoint &target ) const
     return -1;
 }
 
-void spell::cast_spell_effect( Creature &source, const tripoint &target ) const
+void spell::cast_spell_effect( Creature &source, const tripoint_bub_ms &target ) const
 {
     type->effect( *this, source, target );
 }
 
-void spell::cast_all_effects( Creature &source, const tripoint &target ) const
+void spell::cast_all_effects( Creature &source, const tripoint_bub_ms &target ) const
 {
     if( has_flag( spell_flag::WONDER ) ) {
         const auto iter = type->additional_spells.begin();
@@ -1455,13 +1456,13 @@ void spell::cast_all_effects( Creature &source, const tripoint &target ) const
             source.add_msg_if_player( sp.message() );
 
             if( sp.has_flag( RANDOM_TARGET ) ) {
-                if( const std::optional<tripoint> new_target = sp.random_valid_target( source,
-                        _self ? source.pos() : target ) ) {
+                if( const std::optional<tripoint_bub_ms> new_target = sp.random_valid_target( source,
+                        _self ? source.bub_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
             } else {
                 if( _self ) {
-                    sp.cast_all_effects( source, source.pos() );
+                    sp.cast_all_effects( source, source.bub_pos() );
                 } else {
                     sp.cast_all_effects( source, target );
                 }
@@ -1473,13 +1474,13 @@ void spell::cast_all_effects( Creature &source, const tripoint &target ) const
         for( const fake_spell &extra_spell : type->additional_spells ) {
             spell sp = extra_spell.get_spell( get_level() );
             if( sp.has_flag( RANDOM_TARGET ) ) {
-                if( const std::optional<tripoint> new_target = sp.random_valid_target( source,
-                        extra_spell.self ? source.pos() : target ) ) {
+                if( const std::optional<tripoint_bub_ms> new_target = sp.random_valid_target( source,
+                        extra_spell.self ? source.bub_pos() : target ) ) {
                     sp.cast_all_effects( source, *new_target );
                 }
             } else {
                 if( extra_spell.self ) {
-                    sp.cast_all_effects( source, source.pos() );
+                    sp.cast_all_effects( source, source.bub_pos() );
                 } else {
                     sp.cast_all_effects( source, target );
                 }
@@ -1488,11 +1489,12 @@ void spell::cast_all_effects( Creature &source, const tripoint &target ) const
     }
 }
 
-std::optional<tripoint> spell::random_valid_target( const Creature &caster,
-        const tripoint &caster_pos ) const
+std::optional<tripoint_bub_ms> spell::random_valid_target( const Creature &caster,
+        const tripoint_bub_ms &caster_pos ) const
 {
-    std::set<tripoint> valid_area;
-    for( const tripoint &target : spell_effect::spell_effect_blast( *this, caster_pos, caster_pos,
+    std::set<tripoint_bub_ms> valid_area;
+    for( const tripoint_bub_ms &target : spell_effect::spell_effect_blast( *this, caster_pos,
+            caster_pos,
             range(), false ) ) {
         if( is_valid_target( caster, target ) ) {
             valid_area.emplace( target );
@@ -1517,6 +1519,9 @@ void known_magic::serialize( JsonOut &json ) const
     json.start_object();
 
     json.member( "mana", mana );
+    if( last_cast_spell_id ) {
+        json.member( "last_cast_spell", last_cast_spell_id->str() );
+    }
 
     json.member( "spellbook" );
     json.start_array();
@@ -1534,13 +1539,17 @@ void known_magic::serialize( JsonOut &json ) const
 
 void known_magic::deserialize( JsonIn &jsin )
 {
-    JsonObject data = jsin.get_object();
+    auto data = jsin.get_object();
     data.read( "mana", mana );
+    last_cast_spell_id.reset();
+
+    auto last_cast_spell_str = std::string();
+    data.read( "last_cast_spell", last_cast_spell_str );
 
     for( JsonObject jo : data.get_array( "spellbook" ) ) {
-        std::string id = jo.get_string( "id" );
-        spell_id sp = spell_id( id );
-        int xp = jo.get_int( "xp" );
+        auto id = jo.get_string( "id" );
+        auto sp = spell_id( id );
+        const auto xp = jo.get_int( "xp" );
         if( !sp.is_valid() ) {
             debugmsg( "Skipping spell with invalid id: %s", sp.c_str() );
         } else if( knows_spell( sp ) ) {
@@ -1550,6 +1559,13 @@ void known_magic::deserialize( JsonIn &jsin )
         }
     }
     data.read( "invlets", invlets );
+
+    if( !last_cast_spell_str.empty() ) {
+        const auto spell = spell_id( last_cast_spell_str );
+        if( knows_spell( spell ) ) {
+            last_cast_spell_id = spell;
+        }
+    }
 }
 
 bool known_magic::knows_spell( const std::string &sp ) const
@@ -1649,6 +1665,9 @@ void known_magic::forget_spell( const spell_id &sp )
     }
     add_msg( m_bad, _( "All knowledge of %s leaves you." ), sp->name );
     spellbook.erase( sp );
+    if( last_cast_spell_id && *last_cast_spell_id == sp ) {
+        last_cast_spell_id.reset();
+    }
 }
 
 bool known_magic::can_learn_spell( const Character &guy, const spell_id &sp ) const
@@ -1668,6 +1687,18 @@ spell &known_magic::get_spell( const spell_id &sp )
         return bugged_spell;
     }
     return spellbook.at( sp );
+}
+
+auto known_magic::last_cast_spell() const -> std::optional<spell_id>
+{
+    return last_cast_spell_id;
+}
+
+auto known_magic::set_last_cast_spell( const spell_id &sp ) -> void
+{
+    if( knows_spell( sp ) ) {
+        last_cast_spell_id = sp;
+    }
 }
 
 std::vector<spell *> known_magic::get_spells()

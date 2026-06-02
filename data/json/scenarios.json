@@ -53,6 +53,7 @@
       "castaway",
       "professional_diver",
       "underwater_welder",
+      "floatplane_pilot_scenario",
       "bionic_diver",
       "fisher",
       "davy_jones",
@@ -263,7 +264,8 @@
       "prof_fursuiter",
       "clown",
       "broken_cyborg",
-      "true_foodperson"
+      "true_foodperson",
+      "elite_specops"
     ],
     "flags": [ "FIRE_START", "INFECTED", "BAD_DAY", "CHALLENGE", "CITY_START" ]
   },
@@ -275,7 +277,7 @@
     "description": "A temporal distortion has hurled you into this collapsing world. You arrive carrying only the few items that mattered most to you - the things tied to who you are, or who you were meant to become.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
-    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder" ],
+    "professions": [ "churl", "caveman", "prospector", "knight", "frontiersman", "dogsledder", "soldier_wwii" ],
     "forbids_bionics": true,
     "flags": [ "CHALLENGE", "LONE_START" ]
   },
@@ -418,6 +420,7 @@
       "bio_medic",
       "bionic_mentat",
       "bionic_spy",
+      "bio_specops",
       "military_saboteur",
       "hacker"
     ],
@@ -468,6 +471,7 @@
     "flags": [ "WIN_START", "LONE_START" ],
     "add_professions": true,
     "professions": [
+      "wolfpack_mutant",
       "sheltered_survivor",
       "sheltered_militia",
       "winter_scavenger",
@@ -508,6 +512,7 @@
     "flags": [ "SUM_ADV_START", "LONE_START" ],
     "add_professions": true,
     "professions": [
+      "wolfpack_mutant",
       "sheltered_survivor",
       "sheltered_militia",
       "winter_scavenger",
@@ -619,7 +624,16 @@
     "description": "Since birth, your sole purpose in life has been the advancement of genetic science, willingly or not.  Once the Cataclysm struck, you left the lab, and wandered aimlessly, ending up in a forest.",
     "start_name": "Wilderness",
     "allowed_locs": [ "sloc_forest", "sloc_field", "sloc_swamp" ],
-    "professions": [ "unemployed", "mutant_patient", "mutant_volunteer", "broken_cyborg", "faulty_bionic", "cykotic", "convict_political" ],
+    "professions": [
+      "unemployed",
+      "mutant_patient",
+      "mutant_volunteer",
+      "wolfpack_mutant",
+      "broken_cyborg",
+      "faulty_bionic",
+      "cykotic",
+      "convict_political"
+    ],
     "traits": [
       "ELFAEYES",
       "NIGHTVISION2",
@@ -732,12 +746,15 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "bionic_spy",
       "national_guard",
       "hitman",
       "assassin",
       "politician",
       "mili_pilot",
+      "fighter_pilot",
       "major-general"
     ],
     "map_extra": "mx_helicopter",
@@ -775,7 +792,8 @@
       "bionic_hitman",
       "bio_gangster",
       "razorgirl",
-      "bio_sniper"
+      "bio_sniper",
+      "bio_specops"
     ],
     "flags": [ "CITY_START" ],
     "missions": [ "MISSION_ASSASSINATION" ]
@@ -818,6 +836,7 @@
       "gyro_pilot",
       "bird_pilot",
       "mili_pilot_blackhawk",
+      "fighter_pilot_f35",
       "airship_pilot",
       "airboat_pilot",
       "aircanoe_pilot"
@@ -904,10 +923,13 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "labtech",
       "bionic_labtech",
       "medic",
       "mili_pilot",
+      "fighter_pilot",
       "major-general"
     ],
     "flags": [ "CHALLENGE", "LONE_START", "CITY_START" ],
@@ -972,8 +994,11 @@
       "recon_mech_pilot",
       "bio_soldier",
       "bio_sniper",
+      "bio_specops",
+      "elite_specops",
       "medic",
       "mili_pilot",
+      "fighter_pilot",
       "prof_combat_engineer",
       "major-general"
     ],
@@ -1016,5 +1041,39 @@
       "bio_blade",
       "bio_weight"
     ]
+  },
+  {
+    "type": "scenario",
+    "id": "irs_auditing",
+    "name": "Death And Taxes",
+    "points": 0,
+    "description": "Conducting an audit of a corporate office's records as part of a career-making official investigation, you found your hosts suddenly much less cooperative. It may be time to render summary judgment and haul ass out of this tower of toil.",
+    "start_name": "Office Tower",
+    "allowed_locs": [ "sloc_office_tower" ],
+    "missions": [ "MISSION_ONE_LAST_AUDIT" ],
+    "professions": [ "irs", "lawyer", "politician" ],
+    "flags": [ "LONE_START", "CITY_START" ]
+  },
+  {
+    "type": "scenario",
+    "id": "lab_cargo_staff_1",
+    "name": "Challenge - Trans-Coast Logistics Concourse",
+    "points": -6,
+    "description": "You were deemed an essential employee and required to stay behind during the facility's evacuation.  You'd better find a keycard before something finds you.",
+    "start_name": "Locked Lab",
+    "professions": [
+      "labtech",
+      "bionic_labtech",
+      "security",
+      "medic",
+      "bionic_installer",
+      "bio_medic",
+      "bionic_mentat",
+      "bionic_spy",
+      "military_saboteur",
+      "hacker"
+    ],
+    "allowed_locs": [ "sloc_lab_concourse_area" ],
+    "flags": [ "CHALLENGE", "LONE_START" ]
   }
 ]

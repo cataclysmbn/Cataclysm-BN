@@ -4,12 +4,12 @@
 #include <vector>
 
 #include "avatar.h"
+#include "coordinates.h"
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
 #include "map.h"
 #include "map_helpers.h"
-#include "point.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -17,17 +17,17 @@ TEST_CASE( "destroy_grabbed_furniture" )
 {
     clear_all_state();
     GIVEN( "Furniture grabbed by the player" ) {
-        const tripoint test_origin( 60, 60, 0 );
+        const tripoint_bub_ms test_origin( 60, 60, 0 );
         map &here = get_map();
         g->u.setpos( test_origin );
-        const tripoint grab_point = test_origin + tripoint_east;
+        const tripoint_bub_ms grab_point = test_origin + tripoint_rel_ms::east();
         here.furn_set( grab_point, furn_id( "f_chair" ) );
-        g->u.grab( OBJECT_FURNITURE, grab_point );
+        g->u.grab( OBJECT_FURNITURE, tripoint_rel_ms::east() );
         WHEN( "The furniture grabbed by the player is destroyed" ) {
             here.destroy( grab_point );
             THEN( "The player's grab is released" ) {
                 CHECK( g->u.get_grab_type() == OBJECT_NONE );
-                CHECK( g->u.grab_point == tripoint_zero );
+                CHECK( g->u.grab_point == tripoint_rel_ms::zero() );
             }
         }
     }
@@ -45,7 +45,7 @@ TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
     // Regression test for the situation where game::place_player would misuse
     // map::shift if the resulting shift exceeded a single submap, leading to a
     // broken active item cache.
-    g->place_player( tripoint_zero );
+    g->place_player( tripoint_bub_ms::zero() );
     CHECK( get_map().check_submap_active_item_consistency().empty() );
 }
 
@@ -65,7 +65,7 @@ TEST_CASE( "bash_through_roof_can_destroy_multiple_times" )
     static const ter_str_id t_strong_roof( "t_strong_roof" );
     static const ter_str_id t_rock_floor_no_roof( "t_rock_floor_no_roof" );
     static const ter_str_id t_open_air( "t_open_air" );
-    static const tripoint p( 65, 65, 1 );
+    static const tripoint_bub_ms p( 65, 65, 1 );
     WHEN( "A wall has a matching roof above it, but the roof turns to a stronger roof on successful bash" ) {
         static const ter_str_id t_fragile_wall( "t_fragile_wall" );
         here.ter_set( p + tripoint_below, t_fragile_wall );

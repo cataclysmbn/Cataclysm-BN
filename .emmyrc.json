@@ -6,18 +6,18 @@
     "enable": true,
     "postfix": "@"
   },
+  "runtime": {
+    "requirePattern": [ "?.lua", "?/init.lua", "./?.lua", "./?/init.lua", "../?.lua", "../?/init.lua" ]
+  },
   "workspace": {
-    "ignoreDir": [
-      "src"
-    ],
-    "library": [
-      "./lua_annotations.lua"
-    ]
+    "ignoreDir": [ "src" ],
+    "ignoreGlobs": [ "tests/lua/**" ],
+    "library": [ "./lua_annotations.lua" ],
+    "workspaceRoots": [ "data/json", "data/mods/test_lua_require" ],
+    "moduleMap": [ { "pattern": "^\\./(.*)$", "replace": "$1" }, { "pattern": "^\\.\\./(.*)$", "replace": "$1" } ]
   },
   "diagnostics": {
     "enable": true,
-    "globals": [
-      "test_data"
-    ]
+    "globals": [ "test_data", "catadoc", "doc_gen_func", "get_requirement" ]
   }
 }

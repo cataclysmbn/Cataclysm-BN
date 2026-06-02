@@ -227,6 +227,33 @@
     "flags": [ "RELOAD_ONE", "IRREMOVABLE", "USE_PARENT_GUN" ]
   },
   {
+    "id": "dp12_aux_shotgun",
+    "type": "GUNMOD",
+    "name": { "str": "DP-12 second magazine" },
+    "description": "The integrated second shotgun magazine of the DP-12 which holds 7 shots.  It's irremovable.",
+    "weight": "100 g",
+    "volume": "1750 ml",
+    "integral_volume": "0 ml",
+    "price": "0 cent",
+    "price_postapoc": "0 cent",
+    "material": [ "steel" ],
+    "symbol": ":",
+    "color": "light_red",
+    "location": "underbarrel",
+    "mod_target_category": [ [ "SHOTGUNS" ] ],
+    "gun_data": {
+      "ammo": "shot",
+      "skill": "shotgun",
+      "ranged_damage": { "damage_type": "bullet", "amount": 1 },
+      "dispersion": 365,
+      "durability": 8,
+      "clip_size": 7,
+      "blackpowder_tolerance": 48,
+      "reload": 120
+    },
+    "flags": [ "RELOAD_ONE", "IRREMOVABLE", "USE_PARENT_GUN" ]
+  },
+  {
     "id": "ts12_aux_shotgun",
     "type": "GUNMOD",
     "name": { "str": "TS12 second magazine" },

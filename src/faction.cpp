@@ -329,14 +329,17 @@ nc_color faction::food_supply_color()
     }
 }
 
+auto faction::relationship_flags_with( const faction_id &guy_id ) const ->
+const std::bitset<npc_factions::rel_types> *
+{
+    const auto rel_data = relations.find( guy_id.c_str() );
+    return rel_data != relations.end() ? &rel_data->second : nullptr;
+}
+
 bool faction::has_relationship( const faction_id &guy_id, npc_factions::relationship flag ) const
 {
-    for( const auto &rel_data : relations ) {
-        if( rel_data.first == guy_id.c_str() ) {
-            return rel_data.second.test( flag );
-        }
-    }
-    return false;
+    const auto rel_data = relationship_flags_with( guy_id );
+    return rel_data != nullptr && rel_data->test( flag );
 }
 
 std::string fac_combat_ability_text( int val )
@@ -497,7 +500,7 @@ int npc::faction_display( const catacurses::window &fac_w, const int width ) con
     int y = 2;
     const nc_color col = c_white;
     Character &player_character = get_player_character();
-    const tripoint_abs_omt player_abspos = player_character.global_omt_location();
+    const tripoint_abs_omt player_abspos = player_character.abs_omt_pos();
 
     //get NPC followers, status, direction, location, needs, weapon, etc.
     mvwprintz( fac_w, point( width, ++y ), c_light_gray,
@@ -513,15 +516,16 @@ int npc::faction_display( const catacurses::window &fac_w, const int width ) con
     bool guy_has_radio = has_item_with_flag( json_flag_TWO_WAY_RADIO, true ) ||
                          has_bionic( bio_infolink );
     // is the NPC even in the same area as the player?
-    if( rl_dist( player_abspos, global_omt_location() ) > 3 ||
-        ( rl_dist( g->u.pos(), pos() ) > SEEX * 2 || !g->u.sees( pos() ) ) ) {
+    if( rl_dist( player_abspos, abs_omt_pos() ) > 3 ||
+        ( rl_dist( g->u.bub_pos(), bub_pos() ) > SEEX * 2 || !g->u.sees( bub_pos() ) ) ) {
         if( u_has_radio && guy_has_radio ) {
             // TODO: better range calculation than just elevation.
             int max_range = 200;
-            max_range *= ( 1 + ( g->u.pos().z * 0.1 ) );
-            max_range *= ( 1 + ( pos().z * 0.1 ) );
-            if( ( ( g->u.pos().z >= 0 && pos().z >= 0 ) || ( g->u.pos().z == pos().z ) ) &&
-                square_dist( g->u.global_sm_location(), global_sm_location() ) <= max_range ) {
+            max_range *= ( 1 + ( g->u.bub_pos().z() * 0.1 ) );
+            max_range *= ( 1 + ( bub_pos().z() * 0.1 ) );
+            if( ( ( g->u.bub_pos().z() >= 0 && bub_pos().z() >= 0 ) ||
+                  ( g->u.bub_pos().z() == bub_pos().z() ) ) &&
+                square_dist( g->u.abs_sm_pos(), abs_sm_pos() ) <= max_range ) {
                 retval = 2;
                 can_see = _( "Within radio range" );
                 see_color = c_light_green;

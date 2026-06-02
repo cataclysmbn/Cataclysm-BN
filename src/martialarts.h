@@ -144,6 +144,7 @@ class ma_technique
 
         bool miss_recovery = false; // allows free recovery from misses, like tec_feint
         bool grab_break = false;    // allows grab_breaks, like tec_break
+        bool force_unarmed = false;    // no weapon bonus when performing technique
 
         int weighting = 0; //how often this technique is used
 

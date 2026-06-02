@@ -8,7 +8,7 @@
 #include "ranged.h"
 #include "state_helpers.h"
 
-static constexpr tripoint shooter_pos( 60, 60, 0 );
+static constexpr tripoint_bub_ms shooter_pos( 60, 60, 0 );
 
 static void check_burst_penalty( const Character &shooter, item &gun, int expected,
                                  bool bipod = false )

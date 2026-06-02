@@ -32,13 +32,8 @@
         ".##oo#####o###*###oo###.",
         "............^---........"
       ],
-      "palettes": [ "standard_domestic_palette" ],
-      "terrain": { "$": "t_carpet_green", "%": "t_shrub" },
-      "set": [
-        { "point": "terrain", "id": "t_dirt", "x": [ 0, 14 ], "y": 0, "repeat": [ 5, 8 ] },
-        { "point": "terrain", "id": "t_tree_young", "x": [ 0, 14 ], "y": 0, "chance": 5 },
-        { "point": "terrain", "id": "t_tree_apple", "x": [ 0, 14 ], "y": 0, "chance": 10, "repeat": [ 1, 2 ] }
-      ],
+      "palettes": [ "standard_domestic_palette", "standard_domestic_landscaping_palette" ],
+      "terrain": { "$": "t_carpet_green" },
       "place_loot": [
         { "group": "cleaning", "x": 13, "y": 6, "chance": 90, "repeat": [ 1, 2 ] },
         { "group": "guns_pistol_common", "x": 2, "y": 13, "chance": 5, "ammo": 90, "magazine": 100 },

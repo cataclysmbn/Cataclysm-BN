@@ -1,0 +1,32 @@
+[
+  {
+    "type": "scenario",
+    "id": "arcane_urban",
+    "copy-from": "arcane_urban",
+    "extend": { "professions": [ "crt_arcanist" ] }
+  },
+  {
+    "type": "scenario",
+    "id": "Mine_bottom",
+    "copy-from": "Mine_bottom",
+    "extend": { "professions": [ "crt_arcanist" ] }
+  },
+  {
+    "type": "scenario",
+    "id": "lab_staff",
+    "copy-from": "lab_staff",
+    "extend": { "professions": [ "crt_arcanist" ] }
+  },
+  {
+    "type": "scenario",
+    "id": "heli_crash",
+    "copy-from": "heli_crash",
+    "extend": { "professions": [ "crt_arcanist" ] }
+  },
+  {
+    "type": "scenario",
+    "id": "overrun",
+    "copy-from": "overrun",
+    "extend": { "professions": [ "crt_arcanist" ] }
+  }
+]

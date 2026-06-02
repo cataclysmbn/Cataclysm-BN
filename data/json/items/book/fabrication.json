@@ -473,5 +473,33 @@
     "max_level": 5,
     "intelligence": 9,
     "time": "10 m"
+  },
+  {
+    "id": "reference_aircraft",
+    "type": "BOOK",
+    "copy-from": "reference_fabrication1",
+    "name": { "str": "The Amateur Aviator", "str_pl": "copies of The Amateur Aviator" },
+    "description": "This reference book contains detailed parts diagrams and instructions for making aircraft parts, primarily from wood and canvas.  Typically sold alongside parts kits for hobbyists.",
+    "price": "100 USD",
+    "price_postapoc": "12 USD",
+    "required_level": 4,
+    "max_level": 5
+  },
+  {
+    "id": "recipe_oldguard",
+    "type": "BOOK",
+    "copy-from": "book_magazine",
+    "name": { "str": "AS 1-12 Army new threat combat equipment" },
+    "description": "A crudely-printed military field manual about converting existing gear to better face the threats and conditions of the cataclysm.",
+    "weight": "250 g",
+    "volume": "250 ml",
+    "price": "20 USD",
+    "price_postapoc": "1250 cent",
+    "color": "green",
+    "looks_like": "mag_fieldrepair",
+    "skill": "fabrication",
+    "max_level": 3,
+    "intelligence": 4,
+    "time": "18 m"
   }
 ]

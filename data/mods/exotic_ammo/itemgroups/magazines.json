@@ -63,5 +63,16 @@
     "id": "mags_milspec",
     "//": "Current military specification magazines.",
     "items": [ [ "hk46mag", 15 ], [ "hk46bigmag", 5 ] ]
+  },
+  {
+    "type": "item_group",
+    "id": "mags_surplus",
+    "//": "Obsolete military magazines no longer in common use.  Matches mags used in guns_surplus.",
+    "items": [
+      [ "makarovmag", 10 ],
+      [ "tokarevmag", 5 ],
+      { "group": "display_ppsh_mag", "prob": 10 },
+      { "group": "display_ak74_mag", "prob": 15 }
+    ]
   }
 ]

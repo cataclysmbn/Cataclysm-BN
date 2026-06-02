@@ -109,7 +109,11 @@
 "drop": "nail",             // (Optional) Defines an object that drops at the projectile location at a 100% chance.
 "drop_active": false        // (Optional) Whether the object starts active. Default is true.
 "drop_count": 1,            // (Optional) Number of items to drop. For tools, this sets their charges. 
-                            // If omitted, the drop amount defaults to the 'count' defined in its itype.
+                             // If omitted, the drop amount defaults to the 'count' defined in its itype.
+"shot": {                   // (Optional) Shot-pattern data for pellet-style ammo.
+  "count": 12,             // Number of projectile attacks spawned by one round.
+  "half_angle": 3          // Half-angle in degrees used for the pellet spread preview and pattern.
+},
 "effects" : ["COOKOFF", "SHOT"]
 ```
 
@@ -1099,7 +1103,7 @@ more structured function.
 },
 "use_action": {
     "type": "sew_advanced",  // Modify clothing
-    "materials": [           // materials to deal with.
+    "materials": [           // materials to deal with. Power armor can be targeted when its material matches.
         "cotton",
         "leather"
     ],
@@ -1124,8 +1128,16 @@ more structured function.
     "spell_id": "magus_escape", // The ID of the spell to be casted
     "no_fail": true,            // Whether you can fail the cast
     "level": 10,                // The level its cast at
-    "need_worn": true,           // if you need to wear it to cast the spell
+    "need_worn": true,          // if you need to wear it to cast the spell
     "need_wielding": true       // if you need to wield it to cast the spell
+},
+"use_action": {
+    "type": "paint_stuff",      // Paints terrain or vehicles using ammo
+    "charge_cost": 0            // Number of charges to use
+},
+"use_action": {
+    "type": "paint_stuff_cfg",  // Configures how it paints using paint stuff
+    "color_swap": true          // Allow the color to be swapped to any other named color
 }
 ```
 

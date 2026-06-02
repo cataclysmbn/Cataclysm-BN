@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "calendar.h"
-#include "point.h"
+#include "coordinates.h"
 #include "weather.h"
 #include "weather_gen.h"
 
@@ -171,7 +171,7 @@ TEST_CASE( "weather realism", "[.]" )
 
         // Collect generated weather data for a single year.
         for( time_point i = begin ; i < end ; i += 1_minutes ) {
-            w_point w = wgen.get_weather( tripoint_zero, i, seed );
+            w_point w = wgen.get_weather( tripoint_abs_ms::zero(), i, seed );
             int day = to_days<int>( time_past_new_year( i ) );
             int minute = to_minutes<int>( time_past_midnight( i ) );
             temperature[day][minute] = units::to_fahrenheit( w.temperature );

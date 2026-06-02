@@ -2,6 +2,7 @@
 #include "item.h"
 #include "json.h"
 #include "character.h"
+#include "coordinates.h"
 #include "map.h"
 #include "map_selector.h"
 #include "avatar.h"
@@ -70,7 +71,7 @@ void deserialize<item>( safe_reference<item> &out, JsonIn &js )
         auto obj = js.get_object();
         auto type = obj.get_string( "type" );
         int idx = -1;
-        tripoint pos = tripoint_min;
+        auto pos = tripoint_abs_ms::zero();
 
         obj.read( "idx", idx );
         obj.read( "pos", pos );

@@ -1,9 +1,19 @@
 gdebug.log_info("LUA HOOKS TEST: PRELOAD ONLINE")
 
+---@class ModNpcLuaHookTest
+---@field triggered boolean
+---@field handle_testing fun(_params: unknown)
+---@field on_dialogue_start fun(params: OnDialogueStartParams): string?
+---@field on_dialogue_option fun(params: OnDialogueOptionParams): string?
+---@field on_dialogue_end fun(params: OnDialogueEndParams)
+---@field on_try_npc_interaction fun(params: OnTryNPCInterationParams): boolean
+---@field force_talk fun(params: OnTryNPCInterationParams): boolean
+---@field on_npc_interaction fun(params: OnNPCInterationParams)
+---@type ModNpcLuaHookTest
 local mod = game.mod_runtime[game.current_mod]
 
 mod.triggered = false
-mod.handle_testing = function(params)
+mod.handle_testing = function(_params)
   if mod.triggered then return end
   mod.triggered = true
   local test = UiList.new()
@@ -16,17 +26,17 @@ mod.handle_testing = function(params)
     "When interacting with an npc, you will bypass the npc_menu and immediately being talking."
   )
   test:add_w_desc(4, "Notify", "When interacting with an npc, it will be logged.")
-  test = test:query()
-  print(test)
-  if test == 1 then
+  local choice = test:query()
+  print(choice)
+  if choice == 1 then
     game.add_hook("on_dialogue_start", function(...) return mod.on_dialogue_start(...) end)
     game.add_hook("on_dialogue_option", function(...) return mod.on_dialogue_option(...) end)
     game.add_hook("on_dialogue_end", function(...) return mod.on_dialogue_end(...) end)
-  elseif test == 2 then
+  elseif choice == 2 then
     game.add_hook("on_try_npc_interaction", function(...) return mod.on_try_npc_interaction(...) end)
-  elseif test == 3 then
+  elseif choice == 3 then
     game.add_hook("on_try_npc_interaction", function(...) return mod.force_talk(...) end)
-  elseif test == 4 then
+  elseif choice == 4 then
     game.add_hook("on_npc_interaction", function(...) return mod.on_npc_interaction(...) end)
   end
 end

@@ -33,13 +33,15 @@ C++ flags used by all builds:
 /Zc:inline    Remove unreferenced COMDAT
 /Zc:wchar_t   wchar_t Is Native Type
 
-Additional C++ flags used by RelWithDebInfo builds:
+Additional C++ flags used by optimized builds:
 
+/Z7  Generate embedded CodeView debug information
 /Ob1 Inline Function Expansion (1 = only when marked as such)
 /Oi  Generate Intrinsic Functions
 
 Linker flags used by all builds:
 
+/DEBUG       emit program database (.pdb) files for release artifacts
 /OPT:REF  remove unreferenced COMDATs
 /OPT:ICF  folds identical COMDATs
 /DYNAMICBASE  does this app really need ASLR ?
@@ -49,6 +51,8 @@ No need to force /TLBID:1 because is default
 #]=======================================================================]
 
 # Path has changed, so this configure run will find cl.exe
+# CMP0141 is set before project() in CMakeLists.txt so this variable is honored.
+set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "Embedded")
 set(CMAKE_C_COMPILER   cl.exe)
 set(CMAKE_CXX_COMPILER ${CMAKE_C_COMPILER})
 set(CMAKE_CXX_FLAGS_INIT "\
@@ -56,8 +60,7 @@ set(CMAKE_CXX_FLAGS_INIT "\
 /wd4068 /wd4146 /wd4819 /wd6237 /wd6319 /wd26444 /wd26451 /wd26495 /WX- /W1 \
 /TP /Zc:forScope /Zc:inline /Zc:wchar_t"
 )
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "/Zi /Oi")
-set(CMAKE_CXX_FLAGS_RELEASE_INIT "/Zi")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "/Oi")
 add_compile_definitions(
     _SCL_SECURE_NO_WARNINGS
     _CRT_SECURE_NO_WARNINGS

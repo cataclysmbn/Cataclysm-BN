@@ -1,0 +1,56 @@
+[
+  {
+    "result": "afs_bag_of_holding",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "scrap", 20 ] ], [ [ "essence_dull", 300 ] ] ]
+  },
+  {
+    "result": "vibrating_blaster",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "resin_chunk", 6 ] ], [ [ "essence_dull", 150 ] ] ]
+  },
+  {
+    "result": "afs_holo_transposition_caster",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "alloy_sheet", 1 ] ], [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "afs_holo_flare_caster",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "alloy_sheet", 1 ] ], [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "afs_holo_decoy_caster",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "alloy_sheet", 1 ] ], [ [ "essence_dull", 50 ] ] ]
+  },
+  {
+    "result": "afs_holo_field_caster",
+    "type": "uncraft",
+    "skill_used": "magic",
+    "difficulty": 4,
+    "time": "5 m",
+    "tools": [ [ [ "hexenhammer", -1 ] ] ],
+    "components": [ [ [ "alloy_sheet", 1 ] ], [ [ "essence_dull", 50 ] ] ]
+  }
+]

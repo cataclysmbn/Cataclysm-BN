@@ -1,0 +1,205 @@
+[
+  {
+    "name": "GROUP_NETHER_LAVA",
+    "type": "monstergroup",
+    "default": "mon_shadow_summoned",
+    "monsters": [
+      { "monster": "mon_hunting_horror", "freq": 250, "cost_multiplier": 0 },
+      { "monster": "mon_gozu", "freq": 175, "cost_multiplier": 0 },
+      { "monster": "mon_flaming_eye", "freq": 75, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "name": "GROUP_IMPACT",
+    "type": "monstergroup",
+    "default": "mon_dementia",
+    "monsters": [
+      { "monster": "mon_gracke", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_homunculus", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_leech_blossom", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_flesh_angel", "freq": 25, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "name": "GROUP_SANGUINE_BASEMENT",
+    "type": "monstergroup",
+    "default": "mon_dementia",
+    "monsters": [
+      { "monster": "mon_blank", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_homunculus", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_albino_penguin", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_feral_summoner", "freq": 50, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_sanguinist", "freq": 50, "cost_multiplier": 0, "starts": 500 }
+    ]
+  },
+  {
+    "name": "GROUP_GROVESURFACE",
+    "type": "monstergroup",
+    "default": "mon_triffid",
+    "monsters": [
+      { "monster": "mon_triffid_young", "freq": 300, "cost_multiplier": 0 },
+      { "monster": "mon_fungal_fighter", "freq": 200, "cost_multiplier": 0 },
+      { "monster": "mon_vinebeast", "freq": 200, "cost_multiplier": 10 }
+    ]
+  },
+  {
+    "name": "GROUP_GROVEBASEMENT",
+    "type": "monstergroup",
+    "default": "mon_kreck",
+    "monsters": [
+      { "monster": "mon_flying_polyp", "freq": 25, "cost_multiplier": 0 },
+      { "monster": "mon_hunting_horror", "freq": 250, "cost_multiplier": 0 },
+      { "monster": "mon_yugg", "freq": 75, "cost_multiplier": 0 },
+      { "monster": "mon_gozu", "freq": 25, "cost_multiplier": 0 },
+      { "monster": "mon_feral_summoner", "freq": 100, "cost_multiplier": 0, "starts": 250 }
+    ]
+  },
+  {
+    "name": "GROUP_CF_BASEMENT",
+    "type": "monstergroup",
+    "default": "mon_blank",
+    "monsters": [
+      { "monster": "mon_shadow_summoned", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_shadow_snake_summoned", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_hunting_horror", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_kreck", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_gracke", "freq": 75, "cost_multiplier": 0 },
+      { "monster": "mon_gozu", "freq": 75, "cost_multiplier": 0 },
+      { "monster": "mon_flying_polyp", "freq": 25, "cost_multiplier": 0 },
+      { "monster": "mon_flaming_eye", "freq": 25, "cost_multiplier": 0 },
+      { "monster": "mon_feral_magehunter", "freq": 100, "cost_multiplier": 0, "starts": 500 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ARCHON",
+    "default": "mon_null",
+    "monsters": [
+      { "monster": "mon_shadow_snake_summoned", "freq": 400, "cost_multiplier": 0, "starts": 72 },
+      { "monster": "mon_shadow_summoned", "freq": 250, "cost_multiplier": 0, "starts": 120 },
+      { "monster": "mon_hunting_horror_summoned", "freq": 50, "cost_multiplier": 0, "starts": 336 },
+      { "monster": "mon_vortex_summoned", "freq": 50, "cost_multiplier": 0, "starts": 168 },
+      { "monster": "mon_archon", "freq": 0, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ARCHON_TEMPLE",
+    "default": "mon_null",
+    "monsters": [
+      { "monster": "mon_shadow_snake_summoned", "freq": 400, "cost_multiplier": 0 },
+      { "monster": "mon_shadow_summoned", "freq": 250, "cost_multiplier": 0 },
+      { "monster": "mon_hunting_horror_summoned", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_vortex_summoned", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_feral_summoner", "freq": 50, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_keeper", "freq": 50, "cost_multiplier": 0, "starts": 500 }
+    ]
+  },
+  {
+    "name": "GROUP_SHRINE_FLAME",
+    "type": "monstergroup",
+    "default": "mon_dementia",
+    "monsters": [
+      { "monster": "mon_gracke", "freq": 275, "cost_multiplier": 0 },
+      { "monster": "mon_gozu", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_flesh_angel", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_feral_summoner", "freq": 50, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_magehunter", "freq": 75, "cost_multiplier": 0, "starts": 500 }
+    ]
+  },
+  {
+    "name": "GROUP_SHRINE_SANGUINE",
+    "type": "monstergroup",
+    "default": "mon_dementia",
+    "monsters": [
+      { "monster": "mon_kreck", "freq": 175, "cost_multiplier": 0 },
+      { "monster": "mon_homunculus", "freq": 150, "cost_multiplier": 0 },
+      { "monster": "mon_hunting_horror", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_feral_summoner", "freq": 50, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_sanguinist", "freq": 75, "cost_multiplier": 0, "starts": 500 }
+    ]
+  },
+  {
+    "name": "GROUP_SHRINE_CHALICE",
+    "type": "monstergroup",
+    "default": "mon_dementia",
+    "monsters": [
+      { "monster": "mon_homunculus", "freq": 200, "cost_multiplier": 0 },
+      { "monster": "mon_flaming_eye", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_flying_polyp", "freq": 25, "cost_multiplier": 0 },
+      { "monster": "mon_flesh_angel", "freq": 50, "cost_multiplier": 0 },
+      { "monster": "mon_feral_summoner", "freq": 50, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_keeper", "freq": 75, "cost_multiplier": 0, "starts": 500 }
+    ]
+  },
+  {
+    "type": "monstergroup",
+    "name": "GROUP_ARCHON_RESURGENCE",
+    "default": "mon_shadow_summoned",
+    "monsters": [
+      { "monster": "mon_shadow_snake_summoned", "freq": 400, "cost_multiplier": 0 },
+      { "monster": "mon_hunting_horror_summoned", "freq": 100, "cost_multiplier": 0 },
+      { "monster": "mon_feral_summoner", "freq": 10, "cost_multiplier": 0, "starts": 125 },
+      { "monster": "mon_feral_magehunter", "freq": 5, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_keeper", "freq": 5, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_feral_sanguinist", "freq": 5, "cost_multiplier": 0, "starts": 250 },
+      { "monster": "mon_seraphic_shade", "freq": 0, "cost_multiplier": 0 }
+    ]
+  },
+  {
+    "name": "GROUP_STANDING_STONES",
+    "type": "monstergroup",
+    "override": false,
+    "auto_total": true,
+    "monsters": [
+      {
+        "monster": "mon_shadow_snake_summoned",
+        "freq": 50,
+        "cost_multiplier": 1,
+        "pack_size": [ 1, 3 ],
+        "conditions": [ "NIGHT" ]
+      },
+      {
+        "monster": "mon_shadow_snake_summoned",
+        "freq": 50,
+        "cost_multiplier": 1,
+        "pack_size": [ 1, 3 ],
+        "conditions": [ "NIGHT" ]
+      }
+    ]
+  },
+  {
+    "name": "GROUP_CAVE",
+    "type": "monstergroup",
+    "override": false,
+    "auto_total": true,
+    "is_animal": true,
+    "monsters": [ { "monster": "mon_fleshy_shambler", "freq": 25, "cost_multiplier": 10 } ]
+  },
+  {
+    "name": "GROUP_MANSION",
+    "type": "monstergroup",
+    "override": false,
+    "auto_total": true,
+    "monsters": [
+      { "monster": "mon_feral_summoner", "freq": 10, "cost_multiplier": 5, "starts": 250 },
+      { "monster": "mon_feral_magehunter", "freq": 4, "cost_multiplier": 5, "starts": 500 },
+      { "monster": "mon_feral_keeper", "freq": 4, "cost_multiplier": 5, "starts": 500 },
+      { "monster": "mon_feral_sanguinist", "freq": 2, "cost_multiplier": 10, "starts": 500 }
+    ]
+  },
+  {
+    "name": "GROUP_CHURCH_ZOMBIE",
+    "type": "monstergroup",
+    "override": false,
+    "auto_total": true,
+    "monsters": [ { "monster": "mon_feral_magehunter", "freq": 10, "cost_multiplier": 10, "starts": 500 } ]
+  },
+  {
+    "name": "GROUP_CHURCH_BLANK",
+    "type": "monstergroup",
+    "override": false,
+    "auto_total": true,
+    "monsters": [ { "monster": "mon_feral_magehunter", "freq": 25, "cost_multiplier": 5, "starts": 250 } ]
+  }
+]

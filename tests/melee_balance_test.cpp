@@ -5,6 +5,7 @@
 #include <string>
 
 #include "creature.h"
+#include "coordinates.h"
 #include "game_constants.h"
 #include "item.h"
 #include "item_factory.h"
@@ -12,11 +13,10 @@
 #include "monster.h"
 #include "npc.h"
 #include "player.h"
-#include "point.h"
 #include "string_formatter.h"
 #include "type_id.h"
 
-static const tripoint dude_pos( g_half_mapsize_x, g_half_mapsize_y, 0 );
+static const tripoint_bub_ms dude_pos( g_half_mapsize_x, g_half_mapsize_y, 0 );
 
 static std::vector<const itype *> find_weapons()
 {

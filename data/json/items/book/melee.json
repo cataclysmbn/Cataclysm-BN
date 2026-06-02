@@ -31,5 +31,22 @@
     "max_level": 3,
     "intelligence": 4,
     "time": "18 m"
+  },
+  {
+    "id": "textbook_melee",
+    "type": "BOOK",
+    "copy-from": "base_book",
+    "name": { "str": "TC 7-21 (CUI) Special Forces Close Quarters Combat" },
+    "description": "A large military manual describing advanced techniques and practices for melee combat, both armed and unarmed, based on the experiences of a legendary soldier.  Requires some experience to understand.",
+    "weight": "800 g",
+    "volume": "500 ml",
+    "price": "85 USD",
+    "price_postapoc": "5 USD",
+    "color": "blue",
+    "skill": "melee",
+    "required_level": 3,
+    "max_level": 6,
+    "intelligence": 9,
+    "time": "28 m"
   }
 ]

@@ -3,7 +3,7 @@ name: Clang-tidy (tiles)
 on:
   # push:
   #   branches: [main]
-  #   paths: [ "**.cpp", "**.h", "**.c", "**/CMakeLists.txt", "**/Makefile", "**.hpp", "**.cmake", "build-scripts/**","tools/clang-tidy-plugin/**", ".github/workflows/clang-tidy.yml", "**/.clang-tidy" ]
+  #   paths: [ "**.cpp", "**.h", "**.c", "**/CMakeLists.txt", "**.hpp", "**.cmake", "build-scripts/**","tools/clang-tidy-plugin/**", ".github/workflows/clang-tidy.yml", "**/.clang-tidy" ]
   workflow_dispatch:
   pull_request:
     branches: [main]
@@ -13,7 +13,6 @@ on:
         "**.h",
         "**.c",
         "**/CMakeLists.txt",
-        "**/Makefile",
         "**.hpp",
         "**.cmake",
         "build-scripts/**",
@@ -48,7 +47,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
             cmake gettext ninja-build mold jq \
-            libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev libsdl2-mixer-dev libpulse-dev libflac-dev \
             sqlite3 libsqlite3-dev zlib1g-dev
 
           VERSION=20
@@ -58,6 +56,20 @@ jobs:
           for bin in clang clang++ clang-format clang-tidy run-clang-tidy llvm-config; do
             sudo update-alternatives --install /usr/bin/$bin $bin /usr/bin/$bin-$VERSION 200
           done
+
+      #- name: Install SDL3
+      #  run: |
+      #    sudo apt-get install --ignore-missing libsdl3-dev libsdl3-ttf-dev libsdl3-image-dev libsdl3-mixer-dev
+
+      - name: Install SDL3-devel dependencies
+        run: |
+          sudo apt-get install libasound2-dev libpulse-dev libaudio-dev libjack-dev libsndio-dev libx11-dev \
+            libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
+            libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev \
+            libibus-1.0-dev libudev-dev libpipewire-0.3-dev libwayland-dev libdecor-0-dev liburing-dev \
+            libfreetype-dev libharfbuzz-dev \
+            libtiff-dev libavif-dev libwebp-dev libjpeg-dev libjxl-dev \
+            libflac-dev libvorbis-dev libxmp-dev libmpg123-dev libwavpack-dev
 
       - name: Setup ccache
         uses: hendrikmuhs/ccache-action@v1.2

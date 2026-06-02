@@ -4,6 +4,7 @@
     "compatibility": [ "UNDEAD_PEOPLE_BASE", "UNDEAD_PEOPLE" ],
     "tints": [
       { "id": "SKIN_DARK", "fg": "#55381c", "blend_mode": "multiply" },
+      { "id": "SKIN_LIGHTER", "fg": "#ffe3d7", "blend_mode": "multiply" },
       { "id": "SKIN_LIGHT", "fg": "#ffccb5", "blend_mode": "multiply" },
       { "id": "SKIN_MEDIUM", "fg": "#bf876a", "blend_mode": "multiply" },
       { "id": "SKIN_PINK", "fg": "#ffb5bc", "blend_mode": "multiply" },
@@ -22,6 +23,8 @@
         "tiles": [
           { "id": "overlay_female_mutation_SKIN_DARK", "fg": 0, "rotates": false },
           { "id": "overlay_male_mutation_SKIN_DARK", "fg": 1, "rotates": false },
+          { "id": "overlay_female_mutation_SKIN_LIGHTER", "fg": 0, "rotates": false },
+          { "id": "overlay_male_mutation_SKIN_LIGHTER", "fg": 1, "rotates": false },
           { "id": "overlay_female_mutation_SKIN_LIGHT", "fg": 0, "rotates": false },
           { "id": "overlay_male_mutation_SKIN_LIGHT", "fg": 1, "rotates": false },
           { "id": "overlay_female_mutation_SKIN_MEDIUM", "fg": 0, "rotates": false },

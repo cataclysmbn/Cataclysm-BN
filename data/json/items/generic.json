@@ -136,6 +136,21 @@
   },
   {
     "type": "GENERIC",
+    "id": "classified_file_docmission",
+    "name": { "str": "classified lab reports" },
+    "category": "books",
+    "description": "A large stack of papers detailing all manner of classified information regarding the secret labs.",
+    "weight": "400 g",
+    "to_hit": -3,
+    "color": "white",
+    "symbol": ",",
+    "material": [ "paper" ],
+    "looks_like": "record_accounting",
+    "volume": "750 ml",
+    "flags": [ "TRADER_AVOID" ]
+  },
+  {
+    "type": "GENERIC",
     "id": "log_immersion27",
     "copy-from": "file",
     "name": { "str": "INCIDENT REPORT: IMMERSION-27A" },
@@ -368,7 +383,7 @@
     "color": "light_gray",
     "name": { "str": "cluster of gas sacs", "str_pl": "clusters of gas sacs" },
     "description": "This is a cluster of membranous bubbles, each about the size of a grape, retrieved from inside a mutant insect.  They float like tiny helium balloons, and are likely full of a lighter-than-air gas helping the bug to fly.",
-    "price": 0,
+    "price": "0 USD",
     "stackable": true,
     "material": [ "flesh" ],
     "flags": [ "NO_SALVAGE" ],
@@ -3508,5 +3523,22 @@
     "volume": "250 ml",
     "price": "8 USD",
     "price_postapoc": "50 cent"
+  },
+  {
+    "id": "wooden_plane_kit",
+    "type": "GENERIC",
+    "category": "tools",
+    "name": { "str": "hobby aircraft parts kit" },
+    "description": "This tightly-packed pallet of cardboard boxes contains the raw lumber and hardware for making homebuilt aircraft, along with the necessary parts diagrams.  You'd still need to provide your own engine, electronics, and a LOT of canvas.",
+    "//": "Weight rounded up from total weight of contents, volume rounded up from contents minus the boxes.  Pre-apoc price is in the range for budget kits from what I could find, post-apoc price is roughly barter value of contents.",
+    "weight": "210 kg",
+    "volume": "375 L",
+    "price": "20 kUSD",
+    "price_postapoc": "50 USD",
+    "material": [ "wood", "cardboard" ],
+    "symbol": ")",
+    "color": "brown",
+    "looks_like": "f_cardboard_wall",
+    "flags": [ "NO_REPAIR", "NO_SALVAGE" ]
   }
 ]

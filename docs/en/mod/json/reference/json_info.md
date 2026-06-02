@@ -342,6 +342,16 @@ When you sort your inventory by category, these are the categories that are disp
 { "name" : "Aaliyah", "gender" : "female", "usage" : "given" }, // Name, gender, "given"/"family"/"city" (first/last/city name).
 ```
 
+### Named Colors
+
+```json
+{
+  "type": "named_color", // As you expect
+  "name": "Cataclysm Red", // Name to display
+  "value": "#622625" // Hex value of color
+}
+```
+
 ### Scent_types
 
 | Identifier        | Description                                                                    |
@@ -611,6 +621,95 @@ an `"anything"` constraint on it. For example:
 
 This is a simple "survive a day" but is triggered by waking up, so it will be completed when you
 wake up for the first time after 24 hours into the game.
+
+### `requirements`
+
+The requirements system in Cataclysm defines reusable sets of components, tools, and qualities needed for crafting, construction, and other game mechanics. Requirements are defined in JSON format and located in `data/json/requirements/`.
+
+## JSON Structure
+
+### Basic Format
+
+```json
+{
+  "id": "unique_id",
+  "type": "requirement",
+  "//": "Optional comment",
+  "components": [
+    [
+      ["gasoline", 1],
+      ["diesel", 1],
+      ["biodiesel", 1]
+    ]
+  ],
+  "tools": [
+    [
+      ["soldering_iron", 1],
+      ["soldering_ethanol", 10],
+      ["toolset", 1]
+    ]
+  ],
+  "qualities": [
+    { "id": "CUT", "level": 1 },
+    { "id": "HAMMER", "level": 2 }
+  ]
+}
+```
+
+#### Format
+
+Any of the three last arrays is optional, as long as one of them is present (a requirement must depend on _something_ after all!)
+
+**Components** are organized as nested arrays representing alternatives and requirements:
+
+```json
+"components": [
+  [ /* Group 1: ONE of these required */ ],
+  [ /* Group 2: ONE of these required */ ]
+]
+```
+
+- `[ "item_id", quantity ]` - Specific item
+- `[ "item_id", quantity, "LIST" ]` - References another requirement definition
+
+**Tools** specify items that are used but not consumed, along with charge costs:
+
+```json
+"tools": [
+  [
+    [ "tool_id", charges ],
+    [ "alternative", charges, "LIST" ]
+  ]
+]
+```
+
+`charges` can be a positive integer, in which case it references the number of charges consumed, or `-1` to signify that no charges are used.
+
+**Qualities** specify minimum tool quality levels needed:
+
+````json
+"qualities": [
+  { "id": "QUALITY_ID", "level": min_level }
+]
+
+#### Usage in Recipes
+
+Here is an example of a requirement in a recipe:
+
+```json
+"using": [ [ "requirement_id", multiplier ] ]
+````
+
+Multiple requirements:
+
+```json
+"using": [
+  [ "welding_standard", 1 ],
+  [ "forging_standard", 2 ]
+]
+```
+
+You can explore the files in the `/data/json/requirements` folder to see common examples of requirements for certain types of items or components. Make sure that your requirements do not form any circular dependencies.
 
 ### Skills
 

@@ -44,7 +44,8 @@
     },
     "size": "2500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#622625"
   },
   {
     "abstract": "door_opaque_abstract",
@@ -68,7 +69,8 @@
     },
     "size": "2500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#622625"
   },
   {
     "copy-from": "door_abstract",
@@ -88,7 +90,8 @@
     },
     "damage_reduction": { "all": 25 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
+    "default_color": "#622625"
   },
   {
     "copy-from": "door_opaque_abstract",
@@ -108,7 +111,8 @@
     },
     "damage_reduction": { "all": 34 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
+    "default_color": "#622625"
   },
   {
     "abstract": "hddoor_abstract",
@@ -132,7 +136,8 @@
     },
     "size": "2500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#3f4535"
   },
   {
     "abstract": "hddoor_opaque_abstract",
@@ -156,7 +161,8 @@
     },
     "size": "2500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#3f4535"
   },
   {
     "abstract": "door_internal_abstract",
@@ -179,7 +185,8 @@
       "repair": { "skills": [ [ "mechanics", 3 ] ], "time": "60 m", "using": [ [ "welding_standard", 5 ], [ "steel_tiny", 1 ] ] }
     },
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#622625"
   },
   {
     "abstract": "hatch_abstract",
@@ -203,7 +210,8 @@
     },
     "size": "37500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#622625"
   },
   {
     "abstract": "hatch_opaque_abstract",
@@ -227,7 +235,8 @@
     },
     "size": "37500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#622625"
   },
   {
     "copy-from": "door_internal_abstract",
@@ -266,7 +275,8 @@
     },
     "damage_reduction": { "all": 36 },
     "folded_volume": "2500 ml",
-    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] }
+    "extend": { "flags": [ "FOLDABLE", "SHOCK_RESISTANT" ] },
+    "default_color": "#622625"
   },
   {
     "copy-from": "hatch_opaque_abstract",
@@ -310,7 +320,8 @@
     },
     "size": "37500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#3f4535"
   },
   {
     "abstract": "hdhatch_opaque_abstract",
@@ -334,7 +345,8 @@
     },
     "size": "37500 ml",
     "symbol": "+",
-    "type": "vehicle_part"
+    "type": "vehicle_part",
+    "default_color": "#3f4535"
   },
   {
     "type": "vehicle_part",
@@ -415,7 +427,8 @@
     },
     "flags": [ "OPAQUE", "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE" ],
     "breaks_into": "ig_vp_sheet_metal",
-    "damage_reduction": { "all": 24 }
+    "damage_reduction": { "all": 24 },
+    "default_color": "#622625"
   },
   {
     "type": "vehicle_part",
@@ -438,7 +451,8 @@
     },
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "WINDOW" ],
     "breaks_into": "ig_vp_frame",
-    "damage_reduction": { "all": 26 }
+    "damage_reduction": { "all": 26 },
+    "default_color": "#622625"
   },
   {
     "copy-from": "door_sliding",
@@ -480,7 +494,8 @@
     },
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "NO_ROOF_NEEDED", "WINDOW" ],
     "breaks_into": "ig_vp_frame",
-    "damage_reduction": { "all": 25 }
+    "damage_reduction": { "all": 25 },
+    "default_color": "#622625"
   },
   {
     "copy-from": "door_trunk",
@@ -522,7 +537,8 @@
     },
     "flags": [ "OBSTACLE", "OPENABLE", "MULTISQUARE", "BOARDABLE", "LOW_FINAL_AIR_DRAG", "WINDOW" ],
     "breaks_into": "ig_vp_hdframe",
-    "damage_reduction": { "all": 78 }
+    "damage_reduction": { "all": 78 },
+    "default_color": "#3f4535"
   },
   {
     "type": "vehicle_part",

@@ -1,0 +1,28 @@
+[
+  {
+    "type": "mapgen",
+    "method": "lua",
+    "om_terrain": [
+      "lab",
+      "lab_stairs",
+      "lab_core",
+      "lab_finale",
+      "central_lab",
+      "central_lab_stairs",
+      "central_lab_core",
+      "central_lab_finale",
+      "tower_lab",
+      "tower_lab_stairs",
+      "tower_lab_finale",
+      "ants_lab",
+      "ants_lab_stairs"
+    ],
+    "luamethod": "lab"
+  },
+  {
+    "type": "mapgen",
+    "method": "lua",
+    "om_terrain": [ "ice_lab", "ice_lab_stairs", "ice_lab_core", "ice_lab_finale" ],
+    "luamethod": "lab_ice"
+  }
+]

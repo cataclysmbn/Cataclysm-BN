@@ -7,6 +7,7 @@
 #include <utility>
 #include <limits>
 
+#include "coordinates.h"
 
 class vehicle;
 struct vehicle_part;
@@ -15,8 +16,6 @@ class vpart_info;
 
 enum vpart_bitflags : int;
 class vpart_reference;
-struct tripoint;
-struct point;
 
 /**
  * Reference to a position (a point) of the @ref vehicle.
@@ -84,13 +83,12 @@ class vpart_position
          * `g->m.veh_at( this->pos() )->vehicle() == this->vehicle()` (it's this one)
          */
         // Name chosen to match Creature::pos
-        tripoint pos() const;
+        tripoint_bub_ms pos() const;
         /**
          * Returns the mount point: the point in the vehicles own coordinate system.
          * This system is independent of movement / rotation.
          */
-        // TODO: change to return tripoint.
-        point mount() const;
+        tripoint_mnt_veh mount() const;
 };
 
 /**

@@ -1,0 +1,13 @@
+[
+  {
+    "type": "skill",
+    "id": "magic",
+    "name": { "str": "Arcana" },
+    "description": "Your knowledge of strange, anomalous powers from far-off worlds.  While certain artifacts are beyond mortal understanding, this skill can be used for creating and using a few odd devices, some with lethal applications.",
+    "tags": [ "combat_skill" ],
+    "time_to_attack": { "min_time": 30, "base_time": 100, "time_reduction_per_level": 7 },
+    "companion_survival_rank_factor": 1,
+    "display_category": "display_interaction",
+    "companion_skill_practice": [ { "skill": "hunting", "weight": 1 }, { "skill": "combat", "weight": 1 } ]
+  }
+]

@@ -35,7 +35,7 @@
     "id": "NBC_seal",
     "type": "GENERIC",
     "category": "veh_parts",
-    "name": { "str": "NBC_seal" },
+    "name": { "str": "NBC seal" },
     "description": "A series of lead-based gaskets, seals and other things meant to keep all Nuclear, Biological, and Chemical contaminants out of a vehicle.  Installing this on a tile will protect people seated there from toxic gas and radiation.",
     "weight": "8000 g",
     "volume": "1 L",

@@ -7,13 +7,14 @@
 #include "filesystem.h"
 #include "language.h"
 #include "options.h"
+#include "title_screen.h"
 
 #if defined(_WIN32)
 #include <windows.h>
 #endif
 #if defined(__ANDROID__)
 #include <jni.h>
-#include <SDL_system.h>
+#include <SDL3/SDL.h>
 #endif
 /**
  * Return a locale specific path, or if there is no path for the current
@@ -54,8 +55,8 @@ void PATH_INFO::init_user_dir( std::string dir )
         user_dir_value = as_norm_dir( dir );
         return;
     }
-    JNIEnv *env = static_cast<JNIEnv *>( SDL_AndroidGetJNIEnv() );
-    jobject activity = static_cast<jobject>( SDL_AndroidGetActivity() );
+    auto *env = static_cast<JNIEnv *>( SDL_GetAndroidJNIEnv() );
+    auto activity = static_cast<jobject>( SDL_GetAndroidActivity() );
 
     jclass clazz = env->GetObjectClass( activity );
 
@@ -370,10 +371,7 @@ std::string PATH_INFO::motd()
 
 std::string PATH_INFO::title( const holiday )
 {
-    std::string theme_basepath = datadir_value + "title/";
-    std::string theme_extension = ".title";
-    std::string theme_fallback = theme_basepath + "en.title";
-    return find_translated_file( theme_basepath, theme_extension, theme_fallback );
+    return title_screen::resolve_path();
 }
 
 std::string PATH_INFO::names()

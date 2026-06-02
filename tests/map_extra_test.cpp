@@ -6,7 +6,6 @@
 #include <utility>
 #include <vector>
 
-#include "coordinate_conversions.h"
 #include "coordinates.h"
 #include "enums.h"
 #include "map.h"

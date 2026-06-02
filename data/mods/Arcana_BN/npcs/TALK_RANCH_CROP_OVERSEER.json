@@ -1,0 +1,129 @@
+[
+  {
+    "id": "TALK_RANCH_CROP_OVERSEER",
+    "type": "talk_topic",
+    "responses": [
+      {
+        "text": "I've been sent to ask about recent attacks on survivors by anomalous creatures.  Know anything about that?",
+        "condition": {
+          "and": [
+            { "u_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" },
+            {
+              "not": { "npc_has_var": "johnathan_prelude_mid", "type": "mission", "context": "rural_church", "value": "yes" }
+            },
+            {
+              "not": { "u_has_var": "johnathan_prelude_data_5", "type": "mission", "context": "rural_church", "value": "yes" }
+            }
+          ]
+        },
+        "topic": "TALK_RANCH_CROP_OVERSEER_GM_PRELUDE"
+      },
+      {
+        "text": "[MISSION] I've been asked to help attract work for another community of survivors.  Know anyone who could help?",
+        "topic": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4",
+        "condition": {
+          "and": [
+            { "not": { "u_has_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" } },
+            { "u_has_mission": "MISSION_CF_REP_4" }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "TALK_RANCH_CROP_OVERSEER_GM_PRELUDE",
+    "type": "talk_topic",
+    "dynamic_line": "One of the traders stopped by telling stories like that, mentioned an old town a few days travel down the road.  He said not to travel through the outer edges of the residential section at night, mentioned some strange goings-on there.  Personally I don't believe it's anything more than the usual freaks, but he was convinced it was something else.  Hope that's what you're looking for."
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4",
+    "dynamic_line": "We're already struggling to make up for demand as it is.  Lots of people coming in and not enough food to go around.",
+    "responses": [
+      {
+        "text": "They're mainly interested in trade and labor, actually.",
+        "topic": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_LABOR"
+      },
+      {
+        "text": "They can take care of themselves, if you think you can work something out?",
+        "topic": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_CARE"
+      },
+      { "text": "I'll keep asking around.", "topic": "TALK_RANCH_CROP_OVERSEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_LABOR",
+    "dynamic_line": "Well, if they can think of something and are willing to provide a stable supply of food in exchange, I guess that works.  Labor is about all we have, and even then I'm reluctant to commit any people to an unknown settlement.",
+    "responses": [
+      {
+        "text": "Having another contact with other survivors is useful too.",
+        "topic": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_CONTACT"
+      },
+      { "text": "Nevermind, maybe another time.", "topic": "TALK_RANCH_CROP_OVERSEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_CONTACT",
+    "dynamic_line": "I suppose you have a point there.  New people come in every so often, giving them details on another place to go must ease a bit of burden here.  I'll see what I can do, what can you tell me about them?",
+    "responses": [
+      {
+        "text": "A local settlement in a fortified roadside church.  It's not too far from the refugee center.",
+        "topic": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_DEAL"
+      },
+      { "text": "Maybe later.", "topic": "TALK_RANCH_CROP_OVERSEER" }
+    ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_DEAL",
+    "dynamic_line": "Alright.  I'll have someone set up and see if they can finalize this deal with the people that run the place.  Here's hoping it goes well…",
+    "speaker_effect": [
+      {
+        "effect": [
+          { "u_add_var": "sofia_allies_secured", "type": "mission", "context": "rural_church", "value": "yes" },
+          {
+            "mapgen_update": "arcana_cf_4_tacoma_commune_1",
+            "om_terrain": "cf_church_1",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_tacoma_commune_2",
+            "om_terrain": "cf_church_3",
+            "om_special": "cf_rural_church",
+            "must_see": true
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_1",
+            "om_terrain": "cf_church_1_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          },
+          {
+            "mapgen_update": "arcana_cf_4_roof_2",
+            "om_terrain": "cf_church_3_roof",
+            "om_special": "cf_rural_church",
+            "must_see": true,
+            "z": 1
+          }
+        ]
+      }
+    ],
+    "responses": [ { "text": "Thank you.  I should go check on them.", "topic": "TALK_DONE" } ]
+  },
+  {
+    "type": "talk_topic",
+    "id": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_CARE",
+    "dynamic_line": "Well good.  I dunno what they could be asking for in that case.  Supplies and labor, especially skilled labor, are still important here.",
+    "responses": [
+      {
+        "text": "They seem more interested in having another point of contact with other settlements.  Would be useful, right?",
+        "topic": "TALK_RANCH_CROP_OVERSEER_CF_REP_MISSION_4_CONTACT"
+      },
+      { "text": "I'll look around elsewhere.", "topic": "TALK_RANCH_CROP_OVERSEER" }
+    ]
+  }
+]

@@ -1,0 +1,403 @@
+[
+  {
+    "id": "cleansing_flame_books",
+    "type": "item_group",
+    "items": [
+      [ "poetry_book", 5 ],
+      [ "philosophy_book", 3 ],
+      [ "essay_book", 3 ],
+      [ "holybook_bible1", 1 ],
+      [ "holybook_bible2", 1 ],
+      [ "holybook_bible4", 5 ],
+      [ "holybook_havamal", 6 ],
+      [ "holybook_paganism", 2 ],
+      [ "holybook_quran", 3 ],
+      [ "holybook_hadith", 2 ],
+      [ "holybook_kojiki", 5 ],
+      [ "holybook_tanakh", 3 ],
+      [ "holybook_tripitaka", 1 ],
+      [ "holybook_sutras", 1 ],
+      [ "book_hexenhammer", 25 ],
+      [ "book_scrollcraft", 10 ],
+      [ "book_potioncraft", 10 ],
+      [ "book_magicfordummies", 3 ],
+      [ "manual_cleansingflame", 10 ],
+      [ "manual_fencing", 1 ],
+      [ "manual_aikido", 1 ]
+    ]
+  },
+  {
+    "id": "cleansing_flame_books_postapoc",
+    "type": "item_group",
+    "items": [
+      [ "poetry_book", 5 ],
+      [ "philosophy_book", 3 ],
+      [ "essay_book", 3 ],
+      [ "holybook_bible1", 1 ],
+      [ "holybook_bible2", 1 ],
+      [ "holybook_bible4", 5 ],
+      [ "holybook_havamal", 6 ],
+      [ "holybook_paganism", 2 ],
+      [ "holybook_quran", 3 ],
+      [ "holybook_hadith", 2 ],
+      [ "holybook_kojiki", 5 ],
+      [ "holybook_tanakh", 3 ],
+      [ "holybook_tripitaka", 1 ],
+      [ "holybook_sutras", 1 ],
+      [ "book_hexenhammer", 25 ],
+      [ "book_scrollcraft", 10 ],
+      [ "book_potioncraft", 10 ],
+      [ "book_magicfordummies", 3 ],
+      [ "book_syncretism", 2 ],
+      [ "recipe_lab_arcana", 3 ],
+      [ "manual_cleansingflame", 5 ],
+      [ "manual_fencing", 1 ],
+      [ "manual_aikido", 1 ]
+    ]
+  },
+  {
+    "id": "cleansing_flame_gear",
+    "type": "item_group",
+    "items": [
+      [ "warhammer", 6 ],
+      [ "lucern_hammer", 2 ],
+      [ "mace", 1 ],
+      [ "morningstar", 1 ],
+      [ "broadsword", 4 ],
+      [ "arming_sword", 4 ],
+      [ "jian", 3 ],
+      [ "crossbow", 10 ],
+      [ "hand_crossbow", 3 ],
+      [ "huge_crossbow", 2 ],
+      [ "shotgun_d", 5 ],
+      [ "bolt_steel", 10 ],
+      [ "helmet_galea", 5 ],
+      [ "helmet_nasal", 5 ],
+      [ "cloak_leather", 5 ],
+      [ "chainmail_hauberk", 2 ],
+      [ "armor_lightplate", 2 ],
+      [ "armor_plate", 1 ],
+      [ "boots_larmor", 5 ],
+      [ "boots_plate", 5 ],
+      [ "gauntlets_larmor", 5 ],
+      [ "gloves_plate", 5 ],
+      [ "holy_symbol", 10 ]
+    ]
+  },
+  {
+    "id": "cleansing_flame_spells",
+    "type": "item_group",
+    "items": [
+      [ "scroll_spell_plants", 1 ],
+      [ "scroll_spell_heal", 1 ],
+      [ "scroll_spell_flame_armor", 1 ],
+      [ "scroll_spell_clairvoyance", 1 ],
+      [ "scroll_spell_cleric", 1 ]
+    ]
+  },
+  {
+    "id": "cleansing_flame_gear_magic",
+    "type": "item_group",
+    "items": [
+      [ "hexenhammer", 30 ],
+      [ "sun_sword", 15 ],
+      [ "ethereal_crossbow", 20 ],
+      [ "reloaded_shot_00_arcana", 5 ],
+      [ "gilded_aegis", 10 ],
+      [ "somen_clairvoyance", 15 ],
+      [ "thermic_essence_cutter", 5 ]
+    ]
+  },
+  {
+    "id": "cleansing_flame_gear_consumables",
+    "type": "item_group",
+    "items": [
+      [ "numbness_potion", 5 ],
+      [ "strength_potion", 10 ],
+      [ "speed_potion", 5 ],
+      [ "healing_potion", 15 ],
+      [ "scroll_sun", 5 ],
+      [ "scroll_moon", 5 ],
+      [ "scroll_artiface", 5 ],
+      [ "scroll_nature", 3 ],
+      [ "scroll_destruction", 2 ],
+      [ "scroll_subversion", 1 ]
+    ]
+  },
+  {
+    "id": "cleansing_flame_crafting",
+    "type": "item_group",
+    "items": [
+      [ "holy_symbol", 15 ],
+      [ "pot", 5 ],
+      [ "bowl_clay", 10 ],
+      [ "candle", 5 ],
+      [ "matches", 15 ],
+      { "item": "copper", "prob": 5, "charges": [ 25, 100 ] },
+      { "item": "scrap_copper", "prob": 5, "count": [ 1, 3 ] },
+      { "item": "silver_small", "prob": 10, "charges": [ 25, 100 ] },
+      { "item": "gold_small", "prob": 10, "charges": [ 25, 100 ] },
+      { "item": "CF_golden_scale", "prob": 20, "count": [ 2, 5 ] },
+      { "item": "scrap", "prob": 15, "count": [ 5, 10 ] },
+      { "item": "leather", "prob": 15, "count": [ 5, 10 ] },
+      { "item": "paper", "prob": 10, "charges": [ 20, 50 ] },
+      [ "chem_ethanol", 10 ],
+      { "group": "arcana_hunt_random", "prob": 25 },
+      { "item": "essence_dull", "prob": 75, "count": [ 15, 45 ] }
+    ]
+  },
+  {
+    "id": "cleansing_flame_casualties",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_magic", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_consumables", "prob": 25 },
+      { "group": "cleansing_flame_crafting", "prob": 25 },
+      { "group": "cf_corpse_combatants", "damage": 4 }
+    ]
+  },
+  {
+    "id": "cleansing_flame_casualties_old",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_magic", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_consumables", "prob": 25 },
+      { "group": "cleansing_flame_crafting", "prob": 25 },
+      { "item": "bone_human", "prob": 100, "count": [ 3, 9 ] }
+    ]
+  },
+  {
+    "id": "cleansing_flame_casualty_specific",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_magic", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_consumables", "prob": 25 },
+      { "group": "cleansing_flame_crafting", "prob": 25 },
+      { "item": "corpse_gunned", "damage": 4 }
+    ]
+  },
+  {
+    "id": "cf_corpse_combatants",
+    "//": "Various adult corpses, excluding versions that imply anything human was responsible.",
+    "type": "item_group",
+    "items": [
+      [ "corpse", 25 ],
+      [ "corpse_bloody", 25 ],
+      [ "corpse_generic_male", 15 ],
+      [ "corpse_generic_female", 10 ],
+      [ "corpse_painful", 10 ],
+      [ "corpse_halved_upper", 10 ],
+      [ "corpse_half_beheaded", 5 ]
+    ]
+  },
+  {
+    "id": "curious_structure_tomb_offerings",
+    "type": "item_group",
+    "items": [
+      { "group": "standing_stones_libation", "prob": 25 },
+      { "item": "candle", "prob": 10, "count": [ 1, 7 ] },
+      [ "photo_album", 15 ],
+      [ "holy_symbol", 10 ],
+      [ "silver_locket", 15 ],
+      { "item": "CF_golden_scale", "prob": 20, "count": [ 2, 5 ] },
+      [ "triffid_queen_flower", 5 ]
+    ]
+  },
+  {
+    "id": "cleansing_flame_casualties_inferno",
+    "//": "For the bodies in the lowest level, likely killed by the spirit of fire.",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_magic", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_consumables", "prob": 25 },
+      { "item": "corpse_scorched", "damage": 4 }
+    ]
+  },
+  {
+    "id": "cleansing_flame_casualties_basement",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "clothing_outdoor_set", "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear", "prob": 10, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_magic", "prob": 15, "damage": [ 1, 4 ] },
+      { "group": "cleansing_flame_gear_consumables", "prob": 25 },
+      { "group": "arcanist_corpses_adult_random", "damage": 4 }
+    ]
+  },
+  {
+    "id": "arcane_purifier_generic_casualty",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          {
+            "collection": [
+              { "item": "UPS_off", "prob": 50, "charges-min": 1, "charges-max": 200, "damage": [ 0, 2 ] },
+              { "group": "guns_energy", "prob": 50, "damage": [ 0, 2 ] }
+            ],
+            "prob": 20
+          },
+          { "group": "guns_pistol_common", "prob": 40, "damage": [ 0, 2 ] },
+          { "group": "guns_rifle_common", "prob": 40, "damage": [ 0, 2 ] }
+        ]
+      },
+      { "group": "cleansing_flame_casualties_basement", "damage": 4 }
+    ]
+  },
+  {
+    "id": "arcane_purifier_radio_casualty",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      {
+        "distribution": [
+          {
+            "collection": [
+              { "group": "male_underwear", "damage": [ 1, 4 ] },
+              { "item": "dress_shirt", "damage": [ 1, 4 ] },
+              { "item": "pants", "damage": [ 1, 4 ] },
+              { "item": "dress_shoes", "damage": [ 1, 4 ] }
+            ],
+            "prob": 50
+          },
+          {
+            "collection": [
+              { "group": "female_underwear", "damage": [ 1, 4 ] },
+              { "item": "dress_shirt", "damage": [ 1, 4 ] },
+              { "item": "skirt", "damage": [ 1, 4 ] },
+              { "item": "dress_shoes", "damage": [ 1, 4 ] }
+            ],
+            "prob": 50
+          }
+        ]
+      },
+      {
+        "distribution": [ { "item": "coat_lab", "prob": 80, "damage": [ 1, 4 ] }, { "item": "cleansuit", "prob": 20, "damage": [ 1, 4 ] } ]
+      },
+      { "group": "socks_unisex", "damage": [ 1, 4 ] },
+      { "group": "lab_shoes", "damage": [ 1, 4 ] },
+      { "item": "badge_doctor", "prob": 10, "damage": [ 1, 4 ] },
+      { "item": "mbag", "damage": [ 1, 4 ] },
+      { "item": "holster", "damage": [ 1, 4 ] },
+      { "item": "somen_clairvoyance", "damage": [ 1, 4 ] },
+      { "item": "m1911mag", "charges": [ 0, 7 ], "damage": [ 0, 2 ], "prob": 50 },
+      { "group": "drugs_heal_simple", "prob": 50 },
+      { "group": "supplies_reagents_lab", "prob": 60 },
+      { "group": "tools_electronics", "prob": 40 },
+      { "group": "bionics", "prob": 10 },
+      { "item": "id_science", "prob": 5 },
+      { "item": "CF_golden_scale", "charges": [ 1, 5 ] },
+      { "item": "m1911", "charges": [ 0, 3 ], "damage": [ 0, 2 ] },
+      { "item": "corpse_halved_upper", "damage": 4 }
+    ]
+  },
+  {
+    "id": "rural_church_alchemy_stock",
+    "type": "item_group",
+    "items": [
+      [ "numbness_potion", 15 ],
+      [ "strength_potion", 15 ],
+      [ "speed_potion", 10 ],
+      [ "healing_potion", 10 ],
+      [ "red_black_vulnerary", 5 ],
+      [ "yellow_white_incense", 5 ]
+    ]
+  },
+  {
+    "id": "rural_church_farmhand_research",
+    "type": "item_group",
+    "items": [
+      { "group": "cleansing_flame_gear_consumables", "prob": 15 },
+      [ "scroll_blank", 5 ],
+      [ "flame_talisman", 5 ],
+      [ "water_talisman", 10 ],
+      [ "earth_talisman", 10 ],
+      [ "air_talisman", 5 ],
+      [ "totem_plants", 1 ]
+    ]
+  },
+  {
+    "id": "rural_church_hunter_haul",
+    "type": "item_group",
+    "items": [
+      { "item": "meat_pickled", "prob": 25, "charges": 2, "container-item": "jar_glass_sealed" },
+      { "item": "meat_smoked", "prob": 10, "charges": 2, "container-item": "wrapper" },
+      { "item": "jerky", "prob": 10, "charges": 4, "container-item": "wrapper" },
+      { "item": "sausage", "prob": 10, "charges": 2, "container-item": "wrapper" },
+      { "item": "sausage_wasteland", "prob": 10, "charges": 2, "container-item": "wrapper" },
+      { "item": "cracklins", "prob": 5, "charges": 8, "container-item": "wrapper" },
+      { "item": "tallow", "prob": 5, "charges": 2, "container-item": "wrapper" },
+      { "item": "lard", "prob": 5, "charges": 2, "container-item": "wrapper" },
+      { "item": "cured_pelt", "prob": 10, "charges": [ 1, 5 ] },
+      { "item": "cured_hide", "prob": 10, "charges": [ 1, 5 ] },
+      { "item": "bone", "prob": 5, "charges": [ 1, 5 ] },
+      { "item": "broth_bone", "prob": 5, "charges": 2, "container-item": "jar_glass_sealed" }
+    ]
+  },
+  {
+    "id": "rural_church_medical_items",
+    "type": "item_group",
+    "//": "Assorted makeshift healing items, not counting potions.",
+    "items": [
+      { "item": "cattail_jelly", "prob": 10, "charges": 21, "container-item": "bottle_glass" },
+      { "item": "thyme_oil", "prob": 20, "charges": 3, "container-item": "bottle_glass" },
+      { "item": "mugwort_oil", "prob": 5, "charges": 3, "container-item": "bottle_glass" },
+      { "item": "tea_bark", "prob": 5, "charges": 3, "container-item": "bottle_glass" },
+      [ "bandages_makeshift", 30 ],
+      [ "bandages_makeshift_boiled", 15 ],
+      [ "water_talisman", 5 ],
+      [ "poppy_pain", 5 ]
+    ]
+  },
+  {
+    "id": "rural_church_start_scales",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [ { "item": "CF_golden_scale", "charges": [ 40, 80 ] } ]
+  },
+  {
+    "id": "rural_church_celine_research",
+    "type": "item_group",
+    "items": [
+      [ "scroll_blank", 10 ],
+      [ "mana_gem_dull", 5 ],
+      { "group": "arcana_totem_random", "prob": 5 },
+      [ "flame_talisman", 10 ],
+      [ "water_talisman", 10 ],
+      [ "earth_talisman", 5 ],
+      [ "air_talisman", 5 ]
+    ]
+  },
+  {
+    "id": "arcane_purifier_bandit_safe",
+    "type": "item_group",
+    "subtype": "collection",
+    "entries": [
+      { "group": "cleansing_flame_gear_magic", "prob": 50, "damage": [ 1, 4 ] },
+      { "group": "bionics_mil", "prob": 75 },
+      { "item": "id_science", "prob": 10 },
+      { "item": "CF_golden_scale", "charges": [ 2, 6 ] },
+      { "item": "arcane_purifier_intel" }
+    ]
+  },
+  {
+    "id": "arcana_purifying_shot_group",
+    "type": "item_group",
+    "//": "Used for shopkeepers at the rural church who sell ammo.",
+    "items": [ [ "reloaded_shot_00_arcana", 7 ], [ "flintlock_shot_arcana", 2 ], [ "blun_shot_arcana", 1 ] ]
+  }
+]

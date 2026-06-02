@@ -926,7 +926,7 @@
     "weight": 100,
     "object": {
       "rotation": [ 0, 1 ],
-      "fill_ter": "t_strconc_floor",
+      "fill_ter": "t_floor",
       "rows": [
         "BB|FFFt |`````| tFFF|BB|",
         "  +   F w`````w F   +  |",

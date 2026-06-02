@@ -7,6 +7,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "coordinates.h"
 #include "type_id.h"
 
 class Character;
@@ -14,7 +15,6 @@ class inventory;
 class item;
 class player;
 class player_activity;
-struct tripoint;
 // TODO (https://github.com/cataclysmbn/Cataclysm-BN/issues/1612):
 // Remove that forward declaration after repair_activity_actor.
 class vehicle;
@@ -22,9 +22,11 @@ class vehicle;
 template<typename T>
 class detached_ptr;
 
-std::vector<tripoint> get_sorted_tiles_by_distance( const tripoint &abspos,
-        const std::unordered_set<tripoint> &tiles );
-std::vector<tripoint> route_adjacent( const player &p, const tripoint &dest );
+std::vector<tripoint_bub_ms> get_sorted_tiles_by_distance( const tripoint_bub_ms &coord,
+        const std::unordered_set<tripoint_bub_ms> &tiles );
+std::vector<tripoint_abs_ms> get_sorted_tiles_by_distance( const tripoint_abs_ms &coord,
+        const std::unordered_set<tripoint_abs_ms> &tiles );
+std::vector<tripoint_bub_ms> route_adjacent( const player &p, const tripoint_bub_ms &dest );
 
 enum requirement_check_result : int {
     SKIP_LOCATION = 0,
@@ -152,16 +154,16 @@ void put_into_vehicle_or_drop( Character &c, item_drop_reason,
                                std::vector<detached_ptr<item>> &items );
 void put_into_vehicle_or_drop( Character &c, item_drop_reason,
                                std::vector<detached_ptr<item>> &items,
-                               const tripoint &where, bool force_ground = false );
+                               const tripoint_bub_ms &where, bool force_ground = false );
 void put_into_vehicle_or_drop( Character &c, item_drop_reason,
                                detached_ptr<item> &&it,
-                               const tripoint &where, bool force_ground = false );
+                               const tripoint_bub_ms &where, bool force_ground = false );
 void drop_on_map( Character &c, item_drop_reason reason,
                   std::vector<detached_ptr<item>> &items,
-                  const tripoint &where );
+                  const tripoint_bub_ms &where );
 void drop_on_map( Character &c, item_drop_reason reason,
                   detached_ptr<item> &&it,
-                  const tripoint &where );
+                  const tripoint_bub_ms &where );
 
 namespace activity_handlers
 {
@@ -300,13 +302,13 @@ namespace repair_activity_hack
 
 void patch_activity_for_vehicle(
     player_activity &activity,
-    const tripoint &veh_part_position,
+    const tripoint_bub_ms &veh_part_position,
     const vehicle &veh,
     int interact_part_idx,
     const itype_id &it
 );
 void patch_activity_for_furniture( player_activity &activity,
-                                   const tripoint &furniture_position,
+                                   const tripoint_bub_ms &furniture_position,
                                    const itype_id &itt );
 
 } // namespace repair_activity_hack

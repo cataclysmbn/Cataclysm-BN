@@ -2,8 +2,8 @@
 
 #include <optional>
 
+#include "coordinates.h"
 #include "detached_ptr.h"
-#include "point.h"
 #include "units.h"
 
 class avatar;
@@ -24,17 +24,17 @@ bool eat_here( avatar &you );
 
 // Standard movement; handles attacks, traps, &c. Returns false if auto move
 // should be canceled
-bool move( avatar &you, map &m, const tripoint &d );
-inline bool move( avatar &you, map &m, point d )
+bool move( avatar &you, map &m, const tripoint_rel_ms &d );
+inline bool move( avatar &you, map &m, const point_rel_ms &d )
 {
-    return move( you, m, tripoint( d, 0 ) );
+    return move( you, m, tripoint_rel_ms( d, 0 ) );
 }
 
 // Handle moving from a ramp
-bool ramp_move( avatar &you, map &m, const tripoint &dest );
+bool ramp_move( avatar &you, map &m, const tripoint_bub_ms &dest );
 
 /** Handles swimming by the player. Called by avatar_action::move(). */
-void swim( map &m, avatar &you, const tripoint &p );
+void swim( map &m, avatar &you, const tripoint_bub_ms &p );
 
 void autoattack( avatar &you, map &m );
 
@@ -61,6 +61,7 @@ void reload_weapon( bool try_everything = true );
  * If it's a gun, some gunmods can also be loaded.
  */
 void unload( avatar &you );
+void unload_all( avatar &you, bool inv = true );
 
 /**
  * Checks if the weapon is valid and if the player meets certain conditions for firing it.
@@ -105,10 +106,9 @@ void fire_turret_manual( avatar &you, map &m, turret_data &turret );
 
 // Throw an item  't'
 void plthrow( avatar &you, item *loc,
-              const std::optional<tripoint> &blind_throw_from_pos = std::nullopt );
+              const std::optional<tripoint_bub_ms> &blind_throw_from_pos = std::nullopt );
 
 // Use item; also tries E,R,W  'a'
 void use_item( avatar &you, item *loc = nullptr );
 } // namespace avatar_action
-
 

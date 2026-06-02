@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <string>
+#include <unordered_map>
 
 #include "debug.h"
 #include "options.h"
@@ -35,29 +37,68 @@ const time_point &calendar::start_of_game = calendar::config.start_of_game();
 const season_type &calendar::initial_season = calendar::config.initial_season();
 time_point calendar::turn = calendar::turn_zero;
 
-// Internal constants, not part of the calendar interface.
-// Times for sunrise, sunset at equinoxes
+// Sunrise/sunset hours are now driven by world options (SUNRISE_SUMMER etc.) with per-dimension
+// overrides registered via calendar::register_dim_time_config(). See calendar.h for details.
 
-/** Hour of sunrise at winter solstice */
-static constexpr int sunrise_winter = 7;
-
-/** Hour of sunrise at summer solstice */
-static constexpr int sunrise_summer = 5;
-
-/** Hour of sunrise at fall and spring equinox */
-static constexpr int sunrise_equinox = ( sunrise_summer + sunrise_winter ) / 2;
-
-/** Hour of sunset at winter solstice */
-static constexpr int sunset_winter = 17;
-
-/** Hour of sunset at summer solstice */
-static constexpr int sunset_summer = 21;
-
-/** Hour of sunset at fall and spring equinox */
-static constexpr int sunset_equinox = ( sunset_summer + sunset_winter ) / 2;
-
-// How long, does sunrise/sunset last?
+// How long does sunrise/sunset last?
 static const time_duration twilight_duration = 1_hours;
+
+// Per-dimension time configuration registry, populated by world_types::finalize_all().
+namespace
+{
+std::unordered_map<std::string, calendar::dim_time_config> dim_time_registry;
+std::string active_dim_id_for_time;
+} // namespace
+
+namespace calendar
+{
+void register_dim_time_config( const std::string &dim_id, const dim_time_config &cfg )
+{
+    dim_time_registry[dim_id] = cfg;
+}
+
+void set_active_world_type( const std::string &world_type_id )
+{
+    active_dim_id_for_time = world_type_id;
+}
+} // namespace calendar
+
+// Returns the effective time config for a dimension, falling back to world options.
+static calendar::dim_time_config get_effective_time_config( const std::string &dim_id )
+{
+    if( !dim_id.empty() ) {
+        auto it = dim_time_registry.find( dim_id );
+        if( it != dim_time_registry.end() ) {
+            return it->second;
+        }
+    }
+    // Fall back to world options (default dimension or unconfigured dimension).
+    calendar::dim_time_config cfg;
+    cfg.sunrise_summer  = ::get_option<int>( "SUNRISE_SUMMER" );
+    cfg.sunrise_winter  = ::get_option<int>( "SUNRISE_WINTER" );
+    cfg.sunrise_equinox = ::get_option<int>( "SUNRISE_EQUINOX" );
+    cfg.sunset_summer   = ::get_option<int>( "SUNSET_SUMMER" );
+    cfg.sunset_winter   = ::get_option<int>( "SUNSET_WINTER" );
+    cfg.sunset_equinox  = ::get_option<int>( "SUNSET_EQUINOX" );
+    return cfg;
+}
+
+// Returns the resolved sunrise hours for the given config, applying world options for -1 values.
+static std::array<int, 4> resolve_sunrise_hours( const calendar::dim_time_config &cfg )
+{
+    auto eq = cfg.sunrise_equinox >= 0 ? cfg.sunrise_equinox : ::get_option<int>( "SUNRISE_EQUINOX" );
+    auto su = cfg.sunrise_summer  >= 0 ? cfg.sunrise_summer  : ::get_option<int>( "SUNRISE_SUMMER" );
+    auto wi = cfg.sunrise_winter  >= 0 ? cfg.sunrise_winter  : ::get_option<int>( "SUNRISE_WINTER" );
+    return { { eq, su, eq, wi } };
+}
+
+static std::array<int, 4> resolve_sunset_hours( const calendar::dim_time_config &cfg )
+{
+    auto eq = cfg.sunset_equinox >= 0 ? cfg.sunset_equinox : ::get_option<int>( "SUNSET_EQUINOX" );
+    auto su = cfg.sunset_summer  >= 0 ? cfg.sunset_summer  : ::get_option<int>( "SUNSET_SUMMER" );
+    auto wi = cfg.sunset_winter  >= 0 ? cfg.sunset_winter  : ::get_option<int>( "SUNSET_WINTER" );
+    return { { eq, su, eq, wi } };
+}
 
 moon_phase get_moon_phase( const time_point &p )
 {
@@ -78,14 +119,11 @@ moon_phase get_moon_phase( const time_point &p )
     return static_cast<moon_phase>( current_phase );
 }
 
-// TODO: Refactor sunrise / sunset
-// The only difference between them is the start_hours array
-time_point sunrise( const time_point &p )
+// Shared implementation for sunrise/sunset interpolation.
+static time_point calc_sun_event( const time_point &p, const std::array<int, 4> &start_hours )
 {
     static_assert( static_cast<int>( SPRING ) == 0,
                    "Expected spring to be the first season.  If not, code below will use wrong index into array" );
-
-    static const std::array<int, 4> start_hours = { { sunrise_equinox, sunrise_summer, sunrise_equinox, sunrise_winter, } };
     const size_t season = static_cast<size_t>( season_of_year( p ) );
     assert( season < start_hours.size() );
 
@@ -100,24 +138,24 @@ time_point sunrise( const time_point &p )
     return midnight + time_duration::from_minutes( static_cast<int>( time * 60 ) );
 }
 
+time_point sunrise( const time_point &p )
+{
+    return ::sunrise( p, active_dim_id_for_time );
+}
+
+time_point sunrise( const time_point &p, const std::string &dim_id )
+{
+    return calc_sun_event( p, resolve_sunrise_hours( get_effective_time_config( dim_id ) ) );
+}
+
 time_point sunset( const time_point &p )
 {
-    static_assert( static_cast<int>( SPRING ) == 0,
-                   "Expected spring to be the first season.  If not, code below will use wrong index into array" );
+    return ::sunset( p, active_dim_id_for_time );
+}
 
-    static const std::array<int, 4> start_hours = { { sunset_equinox, sunset_summer, sunset_equinox, sunset_winter, } };
-    const size_t season = static_cast<size_t>( season_of_year( p ) );
-    assert( season < start_hours.size() );
-
-    const double start_hour = start_hours[season];
-    const double end_hour = start_hours[( season + 1 ) % 4];
-
-    const double into_month = static_cast<double>( day_of_season<int>( p ) ) / to_days<int>
-                              ( calendar::season_length() );
-    const double time = start_hour * ( 1.0 - into_month ) + end_hour * into_month;
-
-    const time_point midnight = p - time_past_midnight( p );
-    return midnight + time_duration::from_minutes( static_cast<int>( time * 60 ) );
+time_point sunset( const time_point &p, const std::string &dim_id )
+{
+    return calc_sun_event( p, resolve_sunset_hours( get_effective_time_config( dim_id ) ) );
 }
 
 time_point night_time( const time_point &p )
@@ -133,36 +171,58 @@ time_point daylight_time( const time_point &p )
 
 bool is_night( const time_point &p )
 {
+    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    if( cfg.permanent_night ) {
+        return true;
+    }
+    if( cfg.permanent_daylight ) {
+        return false;
+    }
     const time_duration now = time_past_midnight( p );
-    const time_duration sunrise = time_past_midnight( ::sunrise( p ) );
-    const time_duration sunset = time_past_midnight( ::sunset( p ) );
+    const time_duration sr = time_past_midnight( ::sunrise( p ) );
+    const time_duration ss = time_past_midnight( ::sunset( p ) );
 
-    return now >= sunset + twilight_duration || now <= sunrise;
+    return now >= ss + twilight_duration || now <= sr;
 }
 
 bool is_day( const time_point &p )
 {
+    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    if( cfg.permanent_daylight ) {
+        return true;
+    }
+    if( cfg.permanent_night ) {
+        return false;
+    }
     const time_duration now = time_past_midnight( p );
-    const time_duration sunrise = time_past_midnight( ::sunrise( p ) );
-    const time_duration sunset = time_past_midnight( ::sunset( p ) );
+    const time_duration sr = time_past_midnight( ::sunrise( p ) );
+    const time_duration ss = time_past_midnight( ::sunset( p ) );
 
-    return now >= sunrise + twilight_duration && now <= sunset;
+    return now >= sr + twilight_duration && now <= ss;
 }
 
 bool is_dusk( const time_point &p )
 {
+    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    if( cfg.permanent_daylight || cfg.permanent_night ) {
+        return false;
+    }
     const time_duration now = time_past_midnight( p );
-    const time_duration sunset = time_past_midnight( ::sunset( p ) );
+    const time_duration ss = time_past_midnight( ::sunset( p ) );
 
-    return now >= sunset && now <= sunset + twilight_duration;
+    return now >= ss && now <= ss + twilight_duration;
 }
 
 bool is_dawn( const time_point &p )
 {
+    const auto cfg = get_effective_time_config( active_dim_id_for_time );
+    if( cfg.permanent_daylight || cfg.permanent_night ) {
+        return false;
+    }
     const time_duration now = time_past_midnight( p );
-    const time_duration sunrise = time_past_midnight( ::sunrise( p ) );
+    const time_duration sr = time_past_midnight( ::sunrise( p ) );
 
-    return now >= sunrise && now <= sunrise + twilight_duration;
+    return now >= sr && now <= sr + twilight_duration;
 }
 
 double current_daylight_level( const time_point &p )

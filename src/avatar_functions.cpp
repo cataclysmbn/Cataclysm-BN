@@ -50,10 +50,10 @@ namespace avatar_funcs
 void try_to_sleep( avatar &you, const time_duration &dur )
 {
     map &here = get_map();
-    const optional_vpart_position vp = here.veh_at( you.pos() );
-    const trap &trap_at_pos = here.tr_at( you.pos() );
-    const ter_id ter_at_pos = here.ter( you.pos() );
-    const furn_id furn_at_pos = here.furn( you.pos() );
+    const optional_vpart_position vp = here.veh_at( you.bub_pos() );
+    const trap &trap_at_pos = here.tr_at( you.bub_pos() );
+    const ter_id ter_at_pos = here.ter( you.bub_pos() );
+    const furn_id furn_at_pos = here.furn( you.bub_pos() );
     bool plantsleep = false;
     bool fungaloid_cosplay = false;
     bool websleep = false;
@@ -78,7 +78,7 @@ void try_to_sleep( avatar &you, const time_duration &dur )
         }
     } else if( you.has_trait( trait_M_SKIN3 ) ) {
         fungaloid_cosplay = true;
-        if( here.has_flag_ter_or_furn( "FUNGUS", you.pos() ) ) {
+        if( here.has_flag_ter_or_furn( "FUNGUS", you.bub_pos() ) ) {
             you.add_msg_if_player( m_good,
                                    _( "Our fibers meld with the ground beneath us.  The gills on our neck begin to seed the air with spores as our awareness fades." ) );
         }
@@ -92,7 +92,7 @@ void try_to_sleep( avatar &you, const time_duration &dur )
         webforce = true;
     }
     if( websleep || webforce ) {
-        int web = here.get_field_intensity( you.pos(), fd_web );
+        int web = here.get_field_intensity( you.bub_pos(), fd_web );
         if( !webforce ) {
             // At this point, it's kinda weird, but surprisingly comfy...
             if( web >= 3 ) {
@@ -102,7 +102,7 @@ void try_to_sleep( avatar &you, const time_duration &dur )
             } else if( web > 0 ) {
                 you.add_msg_if_player( m_info,
                                        _( "You try to sleep, but the webs get in the way.  You brush them aside." ) );
-                here.remove_field( you.pos(), fd_web );
+                here.remove_field( you.bub_pos(), fd_web );
             }
         } else {
             // Here, you're just not comfortable outside a nice thick web.
@@ -125,7 +125,7 @@ void try_to_sleep( avatar &you, const time_duration &dur )
             you.add_msg_if_player( m_good,
                                    _( "You lay beneath the waves' embrace, gazing up through the water's surface�" ) );
             watersleep = true;
-        } else if( here.has_flag_ter( "SWIMMABLE", you.pos() ) ) {
+        } else if( here.has_flag_ter( "SWIMMABLE", you.bub_pos() ) ) {
             you.add_msg_if_player( m_good, _( "You settle into the water and begin to drowse�" ) );
             watersleep = true;
         }
@@ -839,7 +839,7 @@ bool unload_item( avatar &you, item &loc )
 
     // Turn off any active tools
     if( target->is_tool() && target->is_active() && target->ammo_remaining() == 0 ) {
-        target->type->invoke( you, *target, you.pos() );
+        target->type->invoke( you, *target, you.bub_pos() );
     }
 
     add_msg( _( "You unload your %s." ), target->tname() );
@@ -854,8 +854,8 @@ std::vector<npc *> list_potential_theft_witnesses( avatar &you, const faction_id
         // Only owners care about theft of their property
         if( guy.get_faction() &&
             guy.get_faction()->id == owners &&
-            rl_dist( guy.pos(), you.pos() ) < g_max_view_distance &&
-            guy.sees( you.pos() )
+            rl_dist( guy.bub_pos(), you.bub_pos() ) < g_max_view_distance &&
+            guy.sees( you.bub_pos() )
           ) {
             witnesses.push_back( &guy );
         }

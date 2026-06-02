@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "coordinates.h"
 #include "point.h"
 #include "type_id.h"
 
@@ -27,12 +28,12 @@ struct monster_plan_t {
     // to unset_dest(), because unset_dest() is defined as set_goal(pos()) and
     // apply_plan() commits via set_goal(plan.goal).  No separate
     // "unset_dest_requested" flag is necessary.
-    tripoint goal;
+    tripoint_bub_ms goal;
 
     // Wander state.  Only written when swarm dispersal logic fires;
     // apply_plan only updates wander_pos/wandf when this flag is set.
     bool wander_updated = false;
-    tripoint wander_pos;
+    tripoint_bub_ms wander_pos;
     int wandf = 0;
 
     // Per-monster stat final values.

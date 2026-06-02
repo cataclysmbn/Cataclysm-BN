@@ -650,7 +650,8 @@ enum class enumeration_conjunction {
     and_,
     or_,
     newline,
-    arrow
+    arrow,
+    space
 };
 
 /**
@@ -674,6 +675,8 @@ std::string enumerate_as_string( const _Container &values,
                 return "\n";
             case enumeration_conjunction::arrow:
                 return _( " > " );
+            case enumeration_conjunction::space:
+                return " ";
         }
         debugmsg( "Unexpected conjunction" );
         return _( ", " );
