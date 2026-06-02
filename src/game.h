@@ -661,7 +661,7 @@ class game : public submap_load_listener
         void add_artifact_dreams( );
 
         std::optional<tripoint_bub_ms> find_local_stairs_leading_to( map &mp, const int z_after );
-        void suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
+        bool suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
         auto describe_tile( const tripoint_bub_ms &target ) -> void;
         auto mouse_attack( const tripoint_bub_ms &target ) -> void;
 
