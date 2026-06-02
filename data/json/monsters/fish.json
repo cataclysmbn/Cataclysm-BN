@@ -846,17 +846,8 @@
     "vision_day": 15,
     "vision_night": 15,
     "harvest": "exempt",
-    "emit_fields": [
-      {
-        "emit_id": "emit_fog_plume",
-        "delay": "1 s"
-      }
-    ],
-    "anger_triggers": [
-      "PLAYER_CLOSE",
-      "PLAYER_WEAK",
-      "HURT"
-    ],
+    "emit_fields": [ { "emit_id": "emit_fog_plume", "delay": "1 s" } ],
+    "anger_triggers": [ "PLAYER_CLOSE", "PLAYER_WEAK", "HURT" ],
     "regenerates": 10,
     "special_attacks": [
       [ "SMASH", 15 ],
