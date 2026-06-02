@@ -99,8 +99,6 @@
     "symbol": ".",
     "color": "light_gray",
     "flags": [ "TRADER_AVOID" ],
-    "artifact_data": {
-      "effects_wielded": [ "AEP_CLAIRVOYANCE_PLUS", "AEP_ATTENTION" ]
-    }
+    "artifact_data": { "effects_wielded": [ "AEP_CLAIRVOYANCE_PLUS", "AEP_ATTENTION" ] }
   }
 ]
