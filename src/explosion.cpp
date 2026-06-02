@@ -81,7 +81,6 @@ static const efftype_id effect_deaf( "deaf" );
 static const efftype_id effect_emp( "emp" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_teleglow( "teleglow" );
-static const efftype_id effect_onfire( "onfire" );
 
 static const species_id ROBOT( "ROBOT" );
 
