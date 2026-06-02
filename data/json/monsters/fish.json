@@ -877,7 +877,8 @@
       "PUSH_MON",
       "PUSH_VEH",
       "ABSORBS",
-      "NOGIB"
+      "NOGIB",
+      "STUN_IMMUNE"
     ]
   },
   {
