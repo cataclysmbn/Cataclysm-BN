@@ -92,7 +92,7 @@
     "id": "onyx_eye",
     "type": "TOOL",
     "name": { "str": "onyx eye" },
-    "description": "A small, light gemstone made of an unknown pitch black material.  The gem's surface is lined with cracks, through which a brilliant white light shines through.  Holding it seems to give you profound, indescribable perspective.",
+    "description": "A small, light gemstone made of an unknown pitch black material.  The gem's surface is lined with cracks, through which a blinding white light shines through.  Holding it gives you profound, indescribable perspective, as countless worlds along with your own flash before you, all somehow equally discernable.",
     "weight": "5 g",
     "volume": "10 ml",
     "material": [ "gemstone" ],
