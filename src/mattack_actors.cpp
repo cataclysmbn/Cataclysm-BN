@@ -564,7 +564,13 @@ void gun_actor::load_internal( const JsonObject &obj, const std::string & )
         targeting_sound = _( "Beep." );
     }
 
-    obj.read( "targeting_volume", targeting_volume );
+    if( obj.has_int( "targeting_volume" ) ) {
+        int volume = obj.get_int( "targeting_volume" );
+        volume = approximate_dB_volume_from_legacy_tile_distance_vol( volume );
+        targeting_volume = volume;
+    }
+
+    obj.read( "targeting_volume_dB", targeting_volume );
 
     obj.read( "laser_lock", laser_lock );
 
