@@ -819,7 +819,7 @@
     "id": "mon_kraken_boss",
     "type": "MONSTER",
     "name": { "str": "kraken" },
-    "description": "A creature of terror from old sailor legend, said to be able to bring down entire ships and swallow a crew whole.  You were sure it was just a legend, but now, seeing the beast's massive, razored tentacles rise from the water, you aren't so sure.",
+    "description": "A creature of terror from old sailor legend, said to be able to bring down entire ships and swallow a crew whole.  You were sure it was just a legend, but now, seeing this beast's massive, razored tentacles rise from the water, you aren't so sure.",
     "default_faction": "factionless",
     "bodytype": "crab",
     "species": [ "NETHER" ],
@@ -846,6 +846,12 @@
     "vision_day": 15,
     "vision_night": 15,
     "harvest": "exempt",
+    "emit_fields": [
+      {
+        "emit_id": "emit_fog_plume",
+        "delay": "1 s"
+      }
+    ],
     "regenerates": 10,
     "special_attacks": [
       [ "SMASH", 15 ],
