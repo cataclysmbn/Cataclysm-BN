@@ -13,7 +13,6 @@ game.iuse_functions["OBJ_VAR_VIEWER"] = function(...) return mod.item_var_viewer
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
   if mod.on_nyctophobia_tick then mod.on_nyctophobia_tick(...) end
   if mod.on_morale_traits_tick then mod.on_morale_traits_tick(...) end
-  if mod.robofac and mod.robofac.authorize_active_hub01_turrets then mod.robofac.authorize_active_hub01_turrets(...) end
 end)
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(300), function(...)
@@ -22,14 +21,12 @@ end)
 
 game.add_hook("on_character_try_move", function(...) return mod.on_character_try_move(...) end)
 game.add_hook("on_elevator_try_use", function(...) return mod.robofac.on_elevator_try_use(...) end)
-game.add_hook("on_dialogue_option", function(...) return mod.robofac.authorize_hub01_after_dialogue(...) end)
 game.add_hook("on_dialogue_end", function(...) return mod.robofac.authorize_hub01_after_dialogue(...) end)
 game.add_hook("on_npc_spawn", function(...) return mod.robofac.authorize_hub01_security(...) end)
 game.add_hook("on_npc_loaded", function(...) return mod.robofac.authorize_hub01_security(...) end)
 game.add_hook("on_npc_do_turn", function(...) return mod.robofac.authorize_hub01_security(...) end)
 game.add_hook("on_monster_spawn", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_monster_loaded", function(...) return mod.robofac.authorize_hub01_turret(...) end)
-game.add_hook("on_monster_do_turn", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
 
 -- Mapgen
