@@ -1667,7 +1667,7 @@
     "charges": 5,
     "symbol": "!",
     "color": "white",
-    "healthy": -10,
+    "healthy": -5,
     "flags": [ "NPC_SAFE" ],
     "use_action": { "type": "STRONG_ANTIBIOTIC" }
   }
