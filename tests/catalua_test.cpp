@@ -2,6 +2,7 @@
 
 #include "avatar.h"
 #include "calendar.h"
+#include "cata_utility.h"
 #include "catacharset.h"
 #include "catalua.h"
 #include "catalua_coord.h"
@@ -193,6 +194,27 @@ TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][cre
     CHECK( test_data.get<int>( "monster_count" ) == 1 );
     CHECK( test_data.get<bool>( "found_expected_npc" ) );
     CHECK( test_data.get<bool>( "found_expected_monster" ) );
+}
+
+TEST_CASE( "lua_place_monster_pins_upgrade_time", "[lua][monster]" )
+{
+    const auto restore_turn = restore_on_out_of_scope<time_point>( calendar::turn );
+    clear_map();
+    put_player_underground();
+    calendar::turn = calendar::start_of_cataclysm + 2 * calendar::season_length();
+
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+    test_data["monster_id"] = mtype_id( "mon_zombie" );
+    test_data["pos"] = tripoint_bub_ms{ 5, 5, 0 };
+
+    run_lua_test_script( lua, "place_monster_upgrade_time_test.lua" );
+
+    const auto current_day = to_days<int>( calendar::turn - calendar::turn_zero );
+    REQUIRE( test_data.get<bool>( "monster_spawned" ) );
+    CHECK( test_data.get<std::string>( "monster_type" ) == "mon_zombie" );
+    CHECK( test_data.get<int>( "upgrade_time" ) > current_day );
 }
 
 TEST_CASE( "lua_typed_coords_projection", "[lua]" )
