@@ -40,6 +40,16 @@ void add_msg_lua( game_message_type t, sol::variadic_args va )
     add_msg( t, msg );
 }
 
+auto place_lua_monster_around( const mtype_id &id, const tripoint_bub_ms &center,
+                               const int radius ) -> monster * // *NOPAD*
+{
+    const auto placed = g->place_critter_around( id, center, radius );
+    if( placed != nullptr ) {
+        placed->try_upgrade( true );
+    }
+    return placed;
+}
+
 auto direction_from_relative_delta( const cata::detail::lua_coords::lua_tripoint_coord &delta ) ->
 direction
 {
@@ -194,14 +204,14 @@ void cata::detail::reg_game_api( sol::state &lua )
         return g->critter_at<monster>( tripoint_bub_ms( p ), allow_hallucination.value_or( false ) );
     } ) );
     luna::set_fx( lib, "place_monster_at", sol::overload(
-    []( const mtype_id & id, const tripoint_bub_ms & p ) { return g->place_critter_at( id, p ); },
-    []( const mtype_id & id, const tripoint & p ) { return g->place_critter_at( id, tripoint_bub_ms( p ) ); } ) );
+    []( const mtype_id & id, const tripoint_bub_ms & p ) { return place_lua_monster_around( id, p, 0 ); },
+    []( const mtype_id & id, const tripoint & p ) { return place_lua_monster_around( id, tripoint_bub_ms( p ), 0 ); } ) );
     luna::set_fx( lib, "place_monster_around", sol::overload(
     []( const mtype_id & id, const tripoint_bub_ms & p, const int radius ) {
-        return g->place_critter_around( id, p, radius );
+        return place_lua_monster_around( id, p, radius );
     },
     []( const mtype_id & id, const tripoint & p, const int radius ) {
-        return g->place_critter_around( id, tripoint_bub_ms( p ), radius );
+        return place_lua_monster_around( id, tripoint_bub_ms( p ), radius );
     } ) );
     luna::set_fx( lib, "spawn_hallucination", sol::overload(
                       []( const tripoint_bub_ms & p ) -> bool { return g->spawn_hallucination( p ); },
