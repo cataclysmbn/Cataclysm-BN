@@ -46,13 +46,13 @@ class base_settings
         mutable item_search_cache map_items;
         /**
          * Used to store item names that don't correspond to itypes like
-         * "clean water (plastic bottles) (2/2)." This map is appended to 
+         * "clean water (plastic bottles) (2/2)." This map is appended to
          * when an unrecognized name is added
          */
         mutable std::unordered_map<std::string, rule_state> map_names;
         /**
          * Flag that says whether the map_items and map_names
-         * are valid 
+         * are valid
          */
         bool cache_is_valid = false;
     public:
@@ -60,18 +60,18 @@ class base_settings
 
         /**
          * This returns whether the item should be picked up or not
-         * 
+         *
          * WARNING: This may modify the map_items and map_names.
-         * 
-         * @param item 
-         * @return rule_state 
+         *
+         * @param item
+         * @return rule_state
          */
         rule_state check_item_by_type( const item &item );
         virtual rule_state check_item( const item &item ) = 0;
 
         virtual void refresh_cache() = 0;
         inline bool get_cache_valid() const { return cache_is_valid; };
-        inline void set_cache_valid(bool valid) { cache_is_valid = valid; };
+        inline void set_cache_valid( bool valid ) { cache_is_valid = valid; };
 };
 
 class player_settings : public base_settings
@@ -87,8 +87,8 @@ class player_settings : public base_settings
         bool has_rule( const item *it );
         /**
          * TODO: Convert from item* to a string or itype_id for add_rule and remove_rule
-         * 
-         * @param it 
+         *
+         * @param it
          */
         void add_rule( const item *it );
         void remove_rule( const item *it );
@@ -104,7 +104,7 @@ class player_settings : public base_settings
 
         /**
          * Create the actual autopickup std::map<itype_id, rule_state> for all the items in the game for
-         * 
+         *
          * WARNING: Must be loaded after a world is loaded, as mods that add items to the world must be
          * handled first before the cache is created. Essentially just a call to refresh_cache()
          */
@@ -119,12 +119,12 @@ class npc_settings : public base_settings
         rule_list rules;
     public:
         ~npc_settings() override = default;
-        
+
         void show( const std::string &name );
-        
+
         void serialize( JsonOut &jsout ) const;
         void deserialize( JsonIn &jsin );
-        
+
         bool empty() const;
 
         rule_state check_item( const item &item ) override;

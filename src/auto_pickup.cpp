@@ -287,7 +287,7 @@ void user_interface::show()
                 const auto init_help_window = [&]( ui_adaptor & help_ui ) {
                     const point iOffset( TERMX > FULL_SCREEN_WIDTH ? ( TERMX - FULL_SCREEN_WIDTH ) / 2 : 0,
                                          TERMY > FULL_SCREEN_HEIGHT ? ( TERMY - FULL_SCREEN_HEIGHT ) / 2 : 0 );
-                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT * (2.0/3) + 2,
+                    w_help = catacurses::newwin( FULL_SCREEN_HEIGHT * ( 2.0 / 3 ) + 2,
                                                  FULL_SCREEN_WIDTH * 3 / 4,
                                                  iOffset + point( 19 / 2, 7 + FULL_SCREEN_HEIGHT / 2 / 2 ) );
                     help_ui.position_from_window( w_help );
@@ -330,7 +330,7 @@ void user_interface::show()
                 // (2) Explicitly entered an empty rule- which isn't allowed since "*" should be used
                 // to include/exclude everything
                 if( !r.empty() ) {
-                    cur_rules[iLine].set_rule_string(r);
+                    cur_rules[iLine].set_rule_string( r );
                     bStuffChanged = true;
                 } else if( action == "ADD_RULE" ) {
                     cur_rules.pop_back();
@@ -371,7 +371,7 @@ void user_interface::show()
                 iColumn = 1;
             }
         } else if( action == "TEST_RULE" && currentPageNonEmpty && !g->u.name.empty() ) {
-            test_pattern(cur_rules[iLine]);
+            test_pattern( cur_rules[iLine] );
         } else if( action == "SWITCH_AUTO_PICKUP_OPTION" ) {
             // TODO: Now that NPCs use this function, it could be used for them too
             get_options().get_option( "AUTO_PICKUP" ).setNext();
@@ -393,7 +393,7 @@ void user_interface::show()
 }
 
 
-void user_interface::test_pattern(const rule& rule) const
+void user_interface::test_pattern( const rule &rule ) const
 {
     std::vector<std::string> vMatchingItems;
 
@@ -404,8 +404,8 @@ void user_interface::test_pattern(const rule& rule) const
     //Loop through all itemfactory items
     //APU now ignores prefixes, bottled items and suffix combinations still not generated
     for( const itype *e : item_controller->all() ) {
-        rule_state result = rule(*e);
-        if( result == RULE_WHITELISTED || result == RULE_BLACKLISTED) {
+        rule_state result = rule( *e );
+        if( result == RULE_WHITELISTED || result == RULE_BLACKLISTED ) {
             vMatchingItems.push_back( e->nname( 1 ) );
         }
     }
@@ -528,7 +528,7 @@ void player_settings::show()
     if( !g->u.name.empty() ) {
         save_character();
     }
-    set_cache_valid(false);
+    set_cache_valid( false );
 }
 
 bool player_settings::has_rule( const item *it )
@@ -545,7 +545,7 @@ bool player_settings::has_rule( const item *it )
 void player_settings::add_rule( const item *it )
 {
     character_rules.push_back( rule( it->tname( 1, false ), true, false ) );
-    set_cache_valid(false);
+    set_cache_valid( false );
 
     if( !get_option<bool>( "AUTO_PICKUP" ) &&
         query_yn( _( "Autopickup is not enabled in the options.  Enable it now?" ) ) ) {
@@ -562,7 +562,7 @@ void player_settings::remove_rule( const item *it )
         if( sRule.length() == candidate->sRule.length() &&
             ci_find_substr( sRule, candidate->sRule ) != -1 ) {
             character_rules.erase( candidate );
-            set_cache_valid(false);
+            set_cache_valid( false );
             break;
         }
     }
@@ -611,17 +611,17 @@ void player_settings::refresh_cache()
     //may have some performance issues since exclusion needs to check all items also
     map_items.clear_items();
     map_names.clear();
-    map_items.apply_rules(global_rules);
-    map_items.apply_rules(character_rules);
+    map_items.apply_rules( global_rules );
+    map_items.apply_rules( character_rules );
 
 }
 
 [[clang::optnone]]
-rule_state base_settings::check_item_by_type( const item& item )
+rule_state base_settings::check_item_by_type( const item &item )
 {
-    if (!get_cache_valid()) {
+    if( !get_cache_valid() ) {
         refresh_cache();
-        set_cache_valid(true);
+        set_cache_valid( true );
     }
 
     rule_state result = RULE_NONE;
@@ -631,10 +631,10 @@ rule_state base_settings::check_item_by_type( const item& item )
         result = iter1->second;
     }
 
-    //Try to see if item name is in map_names, if so it overrites the result 
+    //Try to see if item name is in map_names, if so it overrites the result
     //from item type
-    auto iter2 = map_names.find(item.tname(1));
-    if (iter2 != map_names.end()) {
+    auto iter2 = map_names.find( item.tname( 1 ) );
+    if( iter2 != map_names.end() ) {
         return iter2->second;
     }
 
@@ -644,7 +644,7 @@ rule_state base_settings::check_item_by_type( const item& item )
 void player_settings::clear_character_rules()
 {
     character_rules.clear();
-    set_cache_valid(false);
+    set_cache_valid( false );
 }
 
 bool player_settings::save_character()
@@ -680,13 +680,13 @@ bool player_settings::save( const bool bCharacter )
 void player_settings::load_character()
 {
     load( true );
-    set_cache_valid(false);
+    set_cache_valid( false );
 }
 
 void player_settings::load_global()
 {
     load( false );
-    set_cache_valid(false);
+    set_cache_valid( false );
 }
 
 void player_settings::load( const bool bCharacter )
@@ -702,18 +702,18 @@ void player_settings::load( const bool bCharacter )
     }
 }
 
-rule_state player_settings::check_item(const item& item) 
+rule_state player_settings::check_item( const item &item )
 {
-    rule_state result = check_item_by_type(item);
-    if (result == RULE_NONE) {
-        std::string to_match = item.tname(1);
-        for (auto& elem : character_rules) {
+    rule_state result = check_item_by_type( item );
+    if( result == RULE_NONE ) {
+        std::string to_match = item.tname( 1 );
+        for( auto &elem : character_rules ) {
             if( elem.bActive && wildcard_match( to_match, elem.sRule ) ) {
                 map_names[ to_match ] = elem.bExclude ? RULE_BLACKLISTED : RULE_WHITELISTED;
             }
         }
 
-        for (auto& elem : character_rules) {
+        for( auto &elem : character_rules ) {
             if( elem.bActive && wildcard_match( to_match, elem.sRule ) ) {
                 map_names[ to_match ] = elem.bExclude ? RULE_BLACKLISTED : RULE_WHITELISTED;
             }
@@ -735,7 +735,7 @@ void npc_settings::show( const std::string &name )
     if( !ui.bStuffChanged ) {
         return;
     }
-    set_cache_valid(false);
+    set_cache_valid( false );
 }
 
 void npc_settings::serialize( JsonOut &jsout ) const
@@ -752,15 +752,15 @@ void npc_settings::refresh_cache()
 {
     map_items.clear_items();
     map_names.clear();
-    map_items.apply_rules(rules);
+    map_items.apply_rules( rules );
 }
 
-rule_state npc_settings::check_item(const item& item) 
+rule_state npc_settings::check_item( const item &item )
 {
-    rule_state result = check_item_by_type(item);
-    if (result == RULE_NONE) {
-        std::string to_match = item.tname(1);
-        for (auto& elem : rules) {
+    rule_state result = check_item_by_type( item );
+    if( result == RULE_NONE ) {
+        std::string to_match = item.tname( 1 );
+        for( auto &elem : rules ) {
             if( elem.bActive && wildcard_match( to_match, elem.sRule ) ) {
                 map_names[ to_match ] = elem.bExclude ? RULE_BLACKLISTED : RULE_WHITELISTED;
             }
