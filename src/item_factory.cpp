@@ -1940,6 +1940,7 @@ void Item_factory::load( islot_gun &slot, const JsonObject &jo, const std::strin
     assign( jo, "loudness", slot.loudness, strict );
     assign( jo, "clip_size", slot.clip, strict, 0 );
     assign( jo, "reload", slot.reload_time, strict, 0 );
+    assign( jo, "reload_noise", slot.reload_noise, strict );
     assign( jo, "reload_noise_volume_dB", slot.reload_noise_volume, strict, 0, 191 );
     // Depreciated alias, use barrel_volume instead.
     assign( jo, "barrel_length", slot.barrel_volume, strict, 0_ml );
