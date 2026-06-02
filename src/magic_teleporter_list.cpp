@@ -26,6 +26,7 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "translations.h"
+#include "translocator_utils.h"
 #include "type_id.h"
 #include "ui.h"
 
@@ -84,7 +85,9 @@ bool teleporter_list::place_avatar_overmap( Character &you, const tripoint_abs_o
     if( !global_dest ) {
         return false;
     }
-    auto local_dest = omt_dest.abs_to_bub( *global_dest ) + point( 60, 60 );
+    const auto omt_local_dest = omt_dest.abs_to_bub( *global_dest );
+    const auto local_dest = translocator::local_dest( omt_local_dest,
+                            point_bub_ms( g_half_mapsize_x, g_half_mapsize_y ) );
     you.add_effect( efftype_id( "ignore_fall_damage" ), 1_seconds, bodypart_str_id::NULL_ID(), 0,
                     true );
     g->place_player_overmap( omt_pt );
