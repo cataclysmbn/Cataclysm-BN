@@ -6,6 +6,7 @@
 
 class item;
 enum class item_location_type : int;
+enum class temperature_flag : int;
 class Character;
 class Creature;
 class submap;
@@ -181,6 +182,7 @@ class vehicle_item_location : public item_location
         bool is_loaded( const item *it ) const override;
         tripoint_bub_ms position( const item *it ) const override;
         item_location_type where() const override;
+        auto storage_temperature() const -> temperature_flag;
         int obtain_cost( const Character &ch, int qty, const item *it ) const override;
         std::string describe( const Character *ch, const item *it ) const override;
 };

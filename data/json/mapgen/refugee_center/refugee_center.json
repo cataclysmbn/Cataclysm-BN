@@ -310,6 +310,7 @@
         { "class": "guard", "x": 38, "y": 4 },
         { "class": "guard", "x": 38, "y": 7 },
         { "class": "arsonist", "x": 38, "y": 19, "add_trait": "FELINE_EARS" },
+        { "class": "wasp_exterminator", "x": 40, "y": 19 },
         { "class": "old_guard_rep", "x": 47, "y": 10 },
         { "class": "guard", "x": 45, "y": 3 },
         { "class": "evac_merchant", "x": 71, "y": 0 },

@@ -95,6 +95,7 @@
 #include "units.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_grab.h"
 #include "vehicle_part.h"
 #include "vehicle_wait.h"
 #include "vpart_position.h"
@@ -587,8 +588,8 @@ static void grab()
     map &here = get_map();
 
     if( you.get_grab_type() != OBJECT_NONE ) {
-        if( const optional_vpart_position vp = here.veh_at( you.bub_pos() + you.grab_point ) ) {
-            add_msg( _( "You release the %s." ), vp->vehicle().name );
+        if( const auto target = vehicle_grab_target_at( here, you.bub_pos() + you.grab_point ) ) {
+            add_msg( _( "You release the %s." ), target->vp.vehicle().name );
         } else if( here.has_furn( you.bub_pos() + you.grab_point ) ) {
             add_msg( _( "You release the %s." ), here.furnname( you.bub_pos() + you.grab_point ) );
         }
@@ -609,12 +610,12 @@ static void grab()
         you.grab( OBJECT_NONE );
         return;
     }
-    if( const optional_vpart_position vp = here.veh_at( grabp ) ) {
-        if( !vp->vehicle().handle_potential_theft( get_avatar() ) ) {
+    if( const auto target = vehicle_grab_target_at( here, grabp ) ) {
+        if( !target->vp.vehicle().handle_potential_theft( get_avatar() ) ) {
             return;
         }
-        you.grab( OBJECT_VEHICLE, grabp - you.bub_pos() );
-        add_msg( _( "You grab the %s." ), vp->vehicle().name );
+        you.grab( OBJECT_VEHICLE, target->pos - you.bub_pos() );
+        add_msg( _( "You grab the %s." ), target->vp.vehicle().name );
     } else if( here.has_furn( grabp ) ) { // If not, grab furniture if present
         if( !here.furn( grabp ).obj().is_movable() ) {
             add_msg( _( "You can not grab the %s" ), here.furnname( grabp ) );

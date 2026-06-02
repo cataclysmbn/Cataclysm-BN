@@ -597,9 +597,20 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
     vehicle *wreckage = m.add_vehicle(
                             crashed_hull, tripoint_bub_ms( x1, y1, abs_sub.z() ), dir1, rng( 1, 33 ), 1 );
 
-    const auto controls_at = []( vehicle * wreckage, const tripoint_bub_ms & pos ) {
-        return !wreckage->get_parts_at( pos, "CONTROLS", part_status_flag::any ).empty() ||
-               !wreckage->get_parts_at( pos, "CTRL_ELECTRONIC", part_status_flag::any ).empty();
+    // During mapgen, m may be a tinymap while vpart_position::pos() uses get_map().
+    const auto local_part_pos = [&m]( const vehicle & wreckage,
+    const vpart_reference & vp ) {
+        return m.abs_to_bub( wreckage.abs_part_location( vp.part() ) );
+    };
+
+    const auto controls_at = []( vehicle * wreckage, const tripoint_mnt_veh & mount ) {
+        const std::vector<int> parts_at_mount = wreckage->parts_at_relative( mount, true );
+        return std::ranges::any_of( parts_at_mount, [&]( const int part_index ) {
+            const vehicle_part &part = wreckage->part( part_index );
+            return !part.removed &&
+                   ( part.info().has_flag( "CONTROLS" ) ||
+                     part.info().has_flag( "CTRL_ELECTRONIC" ) );
+        } );
     };
 
     if( wreckage != nullptr ) {
@@ -611,9 +622,9 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
             case 3:
                 // Full clown car
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
-                    const auto pos = vp.pos();
+                    const auto pos = local_part_pos( *wreckage, vp );
                     // Spawn pilots in seats with controls.CTRL_ELECTRONIC
-                    if( controls_at( wreckage, pos ) ) {
+                    if( controls_at( wreckage, vp.mount() ) ) {
                         m.add_spawn( mon_zombie_military_pilot, 1, pos );
                     } else {
                         if( one_in( 5 ) ) {
@@ -639,9 +650,9 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
             case 5:
                 // 2/3rds clown car
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_SEATBELT ) ) {
-                    const auto pos = vp.pos();
+                    const auto pos = local_part_pos( *wreckage, vp );
                     // Spawn pilots in seats with controls.
-                    if( controls_at( wreckage, pos ) ) {
+                    if( controls_at( wreckage, vp.mount() ) ) {
                         m.add_spawn( mon_zombie_military_pilot, 1, pos );
                     } else {
                         if( !one_in( 3 ) ) {
@@ -662,7 +673,8 @@ static bool mx_aircraft( map &m, const tripoint_abs_sm &abs_sub )
             case 6:
                 // Just pilots
                 for( const vpart_reference &vp : wreckage->get_any_parts( VPFLAG_CONTROLS ) ) {
-                    m.add_spawn( mon_zombie_military_pilot, 1, vp.pos() );
+                    const tripoint_bub_ms pos = local_part_pos( *wreckage, vp );
+                    m.add_spawn( mon_zombie_military_pilot, 1, pos );
 
                     // Delete the items that would have spawned here from a "corpse"
                     for( auto sp : wreckage->parts_at_relative( vp.mount(), true ) ) {

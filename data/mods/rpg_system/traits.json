@@ -258,8 +258,8 @@
     "valid": false,
     "purifiable": false,
     "player_display": true,
-    "healing_awake": 1.5,
-    "healing_resting": 2.0
+    "healing_awake": 0.5,
+    "healing_resting": 1.0
   },
   {
     "type": "mutation",

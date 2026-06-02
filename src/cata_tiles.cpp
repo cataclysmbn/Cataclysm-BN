@@ -268,6 +268,7 @@ struct tile_render_info {
     tripoint_bub_ms pos;
     // accumulator for 3d tallness of sprites rendered here so far;
     int height_3d = 0;
+    int screen_row = 0;
     lit_level ll;
     bool invisible[5];
     tile_render_info( const tripoint_bub_ms &pos, const int height_3d, const lit_level ll,
@@ -3137,10 +3138,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     std::vector<tile_render_info> &draw_points = *draw_points_cache;
     int min_z = OVERMAP_HEIGHT;
+    draw_points.clear();
 
     for( int row = min_row; row < max_row; row ++ ) {
 
-        draw_points.clear();
         for( int col = min_col; col < max_col; col ++ ) {
             int temp_x;
             int temp_y;
@@ -3322,6 +3323,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             bool had_visible_open_air = false;
             const int &x = temp_x;
             const int &y = temp_y;
+            const auto queue_draw_point = [&]( tile_render_info info ) {
+                info.screen_row = row;
+                draw_points.push_back( info );
+            };
 
             const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
                                          x <= max_visible_x );
@@ -3403,10 +3408,9 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                                                        ? ch_above.visibility_cache[ch_above.idx( pos.x(), pos.y() )]
                                                        : lit_level::BLANK;
                             invisible[0] = above_ll == lit_level::BLANK;
+                            const auto vehicle_ll = above_ll != lit_level::BLANK ? above_ll : ll;
                             min_z = std::min( pos.z(), min_z );
-                            draw_points.emplace_back( pos, height_3d,
-                                                      above_ll != lit_level::BLANK ? above_ll : ll,
-                                                      invisible );
+                            queue_draw_point( tile_render_info( pos, height_3d, vehicle_ll, invisible ) );
                         } else {
                             if( has_draw_override( pos ) || has_memory ) {
                                 invisible[0] = true;
@@ -3420,121 +3424,136 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                             }
                             if( invisible[0] ) {
                                 min_z = std::min( pos.z(), min_z );
-                                draw_points.emplace_back( pos, height_3d, ll, invisible );
+                                queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
                             } else if( last_vis != center.z() + 1 ) {
                                 min_z = std::min( last_vis, min_z );
-                                draw_points.emplace_back( tripoint_bub_ms( pos.xy(), last_vis ), height_3d,
-                                                          last_vis_ll, invisible );
+                                queue_draw_point( tile_render_info( tripoint_bub_ms( pos.xy(), last_vis ),
+                                                                    height_3d, last_vis_ll, invisible ) );
                             } else if( had_visible_open_air && in_map_bounds ) {
                                 // No vehicle and no solid last_vis — placeholder so cross-z
                                 // sprite draws (player character above) still execute.
                                 min_z = std::min( pos.z(), min_z );
                                 invisible[0] = true;
-                                draw_points.emplace_back( pos, height_3d, ll, invisible );
+                                queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
                             }
                         }
 
                     } else {
                         min_z = std::min( pos.z(), min_z );
-                        draw_points.emplace_back( pos, height_3d, ll, invisible );
+                        queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
                     }
                     break;
                 }
             }
         }
 
-        auto compare_z = [&]( tile_render_info a, tile_render_info b ) -> bool {
-            return ( a.pos.z() < b.pos.z() );
-        };
+    }
 
-        const std::array<decltype( &cata_tiles::draw_furniture ), 3> base_drawing_layers = {{
-                &cata_tiles::draw_furniture, &cata_tiles::draw_graffiti, &cata_tiles::draw_trap
-            }
-        };
-        struct zlevel_layer {
-            bool hide_unseen;
-            decltype( &cata_tiles::draw_furniture ) function;
-        };
-        const std::array<zlevel_layer, 3> zlevel_drawing_layers = {{
-                {true, &cata_tiles::draw_field_or_item}, {false, &cata_tiles::draw_vpart}, {true, &cata_tiles::draw_critter_at}
-            }
-        };
-        const std::array<decltype( &cata_tiles::draw_furniture ), 2> final_drawing_layers = {{
-                &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
-            }
-        };
+    struct zlevel_layer {
+        bool hide_unseen;
+        decltype( &cata_tiles::draw_furniture ) function;
+    };
+    const auto base_drawing_layers = std::array{
+        &cata_tiles::draw_furniture, &cata_tiles::draw_graffiti, &cata_tiles::draw_trap
+    };
+    const auto zlevel_drawing_layers = std::array{
+        zlevel_layer{ true, &cata_tiles::draw_field_or_item },
+        zlevel_layer{ false, &cata_tiles::draw_vpart },
+        zlevel_layer{ true, &cata_tiles::draw_critter_at }
+    };
+    const auto final_drawing_layers = std::array{
+        &cata_tiles::draw_zone_mark, &cata_tiles::draw_zombie_revival_indicators
+    };
 
-        std::ranges::stable_sort( draw_points, compare_z );
-        for( tile_render_info &p : draw_points ) {
-            draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
-            if( p.pos.z() == center.z() ) {
-                const point screen_tl = player_to_screen( p.pos.xy() );
-                const SDL_Rect tile_rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
-                const bool in_selected_zone = has_selected_zone && p.pos.z() == selected_z &&
-                                              ( has_custom_selected_zone
-                                                ? zone_point_lookup.contains( p.pos )
-                                                : ( p.pos.x() >= selected_min.x() && p.pos.x() <= selected_max.x() &&
-                                                    p.pos.y() >= selected_min.y() && p.pos.y() <= selected_max.y() ) );
-                bool selected_drawn = false;
-                if( show_zones_overlay ) {
-                    for( const zone_render_data &zone : zones_to_draw ) {
-                        if( !zone.tiles.contains( p.pos.xy() ) ) {
-                            continue;
+    const auto draw_zone_overlay_for = [&]( const tile_render_info & p ) {
+        if( p.pos.z() != center.z() ) {
+            return;
+        }
+        const auto screen_tl = player_to_screen( p.pos.xy() );
+        const auto tile_rect = SDL_Rect{ screen_tl.x, screen_tl.y, tile_width, tile_height };
+        const auto in_selected_zone = has_selected_zone && p.pos.z() == selected_z &&
+                                      ( has_custom_selected_zone
+                                        ? zone_point_lookup.contains( p.pos )
+                                        : ( p.pos.x() >= selected_min.x() && p.pos.x() <= selected_max.x() &&
+                                            p.pos.y() >= selected_min.y() && p.pos.y() <= selected_max.y() ) );
+        auto selected_drawn = false;
+        if( show_zones_overlay ) {
+            for( const zone_render_data &zone : zones_to_draw ) {
+                if( !zone.tiles.contains( p.pos.xy() ) ) {
+                    continue;
+                }
+                draw_zone_overlay( {
+                    .renderer = renderer,
+                    .rect = tile_rect,
+                    .color = zone.color,
+                    .overlay_strings = overlay_strings,
+                    .alpha = in_selected_zone ? 128 : 64,
+                    .draw_label = false
+                } );
+                selected_drawn = selected_drawn || in_selected_zone;
+            }
+        }
+        if( in_selected_zone && !selected_drawn ) {
+            draw_zone_overlay( {
+                .renderer = renderer,
+                .rect = tile_rect,
+                .color = curses_color_to_SDL( c_light_green ),
+                .overlay_strings = overlay_strings,
+                .alpha = 128,
+                .draw_label = false
+            } );
+        }
+    };
+
+    if( !draw_points.empty() ) {
+        for( const auto z : std::views::iota( min_z, center.z() + 1 ) ) {
+            auto row_begin = draw_points.begin();
+            while( row_begin != draw_points.end() ) {
+                const auto row = row_begin->screen_row;
+                const auto row_end = std::find_if_not( row_begin, draw_points.end(),
+                [row]( const tile_render_info & info ) {
+                    return info.screen_row == row;
+                } );
+                const auto row_points = std::ranges::subrange( row_begin, row_end );
+                for( tile_render_info &p : row_points ) {
+                    if( p.pos.z() == z ) {
+                        draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
+                        draw_zone_overlay_for( p );
+                    }
+                }
+                for( tile_render_info &p : row_points ) {
+                    if( p.pos.z() == z ) {
+                        for( const auto f : base_drawing_layers ) {
+                            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
                         }
-                        draw_zone_overlay( {
-                            .renderer = renderer,
-                            .rect = tile_rect,
-                            .color = zone.color,
-                            .overlay_strings = overlay_strings,
-                            .alpha = in_selected_zone ? 128 : 64,
-                            .draw_label = false
-                        } );
-                        selected_drawn = selected_drawn || in_selected_zone;
-                    }
-                }
-                if( in_selected_zone && !selected_drawn ) {
-                    draw_zone_overlay( {
-                        .renderer = renderer,
-                        .rect = tile_rect,
-                        .color = curses_color_to_SDL( c_light_green ),
-                        .overlay_strings = overlay_strings,
-                        .alpha = 128,
-                        .draw_label = false
-                    } );
-                }
-            }
-        }
-
-        for( int z = min_z; z <= center.z(); z++ ) {
-            for( tile_render_info &p : draw_points ) {
-                if( p.pos.z() > z ) {
-                    break;
-                }
-                if( p.pos.z() == z ) {
-                    for( decltype( &cata_tiles::draw_furniture ) f : base_drawing_layers ) {
-                        ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
                     }
                 }
                 const auto &ch = here.access_cache( z );
-                for( const zlevel_layer &f : zlevel_drawing_layers ) {
-                    if( here.inbounds( p.pos ) && z != p.pos.z() ) {
-                        const auto z_ll = ch.inbounds( { p.pos.x(), p.pos.y() } )
-                                          ? ch.visibility_cache[ch.idx( p.pos.x(), p.pos.y() )]
-                                          : lit_level::BLANK;
-                        if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
-                            const bool ( invis )[5] = {false, false, false, false, false};
-                            ( this->*( f.function ) )( { p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z() - z );
+                for( tile_render_info &p : row_points ) {
+                    if( p.pos.z() > z ) {
+                        continue;
+                    }
+                    for( const zlevel_layer &f : zlevel_drawing_layers ) {
+                        if( here.inbounds( p.pos ) && z != p.pos.z() ) {
+                            const auto z_ll = ch.inbounds( { p.pos.x(), p.pos.y() } )
+                                              ? ch.visibility_cache[ch.idx( p.pos.x(), p.pos.y() )]
+                                              : lit_level::BLANK;
+                            if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
+                                const bool ( invis )[5] = {false, false, false, false, false};
+                                ( this->*( f.function ) )( { p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z() - z );
+                            }
+                        } else {
+                            ( this->*( f.function ) )( { p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z() - z );
                         }
-                    } else {
-                        ( this->*( f.function ) )( { p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z() - z );
                     }
                 }
+                row_begin = row_end;
             }
         }
-        for( tile_render_info &p : draw_points ) {
-            for( decltype( &cata_tiles::draw_furniture ) f : final_drawing_layers ) {
-                ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
-            }
+    }
+    for( tile_render_info &p : draw_points ) {
+        for( const auto f : final_drawing_layers ) {
+            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
         }
     }
 
@@ -5287,8 +5306,10 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                 veh_part ) ) ) );
         const std::string vpname = "vp_" + vp_id.str();
         avatar &you = get_avatar();
-        if( here.check_seen_cache( p ) ) {
-            you.memorize_tile( here.bub_to_abs( p ), vpname, subtile, rotation );
+        const auto abs_pos = here.bub_to_abs( p );
+        // Projected rope segments are live draws, not persistent vehicle parts.
+        if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
+            you.clear_memorized_overlay( abs_pos );
         }
         const tile_search_params tile = {vpname, C_VEHICLE_PART, empty_string, subtile, rotation};
         const bool ret = draw_from_id_string(

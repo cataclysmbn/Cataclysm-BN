@@ -222,14 +222,20 @@ static void eff_fun_bleed( player &u, effect &it )
 }
 static void eff_fun_hallu( player &u, effect &it )
 {
-    // TODO: Redo this to allow for variable durations
-    // Time intervals are drawn from the old ones based on 3600 (6-hour) duration.
-    constexpr int maxDuration = 21600;
-    constexpr int comeupTime = static_cast<int>( maxDuration * 0.9 );
-    constexpr int noticeTime = static_cast<int>( comeupTime + ( maxDuration - comeupTime ) / 2 );
-    constexpr int peakTime = static_cast<int>( maxDuration * 0.8 );
-    constexpr int comedownTime = static_cast<int>( maxDuration * 0.3 );
-    const int dur = to_turns<int>( it.get_duration() );
+    // Scale thresholds to the actual duration this instance was added with so
+    // that short doses (pink tablets) still go through the full lifecycle and
+    // longer ones (spells / monster attacks) aren't cut off early.
+    const time_duration remaining = it.get_duration();
+    const time_duration total = ( calendar::turn - it.get_start_time() ) + remaining;
+    if( total <= 0_turns ) {
+        return;
+    }
+    const int totalTurns = to_turns<int>( total );
+    const int comeupTime = static_cast<int>( totalTurns * 0.9 );
+    const int noticeTime = static_cast<int>( comeupTime + ( totalTurns - comeupTime ) / 2 );
+    const int peakTime = static_cast<int>( totalTurns * 0.8 );
+    const int comedownTime = static_cast<int>( totalTurns * 0.3 );
+    const int dur = to_turns<int>( remaining );
     // Baseline
     if( dur == noticeTime ) {
         u.add_msg_if_player( m_warning, _( "You feel a little strange." ) );

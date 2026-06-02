@@ -70,6 +70,7 @@
 #include "player.h"
 #include "point.h"
 #include "point_float.h"
+#include "profile.h"
 #include "rng.h"
 #include "string_formatter.h"
 #include "string_id.h"
@@ -101,8 +102,6 @@ static const mongroup_id GROUP_BREATHER_HUB( "GROUP_BREATHER_HUB" );
 static const mongroup_id GROUP_DOG_THING( "GROUP_DOG_THING" );
 static const mongroup_id GROUP_FUNGI_FUNGALOID( "GROUP_FUNGI_FUNGALOID" );
 static const mongroup_id GROUP_HAZMATBOT( "GROUP_HAZMATBOT" );
-static const mongroup_id GROUP_LAB( "GROUP_LAB" );
-static const mongroup_id GROUP_LAB_CYBORG( "GROUP_LAB_CYBORG" );
 static const mongroup_id GROUP_PLAIN( "GROUP_PLAIN" );
 static const mongroup_id GROUP_SEWER( "GROUP_SEWER" );
 static const mongroup_id GROUP_TURRET( "GROUP_TURRET" );
@@ -115,17 +114,20 @@ static const trait_id trait_NPC_STATIC_NPC( "NPC_STATIC_NPC" );
 
 static constexpr int MON_RADIUS = 3;
 
-static void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z,
-                          int rotate );
-
 // (x,y,z) are absolute coordinates of a submap
 // x%2 and y%2 must be 0!
-void map::generate( const tripoint_abs_sm &p, const time_point &when )
+auto map::generate( const tripoint_abs_sm &p, const time_point &when,
+                    const map_generate_options &options ) -> mapgen_result
 {
+    ZoneScopedN( "map_generate" );
+    ZoneValue( static_cast<uint64_t>( p.z() + OVERMAP_DEPTH ) );
     dbg( DL::Info ) << "map::generate( g[" << g.get() << "], p[" << p <<
                     "], when[" << to_string( when ) << "] )";
 
-    set_abs_sub( p );
+    {
+        ZoneScopedN( "generate_set_abs_sub" );
+        set_abs_sub( p );
+    }
 
     // First we have to create new submaps and initialize them to 0 all over
     // We create all the submaps, even if we're not a tinymap, so that map
@@ -133,48 +135,72 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     //  function, we save the upper-left 4 submaps, and delete the rest.
     // Mapgen is not z-level aware yet. Only actually initialize current z-level
     //  because other submaps won't be touched.
-    for( int gridx = 0; gridx < my_MAPSIZE; gridx++ ) {
-        for( int gridy = 0; gridy < my_MAPSIZE; gridy++ ) {
-            const size_t grid_pos = get_nonant( tripoint_bub_sm{ gridx, gridy, p.z() } );
-            if( getsubmap( grid_pos ) ) {
-                debugmsg( "Submap already exists at (%d, %d, %d)", gridx, gridy, p.z() );
-                continue;
-            }
-            setsubmap( grid_pos, new submap( bub_to_abs( tripoint_bub_sm{ gridx, gridy, p.z() } ) ) );
-            // TODO: memory leak if the code below throws before the submaps get stored/deleted!
+    for( const auto smp : bubble_submaps() ) {
+        const size_t grid_pos = get_nonant( tripoint_bub_sm( smp, p.z() ) );
+        if( getsubmap( grid_pos ) ) {
+            debugmsg( "Submap already exists at (%d, %d, %d)", smp.x(), smp.y(), p.z() );
+            continue;
         }
+        auto *new_submap = new submap( bub_to_abs( tripoint_bub_sm( smp, p.z() ) ) );
+        new_submap->last_touched = when;
+        setsubmap( grid_pos, new_submap );
+        // TODO: memory leak if the code below throws before the submaps get stored/deleted!
     }
+    const auto discard_unowned_generated_submaps = [&]() {
+        for( const auto smp : bubble_submaps() ) {
+            const auto grid_pos = get_nonant( tripoint_bub_sm( smp, p.z() ) );
+            delete getsubmap( grid_pos );
+            setsubmap( grid_pos, nullptr );
+        }
+    };
     // x, and y are submap coordinates, convert to overmap terrain coordinates
     // TODO: fix point types
     tripoint_abs_omt abs_omt( project_to<coords::omt>( p ) );
     // Use the dimension-specific overmapbuffer so worker threads do not read the
     // active-dimension global (g_active_dimension_id).
     overmapbuffer &omap = get_overmapbuffer( bound_dimension_ );
-    oter_id terrain_type = omap.ter( abs_omt );
+    oter_id terrain_type;
+    {
+        ZoneScopedN( "generate_oter" );
+        terrain_type = omap.ter( abs_omt );
+    }
 
     // This attempts to scale density of zombies inversely with distance from the nearest city.
     // In other words, make city centers dense and perimeters sparse.
-    float density = 0.0;
-    for( int i = -MON_RADIUS; i <= MON_RADIUS; i++ ) {
-        for( int j = -MON_RADIUS; j <= MON_RADIUS; j++ ) {
-            density += omap.ter( abs_omt + point_rel_omt( i, j ) )->get_mondensity();
+    auto density = 0.0f;
+    {
+        ZoneScopedN( "generate_density" );
+        for( int i = -MON_RADIUS; i <= MON_RADIUS; i++ ) {
+            for( int j = -MON_RADIUS; j <= MON_RADIUS; j++ ) {
+                density += omap.ter( abs_omt + point_rel_omt( i, j ) )->get_mondensity();
+            }
         }
+        density = density / 100;
     }
-    density = density / 100;
 
     mapgendata dat( abs_omt, *this, density, when, nullptr, omap );
-    draw_map( dat );
+    {
+        ZoneScopedN( "generate_draw_map" );
+        const auto draw_result = draw_map( dat, options );
+        if( draw_result.needs_main_thread() ) {
+            discard_unowned_generated_submaps();
+            return draw_result;
+        }
+    }
 
-    const auto &region_extras = omap.get_settings( abs_omt ).region_extras;
-    const auto extra_it = region_extras.find( terrain_type->get_extras() );
-    if( extra_it != region_extras.end() ) {
-        const map_extras &ex = extra_it->second;
-        if( ex.chance > 0 && one_in( ex.chance ) ) {
-            const std::string *extra = ex.values.pick();
-            if( extra == nullptr ) {
-                debugmsg( "failed to pick extra for type %s", terrain_type->get_extras() );
-            } else {
-                MapExtras::apply_function( *( ex.values.pick() ), *this, abs_sub );
+    {
+        ZoneScopedN( "generate_extras" );
+        const auto &region_extras = omap.get_settings( abs_omt ).region_extras;
+        const auto extra_it = region_extras.find( terrain_type->get_extras() );
+        if( extra_it != region_extras.end() ) {
+            const map_extras &ex = extra_it->second;
+            if( ex.chance > 0 && one_in( ex.chance ) ) {
+                const std::string *extra = ex.values.pick();
+                if( extra == nullptr ) {
+                    debugmsg( "failed to pick extra for type %s", terrain_type->get_extras() );
+                } else {
+                    MapExtras::apply_function( *( ex.values.pick() ), *this, abs_sub );
+                }
             }
         }
     }
@@ -198,18 +224,21 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     }
     const int spawn_count = roll_remainder( density_multiplier );
 
-    if( spawns.group && x_in_y( odds_after_density, 100 ) ) {
-        int pop = spawn_count * rng( spawns.population.min, spawns.population.max );
-        for( ; pop > 0; pop-- ) {
-            MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup( spawns.group, &pop );
-            if( !spawn_details.name ) {
-                continue;
-            }
-            if( const std::optional<tripoint_bub_ms> pt =
-            random_point( *this, [this]( const tripoint_bub_ms & n ) {
-            return passable( n );
-            } ) ) {
-                add_spawn( spawn_details.name, spawn_details.pack_size, *pt );
+    {
+        ZoneScopedN( "generate_static_spawns" );
+        if( spawns.group && x_in_y( odds_after_density, 100 ) ) {
+            int pop = spawn_count * rng( spawns.population.min, spawns.population.max );
+            for( ; pop > 0; pop-- ) {
+                MonsterGroupResult spawn_details = MonsterGroupManager::GetResultFromGroup( spawns.group, &pop );
+                if( !spawn_details.name ) {
+                    continue;
+                }
+                if( const std::optional<tripoint_bub_ms> pt =
+                random_point( *this, [this]( const tripoint_bub_ms & n ) {
+                return passable( n );
+                } ) ) {
+                    add_spawn( spawn_details.name, spawn_details.pack_size, *pt );
+                }
             }
         }
     }
@@ -221,50 +250,53 @@ void map::generate( const tripoint_abs_sm &p, const time_point &when )
     //  (b) When generate() is called from a worker thread, the submaps land
     //      in the mapbuffer before the deferred hook is queued, so the main
     //      thread can reconstruct a tinymap from the mapbuffer to run it.
-    for( int i = 0; i < my_MAPSIZE; i++ ) {
-        for( int j = 0; j < my_MAPSIZE; j++ ) {
-            dbg( DL::Info ) << "map::generate: submap (" << i << "," << j << ")";
+    for( const auto smp : bubble_submaps() ) {
+        dbg( DL::Info ) << "map::generate: submap (" << smp.x() << "," << smp.y() << ")";
 
-            const tripoint_bub_sm pos( i, j, p.z() );
-            if( i <= 1 && j <= 1 ) {
-                const tripoint_abs_sm grid_abs = bub_to_abs( pos );
-                const int gridn = get_nonant( pos );
-                submap *const sm = getsubmap( gridn );
-                if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
-                    return;
-                }
-                // Transfer ownership of the freshly generated submap to the mapbuffer.
-                // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
-                auto owned = std::unique_ptr<submap>( sm );
-                if( !MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs, owned ) ) {
-                    owned.release(); // Already present; don't double-free.
-                }
-            } else {
-                const size_t grid_pos = get_nonant( pos );
-                delete getsubmap( grid_pos );
-                setsubmap( grid_pos, nullptr );
+        const tripoint_bub_sm pos( smp, p.z() );
+        if( pos.x() <= 1 && pos.y() <= 1 ) {
+            const tripoint_abs_sm grid_abs = bub_to_abs( pos );
+            const int gridn = get_nonant( pos );
+            submap *const sm = getsubmap( gridn );
+            if( sm == nullptr || sm->get_ter( point_sm_ms::zero() ) == t_null ) {
+                return {};
             }
+            // Transfer ownership of the freshly generated submap to the mapbuffer.
+            // grid[] holds a borrowed reference to the mapbuffer-owned submap after this.
+            auto owned = std::unique_ptr<submap>( sm );
+            if( !MAPBUFFER_REGISTRY.get( bound_dimension_ ).add_submap( grid_abs, owned ) ) {
+                owned.release(); // Already present; don't double-free.
+            }
+        } else {
+            const size_t grid_pos = get_nonant( pos );
+            delete getsubmap( grid_pos );
+            setsubmap( grid_pos, nullptr );
         }
     }
 
     // Run the Lua on_mapgen_postprocess hook.
     // Main thread: run immediately.  Worker thread: defer (Lua is not thread-safe).
-    // map::shift() drains deferred hooks after drain_completed().
+    // The main thread drains deferred hooks after worker mapgen completes.
     const auto omt_pos( project_to<coords::omt>( p ) );
-    if( is_pool_worker_thread() ) {
-        push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );
-    } else {
-        cata::run_on_mapgen_postprocess_hooks(
-            *DynamicDataLoader::get_instance().lua,
-            *this,
-            omt_pos,
-            when
-        );
+    {
+        ZoneScopedN( "generate_postprocess_hooks" );
+        if( is_pool_worker_thread() || options.defer_postprocess_hooks ) {
+            push_deferred_mapgen_hook( { bound_dimension_, omt_pos, when } );
+        } else {
+            cata::run_on_mapgen_postprocess_hooks(
+                *DynamicDataLoader::get_instance().lua,
+                *this,
+                omt_pos,
+                when
+            );
+        }
     }
+    return { .status = mapgen_result_status::generated };
 }
 
 void mapgen_function_builtin::generate( mapgendata &mgd )
 {
+    ZoneScopedN( "mapgen_builtin_generate" );
     ( *fptr )( mgd );
 }
 
@@ -298,21 +330,35 @@ class mapgen_basic_container
          * false is returned. If unsure, just use 0 for it.
          */
         bool generate( mapgendata &dat, const int hardcoded_weight ) const {
-            if( hardcoded_weight > 0 &&
-                rng( 1, weights_.get_weight() + hardcoded_weight ) > weights_.get_weight() ) {
-                return false;
-            }
-            const std::shared_ptr<mapgen_function> *const ptr = weights_.pick();
+            ZoneScopedN( "mapgen_container_generate" );
+            const auto ptr = pick( hardcoded_weight );
             if( !ptr ) {
                 return false;
             }
-            assert( *ptr );
-            ( *ptr )->generate( dat );
+            {
+                ZoneScopedN( "mapgen_container_dispatch" );
+                ptr->generate( dat );
+            }
             return true;
         }
-        /** Returns true if any generator in the weighted pool is Lua-based. */
-        auto any_lua() const -> bool {
-            bool found = false;
+        auto pick( const int hardcoded_weight ) const -> std::shared_ptr<mapgen_function> {
+            if( hardcoded_weight > 0 &&
+                rng( 1, weights_.get_weight() + hardcoded_weight ) > weights_.get_weight() ) {
+                return nullptr;
+            }
+            const std::shared_ptr<mapgen_function> *ptr = nullptr;
+            {
+                ZoneScopedN( "mapgen_container_pick" );
+                ptr = weights_.pick();
+            }
+            if( !ptr ) {
+                return nullptr;
+            }
+            assert( *ptr );
+            return *ptr;
+        }
+        auto has_direct_lua_generator() const -> bool {
+            auto found = false;
             weights_.apply( [&]( const std::shared_ptr<mapgen_function> &ptr ) {
                 if( ptr && ptr->is_lua_generator() ) {
                     found = true;
@@ -362,6 +408,7 @@ class mapgen_factory
 {
     private:
         std::map<std::string, mapgen_basic_container> mapgens_;
+        bool any_direct_lua_generator_ = false;
 
         /// Collect all the possible and expected keys that may get used with @ref pick.
         static std::set<std::string> get_usages() {
@@ -376,10 +423,6 @@ class mapgen_factory
                     result.insert( elem.generator_id );
                 }
             }
-            // Used in C++ code only, see calls to `oter_mapgen.generate()` below
-            result.insert( "lab_1side" );
-            result.insert( "lab_4side" );
-            result.insert( "lab_finale_1level" );
             // Stuff used in lua code only
             // Yes a mod could blow something up...
             // But it makes itself widely known
@@ -391,6 +434,7 @@ class mapgen_factory
     public:
         void reset() {
             mapgens_.clear();
+            any_direct_lua_generator_ = false;
         }
         /// @see mapgen_basic_container::setup
         void setup() {
@@ -401,6 +445,9 @@ class mapgen_factory
             // Dummy entry, overmap terrain null should never appear and is
             // therefore never generated.
             mapgens_.erase( "null" );
+            any_direct_lua_generator_ = std::ranges::any_of( mapgens_, []( const auto & omw ) {
+                return omw.second.has_direct_lua_generator();
+            } );
         }
         void finalize_parameters() {
             for( std::pair<const std::string, mapgen_basic_container> &omw : mapgens_ ) {
@@ -438,15 +485,24 @@ class mapgen_factory
             }
             return iter->second.generate( dat, hardcoded_weight );
         }
-        /// Returns true if any generator registered under @p key is Lua-based.
-        auto has_lua_generator( const std::string &key ) const -> bool {
-            const auto iter = mapgens_.find( key );
+        auto pick( const std::string &key, const int hardcoded_weight = 0 ) const
+        -> std::shared_ptr<mapgen_function> {
+            const auto iter = mapgens_.find( disable_mapgen ? "test" : key );
+            if( iter == mapgens_.end() ) {
+                return nullptr;
+            }
+            return iter->second.pick( hardcoded_weight );
+        }
+        auto has_direct_lua_generator( const std::string &key ) const -> bool {
+            const auto iter = mapgens_.find( disable_mapgen ? "test" : key );
             if( iter == mapgens_.end() ) {
                 return false;
             }
-            return iter->second.any_lua();
+            return iter->second.has_direct_lua_generator();
         }
-
+        auto has_any_direct_lua_generator() const -> bool {
+            return any_direct_lua_generator_;
+        }
         mapgen_parameters get_map_special_params( const std::string &key ) const {
             const auto iter = mapgens_.find( key );
             if( iter == mapgens_.end() ) {
@@ -465,6 +521,20 @@ static mapgen_factory oter_mapgen;
 std::map<std::string, weighted_int_list<std::shared_ptr<mapgen_function_json_nested>> >
         nested_mapgen;
 std::map<std::string, std::vector<std::unique_ptr<update_mapgen_function_json>> > update_mapgen;
+
+using nested_mapgen_function_list =
+    weighted_int_list<std::shared_ptr<mapgen_function_json_nested>>;
+
+struct nested_mapgen_ref {
+    const nested_mapgen_function_list *functions = nullptr;
+
+    friend auto operator==( const nested_mapgen_ref &lhs,
+                            const nested_mapgen_ref &rhs ) -> bool {
+        return lhs.functions == rhs.functions;
+    }
+};
+
+using nested_mapgen_ref_list = weighted_int_list<nested_mapgen_ref>;
 
 void call_mapgen_function( std::string name, mapgendata &dat, bool nested, const point_rel_ms &pos )
 {
@@ -494,6 +564,7 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
     oter_mapgen.setup();
     // Not really calculate weights, but let's keep it here for now
     for( auto &pr : nested_mapgen ) {
+        pr.second.precalc();
         for( weighted_object<int, std::shared_ptr<mapgen_function_json_nested>> &ptr : pr.second ) {
             ptr.obj->setup();
             inp_mngr.pump_events();
@@ -2981,6 +3052,10 @@ class jmapgen_nested : public jmapgen_piece
     public:
         weighted_int_list<std::string> entries;
         weighted_int_list<std::string> else_entries;
+        mutable nested_mapgen_ref_list resolved_entries;
+        mutable nested_mapgen_ref_list resolved_else_entries;
+        mutable bool resolved_entries_valid = false;
+        mutable bool resolved_else_entries_valid = false;
         neighbor_oter_check neighbor_oters;
         neighbor_join_check neighbor_joins;
         neighbor_connection_check neighbor_connections;
@@ -3003,8 +3078,24 @@ class jmapgen_nested : public jmapgen_piece
                 return else_entries;
             }
         }
+        auto get_resolved_entries( const mapgendata &dat ) const -> const nested_mapgen_ref_list
+        & { // *NOPAD*
+            if( neighbor_oters.test( dat ) && neighbor_joins.test( dat ) && neighbor_connections.test( dat ) ) {
+                ensure_resolved( entries, resolved_entries, resolved_entries_valid );
+                return resolved_entries;
+            } else {
+                ensure_resolved( else_entries, resolved_else_entries, resolved_else_entries_valid );
+                return resolved_else_entries;
+            }
+        }
         mapgen_phase phase() const override {
             return mapgen_phase::nested_mapgen;
+        }
+        auto finalize() const -> void override {
+            resolved_entries.clear();
+            resolved_else_entries.clear();
+            resolved_entries_valid = false;
+            resolved_else_entries_valid = false;
         }
         void merge_parameters_into( mapgen_parameters &params,
                                     const std::string &outer_context ) const override {
@@ -3033,25 +3124,27 @@ class jmapgen_nested : public jmapgen_piece
         }
         void apply( const mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y
                   ) const override {
-            const std::string *res = get_entries( dat ).pick();
-            if( res == nullptr || res->empty() || *res == "null" ) {
-                // This will be common when neighbors.test(...) is false, since else_entires is often empty.
+            ZoneScopedN( "jmapgen_nested_apply" );
+            const std::shared_ptr<mapgen_function_json_nested> *ptr = nullptr;
+            {
+                ZoneScopedN( "jmapgen_nested_pick" );
+                const nested_mapgen_ref *res = get_resolved_entries( dat ).pick();
+                if( res == nullptr || res->functions == nullptr ) {
+                    // This will be common when neighbors.test(...) is false, since else_entries is often empty.
+                    return;
+                }
+
+                // A second roll? Let's allow it for now
+                ptr = res->functions->pick();
+            }
+            if( ptr == nullptr || !*ptr ) {
                 return;
             }
 
-            const auto iter = nested_mapgen.find( *res );
-            if( iter == nested_mapgen.end() ) {
-                debugmsg( "Unknown nested mapgen function id %s", res->c_str() );
-                return;
+            {
+                ZoneScopedN( "jmapgen_nested_nest" );
+                ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ) );
             }
-
-            // A second roll? Let's allow it for now
-            const auto &ptr = iter->second.pick();
-            if( ptr == nullptr ) {
-                return;
-            }
-
-            ( *ptr )->nest( dat, point_rel_ms( x.get(), y.get() ) );
         }
 
         void check( const std::string &oter_name, const mapgen_parameters & ) const override {
@@ -3060,21 +3153,17 @@ class jmapgen_nested : public jmapgen_piece
             neighbor_connections.check( oter_name );
         }
         bool has_vehicle_collision( const mapgendata &dat, const point_rel_ms &p ) const override {
-            const weighted_int_list<std::string> &selected_entries = get_entries( dat );
+            const nested_mapgen_ref_list &selected_entries = get_resolved_entries( dat );
 
             if( selected_entries.empty() ) {
                 return false;
             }
 
             for( auto &entry : selected_entries ) {
-                if( entry.obj == "null" ) {
+                if( entry.obj.functions == nullptr ) {
                     continue;
                 }
-                const auto iter = nested_mapgen.find( entry.obj );
-                if( iter == nested_mapgen.end() ) {
-                    return false;
-                }
-                for( const auto &nest : iter->second ) {
+                for( const auto &nest : *entry.obj.functions ) {
                     if( nest.obj->has_vehicle_collision( dat, p ) ) {
                         return true;
                     }
@@ -3082,6 +3171,36 @@ class jmapgen_nested : public jmapgen_piece
             }
 
             return false;
+        }
+    private:
+        static auto ensure_resolved( const weighted_int_list<std::string> &source,
+                                     nested_mapgen_ref_list &resolved,
+                                     bool &valid ) -> void {
+            if( valid ) {
+                return;
+            }
+            resolved = resolve_entries( source );
+            valid = true;
+        }
+
+        static auto resolve_entries( const weighted_int_list<std::string> &source )
+        -> nested_mapgen_ref_list {
+            auto resolved = nested_mapgen_ref_list {};
+            for( const auto &entry : source ) {
+                if( entry.obj.empty() || entry.obj == "null" ) {
+                    resolved.add( {}, entry.weight );
+                    continue;
+                }
+                const auto iter = nested_mapgen.find( entry.obj );
+                if( iter == nested_mapgen.end() ) {
+                    debugmsg( "Unknown nested mapgen function id %s", entry.obj.c_str() );
+                    resolved.add( {}, entry.weight );
+                    continue;
+                }
+                resolved.add( { &iter->second }, entry.weight );
+            }
+            resolved.precalc();
+            return resolved;
         }
 };
 
@@ -3832,6 +3951,9 @@ void mapgen_function_json_base::check_common( const std::string &oter_name ) con
 
 void jmapgen_objects::finalize()
 {
+    for( const auto &obj : objects ) {
+        obj.second->finalize();
+    }
     std::stable_sort( objects.begin(), objects.end(),
     []( const jmapgen_obj & l, const jmapgen_obj & r ) {
         return l.second->phase() < r.second->phase();
@@ -4035,15 +4157,20 @@ bool mapgen_function_json_base::has_vehicle_collision(
  */
 void mapgen_function_json::generate( mapgendata &md )
 {
+    ZoneScopedN( "mapgen_json_generate" );
     map *const m = &md.m;
     if( fill_ter != t_null ) {
+        ZoneScopedN( "mapgen_json_fill_background" );
         m->draw_fill_background( fill_ter );
     }
     const oter_t &ter = *md.terrain_type();
 
     if( predecessor_mapgen != oter_str_id::NULL_ID() ) {
-        mapgendata predecessor_mapgen_dat( md, predecessor_mapgen );
-        run_mapgen_func( predecessor_mapgen.id().str(), predecessor_mapgen_dat );
+        {
+            ZoneScopedN( "mapgen_json_predecessor" );
+            mapgendata predecessor_mapgen_dat( md, predecessor_mapgen );
+            run_mapgen_func( predecessor_mapgen.id().str(), predecessor_mapgen_dat );
+        }
 
         // Now we have to do some rotation shenanigans. We need to ensure that
         // our predecessor is not rotated out of alignment as part of rotating this location,
@@ -4053,27 +4180,60 @@ void mapgen_function_json::generate( mapgendata &md )
         // when we apply that rotation, our predecessor is back in its original state while this
         // location is rotated as desired.
 
-        m->rotate( ( -rotation.get() + 4 ) % 4 );
+        {
+            ZoneScopedN( "mapgen_json_predecessor_unrotate" );
+            m->rotate( ( -rotation.get() + 4 ) % 4 );
 
-        if( ter.is_rotatable() || ter.is_linear() ) {
-            m->rotate( ( -ter.get_rotation() + 4 ) % 4 );
+            if( ter.is_rotatable() || ter.is_linear() ) {
+                m->rotate( ( -ter.get_rotation() + 4 ) % 4 );
+            }
         }
     }
 
-    mapgendata md_with_params( md, get_args( md, mapgen_parameter_scope::omt ) );
-
-    for( auto &elem : setmap_points ) {
-        elem.apply( md_with_params, point_rel_ms::zero() );
+    auto args = mapgen_arguments {};
+    {
+        ZoneScopedN( "mapgen_json_get_args" );
+        args = get_args( md, mapgen_parameter_scope::omt );
     }
 
-    objects.apply( md_with_params, point_rel_ms::zero() );
+    const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
+        {
+            ZoneScopedN( "mapgen_json_setmap" );
+            for( auto &elem : setmap_points )
+            {
+                elem.apply( active_md, point_rel_ms::zero() );
+            }
+        }
 
-    resolve_regional_terrain_and_furniture( md_with_params );
+        {
+            ZoneScopedN( "mapgen_json_objects" );
+            objects.apply( active_md, point_rel_ms::zero() );
+        }
 
-    m->rotate( rotation.get() );
+        {
+            ZoneScopedN( "mapgen_json_resolve_regional" );
+            resolve_regional_terrain_and_furniture( active_md );
+        }
+    };
 
-    if( ter.is_rotatable() || ter.is_linear() ) {
-        m->rotate( ter.get_rotation() );
+    if( args.map.empty() ) {
+        apply_contents( md );
+    } else {
+        auto md_with_params = std::optional<mapgendata> {};
+        {
+            ZoneScopedN( "mapgen_json_make_param_data" );
+            md_with_params.emplace( md, args );
+        }
+        apply_contents( *md_with_params );
+    }
+
+    {
+        ZoneScopedN( "mapgen_json_rotate" );
+        m->rotate( rotation.get() );
+
+        if( ter.is_rotatable() || ter.is_linear() ) {
+            m->rotate( ter.get_rotation() );
+        }
     }
 }
 
@@ -4084,18 +4244,46 @@ mapgen_parameters mapgen_function_json::get_mapgen_params( mapgen_parameter_scop
 
 void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms &offset ) const
 {
+    ZoneScopedN( "mapgen_json_nested" );
     // TODO: Make rotation work for submaps, then pass this value into elem & objects apply.
     //int chosen_rotation = rotation.get() % 4;
 
-    mapgendata md_with_params( md, get_args( md, mapgen_parameter_scope::nest ) );
-
-    for( const jmapgen_setmap &elem : setmap_points ) {
-        elem.apply( md_with_params, offset );
+    auto args = mapgen_arguments {};
+    {
+        ZoneScopedN( "mapgen_json_nested_get_args" );
+        args = get_args( md, mapgen_parameter_scope::nest );
     }
 
-    objects.apply( md_with_params, offset );
+    const auto apply_contents = [&]( const mapgendata & active_md ) -> void {
+        {
+            ZoneScopedN( "mapgen_json_nested_setmap" );
+            for( const auto &elem : setmap_points )
+            {
+                elem.apply( active_md, offset );
+            }
+        }
 
-    resolve_regional_terrain_and_furniture( md_with_params );
+        {
+            ZoneScopedN( "mapgen_json_nested_objects" );
+            objects.apply( active_md, offset );
+        }
+
+        {
+            ZoneScopedN( "mapgen_json_nested_resolve_regional" );
+            resolve_regional_terrain_and_furniture( active_md );
+        }
+    };
+
+    if( args.map.empty() ) {
+        apply_contents( md );
+    } else {
+        auto md_with_params = std::optional<mapgendata> {};
+        {
+            ZoneScopedN( "mapgen_json_nested_make_param_data" );
+            md_with_params.emplace( md, args );
+        }
+        apply_contents( *md_with_params );
+    }
 }
 
 /*
@@ -4103,6 +4291,7 @@ void mapgen_function_json_nested::nest( const mapgendata &md, const point_rel_ms
  */
 void jmapgen_objects::apply( const mapgendata &dat ) const
 {
+    ZoneScopedN( "jmapgen_objects_apply" );
     for( auto &obj : objects ) {
         const auto &where = obj.first;
         const auto &what = *obj.second;
@@ -4117,6 +4306,7 @@ void jmapgen_objects::apply( const mapgendata &dat ) const
 
 void jmapgen_objects::apply( const mapgendata &dat, const point_rel_ms &offset ) const
 {
+    ZoneScopedN( "jmapgen_objects_apply_offset" );
     if( offset == point_rel_ms::zero() ) {
         // It's a bit faster
         apply( dat );
@@ -4152,23 +4342,52 @@ bool jmapgen_objects::has_vehicle_collision( const mapgendata &dat,
 }
 
 /////////////
-void map::draw_map( mapgendata &dat )
+auto map::draw_map( mapgendata &dat, const map_generate_options &options ) -> mapgen_result
 {
+    ZoneScopedN( "map_draw_map" );
     const oter_id &terrain_type = dat.terrain_type();
     const std::string function_key = terrain_type->get_mapgen_id();
     bool found = true;
 
-    const bool generated = run_mapgen_func( function_key, dat );
+    bool generated = false;
+    {
+        ZoneScopedN( "draw_map_run_mapgen_func" );
+        if( options.use_selected_mapgen ) {
+            if( options.selected_mapgen ) {
+                if( options.worker_safe && mapgen_function_needs_main_thread( options.selected_mapgen ) ) {
+                    return {
+                        .status = mapgen_result_status::needs_main_thread,
+                        .selected_mapgen = options.selected_mapgen,
+                    };
+                }
+                options.selected_mapgen->generate( dat );
+                generated = true;
+            }
+        } else if( options.worker_safe ) {
+            const auto selected_mapgen = oter_mapgen.pick( function_key );
+            if( selected_mapgen ) {
+                if( mapgen_function_needs_main_thread( selected_mapgen ) ) {
+                    return {
+                        .status = mapgen_result_status::needs_main_thread,
+                        .selected_mapgen = selected_mapgen,
+                    };
+                }
+                selected_mapgen->generate( dat );
+                generated = true;
+            }
+        } else {
+            generated = run_mapgen_func( function_key, dat );
+        }
+    }
 
     if( !generated ) {
+        ZoneScopedN( "draw_map_fallback" );
         if( is_ot_match( "office", terrain_type, ot_match_type::prefix ) ) {
             draw_office_tower( dat );
         } else if( is_ot_match( "temple", terrain_type, ot_match_type::prefix ) ) {
             draw_temple( dat );
         } else if( is_ot_match( "mine", terrain_type, ot_match_type::prefix ) ) {
             draw_mine( dat );
-        } else if( is_ot_match( "lab", terrain_type, ot_match_type::contains ) ) {
-            draw_lab( dat );
         } else {
             found = false;
         }
@@ -4182,7 +4401,11 @@ void map::draw_map( mapgendata &dat )
         fill_background( this, t_floor );
     }
 
-    draw_connections( dat );
+    {
+        ZoneScopedN( "draw_map_connections" );
+        draw_connections( dat );
+    }
+    return { .status = mapgen_result_status::generated };
 }
 
 const int SOUTH_EDGE = 2 * SEEY - 1;
@@ -4785,630 +5008,6 @@ void map::draw_office_tower( const mapgendata &dat )
                 }
                 if( x_in_y( 1, 3 ) ) {
                     add_vehicle( vproto_id( "car" ), point_bub_ms( 4, 6 ), 90_degrees );
-                }
-            }
-        }
-    }
-}
-
-void map::draw_lab( mapgendata &dat )
-{
-    const oter_id &terrain_type = dat.terrain_type();
-    // To distinguish between types of labs
-    bool ice_lab = true;
-    bool central_lab = false;
-    bool tower_lab = false;
-    bool ants_lab = false;
-
-    point_bub_ms p2;
-
-    int lw = 0;
-    int rw = 0;
-    int tw = 0;
-    int bw = 0;
-
-    if( terrain_type == "lab" || terrain_type == "lab_stairs" || terrain_type == "lab_core" ||
-        terrain_type == "ants_lab" || terrain_type == "ants_lab_stairs" ||
-        terrain_type == "ice_lab" || terrain_type == "ice_lab_stairs" ||
-        terrain_type == "ice_lab_core" ||
-        terrain_type == "central_lab" || terrain_type == "central_lab_stairs" ||
-        terrain_type == "central_lab_core" ||
-        terrain_type == "tower_lab" || terrain_type == "tower_lab_stairs" ) {
-
-        ice_lab = is_ot_match( "ice_lab", terrain_type, ot_match_type::prefix );
-        central_lab = is_ot_match( "central_lab", terrain_type, ot_match_type::prefix );
-        tower_lab = is_ot_match( "tower_lab", terrain_type, ot_match_type::prefix );
-        ants_lab = is_ot_match( "ants", dat.north(), ot_match_type::contains ) ||
-                   is_ot_match( "ants", dat.east(), ot_match_type::contains ) ||
-                   is_ot_match( "ants", dat.south(), ot_match_type::contains ) ||
-                   is_ot_match( "ants", dat.west(), ot_match_type::contains );
-
-        if( ice_lab ) {
-            int temperature;
-
-            if( dat.zlevel() == 0 ) {
-                temperature = -20;
-            } else {
-                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
-            }
-            set_temperature( p2, temperature );
-            set_temperature( p2 + point_rel_ms( SEEX, 0 ), temperature );
-            set_temperature( p2 + point_rel_ms( 0, SEEY ), temperature );
-            set_temperature( p2 + point_rel_ms( SEEX, SEEY ), temperature );
-        }
-
-        // Check for adjacent sewers; used below
-        tw = 0;
-        rw = 0;
-        bw = 0;
-        lw = 0;
-        if( is_ot_match( "sewer", dat.north(), ot_match_type::type ) && connects_to( dat.north(), 2 ) ) {
-            tw = SOUTH_EDGE + 1;
-        }
-        if( is_ot_match( "sewer", dat.east(), ot_match_type::type ) && connects_to( dat.east(), 3 ) ) {
-            rw = EAST_EDGE + 1;
-        }
-        if( is_ot_match( "sewer", dat.south(), ot_match_type::type ) && connects_to( dat.south(), 0 ) ) {
-            bw = SOUTH_EDGE + 1;
-        }
-        if( is_ot_match( "sewer", dat.west(), ot_match_type::type ) && connects_to( dat.west(), 1 ) ) {
-            lw = EAST_EDGE + 1;
-        }
-        if( dat.zlevel() == 0 ) { // We're on ground level
-            for( int i = 0; i < SEEX * 2; i++ ) {
-                for( int j = 0; j < SEEY * 2; j++ ) {
-                    if( i <= 1 || i >= SEEX * 2 - 2 ||
-                        ( j > 1 && j < SEEY * 2 - 2 && ( i == SEEX - 2 || i == SEEX + 1 ) ) ) {
-                        ter_set( point_bub_ms( i, j ), t_concrete_wall );
-                    } else if( j <= 1 || j >= SEEY * 2 - 2 ) {
-                        ter_set( point_bub_ms( i, j ), t_concrete_wall );
-                    } else {
-                        ter_set( point_bub_ms( i, j ), t_floor );
-                    }
-                }
-            }
-            ter_set( point_bub_ms( SEEX - 1, 0 ), t_door_metal_locked );
-            ter_set( point_bub_ms( SEEX - 1, 1 ), t_floor );
-            ter_set( point_bub_ms( SEEX, 0 ), t_door_metal_locked );
-            ter_set( point_bub_ms( SEEX, 1 ), t_floor );
-            ter_set( point_bub_ms( SEEX - 2 + rng( 0, 1 ) * 3, 0 ), t_card_science );
-            ter_set( point_bub_ms( SEEX - 2, SEEY ), t_door_metal_c );
-            ter_set( point_bub_ms( SEEX + 1, SEEY ), t_door_metal_c );
-            ter_set( point_bub_ms( SEEX - 2, SEEY - 1 ), t_door_metal_c );
-            ter_set( point_bub_ms( SEEX + 1, SEEY - 1 ), t_door_metal_c );
-            ter_set( point_bub_ms( SEEX - 1, SEEY * 2 - 3 ), t_stairs_down );
-            ter_set( point_bub_ms( SEEX, SEEY * 2 - 3 ), t_stairs_down );
-            science_room( this, point_bub_ms( 2, 2 ), point_bub_ms( SEEX - 3, SEEY * 2 - 3 ), dat.zlevel(), 1 );
-            science_room( this, point_bub_ms( SEEX + 2, 2 ), point_bub_ms( SEEX * 2 - 3, SEEY * 2 - 3 ),
-                          dat.zlevel(), 3 );
-
-            place_spawns( GROUP_TURRET, 1, point_bub_ms( SEEX, 5 ), point_bub_ms( SEEX, 5 ), 1, true );
-
-            if( is_ot_match( "road", dat.east(), ot_match_type::type ) ) {
-                rotate( 1 );
-            } else if( is_ot_match( "road", dat.south(), ot_match_type::type ) ) {
-                rotate( 2 );
-            } else if( is_ot_match( "road", dat.west(), ot_match_type::type ) ) {
-                rotate( 3 );
-            }
-        } else if( tw != 0 || rw != 0 || lw != 0 || bw != 0 ) { // Sewers!
-            for( int i = 0; i < SEEX * 2; i++ ) {
-                for( int j = 0; j < SEEY * 2; j++ ) {
-                    ter_set( point_bub_ms( i, j ), t_thconc_floor );
-                    if( ( ( i < lw || i > EAST_EDGE - rw ) && j > SEEY - 3 && j < SEEY + 2 ) ||
-                        ( ( j < tw || j > SOUTH_EDGE - bw ) && i > SEEX - 3 && i < SEEX + 2 ) ) {
-                        ter_set( point_bub_ms( i, j ), t_sewage );
-                    }
-                    if( ( i == 0 && is_ot_match( "lab", dat.east(), ot_match_type::contains ) ) || i == EAST_EDGE ) {
-                        if( ter( point_bub_ms( i, j ) ) == t_sewage ) {
-                            ter_set( point_bub_ms( i, j ), t_bars );
-                        } else if( j == SEEY - 1 || j == SEEY ) {
-                            ter_set( point_bub_ms( i, j ), t_door_metal_c );
-                        } else {
-                            ter_set( point_bub_ms( i, j ), t_concrete_wall );
-                        }
-                    } else if( ( j == 0 && is_ot_match( "lab", dat.north(), ot_match_type::contains ) ) ||
-                               j == SOUTH_EDGE ) {
-                        if( ter( point_bub_ms( i, j ) ) == t_sewage ) {
-                            ter_set( point_bub_ms( i, j ), t_bars );
-                        } else if( i == SEEX - 1 || i == SEEX ) {
-                            ter_set( point_bub_ms( i, j ), t_door_metal_c );
-                        } else {
-                            ter_set( point_bub_ms( i, j ), t_concrete_wall );
-                        }
-                    }
-                }
-            }
-        } else { // We're below ground, and no sewers
-            // Set up the boundaries of walls (connect to adjacent lab squares)
-            tw = is_ot_match( "lab", dat.north(), ot_match_type::contains ) ? 0 : 2;
-            rw = is_ot_match( "lab", dat.east(), ot_match_type::contains ) ? 1 : 2;
-            bw = is_ot_match( "lab", dat.south(), ot_match_type::contains ) ? 1 : 2;
-            lw = is_ot_match( "lab", dat.west(), ot_match_type::contains ) ? 0 : 2;
-
-            int boarders = 0;
-            if( tw == 0 ) {
-                boarders++;
-            }
-            if( rw == 1 ) {
-                boarders++;
-            }
-            if( bw == 1 ) {
-                boarders++;
-            }
-            if( lw == 0 ) {
-                boarders++;
-            }
-
-            const auto maybe_insert_stairs = [this]( const oter_id & terrain,  const ter_id & t_stair_type ) {
-                if( is_ot_match( "stairs", terrain, ot_match_type::contains ) ) {
-                    const auto predicate = [this]( const tripoint_bub_ms & p ) {
-                        return ter( p ) == t_thconc_floor && furn( p ) == f_null && tr_at( p ).is_null();
-                    };
-                    const auto range = points_in_rectangle( { 0, 0, abs_sub.z() }, { SEEX * 2 - 2, SEEY * 2 - 2, abs_sub.z() } );
-
-                    if( const auto p = random_point( range, predicate ) ) {
-                        ter_set( *p, t_stair_type );
-                    }
-                }
-            };
-
-            //A lab area with only one entrance
-            if( boarders == 1 ) {
-                // If you remove the usage of "lab_1side" here, remove it from mapgen_factory::get_usages above as well.
-                if( oter_mapgen.generate( dat, "lab_1side" ) ) {
-                    if( tw == 2 ) {
-                        rotate( 2 );
-                    }
-                    if( rw == 2 ) {
-                        rotate( 1 );
-                    }
-                    if( lw == 2 ) {
-                        rotate( 3 );
-                    }
-                } else {
-                    debugmsg( "Error: Tried to generate 1-sided lab but no lab_1side json exists." );
-                }
-                maybe_insert_stairs( dat.above(), t_stairs_up );
-                maybe_insert_stairs( terrain_type, t_stairs_down );
-            } else {
-                // If you remove the usage of "lab_4side" here, remove it from mapgen_factory::get_usages above as well.
-                if( oter_mapgen.generate( dat, "lab_4side" ) ) {
-                    // If the map template hasn't handled borders, handle them in code.
-                    // Rotated maps cannot handle borders and have to be caught in code.
-                    // We determine if a border isn't handled by checking the east-facing
-                    // border space where the door normally is -- it should be a wall or door.
-                    tripoint_bub_ms east_border( 23, 11, abs_sub.z() );
-                    if( !has_flag_ter( "WALL", east_border ) &&
-                        !has_flag_ter( "DOOR", east_border ) ) {
-                        // TODO: create a ter_reset function that does ter_set,
-                        // furn_set, and i_clear?
-                        ter_id lw_type = tower_lab ? t_reinforced_glass : t_concrete_wall;
-                        ter_id tw_type = tower_lab ? t_reinforced_glass : t_concrete_wall;
-                        ter_id rw_type = tower_lab && rw == 2 ? t_reinforced_glass :
-                                         t_concrete_wall;
-                        ter_id bw_type = tower_lab && bw == 2 ? t_reinforced_glass :
-                                         t_concrete_wall;
-                        for( int i = 0; i < SEEX * 2; i++ ) {
-                            ter_set( point_bub_ms( 23, i ), rw_type );
-                            furn_set( point_bub_ms( 23, i ), f_null );
-                            i_clear( tripoint_bub_ms( 23, i, get_abs_sub().z() ) );
-
-                            ter_set( point_bub_ms( i, 23 ), bw_type );
-                            furn_set( point_bub_ms( i, 23 ), f_null );
-                            i_clear( tripoint_bub_ms( i, 23, get_abs_sub().z() ) );
-
-                            if( lw == 2 ) {
-                                ter_set( point_bub_ms( 0, i ), lw_type );
-                                furn_set( point_bub_ms( 0, i ), f_null );
-                                i_clear( tripoint_bub_ms( 0, i, get_abs_sub().z() ) );
-                            }
-                            if( tw == 2 ) {
-                                ter_set( point_bub_ms( i, 0 ), tw_type );
-                                furn_set( point_bub_ms( i, 0 ), f_null );
-                                i_clear( tripoint_bub_ms( i, 0, get_abs_sub().z() ) );
-                            }
-                        }
-                        if( rw != 2 ) {
-                            ter_set( point_bub_ms( 23, 11 ), t_door_metal_c );
-                            ter_set( point_bub_ms( 23, 12 ), t_door_metal_c );
-                        }
-                        if( bw != 2 ) {
-                            ter_set( point_bub_ms( 11, 23 ), t_door_metal_c );
-                            ter_set( point_bub_ms( 12, 23 ), t_door_metal_c );
-                        }
-                    }
-
-                    maybe_insert_stairs( dat.above(), t_stairs_up );
-                    maybe_insert_stairs( terrain_type, t_stairs_down );
-                } else { // then no json maps for lab_4side were found
-                    debugmsg( "Error: Tried to generate 4-sided lab but no valid lab_4side room exists." );
-                } // endif use_hardcoded_4side_map
-            }  // end 1 vs 4 sides
-        } // end aboveground vs belowground
-
-        // Ants will totally wreck up the place
-        if( ants_lab ) {
-            for( int i = 0; i < SEEX * 2; i++ ) {
-                for( int j = 0; j < SEEY * 2; j++ ) {
-                    // Carve out a diamond area that covers 2 spaces on each edge.
-                    if( i + j > 10 && i + j < 36 && std::abs( i - j ) < 13 ) {
-                        // Doors and walls get sometimes destroyed:
-                        // 100% at the edge, usually in a central cross, occasionally elsewhere.
-                        if( ( has_flag_ter( "DOOR", point_bub_ms( i, j ) ) ||
-                              has_flag_ter( "WALL", point_bub_ms( i, j ) ) ) ) {
-                            if( ( i == 0 || j == 0 || i == 23 || j == 23 ) ||
-                                ( !one_in( 3 ) && ( i == 11 || i == 12 || j == 11 || j == 12 ) ) ||
-                                one_in( 4 ) ) {
-                                // bash and usually remove the rubble.
-                                make_rubble( { i, j, abs_sub.z() } );
-                                ter_set( point_bub_ms( i, j ), t_rock_floor );
-                                if( !one_in( 3 ) ) {
-                                    furn_set( point_bub_ms( i, j ), f_null );
-                                }
-                            }
-                            // and then randomly destroy 5% of the remaining nonstairs.
-                        } else if( one_in( 20 ) &&
-                                   !has_flag_ter( "GOES_DOWN", p2 ) &&
-                                   !has_flag_ter( "GOES_UP", p2 ) ) {
-                            destroy( { i, j, abs_sub.z() } );
-                            // bashed squares can create dirt & floors, but we want rock floors.
-                            if( t_dirt == ter( point_bub_ms( i, j ) ) || t_floor == ter( point_bub_ms( i, j ) ) ) {
-                                ter_set( point_bub_ms( i, j ), t_rock_floor );
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Slimes pretty much wreck up the place, too, but only underground
-        tw = ( dat.north() == "slimepit" ? SEEY     : 0 );
-        rw = ( dat.east()  == "slimepit" ? SEEX + 1 : 0 );
-        bw = ( dat.south() == "slimepit" ? SEEY + 1 : 0 );
-        lw = ( dat.west()  == "slimepit" ? SEEX     : 0 );
-        if( tw != 0 || rw != 0 || bw != 0 || lw != 0 ) {
-            for( int i = 0; i < SEEX * 2; i++ ) {
-                for( int j = 0; j < SEEY * 2; j++ ) {
-                    if( ( ( j <= tw || i >= rw ) && i >= j && ( EAST_EDGE - i ) <= j ) ||
-                        ( ( j >= bw || i <= lw ) && i <= j && ( SOUTH_EDGE - j ) <= i ) ) {
-                        if( one_in( 5 ) ) {
-                            make_rubble( tripoint_bub_ms( i,  j, abs_sub.z() ), f_rubble_rock,
-                                         t_slime );
-                        } else if( !one_in( 5 ) ) {
-                            ter_set( point_bub_ms( i, j ), t_slime );
-                        }
-                    }
-                }
-            }
-        }
-
-        int light_odds = 0;
-        // central labs are always fully lit, other labs have half chance of some lights.
-        if( central_lab ) {
-            light_odds = 1;
-        } else if( one_in( 2 ) ) {
-            // Create a spread of densities, from all possible lights on, to 1/3, ...
-            // to ~1 per segment.
-            light_odds = std::pow( rng( 1, 12 ), 1.6 );
-        }
-        if( light_odds > 0 ) {
-            for( int i = 0; i < SEEX * 2; i++ ) {
-                for( int j = 0; j < SEEY * 2; j++ ) {
-                    if( !( ( i * j ) % 2 || ( i + j ) % 4 ) && one_in( light_odds ) ) {
-                        if( t_thconc_floor == ter( point_bub_ms( i, j ) ) ||
-                            t_strconc_floor == ter( point_bub_ms( i, j ) ) ) {
-                            ter_set( point_bub_ms( i, j ), t_thconc_floor_olight );
-                        }
-                    }
-                }
-            }
-        }
-
-        if( tower_lab ) {
-            place_spawns( GROUP_LAB, 1, point_bub_ms::zero(), point_bub_ms( EAST_EDGE, EAST_EDGE ),
-                          abs_sub.z() * 0.02f );
-        }
-
-        // Lab special effects.
-        if( one_in( 10 ) ) {
-            switch( rng( 1, 7 ) ) {
-                // full flooding/sewage
-                case 1: {
-                    if( is_ot_match( "stairs", terrain_type, ot_match_type::contains ) ||
-                        is_ot_match( "ice", terrain_type, ot_match_type::contains ) ) {
-                        // don't flood if stairs because the floor below will not be flooded.
-                        // don't flood if ice lab because there's no mechanic for freezing
-                        // liquid floors.
-                        break;
-                    }
-                    auto fluid_type = one_in( 3 ) ? t_sewage : t_water_sh;
-                    for( int i = 0; i < EAST_EDGE; i++ ) {
-                        for( int j = 0; j < SOUTH_EDGE; j++ ) {
-                            // We spare some terrain to make it look better visually.
-                            if( !one_in( 10 ) && ( t_thconc_floor == ter( point_bub_ms( i, j ) ) ||
-                                                   t_strconc_floor == ter( point_bub_ms( i, j ) ) ||
-                                                   t_thconc_floor_olight == ter( point_bub_ms( i, j ) ) ) ) {
-                                ter_set( point_bub_ms( i, j ), fluid_type );
-                            } else if( has_flag_ter( "DOOR", point_bub_ms( i, j ) ) && !one_in( 3 ) ) {
-                                // We want the actual debris, but not the rubble marker or dirt.
-                                make_rubble( { i, j, abs_sub.z() } );
-                                ter_set( point_bub_ms( i, j ), fluid_type );
-                                furn_set( point_bub_ms( i, j ), f_null );
-                            }
-                        }
-                    }
-                    break;
-                }
-                // minor flooding/sewage
-                case 2: {
-                    if( is_ot_match( "stairs", terrain_type, ot_match_type::contains ) ||
-                        is_ot_match( "ice", terrain_type, ot_match_type::contains ) ) {
-                        // don't flood if stairs because the floor below will not be flooded.
-                        // don't flood if ice lab because there's no mechanic for freezing
-                        // liquid floors.
-                        break;
-                    }
-                    auto fluid_type = one_in( 3 ) ? t_sewage : t_water_sh;
-                    for( int i = 0; i < 2; ++i ) {
-                        // Please somebody help make this less horrifying. Presumably this is too
-                        // hardcoded as is, so hopefully this is temporary.
-                        draw_rough_circle( std::function<void( point_bub_ms )>( [this, fluid_type]( auto p ) {
-                            if( t_thconc_floor == ter( p ) || t_strconc_floor == ter( p ) ||
-                                t_thconc_floor_olight == ter( p ) ) {
-                                ter_set( p, fluid_type );
-                            } else if( has_flag_ter( "DOOR", p ) ) {
-                                // We want the actual debris, but not the rubble marker or dirt.
-                                make_rubble( { p, abs_sub.z() } );
-                                ter_set( p, fluid_type );
-                                furn_set( p, f_null );
-                            }
-                        } ), point_bub_ms( rng( 1, SEEX * 2 - 2 ), rng( 1, SEEY * 2 - 2 ) ), rng( 3, 6 ) );
-                    }
-                    break;
-                }
-                // toxic gas leaks and smoke-filled rooms.
-                case 3:
-                case 4: {
-                    bool is_toxic = one_in( 3 );
-                    for( int i = 0; i < SEEX * 2; i++ ) {
-                        for( int j = 0; j < SEEY * 2; j++ ) {
-                            if( one_in( 200 ) && ( t_thconc_floor == ter( point_bub_ms( i, j ) ) ||
-                                                   t_strconc_floor == ter( point_bub_ms( i, j ) ) ) ) {
-                                if( is_toxic ) {
-                                    add_field( {i, j, abs_sub.z()}, fd_gas_vent, 1 );
-                                } else {
-                                    add_field( {i, j, abs_sub.z()}, fd_smoke_vent, 2 );
-                                }
-                            }
-                        }
-                    }
-                    break;
-                }
-                // portal with an artifact effect.
-                case 5: {
-                    tripoint_bub_ms center( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), abs_sub.z() );
-                    std::vector<artifact_natural_property> valid_props = {
-                        ARTPROP_BREATHING,
-                        ARTPROP_CRACKLING,
-                        ARTPROP_WARM,
-                        ARTPROP_SCALED,
-                        ARTPROP_WHISPERING,
-                        ARTPROP_GLOWING
-                    };
-                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
-                        if( has_flag_ter( "GOES_DOWN", p ) ||
-                            has_flag_ter( "GOES_UP", p ) ||
-                            has_flag_ter( "CONSOLE", p ) ) {
-                            return; // spare stairs and consoles.
-                        }
-                        make_rubble( {p, abs_sub.z() } );
-                        ter_set( p, t_thconc_floor );
-                    } ), center.xy(), 4 );
-                    furn_set( center.xy(), f_null );
-                    trap_set( center, tr_portal );
-                    create_anomaly( center, random_entry( valid_props ), false );
-                    break;
-                }
-                // radioactive accident.
-                case 6: {
-                    tripoint_bub_ms center( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), abs_sub.z() );
-                    if( has_flag_ter( "WALL", center.xy() ) ) {
-                        // just skip it, we don't want to risk embedding radiation out of sight.
-                        break;
-                    }
-                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
-                        set_radiation( p, 10 );
-                    } ), center.xy(), rng( 7, 12 ) );
-                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
-                        set_radiation( p, 20 );
-                    } ), center.xy(), rng( 5, 8 ) );
-                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
-                        set_radiation( p, 30 );
-                    } ), center.xy(), rng( 2, 4 ) );
-                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
-                        set_radiation( p, 50 );
-                    } ), center.xy(), 1 );
-                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
-                        if( has_flag_ter( "GOES_DOWN", p ) ||
-                            has_flag_ter( "GOES_UP", p ) ||
-                            has_flag_ter( "CONSOLE", p ) ) {
-                            return; // spare stairs and consoles.
-                        }
-                        make_rubble( {p, abs_sub.z() } );
-                        ter_set( p, t_thconc_floor );
-                    } ), center.xy(), 1 );
-
-                    place_spawns( GROUP_HAZMATBOT, 1, center.xy() + point_west,
-                                  center.xy() + point_west, 1, true );
-                    place_spawns( GROUP_HAZMATBOT, 2, center.xy() + point_west,
-                                  center.xy() + point_west, 1, true );
-
-                    // damaged mininuke/plut thrown past edge of rubble so the player can see it.
-                    int marker_x = center.x() - 2 + 4 * rng( 0, 1 );
-                    int marker_y = center.y() + rng( -2, 2 );
-                    if( one_in( 4 ) ) {
-                        spawn_item(
-                            point_bub_ms( marker_x, marker_y ), "mininuke", 1, 1, calendar::start_of_cataclysm, rng( 2, 4 )
-                        );
-                    } else {
-                        detached_ptr<item> newliquid = item::spawn( "plut_slurry_dense", calendar::start_of_cataclysm );
-                        newliquid->charges = 1;
-                        add_item_or_charges( tripoint_bub_ms( marker_x, marker_y, get_abs_sub().z() ),
-                                             std::move( newliquid ) );
-                    }
-                    break;
-                }
-                // portal with fungal invasion
-                case 7: {
-                    for( int i = 0; i < EAST_EDGE; i++ ) {
-                        for( int j = 0; j < SOUTH_EDGE; j++ ) {
-                            // Create a mostly spread fungal area throughout entire lab.
-                            if( !one_in( 5 ) && ( has_flag( "FLAT", point_bub_ms( i, j ) ) ) ) {
-                                ter_set( point_bub_ms( i, j ), t_fungus_floor_in );
-                                if( has_flag_furn( "ORGANIC", point_bub_ms( i, j ) ) ) {
-                                    furn_set( point_bub_ms( i, j ), f_fungal_clump );
-                                }
-                            } else if( has_flag_ter( "DOOR", point_bub_ms( i, j ) ) && !one_in( 5 ) ) {
-                                ter_set( point_bub_ms( i, j ), t_fungus_floor_in );
-                            } else if( has_flag_ter( "WALL", point_bub_ms( i, j ) ) && one_in( 3 ) ) {
-                                ter_set( point_bub_ms( i, j ), t_fungus_wall );
-                            }
-                        }
-                    }
-                    tripoint_bub_ms center( rng( 6, SEEX * 2 - 7 ), rng( 6, SEEY * 2 - 7 ), abs_sub.z() );
-
-                    // Make a portal surrounded by more dense fungal stuff and a fungaloid.
-                    draw_rough_circle( std::function<void( point_bub_ms )>( [this]( auto p ) {
-                        if( has_flag_ter( "GOES_DOWN", p ) ||
-                            has_flag_ter( "GOES_UP", p ) ||
-                            has_flag_ter( "CONSOLE", p ) ) {
-                            return; // spare stairs and consoles.
-                        }
-                        if( has_flag_ter( "WALL", p ) ) {
-                            ter_set( p, t_fungus_wall );
-                        } else {
-                            ter_set( p, t_fungus_floor_in );
-                            if( one_in( 3 ) ) {
-                                furn_set( p, f_flower_fungal );
-                            } else if( one_in( 10 ) ) {
-                                ter_set( p, t_marloss );
-                            }
-                        }
-                    } ), center.xy(), 3 );
-                    ter_set( center.xy(), t_fungus_floor_in );
-                    furn_set( center.xy(), f_null );
-                    trap_set( center, tr_portal );
-                    place_spawns( GROUP_FUNGI_FUNGALOID, 1, center.xy() + point_rel_ms( -2, -2 ),
-                                  center.xy() + point_rel_ms( 2, 2 ), 1, true );
-
-                    break;
-                }
-            }
-        }
-    } else if( terrain_type == "lab_finale" || terrain_type == "ice_lab_finale" ||
-               terrain_type == "central_lab_finale" || terrain_type == "tower_lab_finale" ) {
-
-        ice_lab = is_ot_match( "ice_lab", terrain_type, ot_match_type::prefix );
-        central_lab = is_ot_match( "central_lab", terrain_type, ot_match_type::prefix );
-        tower_lab = is_ot_match( "tower_lab", terrain_type, ot_match_type::prefix );
-
-        if( ice_lab ) {
-            int temperature;
-
-            if( dat.zlevel() == 0 ) {
-                temperature = -20;
-            } else {
-                temperature = static_cast<int>( -20.0 * log( -1 * dat.zlevel() ) - 45.0 );
-            }
-            set_temperature( p2, temperature );
-            set_temperature( p2 + point_rel_ms( SEEX, 0 ), temperature );
-            set_temperature( p2 + point_rel_ms( 0, SEEY ), temperature );
-            set_temperature( p2 + point_rel_ms( SEEX, SEEY ), temperature );
-        }
-
-        tw = is_ot_match( "lab", dat.north(), ot_match_type::contains ) ? 0 : 2;
-        rw = is_ot_match( "lab", dat.east(), ot_match_type::contains ) ? 1 : 2;
-        bw = is_ot_match( "lab", dat.south(), ot_match_type::contains ) ? 1 : 2;
-        lw = is_ot_match( "lab", dat.west(), ot_match_type::contains ) ? 0 : 2;
-
-        // If you remove the usage of "lab_finale_1level" here, remove it from mapgen_factory::get_usages above as well.
-        if( oter_mapgen.generate( dat, "lab_finale_1level" ) ) {
-            // If the map template hasn't handled borders, handle them in code.
-            // Rotated maps cannot handle borders and have to be caught in code.
-            // We determine if a border isn't handled by checking the east-facing
-            // border space where the door normally is -- it should be a wall or door.
-            tripoint_bub_ms east_border( 23, 11, abs_sub.z() );
-            if( !has_flag_ter( "WALL", east_border ) && !has_flag_ter( "DOOR", east_border ) ) {
-                // TODO: create a ter_reset function that does ter_set, furn_set, and i_clear?
-                ter_id lw_type = tower_lab ? t_reinforced_glass : t_concrete_wall;
-                ter_id tw_type = tower_lab ? t_reinforced_glass : t_concrete_wall;
-                ter_id rw_type = tower_lab && rw == 2 ? t_reinforced_glass : t_concrete_wall;
-                ter_id bw_type = tower_lab && bw == 2 ? t_reinforced_glass : t_concrete_wall;
-                for( int i = 0; i < SEEX * 2; i++ ) {
-                    ter_set( point_bub_ms( 23, i ), rw_type );
-                    furn_set( point_bub_ms( 23, i ), f_null );
-                    i_clear( tripoint_bub_ms( 23, i, get_abs_sub().z() ) );
-
-                    ter_set( point_bub_ms( i, 23 ), bw_type );
-                    furn_set( point_bub_ms( i, 23 ), f_null );
-                    i_clear( tripoint_bub_ms( i, 23, get_abs_sub().z() ) );
-
-                    if( lw == 2 ) {
-                        ter_set( point_bub_ms( 0, i ), lw_type );
-                        furn_set( point_bub_ms( 0, i ), f_null );
-                        i_clear( tripoint_bub_ms( 0, i, get_abs_sub().z() ) );
-                    }
-                    if( tw == 2 ) {
-                        ter_set( point_bub_ms( i, 0 ), tw_type );
-                        furn_set( point_bub_ms( i, 0 ), f_null );
-                        i_clear( tripoint_bub_ms( i, 0, get_abs_sub().z() ) );
-                    }
-                }
-                if( rw != 2 ) {
-                    ter_set( point_bub_ms( 23, 11 ), t_door_metal_c );
-                    ter_set( point_bub_ms( 23, 12 ), t_door_metal_c );
-                }
-                if( bw != 2 ) {
-                    ter_set( point_bub_ms( 11, 23 ), t_door_metal_c );
-                    ter_set( point_bub_ms( 12, 23 ), t_door_metal_c );
-                }
-            }
-        }
-
-        // Handle stairs in the unlikely case they are needed.
-        const auto maybe_insert_stairs = [this]( const oter_id & terrain,  const ter_id & t_stair_type ) {
-            if( is_ot_match( "stairs", terrain, ot_match_type::contains ) ) {
-                const auto predicate = [this]( const tripoint_bub_ms & p ) {
-                    return ter( p ) == t_thconc_floor && furn( p ) == f_null &&
-                           tr_at( p ).is_null();
-                };
-                const auto range = points_in_rectangle( { 0, 0, abs_sub.z() },
-                { SEEX * 2 - 2, SEEY * 2 - 2, abs_sub.z() } );
-                if( const auto p = random_point( range, predicate ) ) {
-                    ter_set( *p, t_stair_type );
-                }
-            }
-        };
-        maybe_insert_stairs( dat.above(), t_stairs_up );
-        maybe_insert_stairs( terrain_type, t_stairs_down );
-
-        int light_odds = 0;
-        // central labs are always fully lit, other labs have half chance of some lights.
-        if( central_lab ) {
-            light_odds = 1;
-        } else if( one_in( 2 ) ) {
-            light_odds = std::pow( rng( 1, 12 ), 1.6 );
-        }
-        if( light_odds > 0 ) {
-            for( int i = 0; i < SEEX * 2; i++ ) {
-                for( int j = 0; j < SEEY * 2; j++ ) {
-                    if( !( ( i * j ) % 2 || ( i + j ) % 4 ) && one_in( light_odds ) ) {
-                        if( t_thconc_floor == ter( point_bub_ms( i, j ) ) ||
-                            t_strconc_floor == ter( point_bub_ms( i, j ) ) ) {
-                            ter_set( point_bub_ms( i, j ), t_thconc_floor_olight );
-                        }
-                    }
                 }
             }
         }
@@ -6737,408 +6336,6 @@ bool connects_to( const oter_id &there, int dir )
     }
 }
 
-void science_room( map *m, const point_bub_ms &p1, const point_bub_ms &p2, int z, int rotate )
-{
-    int height = p2.y() - p1.y();
-    int width  = p2.x() - p1.x();
-    if( rotate % 2 == 1 ) { // Swap width & height if we're a lateral room
-        int tmp = height;
-        height  = width;
-        width   = tmp;
-    }
-    for( int i = p1.x(); i <= p2.x(); i++ ) {
-        for( int j = p1.y(); j <= p2.y(); j++ ) {
-            m->ter_set( point_bub_ms( i, j ), t_thconc_floor );
-        }
-    }
-    int area = height * width;
-    std::vector<room_type> valid_rooms;
-    if( height < 5 && width < 5 ) {
-        valid_rooms.push_back( room_closet );
-    }
-    if( height > 6 && width > 3 ) {
-        valid_rooms.push_back( room_lobby );
-    }
-    if( height > 4 || width > 4 ) {
-        valid_rooms.push_back( room_chemistry );
-        valid_rooms.push_back( room_goo );
-    }
-    if( z != 0 && ( height > 7 || width > 7 ) && height > 2 && width > 2 ) {
-        valid_rooms.push_back( room_teleport );
-    }
-    if( height > 7 && width > 7 ) {
-        valid_rooms.push_back( room_bionics );
-        valid_rooms.push_back( room_cloning );
-    }
-    if( area >= 9 ) {
-        valid_rooms.push_back( room_vivisect );
-    }
-    if( height > 5 && width > 4 ) {
-        valid_rooms.push_back( room_dorm );
-    }
-    if( width > 8 ) {
-        for( int i = 8; i < width; i += rng( 1, 2 ) ) {
-            valid_rooms.push_back( room_split );
-        }
-    }
-
-    point_bub_ms trap{ rng( p1.x() + 1, p2.x() - 1 ), rng( p1.y() + 1, p2.y() - 1 ) };
-    switch( random_entry( valid_rooms ) ) {
-        case room_closet:
-            m->place_items( item_group_id( "cleaning" ), 80, p1, p2, false,
-                            calendar::start_of_cataclysm );
-            break;
-        case room_lobby:
-            if( rotate % 2 == 0 ) { // Vertical
-                int desk = p1.y() + rng( ( height / 2 ) - ( height / 4 ),
-                                         ( height / 2 ) + 1 );
-                for( int x = p1.x() + ( width / 4 ); x < p2.x() - ( width / 4 ); x++ ) {
-                    m->furn_set( point_bub_ms( x, desk ), f_counter );
-                }
-                computer *tmpcomp = m->add_computer( tripoint_bub_ms( p2.x() - ( width / 4 ), desk, z ),
-                                                     _( "Log Console" ), 3 );
-                tmpcomp->add_option( _( "View Research Logs" ), COMPACT_RESEARCH, 0 );
-                tmpcomp->add_option( _( "Download Map Data" ), COMPACT_MAPS, 0 );
-                tmpcomp->add_failure( COMPFAIL_SHUTDOWN );
-                tmpcomp->add_failure( COMPFAIL_ALARM );
-                tmpcomp->add_failure( COMPFAIL_DAMAGE );
-                m->place_spawns( GROUP_TURRET, 1,
-                                 point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ), desk ),
-                                 point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ), desk ), 1, true );
-            } else {
-                int desk = p1.x() + rng( ( height / 2 ) - ( height / 4 ),
-                                         ( height / 2 ) + 1 );
-                for( int y = p1.y() + ( width / 4 ); y < p2.y() - ( width / 4 ); y++ ) {
-                    m->furn_set( point_bub_ms( desk, y ), f_counter );
-                }
-                computer *tmpcomp = m->add_computer( tripoint_bub_ms( desk, p2.y() - ( width / 4 ), z ),
-                                                     _( "Log Console" ), 3 );
-                tmpcomp->add_option( _( "View Research Logs" ), COMPACT_RESEARCH, 0 );
-                tmpcomp->add_option( _( "Download Map Data" ), COMPACT_MAPS, 0 );
-                tmpcomp->add_failure( COMPFAIL_SHUTDOWN );
-                tmpcomp->add_failure( COMPFAIL_ALARM );
-                tmpcomp->add_failure( COMPFAIL_DAMAGE );
-                m->place_spawns( GROUP_TURRET, 1,
-                                 point_bub_ms( desk, ( ( p1.y() + p2.y() ) / 2 ) ),
-                                 point_bub_ms( desk, ( ( p1.y() + p2.y() ) / 2 ) ), 1, true );
-            }
-            break;
-        case room_chemistry:
-            if( rotate % 2 == 0 ) { // Vertical
-                for( int x = p1.x(); x <= p2.x(); x++ ) {
-                    if( x % 3 == 0 ) {
-                        for( int y = p1.y() + 1; y <= p2.y() - 1; y++ ) {
-                            m->furn_set( point_bub_ms( x, y ), f_counter );
-                        }
-                        if( one_in( 3 ) ) {
-                            m->place_items( item_group_id( "mut_lab" ), 35, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x,
-                                            p2.y() - 1 ), false,
-                                            calendar::start_of_cataclysm );
-                        } else {
-                            m->place_items( item_group_id( "chem_lab" ), 70, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x,
-                                            p2.y() - 1 ), false,
-                                            calendar::start_of_cataclysm );
-                        }
-                    }
-                }
-            } else {
-                for( int y = p1.y(); y <= p2.y(); y++ ) {
-                    if( y % 3 == 0 ) {
-                        for( int x = p1.x() + 1; x <= p2.x() - 1; x++ ) {
-                            m->furn_set( point_bub_ms( x, y ), f_counter );
-                        }
-                        if( one_in( 3 ) ) {
-                            m->place_items( item_group_id( "mut_lab" ), 35, point_bub_ms( p1.x() + 1, y ),
-                                            point_bub_ms( p2.x() - 1, y ), false,
-                                            calendar::start_of_cataclysm );
-                        } else {
-                            m->place_items( item_group_id( "chem_lab" ), 70, point_bub_ms( p1.x() + 1, y ),
-                                            point_bub_ms( p2.x() - 1, y ), false,
-                                            calendar::start_of_cataclysm );
-                        }
-                    }
-                }
-            }
-            break;
-        case room_teleport:
-            m->furn_set( point_bub_ms( ( p1.x() + p2.x() ) / 2, ( ( p1.y() + p2.y() ) / 2 ) ), f_counter );
-            m->furn_set( point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ) + 1,
-                                       ( ( p1.y() + p2.y() ) / 2 ) ),
-                         f_counter );
-            m->furn_set( point_bub_ms( ( p1.x() + p2.x() ) / 2, ( ( p1.y() + p2.y() ) / 2 ) + 1 ),
-                         f_counter );
-            m->furn_set( point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ) + 1,
-                                       ( ( p1.y() + p2.y() ) / 2 ) + 1 ),
-                         f_counter );
-            mtrap_set( m, trap, tr_telepad );
-            m->place_items( item_group_id( "teleport" ), 70, point_bub_ms( ( p1.x() + p2.x() ) / 2,
-                            ( ( p1.y() + p2.y() ) / 2 ) ),
-                            point_bub_ms( ( ( p1.x() + p2.x() ) / 2 ) + 1, ( ( p1.y() + p2.y() ) / 2 ) + 1 ),
-                            false,
-                            calendar::start_of_cataclysm );
-            break;
-        case room_goo:
-            do {
-                mtrap_set( m, trap, tr_goo );
-                trap.x() = rng( p1.x() + 1, p2.x() - 1 );
-                trap.y() = rng( p1.y() + 1, p2.y() - 1 );
-            } while( !one_in( 5 ) );
-            if( rotate == 0 ) {
-                mremove_trap( m, point_bub_ms( p1.x(), p2.y() ) );
-                m->furn_set( point_bub_ms( p1.x(), p2.y() ), f_freezer );
-                m->place_items( item_group_id( "goo" ), 60, point_bub_ms( p1.x(), p2.y() ), point_bub_ms( p1.x(),
-                                p2.y() ), false,
-                                calendar::start_of_cataclysm );
-            } else if( rotate == 1 ) {
-                mremove_trap( m, p1 );
-                m->furn_set( p1, f_fridge );
-                m->place_items( item_group_id( "goo" ), 60, p1, p1, false,
-                                calendar::start_of_cataclysm );
-            } else if( rotate == 2 ) {
-                mremove_trap( m, point_bub_ms( p2.x(), p1.y() ) );
-                m->furn_set( point_bub_ms( p2.x(), p1.y() ), f_freezer );
-                m->place_items( item_group_id( "goo" ), 60, point_bub_ms( p2.x(), p1.y() ), point_bub_ms( p2.x(),
-                                p1.y() ), false,
-                                calendar::start_of_cataclysm );
-            } else {
-                mremove_trap( m, p2 );
-                m->furn_set( p2, f_fridge );
-                m->place_items( item_group_id( "goo" ), 60, p2, p2, false,
-                                calendar::start_of_cataclysm );
-            }
-            break;
-        case room_cloning:
-            for( int x = p1.x() + 1; x <= p2.x() - 1; x++ ) {
-                for( int y = p1.y() + 1; y <= p2.y() - 1; y++ ) {
-                    if( x % 3 == 0 && y % 3 == 0 ) {
-                        m->furn_set( point_bub_ms( x, y ), furn_str_id( "f_cloning_vat" ) );
-                        m->place_items( item_group_id( "cloning_vat" ), 20, point_bub_ms( x, y ), point_bub_ms( x, y ),
-                                        false,
-                                        calendar::start_of_cataclysm );
-                    }
-                }
-            }
-            break;
-        case room_vivisect:
-            if( rotate == 0 ) {
-                for( int x = p1.x(); x <= p2.x(); x++ ) {
-                    m->furn_set( point_bub_ms( x, p2.y() - 1 ), f_counter );
-                }
-                m->place_items( item_group_id( "dissection" ), 80, point_bub_ms( p1.x(), p2.y() - 1 ),
-                                p2 + point_north, false,
-                                calendar::start_of_cataclysm );
-            } else if( rotate == 1 ) {
-                for( int y = p1.y(); y <= p2.y(); y++ ) {
-                    m->furn_set( point_bub_ms( p1.x() + 1, y ), f_counter );
-                }
-                m->place_items( item_group_id( "dissection" ), 80, p1 + point_east, point_bub_ms( p1.x() + 1,
-                                p2.y() ), false,
-                                calendar::start_of_cataclysm );
-            } else if( rotate == 2 ) {
-                for( int x = p1.x(); x <= p2.x(); x++ ) {
-                    m->furn_set( point_bub_ms( x, p1.y() + 1 ), f_counter );
-                }
-                m->place_items( item_group_id( "dissection" ), 80, p1 + point_south, point_bub_ms( p2.x(),
-                                p1.y() + 1 ), false,
-                                calendar::start_of_cataclysm );
-            } else if( rotate == 3 ) {
-                for( int y = p1.y(); y <= p2.y(); y++ ) {
-                    m->furn_set( point_bub_ms( p2.x() - 1, y ), f_counter );
-                }
-                m->place_items( item_group_id( "dissection" ), 80, point_bub_ms( p2.x() - 1, p1.y() ),
-                                p2 + point_west, false,
-                                calendar::start_of_cataclysm );
-            }
-            mtrap_set( m, point_bub_ms( ( p1.x() + p2.x() ) / 2, ( ( p1.y() + p2.y() ) / 2 ) ),
-                       tr_dissector );
-            m->place_spawns( GROUP_LAB_CYBORG, 10,
-                             point_bub_ms( ( ( ( p1.x() + p2.x() ) / 2 ) + 1 ),
-                                           ( ( ( p1.y() + p2.y() ) / 2 ) + 1 ) ),
-                             point_bub_ms( ( ( ( p1.x() + p2.x() ) / 2 ) + 1 ),
-                                           ( ( ( p1.y() + p2.y() ) / 2 ) + 1 ) ), 1, true );
-            break;
-
-        case room_bionics:
-            if( rotate % 2 == 0 ) {
-                int biox = p1.x() + 2;
-                int bioy = ( ( p1.y() + p2.y() ) / 2 );
-                mapf::formatted_set_simple( m, point_bub_ms( biox - 1, bioy - 1 ),
-                                            "---\n"
-                                            "|c|\n"
-                                            "-=-\n",
-                                            mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
-                                            mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
-                                point_bub_ms( biox, bioy ),
-                                false,
-                                calendar::start_of_cataclysm );
-
-                m->ter_set( point_bub_ms( biox, bioy + 2 ), t_console );
-                computer *tmpcomp = m->add_computer( tripoint_bub_ms( biox,  bioy + 2, z ), _( "Bionic access" ),
-                                                     2 );
-                tmpcomp->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
-                tmpcomp->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
-                tmpcomp->add_failure( COMPFAIL_MANHACKS );
-                tmpcomp->add_failure( COMPFAIL_SECUBOTS );
-                tmpcomp->set_access_denied_msg(
-                    _( "ERROR!  Access denied!  Unauthorized access will be met with lethal force!" ) );
-
-                biox = p2.x() - 2;
-                mapf::formatted_set_simple( m, point_bub_ms( biox - 1, bioy - 1 ),
-                                            "-=-\n"
-                                            "|c|\n"
-                                            "---\n",
-                                            mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
-                                            mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
-                                point_bub_ms( biox, bioy ),
-                                false,
-                                calendar::start_of_cataclysm );
-
-                m->ter_set( point_bub_ms( biox, bioy - 2 ), t_console );
-                computer *tmpcomp2 = m->add_computer( tripoint_bub_ms( biox,  bioy - 2, z ), _( "Bionic access" ),
-                                                      2 );
-                tmpcomp2->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
-                tmpcomp2->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
-                tmpcomp2->add_failure( COMPFAIL_MANHACKS );
-                tmpcomp2->add_failure( COMPFAIL_SECUBOTS );
-                tmpcomp2->set_access_denied_msg(
-                    _( "ERROR!  Access denied!  Unauthorized access will be met with lethal force!" ) );
-            } else {
-                int bioy = p1.y() + 2;
-                int biox = ( ( p1.x() + p2.x() ) / 2 );
-                mapf::formatted_set_simple( m, point_bub_ms( biox - 1, bioy - 1 ),
-                                            "|-|\n"
-                                            "|c=\n"
-                                            "|-|\n",
-                                            mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
-                                            mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
-                                point_bub_ms( biox, bioy ),
-                                false,
-                                calendar::start_of_cataclysm );
-
-                m->ter_set( point_bub_ms( biox + 2, bioy ), t_console );
-                computer *tmpcomp = m->add_computer( tripoint_bub_ms( biox + 2,  bioy, z ), _( "Bionic access" ),
-                                                     2 );
-                tmpcomp->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
-                tmpcomp->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
-                tmpcomp->add_failure( COMPFAIL_MANHACKS );
-                tmpcomp->add_failure( COMPFAIL_SECUBOTS );
-                tmpcomp->set_access_denied_msg(
-                    _( "ERROR!  Access denied!  Unauthorized access will be met with lethal force!" ) );
-
-                bioy = p2.y() - 2;
-                mapf::formatted_set_simple( m, point_bub_ms( biox - 1, bioy - 1 ),
-                                            "|-|\n"
-                                            "=c|\n"
-                                            "|-|\n",
-                                            mapf::ter_bind( "- | =", t_concrete_wall, t_concrete_wall, t_reinforced_glass ),
-                                            mapf::furn_bind( "c", f_counter ) );
-                m->place_items( item_group_id( "bionics_common" ), 70, point_bub_ms( biox, bioy ),
-                                point_bub_ms( biox, bioy ),
-                                false, calendar::start_of_cataclysm );
-
-                m->ter_set( point_bub_ms( biox - 2, bioy ), t_console );
-                computer *tmpcomp2 = m->add_computer( tripoint_bub_ms( biox - 2,  bioy, z ), _( "Bionic access" ),
-                                                      2 );
-                tmpcomp2->add_option( _( "Manifest" ), COMPACT_LIST_BIONICS, 0 );
-                tmpcomp2->add_option( _( "Open Chambers" ), COMPACT_RELEASE_BIONICS, 3 );
-                tmpcomp2->add_failure( COMPFAIL_MANHACKS );
-                tmpcomp2->add_failure( COMPFAIL_SECUBOTS );
-                tmpcomp2->set_access_denied_msg(
-                    _( "ERROR!  Access denied!  Unauthorized access will be met with lethal force!" ) );
-            }
-            break;
-        case room_dorm:
-            if( rotate % 2 == 0 ) {
-                for( int y = p1.y() + 1; y <= p2.y() - 1; y += 3 ) {
-                    m->furn_set( point_bub_ms( p1.x(), y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p1.x(), y ), point_bub_ms( p1.x(), y ),
-                                    false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( p1.x() + 1, y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p1.x() + 1, y ), point_bub_ms( p1.x() + 1,
-                                    y ), false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( p2.x(), y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p2.x(), y ), point_bub_ms( p2.x(), y ),
-                                    false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( p2.x() - 1, y ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( p2.x() - 1, y ), point_bub_ms( p2.x() - 1,
-                                    y ), false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( p1.x(), y + 1 ), f_dresser );
-                    m->furn_set( point_bub_ms( p2.x(), y + 1 ), f_dresser );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( p1.x(), y + 1 ), point_bub_ms( p1.x(),
-                                    y + 1 ), false,
-                                    calendar::start_of_cataclysm );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( p2.x(), y + 1 ), point_bub_ms( p2.x(),
-                                    y + 1 ), false,
-                                    calendar::start_of_cataclysm );
-                }
-            } else if( rotate % 2 == 1 ) {
-                for( int x = p1.x() + 1; x <= p2.x() - 1; x += 3 ) {
-                    m->furn_set( point_bub_ms( x, p1.y() ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p1.y() ), point_bub_ms( x, p1.y() ),
-                                    false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( x, p1.y() + 1 ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p1.y() + 1 ), point_bub_ms( x,
-                                    p1.y() + 1 ), false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( x, p2.y() ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p2.y() ), point_bub_ms( x, p2.y() ),
-                                    false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( x, p2.y() - 1 ), f_bed );
-                    m->place_items( item_group_id( "bed" ), 60, point_bub_ms( x, p2.y() - 1 ), point_bub_ms( x,
-                                    p2.y() - 1 ), false,
-                                    calendar::start_of_cataclysm );
-                    m->furn_set( point_bub_ms( x + 1, p1.y() ), f_dresser );
-                    m->furn_set( point_bub_ms( x + 1, p2.y() ), f_dresser );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( x + 1, p1.y() ), point_bub_ms( x + 1,
-                                    p1.y() ), false,
-                                    calendar::start_of_cataclysm );
-                    m->place_items( item_group_id( "dresser" ), 70, point_bub_ms( x + 1, p2.y() ), point_bub_ms( x + 1,
-                                    p2.y() ), false,
-                                    calendar::start_of_cataclysm );
-                }
-            }
-            m->place_items( item_group_id( "lab_dorm" ), 84, p1, p2, false,
-                            calendar::start_of_cataclysm );
-            break;
-        case room_split:
-            if( rotate % 2 == 0 ) {
-                int w1 = ( ( p1.x() + p2.x() ) / 2 ) - 2;
-                int w2 = ( ( p1.x() + p2.x() ) / 2 ) + 2;
-                for( int y = p1.y(); y <= p2.y(); y++ ) {
-                    m->ter_set( point_bub_ms( w1, y ), t_concrete_wall );
-                    m->ter_set( point_bub_ms( w2, y ), t_concrete_wall );
-                }
-                m->ter_set( point_bub_ms( w1, ( ( p1.y() + p2.y() ) / 2 ) ), t_door_glass_frosted_c );
-                m->ter_set( point_bub_ms( w2, ( ( p1.y() + p2.y() ) / 2 ) ), t_door_glass_frosted_c );
-                science_room( m, p1, point_bub_ms( w1 - 1, p2.y() ), z, 1 );
-                science_room( m, point_bub_ms( w2 + 1, p1.y() ), p2, z, 3 );
-            } else {
-                int w1 = ( ( p1.y() + p2.y() ) / 2 ) - 2;
-                int w2 = ( ( p1.y() + p2.y() ) / 2 ) + 2;
-                for( int x = p1.x(); x <= p2.x(); x++ ) {
-                    m->ter_set( point_bub_ms( x, w1 ), t_concrete_wall );
-                    m->ter_set( point_bub_ms( x, w2 ), t_concrete_wall );
-                }
-                m->ter_set( point_bub_ms( ( p1.x() + p2.x() ) / 2, w1 ), t_door_glass_frosted_c );
-                m->ter_set( point_bub_ms( ( p1.x() + p2.x() ) / 2, w2 ), t_door_glass_frosted_c );
-                science_room( m, p1, point_bub_ms( p2.x(), w1 - 1 ), z, 2 );
-                science_room( m, point_bub_ms( p1.x(), w2 + 1 ), p2, z, 0 );
-            }
-            break;
-        default:
-            break;
-    }
-}
-
 void map::create_anomaly( const tripoint_bub_ms &cp, artifact_natural_property prop,
                           bool create_rubble )
 {
@@ -7507,14 +6704,37 @@ std::pair<std::map<ter_id, int>, std::map<furn_id, int>> get_changed_ids_from_up
 
 bool run_mapgen_func( const std::string &mapgen_id, mapgendata &dat )
 {
+    ZoneScopedN( "run_mapgen_func" );
     return oter_mapgen.generate( dat, mapgen_id );
 }
 
-auto omt_mapgen_uses_lua( const std::string &dim_id, const tripoint_abs_omt &omt_addr ) -> bool
+auto pick_mapgen_func( const std::string &mapgen_id ) -> std::shared_ptr<mapgen_function>
 {
-    overmapbuffer &omap = get_overmapbuffer( dim_id );
-    const oter_id terrain_type = omap.ter( omt_addr );
-    return oter_mapgen.has_lua_generator( terrain_type->get_mapgen_id() );
+    ZoneScopedN( "pick_mapgen_func" );
+    return oter_mapgen.pick( mapgen_id );
+}
+
+auto mapgen_function_needs_main_thread( const std::shared_ptr<mapgen_function> &func ) -> bool
+{
+    if( !func ) {
+        return false;
+    }
+    if( func->is_lua_generator() ) {
+        return true;
+    }
+    const auto json_func = std::dynamic_pointer_cast<mapgen_function_json>( func );
+    return json_func && json_func->predecessor_mapgen != oter_str_id::NULL_ID() &&
+           oter_mapgen.has_direct_lua_generator( json_func->predecessor_mapgen.id().str() );
+}
+
+auto mapgen_has_any_direct_lua_generator() -> bool
+{
+    return oter_mapgen.has_any_direct_lua_generator();
+}
+
+auto mapgen_id_has_direct_lua_generator( const std::string &mapgen_id ) -> bool
+{
+    return oter_mapgen.has_direct_lua_generator( mapgen_id );
 }
 
 mapgen_parameters get_map_special_params( const std::string &mapgen_id )

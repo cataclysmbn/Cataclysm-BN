@@ -721,7 +721,6 @@ void game::chat()
             const auto &to = p.value();
             if( npcselect == follower_count ) {
                 for( npc *them : followers ) {
-                    tripoint_abs_ms( here.bub_to_abs( to ) );
                     them->goto_to_this_pos = here.bub_to_abs( to );
                 }
                 yell_msg = _( "Everyone move there!" );

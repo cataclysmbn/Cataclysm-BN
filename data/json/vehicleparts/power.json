@@ -332,7 +332,7 @@
         "using": [ [ "welding_standard", 5 ], [ "vehicle_repair_electronics", 2 ] ]
       }
     },
-    "flags": [ "REACTOR", "PERPETUAL", "OBSTACLE" ],
+    "flags": [ "PERPETUAL", "OBSTACLE" ],
     "breaks_into": [
       { "item": "scrap", "count": [ 4, 16 ] },
       { "item": "steel_chunk", "count": [ 1, 6 ] },

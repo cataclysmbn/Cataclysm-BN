@@ -5,6 +5,8 @@
 #include "map_helpers.h"
 #include "game.h"
 #include "state_helpers.h"
+#include "vehicle.h"
+#include "veh_type.h"
 
 void old_scent_map_update( const tripoint_bub_ms &center, map &m,
                            std::array<std::array<int, MAPSIZE_Y>, MAPSIZE_X> &grscent );
@@ -121,6 +123,23 @@ void old_scent_map_update( const tripoint_bub_ms &center, map &m,
             }
         }
     }
+}
+
+TEST_CASE( "scent_blockers_ignore_vehicle_parts_outside_cache", "[scent]" )
+{
+    clear_all_state();
+
+    auto &here = get_map();
+    auto *const veh = here.add_vehicle( vproto_id( "none" ), tripoint_bub_ms::zero(), 0_degrees, 0,
+                                        0 );
+    REQUIRE( veh != nullptr );
+    REQUIRE( veh->install_part( tripoint_mnt_veh( -1, 0, 0 ), vpart_id( "windshield" ), true ) >= 0 );
+    REQUIRE( veh->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "windshield" ), true ) >= 0 );
+
+    auto scent_transfer = std::vector<char>( MAPSIZE_X * MAPSIZE_Y, 5 );
+    here.scent_blockers( scent_transfer, MAPSIZE_Y, point_bub_ms( -5, -5 ), point_bub_ms( 5, 5 ) );
+
+    CHECK( scent_transfer[MAPSIZE_Y] == 1 );
 }
 
 TEST_CASE( "scent_matches_old", "[.]" )

@@ -113,7 +113,7 @@
       [ "scuba_boat", 25 ],
       [ "fishing_boat", 25 ],
       [ "barge_trailer", 50 ],
-      [ "boat_motor_smuggler", 50 ],
+      [ "boat_motor_smuggler", 10 ],
       [ "boat_motor_police", 150 ],
       [ "CG_patrol_boat", 75 ],
       [ "CG_cutter", 25 ],
@@ -134,7 +134,7 @@
       [ "raft", 100 ],
       [ "boat_motor_single", 200 ],
       [ "fishing_boat", 100 ],
-      [ "boat_motor_smuggler", 100 ],
+      [ "boat_motor_smuggler", 125 ],
       [ "boat_motor_police", 125 ],
       [ "CG_patrol_boat", 25 ],
       [ "sailboat", 150 ],
@@ -159,7 +159,7 @@
       [ "barge_trailer", 50 ],
       [ "water_autosweeper", 50 ],
       [ "boat_motor_single", 115 ],
-      [ "boat_motor_smuggler", 60 ],
+      [ "boat_motor_smuggler", 10 ],
       [ "boat_motor_police", 30 ],
       [ "CG_patrol_boat", 20 ],
       [ "hovercraft_motor_single", 125 ]
@@ -173,7 +173,6 @@
       [ "boat_motor_single", 750 ],
       [ "boat_motor_police", 75 ],
       [ "CG_patrol_boat", 25 ],
-      [ "boat_motor_smuggler", 50 ],
       [ "DUKW", 50 ],
       [ "hovercraft_motor_single", 50 ]
     ]

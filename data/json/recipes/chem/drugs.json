@@ -13,6 +13,26 @@
   },
   {
     "type": "recipe",
+    "result": "fungal_painkiller",
+    "category": "CC_CHEM",
+    "subcategory": "CSC_CHEM_DRUGS",
+    "skill_used": "cooking",
+    "skills_required": [ "firstaid", 4 ],
+    "difficulty": 9,
+    "time": "20 m",
+    "autolearn": true,
+    "flags": [ "BLIND_EASY" ],
+    "batch_time_factors": [ 80, 5 ],
+    "qualities": [ { "id": "CHEM", "level": 3 } ],
+    "components": [
+      [ [ "chem_methanol", 1 ] ],
+      [ [ "oxycodone", 1 ], [ "codeine", 2 ] ],
+      [ [ "chem_muriatic_acid", 1 ] ],
+      [ [ "veggy_tainted", 1 ] ]
+    ]
+  },
+  {
+    "type": "recipe",
     "result": "tobacco",
     "category": "CC_CHEM",
     "subcategory": "CSC_CHEM_DRUGS",

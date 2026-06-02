@@ -168,6 +168,27 @@ static void test_vehicle_drag(
     }
 }
 
+TEST_CASE( "water drag remains positive with excess floating parts", "[vehicle] [engine]" )
+{
+    clear_game_drag( ter_id( "t_pavement" ) );
+
+    auto *const veh_ptr = get_map().add_vehicle( vproto_id( "none" ), tripoint_bub_ms( 60, 60, 0 ),
+                          0_degrees, 0, 0 );
+    REQUIRE( veh_ptr != nullptr );
+
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "frame_vertical" ),
+                                    true ) >= 0 );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh( 0, 0, 0 ), vpart_id( "boat_board" ),
+                                    true ) >= 0 );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh( 1, 0, 0 ), vpart_id( "sea_scooter_hull" ),
+                                    true ) >= 0 );
+    REQUIRE( veh_ptr->install_part( tripoint_mnt_veh( 2, 0, 0 ), vpart_id( "sea_scooter_hull" ),
+                                    true ) >= 0 );
+
+    CHECK( veh_ptr->coeff_water_drag() > 0.0 );
+    CHECK( veh_ptr->water_hull_height() == Approx( 0.8 ) );
+}
+
 std::vector<std::string> vehs_to_test_drag = {
     {
         "bicycle_test",

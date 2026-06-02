@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -11,9 +12,11 @@
 #include "cata_utility.h"
 #include "coordinates.h"
 #include "damage.h"
+#include "debug.h"
 #include "enums.h"
 #include "game.h"
 #include "item.h"
+#include "json.h"
 #include "map.h"
 #include "map_helpers.h"
 #include "mongroup.h"
@@ -54,8 +57,8 @@ auto vehicle_points_contain_monster( const std::set<tripoint_abs_ms> &vehicle_po
     return std::ranges::any_of( vehicle_points, point_has_monster );
 }
 
-auto make_horde_vehicle_spawn_fixture( const horde_vehicle_spawn_options &options )
--> horde_vehicle_spawn_fixture
+auto make_horde_vehicle_spawn_fixture(
+    const horde_vehicle_spawn_options &options ) -> horde_vehicle_spawn_fixture
 {
     clear_all_state();
     ACTIVE_OVERMAP_BUFFER.clear();
@@ -108,7 +111,143 @@ auto make_horde_vehicle_spawn_fixture( const horde_vehicle_spawn_options &option
     return horde_vehicle_spawn_fixture{ .vehicle_points = vehicle_points, .horde = horde };
 }
 
+auto vehicle_with_legacy_pivot_json() -> std::string
+{
+    return R"json(
+           {
+           "type": "none",
+           "posx": 5,
+           "posy": 6,
+           "om_id": 0,
+           "faceDir": 180,
+           "moveDir": 180,
+           "turn_dir": 180,
+           "velocity": 0,
+           "falling": false,
+           "floating": false,
+           "flying": false,
+           "cruise_velocity": 0,
+           "vertical_velocity": 0,
+           "name": "legacy pivot test vehicle",
+           "owner": "",
+           "old_owner": "",
+           "parts": [
+           {
+           "id": "frame_horizontal",
+           "mount_dx": 0,
+           "mount_dy": 0,
+           "open": false,
+           "direction": 0,
+           "blood": 0,
+           "proxy_part_id": "null",
+           "proxy_sym": 0,
+           "enabled": false,
+           "flags": 0,
+           "passenger_id": -1,
+           "crew_id": -1,
+           "items": [],
+           "ammo_pref": "null",
+           "part_color": [ 0, 0, 0, 0 ]
+       }
+           ],
+           "pivot": [ -1, 0 ],
+           "zones": []
+       }
+           )json";
+}
+
+auto vehicle_with_invalid_part_and_legacy_pivot_json() -> std::string
+{
+    return R"json(
+           {
+           "type": "none",
+           "posx": 5,
+           "posy": 6,
+           "om_id": 0,
+           "faceDir": 180,
+           "moveDir": 180,
+           "turn_dir": 180,
+           "velocity": 0,
+           "falling": false,
+           "floating": false,
+           "flying": false,
+           "cruise_velocity": 0,
+           "vertical_velocity": 0,
+           "name": "legacy pivot invalid part test vehicle",
+           "owner": "",
+           "old_owner": "",
+           "parts": [
+           {
+           "id": "missing_saved_vehicle_part",
+           "mount_dx": 99,
+           "mount_dy": 99,
+           "open": false,
+           "direction": 0,
+           "blood": 0,
+           "proxy_part_id": "null",
+           "proxy_sym": 0,
+           "enabled": false,
+           "flags": 0,
+           "passenger_id": -1,
+           "crew_id": -1,
+           "items": [],
+           "ammo_pref": "null",
+           "part_color": [ 0, 0, 0, 0 ]
+       },
+           {
+           "id": "frame_horizontal",
+           "mount_dx": 0,
+           "mount_dy": 0,
+           "open": false,
+           "direction": 0,
+           "blood": 0,
+           "proxy_part_id": "null",
+           "proxy_sym": 0,
+           "enabled": false,
+           "flags": 0,
+           "passenger_id": -1,
+           "crew_id": -1,
+           "items": [],
+           "ammo_pref": "null",
+           "part_color": [ 0, 0, 0, 0 ]
+       }
+           ],
+           "pivot": [ -1, 0 ],
+           "zones": []
+       }
+           )json";
+}
+
 } // namespace
+
+TEST_CASE( "vehicle deserialize accepts legacy two coordinate pivot", "[vehicle][save]" )
+{
+    auto json = std::istringstream( vehicle_with_legacy_pivot_json() );
+    auto jsin = JsonIn( json );
+    auto veh = vehicle();
+
+    REQUIRE( jsin.read( veh, true ) );
+    CHECK( veh.mount_to_abs( tripoint_mnt_veh( -1, 0, 0 ) ) == tripoint_abs_ms( 5, 6, 0 ) );
+    CHECK( veh.mount_to_abs( tripoint_mnt_veh( 0, 0, 0 ) ) == tripoint_abs_ms( 4, 6, 0 ) );
+}
+
+TEST_CASE( "vehicle deserialize keeps valid saved parts after an invalid part", "[vehicle][save]" )
+{
+    auto json = std::istringstream( vehicle_with_invalid_part_and_legacy_pivot_json() );
+    auto jsin = JsonIn( json );
+    auto veh = vehicle();
+    auto loaded = false;
+
+    const auto debug_msg = capture_debugmsg_during( [&]() {
+        loaded = jsin.read( veh, true );
+    } );
+
+    REQUIRE( loaded );
+    CHECK( debug_msg.find( "Skipping invalid saved vehicle part" ) != std::string::npos );
+    CHECK( debug_msg.find( "missing_saved_vehicle_part" ) != std::string::npos );
+    CHECK( veh.part_count() == 1 );
+    CHECK( veh.mount_to_abs( tripoint_mnt_veh( 0, 0, 0 ) ) == tripoint_abs_ms( 4, 6, 0 ) );
+}
 
 TEST_CASE( "detaching_vehicle_unboards_passengers" )
 {

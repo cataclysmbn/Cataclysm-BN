@@ -940,23 +940,6 @@ bool oter_t::is_hardcoded() const
 {
     // TODO: This set only exists because so does the monstrous 'if-else' statement in @ref map::draw_map(). Get rid of both.
     static const std::set<std::string> hardcoded_mapgen = {
-        "ants_lab",
-        "ants_lab_stairs",
-        "ice_lab",
-        "ice_lab_stairs",
-        "ice_lab_core",
-        "ice_lab_finale",
-        "central_lab",
-        "central_lab_stairs",
-        "central_lab_core",
-        "central_lab_finale",
-        "tower_lab",
-        "tower_lab_stairs",
-        "tower_lab_finale",
-        "lab",
-        "lab_core",
-        "lab_stairs",
-        "lab_finale",
         "looted_building",  // pseudo-terrain
         "mine",
         "mine_down",
@@ -3846,6 +3829,7 @@ void overmap::move_hordes()
                 type.id == mtype_id( "mon_jabberwock" ) || // Jabberwockies are an exception.
                 this_monster.get_speed() <= 30 || // So are very slow zombies, like crawling zombies.
                 this_monster.has_flag( MF_IMMOBILE ) || // Also exempt anything stationary.
+                this_monster.has_flag( MF_STATIONARY ) || // Also exempt anything stationary.
                 this_monster.has_effect( effect_pet ) || // "Zombie pet" zlaves are, too.
                 !this_monster.will_join_horde( INT_MAX ) || // So are zombies who won't join a horde of any size.
                 this_monster.mission_id != -1 // We mustn't delete monsters that are related to missions.
@@ -4910,7 +4894,7 @@ void overmap::place_cities()
     }
 }
 
-overmap_special_id overmap::pick_random_building_to_place( int town_dist,
+overmap_special_id overmap::pick_random_building_to_place( int town_dist, int town_size,
         bool attempt_finale_place ) const
 {
     const city_settings &city_spec = settings->city_spec;
@@ -4933,11 +4917,19 @@ overmap_special_id overmap::pick_random_building_to_place( int town_dist,
         //return overmap_special_id( "megastore" );
         return city_spec.pick_finale();
     } else if( shop_normal > town_dist ) {
-        return city_spec.pick_shop();
+        if( town_size > 10 ) {
+            return city_spec.pick_urban_shop();
+        } else {
+            return city_spec.pick_shop();
+        }
     } else if( park_normal > town_dist ) {
         return city_spec.pick_park();
     } else {
-        return city_spec.pick_house();
+        if( town_size > 10 ) {
+            return city_spec.pick_urban_house();
+        } else {
+            return city_spec.pick_house();
+        }
     }
 }
 
@@ -4950,7 +4942,7 @@ bool overmap::place_building( const tripoint_om_omt &p, om_direction::type dir, 
     const int town_dist = ( trig_dist( building_pos.xy(), town.pos ) * 100 ) / std::max( town.size, 1 );
 
     for( size_t retries = 10; retries > 0; --retries ) {
-        const overmap_special_id building_tid = pick_random_building_to_place( town_dist,
+        const overmap_special_id building_tid = pick_random_building_to_place( town_dist, town.size,
                                                 attempt_finale_place );
 
         if( !building_tid.is_valid() ) {

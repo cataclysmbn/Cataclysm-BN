@@ -81,6 +81,16 @@ void VehicleGroup::load( const JsonObject &jo )
     }
 }
 
+void VehicleGroup::check()
+{
+    for( const auto &vgroup : vgroups ) {
+        for( const auto &veh : vgroup.second.vehicles ) {
+            if( !veh.obj.is_valid() ) {
+                debugmsg( "Invalid vehicle %s in Vehicle Group %s", veh.obj, vgroup.first );
+            }
+        }
+    }
+}
 void VehicleGroup::reset()
 {
     vgroups.clear();

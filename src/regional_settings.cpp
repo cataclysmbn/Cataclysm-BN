@@ -555,7 +555,9 @@ void load_region_settings( const JsonObject &jo )
             }
         };
         load_building_types( "houses", new_region.city_spec.houses );
+        load_building_types( "urban_houses", new_region.city_spec.urban_houses );
         load_building_types( "shops", new_region.city_spec.shops );
+        load_building_types( "urban_shops", new_region.city_spec.urban_shops );
         load_building_types( "parks", new_region.city_spec.parks );
         if( cjo.has_member( "finales" ) ) {
             load_building_types( "finales", new_region.city_spec.finales );
@@ -761,7 +763,9 @@ void apply_region_overlay( const JsonObject &jo, regional_settings &region )
         }
     };
     load_building_types( "houses", region.city_spec.houses );
+    load_building_types( "urban_houses", region.city_spec.urban_houses );
     load_building_types( "shops", region.city_spec.shops );
+    load_building_types( "urban_shops", region.city_spec.urban_shops );
     load_building_types( "parks", region.city_spec.parks );
     if( cityjo.has_member( "finales" ) ) {
         load_building_types( "finales", region.city_spec.finales );
@@ -1074,9 +1078,19 @@ overmap_special_id city_settings::pick_house() const
     return houses.pick()->id;
 }
 
+overmap_special_id city_settings::pick_urban_house() const
+{
+    return urban_houses.pick()->id;
+}
+
 overmap_special_id city_settings::pick_shop() const
 {
     return shops.pick()->id;
+}
+
+overmap_special_id city_settings::pick_urban_shop() const
+{
+    return urban_shops.pick()->id;
 }
 
 overmap_special_id city_settings::pick_park() const
@@ -1092,7 +1106,9 @@ overmap_special_id city_settings::pick_finale() const
 void city_settings::finalize()
 {
     houses.finalize();
+    urban_houses.finalize();
     shops.finalize();
+    urban_shops.finalize();
     parks.finalize();
     if( !finales.unfinalized_buildings.empty() ) {
         finales.finalize();

@@ -330,7 +330,7 @@ std::optional<std::string> player_activity::get_progress_message( const avatar &
                                                         speed.moves_per_turn() ) ) );
             }
         } else {
-            if( !targets.empty() && targets.front().is_accessible() ) {
+            if( !targets.empty() && targets.front().is_accessible() && !targets.front().is_destroyed() ) {
                 target = string_format( ": %s", targets.front()->tname( targets.front()->count() ) );
             }
             if( moves_total > 0 ) {

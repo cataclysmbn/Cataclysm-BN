@@ -1630,7 +1630,10 @@ void Item_factory::check_definitions() const
 //Returns the template with the given identification tag
 const itype *Item_factory::find_template( const itype_id &id ) const
 {
-    assert( frozen );
+    if( !frozen ) {
+        debugmsg( "Tried to load item definitions before finalization. This is bad, very bad" );
+        assert( frozen );
+    }
 
     auto found = m_templates.find( id );
     if( found != m_templates.end() ) {
@@ -1718,7 +1721,10 @@ void load_optional_enum_array( std::vector<E> &vec, const JsonObject &jo,
 
 bool Item_factory::load_definition( const JsonObject &jo, const std::string &src, itype &def )
 {
-    assert( !frozen );
+    if( frozen ) {
+        debugmsg( "Tried to load item definitions after finalization. This is bad, very bad" );
+        assert( !frozen );
+    }
 
     if( !jo.has_string( "copy-from" ) ) {
         // if this is a new definition ensure we start with a clean itype
@@ -2016,35 +2022,8 @@ void Item_factory::load( islot_armor &slot, const JsonObject &jo, const std::str
     assign( jo, "valid_mods", slot.valid_mods, strict );
 
     if( jo.has_array( "armor_portion_data" ) ) {
-        bool dont_add_first = false;
-        if( !slot.data.empty() ) { // Uses copy-from
-            dont_add_first = true;
-            const JsonObject &obj = *jo.get_array( "armor_portion_data" ).begin();
-
-            if( obj.has_array( "encumbrance" ) ) {
-                slot.data[0].encumber = obj.get_array( "encumbrance" ).get_int( 0 );
-                slot.data[0].max_encumber = obj.get_array( "encumbrance" ).get_int( 1 );
-            } else if( obj.has_int( "encumbrance" ) ) {
-                slot.data[0].encumber = obj.get_int( "encumbrance" );
-                slot.data[0].max_encumber = slot.data[0].encumber;
-            }
-            if( obj.has_int( "coverage" ) ) {
-                slot.data[0].coverage = obj.get_int( "coverage" );
-            }
-            body_part_set temp_cover_data;
-            assign_coverage_from_json( obj, "covers", temp_cover_data, slot.sided );
-            if( temp_cover_data.any() ) {
-                slot.data[0].covers = temp_cover_data;
-            }
-        }
-
+        slot.data.clear();
         for( const JsonObject &obj : jo.get_array( "armor_portion_data" ) ) {
-            // If this item used copy-from, data[0] is already set, so skip adding first data
-            if( dont_add_first ) {
-                obj.allow_omitted_members();
-                dont_add_first = false;
-                continue;
-            }
             armor_portion_data tempData;
             body_part_set temp_cover_data;
             assign_coverage_from_json( obj, "covers", temp_cover_data, slot.sided );
@@ -3711,7 +3690,10 @@ bool Item_factory::has_template( const itype_id &id ) const
 
 std::vector<const itype *> Item_factory::all() const
 {
-    assert( frozen );
+    if( !frozen ) {
+        debugmsg( "Tried to load item definitions before finalization. This is bad, very bad" );
+        assert( frozen );
+    }
 
     std::vector<const itype *> res;
     res.reserve( m_templates.size() + m_runtimes.size() );
@@ -3740,7 +3722,10 @@ std::vector<const itype *> Item_factory::get_runtime_types() const
 /** Find all templates matching the UnaryPredicate function */
 std::vector<const itype *> Item_factory::find( const std::function<bool( const itype & )> &func )
 {
-    assert( frozen );
+    if( !frozen ) {
+        debugmsg( "Tried to load item definitions before finalization. This is bad, very bad" );
+        assert( frozen );
+    }
 
     std::vector<const itype *> res;
 

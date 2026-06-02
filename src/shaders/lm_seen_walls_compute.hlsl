@@ -29,6 +29,7 @@ cbuffer Constants : register(b0, space2)
 
 StructuredBuffer<float> transparency_all : register(t0, space0);
 StructuredBuffer<float> seen_src_all     : register(t1, space0);
+StructuredBuffer<uint>  vehicle_floor_all : register(t2, space0);
 
 RWStructuredBuffer<float> seen_dst_all : register(u0, space1);
 
@@ -94,6 +95,13 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         }
 
         best = max( best, seen_src_all[nidx] );
+    }
+
+    if( tz < player_z_idx && tz + 1 < z_count ) {
+        int roof_idx = tile_index( tx, ty, tz + 1 );
+        if( vehicle_floor_all[roof_idx] != 0u ) {
+            best = 0.0;
+        }
     }
 
     seen_dst_all[idx] = best;

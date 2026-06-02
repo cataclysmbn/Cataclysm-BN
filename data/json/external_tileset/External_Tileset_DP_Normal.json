@@ -332,7 +332,11 @@
           { "id": "mon_shade_boss", "fg": 224 },
           { "id": "mon_shade_boss_clone", "fg": 224 },
           { "id": [ "bucket_helmet", "overlay_wielded_bucket_helmet" ], "fg": 226 },
-          { "id": "overlay_worn_bucket_helmet", "fg": 227 }
+          { "id": "overlay_worn_bucket_helmet", "fg": 227 },
+          { "id": [ "armor_trench", "overlay_wielded_armor_trench" ], "fg": 228 },
+          { "id": "overlay_worn_armor_trench", "fg": 229 },
+          { "id": [ "helm_trench", "overlay_wielded_helm_trench" ], "fg": 230 },
+          { "id": "overlay_worn_helm_trench", "fg": 231 }
         ],
         "sprite_width": 32,
         "sprite_height": 32

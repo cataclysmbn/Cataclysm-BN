@@ -1095,8 +1095,10 @@ void do_pause( Character &who )
                         who.mutation_spend_resources( tid );
                     }
                 }
-            } else {
+            } else if( who.is_avatar() ) {
                 g->vertical_move( 0, true );
+            } else {
+                here.creature_on_trap( who, false );
             }
         }
 

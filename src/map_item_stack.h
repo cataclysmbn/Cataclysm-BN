@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "coordinates.h"
-#include "point.h"
 
 class item;
 
@@ -14,29 +13,29 @@ class map_item_stack
         class item_group
         {
             public:
-                tripoint_bub_ms pos;
+                tripoint_rel_ms pos;
                 int count;
 
                 //only expected to be used for things like lists and vectors
                 item_group();
-                item_group( const tripoint_bub_ms &p, int arg_count );
+                item_group( const tripoint_rel_ms &p, int arg_count );
         };
     public:
         // This should be per-group!
         const item *example; //an example item for showing stats, etc.
-        tripoint_bub_ms example_item_pos;
+        tripoint_rel_ms example_item_pos;
         std::vector<item_group> vIG;
         int totalcount;
 
         //only expected to be used for things like lists and vectors
         map_item_stack();
-        map_item_stack( const item *it, const tripoint_bub_ms &pos );
+        map_item_stack( const item *it, const tripoint_rel_ms &pos );
 
         // This adds to an existing item group if the last current
         // item group is the same position and otherwise creates and
         // adds to a new item group. Note that it does not search
         // through all older item groups for a match.
-        void add_at_pos( const item *it, const tripoint_bub_ms &pos );
+        void add_at_pos( const item *it, const tripoint_rel_ms &pos );
 
         static bool map_item_stack_sort( const map_item_stack &lhs, const map_item_stack &rhs );
 };

@@ -650,5 +650,35 @@
       "draw_cost": 35
     },
     "flags": [ "WAIST", "COMPACT", "OVERSIZE", "WATER_FRIENDLY", "ALLOWS_TAIL_SNAKE" ]
+  },
+  {
+    "id": "shoulder_pouch",
+    "type": "ARMOR",
+    "name": { "str": "shoulder magazine pouch", "str_pl": "shoulder magazine pouches" },
+    "description": "A shoulder pouch designed to be worn under a jacket or coat that can hold two small magazines or speedloaders. Normally meant to be worn alongside a shoulder holster, but can be used on its own.",
+    "volume": "250 ml",
+    "weight": "120 g",
+    "price": "20 USD",
+    "price_postapoc": "750 cent",
+    "material": [ "cotton" ],
+    "symbol": "[",
+    "looks_like": "legpouch_large",
+    "color": "dark_gray",
+    "covers": [ "arm_either" ],
+    "coverage": 5,
+    "encumbrance": 1,
+    "max_encumbrance": 3,
+    "material_thickness": 2,
+    "use_action": {
+      "type": "holster",
+      "holster_prompt": "Stash ammo",
+      "holster_msg": "You stash your %s.",
+      "multi": 2,
+      "min_volume": "25 ml",
+      "max_volume": "250 ml",
+      "draw_cost": 40,
+      "flags": [ "MAG_COMPACT", "SPEEDLOADER" ]
+    },
+    "flags": [ "WATER_FRIENDLY", "BELTED", "OVERSIZE", "COMPACT" ]
   }
 ]

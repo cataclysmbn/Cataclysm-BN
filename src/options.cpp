@@ -37,6 +37,7 @@
 #include "string_formatter.h"
 #include "string_input_popup.h"
 #include "string_utils.h"
+#include "title_screen.h"
 #include "translations.h"
 #include "ui_manager.h"
 #include "worldfactory.h"
@@ -223,6 +224,21 @@ void options_manager::add_value( const std::string &lvar, const std::string &lva
         }
 
     }
+}
+
+auto options_manager::refresh_title_screen_option() -> void
+{
+    auto iter = options.find( title_screen::option_id );
+    if( iter == options.end() || iter->second.sType != "string_select" ) {
+        return;
+    }
+
+    auto &option = iter->second;
+    const auto old_value = option.getValue();
+    option.vItems = title_screen::get_options();
+    option.sDefault = title_screen::default_option_id;
+    option.setValue( option.getItemPos( old_value ) != -1 ? old_value :
+                     title_screen::default_option_id );
 }
 
 void options_manager::addOptionToPage( const std::string &name, const std::string &page )
@@ -1555,6 +1571,12 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( title_screen::option_id, interface, translate_marker( "Title screen" ),
+         translate_marker( "Title screen ASCII art to display on the main menu." ),
+         title_screen::get_all_options(), title_screen::default_option_id );
+
+    add_empty_line();
+
     add( "HEALTH_STYLE", interface, translate_marker( "Health Display Style" ),
     translate_marker( "Switch health-related display styling such as HP and hunger" ), {
         {"number", translate_marker( "Numerical" ) },
@@ -1830,6 +1852,11 @@ void options_manager::add_options_interface()
     add( "AIM_AUTORESET_FILTER", interface,
          translate_marker( "Advanced Inventory Manager Filter Resets" ),
          translate_marker( "If true, Advanced Inventory Manager filters will be reset when leaving the menu" ),
+         false );
+
+    add( "NEW_PICKUP_MENU", interface,
+         translate_marker( "Use new pickup menu ui (EXPERIMENTAL)" ),
+         translate_marker( "Whether to use the new or old pickup menu ui. WARNING: Is experimental feature" ),
          false );
 
     add_empty_line();
@@ -2404,6 +2431,14 @@ void options_manager::add_options_performance()
                                "0 = Tier-0 only (default, cheapest).  1 = Tier-0 and Tier-1 monsters also "
                                "run group-morale/swarm checks. " ),
              0, 1, 0 );
+        add( "ACTIVITY_SKIP_MONSTER_LOD_GATE", page_id,
+             translate_marker( "Activity Skip Monster Gate" ),
+             translate_marker( "Highest real monster LOD tier allowed to run activity-skip AI.  "
+                               "Allowed monsters act one LOD tier less detailed than normal.  "
+                               "0 lets only Tier-0 monsters act as Tier-1.  "
+                               "1 lets Tier-0 and Tier-1 monsters act as Tier-1 and Tier-2, "
+                               "which is the default.  2 also lets Tier-2 monsters run macro AI." ),
+             0, 2, 1 );
     } );
 
     get_option( "LOD_ACTION_BUDGET" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
@@ -2413,6 +2448,7 @@ void options_manager::add_options_performance()
     get_option( "LOD_DEMOTION_COOLDOWN" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
     get_option( "LOD_COARSE_SCENT_INTERVAL" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
     get_option( "LOD_GROUP_MORALE_MAX_TIER" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
+    get_option( "ACTIVITY_SKIP_MONSTER_LOD_GATE" ).setPrerequisite( "MONSTER_LOD_ENABLED" );
 
     add_empty_line();
 
@@ -2459,7 +2495,7 @@ void options_manager::add_options_performance()
                            "Higher values reduce redundant ray traces at the cost of more RAM.  "
                            "Reduce if memory is tight; increase on machines with spare RAM and many "
                            "on-screen creatures." ),
-         1000, 500000, is_android ? 64000 : 128000 );
+         1024, 4194304, is_android ? 65536 : 262144 );
 
     add_empty_line();
 
@@ -2509,11 +2545,6 @@ void options_manager::add_options_performance()
                                "Disable on machines where the ~70 k-cell work unit is too small to "
                                "amortize dispatch latency.  Requires restart." ),
              true );
-        add( "LAZY_BORDER", page_id,
-             translate_marker( "Pre-load Border" ),
-             translate_marker( "No effect — lazy border loading is pending async mapgen rework "
-                               "and is currently disabled regardless of this setting." ),
-             !is_android );
     } );
 
     get_option( "THREAD_POOL_WORKERS" ).setPrerequisite( "MULTITHREADING_ENABLED" );
@@ -2521,7 +2552,6 @@ void options_manager::add_options_performance()
     get_option( "MONSTER_PLAN_CHUNK_SIZE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_MAP_CACHE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
     get_option( "PARALLEL_SCENT_UPDATE" ).setPrerequisite( "MULTITHREADING_ENABLED" );
-    get_option( "LAZY_BORDER" ).setPrerequisite( "MULTITHREADING_ENABLED" );
 
     add_empty_line();
 
@@ -2536,6 +2566,12 @@ void options_manager::add_options_performance()
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. " ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "LAZY_BORDER", page_id,
+             translate_marker( "Pre-load Border" ),
+             translate_marker( "Preload a one-overmap-tile border around the reality bubble over several turns.  "
+                               "This reduces map-shift hitches at the cost of extra per-turn loading work and    "
+                               "some additional memory usage." ),
+             !is_android );
         add( "ACTIVITY_MOBILE_BUBBLE_SIZE", page_id,
              translate_marker( "Mobile Activity Bubble Size" ),
              translate_marker( "Shrink the reality bubble to this radius while the player is performing a "
@@ -2607,6 +2643,11 @@ void options_manager::add_options_performance()
         //                        "fires to be simulated correctly. "
         //                        "0 disables out-of-bubble fire spread loading entirely. " ),
         //      0, 250, 25 );
+        add( "RETAINED_OMT_CACHE_MULTIPLIER", page_id,
+             translate_marker( "Retained Map Cache" ),
+             translate_marker( "Keep more map data loaded to reduce lag when moving around the same general area, "
+                               "at the cost of memory usage." ),
+             1, 20, is_android ? 1 : 3 );
         add( "POWER_PORTAL_LOAD_RADIUS", page_id,
              translate_marker( "Power portal load radius (submaps)" ),
              translate_marker( "Radius in submaps around each end of a power-portal link that is "
@@ -3677,6 +3718,10 @@ std::string options_manager::show( bool ingame, const bool world_options_only,
             *world_options.value() :
             OPTIONS;
 
+    if( !world_options_only ) {
+        refresh_title_screen_option();
+    }
+
     auto OPTIONS_OLD = OPTIONS;
     auto WOPTIONS_OLD = ACTIVE_WORLD_OPTIONS;
     if( world_generator->active_world == nullptr ) {
@@ -4278,6 +4323,7 @@ void options_manager::cache_to_globals()
     lod_macro_interval        = ::get_option<int>( "LOD_MACRO_INTERVAL" );
     lod_coarse_scent_interval = ::get_option<int>( "LOD_COARSE_SCENT_INTERVAL" );
     lod_group_morale_max_tier = ::get_option<int>( "LOD_GROUP_MORALE_MAX_TIER" );
+    activity_skip_monster_lod_gate = ::get_option<int>( "ACTIVITY_SKIP_MONSTER_LOD_GATE" );
 
     // Temporary fix for #8726: force out-of-bubble fire spread off while the
     // corresponding options are commented out above.
@@ -4306,7 +4352,8 @@ void options_manager::cache_to_globals()
     monster_plan_chunk_size   = ::get_option<int>( "MONSTER_PLAN_CHUNK_SIZE" );
     parallel_map_cache        = ::get_option<bool>( "PARALLEL_MAP_CACHE" );
     parallel_scent_update     = ::get_option<bool>( "PARALLEL_SCENT_UPDATE" );
-    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" ) && false;
+    lazy_border_enabled = ::get_option<bool>( "LAZY_BORDER" );
+    retained_omt_cache_multiplier = ::get_option<int>( "RETAINED_OMT_CACHE_MULTIPLIER" );
 
     merge_comestible_mode = ( [] {
         const auto opt = ::get_option<std::string>( "MERGE_COMESTIBLES" );

@@ -8,6 +8,7 @@
 *.tmp
 *.zip
 /WinDepend/
+/android/app/jni/sdl3
 /bindist/
 build.*
 build
@@ -240,3 +241,4 @@ clang-tidy-trace
 
 CMakeFiles/
 CMakeCache.txt
+__cmake_systeminformation/

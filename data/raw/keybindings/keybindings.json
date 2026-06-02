@@ -1658,6 +1658,20 @@
   },
   {
     "type": "keybinding",
+    "id": "WIELD",
+    "category": "INVENTORY",
+    "name": "Wield selected item",
+    "bindings": [ { "input_method": "keyboard", "key": "w" } ]
+  },
+  {
+    "type": "keybinding",
+    "id": "WEAR",
+    "category": "INVENTORY",
+    "name": "Wear selected item",
+    "bindings": [ { "input_method": "keyboard", "key": "W" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "TOGGLE_EXAMINE",
     "category": "BIONICS",
     "name": "Toggle activate/examine",
@@ -1703,7 +1717,11 @@
     "name": "Pause",
     "category": "DEFAULTMODE",
     "id": "pause",
-    "bindings": [ { "input_method": "keyboard", "key": "." }, { "input_method": "keyboard", "key": "5" } ]
+    "bindings": [
+      { "input_method": "keyboard", "key": "." },
+      { "input_method": "keyboard", "key": "5" },
+      { "input_method": "keyboard", "key": "NUMPAD_5" }
+    ]
   },
   {
     "type": "keybinding",
@@ -3707,7 +3725,7 @@
     "type": "keybinding",
     "id": "TEXT.CONFIRM",
     "name": "Confirm text input",
-    "bindings": [ { "input_method": "keyboard", "key": "RETURN" } ]
+    "bindings": [ { "input_method": "keyboard", "key": "RETURN" }, { "input_method": "keyboard", "key": "NUMPAD_6" } ]
   },
   {
     "type": "keybinding",

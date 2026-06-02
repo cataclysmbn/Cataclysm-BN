@@ -252,7 +252,7 @@
       "ranged": { "reduction": [ 40, 40 ], "destroy_threshold": 40, "block_unaimed_chance": "50%" }
     },
     "examine_action": "workbench",
-    "workbench": { "multiplier": 1.05, "mass": 500000, "volume": "500L" }
+    "workbench": { "multiplier": 1.05, "mass": "500 kg", "volume": "500L" }
   },
   {
     "id": "f_arcana_dimension_doorway",

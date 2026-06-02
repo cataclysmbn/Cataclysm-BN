@@ -5,8 +5,8 @@
     "name": { "str": "Wraitheon executive's smartphone" },
     "copy-from": "afs_atomic_smartphone",
     "description": "Your custom crafted atomic smartphone.  Most notably a confidential executive-level override program allows you to remotely control most robots.",
-    "price": 20000000,
-    "price_postapoc": 250000,
+    "price": "200000 USD",
+    "price_postapoc": "2500 USD",
     "material": [ "superalloy", "aluminum" ],
     "use_action": [
       {
@@ -222,8 +222,8 @@
     "description": "A modified laptop, now capable of transmitting in the ultra-high frequencies utilized by robots.  Activate it to command robots from afar.",
     "weight": "2721 g",
     "volume": "1 L",
-    "price": 10000,
-    "price_postapoc": 8000,
+    "price": "100 USD",
+    "price_postapoc": "80 USD",
     "material": [ "plastic", "aluminum" ],
     "symbol": ",",
     "color": "yellow",
@@ -236,6 +236,6 @@
         [ "medium_battery_cell", "medium_plus_battery_cell", "medium_atomic_battery_cell", "medium_disposable_cell" ]
       ]
     ],
-    "magazine_well": 1
+    "magazine_well": "250 ml"
   }
 ]

@@ -128,6 +128,7 @@ void string_input_popup::create_context()
     ctxt->register_action( "PAGE_DOWN" );
     ctxt->register_action( "SCROLL_UP" );
     ctxt->register_action( "SCROLL_DOWN" );
+    ctxt->register_action( "NUMPAD_6" );
     ctxt->register_action( "ANY_INPUT" );
 }
 
@@ -454,7 +455,8 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
             _position = -1;
             _canceled = true;
             return _text;
-        } else if( action == "TEXT.CONFIRM" ) {
+        } else if( action == "TEXT.CONFIRM" || ( action == "TEXT.RIGHT" && !( edit.empty() &&
+                   _position + 1 <= static_cast<int>( ret.size() ) ) ) ) {
             add_to_history( ret.str() );
             _confirmed = true;
             _text = ret.str();

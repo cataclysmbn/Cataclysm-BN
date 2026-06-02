@@ -971,6 +971,13 @@ class item : public location_visitable<item>, public game_object<item>
         /** Get the shelf life of the item*/
         time_duration get_shelf_life() const;
 
+        /** Update @ref rot from current location without removing rotten-away items. */
+        void update_rot_from_location( temperature_flag temperature );
+
+        /** Update @ref rot at the specified location without removing rotten-away items. */
+        void update_rot( const tripoint_bub_ms &pos, temperature_flag temperature,
+                         const weather_manager &weather_generator );
+
         /** Get @ref rot value relative to shelf life (or 0 if item does not spoil) */
         double get_relative_rot() const;
 
@@ -1013,6 +1020,7 @@ class item : public location_visitable<item>, public game_object<item>
         bool has_rotten_away() const;
 
         time_duration get_rot() const {
+            const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
             return rot;
         }
         void mod_rot( const time_duration &val ) {
@@ -2406,6 +2414,8 @@ class item : public location_visitable<item>, public game_object<item>
         static detached_ptr<item> process_internal( detached_ptr<item> &&self, player *carrier,
                 const tripoint_bub_ms &pos, bool activate,
                 bool seals, temperature_flag flag, const weather_manager &weather_generator );
+        auto is_in_preserving_container() const -> bool;
+        auto mark_rot_checked_now() -> void;
 
         /** Helper for checking reloadability. **/
         bool is_reloadable_helper( const itype_id &ammo, bool now ) const;
@@ -2782,4 +2792,3 @@ struct cable_connection_data {
         con2.point = tripoint_abs_ms( tmp );
     }
 };
-

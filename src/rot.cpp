@@ -47,8 +47,13 @@ auto temperature_flag_for_location( const map &m, const item &loc ) -> temperatu
             }
             return temperature_flag_for_part( veh->vehicle(), cargo_index );
         }
-        case item_location_type::container:
-            return temperature_flag_for_location( m, *loc.parent_item() );
+        case item_location_type::container: {
+            const auto parent = loc.parent_item();
+            if( parent == nullptr ) {
+                return temperature_flag::TEMP_NORMAL;
+            }
+            return temperature_flag_for_location( m, *parent );
+        }
         default:
             debugmsg( "Invalid item location %d", static_cast<int>( loc.where() ) );
             return temperature_flag::TEMP_NORMAL;

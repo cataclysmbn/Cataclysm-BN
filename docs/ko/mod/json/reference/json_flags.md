@@ -1,5 +1,21 @@
 # JSON Flags
 
+## Example
+
+```json
+{
+  "type": "json_flag", // 필수 유형
+  "id": "GENERIC_FLAG", // 플래그 ID
+  "context": [], // 존재해야 하지만 아무 작업도 하지 않는 장식용 필드
+  "craft_inherit": true, // 이것으로 제작한 아이템이 이 플래그를 유지합니다
+  "requires_flag": true, // 차량 부품 플래그에서 사용하며, 해당 타일에 이 ID를 가진 다른 부품이 필요합니다
+  "inherit": true, // 아이템 모드가 이 플래그를 아이템에 전달합니다
+  "tag": "string" // 아이템에 이 플래그가 있으면 아이템의 UI 표시 이름에 추가되는 번역 가능한 문자열
+}
+```
+
+-
+
 ## Notes
 
 - 일부 플래그(아이템, 효과, 차량 부품)는 `flags.json` 또는 `vp_flags.json`에 정의되어야 합니다.

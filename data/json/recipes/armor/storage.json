@@ -570,7 +570,18 @@
     "time": "48 s",
     "reversible": true,
     "autolearn": true,
-    "components": [ [ [ "sheet", 1 ], [ "blanket", 1 ], [ "electric_blanket", 1 ] ] ],
+    "components": [
+      [
+        [ "blanket", 1 ],
+        [ "down_blanket", 1 ],
+        [ "fur_blanket", 1 ],
+        [ "electric_blanket", 1 ],
+        [ "emer_blanket", 1 ],
+        [ "afs_quilt", 1 ],
+        [ "afs_quilt_patchwork", 1 ],
+        [ "sheet", 1 ]
+      ]
+    ],
     "flags": [ "BLIND_EASY" ]
   },
   {
@@ -1104,6 +1115,18 @@
     "components": [ [ [ "leather", 8 ] ] ]
   },
   {
+    "result": "shoulder_pouch",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "tailor",
+    "difficulty": 3,
+    "time": "15 m",
+    "autolearn": true,
+    "using": [ [ "sewing_standard", 10 ] ],
+    "components": [ [ [ "legpouch", 2 ] ], [ [ "shoulder_strap", 1 ] ] ]
+  },
+  {
     "result": "power_armor_back_holster",
     "type": "recipe",
     "category": "CC_ARMOR",
@@ -1341,5 +1364,19 @@
     "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
     "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
     "components": [ [ [ "grenadebandolier", 1 ] ] ]
+  },
+  {
+    "result": "power_armor_shoulder_pouch",
+    "type": "recipe",
+    "category": "CC_ARMOR",
+    "subcategory": "CSC_ARMOR_STORAGE",
+    "skill_used": "mechanics",
+    "difficulty": 6,
+    "skills_required": [ "fabrication", 3 ],
+    "time": "30 m",
+    "autolearn": true,
+    "qualities": [ { "id": "HAMMER_FINE", "level": 1 }, { "id": "SCREW_FINE", "level": 1 }, { "id": "SAW_M_FINE", "level": 1 } ],
+    "using": [ [ "welding_standard", 10 ], [ "steel_standard", 1 ] ],
+    "components": [ [ [ "shoulder_pouch", 1 ] ] ]
   }
 ]

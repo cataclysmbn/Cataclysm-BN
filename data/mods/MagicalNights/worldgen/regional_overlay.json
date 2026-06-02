@@ -2,7 +2,7 @@
   {
     "type": "region_overlay",
     "regions": [ "all" ],
-    "city": { "shops": { "used_bookstore": 225 } },
+    "city": { "shops": { "used_bookstore": 225 }, "urban_shops": { "used_bookstore": 60 } },
     "field_coverage": { "other": { "f_boulder_large": 0.98, "f_glow_boulder": 0.02 } }
   }
 ]

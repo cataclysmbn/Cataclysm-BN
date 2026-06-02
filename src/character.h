@@ -1918,9 +1918,9 @@ class Character : public Creature, public location_visitable<Character>
     public:
 
         /** Called when an item is worn */
-        void on_item_wear( const item &it );
+        void on_item_wear( item &it );
         /** Called when an item is taken off */
-        void on_item_takeoff( const item &it );
+        void on_item_takeoff( item &it );
         /** Called when effect intensity has been changed */
         void on_effect_int_change( const efftype_id &effect_type, int intensity,
                                    const bodypart_str_id &bp ) override;

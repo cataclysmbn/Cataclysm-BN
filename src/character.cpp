@@ -11071,7 +11071,7 @@ void Character::use_fire( const int quantity )
 }
 
 
-void Character::on_item_wear( const item &it )
+void Character::on_item_wear( item &it )
 {
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_effect( mut );
@@ -11084,9 +11084,12 @@ void Character::on_item_wear( const item &it )
         }
     }
     morale->on_item_wear( it );
+    if( it.type->iwearable_callbacks ) {
+        it.type->iwearable_callbacks->call_on_wear( *this, it );
+    }
 }
 
-void Character::on_item_takeoff( const item &it )
+void Character::on_item_takeoff( item &it )
 {
     for( const trait_id &mut : it.mutations_from_wearing( *this ) ) {
         mutation_loss_effect( mut );
@@ -11097,6 +11100,9 @@ void Character::on_item_takeoff( const item &it )
         }
     }
     morale->on_item_takeoff( it );
+    if( it.type->iwearable_callbacks ) {
+        it.type->iwearable_callbacks->call_on_takeoff( *this, it );
+    }
 }
 
 void Character::on_effect_int_change( const efftype_id &effect_type, int intensity,

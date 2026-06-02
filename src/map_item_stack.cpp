@@ -14,7 +14,7 @@ map_item_stack::item_group::item_group() : count( 0 )
 {
 }
 
-map_item_stack::item_group::item_group( const tripoint_bub_ms &p, const int arg_count ) : pos( p ),
+map_item_stack::item_group::item_group( const tripoint_rel_ms &p, int arg_count ) : pos( p ),
     count( arg_count )
 {
 }
@@ -24,14 +24,14 @@ map_item_stack::map_item_stack() : example( nullptr ), totalcount( 0 )
     vIG.emplace_back( );
 }
 
-map_item_stack::map_item_stack( const item *const it, const tripoint_bub_ms &pos ) : example( it ),
+map_item_stack::map_item_stack( const item *const it, const tripoint_rel_ms &pos ) : example( it ),
     totalcount( it->count() )
 {
     vIG.emplace_back( pos, totalcount );
     example_item_pos = pos;
 }
 
-void map_item_stack::add_at_pos( const item *const it, const tripoint_bub_ms &pos )
+void map_item_stack::add_at_pos( const item *const it, const tripoint_rel_ms &pos )
 {
     const int amount = it->count();
 
@@ -47,8 +47,8 @@ void map_item_stack::add_at_pos( const item *const it, const tripoint_bub_ms &po
 bool map_item_stack::map_item_stack_sort( const map_item_stack &lhs, const map_item_stack &rhs )
 {
     if( lhs.example->get_category() == rhs.example->get_category() ) {
-        return square_dist( tripoint_bub_ms::zero(), lhs.vIG[0].pos ) <
-               square_dist( tripoint_bub_ms::zero(), rhs.vIG[0].pos );
+        return square_dist( tripoint_rel_ms::zero(), lhs.vIG[0].pos ) <
+               square_dist( tripoint_rel_ms::zero(), rhs.vIG[0].pos );
     }
 
     return lhs.example->get_category() < rhs.example->get_category();

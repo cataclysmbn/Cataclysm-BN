@@ -142,7 +142,7 @@ auto ensure_pipelines( SDL_GPUDevice *const device ) -> bool
 {
     if( s_ambient_pipeline == nullptr ) {
         s_ambient_pipeline = load_pipeline( device, "lm_ambient_compute",
-                                            /*ro=*/3, /*rw=*/1, 64, 1 );
+                                            /*ro=*/2, /*rw=*/1, 64, 1 );
     }
     if( s_raytrace_pipeline == nullptr ) {
         s_raytrace_pipeline = load_pipeline( device, "lm_raytrace_compute",
@@ -154,7 +154,7 @@ auto ensure_pipelines( SDL_GPUDevice *const device ) -> bool
     }
     if( s_seen_walls_pipeline == nullptr ) {
         s_seen_walls_pipeline = load_pipeline( device, "lm_seen_walls_compute",
-                                               /*ro=*/2, /*rw=*/1, 8, 8 );
+                                               /*ro=*/3, /*rw=*/1, 8, 8 );
     }
     return s_ambient_pipeline != nullptr
            && s_raytrace_pipeline != nullptr
@@ -488,7 +488,8 @@ auto run_gpu_lighting( SDL_GPUDevice *const device,
 
     // [Pass 2] Compute: ambient initialisation.
     // Writes lm_all[tile] = asuint(ambient_value) for every tile.
-    // Uses floor_all and vehicle_floor_all to determine sky access physically.
+    // Uses terrain floor_all and transparency_all to determine sky access
+    // physically.  Vehicle roofs do not affect sunlight.
     {
         SDL_GPUStorageBufferReadWriteBinding const rw_lm{
             .buffer = lm_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0
@@ -496,8 +497,8 @@ auto run_gpu_lighting( SDL_GPUDevice *const device,
         auto *const cp = SDL_BeginGPUComputePass( cmd, nullptr, 0, &rw_lm, 1 );
         SDL_BindGPUComputePipeline( cp, s_ambient_pipeline );
 
-        SDL_GPUBuffer *const ro_bufs[3] = { f_buf, vf_buf, t_buf };
-        SDL_BindGPUComputeStorageBuffers( cp, 0, ro_bufs, 3 );
+        SDL_GPUBuffer *const ro_bufs[2] = { f_buf, t_buf };
+        SDL_BindGPUComputeStorageBuffers( cp, 0, ro_bufs, 2 );
 
         SDL_PushGPUComputeUniformData( cmd, 0, &ambient_push, sizeof( ambient_push ) );
 
@@ -572,8 +573,8 @@ auto run_gpu_lighting( SDL_GPUDevice *const device,
         auto *const cp = SDL_BeginGPUComputePass( cmd, nullptr, 0, &rw_seen, 1 );
         SDL_BindGPUComputePipeline( cp, s_seen_walls_pipeline );
 
-        SDL_GPUBuffer *const ro_bufs[2] = { t_buf, seen_raw_buf };
-        SDL_BindGPUComputeStorageBuffers( cp, 0, ro_bufs, 2 );
+        SDL_GPUBuffer *const ro_bufs[3] = { t_buf, seen_raw_buf, vf_buf };
+        SDL_BindGPUComputeStorageBuffers( cp, 0, ro_bufs, 3 );
 
         SDL_PushGPUComputeUniformData( cmd, 0, &seen_push, sizeof( seen_push ) );
         SDL_DispatchGPUCompute( cp, g_seen, g_seen, static_cast<Uint32>( z_count ) );

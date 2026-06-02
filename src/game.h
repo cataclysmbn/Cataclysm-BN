@@ -79,6 +79,13 @@ enum class dump_mode {
     HTML
 };
 
+enum class monster_activity_ai_mode : int {
+    normal,
+    activity_skip
+};
+
+struct activity_monmove_cache;
+
 enum quit_status {
     QUIT_NO = 0,    // Still playing
     QUIT_SUICIDE,   // Quit with 'Q'
@@ -313,7 +320,7 @@ class game : public submap_load_listener
         std::optional<tripoint_bub_ms> find_or_make_stairs( map &mp, int z_after, bool &rope_ladder,
                 bool peeking );
         /** Actual z-level movement part of vertical_move. Doesn't include stair finding, traps etc. */
-        void vertical_shift( int z_after );
+        auto vertical_shift( int z_after, bool keep_grab = false ) -> void;
         /** Add goes up/down auto_notes (if turned on) */
         void vertical_notes( int z_before, int z_after );
         /** Checks to see if a player can use a computer (not illiterate, etc.) and uses if able. */
@@ -567,7 +574,7 @@ class game : public submap_load_listener
     private:
         /** Resizes the reality bubble to an explicit target size.
          *  Safe to call mid-session: despawns out-of-range entities, flushes the
-         *  background streamer, rebuilds map grid and all dependent caches.
+         *  submap load-manager work, rebuilds map grid and all dependent caches.
          */
         void resize_reality_bubble_to( int new_size );
 
@@ -917,9 +924,9 @@ class game : public submap_load_listener
         /** Check for dangerous stuff at dest_loc, return false if the player decides
         not to step there */
         // Handle pushing during move, returns true if it handled the move
-        bool grabbed_move( const tripoint_rel_ms &dp );
+        auto grabbed_move( const tripoint_rel_ms &dp, bool allow_furniture_z_move = false ) -> bool;
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
-        bool grabbed_furn_move( const tripoint_rel_ms &dp );
+        auto grabbed_furn_move( const tripoint_rel_ms &dp ) -> bool;
 
         void control_vehicle(); // Use vehicle controls  '^'
         void examine( const tripoint_bub_ms &p ); // Examine nearby terrain  'e'
@@ -936,7 +943,7 @@ class game : public submap_load_listener
         void butcher(); // Butcher a corpse  'B'
     public:
         // Places the player at the specified point; hurts feet, lists items etc.
-        point_rel_sm place_player( const tripoint_bub_ms &dest );
+        auto place_player( const tripoint_bub_ms &dest, bool keep_grab = false ) -> point_rel_sm;
         void place_player_overmap( const tripoint_abs_omt &om_dest );
 
         unsigned int get_seed() const;
@@ -1005,7 +1012,8 @@ class game : public submap_load_listener
         void perhaps_add_random_npc();
 
         // Routine loop functions, approximately in order of execution
-        void monmove();          // Monster movement
+        auto monmove( monster_activity_ai_mode mode = monster_activity_ai_mode::normal,
+                      activity_monmove_cache *cache = nullptr ) -> void;
         void npcmove();          // NPC movement (split from monmove for per-option sleep-skip)
         void sleep_skip_npc_process(); // Sleep-only NPC processing when SLEEP_SKIP_NPC is active
         int  tier_assign_all(); // LOD tier assignment, O(M), called from monmove(); returns Tier 0 count
@@ -1014,6 +1022,16 @@ class game : public submap_load_listener
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
+        auto try_activity_fixed_window_skip() -> bool;
+        auto activity_fixed_window_duration() -> time_duration;
+        auto execute_activity_fixed_window_skip( const time_duration &duration ) -> int;
+        auto can_activity_fixed_window_skip( const time_duration &duration ) -> bool;
+        auto has_activity_skip_blocking_npc_state() -> bool;
+        auto has_activity_skip_relevant_vehicle() -> bool;
+        auto has_activity_skip_active_fire() -> bool;
+        auto run_activity_skip_batch_turns( int skipped_turns ) -> void;
+        auto handle_wait_activity_redraw( bool force = false ) -> void;
+        auto run_activity_cadence_boundary() -> void;
         void handle_key_blocking_activity(); // Abort reading etc.
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
         bool handle_action();
@@ -1165,11 +1183,12 @@ class game : public submap_load_listener
 
         int mostseen = 0; // # of mons seen last turn; if this increases, set safe_mode to SAFE_MODE_STOP
 
-        // P-8: per-turn symmetric sight-result cache used during parallel monster
-        // planning (monmove()).  Keyed on the sorted (lo, hi) Creature pointer
-        // pair so A→B and B→A share one entry (LOS ray is symmetric).  Cleared
-        // at the start of monmove() before the parallel phase begins.  Workers
-        // hold a shared_lock for hits and upgrade to unique_lock on a miss.
+        // P-8: per-turn Creature::sees() result cache used during parallel monster
+        // planning (monmove()).  Keyed on directional (seer, target) Creature pointer
+        // pairs; Creature::sees() includes observer and target perception rules, while
+        // map::sees() remains the symmetric LOS cache.  Cleared at the start of
+        // monmove() before the parallel phase begins.  Workers hold a shared_lock for
+        // hits and upgrade to unique_lock on a miss.
         // Lives in the public section so turn_cached_sees() in monmove.cpp can
         // access it directly without an additional indirection layer.
         struct TurnSightPairHash {
@@ -1273,7 +1292,7 @@ class game : public submap_load_listener
         /// Always use this instead of assigning the two fields separately.
         void set_active_dimension_id( const std::string &dim_id );
 
-        /// Sequenced critical section of a dimension switch: drain all background
+        /// Sequenced critical section of a dimension switch: drain all load-manager
         /// work, release load handles, flush the desired set, update the active
         /// dimension ID, and clear the old dimension's distribution-grid tracker.
         /// Must only be called from travel_to_dimension() after swapping_dimensions
@@ -1307,6 +1326,11 @@ class game : public submap_load_listener
         // until the activity ends regardless of remaining time.
         // Cleared by resize_reality_bubble() so an explicit option change always wins.
         bool in_activity_bubble_ = false;
+
+        // Avoid paying the fixed-window proof cost every turn when a long activity is
+        // currently ineligible because of nearby simulation state.
+        time_point next_activity_fixed_window_check_ = calendar::turn_zero;
+        bool activity_fixed_window_force_normal_turn_ = false;
 
         // Consecutive turns each dynamic condition has been continuously met.
         // Trigger fires once the count reaches DYNAMIC_BUBBLE_GRACE; resets to 0 immediately

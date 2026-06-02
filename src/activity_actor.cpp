@@ -396,6 +396,27 @@ void autodrive_activity_actor::start( player_activity &/* act */, Character &who
     }
 
     player_vehicle = &vp->vehicle();
+    if( player_vehicle->is_flying_in_air() ) {
+        int min_speed = player_vehicle->get_takeoff_speed( "t/t" );
+        if( player_vehicle->velocity * 0.8 < min_speed * vehicles::cmps_per_tile ) {
+            if( !g->u.query_yn( "Warning: Current Speed is below recommened values, proceed?" ) ) {
+                who.cancel_activity();
+                return;
+            }
+        }
+        if( player_vehicle->min_autodrive_speed * 0.8 < min_speed ) {
+            if( !g->u.query_yn( "Warning: Min Autodrive Speed is below recommened values, proceed?" ) ) {
+                who.cancel_activity();
+                return;
+            }
+        }
+        if( player_vehicle->max_autodrive_speed * 0.5 < min_speed ) {
+            if( !g->u.query_yn( "Warning: Max Autodrive Speed is below recommened values, proceed?" ) ) {
+                who.cancel_activity();
+                return;
+            }
+        }
+    }
     player_vehicle->is_autodriving = true;
     progress.dummy();
 }

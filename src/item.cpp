@@ -13,6 +13,7 @@
 #include <locale>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <string>
@@ -88,6 +89,7 @@
 #include "pldata.h"
 #include "point.h"
 #include "projectile.h"
+#include "profile.h"
 #include "ranged.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
@@ -824,12 +826,19 @@ void item::set_damage( int qty )
 
 detached_ptr<item> item::split( int qty )
 {
+    const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
+    if( split_from_preserving_container ) {
+        mark_rot_checked_now();
+    }
     if( qty <= 0 || !count_by_charges() || qty >= charges ) {
         return detach();
     }
     detached_ptr<item> res = item::spawn( *this );
     res->charges = qty;
     charges -= qty;
+    if( split_from_preserving_container ) {
+        res->mark_rot_checked_now();
+    }
     return res;
 }
 
@@ -862,6 +871,9 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
     if( is_null() ) {
         return false;
     }
+    if( goes_bad() && is_in_preserving_container() ) {
+        mark_rot_checked_now();
+    }
     if( count_by_charges() ) {
         return attempt_split( 0, cb );
     }
@@ -871,8 +883,28 @@ bool item::attempt_detach( std::function < detached_ptr<item>( detached_ptr<item
 bool item::attempt_split( int qty,
                           const std::function < detached_ptr<item>( detached_ptr<item> && ) > & cb )
 {
+    const bool split_from_preserving_container = goes_bad() && is_in_preserving_container();
+    if( split_from_preserving_container ) {
+        mark_rot_checked_now();
+    }
+    const bool split_needs_rot_actualization = goes_bad() && has_position() &&
+            !split_from_preserving_container;
+    const auto split_pos = split_needs_rot_actualization ? position() : tripoint_bub_ms::zero();
+    const auto vehicle_loc = dynamic_cast<vehicle_item_location *>( loc );
+    const auto split_temperature = !split_needs_rot_actualization ? temperature_flag::TEMP_NORMAL :
+                                   vehicle_loc != nullptr ? vehicle_loc->storage_temperature() :
+                                   rot::temperature_flag_for_location( get_map(), *this );
     detached_ptr<item> det = unsafe_split( qty );
+    if( det && split_from_preserving_container ) {
+        det->mark_rot_checked_now();
+    }
+    if( det && split_needs_rot_actualization ) {
+        det = actualize_rot( std::move( det ), split_pos, split_temperature, get_weather() );
+    }
     if( !det ) {
+        if( charges == 0 && has_position() ) {
+            detach().release();
+        }
         return false;
     }
     item &after_split = *det;
@@ -2027,28 +2059,34 @@ void item::food_info( const item *food_item, std::vector<iteminfo> &info,
         if( parts->test( iteminfo_parts::FOOD_ROT_STORAGE ) ) {
             const char *temperature_description;
             bool print_freshness_duration = false;
+            const bool preserved_by_container = food_item->is_in_preserving_container();
             // There should be a better way to do this...
-            switch( temperature ) {
-                case temperature_flag::TEMP_NORMAL:
-                case temperature_flag::TEMP_HEATER: {
-                    temperature_description = _( "* Current storage conditions <bad>do not</bad> "
-                                                 "protect this item from rot." );
-                }
-                break;
-                case temperature_flag::TEMP_FRIDGE:
-                case temperature_flag::TEMP_ROOT_CELLAR: {
-                    temperature_description = _( "* Current storage conditions <neutral>partially</neutral> "
-                                                 "protect this item from rot.  It will stay fresh at least <info>%s</info>." );
-                    print_freshness_duration = true;
-                }
-                break;
-                case temperature_flag::TEMP_FREEZER: {
-                    temperature_description = _( "* Current storage conditions <good>fully</good> "
-                                                 "protect this item from rot.  It will stay fresh indefinitely." );
-                }
-                break;
-                default: {
-                    temperature_description = "BUGGED TEMPERATURE INFO";
+            if( preserved_by_container ) {
+                temperature_description = _( "* Current storage conditions <good>fully</good> "
+                                             "protect this item from rot.  It will stay fresh indefinitely." );
+            } else {
+                switch( temperature ) {
+                    case temperature_flag::TEMP_NORMAL:
+                    case temperature_flag::TEMP_HEATER: {
+                        temperature_description = _( "* Current storage conditions <bad>do not</bad> "
+                                                     "protect this item from rot." );
+                    }
+                    break;
+                    case temperature_flag::TEMP_FRIDGE:
+                    case temperature_flag::TEMP_ROOT_CELLAR: {
+                        temperature_description = _( "* Current storage conditions <neutral>partially</neutral> "
+                                                     "protect this item from rot.  It will stay fresh at least <info>%s</info>." );
+                        print_freshness_duration = true;
+                    }
+                    break;
+                    case temperature_flag::TEMP_FREEZER: {
+                        temperature_description = _( "* Current storage conditions <good>fully</good> "
+                                                     "protect this item from rot.  It will stay fresh indefinitely." );
+                    }
+                    break;
+                    default: {
+                        temperature_description = "BUGGED TEMPERATURE INFO";
+                    }
                 }
             }
 
@@ -4133,11 +4171,11 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query &parts_
 
         std::string signame;
         if( has_flag( flag_RADIOSIGNAL_1 ) ) {
-            signame = "<color_c_red>red</color> radio signal.";
+            signame = "<color_c_red>red</color> radio signal";
         } else if( has_flag( flag_RADIOSIGNAL_2 ) ) {
-            signame = "<color_c_blue>blue</color> radio signal.";
+            signame = "<color_c_blue>blue</color> radio signal";
         } else if( has_flag( flag_RADIOSIGNAL_3 ) ) {
-            signame = "<color_c_green>green</color> radio signal.";
+            signame = "<color_c_green>green</color> radio signal";
         }
         if( parts->test( iteminfo_parts::DESCRIPTION_RADIO_ACTIVATION_CHANNEL ) ) {
             info.emplace_back( "DESCRIPTION",
@@ -5143,18 +5181,13 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         if( is_loaded() ) {
             const auto temp = rot::temperature_flag_for_location( get_map(), *this );
             if( temp == temperature_flag::TEMP_FREEZER ) {
-                tagtext += _( " (very cold)" );
+                tagtext += _( " (frozen)" );
             } else if( temp == temperature_flag::TEMP_FRIDGE || temp == temperature_flag::TEMP_ROOT_CELLAR ) {
                 tagtext += _( " (cold)" );
             }
         }
     }
 
-    if( has_flag( flag_resized_large ) ) {
-        tagtext += _( " (XL)" );
-    } else if( has_flag( flag_resized_small ) ) {
-        tagtext += _( " (XS)" );
-    }
     const sizing sizing_level = get_sizing( you );
 
     if( sizing_level == sizing::human_sized_small_char ) {
@@ -5217,38 +5250,11 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
         tagtext += string_format( " (%s [%d])", nname( item ), std::max( 1, item->volume / 250_ml ) * 5 );
     }
 
-    if( has_flag( flag_RADIO_MOD ) ) {
-        tagtext += _( " (radio:" );
-        if( has_flag( flag_RADIOSIGNAL_1 ) ) {
-            tagtext += pgettext( "The radio mod is associated with the [R]ed button.", "R)" );
-        } else if( has_flag( flag_RADIOSIGNAL_2 ) ) {
-            tagtext += pgettext( "The radio mod is associated with the [B]lue button.", "B)" );
-        } else if( has_flag( flag_RADIOSIGNAL_3 ) ) {
-            tagtext += pgettext( "The radio mod is associated with the [G]reen button.", "G)" );
-        } else {
-            debugmsg( "Why is the radio neither red, blue, nor green?" );
-            tagtext += "?)";
-        }
-    }
-
-    if( has_flag( flag_WET ) ) {
-        tagtext += _( " (wet)" );
-    }
     if( already_used_by_player( you ) ) {
         tagtext += _( " (used)" );
     }
     if( has_flag( flag_IS_UPS ) && get_var( "cable" ) == "plugged_in" ) {
         tagtext += _( " (plugged in)" );
-    }
-    if( has_flag( flag_SPAWN_FRIENDLY ) ) {
-        tagtext += _( " (friendly)" );
-    }
-    if( has_flag( flag_SPAWN_HOSTILE ) ) {
-        tagtext += _( " (hostile)" );
-    }
-
-    if( is_favorite ) {
-        tagtext += _( " *" ); // Display asterisk for favorite items
     }
 
     std::string modtext;
@@ -5260,6 +5266,27 @@ std::string item::tname( unsigned int quantity, bool with_prefix, unsigned int t
     }
     if( has_flag( flag_DIAMOND ) ) {
         modtext += std::string( pgettext( "Adjective, as in diamond katana", "diamond" ) ) + " ";
+    }
+
+    // Collects all flags from the item and its type, then appends their display tags to the item
+    // name. This is used to display tags from both the item and its type, such as (wet) or (XL).
+    namespace ranges = std::ranges;
+    const auto display_tags = []( const auto & flags ) {
+        using namespace std::views;
+        const auto get_tag = transform( []( const flag_id & f ) -> const translation & { return f->tag(); } );
+        const auto has_tag = filter( []( const translation & tag ) { return !tag.empty(); } );
+        const auto translate_tag = transform( []( const translation & tag ) { return tag.translated(); } );
+        return flags | get_tag | has_tag | translate_tag;
+    };
+    std::vector<std::string> flag_tags;
+    ranges::copy( display_tags( get_flags() ), std::back_inserter( flag_tags ) );
+    ranges::copy( display_tags( type->item_tags ), std::back_inserter( flag_tags ) );
+    if( !flag_tags.empty() ) {
+        tagtext += " " + enumerate_as_string( flag_tags, enumeration_conjunction::space );
+    }
+
+    if( is_favorite ) {
+        tagtext += _( " *" ); // Display asterisk for favorite items
     }
 
     //~ This is a string to construct the item name as it is displayed. This format string has been added for maximum flexibility. The strings are: %1$s: Damage text (e.g. "bruised"). %2$s: burn adjectives (e.g. "burnt"). %3$s: tool modifier text (e.g. "atomic"). %4$s: vehicle part text (e.g. "3.8-Liter"). $5$s: main item text (e.g. "apple"). %6s: tags (e.g. "(wet) (poor fit)").
@@ -6274,7 +6301,7 @@ int item::get_comestible_fun() const
     if( !is_comestible() ) {
         return 0;
     }
-    int fun = get_comestible()->fun;
+    auto fun = get_comestible()->fun;
     for( const flag_id &flag : item_tags ) {
         fun += flag->taste_mod();
     }
@@ -6282,7 +6309,7 @@ int item::get_comestible_fun() const
         fun += flag->taste_mod();
     }
 
-    return fun;
+    return static_cast<int>( get_var( "comestible_fun", static_cast<double>( fun ) ) );
 }
 
 bool item::goes_bad() const
@@ -6316,6 +6343,21 @@ bool item::goes_bad_after_opening( bool strict ) const
                            !contents.empty() && contents.front().goes_bad() );
 }
 
+auto item::is_in_preserving_container() const -> bool
+{
+    for( const item *parent = parent_item(); parent != nullptr; parent = parent->parent_item() ) {
+        if( parent->type && parent->type->container && parent->type->container->preserves ) {
+            return true;
+        }
+    }
+    return false;
+}
+
+auto item::mark_rot_checked_now() -> void
+{
+    last_rot_check = calendar::turn;
+}
+
 time_duration item::get_shelf_life() const
 {
     if( goes_bad() ) {
@@ -6331,6 +6373,7 @@ time_duration item::get_shelf_life() const
 double item::get_relative_rot() const
 {
     if( goes_bad() ) {
+        const_cast<item *>( this )->update_rot_from_location( temperature_flag::TEMP_NORMAL );
         return rot / get_shelf_life();
     }
     return 0;
@@ -6435,7 +6478,7 @@ auto item::calc_rot( time_point time, const units::temperature temp ) const -> t
     // always rot away and food rots away at twice the shelf life.  If the food
     // is in a sealed container they won't rot away, this avoids needlessly
     // calculating their rot in that case.
-    if( !is_corpse() && get_relative_rot() > 2.0 ) {
+    if( !is_corpse() && get_shelf_life() != 0_turns && rot / get_shelf_life() > 2.0 ) {
         return 0_seconds;
     }
 
@@ -6484,6 +6527,9 @@ auto temperature_flag_to_highest_temperature( temperature_flag temperature ) -> 
 
 time_duration item::minimum_freshness_duration( temperature_flag temperature ) const
 {
+    if( is_in_preserving_container() ) {
+        return calendar::INDEFINITELY_LONG_DURATION;
+    }
     const units::temperature temp = temperature_flag_to_highest_temperature( temperature );
     unsigned long long rot_per_hour = get_hourly_rotpoints_at_temp( temp );
 
@@ -10027,7 +10073,7 @@ bool item::needs_processing() const
     return is_active() || has_flag( flag_RADIO_ACTIVATION ) || has_flag( flag_ETHEREAL_ITEM ) ||
            ( !contents.empty() && is_container() && contents.front().needs_processing() ) ||
            ( magazine_current() && magazine_current()->needs_processing() ) ||
-           is_artifact() || is_relic() || is_food();
+           is_artifact() || is_relic() || goes_bad();
 }
 
 int item::processing_speed() const
@@ -10068,21 +10114,35 @@ static units::temperature clip_by_temperature_flag( units::temperature temperatu
     return temperature;
 }
 
-detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
-                                       const tripoint_bub_ms &pos,
-                                       player *carrier, const temperature_flag flag,
-                                       const weather_manager &weather )
+void item::update_rot_from_location( const temperature_flag temperature )
 {
-    if( !self ) {
-        return std::move( self );
+    if( !goes_bad() || last_rot_check == calendar::turn ) {
+        return;
     }
+    if( is_in_preserving_container() ) {
+        mark_rot_checked_now();
+        return;
+    }
+
+    auto pos = tripoint_bub_ms::zero();
+    auto flag = temperature;
+    if( is_loaded() && has_position() ) {
+        pos = position();
+        flag = rot::temperature_flag_for_location( get_map(), *this );
+    }
+    update_rot( pos, flag, get_weather() );
+}
+
+void item::update_rot( const tripoint_bub_ms &pos, const temperature_flag flag,
+                       const weather_manager &weather )
+{
     const time_point now = calendar::turn;
 
     // if player debug menu'd the time backward it breaks stuff, just reset the
     // last_temp_check and last_rot_check in this case
-    if( now - self->last_rot_check < 0_turns ) {
-        self->last_rot_check = now;
-        return std::move( self );
+    if( now - last_rot_check < 0_turns ) {
+        last_rot_check = now;
+        return;
     }
 
     // process rot at most once every 100_turns (10 min)
@@ -10092,8 +10152,8 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
     units::temperature temp = weather.get_temperature( bub_to_abs( pos ) );
     temp = clip_by_temperature_flag( temp, flag );
 
-    time_point time = self->last_rot_check;
-    item_internal::scoped_goes_bad_cache _cache( &*self );
+    time_point time = last_rot_check;
+    item_internal::scoped_goes_bad_cache _cache( this );
 
     if( now - time > 1_hours ) {
         // This code is for items that were left out of reality bubble for long time
@@ -10125,27 +10185,36 @@ detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool sea
             units::temperature env_temperature_clipped = clip_by_temperature_flag( env_temperature_raw, flag );
 
             // Calculate item rot
-            self->rot += self->calc_rot( time, env_temperature_clipped );
-            self->last_rot_check = time;
-
-            if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-                // No need to track item that will be gone
-                return detached_ptr<item>();
-            }
+            rot += calc_rot( time, env_temperature_clipped );
+            last_rot_check = time;
         }
     }
 
     // Remaining <1 h from above
     // and items that are held near the player
     if( now - time > smallest_interval ) {
-        self->rot += self->calc_rot( now, temp );
-        self->last_rot_check = now;
+        rot += calc_rot( now, temp );
+        last_rot_check = now;
+    }
+}
 
-        if( self->has_rotten_away() && carrier == nullptr && !seals ) {
-            return detached_ptr<item>();
-        } else {
-            return std::move( self );
-        }
+detached_ptr<item>  item::process_rot( detached_ptr<item> &&self, const bool seals,
+                                       const tripoint_bub_ms &pos,
+                                       player *carrier, const temperature_flag flag,
+                                       const weather_manager &weather )
+{
+    if( !self ) {
+        return std::move( self );
+    }
+    if( self->is_in_preserving_container() ) {
+        self->mark_rot_checked_now();
+        return std::move( self );
+    }
+
+    self->update_rot( pos, flag, weather );
+
+    if( self->has_rotten_away() && carrier == nullptr && !seals ) {
+        return detached_ptr<item>();
     }
     return std::move( self );
 }
@@ -10839,10 +10908,12 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         const bool seals, const temperature_flag flag,
         const weather_manager &weather_generator )
 {
+    ZoneScopedN( "item_process_internal" );
     if( !self ) {
         return std::move( self );
     }
     if( self->has_flag( flag_ETHEREAL_ITEM ) ) {
+        ZoneScopedN( "item_process_ethereal" );
         if( !self->has_var( "ethereal" ) ) {
             return detached_ptr<item>();
         }
@@ -10858,15 +10929,20 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
         }
     }
 
-    self->process_artifact( carrier, pos );
-    self->process_relic( carrier );
+    {
+        ZoneScopedN( "item_process_artifact_relic" );
+        self->process_artifact( carrier, pos );
+        self->process_relic( carrier );
+    }
 
     if( self->faults.contains( fault_gun_blackpowder ) ) {
+        ZoneScopedN( "item_process_faults" );
         return process_blackpowder_fouling( std::move( self ), carrier );
     }
 
     avatar &you = get_avatar();
     if( activate ) {
+        ZoneScopedN( "item_process_activate" );
         if( self->type->invoke( carrier != nullptr ? *carrier : you, *self, pos ) > 0 ) {
             return detached_ptr<item>();
         }
@@ -10882,14 +10958,17 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
 
     // Remaining stuff is only done for active items.
     if( !self->is_active() ) {
+        ZoneScopedN( "item_process_inactive_return" );
         return std::move( self );
     }
 
     if( !self->is_food() && self->item_counter > 0 ) {
+        ZoneScopedN( "item_process_counter" );
         self->item_counter--;
     }
 
     if( self->item_counter == 0 && self->type->countdown_action ) {
+        ZoneScopedN( "item_process_countdown" );
         self->type->countdown_action.call( carrier ? *carrier : you, *self, false, pos );
         if( self->type->countdown_destroy ) {
             return detached_ptr<item>();
@@ -10897,69 +10976,86 @@ detached_ptr<item> item::process_internal( detached_ptr<item> &&self, player *ca
     }
 
     map &here = get_map();
-    for( const emit_id &e : self->type->emits ) {
-        here.emit_field( pos, e );
+    if( !self->type->emits.empty() ) {
+        ZoneScopedN( "item_process_emits" );
+        for( const emit_id &e : self->type->emits ) {
+            here.emit_field( pos, e );
+        }
     }
 
     if( self->has_flag( flag_FAKE_SMOKE ) ) {
+        ZoneScopedN( "item_process_fake_smoke" );
         self = process_fake_smoke( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->has_flag( flag_FAKE_CLONING_VAT ) ) {
+        ZoneScopedN( "item_process_fake_cloning_vat" );
         self = process_fake_cloning_vat( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->has_flag( flag_FAKE_MILL ) ) {
+        ZoneScopedN( "item_process_fake_mill" );
         self = process_fake_mill( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->is_corpse() ) {
+        ZoneScopedN( "item_process_corpse" );
         self = process_corpse( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
-    if( self->has_flag( flag_WET ) && self->process_wet( carrier, pos ) ) {
-        // Drying items are never destroyed, but we want to exit so they don't get processed as tools.
-        return std::move( self );
+    if( self->has_flag( flag_WET ) ) {
+        ZoneScopedN( "item_process_wet" );
+        if( self->process_wet( carrier, pos ) ) {
+            // Drying items are never destroyed, but we want to exit so they don't get processed as tools.
+            return std::move( self );
+        }
     }
     if( self->has_flag( flag_LITCIG ) ) {
+        ZoneScopedN( "item_process_litcig" );
         self = process_litcig( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( ( self->has_flag( flag_WATER_EXTINGUISH ) || self->has_flag( flag_WIND_EXTINGUISH ) ) ) {
+        ZoneScopedN( "item_process_extinguish" );
         self = process_extinguish( std::move( self ), carrier, pos );
         if( !self ) {
             return std::move( self );
         }
     }
     if( self->has_flag( flag_WATER_DISABLE ) && carrier->is_underwater() ) {
+        ZoneScopedN( "item_process_water_disable" );
         carrier->add_msg_if_player( "Your %s gurgles and splutters.", self->tname() );
         self->revert( carrier );
         self->deactivate();
         return std::move( self );
     }
     if( self->has_flag( flag_CABLE_SPOOL ) ) {
+        ZoneScopedN( "item_process_cable" );
         // DO NOT process this as a tool! It really isn't!
         return process_cable( std::move( self ), carrier, pos );
     }
     if( self->has_flag( flag_IS_UPS ) ) {
+        ZoneScopedN( "item_process_ups" );
         // DO NOT process this as a tool! It really isn't!
         return process_UPS( std::move( self ), carrier, pos );
     }
     if( self->is_tool() ) {
+        ZoneScopedN( "item_process_tool" );
         return process_tool( std::move( self ), carrier, pos );
     }
     // All foods that go bad have temperature
     if( ( self->is_food() || self->is_corpse() ) ) {
+        ZoneScopedN( "item_process_rot" );
         item &obj = *self;
         self = process_rot( std::move( self ), seals, pos, carrier, flag, weather_generator );
         // If the item has rotted away, then self becomes a null pointer.
@@ -11484,7 +11580,8 @@ std::string item::describe_location( const Character *ch ) const
 
 item *item::parent_item() const
 {
-    contents_item_location *cont = dynamic_cast<contents_item_location *>( &*loc );
+    const auto location = loc ? loc : saved_loc;
+    auto *cont = dynamic_cast<contents_item_location *>( location );
     if( !cont ) {
         return nullptr;
     }

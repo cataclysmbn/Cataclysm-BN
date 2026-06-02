@@ -7,48 +7,46 @@ various entities in the game. It also has a `tileset.txt` file that provides met
 ## Compositing Tilesets
 
 Prior October 2019, tilesets had to be submitted to the repo with each tilesheet fully composited
-and the sprite indices in `tile_config.json` calculated by hand. After October 2019, tilesets can be
-submitted to repos as directories of individual sprite files and tile entry JSON files that used
-sprite file names, and a Python script that runs at compile time would merge the sprite images into
-tilesheets, convert the files names into sprite indices for the tile entries, and merge the tile
-entries into a `tile_config.json`.
+and the sprite indices in `tile_config.json` calculated by hand. Since then, tilesets can be
+submitted as directories of individual sprite files and `tile_entry` JSON files that use sprite file
+names. The TypeScript tileset tool merges those files into tilesheets, converts sprite file names to
+sprite indices, and writes `tile_config.json`.
 
 For the rest of this document, tilesets that are submitted as fully composited tilesheets are called
-legacy tilesets, and tilesets that submitted as individual sprite image files are compositing
+legacy tilesets, and tilesets that are submitted as individual sprite image files are compositing
 tilesets.
 
-### tools/gfx_tools/decompose.py
+### TypeScript tileset tool
 
-This is a Python script that will convert a legacy tileset into a compositing tileset. It reads the
-`tile_config.json` and assigns semi-arbitrary file names to each sprite index. Then it changes all
-the sprite indexes references to the file names. Then it breaks up `tile_config.json` into many
-small tile_entry JSON files with arbitrary file names, and pulls out each sprite and writes it to
-aseparate file.
+Use `scripts/tileset.ts` for normal compose/decompose work. It replaced the old Python compose
+workflow in [PR #8151](https://github.com/cataclysmbn/Cataclysm-BN/pull/8151).
 
-It requires pyvips to do the image processing.
+```sh
+# Compose individual sprite files and tile entries into tile_config.json and tilesheet PNGs.
+deno run -A scripts/tileset.ts --pack gfx/Retrodays
 
-It takes a single mandatory argument, which is the path to the tileset directory. For example:
-`python tools/gfx_tools/decompose.py gfx/ChestHole16Tileset` will convert the legacy ChestHole16
-tileset to a compositing tileset.
+# Write the composed output to another directory.
+deno run -A scripts/tileset.ts --pack gfx/Retrodays /tmp/Retrodays-composed
 
-decompose.py creates a sufficient directory hierarchy and file names for a tileset to be
-compositing, but it is machine generated and badly organized. New compositing tilesets should use
-more sensible file names and a better organization.
+# Decompose a legacy tileset into individual sprite files and tile entries.
+deno run -A scripts/tileset.ts --unpack gfx/ChestHole16Tileset
+```
 
-It shouldn't be necessary to run decompose.py very often. Legacy tilesets should only need to be
-converted to composite tilesets one time.
+Useful options:
 
-### tools/gfx_tools/compose.py
+- `--format-json`: pretty-print the generated `tile_config.json`.
+- `--only-json`: regenerate `tile_config.json` without writing tilesheet PNGs.
+- `--use-all`: include otherwise unused PNG files with ids based on their filenames.
+- `--palette` and `--palette-copies`: generate 8-bit palette output.
 
-This is a Python script that creates the tilesheets for a compositing tileset. It reads all of the
-directories in a tileset's directory with names that start with `pngs_` for sprite files and
-`tile_entry` JSON files, creates mappings of sprite file names to indices, merges the sprite files
-into tilesheets, changes all of the sprite file name references in the `tile_entries` to indices,
-and merges the `tile_entries` into a `tile_config.json`.
+The old `tools/gfx_tools/compose.py` and `tools/gfx_tools/decompose.py` scripts are deprecated for
+documentation and daily tileset work. They remain in the repository for compatibility and parity
+tests.
 
-Like decompose.py, it requires pyvips to the image processing.
+The original sprite files and `tile_entry` JSON files are preserved when composing.
 
-The original sprite files and `tile_entry` JSON files are preserved.
+For small examples or quick browser-only checks, see the
+[tileset web tool](/dev/reference/tileset_web_tool/).
 
 ### directory structure
 
@@ -201,8 +199,8 @@ offsets, it can have an empty dictionary as the value for the tilesheet name key
 should have a dictionary of the sprite offsets, height, and width.
 
 A special key is `"fallback"` which should be `true` if present. If a tilesheet is designated as
-fallback, it will be treated as a tilesheet of fallback ASCII characters. `compose.py` will also
-compose the fallback tilesheet to the end of the tileset, and will add a "fallback.png" to
+fallback, it will be treated as a tilesheet of fallback ASCII characters. `scripts/tileset.ts` will
+also compose the fallback tilesheet to the end of the tileset, and will add a "fallback.png" to
 `tile_config.json` if there is no `"fallback"` entry in `tile_info.json`.
 
 A special is `"filler"` which should be `true` if present. If a tilesheet is designated as filler,

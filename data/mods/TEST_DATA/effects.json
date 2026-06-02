@@ -38,5 +38,10 @@
     "type": "effect_type",
     "id": "test_juggling_l2",
     "effects_on_remove": [ { "effect_type": "test_juggling_l1", "duration": "0 s" } ]
+  },
+  {
+    "type": "effect_type",
+    "id": "test_lua_effect",
+    "flags": [ "EFFECT_LUA_ON_ADDED", "EFFECT_LUA_ON_TICK", "EFFECT_LUA_ON_REMOVED" ]
   }
 ]

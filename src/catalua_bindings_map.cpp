@@ -17,6 +17,7 @@
 #include "map_iterator.h"
 #include "npc.h"
 #include "overmap.h"
+#include "sol/sol.hpp"
 #include "sounds.h"
 #include "trap.h"
 #include "detached_ptr.h"
@@ -457,18 +458,16 @@ void cata::detail::reg_map( sol::state &lua )
             }
         } );
 
+        luna::set_fx( ut, "has_flag_at",
+                      sol::resolve<bool( const std::string &, const tripoint_bub_ms & ) const>( &map::has_flag ) );
+
+        luna::set_fx( ut, "has_ter_flag_at",
+                      sol::resolve<bool( const std::string &, const tripoint_bub_ms & ) const>( &map::has_flag_ter ) );
         luna::set_fx( ut, "get_ter_at", sol::resolve<ter_id( const tripoint_bub_ms & )const>( &map::ter ) );
         luna::set_fx( ut, "set_ter_at",
                       sol::resolve<bool( const tripoint_bub_ms &, const ter_id & )>( &map::ter_set ) );
-        DOC( "Coordinate-based variants that avoid allocating a Tripoint object." );
-        luna::set_fx( ut, "get_ter_at_xyz", []( const map & m, int x, int y, int z ) -> ter_id {
-            return m.ter( tripoint_bub_ms( x, y, z ) );
-        } );
-        luna::set_fx( ut, "set_ter_at_xyz", []( map & m, int x, int y, int z,
-        const ter_id & id ) -> bool {
-            return m.ter_set( tripoint_bub_ms( x, y, z ), id );
-        } );
-
+        luna::set_fx( ut, "has_furn_flag_at",
+                      sol::resolve<bool( const std::string &, const tripoint_bub_ms & ) const>( &map::has_flag_furn ) );
         luna::set_fx( ut, "get_furn_at",
                       sol::resolve<furn_id( const tripoint_bub_ms & )const>( &map::furn ) );
         luna::set_fx( ut, "set_furn_at", []( map & m, const tripoint_bub_ms & p, const furn_id & id ) { m.furn_set( p, id ); } );
@@ -515,6 +514,9 @@ void cata::detail::reg_map( sol::state &lua )
         luna::set_fx( ut, "place_items", []( map & m, std::string id, int chance, point_bub_ms topleft,
         point_bub_ms bottomright, bool onflat ) { m.place_items( item_group_id( id ), chance, topleft, bottomright, onflat, calendar::start_of_cataclysm ); } );
         luna::set_fx( ut, "rotate", []( map & m, int turns ) { m.rotate( turns ); } );
+        luna::set_fx( ut, "make_rubble", []( map & m, tripoint_bub_ms point, furn_id & fid, ter_id & tid ) { m.make_rubble( point, fid, tid ); } );
+        luna::set_fx( ut, "destroy", []( map & m, tripoint_bub_ms point ) { m.destroy( point ); } );
+        luna::set_fx( ut, "set_temperature", []( map & m, tripoint_bub_ms point, int temp ) { m.set_temperature( point, temp ); } );
     }
 
     // Register 'tinymap' class to be used in Lua

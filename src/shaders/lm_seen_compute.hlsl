@@ -8,7 +8,8 @@
 //   2. Compute 3D distance from player; skip if beyond view_radius.
 //   3. Trace a DDA ray from player toward target, accumulating a running-
 //      average transparency (mirrors accumulate_transparency on CPU).
-//      Vertical steps check floor_all/vehicle_floor_all to block the ray.
+//      Vertical steps check floor_all to block the ray.  Vehicle roofs are
+//      applied as a fixed vertical stamp directly beneath the roof.
 //   4. seen_all[target] = exp(-avg_transparency * distance).
 //      This matches the CPU k_sight_model decay: values in [0, 1] that
 //      apparent_light_helper then multiplies by lm to get apparent brightness.
@@ -117,7 +118,7 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
             const int floor_z = sign_z > 0 ? player_z_idx + k + 1 : player_z_idx - k;
             if( floor_z >= 0 && floor_z < z_count ) {
                 const int fl_idx = floor_z * cache_xy + ix_z * cache_y + iy_z;
-                if( floor_all[fl_idx] != 0u || vehicle_floor_all[fl_idx] != 0u ) {
+                if( floor_all[fl_idx] != 0u ) {
                     blocked = true;
                     break;
                 }
@@ -148,6 +149,14 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
     if( blocked ) {
         seen_all[seen_idx] = 0.0;
         return;
+    }
+
+    if( tz < player_z_idx && tz + 1 < z_count ) {
+        int roof_idx = ( tz + 1 ) * cache_xy + tx * cache_y + ty;
+        if( vehicle_floor_all[roof_idx] != 0u ) {
+            seen_all[seen_idx] = 0.0;
+            return;
+        }
     }
 
     // Visibility decays exponentially with distance through the average

@@ -329,14 +329,17 @@ nc_color faction::food_supply_color()
     }
 }
 
+auto faction::relationship_flags_with( const faction_id &guy_id ) const ->
+const std::bitset<npc_factions::rel_types> *
+{
+    const auto rel_data = relations.find( guy_id.c_str() );
+    return rel_data != relations.end() ? &rel_data->second : nullptr;
+}
+
 bool faction::has_relationship( const faction_id &guy_id, npc_factions::relationship flag ) const
 {
-    for( const auto &rel_data : relations ) {
-        if( rel_data.first == guy_id.c_str() ) {
-            return rel_data.second.test( flag );
-        }
-    }
-    return false;
+    const auto rel_data = relationship_flags_with( guy_id );
+    return rel_data != nullptr && rel_data->test( flag );
 }
 
 std::string fac_combat_ability_text( int val )
