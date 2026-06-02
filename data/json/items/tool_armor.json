@@ -959,7 +959,8 @@
     "environmental_protection": 40,
     "encumbrance": 10,
     "qualities": [ [ "GLARE", 2 ], [ "HV_INSULATION", 1 ] ],
-    "material_thickness": 7
+    "material_thickness": 7,
+    "adv_hearing_protection": 120
   },
   {
     "id": "dimensional_anchor",
