@@ -2025,11 +2025,11 @@ bool game::do_turn()
                 }
 
                 if( !soundperf && u.moves <= 0 ) {
-                    const auto is_unheard_by_player = []( const auto &sound ) {
+                    const auto is_unheard_by_player = []( const auto & sound ) {
                         return !sound.heard_by_player;
                     };
                     const auto has_unheard_player_sounds = std::ranges::any_of(
-                                m.m_sound_cache.sound_instances, is_unheard_by_player );
+                            m.m_sound_cache.sound_instances, is_unheard_by_player );
                     if( has_unheard_player_sounds ) {
                         sounds::process_sound_markers( &u );
                     }
