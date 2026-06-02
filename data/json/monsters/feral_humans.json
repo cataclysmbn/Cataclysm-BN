@@ -927,8 +927,11 @@
     "melee_skill": 10,
     "melee_dice": 1,
     "melee_dice_sides": 1,
-    "melee_damage": [ { "damage_type": "electric", "amount": 6 }, { "damage_type": "dark", "amount": 6 } ],
-    "melee_cut": 36,
+    "melee_damage": [
+      { "damage_type": "electric", "amount": 6 },
+      { "damage_type": "dark", "amount": 6 },
+      { "damage_type": "cut", "amount": 36, "armor_penetration": 28 }
+    ],
     "//": "Matches armor value of powered RM13 + alloy plating. Night vision simulates active gpnvgs. Melee stats simulate monomolecular blade, hence no monster_weapon. Health regen simulates repair nanobots. Hard to shoot simulates uncanny dodge + high speed.",
     "armor_bash": 24,
     "armor_cut": 38,

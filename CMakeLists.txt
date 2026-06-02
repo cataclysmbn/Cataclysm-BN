@@ -446,7 +446,7 @@ if (TILES)
                 "This project requires SDL3_image to be installed to compile in graphical mode. \
                  Please install the SDL3_image development libraries, \
                  or try compiling without -DTILES=1 for a text-only compilation. \
-                 See doc/COMPILING/COMPILING-CMAKE.md for details and more info.")
+                 See docs/en/dev/guides/building/cmake.md for details and more info.")
     endif ()
     add_definitions(-DTILES)
 endif ()
@@ -645,7 +645,6 @@ endif()
 
 if (RELEASE)
     if (USE_PREFIX_DATA_DIR)
-        install(DIRECTORY doc TYPE DOC)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
@@ -653,7 +652,6 @@ if (RELEASE)
             ${CMAKE_SOURCE_DIR}/VERSION.txt
             TYPE DOC)
     else()
-        install(DIRECTORY doc DESTINATION .)
         install(FILES
             ${CMAKE_SOURCE_DIR}/README.md
             ${CMAKE_SOURCE_DIR}/LICENSE.txt
