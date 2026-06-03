@@ -1899,10 +1899,9 @@ bool game::do_turn()
     // Reset dimension swap flag now that the map is fully loaded and turn is processing
     swapping_dimensions = false;
 
-    // Mark all lightmap and visibility caches dirty for this turn.  The first redraw will run
-    // generate_lightmap / update_visibility_cache; subsequent redraws within the same turn skip them.
+    // Mark visibility dirty for this turn. Lightmap dirtiness is derived from
+    // dynamic light state in build_map_cache and from explicit map mutations.
     {
-        m.invalidate_lightmap_caches();
         m.invalidate_visibility_caches();
     }
 

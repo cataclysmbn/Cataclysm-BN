@@ -8,6 +8,7 @@
 #include <array>
 #include <cassert>
 #include <climits>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <iterator>
@@ -186,6 +187,47 @@ auto horde_should_avoid_vehicle_tile( const map &here, const tripoint_bub_ms &p,
 
     const auto &veh = vp->vehicle();
     return veh.is_owned_by( get_avatar() );
+}
+
+auto quantized_light_signature_value( const float value ) -> int
+{
+    return static_cast<int>( std::lround( value * 4.0f ) );
+}
+
+auto quantized_solar_signature_value( const float value ) -> int
+{
+    return static_cast<int>( std::lround( value * 8.0f ) );
+}
+
+auto quantized_angle_signature_value( const units::angle angle ) -> int
+{
+    return static_cast<int>( std::lround( units::to_degrees( angle ) * 10.0 ) );
+}
+
+void hash_light_item( std::size_t &seed, const tripoint_bub_ms &pos, const item &itm )
+{
+    auto luminance = 0.0f;
+    auto width = 0_degrees;
+    auto direction = 0_degrees;
+    if( !itm.getlight( luminance, width, direction ) ) {
+        return;
+    }
+    cata::hash_combine( seed, pos );
+    cata::hash_combine( seed, quantized_light_signature_value( luminance ) );
+    cata::hash_combine( seed, quantized_angle_signature_value( width ) );
+    cata::hash_combine( seed, quantized_angle_signature_value( direction ) );
+}
+
+void hash_character_light_state( std::size_t &seed, const Character &who )
+{
+    const auto active_luminance = who.active_light();
+    const auto has_fire_light = who.has_effect( effect_onfire );
+    if( active_luminance <= LIGHT_AMBIENT_LOW && !has_fire_light ) {
+        return;
+    }
+    cata::hash_combine( seed, who.bub_pos() );
+    cata::hash_combine( seed, quantized_light_signature_value( active_luminance ) );
+    cata::hash_combine( seed, has_fire_light );
 }
 
 } // namespace
@@ -478,10 +520,14 @@ void map::set_seen_cache_dirty( const tripoint_bub_ms &change_location )
         if( cache.seen_cache_dirty ) {
             return;
         }
+#if defined( CATA_SDL )
+        cache.seen_cache_dirty = true;
+#else
         const int ci = cache.idx( change_location.x(), change_location.y() );
         if( cache.seen_cache[ci] != 0.0 || cache.camera_cache[ci] != 0.0 ) {
             cache.seen_cache_dirty = true;
         }
+#endif
     }
 }
 
@@ -2208,6 +2254,9 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
     if( old_t.transparent != new_t.transparent ) {
         set_transparency_cache_dirty( p );
         set_seen_cache_dirty( p );
+    }
+    if( old_t.light_emitted != new_t.light_emitted ) {
+        invalidate_lightmap_caches();
     }
 
     if( ( old_t.has_flag( TFLAG_NO_FLOOR ) != new_t.has_flag( TFLAG_NO_FLOOR ) ) ||
@@ -5563,7 +5612,11 @@ map_stack::iterator map::i_rem( const tripoint_bub_ms &p, map_stack::const_itera
         submaps_with_active_items.erase( project_to<coords::sm>( bub_to_abs( p ) ) );
     }
 
+    const auto removed_emissive = ( *it )->is_emissive();
     current_submap->update_lum_rem( l, **it );
+    if( removed_emissive ) {
+        invalidate_lightmap_caches();
+    }
 
     return current_submap->get_items( l ).erase( std::move( it ), out );
 }
@@ -5595,7 +5648,11 @@ std::vector<detached_ptr<item>> map::i_clear( const tripoint_bub_ms &p )
         submaps_with_active_items.erase( project_to<coords::sm>( bub_to_abs( p ) ) );
     }
 
+    const auto had_luminance = current_submap->get_lum( l ) != 0;
     current_submap->set_lum( l, 0 );
+    if( had_luminance ) {
+        invalidate_lightmap_caches();
+    }
     return current_submap->get_items( l ).clear();
 }
 
@@ -5865,7 +5922,11 @@ void map::add_item( const tripoint_bub_ms &p, detached_ptr<item> &&new_item )
     current_submap->is_uniform = false;
     invalidate_max_populated_zlev( p.z() );
 
+    const auto adds_luminance = new_item->is_emissive();
     current_submap->update_lum_add( l, *new_item );
+    if( adds_luminance ) {
+        invalidate_lightmap_caches();
+    }
     if( new_item->needs_processing() ) {
         if( current_submap->active_items.empty() ) {
             submaps_with_active_items.insert( tripoint_abs_sm( abs_sub.x() + p.x() / SEEX,
@@ -5981,6 +6042,7 @@ void map::update_lum( item &loc, bool add )
     } else {
         current_submap->update_lum_rem( l, *target );
     }
+    invalidate_lightmap_caches();
 }
 
 static bool process_map_items( item *item_ref, const tripoint_bub_ms &location,
@@ -10310,9 +10372,22 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
     }
     const tripoint_bub_ms &p = g->u.bub_pos();
-    const bool need_seen_rebuild = seen_cache_dirty || m_last_seen_cache_origin != p;
+    auto need_seen_rebuild = seen_cache_dirty || m_last_seen_cache_origin != p;
 #if defined( CATA_SDL )
     SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+    if( !skip_lightmap && gpu_device != nullptr ) {
+        const auto &visibility_cache = get_cache_ref( zlev );
+        if( !cata_gpu::resident_lighting_ready_for_visibility( {
+                .device = gpu_device,
+                .cache_x = visibility_cache.cache_x,
+                .cache_y = visibility_cache.cache_y,
+                .z_count = OVERMAP_LAYERS,
+            } ) ) {
+            need_seen_rebuild = true;
+            invalidate_lightmap_caches();
+            get_cache( zlev ).visibility_cache_dirty = true;
+        }
+    }
 #endif
     if( need_seen_rebuild ) {
 #if defined( CATA_SDL )
@@ -10329,44 +10404,29 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
     if( !skip_lightmap ) {
         ZoneScopedN( "Phase4_lightmap" );
+        invalidate_lightmap_caches_if_light_state_changed();
         auto needs_lightmap_dispatch = [this]( const int z ) {
-#if defined( CATA_SDL )
-            return get_cache( z ).lightmap_dirty || get_cache( z ).visibility_cache_dirty;
-#else
             return get_cache( z ).lightmap_dirty;
-#endif
         };
+        auto dirty_lightmap_levels = std::vector<int>{};
+        std::ranges::copy_if( std::views::iota( minz, maxz + 1 ),
+                              std::back_inserter( dirty_lightmap_levels ), needs_lightmap_dispatch );
+
         // Only include levels whose lightmap is actually stale this redraw.
-        // lightmap_dirty is set for all levels at the start of each game turn and
-        // cleared here after generate_lightmap runs, so subsequent redraws within
-        // the same turn skip the rebuild entirely.
-        if( needs_lightmap_dispatch( zlev ) ) {
-            dirty_seen_cache_levels.push_back( zlev );
-        }
-        dirty_seen_cache_levels.erase(
-        std::ranges::remove_if( dirty_seen_cache_levels, [&]( int z ) {
-            return !needs_lightmap_dispatch( z );
-        } ).begin(),
-        dirty_seen_cache_levels.end() );
-        std::ranges::sort( dirty_seen_cache_levels );
-        dirty_seen_cache_levels.erase( std::ranges::unique( dirty_seen_cache_levels ).begin(),
-                                       dirty_seen_cache_levels.end() );
+        // lightmap_dirty is set by explicit cache invalidation or dynamic light
+        // source changes, then cleared after generate_lightmap runs.
+        std::ranges::sort( dirty_lightmap_levels );
+        dirty_lightmap_levels.erase( std::ranges::unique( dirty_lightmap_levels ).begin(),
+                                     dirty_lightmap_levels.end() );
 
 #if defined( CATA_SDL )
         if( gpu_device != nullptr ) {
             update_solar_params();
-            // GPU path: extend dirty_seen_cache_levels with the current z-level if the
-            // player-view seen cache also needs a rebuild (player moved or transparency
-            // changed), then run the full GPU lighting + seen-cache dispatch.
-            auto gpu_levels = dirty_seen_cache_levels;
-            if( need_seen_rebuild ) {
-                gpu_levels.push_back( zlev );
-                std::ranges::sort( gpu_levels );
-                gpu_levels.erase( std::ranges::unique( gpu_levels ).begin(),
-                                  gpu_levels.end() );
-            }
-            if( !gpu_levels.empty() ) {
-                for( const int z : gpu_levels ) {
+            // GPU path: rebuild lm only for lightmap-dirty levels. A player
+            // movement / FoV-only update can reuse resident lm and run just
+            // the seen-cache pass.
+            if( !dirty_lightmap_levels.empty() || need_seen_rebuild ) {
+                for( const int z : dirty_lightmap_levels ) {
                     auto &c = get_cache( z );
                     std::fill( c.sm.begin(), c.sm.end(), 0.0f );
                     std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
@@ -10374,13 +10434,16 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     std::ranges::fill( c.lm, 0.0f );
                 }
                 // Pre-warm vehicle list cache serially to avoid concurrent heap writes.
-                get_vehicles();
-                for( const int z : gpu_levels ) {
-                    generate_lightmap_worker( z, true );
+                if( !dirty_lightmap_levels.empty() ) {
+                    get_vehicles();
+                    for( const int z : dirty_lightmap_levels ) {
+                        generate_lightmap_worker( z, true );
+                    }
                 }
                 const bool gpu_lighting_ok = cata_gpu::run_gpu_lighting( gpu_device, {
                     .m            = this,
-                    .dirty_levels = &gpu_levels,
+                    .dirty_levels = &dirty_lightmap_levels,
+                    .seen_dirty_levels = &dirty_seen_cache_levels,
                     .player_x     = p.x(),
                     .player_y     = p.y(),
                     .player_zlev  = zlev,
@@ -10401,33 +10464,32 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     return;
                 }
 
-                std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
+                std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
                     get_cache( z ).lightmap_dirty = false;
                     get_cache( z ).visibility_cache_dirty = true;
                 } );
                 if( need_seen_rebuild ) {
                     auto &origin_cache = get_cache( zlev );
                     std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
-                    apply_vehicle_optics( p, zlev );
                     m_last_seen_cache_origin = p;
                     get_cache( zlev ).visibility_cache_dirty = true;
                 }
             }
         } else {
-            if( !dirty_seen_cache_levels.empty() ) {
+            if( !dirty_lightmap_levels.empty() ) {
                 debugmsg( "SDL_GPU lighting is required for lightmap rebuild, but no GPU device is available" );
                 return;
             }
 #endif
-            if( !dirty_seen_cache_levels.empty() ) {
+            if( !dirty_lightmap_levels.empty() ) {
 
-                if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
+                if( dirty_lightmap_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
                     // Multiple dirty levels: hoist shared initialization outside the
                     // parallel loop so worker threads never race on cross-level writes.
                     //
                     // Clear sm, light_source_buffer, and lm for every dirty level.
                     // lm must be zeroed because build_sunlight_cache only writes outdoor tiles.
-                    for( const int z : dirty_seen_cache_levels ) {
+                    for( const int z : dirty_lightmap_levels ) {
                         auto &c = get_cache( z );
                         std::fill( c.sm.begin(), c.sm.end(), 0.0f );
                         std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
@@ -10462,12 +10524,12 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     // Pre-warm the vehicle list cache serially to avoid heap corruption
                     // from concurrent writes to last_full_vehicle_list.
                     get_vehicles();
-                    parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
-                        generate_lightmap_worker( dirty_seen_cache_levels[i] );
+                    parallel_for( 0, static_cast<int>( dirty_lightmap_levels.size() ), [&]( int i ) {
+                        generate_lightmap_worker( dirty_lightmap_levels[i] );
                     } );
                 } else {
                     // Single dirty level: run serially using the standard full path.
-                    for( const int level : dirty_seen_cache_levels ) {
+                    for( const int level : dirty_lightmap_levels ) {
                         generate_lightmap( level );
                     }
                 }
@@ -10476,12 +10538,12 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // Also mark visibility dirty: the lightmap just changed, so any visibility
                 // cache computed before this rebuild (e.g. from handle_action's unconditional
                 // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
-                std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
+                std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
                     get_cache( z ).lightmap_dirty = false;
                     get_cache( z ).visibility_cache_dirty = true;
                 } );
 
-            } // end if( !dirty_seen_cache_levels.empty() )
+            } // end if( !dirty_lightmap_levels.empty() )
 #if defined( CATA_SDL )
         }
 #endif
@@ -11214,6 +11276,171 @@ void map::invalidate_lightmap_caches()
     std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
         get_cache( z ).lightmap_dirty = true;
     } );
+}
+
+auto map::current_lightmap_source_signature() -> std::size_t
+{
+    ZoneScopedN( "lightmap_source_signature" );
+
+    auto seed = std::size_t{ 0 };
+    const auto minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
+    const auto maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
+
+    update_solar_params();
+    cata::hash_combine( seed, angled_sunlight_shadows );
+    cata::hash_combine( seed, m_solar.direct_active );
+    if( angled_sunlight_shadows && m_solar.direct_active ) {
+        cata::hash_combine( seed, quantized_solar_signature_value( m_solar.dx_per_z ) );
+        cata::hash_combine( seed, quantized_solar_signature_value( m_solar.dy_per_z ) );
+    }
+    std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
+        cata::hash_combine( seed, z );
+        cata::hash_combine( seed, quantized_light_signature_value( g->natural_light_level( z ) ) );
+    } );
+
+    hash_character_light_state( seed, get_player_character() );
+    for( npc &guy : g->all_npcs() ) {
+        hash_character_light_state( seed, guy );
+    }
+    for( monster &critter : g->all_monsters() ) {
+        if( critter.is_hallucination() ) {
+            continue;
+        }
+        const auto has_fire_light = critter.has_effect( effect_onfire );
+        const auto luminance = critter.type->luminance;
+        if( !has_fire_light && luminance <= 0.0f ) {
+            continue;
+        }
+        cata::hash_combine( seed, critter.bub_pos() );
+        cata::hash_combine( seed, has_fire_light );
+        cata::hash_combine( seed, quantized_light_signature_value( luminance ) );
+    }
+
+    const auto axis = std::views::iota( 0, my_MAPSIZE );
+    for( const auto x : axis ) {
+        for( const auto y : axis ) {
+            const auto grid_xy = point_bub_sm( x, y );
+            for( const auto z : std::views::iota( minz, maxz + 1 ) ) {
+                const auto grid = tripoint_bub_sm( grid_xy, z );
+                auto *sm = get_submap_at_grid( grid );
+                if( sm == nullptr || sm->is_uniform ) {
+                    continue;
+                }
+                for( const auto local : sm->field_cache ) {
+                    auto &curfield = sm->get_field( local );
+                    if( curfield.field_count() == 0 ) {
+                        continue;
+                    }
+                    const auto pos = project_combine( grid, local );
+                    for( const auto &field_pair : curfield ) {
+                        const auto &entry = field_pair.second;
+                        const auto emitted = entry.light_emitted();
+                        const auto override = entry.local_light_override();
+                        if( emitted <= 0 && override < 0.0f ) {
+                            continue;
+                        }
+                        cata::hash_combine( seed, pos );
+                        cata::hash_combine( seed, field_pair.first );
+                        cata::hash_combine( seed, entry.get_field_intensity() );
+                        cata::hash_combine( seed, quantized_light_signature_value(
+                                                static_cast<float>( emitted ) ) );
+                        cata::hash_combine( seed, quantized_light_signature_value( override ) );
+                    }
+                }
+            }
+        }
+    }
+
+    for( const tripoint_abs_sm &abs_pos : submaps_with_active_items ) {
+        if( !submap_loader.is_simulated( bound_dimension_, tripoint_abs_sm( abs_pos ) ) ) {
+            continue;
+        }
+        const auto local_pos = abs_to_bub( abs_pos );
+        auto *sm = get_submap_at_grid( local_pos );
+        if( sm == nullptr || sm->active_items.empty() ) {
+            continue;
+        }
+        for( item * const itm : sm->active_items.get() ) {
+            if( itm != nullptr ) {
+                hash_light_item( seed, tripoint_bub_ms( itm->position() ), *itm );
+            }
+        }
+    }
+
+    const auto odd_turn = calendar::once_every( 2_turns );
+    for( const wrapped_vehicle &wrapped : get_vehicles() ) {
+        vehicle *veh = wrapped.v;
+        if( veh == nullptr ) {
+            continue;
+        }
+
+        auto lights = veh->lights( true );
+        auto veh_luminance = 0.0f;
+        auto iteration = 1.0f;
+        for( const auto pt : lights ) {
+            const auto &vp = pt->info();
+            if( vp.has_flag( VPFLAG_CONE_LIGHT ) ||
+                vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
+                veh_luminance += vp.bonus / iteration;
+                iteration = iteration * 1.1f;
+            }
+        }
+
+        for( const auto pt : lights ) {
+            const auto &vp = pt->info();
+            const auto src = veh->bub_part_location( *pt );
+            if( !inbounds( src ) ) {
+                continue;
+            }
+            cata::hash_combine( seed, src );
+            cata::hash_combine( seed, quantized_light_signature_value(
+                                    static_cast<float>( vp.bonus ) ) );
+            cata::hash_combine( seed, quantized_light_signature_value( veh_luminance ) );
+            cata::hash_combine( seed, quantized_angle_signature_value(
+                                    veh->face.dir() + pt->direction ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_CONE_LIGHT ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) );
+            cata::hash_combine( seed, vp.has_flag( VPFLAG_CIRCLE_LIGHT ) );
+            const auto uses_turn_gated_light = vp.has_flag( VPFLAG_CIRCLE_LIGHT ) &&
+                                               ( vp.has_flag( VPFLAG_ODDTURN ) ||
+                                                 vp.has_flag( VPFLAG_EVENTURN ) );
+            cata::hash_combine( seed, uses_turn_gated_light );
+            if( uses_turn_gated_light ) {
+                cata::hash_combine( seed, odd_turn );
+            }
+        }
+
+        for( const vpart_reference &vp : veh->get_all_parts() ) {
+            if( !vp.has_feature( VPFLAG_CARGO ) || vp.has_feature( "COVERED" ) ) {
+                continue;
+            }
+            const auto part_index = static_cast<int>( vp.part_index() );
+            const auto pos = vp.pos();
+            if( !inbounds( pos ) ) {
+                continue;
+            }
+            for( item * const &itm : veh->get_items( part_index ) ) {
+                if( itm != nullptr ) {
+                    hash_light_item( seed, pos, *itm );
+                }
+            }
+        }
+    }
+
+    return seed;
+}
+
+void map::invalidate_lightmap_caches_if_light_state_changed()
+{
+    const auto signature = current_lightmap_source_signature();
+    if( m_last_lightmap_source_signature_valid &&
+        signature == m_last_lightmap_source_signature ) {
+        return;
+    }
+    m_last_lightmap_source_signature = signature;
+    m_last_lightmap_source_signature_valid = true;
+    invalidate_lightmap_caches();
 }
 
 void map::invalidate_visibility_caches()

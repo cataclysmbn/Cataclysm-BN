@@ -39,7 +39,7 @@ cbuffer Constants : register(b0, space2)
 StructuredBuffer<float> transparency_all : register(t0, space0);
 StructuredBuffer<uint>  lm_all           : register(t1, space0);
 StructuredBuffer<float> seen_all         : register(t2, space0);
-StructuredBuffer<float> camera_all       : register(t3, space0);
+StructuredBuffer<uint>  camera_all       : register(t3, space0);
 StructuredBuffer<float> source_map_all   : register(t4, space0);
 
 RWStructuredBuffer<uint> visibility_all : register(u0, space1);
@@ -104,7 +104,7 @@ float visible_surface_light( int x, int y, int z )
         }
 
         int nidx = tile_index( nx, ny, z );
-        if( seen_all[nidx] == 0.0 && camera_all[nidx] == 0.0 ) {
+        if( seen_all[nidx] == 0.0 && asfloat( camera_all[nidx] ) == 0.0 ) {
             continue;
         }
         best = max( best, asfloat( lm_all[nidx] ) );
@@ -137,7 +137,7 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
         return;
     }
 
-    float vis = max( seen_all[idx], camera_all[idx] );
+    float vis = max( seen_all[idx], asfloat( camera_all[idx] ) );
     bool obstructed = vis <= visible_threshold;
     float scaled_vis = scaled_visibility_for_view_distance( vis );
     bool opaque = is_opaque( x, y, z );

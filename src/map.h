@@ -348,9 +348,8 @@ struct level_cache {
     cata_dynamic_bitset sound_wall_cache_dirty;
 
     bool seen_cache_dirty = false;
-    // Set to true at the start of each game turn; cleared after generate_lightmap
-    // completes for this level.  Allows subsequent redraws within the same turn
-    // to skip the full lightmap rebuild when nothing has changed.
+    // Set by map mutations and dynamic light-state changes; cleared after
+    // generate_lightmap completes for this level.
     bool lightmap_dirty = true;
     // Set to true at the start of each game turn; cleared after update_visibility_cache
     // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
@@ -850,8 +849,7 @@ class map : public submap_load_listener
 
         void invalidate_map_cache( const int zlev );
 
-        /// Mark lightmap_dirty for every loaded z-level.  Call once per game turn
-        /// so that only the first redraw of each turn runs generate_lightmap.
+        /// Mark lightmap_dirty for every loaded z-level.
         void invalidate_lightmap_caches();
 
         /// Mark visibility_cache_dirty for every loaded z-level.  Call once per game turn
@@ -2327,6 +2325,8 @@ class map : public submap_load_listener
         void update_solar_params();
         // True when a tile has physical sky access along the current sunlight ray.
         bool has_direct_sunlight_at( point_bub_ms p, int zlev ) const;
+        auto current_lightmap_source_signature() -> std::size_t;
+        void invalidate_lightmap_caches_if_light_state_changed();
     public:
         // Rebuilds outside_caches for zlev top-down:
         // A tile is outside if any neighbour in the 3×3 at z+1
@@ -2410,6 +2410,8 @@ class map : public submap_load_listener
         // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
         // forces a seen_cache rebuild regardless of whether the player moved.
         tripoint_bub_ms m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+        std::size_t m_last_lightmap_source_signature = 0;
+        bool m_last_lightmap_source_signature_valid = false;
 
         // State for the directional sunlight system.  Rebuilt by update_solar_params().
         struct solar_params {

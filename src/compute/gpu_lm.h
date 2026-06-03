@@ -130,6 +130,7 @@ auto compute_light_radius(float luminance) -> float;
 struct run_gpu_lighting_params {
     map const* m;                         // source of all level caches
     std::vector<int> const* dirty_levels; // z-levels whose lm needs rebuild
+    std::vector<int> const* seen_dirty_levels = nullptr; // CPU seen slices to refresh when seen rebuilds
     int player_x;                         // player tile coordinates (flat map space)
     int player_y;
     int player_zlev; // actual game z-level (not z_idx)
@@ -171,6 +172,16 @@ auto prepare_lighting_transparency_output(
 auto mark_lighting_transparency_level_updated(int zlev) -> void;
 auto lighting_transparency_level_is_valid(int zlev) -> bool;
 auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> void;
+
+struct resident_lighting_visibility_params {
+    SDL_GPUDevice* device = nullptr;
+    int cache_x = 0;
+    int cache_y = 0;
+    int z_count = 0;
+};
+
+auto resident_lighting_ready_for_visibility(
+    resident_lighting_visibility_params const& p) -> bool;
 
 struct shift_lighting_residency_params {
     SDL_GPUDevice* device = nullptr;
