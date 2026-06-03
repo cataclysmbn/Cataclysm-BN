@@ -1079,6 +1079,8 @@ class game : public submap_load_listener
         void display_radiation(); // Displays radiation map
         void display_transparency(); // Displays transparency map
         void display_outside(); // Displays outside/sheltered/indoors overlay
+        void display_sound_absorption(); // Displays terrain sound absorption overlay
+        void display_sound_walls(); // Displays sound walls overlay
         void display_tiles_no_vfx(); // Disables tileset visual effects
 
         // prints the IRL time in ms of the last full in-game hour

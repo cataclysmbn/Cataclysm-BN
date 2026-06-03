@@ -1836,5 +1836,12 @@
         "prob": 50
       }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_kraken_boss_death_drops",
+    "//": "Adds to existing group",
+    "entries": [ { "item": "essence", "count": [ 2, 5 ] } ]
   }
 ]

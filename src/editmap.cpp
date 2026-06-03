@@ -1892,6 +1892,7 @@ void editmap::mapgen_preview( const point_abs_ms &tc, uilist &gmenu )
             here.set_floor_cache_dirty( target.z() );
             here.set_pathfinding_cache_dirty( target.z() );
             here.set_suspension_cache_dirty( target.z() );
+            here.set_absorption_cache_dirty( target.z() );
 
             here.clear_vehicle_cache();
             here.clear_vehicle_list( target.z() );
