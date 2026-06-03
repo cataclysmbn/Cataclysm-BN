@@ -521,7 +521,8 @@ void monster::try_reproduce()
         return;
     }
     const int base_days = to_days<int>( *type->baby_timer );
-    const int scaled_days = std::max( 1, static_cast<int>( std::ceil( base_days * calendar::season_ratio() ) ) );
+    const int scaled_days = std::max( 1,
+                                      static_cast<int>( std::ceil( base_days * calendar::season_ratio() ) ) );
     const time_duration repro_interval = time_duration::from_days( scaled_days );
 
     if( !baby_timer ) {
