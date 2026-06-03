@@ -10,11 +10,13 @@
 #include "gpu_platform.h"
 #include "lightmap.h"
 #include "map.h"
+#include "math_defines.h"
 #include "monster.h"
 #include "npc.h"
 #include "path_info.h"
 #include "profile.h"
 #include "shadowcasting.h"
+#include "submap.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -589,67 +591,268 @@ auto make_source(int const x, int const y, int const zlev, float const luminance
     };
 }
 
-auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
-    -> std::vector<GpuLightSource> {
-    auto sources = std::vector<GpuLightSource>{};
-    auto source_count_hint = std::size_t{0};
-    std::ranges::for_each(dirty_levels, [&](auto const z) {
-        source_count_hint += m.get_cache_ref(z).light_source_points.size();
-    });
-    sources.reserve(source_count_hint);
+struct source_accumulator {
+    map const& m;
+    std::vector<int> const& dirty_levels;
+    int cache_xy = 0;
+    std::vector<int> source_indices;
+    std::vector<GpuLightSource> sources;
+};
 
-    // Collect omnidirectional point sources from the touched source-tile list.
-    // These were populated by generate_lightmap_worker (collect-only mode)
-    // and cover terrain, furniture, item, and vehicle circular lights.
-    for (auto const z : dirty_levels) {
-        auto const& lc = m.get_cache_ref(z);
-        auto const& lsb = lc.light_source_buffer;
-        for (auto const point : lc.light_source_points) {
-            if (!lc.inbounds(point)) { continue; }
-            float const lum = lsb[lc.idx(point.x(), point.y())];
-            if (lum > LIGHT_AMBIENT_LOW) {
-                sources.push_back(make_source(point.x(), point.y(), z, lum));
+auto dirty_level_index(source_accumulator const& acc, int const zlev) -> int {
+    auto const iter = std::ranges::find(acc.dirty_levels, zlev);
+    if (iter == acc.dirty_levels.end()) { return -1; }
+    return static_cast<int>(std::distance(acc.dirty_levels.begin(), iter));
+}
+
+auto add_source(source_accumulator& acc, tripoint_bub_ms const& pos, float const luminance)
+    -> void {
+    if (luminance <= LIGHT_AMBIENT_LOW || !acc.m.inbounds(pos)) { return; }
+
+    auto const level_index = dirty_level_index(acc, pos.z());
+    if (level_index < 0) { return; }
+
+    auto const& lc = acc.m.get_cache_ref(pos.z());
+    if (!lc.inbounds(pos.xy())) { return; }
+
+    auto const source_slot =
+        static_cast<std::size_t>(level_index) * static_cast<std::size_t>(acc.cache_xy) +
+        static_cast<std::size_t>(lc.idx(pos.x(), pos.y()));
+    auto& source_index = acc.source_indices[source_slot];
+    if (source_index < 0) {
+        source_index = static_cast<int>(acc.sources.size());
+        acc.sources.push_back(make_source(pos.x(), pos.y(), pos.z(), luminance));
+        return;
+    }
+
+    auto& source = acc.sources[static_cast<std::size_t>(source_index)];
+    if (luminance > source.luminance) {
+        source.luminance = luminance;
+        source.radius = compute_light_radius(luminance);
+    }
+}
+
+auto add_item_sources(source_accumulator& acc, tripoint_bub_ms const& pos,
+                      location_vector<item> const& items) -> void {
+    for (auto const& itm : items) {
+        auto luminance = 0.0f;
+        auto width = 0_degrees;
+        auto direction = 0_degrees;
+        if (itm->getlight(luminance, width, direction)) {
+            add_source(acc, pos, luminance);
+        }
+    }
+}
+
+auto add_field_sources(source_accumulator& acc, tripoint_bub_ms const& pos,
+                       field const& fields) -> void {
+    for (auto const& field_pair : fields) {
+        if (!field_pair.first.is_valid()) { continue; }
+        add_source(acc, pos, field_pair.second.light_emitted());
+    }
+}
+
+auto static_emitter_tiles(submap& sm) -> std::vector<point_sm_ms> const& {
+    if (!sm.emitter_cache.has_value()) {
+        ZoneScopedN( "gpu_lm_rebuild_static_emitter_cache" );
+        auto emitters = std::vector<point_sm_ms>{};
+        for (auto const sm_ms : submap_tiles()) {
+            auto const terrain = sm.get_ter(sm_ms);
+            auto const furniture = sm.get_furn(sm_ms);
+            if (terrain->light_emitted > LIGHT_AMBIENT_LOW ||
+                furniture->light_emitted > LIGHT_AMBIENT_LOW) {
+                emitters.push_back(sm_ms);
+            }
+        }
+        sm.emitter_cache = std::move(emitters);
+    }
+    return *sm.emitter_cache;
+}
+
+auto add_static_emitter_sources(source_accumulator& acc) -> void {
+    ZoneScopedN( "gpu_lm_collect_static_emitters" );
+    for (auto const z : acc.dirty_levels) {
+        auto const& lc = acc.m.get_cache_ref(z);
+        for (auto const smx : std::views::iota(0, lc.cache_mapsize)) {
+            for (auto const smy : std::views::iota(0, lc.cache_mapsize)) {
+                auto const grid = tripoint_bub_sm(smx, smy, z);
+                auto* const sm = acc.m.get_submap_at_grid(grid);
+                if (sm == nullptr) { continue; }
+
+                for (auto const sm_ms : static_emitter_tiles(*sm)) {
+                    auto const pos = project_combine(grid, sm_ms);
+                    auto const terrain = sm->get_ter(sm_ms);
+                    add_source(acc, pos, static_cast<float>(terrain->light_emitted));
+
+                    auto const furniture = sm->get_furn(sm_ms);
+                    add_source(acc, pos, static_cast<float>(furniture->light_emitted));
+                }
             }
         }
     }
+}
 
-    // Collect character lights (player + NPCs).
-    // effect_haslight is a CPU-path artifact that marks characters lit by the
-    // CPU lightmap; it must not be used here because the GPU derives lm itself.
-    // The character's actual emitted light is captured by active_light() and
-    // by light_source_buffer (populated during generate_lightmap_worker).
+auto add_field_sources(source_accumulator& acc) -> void {
+    ZoneScopedN( "gpu_lm_collect_field_sources" );
+    for (auto const z : acc.dirty_levels) {
+        auto const& lc = acc.m.get_cache_ref(z);
+        for (auto const smx : std::views::iota(0, lc.cache_mapsize)) {
+            for (auto const smy : std::views::iota(0, lc.cache_mapsize)) {
+                auto const grid = tripoint_bub_sm(smx, smy, z);
+                auto const* const sm = acc.m.get_submap_at_grid(grid);
+                if (sm == nullptr || sm->field_count == 0) { continue; }
+
+                for (auto const sm_ms : sm->field_cache) {
+                    auto const& fields = sm->get_field(sm_ms);
+                    if (fields.field_count() == 0) { continue; }
+                    add_field_sources(acc, project_combine(grid, sm_ms), fields);
+                }
+            }
+        }
+    }
+}
+
+auto add_active_item_sources(source_accumulator& acc) -> void {
+    ZoneScopedN( "gpu_lm_collect_active_item_sources" );
+    for (tripoint_abs_sm const& abs_pos : acc.m.get_submaps_with_active_items()) {
+        auto const local_pos = acc.m.abs_to_bub(abs_pos);
+        if (dirty_level_index(acc, local_pos.z()) < 0) { continue; }
+
+        auto* const sm = acc.m.get_submap_at_grid(local_pos);
+        if (sm == nullptr || sm->active_items.empty()) { continue; }
+
+        for (item const* const itm : sm->active_items.get()) {
+            if (itm == nullptr) { continue; }
+            auto luminance = 0.0f;
+            auto width = 0_degrees;
+            auto direction = 0_degrees;
+            if (itm->getlight(luminance, width, direction)) {
+                add_source(acc, tripoint_bub_ms(itm->position()), luminance);
+            }
+        }
+    }
+}
+
+auto add_vehicle_sources(source_accumulator& acc) -> void {
+    ZoneScopedN( "gpu_lm_collect_vehicle_sources" );
+    auto const odd_turn = calendar::once_every(2_turns);
+    for (auto const& wrapped : const_cast<map&>(acc.m).get_vehicles()) {
+        auto* const veh = wrapped.v;
+        if (veh == nullptr) { continue; }
+
+        auto const lights = veh->lights(true);
+        auto vehicle_luminance = 0.0f;
+        auto iteration = 1.0f;
+        for (auto const* const part : lights) {
+            auto const& info = part->info();
+            if (info.has_flag(VPFLAG_CONE_LIGHT) ||
+                info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) {
+                vehicle_luminance += info.bonus / iteration;
+                iteration = iteration * 1.1f;
+            }
+        }
+
+        for (auto const* const part : lights) {
+            auto const& info = part->info();
+            auto const pos = veh->bub_part_location(*part);
+            if (!acc.m.inbounds(pos)) { continue; }
+
+            if (info.has_flag(VPFLAG_CONE_LIGHT) ||
+                info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) {
+                if (vehicle_luminance > lit_level::LIT) {
+                    add_source(acc, pos, static_cast<float>(M_SQRT2));
+                    add_source(acc, pos, vehicle_luminance);
+                }
+            } else if (info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT)) {
+                add_source(acc, pos, static_cast<float>(M_SQRT2));
+                add_source(acc, pos, static_cast<float>(info.bonus));
+            } else if (info.has_flag(VPFLAG_CIRCLE_LIGHT)) {
+                if ((odd_turn && info.has_flag(VPFLAG_ODDTURN)) ||
+                    (!odd_turn && info.has_flag(VPFLAG_EVENTURN)) ||
+                    (!(info.has_flag(VPFLAG_EVENTURN) || info.has_flag(VPFLAG_ODDTURN)))) {
+                    add_source(acc, pos, static_cast<float>(info.bonus));
+                }
+            } else {
+                add_source(acc, pos, static_cast<float>(info.bonus));
+            }
+        }
+
+        for (vpart_reference const& part : veh->get_all_parts()) {
+            if (!part.has_feature(VPFLAG_CARGO) || part.has_feature("COVERED")) {
+                continue;
+            }
+
+            auto const pos = part.pos();
+            if (!acc.m.inbounds(pos)) { continue; }
+
+            auto const part_index = static_cast<int>(part.part_index());
+            for (auto const& itm : veh->get_items(part_index)) {
+                auto luminance = 0.0f;
+                auto width = 0_degrees;
+                auto direction = 0_degrees;
+                if (itm->getlight(luminance, width, direction)) {
+                    add_source(acc, pos, luminance);
+                }
+            }
+        }
+    }
+}
+
+auto add_character_sources(source_accumulator& acc) -> void {
+    ZoneScopedN( "gpu_lm_collect_character_sources" );
     static const efftype_id effect_onfire("onfire");
 
     auto add_char = [&](Character const& ch) {
         auto const& pos = ch.bub_pos();
-        if (!m.inbounds(pos)) { return; }
+        if (!acc.m.inbounds(pos)) { return; }
         if (ch.has_effect(effect_onfire)) {
-            sources.push_back(make_source(pos.x(), pos.y(), pos.z(), 8.0f));
+            add_source(acc, pos, 8.0f);
         }
-        float const held = ch.active_light();
-        if (held > LIGHT_AMBIENT_LOW) {
-            sources.push_back(make_source(pos.x(), pos.y(), pos.z(), held));
-        }
+        add_source(acc, pos, ch.active_light());
     };
 
     add_char(get_player_character());
     for (npc const& guy : g->all_npcs()) { add_char(guy); }
+}
 
-    // Collect monster lights.
+auto add_monster_sources(source_accumulator& acc) -> void {
+    ZoneScopedN( "gpu_lm_collect_monster_sources" );
+    static const efftype_id effect_onfire("onfire");
+
     for (monster const& critter : g->all_monsters()) {
         if (critter.is_hallucination()) { continue; }
-        auto const& mp = critter.bub_pos();
-        if (!m.inbounds(mp)) { continue; }
+        auto const& pos = critter.bub_pos();
+        if (!acc.m.inbounds(pos)) { continue; }
         if (critter.has_effect(effect_onfire)) {
-            sources.push_back(make_source(mp.x(), mp.y(), mp.z(), 8.0f));
+            add_source(acc, pos, 8.0f);
         }
-        if (critter.type->luminance > 0) {
-            sources.push_back(
-                make_source(mp.x(), mp.y(), mp.z(), static_cast<float>(critter.type->luminance)));
-        }
+        add_source(acc, pos, static_cast<float>(critter.type->luminance));
     }
+}
 
-    return sources;
+auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
+    -> std::vector<GpuLightSource> {
+    if (dirty_levels.empty()) { return {}; }
+
+    auto const& lc0 = m.get_cache_ref(dirty_levels.front());
+    auto acc = source_accumulator{
+        .m = m,
+        .dirty_levels = dirty_levels,
+        .cache_xy = lc0.cache_x * lc0.cache_y,
+        .source_indices = std::vector<int>(
+            dirty_levels.size() * static_cast<std::size_t>(lc0.cache_x * lc0.cache_y),
+            -1),
+        .sources = {},
+    };
+
+    add_static_emitter_sources(acc);
+    add_field_sources(acc);
+    add_active_item_sources(acc);
+    add_vehicle_sources(acc);
+    add_character_sources(acc);
+    add_monster_sources(acc);
+
+    return std::move(acc.sources);
 }
 
 auto source_is_on_dirty_level(std::vector<int> const& dirty_levels, int const zlev) -> bool {

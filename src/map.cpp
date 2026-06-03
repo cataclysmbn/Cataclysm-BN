@@ -10433,13 +10433,6 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     c.light_source_points.clear();
                     std::ranges::fill( c.lm, 0.0f );
                 }
-                // Pre-warm vehicle list cache serially to avoid concurrent heap writes.
-                if( !dirty_lightmap_levels.empty() ) {
-                    get_vehicles();
-                    for( const int z : dirty_lightmap_levels ) {
-                        generate_lightmap_worker( z, true );
-                    }
-                }
                 const bool gpu_lighting_ok = cata_gpu::run_gpu_lighting( gpu_device, {
                     .m            = this,
                     .dirty_levels = &dirty_lightmap_levels,
