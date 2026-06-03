@@ -1191,7 +1191,7 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
             .output_bytes = uint_volume_bytes,
             .lm_download_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t)),
             .visibility_download_bytes = uint_volume_bytes,
-            .upload_bytes = source_bytes + float_volume_bytes,
+            .upload_bytes = float_volume_bytes,
             .visibility_upload_bytes = visibility_upload_total,
         })) {
         return false;

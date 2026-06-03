@@ -359,6 +359,8 @@ void vehicle::set_electronics_menu_options( std::vector<uilist_entry> &options,
             {
                 add_msg( _( "Camera system won't turn on" ) );
             }
+            get_map().set_seen_cache_dirty( bub_ms_location().z() );
+            get_map().invalidate_visibility_caches();
             refresh();
         } );
     }

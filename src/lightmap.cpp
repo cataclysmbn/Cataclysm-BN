@@ -1694,6 +1694,64 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
         }
     }
 
+    auto apply_camera_visibility = [&]( const tripoint_bub_ms &camera_pos,
+                                        const int camera_range ) {
+        if( camera_range <= 0 || !target_cache.inbounds( camera_pos.xy() ) ) {
+            return;
+        }
+
+        const auto camera_idx = target_cache.idx( camera_pos.x(), camera_pos.y() );
+        target_cache.camera_cache[camera_idx] = VISIBILITY_FULL;
+
+        const auto min_x = std::max( 0, camera_pos.x() - camera_range );
+        const auto max_x = std::min( target_cache.cache_x - 1, camera_pos.x() + camera_range );
+        const auto min_y = std::max( 0, camera_pos.y() - camera_range );
+        const auto max_y = std::min( target_cache.cache_y - 1, camera_pos.y() + camera_range );
+
+        for( const auto x : std::views::iota( min_x, max_x + 1 ) ) {
+            for( const auto y : std::views::iota( min_y, max_y + 1 ) ) {
+                const point_bub_ms target( x, y );
+                const auto distance = rl_dist( camera_pos.xy(), target );
+                if( distance == 0 || distance > camera_range ) {
+                    continue;
+                }
+
+                auto cumulative_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+                auto transparent_steps = 0;
+                auto blocked = false;
+
+                for( const point_bub_ms &step : line_to( camera_pos.xy(), target ) ) {
+                    if( !target_cache.inbounds( step ) ) {
+                        blocked = true;
+                        break;
+                    }
+
+                    const auto step_transparency =
+                        target_cache.transparency_cache[target_cache.idx( step.x(), step.y() )];
+                    if( step_transparency <= LIGHT_TRANSPARENCY_SOLID ) {
+                        blocked = step != target;
+                        break;
+                    }
+
+                    ++transparent_steps;
+                    cumulative_transparency = accumulate_transparency( cumulative_transparency,
+                                                step_transparency, transparent_steps );
+                }
+
+                if( blocked ) {
+                    continue;
+                }
+
+                const auto visibility = sight_calc( VISIBILITY_FULL, cumulative_transparency,
+                                                    distance );
+                auto &target_visibility = target_cache.camera_cache[target_cache.idx( x, y )];
+                target_visibility = std::max( target_visibility, visibility );
+            }
+        }
+
+        target_cache.camera_cache[camera_idx] = VISIBILITY_FULL;
+    };
+
     for( const int mirror : mirrors ) {
         const bool is_camera = veh->part_info( mirror ).has_flag( "CAMERA" );
         if( is_camera && cam_control < 0 ) {
@@ -1702,17 +1760,16 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
 
         const tripoint_bub_ms mirror_pos = veh->bub_part_location( mirror );
 
+        if( is_camera ) {
+            const auto raw_range = veh->part_info( mirror ).bonus *
+                                   veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
+            apply_camera_visibility( mirror_pos, std::clamp( raw_range, 0, g_max_view_distance ) );
+            continue;
+        }
+
         // Determine how far the light has already traveled so mirrors
         // don't cheat the light distance falloff.
-        int offset_distance;
-        if( !is_camera ) {
-            offset_distance = rl_dist( origin, mirror_pos );
-        } else {
-            offset_distance = g_max_view_distance - veh->part_info( mirror ).bonus *
-                              veh->part( mirror ).hp() / veh->part_info( mirror ).durability;
-            target_cache.camera_cache[target_cache.idx( mirror_pos.x(),
-                                                        mirror_pos.y() )] = LIGHT_TRANSPARENCY_OPEN_AIR;
-        }
+        const auto offset_distance = rl_dist( origin, mirror_pos );
 
         // TODO: Factor in the mirror facing and only cast in the
         // directions the player's line of sight reflects to.

@@ -10270,6 +10270,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     get_cache( z ).visibility_cache_dirty = true;
                 } );
                 if( need_seen_rebuild ) {
+                    auto &origin_cache = get_cache( zlev );
+                    std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
+                    apply_vehicle_optics( p, zlev );
                     m_last_seen_cache_origin = p;
                     get_cache( zlev ).visibility_cache_dirty = true;
                 }
