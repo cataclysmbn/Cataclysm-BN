@@ -179,8 +179,9 @@ auto dispatch_transparency(
     auto const output_bytes = static_cast<Uint32>(cache_size * sizeof(float));
 
     if (ter_lut_bytes == 0 || fur_lut_bytes == 0) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: transparency LUTs are empty — call "
-                                         "rebuild_transparency_luts first";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency LUTs are empty — call "
+               "rebuild_transparency_luts first";
         return;
     }
 
