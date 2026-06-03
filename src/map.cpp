@@ -9992,8 +9992,31 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     bool seen_cache_dirty = false;
     bool gpu_transparency_dirty = false;
     bool gpu_floor_dirty = false;
-    bool gpu_vehicle_floor_dirty = true;
+    bool gpu_vehicle_floor_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
+    std::vector<int> gpu_transparency_dirty_levels;
+    std::vector<int> gpu_floor_dirty_levels;
+    std::vector<int> gpu_vehicle_floor_dirty_levels;
+
+    auto add_gpu_dirty_level = []( auto &levels, const int z ) {
+        if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
+            levels.push_back( z );
+        }
+    };
+    auto add_all_gpu_dirty_levels = [&]( auto &levels ) {
+        std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
+            add_gpu_dirty_level( levels, z );
+        } );
+    };
+    auto normalize_gpu_dirty_levels = []( auto &levels ) {
+        std::ranges::sort( levels );
+        levels.erase( std::ranges::unique( levels ).begin(), levels.end() );
+    };
+    auto level_has_vehicle_floor = []( const level_cache &ch ) {
+        return std::ranges::any_of( ch.vehicle_floor_cache, []( const char c ) {
+            return c != '\0';
+        } );
+    };
 
     // Refresh the shared weather-transparency lookup table once, serially,
     // before the parallel block.  build_transparency_cache() reads the
@@ -10017,7 +10040,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             if( build_floor_cache( z ) ) {
                 seen_cache_dirty = true;
             }
-            gpu_floor_dirty |= floor_was_dirty;
+            if( floor_was_dirty ) {
+                gpu_floor_dirty = true;
+                add_gpu_dirty_level( gpu_floor_dirty_levels, z );
+            }
         }
     }
 
@@ -10035,7 +10061,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         ZoneScopedN( "Phase1_transparency" );
         // Transparency depends on outside_cache; runs after outside is complete.
         for( int z = minz; z <= maxz; ++z ) {
-            gpu_transparency_dirty |= build_transparency_cache( z );
+            if( build_transparency_cache( z ) ) {
+                gpu_transparency_dirty = true;
+                add_gpu_dirty_level( gpu_transparency_dirty_levels, z );
+            }
         }
     }
 
@@ -10046,6 +10075,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             std::mutex dirty_mutex;
             parallel_for( minz, maxz + 1, [&]( int z ) {
                 level_cache &ch = get_cache( z );
+                const bool vehicle_floor_was_dirty = level_has_vehicle_floor( ch );
                 // vehicle_floor_cache is written by vehicles one level below (via
                 // vehicle_caching_internal_above), so it must be cleared unconditionally —
                 // not gated on veh_in_active_range — to prevent stale entries after shifts.
@@ -10057,15 +10087,21 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 }
 
                 const bool level_seen_dirty = ch.seen_cache_dirty;
-                if( level_seen_dirty ) {
+                if( level_seen_dirty || vehicle_floor_was_dirty ) {
                     std::lock_guard<std::mutex> lock( dirty_mutex );
-                    seen_cache_dirty = true;
-                    dirty_seen_cache_levels.push_back( z );
+                    if( level_seen_dirty ) {
+                        seen_cache_dirty = true;
+                        dirty_seen_cache_levels.push_back( z );
+                    }
+                    if( vehicle_floor_was_dirty ) {
+                        add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
+                    }
                 }
             } );
         } else {
             for( int z = minz; z <= maxz; ++z ) {
                 level_cache &ch = get_cache( z );
+                const bool vehicle_floor_was_dirty = level_has_vehicle_floor( ch );
 
                 // vehicle_floor_cache is written by vehicles one level below (via
                 // vehicle_caching_internal_above), so it must be cleared unconditionally —
@@ -10081,6 +10117,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 if( level_seen_dirty ) {
                     seen_cache_dirty = true;
                     dirty_seen_cache_levels.push_back( z );
+                }
+                if( vehicle_floor_was_dirty ) {
+                    add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
                 }
             }
         }
@@ -10105,9 +10144,16 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             if( get_cache( z ).veh_in_active_range ) {
                 gpu_transparency_dirty = true;
                 gpu_floor_dirty = true;
+                add_all_gpu_dirty_levels( gpu_transparency_dirty_levels );
+                add_all_gpu_dirty_levels( gpu_floor_dirty_levels );
                 do_vehicle_caching( z );
             }
         }
+        std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
+            if( level_has_vehicle_floor( get_cache_ref( z ) ) ) {
+                add_gpu_dirty_level( gpu_vehicle_floor_dirty_levels, z );
+            }
+        } );
     }
 
     {
@@ -10119,6 +10165,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
 
     seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
+    normalize_gpu_dirty_levels( gpu_transparency_dirty_levels );
+    normalize_gpu_dirty_levels( gpu_floor_dirty_levels );
+    normalize_gpu_dirty_levels( gpu_vehicle_floor_dirty_levels );
+    gpu_vehicle_floor_dirty = !gpu_vehicle_floor_dirty_levels.empty();
 
     if( seen_cache_dirty ) {
         skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
@@ -10136,23 +10186,30 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         }
 #else
         build_seen_cache( p, zlev );
-#endif
         m_last_seen_cache_origin = p;
+#endif
         // seen_cache changed (or will be updated by GPU pass); mark visibility stale.
         get_cache( zlev ).visibility_cache_dirty = true;
     }
     if( !skip_lightmap ) {
         ZoneScopedN( "Phase4_lightmap" );
+        auto needs_lightmap_dispatch = [this]( const int z ) {
+#if defined( CATA_SDL )
+            return get_cache( z ).lightmap_dirty || get_cache( z ).visibility_cache_dirty;
+#else
+            return get_cache( z ).lightmap_dirty;
+#endif
+        };
         // Only include levels whose lightmap is actually stale this redraw.
         // lightmap_dirty is set for all levels at the start of each game turn and
         // cleared here after generate_lightmap runs, so subsequent redraws within
         // the same turn skip the rebuild entirely.
-        if( get_cache( zlev ).lightmap_dirty ) {
+        if( needs_lightmap_dispatch( zlev ) ) {
             dirty_seen_cache_levels.push_back( zlev );
         }
         dirty_seen_cache_levels.erase(
-        std::ranges::remove_if( dirty_seen_cache_levels, [this]( int z ) {
-            return !get_cache( z ).lightmap_dirty;
+        std::ranges::remove_if( dirty_seen_cache_levels, [&]( int z ) {
+            return !needs_lightmap_dispatch( z );
         } ).begin(),
         dirty_seen_cache_levels.end() );
         std::ranges::sort( dirty_seen_cache_levels );
@@ -10192,8 +10249,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     .player_y     = p.y(),
                     .player_zlev  = zlev,
                     .transparency_dirty = gpu_transparency_dirty,
+                    .transparency_dirty_levels = &gpu_transparency_dirty_levels,
                     .floor_dirty = gpu_floor_dirty,
+                    .floor_dirty_levels = &gpu_floor_dirty_levels,
                     .vehicle_floor_dirty = gpu_vehicle_floor_dirty,
+                    .vehicle_floor_dirty_levels = &gpu_vehicle_floor_dirty_levels,
                     .rebuild_seen_cache = need_seen_rebuild,
                     .angled_sunlight_shadows = angled_sunlight_shadows,
                     .direct_sunlight = m_solar.direct_active,
@@ -10210,6 +10270,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     get_cache( z ).visibility_cache_dirty = true;
                 } );
                 if( need_seen_rebuild ) {
+                    m_last_seen_cache_origin = p;
                     get_cache( zlev ).visibility_cache_dirty = true;
                 }
             }

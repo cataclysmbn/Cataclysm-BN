@@ -195,6 +195,7 @@ struct lighting_resource_cache {
     std::vector<float> source_map_staging;
     lighting_input_residency inputs;
     bool seen_valid = false;
+    bool source_map_valid = false;
     bool lighting_outputs_valid = false;
 };
 
@@ -229,9 +230,9 @@ struct lighting_buffer_sizes {
 };
 
 struct input_upload_plan {
-    bool transparency;
-    bool floor;
-    bool vehicle_floor;
+    std::vector<int> transparency_levels;
+    std::vector<int> floor_levels;
+    std::vector<int> vehicle_floor_levels;
 };
 
 lighting_resource_cache s_lighting_resources;
@@ -275,6 +276,7 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.source_map_staging = {};
     s_lighting_resources.inputs = {};
     s_lighting_resources.seen_valid = false;
+    s_lighting_resources.source_map_valid = false;
     s_lighting_resources.lighting_outputs_valid = false;
     s_lighting_resources.device = nullptr;
 }
@@ -463,14 +465,20 @@ auto make_source(int const x, int const y, int const zlev, float const luminance
 auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
     -> std::vector<GpuLightSource> {
     auto sources = std::vector<GpuLightSource>{};
+    auto source_count_hint = std::size_t{0};
+    std::ranges::for_each(dirty_levels, [&](auto const z) {
+        source_count_hint += m.get_cache_ref(z).light_source_points.size();
+    });
+    sources.reserve(source_count_hint);
 
     // Collect omnidirectional point sources from the touched source-tile list.
     // These were populated by generate_lightmap_worker (collect-only mode)
     // and cover terrain, furniture, item, and vehicle circular lights.
-    for (int const z : dirty_levels) {
+    for (auto const z : dirty_levels) {
         auto const& lc = m.get_cache_ref(z);
         auto const& lsb = lc.light_source_buffer;
         for (auto const point : lc.light_source_points) {
+            if (!lc.inbounds(point)) { continue; }
             float const lum = lsb[lc.idx(point.x(), point.y())];
             if (lum > LIGHT_AMBIENT_LOW) {
                 sources.push_back(make_source(point.x(), point.y(), z, lum));
@@ -567,62 +575,84 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
         .vehicle_floor_valid = false,
     };
     s_lighting_resources.seen_valid = false;
+    s_lighting_resources.source_map_valid = false;
     s_lighting_resources.lighting_outputs_valid = false;
 }
 
-auto make_input_upload_plan(run_gpu_lighting_params const& p) -> input_upload_plan {
+auto select_input_upload_levels(
+    bool const dirty, bool const resident_valid, std::vector<int> const* const dirty_levels,
+    std::vector<int> const& all_levels) -> std::vector<int> {
+    if (!dirty && resident_valid) { return {}; }
+    if (!resident_valid || dirty_levels == nullptr || dirty_levels->empty()) {
+        return all_levels;
+    }
+
+    auto levels = *dirty_levels;
+    std::ranges::sort(levels);
+    levels.erase(std::ranges::unique(levels).begin(), levels.end());
+    return levels;
+}
+
+auto make_input_upload_plan(
+    run_gpu_lighting_params const& p, std::vector<int> const& all_levels) -> input_upload_plan {
     auto const& inputs = s_lighting_resources.inputs;
     return input_upload_plan{
-        .transparency = p.transparency_dirty || !inputs.transparency_valid,
-        .floor = p.floor_dirty || !inputs.floor_valid,
-        .vehicle_floor = p.vehicle_floor_dirty || !inputs.vehicle_floor_valid,
+        .transparency_levels = select_input_upload_levels(
+            p.transparency_dirty, inputs.transparency_valid, p.transparency_dirty_levels, all_levels),
+        .floor_levels = select_input_upload_levels(
+            p.floor_dirty, inputs.floor_valid, p.floor_dirty_levels, all_levels),
+        .vehicle_floor_levels = select_input_upload_levels(
+            p.vehicle_floor_dirty, inputs.vehicle_floor_valid, p.vehicle_floor_dirty_levels, all_levels),
     };
 }
 
 auto has_structural_upload(input_upload_plan const& plan) -> bool {
-    return plan.transparency || plan.floor || plan.vehicle_floor;
+    return !plan.transparency_levels.empty() || !plan.floor_levels.empty() ||
+           !plan.vehicle_floor_levels.empty();
 }
 
 auto commit_input_upload_plan(input_upload_plan const& plan) -> void {
     auto& inputs = s_lighting_resources.inputs;
-    if (plan.transparency) {
+    if (!plan.transparency_levels.empty()) {
         inputs.transparency_valid = true;
     }
-    if (plan.floor) {
+    if (!plan.floor_levels.empty()) {
         inputs.floor_valid = true;
     }
-    if (plan.vehicle_floor) {
+    if (!plan.vehicle_floor_levels.empty()) {
         inputs.vehicle_floor_valid = true;
     }
 }
 
-// Pack a per-z-level std::vector<float> cache into a combined 3D buffer.
-// Accumulates into `out`, advancing `offset` by each z-level's contribution.
+// Pack selected z-levels into a compact upload buffer.  Copy commands place
+// each packed level into its resident 3D-buffer slice.
 auto pack_float_cache(
-    map const& m, std::vector<int> const& levels, int const z_count, int const cache_xy,
+    map const& m, std::vector<int> const& levels, int const cache_xy,
     auto const cache_accessor, std::vector<float>& out) -> void {
-    out.assign(static_cast<std::size_t>(z_count * cache_xy), 0.0f);
-    for (int const z : levels) {
+    out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
+    auto level_index = std::size_t{0};
+    for (auto const z : levels) {
         auto const& lc = m.get_cache_ref(z);
-        auto const zi = z + OVERMAP_DEPTH;
         auto const& src = cache_accessor(lc);
-        auto* dst = out.data() + zi * cache_xy;
+        auto* dst = out.data() + level_index * cache_xy;
         std::ranges::copy(src, dst);
+        ++level_index;
     }
 }
 
-// Pack a per-z-level std::vector<char> cache into a combined 3D uint buffer.
+// Pack selected z-levels into a compact uint upload buffer.
 // Non-zero char → uint 1; zero → uint 0.
 auto pack_char_cache_uint(
-    map const& m, std::vector<int> const& levels, int const z_count, int const cache_xy,
+    map const& m, std::vector<int> const& levels, int const cache_xy,
     auto const cache_accessor, std::vector<uint32_t>& out) -> void {
-    out.assign(static_cast<std::size_t>(z_count * cache_xy), 0u);
-    for (int const z : levels) {
+    out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
+    auto level_index = std::size_t{0};
+    for (auto const z : levels) {
         auto const& lc = m.get_cache_ref(z);
-        auto const zi = z + OVERMAP_DEPTH;
         auto const& src = cache_accessor(lc);
-        auto* dst = out.data() + zi * cache_xy;
+        auto* dst = out.data() + level_index * cache_xy;
         std::ranges::transform(src, dst, [](char const c) -> uint32_t { return c != 0 ? 1u : 0u; });
+        ++level_index;
     }
 }
 
@@ -668,42 +698,54 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     }
     auto const groups_xy = static_cast<Uint32>((2 * max_radius + 1 + 7) / 8);
 
-    // ── Pack CPU input buffers into flat 3D arrays ───────────────────────────
-    // Transparency, floor, and vehicle_floor are packed for ALL z-levels so
-    // the seen and ambient shaders have correct data for cross-z-level floor
-    // blocking and ceiling checks even when only a subset of levels is dirty.
+    // ── Pack CPU input buffers into compact upload slices ────────────────────
+    // Full-volume uploads are still used when residency is invalid or precise
+    // dirty levels are unavailable.  Otherwise each packed level is uploaded
+    // into its resident 3D-buffer slice.
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
-    auto const input_uploads = make_input_upload_plan(p);
     auto const all_levels = make_all_levels(z_count);
+    auto const input_uploads = make_input_upload_plan(p, all_levels);
+    auto source_map_upload_levels = s_lighting_resources.source_map_valid ? *p.dirty_levels : all_levels;
+    std::ranges::sort(source_map_upload_levels);
+    source_map_upload_levels.erase(
+        std::ranges::unique(source_map_upload_levels).begin(), source_map_upload_levels.end());
 
     auto& transparency_cpu = s_lighting_resources.transparency_staging;
     auto& floor_cpu = s_lighting_resources.floor_staging;
     auto& vehicle_floor_cpu = s_lighting_resources.vehicle_floor_staging;
+    auto& source_map_cpu = s_lighting_resources.source_map_staging;
 
     if (has_structural_upload(input_uploads)) {
         ZoneScopedN( "gpu_lm_pack_inputs" );
-        if (input_uploads.transparency) {
+        if (!input_uploads.transparency_levels.empty()) {
             pack_float_cache(
-                *p.m, all_levels, z_count, cache_xy,
+                *p.m, input_uploads.transparency_levels, cache_xy,
                 [](level_cache const& lc) -> std::vector<float> const& {
                     return lc.transparency_cache;
                 },
                 transparency_cpu);
         }
-        if (input_uploads.floor) {
+        if (!input_uploads.floor_levels.empty()) {
             pack_char_cache_uint(
-                *p.m, all_levels, z_count, cache_xy,
+                *p.m, input_uploads.floor_levels, cache_xy,
                 [](level_cache const& lc) -> std::vector<char> const& { return lc.floor_cache; },
                 floor_cpu);
         }
-        if (input_uploads.vehicle_floor) {
+        if (!input_uploads.vehicle_floor_levels.empty()) {
             pack_char_cache_uint(
-                *p.m, all_levels, z_count, cache_xy,
+                *p.m, input_uploads.vehicle_floor_levels, cache_xy,
                 [](level_cache const& lc) -> std::vector<char> const& {
                     return lc.vehicle_floor_cache;
                 },
                 vehicle_floor_cpu);
         }
+    }
+    {
+        ZoneScopedN( "gpu_lm_pack_source_map" );
+        pack_float_cache(
+            *p.m, source_map_upload_levels, cache_xy,
+            [](level_cache const& lc) -> std::vector<float> const& { return lc.sm; },
+            source_map_cpu);
     }
 
     // ── Compute ambient constants per z-level ────────────────────────────────
@@ -735,6 +777,8 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     auto const source_map_bytes = t_bytes;
     // lm and seen buffers cover all z_count * cache_xy tiles.
     auto const out_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
+    auto const float_level_bytes = static_cast<Uint32>(cache_xy * sizeof(float));
+    auto const uint_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
     auto const lm_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
     auto const lm_download_bytes =
         static_cast<Uint32>(p.dirty_levels->size()) * lm_level_bytes;
@@ -744,20 +788,23 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
 
     auto const rebuild_seen = p.rebuild_seen_cache || !s_lighting_resources.seen_valid;
     auto const seen_zero_bytes = t_bytes;
+    auto const transparency_upload_bytes =
+        static_cast<Uint32>(input_uploads.transparency_levels.size()) * float_level_bytes;
+    auto const floor_upload_bytes =
+        static_cast<Uint32>(input_uploads.floor_levels.size()) * uint_level_bytes;
+    auto const vehicle_floor_upload_bytes =
+        static_cast<Uint32>(input_uploads.vehicle_floor_levels.size()) * uint_level_bytes;
+    auto const source_map_upload_bytes =
+        static_cast<Uint32>(source_map_upload_levels.size()) * float_level_bytes;
     auto upload_total = src_bytes;
-    if (input_uploads.transparency) {
-        upload_total += t_bytes;
-    }
-    if (input_uploads.floor) {
-        upload_total += f_bytes;
-    }
-    if (input_uploads.vehicle_floor) {
-        upload_total += vf_bytes;
-    }
+    upload_total += transparency_upload_bytes;
+    upload_total += floor_upload_bytes;
+    upload_total += vehicle_floor_upload_bytes;
+    upload_total += source_map_upload_bytes;
     if (rebuild_seen) {
         upload_total += seen_zero_bytes + seen_zero_bytes;
     }
-    auto const visibility_upload_total = camera_bytes + source_map_bytes;
+    auto const visibility_upload_total = camera_bytes;
 
     {
         ZoneScopedN( "gpu_lm_ensure_resources" );
@@ -781,6 +828,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     auto* const t_buf = s_lighting_resources.transparency.buffer;
     auto* const f_buf = s_lighting_resources.floor.buffer;
     auto* const vf_buf = s_lighting_resources.vehicle_floor.buffer;
+    auto* const source_map_buf = s_lighting_resources.source_map.buffer;
     auto* const src_buf = s_lighting_resources.sources.buffer;
     auto* const lm_buf = s_lighting_resources.lm.buffer;
     auto* const seen_raw_buf = s_lighting_resources.seen_raw.buffer;
@@ -800,17 +848,21 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             return false;
         }
         auto off = Uint32{0};
-        if (input_uploads.transparency) {
-            std::memcpy(mapped + off, transparency_cpu.data(), t_bytes);
-            off += t_bytes;
+        if (transparency_upload_bytes > 0) {
+            std::memcpy(mapped + off, transparency_cpu.data(), transparency_upload_bytes);
+            off += transparency_upload_bytes;
         }
-        if (input_uploads.floor) {
-            std::memcpy(mapped + off, floor_cpu.data(), f_bytes);
-            off += f_bytes;
+        if (floor_upload_bytes > 0) {
+            std::memcpy(mapped + off, floor_cpu.data(), floor_upload_bytes);
+            off += floor_upload_bytes;
         }
-        if (input_uploads.vehicle_floor) {
-            std::memcpy(mapped + off, vehicle_floor_cpu.data(), vf_bytes);
-            off += vf_bytes;
+        if (vehicle_floor_upload_bytes > 0) {
+            std::memcpy(mapped + off, vehicle_floor_cpu.data(), vehicle_floor_upload_bytes);
+            off += vehicle_floor_upload_bytes;
+        }
+        if (source_map_upload_bytes > 0) {
+            std::memcpy(mapped + off, source_map_cpu.data(), source_map_upload_bytes);
+            off += source_map_upload_bytes;
         }
         if (num_src > 0) {
             std::memcpy(mapped + off, sources.data(), src_bytes);
@@ -841,7 +893,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
             auto off = Uint32{0};
 
-            auto upload = [&](SDL_GPUBuffer* dst, Uint32 const bytes) {
+            auto upload_whole = [&](SDL_GPUBuffer* dst, Uint32 const bytes) {
                 auto const src_loc = SDL_GPUTransferBufferLocation{
                     .transfer_buffer = upload_tbuf,
                     .offset = off,
@@ -854,19 +906,33 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                 SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
                 off += bytes;
             };
-            if (input_uploads.transparency) {
-                upload(t_buf, t_bytes);
-            }
-            if (input_uploads.floor) {
-                upload(f_buf, f_bytes);
-            }
-            if (input_uploads.vehicle_floor) {
-                upload(vf_buf, vf_bytes);
-            }
-            upload(src_buf, src_bytes);
+            auto upload_levels = [&](SDL_GPUBuffer* dst, std::vector<int> const& levels,
+            Uint32 const level_bytes) {
+                auto level_index = Uint32{0};
+                std::ranges::for_each(levels, [&](auto const z) {
+                    auto const src_loc = SDL_GPUTransferBufferLocation{
+                        .transfer_buffer = upload_tbuf,
+                        .offset = off + level_index * level_bytes,
+                    };
+                    auto const dst_reg = SDL_GPUBufferRegion{
+                        .buffer = dst,
+                        .offset = static_cast<Uint32>(z + OVERMAP_DEPTH) * level_bytes,
+                        .size = level_bytes,
+                    };
+                    SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
+                    ++level_index;
+                });
+                off += static_cast<Uint32>(levels.size()) * level_bytes;
+            };
+
+            upload_levels(t_buf, input_uploads.transparency_levels, float_level_bytes);
+            upload_levels(f_buf, input_uploads.floor_levels, uint_level_bytes);
+            upload_levels(vf_buf, input_uploads.vehicle_floor_levels, uint_level_bytes);
+            upload_levels(source_map_buf, source_map_upload_levels, float_level_bytes);
+            upload_whole(src_buf, src_bytes);
             if (rebuild_seen) {
-                upload(seen_raw_buf, seen_zero_bytes);
-                upload(seen_buf, seen_zero_bytes);
+                upload_whole(seen_raw_buf, seen_zero_bytes);
+                upload_whole(seen_buf, seen_zero_bytes);
             }
 
             SDL_EndGPUCopyPass(cp);
@@ -1075,6 +1141,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     if (rebuild_seen) {
         s_lighting_resources.seen_valid = true;
     }
+    s_lighting_resources.source_map_valid = true;
     s_lighting_resources.lighting_outputs_valid = true;
     return true;
 }
@@ -1102,11 +1169,12 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
     auto const float_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
     auto const uint_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
     auto const source_bytes = static_cast<Uint32>(sizeof(GpuLightSource));
-    auto const visibility_upload_total = float_volume_bytes + float_volume_bytes;
+    auto const visibility_upload_total = float_volume_bytes;
 
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
     if (!s_lighting_resources.inputs.transparency_valid ||
         !s_lighting_resources.seen_valid ||
+        !s_lighting_resources.source_map_valid ||
         !s_lighting_resources.lighting_outputs_valid) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: lm: visibility requested before resident lighting inputs are valid";
@@ -1123,7 +1191,7 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
             .output_bytes = uint_volume_bytes,
             .lm_download_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t)),
             .visibility_download_bytes = uint_volume_bytes,
-            .upload_bytes = source_bytes + float_volume_bytes + float_volume_bytes,
+            .upload_bytes = source_bytes + float_volume_bytes,
             .visibility_upload_bytes = visibility_upload_total,
         })) {
         return false;
@@ -1131,17 +1199,12 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
 
     auto const all_levels = make_all_levels(z_count);
     auto& camera_cpu = s_lighting_resources.camera_staging;
-    auto& source_map_cpu = s_lighting_resources.source_map_staging;
     {
         ZoneScopedN( "gpu_visibility_pack_inputs" );
         pack_float_cache(
-            *p.m, all_levels, z_count, cache_xy,
+            *p.m, all_levels, cache_xy,
             [](level_cache const& lc) -> std::vector<float> const& { return lc.camera_cache; },
             camera_cpu);
-        pack_float_cache(
-            *p.m, all_levels, z_count, cache_xy,
-            [](level_cache const& lc) -> std::vector<float> const& { return lc.sm; },
-            source_map_cpu);
     }
 
     auto* const camera_buf = s_lighting_resources.camera.buffer;
@@ -1164,8 +1227,6 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
         }
         auto off = Uint32{0};
         std::memcpy(mapped + off, camera_cpu.data(), float_volume_bytes);
-        off += float_volume_bytes;
-        std::memcpy(mapped + off, source_map_cpu.data(), float_volume_bytes);
         SDL_UnmapGPUTransferBuffer(device, upload_tbuf);
     }
 
@@ -1195,7 +1256,6 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
                 off += bytes;
             };
             upload(camera_buf, float_volume_bytes);
-            upload(source_map_buf, float_volume_bytes);
             SDL_EndGPUCopyPass(cp);
         }
         {

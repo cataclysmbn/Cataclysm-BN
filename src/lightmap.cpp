@@ -783,6 +783,14 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
             }
         }
 
+        if( gpu_collect_only ) {
+            auto light_source_point_count = std::size_t{ 0 };
+            std::ranges::for_each( smx_accs, [&]( const auto & local ) {
+                light_source_point_count += local.light_source_points.size();
+            } );
+            light_source_points.reserve( light_source_points.size() + light_source_point_count );
+        }
+
         // Merge per-smx accumulators.  App.y() deferred shadowcasts serially to avoid lm races.
         std::ranges::for_each( smx_accs, [&]( auto & local ) {
             lm_override.insert( lm_override.end(), local.lm_override.begin(), local.lm_override.end() );

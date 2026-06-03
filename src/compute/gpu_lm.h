@@ -134,8 +134,11 @@ struct run_gpu_lighting_params {
     int player_y;
     int player_zlev; // actual game z-level (not z_idx)
     bool transparency_dirty;
+    std::vector<int> const* transparency_dirty_levels = nullptr;
     bool floor_dirty;
+    std::vector<int> const* floor_dirty_levels = nullptr;
     bool vehicle_floor_dirty;
+    std::vector<int> const* vehicle_floor_dirty_levels = nullptr;
     bool rebuild_seen_cache;
     bool angled_sunlight_shadows;
     bool direct_sunlight;
