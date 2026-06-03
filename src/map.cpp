@@ -8355,6 +8355,26 @@ void map::shift( const point_rel_sm &sp )
 
     const int zmin = zlevels ? -OVERMAP_DEPTH : abs.z();
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs.z();
+#if defined( CATA_SDL )
+    auto *const gpu_device = cata_gpu::get_device();
+    const auto &shift_cache = get_cache_ref( zmin );
+    const auto gpu_residency_shifted = cata_gpu::shift_lighting_resident_inputs( {
+        .device = gpu_device,
+        .cache_x = shift_cache.cache_x,
+        .cache_y = shift_cache.cache_y,
+        .z_count = OVERMAP_LAYERS,
+        .shift_x_submaps = sp.x(),
+        .shift_y_submaps = sp.y(),
+    } );
+    if( !gpu_residency_shifted ) {
+        debugmsg( "SDL_GPU resident lighting input shift failed; see debug.log for details" );
+        auto shifted_levels = std::vector<int> {};
+        for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
+            shifted_levels.push_back( gridz );
+        }
+        cata_gpu::invalidate_lighting_transparency_levels( shifted_levels );
+    }
+#endif
     for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
         for( auto *veh : get_cache( gridz ).vehicle_list ) {
             veh->zones_dirty = true;
@@ -8365,25 +8385,8 @@ void map::shift( const point_rel_sm &sp )
             point_bub_ms( g_mapsize_x, g_mapsize_y ) );
     const point_rel_ms shift_offset_pt( -sp.x() * SEEX, -sp.y() * SEEY );
 
-    auto const mark_shifted_map_caches_dirty = [&]( auto const gridz ) {
-        ZoneScopedN( "shift_mark_map_caches_dirty" );
-        auto &gc = get_cache( gridz );
-        gc.transparency_cache_dirty.set();
-        gc.floor_cache_dirty.set();
-        gc.outside_cache_dirty.set();
-        for( const auto p : bubble_submaps() ) {
-            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, gridz ) );
-            if( sm == nullptr ) {
-                continue;
-            }
-            sm->transparency_dirty = true;
-            sm->floor_dirty = true;
-            sm->outside_dirty = true;
-        }
-    };
-    auto const shift_absorption_flat_cache = [&]( level_cache &gc ) {
-        auto old_absorption_cache = gc.absorption_cache;
-        auto old_sound_wall_cache = gc.sound_wall_cache;
+    auto const shift_flat_cache = [&]( auto &cache, level_cache &gc, const auto fill_value ) {
+        auto old_cache = cache;
         const auto source_offset_x = sp.x() * SEEX;
         const auto source_offset_y = sp.y() * SEEY;
 
@@ -8395,18 +8398,16 @@ void map::shift( const point_rel_sm &sp )
                 if( source_x >= 0 && source_x < gc.cache_x && source_y >= 0 &&
                     source_y < gc.cache_y ) {
                     const auto src_idx = static_cast<size_t>( gc.idx( source_x, source_y ) );
-                    gc.absorption_cache[dst_idx] = old_absorption_cache[src_idx];
-                    gc.sound_wall_cache[dst_idx] = old_sound_wall_cache[src_idx];
+                    cache[dst_idx] = old_cache[src_idx];
                 } else {
-                    gc.absorption_cache[dst_idx] = SOUND_ABSORPTION_OPEN_FIELD;
-                    gc.sound_wall_cache[dst_idx] = false;
+                    cache[dst_idx] = fill_value;
                 }
             }
         }
     };
-    auto const shift_absorption_dirty_bits = [&]( level_cache &gc ) {
-        const auto old_dirty = gc.absorption_cache_dirty;
-        gc.absorption_cache_dirty.reset();
+    auto const shift_submap_dirty_bits = [&]( cata_dynamic_bitset &dirty_bits, level_cache &gc ) {
+        const auto old_dirty = dirty_bits;
+        dirty_bits.reset();
         for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
             const auto source_smx = smx + sp.x();
             for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
@@ -8414,10 +8415,71 @@ void map::shift( const point_rel_sm &sp )
                 if( source_smx >= 0 && source_smx < my_MAPSIZE && source_smy >= 0 &&
                     source_smy < my_MAPSIZE &&
                     old_dirty.test( static_cast<size_t>( gc.bidx( source_smx, source_smy ) ) ) ) {
-                    gc.absorption_cache_dirty.set( static_cast<size_t>( gc.bidx( smx, smy ) ) );
+                    dirty_bits.set( static_cast<size_t>( gc.bidx( smx, smy ) ) );
                 }
             }
         }
+    };
+    auto const mark_shifted_submap_bands = [&]( const int gridz, const int band_count, auto mark ) {
+        auto const mark_column = [&]( const int smx ) {
+            if( smx < 0 || smx >= my_MAPSIZE ) {
+                return;
+            }
+            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                mark( tripoint_bub_sm( smx, smy, gridz ) );
+            }
+        };
+        auto const mark_row = [&]( const int smy ) {
+            if( smy < 0 || smy >= my_MAPSIZE ) {
+                return;
+            }
+            for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+                mark( tripoint_bub_sm( smx, smy, gridz ) );
+            }
+        };
+
+        for( const auto band : std::views::iota( 0, band_count ) ) {
+            if( sp.x() > 0 ) {
+                mark_column( my_MAPSIZE - 1 - band );
+            } else if( sp.x() < 0 ) {
+                mark_column( band );
+            }
+            if( sp.y() > 0 ) {
+                mark_row( my_MAPSIZE - 1 - band );
+            } else if( sp.y() < 0 ) {
+                mark_row( band );
+            }
+        }
+    };
+    auto const mark_shifted_map_caches_dirty = [&]( auto const gridz ) {
+        ZoneScopedN( "shift_mark_map_caches_dirty" );
+        auto &gc = get_cache( gridz );
+
+        auto const mark_floor = [&]( const tripoint_bub_sm &smp ) {
+            gc.floor_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->floor_dirty = true;
+            }
+        };
+        auto const mark_outside = [&]( const tripoint_bub_sm &smp ) {
+            gc.outside_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->outside_dirty = true;
+            }
+        };
+        auto const mark_transparency = [&]( const tripoint_bub_sm &smp ) {
+            gc.transparency_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->transparency_dirty = true;
+            }
+        };
+
+        mark_shifted_submap_bands( gridz, 1, mark_floor );
+        mark_shifted_submap_bands( gridz, 3, mark_outside );
+        mark_shifted_submap_bands( gridz, 3, mark_transparency );
     };
     auto const mark_shifted_absorption_cache_dirty = [&]( level_cache &gc, const int gridz ) {
         auto const mark = [&]( const tripoint_bub_sm &smp ) {
@@ -8430,31 +8492,7 @@ void map::shift( const point_rel_sm &sp )
                 sm->absorption_dirty = true;
             }
         };
-        auto const mark_column = [&]( const int smx ) {
-            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
-                mark( tripoint_bub_sm( smx, smy, gridz ) );
-            }
-        };
-        auto const mark_row = [&]( const int smy ) {
-            for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
-                mark( tripoint_bub_sm( smx, smy, gridz ) );
-            }
-        };
-
-        if( sp.x() > 0 ) {
-            mark_column( my_MAPSIZE - 1 );
-            mark_column( my_MAPSIZE - 2 );
-        } else if( sp.x() < 0 ) {
-            mark_column( 0 );
-            mark_column( 1 );
-        }
-        if( sp.y() > 0 ) {
-            mark_row( my_MAPSIZE - 1 );
-            mark_row( my_MAPSIZE - 2 );
-        } else if( sp.y() < 0 ) {
-            mark_row( 0 );
-            mark_row( 1 );
-        }
+        mark_shifted_submap_bands( gridz, 2, mark );
     };
 
     // Run any Lua on_mapgen_postprocess hooks that were deferred from worker
@@ -8485,10 +8523,22 @@ void map::shift( const point_rel_sm &sp )
                 shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
             }
             {
+                ZoneScopedN( "shift_prerequisite_caches" );
+                auto &gc = get_cache( gridz );
+                shift_flat_cache( gc.transparency_cache, gc, LIGHT_TRANSPARENCY_OPEN_AIR );
+                shift_flat_cache( gc.floor_cache, gc, '\x01' );
+                shift_flat_cache( gc.outside_cache, gc, '\0' );
+                shift_flat_cache( gc.sheltered_cache, gc, '\x01' );
+                shift_submap_dirty_bits( gc.transparency_cache_dirty, gc );
+                shift_submap_dirty_bits( gc.floor_cache_dirty, gc );
+                shift_submap_dirty_bits( gc.outside_cache_dirty, gc );
+            }
+            {
                 ZoneScopedN( "shift_absorption_cache" );
                 auto &gc = get_cache( gridz );
-                shift_absorption_flat_cache( gc );
-                shift_absorption_dirty_bits( gc );
+                shift_flat_cache( gc.absorption_cache, gc, static_cast<short>( SOUND_ABSORPTION_OPEN_FIELD ) );
+                shift_flat_cache( gc.sound_wall_cache, gc, false );
+                shift_submap_dirty_bits( gc.absorption_cache_dirty, gc );
             }
             // Iterate in shift-direction order so copy_grid never reads an
             // already-overwritten source slot.  sp >= 0 → forward; sp < 0 → reverse.
@@ -9729,6 +9779,7 @@ void map::build_outside_cache( const int zlev )
     if( zlev >= OVERMAP_HEIGHT ) {
         // Base case: open sky at the top — every tile is outside, nothing above.
         std::fill( ch.outside_cache.begin(), ch.outside_cache.end(), true );
+        std::fill( ch.sheltered_cache.begin(), ch.sheltered_cache.end(), false );
         for( const auto p : bubble_submaps() ) {
             auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
             if( sm ) {

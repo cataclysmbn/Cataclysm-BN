@@ -190,6 +190,8 @@ bool map::build_transparency_cache( const int zlev )
             debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
             return false;
         }
+        const auto resident_level_was_valid =
+            cata_gpu::lighting_transparency_level_is_valid( zlev );
         if( !cata_gpu::dispatch_transparency( {
                 .device = gpu_device,
                 .luts = &luts,
@@ -205,7 +207,7 @@ bool map::build_transparency_cache( const int zlev )
             debugmsg( "SDL_GPU transparency dispatch failed; see debug.log for details" );
             return false;
         }
-        if( resident_output_complete ) {
+        if( resident_output_complete && ( rebuild_all || resident_level_was_valid ) ) {
             cata_gpu::mark_lighting_transparency_level_updated( zlev );
         }
 

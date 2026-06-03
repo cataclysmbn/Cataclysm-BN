@@ -169,7 +169,22 @@ auto prepare_lighting_transparency_output(
 // shader this cache cycle.  Later CPU-side transparency mutations, such as
 // vehicle opacity stamps, must invalidate these markers before lighting runs.
 auto mark_lighting_transparency_level_updated(int zlev) -> void;
+auto lighting_transparency_level_is_valid(int zlev) -> bool;
 auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> void;
+
+struct shift_lighting_residency_params {
+    SDL_GPUDevice* device = nullptr;
+    int cache_x = 0;
+    int cache_y = 0;
+    int z_count = 0;
+    int shift_x_submaps = 0;
+    int shift_y_submaps = 0;
+};
+
+// Shift resident GPU lighting input buffers in flat bubble coordinates after
+// map::shift().  This preserves valid resident transparency so dirty submap
+// transparency dispatches can patch only the newly loaded edge bands.
+auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) -> bool;
 
 // Run the full GPU lighting pass for the dirty z-levels.
 //   1. Pack inputs from CPU level caches.

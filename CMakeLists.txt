@@ -406,7 +406,8 @@ if (CATA_SDL)
         message(STATUS "shadercross: ${SHADERCROSS_EXE}")
         file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/data/shaders")
 
-        file(GLOB_RECURSE CATA_HLSL_SOURCES "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
+        file(GLOB_RECURSE CATA_HLSL_SOURCES CONFIGURE_DEPENDS
+             "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
         set(CATA_SHADER_OUTPUTS "")
 
         foreach (HLSL_SRC ${CATA_HLSL_SOURCES})

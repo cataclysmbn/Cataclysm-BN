@@ -29,6 +29,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace cata_gpu {
@@ -68,6 +69,7 @@ SDL_GPUComputePipeline* s_raytrace_pipeline = nullptr;
 SDL_GPUComputePipeline* s_seen_pipeline = nullptr;
 SDL_GPUComputePipeline* s_seen_walls_pipeline = nullptr;
 SDL_GPUComputePipeline* s_visibility_pipeline = nullptr;
+auto* s_shift_float_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 
 auto load_pipeline(
     SDL_GPUDevice* const device, std::string_view const name, int const ro_bufs, int const rw_bufs,
@@ -149,6 +151,15 @@ auto ensure_visibility_pipeline(SDL_GPUDevice* const device) -> bool {
     return s_visibility_pipeline != nullptr;
 }
 
+auto ensure_shift_float_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (s_shift_float_pipeline == nullptr) {
+        s_shift_float_pipeline = load_pipeline(
+            device, "lm_shift_float_compute",
+            /*ro=*/1, /*rw=*/1, 64, 1);
+    }
+    return s_shift_float_pipeline != nullptr;
+}
+
 // ---------------------------------------------------------------------------
 // Persistent GPU lighting resources
 // ---------------------------------------------------------------------------
@@ -186,6 +197,7 @@ struct lighting_resource_cache {
     gpu_buffer_slot seen_raw;
     gpu_buffer_slot seen;
     gpu_buffer_slot visibility;
+    gpu_buffer_slot shift_float_scratch;
     gpu_transfer_slot upload;
     gpu_transfer_slot visibility_upload;
     gpu_transfer_slot lm_download;
@@ -245,6 +257,18 @@ struct camera_upload_plan {
     std::vector<int> nonzero_levels;
 };
 
+struct lm_shift_float_push_constants {
+    int32_t cache_x;
+    int32_t cache_y;
+    int32_t cache_xy;
+    int32_t z_count;
+    int32_t shift_x_tiles;
+    int32_t shift_y_tiles;
+    float fill_value;
+    uint32_t _pad;
+};
+static_assert(sizeof(lm_shift_float_push_constants) == 32);
+
 lighting_resource_cache s_lighting_resources;
 
 auto reset_input_residency_for_shape(int cache_x, int cache_y, int z_count) -> void;
@@ -276,6 +300,7 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_buffer_slot(device, s_lighting_resources.seen_raw);
     release_buffer_slot(device, s_lighting_resources.seen);
     release_buffer_slot(device, s_lighting_resources.visibility);
+    release_buffer_slot(device, s_lighting_resources.shift_float_scratch);
     release_transfer_slot(device, s_lighting_resources.upload);
     release_transfer_slot(device, s_lighting_resources.visibility_upload);
     release_transfer_slot(device, s_lighting_resources.lm_download);
@@ -298,6 +323,10 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
 auto ensure_resource_device(SDL_GPUDevice* const device) -> void {
     if (s_lighting_resources.device == device) { return; }
     if (s_lighting_resources.device != nullptr) {
+        if (!SDL_WaitForGPUIdle(s_lighting_resources.device)) {
+            DebugLog(DL::Warn, DC::Main)
+                << "SDL_GPU: lm: wait for idle during device switch failed: " << SDL_GetError();
+        }
         release_lighting_resources(s_lighting_resources.device);
     }
     s_lighting_resources.device = device;
@@ -476,6 +505,18 @@ auto ensure_lighting_transparency_resource(prepare_lighting_transparency_output_
         .usage = read_write_usage,
         .required_bytes = transparency_bytes,
         .name = "transparency",
+    });
+}
+
+auto ensure_float_shift_scratch(SDL_GPUDevice* const device, Uint32 const required_bytes) -> bool {
+    auto const read_write_usage = static_cast<SDL_GPUBufferUsageFlags>(
+        SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ | SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE);
+    return ensure_gpu_buffer({
+        .device = device,
+        .slot = &s_lighting_resources.shift_float_scratch,
+        .usage = read_write_usage,
+        .required_bytes = required_bytes,
+        .name = "shift_float_scratch",
     });
 }
 
@@ -838,6 +879,10 @@ auto mark_lighting_transparency_level_updated(int const zlev) -> void {
     refresh_transparency_valid_flag();
 }
 
+auto lighting_transparency_level_is_valid(int const zlev) -> bool {
+    return transparency_level_is_valid(zlev);
+}
+
 auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> void {
     auto& inputs = s_lighting_resources.inputs;
     for (auto const z : levels) {
@@ -850,6 +895,89 @@ auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> 
         }
     }
     refresh_transparency_valid_flag();
+}
+
+auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) -> bool {
+    ZoneScopedN( "gpu_lm_shift_resident_inputs" );
+
+    if (p.device == nullptr || p.cache_x <= 0 || p.cache_y <= 0 || p.z_count <= 0) {
+        return false;
+    }
+
+    auto const shift_x_tiles = p.shift_x_submaps * SEEX;
+    auto const shift_y_tiles = p.shift_y_submaps * SEEY;
+    if (shift_x_tiles == 0 && shift_y_tiles == 0) {
+        return true;
+    }
+
+    ensure_resource_device(p.device);
+    reset_input_residency_for_shape(p.cache_x, p.cache_y, p.z_count);
+
+    auto& inputs = s_lighting_resources.inputs;
+    auto const has_valid_transparency =
+        std::ranges::any_of(inputs.transparency_valid_levels, [](char const value) {
+        return value != '\0';
+    });
+    if (!has_valid_transparency) {
+        return true;
+    }
+
+    if (s_lighting_resources.transparency.buffer == nullptr ||
+        !ensure_shift_float_pipeline(p.device)) {
+        return false;
+    }
+
+    auto const cache_xy = p.cache_x * p.cache_y;
+    auto const volume_tiles = static_cast<Uint32>(p.z_count * cache_xy);
+    auto const transparency_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
+    if (!ensure_float_shift_scratch(p.device, transparency_bytes)) {
+        return false;
+    }
+
+    auto* const src_buf = s_lighting_resources.transparency.buffer;
+    auto* const dst_buf = s_lighting_resources.shift_float_scratch.buffer;
+    auto* const cmd = SDL_AcquireGPUCommandBuffer(p.device);
+    if (cmd == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: shift command buffer acquisition failed: " << SDL_GetError();
+        return false;
+    }
+
+    {
+        ZoneScopedN( "gpu_lm_shift_record_commands" );
+        auto const rw_shifted = SDL_GPUStorageBufferReadWriteBinding{
+            .buffer = dst_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
+        auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_shifted, 1);
+        SDL_BindGPUComputePipeline(cp, s_shift_float_pipeline);
+
+        auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{src_buf};
+        SDL_BindGPUComputeStorageBuffers(
+            cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+
+        auto const push = lm_shift_float_push_constants{
+            .cache_x = p.cache_x,
+            .cache_y = p.cache_y,
+            .cache_xy = cache_xy,
+            .z_count = p.z_count,
+            .shift_x_tiles = shift_x_tiles,
+            .shift_y_tiles = shift_y_tiles,
+            .fill_value = LIGHT_TRANSPARENCY_OPEN_AIR,
+            ._pad = 0u,
+        };
+        SDL_PushGPUComputeUniformData(cmd, 0, &push, sizeof(push));
+        SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
+        SDL_EndGPUComputePass(cp);
+    }
+
+    if (!SDL_SubmitGPUCommandBuffer(cmd)) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: shift command buffer submission failed: " << SDL_GetError();
+        return false;
+    }
+
+    std::swap(s_lighting_resources.transparency, s_lighting_resources.shift_float_scratch);
+    clear_transparency_shader_update_marks();
+    return true;
 }
 
 auto compute_light_radius(float const luminance) -> float {
@@ -1554,6 +1682,10 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
 auto shutdown_lm() -> void {
     auto* const device = get_device();
     if (device == nullptr) { return; }
+    if (!SDL_WaitForGPUIdle(device)) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: lm: wait for idle during shutdown failed: " << SDL_GetError();
+    }
     release_lighting_resources(device);
     if (s_ambient_pipeline != nullptr) {
         SDL_ReleaseGPUComputePipeline(device, s_ambient_pipeline);
@@ -1574,6 +1706,10 @@ auto shutdown_lm() -> void {
     if (s_visibility_pipeline != nullptr) {
         SDL_ReleaseGPUComputePipeline(device, s_visibility_pipeline);
         s_visibility_pipeline = nullptr;
+    }
+    if (s_shift_float_pipeline != nullptr) {
+        SDL_ReleaseGPUComputePipeline(device, s_shift_float_pipeline);
+        s_shift_float_pipeline = nullptr;
     }
 }
 
