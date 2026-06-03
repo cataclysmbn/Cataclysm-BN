@@ -1551,7 +1551,7 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         return MATT_ZLAVE;
     }
 
-    const npc *np = u == nullptr ? nullptr : u->as_npc();
+    const auto *np = u == nullptr ? nullptr : u->as_npc();
     if( np != nullptr ) {
         const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
         if( faction_att == MFA_FRIENDLY ) {
@@ -1562,6 +1562,21 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         }
         if( faction_att == MFA_HATE ) {
             return MATT_ATTACK;
+        }
+    } else if( u != nullptr && u->is_player() ) {
+        static const auto player_faction = mfaction_id( "player" );
+        const auto &attitude_map = faction.obj().attitude_map;
+        const auto found = attitude_map.find( player_faction );
+        if( found != attitude_map.end() ) {
+            if( found->second == MFA_FRIENDLY ) {
+                return MATT_FRIEND;
+            }
+            if( found->second == MFA_NEUTRAL ) {
+                return MATT_IGNORE;
+            }
+            if( found->second == MFA_HATE ) {
+                return MATT_ATTACK;
+            }
         }
     }
 

@@ -77,7 +77,6 @@ M.authorize_hub01_turret = function(params)
     if not monster then return true end
   end
   monster.faction = get_robofac_authorized_monster_faction()
-  monster.friendly = 100
   return true
 end
 

@@ -25,6 +25,25 @@ TEST_CASE( "monster_faction_attitude_to_npc_faction", "[monster][faction][npc]" 
     CHECK( turret.generic_npc_attitude_to( guard.get_monster_faction() ) == Attitude::A_FRIENDLY );
 }
 
+TEST_CASE( "authorized_robofac_turrets_use_faction_attitude", "[monster][faction][npc]" )
+{
+    clear_all_state();
+
+    const auto robofac_pos = tripoint_bub_ms( 5, 5, 0 );
+    const auto authorized_pos = tripoint_bub_ms( 7, 5, 0 );
+    auto &robofac_turret = spawn_test_monster( "mon_robofac_turret_light", robofac_pos );
+    auto &authorized_turret = spawn_test_monster( "mon_robofac_turret_light", authorized_pos );
+    authorized_turret.faction = mfaction_id( "robofac_authorized" );
+    authorized_turret.friendly = 0;
+
+    auto &you = get_avatar();
+    put_player_underground();
+
+    CHECK( authorized_turret.attitude( &you ) == MATT_FRIEND );
+    CHECK( authorized_turret.attitude_to( robofac_turret ) == Attitude::A_FRIENDLY );
+    CHECK( robofac_turret.attitude_to( authorized_turret ) == Attitude::A_FRIENDLY );
+}
+
 TEST_CASE( "monster_faction_memory_anger", "[monster][faction][anger]" )
 {
     clear_all_state();
