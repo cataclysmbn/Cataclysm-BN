@@ -562,16 +562,19 @@ void npc::assess_danger()
                 continue;
             }
             Attitude att;
+            const auto npc_monster_faction = get_monster_faction();
             if( !has_special_attitude_traits &&
-                critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch ) {
+                critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch &&
+                critter.cached_npc_attitude_faction == npc_monster_faction ) {
                 ZoneScopedN( "npc_monster_attitude_cache_hit" );
                 att = critter.cached_npc_attitude;
             } else {
                 ZoneScopedN( "npc_monster_attitude_cache_miss" );
                 att = has_special_attitude_traits ? critter.attitude_to( *this ) :
-                      critter.generic_npc_attitude_to();
+                      critter.generic_npc_attitude_to( *this );
                 if( !has_special_attitude_traits ) {
                     critter.cached_npc_attitude_epoch = g_npcmove_attitude_epoch;
+                    critter.cached_npc_attitude_faction = npc_monster_faction;
                     critter.cached_npc_attitude = att;
                 }
             }
