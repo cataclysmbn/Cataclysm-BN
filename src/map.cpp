@@ -10193,6 +10193,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     .transparency_dirty = gpu_transparency_dirty,
                     .floor_dirty = gpu_floor_dirty,
                     .vehicle_floor_dirty = gpu_vehicle_floor_dirty,
+                    .rebuild_seen_cache = need_seen_rebuild,
                     .angled_sunlight_shadows = angled_sunlight_shadows,
                     .direct_sunlight = m_solar.direct_active,
                     .sun_dx_per_z = m_solar.dx_per_z,

@@ -136,6 +136,7 @@ struct run_gpu_lighting_params {
     bool transparency_dirty;
     bool floor_dirty;
     bool vehicle_floor_dirty;
+    bool rebuild_seen_cache;
     bool angled_sunlight_shadows;
     bool direct_sunlight;
     float sun_dx_per_z;
@@ -147,9 +148,10 @@ struct run_gpu_lighting_params {
 //   2. Collect light sources (light_source_buffer + character/monster lights).
 //   3. Ambient init pass  → initialises lm_all.
 //   4. Raytrace pass      → InterlockedMax per-source contributions into lm_all.
-//   5. Seen-cache pass    → ray cast from player into raw seen_all.
+//   5. Seen-cache pass    → ray cast from player into raw seen_all when requested
+//                           or when resident GPU seen data is invalid.
 //   6. Surface pass       → make glancing surfaces inherit adjacent visibility.
-//   7. Download lm and seen_cache back to map_cache for each dirty level.
+//   7. Download lm and any rebuilt seen_cache back to map_cache.
 // device must be non-null (caller responsibility).
 // Returns false if the GPU pass could not run (e.g. shaders not compiled).
 // A failed SDL_GPU lighting pass is an error; it must not silently rebuild with
