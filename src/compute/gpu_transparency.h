@@ -60,7 +60,7 @@ struct transparency_push_constants {
     float sight_penalty;  // weather sight_penalty (1.0 = clear, <1.0 = rain/fog/etc.)
     int32_t cache_y;      // flat level-cache y-stride (= SEEY * mapsize)
     uint32_t num_submaps; // number of entries in the per-submap storage buffer
-    uint32_t output_offset = 0; // float elements from start of output buffer
+    uint32_t output_offset = 0; // float elements from start of full resident output buffer
 };
 static_assert(sizeof(transparency_push_constants) == 16);
 
@@ -110,9 +110,10 @@ struct dispatch_transparency_params {
 };
 
 // Upload the submap records, dispatch the transparency compute shader, and
-// synchronously download the result into out_buffer when requested.
-// If output.buffer is non-null, the shader writes into that existing buffer at
-// output.output_offset instead of allocating a temporary output buffer.
+// synchronously download compact submap-local results into out_buffer.
+// If output.buffer is non-null, the shader also writes into that existing full
+// flat-cache buffer at output.output_offset so lighting can keep resident input
+// state without a duplicate CPU upload.
 auto dispatch_transparency(dispatch_transparency_params const& p) -> bool;
 
 #if defined(CATA_GPU_VERIFY)

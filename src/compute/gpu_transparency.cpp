@@ -13,6 +13,7 @@
 
 #include <SDL3/SDL_gpu.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 #include <fstream>
@@ -81,7 +82,7 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
         .num_readonly_storage_textures = 0,
         .num_readonly_storage_buffers = 3, // submap_in, ter_lut, furn_lut
         .num_readwrite_storage_textures = 0,
-        .num_readwrite_storage_buffers = 1, // transparency_out
+        .num_readwrite_storage_buffers = 2, // compact output, full resident output
         .num_uniform_buffers = 1,           // push constants (slot 0)
         .threadcount_x = 12,
         .threadcount_y = 12,
@@ -185,9 +186,9 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto const submap_bytes = static_cast<Uint32>(submaps.size() * sizeof(transparency_submap_in));
     auto const ter_lut_bytes = static_cast<Uint32>(luts.ter_transparent.size() * sizeof(uint32_t));
     auto const fur_lut_bytes = static_cast<Uint32>(luts.furn_transparent.size() * sizeof(uint32_t));
-    auto const output_bytes = static_cast<Uint32>(p.cache_size * sizeof(float));
-    auto const output_offset_bytes =
-        static_cast<Uint32>(output_offset * sizeof(float));
+    auto const compact_output_bytes =
+        static_cast<Uint32>(submaps.size() * SEEX * SEEY * sizeof(float));
+    auto const full_output_bytes = static_cast<Uint32>(p.cache_size * sizeof(float));
 
     if (ter_lut_bytes == 0 || fur_lut_bytes == 0) {
         DebugLog(DL::Error, DC::Main)
@@ -209,11 +210,19 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ, .size = fur_lut_bytes, .props = 0};
     auto* const fur_lut_buf = SDL_CreateGPUBuffer(device, &fur_lut_buf_ci);
 
-    auto* output_buf = p.output.buffer;
+    SDL_GPUBufferCreateInfo const compact_output_buf_ci{
+        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
+        .size = compact_output_bytes,
+        .props = 0};
+    auto* const compact_output_buf = SDL_CreateGPUBuffer(device, &compact_output_buf_ci);
+
+    auto* full_output_buf = p.output.buffer;
     if (!use_external_output) {
-        SDL_GPUBufferCreateInfo const output_buf_ci{
-            .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE, .size = output_bytes, .props = 0};
-        output_buf = SDL_CreateGPUBuffer(device, &output_buf_ci);
+        SDL_GPUBufferCreateInfo const full_output_buf_ci{
+            .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
+            .size = full_output_bytes,
+            .props = 0};
+        full_output_buf = SDL_CreateGPUBuffer(device, &full_output_buf_ci);
     }
 
     // Single upload transfer buffer covering all input data.
@@ -223,11 +232,14 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto* const upload_tbuf = SDL_CreateGPUTransferBuffer(device, &upload_tbuf_ci);
 
     SDL_GPUTransferBufferCreateInfo const download_tbuf_ci{
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, .size = output_bytes, .props = 0};
+        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+        .size = compact_output_bytes,
+        .props = 0};
     auto* const download_tbuf = SDL_CreateGPUTransferBuffer(device, &download_tbuf_ci);
 
     if (submap_buf == nullptr || ter_lut_buf == nullptr || fur_lut_buf == nullptr ||
-        output_buf == nullptr || upload_tbuf == nullptr || download_tbuf == nullptr) {
+        compact_output_buf == nullptr || full_output_buf == nullptr || upload_tbuf == nullptr ||
+        download_tbuf == nullptr) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: transparency resource allocation failed: " << SDL_GetError();
         if (upload_tbuf != nullptr) { SDL_ReleaseGPUTransferBuffer(device, upload_tbuf); }
@@ -235,7 +247,10 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         if (submap_buf != nullptr) { SDL_ReleaseGPUBuffer(device, submap_buf); }
         if (ter_lut_buf != nullptr) { SDL_ReleaseGPUBuffer(device, ter_lut_buf); }
         if (fur_lut_buf != nullptr) { SDL_ReleaseGPUBuffer(device, fur_lut_buf); }
-        if (!use_external_output && output_buf != nullptr) { SDL_ReleaseGPUBuffer(device, output_buf); }
+        if (compact_output_buf != nullptr) { SDL_ReleaseGPUBuffer(device, compact_output_buf); }
+        if (!use_external_output && full_output_buf != nullptr) {
+            SDL_ReleaseGPUBuffer(device, full_output_buf);
+        }
         return false;
     }
 
@@ -252,7 +267,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
             SDL_ReleaseGPUBuffer(device, submap_buf);
             SDL_ReleaseGPUBuffer(device, ter_lut_buf);
             SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+            SDL_ReleaseGPUBuffer(device, compact_output_buf);
+            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
             return false;
         }
         auto offset = Uint32{0};
@@ -273,7 +289,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         SDL_ReleaseGPUBuffer(device, submap_buf);
         SDL_ReleaseGPUBuffer(device, ter_lut_buf);
         SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+        SDL_ReleaseGPUBuffer(device, compact_output_buf);
+        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
         return false;
     }
 
@@ -303,9 +320,24 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
 
         // --- Compute pass ---
         {
-            SDL_GPUStorageBufferReadWriteBinding const rw_binding{
-                .buffer = output_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
-            auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_binding, 1);
+            auto const rw_bindings = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{{
+                {
+                    .buffer = compact_output_buf,
+                    .cycle = false,
+                    .padding1 = 0,
+                    .padding2 = 0,
+                    .padding3 = 0,
+                },
+                {
+                    .buffer = full_output_buf,
+                    .cycle = false,
+                    .padding1 = 0,
+                    .padding2 = 0,
+                    .padding3 = 0,
+                },
+            }};
+            auto* const cp = SDL_BeginGPUComputePass(
+                cmd, nullptr, 0, rw_bindings.data(), static_cast<Uint32>(rw_bindings.size()));
             SDL_BindGPUComputePipeline(cp, pipeline);
 
             SDL_GPUBuffer* const ro_bufs[3] = {submap_buf, ter_lut_buf, fur_lut_buf};
@@ -322,7 +354,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         {
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
             SDL_GPUBufferRegion const
-                output_src{.buffer = output_buf, .offset = output_offset_bytes, .size = output_bytes};
+                output_src{.buffer = compact_output_buf, .offset = 0, .size = compact_output_bytes};
             SDL_GPUTransferBufferLocation const
                 output_dst{.transfer_buffer = download_tbuf, .offset = 0};
             SDL_DownloadFromGPUBuffer(cp, &output_src, &output_dst);
@@ -340,7 +372,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         SDL_ReleaseGPUBuffer(device, submap_buf);
         SDL_ReleaseGPUBuffer(device, ter_lut_buf);
         SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+        SDL_ReleaseGPUBuffer(device, compact_output_buf);
+        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
         return false;
     }
     {
@@ -350,7 +383,9 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     SDL_ReleaseGPUFence(device, fence);
 
     // --- Map download buffer and copy results out ---
-    p.out_buffer->resize(static_cast<std::size_t>(p.cache_size));
+    auto const compact_output_count =
+        submaps.size() * static_cast<std::size_t>(SEEX * SEEY);
+    p.out_buffer->resize(compact_output_count);
     {
         ZoneScopedN( "gpu_transparency_unpack_download" );
         auto const* const mapped = static_cast<float const*>(
@@ -363,11 +398,11 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
             SDL_ReleaseGPUBuffer(device, submap_buf);
             SDL_ReleaseGPUBuffer(device, ter_lut_buf);
             SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+            SDL_ReleaseGPUBuffer(device, compact_output_buf);
+            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
             return false;
         }
-        std::ranges::
-            copy(std::span{mapped, static_cast<std::size_t>(p.cache_size)}, p.out_buffer->begin());
+        std::ranges::copy(std::span{mapped, compact_output_count}, p.out_buffer->begin());
         SDL_UnmapGPUTransferBuffer(device, download_tbuf);
     }
 
@@ -377,7 +412,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     SDL_ReleaseGPUBuffer(device, submap_buf);
     SDL_ReleaseGPUBuffer(device, ter_lut_buf);
     SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-    if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+    SDL_ReleaseGPUBuffer(device, compact_output_buf);
+    if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
     return true;
 }
 
@@ -428,6 +464,13 @@ auto verify_transparency_against_cpu(map const& m, int const zlev, float const s
         DebugLog(DL::Error, DC::Main) << "SDL_GPU: transparency verify: dispatch returned no data";
         return;
     }
+    auto const expected_compact_result_size = refs.size() * static_cast<std::size_t>(SEEX * SEEY);
+    if (s_gpu_result.size() != expected_compact_result_size) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency verify: dispatch returned " << s_gpu_result.size()
+            << " compact values, expected " << expected_compact_result_size;
+        return;
+    }
 
     // Compare GPU output against each submap's local transparency_cache[][],
     // which is the direct output of rebuild_transparency_cache.  The flat
@@ -437,6 +480,7 @@ auto verify_transparency_against_cpu(map const& m, int const zlev, float const s
     // arrays always reflect the last actual computation for that submap's terrain.
     static constexpr float threshold = 1e-5f;
     auto diff_count = 0;
+    auto ref_index = std::size_t{0};
     for (auto const& ref : refs) {
         if (diff_count >= 20) { break; }
         for (const auto p : submap_tiles()) {
@@ -444,15 +488,18 @@ auto verify_transparency_against_cpu(map const& m, int const zlev, float const s
             auto const cx = ref.offset_x + p.x();
             auto const cy = ref.offset_y + p.y();
             auto const flat_idx = static_cast<std::size_t>(cx * push.cache_y + cy);
-            auto const gpu_val = s_gpu_result[flat_idx];
+            auto const compact_idx = ref_index * static_cast<std::size_t>(SEEX * SEEY) +
+                                     static_cast<std::size_t>(p.x() * SEEY + p.y());
+            auto const gpu_val = s_gpu_result[compact_idx];
             auto const cpu_val = ref.sm->transparency_cache[p.x()][p.y()];
             if (std::fabs(gpu_val - cpu_val) > threshold) {
                 ++diff_count;
                 DebugLog(DL::Warn, DC::Main)
-                    << "SDL_GPU: transparency mismatch flat_idx=" << flat_idx << " gpu=" << gpu_val
-                    << " cpu=" << cpu_val;
+                    << "SDL_GPU: transparency mismatch flat_idx=" << flat_idx
+                    << " compact_idx=" << compact_idx << " gpu=" << gpu_val << " cpu=" << cpu_val;
             }
         }
+        ++ref_index;
     }
 
     if (diff_count == 0) {

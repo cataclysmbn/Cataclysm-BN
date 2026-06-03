@@ -30,14 +30,15 @@ cbuffer Constants : register(b0, space2)
     float sight_penalty; // weather penalty; 1.0 = clear sky
     int   cache_y;       // flat level-cache y-stride (= SEEY * mapsize)
     uint  num_submaps;   // number of entries in submap_in
-    uint  output_offset; // float elements from the start of transparency_out
+    uint  output_offset; // float elements from the start of full_transparency_out
 };
 
 StructuredBuffer<TransparencySubmapIn> submap_in   : register(t0, space0);
 StructuredBuffer<uint>                 ter_lut     : register(t1, space0);
 StructuredBuffer<uint>                 furn_lut    : register(t2, space0);
 
-RWStructuredBuffer<float> transparency_out : register(u0, space1);
+RWStructuredBuffer<float> compact_transparency_out : register(u0, space1);
+RWStructuredBuffer<float> full_transparency_out    : register(u1, space1);
 
 [numthreads(12, 12, 1)]
 void main(uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID)
@@ -69,5 +70,6 @@ void main(uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID)
 
     int cx = sm.cache_offset_x + (int)sx;
     int cy = sm.cache_offset_y + (int)sy;
-    transparency_out[output_offset + cx * cache_y + cy] = value;
+    compact_transparency_out[group_id.x * 144 + tile] = value;
+    full_transparency_out[output_offset + cx * cache_y + cy] = value;
 }

@@ -207,7 +207,14 @@ bool map::build_transparency_cache( const int zlev )
             debugmsg( "SDL_GPU transparency dispatch failed; see debug.log for details" );
             return false;
         }
-        if( resident_output_complete && ( rebuild_all || resident_level_was_valid ) ) {
+        const auto expected_compact_result_size =
+            refs.size() * static_cast<size_t>( SEEX * SEEY );
+        if( gpu_result.size() != expected_compact_result_size ) {
+            debugmsg( "SDL_GPU transparency dispatch returned %zu compact values, expected %zu",
+                      gpu_result.size(), expected_compact_result_size );
+            return false;
+        }
+        if( rebuild_all ? resident_output_complete : resident_level_was_valid ) {
             cata_gpu::mark_lighting_transparency_level_updated( zlev );
         }
 
@@ -221,16 +228,20 @@ bool map::build_transparency_cache( const int zlev )
             return value;
         };
 
+        auto ref_index = size_t{ 0 };
         for( const auto &ref : refs ) {
             auto *cur_submap = const_cast<submap *>( ref.sm );
             for( const auto sm_ms : submap_tiles() ) {
                 const auto x = ref.offset_x + sm_ms.x();
                 const auto y = ref.offset_y + sm_ms.y();
-                const auto value = gpu_result[static_cast<size_t>( map_cache.idx( x, y ) )];
+                const auto compact_idx = ref_index * static_cast<size_t>( SEEX * SEEY ) +
+                                         static_cast<size_t>( sm_ms.x() * SEEY + sm_ms.y() );
+                const auto value = gpu_result[compact_idx];
                 cur_submap->transparency_cache[sm_ms.x()][sm_ms.y()] = value;
                 transparency_cache[map_cache.idx( x, y )] = normalized_flat_value( value );
             }
             cur_submap->transparency_dirty = false;
+            ++ref_index;
         }
 
         map_cache.transparency_cache_dirty.reset();
