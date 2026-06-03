@@ -2,7 +2,6 @@
 #include "gpu_platform.h"
 
 #include "debug.h"
-#include "gpu_lighting.h"
 #include "gpu_lm.h"
 #include "path_info.h"
 #include "preload_config.h"
@@ -144,7 +143,6 @@ auto init() -> void {
 
 auto shutdown() -> void {
     if (s_device != nullptr) {
-        shutdown_lighting();
         shutdown_lm();
         SDL_DestroyGPUDevice(s_device);
         s_device = nullptr;
