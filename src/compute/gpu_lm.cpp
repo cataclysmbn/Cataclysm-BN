@@ -22,6 +22,7 @@
 #include <cmath>
 #include <cstring>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <numeric>
 #include <ranges>
@@ -194,7 +195,9 @@ struct lighting_resource_cache {
     std::vector<float> camera_staging;
     std::vector<float> source_map_staging;
     lighting_input_residency inputs;
+    std::vector<int> camera_nonzero_levels;
     bool seen_valid = false;
+    bool camera_valid = false;
     bool source_map_valid = false;
     bool lighting_outputs_valid = false;
 };
@@ -233,6 +236,11 @@ struct input_upload_plan {
     std::vector<int> transparency_levels;
     std::vector<int> floor_levels;
     std::vector<int> vehicle_floor_levels;
+};
+
+struct camera_upload_plan {
+    std::vector<int> upload_levels;
+    std::vector<int> nonzero_levels;
 };
 
 lighting_resource_cache s_lighting_resources;
@@ -275,7 +283,9 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.camera_staging = {};
     s_lighting_resources.source_map_staging = {};
     s_lighting_resources.inputs = {};
+    s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.seen_valid = false;
+    s_lighting_resources.camera_valid = false;
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.lighting_outputs_valid = false;
     s_lighting_resources.device = nullptr;
@@ -575,6 +585,8 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
         .vehicle_floor_valid = false,
     };
     s_lighting_resources.seen_valid = false;
+    s_lighting_resources.camera_valid = false;
+    s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.lighting_outputs_valid = false;
 }
@@ -622,6 +634,44 @@ auto commit_input_upload_plan(input_upload_plan const& plan) -> void {
     if (!plan.vehicle_floor_levels.empty()) {
         inputs.vehicle_floor_valid = true;
     }
+}
+
+auto sorted_unique(std::vector<int> levels) -> std::vector<int> {
+    std::ranges::sort(levels);
+    levels.erase(std::ranges::unique(levels).begin(), levels.end());
+    return levels;
+}
+
+auto camera_level_has_data(map const& m, int const z) -> bool {
+    auto const& camera_cache = m.get_cache_ref(z).camera_cache;
+    return std::ranges::any_of(camera_cache, [](float const value) {
+        return value > LIGHT_TRANSPARENCY_SOLID;
+    });
+}
+
+auto make_camera_upload_plan(
+    map const& m, std::vector<int> const& all_levels) -> camera_upload_plan {
+    auto nonzero_levels = std::vector<int>{};
+    for (auto const z : all_levels) {
+        if (camera_level_has_data(m, z)) {
+            nonzero_levels.push_back(z);
+        }
+    }
+
+    if (!s_lighting_resources.camera_valid) {
+        return camera_upload_plan{
+            .upload_levels = all_levels,
+            .nonzero_levels = std::move(nonzero_levels),
+        };
+    }
+
+    auto upload_levels = nonzero_levels;
+    std::ranges::copy(s_lighting_resources.camera_nonzero_levels,
+                      std::back_inserter(upload_levels));
+    return camera_upload_plan{
+        .upload_levels = sorted_unique(std::move(upload_levels)),
+        .nonzero_levels = std::move(nonzero_levels),
+    };
 }
 
 // Pack selected z-levels into a compact upload buffer.  Copy commands place
@@ -1168,10 +1218,15 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
     auto const volume_tiles = static_cast<Uint32>(z_count * cache_xy);
     auto const float_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
     auto const uint_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
+    auto const float_level_bytes = static_cast<Uint32>(cache_xy * sizeof(float));
     auto const source_bytes = static_cast<Uint32>(sizeof(GpuLightSource));
-    auto const visibility_upload_total = float_volume_bytes;
-
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
+    auto const all_levels = make_all_levels(z_count);
+    auto const camera_uploads = make_camera_upload_plan(*p.m, all_levels);
+    auto const camera_upload_bytes =
+        static_cast<Uint32>(camera_uploads.upload_levels.size()) * float_level_bytes;
+    auto const visibility_upload_total = std::max(camera_upload_bytes, 1u);
+
     if (!s_lighting_resources.inputs.transparency_valid ||
         !s_lighting_resources.seen_valid ||
         !s_lighting_resources.source_map_valid ||
@@ -1197,12 +1252,11 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
         return false;
     }
 
-    auto const all_levels = make_all_levels(z_count);
     auto& camera_cpu = s_lighting_resources.camera_staging;
-    {
+    if (camera_upload_bytes > 0) {
         ZoneScopedN( "gpu_visibility_pack_inputs" );
         pack_float_cache(
-            *p.m, all_levels, cache_xy,
+            *p.m, camera_uploads.upload_levels, cache_xy,
             [](level_cache const& lc) -> std::vector<float> const& { return lc.camera_cache; },
             camera_cpu);
     }
@@ -1216,7 +1270,7 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
     auto* const upload_tbuf = s_lighting_resources.visibility_upload.buffer;
     auto* const visibility_dl_tbuf = s_lighting_resources.visibility_download.buffer;
 
-    {
+    if (camera_upload_bytes > 0) {
         ZoneScopedN( "gpu_visibility_stage_upload" );
         auto* const mapped = static_cast<std::byte*>(
             SDL_MapGPUTransferBuffer(device, upload_tbuf, false));
@@ -1226,7 +1280,7 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
             return false;
         }
         auto off = Uint32{0};
-        std::memcpy(mapped + off, camera_cpu.data(), float_volume_bytes);
+        std::memcpy(mapped + off, camera_cpu.data(), camera_upload_bytes);
         SDL_UnmapGPUTransferBuffer(device, upload_tbuf);
     }
 
@@ -1239,26 +1293,33 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
 
     {
         ZoneScopedN( "gpu_visibility_record_commands" );
-        {
+        if (camera_upload_bytes > 0) {
+            ZoneScopedN( "gpu_visibility_record_camera_upload" );
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
             auto off = Uint32{0};
-            auto upload = [&](SDL_GPUBuffer* dst, Uint32 const bytes) {
-                auto const src_loc = SDL_GPUTransferBufferLocation{
-                    .transfer_buffer = upload_tbuf,
-                    .offset = off,
-                };
-                auto const dst_reg = SDL_GPUBufferRegion{
-                    .buffer = dst,
-                    .offset = 0,
-                    .size = bytes,
-                };
-                SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
-                off += bytes;
+            auto upload_levels = [&](SDL_GPUBuffer* dst, std::vector<int> const& levels,
+            Uint32 const level_bytes) {
+                auto level_index = Uint32{0};
+                std::ranges::for_each(levels, [&](auto const z) {
+                    auto const src_loc = SDL_GPUTransferBufferLocation{
+                        .transfer_buffer = upload_tbuf,
+                        .offset = off + level_index * level_bytes,
+                    };
+                    auto const dst_reg = SDL_GPUBufferRegion{
+                        .buffer = dst,
+                        .offset = static_cast<Uint32>(z + OVERMAP_DEPTH) * level_bytes,
+                        .size = level_bytes,
+                    };
+                    SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
+                    ++level_index;
+                });
+                off += static_cast<Uint32>(levels.size()) * level_bytes;
             };
-            upload(camera_buf, float_volume_bytes);
+            upload_levels(camera_buf, camera_uploads.upload_levels, float_level_bytes);
             SDL_EndGPUCopyPass(cp);
         }
         {
+            ZoneScopedN( "gpu_visibility_record_dispatch" );
             auto const rw_visibility = SDL_GPUStorageBufferReadWriteBinding{
                 .buffer = visibility_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
             auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_visibility, 1);
@@ -1291,6 +1352,7 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
             SDL_EndGPUComputePass(cp);
         }
         {
+            ZoneScopedN( "gpu_visibility_record_download" );
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
             auto const src_visibility = SDL_GPUBufferRegion{
                 .buffer = visibility_buf,
@@ -1343,6 +1405,8 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
         SDL_UnmapGPUTransferBuffer(device, visibility_dl_tbuf);
     }
 
+    s_lighting_resources.camera_valid = true;
+    s_lighting_resources.camera_nonzero_levels = camera_uploads.nonzero_levels;
     return true;
 }
 

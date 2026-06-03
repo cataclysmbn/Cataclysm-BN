@@ -4391,7 +4391,10 @@ void game::draw( ui_adaptor &ui )
     }
 
     werase( w_terrain );
-    draw_ter();
+    {
+        ZoneScopedN( "game_draw_terrain" );
+        draw_ter();
+    }
     {
         ZoneScopedN( "game_draw_callbacks" );
         for( auto it = draw_callbacks.begin(); it != draw_callbacks.end(); ) {
