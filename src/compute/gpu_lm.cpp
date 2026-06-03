@@ -170,6 +170,8 @@ struct lighting_input_residency {
     bool transparency_valid = false;
     bool floor_valid = false;
     bool vehicle_floor_valid = false;
+    std::vector<char> transparency_valid_levels;
+    std::vector<char> transparency_shader_updated_levels;
 };
 
 struct lighting_resource_cache {
@@ -244,6 +246,8 @@ struct camera_upload_plan {
 };
 
 lighting_resource_cache s_lighting_resources;
+
+auto reset_input_residency_for_shape(int cache_x, int cache_y, int z_count) -> void;
 
 auto release_buffer_slot(SDL_GPUDevice* const device, gpu_buffer_slot& slot) -> void {
     if (slot.buffer != nullptr) {
@@ -352,7 +356,7 @@ auto ensure_lighting_resources(SDL_GPUDevice* const device, lighting_buffer_size
     return ensure_gpu_buffer({
                .device = device,
                .slot = &s_lighting_resources.transparency,
-               .usage = read_usage,
+               .usage = read_write_usage,
                .required_bytes = sizes.transparency_bytes,
                .name = "transparency",
            })
@@ -454,6 +458,25 @@ auto ensure_lighting_resources(SDL_GPUDevice* const device, lighting_buffer_size
                .required_bytes = sizes.visibility_download_bytes,
                .name = "visibility_download",
            });
+}
+
+auto ensure_lighting_transparency_resource(prepare_lighting_transparency_output_params const& p)
+    -> bool {
+    ensure_resource_device(p.device);
+    reset_input_residency_for_shape(p.cache_x, p.cache_y, p.z_count);
+
+    auto const volume_tiles = static_cast<Uint32>(p.z_count * p.cache_x * p.cache_y);
+    auto const transparency_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
+    auto const read_write_usage = static_cast<SDL_GPUBufferUsageFlags>(
+        SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ | SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE);
+
+    return ensure_gpu_buffer({
+        .device = p.device,
+        .slot = &s_lighting_resources.transparency,
+        .usage = read_write_usage,
+        .required_bytes = transparency_bytes,
+        .name = "transparency",
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -583,12 +606,58 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
         .transparency_valid = false,
         .floor_valid = false,
         .vehicle_floor_valid = false,
+        .transparency_valid_levels = std::vector<char>(static_cast<std::size_t>(z_count), '\0'),
+        .transparency_shader_updated_levels =
+            std::vector<char>(static_cast<std::size_t>(z_count), '\0'),
     };
     s_lighting_resources.seen_valid = false;
     s_lighting_resources.camera_valid = false;
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.lighting_outputs_valid = false;
+}
+
+auto z_to_resident_index(int const zlev) -> int {
+    return zlev + OVERMAP_DEPTH;
+}
+
+auto resident_index_is_valid(int const idx, std::vector<char> const& levels) -> bool {
+    return idx >= 0 && static_cast<std::size_t>(idx) < levels.size();
+}
+
+auto transparency_level_is_valid(int const zlev) -> bool {
+    auto const& levels = s_lighting_resources.inputs.transparency_valid_levels;
+    auto const idx = z_to_resident_index(zlev);
+    return resident_index_is_valid(idx, levels) && levels[static_cast<std::size_t>(idx)] != '\0';
+}
+
+auto transparency_level_shader_updated(int const zlev) -> bool {
+    auto const& levels = s_lighting_resources.inputs.transparency_shader_updated_levels;
+    auto const idx = z_to_resident_index(zlev);
+    return resident_index_is_valid(idx, levels) && levels[static_cast<std::size_t>(idx)] != '\0';
+}
+
+auto refresh_transparency_valid_flag() -> void {
+    auto& inputs = s_lighting_resources.inputs;
+    inputs.transparency_valid = !inputs.transparency_valid_levels.empty() &&
+                                std::ranges::all_of(inputs.transparency_valid_levels, [](char const value) {
+        return value != '\0';
+    });
+}
+
+auto mark_transparency_levels_valid(std::vector<int> const& levels) -> void {
+    auto& inputs = s_lighting_resources.inputs;
+    for (auto const z : levels) {
+        auto const idx = z_to_resident_index(z);
+        if (resident_index_is_valid(idx, inputs.transparency_valid_levels)) {
+            inputs.transparency_valid_levels[static_cast<std::size_t>(idx)] = '\1';
+        }
+    }
+    refresh_transparency_valid_flag();
+}
+
+auto clear_transparency_shader_update_marks() -> void {
+    std::ranges::fill(s_lighting_resources.inputs.transparency_shader_updated_levels, '\0');
 }
 
 auto select_input_upload_levels(
@@ -605,12 +674,38 @@ auto select_input_upload_levels(
     return levels;
 }
 
+auto select_transparency_upload_levels(
+    bool const dirty, std::vector<int> const* const dirty_levels,
+    std::vector<int> const& all_levels) -> std::vector<int> {
+    auto levels = std::vector<int>{};
+
+    for (auto const z : all_levels) {
+        if (!transparency_level_is_valid(z)) {
+            levels.push_back(z);
+        }
+    }
+
+    if (dirty) {
+        auto const& dirty_source =
+            (dirty_levels == nullptr || dirty_levels->empty()) ? all_levels : *dirty_levels;
+        for (auto const z : dirty_source) {
+            if (!transparency_level_shader_updated(z)) {
+                levels.push_back(z);
+            }
+        }
+    }
+
+    std::ranges::sort(levels);
+    levels.erase(std::ranges::unique(levels).begin(), levels.end());
+    return levels;
+}
+
 auto make_input_upload_plan(
     run_gpu_lighting_params const& p, std::vector<int> const& all_levels) -> input_upload_plan {
     auto const& inputs = s_lighting_resources.inputs;
     return input_upload_plan{
-        .transparency_levels = select_input_upload_levels(
-            p.transparency_dirty, inputs.transparency_valid, p.transparency_dirty_levels, all_levels),
+        .transparency_levels = select_transparency_upload_levels(
+            p.transparency_dirty, p.transparency_dirty_levels, all_levels),
         .floor_levels = select_input_upload_levels(
             p.floor_dirty, inputs.floor_valid, p.floor_dirty_levels, all_levels),
         .vehicle_floor_levels = select_input_upload_levels(
@@ -626,7 +721,7 @@ auto has_structural_upload(input_upload_plan const& plan) -> bool {
 auto commit_input_upload_plan(input_upload_plan const& plan) -> void {
     auto& inputs = s_lighting_resources.inputs;
     if (!plan.transparency_levels.empty()) {
-        inputs.transparency_valid = true;
+        mark_transparency_levels_valid(plan.transparency_levels);
     }
     if (!plan.floor_levels.empty()) {
         inputs.floor_valid = true;
@@ -712,6 +807,51 @@ auto pack_char_cache_uint(
 // Public API
 // ---------------------------------------------------------------------------
 
+auto prepare_lighting_transparency_output(prepare_lighting_transparency_output_params const& p)
+    -> resident_transparency_output {
+    if (p.device == nullptr || p.cache_x <= 0 || p.cache_y <= 0 || p.z_count <= 0) {
+        return {};
+    }
+    auto const z_idx = z_to_resident_index(p.zlev);
+    if (z_idx < 0 || z_idx >= p.z_count) { return {}; }
+    if (!ensure_lighting_transparency_resource(p)) {
+        return {};
+    }
+
+    auto const cache_xy = static_cast<uint32_t>(p.cache_x * p.cache_y);
+    return resident_transparency_output{
+        .buffer = s_lighting_resources.transparency.buffer,
+        .output_offset = static_cast<uint32_t>(z_idx) * cache_xy,
+    };
+}
+
+auto mark_lighting_transparency_level_updated(int const zlev) -> void {
+    auto& inputs = s_lighting_resources.inputs;
+    auto const idx = z_to_resident_index(zlev);
+    if (!resident_index_is_valid(idx, inputs.transparency_valid_levels) ||
+        !resident_index_is_valid(idx, inputs.transparency_shader_updated_levels)) {
+        return;
+    }
+
+    inputs.transparency_valid_levels[static_cast<std::size_t>(idx)] = '\1';
+    inputs.transparency_shader_updated_levels[static_cast<std::size_t>(idx)] = '\1';
+    refresh_transparency_valid_flag();
+}
+
+auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> void {
+    auto& inputs = s_lighting_resources.inputs;
+    for (auto const z : levels) {
+        auto const idx = z_to_resident_index(z);
+        if (resident_index_is_valid(idx, inputs.transparency_valid_levels)) {
+            inputs.transparency_valid_levels[static_cast<std::size_t>(idx)] = '\0';
+        }
+        if (resident_index_is_valid(idx, inputs.transparency_shader_updated_levels)) {
+            inputs.transparency_shader_updated_levels[static_cast<std::size_t>(idx)] = '\0';
+        }
+    }
+    refresh_transparency_valid_flag();
+}
+
 auto compute_light_radius(float const luminance) -> float {
     if (luminance <= LIGHT_AMBIENT_LOW) { return 0.0f; }
     auto const raw =
@@ -755,6 +895,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
     auto const all_levels = make_all_levels(z_count);
     auto const input_uploads = make_input_upload_plan(p, all_levels);
+    clear_transparency_shader_update_marks();
     auto source_map_upload_levels = s_lighting_resources.source_map_valid ? *p.dirty_levels : all_levels;
     std::ranges::sort(source_map_upload_levels);
     source_map_upload_levels.erase(

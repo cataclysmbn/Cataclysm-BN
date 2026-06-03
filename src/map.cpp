@@ -10146,6 +10146,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 gpu_floor_dirty = true;
                 add_all_gpu_dirty_levels( gpu_transparency_dirty_levels );
                 add_all_gpu_dirty_levels( gpu_floor_dirty_levels );
+#if defined( CATA_SDL )
+                cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_dirty_levels );
+#endif
                 do_vehicle_caching( z );
             }
         }

@@ -146,6 +146,31 @@ struct run_gpu_lighting_params {
     float sun_dy_per_z;
 };
 
+struct resident_transparency_output {
+    SDL_GPUBuffer* buffer = nullptr;
+    uint32_t output_offset = 0; // float elements from the start of the resident volume
+};
+
+struct prepare_lighting_transparency_output_params {
+    SDL_GPUDevice* device = nullptr;
+    int cache_x = 0;
+    int cache_y = 0;
+    int z_count = 0;
+    int zlev = 0;
+};
+
+// Ensure the lighting input transparency buffer exists and return the resident
+// output binding for one z-level.  Used by transparency_compute so a successful
+// transparency dispatch can seed the lighting input buffer directly.
+auto prepare_lighting_transparency_output(
+    prepare_lighting_transparency_output_params const& p) -> resident_transparency_output;
+
+// Mark levels whose resident transparency slice was written by the transparency
+// shader this cache cycle.  Later CPU-side transparency mutations, such as
+// vehicle opacity stamps, must invalidate these markers before lighting runs.
+auto mark_lighting_transparency_level_updated(int zlev) -> void;
+auto invalidate_lighting_transparency_levels(std::vector<int> const& levels) -> void;
+
 // Run the full GPU lighting pass for the dirty z-levels.
 //   1. Pack inputs from CPU level caches.
 //   2. Collect light sources (light_source_buffer + character/monster lights).

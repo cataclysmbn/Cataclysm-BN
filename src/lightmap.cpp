@@ -50,7 +50,9 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "weather.h"
-#if defined( CATA_SDL ) && defined( CATA_GPU_VERIFY )
+#if defined( CATA_SDL )
+#include "compute/gpu_lm.h"
+#include "compute/gpu_platform.h"
 #include "compute/gpu_transparency.h"
 #endif
 
@@ -108,6 +110,131 @@ bool map::build_transparency_cache( const int zlev )
         std::fill( transparency_cache.begin(), transparency_cache.end(),
                    static_cast<float>( LIGHT_TRANSPARENCY_OPEN_AIR ) );
     }
+
+#if defined( CATA_SDL ) && !defined( CATA_GPU_VERIFY )
+    {
+        ZoneScopedN( "build_transparency_cache_gpu" );
+        SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+        if( gpu_device == nullptr ) {
+            debugmsg( "SDL_GPU transparency is required, but no GPU device is available" );
+            return false;
+        }
+
+        auto refs = std::vector<cata_gpu::transparency_submap_ref> {};
+        refs.reserve( static_cast<size_t>( map_cache.cache_mapsize * map_cache.cache_mapsize ) );
+        auto resident_output_complete = true;
+
+        for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                if( !rebuild_all && !map_cache.transparency_cache_dirty.test(
+                        static_cast<size_t>( map_cache.bidx( smx, smy ) ) ) ) {
+                    continue;
+                }
+
+                const auto sm_pos = tripoint_bub_sm( smx, smy, zlev );
+                auto *cur_submap = get_submap_at_grid( sm_pos );
+                const auto sm_offset = project_to<coords::ms>( sm_pos );
+
+                if( cur_submap == nullptr ) {
+                    resident_output_complete = false;
+                    if( !rebuild_all ) {
+                        for( const auto sx : std::views::iota( 0, SEEX ) ) {
+                            std::fill_n( transparency_cache.data() + map_cache.idx( sm_offset.x() + sx,
+                                         sm_offset.y() ), SEEY, LIGHT_TRANSPARENCY_OPEN_AIR );
+                        }
+                    }
+                    continue;
+                }
+
+                cur_submap->transparency_dirty = true;
+                if( cur_submap->outside_dirty ) {
+                    const level_cache *above = zlev < OVERMAP_HEIGHT ? &get_cache_ref( zlev + 1 ) : nullptr;
+                    cur_submap->rebuild_outside_cache( above, sm_pos );
+                }
+                refs.push_back( { cur_submap, sm_offset.x(), sm_offset.y() } );
+            }
+        }
+
+        if( refs.empty() ) {
+            map_cache.transparency_cache_dirty.reset();
+            return true;
+        }
+
+        static auto luts = cata_gpu::transparency_luts {};
+        static auto luts_valid = false;
+        if( !luts_valid ) {
+            cata_gpu::rebuild_transparency_luts( luts );
+            luts_valid = true;
+        }
+
+        static auto inputs = std::vector<cata_gpu::transparency_submap_in> {};
+        cata_gpu::prepare_transparency_inputs( refs, inputs );
+
+        const auto push = cata_gpu::transparency_push_constants {
+            .sight_penalty = get_weather().weather_id->sight_penalty,
+            .cache_y = map_cache.cache_y,
+            .num_submaps = static_cast<uint32_t>( inputs.size() ),
+            .output_offset = 0,
+        };
+
+        static auto gpu_result = std::vector<float> {};
+        const auto cache_size = map_cache.cache_x * map_cache.cache_y;
+        const auto resident_output = cata_gpu::prepare_lighting_transparency_output( {
+            .device = gpu_device,
+            .cache_x = map_cache.cache_x,
+            .cache_y = map_cache.cache_y,
+            .z_count = OVERMAP_LAYERS,
+            .zlev = zlev,
+        } );
+        if( resident_output.buffer == nullptr ) {
+            debugmsg( "SDL_GPU transparency resident output allocation failed; see debug.log for details" );
+            return false;
+        }
+        if( !cata_gpu::dispatch_transparency( {
+                .device = gpu_device,
+                .luts = &luts,
+                .submaps = &inputs,
+                .push = push,
+                .cache_size = cache_size,
+                .out_buffer = &gpu_result,
+                .output = {
+                    .buffer = resident_output.buffer,
+                    .output_offset = resident_output.output_offset,
+                },
+            } ) || gpu_result.empty() ) {
+            debugmsg( "SDL_GPU transparency dispatch failed; see debug.log for details" );
+            return false;
+        }
+        if( resident_output_complete ) {
+            cata_gpu::mark_lighting_transparency_level_updated( zlev );
+        }
+
+        auto normalized_flat_value = [&]( const float value ) {
+            if( std::fabs( value - LIGHT_TRANSPARENCY_OPEN_AIR ) <= 0.0001f ) {
+                return LIGHT_TRANSPARENCY_OPEN_AIR;
+            }
+            if( std::fabs( value - weather_lookup_.transparency ) <= 0.0001f ) {
+                return weather_lookup_.transparency;
+            }
+            return value;
+        };
+
+        for( const auto &ref : refs ) {
+            auto *cur_submap = const_cast<submap *>( ref.sm );
+            for( const auto sm_ms : submap_tiles() ) {
+                const auto x = ref.offset_x + sm_ms.x();
+                const auto y = ref.offset_y + sm_ms.y();
+                const auto value = gpu_result[static_cast<size_t>( map_cache.idx( x, y ) )];
+                cur_submap->transparency_cache[sm_ms.x()][sm_ms.y()] = value;
+                transparency_cache[map_cache.idx( x, y )] = normalized_flat_value( value );
+            }
+            cur_submap->transparency_dirty = false;
+        }
+
+        map_cache.transparency_cache_dirty.reset();
+        return true;
+    }
+#endif
 
     // Traverse the submaps; delegate to per-submap rebuild, then copy the
     // 12×12 result into the flat render cache.

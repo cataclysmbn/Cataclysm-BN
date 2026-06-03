@@ -30,7 +30,7 @@ cbuffer Constants : register(b0, space2)
     float sight_penalty; // weather penalty; 1.0 = clear sky
     int   cache_y;       // flat level-cache y-stride (= SEEY * mapsize)
     uint  num_submaps;   // number of entries in submap_in
-    uint  _pad;          // std140 padding
+    uint  output_offset; // float elements from the start of transparency_out
 };
 
 StructuredBuffer<TransparencySubmapIn> submap_in   : register(t0, space0);
@@ -69,5 +69,5 @@ void main(uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID)
 
     int cx = sm.cache_offset_x + (int)sx;
     int cy = sm.cache_offset_y + (int)sy;
-    transparency_out[cx * cache_y + cy] = value;
+    transparency_out[output_offset + cx * cache_y + cy] = value;
 }

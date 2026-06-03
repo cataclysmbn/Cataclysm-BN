@@ -388,7 +388,9 @@ if (CATA_SDL)
                  See CMake compiling guide for details and more info.")
     endif ()
     add_definitions(-DCATA_SDL)
-    add_definitions(-DCATA_GPU_VERIFY)
+    if (CATA_GPU_VERIFY)
+        add_definitions(-DCATA_GPU_VERIFY)
+    endif ()
 
     # --- SDL_shadercross: HLSL shader compiler (build-time tool only, library not linked) ---
     # Install via: vcpkg (sdl3-shadercross in msvc-full-features/vcpkg.json) or place shadercross on PATH.

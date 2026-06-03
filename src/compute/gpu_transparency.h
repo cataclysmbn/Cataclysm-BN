@@ -8,6 +8,7 @@
 #include <vector>
 
 class map;
+struct SDL_GPUBuffer;
 struct SDL_GPUDevice;
 struct submap;
 
@@ -59,7 +60,7 @@ struct transparency_push_constants {
     float sight_penalty;  // weather sight_penalty (1.0 = clear, <1.0 = rain/fog/etc.)
     int32_t cache_y;      // flat level-cache y-stride (= SEEY * mapsize)
     uint32_t num_submaps; // number of entries in the per-submap storage buffer
-    uint32_t _pad = 0;    // std140: struct size rounded up to next 16 bytes
+    uint32_t output_offset = 0; // float elements from start of output buffer
 };
 static_assert(sizeof(transparency_push_constants) == 16);
 
@@ -93,13 +94,26 @@ auto prepare_transparency_inputs(
     std::span<transparency_submap_ref const> refs,
     std::vector<transparency_submap_in>& out) -> void;
 
+struct transparency_output_target {
+    SDL_GPUBuffer* buffer = nullptr;
+    uint32_t output_offset = 0; // float elements from start of buffer
+};
+
+struct dispatch_transparency_params {
+    SDL_GPUDevice* device = nullptr;
+    transparency_luts const* luts = nullptr;
+    std::vector<transparency_submap_in> const* submaps = nullptr;
+    transparency_push_constants push = {};
+    int cache_size = 0;
+    std::vector<float>* out_buffer = nullptr;
+    transparency_output_target output = {};
+};
+
 // Upload the submap records, dispatch the transparency compute shader, and
-// synchronously download the result into out_buffer (resized to cache_size).
-// out_buffer is always populated; callers decide whether to use or compare it.
-auto dispatch_transparency(
-    SDL_GPUDevice* device, transparency_luts const& luts,
-    std::vector<transparency_submap_in> const& submaps, transparency_push_constants const& push,
-    int cache_size, std::vector<float>& out_buffer) -> void;
+// synchronously download the result into out_buffer when requested.
+// If output.buffer is non-null, the shader writes into that existing buffer at
+// output.output_offset instead of allocating a temporary output buffer.
+auto dispatch_transparency(dispatch_transparency_params const& p) -> bool;
 
 #if defined(CATA_GPU_VERIFY)
 // Orchestrates the full GPU verify cycle for one z-level:

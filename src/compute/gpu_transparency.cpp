@@ -8,6 +8,7 @@
 #include "map.h"
 #include "mapdata.h"
 #include "path_info.h"
+#include "profile.h"
 #include "submap.h"
 
 #include <SDL3/SDL_gpu.h>
@@ -164,25 +165,35 @@ auto prepare_transparency_inputs(
     }
 }
 
-auto dispatch_transparency(
-    SDL_GPUDevice* const device, transparency_luts const& luts,
-    std::vector<transparency_submap_in> const& submaps, transparency_push_constants const& push,
-    int const cache_size, std::vector<float>& out_buffer) -> void {
-    if (submaps.empty() || cache_size <= 0) { return; }
+auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
+    ZoneScopedN( "dispatch_transparency" );
+    if (p.device == nullptr || p.luts == nullptr || p.submaps == nullptr || p.submaps->empty() ||
+        p.cache_size <= 0 || p.out_buffer == nullptr) {
+        return false;
+    }
 
+    auto* const device = p.device;
+    auto const& luts = *p.luts;
+    auto const& submaps = *p.submaps;
+    auto const use_external_output = p.output.buffer != nullptr;
+    auto const output_offset = use_external_output ? p.output.output_offset : 0u;
+    auto push = p.push;
+    push.output_offset = output_offset;
     auto* const pipeline = ensure_pipeline(device);
-    if (pipeline == nullptr) { return; }
+    if (pipeline == nullptr) { return false; }
 
     auto const submap_bytes = static_cast<Uint32>(submaps.size() * sizeof(transparency_submap_in));
     auto const ter_lut_bytes = static_cast<Uint32>(luts.ter_transparent.size() * sizeof(uint32_t));
     auto const fur_lut_bytes = static_cast<Uint32>(luts.furn_transparent.size() * sizeof(uint32_t));
-    auto const output_bytes = static_cast<Uint32>(cache_size * sizeof(float));
+    auto const output_bytes = static_cast<Uint32>(p.cache_size * sizeof(float));
+    auto const output_offset_bytes =
+        static_cast<Uint32>(output_offset * sizeof(float));
 
     if (ter_lut_bytes == 0 || fur_lut_bytes == 0) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: transparency LUTs are empty — call "
                "rebuild_transparency_luts first";
-        return;
+        return false;
     }
 
     // --- Allocate GPU buffers ---
@@ -198,9 +209,12 @@ auto dispatch_transparency(
         .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ, .size = fur_lut_bytes, .props = 0};
     auto* const fur_lut_buf = SDL_CreateGPUBuffer(device, &fur_lut_buf_ci);
 
-    SDL_GPUBufferCreateInfo const output_buf_ci{
-        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE, .size = output_bytes, .props = 0};
-    auto* const output_buf = SDL_CreateGPUBuffer(device, &output_buf_ci);
+    auto* output_buf = p.output.buffer;
+    if (!use_external_output) {
+        SDL_GPUBufferCreateInfo const output_buf_ci{
+            .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE, .size = output_bytes, .props = 0};
+        output_buf = SDL_CreateGPUBuffer(device, &output_buf_ci);
+    }
 
     // Single upload transfer buffer covering all input data.
     auto const upload_bytes = submap_bytes + ter_lut_bytes + fur_lut_bytes;
@@ -212,10 +226,35 @@ auto dispatch_transparency(
         .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD, .size = output_bytes, .props = 0};
     auto* const download_tbuf = SDL_CreateGPUTransferBuffer(device, &download_tbuf_ci);
 
+    if (submap_buf == nullptr || ter_lut_buf == nullptr || fur_lut_buf == nullptr ||
+        output_buf == nullptr || upload_tbuf == nullptr || download_tbuf == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency resource allocation failed: " << SDL_GetError();
+        if (upload_tbuf != nullptr) { SDL_ReleaseGPUTransferBuffer(device, upload_tbuf); }
+        if (download_tbuf != nullptr) { SDL_ReleaseGPUTransferBuffer(device, download_tbuf); }
+        if (submap_buf != nullptr) { SDL_ReleaseGPUBuffer(device, submap_buf); }
+        if (ter_lut_buf != nullptr) { SDL_ReleaseGPUBuffer(device, ter_lut_buf); }
+        if (fur_lut_buf != nullptr) { SDL_ReleaseGPUBuffer(device, fur_lut_buf); }
+        if (!use_external_output && output_buf != nullptr) { SDL_ReleaseGPUBuffer(device, output_buf); }
+        return false;
+    }
+
     // --- Map upload buffer and copy input data ---
     {
+        ZoneScopedN( "gpu_transparency_stage_upload" );
         auto* const mapped = static_cast<std::byte*>(
             SDL_MapGPUTransferBuffer(device, upload_tbuf, false));
+        if (mapped == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: transparency upload transfer map failed: " << SDL_GetError();
+            SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
+            SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
+            SDL_ReleaseGPUBuffer(device, submap_buf);
+            SDL_ReleaseGPUBuffer(device, ter_lut_buf);
+            SDL_ReleaseGPUBuffer(device, fur_lut_buf);
+            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+            return false;
+        }
         auto offset = Uint32{0};
         std::memcpy(mapped + offset, submaps.data(), submap_bytes);
         offset += submap_bytes;
@@ -226,9 +265,21 @@ auto dispatch_transparency(
     }
 
     auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
+    if (cmd == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency command buffer acquisition failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
+        SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
+        SDL_ReleaseGPUBuffer(device, submap_buf);
+        SDL_ReleaseGPUBuffer(device, ter_lut_buf);
+        SDL_ReleaseGPUBuffer(device, fur_lut_buf);
+        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+        return false;
+    }
 
-    // --- Copy pass: upload all inputs ---
     {
+        ZoneScopedN( "gpu_transparency_record_commands" );
+        // --- Copy pass: upload all inputs ---
         auto* const cp = SDL_BeginGPUCopyPass(cmd);
 
         SDL_GPUTransferBufferLocation const submap_src{.transfer_buffer = upload_tbuf, .offset = 0};
@@ -249,48 +300,74 @@ auto dispatch_transparency(
         SDL_UploadToGPUBuffer(cp, &fur_src, &fur_dst, false);
 
         SDL_EndGPUCopyPass(cp);
-    }
 
-    // --- Compute pass ---
-    {
-        SDL_GPUStorageBufferReadWriteBinding const rw_binding{
-            .buffer = output_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
-        auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_binding, 1);
-        SDL_BindGPUComputePipeline(cp, pipeline);
+        // --- Compute pass ---
+        {
+            SDL_GPUStorageBufferReadWriteBinding const rw_binding{
+                .buffer = output_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
+            auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_binding, 1);
+            SDL_BindGPUComputePipeline(cp, pipeline);
 
-        SDL_GPUBuffer* const ro_bufs[3] = {submap_buf, ter_lut_buf, fur_lut_buf};
-        SDL_BindGPUComputeStorageBuffers(cp, 0, ro_bufs, 3);
+            SDL_GPUBuffer* const ro_bufs[3] = {submap_buf, ter_lut_buf, fur_lut_buf};
+            SDL_BindGPUComputeStorageBuffers(cp, 0, ro_bufs, 3);
 
-        // Uniform slot 0 → cbuffer Constants (register b0, space2) in HLSL.
-        SDL_PushGPUComputeUniformData(cmd, 0, &push, sizeof(push));
+            // Uniform slot 0 → cbuffer Constants (register b0, space2) in HLSL.
+            SDL_PushGPUComputeUniformData(cmd, 0, &push, sizeof(push));
 
-        SDL_DispatchGPUCompute(cp, static_cast<Uint32>(submaps.size()), 1, 1);
-        SDL_EndGPUComputePass(cp);
-    }
+            SDL_DispatchGPUCompute(cp, static_cast<Uint32>(submaps.size()), 1, 1);
+            SDL_EndGPUComputePass(cp);
+        }
 
-    // --- Copy pass: download output ---
-    {
-        auto* const cp = SDL_BeginGPUCopyPass(cmd);
-        SDL_GPUBufferRegion const
-            output_src{.buffer = output_buf, .offset = 0, .size = output_bytes};
-        SDL_GPUTransferBufferLocation const
-            output_dst{.transfer_buffer = download_tbuf, .offset = 0};
-        SDL_DownloadFromGPUBuffer(cp, &output_src, &output_dst);
-        SDL_EndGPUCopyPass(cp);
+        // --- Copy pass: download output ---
+        {
+            auto* const cp = SDL_BeginGPUCopyPass(cmd);
+            SDL_GPUBufferRegion const
+                output_src{.buffer = output_buf, .offset = output_offset_bytes, .size = output_bytes};
+            SDL_GPUTransferBufferLocation const
+                output_dst{.transfer_buffer = download_tbuf, .offset = 0};
+            SDL_DownloadFromGPUBuffer(cp, &output_src, &output_dst);
+            SDL_EndGPUCopyPass(cp);
+        }
     }
 
     // --- Submit and wait ---
     auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
-    SDL_WaitForGPUFences(device, true, &fence, 1);
+    if (fence == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency command buffer submission failed: " << SDL_GetError();
+        SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
+        SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
+        SDL_ReleaseGPUBuffer(device, submap_buf);
+        SDL_ReleaseGPUBuffer(device, ter_lut_buf);
+        SDL_ReleaseGPUBuffer(device, fur_lut_buf);
+        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+        return false;
+    }
+    {
+        ZoneScopedN( "gpu_transparency_fence_wait" );
+        SDL_WaitForGPUFences(device, true, &fence, 1);
+    }
     SDL_ReleaseGPUFence(device, fence);
 
     // --- Map download buffer and copy results out ---
-    out_buffer.resize(static_cast<std::size_t>(cache_size));
+    p.out_buffer->resize(static_cast<std::size_t>(p.cache_size));
     {
+        ZoneScopedN( "gpu_transparency_unpack_download" );
         auto const* const mapped = static_cast<float const*>(
             SDL_MapGPUTransferBuffer(device, download_tbuf, false));
+        if (mapped == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: transparency download transfer map failed: " << SDL_GetError();
+            SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
+            SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
+            SDL_ReleaseGPUBuffer(device, submap_buf);
+            SDL_ReleaseGPUBuffer(device, ter_lut_buf);
+            SDL_ReleaseGPUBuffer(device, fur_lut_buf);
+            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+            return false;
+        }
         std::ranges::
-            copy(std::span{mapped, static_cast<std::size_t>(cache_size)}, out_buffer.begin());
+            copy(std::span{mapped, static_cast<std::size_t>(p.cache_size)}, p.out_buffer->begin());
         SDL_UnmapGPUTransferBuffer(device, download_tbuf);
     }
 
@@ -300,7 +377,8 @@ auto dispatch_transparency(
     SDL_ReleaseGPUBuffer(device, submap_buf);
     SDL_ReleaseGPUBuffer(device, ter_lut_buf);
     SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-    SDL_ReleaseGPUBuffer(device, output_buf);
+    if (!use_external_output) { SDL_ReleaseGPUBuffer(device, output_buf); }
+    return true;
 }
 
 #if defined(CATA_GPU_VERIFY)
@@ -332,13 +410,21 @@ auto verify_transparency_against_cpu(map const& m, int const zlev, float const s
         .sight_penalty = sight_penalty,
         .cache_y = lc.cache_y,
         .num_submaps = static_cast<uint32_t>(s_inputs.size()),
-        ._pad = 0,
+        .output_offset = 0,
     };
 
     static auto s_gpu_result = std::vector<float>{};
-    dispatch_transparency(device, s_luts, s_inputs, push, cache_size, s_gpu_result);
+    const bool dispatched = dispatch_transparency({
+        .device = device,
+        .luts = &s_luts,
+        .submaps = &s_inputs,
+        .push = push,
+        .cache_size = cache_size,
+        .out_buffer = &s_gpu_result,
+        .output = {},
+    });
 
-    if (s_gpu_result.empty()) {
+    if (!dispatched || s_gpu_result.empty()) {
         DebugLog(DL::Error, DC::Main) << "SDL_GPU: transparency verify: dispatch returned no data";
         return;
     }
