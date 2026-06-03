@@ -6306,8 +6306,17 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
 
         // Because we don't actually model insulation very well at the moment, clothes are oppressive in Summer
         // So we make them half as effective at making you uncomfortably hot as they are at making you not-cold
-        if( bp_conv >= BODYTEMP_HOT ) {
-            bp_conv -= clothing_warmth_adjustment / 2;
+        if( bp_conv >= BODYTEMP_NORM ) {
+            int bp_without_clothes = bp_conv - clothing_warmth_adjustment;
+            if( bp_without_clothes >= BODYTEMP_NORM ) {
+                // If the heat is above normal, clothes start to contribute less
+                bp_conv -= clothing_warmth_adjustment / 2;
+            } else {
+                // Do the same to any clothing that contributes to above normal
+                int clothes_to_norm = BODYTEMP_NORM - bp_without_clothes;
+                bp_conv -= ( clothing_warmth_adjustment - clothes_to_norm ) / 2;
+
+            }
         }
 
         // FINAL CALCULATION : Increments current body temperature towards convergent.
