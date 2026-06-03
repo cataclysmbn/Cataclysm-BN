@@ -24,7 +24,7 @@ state_t s_state;
 
 auto load() -> void
 {
-    read_from_file_json( PATH_INFO::preload(), [&]( JsonIn &jsin ) {
+    read_from_file_json( PATH_INFO::preload(), [&]( JsonIn & jsin ) {
         auto jobj = jsin.get_object();
         s_state.accel = compute_accel_from_string(
                             jobj.get_string( "compute_acceleration", "auto" ) );
@@ -33,7 +33,7 @@ auto load() -> void
 
 auto save() -> void
 {
-    write_to_file( PATH_INFO::preload(), [&]( std::ostream &fout ) {
+    write_to_file( PATH_INFO::preload(), [&]( std::ostream & fout ) {
         JsonOut jout( fout, true );
         jout.start_object();
         jout.member( "compute_acceleration",
@@ -50,7 +50,7 @@ auto set_gpu_backend_override( std::string_view s ) -> void       { s_state.gpu_
 
 auto compute_accel_from_string( std::string_view s ) -> compute_accel
 {
-    if( s == "off"   ) { return compute_accel::off;   }
+    if( s == "off" ) { return compute_accel::off;   }
     if( s == "force" ) { return compute_accel::force; }
     return compute_accel::auto_select;
 }
@@ -58,9 +58,12 @@ auto compute_accel_from_string( std::string_view s ) -> compute_accel
 auto compute_accel_to_string( compute_accel val ) -> std::string_view
 {
     switch( val ) {
-        case compute_accel::off:   return "off";
-        case compute_accel::force: return "force";
-        default:                   return "auto";
+        case compute_accel::off:
+            return "off";
+        case compute_accel::force:
+            return "force";
+        default:
+            return "auto";
     }
 }
 

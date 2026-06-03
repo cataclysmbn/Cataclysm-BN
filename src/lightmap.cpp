@@ -347,7 +347,7 @@ bool map::has_direct_sunlight_at( const point_bub_ms p, const int zlev ) const
         const auto sx = p.x() + static_cast<int>( std::lround( dx_to_sky * t ) );
         const auto sy = p.y() + static_cast<int>( std::lround( dy_to_sky * t ) );
         const auto sz = std::clamp( zlev + static_cast<int>( std::lround(
-                                       static_cast<float>( levels_up ) * t ) ), zlev, OVERMAP_HEIGHT );
+                                        static_cast<float>( levels_up ) * t ) ), zlev, OVERMAP_HEIGHT );
         if( sx < 0 || sy < 0 ) {
             return true;
         }
@@ -631,21 +631,21 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
                         return prev_floor_cache[idx];
                     };
                     const int cur_idx = map_cache.idx( p.x(), p.y() );
-                    auto direct_sky = [&]( const point_bub_ms &tile ) {
+                    auto direct_sky = [&]( const point_bub_ms & tile ) {
                         return top_floor || has_direct_sunlight_at( tile, zlev );
                     };
-                    auto inbounds_light_neighbour = [&]( const auto &neighbour ) {
+                    auto inbounds_light_neighbour = [&]( const auto & neighbour ) {
                         if( neighbour.x() < 0 || neighbour.y() < 0 ||
                             neighbour.x() >= map_cache.cache_x || neighbour.y() >= map_cache.cache_y ) {
                             return false;
                         }
                         return true;
                     };
-                    auto direct_light_neighbour = [&]( const auto &neighbour ) {
+                    auto direct_light_neighbour = [&]( const auto & neighbour ) {
                         return inbounds_light_neighbour( neighbour ) &&
                                direct_sky( neighbour );
                     };
-                    auto open_sky_neighbour = [&]( const auto &neighbour ) {
+                    auto open_sky_neighbour = [&]( const auto & neighbour ) {
                         return inbounds_light_neighbour( neighbour ) &&
                                direct_sky( neighbour );
                     };

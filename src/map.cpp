@@ -10188,68 +10188,68 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 return;
             }
 #endif
-        if( !dirty_seen_cache_levels.empty() ) {
+            if( !dirty_seen_cache_levels.empty() ) {
 
-            if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
-                // Multiple dirty levels: hoist shared initialization outside the
-                // parallel loop so worker threads never race on cross-level writes.
-                //
-                // Clear sm, light_source_buffer, and lm for every dirty level.
-                // lm must be zeroed because build_sunlight_cache only writes outdoor tiles.
-                for( const int z : dirty_seen_cache_levels ) {
-                    auto &c = get_cache( z );
-                    std::fill( c.sm.begin(), c.sm.end(), 0.0f );
-                    std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
-                    std::ranges::fill( c.lm, 0.0f );
-                }
-                // Build sunlight (all z-levels, top-to-bottom; serial).
-                build_sunlight_cache( zlev );
-                // Apply character/NPC lights serially to avoid racing on per-level caches.
-                apply_character_light( get_player_character() );
-                for( npc &guy : g->all_npcs() ) {
-                    apply_character_light( guy );
-                }
-                // Apply monster lights serially (all_monsters() uses non-atomic weak_ptr_fast
-                // refcounts, so iterating from worker threads would be a data race).
-                for( monster &critter : g->all_monsters() ) {
-                    if( critter.is_hallucination() ) {
-                        continue;
+                if( dirty_seen_cache_levels.size() > 1 && parallel_enabled && parallel_map_cache ) {
+                    // Multiple dirty levels: hoist shared initialization outside the
+                    // parallel loop so worker threads never race on cross-level writes.
+                    //
+                    // Clear sm, light_source_buffer, and lm for every dirty level.
+                    // lm must be zeroed because build_sunlight_cache only writes outdoor tiles.
+                    for( const int z : dirty_seen_cache_levels ) {
+                        auto &c = get_cache( z );
+                        std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+                        std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                        std::ranges::fill( c.lm, 0.0f );
                     }
-                    const auto &mp = critter.bub_pos();
-                    if( inbounds( mp ) ) {
-                        if( critter.has_effect( effect_onfire ) ) {
-                            apply_light_source( mp, 8 );
+                    // Build sunlight (all z-levels, top-to-bottom; serial).
+                    build_sunlight_cache( zlev );
+                    // Apply character/NPC lights serially to avoid racing on per-level caches.
+                    apply_character_light( get_player_character() );
+                    for( npc &guy : g->all_npcs() ) {
+                        apply_character_light( guy );
+                    }
+                    // Apply monster lights serially (all_monsters() uses non-atomic weak_ptr_fast
+                    // refcounts, so iterating from worker threads would be a data race).
+                    for( monster &critter : g->all_monsters() ) {
+                        if( critter.is_hallucination() ) {
+                            continue;
                         }
-                        if( critter.type->luminance > 0 ) {
-                            apply_light_source( mp, critter.type->luminance );
+                        const auto &mp = critter.bub_pos();
+                        if( inbounds( mp ) ) {
+                            if( critter.has_effect( effect_onfire ) ) {
+                                apply_light_source( mp, 8 );
+                            }
+                            if( critter.type->luminance > 0 ) {
+                                apply_light_source( mp, critter.type->luminance );
+                            }
                         }
                     }
+                    // Generate per-level dynamic lighting in parallel.
+                    // skip_shared_init=true: workers only process entities on their own z-level.
+                    // Pre-warm the vehicle list cache serially to avoid heap corruption
+                    // from concurrent writes to last_full_vehicle_list.
+                    get_vehicles();
+                    parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
+                        generate_lightmap_worker( dirty_seen_cache_levels[i] );
+                    } );
+                } else {
+                    // Single dirty level: run serially using the standard full path.
+                    for( const int level : dirty_seen_cache_levels ) {
+                        generate_lightmap( level );
+                    }
                 }
-                // Generate per-level dynamic lighting in parallel.
-                // skip_shared_init=true: workers only process entities on their own z-level.
-                // Pre-warm the vehicle list cache serially to avoid heap corruption
-                // from concurrent writes to last_full_vehicle_list.
-                get_vehicles();
-                parallel_for( 0, static_cast<int>( dirty_seen_cache_levels.size() ), [&]( int i ) {
-                    generate_lightmap_worker( dirty_seen_cache_levels[i] );
+
+                // Mark each regenerated level clean so subsequent redraws this turn skip it.
+                // Also mark visibility dirty: the lightmap just changed, so any visibility
+                // cache computed before this rebuild (e.g. from handle_action's unconditional
+                // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
+                std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
+                    get_cache( z ).lightmap_dirty = false;
+                    get_cache( z ).visibility_cache_dirty = true;
                 } );
-            } else {
-                // Single dirty level: run serially using the standard full path.
-                for( const int level : dirty_seen_cache_levels ) {
-                    generate_lightmap( level );
-                }
-            }
 
-            // Mark each regenerated level clean so subsequent redraws this turn skip it.
-            // Also mark visibility dirty: the lightmap just changed, so any visibility
-            // cache computed before this rebuild (e.g. from handle_action's unconditional
-            // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
-            std::ranges::for_each( dirty_seen_cache_levels, [this]( int z ) {
-                get_cache( z ).lightmap_dirty = false;
-                get_cache( z ).visibility_cache_dirty = true;
-            } );
-
-        } // end if( !dirty_seen_cache_levels.empty() )
+            } // end if( !dirty_seen_cache_levels.empty() )
 #if defined( CATA_SDL )
         }
 #endif
