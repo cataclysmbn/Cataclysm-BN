@@ -2626,7 +2626,7 @@ std::vector<pickup::pick_drop_selection> inventory_pickup_selector::execute()
             }
         }
 
-        if( no_items ) {
+        if( no_items && (input.action == "WIELD" || input.action == "WEAR")) {
             return std::vector<pickup::pick_drop_selection>();
         }
     }
