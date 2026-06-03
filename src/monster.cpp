@@ -520,10 +520,13 @@ void monster::try_reproduce()
     if( !type->baby_timer ) {
         return;
     }
+    const int base_days = to_days<int>( *type->baby_timer );
+    const int scaled_days = std::max( 1, static_cast<int>( std::ceil( base_days * calendar::season_ratio() ) ) );
+    const time_duration repro_interval = time_duration::from_days( scaled_days );
 
     if( !baby_timer ) {
         // Assume this is a freshly spawned monster (because baby_timer is not set yet), set the point when it reproduce to somewhere in the future.
-        baby_timer.emplace( calendar::turn + *type->baby_timer );
+        baby_timer.emplace( calendar::turn + repro_interval );
     }
 
     bool season_spawn = false;
@@ -561,7 +564,7 @@ void monster::try_reproduce()
         if( ( season_match && female && one_in( chance ) ) ) {
             reproduce();
         }
-        *baby_timer += *type->baby_timer;
+        *baby_timer += repro_interval;
     }
 }
 
