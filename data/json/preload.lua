@@ -13,6 +13,7 @@ game.iuse_functions["OBJ_VAR_VIEWER"] = function(...) return mod.item_var_viewer
 gapi.add_on_every_x_hook(TimeDuration.from_turns(1), function(...)
   if mod.on_nyctophobia_tick then mod.on_nyctophobia_tick(...) end
   if mod.on_morale_traits_tick then mod.on_morale_traits_tick(...) end
+  if mod.robofac.authorize_active_hub01 then mod.robofac.authorize_active_hub01(...) end
 end)
 
 gapi.add_on_every_x_hook(TimeDuration.from_turns(300), function(...)

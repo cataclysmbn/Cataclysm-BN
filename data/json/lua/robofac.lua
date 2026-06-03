@@ -90,6 +90,16 @@ M.authorize_active_hub01_turrets = function()
   return true
 end
 
+M.authorize_active_hub01 = function()
+  local player = gapi.get_avatar()
+  if not has_hub01_clearance(player) then return true end
+  if not is_in_hub01(player) then return true end
+
+  M.authorize_active_hub01_security()
+  M.authorize_active_hub01_turrets()
+  return true
+end
+
 M.authorize_hub01_after_dialogue = function()
   M.authorize_active_hub01_security()
   M.authorize_active_hub01_turrets()
