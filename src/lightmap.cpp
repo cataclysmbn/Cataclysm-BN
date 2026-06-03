@@ -533,10 +533,12 @@ void map::generate_lightmap( const int zlev )
     auto &lm = map_cache.lm;
     auto &sm = map_cache.sm;
     auto &light_source_buffer = map_cache.light_source_buffer;
+    auto &light_source_points = map_cache.light_source_points;
 
     std::ranges::fill( lm, 0.0f );
     std::fill( sm.begin(), sm.end(), 0.0f );
     std::fill( light_source_buffer.begin(), light_source_buffer.end(), 0.0f );
+    light_source_points.clear();
 
     build_sunlight_cache( zlev );
 
@@ -578,12 +580,28 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
          significant slowdown, so for stuff like fire and lava:
      * Step 1: Store the position and luminance in buffer via add_light_source, for efficient
          checking of neighbors.
-     * Step 2: After everything else, iterate buffer and apply_light_source only in non-redundant
-         directions
+     * Step 2: After everything else, iterate buffer/source points and apply_light_source only in
+         non-redundant directions
      * Step 3: ????
      * Step 4: Profit!
-     */
+    */
     auto &light_source_buffer = map_cache.light_source_buffer;
+    auto &light_source_points = map_cache.light_source_points;
+    if( gpu_collect_only ) {
+        light_source_points.clear();
+    }
+    auto add_collected_light_source = [&]( std::vector<point_bub_ms> &source_points,
+    const tripoint_bub_ms & source, const float luminance ) {
+        if( !gpu_collect_only ) {
+            add_light_source( source, luminance );
+            return;
+        }
+        const auto idx = map_cache.idx( source.x(), source.y() );
+        if( light_source_buffer[idx] <= 0.0f ) {
+            source_points.push_back( source.xy() );
+        }
+        light_source_buffer[idx] = std::max( luminance, light_source_buffer[idx] );
+    };
 
     constexpr std::array<int, 4> dir_x = { {  0, -1, 1, 0 } };    //    [0]
     constexpr std::array<int, 4> dir_y = { { -1,  0, 0, 1 } };    // [1][X][2]
@@ -613,6 +631,7 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
             std::vector<std::pair<tripoint_bub_ms, float>> lm_override;
             std::vector<dir_light_def>                     dir_lights;
             std::vector<arc_light_def>                     arc_lights;
+            std::vector<point_bub_ms>                      light_source_points;
         };
         std::vector<smx_acc> smx_accs( my_MAPSIZE );
 
@@ -667,7 +686,8 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
                                 // Daylight entering a covered interior is diffuse skylight, not a
                                 // second direct-sun source.  Full natural_light point sources wash
                                 // out several tiles of physical roof shadow after the GPU ray pass.
-                                add_light_source( p, std::min( natural_light, LIGHT_AMBIENT_LIT ) );
+                                add_collected_light_source( local.light_source_points, p,
+                                                            std::min( natural_light, LIGHT_AMBIENT_LIT ) );
                                 break;
                             }
                         }
@@ -717,7 +737,7 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
                                     // apply_light_arc writes to arbitrary lm positions — defer.
                                     local.arc_lights.push_back( { p, idir, ilum, iwidth } );
                                 } else {
-                                    add_light_source( p, ilum );
+                                    add_collected_light_source( local.light_source_points, p, ilum );
                                 }
                             }
                         }
@@ -725,11 +745,11 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
 
                     const ter_id terrain = cur_submap->get_ter( sm_ms );
                     if( terrain->light_emitted > 0 ) {
-                        add_light_source( p, terrain->light_emitted );
+                        add_collected_light_source( local.light_source_points, p, terrain->light_emitted );
                     }
                     const furn_id furniture = cur_submap->get_furn( sm_ms );
                     if( furniture->light_emitted > 0 ) {
-                        add_light_source( p, furniture->light_emitted );
+                        add_collected_light_source( local.light_source_points, p, furniture->light_emitted );
                     }
 
                     std::ranges::for_each( cur_submap->get_field( sm_ms ), [&]( auto & fld ) {
@@ -744,7 +764,7 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
                         const auto *cur = &fld.second;
                         const int light_emitted = cur->light_emitted();
                         if( light_emitted > 0 ) {
-                            add_light_source( p, light_emitted );
+                            add_collected_light_source( local.light_source_points, p, light_emitted );
                         }
                         const float light_override = cur->local_light_override();
                         if( light_override >= 0.0 ) {
@@ -766,13 +786,15 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
         // Merge per-smx accumulators.  App.y() deferred shadowcasts serially to avoid lm races.
         std::ranges::for_each( smx_accs, [&]( auto & local ) {
             lm_override.insert( lm_override.end(), local.lm_override.begin(), local.lm_override.end() );
+            light_source_points.insert( light_source_points.end(), local.light_source_points.begin(),
+                                        local.light_source_points.end() );
             if( gpu_collect_only ) {
                 // Approximate directional/arc lights as omnidirectional point sources.
                 std::ranges::for_each( local.dir_lights, [&]( auto & dl ) {
-                    add_light_source( dl.p, dl.luminance );
+                    add_collected_light_source( light_source_points, dl.p, dl.luminance );
                 } );
                 std::ranges::for_each( local.arc_lights, [&]( auto & al ) {
-                    add_light_source( al.p, al.luminance );
+                    add_collected_light_source( light_source_points, al.p, al.luminance );
                 } );
             } else {
                 std::ranges::for_each( local.dir_lights, [&]( auto & dl ) {
@@ -817,9 +839,10 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
 
                 if( vp.has_flag( VPFLAG_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
+                        add_collected_light_source( light_source_points, src,
+                                                    M_SQRT2 ); // Add a little surrounding light
                         if( gpu_collect_only ) {
-                            add_light_source( src, veh_luminance );
+                            add_collected_light_source( light_source_points, src, veh_luminance );
                         } else {
                             apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
                                              45_degrees );
@@ -828,9 +851,10 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
 
                 } else if( vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) ) {
                     if( veh_luminance > lit_level::LIT ) {
-                        add_light_source( src, M_SQRT2 ); // Add a little surrounding light
+                        add_collected_light_source( light_source_points, src,
+                                                    M_SQRT2 ); // Add a little surrounding light
                         if( gpu_collect_only ) {
-                            add_light_source( src, veh_luminance );
+                            add_collected_light_source( light_source_points, src, veh_luminance );
                         } else {
                             apply_light_arc( src, v->face.dir() + pt->direction, veh_luminance,
                                              90_degrees );
@@ -838,9 +862,10 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
                     }
 
                 } else if( vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) ) {
-                    add_light_source( src, M_SQRT2 ); // Add a little surrounding light
+                    add_collected_light_source( light_source_points, src,
+                                                M_SQRT2 ); // Add a little surrounding light
                     if( gpu_collect_only ) {
-                        add_light_source( src, vp.bonus );
+                        add_collected_light_source( light_source_points, src, vp.bonus );
                     } else {
                         apply_light_arc( src, v->face.dir() + pt->direction, vp.bonus, 180_degrees );
                     }
@@ -851,11 +876,11 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
                         ( !odd_turn && vp.has_flag( VPFLAG_EVENTURN ) ) ||
                         ( !( vp.has_flag( VPFLAG_EVENTURN ) || vp.has_flag( VPFLAG_ODDTURN ) ) ) ) {
 
-                        add_light_source( src, vp.bonus );
+                        add_collected_light_source( light_source_points, src, vp.bonus );
                     }
 
                 } else {
-                    add_light_source( src, vp.bonus );
+                    add_collected_light_source( light_source_points, src, vp.bonus );
                 }
             }
 
@@ -876,7 +901,7 @@ void map::generate_lightmap_worker( const int zlev, bool const gpu_collect_only 
                             units::angle iwidth = 0_degrees;
                             units::angle idir = 0_degrees;
                             if( itm->getlight( ilum, iwidth, idir ) ) {
-                                add_light_source( pp, ilum );
+                                add_collected_light_source( light_source_points, pp, ilum );
                             }
                         }
                     } else {

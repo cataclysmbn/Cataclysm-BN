@@ -10177,6 +10177,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     auto &c = get_cache( z );
                     std::fill( c.sm.begin(), c.sm.end(), 0.0f );
                     std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                    c.light_source_points.clear();
                     std::ranges::fill( c.lm, 0.0f );
                 }
                 // Pre-warm vehicle list cache serially to avoid concurrent heap writes.
@@ -10230,6 +10231,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                         auto &c = get_cache( z );
                         std::fill( c.sm.begin(), c.sm.end(), 0.0f );
                         std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+                        c.light_source_points.clear();
                         std::ranges::fill( c.lm, 0.0f );
                     }
                     // Build sunlight (all z-levels, top-to-bottom; serial).

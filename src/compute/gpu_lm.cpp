@@ -464,18 +464,16 @@ auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
     -> std::vector<GpuLightSource> {
     auto sources = std::vector<GpuLightSource>{};
 
-    // Collect omnidirectional point sources from light_source_buffer.
+    // Collect omnidirectional point sources from the touched source-tile list.
     // These were populated by generate_lightmap_worker (collect-only mode)
     // and cover terrain, furniture, item, and vehicle circular lights.
     for (int const z : dirty_levels) {
         auto const& lc = m.get_cache_ref(z);
         auto const& lsb = lc.light_source_buffer;
-        auto const cache_y_sz = lc.cache_y;
-
-        for (int x = 0; x < lc.cache_x; ++x) {
-            for (int y = 0; y < cache_y_sz; ++y) {
-                float const lum = lsb[lc.idx(x, y)];
-                if (lum > LIGHT_AMBIENT_LOW) { sources.push_back(make_source(x, y, z, lum)); }
+        for (auto const point : lc.light_source_points) {
+            float const lum = lsb[lc.idx(point.x(), point.y())];
+            if (lum > LIGHT_AMBIENT_LOW) {
+                sources.push_back(make_source(point.x(), point.y(), z, lum));
             }
         }
     }
