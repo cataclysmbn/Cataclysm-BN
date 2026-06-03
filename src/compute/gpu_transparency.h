@@ -34,8 +34,9 @@ struct transparency_submap_in {
     uint32_t outside_flags[SEEX * SEEY]; // 1 = tile exposed to sky (weather penalty applies)
     int32_t cache_offset_x;              // tile x of this submap's origin in the flat level cache
     int32_t cache_offset_y;              // tile y of this submap's origin in the flat level cache
+    uint32_t output_offset;              // float elements from start of full resident output buffer
 };
-static_assert(sizeof(transparency_submap_in) == 2312);
+static_assert(sizeof(transparency_submap_in) == 2316);
 
 // ---------------------------------------------------------------------------
 // transparency_luts
@@ -76,6 +77,7 @@ struct transparency_submap_ref {
     submap const* sm; // source submap data
     int offset_x;     // sm_offset.x() — tile x of submap origin in flat level cache
     int offset_y;     // sm_offset.y()
+    uint32_t output_offset = 0;
 };
 
 // Rebuild ter_transparent / furn_transparent from the currently loaded type

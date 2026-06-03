@@ -10,6 +10,7 @@
 #include <climits>
 #include <cstdlib>
 #include <cstring>
+#include <iterator>
 #include <ranges>
 #include <limits>
 #include <mutex>
@@ -10192,11 +10193,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     {
         ZoneScopedN( "Phase1_transparency" );
         // Transparency depends on outside_cache; runs after outside is complete.
-        for( int z = minz; z <= maxz; ++z ) {
-            if( build_transparency_cache( z ) ) {
-                gpu_transparency_dirty = true;
-                add_gpu_dirty_level( gpu_transparency_dirty_levels, z );
-            }
+        auto const transparency_dirty_levels = build_transparency_caches( minz, maxz );
+        if( !transparency_dirty_levels.empty() ) {
+            gpu_transparency_dirty = true;
+            std::ranges::copy( transparency_dirty_levels,
+                               std::back_inserter( gpu_transparency_dirty_levels ) );
         }
     }
 

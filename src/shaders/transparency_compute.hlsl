@@ -14,7 +14,7 @@ static const float LIGHT_TRANSPARENCY_SOLID    = 0.0;
 static const uint  SEEY                        = 12;
 
 // Must match transparency_submap_in in gpu_transparency.h exactly.
-// Struct stride = 2312 bytes.
+// Struct stride = 2316 bytes.
 struct TransparencySubmapIn
 {
     uint  ter_ids[144];
@@ -23,6 +23,7 @@ struct TransparencySubmapIn
     uint  outside_flags[144];
     int   cache_offset_x;
     int   cache_offset_y;
+    uint  output_offset;
 };
 
 cbuffer Constants : register(b0, space2)
@@ -71,5 +72,5 @@ void main(uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID)
     int cx = sm.cache_offset_x + (int)sx;
     int cy = sm.cache_offset_y + (int)sy;
     compact_transparency_out[group_id.x * 144 + tile] = value;
-    full_transparency_out[output_offset + cx * cache_y + cy] = value;
+    full_transparency_out[output_offset + sm.output_offset + cx * cache_y + cy] = value;
 }

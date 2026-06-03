@@ -2315,6 +2315,7 @@ class map : public submap_load_listener
         // Builds a transparency cache and returns true if the cache was invalidated.
         // Used to determine if seen cache should be rebuilt.
         bool build_transparency_cache( int zlev );
+        auto build_transparency_caches( int minz, int maxz ) -> std::vector<int>;
         // Refreshes the weather-transparency lookup table if the sight penalty
         // has changed.  Must be called once serially before any parallel call to
         // build_transparency_cache() to avoid a data race on the shared table.

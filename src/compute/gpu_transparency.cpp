@@ -148,6 +148,7 @@ auto prepare_transparency_inputs(
 
         rec.cache_offset_x = ref.offset_x;
         rec.cache_offset_y = ref.offset_y;
+        rec.output_offset = ref.output_offset;
 
         for (const auto p : submap_tiles()) {
             auto const tile = static_cast<std::size_t>(p.x() * SEEY + p.y());
