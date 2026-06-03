@@ -21,6 +21,8 @@
 #include "point.h"
 #include "tileray.h"
 #include "type_id.h"
+#include "vehicle_part.h"
+
 
 class avatar;
 class Character;
@@ -304,6 +306,36 @@ struct label : public tripoint_mnt_veh {
 
     void deserialize( JsonIn &jsin );
     void serialize( JsonOut &json ) const;
+};
+
+class veh_mount_slot
+{
+        friend vehicle;
+
+    public:
+
+        // TODO: Figure out the right required declarations.
+        veh_mount_slot();
+        veh_mount_slot( const tripoint_mnt_veh &mnt_tri, vehicle * );
+        // Later: version that takes a vehicle turret mount sub-grid
+        ~veh_mount_slot();
+
+        // We always initialize a mount slot as dirty. 
+        bool veh_mount_slot_dirty = true;
+
+        // TODO: Do we need to have a relative to vehicle index tile adjust value?
+        const tripoint_mnt_veh pos;
+        // Be very vareful about poking this.
+        vehicle *veh = nullptr;
+
+        vehicle *get_veh() const {
+            return veh;
+        } 
+        // Initialize our dedicated slot vector with dummies
+        std::vector<vehicle_part> dedicated_slots = get_dummy_dedicated_slot_table( this );
+
+        
+
 };
 
 enum class autodrive_result : int {
