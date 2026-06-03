@@ -1560,6 +1560,9 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         if( faction_att == MFA_NEUTRAL ) {
             return MATT_IGNORE;
         }
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
     }
 
     int effective_anger  = anger;
@@ -1690,7 +1693,7 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     return MATT_ATTACK;
 }
 
-auto monster::generic_npc_attitude_to( const npc &who ) const -> Attitude
+auto monster::generic_npc_attitude_to( const mfaction_id &who_faction ) const -> Attitude
 {
     auto effective_anger = anger;
     auto effective_morale = morale;
@@ -1710,12 +1713,15 @@ auto monster::generic_npc_attitude_to( const npc &who ) const -> Attitude
         return Attitude::A_FRIENDLY;
     }
 
-    const auto faction_att = faction.obj().attitude( who.get_monster_faction() );
+    const auto faction_att = faction.obj().attitude( who_faction );
     if( faction_att == MFA_FRIENDLY ) {
         return Attitude::A_FRIENDLY;
     }
     if( faction_att == MFA_NEUTRAL ) {
         return Attitude::A_NEUTRAL;
+    }
+    if( faction_att == MFA_HATE ) {
+        return Attitude::A_HOSTILE;
     }
 
     if( has_flag( MF_FACTION_MEMORY ) ) {

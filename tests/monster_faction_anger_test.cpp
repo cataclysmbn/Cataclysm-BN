@@ -1,6 +1,8 @@
 #include "catch/catch.hpp"
 #include "monster.h"
 #include "mtype.h"
+#include "monfaction.h"
+#include "npc.h"
 #include "avatar.h"
 #include "game.h"
 #include "map.h"
@@ -9,6 +11,19 @@
 #include "options.h"
 #include "map_helpers.h"
 #include "state_helpers.h"
+
+TEST_CASE( "monster_faction_attitude_to_npc_faction", "[monster][faction][npc]" )
+{
+    clear_all_state();
+
+    const auto pos = tripoint_bub_ms( 5, 5, 0 );
+    auto &turret = spawn_test_monster( "mon_robofac_turret_light", pos );
+    auto guard = npc();
+    guard.set_fac( faction_id( "robofac" ) );
+
+    CHECK( turret.attitude( &guard ) == MATT_FRIEND );
+    CHECK( turret.generic_npc_attitude_to( guard.get_monster_faction() ) == Attitude::A_FRIENDLY );
+}
 
 TEST_CASE( "monster_faction_memory_anger", "[monster][faction][anger]" )
 {
@@ -87,6 +102,33 @@ TEST_CASE( "monster_faction_memory_zombie_attacks_tank", "[monster][faction][ang
 
     // Verify that global anger didn't increase
     CHECK( tank.anger == 0 );
+}
+
+TEST_CASE( "generic_npc_attitude_uses_monster_faction_relations", "[monster][faction][npc]" )
+{
+    clear_all_state();
+
+    const auto pos = tripoint_bub_ms( 5, 5, 0 );
+    auto &critter = spawn_test_monster( "mon_zombie", pos );
+    critter.friendly = 0;
+    critter.anger = 0;
+    critter.morale = 0;
+
+    SECTION( "friendly faction" ) {
+        critter.faction = mfaction_id( "robofac_authorized" );
+        CHECK( critter.generic_npc_attitude_to( mfaction_id( "player" ) ) == Attitude::A_FRIENDLY );
+    }
+
+    SECTION( "neutral faction" ) {
+        critter.faction = mfaction_id( "mech_bot" );
+        CHECK( critter.generic_npc_attitude_to( mfaction_id( "player" ) ) == Attitude::A_NEUTRAL );
+    }
+
+    SECTION( "hated faction" ) {
+        critter.faction = mfaction_id( "insect" );
+        REQUIRE( critter.faction.obj().attitude( mfaction_id( "zombie" ) ) == MFA_HATE );
+        CHECK( critter.generic_npc_attitude_to( mfaction_id( "zombie" ) ) == Attitude::A_HOSTILE );
+    }
 }
 
 TEST_CASE( "monster_faction_memory_friend_attacked", "[monster][faction][anger]" )
