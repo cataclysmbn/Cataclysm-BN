@@ -160,10 +160,6 @@ auto run_lua_monster_ai( monster &mon ) -> bool
 } // namespace
 static const std::string flag_LIQUID( "LIQUID" );
 
-enum {
-    MONSTER_FOLLOW_DIST = 8
-};
-
 bool monster::is_wandering() const
 {
     return ( goal == bub_pos() );
@@ -1174,8 +1170,9 @@ monster_action_t monster::decide_action() const
             current_attitude = attitude( nullptr );
         }
         if( current_attitude == MATT_IGNORE ||
-            ( current_attitude == MATT_FOLLOW &&
-              rl_dist( pos, goal ) <= MONSTER_FOLLOW_DIST ) ) {
+            ( ( current_attitude == MATT_FOLLOW ||
+                ( has_flag( MF_KEEP_DISTANCE ) && current_attitude != MATT_FLEE ) ) &&
+              rl_dist( pos, goal ) <= type->tracking_distance ) ) {
             // Consume 100 moves and stumble; execute_action handles the writes.
             action.kind          = monster_action_kind::idle;
             action.move_cost     = 100;
