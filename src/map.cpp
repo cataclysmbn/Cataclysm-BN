@@ -7095,6 +7095,50 @@ void map::update_visibility_cache( const int zlev )
     visibility_variables_cache.visibility_scale_factor =
         60.0f / static_cast<float>( g_max_view_distance );
 
+#if defined( CATA_SDL )
+    auto const mark_overmap_seen_from_visibility = [this]( const level_cache &vc_cache ) {
+        auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
+        for( const auto x : std::views::iota( 0, vc_cache.cache_x ) ) {
+            for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
+                const auto ll = vc_cache.visibility_cache[vc_cache.idx( x, y )];
+                sm_squares_seen[( x / SEEX ) * my_MAPSIZE + y / SEEY] +=
+                    ( ll == lit_level::BRIGHT || ll == lit_level::LIT );
+            }
+        }
+        for( const auto p : bubble_submaps() ) {
+            if( sm_squares_seen[p.x() * my_MAPSIZE + p.y()] > 36 ) {
+                const auto abs_sm = bub_to_abs( p );
+                const auto abs_omt( project_to<coords::omt>( abs_sm ) );
+                get_overmapbuffer( bound_dimension_ ).set_seen( tripoint_abs_omt( abs_omt, 0 ), true );
+            }
+        }
+    };
+
+    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+    if( gpu_device == nullptr ) {
+        debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
+        return;
+    }
+    const bool gpu_visibility_ok = cata_gpu::run_gpu_visibility( gpu_device, {
+        .m = this,
+        .zlev = zlev,
+        .player_x = player_pos.x(),
+        .player_y = player_pos.y(),
+        .player_zlev = player_pos.z(),
+        .g_light_level = visibility_variables_cache.g_light_level,
+        .u_clairvoyance = visibility_variables_cache.u_clairvoyance,
+        .u_unimpaired_range = visibility_variables_cache.u_unimpaired_range,
+        .vision_threshold = visibility_variables_cache.vision_threshold,
+        .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
+    } );
+    if( !gpu_visibility_ok ) {
+        debugmsg( "SDL_GPU visibility dispatch failed; see debug.log for details" );
+        return;
+    }
+    mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
+    return;
+#endif
+
     auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 
     const int min_z = -OVERMAP_DEPTH;
@@ -9946,6 +9990,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
     bool seen_cache_dirty = false;
+    bool gpu_transparency_dirty = false;
+    bool gpu_floor_dirty = false;
+    bool gpu_vehicle_floor_dirty = true;
     std::vector<int> dirty_seen_cache_levels;
 
     // Refresh the shared weather-transparency lookup table once, serially,
@@ -9966,9 +10013,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // Floor caches are z-independent so they can run in any order.
         // They must complete before outside/sheltered caches which read floor[z+1].
         for( int z = minz; z <= maxz; ++z ) {
+            const bool floor_was_dirty = !get_cache_ref( z ).floor_cache_dirty.none();
             if( build_floor_cache( z ) ) {
                 seen_cache_dirty = true;
             }
+            gpu_floor_dirty |= floor_was_dirty;
         }
     }
 
@@ -9986,7 +10035,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         ZoneScopedN( "Phase1_transparency" );
         // Transparency depends on outside_cache; runs after outside is complete.
         for( int z = minz; z <= maxz; ++z ) {
-            build_transparency_cache( z );
+            gpu_transparency_dirty |= build_transparency_cache( z );
         }
     }
 
@@ -10054,6 +10103,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
         for( int z = minz; z <= maxz; z++ ) {
             if( get_cache( z ).veh_in_active_range ) {
+                gpu_transparency_dirty = true;
+                gpu_floor_dirty = true;
                 do_vehicle_caching( z );
             }
         }
@@ -10139,6 +10190,9 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     .player_x     = p.x(),
                     .player_y     = p.y(),
                     .player_zlev  = zlev,
+                    .transparency_dirty = gpu_transparency_dirty,
+                    .floor_dirty = gpu_floor_dirty,
+                    .vehicle_floor_dirty = gpu_vehicle_floor_dirty,
                     .angled_sunlight_shadows = angled_sunlight_shadows,
                     .direct_sunlight = m_solar.direct_active,
                     .sun_dx_per_z = m_solar.dx_per_z,

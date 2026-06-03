@@ -92,6 +92,30 @@ struct lm_seen_push_constants {
 static_assert(sizeof(lm_seen_push_constants) == 48);
 
 // ---------------------------------------------------------------------------
+// lm_visibility_push_constants
+// Uniform data for final apparent-light classification.
+// 64 bytes.
+// ---------------------------------------------------------------------------
+struct lm_visibility_push_constants {
+    int32_t player_x;                 //  4 bytes
+    int32_t player_y;                 //  4 bytes
+    int32_t player_z_idx;             //  4 bytes
+    int32_t cache_x;                  //  4 bytes = 16
+    int32_t cache_y;                  //  4 bytes
+    int32_t cache_xy;                 //  4 bytes
+    int32_t z_count;                  //  4 bytes
+    uint32_t trigdist;                //  4 bytes = 32
+    int32_t u_clairvoyance;           //  4 bytes
+    int32_t u_unimpaired_range;       //  4 bytes
+    int32_t g_light_level;            //  4 bytes
+    float vision_threshold;           //  4 bytes = 48
+    float visibility_scale_factor;    //  4 bytes
+    float visible_threshold;          //  4 bytes
+    uint32_t _pad[2];                 //  8 bytes = 64
+};
+static_assert(sizeof(lm_visibility_push_constants) == 64);
+
+// ---------------------------------------------------------------------------
 // Compute the effective illumination radius from source luminance.
 // Uses the same formula as LIGHT_RANGE() in lightmap.h, capped at
 // MAX_VIEW_DISTANCE to bound dispatch dimensions.
@@ -109,6 +133,9 @@ struct run_gpu_lighting_params {
     int player_x;                         // player tile coordinates (flat map space)
     int player_y;
     int player_zlev; // actual game z-level (not z_idx)
+    bool transparency_dirty;
+    bool floor_dirty;
+    bool vehicle_floor_dirty;
     bool angled_sunlight_shadows;
     bool direct_sunlight;
     float sun_dx_per_z;
@@ -128,6 +155,27 @@ struct run_gpu_lighting_params {
 // A failed SDL_GPU lighting pass is an error; it must not silently rebuild with
 // legacy CPU lighting.
 auto run_gpu_lighting(SDL_GPUDevice* device, run_gpu_lighting_params const& p) -> bool;
+
+// ---------------------------------------------------------------------------
+// run_gpu_visibility_params
+// Input to the final visibility classification compute pass.
+// ---------------------------------------------------------------------------
+struct run_gpu_visibility_params {
+    map const* m;
+    int zlev;
+    int player_x;
+    int player_y;
+    int player_zlev;
+    int g_light_level;
+    int u_clairvoyance;
+    int u_unimpaired_range;
+    float vision_threshold;
+    float visibility_scale_factor;
+};
+
+// Run the final apparent-light classification pass and download the resulting
+// lit_level values into level_cache::visibility_cache for every z-level.
+auto run_gpu_visibility(SDL_GPUDevice* device, run_gpu_visibility_params const& p) -> bool;
 
 // Release all GPU pipeline objects owned by the lm module.
 // Called from cata_gpu::shutdown() before the device is destroyed.
