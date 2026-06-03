@@ -8381,6 +8381,81 @@ void map::shift( const point_rel_sm &sp )
             sm->outside_dirty = true;
         }
     };
+    auto const shift_absorption_flat_cache = [&]( level_cache &gc ) {
+        auto old_absorption_cache = gc.absorption_cache;
+        auto old_sound_wall_cache = gc.sound_wall_cache;
+        const auto source_offset_x = sp.x() * SEEX;
+        const auto source_offset_y = sp.y() * SEEY;
+
+        for( const auto x : std::views::iota( 0, gc.cache_x ) ) {
+            const auto source_x = x + source_offset_x;
+            for( const auto y : std::views::iota( 0, gc.cache_y ) ) {
+                const auto source_y = y + source_offset_y;
+                const auto dst_idx = static_cast<size_t>( gc.idx( x, y ) );
+                if( source_x >= 0 && source_x < gc.cache_x && source_y >= 0 &&
+                    source_y < gc.cache_y ) {
+                    const auto src_idx = static_cast<size_t>( gc.idx( source_x, source_y ) );
+                    gc.absorption_cache[dst_idx] = old_absorption_cache[src_idx];
+                    gc.sound_wall_cache[dst_idx] = old_sound_wall_cache[src_idx];
+                } else {
+                    gc.absorption_cache[dst_idx] = SOUND_ABSORPTION_OPEN_FIELD;
+                    gc.sound_wall_cache[dst_idx] = false;
+                }
+            }
+        }
+    };
+    auto const shift_absorption_dirty_bits = [&]( level_cache &gc ) {
+        const auto old_dirty = gc.absorption_cache_dirty;
+        gc.absorption_cache_dirty.reset();
+        for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+            const auto source_smx = smx + sp.x();
+            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                const auto source_smy = smy + sp.y();
+                if( source_smx >= 0 && source_smx < my_MAPSIZE && source_smy >= 0 &&
+                    source_smy < my_MAPSIZE &&
+                    old_dirty.test( static_cast<size_t>( gc.bidx( source_smx, source_smy ) ) ) ) {
+                    gc.absorption_cache_dirty.set( static_cast<size_t>( gc.bidx( smx, smy ) ) );
+                }
+            }
+        }
+    };
+    auto const mark_shifted_absorption_cache_dirty = [&]( level_cache &gc, const int gridz ) {
+        auto const mark = [&]( const tripoint_bub_sm &smp ) {
+            if( smp.x() < 0 || smp.x() >= my_MAPSIZE || smp.y() < 0 || smp.y() >= my_MAPSIZE ) {
+                return;
+            }
+            gc.absorption_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
+            auto *sm = get_submap_at_grid( smp );
+            if( sm != nullptr ) {
+                sm->absorption_dirty = true;
+            }
+        };
+        auto const mark_column = [&]( const int smx ) {
+            for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
+                mark( tripoint_bub_sm( smx, smy, gridz ) );
+            }
+        };
+        auto const mark_row = [&]( const int smy ) {
+            for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
+                mark( tripoint_bub_sm( smx, smy, gridz ) );
+            }
+        };
+
+        if( sp.x() > 0 ) {
+            mark_column( my_MAPSIZE - 1 );
+            mark_column( my_MAPSIZE - 2 );
+        } else if( sp.x() < 0 ) {
+            mark_column( 0 );
+            mark_column( 1 );
+        }
+        if( sp.y() > 0 ) {
+            mark_row( my_MAPSIZE - 1 );
+            mark_row( my_MAPSIZE - 2 );
+        } else if( sp.y() < 0 ) {
+            mark_row( 0 );
+            mark_row( 1 );
+        }
+    };
 
     // Run any Lua on_mapgen_postprocess hooks that were deferred from worker
     // threads (Lua is not thread-safe).  The submaps are already in the
@@ -8408,6 +8483,12 @@ void map::shift( const point_rel_sm &sp )
                 ZoneScopedN( "shift_memory_seen_cache" );
                 auto &gc = get_cache( gridz );
                 shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
+            }
+            {
+                ZoneScopedN( "shift_absorption_cache" );
+                auto &gc = get_cache( gridz );
+                shift_absorption_flat_cache( gc );
+                shift_absorption_dirty_bits( gc );
             }
             // Iterate in shift-direction order so copy_grid never reads an
             // already-overwritten source slot.  sp >= 0 → forward; sp < 0 → reverse.
@@ -8456,7 +8537,7 @@ void map::shift( const point_rel_sm &sp )
             set_seen_cache_dirty( gridz );
             set_pathfinding_cache_dirty( gridz );
             set_suspension_cache_dirty( gridz );
-            set_absorption_cache_dirty( gridz );
+            mark_shifted_absorption_cache_dirty( get_cache( gridz ), gridz );
         }
     } // shift_grid_copy_load
     if( zlevels ) {
