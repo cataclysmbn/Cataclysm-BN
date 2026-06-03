@@ -8179,37 +8179,6 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
 }
 
 
-// Shift a flat tile-coordinate cache array (x-major layout: vec[x * stride_y + y])
-// by `s` submaps.  seex/seey give the tile count per submap in each direction.
-// New edge positions retain stale values — the caller must mark those submaps
-// dirty so the next build_*_cache() pass overwrites them.
-template <typename T>
-static void shift_flat_cache( std::vector<T> &cache, int cache_x, int cache_y,
-                              const point_rel_sm &s )
-{
-    T *data = cache.data();
-    // X shift: each x-column is a contiguous block of cache_y elements.
-    if( s.x() > 0 ) {
-        std::memmove( data, data + SEEX * cache_y,
-                      static_cast<size_t>( cache_x - SEEX ) * cache_y * sizeof( T ) );
-    } else if( s.x() < 0 ) {
-        std::memmove( data + SEEX * cache_y, data,
-                      static_cast<size_t>( cache_x - SEEX ) * cache_y * sizeof( T ) );
-    }
-    // Y shift: move within each x-column.
-    if( s.y() > 0 ) {
-        for( int x = 0; x < cache_x; ++x ) {
-            T *col = data + x * cache_y;
-            std::memmove( col, col + SEEY, static_cast<size_t>( cache_y - SEEY ) * sizeof( T ) );
-        }
-    } else if( s.y() < 0 ) {
-        for( int x = 0; x < cache_x; ++x ) {
-            T *col = data + x * cache_y;
-            std::memmove( col + SEEY, col, static_cast<size_t>( cache_y - SEEY ) * sizeof( T ) );
-        }
-    }
-}
-
 void shift_bitset_cache( cata_dynamic_bitset &cache, int size, int multiplier,
                          const point_rel_sm &s )
 {
@@ -8352,6 +8321,22 @@ void map::shift( const point_rel_sm &sp )
             point_bub_ms( g_mapsize_x, g_mapsize_y ) );
     const point_rel_ms shift_offset_pt( -sp.x() * SEEX, -sp.y() * SEEY );
 
+    auto const mark_shifted_map_caches_dirty = [&]( auto const gridz ) {
+        ZoneScopedN( "shift_mark_map_caches_dirty" );
+        auto &gc = get_cache( gridz );
+        gc.transparency_cache_dirty.set();
+        gc.floor_cache_dirty.set();
+        gc.outside_cache_dirty.set();
+        for( const auto p : bubble_submaps() ) {
+            auto *sm = get_submap_at_grid( tripoint_bub_sm( p, gridz ) );
+            if( sm == nullptr ) {
+                continue;
+            }
+            sm->transparency_dirty = true;
+            sm->floor_dirty = true;
+            sm->outside_dirty = true;
+        }
+    };
 
     // Run any Lua on_mapgen_postprocess hooks that were deferred from worker
     // threads (Lua is not thread-safe).  The submaps are already in the
@@ -8376,19 +8361,9 @@ void map::shift( const point_rel_sm &sp )
         for( const auto gridz : std::views::iota( zmin, zmax + 1 ) ) {
             clear_vehicle_list( gridz );
             {
-                ZoneScopedN( "shift_cache_arrays" );
-                level_cache &gc = get_cache( gridz );
+                ZoneScopedN( "shift_memory_seen_cache" );
+                auto &gc = get_cache( gridz );
                 shift_bitset_cache( gc.map_memory_seen_cache, gc.cache_x, SEEX, sp );
-                // Shift per-submap dirty bitsets so retained submaps stay clean.
-                shift_bitset_cache( gc.transparency_cache_dirty, gc.cache_mapsize, 1, sp );
-                shift_bitset_cache( gc.floor_cache_dirty, gc.cache_mapsize, 1, sp );
-                // Shift flat cache data so retained submaps' data stays in the
-                // correct tile position.  New edge submaps get stale values that
-                // will be overwritten by the next build_*_cache() call.
-                shift_flat_cache( gc.transparency_cache, gc.cache_x, gc.cache_y, sp );
-                shift_flat_cache( gc.floor_cache, gc.cache_x, gc.cache_y, sp );
-                shift_flat_cache( gc.outside_cache, gc.cache_x, gc.cache_y, sp );
-                shift_flat_cache( gc.sheltered_cache, gc.cache_x, gc.cache_y, sp );
             }
             // Iterate in shift-direction order so copy_grid never reads an
             // already-overwritten source slot.  sp >= 0 → forward; sp < 0 → reverse.
@@ -8433,7 +8408,7 @@ void map::shift( const point_rel_sm &sp )
                     } );
                 } );
             }
-            set_outside_cache_dirty( gridz );
+            mark_shifted_map_caches_dirty( gridz );
             set_seen_cache_dirty( gridz );
             set_pathfinding_cache_dirty( gridz );
             set_suspension_cache_dirty( gridz );
