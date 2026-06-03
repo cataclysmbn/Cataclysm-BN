@@ -1481,6 +1481,29 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
         return false;    // Out of range!
     }
 
+#if defined( CATA_SDL )
+    const auto &map_cache = get_cache_ref( t.z() );
+    if( !map_cache.visibility_cache_dirty && visibility_variables_cache.variables_set ) {
+        const auto ll = map_cache.visibility_cache[map_cache.idx( t.x(), t.y() )];
+        return get_visibility( ll, visibility_variables_cache ) == VIS_CLEAR;
+    }
+
+    ZoneScopedN( "pl_sees_dirty_visibility_fallback" );
+    const auto player_pos = g->u.bub_pos();
+    if( !sees( player_pos, t, -1 ) ) {
+        return false;
+    }
+
+    const auto &player_cache = get_cache_ref( player_pos.z() );
+    if( !player_cache.inbounds( player_pos.xy() ) ) {
+        return false;
+    }
+
+    const auto light_at_player = player_cache.lm[player_cache.idx( player_pos.x(), player_pos.y() )];
+    const auto tile_idx = map_cache.idx( t.x(), t.y() );
+    return map_cache.lm[tile_idx] >= g->u.get_vision_threshold( light_at_player ) ||
+           map_cache.sm[tile_idx] > 0.0f;
+#else
     const auto &map_cache = get_cache_ref( t.z() );
     const auto visibility_scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
     const apparent_light_info a = apparent_light_helper( map_cache, t, visibility_scale_factor );
@@ -1489,6 +1512,7 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
     return !a.obstructed &&
            ( a.apparent_light >= g->u.get_vision_threshold( light_at_player ) ||
              map_cache.sm[map_cache.idx( t.x(), t.y() )] > 0.0 );
+#endif
 }
 
 bool map::pl_line_of_sight( const tripoint_bub_ms &t, const int max_range ) const
@@ -1502,10 +1526,14 @@ bool map::pl_line_of_sight( const tripoint_bub_ms &t, const int max_range ) cons
         return false;
     }
 
+#if defined( CATA_SDL )
+    return sees( g->u.bub_pos(), t, -1 );
+#else
     const auto &map_cache = get_cache_ref( t.z() );
     // Any epsilon > 0 is fine - it means lightmap processing visited the point
     return map_cache.seen_cache[map_cache.idx( t.x(), t.y() )] > 0.0f ||
            map_cache.camera_cache[map_cache.idx( t.x(), t.y() )] > 0.0f;
+#endif
 }
 
 //Alters the vision caches to the player specific version, the restore caches will be filled so it can be undone with restore_vision_transparency_cache

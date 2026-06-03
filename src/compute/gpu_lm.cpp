@@ -73,6 +73,7 @@ auto preferred_fmt(SDL_GPUShaderFormat const fmts) -> SDL_GPUShaderFormat {
 
 SDL_GPUComputePipeline* s_ambient_pipeline = nullptr;
 SDL_GPUComputePipeline* s_raytrace_pipeline = nullptr;
+auto* s_clear_seen_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 SDL_GPUComputePipeline* s_seen_pipeline = nullptr;
 SDL_GPUComputePipeline* s_seen_walls_pipeline = nullptr;
 SDL_GPUComputePipeline* s_visibility_pipeline = nullptr;
@@ -136,6 +137,11 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
             device, "lm_raytrace_compute",
             /*ro=*/4, /*rw=*/1, 8, 8);
     }
+    if (s_clear_seen_pipeline == nullptr) {
+        s_clear_seen_pipeline = load_pipeline(
+            device, "lm_clear_seen_compute",
+            /*ro=*/0, /*rw=*/2, 64, 1);
+    }
     if (s_seen_pipeline == nullptr) {
         s_seen_pipeline = load_pipeline(
             device, "lm_seen_compute",
@@ -147,7 +153,8 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
             /*ro=*/3, /*rw=*/1, 8, 8);
     }
     return s_ambient_pipeline != nullptr && s_raytrace_pipeline != nullptr
-        && s_seen_pipeline != nullptr && s_seen_walls_pipeline != nullptr;
+        && s_clear_seen_pipeline != nullptr && s_seen_pipeline != nullptr &&
+        s_seen_walls_pipeline != nullptr;
 }
 
 auto ensure_visibility_pipeline(SDL_GPUDevice* const device) -> bool {
@@ -303,6 +310,12 @@ struct lm_vehicle_optics_push_constants {
     uint32_t _pad[3];
 };
 static_assert(sizeof(lm_vehicle_optics_push_constants) == 48);
+
+struct lm_clear_seen_push_constants {
+    uint32_t total_tiles;
+    uint32_t _pad[3];
+};
+static_assert(sizeof(lm_clear_seen_push_constants) == 16);
 
 struct lm_shift_float_push_constants {
     int32_t cache_x;
@@ -1353,7 +1366,8 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     ensure_resource_device(device);
 
     auto const lightmap_levels = sorted_unique(*p.dirty_levels);
-    if (lightmap_levels.empty() && !p.rebuild_seen_cache && s_lighting_resources.seen_valid) {
+    if (lightmap_levels.empty() && !p.rebuild_seen_cache && !p.download_seen_cache &&
+        s_lighting_resources.seen_valid) {
         return false;
     }
 
@@ -1475,10 +1489,11 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
 
     auto const seen_was_valid = s_lighting_resources.seen_valid;
     auto const rebuild_seen = p.rebuild_seen_cache || !seen_was_valid;
-    auto const seen_download_levels =
-        rebuild_seen ? make_seen_download_levels(p, seen_was_valid, all_levels)
-                     : std::vector<int>{};
-    auto const seen_zero_bytes = t_bytes;
+    auto seen_download_levels = std::vector<int>{};
+    if (p.download_seen_cache) {
+        seen_download_levels =
+            rebuild_seen ? make_seen_download_levels(p, seen_was_valid, all_levels) : all_levels;
+    }
     auto const transparency_upload_bytes =
         static_cast<Uint32>(input_uploads.transparency_levels.size()) * float_level_bytes;
     auto const floor_upload_bytes =
@@ -1492,9 +1507,6 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     upload_total += floor_upload_bytes;
     upload_total += vehicle_floor_upload_bytes;
     upload_total += source_map_upload_bytes;
-    if (rebuild_seen) {
-        upload_total += seen_zero_bytes + seen_zero_bytes;
-    }
     auto const visibility_upload_total = camera_bytes;
 
     {
@@ -1562,9 +1574,6 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             std::memset(mapped + off, 0, src_bytes);
         }
         off += src_bytes;
-        if (rebuild_seen) {
-            std::memset(mapped + off, 0, seen_zero_bytes + seen_zero_bytes);
-        }
         SDL_UnmapGPUTransferBuffer(device, upload_tbuf);
     }
 
@@ -1622,10 +1631,6 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             upload_levels(vf_buf, input_uploads.vehicle_floor_levels, uint_level_bytes);
             upload_levels(source_map_buf, source_map_upload_levels, float_level_bytes);
             upload_whole(src_buf, src_bytes);
-            if (rebuild_seen) {
-                upload_whole(seen_raw_buf, seen_zero_bytes);
-                upload_whole(seen_buf, seen_zero_bytes);
-            }
 
             SDL_EndGPUCopyPass(cp);
         }
@@ -1679,6 +1684,37 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         }
 
         if (rebuild_seen) {
+            {
+                ZoneScopedN( "gpu_lm_record_clear_seen" );
+                auto const rw_seen = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{
+                    SDL_GPUStorageBufferReadWriteBinding{
+                        .buffer = seen_raw_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0,
+                    },
+                    SDL_GPUStorageBufferReadWriteBinding{
+                        .buffer = seen_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0,
+                    },
+                };
+                auto* const cp = SDL_BeginGPUComputePass(
+                    cmd, nullptr, 0, rw_seen.data(), static_cast<Uint32>(rw_seen.size()));
+                SDL_BindGPUComputePipeline(cp, s_clear_seen_pipeline);
+
+                auto const clear_push = lm_clear_seen_push_constants{
+                    .total_tiles = volume_tiles,
+                    ._pad = {},
+                };
+                SDL_PushGPUComputeUniformData(cmd, 0, &clear_push, sizeof(clear_push));
+                SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
+                SDL_EndGPUComputePass(cp);
+            }
+
             auto const seen_push = lm_seen_push_constants{
                 .player_x = p.player_x,
                 .player_y = p.player_y,
@@ -1727,7 +1763,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             }
         }
 
-        // [Pass 5] Copy: download dirty lm levels and rebuilt seen_cache results.
+        // [Pass 5] Copy: download dirty lm levels and requested seen_cache results.
         {
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
 
@@ -1747,7 +1783,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                 SDL_DownloadFromGPUBuffer(cp, &src_lm, &dst_lm);
                 lm_download_offset += lm_level_bytes;
             }
-            if (rebuild_seen) {
+            if (!seen_download_levels.empty()) {
                 auto seen_download_offset = Uint32{0};
                 for (int const z : seen_download_levels) {
                     auto const zi = z + OVERMAP_DEPTH;
@@ -1770,7 +1806,10 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         }
     }
 
-    // Submit and wait for all GPU work to complete.
+    // Submit and wait for GPU work to complete.  Even without a CPU-facing
+    // lighting download, the following visibility pass consumes these resident
+    // outputs immediately, so queuing this asynchronously only moves the wait
+    // into a later fence and makes Tracy attribution less useful.
     auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
     if (fence == nullptr) {
         DebugLog(DL::Error, DC::Main)
@@ -1793,12 +1832,12 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                                 ? nullptr
                                 : static_cast<uint32_t const*>(
                                     SDL_MapGPUTransferBuffer(device, lm_dl_tbuf, false));
-        auto const* seen_mapped = rebuild_seen
-                                  ? static_cast<float const*>(
-                                      SDL_MapGPUTransferBuffer(device, seen_dl_tbuf, false))
-                                  : nullptr;
+        auto const* seen_mapped = seen_download_levels.empty()
+                                  ? nullptr
+                                  : static_cast<float const*>(
+                                      SDL_MapGPUTransferBuffer(device, seen_dl_tbuf, false));
         if ((!lightmap_levels.empty() && lm_mapped == nullptr) ||
-            (rebuild_seen && seen_mapped == nullptr)) {
+            (!seen_download_levels.empty() && seen_mapped == nullptr)) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: lm: download transfer buffer map failed: " << SDL_GetError();
             if (lm_mapped != nullptr) { SDL_UnmapGPUTransferBuffer(device, lm_dl_tbuf); }
@@ -1820,26 +1859,29 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             ++lm_level_index;
         }
 
-        if (rebuild_seen) {
+        if (!seen_download_levels.empty()) {
             auto seen_level_index = std::size_t{0};
             for (int const z : seen_download_levels) {
                 auto& lc = const_cast<level_cache&>(p.m->get_cache_ref(z));
                 auto const sz = static_cast<std::size_t>(cache_xy);
                 auto const* seen_src = seen_mapped + seen_level_index * cache_xy;
                 std::ranges::copy(std::span{seen_src, sz}, lc.seen_cache.begin());
+                lc.seen_cache_dirty = false;
                 ++seen_level_index;
             }
-            std::ranges::
-                for_each(std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1), [&](int const z) {
-                auto& lc = const_cast<level_cache&>(p.m->get_cache_ref(z));
-                lc.seen_cache_dirty = false;
-            });
+        }
+        if (rebuild_seen) {
+            std::ranges::for_each(
+                std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1), [&](int const z) {
+                    auto& lc = const_cast<level_cache&>(p.m->get_cache_ref(z));
+                    lc.seen_cache_dirty = false;
+                });
         }
 
         if (lm_mapped != nullptr) {
             SDL_UnmapGPUTransferBuffer(device, lm_dl_tbuf);
         }
-        if (rebuild_seen) {
+        if (seen_mapped != nullptr) {
             SDL_UnmapGPUTransferBuffer(device, seen_dl_tbuf);
         }
     }
@@ -2137,6 +2179,10 @@ auto shutdown_lm() -> void {
     if (s_raytrace_pipeline != nullptr) {
         SDL_ReleaseGPUComputePipeline(device, s_raytrace_pipeline);
         s_raytrace_pipeline = nullptr;
+    }
+    if (s_clear_seen_pipeline != nullptr) {
+        SDL_ReleaseGPUComputePipeline(device, s_clear_seen_pipeline);
+        s_clear_seen_pipeline = nullptr;
     }
     if (s_seen_pipeline != nullptr) {
         SDL_ReleaseGPUComputePipeline(device, s_seen_pipeline);

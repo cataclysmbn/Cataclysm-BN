@@ -141,6 +141,7 @@ struct run_gpu_lighting_params {
     bool vehicle_floor_dirty;
     std::vector<int> const* vehicle_floor_dirty_levels = nullptr;
     bool rebuild_seen_cache;
+    bool download_seen_cache = false;
     bool angled_sunlight_shadows;
     bool direct_sunlight;
     float sun_dx_per_z;
@@ -205,7 +206,7 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 //   5. Seen-cache pass    → ray cast from player into raw seen_all when requested
 //                           or when resident GPU seen data is invalid.
 //   6. Surface pass       → make glancing surfaces inherit adjacent visibility.
-//   7. Download lm and any rebuilt seen_cache back to map_cache.
+//   7. Download lm, and optionally rebuilt seen_cache, back to map_cache.
 // device must be non-null (caller responsibility).
 // Returns false if the GPU pass could not run (e.g. shaders not compiled).
 // A failed SDL_GPU lighting pass is an error; it must not silently rebuild with

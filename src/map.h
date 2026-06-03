@@ -133,15 +133,15 @@ class map_stack : public item_stack
 
 struct visibility_variables {
     // Is this struct initialized for current z-level
-    bool variables_set;
-    bool u_sight_impaired;
-    bool u_is_boomered;
+    bool variables_set = false;
+    bool u_sight_impaired = false;
+    bool u_is_boomered = false;
     // Cached values for map visibility calculations
-    int g_light_level;
-    int u_clairvoyance;
-    int u_unimpaired_range;
-    float vision_threshold;
-    float visibility_scale_factor;
+    int g_light_level = 0;
+    int u_clairvoyance = 0;
+    int u_unimpaired_range = 0;
+    float vision_threshold = 0.0f;
+    float visibility_scale_factor = 1.0f;
 };
 
 struct bash_params {
