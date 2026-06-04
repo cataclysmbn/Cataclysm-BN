@@ -893,6 +893,7 @@ class item : public location_visitable<item>, public game_object<item>
         int get_quality( const quality_id &id ) const;
         std::map<quality_id, int> get_qualities() const;
         bool count_by_charges() const;
+        bool is_stackable() const;
 
         /**
          * If count_by_charges(), returns charges, otherwise 1

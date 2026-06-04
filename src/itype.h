@@ -1131,6 +1131,8 @@ struct itype {
         const itype_id &get_id() const;
 
         bool count_by_charges() const;
+        // Separate check for stackable generics, for functions that are allowed to treat them separately from ammo or comestibles.
+        bool is_stackable() const;
 
         int charges_default() const;
 

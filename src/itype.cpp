@@ -101,6 +101,11 @@ bool itype::count_by_charges() const
     return stackable_ || ammo || comestible;
 }
 
+bool itype::is_stackable() const
+{
+    return stackable_;
+}
+
 int itype::charges_default() const
 {
     if( tool ) {

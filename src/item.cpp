@@ -6917,6 +6917,11 @@ bool item::count_by_charges() const
     return type->count_by_charges();
 }
 
+bool item::is_stackable() const
+{
+    return type->is_stackable();
+}
+
 int item::count() const
 {
     return count_by_charges() ? charges : 1;
@@ -7152,12 +7157,20 @@ bool item::mod_damage( int qty, damage_type dt )
 {
     bool destroy = false;
 
+    if( count_by_charges() && !is_stackable() ) {
+        charges -= std::min( type->stack_size * qty / itype::damage_scale, charges );
+        destroy |= charges == 0;
+    }
+
     if( qty > 0 ) {
         on_damage( qty, dt );
     }
 
-    destroy |= damage_ + qty > max_damage();
-    damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
+    if( !count_by_charges() || is_stackable() ) {
+        destroy |= damage_ + qty > max_damage();
+
+        damage_ = std::max( std::min( damage_ + qty, max_damage() ), min_damage() );
+    }
 
     if( destroy && type->iequippable_callbacks ) {
         type->iequippable_callbacks->call_on_break( get_avatar(), *this );
