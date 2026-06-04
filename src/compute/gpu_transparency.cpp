@@ -51,8 +51,169 @@ auto preferred_shader_ext(SDL_GPUShaderFormat const fmts) -> std::string_view {
 }
 
 SDL_GPUComputePipeline* s_pipeline = nullptr;
+auto* s_pipeline_device = static_cast<SDL_GPUDevice*>(nullptr);
+
+struct gpu_buffer_slot {
+    SDL_GPUBuffer* buffer = nullptr;
+    Uint32 capacity = 0;
+};
+
+struct gpu_transfer_slot {
+    SDL_GPUTransferBuffer* buffer = nullptr;
+    Uint32 capacity = 0;
+};
+
+struct transparency_resource_cache {
+    SDL_GPUDevice* device = nullptr;
+    gpu_buffer_slot submap;
+    gpu_buffer_slot ter_lut;
+    gpu_buffer_slot furn_lut;
+    gpu_buffer_slot compact_output;
+    gpu_buffer_slot full_output;
+    gpu_transfer_slot upload;
+    gpu_transfer_slot download;
+    std::size_t ter_lut_signature = 0;
+    std::size_t furn_lut_signature = 0;
+    bool ter_lut_valid = false;
+    bool furn_lut_valid = false;
+};
+
+struct ensure_buffer_params {
+    SDL_GPUDevice* device = nullptr;
+    gpu_buffer_slot* slot = nullptr;
+    SDL_GPUBufferUsageFlags usage = 0;
+    Uint32 required_bytes = 0;
+    std::string_view name;
+};
+
+struct ensure_transfer_params {
+    SDL_GPUDevice* device = nullptr;
+    gpu_transfer_slot* slot = nullptr;
+    SDL_GPUTransferBufferUsage usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD;
+    Uint32 required_bytes = 0;
+    std::string_view name;
+};
+
+auto s_resources = transparency_resource_cache{};
+
+auto mix_signature(std::size_t& seed, std::size_t const value) -> void {
+    seed ^= value + 0x9e3779b97f4a7c15ULL + (seed << 6) + (seed >> 2);
+}
+
+auto lut_signature(std::vector<uint32_t> const& values) -> std::size_t {
+    auto seed = values.size();
+    std::ranges::for_each(values, [&seed](uint32_t const value) {
+        mix_signature(seed, static_cast<std::size_t>(value));
+    });
+    return seed;
+}
+
+auto release_buffer_slot(SDL_GPUDevice* const device, gpu_buffer_slot& slot) -> void {
+    if (slot.buffer != nullptr) {
+        SDL_ReleaseGPUBuffer(device, slot.buffer);
+    }
+    slot = {};
+}
+
+auto release_transfer_slot(SDL_GPUDevice* const device, gpu_transfer_slot& slot) -> void {
+    if (slot.buffer != nullptr) {
+        SDL_ReleaseGPUTransferBuffer(device, slot.buffer);
+    }
+    slot = {};
+}
+
+auto release_transparency_resources(SDL_GPUDevice* const device) -> void {
+    release_buffer_slot(device, s_resources.submap);
+    release_buffer_slot(device, s_resources.ter_lut);
+    release_buffer_slot(device, s_resources.furn_lut);
+    release_buffer_slot(device, s_resources.compact_output);
+    release_buffer_slot(device, s_resources.full_output);
+    release_transfer_slot(device, s_resources.upload);
+    release_transfer_slot(device, s_resources.download);
+    s_resources = {};
+}
+
+auto ensure_resource_device(SDL_GPUDevice* const device) -> void {
+    if (s_resources.device == device) { return; }
+    if (s_resources.device != nullptr) {
+        if (!SDL_WaitForGPUIdle(s_resources.device)) {
+            DebugLog(DL::Warn, DC::Main)
+                << "SDL_GPU: transparency: wait for idle during resource device switch failed: "
+                << SDL_GetError();
+        }
+        release_transparency_resources(s_resources.device);
+    }
+    s_resources.device = device;
+}
+
+auto ensure_buffer(ensure_buffer_params const& p) -> bool {
+    if (p.slot->buffer != nullptr && p.slot->capacity >= p.required_bytes) { return true; }
+
+    release_buffer_slot(p.device, *p.slot);
+    auto const ci = SDL_GPUBufferCreateInfo{
+        .usage = p.usage,
+        .size = p.required_bytes,
+        .props = 0,
+    };
+    p.slot->buffer = SDL_CreateGPUBuffer(p.device, &ci);
+    if (p.slot->buffer == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency failed to allocate " << p.name << " buffer ("
+            << p.required_bytes << " bytes): " << SDL_GetError();
+        p.slot->capacity = 0;
+        return false;
+    }
+    p.slot->capacity = p.required_bytes;
+    return true;
+}
+
+auto ensure_transfer_buffer(ensure_transfer_params const& p) -> bool {
+    if (p.slot->buffer != nullptr && p.slot->capacity >= p.required_bytes) { return true; }
+
+    release_transfer_slot(p.device, *p.slot);
+    auto const ci = SDL_GPUTransferBufferCreateInfo{
+        .usage = p.usage,
+        .size = p.required_bytes,
+        .props = 0,
+    };
+    p.slot->buffer = SDL_CreateGPUTransferBuffer(p.device, &ci);
+    if (p.slot->buffer == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency failed to allocate " << p.name << " transfer buffer ("
+            << p.required_bytes << " bytes): " << SDL_GetError();
+        p.slot->capacity = 0;
+        return false;
+    }
+    p.slot->capacity = p.required_bytes;
+    return true;
+}
+
+auto release_pipeline(SDL_GPUDevice* const device) -> void {
+    if (s_pipeline == nullptr) { return; }
+    SDL_ReleaseGPUComputePipeline(device, s_pipeline);
+    s_pipeline = nullptr;
+    if (s_pipeline_device == device) {
+        s_pipeline_device = nullptr;
+    }
+}
+
+auto ensure_pipeline_device(SDL_GPUDevice* const device) -> bool {
+    if (device == nullptr) { return false; }
+    if (s_pipeline_device == device) { return true; }
+    if (s_pipeline_device != nullptr) {
+        if (!SDL_WaitForGPUIdle(s_pipeline_device)) {
+            DebugLog(DL::Warn, DC::Main)
+                << "SDL_GPU: transparency: wait for idle during pipeline device switch failed: "
+                << SDL_GetError();
+        }
+        release_pipeline(s_pipeline_device);
+    }
+    s_pipeline_device = device;
+    return true;
+}
 
 auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
+    if (!ensure_pipeline_device(device)) { return nullptr; }
     if (s_pipeline != nullptr) { return s_pipeline; }
 
     auto const fmts = SDL_GetGPUShaderFormats(device);
@@ -101,6 +262,17 @@ auto ensure_pipeline(SDL_GPUDevice* const device) -> SDL_GPUComputePipeline* {
 } // namespace
 
 // ---------------------------------------------------------------------------
+
+auto shutdown_transparency() -> void {
+    auto* const device = get_device();
+    if (device == nullptr) { return; }
+    if (!SDL_WaitForGPUIdle(device)) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: transparency: wait for idle during shutdown failed: " << SDL_GetError();
+    }
+    release_transparency_resources(device);
+    release_pipeline(device);
+}
 
 auto rebuild_transparency_luts(transparency_luts& luts) -> void {
     auto const& all_ter = ter_t::get_all();
@@ -175,6 +347,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     }
 
     auto* const device = p.device;
+    ensure_resource_device(device);
     auto const& luts = *p.luts;
     auto const& submaps = *p.submaps;
     auto const use_external_output = p.output.buffer != nullptr;
@@ -198,60 +371,102 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         return false;
     }
 
-    // --- Allocate GPU buffers ---
-    SDL_GPUBufferCreateInfo const submap_buf_ci{
-        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ, .size = submap_bytes, .props = 0};
-    auto* const submap_buf = SDL_CreateGPUBuffer(device, &submap_buf_ci);
-
-    SDL_GPUBufferCreateInfo const ter_lut_buf_ci{
-        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ, .size = ter_lut_bytes, .props = 0};
-    auto* const ter_lut_buf = SDL_CreateGPUBuffer(device, &ter_lut_buf_ci);
-
-    SDL_GPUBufferCreateInfo const fur_lut_buf_ci{
-        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ, .size = fur_lut_bytes, .props = 0};
-    auto* const fur_lut_buf = SDL_CreateGPUBuffer(device, &fur_lut_buf_ci);
-
-    SDL_GPUBufferCreateInfo const compact_output_buf_ci{
-        .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
-        .size = compact_output_bytes,
-        .props = 0};
-    auto* const compact_output_buf = SDL_CreateGPUBuffer(device, &compact_output_buf_ci);
-
-    auto* full_output_buf = p.output.buffer;
-    if (!use_external_output) {
-        SDL_GPUBufferCreateInfo const full_output_buf_ci{
-            .usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE,
-            .size = full_output_bytes,
-            .props = 0};
-        full_output_buf = SDL_CreateGPUBuffer(device, &full_output_buf_ci);
+    auto const read_usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ;
+    auto const write_usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE;
+    auto const old_ter_lut_buf = s_resources.ter_lut.buffer;
+    auto const old_furn_lut_buf = s_resources.furn_lut.buffer;
+    auto const full_output_required_bytes =
+        use_external_output ? Uint32{1} : std::max(full_output_bytes, Uint32{1});
+    if (!ensure_buffer({
+            .device = device,
+            .slot = &s_resources.submap,
+            .usage = read_usage,
+            .required_bytes = submap_bytes,
+            .name = "submap",
+        })) {
+        return false;
+    }
+    if (!ensure_buffer({
+            .device = device,
+            .slot = &s_resources.ter_lut,
+            .usage = read_usage,
+            .required_bytes = ter_lut_bytes,
+            .name = "terrain_lut",
+        })) {
+        return false;
+    }
+    if (old_ter_lut_buf != s_resources.ter_lut.buffer) {
+        s_resources.ter_lut_valid = false;
+    }
+    if (!ensure_buffer({
+            .device = device,
+            .slot = &s_resources.furn_lut,
+            .usage = read_usage,
+            .required_bytes = fur_lut_bytes,
+            .name = "furniture_lut",
+        })) {
+        return false;
+    }
+    if (old_furn_lut_buf != s_resources.furn_lut.buffer) {
+        s_resources.furn_lut_valid = false;
+    }
+    if (!ensure_buffer({
+            .device = device,
+            .slot = &s_resources.compact_output,
+            .usage = write_usage,
+            .required_bytes = compact_output_bytes,
+            .name = "compact_output",
+        })) {
+        return false;
+    }
+    if (!use_external_output && !ensure_buffer({
+            .device = device,
+            .slot = &s_resources.full_output,
+            .usage = write_usage,
+            .required_bytes = full_output_required_bytes,
+            .name = "full_output",
+        })) {
+        return false;
+    }
+    if (!ensure_transfer_buffer({
+            .device = device,
+            .slot = &s_resources.download,
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+            .required_bytes = compact_output_bytes,
+            .name = "download",
+        })) {
+        return false;
     }
 
-    // Single upload transfer buffer covering all input data.
-    auto const upload_bytes = submap_bytes + ter_lut_bytes + fur_lut_bytes;
-    SDL_GPUTransferBufferCreateInfo const upload_tbuf_ci{
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD, .size = upload_bytes, .props = 0};
-    auto* const upload_tbuf = SDL_CreateGPUTransferBuffer(device, &upload_tbuf_ci);
+    auto const ter_lut_signature = lut_signature(luts.ter_transparent);
+    auto const furn_lut_signature = lut_signature(luts.furn_transparent);
+    auto const upload_ter_lut =
+        !s_resources.ter_lut_valid || s_resources.ter_lut_signature != ter_lut_signature;
+    auto const upload_furn_lut =
+        !s_resources.furn_lut_valid || s_resources.furn_lut_signature != furn_lut_signature;
+    auto upload_bytes = submap_bytes;
+    upload_bytes += upload_ter_lut ? ter_lut_bytes : Uint32{0};
+    upload_bytes += upload_furn_lut ? fur_lut_bytes : Uint32{0};
+    if (!ensure_transfer_buffer({
+            .device = device,
+            .slot = &s_resources.upload,
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .required_bytes = std::max(upload_bytes, Uint32{1}),
+            .name = "upload",
+        })) {
+        return false;
+    }
 
-    SDL_GPUTransferBufferCreateInfo const download_tbuf_ci{
-        .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
-        .size = compact_output_bytes,
-        .props = 0};
-    auto* const download_tbuf = SDL_CreateGPUTransferBuffer(device, &download_tbuf_ci);
-
-    if (submap_buf == nullptr || ter_lut_buf == nullptr || fur_lut_buf == nullptr ||
-        compact_output_buf == nullptr || full_output_buf == nullptr || upload_tbuf == nullptr ||
-        download_tbuf == nullptr) {
-        DebugLog(DL::Error, DC::Main)
-            << "SDL_GPU: transparency resource allocation failed: " << SDL_GetError();
-        if (upload_tbuf != nullptr) { SDL_ReleaseGPUTransferBuffer(device, upload_tbuf); }
-        if (download_tbuf != nullptr) { SDL_ReleaseGPUTransferBuffer(device, download_tbuf); }
-        if (submap_buf != nullptr) { SDL_ReleaseGPUBuffer(device, submap_buf); }
-        if (ter_lut_buf != nullptr) { SDL_ReleaseGPUBuffer(device, ter_lut_buf); }
-        if (fur_lut_buf != nullptr) { SDL_ReleaseGPUBuffer(device, fur_lut_buf); }
-        if (compact_output_buf != nullptr) { SDL_ReleaseGPUBuffer(device, compact_output_buf); }
-        if (!use_external_output && full_output_buf != nullptr) {
-            SDL_ReleaseGPUBuffer(device, full_output_buf);
-        }
+    auto* const submap_buf = s_resources.submap.buffer;
+    auto* const ter_lut_buf = s_resources.ter_lut.buffer;
+    auto* const fur_lut_buf = s_resources.furn_lut.buffer;
+    auto* const compact_output_buf = s_resources.compact_output.buffer;
+    auto* const full_output_buf =
+        use_external_output ? p.output.buffer : s_resources.full_output.buffer;
+    auto* const upload_tbuf = s_resources.upload.buffer;
+    auto* const download_tbuf = s_resources.download.buffer;
+    if (full_output_buf == nullptr) {
+        DebugLog(DL::Error, DC::Main) << "SDL_GPU: transparency missing full output buffer";
         return false;
     }
 
@@ -263,21 +478,18 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         if (mapped == nullptr) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: transparency upload transfer map failed: " << SDL_GetError();
-            SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
-            SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
-            SDL_ReleaseGPUBuffer(device, submap_buf);
-            SDL_ReleaseGPUBuffer(device, ter_lut_buf);
-            SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-            SDL_ReleaseGPUBuffer(device, compact_output_buf);
-            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
             return false;
         }
         auto offset = Uint32{0};
         std::memcpy(mapped + offset, submaps.data(), submap_bytes);
         offset += submap_bytes;
-        std::memcpy(mapped + offset, luts.ter_transparent.data(), ter_lut_bytes);
-        offset += ter_lut_bytes;
-        std::memcpy(mapped + offset, luts.furn_transparent.data(), fur_lut_bytes);
+        if (upload_ter_lut) {
+            std::memcpy(mapped + offset, luts.ter_transparent.data(), ter_lut_bytes);
+            offset += ter_lut_bytes;
+        }
+        if (upload_furn_lut) {
+            std::memcpy(mapped + offset, luts.furn_transparent.data(), fur_lut_bytes);
+        }
         SDL_UnmapGPUTransferBuffer(device, upload_tbuf);
     }
 
@@ -285,13 +497,6 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     if (cmd == nullptr) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: transparency command buffer acquisition failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
-        SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
-        SDL_ReleaseGPUBuffer(device, submap_buf);
-        SDL_ReleaseGPUBuffer(device, ter_lut_buf);
-        SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-        SDL_ReleaseGPUBuffer(device, compact_output_buf);
-        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
         return false;
     }
 
@@ -305,17 +510,22 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
             submap_dst{.buffer = submap_buf, .offset = 0, .size = submap_bytes};
         SDL_UploadToGPUBuffer(cp, &submap_src, &submap_dst, false);
 
-        SDL_GPUTransferBufferLocation const
-            ter_src{.transfer_buffer = upload_tbuf, .offset = submap_bytes};
-        SDL_GPUBufferRegion const
-            ter_dst{.buffer = ter_lut_buf, .offset = 0, .size = ter_lut_bytes};
-        SDL_UploadToGPUBuffer(cp, &ter_src, &ter_dst, false);
-
-        SDL_GPUTransferBufferLocation const
-            fur_src{.transfer_buffer = upload_tbuf, .offset = submap_bytes + ter_lut_bytes};
-        SDL_GPUBufferRegion const
-            fur_dst{.buffer = fur_lut_buf, .offset = 0, .size = fur_lut_bytes};
-        SDL_UploadToGPUBuffer(cp, &fur_src, &fur_dst, false);
+        auto offset = submap_bytes;
+        if (upload_ter_lut) {
+            SDL_GPUTransferBufferLocation const
+                ter_src{.transfer_buffer = upload_tbuf, .offset = offset};
+            SDL_GPUBufferRegion const
+                ter_dst{.buffer = ter_lut_buf, .offset = 0, .size = ter_lut_bytes};
+            SDL_UploadToGPUBuffer(cp, &ter_src, &ter_dst, false);
+            offset += ter_lut_bytes;
+        }
+        if (upload_furn_lut) {
+            SDL_GPUTransferBufferLocation const
+                fur_src{.transfer_buffer = upload_tbuf, .offset = offset};
+            SDL_GPUBufferRegion const
+                fur_dst{.buffer = fur_lut_buf, .offset = 0, .size = fur_lut_bytes};
+            SDL_UploadToGPUBuffer(cp, &fur_src, &fur_dst, false);
+        }
 
         SDL_EndGPUCopyPass(cp);
 
@@ -368,20 +578,27 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     if (fence == nullptr) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: transparency command buffer submission failed: " << SDL_GetError();
-        SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
-        SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
-        SDL_ReleaseGPUBuffer(device, submap_buf);
-        SDL_ReleaseGPUBuffer(device, ter_lut_buf);
-        SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-        SDL_ReleaseGPUBuffer(device, compact_output_buf);
-        if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
         return false;
     }
+    auto wait_succeeded = true;
     {
         ZoneScopedN( "gpu_transparency_fence_wait" );
-        SDL_WaitForGPUFences(device, true, &fence, 1);
+        wait_succeeded = SDL_WaitForGPUFences(device, true, &fence, 1);
     }
     SDL_ReleaseGPUFence(device, fence);
+    if (!wait_succeeded) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: transparency fence wait failed: " << SDL_GetError();
+        return false;
+    }
+    if (upload_ter_lut) {
+        s_resources.ter_lut_signature = ter_lut_signature;
+        s_resources.ter_lut_valid = true;
+    }
+    if (upload_furn_lut) {
+        s_resources.furn_lut_signature = furn_lut_signature;
+        s_resources.furn_lut_valid = true;
+    }
 
     // --- Map download buffer and copy results out ---
     auto const compact_output_count =
@@ -394,27 +611,12 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         if (mapped == nullptr) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: transparency download transfer map failed: " << SDL_GetError();
-            SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
-            SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
-            SDL_ReleaseGPUBuffer(device, submap_buf);
-            SDL_ReleaseGPUBuffer(device, ter_lut_buf);
-            SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-            SDL_ReleaseGPUBuffer(device, compact_output_buf);
-            if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
             return false;
         }
         std::ranges::copy(std::span{mapped, compact_output_count}, p.out_buffer->begin());
         SDL_UnmapGPUTransferBuffer(device, download_tbuf);
     }
 
-    // --- Release all temporary GPU resources ---
-    SDL_ReleaseGPUTransferBuffer(device, upload_tbuf);
-    SDL_ReleaseGPUTransferBuffer(device, download_tbuf);
-    SDL_ReleaseGPUBuffer(device, submap_buf);
-    SDL_ReleaseGPUBuffer(device, ter_lut_buf);
-    SDL_ReleaseGPUBuffer(device, fur_lut_buf);
-    SDL_ReleaseGPUBuffer(device, compact_output_buf);
-    if (!use_external_output) { SDL_ReleaseGPUBuffer(device, full_output_buf); }
     return true;
 }
 

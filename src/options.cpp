@@ -2333,8 +2333,8 @@ void options_manager::add_options_graphics()
 #if defined(CATA_SDL)
     add_empty_line();
     add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
-         translate_marker( "Enables SDL_GPU hardware acceleration for compute passes (lighting, visibility).  Requires restart." ),
-    { { "auto", translate_marker( "Auto" ) }, { "off", translate_marker( "Off" ) }, { "force", translate_marker( "Force" ) } },
+         translate_marker( "Controls SDL_GPU compute device diagnostics for lighting and visibility.  Requires restart." ),
+    { { "auto", translate_marker( "Auto" ) }, { "force", translate_marker( "Force" ) } },
     "auto" );
 #endif
 

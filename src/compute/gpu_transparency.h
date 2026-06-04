@@ -118,6 +118,9 @@ struct dispatch_transparency_params {
 // state without a duplicate CPU upload.
 auto dispatch_transparency(dispatch_transparency_params const& p) -> bool;
 
+// Release transparency compute resources before the SDL GPU device is destroyed.
+auto shutdown_transparency() -> void;
+
 #if defined(CATA_GPU_VERIFY)
 // Orchestrates the full GPU verify cycle for one z-level:
 // gather → prepare → dispatch → compare against the CPU result already in

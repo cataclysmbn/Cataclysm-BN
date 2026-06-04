@@ -84,6 +84,45 @@ auto* s_vehicle_optics_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_shift_float_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_fill_uint_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_max_uint_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
+auto* s_pipeline_device = static_cast<SDL_GPUDevice*>(nullptr);
+
+auto release_pipeline(SDL_GPUDevice* const device, SDL_GPUComputePipeline*& pipeline) -> void {
+    if (pipeline == nullptr) { return; }
+    SDL_ReleaseGPUComputePipeline(device, pipeline);
+    pipeline = nullptr;
+}
+
+auto release_lm_pipelines(SDL_GPUDevice* const device) -> void {
+    release_pipeline(device, s_ambient_pipeline);
+    release_pipeline(device, s_raytrace_pipeline);
+    release_pipeline(device, s_clear_seen_pipeline);
+    release_pipeline(device, s_clear_seen_view_pipeline);
+    release_pipeline(device, s_seen_pipeline);
+    release_pipeline(device, s_seen_walls_pipeline);
+    release_pipeline(device, s_visibility_pipeline);
+    release_pipeline(device, s_vehicle_optics_pipeline);
+    release_pipeline(device, s_shift_float_pipeline);
+    release_pipeline(device, s_fill_uint_pipeline);
+    release_pipeline(device, s_max_uint_pipeline);
+    if (s_pipeline_device == device) {
+        s_pipeline_device = nullptr;
+    }
+}
+
+auto ensure_pipeline_device(SDL_GPUDevice* const device) -> bool {
+    if (device == nullptr) { return false; }
+    if (s_pipeline_device == device) { return true; }
+    if (s_pipeline_device != nullptr) {
+        if (!SDL_WaitForGPUIdle(s_pipeline_device)) {
+            DebugLog(DL::Warn, DC::Main)
+                << "SDL_GPU: lm: wait for idle during pipeline device switch failed: "
+                << SDL_GetError();
+        }
+        release_lm_pipelines(s_pipeline_device);
+    }
+    s_pipeline_device = device;
+    return true;
+}
 
 auto load_pipeline(
     SDL_GPUDevice* const device, std::string_view const name, int const ro_bufs, int const rw_bufs,
@@ -132,6 +171,7 @@ auto load_pipeline(
 }
 
 auto ensure_seen_pipelines(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
     if (s_clear_seen_pipeline == nullptr) {
         s_clear_seen_pipeline = load_pipeline(
             device, "lm_clear_seen_compute",
@@ -157,6 +197,7 @@ auto ensure_seen_pipelines(SDL_GPUDevice* const device) -> bool {
 }
 
 auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
     if (s_ambient_pipeline == nullptr) {
         s_ambient_pipeline = load_pipeline(
             device, "lm_ambient_compute",
@@ -172,6 +213,7 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
 }
 
 auto ensure_visibility_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
     if (s_visibility_pipeline == nullptr) {
         s_visibility_pipeline = load_pipeline(
             device, "lm_visibility_compute",
@@ -181,6 +223,7 @@ auto ensure_visibility_pipeline(SDL_GPUDevice* const device) -> bool {
 }
 
 auto ensure_vehicle_optics_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
     if (s_vehicle_optics_pipeline == nullptr) {
         s_vehicle_optics_pipeline = load_pipeline(
             device, "lm_vehicle_optics_compute",
@@ -190,6 +233,7 @@ auto ensure_vehicle_optics_pipeline(SDL_GPUDevice* const device) -> bool {
 }
 
 auto ensure_shift_float_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
     if (s_shift_float_pipeline == nullptr) {
         s_shift_float_pipeline = load_pipeline(
             device, "lm_shift_float_compute",
@@ -199,6 +243,7 @@ auto ensure_shift_float_pipeline(SDL_GPUDevice* const device) -> bool {
 }
 
 auto ensure_fill_uint_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
     if (s_fill_uint_pipeline == nullptr) {
         s_fill_uint_pipeline = load_pipeline(
             device, "lm_fill_uint_compute",
@@ -208,6 +253,7 @@ auto ensure_fill_uint_pipeline(SDL_GPUDevice* const device) -> bool {
 }
 
 auto ensure_max_uint_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
     if (s_max_uint_pipeline == nullptr) {
         s_max_uint_pipeline = load_pipeline(
             device, "lm_max_uint_compute",
@@ -2012,11 +2058,17 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
             << "SDL_GPU: lm: shift command buffer submission failed: " << SDL_GetError();
         return false;
     }
+    auto wait_succeeded = true;
     {
         ZoneScopedN( "gpu_lm_shift_fence_wait" );
-        SDL_WaitForGPUFences(p.device, true, &fence, 1);
+        wait_succeeded = SDL_WaitForGPUFences(p.device, true, &fence, 1);
     }
     SDL_ReleaseGPUFence(p.device, fence);
+    if (!wait_succeeded) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: shift fence wait failed: " << SDL_GetError();
+        return false;
+    }
 
     std::swap(s_lighting_resources.transparency, s_lighting_resources.shift_float_scratch);
     clear_transparency_shader_update_marks();
@@ -2045,8 +2097,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             << "SDL_GPU: lm: lighting begin requested while visibility work is pending";
         return {};
     }
-    if (!ensure_pipelines(device)) { return {}; }
     ensure_resource_device(device);
+    if (!ensure_pipelines(device)) { return {}; }
 
     auto lightmap_levels = sorted_unique(*p.dirty_levels);
     if (lightmap_levels.empty() && !p.rebuild_seen_cache && !p.download_seen_cache &&
@@ -2066,21 +2118,19 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto static_sources = std::vector<GpuLightSource>{};
     auto dynamic_sources = std::vector<GpuLightSource>{};
     auto source_stats = source_collection_stats{};
-    if (!lightmap_levels.empty()) {
+    auto const rewrites_full_lighting_volume = !lightmap_levels.empty();
+    auto const requested_selected_lightmap_levels =
+        !lightmap_levels.empty() && lightmap_levels != all_levels;
+    auto const& source_collection_levels =
+        rewrites_full_lighting_volume ? all_levels : lightmap_levels;
+    if (!source_collection_levels.empty()) {
         ZoneScopedN( "gpu_lm_collect_sources" );
-        auto collection = collect_sources(*p.m, lightmap_levels);
+        auto collection = collect_sources(*p.m, source_collection_levels);
         source_stats = collection.stats;
         all_sources = std::move(collection.sources);
+        static_sources = std::move(collection.static_sources);
         dynamic_sources = std::move(collection.dynamic_sources);
-        if (lightmap_levels == all_levels) {
-            static_sources = std::move(collection.static_sources);
-        } else {
-            ZoneScopedN( "gpu_lm_collect_static_sources_full" );
-            auto static_collection = collect_sources(*p.m, all_levels);
-            static_sources = std::move(static_collection.static_sources);
-            source_stats.static_sources = static_sources.size();
-        }
-        write_source_map_to_level_caches(*p.m, lightmap_levels, all_sources);
+        write_source_map_to_level_caches(*p.m, source_collection_levels, all_sources);
     }
 
     // ── Pack CPU input buffers into compact upload slices ────────────────────
@@ -2095,7 +2145,10 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             << "SDL_GPU: lm: seen-only rebuild requested before resident source-map is valid";
         return {};
     }
-    auto source_map_upload_levels = s_lighting_resources.source_map_valid ? lightmap_levels : all_levels;
+    auto source_map_upload_levels =
+        rewrites_full_lighting_volume || !s_lighting_resources.source_map_valid ?
+        all_levels :
+        lightmap_levels;
     std::ranges::sort(source_map_upload_levels);
     source_map_upload_levels.erase(
         std::ranges::unique(source_map_upload_levels).begin(), source_map_upload_levels.end());
@@ -2294,6 +2347,10 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const visibility_upload_total = camera_bytes;
 
     TracyPlot( "GPU LM Dirty Levels", static_cast<int64_t>( lightmap_levels.size() ) );
+    TracyPlot( "GPU LM Rewrite Full Volume",
+               rewrites_full_lighting_volume ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Requested Selected Rewrite",
+               requested_selected_lightmap_levels ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Rebuild Seen", rebuild_seen ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Sources", static_cast<int64_t>( all_num_src ) );
     TracyPlot( "GPU LM Trace Sources", static_cast<int64_t>( num_src ) );
@@ -2738,10 +2795,16 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
     auto pending = std::move(s_pending_lighting_work);
     s_pending_lighting_work = {};
     if (pending.fence != nullptr) {
+        auto wait_succeeded = true;
         ZoneScopedN( "gpu_lm_fence_wait" );
-        SDL_WaitForGPUFences(device, true, &pending.fence, 1);
+        wait_succeeded = SDL_WaitForGPUFences(device, true, &pending.fence, 1);
         SDL_ReleaseGPUFence(device, pending.fence);
         pending.fence = nullptr;
+        if (!wait_succeeded) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: lighting fence wait failed: " << SDL_GetError();
+            return false;
+        }
     }
 
     auto* const lm_dl_tbuf = s_lighting_resources.lm_download.buffer;
@@ -2805,14 +2868,6 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
                 ++seen_level_index;
             }
         }
-        if (pending.rebuild_seen) {
-            std::ranges::for_each(
-                std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1), [&](int const z) {
-                    auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
-                    lc.seen_cache_dirty = false;
-                });
-        }
-
         if (lm_mapped != nullptr) {
             SDL_UnmapGPUTransferBuffer(device, lm_dl_tbuf);
         }
@@ -2843,11 +2898,6 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
         }
     }
     if (pending.rebuild_seen) {
-        std::ranges::for_each(
-            std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1), [&](int const z) {
-                auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
-                lc.seen_cache_dirty = false;
-            });
         mark_seen_rebuild_success(pending.all_levels, pending.player_x, pending.player_y, true);
     }
     s_lighting_resources.source_map_valid = true;
@@ -2880,8 +2930,8 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
             << "SDL_GPU: lm: visibility begin requested while lighting work is pending";
         return {};
     }
-    if (!ensure_visibility_pipeline(device)) { return {}; }
     ensure_resource_device(device);
+    if (!ensure_visibility_pipeline(device)) { return {}; }
 
     static_assert(static_cast<uint32_t>(lit_level::DARK) == 0u);
     static_assert(static_cast<uint32_t>(lit_level::LOW) == 1u);
@@ -3215,12 +3265,18 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
             << "SDL_GPU: lm: visibility finish requested without a GPU fence";
         return false;
     }
+    auto wait_succeeded = true;
     {
         ZoneScopedN( "gpu_visibility_fence_wait" );
-        SDL_WaitForGPUFences(device, true, &pending.fence, 1);
+        wait_succeeded = SDL_WaitForGPUFences(device, true, &pending.fence, 1);
     }
     SDL_ReleaseGPUFence(device, pending.fence);
     pending.fence = nullptr;
+    if (!wait_succeeded) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility fence wait failed: " << SDL_GetError();
+        return false;
+    }
 
     auto* const visibility_dl_tbuf = s_lighting_resources.visibility_download.buffer;
 
@@ -3251,11 +3307,6 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
     }
 
     if (pending.rebuild_seen) {
-        std::ranges::for_each(
-            std::views::iota(-OVERMAP_DEPTH, OVERMAP_HEIGHT + 1), [&](int const z) {
-                auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
-                lc.seen_cache_dirty = false;
-            });
         mark_seen_rebuild_success(
             pending.visibility_download_levels, pending.player_x, pending.player_y,
             pending.force_seen_invalidate);
@@ -3283,50 +3334,7 @@ auto shutdown_lm() -> void {
             << "SDL_GPU: lm: wait for idle during shutdown failed: " << SDL_GetError();
     }
     release_lighting_resources(device);
-    if (s_ambient_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_ambient_pipeline);
-        s_ambient_pipeline = nullptr;
-    }
-    if (s_raytrace_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_raytrace_pipeline);
-        s_raytrace_pipeline = nullptr;
-    }
-    if (s_clear_seen_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_clear_seen_pipeline);
-        s_clear_seen_pipeline = nullptr;
-    }
-    if (s_clear_seen_view_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_clear_seen_view_pipeline);
-        s_clear_seen_view_pipeline = nullptr;
-    }
-    if (s_seen_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_seen_pipeline);
-        s_seen_pipeline = nullptr;
-    }
-    if (s_seen_walls_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_seen_walls_pipeline);
-        s_seen_walls_pipeline = nullptr;
-    }
-    if (s_visibility_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_visibility_pipeline);
-        s_visibility_pipeline = nullptr;
-    }
-    if (s_vehicle_optics_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_vehicle_optics_pipeline);
-        s_vehicle_optics_pipeline = nullptr;
-    }
-    if (s_shift_float_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_shift_float_pipeline);
-        s_shift_float_pipeline = nullptr;
-    }
-    if (s_fill_uint_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_fill_uint_pipeline);
-        s_fill_uint_pipeline = nullptr;
-    }
-    if (s_max_uint_pipeline != nullptr) {
-        SDL_ReleaseGPUComputePipeline(device, s_max_uint_pipeline);
-        s_max_uint_pipeline = nullptr;
-    }
+    release_lm_pipelines(device);
 }
 
 } // namespace cata_gpu

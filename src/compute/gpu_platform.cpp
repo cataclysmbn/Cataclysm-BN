@@ -3,6 +3,7 @@
 
 #include "debug.h"
 #include "gpu_lm.h"
+#include "gpu_transparency.h"
 #include "path_info.h"
 #include "preload_config.h"
 
@@ -108,10 +109,6 @@ auto init() -> void {
     using preload_config::compute_accel;
 
     auto const accel = preload_config::get_compute_accel();
-    if (accel == compute_accel::off) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: disabled (COMPUTE_ACCELERATION=off)";
-        return;
-    }
 
     auto const backend_sv = preload_config::get_gpu_backend_override();
     auto const backend_str = std::string{backend_sv};
@@ -143,6 +140,7 @@ auto init() -> void {
 
 auto shutdown() -> void {
     if (s_device != nullptr) {
+        shutdown_transparency();
         shutdown_lm();
         SDL_DestroyGPUDevice(s_device);
         s_device = nullptr;
