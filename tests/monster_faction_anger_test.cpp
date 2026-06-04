@@ -60,6 +60,7 @@ TEST_CASE( "authorized_robofac_turrets_defend_hub_guards", "[monster][faction][n
     authorized_turret.friendly = 0;
 
     auto guard = npc();
+    guard.set_fake( true );
     guard.set_fac( faction_id( "robofac_auxiliaries" ) );
     guard.set_attitude( NPCATT_NULL );
     guard.setpos( guard_pos );

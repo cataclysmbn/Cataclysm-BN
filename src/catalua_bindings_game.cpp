@@ -293,16 +293,22 @@ void cata::detail::reg_game_api( sol::state &lua )
         const auto radius = params["radius"].get_or( 0 );
         const auto all_z = params["ignore_z"].get_or( false );
         auto idx = 1;
-        std::ranges::for_each(
-        g->raw_npcs() | std::views::filter( [&]( const shared_ptr_fast<npc> &sp ) -> bool {
-            if( !sp || sp->is_dead() || sp->marked_for_death )
-            {
-                return false;
-            }
-            const auto pos = sp->abs_omt_pos();
-            return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
-        } ),
-        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        auto npcs = g->all_npcs();
+        if( npcs.items )
+        {
+            std::ranges::for_each(
+                *npcs.items
+            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+            | std::views::filter( [&]( const shared_ptr_fast<npc> &sp ) -> bool {
+                if( !sp || sp->is_dead() || sp->marked_for_death )
+                {
+                    return false;
+                }
+                const auto pos = sp->abs_omt_pos();
+                return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
+            } ),
+            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        }
         return out;
     } );
 
