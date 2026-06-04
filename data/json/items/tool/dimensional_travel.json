@@ -52,6 +52,30 @@
     ]
   },
   {
+    "id": "debug_backroom_key",
+    "type": "TOOL",
+    "copy-from": "pocketwatch",
+    "name": { "str": "debug backroom key" },
+    "description": "DEBUG ITEM: Activating this key noclips you into or out of a pocket backroom dimension.",
+    "looks_like": "pocketwatch",
+    "weight": "50 g",
+    "volume": "10 ml",
+    "price": "0 USD",
+    "price_postapoc": "0 USD",
+    "material": [ "steel" ],
+    "flags": [ "UNBREAKABLE" ],
+    "stackable": false,
+    "use_action": [
+      {
+        "type": "pocket_dimension",
+        "pocket_name": "Backroom",
+        "entry_mapgen": "debug_backroom_pocket",
+        "need_charges": 0,
+        "persistent": true
+      }
+    ]
+  },
+  {
     "type": "TOOL",
     "id": "pocket_dimension_key",
     "name": { "str": "pocket cave key" },
