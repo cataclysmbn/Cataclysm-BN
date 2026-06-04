@@ -963,6 +963,21 @@ TEST_CASE( "lua_require_dotted", "[lua]" )
     REQUIRE( result_mul == 21 );  // 3 * 7
 }
 
+TEST_CASE( "robofac_authorization_scans_nearby_hub01_tiles", "[lua][robofac]" )
+{
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "robofac_authorization_scan_test.lua" );
+
+    CHECK( test_data.get<bool>( "npc_authorized" ) );
+    CHECK( test_data.get<bool>( "npc_attitude_cleared" ) );
+    CHECK( test_data.get<bool>( "monster_authorized" ) );
+    CHECK( test_data.get<int>( "npc_point_lookups" ) == test_data.get<int>( "expected_hub_points" ) );
+    CHECK( test_data.get<int>( "monster_point_lookups" ) == test_data.get<int>( "expected_hub_points" ) );
+}
+
 TEST_CASE( "lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]" )
 {
     auto lua = make_lua_state();
