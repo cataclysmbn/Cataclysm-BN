@@ -42,6 +42,46 @@ TEST_CASE( "authorized_robofac_turrets_use_faction_attitude", "[monster][faction
     CHECK( authorized_turret.attitude( &you ) == MATT_FRIEND );
     CHECK( authorized_turret.attitude_to( robofac_turret ) == Attitude::A_FRIENDLY );
     CHECK( robofac_turret.attitude_to( authorized_turret ) == Attitude::A_FRIENDLY );
+
+    authorized_turret.apply_damage( &you, bodypart_id( "torso" ), 27 );
+
+    CHECK( authorized_turret.get_faction_anger( mfaction_id( "player" ) ) >= 10 );
+    CHECK( authorized_turret.attitude( &you ) == MATT_ATTACK );
+}
+
+TEST_CASE( "authorized_robofac_turrets_defend_hub_guards", "[monster][faction][npc]" )
+{
+    clear_all_state();
+
+    const auto turret_pos = tripoint_bub_ms( 5, 5, 0 );
+    const auto guard_pos = tripoint_bub_ms( 6, 5, 0 );
+    auto &authorized_turret = spawn_test_monster( "mon_robofac_turret_light", turret_pos );
+    authorized_turret.faction = mfaction_id( "robofac_authorized" );
+    authorized_turret.friendly = 0;
+
+    auto guard = npc();
+    guard.set_fac( faction_id( "robofac_auxiliaries" ) );
+    guard.set_attitude( NPCATT_NULL );
+    guard.setpos( guard_pos );
+
+    auto &you = get_avatar();
+    CHECK( authorized_turret.attitude( &you ) == MATT_FRIEND );
+    CHECK( guard.get_monster_faction() == mfaction_id( "robofac" ) );
+    CHECK( authorized_turret.generic_npc_attitude_to( guard.get_monster_faction() ) ==
+           Attitude::A_FRIENDLY );
+
+    guard.on_attacked( you );
+
+    auto monster_count = 0;
+    for( monster &critter : g->all_monsters() ) {
+        static_cast<void>( critter );
+        monster_count++;
+    }
+
+    CHECK( monster_count == 1 );
+    CHECK( guard.get_attitude() == NPCATT_KILL );
+    CHECK( authorized_turret.get_faction_anger( mfaction_id( "player" ) ) >= 10 );
+    CHECK( authorized_turret.attitude( &you ) == MATT_ATTACK );
 }
 
 TEST_CASE( "monster_faction_memory_anger", "[monster][faction][anger]" )
