@@ -11,9 +11,11 @@ class JsonObject;
 class nc_color;
 
 struct explosion_data {
-    int damage              = 0;
-    float radius            = 0;
-    bool fire               = false;
+    int damage                 = 0;
+    float radius               = 0;
+    float terrain_damage_mult  = 1.0f;
+    float vehicle_damage_mult  = 1.0f;
+    bool fire                  = false;
     std::optional<std::vector<std::tuple<std::string, int, int, int>>> fragment_effect = std::nullopt;
     std::optional<projectile> fragment = std::nullopt;
 

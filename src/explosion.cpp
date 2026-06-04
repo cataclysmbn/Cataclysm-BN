@@ -160,10 +160,10 @@ explosion_data load_explosion_data( const JsonObject &jo )
         jo.read( "fragment", ret.fragment );
     } else {
         // Legacy
-        float power = jo.get_float( "power" );
+        const auto power = jo.get_float( "power" );
         ret.damage = power * explosion_handler::power_to_dmg_mult;
         // Don't reuse old formula, it gave way too big blasts
-        float distance_factor = jo.get_float( "distance_factor", 0.8f );
+        const auto distance_factor = jo.get_float( "distance_factor", 0.8f );
         ret.radius = explosion_handler::blast_radius_from_legacy( power, distance_factor );
         if( jo.has_int( "shrapnel" ) ) {
             ret.fragment = explosion_handler::shrapnel_from_legacy( power, ret.radius );
@@ -181,6 +181,8 @@ explosion_data load_explosion_data( const JsonObject &jo )
         }
     }
 
+    jo.read( "terrain_damage_mult", ret.terrain_damage_mult );
+    jo.read( "vehicle_damage_mult", ret.vehicle_damage_mult );
     ret.fire = jo.get_bool( "fire", false );
     std::vector<std::tuple<std::string, int, int, int>> frag_effect;
 
@@ -352,6 +354,18 @@ class ExplosionEvent
             kind( kind ), target( std::move( target ) ), position( position ) {};
 };
 
+struct explosion_process_options {
+    tripoint_bub_ms center;
+    int blast_power;
+    int blast_radius;
+    bool is_fiery = false;
+    float terrain_damage_mult = 1.0f;
+    float vehicle_damage_mult = 1.0f;
+    std::optional<std::vector<std::tuple<std::string, int, int, int>>> fragment_effect = std::nullopt;
+    std::optional<projectile> shrapnel = std::nullopt;
+    std::optional<Creature *> emitter = std::nullopt;
+};
+
 class ExplosionProcess
 {
     public:
@@ -366,6 +380,12 @@ class ExplosionProcess
 
         // Is the fire created by the explosion actually left behind?
         const bool is_fiery;
+
+        // Multiplier for terrain and furniture destruction.
+        const float terrain_damage_mult;
+
+        // Multiplier for vehicle destruction.
+        const float vehicle_damage_mult;
 
         //Effects shrapnel may influct, nullopt to disable
         const std::optional<std::vector<std::tuple<std::string, int, int, int>>> fragment_effect;
@@ -403,23 +423,15 @@ class ExplosionProcess
             return mobs_shrapneled;
         };
 
-        ExplosionProcess(
-            const tripoint_bub_ms blast_center,
-            const int blast_power,
-            const int blast_radius,
-            const std::optional<std::vector<std::tuple<std::string, int, int, int>>> &fragment_effect =
-                std::nullopt,
-            const std::optional<projectile> &proj = std::nullopt,
-            const bool is_fiery = false,
-
-            const std::optional<Creature *> responsible = std::nullopt
-        ) : center( blast_center ),
-            blast_power( blast_power ),
-            blast_radius( blast_radius ),
-            is_fiery( is_fiery ),
-            fragment_effect( fragment_effect ),
-            shrapnel( proj ),
-            emitter( responsible ),
+        explicit ExplosionProcess( const explosion_process_options &opts ) : center( opts.center ),
+            blast_power( opts.blast_power ),
+            blast_radius( opts.blast_radius ),
+            is_fiery( opts.is_fiery ),
+            terrain_damage_mult( opts.terrain_damage_mult ),
+            vehicle_damage_mult( opts.vehicle_damage_mult ),
+            fragment_effect( opts.fragment_effect ),
+            shrapnel( opts.shrapnel ),
+            emitter( opts.emitter ),
             player_flung( std::nullopt ),
             cur_relative_time( 0.0 ),
             last_update_ms(
@@ -718,11 +730,14 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     }
 
     if( here.impassable( position ) ) {
-        const int damage = fragment.impact.total_damage() * ExplosionConstants::SHRAPNEL_OBSTACLE_REDUCTION;
+        const auto base_damage = fragment.impact.total_damage() *
+                                 ExplosionConstants::SHRAPNEL_OBSTACLE_REDUCTION;
         if( optional_vpart_position vp = here.veh_at( position ) ) {
+            const auto damage = static_cast<int>( base_damage * vehicle_damage_mult );
             vp->vehicle().damage( vp->part_index(), damage );
         } else {
             // Terrain should be affected by shrapnel less
+            const auto damage = static_cast<int>( base_damage * terrain_damage_mult );
             here.bash( position, damage, true );
         }
     }
@@ -843,35 +858,62 @@ void ExplosionProcess::blast_tile( const tripoint_bub_ms position, const int rl_
         {
             // This reduces the randomness factor in terrain bash significantly
             // Which makes explosions have a more well-defined shape.
-            const float offset_distance = std::max( rl_distance - 1.0, 0.0 );
-            const float terrain_random_factor = rng_float( 0.0, ExplosionConstants::BASH_RANDOM_FACTOR );
-            const float terrain_factor = std::min( std::max( offset_distance / blast_radius -
-                                                   terrain_random_factor, 0.0f ), 1.0f );
-            float terrain_blast_force = blast_power * obstacle_blast_percentage( blast_radius, rl_distance );
+            const auto offset_distance = std::max( rl_distance - 1.0f, 0.0f );
+            const auto terrain_random_factor = static_cast<float>( rng_float( 0.0f,
+                                               ExplosionConstants::BASH_RANDOM_FACTOR ) );
+            const auto terrain_factor = std::min( std::max( offset_distance / blast_radius -
+                                                  terrain_random_factor, 0.0f ), 1.0f );
+            auto terrain_blast_force = blast_power * terrain_damage_mult *
+                                       obstacle_blast_percentage( blast_radius, rl_distance );
+            auto vehicle_blast_force = blast_power * vehicle_damage_mult *
+                                       obstacle_blast_percentage( blast_radius, rl_distance );
+            const auto max_blast_force = std::max( terrain_blast_force, vehicle_blast_force );
 
             // Multibash is done by bashing the tile with decaying force.
             // The reason for this existing is because a number of tiles undergo multiple bashed states
             // Things like doors and wall -> floor -> ground.
 
-            const float blast_force_decay = ( ExplosionConstants::VEHICLE_DAMAGE_MULT - 1.0 ) *
-                                            blast_power / ExplosionConstants::MULTIBASH_COUNT;
-            assert( blast_force_decay > 0 );
-            while( terrain_blast_force > 0 ) {
-                bash_params bash{
-                    static_cast<int>( terrain_blast_force ),
-                    true,
-                    false,
-                    here.passable( position + tripoint_below ),
-                    terrain_factor,
-                    center.z() > position.z(),
-                    true
-                };
-                // Despite what you might expect, this is NOT the same as smash_items
-                here.bash_items( position, bash );
-                here.bash_field( position, bash );
-                here.bash_vehicle( position, bash );
-                here.bash_ter_furn( position, bash );
-                terrain_blast_force -= blast_force_decay;
+            if( max_blast_force > 0 ) {
+                const auto terrain_force_decay = terrain_blast_force > 0 ?
+                                                 ( ExplosionConstants::VEHICLE_DAMAGE_MULT - 1.0 ) *
+                                                 terrain_blast_force / ExplosionConstants::MULTIBASH_COUNT :
+                                                 0.0f;
+                const auto vehicle_force_decay = vehicle_blast_force > 0 ?
+                                                 ( ExplosionConstants::VEHICLE_DAMAGE_MULT - 1.0 ) *
+                                                 vehicle_blast_force / ExplosionConstants::MULTIBASH_COUNT :
+                                                 0.0f;
+                assert( terrain_force_decay > 0 || vehicle_force_decay > 0 );
+                while( terrain_blast_force > 0 || vehicle_blast_force > 0 ) {
+                    if( terrain_blast_force > 0 ) {
+                        auto terrain_bash = bash_params{
+                            .strength = static_cast<int>( terrain_blast_force ),
+                            .silent = true,
+                            .destroy = false,
+                            .bash_floor = here.passable( position + tripoint_below ),
+                            .roll = terrain_factor,
+                            .bashing_from_above = center.z() > position.z(),
+                            .do_recurse = true
+                        };
+                        // Despite what you might expect, this is NOT the same as smash_items
+                        here.bash_items( position, terrain_bash );
+                        here.bash_field( position, terrain_bash );
+                        here.bash_ter_furn( position, terrain_bash );
+                    }
+                    if( vehicle_blast_force > 0 ) {
+                        auto vehicle_bash = bash_params{
+                            .strength = static_cast<int>( vehicle_blast_force ),
+                            .silent = true,
+                            .destroy = false,
+                            .bash_floor = here.passable( position + tripoint_below ),
+                            .roll = terrain_factor,
+                            .bashing_from_above = center.z() > position.z(),
+                            .do_recurse = true
+                        };
+                        here.bash_vehicle( position, vehicle_bash );
+                    }
+                    terrain_blast_force -= terrain_force_decay;
+                    vehicle_blast_force -= vehicle_force_decay;
+                }
             }
         }
 
@@ -1676,8 +1718,17 @@ void explosion_funcs::regular( const queued_explosion &qe )
         }
         damaged_by_blast = legacy_blast( p, ex.damage, ex.radius, ex.fire, qe.source );
     } else {
-        ExplosionProcess process( p, ex.damage, ex.radius, ex.fragment_effect, shr, ex.fire,
-                                  std::make_optional( qe.source ) );
+        auto process = ExplosionProcess( {
+            .center = p,
+            .blast_power = ex.damage,
+            .blast_radius = static_cast<int>( ex.radius ),
+            .is_fiery = ex.fire,
+            .terrain_damage_mult = ex.terrain_damage_mult,
+            .vehicle_damage_mult = ex.vehicle_damage_mult,
+            .fragment_effect = ex.fragment_effect,
+            .shrapnel = shr,
+            .emitter = std::make_optional( qe.source )
+        } );
         process.run();
         damaged_by_blast = process.get_blasted();
         damaged_by_shrapnel = process.get_shrapneled();

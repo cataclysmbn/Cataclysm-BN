@@ -65,6 +65,8 @@
 "explosion": {                               // Physical explosion data
   "damage": 10,                              // Damage the explosion deals to player at epicenter. Damage is halved above 50% radius.
   "radius": 8,                               // Radius of the explosion. 0 means only the epicenter is affected.
+  "terrain_damage_mult": 1.0,                // Multiplier for terrain and furniture damage from the explosion and shrapnel.
+  "vehicle_damage_mult": 1.0,                // Multiplier for vehicle damage from the explosion and shrapnel.
   "fire": true,                              // Should the explosion leave fire
   "fragment_effect": [ {                     // Effects data of "shrapnel"
       "effect": "onfire",                    // Effect to apply (note that onfire has special hardcoded behaviour to check the target is flamable)
