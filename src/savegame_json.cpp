@@ -2492,7 +2492,6 @@ void reset()
 {
     removal_list.clear();
 }
-
 } // namespace charge_removal_blacklist
 
 namespace to_cbc_migration
