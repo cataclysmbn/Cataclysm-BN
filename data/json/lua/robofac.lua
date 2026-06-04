@@ -26,6 +26,11 @@ local nearby_hub01_scan_radius_omt = 4
 ---@field mission Mission?
 ---@field mission_type MissionType?
 
+---@class NearbyOmtCreatureQuery
+---@field center TripointAbsOmt
+---@field radius integer
+---@field ignore_z boolean?
+
 ---@param text string
 ---@param prefix string
 ---@return boolean
@@ -54,21 +59,15 @@ end
 ---@return NPC[]
 local nearby_hub01_npcs = function()
   local center = hub01_scan_center()
-  if center ~= nil then return gapi.get_npcs_near_omt(center, nearby_hub01_scan_radius_omt, true) end
-
-  local player = gapi.get_avatar()
-  if not has_hub01_clearance(player) then return {} end
-  return gapi.get_active_npcs()
+  if center == nil then return {} end
+  return gapi.get_npcs_near_omt({ center = center, radius = nearby_hub01_scan_radius_omt, ignore_z = true })
 end
 
 ---@return Monster[]
 local nearby_hub01_monsters = function()
   local center = hub01_scan_center()
-  if center ~= nil then return gapi.get_monsters_near_omt(center, nearby_hub01_scan_radius_omt, true) end
-
-  local player = gapi.get_avatar()
-  if not has_hub01_clearance(player) then return {} end
-  return gapi.get_active_monsters()
+  if center == nil then return {} end
+  return gapi.get_monsters_near_omt({ center = center, radius = nearby_hub01_scan_radius_omt, ignore_z = true })
 end
 
 ---@param params RobofacElevatorTryUseParams

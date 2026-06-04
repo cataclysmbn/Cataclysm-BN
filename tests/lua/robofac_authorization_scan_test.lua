@@ -127,43 +127,30 @@ local npc_query_radius = -1
 local monster_query_radius = -1
 local npc_query_ignores_z = false
 local monster_query_ignores_z = false
-local active_npc_queries = 0
-local active_monster_queries = 0
 
----@param center FakeCoord
----@param radius integer
----@param ignore_z boolean
+---@class FakeNearbyOmtCreatureQuery
+---@field center FakeCoord
+---@field radius integer
+---@field ignore_z boolean?
+
+---@param params FakeNearbyOmtCreatureQuery
 ---@return FakeNpc[]
-local get_npcs_near_omt = function(center, radius, ignore_z)
+local get_npcs_near_omt = function(params)
   npc_omt_queries = npc_omt_queries + 1
-  npc_query_radius = radius
-  npc_query_ignores_z = ignore_z
-  if center.x == 11 and center.y == 20 and center.z == 0 then return { npc } end
+  npc_query_radius = params.radius
+  npc_query_ignores_z = params.ignore_z == true
+  if params.center.x == 11 and params.center.y == 20 and params.center.z == 0 then return { npc } end
   return {}
 end
 
----@param center FakeCoord
----@param radius integer
----@param ignore_z boolean
+---@param params FakeNearbyOmtCreatureQuery
 ---@return FakeMonster[]
-local get_monsters_near_omt = function(center, radius, ignore_z)
+local get_monsters_near_omt = function(params)
   monster_omt_queries = monster_omt_queries + 1
-  monster_query_radius = radius
-  monster_query_ignores_z = ignore_z
-  if center.x == 11 and center.y == 20 and center.z == 0 then return { monster } end
+  monster_query_radius = params.radius
+  monster_query_ignores_z = params.ignore_z == true
+  if params.center.x == 11 and params.center.y == 20 and params.center.z == 0 then return { monster } end
   return {}
-end
-
----@return FakeNpc[]
-local get_active_npcs = function()
-  active_npc_queries = active_npc_queries + 1
-  return { npc }
-end
-
----@return FakeMonster[]
-local get_active_monsters = function()
-  active_monster_queries = active_monster_queries + 1
-  return { monster }
 end
 
 ---@return nil
@@ -176,8 +163,6 @@ _G.gapi = {
   get_avatar = get_avatar,
   get_npcs_near_omt = get_npcs_near_omt,
   get_monsters_near_omt = get_monsters_near_omt,
-  get_active_npcs = get_active_npcs,
-  get_active_monsters = get_active_monsters,
   get_all_npcs = fail_slow_scan,
   get_all_monsters = fail_slow_scan,
   get_npc_at = fail_slow_scan,
@@ -201,15 +186,3 @@ test_data.npc_query_radius = npc_query_radius
 test_data.monster_query_radius = monster_query_radius
 test_data.npc_query_ignores_z = npc_query_ignores_z
 test_data.monster_query_ignores_z = monster_query_ignores_z
-
-npc_authorized = false
-npc_attitude_cleared = false
-monster.faction = nil
-player_is_in_hub01 = false
-robofac.authorize_hub01_after_dialogue()
-
-test_data.fallback_npc_authorized = npc_authorized
-test_data.fallback_npc_attitude_cleared = npc_attitude_cleared
-test_data.fallback_monster_authorized = monster.faction == "robofac_authorized:int"
-test_data.active_npc_queries = active_npc_queries
-test_data.active_monster_queries = active_monster_queries
