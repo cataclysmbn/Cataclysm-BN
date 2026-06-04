@@ -1,0 +1,97 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct type_Constants
+{
+    int player_x;
+    int player_y;
+    int cache_x;
+    int cache_y;
+    int cache_xy;
+    int z_count;
+    int view_radius;
+    int z_start_idx;
+    int dispatch_z_count;
+    packed_uint3 _pad0;
+};
+
+struct type_RWStructuredBuffer_float
+{
+    float _m0[1];
+};
+
+kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_RWStructuredBuffer_float& seen_raw_all [[buffer(1)]], device type_RWStructuredBuffer_float& seen_all [[buffer(2)]], uint3 gl_WorkGroupID [[threadgroup_position_in_grid]], uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
+{
+    do
+    {
+        int _51 = (Constants.player_x + int((gl_WorkGroupID.x * 8u) + gl_LocalInvocationID.x)) - Constants.view_radius;
+        int _62 = (Constants.player_y + int((gl_WorkGroupID.y * 8u) + gl_LocalInvocationID.y)) - Constants.view_radius;
+        int _65 = int(gl_WorkGroupID.z);
+        int _68 = Constants.z_start_idx + _65;
+        bool _73;
+        if (_51 >= 0)
+        {
+            _73 = _62 < 0;
+        }
+        else
+        {
+            _73 = true;
+        }
+        bool _80;
+        if (!_73)
+        {
+            _80 = _51 >= Constants.cache_x;
+        }
+        else
+        {
+            _80 = true;
+        }
+        bool _87;
+        if (!_80)
+        {
+            _87 = _62 >= Constants.cache_y;
+        }
+        else
+        {
+            _87 = true;
+        }
+        bool _94;
+        if (!_87)
+        {
+            _94 = _65 >= Constants.dispatch_z_count;
+        }
+        else
+        {
+            _94 = true;
+        }
+        bool _99;
+        if (!_94)
+        {
+            _99 = _68 < 0;
+        }
+        else
+        {
+            _99 = true;
+        }
+        bool _106;
+        if (!_99)
+        {
+            _106 = _68 >= Constants.z_count;
+        }
+        else
+        {
+            _106 = true;
+        }
+        if (_106)
+        {
+            break;
+        }
+        uint _117 = uint(((_68 * Constants.cache_xy) + (_51 * Constants.cache_y)) + _62);
+        seen_raw_all._m0[_117] = 0.0;
+        seen_all._m0[_117] = 0.0;
+        break;
+    } while(false);
+}
+

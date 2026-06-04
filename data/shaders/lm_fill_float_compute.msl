@@ -1,0 +1,31 @@
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+struct type_Constants
+{
+    uint total_tiles;
+    int cache_xy;
+    int z_start_idx;
+    float value;
+};
+
+struct type_RWStructuredBuffer_float
+{
+    float _m0[1];
+};
+
+kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_RWStructuredBuffer_float& target_values [[buffer(1)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+    do
+    {
+        if (gl_GlobalInvocationID.x >= Constants.total_tiles)
+        {
+            break;
+        }
+        target_values._m0[uint(Constants.z_start_idx * Constants.cache_xy) + gl_GlobalInvocationID.x] = Constants.value;
+        break;
+    } while(false);
+}
+

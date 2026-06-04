@@ -1,0 +1,345 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#pragma clang diagnostic ignored "-Wmissing-braces"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+template<typename T, size_t Num>
+struct spvUnsafeArray
+{
+    T elements[Num ? Num : 1];
+    
+    thread T& operator [] (size_t pos) thread
+    {
+        return elements[pos];
+    }
+    constexpr const thread T& operator [] (size_t pos) const thread
+    {
+        return elements[pos];
+    }
+    
+    device T& operator [] (size_t pos) device
+    {
+        return elements[pos];
+    }
+    constexpr const device T& operator [] (size_t pos) const device
+    {
+        return elements[pos];
+    }
+    
+    constexpr const constant T& operator [] (size_t pos) const constant
+    {
+        return elements[pos];
+    }
+    
+    threadgroup T& operator [] (size_t pos) threadgroup
+    {
+        return elements[pos];
+    }
+    constexpr const threadgroup T& operator [] (size_t pos) const threadgroup
+    {
+        return elements[pos];
+    }
+};
+
+struct type_Constants
+{
+    int player_x;
+    int player_y;
+    int player_z_idx;
+    int cache_x;
+    int cache_y;
+    int cache_xy;
+    int z_count;
+    uint trigdist;
+    int u_clairvoyance;
+    int u_unimpaired_range;
+    int g_light_level;
+    float vision_threshold;
+    float visibility_scale_factor;
+    float visible_threshold;
+    int z_start_idx;
+    int dispatch_z_count;
+};
+
+struct type_StructuredBuffer_float
+{
+    float _m0[1];
+};
+
+struct type_StructuredBuffer_uint
+{
+    uint _m0[1];
+};
+
+struct type_RWStructuredBuffer_uint
+{
+    uint _m0[1];
+};
+
+constant spvUnsafeArray<int2, 8> _74 = spvUnsafeArray<int2, 8>({ int2(0, 1), int2(0, -1), int2(1, 0), int2(1), int2(1, -1), int2(-1, 0), int2(-1, 1), int2(-1) });
+
+kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_StructuredBuffer_float& transparency_all [[buffer(1)]], device type_StructuredBuffer_uint& lm_all [[buffer(2)]], device type_StructuredBuffer_float& seen_all [[buffer(3)]], device type_StructuredBuffer_uint& camera_all [[buffer(4)]], device type_StructuredBuffer_float& source_map_all [[buffer(5)]], device type_RWStructuredBuffer_uint& visibility_all [[buffer(6)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+    do
+    {
+        if (gl_GlobalInvocationID.x >= uint(Constants.dispatch_z_count * Constants.cache_xy))
+        {
+            break;
+        }
+        uint _93 = uint(Constants.cache_xy);
+        uint _95 = uint(Constants.z_start_idx) + (gl_GlobalInvocationID.x / _93);
+        if (_95 >= uint(Constants.z_count))
+        {
+            break;
+        }
+        uint _102 = gl_GlobalInvocationID.x % _93;
+        uint _104 = (_95 * _93) + _102;
+        uint _107 = uint(Constants.cache_y);
+        int _109 = int(_102 / _107);
+        int _111 = int(_102 % _107);
+        int _112 = int(_95);
+        int _116 = abs(_109 - Constants.player_x);
+        int _120 = abs(_111 - Constants.player_y);
+        int _124 = abs(_112 - Constants.player_z_idx);
+        int _143;
+        do
+        {
+            if (Constants.trigdist == 0u)
+            {
+                _143 = max(_116, max(_120, _124));
+                break;
+            }
+            _143 = int(rint(sqrt(float(((_116 * _116) + (_120 * _120)) + (_124 * _124)))));
+            break;
+        } while(false);
+        if (_143 <= Constants.u_clairvoyance)
+        {
+            visibility_all._m0[_104] = 4u;
+            break;
+        }
+        float _151 = seen_all._m0[_104];
+        uint _153 = camera_all._m0[_104];
+        float _155 = precise::max(_151, as_type<float>(_153));
+        bool _158 = _155 <= Constants.visible_threshold;
+        float _173;
+        do
+        {
+            if (_155 <= 0.0)
+            {
+                _173 = 0.0;
+                break;
+            }
+            if (_155 >= 1.0)
+            {
+                _173 = 1.0;
+                break;
+            }
+            if (Constants.visibility_scale_factor == 1.0)
+            {
+                _173 = _155;
+                break;
+            }
+            _173 = powr(_155, Constants.visibility_scale_factor);
+            break;
+        } while(false);
+        int _174 = _112 * Constants.cache_xy;
+        bool _189;
+        if (transparency_all._m0[uint((_174 + (_109 * Constants.cache_y)) + _111)] <= 0.0)
+        {
+            bool _188;
+            if (_109 == Constants.player_x)
+            {
+                _188 = _111 != Constants.player_y;
+            }
+            else
+            {
+                _188 = true;
+            }
+            _189 = _188;
+        }
+        else
+        {
+            _189 = false;
+        }
+        bool _193;
+        if (_189)
+        {
+            _193 = _173 > 0.0;
+        }
+        else
+        {
+            _193 = false;
+        }
+        float _269;
+        if (_193)
+        {
+            float _202;
+            _202 = 0.0;
+            float _203;
+            for (int _205 = 0; _205 < 8; _202 = _203, _205++)
+            {
+                int _212 = _109 + _74[_205].x;
+                int _215 = _111 + _74[_205].y;
+                bool _220;
+                if (_212 >= 0)
+                {
+                    _220 = _215 < 0;
+                }
+                else
+                {
+                    _220 = true;
+                }
+                bool _227;
+                if (!_220)
+                {
+                    _227 = _212 >= Constants.cache_x;
+                }
+                else
+                {
+                    _227 = true;
+                }
+                bool _232;
+                if (!_227)
+                {
+                    _232 = _215 >= Constants.cache_y;
+                }
+                else
+                {
+                    _232 = true;
+                }
+                if (_232)
+                {
+                    _203 = _202;
+                    continue;
+                }
+                uint _238 = uint((_174 + (_212 * Constants.cache_y)) + _215);
+                bool _249;
+                if (transparency_all._m0[_238] <= 0.0)
+                {
+                    bool _248;
+                    if (_212 == Constants.player_x)
+                    {
+                        _248 = _215 != Constants.player_y;
+                    }
+                    else
+                    {
+                        _248 = true;
+                    }
+                    _249 = _248;
+                }
+                else
+                {
+                    _249 = false;
+                }
+                if (_249)
+                {
+                    _203 = _202;
+                    continue;
+                }
+                bool _261;
+                if (seen_all._m0[_238] == 0.0)
+                {
+                    _261 = as_type<float>(camera_all._m0[_238]) == 0.0;
+                }
+                else
+                {
+                    _261 = false;
+                }
+                if (_261)
+                {
+                    _203 = _202;
+                    continue;
+                }
+                _203 = precise::max(_202, as_type<float>(lm_all._m0[_238]));
+            }
+            _269 = _173 * _202;
+        }
+        else
+        {
+            _269 = _173 * as_type<float>(lm_all._m0[_104]);
+        }
+        if (_143 > Constants.u_unimpaired_range)
+        {
+            bool _281;
+            if (!_158)
+            {
+                _281 = source_map_all._m0[_104] > 0.0;
+            }
+            else
+            {
+                _281 = false;
+            }
+            if (_281)
+            {
+                visibility_all._m0[_104] = 2u;
+            }
+            else
+            {
+                visibility_all._m0[_104] = 0u;
+            }
+            break;
+        }
+        if (_158)
+        {
+            if (_269 > 10.0)
+            {
+                if (_269 > float(Constants.g_light_level))
+                {
+                    visibility_all._m0[_104] = 2u;
+                }
+                else
+                {
+                    visibility_all._m0[_104] = 1u;
+                }
+            }
+            else
+            {
+                if (_269 >= Constants.vision_threshold)
+                {
+                    visibility_all._m0[_104] = 1u;
+                }
+                else
+                {
+                    visibility_all._m0[_104] = 6u;
+                }
+            }
+            break;
+        }
+        bool _316;
+        if ((isunordered(_269, 10.0) || _269 <= 10.0))
+        {
+            _316 = source_map_all._m0[_104] > 0.0;
+        }
+        else
+        {
+            _316 = true;
+        }
+        if (_316)
+        {
+            visibility_all._m0[_104] = 4u;
+        }
+        else
+        {
+            if (_269 > 10.0)
+            {
+                visibility_all._m0[_104] = 3u;
+            }
+            else
+            {
+                if (_269 >= Constants.vision_threshold)
+                {
+                    visibility_all._m0[_104] = 1u;
+                }
+                else
+                {
+                    visibility_all._m0[_104] = 6u;
+                }
+            }
+        }
+        break;
+    } while(false);
+}
+
