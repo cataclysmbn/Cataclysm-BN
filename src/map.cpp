@@ -10526,7 +10526,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             debugmsg( "SDL_GPU lighting dispatch failed; see debug.log for details" );
             return;
         }
-        {
+        if( submap_loader.has_deferred_lazy_border_work() ) {
             ZoneScopedN( "Phase4_lightmap_pending_lazy_border" );
             submap_loader.process_deferred_lazy_border_work();
         }

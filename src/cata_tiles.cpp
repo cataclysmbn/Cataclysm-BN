@@ -3139,10 +3139,15 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         TracyPlot( "Cata Tiles Offscreen Memory Candidates",
                    static_cast<int64_t>( offscreen_memory_points.size() ) );
     };
+    const auto run_visibility_independent_work = [&]() {
+        if( submap_loader.has_deferred_lazy_border_work() ) {
+            submap_loader.process_deferred_lazy_border_work();
+        }
+        prepare_offscreen_memory_scan();
+    };
     const auto run_visibility_pending_work = [&]() {
         ZoneScopedN( "cata_tiles_visibility_pending_work" );
-        submap_loader.process_deferred_lazy_border_work();
-        prepare_offscreen_memory_scan();
+        run_visibility_independent_work();
     };
 
     const auto cache_z = g->visibility_cache_z();
@@ -3151,7 +3156,8 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     if( visibility_dirty ) {
         here.update_visibility_cache( cache_z, run_visibility_pending_work );
     } else {
-        run_visibility_pending_work();
+        ZoneScopedN( "cata_tiles_visibility_clean_work" );
+        run_visibility_independent_work();
     }
 
     const visibility_variables &cache = here.get_visibility_variables_cache();
