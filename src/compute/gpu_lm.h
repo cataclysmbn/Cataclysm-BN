@@ -210,12 +210,13 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 // Begin the full GPU lighting pass for the dirty z-levels.
 //   1. Pack inputs from CPU level caches.
 //   2. Collect typed GPU light sources.
-//   3. Ambient init pass  -> initialises lm_all.
-//   4. Raytrace pass      -> InterlockedMax per-source contributions into lm_all.
-//   5. Seen-cache pass    -> ray cast from player into raw seen_all when requested
+//   3. Ambient init pass  -> initialises lm_all and daylight_seed.
+//   4. Daylight diffusion -> gather-propagates seed daylight through transparent openings.
+//   5. Raytrace pass      -> InterlockedMax per-source contributions into lm_all.
+//   6. Seen-cache pass    -> ray cast from player into raw seen_all when requested
 //                           or when resident GPU seen data is invalid.
-//   6. Surface pass       -> make glancing surfaces inherit adjacent visibility.
-//   7. Schedule lm/seen downloads when CPU readback was requested.
+//   7. Surface pass       -> make glancing surfaces inherit adjacent visibility.
+//   8. Schedule lm/seen downloads when CPU readback was requested.
 // device must be non-null (caller responsibility).
 // Returns an id-bearing handle if the GPU pass was submitted.
 // A failed SDL_GPU lighting pass is an error; it must not silently rebuild with

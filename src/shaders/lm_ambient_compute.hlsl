@@ -10,7 +10,7 @@
 // shadows are enabled during daytime, wall transparency is checked along the
 // ray back toward the sun. Vehicle roofs do not affect sunlight.
 //
-// lm_all stores uint — the bit-reinterpretation of positive floats.
+// lm_all and daylight_seed_all store uint — the bit-reinterpretation of positive floats.
 // This allows the raytrace pass to use InterlockedMax on the same buffer.
 //
 // Binding layout (SDL3 GPU / shadercross HLSL conventions):
@@ -51,7 +51,8 @@ StructuredBuffer<uint>  floor_all        : register(t0, space0);
 StructuredBuffer<float> transparency_all : register(t1, space0);
 StructuredBuffer<float> source_map_all   : register(t2, space0);
 
-RWStructuredBuffer<uint> lm_all : register(u0, space1);
+RWStructuredBuffer<uint> lm_all             : register(u0, space1);
+RWStructuredBuffer<uint> daylight_seed_all  : register(u1, space1);
 
 int round_nearest_int( float value )
 {
@@ -141,13 +142,16 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
     bool use_angled_sun = angled_sunlight_shadows != 0u && direct_sunlight != 0u;
     int sun_state = sunlight_state( x, y, (int)z_idx, use_angled_sun );
 
+    float daylight = 0.0;
     float ambient = inside_light;
     if( sun_state == SUN_DIRECT ) {
-        ambient = natural_light[z_idx / 4][z_idx % 4];
+        daylight = natural_light[z_idx / 4][z_idx % 4];
+        ambient = daylight;
     } else if( sun_state == SUN_SHADOW ) {
-        ambient = solar_shadow_light;
+        daylight = solar_shadow_light;
+        ambient = daylight;
     }
     ambient = max( ambient, source_map_all[idx] );
-    uint packed_ambient = asuint( ambient );
-    lm_all[idx] = packed_ambient;
+    lm_all[idx] = asuint( ambient );
+    daylight_seed_all[idx] = asuint( daylight );
 }

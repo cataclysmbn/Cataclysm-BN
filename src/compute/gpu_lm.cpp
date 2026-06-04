@@ -47,6 +47,7 @@ namespace cata_gpu {
 namespace {
 
 static constexpr auto solar_shadow_scatter = 0.09f;
+static constexpr auto daylight_diffusion_passes = 16;
 
 // ---------------------------------------------------------------------------
 // Pipeline management
@@ -77,6 +78,7 @@ auto preferred_fmt(SDL_GPUShaderFormat const fmts) -> SDL_GPUShaderFormat {
 }
 
 SDL_GPUComputePipeline* s_ambient_pipeline = nullptr;
+SDL_GPUComputePipeline* s_daylight_diffuse_pipeline = nullptr;
 SDL_GPUComputePipeline* s_raytrace_pipeline = nullptr;
 auto* s_clear_seen_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_clear_seen_view_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
@@ -100,6 +102,7 @@ auto release_pipeline(SDL_GPUDevice* const device, SDL_GPUComputePipeline*& pipe
 
 auto release_lm_pipelines(SDL_GPUDevice* const device) -> void {
     release_pipeline(device, s_ambient_pipeline);
+    release_pipeline(device, s_daylight_diffuse_pipeline);
     release_pipeline(device, s_raytrace_pipeline);
     release_pipeline(device, s_clear_seen_pipeline);
     release_pipeline(device, s_clear_seen_view_pipeline);
@@ -208,14 +211,20 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
     if (s_ambient_pipeline == nullptr) {
         s_ambient_pipeline = load_pipeline(
             device, "lm_ambient_compute",
-            /*ro=*/3, /*rw=*/1, 64, 1);
+            /*ro=*/3, /*rw=*/2, 64, 1);
+    }
+    if (s_daylight_diffuse_pipeline == nullptr) {
+        s_daylight_diffuse_pipeline = load_pipeline(
+            device, "lm_daylight_diffuse_compute",
+            /*ro=*/3, /*rw=*/2, 64, 1);
     }
     if (s_raytrace_pipeline == nullptr) {
         s_raytrace_pipeline = load_pipeline(
             device, "lm_raytrace_compute",
             /*ro=*/4, /*rw=*/1, 8, 8);
     }
-    return s_ambient_pipeline != nullptr && s_raytrace_pipeline != nullptr
+    return s_ambient_pipeline != nullptr && s_daylight_diffuse_pipeline != nullptr
+        && s_raytrace_pipeline != nullptr
         && ensure_seen_pipelines(device);
 }
 
@@ -334,6 +343,9 @@ struct lighting_resource_cache {
     gpu_buffer_slot vehicle_optics;
     gpu_buffer_slot source_map;
     gpu_buffer_slot sources;
+    gpu_buffer_slot daylight_seed;
+    gpu_buffer_slot daylight_diffuse_a;
+    gpu_buffer_slot daylight_diffuse_b;
     gpu_buffer_slot static_lm;
     gpu_buffer_slot lm;
     gpu_buffer_slot seen_raw;
@@ -398,6 +410,7 @@ struct lighting_buffer_sizes {
     Uint32 vehicle_optics_bytes;
     Uint32 source_map_bytes;
     Uint32 source_bytes;
+    Uint32 daylight_bytes;
     Uint32 static_lm_bytes;
     Uint32 output_bytes;
     Uint32 lm_download_bytes;
@@ -522,6 +535,18 @@ struct lm_max_uint_push_constants {
 };
 static_assert(sizeof(lm_max_uint_push_constants) == 16);
 
+struct lm_daylight_diffuse_push_constants {
+    uint32_t total_tiles;
+    int32_t cache_x;
+    int32_t cache_y;
+    int32_t cache_xy;
+    int32_t z_count;
+    float diffuse_decay;
+    float min_light;
+    uint32_t _pad;
+};
+static_assert(sizeof(lm_daylight_diffuse_push_constants) == 32);
+
 lighting_resource_cache s_lighting_resources;
 
 struct pending_gpu_lighting_work {
@@ -633,6 +658,9 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_buffer_slot(device, s_lighting_resources.vehicle_optics);
     release_buffer_slot(device, s_lighting_resources.source_map);
     release_buffer_slot(device, s_lighting_resources.sources);
+    release_buffer_slot(device, s_lighting_resources.daylight_seed);
+    release_buffer_slot(device, s_lighting_resources.daylight_diffuse_a);
+    release_buffer_slot(device, s_lighting_resources.daylight_diffuse_b);
     release_buffer_slot(device, s_lighting_resources.static_lm);
     release_buffer_slot(device, s_lighting_resources.lm);
     release_buffer_slot(device, s_lighting_resources.seen_raw);
@@ -786,6 +814,27 @@ auto ensure_lighting_resources(SDL_GPUDevice* const device, lighting_buffer_size
             .usage = read_usage,
             .required_bytes = sizes.source_bytes,
             .name = "sources",
+        })
+        && ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.daylight_seed,
+            .usage = read_write_usage,
+            .required_bytes = sizes.daylight_bytes,
+            .name = "daylight_seed",
+        })
+        && ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.daylight_diffuse_a,
+            .usage = read_write_usage,
+            .required_bytes = sizes.daylight_bytes,
+            .name = "daylight_diffuse_a",
+        })
+        && ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.daylight_diffuse_b,
+            .usage = read_write_usage,
+            .required_bytes = sizes.daylight_bytes,
+            .name = "daylight_diffuse_b",
         })
         && ensure_gpu_buffer({
             .device = device,
@@ -2257,6 +2306,13 @@ auto compute_light_radius(float const luminance) -> float {
     return std::min(raw, static_cast<float>(MAX_VIEW_DISTANCE));
 }
 
+auto daylight_diffusion_decay_for_pass(int const pass) -> float {
+    auto const air_decay = std::exp(-LIGHT_TRANSPARENCY_OPEN_AIR);
+    if (pass == 0) { return air_decay; }
+    auto const distance = static_cast<float>(pass + 1);
+    return air_decay * (distance - 1.0f) / distance;
+}
+
 auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const& p)
     -> gpu_lighting_work {
     ZoneScopedN("begin_gpu_lighting");
@@ -2585,6 +2641,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     .vehicle_optics_bytes = static_cast<Uint32>(sizeof(GpuVehicleOptic)),
                     .source_map_bytes = source_map_bytes,
                     .source_bytes = source_buffer_bytes,
+                    .daylight_bytes = out_bytes,
                     .static_lm_bytes = out_bytes,
                     .output_bytes = out_bytes,
                     .lm_download_bytes = std::max(lm_download_bytes, 1u),
@@ -2605,6 +2662,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto* const vf_buf = s_lighting_resources.vehicle_floor.buffer;
     auto* const source_map_buf = s_lighting_resources.source_map.buffer;
     auto* const src_buf = s_lighting_resources.sources.buffer;
+    auto* const daylight_seed_buf = s_lighting_resources.daylight_seed.buffer;
+    auto* const daylight_diffuse_a_buf = s_lighting_resources.daylight_diffuse_a.buffer;
+    auto* const daylight_diffuse_b_buf = s_lighting_resources.daylight_diffuse_b.buffer;
     auto* const static_lm_buf = s_lighting_resources.static_lm.buffer;
     auto* const lm_buf = s_lighting_resources.lm.buffer;
     auto* const seen_raw_buf = s_lighting_resources.seen_raw.buffer;
@@ -2767,9 +2827,22 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
 
             // [Pass 3] Compute: ambient/weather/sun base for this frame.
             {
-                auto const rw_lm = SDL_GPUStorageBufferReadWriteBinding{
-                    .buffer = lm_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
-                auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
+                auto const rw_bufs = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{
+                    SDL_GPUStorageBufferReadWriteBinding{
+                        .buffer = lm_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0},
+                    SDL_GPUStorageBufferReadWriteBinding{
+                        .buffer = daylight_seed_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0},
+                };
+                auto* const cp = SDL_BeginGPUComputePass(
+                    cmd, nullptr, 0, rw_bufs.data(), static_cast<Uint32>(rw_bufs.size()));
                 SDL_BindGPUComputePipeline(cp, s_ambient_pipeline);
 
                 auto const ro_bufs = std::array<SDL_GPUBuffer*, 3>{f_buf, t_buf, source_map_buf};
@@ -2781,7 +2854,60 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 SDL_EndGPUComputePass(cp);
             }
 
-            // [Pass 4] Compute: max cached static-source contribution into frame lm.
+            // [Pass 4] Compute: local daylight diffusion through transparent openings.
+            if (p.direct_sunlight) {
+                auto dispatch_daylight_diffusion =
+                    [&](SDL_GPUBuffer* const source_buf, SDL_GPUBuffer* const target_buf,
+                        float const diffuse_decay) {
+                        auto const rw_bufs =
+                            std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{
+                                SDL_GPUStorageBufferReadWriteBinding{
+                                    .buffer = target_buf,
+                                    .cycle = false,
+                                    .padding1 = 0,
+                                    .padding2 = 0,
+                                    .padding3 = 0},
+                                SDL_GPUStorageBufferReadWriteBinding{
+                                    .buffer = lm_buf,
+                                    .cycle = false,
+                                    .padding1 = 0,
+                                    .padding2 = 0,
+                                    .padding3 = 0},
+                            };
+                        auto* const cp = SDL_BeginGPUComputePass(
+                            cmd, nullptr, 0, rw_bufs.data(), static_cast<Uint32>(rw_bufs.size()));
+                        SDL_BindGPUComputePipeline(cp, s_daylight_diffuse_pipeline);
+                        auto const ro_bufs =
+                            std::array<SDL_GPUBuffer*, 3>{daylight_seed_buf, source_buf, t_buf};
+                        SDL_BindGPUComputeStorageBuffers(
+                            cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+                        auto const diffuse_push = lm_daylight_diffuse_push_constants{
+                            .total_tiles = volume_tiles,
+                            .cache_x = cache_x,
+                            .cache_y = cache_y,
+                            .cache_xy = cache_xy,
+                            .z_count = z_count,
+                            .diffuse_decay = diffuse_decay,
+                            .min_light = LIGHT_AMBIENT_LOW,
+                            ._pad = 0,
+                        };
+                        SDL_PushGPUComputeUniformData(
+                            cmd, 0, &diffuse_push, sizeof(diffuse_push));
+                        SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
+                        SDL_EndGPUComputePass(cp);
+                    };
+
+                auto* source_buf = daylight_seed_buf;
+                auto* target_buf = daylight_diffuse_a_buf;
+                for (auto const pass : std::views::iota(0, daylight_diffusion_passes)) {
+                    dispatch_daylight_diffusion(
+                        source_buf, target_buf, daylight_diffusion_decay_for_pass(pass));
+                    source_buf = target_buf;
+                    target_buf = pass % 2 == 0 ? daylight_diffuse_b_buf : daylight_diffuse_a_buf;
+                }
+            }
+
+            // [Pass 5] Compute: max cached static-source contribution into frame lm.
             {
                 auto const rw_lm = SDL_GPUStorageBufferReadWriteBinding{
                     .buffer = lm_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
@@ -2799,7 +2925,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 SDL_EndGPUComputePass(cp);
             }
 
-            // [Pass 5] Compute: dynamic per-source ray casting over ambient/static base.
+            // [Pass 6] Compute: dynamic per-source ray casting over ambient/static base.
             dispatch_raytrace(lm_buf, dynamic_raytrace_buckets);
         }
 
@@ -2823,7 +2949,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             });
         }
 
-        // [Pass 5] Copy: download dirty lm levels and requested seen_cache results.
+        // [Pass 7] Copy: download dirty lm levels and requested seen_cache results.
         auto const needs_download_copy =
             download_lm_levels || download_player_light || !seen_download_levels.empty();
         if (needs_download_copy) {
@@ -3188,6 +3314,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .vehicle_optics_bytes = vehicle_optics_buffer_bytes,
                 .source_map_bytes = float_volume_bytes,
                 .source_bytes = source_bytes,
+                .daylight_bytes = uint_volume_bytes,
                 .static_lm_bytes = uint_volume_bytes,
                 .output_bytes = uint_volume_bytes,
                 .lm_download_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t)),

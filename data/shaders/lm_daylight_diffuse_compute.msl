@@ -1,0 +1,166 @@
+#pragma clang diagnostic ignored "-Wmissing-prototypes"
+#pragma clang diagnostic ignored "-Wmissing-braces"
+
+#include <metal_stdlib>
+#include <simd/simd.h>
+
+using namespace metal;
+
+template<typename T, size_t Num>
+struct spvUnsafeArray
+{
+    T elements[Num ? Num : 1];
+    
+    thread T& operator [] (size_t pos) thread
+    {
+        return elements[pos];
+    }
+    constexpr const thread T& operator [] (size_t pos) const thread
+    {
+        return elements[pos];
+    }
+    
+    device T& operator [] (size_t pos) device
+    {
+        return elements[pos];
+    }
+    constexpr const device T& operator [] (size_t pos) const device
+    {
+        return elements[pos];
+    }
+    
+    constexpr const constant T& operator [] (size_t pos) const constant
+    {
+        return elements[pos];
+    }
+    
+    threadgroup T& operator [] (size_t pos) threadgroup
+    {
+        return elements[pos];
+    }
+    constexpr const threadgroup T& operator [] (size_t pos) const threadgroup
+    {
+        return elements[pos];
+    }
+};
+
+struct type_Constants
+{
+    uint total_tiles;
+    int cache_x;
+    int cache_y;
+    int cache_xy;
+    int z_count;
+    float diffuse_decay;
+    float min_light;
+    uint _pad;
+};
+
+struct type_StructuredBuffer_uint
+{
+    uint _m0[1];
+};
+
+struct type_StructuredBuffer_float
+{
+    float _m0[1];
+};
+
+struct type_RWStructuredBuffer_uint
+{
+    uint _m0[1];
+};
+
+constant spvUnsafeArray<int2, 4> _52 = spvUnsafeArray<int2, 4>({ int2(0, 1), int2(0, -1), int2(1, 0), int2(-1, 0) });
+
+kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_StructuredBuffer_uint& daylight_seed_all [[buffer(1)]], device type_StructuredBuffer_uint& daylight_src_all [[buffer(2)]], device type_StructuredBuffer_float& transparency_all [[buffer(3)]], device type_RWStructuredBuffer_uint& daylight_dst_all [[buffer(4)]], device type_RWStructuredBuffer_uint& lm_all [[buffer(5)]], uint3 gl_GlobalInvocationID [[thread_position_in_grid]])
+{
+    do
+    {
+        if (gl_GlobalInvocationID.x >= Constants.total_tiles)
+        {
+            break;
+        }
+        uint _65 = daylight_seed_all._m0[gl_GlobalInvocationID.x];
+        if (as_type<float>(_65) > 0.0)
+        {
+            daylight_dst_all._m0[gl_GlobalInvocationID.x] = _65;
+            lm_all._m0[gl_GlobalInvocationID.x] = max(lm_all._m0[gl_GlobalInvocationID.x], _65);
+            break;
+        }
+        if (transparency_all._m0[gl_GlobalInvocationID.x] <= 0.0)
+        {
+            daylight_dst_all._m0[gl_GlobalInvocationID.x] = 0u;
+            break;
+        }
+        uint _82 = uint(Constants.cache_xy);
+        uint _84 = gl_GlobalInvocationID.x % _82;
+        uint _87 = uint(Constants.cache_y);
+        int _89 = int(_84 / _87);
+        int _91 = int(_84 % _87);
+        int _92 = int(gl_GlobalInvocationID.x / _82);
+        float _97;
+        _97 = as_type<float>(daylight_src_all._m0[gl_GlobalInvocationID.x]);
+        float _98;
+        for (int _100 = 0; _100 < 4; _97 = _98, _100++)
+        {
+            int _107 = _89 + _52[_100].x;
+            int _110 = _91 + _52[_100].y;
+            bool _115;
+            if (_107 >= 0)
+            {
+                _115 = _110 >= 0;
+            }
+            else
+            {
+                _115 = false;
+            }
+            bool _121;
+            if (_115)
+            {
+                _121 = _107 < Constants.cache_x;
+            }
+            else
+            {
+                _121 = false;
+            }
+            bool _125;
+            if (_121)
+            {
+                _125 = _110 < Constants.cache_y;
+            }
+            else
+            {
+                _125 = false;
+            }
+            if (!_125)
+            {
+                _98 = _97;
+                continue;
+            }
+            uint _133 = uint(((_92 * Constants.cache_xy) + (_107 * Constants.cache_y)) + _110);
+            if (transparency_all._m0[_133] <= 0.0)
+            {
+                _98 = _97;
+                continue;
+            }
+            float _141 = as_type<float>(daylight_src_all._m0[_133]);
+            if (_141 <= Constants.min_light)
+            {
+                _98 = _97;
+                continue;
+            }
+            _98 = precise::max(_97, _141 * Constants.diffuse_decay);
+        }
+        if (_97 < Constants.min_light)
+        {
+            daylight_dst_all._m0[gl_GlobalInvocationID.x] = 0u;
+            break;
+        }
+        uint _157 = as_type<uint>(_97);
+        daylight_dst_all._m0[gl_GlobalInvocationID.x] = _157;
+        lm_all._m0[gl_GlobalInvocationID.x] = max(lm_all._m0[gl_GlobalInvocationID.x], _157);
+        break;
+    } while(false);
+}
+
