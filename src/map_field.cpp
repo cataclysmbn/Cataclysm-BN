@@ -1763,8 +1763,8 @@ auto process_fields_in_submap( const std::string &dim, submap &sm,
                 ++it;
             }
 
-            if( in_bubble && dirty_transparency_cache ) {                
-                map.set_transparency_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) )  );
+            if( in_bubble && dirty_transparency_cache ) {
+                map.set_transparency_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
                 map.set_seen_cache_dirty( abs_to_bub( project_to<coords::ms>( pos ) ) );
             }
 
