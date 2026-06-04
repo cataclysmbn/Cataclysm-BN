@@ -7137,7 +7137,8 @@ void map::update_submap_active_item_status( const tripoint_bub_ms &p )
 }
 
 
-void map::update_visibility_cache( const int zlev )
+auto map::update_visibility_cache( const int zlev,
+                                   const std::function<void()> &while_gpu_pending ) -> void
 {
     ZoneScopedN( "update_visibility_cache" );
     const auto player_pos = g->u.bub_pos();
@@ -7188,7 +7189,7 @@ void map::update_visibility_cache( const int zlev )
         visibility_download_levels.push_back( zlev );
     }
     const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
-    const auto gpu_visibility_ok = cata_gpu::run_gpu_visibility( gpu_device, {
+    const auto gpu_visibility_work = cata_gpu::begin_gpu_visibility( gpu_device, {
         .m = this,
         .download_levels = &visibility_download_levels,
         .zlev = zlev,
@@ -7202,8 +7203,16 @@ void map::update_visibility_cache( const int zlev )
         .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
         .rebuild_seen_cache = rebuild_seen_cache,
     } );
-    if( !gpu_visibility_ok ) {
+    if( gpu_visibility_work.id == 0 ) {
         debugmsg( "SDL_GPU visibility dispatch failed; see debug.log for details" );
+        return;
+    }
+    if( while_gpu_pending ) {
+        while_gpu_pending();
+    }
+    const auto gpu_visibility_ok = cata_gpu::finish_gpu_visibility( gpu_device, gpu_visibility_work );
+    if( !gpu_visibility_ok ) {
+        debugmsg( "SDL_GPU visibility completion failed; see debug.log for details" );
         return;
     }
     if( rebuild_seen_cache ) {
@@ -7214,6 +7223,8 @@ void map::update_visibility_cache( const int zlev )
     mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
     return;
 #endif
+
+    ( void )while_gpu_pending;
 
     auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
 
@@ -10514,6 +10525,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         if( pending_gpu_lighting.id == 0 ) {
             debugmsg( "SDL_GPU lighting dispatch failed; see debug.log for details" );
             return;
+        }
+        {
+            ZoneScopedN( "Phase4_lightmap_pending_lazy_border" );
+            submap_loader.process_deferred_lazy_border_work();
         }
     }
 #endif

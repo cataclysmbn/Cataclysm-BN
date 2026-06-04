@@ -2265,7 +2265,7 @@ bool game::do_turn()
     }
     {
         ZoneScopedN( "do_turn_submap_loader_update" );
-        submap_loader.update();
+        submap_loader.update( is_draw_tiles_mode() );
     }
     // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
     {
@@ -4463,7 +4463,9 @@ void game::draw( ui_adaptor &ui )
         const auto cache_z = is_looking ? u.bub_pos().z() : ter_view_p.z();
         m.build_map_cache( cache_z );
         if( m.get_cache_ref( cache_z ).visibility_cache_dirty ) {
-            m.update_visibility_cache( cache_z );
+            if( !is_draw_tiles_mode() ) {
+                m.update_visibility_cache( cache_z );
+            }
         }
     }
 
@@ -4617,6 +4619,11 @@ void game::draw_ter( const bool draw_sounds )
 {
     draw_ter( u.bub_pos() + u.view_offset, is_looking,
               draw_sounds );
+}
+
+auto game::visibility_cache_z() -> int
+{
+    return is_looking ? u.bub_pos().z() : ter_view_p.z();
 }
 
 void game::draw_ter( const tripoint_bub_ms &center, const bool looking, const bool draw_sounds )
@@ -15340,7 +15347,7 @@ point_rel_sm game::update_map( int &x, int &y )
             ensure_distribution_grid_tracker_for( dim_id );
         }
         submap_loader.update_lazy_border_focus( m.get_bound_dimension(), u.abs_pos() );
-        submap_loader.update();
+        submap_loader.update( is_draw_tiles_mode() );
         // Destroy trackers for non-primary dimensions with no remaining tracked submaps.
         for( auto it = grid_trackers_.begin(); it != grid_trackers_.end(); ) {
             if( !it->first.empty() && !it->second->has_tracked_submaps() ) {

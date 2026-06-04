@@ -750,6 +750,26 @@ auto submap_load_manager::process_lazy_border_preload() -> void
     TracyPlot( "Lazy Border Z Jobs Started", static_cast<int64_t>( started ) );
 }
 
+auto submap_load_manager::process_lazy_border_work() -> void
+{
+    ZoneScopedN( "slm_lazy_border_work" );
+    reap_lazy_omt_jobs();
+    process_lazy_border_preload();
+    process_retained_omt_eviction();
+}
+
+auto submap_load_manager::process_deferred_lazy_border_work() -> void
+{
+    ZoneScopedN( "slm_deferred_lazy_border_work" );
+    if( !lazy_border_work_deferred_ ) {
+        TracyPlot( "Lazy Border Work Deferred", int64_t{ 0 } );
+        return;
+    }
+    lazy_border_work_deferred_ = false;
+    TracyPlot( "Lazy Border Work Deferred", int64_t{ 0 } );
+    process_lazy_border_work();
+}
+
 void submap_load_manager::drain_lazy_loads()
 {
     ZoneScopedN( "drain_lazy_loads" );
@@ -766,11 +786,19 @@ void submap_load_manager::drain_lazy_loads()
     }
 }
 
-void submap_load_manager::update()
+auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
 {
     ZoneScoped;
 
-    reap_lazy_omt_jobs();
+    if( lazy_border_work_deferred_ ) {
+        if( defer_lazy_border_work ) {
+            TracyPlot( "Lazy Border Work Deferred", int64_t{ 1 } );
+        } else {
+            process_deferred_lazy_border_work();
+        }
+    } else if( !defer_lazy_border_work ) {
+        reap_lazy_omt_jobs();
+    }
 
     TracyPlot( "Thread Pool Workers", static_cast<int64_t>( get_thread_pool().num_workers() ) );
     TracyPlot( "Thread Pool Queue", static_cast<int64_t>( get_thread_pool().queue_size() ) );
@@ -801,8 +829,14 @@ void submap_load_manager::update()
             lazy_omt_preload_direction_ = bubble_delta;
         }
         if( cur_centers == prev_centers_ ) {
-            process_lazy_border_preload();
-            process_retained_omt_eviction();
+            if( defer_lazy_border_work ) {
+                lazy_border_work_deferred_ = true;
+                TracyPlot( "Lazy Border Work Deferred", int64_t{ 1 } );
+            } else {
+                lazy_border_work_deferred_ = false;
+                TracyPlot( "Lazy Border Work Deferred", int64_t{ 0 } );
+                process_lazy_border_work();
+            }
             return;
         }
         prev_centers_ = std::move( cur_centers );
@@ -999,9 +1033,14 @@ void submap_load_manager::update()
     }
 
     queue_lazy_border_omts( lazy_border_omts );
-    process_lazy_border_preload();
-
-    process_retained_omt_eviction();
+    if( defer_lazy_border_work ) {
+        lazy_border_work_deferred_ = true;
+        TracyPlot( "Lazy Border Work Deferred", int64_t{ 1 } );
+    } else {
+        lazy_border_work_deferred_ = false;
+        TracyPlot( "Lazy Border Work Deferred", int64_t{ 0 } );
+        process_lazy_border_work();
+    }
 
     prev_simulated_ = std::move( simulated );
     prev_desired_ = std::move( all_desired );
