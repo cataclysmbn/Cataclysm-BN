@@ -1651,12 +1651,6 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.static_lighting_valid = false;
-    s_lighting_resources.static_ambient_signature_valid = false;
-    s_lighting_resources.static_ambient_signature = 0;
-    s_lighting_resources.static_source_signature_valid = false;
-    s_lighting_resources.static_source_signature = 0;
-    s_lighting_resources.static_structural_signature_valid = false;
-    s_lighting_resources.static_structural_signature = 0;
     s_lighting_resources.lighting_outputs_valid = false;
 
     auto const has_valid_transparency =
@@ -1860,9 +1854,11 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         s_lighting_resources.static_ambient_signature != current_ambient_signature;
     auto const structural_upload = has_structural_upload(input_uploads);
     auto current_structural_signature = s_lighting_resources.static_structural_signature;
+    auto current_structural_signature_valid = false;
     auto structural_changed = false;
     if (!lightmap_levels.empty() &&
-        (structural_upload || !s_lighting_resources.static_structural_signature_valid)) {
+        s_lighting_resources.static_lighting_valid &&
+        structural_upload) {
         ZoneScopedN( "gpu_lm_structural_signature" );
         current_structural_signature = structural_signature({
             .m = *p.m,
@@ -1870,6 +1866,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             .cache_x = cache_x,
             .cache_y = cache_y,
         });
+        current_structural_signature_valid = true;
         structural_changed =
             !s_lighting_resources.static_structural_signature_valid ||
             s_lighting_resources.static_structural_signature != current_structural_signature;
@@ -1982,6 +1979,8 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     TracyPlot( "GPU LM Static Sources Changed",
                static_sources_changed ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Structural Upload", structural_upload ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Structural Signature Checked",
+               current_structural_signature_valid ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Structural Changed", structural_changed ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Sources Static", static_cast<int64_t>( source_stats.static_sources ) );
     TracyPlot( "GPU LM Sources Static Local",
@@ -2513,8 +2512,10 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         s_lighting_resources.static_lighting_valid = true;
         s_lighting_resources.static_source_signature_valid = true;
         s_lighting_resources.static_source_signature = current_static_source_signature;
-        s_lighting_resources.static_structural_signature_valid = true;
-        s_lighting_resources.static_structural_signature = current_structural_signature;
+        s_lighting_resources.static_structural_signature_valid = current_structural_signature_valid;
+        if (current_structural_signature_valid) {
+            s_lighting_resources.static_structural_signature = current_structural_signature;
+        }
     }
     if (rebuild_seen) {
         s_lighting_resources.seen_valid = true;
