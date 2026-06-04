@@ -5,12 +5,12 @@
 //
 // Algorithm per thread:
 //   1. Map group/thread IDs to a target tile (tx, ty, tz).
-//   2. Compute 3D distance from player; skip if beyond view_radius.
+//   2. Compute gameplay view distance from player; skip if beyond view_radius.
 //   3. Trace a DDA ray from player toward target, accumulating a running-
 //      average transparency (mirrors accumulate_transparency on CPU).
 //      Vertical steps check floor_all to block the ray.  Vehicle roofs are
 //      applied as a fixed vertical stamp directly beneath the roof.
-//   4. seen_all[target] = exp(-avg_transparency * distance).
+//   4. seen_all[target] = exp(-avg_transparency * gameplay_distance).
 //      This matches the CPU k_sight_model decay: values in [0, 1] that
 //      apparent_light_helper then multiplies by lm to get apparent brightness.
 //      Player's own tile is always VISIBILITY_FULL = 1.0.
@@ -41,7 +41,7 @@ cbuffer Constants : register(b0, space2)
     float z_scale;
     int   z_start_idx;
     int   dispatch_z_count;
-    uint  _pad0;
+    uint  trigdist;
 };
 
 StructuredBuffer<float> transparency_all  : register(t0, space0);
@@ -53,6 +53,14 @@ RWStructuredBuffer<float> seen_all : register(u0, space1);
 int round_nearest_int( float value )
 {
     return value >= 0.0 ? (int)floor( value + 0.5 ) : (int)ceil( value - 0.5 );
+}
+
+int visibility_distance( int dx, int dy, int dz )
+{
+    if( trigdist == 0u ) {
+        return max( dx, max( dy, dz ) );
+    }
+    return (int)round( sqrt( (float)( dx * dx + dy * dy + dz * dz ) ) );
 }
 
 [numthreads(8, 8, 1)]
@@ -68,21 +76,21 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         return;
     }
 
-    // 3D distance from player.
-    float fdx  = (float)( tx - player_x );
-    float fdy  = (float)( ty - player_y );
-    float fdz  = (float)( tz - player_z_idx ) * z_scale;
-    float dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
+    // Gameplay distance from player.  This must match final visibility so
+    // seen-cache decay and lit-level classification agree on range.
+    int dist_i = visibility_distance( abs( tx - player_x ), abs( ty - player_y ),
+                                      abs( tz - player_z_idx ) );
+    float dist = (float)dist_i;
 
     int seen_idx = tz * cache_xy + tx * cache_y + ty;
 
-    if( dist < 0.5 ) {
+    if( dist_i == 0 ) {
         // Player's own tile: always fully visible.
         seen_all[seen_idx] = 1.0;
         return;
     }
 
-    if( dist > (float)view_radius ) {
+    if( dist_i > view_radius ) {
         seen_all[seen_idx] = 0.0;
         return;
     }

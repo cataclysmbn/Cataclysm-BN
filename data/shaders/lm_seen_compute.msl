@@ -16,7 +16,7 @@ struct type_Constants
     float z_scale;
     int z_start_idx;
     int dispatch_z_count;
-    uint _pad0;
+    uint trigdist;
 };
 
 struct type_StructuredBuffer_float
@@ -38,211 +38,209 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
 {
     do
     {
-        int _67 = (Constants.player_x + int((gl_WorkGroupID.x * 8u) + gl_LocalInvocationID.x)) - Constants.view_radius;
-        int _78 = (Constants.player_y + int((gl_WorkGroupID.y * 8u) + gl_LocalInvocationID.y)) - Constants.view_radius;
-        int _84 = Constants.z_start_idx + int(gl_WorkGroupID.z);
-        bool _89;
-        if (_67 >= 0)
+        int _68 = (Constants.player_x + int((gl_WorkGroupID.x * 8u) + gl_LocalInvocationID.x)) - Constants.view_radius;
+        int _79 = (Constants.player_y + int((gl_WorkGroupID.y * 8u) + gl_LocalInvocationID.y)) - Constants.view_radius;
+        int _85 = Constants.z_start_idx + int(gl_WorkGroupID.z);
+        bool _90;
+        if (_68 >= 0)
         {
-            _89 = _78 < 0;
+            _90 = _79 < 0;
         }
         else
         {
-            _89 = true;
+            _90 = true;
         }
-        bool _96;
-        if (!_89)
+        bool _97;
+        if (!_90)
         {
-            _96 = _67 >= Constants.cache_x;
+            _97 = _68 >= Constants.cache_x;
         }
         else
         {
-            _96 = true;
+            _97 = true;
         }
-        bool _103;
-        if (!_96)
+        bool _104;
+        if (!_97)
         {
-            _103 = _78 >= Constants.cache_y;
+            _104 = _79 >= Constants.cache_y;
         }
         else
         {
-            _103 = true;
+            _104 = true;
         }
-        bool _111;
-        if (!_103)
+        bool _112;
+        if (!_104)
         {
-            _111 = gl_WorkGroupID.z >= uint(Constants.dispatch_z_count);
+            _112 = gl_WorkGroupID.z >= uint(Constants.dispatch_z_count);
         }
         else
         {
-            _111 = true;
+            _112 = true;
         }
-        bool _118;
-        if (!_111)
+        bool _119;
+        if (!_112)
         {
-            _118 = _84 >= Constants.z_count;
+            _119 = _85 >= Constants.z_count;
         }
         else
         {
-            _118 = true;
+            _119 = true;
         }
-        if (_118)
+        if (_119)
         {
             break;
         }
-        int _121 = _67 - Constants.player_x;
-        float _122 = float(_121);
-        int _123 = _78 - Constants.player_y;
-        float _124 = float(_123);
-        int _127 = _84 - Constants.player_z_idx;
-        float _128 = float(_127);
-        float _131 = _128 * Constants.z_scale;
-        float _137 = sqrt(((_122 * _122) + (_124 * _124)) + (_131 * _131));
-        int _143 = _67 * Constants.cache_y;
-        int _145 = ((_84 * Constants.cache_xy) + _143) + _78;
-        if (_137 < 0.5)
+        int _122 = _68 - Constants.player_x;
+        int _123 = abs(_122);
+        int _124 = _79 - Constants.player_y;
+        int _125 = abs(_124);
+        int _128 = _85 - Constants.player_z_idx;
+        int _129 = abs(_128);
+        int _148;
+        do
         {
-            seen_all._m0[uint(_145)] = 1.0;
+            if (Constants.trigdist == 0u)
+            {
+                _148 = max(_123, max(_125, _129));
+                break;
+            }
+            _148 = int(rint(sqrt(float(((_123 * _123) + (_125 * _125)) + (_129 * _129)))));
+            break;
+        } while(false);
+        int _155 = _68 * Constants.cache_y;
+        int _157 = ((_85 * Constants.cache_xy) + _155) + _79;
+        if (_148 == 0)
+        {
+            seen_all._m0[uint(_157)] = 1.0;
             break;
         }
-        if (_137 > float(Constants.view_radius))
+        if (_148 > Constants.view_radius)
         {
-            seen_all._m0[uint(_145)] = 0.0;
+            seen_all._m0[uint(_157)] = 0.0;
             break;
         }
-        int _159 = abs(_127);
-        float _160 = float(_159);
-        int _166 = max(max(abs(_121), max(abs(_123), int(ceil(_160 * Constants.z_scale)))), 1);
-        bool _257;
-        if (_127 != 0)
+        float _168 = float(_129);
+        int _176 = max(max(_123, max(_125, int(ceil(_168 * Constants.z_scale)))), 1);
+        bool _269;
+        if (_128 != 0)
         {
-            int _171 = (_127 > 0) ? 1 : (-1);
-            bool _256;
-            int _173 = 0;
+            int _181 = (_128 > 0) ? 1 : (-1);
+            bool _268;
+            int _183 = 0;
             for (;;)
             {
-                if (_173 < _159)
+                if (_183 < _129)
                 {
-                    float _181 = (float(_173) + 0.5) / _160;
-                    float _182 = _122 * _181;
-                    int _193;
-                    if (_182 >= 0.0)
+                    float _191 = (float(_183) + 0.5) / _168;
+                    float _193 = float(_122) * _191;
+                    int _204;
+                    if (_193 >= 0.0)
                     {
-                        _193 = int(floor(_182 + 0.5));
+                        _204 = int(floor(_193 + 0.5));
                     }
                     else
                     {
-                        _193 = int(ceil(_182 - 0.5));
+                        _204 = int(ceil(_193 - 0.5));
                     }
-                    int _198 = clamp(Constants.player_x + _193, 0, Constants.cache_x - 1);
-                    float _199 = _124 * _181;
-                    int _210;
-                    if (_199 >= 0.0)
+                    int _209 = clamp(Constants.player_x + _204, 0, Constants.cache_x - 1);
+                    float _211 = float(_124) * _191;
+                    int _222;
+                    if (_211 >= 0.0)
                     {
-                        _210 = int(floor(_199 + 0.5));
-                    }
-                    else
-                    {
-                        _210 = int(ceil(_199 - 0.5));
-                    }
-                    int _213 = clamp(Constants.player_y + _210, 0, Constants.cache_y - 1);
-                    bool _218;
-                    if (_171 < 0)
-                    {
-                        _218 = _173 == 0;
+                        _222 = int(floor(_211 + 0.5));
                     }
                     else
                     {
-                        _218 = false;
+                        _222 = int(ceil(_211 - 0.5));
                     }
-                    bool _222;
-                    if (_218)
+                    int _225 = clamp(Constants.player_y + _222, 0, Constants.cache_y - 1);
+                    bool _230;
+                    if (_181 < 0)
                     {
-                        _222 = _198 == Constants.player_x;
-                    }
-                    else
-                    {
-                        _222 = false;
-                    }
-                    bool _226;
-                    if (_222)
-                    {
-                        _226 = _213 == Constants.player_y;
+                        _230 = _183 == 0;
                     }
                     else
                     {
-                        _226 = false;
+                        _230 = false;
                     }
-                    if (_226)
+                    bool _234;
+                    if (_230)
                     {
-                        int _174 = _173 + 1;
-                        _173 = _174;
+                        _234 = _209 == Constants.player_x;
+                    }
+                    else
+                    {
+                        _234 = false;
+                    }
+                    bool _238;
+                    if (_234)
+                    {
+                        _238 = _225 == Constants.player_y;
+                    }
+                    else
+                    {
+                        _238 = false;
+                    }
+                    if (_238)
+                    {
+                        int _184 = _183 + 1;
+                        _183 = _184;
                         continue;
                     }
-                    int _236;
-                    if (_171 > 0)
+                    int _248;
+                    if (_181 > 0)
                     {
-                        _236 = (Constants.player_z_idx + _173) + 1;
+                        _248 = (Constants.player_z_idx + _183) + 1;
                     }
                     else
                     {
-                        _236 = Constants.player_z_idx - _173;
+                        _248 = Constants.player_z_idx - _183;
                     }
-                    bool _243;
-                    if (_236 >= 0)
+                    bool _255;
+                    if (_248 >= 0)
                     {
-                        _243 = _236 < Constants.z_count;
+                        _255 = _248 < Constants.z_count;
                     }
                     else
                     {
-                        _243 = false;
+                        _255 = false;
                     }
-                    if (_243)
+                    if (_255)
                     {
-                        if (floor_all._m0[uint(((_236 * Constants.cache_xy) + (_198 * Constants.cache_y)) + _213)] != 0u)
+                        if (floor_all._m0[uint(((_248 * Constants.cache_xy) + (_209 * Constants.cache_y)) + _225)] != 0u)
                         {
-                            _256 = true;
+                            _268 = true;
                             break;
                         }
                     }
-                    int _174 = _173 + 1;
-                    _173 = _174;
+                    int _184 = _183 + 1;
+                    _183 = _184;
                     continue;
                 }
                 else
                 {
-                    _256 = false;
+                    _268 = false;
                     break;
                 }
             }
-            _257 = _256;
+            _269 = _268;
         }
         else
         {
-            _257 = false;
+            _269 = false;
         }
-        float _259;
-        _259 = 0.0383764170110225677490234375;
-        float _260;
-        bool _333;
-        int _262 = 1;
+        float _271;
+        _271 = 0.0383764170110225677490234375;
+        float _272;
+        bool _348;
+        int _274 = 1;
         for (;;)
         {
-            if (_262 < _166)
+            if (_274 < _176)
             {
-                float _267 = float(_262);
-                float _269 = _267 / float(_166);
-                float _270 = _122 * _269;
-                int _281;
-                if (_270 >= 0.0)
-                {
-                    _281 = int(floor(_270 + 0.5));
-                }
-                else
-                {
-                    _281 = int(ceil(_270 - 0.5));
-                }
-                float _283 = _124 * _269;
+                float _279 = float(_274);
+                float _281 = _279 / float(_176);
+                float _283 = float(_122) * _281;
                 int _294;
                 if (_283 >= 0.0)
                 {
@@ -252,56 +250,66 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
                 {
                     _294 = int(ceil(_283 - 0.5));
                 }
-                float _296 = _128 * _269;
-                int _307;
-                if (_296 >= 0.0)
+                float _297 = float(_124) * _281;
+                int _308;
+                if (_297 >= 0.0)
                 {
-                    _307 = int(floor(_296 + 0.5));
+                    _308 = int(floor(_297 + 0.5));
                 }
                 else
                 {
-                    _307 = int(ceil(_296 - 0.5));
+                    _308 = int(ceil(_297 - 0.5));
                 }
-                uint _323 = uint(((clamp(Constants.player_z_idx + _307, 0, Constants.z_count - 1) * Constants.cache_xy) + (clamp(Constants.player_x + _281, 0, Constants.cache_x - 1) * Constants.cache_y)) + clamp(Constants.player_y + _294, 0, Constants.cache_y - 1));
-                if (transparency_all._m0[_323] <= 0.0)
+                float _311 = float(_128) * _281;
+                int _322;
+                if (_311 >= 0.0)
                 {
-                    _333 = true;
+                    _322 = int(floor(_311 + 0.5));
+                }
+                else
+                {
+                    _322 = int(ceil(_311 - 0.5));
+                }
+                uint _338 = uint(((clamp(Constants.player_z_idx + _322, 0, Constants.z_count - 1) * Constants.cache_xy) + (clamp(Constants.player_x + _294, 0, Constants.cache_x - 1) * Constants.cache_y)) + clamp(Constants.player_y + _308, 0, Constants.cache_y - 1));
+                if (transparency_all._m0[_338] <= 0.0)
+                {
+                    _348 = true;
                     break;
                 }
-                _260 = ((float(_262 - 1) * _259) + transparency_all._m0[_323]) / _267;
-                _259 = _260;
-                _262++;
+                _272 = ((float(_274 - 1) * _271) + transparency_all._m0[_338]) / _279;
+                _271 = _272;
+                _274++;
                 continue;
             }
             else
             {
-                _333 = _257;
+                _348 = _269;
                 break;
             }
         }
-        if (_333)
+        if (_348)
         {
-            seen_all._m0[uint(_145)] = 0.0;
+            seen_all._m0[uint(_157)] = 0.0;
             break;
         }
-        bool _345;
-        if (_84 < Constants.player_z_idx)
+        bool _360;
+        if (_85 < Constants.player_z_idx)
         {
-            _345 = (_84 + 1) < Constants.z_count;
+            _360 = (_85 + 1) < Constants.z_count;
         }
         else
         {
-            _345 = false;
+            _360 = false;
         }
-        if (_345)
+        if (_360)
         {
-            if (vehicle_floor_all._m0[uint((((_84 + 1) * Constants.cache_xy) + _143) + _78)] != 0u)
+            if (vehicle_floor_all._m0[uint((((_85 + 1) * Constants.cache_xy) + _155) + _79)] != 0u)
             {
-                seen_all._m0[uint(_145)] = 0.0;
+                seen_all._m0[uint(_157)] = 0.0;
                 break;
             }
         }
-        seen_all._m0[uint(_145)] = exp((-_259) * _137);
+        seen_all._m0[uint(_157)] = exp((-_271) * float(_148));
         break;
     } while(false);
 }

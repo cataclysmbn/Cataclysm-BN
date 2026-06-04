@@ -9,7 +9,8 @@
 // center-ray result, not this pass's output, so this closes one-tile surface
 // notches without cascading visibility through rooms.
 
-static const float LIGHT_TRANSPARENCY_SOLID = 0.0;
+static const float LIGHT_TRANSPARENCY_SOLID    = 0.0;
+static const float LIGHT_TRANSPARENCY_OPEN_AIR = 0.038376418216;
 
 cbuffer Constants : register(b0, space2)
 {
@@ -24,7 +25,7 @@ cbuffer Constants : register(b0, space2)
     float z_scale;
     int   z_start_idx;
     int   dispatch_z_count;
-    uint  _pad0;
+    uint  trigdist;
 };
 
 StructuredBuffer<float> transparency_all : register(t0, space0);
@@ -36,6 +37,14 @@ RWStructuredBuffer<float> seen_dst_all : register(u0, space1);
 int tile_index( int x, int y, int z )
 {
     return z * cache_xy + x * cache_y + y;
+}
+
+int visibility_distance( int dx, int dy, int dz )
+{
+    if( trigdist == 0u ) {
+        return max( dx, max( dy, dz ) );
+    }
+    return (int)round( sqrt( (float)( dx * dx + dy * dy + dz * dz ) ) );
 }
 
 [numthreads(8, 8, 1)]
@@ -50,24 +59,27 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         return;
     }
 
-    float fdx  = (float)( tx - player_x );
-    float fdy  = (float)( ty - player_y );
-    float fdz  = (float)( tz - player_z_idx ) * z_scale;
-    float dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
+    int dist = visibility_distance( abs( tx - player_x ), abs( ty - player_y ),
+                                    abs( tz - player_z_idx ) );
 
     int idx = tile_index( tx, ty, tz );
 
-    if( dist < 0.5 ) {
+    if( dist == 0 ) {
         seen_dst_all[idx] = 1.0;
         return;
     }
 
-    if( dist > (float)view_radius ) {
+    if( dist > view_radius ) {
         seen_dst_all[idx] = 0.0;
         return;
     }
 
     float primary = seen_src_all[idx];
+
+    if( transparency_all[idx] == LIGHT_TRANSPARENCY_OPEN_AIR ) {
+        seen_dst_all[idx] = primary;
+        return;
+    }
 
     float best = primary;
 

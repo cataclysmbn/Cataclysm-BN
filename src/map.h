@@ -2330,8 +2330,14 @@ class map : public submap_load_listener
         void build_sunlight_cache( int pzlev );
         // Recomputes sun direction and scatter factor from the current game time.
         void update_solar_params();
-        // True when a tile has physical sky access along the current sunlight ray.
-        bool has_direct_sunlight_at( point_bub_ms p, int zlev ) const;
+        enum class direct_sunlight_state : int {
+            none,
+            shadow,
+            direct
+        };
+        // Distinguishes roofed tiles, angled-sun shadow, and full direct sun.
+        auto direct_sunlight_state_at( point_bub_ms p, int zlev ) const -> direct_sunlight_state;
+        auto has_direct_sunlight_at( point_bub_ms p, int zlev ) const -> bool;
         auto current_lightmap_source_signature() -> std::size_t;
         void invalidate_lightmap_caches_if_light_state_changed();
     public:

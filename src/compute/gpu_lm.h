@@ -50,7 +50,8 @@ struct lm_ambient_push_constants {
     uint32_t direct_sunlight;         //  4 bytes, offset 28 = 32
     float sun_dx_per_z;               //  4 bytes, offset 32
     float sun_dy_per_z;               //  4 bytes, offset 36
-    uint32_t _pad0[2];                //  8 bytes, offset 40 = 48
+    float solar_shadow_light;         //  4 bytes, offset 40
+    uint32_t _pad0;                   //  4 bytes, offset 44 = 48
     float natural_light[6][4];        // 96 bytes, offset 48 = 144 total
 };
 static_assert(sizeof(lm_ambient_push_constants) == 144);
@@ -89,7 +90,7 @@ struct lm_seen_push_constants {
     float z_scale;            //  4 bytes
     int32_t z_start_idx;      //  4 bytes
     int32_t dispatch_z_count; // 4 bytes
-    uint32_t _pad;            //  4 bytes = 48
+    uint32_t trigdist;        //  4 bytes = 48
 };
 static_assert(sizeof(lm_seen_push_constants) == 48);
 

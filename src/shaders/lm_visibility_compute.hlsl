@@ -169,7 +169,7 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
             } else {
                 visibility_all[idx] = LIT_LOW;
             }
-        } else if( apparent_light >= vision_threshold ) {
+        } else if( apparent_light > vision_threshold ) {
             visibility_all[idx] = LIT_LOW;
         } else {
             visibility_all[idx] = LIT_BLANK;
@@ -181,7 +181,7 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
         visibility_all[idx] = LIT_BRIGHT;
     } else if( apparent_light > LIGHT_AMBIENT_LIT ) {
         visibility_all[idx] = LIT_LIT;
-    } else if( apparent_light >= vision_threshold ) {
+    } else if( apparent_light > vision_threshold ) {
         visibility_all[idx] = LIT_LOW;
     } else {
         visibility_all[idx] = LIT_BLANK;

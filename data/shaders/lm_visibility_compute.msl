@@ -297,7 +297,7 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
             }
             else
             {
-                if (_269 >= Constants.vision_threshold)
+                if (_269 > Constants.vision_threshold)
                 {
                     visibility_all._m0[_104] = 1u;
                 }
@@ -329,7 +329,7 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
             }
             else
             {
-                if (_269 >= Constants.vision_threshold)
+                if (_269 > Constants.vision_threshold)
                 {
                     visibility_all._m0[_104] = 1u;
                 }

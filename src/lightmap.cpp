@@ -73,6 +73,8 @@ std::atomic<int64_t> cpu_lm_ambient_reads_stale{ 0 };
 std::atomic<int64_t> cpu_lm_ambient_cache_hits{ 0 };
 std::atomic<int64_t> cpu_lm_ambient_cache_misses{ 0 };
 
+static constexpr auto SOLAR_SHADOW_SCATTER = 0.09f;
+
 struct ambient_cache_key {
     const map *owner = nullptr;
     int x = 0;
@@ -821,29 +823,36 @@ void map::update_solar_params()
     m_solar.dy_per_z = 0.f;  // No latitude tilt modelled.
 }
 
-bool map::has_direct_sunlight_at( const point_bub_ms p, const int zlev ) const
+auto map::direct_sunlight_state_at( const point_bub_ms p,
+                                    const int zlev ) const -> direct_sunlight_state
 {
     if( zlev >= OVERMAP_HEIGHT ) {
-        return true;
+        return direct_sunlight_state::direct;
     }
 
     const auto angled_sunlight = angled_sunlight_shadows && m_solar.direct_active;
     const auto levels_up = OVERMAP_HEIGHT - zlev;
     for( const auto step : std::views::iota( 1, levels_up + 1 ) ) {
-        const auto ray_step = angled_sunlight ? -( static_cast<float>( step ) - 0.5f ) : 0.0f;
+        const auto &above = get_cache_ref( zlev + step );
+        if( above.floor_cache[above.idx( p.x(), p.y() )] ) {
+            return direct_sunlight_state::none;
+        }
+    }
+    if( !angled_sunlight ) {
+        return direct_sunlight_state::direct;
+    }
+
+    for( const auto step : std::views::iota( 1, levels_up + 1 ) ) {
+        const auto ray_step = -( static_cast<float>( step ) - 0.5f );
         const auto sx = p.x() + static_cast<int>( std::lround( m_solar.dx_per_z * ray_step ) );
         const auto sy = p.y() + static_cast<int>( std::lround( m_solar.dy_per_z * ray_step ) );
         const auto &above = get_cache_ref( zlev + step );
         if( sx < 0 || sy < 0 || sx >= above.cache_x || sy >= above.cache_y ) {
-            return true;
+            return direct_sunlight_state::direct;
         }
-        const auto idx = above.idx( sx, sy );
-        if( above.floor_cache[idx] ) {
-            return false;
+        if( above.floor_cache[above.idx( sx, sy )] ) {
+            return direct_sunlight_state::shadow;
         }
-    }
-    if( !angled_sunlight ) {
-        return true;
     }
 
     const auto dx_to_sky = -m_solar.dx_per_z * static_cast<float>( levels_up );
@@ -858,20 +867,25 @@ bool map::has_direct_sunlight_at( const point_bub_ms p, const int zlev ) const
         const auto sz = std::clamp( zlev + static_cast<int>( std::lround(
                                         static_cast<float>( levels_up ) * t ) ), zlev, OVERMAP_HEIGHT );
         if( sx < 0 || sy < 0 ) {
-            return true;
+            return direct_sunlight_state::direct;
         }
         const auto &ray_cache = get_cache_ref( sz );
         if( sx >= ray_cache.cache_x || sy >= ray_cache.cache_y ) {
-            return true;
+            return direct_sunlight_state::direct;
         }
         if( sx == p.x() && sy == p.y() && sz == zlev ) {
             continue;
         }
         if( ray_cache.transparency_cache[ray_cache.idx( sx, sy )] <= LIGHT_TRANSPARENCY_SOLID ) {
-            return false;
+            return direct_sunlight_state::shadow;
         }
     }
-    return true;
+    return direct_sunlight_state::direct;
+}
+
+auto map::has_direct_sunlight_at( const point_bub_ms p, const int zlev ) const -> bool
+{
+    return direct_sunlight_state_at( p, zlev ) == direct_sunlight_state::direct;
 }
 
 // toward the lower limit. Since it's sunlight, the rays are parallel.
@@ -911,8 +925,7 @@ void map::build_sunlight_cache( int pzlev )
         // Grab illumination at ground level.
         const float outside_light_level = g->natural_light_level( 0 );
         // TODO: if zlev < 0 is open to sunlight, this won't calculate correct light, but neither does g->natural_light_level()
-        const float inside_light_level = ( zlev >= 0 && outside_light_level > LIGHT_SOURCE_BRIGHT ) ?
-                                         LIGHT_AMBIENT_DIM * 0.8 : LIGHT_AMBIENT_LOW;
+        const float inside_light_level = LIGHT_AMBIENT_LOW;
         // Handling when z-levels are disabled is based on whether a tile is considered "outside".
         if( !zlevels ) {
             const auto &outside_cache = map_cache.outside_cache;
@@ -1020,14 +1033,22 @@ void map::build_sunlight_cache( int pzlev )
 
         // Override direct-sun tiles to full outside_light_level.
         if( angled_sunlight_shadows && m_solar.direct_active ) {
+            const auto max_shadow_light = static_cast<float>( default_daylight_level() ) *
+                                          SOLAR_SHADOW_SCATTER;
+            const auto shadow_light_level =
+                std::max( inside_light_level, std::min( outside_light_level, max_shadow_light ) );
             std::ranges::for_each(
                 std::views::iota( 0, map_cache.cache_x * map_cache.cache_y ),
             [&]( int i ) {
                 const auto idx = static_cast<size_t>( i );
                 const auto x = i / map_cache.cache_y;
                 const auto y = i % map_cache.cache_y;
-                if( has_direct_sunlight_at( point_bub_ms( x, y ), zlev ) ) {
+                const auto sun_state = direct_sunlight_state_at( point_bub_ms( x, y ), zlev );
+                if( sun_state == direct_sunlight_state::direct ) {
                     lm[idx] = outside_light_level;
+                    fully_inside = false;
+                } else if( sun_state == direct_sunlight_state::shadow ) {
+                    lm[idx] = shadow_light_level;
                     fully_inside = false;
                 }
             }

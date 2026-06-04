@@ -2,6 +2,7 @@
 #include "gpu_lm.h"
 
 #include "cached_options.h"
+#include "calendar.h"
 #include "character.h"
 #include "debug.h"
 #include "effect.h"
@@ -44,6 +45,8 @@
 namespace cata_gpu {
 
 namespace {
+
+static constexpr auto solar_shadow_scatter = 0.09f;
 
 // ---------------------------------------------------------------------------
 // Pipeline management
@@ -1110,6 +1113,7 @@ auto ambient_signature(lm_ambient_push_constants const& ambient) -> std::size_t 
     mix_signature(seed, quantized_signature_float(ambient.sun_dx_per_z, 8.0f));
     mix_signature(seed, quantized_signature_float(ambient.sun_dy_per_z, 8.0f));
     mix_signature(seed, quantized_signature_float(ambient.inside_light, 4.0f));
+    mix_signature(seed, quantized_signature_float(ambient.solar_shadow_light, 4.0f));
     for (auto const& natural_light : ambient.natural_light) {
         for (auto const value : natural_light) {
             mix_signature(seed, quantized_signature_float(value, 4.0f));
@@ -1882,7 +1886,8 @@ struct record_seen_rebuild_params {
 };
 
 auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
-    auto const diam = static_cast<Uint32>(2 * MAX_VIEW_DISTANCE + 1);
+    auto const view_radius = g_max_view_distance;
+    auto const diam = static_cast<Uint32>(2 * view_radius + 1);
     auto const g_seen = (diam + 7) / 8;
 
     {
@@ -1915,7 +1920,7 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
                 .cache_y = p.cache_y,
                 .cache_xy = p.cache_xy,
                 .z_count = p.z_count,
-                .view_radius = MAX_VIEW_DISTANCE,
+                .view_radius = view_radius,
                 .z_start_idx = p.z_start_idx,
                 .dispatch_z_count = p.dispatch_z_count,
                 ._pad = {},
@@ -1949,11 +1954,11 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
         .cache_y = p.cache_y,
         .cache_xy = p.cache_xy,
         .z_count = p.z_count,
-        .view_radius = MAX_VIEW_DISTANCE,
+        .view_radius = view_radius,
         .z_scale = Z_LEVEL_SCALE,
         .z_start_idx = p.z_start_idx,
         .dispatch_z_count = p.dispatch_z_count,
-        ._pad = 0u,
+        .trigdist = trigdist ? 1u : 0u,
     };
 
     {
@@ -2373,9 +2378,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     // ── Compute ambient constants per z-level ────────────────────────────────
     auto ambient_push = lm_ambient_push_constants{};
     {
-        auto const outside_light = g->natural_light_level(0);
-        ambient_push.inside_light =
-            (outside_light > LIGHT_SOURCE_BRIGHT) ? LIGHT_AMBIENT_DIM * 0.8f : LIGHT_AMBIENT_LOW;
+        ambient_push.inside_light = LIGHT_AMBIENT_LOW;
         ambient_push.cache_x = cache_x;
         ambient_push.cache_y = cache_y;
         ambient_push.cache_xy = cache_xy;
@@ -2385,6 +2388,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         ambient_push.direct_sunlight = p.direct_sunlight ? 1u : 0u;
         ambient_push.sun_dx_per_z = p.sun_dx_per_z;
         ambient_push.sun_dy_per_z = p.sun_dy_per_z;
+        auto const max_shadow_light = static_cast<float>(default_daylight_level()) *
+            solar_shadow_scatter;
+        ambient_push.solar_shadow_light =
+            std::max(static_cast<float>(LIGHT_AMBIENT_LOW),
+                     std::min(g->natural_light_level(0), max_shadow_light));
         for (auto const zi : std::views::iota(0, OVERMAP_LAYERS)) {
             ambient_push.natural_light[zi / 4][zi % 4] = g->natural_light_level(zi - OVERMAP_DEPTH);
         }
