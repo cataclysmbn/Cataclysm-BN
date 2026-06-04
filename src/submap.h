@@ -23,6 +23,7 @@
 #include "monster.h"
 #include "point.h"
 #include "poly_serialized.h"
+#include "sounds.h"
 
 class JsonIn;
 class JsonOut;
@@ -309,9 +310,11 @@ class submap : maptile_soa<SEEX, SEEY>
         float  transparency_cache[SEEX][SEEY] = {};
         bool   outside_cache[SEEX][SEEY]      = {};
         bool   sheltered_cache[SEEX][SEEY]    = {};
-        char   floor_cache[SEEX][SEEY]         = {};
+        char   floor_cache[SEEX][SEEY]        = {};
         pf_special pf_special_cache[SEEX][SEEY]  = {};
-        int    scent_values[SEEX][SEEY]        = {};
+        int    scent_values[SEEX][SEEY]       = {};
+        short  absorption_cache[SEEX][SEEY]   = {};
+        bool   sound_wall_cache[SEEX][SEEY]   = {};
         // True if any scent_values cell is non-zero. Set in raw_scent_set; cleared by
         // scent_map::decay once all values reach zero. Lets decay() skip unvisited submaps.
         bool has_scent = false;
@@ -320,6 +323,10 @@ class submap : maptile_soa<SEEX, SEEY>
         bool outside_dirty      = true;
         bool floor_dirty        = true;
         bool pf_dirty           = true;
+        bool absorption_dirty   = true;
+
+        // Since we rebuild the sound_wall_cache at the same time as the absorption cache, we dont need this.
+        // bool sound_wall_dirty   = true;
 
         // Rebuild per-submap caches from terrain/furniture/field data.
         // grid_pos = submap grid coordinates within map m (x,y = submap index, z = z-level).
@@ -331,6 +338,11 @@ class submap : maptile_soa<SEEX, SEEY>
         auto rebuild_pf_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         // rebuild_transparency_cache calls rebuild_outside_cache first if outside_dirty.
         auto rebuild_transparency_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
+
+        // Rebuilds the per-submap sound absorption cache from terrain and furniture data.
+        // This will also rebuild the sound wall cache for the submap.
+        // Check sounds.cpp for implimentation.
+        auto rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid_pos ) -> void;
         /**
          * Vehicles on this submap (their (0,0) point is on this submap).
          * This vehicle objects are deleted by this submap when it gets

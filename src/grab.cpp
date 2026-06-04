@@ -32,8 +32,15 @@ namespace
 {
 auto make_scraping_noise( const tripoint_bub_ms &pos, const int volume ) -> void
 {
-    sounds::sound( pos, volume, sounds::sound_t::movement,
-                   _( "a scraping noise." ), true, "misc", "scraping" );
+    sound_event se;
+    se.origin = pos;
+    se.volume = volume;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "a scraping noise." );
+    se.id = "misc";
+    se.variant = "scraping";
+    sounds::sound( se );
 }
 
 // vehicle movement: strength check. very strong humans can move about 2,000 kg in a wheelbarrow.
@@ -173,7 +180,7 @@ bool game::grabbed_veh_move( const tripoint_rel_ms &dp )
     ///\EFFECT_STR determines ability to drag vehicles
     if( str_req <= str ) {
         if( !grabbed_vehicle->valid_wheel_config() && !grabbed_vehicle->has_sufficient_lift( true ) ) {
-            make_scraping_noise( grabbed_vehicle->bub_ms_location(), str_req * 2 );
+            make_scraping_noise( grabbed_vehicle->bub_ms_location(), std::min( 80, str_req * 2 ) );
         }
 
         //calculate exertion factor and movement penalty

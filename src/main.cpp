@@ -197,6 +197,7 @@ int main( int argc, char *argv[] )
     int seed = time( nullptr );
     bool verifyexit = false;
     bool check_mods = false;
+    auto check_mods_mode = init::check_mods_mode::default_mods;
     std::filesystem::path lua_doc_output_path;
     std::filesystem::path lua_types_output_path;
     std::string dump;
@@ -238,7 +239,7 @@ int main( int argc, char *argv[] )
         const char *section_default = nullptr;
         const char *section_map_sharing = "Map sharing";
         const char *section_user_directory = "User directories";
-        const std::array<arg_handler, 15> first_pass_arguments = {{
+        const std::array<arg_handler, 16> first_pass_arguments = {{
                 {
                     "--seed", "<string of letters and or numbers>",
                     "Sets the random number generator's seed value",
@@ -265,7 +266,7 @@ int main( int argc, char *argv[] )
                 },
                 {
                     "--check-mods", "[mods…]",
-                    "Checks the json files belonging to BN mods",
+                    "Checks the json files belonging to default or specified BN mods",
                     section_default,
                     [&check_mods, &opts]( int n, const char *params[] ) -> int {
                         check_mods = true;
@@ -274,6 +275,17 @@ int main( int argc, char *argv[] )
                         {
                             opts.emplace_back( params[ i ] );
                         }
+                        return 0;
+                    }
+                },
+                {
+                    "--check-all-mods", nullptr,
+                    "Checks the json files belonging to all non-obsolete BN mods",
+                    section_default,
+                    [&check_mods, &check_mods_mode]( int, const char ** ) -> int {
+                        check_mods = true;
+                        check_mods_mode = init::check_mods_mode::all_mods;
+                        test_mode = true;
                         return 0;
                     }
                 },
@@ -761,7 +773,7 @@ int main( int argc, char *argv[] )
             init_colors();
             loading_ui ui( false );
             const std::vector<mod_id> mods( opts.begin(), opts.end() );
-            if( init::check_mods_for_errors( ui, mods ) ) {
+            if( init::check_mods_for_errors( ui, mods, check_mods_mode ) ) {
                 exit( 0 );
             } else {
                 exit( 1 );

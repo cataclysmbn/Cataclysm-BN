@@ -271,6 +271,7 @@ static const std::unordered_map<std::string, ter_bitflags> ter_bitflags_map = { 
         { "FREEZER",                  TFLAG_FREEZER },        // This is an active freezer.
         { "ELEVATOR",                 TFLAG_ELEVATOR },       // This is an elevator.
         { "NO_MEMORY",                TFLAG_NO_MEMORY },      // This should not be added to map memory
+        { "ROAD",                     TFLAG_ROAD },           // Some floors have this flag, as do some passable transformation of otherwise impassible terrain/furniture. Very notably, open doors.
     }
 };
 

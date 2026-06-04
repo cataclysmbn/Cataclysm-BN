@@ -206,11 +206,12 @@ jobs:
         if: runner.os == 'Windows'
         uses: hendrikmuhs/ccache-action@v1.2
         with:
-          key: windows-${{ matrix.artifact }}-${{ github.ref_name }}
+          # Build mode changes MSVC compiler inputs.
+          key: windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
           restore-keys: |
-            windows-${{ matrix.artifact }}-${{ github.ref_name }}
-            windows-${{ matrix.artifact }}-main
-            windows-${{ matrix.artifact }}-
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-${{ github.ref_name }}
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-main
+            windows-${{ matrix.artifact }}-${{ inputs.mode }}-
           max-size: 3G
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}

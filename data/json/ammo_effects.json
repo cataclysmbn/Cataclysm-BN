@@ -420,10 +420,24 @@
     "//": "Nearly-immeasurable chance to fail to fire."
   },
   {
+    "id": "AMMO_50BMG_RAUFOSS",
+    "type": "ammo_effect",
+    "explosion": {
+      "damage": 50,
+      "radius": 2,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 70, "armor_multiplier": 1 }, "range": 5 }
+    }
+  },
+  {
     "id": "AMMO_25MM_HEI",
     "type": "ammo_effect",
-    "aoe": { "field_type": "fd_fire", "intensity_min": 1, "intensity_max": 1, "size": 1, "radius": 1, "chance": 25 },
-    "explosion": { "damage": 10, "radius": 1 }
+    "explosion": {
+      "damage": 10,
+      "radius": 1,
+      "fragment_effect": [ { "effect": "onfire", "odds": 2, "min_turns": 4, "max_turns": 8 } ],
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 5, "armor_multiplier": 1 }, "range": 2 }
+    }
   },
   {
     "id": "AMMO_155MM_FRAG",

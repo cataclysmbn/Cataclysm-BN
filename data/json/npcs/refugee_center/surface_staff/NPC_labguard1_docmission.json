@@ -8,7 +8,7 @@
     "attitude": 0,
     "mission": 8,
     "chat": "TALK_LABGUARD1_DOCMISSION",
-    "faction": "old_guard"
+    "faction": "tcl_holdouts"
   },
   {
     "id": [ "TALK_LABGUARD1_DOCMISSION" ],

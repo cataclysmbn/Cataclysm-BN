@@ -869,6 +869,21 @@ void cata::detail::reg_hooks_examples( sol::state &lua )
     DOC_PARAMS( "params" );
     luna::set_fx( lib, "on_mapgen_postprocess", []( const sol::table & ) {} );
 
+    DOC( "Called right after mission has started.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `mission_type` (mission_type): The type of the mission.  " );
+    DOC( "* `mission` (mission): The mission instance.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_mission_start", []( const sol::table & ) {} );
+
+    DOC( "Called right after mission has ended.  " );
+    DOC( "The hook receives a table with keys:  " );
+    DOC( "* `mission_type` (mission_type): The type of the mission.  " );
+    DOC( "* `mission` (mission): The mission instance.  " );
+    DOC( "* `success` (bool): Successful if true else failed.  " );
+    DOC_PARAMS( "params" );
+    luna::set_fx( lib, "on_mission_end", []( const sol::table & ) {} );
+
     luna::finalize_lib( lib );
 }
 

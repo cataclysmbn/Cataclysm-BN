@@ -361,7 +361,7 @@
       ]
     },
     "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_pestilence", "no_fail": true, "need_wielding": true, "level": 0 } ],
-    "relative": { "weight": 540 },
+    "relative": { "weight": "540 g" },
     "extend": { "flags": [ "NO_SALVAGE", "MAGIC_FOCUS" ] }
   },
   {
@@ -1125,7 +1125,7 @@
     "max_charges": 8,
     "charges_per_use": 2,
     "ammo": "essence_blood_type",
-    "relative": { "weight": 230 },
+    "relative": { "weight": "230 g" },
     "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_lichhook", "no_fail": true, "need_wielding": true, "level": 0 } ],
     "extend": { "flags": [ "NO_SALVAGE", "SHEATH_SWORD" ] }
   },
@@ -1357,7 +1357,7 @@
         ]
       ]
     ],
-    "magazine_well": 20,
+    "magazine_well": "5 L",
     "use_action": [ { "type": "cast_spell", "spell_id": "arcana_item_coalescent_conversion", "no_fail": true, "level": 0 } ]
   },
   {

@@ -57,5 +57,11 @@
       { "group": "underwear", "damage": [ 1, 2 ] },
       { "group": "rare", "count": 1, "prob": 100 }
     ]
+  },
+  {
+    "type": "item_group",
+    "subtype": "collection",
+    "id": "mon_kraken_boss_death_drops",
+    "entries": [ { "item": "onyx_eye", "prob": 100 } ]
   }
 ]
