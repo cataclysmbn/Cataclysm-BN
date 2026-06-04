@@ -2362,11 +2362,7 @@ class map : public submap_load_listener
         // lights.  The function then processes only entities whose position z
         // matches zlev, avoiding cross-level cache writes for parallel safety.
         void generate_lightmap( int zlev );
-        // When gpu_collect_only is true, only populates light_source_buffer/light_source_points;
-        // skips all CPU shadowcasting (apply_light_source / apply_light_arc calls).
-        // Directional and arc lights are approximated as omnidirectional point
-        // sources so they appear in the GPU source list.
-        void generate_lightmap_worker( int zlev, bool gpu_collect_only = false );
+        void generate_lightmap_worker( int zlev );
         void build_seen_cache( const tripoint_bub_ms &origin, int target_z );
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.

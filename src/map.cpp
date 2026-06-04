@@ -6276,9 +6276,7 @@ void map::process_items_in_vehicle( vehicle &cur_veh, submap &current_submap )
         vp.part().process_contents( vp.pos(), engine_heater_is_on );
     }
 
-    // OPP-4 / MISSED-4: if there is nothing to do (no active items and no cargo
-    // recharge), skip the get_parts_including_carried() call entirely.
-    // Building cargo_parts is not free on vehicles with many cargo slots.
+    // If there is nothing to process, skip the expensive cargo-part collection.
     if( cur_veh.active_items.empty() && !cur_veh.has_cargo_recharge ) {
         return;
     }

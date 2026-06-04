@@ -5,8 +5,8 @@
 cbuffer Constants : register(b0, space2)
 {
     uint total_tiles;
-    uint _pad0;
-    uint _pad1;
+    int  cache_xy;
+    int  z_start_idx;
     uint _pad2;
 };
 
@@ -21,6 +21,7 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
         return;
     }
 
-    seen_raw_all[idx] = 0.0;
-    seen_all[idx] = 0.0;
+    uint dst_idx = (uint)( z_start_idx * cache_xy ) + idx;
+    seen_raw_all[dst_idx] = 0.0;
+    seen_all[dst_idx] = 0.0;
 }

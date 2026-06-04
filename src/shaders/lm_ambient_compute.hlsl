@@ -1,7 +1,6 @@
 // GPU Lighting — Ambient Initialisation Pass
 //
-// Initialises environment light and the transitional frame lm before any
-// per-source ray casting.
+// Initialises the frame lm before any per-source ray casting.
 // One thread per tile per z-level.
 //
 // Outdoor tiles receive natural_light[z_idx]; indoor tiles receive
@@ -49,8 +48,7 @@ StructuredBuffer<uint>  floor_all        : register(t0, space0);
 StructuredBuffer<float> transparency_all : register(t1, space0);
 StructuredBuffer<float> source_map_all   : register(t2, space0);
 
-RWStructuredBuffer<uint> env_lm_all : register(u0, space1);
-RWStructuredBuffer<uint> lm_all     : register(u1, space1);
+RWStructuredBuffer<uint> lm_all : register(u0, space1);
 
 int round_nearest_int( float value )
 {
@@ -175,6 +173,5 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
     }
     ambient = max( ambient, source_map_all[idx] );
     uint packed_ambient = asuint( ambient );
-    env_lm_all[idx] = packed_ambient;
     lm_all[idx] = packed_ambient;
 }

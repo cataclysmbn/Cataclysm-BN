@@ -11,7 +11,9 @@ cbuffer Constants : register(b0, space2)
     int cache_xy;
     int z_count;
     int view_radius;
-    uint _pad0;
+    int z_start_idx;
+    int dispatch_z_count;
+    uint3 _pad0;
 };
 
 RWStructuredBuffer<float> seen_raw_all : register(u0, space1);
@@ -22,9 +24,11 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
 {
     int x = player_x + (int)( group_id.x * 8 + thread_id.x ) - view_radius;
     int y = player_y + (int)( group_id.y * 8 + thread_id.y ) - view_radius;
-    int z = (int)group_id.z;
+    int dispatch_z = (int)group_id.z;
+    int z = z_start_idx + dispatch_z;
 
-    if( x < 0 || y < 0 || x >= cache_x || y >= cache_y || z >= z_count ) {
+    if( x < 0 || y < 0 || x >= cache_x || y >= cache_y ||
+        dispatch_z >= dispatch_z_count || z < 0 || z >= z_count ) {
         return;
     }
 

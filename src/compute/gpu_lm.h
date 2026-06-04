@@ -119,9 +119,9 @@ struct lm_visibility_push_constants {
 static_assert(sizeof(lm_visibility_push_constants) == 64);
 
 // ---------------------------------------------------------------------------
-// Compute the effective illumination radius from source luminance.
-// Uses the same formula as LIGHT_RANGE() in lightmap.h, capped at
-// MAX_VIEW_DISTANCE to bound dispatch dimensions.
+// Compute a conservative dispatch radius from source luminance.
+// This is the inverse-square upper bound for lm_raytrace_compute.hlsl before
+// exponential attenuation is applied.
 // ---------------------------------------------------------------------------
 auto compute_light_radius(float luminance) -> float;
 
@@ -145,7 +145,7 @@ struct run_gpu_lighting_params {
     std::vector<int> const* vehicle_floor_dirty_levels = nullptr;
     bool rebuild_seen_cache;
     bool download_seen_cache = false;
-    bool download_lightmap = true;
+    bool download_lightmap = true; // transitional CPU readback request
     bool angled_sunlight_shadows;
     bool direct_sunlight;
     float sun_dx_per_z;
@@ -208,12 +208,12 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 
 // Begin the full GPU lighting pass for the dirty z-levels.
 //   1. Pack inputs from CPU level caches.
-//   2. Collect light sources (light_source_buffer + character/monster lights).
-//   3. Ambient init pass  → initialises lm_all.
-//   4. Raytrace pass      → InterlockedMax per-source contributions into lm_all.
-//   5. Seen-cache pass    → ray cast from player into raw seen_all when requested
+//   2. Collect typed GPU light sources.
+//   3. Ambient init pass  -> initialises lm_all.
+//   4. Raytrace pass      -> InterlockedMax per-source contributions into lm_all.
+//   5. Seen-cache pass    -> ray cast from player into raw seen_all when requested
 //                           or when resident GPU seen data is invalid.
-//   6. Surface pass       → make glancing surfaces inherit adjacent visibility.
+//   6. Surface pass       -> make glancing surfaces inherit adjacent visibility.
 //   7. Schedule lm/seen downloads when CPU readback was requested.
 // device must be non-null (caller responsibility).
 // Returns an id-bearing handle if the GPU pass was submitted.

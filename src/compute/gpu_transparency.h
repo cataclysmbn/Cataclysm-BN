@@ -129,8 +129,7 @@ auto shutdown_transparency() -> void;
 // caller (lightmap.cpp) already has that value in scope.
 auto verify_transparency_against_cpu(map const& m, int zlev, float sight_penalty) -> void;
 
-// Kept for API symmetry; superseded by verify_transparency_against_cpu for
-// Phase 6.  Will be wired for standalone readback in a later phase.
+// Legacy verification hook retained for dev-only CATA_GPU_VERIFY builds.
 auto verify_transparency_readback(SDL_GPUDevice* device, float const* cpu_reference, int cache_size)
     -> void;
 #endif

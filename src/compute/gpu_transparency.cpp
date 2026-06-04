@@ -715,7 +715,7 @@ auto verify_transparency_against_cpu(map const& m, int const zlev, float const s
 
 auto verify_transparency_readback(
     SDL_GPUDevice* /*device*/, float const* /*cpu_reference*/, int /*cache_size*/) -> void {
-    // Superseded by verify_transparency_against_cpu for Phase 6.
+    // Legacy no-op hook retained for CATA_GPU_VERIFY call sites.
 }
 
 #endif // defined( CATA_GPU_VERIFY )
