@@ -407,7 +407,7 @@ bool melee_actor::call( monster &z ) const
 
     if( hitspread < 0 ) {
         auto msg_type = target->is_avatar() ? m_warning : m_info;
-        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos() ),
+        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos(), 50 ),
                                  sfx::get_heard_angle( z.bub_pos() ) );
         target->add_msg_player_or_npc( msg_type, miss_msg_u, miss_msg_npc, z.name() );
         return true;
@@ -432,7 +432,7 @@ bool melee_actor::call( monster &z ) const
     if( damage_total > 0 ) {
         on_damage( z, *target, dealt_damage );
     } else {
-        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos() ),
+        sfx::play_variant_sound( "mon_bite", "bite_miss", sfx::get_heard_volume( z.bub_pos(), 50 ),
                                  sfx::get_heard_angle( z.bub_pos() ) );
         target->add_msg_player_or_npc( m_neutral, no_dmg_msg_u, no_dmg_msg_npc, z.name(),
                                        body_part_name_accusative( bp_hit ) );
@@ -446,7 +446,7 @@ bool melee_actor::call( monster &z ) const
 void melee_actor::on_damage( monster &z, Creature &target, dealt_damage_instance &dealt ) const
 {
     if( target.is_player() ) {
-        sfx::play_variant_sound( "mon_bite", "bite_hit", sfx::get_heard_volume( z.bub_pos() ),
+        sfx::play_variant_sound( "mon_bite", "bite_hit", sfx::get_heard_volume( z.bub_pos(), 60 ),
                                  sfx::get_heard_angle( z.bub_pos() ) );
         sfx::do_player_death_hurt( dynamic_cast<player &>( target ), false );
     }
@@ -564,7 +564,13 @@ void gun_actor::load_internal( const JsonObject &obj, const std::string & )
         targeting_sound = _( "Beep." );
     }
 
-    obj.read( "targeting_volume", targeting_volume );
+    if( obj.has_int( "targeting_volume" ) ) {
+        int volume = obj.get_int( "targeting_volume" );
+        volume = approximate_dB_volume_from_legacy_tile_distance_vol( volume );
+        targeting_volume = volume;
+    }
+
+    obj.read( "targeting_volume_dB", targeting_volume );
 
     obj.read( "laser_lock", laser_lock );
 
@@ -728,8 +734,14 @@ bool gun_actor::try_target( monster &z, Creature &target ) const
 
     if( not_targeted || not_laser_locked ) {
         if( targeting_volume > 0 && !targeting_sound.empty() ) {
-            sounds::sound( z.bub_pos(), targeting_volume, sounds::sound_t::alarm,
-                           _( targeting_sound ) );
+            sound_event se;
+            se.origin = z.bub_pos();
+            se.volume = targeting_volume;
+            se.category = sounds::sound_t::alarm;
+            se.description = _( targeting_sound );
+            se.from_monster = true;
+            se.monfaction = z.faction.id();
+            sounds::sound( se );
         }
         if( not_targeted ) {
             z.add_effect( effect_targeted, time_duration::from_turns( targeting_timeout ) );
@@ -771,7 +783,14 @@ void gun_actor::shoot( monster &z, const tripoint_bub_ms &target, const gun_mode
 
     if( !gun->ammo_sufficient() ) {
         if( !no_ammo_sound.empty() ) {
-            sounds::sound( z.bub_pos(), 10, sounds::sound_t::combat, _( no_ammo_sound ) );
+            sound_event se;
+            se.origin = z.bub_pos();
+            se.volume = 60;
+            se.category = sounds::sound_t::combat;
+            se.description = _( no_ammo_sound );
+            se.from_monster = true;
+            se.monfaction = z.faction.id();
+            sounds::sound( se );
         }
         return;
     }

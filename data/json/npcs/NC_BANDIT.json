@@ -96,13 +96,14 @@
     "entries": [
       { "item": "null", "prob": 50 },
       { "item": "football_armor", "prob": 10 },
-      { "item": "cuirass_scrap", "prob": 10 },
+      { "item": "cuirass_scrap", "prob": 5 },
       { "item": "armor_scrapsuit", "prob": 5 },
       { "item": "armor_larmor", "prob": 5 },
       { "item": "armor_plarmor", "prob": 5 },
       { "item": "kevlar", "prob": 5 },
       { "item": "modularvest", "prob": 5 },
-      { "item": "flotation_vest_sandbag", "prob": 5 }
+      { "item": "flotation_vest_sandbag", "prob": 5 },
+      { "item": "armor_trench", "prob": 5 }
     ]
   },
   {
@@ -156,16 +157,18 @@
       { "item": "cowboy_hat", "prob": 2 },
       { "item": "bandana_head", "prob": 5 },
       { "item": "pickelhaube", "prob": 1 },
-      { "item": "helmet_skid", "prob": 10 },
       { "item": "helmet_motor", "prob": 10 },
-      { "item": "helmet_bike", "prob": 5 },
       { "item": "helmet_football", "prob": 5 },
-      { "item": "hat_hard", "prob": 5 },
-      { "item": "hat_hard_hooded", "prob": 5 },
-      { "item": "helmet_ball", "prob": 5 },
+      { "item": "helmet_skid", "prob": 4 },
+      { "item": "helmet_bike", "prob": 4 },
+      { "item": "hat_hard", "prob": 4 },
+      { "item": "hat_hard_hooded", "prob": 4 },
+      { "item": "helmet_ball", "prob": 4 },
       { "item": "helmet_larmor", "prob": 5 },
       { "item": "helmet_plarmor", "prob": 5 },
       { "item": "helmet_skull", "prob": 5 },
+      { "item": "helmet_scrap", "prob": 5 },
+      { "item": "armor_trench", "prob": 5 },
       { "item": "helmet_army", "prob": 5 },
       { "item": "helmet_steel", "prob": 9 }
     ]

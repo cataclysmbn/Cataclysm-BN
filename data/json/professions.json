@@ -1724,6 +1724,60 @@
   },
   {
     "type": "profession",
+    "id": "prof_combat_engineer",
+    "name": "Military Corpsman",
+    "description": "You were trained to keep your platoon in top shape, while still having to lug all the same kit as any other soldier alongside your medical supplies.  Now you're on your own against the undead, and that rifle they saddled you with is your only line of defense.",
+    "age": { "min": 20, "max": 40 },
+    "points": 6,
+    "traits": [ "PROF_MILITARY" ],
+    "skills": [
+      { "level": 1, "name": "swimming" },
+      { "level": 4, "name": "firstaid" },
+      { "level": 4, "name": "cooking" },
+      { "level": 2, "name": "gun" },
+      { "level": 2, "name": "rifle" },
+      { "level": 1, "name": "dodge" },
+      { "level": 1, "name": "throw" }
+    ],
+    "items": {
+      "both": {
+        "items": [
+          "pants_army",
+          "tshirt",
+          "jacket_army",
+          "helmet_liner",
+          "helmet_army",
+          "gloves_liner",
+          "gloves_tactical",
+          "socks",
+          "boots_combat",
+          "wristwatch",
+          "canteen",
+          "molle_pack",
+          "1st_aid_deluxe",
+          "quikclot",
+          "morphine",
+          "iodine",
+          "adrenaline_injector",
+          "syringe",
+          "rx12_injector"
+        ],
+        "entries": [
+          { "group": "charged_two_way_radio" },
+          { "item": "webbing_belt", "contents-item": "e_tool" },
+          { "item": "modularvestceramic", "contents-group": "army_mags_m4" },
+          { "item": "ear_plugs", "custom-flags": [ "no_auto_equip" ] },
+          { "item": "knife_combat", "container-item": "sheath" },
+          { "item": "m4a1", "ammo-item": "556", "charges": 30, "contents-item": [ "shoulder_strap", "holo_sight" ] },
+          { "item": "grenadebandolier", "contents-item": [ "grenade", "grenade" ] }
+        ]
+      },
+      "male": [ "boxer_shorts" ],
+      "female": [ "boy_shorts", "sports_bra" ]
+    }
+  },
+  {
+    "type": "profession",
     "id": "specops",
     "name": "Special Operator",
     "description": "You were the best of the best, the military's finest.  That's why you're still alive, even after all your comrades fell to the undead.  As far as you can tell, military command abandoned you in this hellhole when you missed the emergency evac.",
@@ -2149,7 +2203,7 @@
           "bandages",
           "aspirin",
           "smart_phone",
-          "1st_aid",
+          "1st_aid_deluxe",
           "stethoscope"
         ]
       },
@@ -6258,7 +6312,7 @@
           "coat_lab",
           "bandages",
           "anesthetic_kit",
-          "1st_aid",
+          "1st_aid_deluxe",
           "wristwatch",
           "smart_phone",
           "stethoscope"
@@ -6386,7 +6440,7 @@
           "bfipowder",
           "antibiotics",
           "oxycodone",
-          "1st_aid",
+          "1st_aid_deluxe",
           "smart_phone",
           "wristwatch"
         ],
@@ -8022,6 +8076,82 @@
       },
       "male": [ "boxer_shorts" ],
       "female": [ "sports_bra", "boxer_shorts" ]
+    }
+  },
+  {
+    "type": "item_group",
+    "id": "RNGweapon",
+    "items": [
+      [ "katana", 5 ],
+      [ "knuckle_brass", 3 ],
+      [ "nodachi", 3 ],
+      [ "mace", 3 ],
+      [ "hammer_sledge", 4 ],
+      [ "dao", 2 ],
+      [ "hatchet", 10 ],
+      [ "arming_sword", 8 ],
+      [ "knife_combat", 14 ],
+      [ "ji", 14 ],
+      [ "kukri", 2 ],
+      [ "battleaxe", 4 ],
+      [ "broadsword", 4 ],
+      [ "greatsword_carbon", 2 ],
+      [ "nodachi_carbon", 8 ],
+      [ "cavalry_sabre", 2 ],
+      [ "cestus", 3 ],
+      [ "cutlass", 6 ],
+      [ "zweihander", 6 ],
+      [ "estoc", 6 ],
+      [ "fencing_epee", 4 ],
+      [ "bat", 25 ],
+      [ "fencing_foil", 10 ],
+      [ "machete", 5 ],
+      [ "baton", 8 ],
+      [ "glaive", 10 ],
+      [ "halberd", 3 ],
+      [ "rapier", 3 ],
+      [ "kris", 2 ],
+      [ "bat_metal", 10 ],
+      [ "lucern_hammer", 2 ],
+      [ "morningstar", 7 ],
+      [ "hammer_sledge_heavy", 4 ],
+      [ "naginata", 10 ],
+      [ "scimitar", 10 ],
+      [ "sai_weapon", 5 ],
+      [ "tanto", 7 ],
+      [ "wakizashi", 3 ],
+      [ "2h_flail_steel", 10 ],
+      [ "sword_xiphos", 2 ],
+      [ "sword_carbon", 2 ],
+      [ "broadsword_carbon", 2 ],
+      [ "hammer_sledge_short", 2 ],
+      [ "knife_rm42", 6 ],
+      [ "crowbar", 8 ],
+      [ "halligan", 4 ]
+    ]
+  },
+  {
+    "type": "profession",
+    "id": "RNG_SURVIVOR",
+    "name": "RANDOMISED: Melee survivor",
+    "description": "You've looted a random assortment of intact armor and a pristine weapon from the overly hungry folk, but will it be enough?  (Note: What you see in character creator IS NOT what you get in game!)",
+    "skills": [ { "level": 3, "name": "swimming" }, { "level": 3, "name": "dodge" }, { "level": 3, "name": "melee" } ],
+    "points": 5,
+    "items": {
+      "both": {
+        "items": [ "socks", "smart_phone", "wristwatch" ],
+        "entries": [
+          { "group": "RNGweapon" },
+          { "group": "survivorzed_tops" },
+          { "group": "survivorzed_bottoms" },
+          { "group": "survivorzed_boots" },
+          { "group": "survivorzed_head" },
+          { "group": "survivorzed_extra" },
+          { "group": "survivorzed_gloves" }
+        ]
+      },
+      "male": [ "briefs" ],
+      "female": [ "bra", "panties" ]
     }
   },
   {

@@ -398,7 +398,8 @@
     "encumbrance": 17,
     "warmth": 5,
     "material_thickness": 1,
-    "flags": [ "OVERSIZE", "DEAF", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS" ]
+    "flags": [ "OVERSIZE", "HELMET_COMPAT", "ALLOWS_NATURAL_ATTACKS" ],
+    "hearing_protection": 8
   },
   {
     "id": "hat_sombrero",

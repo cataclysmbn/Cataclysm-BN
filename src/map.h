@@ -26,6 +26,7 @@
 #include "enums.h"
 #include "filter_utils.h"
 #include "game_constants.h"
+#include "hash_utils.h"
 #include "item.h"
 #include "item_stack.h"
 #include "legacy_pathfinding.h"
@@ -39,6 +40,7 @@
 #include "submap_load_manager.h"
 #include "type_id.h"
 #include "units.h"
+#include "sounds.h"
 #include "vpart_position.h"
 
 
@@ -102,7 +104,7 @@ struct pathfinding_settings;
 template<typename T>
 struct weighted_int_list;
 struct rl_vec2d;
-
+struct sound_event;
 
 /** Causes all generated maps to be empty grass and prevents saved maps from being loaded, used by the test suite */
 extern bool disable_mapgen;
@@ -170,6 +172,8 @@ struct bash_params {
      * TODO: Remove, properly unwrap the calls instead
      */
     bool do_recurse = true;
+    // Was this bash action directly caused by the avatar?
+    bool caused_by_player = false;
 };
 
 struct bash_results {
@@ -337,6 +341,12 @@ struct level_cache {
     cata_dynamic_bitset transparency_cache_dirty;
     cata_dynamic_bitset outside_cache_dirty;
     cata_dynamic_bitset floor_cache_dirty;
+    // FIX ABSORPTION AND WALL CACHE CALLS
+    // absorption_cache_dirty is for tile sound absorption checking/rebuild purposes.
+    // Should be set for a tile position if the tile in question changes significantly, or if a tile feature that affects sound propagation is added/removed.
+    cata_dynamic_bitset absorption_cache_dirty;
+    cata_dynamic_bitset sound_wall_cache_dirty;
+
     bool seen_cache_dirty = false;
     // Set to true at the start of each game turn; cleared after generate_lightmap
     // completes for this level.  Allows subsequent redraws within the same turn
@@ -417,6 +427,252 @@ struct level_cache {
     std::map<tripoint_bub_ms, std::pair<vehicle *, int>> veh_cached_parts;
     std::set<vehicle *> vehicle_list;
     std::set<vehicle *> zone_vehicles;
+
+    // stores cached sound absorption amounts of tiles
+    // In 100ths of decibels
+    // This is in level_cache instead of sound cache as this is a function of terrain,
+    // and we dont want to regenerate this for every single sound.
+    std::vector<short> absorption_cache;
+    // sound_wall_cache is set alongside the absorption cache, and is used during the process for floodfilling sounds.
+    std::vector<bool> sound_wall_cache;
+};
+
+// Use the vector sounds_caches for most purposes when working with sounds in
+// reference to a specific position or checking multiple sounds. Each
+// sound_instance_cache is an originating sound_event, a "volume" short that
+// stores the mdB volume of that sound event at that map position, and some
+// sorting bools. These are kept until they have been heard by both monsters and
+// the player, and are then discarded/removed from the sounds_caches vector.
+struct sound_instance_cache {
+
+    // Default constructor creates a zero-sized cache used as a null sentinel only.
+    sound_instance_cache();
+
+    explicit sound_instance_cache( sound_event &input_sound, const sound_vol_for_flood_dist &d_e,
+                                   const int &f_r );
+    sound_instance_cache( const sound_instance_cache &other ) = default;
+    sound_instance_cache &operator=( const sound_instance_cache &other ) = default;
+
+    // The originating sound, includes volume @1m, tripoint, description, type,
+    // etc.
+    sound_event sound;
+
+    sound_vol_for_flood_dist dist_enum;
+
+    // "radius" around the origin to flood a sound through.
+    // The flood envelope is 1 + (radius * 2) on a side.
+    // Set based on the dist_enum above, and the distance setting for each enum in sound_cache.
+    // radius 7 equates to a 15x15 area, radius 3 is a 7x7 area.
+    // However as our index point starts at local x/y = 0,
+    // our bounds are actually radius * 2, radius * 2
+    int flood_radius = 3;
+
+    // Normal tripoint origin of the sound instance.
+    tripoint_bub_ms origin;
+
+    // The tripoint that corresponds to index location 0.
+    // Calculated off the origin point - flood radius to x and y.
+    tripoint_bub_ms envelope_index_point;
+
+    // Offsets are used to get the right envelope index when using bubble tripoints.
+
+    // The numerical offset between index_point.x and 0. Must be calced on sound instance creation.
+    int offset_x;
+    // the numerical offset between index_point.y and 0. Must be calced on sound instance creation.
+    int offset_y;
+
+    // Volume in 100ths of a dB (mdB) of the sound in question
+    // Indexed as: vec[x * (flood_radius * 2) + y]
+    // The origin point is always the center tile, indexed at (flood_radius * (flood_radius * 2) + flood_radius)
+    // This has to be fully initialized when the sound is made, to the desired flood envelope.
+    std::vector<short> volume;
+
+    // The base volume level in mdB to use for long distance sound, by direction defaulting to 0.
+    // Determined by the highest volume on a tile along the envelope boundary in that respective direction.
+    //              0 1 2
+    // Indexed as   7 @ 3 where @ is the source, indexes 8 and 9 are Down and Up escapes, respectively.
+    //              6 5 4
+    // Index to use is determined by general direction from source to requester.
+    std::array<short, 10> base_distance_vol_by_dir = {{0}};
+
+    // Flat index for tile-coordinate arrays: vec[x * (flood_radius * 2) + y].
+    // Returns index location if provided with x and y corrected to envelope quards.
+    // vector accesses DOES NOT REFLECT ACTUAL LOADED-AREA DIMENSIONS.
+    // auto idx(int x, int y) const -> int { return x * (2 * flood_radius) + y; }
+
+    // Returns corresponding flood envelope volume index provided a relative point.
+    // Use carefully.
+    auto env_index( const point_rel_ms &p ) const -> int { return ( ( p.x() ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() ) ); }
+
+    // Returns the corresponding flood envelope volume index provided a bubble point.
+    auto p_to_env_index( const point_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+    // Returns the corresponding flood envelope volume index provided a bubble tripoint.
+    auto p_to_env_index( const tripoint_bub_ms &p ) const -> int { return ( ( p.x() - offset_x ) * ( ( 2 * flood_radius ) + 1 ) + ( p.y() - offset_y ) ); }
+
+    // Returns true if a given bubble tripoint is inside our envelope.
+    // X and Y offsets taken from our index point, the bottom left corner of our envelope.
+    bool in_envelope( const tripoint_bub_ms &tp ) const {
+        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
+               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+    }
+    // Returns true if a given bubble point is inside our envelope.
+    // X and Y offsets taken from our index point, the bottom left corner of our envelope.
+    bool in_envelope( const point_bub_ms &tp ) const {
+        return ( tp.x() - offset_x ) >= 0 && ( tp.y() - offset_y ) >= 0 &&
+               ( tp.x() - offset_x ) < get_flood_envelope_by_enum( dist_enum ) &&
+               ( tp.y() - offset_y ) < get_flood_envelope_by_enum( dist_enum );
+    }
+
+    // Returns true if a given point is on the border of the flood envelope.
+    bool on_envelope_border( const point_bub_ms &p ) const {
+        return ( p.x() - offset_x ) == 0 || ( p.x() - offset_x ) == ( flood_radius * 2 ) ||
+               ( p.y() - offset_y ) == 0 || ( p.y() - offset_y ) == ( flood_radius * 2 );
+    }
+
+    // Checks if a bubble tripoint is within the floodfill envelope. Returns the volume if true, -1 if not.
+    auto vol_at_tri( const tripoint_bub_ms &tri ) const -> short {return ( in_envelope( tri ) ? volume[p_to_env_index( tri.xy() )] : -1 );}
+
+    // NPCs/Monsters/the Player all get a chance to hear a sound.
+    // After everyone has heard the sound, it is deleted.
+    // This requires a little bit of juggling.
+
+    // Has a sound been heard by the player?
+    bool heard_by_player = false;
+    // Has a sound been heard by the monsters?
+    bool heard_by_monsters = false;
+    // Has a sound been heard by the NPCs?
+    bool heard_by_npcs = false;
+
+    // Is this noise from movement? For quick filtering, so monsters dont hear
+    // their own footsteps and NPCs dont investiage a noise they should know is
+    // wandering zombies.
+    bool movement_noise = false;
+    // Dis the player make this noise? for quick filtering.
+    bool from_player = false;
+    // Did a monster make this noise? For quick filtering.
+    bool from_monster = false;
+    // Did an NPC make this noise? For quick filtering.
+    bool from_npc = false;
+    // If the noise was not made by the player, a monster, or an NPC, it is
+    // ambient or enviornmental.
+
+    // Was the source of our sound indoors?
+    bool source_indoors = false;
+    // If the source of our sound was indoors, did it ever escape to an outside tile?
+    // Used for approximating sound reduction of a large sealed room without having to actually floodfill an entire floor of the necropolis or something.
+    bool escaped_indoors = false;
+
+    // mdB spl absorption per tile value of the local terrain at the sound source tile.
+    short terrain_sound_absorbtion_at_source = 0;
+    // The approximated tile distance until a sound reaches a volume of 20dB spl based on the maximum escape vol.
+    // Will always be atleast the flood radius, can be bonkers huge.
+    // For use with monsters as a easy distance filter. Goodhearing monsters always ignore this and check anyways.
+    int approximate_minvol_distance = 3;
+
+};
+
+// These are used to filter against the vector of sound instances
+struct sound_filter_key {
+    sound_filter_key();
+    sound_filter_key( const sound_filter_key &other ) = default;
+    sound_filter_key &operator=( const sound_filter_key &other ) = default;
+
+    // Ignore sounds of this category or less. Defaults to weather.
+    sounds::sound_t category = sounds::sound_t::weather;
+    mfaction_str_id monfaction = mfaction_str_id( "" );
+    // Not currently implimented, does this monster belong to an NPC faction? i.e., a robot owned by some survivors, someones dog, etc.
+    // faction_id npc_faction = faction_id( "no_faction" );
+    // Is the monster something like a zombie that uses simpler logic and gets angry at everything.
+    bool horde_monster = false;
+    // For whatever reason, does this monster ignore movement noise?
+    bool ignore_movement = false;
+    // Is the monster afraid of noise?
+    bool noise_fear = false;
+    // Does the monster get angry at noises?
+    bool noise_angers = false;
+
+    bool operator==( const sound_filter_key &other ) const {
+        return ( category == other.category &&
+                 monfaction == other.monfaction &&
+                 horde_monster == other.horde_monster &&
+                 ignore_movement == other.ignore_movement &&
+                 noise_fear == other.noise_fear &&
+                 noise_angers == other.noise_angers );
+    }
+
+};
+
+template <>
+struct std::hash<sound_filter_key> {
+    std::size_t operator()( const sound_filter_key &key ) const {
+        using std::size_t;
+        using std::string;
+        using cata::hash_combine;
+        const int cat_int = static_cast<int>( key.category );
+        const std::string stringfac = static_cast<std::string>( key.monfaction.str() );
+
+        std::size_t seed = 0;
+        hash_combine( seed, cat_int );
+        hash_combine( seed, stringfac );
+        hash_combine( seed, key.horde_monster );
+        hash_combine( seed, key.ignore_movement );
+        hash_combine( seed, key.noise_fear );
+        hash_combine( seed, key.noise_angers );
+        return seed;
+    }
+};
+
+// One sound_cache to rule them all.
+// TODO: Make it so that each sound has a pointer or ref? Pointers need to be killed when sounds expire
+struct sound_cache {
+
+    sound_cache();
+    //sound_cache(const sound_cache &) = default;
+    //sound_cache(sound_cache &&) = default;
+    sound_cache &operator=( const sound_cache & ) = default;
+    //sound_cache &operator=(sound_cache &&) = default;
+
+    std::vector<sound_instance_cache> sound_instances;
+
+    // Return the radius to flood a sound out to from the provided enum.
+    int flood_radius_by_enum( const enum sound_vol_for_flood_dist &dist_enum ) const {
+        return get_flood_radius_by_enum( dist_enum );
+    }
+    // Return a sorting enum provided a dB volume short.
+    sound_vol_for_flood_dist flood_dist_enum_by_volume( const short &dB_vol ) const {
+        return get_flood_dist_enum( dB_vol );
+    }
+    // Generated and checked against while informing monster AI of sounds.
+    // MUST be cleared after all monsters are informed of sounds, or if the sound cache gets culled.
+    // Wanted this to contain a vector of pointers, but then we would always loose the sounds it pointed to.
+    // So instead each is a vector of iterator numbers for the sound_instances vector.
+    // If we have more sounds than short can point to as an iterator, something is very wrong and the bad memory access crashing the game is probably doing us a favor.
+    std::unordered_map< sound_filter_key, std::vector<short>> sound_list_filtered;
+    // Adds a filter kay and pointer vector pair to the filtered sound list.
+    // We do want to make copies, as any reference made when informing a monster AI of sounds would go out of scope when we move to the next monster.
+    //auto add_filtered_sound_list(const sound_filter_key &key, const std::vector<short> &list ) -> void { sound_list_filtered.insert({key,list}); }
+    // True if there is a matching list, false if not.
+    //auto matching_filtered_list(const sound_filter_key &key) -> bool { return sound_list_filtered.contains(key); }
+
+    // Clear the filtered list so we dont try to grab an old sound.
+    //auto clear_all_filtered_lists() -> void { sound_list_filtered.clear(); }
+
+    // For debug purposes. These are incremented by their respective sound functions, and zero'ed during sounds::clear_floodfill_que()
+    // If soundperf during game::do_turn(), these will still be zeroed but the debug diagnostic message will not print.
+    short sounds_this_turn = 0;
+    short attempted_monster_sounds = 0;
+    short attempted_NPC_sounds = 0;
+    short attempted_movement_sounds = 0;
+    short attempted_potential_deafening_sounds = 0;
+    short attempted_non_batch_floodfills = 0;
+    short batch_flooded_monster_sounds = 0;
+    short batch_flooded_NPC_sounds = 0;
+    short invalidated_batch_sounds = 0;
+    short filtered_sound_lists_made = 0;
+    short filtered_sound_lists_cleared = 0;
+    short prior_turn_sound_vector_size = 0;
+    short sounds_culled_this_turn = 0;
 
 };
 
@@ -556,12 +812,20 @@ class map : public submap_load_listener
          */
         /*@{*/
 
+        // This will also set the z_levels sound absorption cache to dirty as is almost certainly invalidated as well.
+        void set_transparency_cache_dirty( const int zlev );
+
         // more granular version of the transparency cache invalidation
         // preferred over map::set_transparency_cache_dirty( const int zlev )
         // p is in local coords ("ms")
-        void set_transparency_cache_dirty( const int zlev );
-
         void set_transparency_cache_dirty( const tripoint_bub_ms &p );
+
+        // Invalidates a specific location's (p, in local cords "ms") absorption_cache and marks it for recalculation.
+        // Should be called whenever a tile's (or its contents) ability to absorb sound significantly changes.
+        // For example if wind blocking furniture is added or removed, the tile is set to a tile type with wind blocking, if a tile is set to a type with very high absorption, etc.
+        void set_absorption_cache_dirty( const tripoint_bub_ms &p );
+        // Set an entire zlevel's sound absorption cache to dirty.
+        void set_absorption_cache_dirty( const int zlev );
 
         // invalidates seen cache for the whole zlevel unconditionally
 
@@ -1334,6 +1598,8 @@ class map : public submap_load_listener
         bash_results bash( const tripoint_bub_ms &p, int str, bool silent = false,
                            bool destroy = false, bool bash_floor = false,
                            const vehicle *bashing_vehicle = nullptr );
+        bash_results bash( const tripoint_bub_ms &p, const bash_params &params,
+                           const vehicle *bashing_vehicle = nullptr );
 
         bash_results bash_vehicle( const tripoint_bub_ms &p, const bash_params &params );
         bash_results bash_ter_furn( const tripoint_bub_ms &p, const bash_params &params );
@@ -1883,6 +2149,7 @@ class map : public submap_load_listener
         point_bub_ms abs_to_bub( const point_abs_ms &abs ) const { return point_bub_ms( ( abs - project_to<coords::ms>( abs_sub ).xy() ).raw() ); }
         point_abs_sm bub_to_abs( const point_bub_sm &bub ) const { return abs_sub.xy() + point_rel_sm( bub.raw() ); }
         point_bub_sm abs_to_bub( const point_abs_sm &abs ) const { return ( abs - abs_sub.raw().xy() ).reinterpret_as<point_bub_sm>(); }
+
         bool inbounds_z( const int z ) const {
             return z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT;
         }
@@ -1892,6 +2159,10 @@ class map : public submap_load_listener
         }
         virtual bool inbounds( const tripoint_abs_sm &p ) const;
         bool inbounds( const tripoint_abs_ms &p ) const {
+            return inbounds( project_to<coords::sm>( p ) );
+        }
+        bool inbounds( const point_bub_sm &p ) const;
+        bool inbounds( const point_bub_ms &p ) const {
             return inbounds( project_to<coords::sm>( p ) );
         }
 
@@ -2076,6 +2347,20 @@ class map : public submap_load_listener
         void build_floor_caches();
         // Checks all suspended tiles on a z level and adds those that are invalid to the support_dirty_cache */
         void update_suspension_cache( const int &z );
+        // Builds a sound absorption cache and returns true if the cache was invalidated.
+        // If true, update the absorption cache. We want this built after the other caches, but before sounds are calced.
+        // Function logic located in sounds.cpp
+        bool build_absorption_cache( const int zlev );
+        // Builds a sound_instance_cache by flood filling from a given sound event.
+        // Function logic located in sounds.cpp
+        void flood_fill_sound( const sound_event soundevent, int zlev );
+        // Batch builds a set of sound caches from std::vector<sound_event> sound_batch_floodfill_que
+        // Similar to flood_fill_sound, used for monster sounds for performance.
+        void batch_flood_fill_sounds();
+        // Checks and culls sound_instance_caches from the sound_instance_caches vector.
+        // Sounds that have been heard by monsters and by the player are culled so they are not re-heard.
+        void cull_heard_sounds();
+
     protected:
         // When skip_shared_init is true the caller has already: cleared sm/lsb for
         // this level, called build_sunlight_cache() once, and applied character
@@ -2380,6 +2665,15 @@ class map : public submap_load_listener
         const level_cache &get_cache_ref( int zlev ) const {
             return *caches[zlev + OVERMAP_DEPTH];
         }
+
+        /**
+        * Holds the individual caches for sounds. Each individual cache has a std::vector<short> that stores mdB spl volumes for the flooded area, a sound_event, and some filtering bools.
+        * Each sound is only flooded out to a certain distance for performance and memory reasons. Individual sounds are not referenced directly for volume.
+        * See the strut definition for information on the various getters.
+        * TODO: total rms volume for a tile getter and a ref to the loudest relevant sound event which could be used to speed up flood filling, informing monsters/npcs of sounds, etc.
+        */
+        sound_cache m_sound_cache;
+        //std::vector< sound_instance_cache > sound_instance_caches;
 
         /// Return the pathfinding flags for a single tile, rebuilding the per-submap
         /// pf_cache if it has been marked dirty.  Works for any loaded position.

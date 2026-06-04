@@ -147,7 +147,7 @@
     "id": "NC_PROF_NEIGHBORHOOD_DOCTOR_carry",
     "subtype": "collection",
     "entries": [
-      { "item": "1st_aid" },
+      { "item": "1st_aid_deluxe" },
       { "item": "smart_phone" },
       { "item": "gloves_medical" },
       { "item": "stethoscope" },
