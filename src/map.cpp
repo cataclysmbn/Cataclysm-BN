@@ -7182,7 +7182,7 @@ void map::update_visibility_cache( const int zlev )
     }
     auto visibility_download_levels = std::vector<int> {};
     if( zlevels ) {
-        std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, zlev + 1 ),
+        std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),
                            std::back_inserter( visibility_download_levels ) );
     } else {
         visibility_download_levels.push_back( zlev );
