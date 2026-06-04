@@ -3074,7 +3074,7 @@ bool bandolier_actor::is_valid_ammo_type( const itype &t ) const
 
 bool bandolier_actor::can_store( const item &bandolier, const item &obj ) const
 {
-    if( !bandolier.contents.empty() && ( bandolier.contents.front().typeId() != obj.typeId() ||
+    if( !bandolier.contents.empty() && ( !bandolier.contents.front().stacks_with( obj ) ||
                                          bandolier.contents.front().charges >= capacity ) ) {
         return false;
     }
