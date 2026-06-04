@@ -2902,12 +2902,6 @@ void options_manager::add_options_world_default()
          translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
          false );
 
-    add( "ANIMAL_LIFE_CYCLE_SEASON_SCALING", world_default,
-         translate_marker( "Animal life cycle season scaling" ),
-         translate_marker( "If true, animal reproduction and growth timers are multiplied by "
-                           "the current season length ratio." ),
-         true );
-
     add_empty_line();
 
     add( "RESTOCK_DELAY_MULT", world_default, translate_marker( "Merchant restock scaling factor" ),
@@ -3221,8 +3215,16 @@ void options_manager::add_options_world_default()
          0, 1000, 100, COPT_NO_HIDE, "%i%%"
        );
 
-    add( "GROWTH_SCALING", world_default, translate_marker( "Growth scaling percentage" ),
+    add( "GROWTH_SCALING", world_default, translate_marker( "Crop growth scaling percentage" ),
          translate_marker( "Sets the time of crop growth in percents.  '50' is two times faster than default, '200' is two times longer.  '0' automatically scales growth time to match the world's season length." ),
+         0, 1000, 0, COPT_NO_HIDE, "%i%%"
+       );
+
+    add( "ANIMAL_LIFE_CYCLE_SCALING", world_default,
+         translate_marker( "Animal life cycle scaling" ),
+         translate_marker( "Sets the time of animal reproduction and growth in percents.  "
+                           "'50' is two times faster than default, '200' is two times longer.  "
+                           "'0' automatically scales animal life cycle time to match the world's season length." ),
          0, 1000, 0, COPT_NO_HIDE, "%i%%"
        );
 
