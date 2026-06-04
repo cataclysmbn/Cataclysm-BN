@@ -2366,7 +2366,9 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         }
 
         // [Pass 5] Copy: download dirty lm levels and requested seen_cache results.
-        {
+        auto const needs_download_copy =
+            download_lm_levels || download_player_light || !seen_download_levels.empty();
+        if (needs_download_copy) {
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
 
             auto lm_download_offset = Uint32{0};
@@ -2425,21 +2427,36 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         }
     }
 
-    // Submit and wait for GPU work to complete.  Even without a CPU-facing
-    // lighting download, the following visibility pass consumes these resident
-    // outputs immediately, so queuing this asynchronously only moves the wait
-    // into a later fence and makes Tracy attribution less useful.
-    auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
-    if (fence == nullptr) {
-        DebugLog(DL::Error, DC::Main)
-            << "SDL_GPU: lm: command buffer submission failed: " << SDL_GetError();
-        return false;
+    // Submit seen-only updates without a CPU fence.  SDL_GPU preserves command
+    // buffer submission order, so the later visibility pass can consume these
+    // resident buffers and its own download fence will cover the CPU readback.
+    auto const defer_seen_only_wait =
+        lightmap_levels.empty() &&
+        rebuild_seen &&
+        upload_total == 0 &&
+        lm_download_bytes == 0 &&
+        seen_download_levels.empty();
+    TracyPlot( "GPU LM Deferred Submit", defer_seen_only_wait ? int64_t{ 1 } : int64_t{ 0 } );
+    if (defer_seen_only_wait) {
+        ZoneScopedN( "gpu_lm_submit_deferred" );
+        if (!SDL_SubmitGPUCommandBuffer(cmd)) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: command buffer submission failed: " << SDL_GetError();
+            return false;
+        }
+    } else {
+        auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+        if (fence == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: command buffer submission failed: " << SDL_GetError();
+            return false;
+        }
+        {
+            ZoneScopedN( "gpu_lm_fence_wait" );
+            SDL_WaitForGPUFences(device, true, &fence, 1);
+        }
+        SDL_ReleaseGPUFence(device, fence);
     }
-    {
-        ZoneScopedN( "gpu_lm_fence_wait" );
-        SDL_WaitForGPUFences(device, true, &fence, 1);
-    }
-    SDL_ReleaseGPUFence(device, fence);
 
     // ── Download results to CPU level_cache ──────────────────────────────────
     {

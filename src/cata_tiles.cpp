@@ -3140,27 +3140,29 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     int min_z = OVERMAP_HEIGHT;
     draw_points.clear();
 
-    for( int row = min_row; row < max_row; row ++ ) {
+    {
+        ZoneScopedN( "cata_tiles_build_draw_points" );
+        for( const auto row : std::views::iota( min_row, max_row ) ) {
 
-        for( int col = min_col; col < max_col; col ++ ) {
-            int temp_x;
-            int temp_y;
-            if( iso_mode ) {
-                //in isometric, rows and columns represent a checkerboard screen space, and we place
-                //the appropriate tile in valid squares by getting position relative to the screen center.
-                if( modulo( row - s.y / 2, 2 ) != modulo( col - s.x / 2, 2 ) ) {
-                    continue;
+            for( const auto col : std::views::iota( min_col, max_col ) ) {
+                int temp_x;
+                int temp_y;
+                if( iso_mode ) {
+                    //in isometric, rows and columns represent a checkerboard screen space, and we place
+                    //the appropriate tile in valid squares by getting position relative to the screen center.
+                    if( modulo( row - s.y / 2, 2 ) != modulo( col - s.x / 2, 2 ) ) {
+                        continue;
+                    }
+                    temp_x = divide_round_down( col - row - s.x / 2 + s.y / 2, 2 ) + o.x();
+                    temp_y = divide_round_down( row + col - s.y / 2 - s.x / 2, 2 ) + o.y();
+                } else {
+                    temp_x = col + o.x();
+                    temp_y = row + o.y();
                 }
-                temp_x = divide_round_down( col - row - s.x / 2 + s.y / 2, 2 ) + o.x();
-                temp_y = divide_round_down( row + col - s.y / 2 - s.x / 2, 2 ) + o.y();
-            } else {
-                temp_x = col + o.x();
-                temp_y = row + o.y();
-            }
 
-            bool invis = ( temp_y < min_visible_y || temp_y > max_visible_y || temp_x < min_visible_x ||
-                           temp_x > max_visible_x ) &&
-                         ( has_memory_at( {temp_x, temp_y, center.z()} ) || has_draw_override( {temp_x, temp_y, center.z()} ) );
+                bool invis = ( temp_y < min_visible_y || temp_y > max_visible_y || temp_x < min_visible_x ||
+                               temp_x > max_visible_x ) &&
+                             ( has_memory_at( {temp_x, temp_y, center.z()} ) || has_draw_override( {temp_x, temp_y, center.z()} ) );
 
 
 
@@ -3465,7 +3467,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
                     const auto height_3d = ( pos.z() - center.z() ) * tileset_ptr->get_zlevel_height();
 
-                    for( int i = 0; i < 4; i++ ) {
+                    for( const auto i : std::views::iota( 0, 4 ) ) {
                         const tripoint np = pos.raw() + neighborhood[i];
                         invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
                                            np.x < min_visible_x || np.x > max_visible_x ||
@@ -3525,6 +3527,8 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
     }
 
+    }
+
     struct zlevel_layer {
         bool hide_unseen;
         decltype( &cata_tiles::draw_furniture ) function;
@@ -3581,71 +3585,78 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
     };
 
-    if( !draw_points.empty() ) {
-        for( const auto z : std::views::iota( min_z, center.z() + 1 ) ) {
-            auto row_begin = draw_points.begin();
-            while( row_begin != draw_points.end() ) {
-                const auto row = row_begin->screen_row;
-                const auto row_end = std::find_if_not( row_begin, draw_points.end(),
-                [row]( const tile_render_info & info ) {
-                    return info.screen_row == row;
-                } );
-                const auto row_points = std::ranges::subrange( row_begin, row_end );
-                for( tile_render_info &p : row_points ) {
-                    if( p.pos.z() == z ) {
-                        draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
-                        draw_zone_overlay_for( p );
-                    }
-                }
-                for( tile_render_info &p : row_points ) {
-                    if( p.pos.z() == z ) {
-                        for( const auto f : base_drawing_layers ) {
-                            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
+    {
+        ZoneScopedN( "cata_tiles_draw_queued_points" );
+        if( !draw_points.empty() ) {
+            for( const auto z : std::views::iota( min_z, center.z() + 1 ) ) {
+                auto row_begin = draw_points.begin();
+                while( row_begin != draw_points.end() ) {
+                    const auto row = row_begin->screen_row;
+                    const auto row_end = std::find_if_not( row_begin, draw_points.end(),
+                    [row]( const tile_render_info & info ) {
+                        return info.screen_row == row;
+                    } );
+                    const auto row_points = std::ranges::subrange( row_begin, row_end );
+                    for( tile_render_info &p : row_points ) {
+                        if( p.pos.z() == z ) {
+                            draw_terrain( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
+                            draw_zone_overlay_for( p );
                         }
                     }
-                }
-                const auto &ch = here.access_cache( z );
-                for( tile_render_info &p : row_points ) {
-                    if( p.pos.z() > z ) {
-                        continue;
-                    }
-                    for( const zlevel_layer &f : zlevel_drawing_layers ) {
-                        if( here.inbounds( p.pos ) && z != p.pos.z() ) {
-                            const auto z_ll = ch.inbounds( { p.pos.x(), p.pos.y() } )
-                                              ? ch.visibility_cache[ch.idx( p.pos.x(), p.pos.y() )]
-                                              : lit_level::BLANK;
-                            if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
-                                const bool ( invis )[5] = {false, false, false, false, false};
-                                ( this->*( f.function ) )( { p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z() - z );
+                    for( tile_render_info &p : row_points ) {
+                        if( p.pos.z() == z ) {
+                            for( const auto f : base_drawing_layers ) {
+                                ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, center.z() - p.pos.z() );
                             }
-                        } else {
-                            ( this->*( f.function ) )( { p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z() - z );
                         }
                     }
+                    const auto &ch = here.access_cache( z );
+                    for( tile_render_info &p : row_points ) {
+                        if( p.pos.z() > z ) {
+                            continue;
+                        }
+                        for( const zlevel_layer &f : zlevel_drawing_layers ) {
+                            if( here.inbounds( p.pos ) && z != p.pos.z() ) {
+                                const auto z_ll = ch.inbounds( { p.pos.x(), p.pos.y() } )
+                                                  ? ch.visibility_cache[ch.idx( p.pos.x(), p.pos.y() )]
+                                                  : lit_level::BLANK;
+                                if( !f.hide_unseen || z_ll != lit_level::BLANK ) {
+                                    const bool ( invis )[5] = {false, false, false, false, false};
+                                    ( this->*( f.function ) )( { p.pos.xy(), z}, z_ll, p.height_3d, invis, center.z() - z );
+                                }
+                            } else {
+                                ( this->*( f.function ) )( { p.pos.xy(), z}, p.ll, p.height_3d, p.invisible, center.z() - z );
+                            }
+                        }
+                    }
+                    row_begin = row_end;
                 }
-                row_begin = row_end;
             }
         }
     }
-    for( tile_render_info &p : draw_points ) {
-        for( const auto f : final_drawing_layers ) {
-            ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
-        }
-    }
 
-    // display number of monsters to spawn in mapgen preview
-    for( const tile_render_info &p : draw_points ) {
-        const auto mon_override = monster_override.find( p.pos );
-        if( mon_override != monster_override.end() ) {
-            const int count = std::get<1>( mon_override->second );
-            const bool more = std::get<2>( mon_override->second );
-            if( count > 1 || more ) {
-                std::string text = "x" + std::to_string( count );
-                if( more ) {
-                    text += "+";
+    {
+        ZoneScopedN( "cata_tiles_draw_final_layers" );
+        for( tile_render_info &p : draw_points ) {
+            for( const auto f : final_drawing_layers ) {
+                ( this->*f )( p.pos, p.ll, p.height_3d, p.invisible, 0 );
+            }
+        }
+
+        // display number of monsters to spawn in mapgen preview
+        for( const tile_render_info &p : draw_points ) {
+            const auto mon_override = monster_override.find( p.pos );
+            if( mon_override != monster_override.end() ) {
+                const int count = std::get<1>( mon_override->second );
+                const bool more = std::get<2>( mon_override->second );
+                if( count > 1 || more ) {
+                    std::string text = "x" + std::to_string( count );
+                    if( more ) {
+                        text += "+";
+                    }
+                    overlay_strings.emplace( player_to_screen( p.pos.xy() ) + point( tile_width / 2, 0 ),
+                                             formatted_text( text, catacurses::red, direction::NORTH ) );
                 }
-                overlay_strings.emplace( player_to_screen( p.pos.xy() ) + point( tile_width / 2, 0 ),
-                                         formatted_text( text, catacurses::red, direction::NORTH ) );
             }
         }
     }
@@ -3661,82 +3672,247 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     void_draw_below_override();
     void_monster_override();
 
-    //Memorize everything the character just saw even if it wasn't displayed.
-    for( int mem_y = min_visible_y; mem_y <= max_visible_y; mem_y++ ) {
-        for( int mem_x = min_visible_x; mem_x <= max_visible_x; mem_x++ ) {
-            half_open_rectangle<point> already_drawn(
-                point( min_col, min_row ), point( max_col, max_row ) );
-            if( iso_mode ) {
-                // calculate the screen position according to the drawing code above (division rounded down):
-
-                // mem_x = ( col - row - sx / 2 + sy / 2 ) / 2 + o.x;
-                // mem_y = ( row + col - sy / 2 - sx / 2 ) / 2 + o.y;
-                // ( col - sx / 2 ) % 2 = ( row - sy / 2 ) % 2
-                // ||
-                // \/
-                const int col = mem_y + mem_x + s.x / 2 - o.y() - o.x();
-                const int row = mem_y - mem_x + s.y / 2 - o.y() + o.x();
-                if( already_drawn.contains( point( col, row ) ) ) {
-                    continue;
-                }
+    const auto memorize_live_terrain = [&]( const tripoint_bub_ms &p,
+    const bool( &invisible )[5] ) {
+        if( invisible[0] ) {
+            return;
+        }
+        const auto &t = here.ter( p );
+        if( !t ) {
+            return;
+        }
+        auto subtile = 0;
+        auto rotation = 0;
+        auto connect_group = 0;
+        if( t.obj().connects( connect_group ) ) {
+            get_connect_values( p, subtile, rotation, connect_group, {} );
+            here.set_memory_seen_cache_dirty( p );
+        } else {
+            get_terrain_orientation( p, rotation, subtile, {}, invisible );
+        }
+        const auto &tname = t.id().str();
+        if( here.check_seen_cache( p ) ) {
+            const auto abs_pos = here.bub_to_abs( p );
+            if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
+                g->u.memorize_tile( abs_pos, tname, subtile, rotation );
+                g->u.memorize_terrain_tile( abs_pos, tname, subtile, rotation );
             } else {
-                // calculate the screen position according to the drawing code above:
-
-                // mem_x = col + o.x
-                // mem_y = row + o.y
-                // ||
-                // \/
-                // col = mem_x - o.x
-                // row = mem_y - o.y
-                if( already_drawn.contains( point( mem_x, mem_y ) - o.raw() ) ) {
-                    continue;
-                }
-            }
-
-            const auto &_cz = here.access_cache( center.z() );
-            lit_level lighting = _cz.visibility_cache[_cz.idx( mem_x, mem_y )];
-
-            int z = center.z();
-            for( ;  z > -OVERMAP_DEPTH; z-- ) {
-                const auto low_override = draw_below_override.find( {mem_x, mem_y, z} );
-                const bool low_overridden = low_override != draw_below_override.end();
-                const auto &_cur = here.access_cache( z );
-                const auto &_lower = here.access_cache( z - 1 );
-                if( low_overridden ? !low_override->second : ( here.dont_draw_lower_floor( {mem_x, mem_y, z} )
-                        || ( lighting != lit_level::BLANK &&
-                             _lower.visibility_cache[_lower.idx( mem_x, mem_y )] == lit_level::BLANK ) ) ) {
-                    lighting = _cur.visibility_cache[_cur.idx( mem_x, mem_y )];
-                    break;
-                }
-            }
-
-
-            const auto &ch = here.access_cache( z );
-            const tripoint_bub_ms p( mem_x, mem_y, z );
-
-            if( apply_vision_effects( p, here.get_visibility( lighting, cache ) ) ) {
-                continue;
-            }
-            int height_3d = 0;
-            bool invisible[5];
-            invisible[0] = false;
-            for( int i = 0; i < 4; i++ ) {
-                const auto np = p + neighborhood[i];
-                invisible[1 + i] = np.y() < min_visible_y || np.y() > max_visible_y ||
-                                   np.x() < min_visible_x || np.x() > max_visible_x ||
-                                   would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x(), np.y() )],
-                                           cache ) );
-            }
-            //calling draw to memorize everything.
-            //bypass cache check in case we learn something new about the terrain's connections
-            draw_terrain( p, lighting, height_3d, invisible, 0 );
-            if( here.check_seen_cache( p ) ) {
-                draw_furniture( p, lighting, height_3d, invisible, 0 );
-                draw_trap( p, lighting, height_3d, invisible, 0 );
-                draw_vpart( p, lighting, height_3d, invisible, 0 );
-                here.check_and_set_seen_cache( p );
+                g->u.clear_memorized_tile( abs_pos );
             }
         }
+    };
+
+    const auto memorize_live_furniture = [&]( const tripoint_bub_ms &p,
+    const bool( &invisible )[5] ) {
+        if( invisible[0] ) {
+            return;
+        }
+        const auto &f = here.furn( p );
+        if( !f ) {
+            return;
+        }
+        const auto neighborhood_ids = std::array{
+            static_cast<int>( here.furn( p + point_south ) ),
+            static_cast<int>( here.furn( p + point_east ) ),
+            static_cast<int>( here.furn( p + point_west ) ),
+            static_cast<int>( here.furn( p + point_north ) )
+        };
+        auto subtile = 0;
+        auto rotation = 0;
+        auto connect_group = 0;
+        if( f.obj().connects( connect_group ) ) {
+            get_furn_connect_values( p, subtile, rotation, connect_group, {} );
+        } else {
+            get_tile_values_with_ter( p, f.to_i(), neighborhood_ids.data(), subtile, rotation );
+        }
+        if( here.check_seen_cache( p ) ) {
+            g->u.memorize_tile( here.bub_to_abs( p ), f.id().str(), subtile, rotation );
+        }
+    };
+
+    const auto memorize_live_trap = [&]( const tripoint_bub_ms &p,
+    const bool( &invisible )[5] ) {
+        if( invisible[0] ) {
+            return;
+        }
+        const auto &tr = here.tr_at( p );
+        const auto &tr_id = tr.loadid;
+        if( !tr_id || !tr_id.obj().can_see( p, g->u ) || tr_id == tr_ledge ) {
+            return;
+        }
+        const auto neighborhood_ids = std::array{
+            static_cast<int>( here.tr_at( p + point_south ).loadid ),
+            static_cast<int>( here.tr_at( p + point_east ).loadid ),
+            static_cast<int>( here.tr_at( p + point_west ).loadid ),
+            static_cast<int>( here.tr_at( p + point_north ).loadid )
+        };
+        auto subtile = 0;
+        auto rotation = 0;
+        get_tile_values( tr_id.to_i(), neighborhood_ids.data(), subtile, rotation );
+        if( here.check_seen_cache( p ) ) {
+            g->u.memorize_tile( here.bub_to_abs( p ), tr_id.id().str(), subtile, rotation );
+        }
+    };
+
+    const auto clear_projected_rope_memory = [&]( const tripoint_bub_ms &p ) {
+        if( !here.has_rope_at( p ) ) {
+            return;
+        }
+        const auto veh_pair = here.get_rope_at( p.xy() );
+        auto *const veh = veh_pair.first;
+        const auto veh_part = veh_pair.second;
+        const auto veh_z = veh->bub_ms_location().z();
+        const auto part = veh->part( veh_part ).info();
+        if( veh_z - p.z() <= 0 ) {
+            return;
+        }
+        if( part.ladder_length() >= veh_z - p.z() ) {
+            for( const auto z : std::views::iota( p.z() + 1, veh_z + 1 ) ) {
+                if( here.ter( tripoint_bub_ms( p.x(), p.y(), z ) ).id().str() != "t_open_air" ) {
+                    return;
+                }
+            }
+        }
+        const auto &vp_id = veh->part( veh_part ).info().get_id();
+        const auto vpname = std::string( "vp_" ) + vp_id.str();
+        auto &you = get_avatar();
+        const auto abs_pos = here.bub_to_abs( p );
+        if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
+            you.clear_memorized_overlay( abs_pos );
+        }
+    };
+
+    const auto memorize_live_vehicle = [&]( const tripoint_bub_ms &p,
+    const bool( &invisible )[5] ) {
+        if( invisible[0] ) {
+            return;
+        }
+        const auto vp = here.veh_at( p );
+        if( !vp ) {
+            clear_projected_rope_memory( p );
+            return;
+        }
+        const auto &veh = vp->vehicle();
+        const auto veh_part = vp->part_index();
+        auto part_mod = char{ 0 };
+        const auto &vp_id = veh.part_id_string( veh_part, false, part_mod );
+        const auto subtile = part_mod == 1 ? open_ : part_mod == 2 ? broken : 0;
+        const auto rotation = static_cast<int>( std::round( to_degrees( veh.part_display_direction(
+                veh_part, false ) ) ) );
+        const auto vpname = std::string( "vp_" ) + vp_id.str();
+        auto &you = get_avatar();
+        const auto abs_pos = here.bub_to_abs( p );
+        if( veh.forward_velocity() ) {
+            you.clear_memorized_overlay( abs_pos );
+        } else {
+            you.memorize_tile( abs_pos, vpname, subtile, rotation );
+        }
+    };
+
+    {
+        ZoneScopedN( "cata_tiles_memorize_offscreen_seen" );
+        const auto already_drawn = half_open_rectangle<point>(
+                                      point( min_col, min_row ), point( max_col, max_row ) );
+        const auto &_cz = here.access_cache( center.z() );
+        auto offscreen_scan_count = int64_t{ 0 };
+        auto offscreen_refresh_count = int64_t{ 0 };
+        auto offscreen_dirty_memory_count = int64_t{ 0 };
+        auto offscreen_connecting_refresh_count = int64_t{ 0 };
+        //Memorize everything the character just saw even if it wasn't displayed.
+        for( const auto mem_y : std::views::iota( min_visible_y, max_visible_y + 1 ) ) {
+            for( const auto mem_x : std::views::iota( min_visible_x, max_visible_x + 1 ) ) {
+                if( iso_mode ) {
+                    // calculate the screen position according to the drawing code above (division rounded down):
+
+                    // mem_x = ( col - row - sx / 2 + sy / 2 ) / 2 + o.x;
+                    // mem_y = ( row + col - sy / 2 - sx / 2 ) / 2 + o.y;
+                    // ( col - sx / 2 ) % 2 = ( row - sy / 2 ) % 2
+                    // ||
+                    // \/
+                    const auto col = mem_y + mem_x + s.x / 2 - o.y() - o.x();
+                    const auto row = mem_y - mem_x + s.y / 2 - o.y() + o.x();
+                    if( already_drawn.contains( point( col, row ) ) ) {
+                        continue;
+                    }
+                } else {
+                    // calculate the screen position according to the drawing code above:
+
+                    // mem_x = col + o.x
+                    // mem_y = row + o.y
+                    // ||
+                    // \/
+                    // col = mem_x - o.x
+                    // row = mem_y - o.y
+                    const auto screen_x = mem_x - o.x();
+                    const auto screen_y = mem_y - o.y();
+                    if( screen_x >= min_col && screen_x < max_col &&
+                        screen_y >= min_row && screen_y < max_row ) {
+                        continue;
+                    }
+                }
+                ++offscreen_scan_count;
+
+                lit_level lighting = _cz.visibility_cache[_cz.idx( mem_x, mem_y )];
+
+                int z = center.z();
+                for( ;  z > -OVERMAP_DEPTH; z-- ) {
+                    const auto low_override = draw_below_override.find( {mem_x, mem_y, z} );
+                    const bool low_overridden = low_override != draw_below_override.end();
+                    const auto &_cur = here.access_cache( z );
+                    const auto &_lower = here.access_cache( z - 1 );
+                    if( low_overridden ? !low_override->second : ( here.dont_draw_lower_floor( {mem_x, mem_y, z} )
+                            || ( lighting != lit_level::BLANK &&
+                                 _lower.visibility_cache[_lower.idx( mem_x, mem_y )] == lit_level::BLANK ) ) ) {
+                        lighting = _cur.visibility_cache[_cur.idx( mem_x, mem_y )];
+                        break;
+                    }
+                }
+
+
+                const auto &ch = here.access_cache( z );
+                const tripoint_bub_ms p( mem_x, mem_y, z );
+
+                if( apply_vision_effects( p, here.get_visibility( lighting, cache ) ) ) {
+                    continue;
+                }
+                const auto dirty_memory = here.check_seen_cache( p );
+                auto should_refresh_memory = dirty_memory;
+                auto connecting_refresh = false;
+                if( !should_refresh_memory ) {
+                    auto connect_group = 0;
+                    const auto &terrain = here.ter( p );
+                    connecting_refresh = terrain && terrain.obj().connects( connect_group );
+                    should_refresh_memory = connecting_refresh;
+                }
+                if( !should_refresh_memory ) {
+                    continue;
+                }
+                ++offscreen_refresh_count;
+                offscreen_dirty_memory_count += dirty_memory ? int64_t{ 1 } : int64_t{ 0 };
+                offscreen_connecting_refresh_count += connecting_refresh ? int64_t{ 1 } : int64_t{ 0 };
+                bool invisible[5];
+                invisible[0] = false;
+                for( const auto i : std::views::iota( 0, 4 ) ) {
+                    const auto np = p + neighborhood[i];
+                    invisible[1 + i] = np.y() < min_visible_y || np.y() > max_visible_y ||
+                                       np.x() < min_visible_x || np.x() > max_visible_x ||
+                                       would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x(), np.y() )],
+                                               cache ) );
+                }
+                // Bypass draw calls: these tiles are offscreen and only need map memory refresh.
+                memorize_live_terrain( p, invisible );
+                if( here.check_seen_cache( p ) ) {
+                    memorize_live_furniture( p, invisible );
+                    memorize_live_trap( p, invisible );
+                    memorize_live_vehicle( p, invisible );
+                    here.check_and_set_seen_cache( p );
+                }
+            }
+        }
+        TracyPlot( "Cata Tiles Offscreen Memory Scanned", offscreen_scan_count );
+        TracyPlot( "Cata Tiles Offscreen Memory Refreshed", offscreen_refresh_count );
+        TracyPlot( "Cata Tiles Offscreen Memory Dirty", offscreen_dirty_memory_count );
+        TracyPlot( "Cata Tiles Offscreen Memory Connecting", offscreen_connecting_refresh_count );
     }
 
     in_animation = do_draw_explosion || do_draw_custom_explosion ||
