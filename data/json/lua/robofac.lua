@@ -22,6 +22,10 @@ local nearby_hub01_scan_radius_omt = 4
 ---@class RobofacMonsterParams
 ---@field monster Monster?
 
+---@class RobofacMissionParams
+---@field mission Mission?
+---@field mission_type MissionType?
+
 ---@param text string
 ---@param prefix string
 ---@return boolean
@@ -151,6 +155,14 @@ end
 M.authorize_hub01_after_dialogue = function()
   M.authorize_active_hub01_security()
   M.authorize_active_hub01_turrets()
+end
+
+---@param _params RobofacMissionParams
+---@return boolean?
+M.authorize_hub01_after_mission = function(_params)
+  M.authorize_active_hub01_security()
+  M.authorize_active_hub01_turrets()
+  return true
 end
 
 return M

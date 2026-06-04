@@ -100,6 +100,28 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_npc_avatar_name == "nil" );
 }
 
+TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][creature]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto &nearby_npc = spawn_npc( point_bub_ms{ 50, 50 }, "test_talker" );
+    auto &nearby_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 51, 50, 0 } );
+    test_data["center"] = nearby_npc.abs_omt_pos();
+    test_data["expected_npc"] = &nearby_npc;
+    test_data["expected_monster"] = &nearby_monster;
+
+    run_lua_test_script( lua, "nearby_omt_creature_query_test.lua" );
+
+    CHECK( test_data.get<int>( "npc_count" ) == 1 );
+    CHECK( test_data.get<int>( "monster_count" ) == 1 );
+    CHECK( test_data.get<bool>( "found_expected_npc" ) );
+    CHECK( test_data.get<bool>( "found_expected_monster" ) );
+}
+
 TEST_CASE( "lua_typed_coords_projection", "[lua]" )
 {
     auto lua = make_lua_state();

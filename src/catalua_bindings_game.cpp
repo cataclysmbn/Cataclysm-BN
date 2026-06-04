@@ -6,7 +6,6 @@
 #include "catalua_luna_doc.h"
 
 #include <algorithm>
-#include <climits>
 #include <ranges>
 #include <stdexcept>
 #include <vector>
@@ -285,18 +284,21 @@ void cata::detail::reg_game_api( sol::state &lua )
         return out;
     } );
 
-    DOC( "Returns NPCs near an absolute overmap terrain tile as a Lua array.  " );
+    DOC( "Returns active NPCs near an absolute overmap terrain tile as a Lua array.  " );
     DOC( "Pass `true` as the third argument to ignore z-level." );
     luna::set_fx( lib, "get_npcs_near_omt", []( sol::this_state s, const tripoint_abs_omt & p,
     const int radius, sol::optional<bool> ignore_z ) -> sol::table {
         sol::state_view lua( s );
         auto out = lua.create_table();
-        const auto query = ignore_z.value_or( false ) ? tripoint_abs_omt( p.xy(), INT_MIN ) : p;
-        const auto npcs = get_active_overmapbuffer().get_npcs_near_omt( query, radius );
+        const auto all_z = ignore_z.value_or( false );
         auto idx = 1;
         std::ranges::for_each(
-            npcs | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool {
-                return sp && !sp->is_dead() && !sp->marked_for_death;
+            g->raw_npcs() | std::views::filter( [&]( const shared_ptr_fast<npc> &sp ) -> bool {
+                if( !sp || sp->is_dead() || sp->marked_for_death ) {
+                    return false;
+                }
+                const auto pos = sp->abs_omt_pos();
+                return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
             } ),
         [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
         return out;
