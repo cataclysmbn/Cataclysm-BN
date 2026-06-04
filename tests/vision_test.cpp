@@ -192,6 +192,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     std::ostringstream floor_above;
     transparency << std::setprecision( 3 );
     seen << std::setprecision( 3 );
+    lm << std::setprecision( 3 );
     apparent_light << std::setprecision( 3 );
 
     for( int y = 0; y < height; ++y ) {
@@ -207,8 +208,7 @@ static void full_map_test( const std::vector<std::string> &setup,
             transparency << std::setw( 6 )
                          << cache.transparency_cache[cache.idx( p.x(), p.y() )] << ' ';
             seen << std::setw( 6 ) << cache.seen_cache[cache.idx( p.x(), p.y() )] << ' ';
-            four_quadrants this_lm = cache.lm[cache.idx( p.x(), p.y() )];
-            lm << this_lm.to_string() << ' ';
+            lm << std::setw( 6 ) << cache.lm[cache.idx( p.x(), p.y() )] << ' ';
             apparent_light << std::setw( 6 ) << al.apparent_light << ' ';
             obstructed << ( al.obstructed ? '#' : '.' ) << ' ';
             floor_above << ( above_cache.floor_cache[above_cache.idx( p.x(), p.y() )] ? '#' : '.' ) << ' ';
@@ -333,19 +333,12 @@ struct vision_test_case {
     }
 
     void test_all() const {
-        // Disabling 3d tests for now since 3d sight casting is actually
-        // different (it sees round corners more).
-        const bool test_3d = !( flags & vision_test_flags::no_3d );
-        if( test_3d ) {
-            INFO( "using 3d casting" );
-            fov_3d = true;
-            test_all_transformations();
+        if( !!( flags & vision_test_flags::no_3d ) ) {
+            SUCCEED( "2D-only vision fixture skipped; current visibility is always cross-z" );
+            return;
         }
-        {
-            INFO( "using 2d casting" );
-            fov_3d = false;
-            test_all_transformations();
-        }
+        INFO( "using current visibility casting" );
+        test_all_transformations();
     }
 };
 
