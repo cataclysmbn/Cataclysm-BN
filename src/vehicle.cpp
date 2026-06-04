@@ -4459,10 +4459,11 @@ void vehicle::noise_and_smoke( int load, time_duration time )
             double cur_stress = load / 1000.0 * max_stress;
             // idle stress = 1.0 resulting in nominal working engine noise = engine_noise_factor()
             // and preventing noise = 0
-            const bool electric_engine = part_info(p).fuel_type == fuel_type_battery;
+            const bool electric_engine = part_info( p ).fuel_type == fuel_type_battery;
             cur_stress = std::max( cur_stress, 1.0 );
             // Reduce the relative volume of electric engines as there is not literal explosions occouring inside.
-            double part_noise = cur_stress * part_info( p ).engine_noise_factor() * ((electric_engine) ? 0.1 : 1.0 );
+            double part_noise = cur_stress * part_info( p ).engine_noise_factor() * ( (
+                                    electric_engine ) ? 0.1 : 1.0 );
 
             if( part_info( p ).has_flag( "E_COMBUSTION" ) ) {
                 combustion = true;
@@ -4506,7 +4507,7 @@ void vehicle::noise_and_smoke( int load, time_duration time )
     // noise = std::max( noise, std::fabs( velocity / 224.0 ) );
     // Cap engine noise to avoid deafening. Deafening can occour at or above 140dBspl.
     noise = std::min( noise, 139.0 );
-    if ( velocity >= 34300 ) {
+    if( velocity >= 34300 ) {
         // Sonic boom.
         noise = 180;
     }
