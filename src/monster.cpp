@@ -1565,16 +1565,6 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         }
     }
 
-    auto player_faction_att = std::optional<mf_attitude> {};
-    if( u != nullptr && u->is_player() ) {
-        static const auto player_faction = mfaction_id( "player" );
-        const auto &attitude_map = faction.obj().attitude_map;
-        const auto found = attitude_map.find( player_faction );
-        if( found != attitude_map.end() ) {
-            player_faction_att = found->second;
-        }
-    }
-
     int effective_anger  = anger;
     int effective_morale = morale;
 
@@ -1678,17 +1668,17 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     }
 
 
-    if( player_faction_att.has_value() ) {
-        if( *player_faction_att == MFA_HATE ) {
+    if( u != nullptr && u->is_player() ) {
+        static const auto player_faction = mfaction_id( "player" );
+        const auto faction_att = faction.obj().attitude( player_faction );
+        if( faction_att == MFA_HATE ) {
             return MATT_ATTACK;
         }
-        if( effective_anger < 10 ) {
-            if( *player_faction_att == MFA_FRIENDLY ) {
-                return MATT_FRIEND;
-            }
-            if( *player_faction_att == MFA_NEUTRAL ) {
-                return MATT_IGNORE;
-            }
+        if( effective_anger < 10 && faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( effective_anger < 10 && faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
         }
     }
 
@@ -1710,9 +1700,8 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         return MATT_FOLLOW;
     }
 
-    const auto has_faction_memory_character_anger = has_flag( MF_FACTION_MEMORY ) && u != nullptr &&
-            !u->is_monster() && effective_anger >= 10;
-    if( u != nullptr && !aggro_character && !u->is_monster() && !has_faction_memory_character_anger ) {
+    if( u != nullptr && !aggro_character && !u->is_monster() &&
+        !( has_flag( MF_FACTION_MEMORY ) && effective_anger >= 10 ) ) {
         return MATT_IGNORE;
     }
 
