@@ -143,11 +143,11 @@
     "color": "dark_gray"
   },
   {
-    "id": "40x53mm_m169_casing",
+    "id": "40x53mm_casing",
     "type": "GENERIC",
     "category": "spare_parts",
-    "name": { "str": "40x53mm M169 casing" },
-    "description": "A large canister from a spent 40mm cartridge.",
+    "name": { "str": "40x53mm casing" },
+    "description": "A large canister from a spent 40x53mm grenade cartridge.",
     "weight": "50 g",
     "volume": "64ml",
     "material": "steel",
