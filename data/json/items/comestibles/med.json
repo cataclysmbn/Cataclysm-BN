@@ -1497,7 +1497,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You smoke some weed.  Good stuff, man!",
-      "effects": [ { "id": "weed_high", "duration": 5400 }, { "id": "pkill1", "duration": 360 } ],
+      "effects": [ { "id": "weed_high", "duration": "90 m" }, { "id": "pkill1", "duration": "6 m" } ],
       "stat_adjustments": { "hunger": 4, "thirst": 6 },
       "fields_produced": { "fd_weedsmoke": 2 },
       "charges_needed": { "fire": 1 },
