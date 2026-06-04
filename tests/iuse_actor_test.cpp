@@ -9,9 +9,9 @@
 #include "game.h"
 #include "item.h"
 #include "monster.h"
-#include "overmap_special.h"
 #include "mtype.h"
 #include "player.h"
+#include "scenario.h"
 #include "state_helpers.h"
 #include "string_id.h"
 #include "type_id.h"
@@ -32,7 +32,17 @@ static monster *find_adjacent_monster( const tripoint_bub_ms &pos )
     return nullptr;
 }
 
-TEST_CASE( "debug_backroom_key_opens_backroom_pocket", "[iuse_actor][pocket_dimension][backroom]" )
+TEST_CASE( "backroom_scenario_starts_in_backroom_dimension", "[scenario][dimension][backroom]" )
+{
+    static const auto backroom_dimension = world_type_id( "backroom" );
+    static const auto backroom_dweller = string_id<scenario>( "backroom_dweller" );
+
+    REQUIRE( backroom_dimension.is_valid() );
+    REQUIRE( backroom_dweller.is_valid() );
+    CHECK( backroom_dweller.obj().start_dimension() == backroom_dimension );
+}
+
+TEST_CASE( "debug_backroom_key_opens_backroom_dimension", "[iuse_actor][dimension][backroom]" )
 {
     clear_all_state();
     const auto cleanup = on_out_of_scope( []() {
@@ -40,11 +50,10 @@ TEST_CASE( "debug_backroom_key_opens_backroom_pocket", "[iuse_actor][pocket_dime
     } );
 
     static const auto debug_backroom_key = itype_id( "debug_backroom_key" );
-    static const auto debug_backroom_pocket = overmap_special_id( "debug_backroom_pocket" );
-    static const auto pocket_dimension = world_type_id( "pocket_dimension" );
+    static const auto backroom_dimension = world_type_id( "backroom" );
 
     REQUIRE( debug_backroom_key.is_valid() );
-    REQUIRE( debug_backroom_pocket.is_valid() );
+    REQUIRE( backroom_dimension.is_valid() );
 
     player &dummy = get_avatar();
     g->place_player( tripoint_bub_ms( 60, 60, 0 ) );
@@ -58,12 +67,11 @@ TEST_CASE( "debug_backroom_key_opens_backroom_pocket", "[iuse_actor][pocket_dime
 
     dummy.invoke_item( &key );
 
-    const auto *pocket_info = g->get_current_dimension_info();
-    REQUIRE( pocket_info != nullptr );
-    CHECK( g->get_current_dimension_id() != origin_dim );
-    CHECK( pocket_info->world_type == pocket_dimension );
-    REQUIRE( pocket_info->pocket_info.has_value() );
-    CHECK( pocket_info->pocket_info->bounds.contains( dummy.abs_pos() ) );
+    const auto *backroom_info = g->get_current_dimension_info();
+    REQUIRE( backroom_info != nullptr );
+    CHECK( g->get_current_dimension_id() == "backroom" );
+    CHECK( backroom_info->world_type == backroom_dimension );
+    CHECK_FALSE( backroom_info->pocket_info.has_value() );
 
     dummy.invoke_item( &key );
 
