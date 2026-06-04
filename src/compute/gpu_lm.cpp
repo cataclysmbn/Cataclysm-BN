@@ -80,6 +80,7 @@ auto* s_clear_seen_view_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr)
 SDL_GPUComputePipeline* s_seen_pipeline = nullptr;
 SDL_GPUComputePipeline* s_seen_walls_pipeline = nullptr;
 SDL_GPUComputePipeline* s_visibility_pipeline = nullptr;
+auto* s_sight_pairs_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_vehicle_optics_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_shift_float_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_shift_uint_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
@@ -102,6 +103,7 @@ auto release_lm_pipelines(SDL_GPUDevice* const device) -> void {
     release_pipeline(device, s_seen_pipeline);
     release_pipeline(device, s_seen_walls_pipeline);
     release_pipeline(device, s_visibility_pipeline);
+    release_pipeline(device, s_sight_pairs_pipeline);
     release_pipeline(device, s_vehicle_optics_pipeline);
     release_pipeline(device, s_shift_float_pipeline);
     release_pipeline(device, s_shift_uint_pipeline);
@@ -226,6 +228,16 @@ auto ensure_visibility_pipeline(SDL_GPUDevice* const device) -> bool {
     return s_visibility_pipeline != nullptr;
 }
 
+auto ensure_sight_pairs_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (!ensure_pipeline_device(device)) { return false; }
+    if (s_sight_pairs_pipeline == nullptr) {
+        s_sight_pairs_pipeline = load_pipeline(
+            device, "lm_sight_pairs_compute",
+            /*ro=*/3, /*rw=*/1, 64, 1);
+    }
+    return s_sight_pairs_pipeline != nullptr;
+}
+
 auto ensure_vehicle_optics_pipeline(SDL_GPUDevice* const device) -> bool {
     if (!ensure_pipeline_device(device)) { return false; }
     if (s_vehicle_optics_pipeline == nullptr) {
@@ -326,6 +338,8 @@ struct lighting_resource_cache {
     gpu_buffer_slot seen_raw;
     gpu_buffer_slot seen;
     gpu_buffer_slot visibility;
+    gpu_buffer_slot sight_pairs;
+    gpu_buffer_slot sight_results;
     gpu_buffer_slot shift_float_scratch;
     gpu_buffer_slot shift_floor_scratch;
     gpu_buffer_slot shift_vehicle_floor_scratch;
@@ -334,6 +348,8 @@ struct lighting_resource_cache {
     gpu_transfer_slot lm_download;
     gpu_transfer_slot seen_download;
     gpu_transfer_slot visibility_download;
+    gpu_transfer_slot sight_upload;
+    gpu_transfer_slot sight_download;
     std::vector<float> transparency_staging;
     std::vector<uint32_t> floor_staging;
     std::vector<uint32_t> vehicle_floor_staging;
@@ -427,6 +443,16 @@ struct lm_vehicle_optics_push_constants {
     uint32_t _pad[3];
 };
 static_assert(sizeof(lm_vehicle_optics_push_constants) == 48);
+
+struct lm_sight_pairs_push_constants {
+    int32_t cache_x;
+    int32_t cache_y;
+    int32_t cache_xy;
+    int32_t z_count;
+    uint32_t pair_count;
+    uint32_t _pad[3];
+};
+static_assert(sizeof(lm_sight_pairs_push_constants) == 32);
 
 struct lm_clear_seen_push_constants {
     uint32_t total_tiles;
@@ -542,6 +568,19 @@ struct pending_gpu_visibility_work {
 auto s_pending_visibility_work = pending_gpu_visibility_work{};
 auto s_next_visibility_work_id = uint64_t{1};
 
+struct pending_gpu_sight_pairs_work {
+    bool active = false;
+    uint64_t id = 0;
+    SDL_GPUDevice* device = nullptr;
+    SDL_GPUFence* fence = nullptr;
+    std::size_t pair_count = 0;
+    std::vector<int> upload_levels;
+    int z_count = 0;
+};
+
+auto s_pending_sight_pairs_work = pending_gpu_sight_pairs_work{};
+auto s_next_sight_pairs_work_id = uint64_t{1};
+
 auto reset_input_residency_for_shape(int cache_x, int cache_y, int z_count) -> void;
 
 auto release_pending_lighting_work(SDL_GPUDevice* const device) -> void {
@@ -556,6 +595,13 @@ auto release_pending_visibility_work(SDL_GPUDevice* const device) -> void {
         SDL_ReleaseGPUFence(device, s_pending_visibility_work.fence);
     }
     s_pending_visibility_work = {};
+}
+
+auto release_pending_sight_pairs_work(SDL_GPUDevice* const device) -> void {
+    if (s_pending_sight_pairs_work.fence != nullptr && device != nullptr) {
+        SDL_ReleaseGPUFence(device, s_pending_sight_pairs_work.fence);
+    }
+    s_pending_sight_pairs_work = {};
 }
 
 auto release_buffer_slot(SDL_GPUDevice* const device, gpu_buffer_slot& slot) -> void {
@@ -578,6 +624,7 @@ auto release_transfer_slot(SDL_GPUDevice* const device, gpu_transfer_slot& slot)
 auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_pending_lighting_work(device);
     release_pending_visibility_work(device);
+    release_pending_sight_pairs_work(device);
     release_buffer_slot(device, s_lighting_resources.transparency);
     release_buffer_slot(device, s_lighting_resources.floor);
     release_buffer_slot(device, s_lighting_resources.vehicle_floor);
@@ -590,6 +637,8 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_buffer_slot(device, s_lighting_resources.seen_raw);
     release_buffer_slot(device, s_lighting_resources.seen);
     release_buffer_slot(device, s_lighting_resources.visibility);
+    release_buffer_slot(device, s_lighting_resources.sight_pairs);
+    release_buffer_slot(device, s_lighting_resources.sight_results);
     release_buffer_slot(device, s_lighting_resources.shift_float_scratch);
     release_buffer_slot(device, s_lighting_resources.shift_floor_scratch);
     release_buffer_slot(device, s_lighting_resources.shift_vehicle_floor_scratch);
@@ -598,6 +647,8 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_transfer_slot(device, s_lighting_resources.lm_download);
     release_transfer_slot(device, s_lighting_resources.seen_download);
     release_transfer_slot(device, s_lighting_resources.visibility_download);
+    release_transfer_slot(device, s_lighting_resources.sight_upload);
+    release_transfer_slot(device, s_lighting_resources.sight_download);
     s_lighting_resources.transparency_staging = {};
     s_lighting_resources.floor_staging = {};
     s_lighting_resources.vehicle_floor_staging = {};
@@ -2295,6 +2346,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             << "SDL_GPU: lm: lighting begin requested while visibility work is pending";
         return {};
     }
+    if (s_pending_sight_pairs_work.active) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: lighting begin requested while sight-pair work is pending";
+        return {};
+    }
     ensure_resource_device(device);
     if (!ensure_pipelines(device)) { return {}; }
 
@@ -3025,6 +3081,7 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
                 auto const* lm_src = lm_mapped + lm_level_index * pending.cache_xy;
                 // Reinterpret uint bits as float values for lm.
                 std::memcpy(lc.lm.data(), lm_src, sz * sizeof(float));
+                lc.lm_cpu_cache_valid = true;
                 ++lm_level_index;
             }
         }
@@ -3108,6 +3165,11 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     if (s_pending_lighting_work.active) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: lm: visibility begin requested while lighting work is pending";
+        return {};
+    }
+    if (s_pending_sight_pairs_work.active) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility begin requested while sight-pair work is pending";
         return {};
     }
     ensure_resource_device(device);
@@ -3506,6 +3568,346 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
         return false;
     }
     return finish_gpu_visibility(device, work);
+}
+
+auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_params const& p)
+    -> gpu_sight_pairs_work {
+    ZoneScopedN( "begin_gpu_sight_pairs" );
+
+    if (p.m == nullptr || p.pairs == nullptr) {
+        return {};
+    }
+    if (p.pairs->empty()) {
+        return {};
+    }
+    if (s_pending_lighting_work.active || s_pending_visibility_work.active ||
+        s_pending_sight_pairs_work.active) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight pair batch requested while other lm GPU work is pending";
+        return {};
+    }
+    ensure_resource_device(device);
+    if (!ensure_sight_pairs_pipeline(device)) {
+        return {};
+    }
+
+    auto const& lc0 = p.m->get_cache_ref(p.zlev);
+    auto const cache_x = lc0.cache_x;
+    auto const cache_y = lc0.cache_y;
+    auto const cache_xy = cache_x * cache_y;
+    auto const z_count = OVERMAP_LAYERS;
+    reset_input_residency_for_shape(cache_x, cache_y, z_count);
+
+    auto upload_levels = std::vector<int>{};
+    upload_levels.reserve(p.pairs->size());
+    for (auto const& pair : *p.pairs) {
+        auto const min_z_idx = std::min(pair.from_z_idx, pair.to_z_idx);
+        auto const max_z_idx = std::max(pair.from_z_idx, pair.to_z_idx);
+        std::ranges::copy(
+            std::views::iota(min_z_idx, max_z_idx + 1) |
+            std::views::filter([z_count](int const z_idx) {
+                return z_idx >= 0 && z_idx < z_count;
+            }) |
+            std::views::transform([](int const z_idx) { return z_idx - OVERMAP_DEPTH; }),
+            std::back_inserter(upload_levels));
+    }
+    upload_levels = sorted_unique(std::move(upload_levels));
+    auto const float_level_bytes = static_cast<Uint32>(cache_xy * sizeof(float));
+    auto const uint_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
+    auto const transparency_upload_bytes =
+        static_cast<Uint32>(upload_levels.size()) * float_level_bytes;
+    auto const floor_upload_bytes =
+        static_cast<Uint32>(upload_levels.size()) * uint_level_bytes;
+    auto const pair_count = static_cast<Uint32>(p.pairs->size());
+    auto const pair_bytes = static_cast<Uint32>(p.pairs->size() * sizeof(GpuSightPair));
+    auto const result_bytes = static_cast<Uint32>(p.pairs->size() * sizeof(uint32_t));
+    auto const floor_upload_offset = transparency_upload_bytes;
+    auto const pair_upload_offset = transparency_upload_bytes + floor_upload_bytes;
+    auto const upload_bytes = pair_upload_offset + pair_bytes;
+    auto const read_usage = SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ;
+    auto const read_write_usage = static_cast<SDL_GPUBufferUsageFlags>(
+        SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_READ | SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE);
+    if (!ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.transparency,
+            .usage = read_write_usage,
+            .required_bytes = static_cast<Uint32>(z_count * cache_xy * sizeof(float)),
+            .name = "transparency",
+        }) || !ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.floor,
+            .usage = read_write_usage,
+            .required_bytes = static_cast<Uint32>(z_count * cache_xy * sizeof(uint32_t)),
+            .name = "floor",
+        }) || !ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.sight_pairs,
+            .usage = read_usage,
+            .required_bytes = pair_bytes,
+            .name = "sight_pairs",
+        }) || !ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.sight_results,
+            .usage = read_write_usage,
+            .required_bytes = result_bytes,
+            .name = "sight_results",
+        }) || !ensure_transfer_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.sight_upload,
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+            .required_bytes = upload_bytes,
+            .name = "sight_upload",
+        }) || !ensure_transfer_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.sight_download,
+            .usage = SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+            .required_bytes = result_bytes,
+            .name = "sight_download",
+        })) {
+        return {};
+    }
+
+    TracyPlot("GPU Sight Pair Count", static_cast<int64_t>(pair_count));
+    TracyPlot("GPU Sight Terrain Upload Levels", static_cast<int64_t>(upload_levels.size()));
+    TracyPlot("GPU Sight Terrain Upload Bytes",
+              static_cast<int64_t>(transparency_upload_bytes + floor_upload_bytes));
+    {
+        ZoneScopedN( "gpu_sight_pack_terrain" );
+        pack_float_cache(
+            *p.m, upload_levels, cache_xy,
+            [](level_cache const& lc) -> std::vector<float> const& {
+                return lc.transparency_cache;
+            },
+            s_lighting_resources.transparency_staging);
+        pack_char_cache_uint(
+            *p.m, upload_levels, cache_xy,
+            [](level_cache const& lc) -> std::vector<char> const& {
+                return lc.floor_cache;
+            },
+            s_lighting_resources.floor_staging);
+    }
+    {
+        ZoneScopedN( "gpu_sight_stage_upload" );
+        auto* const mapped = static_cast<std::byte*>(
+            SDL_MapGPUTransferBuffer(device, s_lighting_resources.sight_upload.buffer, false));
+        if (mapped == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: sight upload transfer buffer map failed: " << SDL_GetError();
+            return {};
+        }
+        if (transparency_upload_bytes > 0) {
+            std::memcpy(mapped, s_lighting_resources.transparency_staging.data(),
+                        transparency_upload_bytes);
+        }
+        if (floor_upload_bytes > 0) {
+            std::memcpy(mapped + floor_upload_offset, s_lighting_resources.floor_staging.data(),
+                        floor_upload_bytes);
+        }
+        std::memcpy(mapped + pair_upload_offset, p.pairs->data(), pair_bytes);
+        SDL_UnmapGPUTransferBuffer(device, s_lighting_resources.sight_upload.buffer);
+    }
+
+    auto* const cmd = SDL_AcquireGPUCommandBuffer(device);
+    if (cmd == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight command buffer acquisition failed: " << SDL_GetError();
+        return {};
+    }
+
+    {
+        ZoneScopedN( "gpu_sight_record_commands" );
+        {
+            auto* const cp = SDL_BeginGPUCopyPass(cmd);
+            auto transparency_offset = Uint32{0};
+            auto floor_offset = floor_upload_offset;
+            for (auto const z : upload_levels) {
+                auto const z_idx = static_cast<Uint32>(z + OVERMAP_DEPTH);
+                auto const src_transparency = SDL_GPUTransferBufferLocation{
+                    .transfer_buffer = s_lighting_resources.sight_upload.buffer,
+                    .offset = transparency_offset,
+                };
+                auto const dst_transparency = SDL_GPUBufferRegion{
+                    .buffer = s_lighting_resources.transparency.buffer,
+                    .offset = z_idx * float_level_bytes,
+                    .size = float_level_bytes,
+                };
+                SDL_UploadToGPUBuffer(cp, &src_transparency, &dst_transparency, false);
+                auto const src_floor = SDL_GPUTransferBufferLocation{
+                    .transfer_buffer = s_lighting_resources.sight_upload.buffer,
+                    .offset = floor_offset,
+                };
+                auto const dst_floor = SDL_GPUBufferRegion{
+                    .buffer = s_lighting_resources.floor.buffer,
+                    .offset = z_idx * uint_level_bytes,
+                    .size = uint_level_bytes,
+                };
+                SDL_UploadToGPUBuffer(cp, &src_floor, &dst_floor, false);
+                transparency_offset += float_level_bytes;
+                floor_offset += uint_level_bytes;
+            }
+            auto const src_pairs = SDL_GPUTransferBufferLocation{
+                .transfer_buffer = s_lighting_resources.sight_upload.buffer,
+                .offset = pair_upload_offset,
+            };
+            auto const dst_pairs = SDL_GPUBufferRegion{
+                .buffer = s_lighting_resources.sight_pairs.buffer,
+                .offset = 0,
+                .size = pair_bytes,
+            };
+            SDL_UploadToGPUBuffer(cp, &src_pairs, &dst_pairs, false);
+            SDL_EndGPUCopyPass(cp);
+        }
+        {
+            auto const rw_results = SDL_GPUStorageBufferReadWriteBinding{
+                .buffer = s_lighting_resources.sight_results.buffer,
+                .cycle = false,
+                .padding1 = 0,
+                .padding2 = 0,
+                .padding3 = 0,
+            };
+            auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_results, 1);
+            SDL_BindGPUComputePipeline(cp, s_sight_pairs_pipeline);
+
+            auto const ro_bufs = std::array<SDL_GPUBuffer*, 3>{
+                s_lighting_resources.transparency.buffer,
+                s_lighting_resources.floor.buffer,
+                s_lighting_resources.sight_pairs.buffer,
+            };
+            SDL_BindGPUComputeStorageBuffers(
+                cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+
+            auto const push = lm_sight_pairs_push_constants{
+                .cache_x = cache_x,
+                .cache_y = cache_y,
+                .cache_xy = cache_xy,
+                .z_count = z_count,
+                .pair_count = pair_count,
+                ._pad = {},
+            };
+            SDL_PushGPUComputeUniformData(cmd, 0, &push, sizeof(push));
+            SDL_DispatchGPUCompute(cp, (pair_count + 63) / 64, 1, 1);
+            SDL_EndGPUComputePass(cp);
+        }
+        {
+            auto* const cp = SDL_BeginGPUCopyPass(cmd);
+            auto const src_results = SDL_GPUBufferRegion{
+                .buffer = s_lighting_resources.sight_results.buffer,
+                .offset = 0,
+                .size = result_bytes,
+            };
+            auto const dst_results = SDL_GPUTransferBufferLocation{
+                .transfer_buffer = s_lighting_resources.sight_download.buffer,
+                .offset = 0,
+            };
+            SDL_DownloadFromGPUBuffer(cp, &src_results, &dst_results);
+            SDL_EndGPUCopyPass(cp);
+        }
+    }
+
+    auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+    if (fence == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight command buffer submission failed: " << SDL_GetError();
+        return {};
+    }
+
+    auto const work_id = s_next_sight_pairs_work_id++;
+    if (s_next_sight_pairs_work_id == 0) {
+        s_next_sight_pairs_work_id = 1;
+    }
+    s_pending_sight_pairs_work = pending_gpu_sight_pairs_work{
+        .active = true,
+        .id = work_id,
+        .device = device,
+        .fence = fence,
+        .pair_count = p.pairs->size(),
+        .upload_levels = std::move(upload_levels),
+        .z_count = z_count,
+    };
+    TracyPlot("GPU Sight Pending Work", int64_t{1});
+    return gpu_sight_pairs_work{.id = work_id};
+}
+
+auto finish_gpu_sight_pairs(
+    SDL_GPUDevice* const device, gpu_sight_pairs_work const& work,
+    std::vector<uint32_t>& results) -> bool {
+    ZoneScopedN( "finish_gpu_sight_pairs" );
+
+    if (work.id == 0) {
+        results.clear();
+        return true;
+    }
+    if (!s_pending_sight_pairs_work.active || s_pending_sight_pairs_work.id != work.id) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: finish requested for missing sight-pair work";
+        return false;
+    }
+    if (s_pending_sight_pairs_work.device != device) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight-pair finish requested on a different GPU device";
+        return false;
+    }
+
+    auto pending = std::move(s_pending_sight_pairs_work);
+    s_pending_sight_pairs_work = {};
+    if (pending.fence == nullptr) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight-pair finish requested without a GPU fence";
+        return false;
+    }
+
+    auto wait_succeeded = true;
+    {
+        ZoneScopedN( "gpu_sight_fence_wait" );
+        wait_succeeded = SDL_WaitForGPUFences(device, true, &pending.fence, 1);
+    }
+    SDL_ReleaseGPUFence(device, pending.fence);
+    pending.fence = nullptr;
+    if (!wait_succeeded) {
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight fence wait failed: " << SDL_GetError();
+        return false;
+    }
+
+    {
+        ZoneScopedN( "gpu_sight_unpack_download" );
+        auto const* mapped = static_cast<uint32_t const*>(
+            SDL_MapGPUTransferBuffer(device, s_lighting_resources.sight_download.buffer, false));
+        if (mapped == nullptr) {
+            DebugLog(DL::Error, DC::Main)
+                << "SDL_GPU: lm: sight download transfer buffer map failed: " << SDL_GetError();
+            return false;
+        }
+        results.assign(mapped, mapped + pending.pair_count);
+        SDL_UnmapGPUTransferBuffer(device, s_lighting_resources.sight_download.buffer);
+    }
+
+    mark_transparency_levels_valid(pending.upload_levels);
+    if (pending.upload_levels.size() == static_cast<std::size_t>(pending.z_count)) {
+        s_lighting_resources.inputs.floor_valid = true;
+    }
+
+    TracyPlot("GPU Sight Pending Work", int64_t{0});
+    return true;
+}
+
+auto run_gpu_sight_pairs(SDL_GPUDevice* const device, run_gpu_sight_pairs_params const& p)
+    -> bool {
+    ZoneScopedN( "run_gpu_sight_pairs" );
+
+    if (p.results == nullptr) {
+        return false;
+    }
+    auto const work = begin_gpu_sight_pairs(device, {
+        .m = p.m,
+        .pairs = p.pairs,
+        .zlev = p.zlev,
+    });
+    if (work.id == 0) {
+        p.results->assign(p.pairs == nullptr ? std::size_t{0} : p.pairs->size(), 0u);
+        return p.pairs != nullptr && p.pairs->empty();
+    }
+    return finish_gpu_sight_pairs(device, work, *p.results);
 }
 
 auto shutdown_lm() -> void {

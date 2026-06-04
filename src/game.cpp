@@ -208,6 +208,10 @@
 #include "worldfactory.h"
 #include "location_vector.h"
 #include "monfaction.h"
+#if defined( CATA_SDL )
+#include "compute/gpu_lm.h"
+#include "compute/gpu_platform.h"
+#endif
 class computer;
 
 #if defined(TILES)
@@ -5663,6 +5667,153 @@ void game::world_tick()
     }
 }
 
+struct prepared_sight_query {
+    bool needs_los = false;
+    bool immediate_result = false;
+    tripoint_bub_ms from = tripoint_bub_ms::zero();
+    tripoint_bub_ms to = tripoint_bub_ms::zero();
+    int range = -1;
+};
+
+static auto prepare_terrain_sight_query( const Creature &seer, const tripoint_bub_ms &target,
+        const int range_mod ) -> prepared_sight_query
+{
+    auto &here = get_map();
+    if( seer.get_dimension() != here.get_bound_dimension() ) {
+        return { .immediate_result = false };
+    }
+
+    const auto range_day = seer.sight_range( default_daylight_level() );
+    const auto range_night = seer.sight_range( 0 );
+    const auto range_max = std::max( range_day, range_night );
+    const auto wanted_range = rl_dist( seer.bub_pos(), target );
+    if( wanted_range > range_max ) {
+        return { .immediate_result = false };
+    }
+
+    const auto ambient = here.ambient_light_at( target );
+    const auto range_cur = seer.sight_range( ambient );
+    const auto range_min = std::min( range_cur, range_max );
+    const auto natural_light = g->natural_light_level( target.z() );
+    const auto is_lit = ambient > natural_light;
+    if( wanted_range > range_min && !( wanted_range <= range_max && is_lit ) ) {
+        return { .immediate_result = false };
+    }
+
+    auto range = is_lit ? g_max_view_distance : range_min;
+    if( seer.has_effect( effect_no_sight ) ) {
+        range = 1;
+    }
+    if( range_mod > 0 ) {
+        range = std::min( range, range_mod );
+    }
+    return {
+        .needs_los = true,
+        .from = seer.bub_pos(),
+        .to = target,
+        .range = range,
+    };
+}
+
+static auto prepare_creature_sight_query( const Creature &seer,
+        const Creature &target ) -> prepared_sight_query
+{
+    if( &target == &seer ) {
+        return { .immediate_result = true };
+    }
+    if( target.is_hallucination() ) {
+        return { .immediate_result = seer.is_player() };
+    }
+    if( seer.get_dimension() != target.get_dimension() ) {
+        return { .immediate_result = false };
+    }
+
+    const auto *const target_character = target.as_character();
+    if( target_character != nullptr && target_character->is_invisible() ) {
+        return { .immediate_result = false };
+    }
+
+    auto &here = get_map();
+    const auto seer_pos = seer.bub_pos();
+    const auto target_pos = target.bub_pos();
+    const auto wanted_range = rl_dist( seer_pos, target_pos );
+    if( wanted_range <= 1 && seer_pos.z() == target_pos.z() ) {
+        return {
+            .immediate_result = !here.obscured_by_vehicle_rotation( seer_pos, target_pos ),
+        };
+    }
+    if( wanted_range <= 1 ) {
+        return {
+            .needs_los = true,
+            .from = seer_pos,
+            .to = target_pos,
+            .range = 1,
+        };
+    }
+
+    if( target.digging() ||
+        ( target.has_flag( MF_NIGHT_INVISIBILITY ) &&
+          here.light_at( target_pos ) <= lit_level::LOW ) ||
+        ( target.is_underwater() && !seer.is_underwater() && here.is_divable( target_pos ) ) ||
+        ( here.has_flag_ter_or_furn( TFLAG_HIDE_PLACE, target_pos ) &&
+          !( std::abs( seer_pos.x() - target_pos.x() ) <= 1 &&
+             std::abs( seer_pos.y() - target_pos.y() ) <= 1 &&
+             std::abs( seer_pos.z() - target_pos.z() ) <= 1 ) &&
+          !target.has_flag( MF_FLIES ) &&
+          target.get_size() <= creature_size::medium ) ) {
+        return { .immediate_result = false };
+    }
+
+    if( target_character != nullptr && target_character->movement_mode_is( CMM_CROUCH ) ) {
+        const auto coverage = here.obstacle_coverage( seer_pos, target_pos );
+        if( coverage < 30 ) {
+            return prepare_terrain_sight_query( seer, target_pos, 0 );
+        }
+        auto size_modifier = 1.0;
+        switch( target_character->get_size() ) {
+            case creature_size::tiny:
+                size_modifier = 2.0;
+                break;
+            case creature_size::small:
+                size_modifier = 1.4;
+                break;
+            case creature_size::medium:
+                break;
+            case creature_size::large:
+                size_modifier = 0.6;
+                break;
+            case creature_size::huge:
+                size_modifier = 0.15;
+                break;
+            default:
+                break;
+        }
+        const auto vision_modifier = static_cast<int>( 30 - 0.5 * coverage * size_modifier );
+        if( vision_modifier <= 1 ) {
+            return { .immediate_result = false };
+        }
+        return prepare_terrain_sight_query( seer, target_pos, vision_modifier );
+    }
+
+    return prepare_terrain_sight_query( seer, target_pos, 0 );
+}
+
+#if defined( CATA_SDL )
+static auto make_gpu_sight_pair( const prepared_sight_query &query ) -> cata_gpu::GpuSightPair
+{
+    return {
+        .from_x = query.from.x(),
+        .from_y = query.from.y(),
+        .from_z_idx = query.from.z() + OVERMAP_DEPTH,
+        .to_x = query.to.x(),
+        .to_y = query.to.y(),
+        .to_z_idx = query.to.z() + OVERMAP_DEPTH,
+        .range = query.range,
+        ._pad = 0,
+    };
+}
+#endif
+
 auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache *cache ) -> void
 {
     ZoneScopedN( "game::monmove" );
@@ -5861,10 +6012,9 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
     }
 
     // Pre-warm directed Creature::sees() jobs before the parallel planning phase.
-    // Worker threads compute raw perception results only; the shared
-    // turn_sight_cache_ is filled serially afterward, avoiding cache write-lock
-    // contention in compute_plan().  map::sees() still supplies symmetric LOS reuse
-    // for the ray traces below Creature::sees().
+    // CPU code applies the creature perception rules, then the terrain LOS work
+    // is batched into one GPU dispatch.  The shared turn_sight_cache_ is filled
+    // serially afterward, avoiding cache write-lock contention in compute_plan().
     auto sight_jobs = std::vector<std::pair<const Creature *, const Creature *>> {};
     const auto initial_sight_job_capacity =
         plannable.size() * ( npc_snap->size() + std::min( mon_snap->size(), size_t{ 16 } ) + 1 );
@@ -5922,31 +6072,58 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
         }
     }
     TracyPlot( "Monmove Sight Jobs", static_cast<int64_t>( sight_jobs.size() ) );
+    auto sight_results = std::vector<char> {};
+    auto los_jobs = std::vector<std::pair<size_t, prepared_sight_query>> {};
+#if defined( CATA_SDL )
+    auto gpu_pairs = std::vector<cata_gpu::GpuSightPair> {};
+    auto gpu_results = std::vector<uint32_t> {};
+    auto *gpu_sight_device = static_cast<SDL_GPUDevice *>( nullptr );
+    auto gpu_sight_work = cata_gpu::gpu_sight_pairs_work {};
+#endif
     if( !sight_jobs.empty() ) {
-        auto sight_results = std::vector<char>( sight_jobs.size(), 0 );
+        sight_results.assign( sight_jobs.size(), 0 );
         {
-            ZoneScopedN( "monmove_parallel_sight_prewarm" );
-            if( parallel_enabled && parallel_monster_planning && sight_jobs.size() > 1 ) {
-                parallel_for_chunked( 0, static_cast<int>( sight_jobs.size() ),
-                monster_plan_chunk_size, [&]( int i ) {
-                    const auto index = static_cast<size_t>( i );
-                    const auto &[seer, target] = sight_jobs[index];
-                    sight_results[index] = seer->sees( *target ) ? 1 : 0;
-                } );
-            } else {
-                for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
-                    const auto &[seer, target] = sight_jobs[index];
-                    sight_results[index] = seer->sees( *target ) ? 1 : 0;
+            ZoneScopedN( "monmove_prepare_sight_prewarm" );
+            los_jobs.reserve( sight_jobs.size() );
+            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
+                const auto &[seer, target] = sight_jobs[index];
+                const auto query = prepare_creature_sight_query( *seer, *target );
+                if( query.needs_los ) {
+                    los_jobs.emplace_back( index, query );
+                } else {
+                    sight_results[index] = query.immediate_result ? 1 : 0;
                 }
             }
         }
-        {
-            ZoneScopedN( "monmove_insert_sight_prewarm" );
-            auto lock = std::unique_lock<std::shared_mutex>( turn_sight_cache_mutex_ );
-            turn_sight_cache_.reserve( sight_jobs.size() );
-            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
-                turn_sight_cache_.emplace( sight_jobs[index], sight_results[index] != 0 );
+        TracyPlot( "Monmove GPU Sight LOS Jobs", static_cast<int64_t>( los_jobs.size() ) );
+        if( !los_jobs.empty() ) {
+#if defined( CATA_SDL )
+            ZoneScopedN( "monmove_begin_gpu_sight_prewarm" );
+            gpu_pairs.reserve( los_jobs.size() );
+            std::ranges::transform( los_jobs, std::back_inserter( gpu_pairs ),
+            []( const auto & job ) {
+                return make_gpu_sight_pair( job.second );
+            } );
+            gpu_sight_device = cata_gpu::get_device();
+            if( gpu_sight_device == nullptr ) {
+                debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+            } else {
+                gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
+                    .m = &m,
+                    .pairs = &gpu_pairs,
+                    .zlev = get_levz(),
+                } );
+                if( gpu_sight_work.id == 0 ) {
+                    debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                }
             }
+#else
+            ZoneScopedN( "monmove_cpu_sight_prewarm" );
+            auto &here = get_map();
+            for( const auto &[result_index, query] : los_jobs ) {
+                sight_results[result_index] = here.sees( query.from, query.to, query.range ) ? 1 : 0;
+            }
+#endif
         }
     }
 
@@ -5999,6 +6176,35 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             hostile_fac_map_for_plan = &cache->hostile_fac_map;
         } else {
             hostile_fac_map_for_plan = &hostile_fac_map;
+        }
+    }
+    if( !sight_jobs.empty() ) {
+        if( !los_jobs.empty() ) {
+#if defined( CATA_SDL )
+            if( gpu_sight_work.id != 0 ) {
+                ZoneScopedN( "monmove_finish_gpu_sight_prewarm" );
+                if( !cata_gpu::finish_gpu_sight_pairs( gpu_sight_device, gpu_sight_work,
+                                                        gpu_results ) ) {
+                    debugmsg( "SDL_GPU sight pair completion failed; see debug.log for details" );
+                } else {
+                    auto &here = get_map();
+                    for( const auto gpu_index : std::views::iota( size_t{ 0 }, los_jobs.size() ) ) {
+                        const auto &[result_index, query] = los_jobs[gpu_index];
+                        const auto result = gpu_results[gpu_index] != 0 &&
+                                            !here.obscured_by_vehicle_rotation( query.from, query.to );
+                        sight_results[result_index] = result ? 1 : 0;
+                    }
+                }
+            }
+#endif
+        }
+        {
+            ZoneScopedN( "monmove_insert_sight_prewarm" );
+            auto lock = std::unique_lock<std::shared_mutex>( turn_sight_cache_mutex_ );
+            turn_sight_cache_.reserve( sight_jobs.size() );
+            for( const auto index : std::views::iota( size_t{ 0 }, sight_jobs.size() ) ) {
+                turn_sight_cache_.emplace( sight_jobs[index], sight_results[index] != 0 );
+            }
         }
     }
     const monster::compute_plan_context plan_ctx{ mon_snap, npc_snap, faction_snap_for_plan,

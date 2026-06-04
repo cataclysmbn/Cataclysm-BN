@@ -13,6 +13,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <set>
+#include <source_location>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -351,6 +352,11 @@ struct level_cache {
     // Set by map mutations and dynamic light-state changes; cleared after
     // generate_lightmap completes for this level.
     bool lightmap_dirty = true;
+    // True when CPU lm contains current lighting for the whole level. SDL GPU
+    // lighting may keep resident GPU lm current while leaving this false.
+    bool lm_cpu_cache_valid = false;
+    // Incremented whenever CPU lm contents are invalidated before a rebuild.
+    uint64_t lm_cpu_cache_generation = 0;
     // Set to true at the start of each game turn; cleared after update_visibility_cache
     // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
     // to skip the full visibility rebuild when nothing has changed.
@@ -368,7 +374,7 @@ struct level_cache {
     // To prevent redundant ray casting into neighbors: precalculate bulk light source positions.
     // This is only valid for the duration of generate_lightmap
     std::vector<float>              light_source_buffer;
-    // GPU collect-only path: source tiles touched in light_source_buffer.
+    // Source tiles touched in light_source_buffer.
     std::vector<point_bub_ms>        light_source_points;
 
     // True when the tile has sky access via the 3×3 overhang rule (top-down floor cascade).
@@ -2098,7 +2104,8 @@ class map : public submap_load_listener
         // Assumes 0,0 is light map center
         lit_level light_at( const tripoint_bub_ms &p ) const;
         // Raw values for tilesets
-        float ambient_light_at( const tripoint_bub_ms &p ) const;
+        float ambient_light_at( const tripoint_bub_ms &p,
+                                std::source_location location = std::source_location::current() ) const;
         /**
          * Returns whether the tile at `p` is transparent(you can look past it).
          */
@@ -2363,6 +2370,7 @@ class map : public submap_load_listener
         // matches zlev, avoiding cross-level cache writes for parallel safety.
         void generate_lightmap( int zlev );
         void generate_lightmap_worker( int zlev );
+        void flush_lightmap_cpu_read_counters() const;
         void build_seen_cache( const tripoint_bub_ms &origin, int target_z );
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.

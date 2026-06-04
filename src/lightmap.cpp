@@ -3,14 +3,21 @@
 #include "shadowcasting.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include <array>
+#include <atomic>
 #include <cmath>
 #include <ranges>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <span>
+#include <source_location>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -55,6 +62,165 @@
 #include "compute/gpu_platform.h"
 #include "compute/gpu_transparency.h"
 #endif
+
+namespace
+{
+
+std::atomic<int64_t> cpu_lm_light_reads_valid{ 0 };
+std::atomic<int64_t> cpu_lm_light_reads_stale{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_reads_valid{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_reads_stale{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_cache_hits{ 0 };
+std::atomic<int64_t> cpu_lm_ambient_cache_misses{ 0 };
+
+struct ambient_cache_key {
+    const map *owner = nullptr;
+    int x = 0;
+    int y = 0;
+    int z = 0;
+    int turn = 0;
+    uint64_t generation = 0;
+
+    friend auto operator==( const ambient_cache_key &lhs,
+                            const ambient_cache_key &rhs ) -> bool {
+        return lhs.owner == rhs.owner && lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z &&
+               lhs.turn == rhs.turn &&
+               lhs.generation == rhs.generation;
+    }
+};
+
+struct ambient_cache_key_hash {
+    auto operator()( const ambient_cache_key &key ) const -> std::size_t {
+        auto seed = std::hash<const map *>{}( key.owner );
+        seed ^= static_cast<std::size_t>( key.x ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.y ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.z ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.turn ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        seed ^= static_cast<std::size_t>( key.generation ) + 0x9e3779b97f4a7c15ull +
+                ( seed << 6 ) + ( seed >> 2 );
+        return seed;
+    }
+};
+
+struct ambient_cache_entry {
+    ambient_cache_key key;
+    float light = 0.0f;
+    bool occupied = false;
+};
+
+constexpr auto ambient_cache_slots = std::size_t{ 4096 };
+
+auto ambient_cache_index( const ambient_cache_key &key ) -> std::size_t
+{
+    return ambient_cache_key_hash{}( key ) & ( ambient_cache_slots - 1 );
+}
+
+#if defined( USE_TRACY )
+struct ambient_read_location_key {
+    const char *file = nullptr;
+    std::uint_least32_t line = 0;
+
+    friend auto operator==( const ambient_read_location_key &lhs,
+                            const ambient_read_location_key &rhs ) -> bool {
+        return lhs.file == rhs.file && lhs.line == rhs.line;
+    }
+};
+
+struct ambient_read_location_hash {
+    auto operator()( const ambient_read_location_key &key ) const -> std::size_t {
+        auto seed = std::hash<const char *>{}( key.file );
+        seed ^= static_cast<std::size_t>( key.line ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
+                ( seed >> 2 );
+        return seed;
+    }
+};
+
+struct ambient_read_location_counts {
+    int64_t valid = 0;
+    int64_t stale = 0;
+    std::string valid_plot;
+    std::string stale_plot;
+};
+
+std::mutex cpu_lm_ambient_location_mutex;
+std::unordered_map<ambient_read_location_key, ambient_read_location_counts,
+                   ambient_read_location_hash>
+                   cpu_lm_ambient_location_counts;
+
+auto basename_view( const char *path ) -> std::string_view
+{
+    auto view = std::string_view{ path == nullptr ? "<unknown>" : path };
+    const auto slash = view.find_last_of( "/\\" );
+    return slash == std::string_view::npos ? view : view.substr( slash + 1 );
+}
+
+auto ambient_read_plot_name( const std::source_location &location,
+                             const std::string_view suffix ) -> std::string
+{
+    auto name = std::string{ "CPU LM Ambient " };
+    name += basename_view( location.file_name() );
+    name += ":";
+    name += std::to_string( location.line() );
+    name += " ";
+    name += suffix;
+    return name;
+}
+
+void record_cpu_lm_ambient_location( const bool valid, const std::source_location &location )
+{
+    const auto key = ambient_read_location_key{
+        .file = location.file_name(),
+        .line = location.line(),
+    };
+    const auto guard = std::lock_guard<std::mutex>{ cpu_lm_ambient_location_mutex };
+    auto [iter, inserted] = cpu_lm_ambient_location_counts.try_emplace( key );
+    if( inserted ) {
+        iter->second.valid_plot = ambient_read_plot_name( location, "Valid" );
+        iter->second.stale_plot = ambient_read_plot_name( location, "Stale" );
+    }
+    auto &count = valid ? iter->second.valid : iter->second.stale;
+    ++count;
+}
+
+void flush_cpu_lm_ambient_location_counters()
+{
+    const auto guard = std::lock_guard<std::mutex>{ cpu_lm_ambient_location_mutex };
+    for( auto &[key, counts] : cpu_lm_ambient_location_counts ) {
+        static_cast<void>( key );
+        TracyPlot( counts.valid_plot.c_str(), counts.valid );
+        TracyPlot( counts.stale_plot.c_str(), counts.stale );
+        counts.valid = 0;
+        counts.stale = 0;
+    }
+}
+
+#else
+void record_cpu_lm_ambient_location( const bool, const std::source_location & )
+{
+}
+
+void flush_cpu_lm_ambient_location_counters()
+{
+}
+#endif
+
+void record_cpu_lm_read( const bool valid, std::atomic<int64_t> &valid_counter,
+                         std::atomic<int64_t> &stale_counter )
+{
+    auto &counter = valid ? valid_counter : stale_counter;
+    counter.fetch_add( 1, std::memory_order_relaxed );
+}
+
+auto take_counter( std::atomic<int64_t> &counter ) -> int64_t
+{
+    return counter.exchange( 0, std::memory_order_relaxed );
+}
+
+} // namespace
 
 static const efftype_id effect_haslight( "haslight" );
 static const efftype_id effect_onfire( "onfire" );
@@ -1217,6 +1383,8 @@ lit_level map::light_at( const tripoint_bub_ms &p ) const
     }
 
     const auto &map_cache = get_cache_ref( p.z() );
+    record_cpu_lm_read( map_cache.lm_cpu_cache_valid, cpu_lm_light_reads_valid,
+                        cpu_lm_light_reads_stale );
     const auto &lm = map_cache.lm;
     const auto &sm = map_cache.sm;
     if( sm[map_cache.idx( p.x(), p.y() )] >= LIGHT_SOURCE_BRIGHT ) {
@@ -1235,16 +1403,60 @@ lit_level map::light_at( const tripoint_bub_ms &p ) const
     return lit_level::DARK;
 }
 
-float map::ambient_light_at( const tripoint_bub_ms &p ) const
+float map::ambient_light_at( const tripoint_bub_ms &p,
+                             const std::source_location location ) const
 {
     if( !inbounds( p ) ) {
         return 0.0f;
     }
 
     const auto &map_cache = get_cache_ref( p.z() );
-    float light = map_cache.lm[map_cache.idx( p.x(), p.y() )];
+    if( map_cache.lm_cpu_cache_valid ) {
+        const auto key = ambient_cache_key{
+            .owner = this,
+            .x = p.x(),
+            .y = p.y(),
+            .z = p.z(),
+            .turn = to_turns<int>( calendar::turn - calendar::turn_zero ),
+            .generation = map_cache.lm_cpu_cache_generation,
+        };
+        thread_local auto cpu_lm_ambient_cache =
+            std::array<ambient_cache_entry, ambient_cache_slots>{};
+        auto &entry = cpu_lm_ambient_cache[ambient_cache_index( key )];
+        if( entry.occupied && entry.key == key ) {
+            cpu_lm_ambient_cache_hits.fetch_add( 1, std::memory_order_relaxed );
+            return entry.light;
+        }
+        cpu_lm_ambient_cache_misses.fetch_add( 1, std::memory_order_relaxed );
+        const auto light = map_cache.lm[map_cache.idx( p.x(), p.y() )];
+        entry = ambient_cache_entry{
+            .key = key,
+            .light = light,
+            .occupied = true,
+        };
+        record_cpu_lm_read( true, cpu_lm_ambient_reads_valid, cpu_lm_ambient_reads_stale );
+        record_cpu_lm_ambient_location( true, location );
+        return light;
+    }
+
+    record_cpu_lm_read( map_cache.lm_cpu_cache_valid, cpu_lm_ambient_reads_valid,
+                        cpu_lm_ambient_reads_stale );
+    record_cpu_lm_ambient_location( map_cache.lm_cpu_cache_valid, location );
+    const auto light = map_cache.lm[map_cache.idx( p.x(), p.y() )];
 
     return light;
+}
+
+void map::flush_lightmap_cpu_read_counters() const
+{
+    ZoneScopedN( "flush_lightmap_cpu_read_counters" );
+    TracyPlot( "CPU LM Light Reads Valid", take_counter( cpu_lm_light_reads_valid ) );
+    TracyPlot( "CPU LM Light Reads Stale", take_counter( cpu_lm_light_reads_stale ) );
+    TracyPlot( "CPU LM Ambient Reads Valid", take_counter( cpu_lm_ambient_reads_valid ) );
+    TracyPlot( "CPU LM Ambient Reads Stale", take_counter( cpu_lm_ambient_reads_stale ) );
+    TracyPlot( "CPU LM Ambient Cache Hits", take_counter( cpu_lm_ambient_cache_hits ) );
+    TracyPlot( "CPU LM Ambient Cache Misses", take_counter( cpu_lm_ambient_cache_misses ) );
+    flush_cpu_lm_ambient_location_counters();
 }
 
 bool map::is_transparent( const tripoint_bub_ms &p ) const

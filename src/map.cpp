@@ -10226,6 +10226,14 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     ZoneScoped;
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
+    flush_lightmap_cpu_read_counters();
+    const auto valid_lm_levels = std::ranges::count_if(
+                                     std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+        return get_cache_ref( z ).lm_cpu_cache_valid;
+    } );
+    TracyPlot( "Map CPU LM Valid Levels", static_cast<int64_t>( valid_lm_levels ) );
+    TracyPlot( "Map CPU LM Stale Levels",
+               static_cast<int64_t>( maxz - minz + 1 - valid_lm_levels ) );
     bool seen_cache_dirty = false;
     bool gpu_transparency_dirty = false;
     bool gpu_floor_dirty = false;
@@ -10479,6 +10487,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
             c.light_source_points.clear();
             std::ranges::fill( c.lm, 0.0f );
+            c.lm_cpu_cache_valid = false;
+            ++c.lm_cpu_cache_generation;
         }
         pending_gpu_lighting = cata_gpu::begin_gpu_lighting( gpu_device, {
             .m            = this,
@@ -10574,6 +10584,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                         std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
                         c.light_source_points.clear();
                         std::ranges::fill( c.lm, 0.0f );
+                        c.lm_cpu_cache_valid = false;
+                        ++c.lm_cpu_cache_generation;
                     }
                     // Build sunlight (all z-levels, top-to-bottom; serial).
                     build_sunlight_cache( zlev );
@@ -10619,6 +10631,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 // update_visibility_cache call) is now stale and must be rebuilt in game::draw.
                 std::ranges::for_each( dirty_lightmap_levels, [this]( int z ) {
                     get_cache( z ).lightmap_dirty = false;
+                    get_cache( z ).lm_cpu_cache_valid = true;
                     get_cache( z ).visibility_cache_dirty = true;
                 } );
 
@@ -11341,6 +11354,8 @@ void map::invalidate_map_cache( const int zlev )
         ch.sound_wall_cache_dirty.set();
         ch.seen_cache_dirty = true;
         ch.lightmap_dirty = true;
+        ch.lm_cpu_cache_valid = false;
+        ++ch.lm_cpu_cache_generation;
         ch.visibility_cache_dirty = true;
         ch.outside_cache_dirty.set();
         ch.suspension_cache_dirty = true;
@@ -11353,7 +11368,10 @@ void map::invalidate_lightmap_caches()
     const int minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
     const int maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
     std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [this]( int z ) {
-        get_cache( z ).lightmap_dirty = true;
+        auto &cache = get_cache( z );
+        cache.lightmap_dirty = true;
+        cache.lm_cpu_cache_valid = false;
+        ++cache.lm_cpu_cache_generation;
     } );
 }
 

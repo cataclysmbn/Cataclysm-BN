@@ -265,6 +265,42 @@ auto finish_gpu_visibility(SDL_GPUDevice* device, gpu_visibility_work const& wor
 // Synchronous compatibility wrapper for current callers.
 auto run_gpu_visibility(SDL_GPUDevice* device, run_gpu_visibility_params const& p) -> bool;
 
+struct GpuSightPair {
+    int32_t from_x;
+    int32_t from_y;
+    int32_t from_z_idx;
+    int32_t to_x;
+    int32_t to_y;
+    int32_t to_z_idx;
+    int32_t range;
+    uint32_t _pad;
+};
+static_assert(sizeof(GpuSightPair) == 32);
+
+struct run_gpu_sight_pairs_params {
+    map const* m = nullptr;
+    std::vector<GpuSightPair> const* pairs = nullptr;
+    std::vector<uint32_t>* results = nullptr;
+    int zlev = 0;
+};
+
+struct begin_gpu_sight_pairs_params {
+    map const* m = nullptr;
+    std::vector<GpuSightPair> const* pairs = nullptr;
+    int zlev = 0;
+};
+
+struct gpu_sight_pairs_work {
+    uint64_t id = 0;
+};
+
+auto begin_gpu_sight_pairs(SDL_GPUDevice* device, begin_gpu_sight_pairs_params const& p)
+    -> gpu_sight_pairs_work;
+auto finish_gpu_sight_pairs(
+    SDL_GPUDevice* device, gpu_sight_pairs_work const& work, std::vector<uint32_t>& results)
+    -> bool;
+auto run_gpu_sight_pairs(SDL_GPUDevice* device, run_gpu_sight_pairs_params const& p) -> bool;
+
 // Release all GPU pipeline objects owned by the lm module.
 // Called from cata_gpu::shutdown() before the device is destroyed.
 auto shutdown_lm() -> void;
