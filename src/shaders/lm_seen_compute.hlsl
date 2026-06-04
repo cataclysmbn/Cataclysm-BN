@@ -39,9 +39,9 @@ cbuffer Constants : register(b0, space2)
     int   z_count;
     int   view_radius;
     float z_scale;
+    int   z_start_idx;
+    int   dispatch_z_count;
     uint  _pad0;
-    uint  _pad1;
-    uint  _pad2;
 };
 
 StructuredBuffer<float> transparency_all  : register(t0, space0);
@@ -61,9 +61,10 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
     // Map to target tile.
     int tx = player_x + (int)( group_id.x * 8 + thread_id.x ) - view_radius;
     int ty = player_y + (int)( group_id.y * 8 + thread_id.y ) - view_radius;
-    int tz = (int)group_id.z;
+    int tz = z_start_idx + (int)group_id.z;
 
-    if( tx < 0 || ty < 0 || tx >= cache_x || ty >= cache_y || tz >= z_count ) {
+    if( tx < 0 || ty < 0 || tx >= cache_x || ty >= cache_y ||
+        group_id.z >= (uint)dispatch_z_count || tz >= z_count ) {
         return;
     }
 

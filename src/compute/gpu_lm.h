@@ -87,7 +87,9 @@ struct lm_seen_push_constants {
     int32_t z_count;      //  4 bytes
     int32_t view_radius;  //  4 bytes = 32
     float z_scale;        //  4 bytes
-    uint32_t _pad[3];     // 12 bytes = 48
+    int32_t z_start_idx;  //  4 bytes
+    int32_t dispatch_z_count; // 4 bytes
+    uint32_t _pad;        //  4 bytes = 48
 };
 static_assert(sizeof(lm_seen_push_constants) == 48);
 
@@ -111,7 +113,8 @@ struct lm_visibility_push_constants {
     float vision_threshold;           //  4 bytes = 48
     float visibility_scale_factor;    //  4 bytes
     float visible_threshold;          //  4 bytes
-    uint32_t _pad[2];                 //  8 bytes = 64
+    int32_t z_start_idx;              //  4 bytes
+    int32_t dispatch_z_count;         //  4 bytes = 64
 };
 static_assert(sizeof(lm_visibility_push_constants) == 64);
 
@@ -147,6 +150,10 @@ struct run_gpu_lighting_params {
     bool direct_sunlight;
     float sun_dx_per_z;
     float sun_dy_per_z;
+};
+
+struct gpu_lighting_work {
+    uint64_t id = 0;
 };
 
 struct resident_transparency_output {
@@ -199,7 +206,7 @@ struct shift_lighting_residency_params {
 // transparency dispatches can patch only the newly loaded edge bands.
 auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) -> bool;
 
-// Run the full GPU lighting pass for the dirty z-levels.
+// Begin the full GPU lighting pass for the dirty z-levels.
 //   1. Pack inputs from CPU level caches.
 //   2. Collect light sources (light_source_buffer + character/monster lights).
 //   3. Ambient init pass  → initialises lm_all.
@@ -207,11 +214,20 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 //   5. Seen-cache pass    → ray cast from player into raw seen_all when requested
 //                           or when resident GPU seen data is invalid.
 //   6. Surface pass       → make glancing surfaces inherit adjacent visibility.
-//   7. Download lm, and optionally rebuilt seen_cache, back to map_cache.
+//   7. Schedule lm/seen downloads when CPU readback was requested.
 // device must be non-null (caller responsibility).
-// Returns false if the GPU pass could not run (e.g. shaders not compiled).
+// Returns an id-bearing handle if the GPU pass was submitted.
 // A failed SDL_GPU lighting pass is an error; it must not silently rebuild with
 // legacy CPU lighting.
+auto begin_gpu_lighting(SDL_GPUDevice* device, run_gpu_lighting_params const& p)
+    -> gpu_lighting_work;
+
+// Finish a submitted lighting pass, wait for any CPU-facing download, unpack
+// requested CPU cache data, and commit resident input/output validity.
+auto finish_gpu_lighting(SDL_GPUDevice* device, gpu_lighting_work const& work) -> bool;
+
+// Synchronous compatibility wrapper for callers that still need completed CPU
+// data before returning.
 auto run_gpu_lighting(SDL_GPUDevice* device, run_gpu_lighting_params const& p) -> bool;
 
 // ---------------------------------------------------------------------------
@@ -220,6 +236,7 @@ auto run_gpu_lighting(SDL_GPUDevice* device, run_gpu_lighting_params const& p) -
 // ---------------------------------------------------------------------------
 struct run_gpu_visibility_params {
     map const* m;
+    std::vector<int> const* download_levels = nullptr;
     int zlev;
     int player_x;
     int player_y;
@@ -229,10 +246,23 @@ struct run_gpu_visibility_params {
     int u_unimpaired_range;
     float vision_threshold;
     float visibility_scale_factor;
+    bool rebuild_seen_cache = false;
 };
 
-// Run the final apparent-light classification pass and download the resulting
-// lit_level values into level_cache::visibility_cache for every z-level.
+struct gpu_visibility_work {
+    uint64_t id = 0;
+};
+
+// Begin the final apparent-light classification pass and schedule the
+// requested lit_level download.
+auto begin_gpu_visibility(SDL_GPUDevice* device, run_gpu_visibility_params const& p)
+    -> gpu_visibility_work;
+
+// Finish a submitted visibility pass and unpack downloaded lit_level values
+// into level_cache::visibility_cache for requested z-levels.
+auto finish_gpu_visibility(SDL_GPUDevice* device, gpu_visibility_work const& work) -> bool;
+
+// Synchronous compatibility wrapper for current callers.
 auto run_gpu_visibility(SDL_GPUDevice* device, run_gpu_visibility_params const& p) -> bool;
 
 // Release all GPU pipeline objects owned by the lm module.

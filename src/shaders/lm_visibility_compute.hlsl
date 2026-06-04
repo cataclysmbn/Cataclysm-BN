@@ -32,8 +32,8 @@ cbuffer Constants : register(b0, space2)
     float vision_threshold;
     float visibility_scale_factor;
     float visible_threshold;
-    uint  _pad0;
-    uint  _pad1;
+    int   z_start_idx;
+    int   dispatch_z_count;
 };
 
 StructuredBuffer<float> transparency_all : register(t0, space0);
@@ -115,13 +115,17 @@ float visible_surface_light( int x, int y, int z )
 [numthreads(64, 1, 1)]
 void main( uint3 dispatch_id : SV_DispatchThreadID )
 {
-    uint idx = dispatch_id.x;
-    if( idx >= (uint)( z_count * cache_xy ) ) {
+    uint local_idx = dispatch_id.x;
+    if( local_idx >= (uint)( dispatch_z_count * cache_xy ) ) {
         return;
     }
 
-    uint z_idx = idx / (uint)cache_xy;
-    uint tile  = idx % (uint)cache_xy;
+    uint z_idx = (uint)z_start_idx + local_idx / (uint)cache_xy;
+    if( z_idx >= (uint)z_count ) {
+        return;
+    }
+    uint tile = local_idx % (uint)cache_xy;
+    uint idx = z_idx * (uint)cache_xy + tile;
 
     int x = (int)( tile / (uint)cache_y );
     int y = (int)( tile % (uint)cache_y );

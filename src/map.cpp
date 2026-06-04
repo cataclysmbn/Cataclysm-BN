@@ -7182,8 +7182,17 @@ void map::update_visibility_cache( const int zlev )
         debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
         return;
     }
-    const bool gpu_visibility_ok = cata_gpu::run_gpu_visibility( gpu_device, {
+    auto visibility_download_levels = std::vector<int>{};
+    if( zlevels ) {
+        std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, zlev + 1 ),
+                           std::back_inserter( visibility_download_levels ) );
+    } else {
+        visibility_download_levels.push_back( zlev );
+    }
+    const auto rebuild_seen_cache = m_last_seen_cache_origin != player_pos;
+    const auto gpu_visibility_ok = cata_gpu::run_gpu_visibility( gpu_device, {
         .m = this,
+        .download_levels = &visibility_download_levels,
         .zlev = zlev,
         .player_x = player_pos.x(),
         .player_y = player_pos.y(),
@@ -7193,10 +7202,16 @@ void map::update_visibility_cache( const int zlev )
         .u_unimpaired_range = visibility_variables_cache.u_unimpaired_range,
         .vision_threshold = visibility_variables_cache.vision_threshold,
         .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
+        .rebuild_seen_cache = rebuild_seen_cache,
     } );
     if( !gpu_visibility_ok ) {
         debugmsg( "SDL_GPU visibility dispatch failed; see debug.log for details" );
         return;
+    }
+    if( rebuild_seen_cache ) {
+        auto &origin_cache = get_cache( player_pos.z() );
+        std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
+        m_last_seen_cache_origin = player_pos;
     }
     mark_overmap_seen_from_visibility( get_cache_ref( zlev ) );
     return;
@@ -10394,15 +10409,6 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         } );
     }
 
-    {
-        ZoneScopedN( "Phase3_sound_absorption" );
-        // Absorption cache relies upon the floor, outside, and vehicle caches all being completed.
-        for( int z = minz; z <= maxz; z++ ) {
-            build_absorption_cache( z );
-        }
-    }
-
-    seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
     normalize_gpu_dirty_levels( gpu_transparency_dirty_levels );
     normalize_gpu_dirty_levels( gpu_transparency_residency_invalid_levels );
     normalize_gpu_dirty_levels( gpu_floor_dirty_levels );
@@ -10424,11 +10430,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     TracyPlot( "Map GPU Transparency Invalidated Levels",
                static_cast<int64_t>( gpu_transparency_residency_invalid_levels.size() ) );
 
-    if( seen_cache_dirty ) {
-        skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
-    }
     const tripoint_bub_ms &p = g->u.bub_pos();
-    auto need_seen_rebuild = seen_cache_dirty || m_last_seen_cache_origin != p;
+    auto force_seen_rebuild_for_gpu_residency = false;
 #if defined( CATA_SDL )
     SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
     if( !skip_lightmap && gpu_device != nullptr ) {
@@ -10439,32 +10442,19 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 .cache_y = visibility_cache.cache_y,
                 .z_count = OVERMAP_LAYERS,
             } ) ) {
-            need_seen_rebuild = true;
+            force_seen_rebuild_for_gpu_residency = true;
             invalidate_lightmap_caches();
             get_cache( zlev ).visibility_cache_dirty = true;
         }
     }
 #endif
-    if( need_seen_rebuild ) {
-#if defined( CATA_SDL )
-        if( gpu_device == nullptr ) {
-            debugmsg( "SDL_GPU lighting is required for 3D visibility, but no GPU device is available" );
-            return;
-        }
-#else
-        build_seen_cache( p, zlev );
-        m_last_seen_cache_origin = p;
-#endif
-        // seen_cache changed (or will be updated by GPU pass); mark visibility stale.
-        get_cache( zlev ).visibility_cache_dirty = true;
-    }
+    auto dirty_lightmap_levels = std::vector<int>{};
     if( !skip_lightmap ) {
-        ZoneScopedN( "Phase4_lightmap" );
+        ZoneScopedN( "Phase4_lightmap_prepare" );
         invalidate_lightmap_caches_if_light_state_changed();
         auto needs_lightmap_dispatch = [this]( const int z ) {
             return get_cache( z ).lightmap_dirty;
         };
-        auto dirty_lightmap_levels = std::vector<int>{};
         std::ranges::copy_if( std::views::iota( minz, maxz + 1 ),
                               std::back_inserter( dirty_lightmap_levels ), needs_lightmap_dispatch );
 
@@ -10475,45 +10465,89 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         dirty_lightmap_levels.erase( std::ranges::unique( dirty_lightmap_levels ).begin(),
                                      dirty_lightmap_levels.end() );
         TracyPlot( "Map Dirty LM Levels", static_cast<int64_t>( dirty_lightmap_levels.size() ) );
-        TracyPlot( "Map Need Seen Rebuild", need_seen_rebuild ? int64_t{ 1 } : int64_t{ 0 } );
+    }
 
 #if defined( CATA_SDL )
+    auto pending_gpu_lighting = cata_gpu::gpu_lighting_work{};
+    if( !skip_lightmap && gpu_device != nullptr && !dirty_lightmap_levels.empty() ) {
+        ZoneScopedN( "Phase4_lightmap_begin" );
+        update_solar_params();
+        // GPU path: lightmap rebuilds only run for lightmap-dirty levels.
+        // Player movement and other FoV-only updates are handled by
+        // update_visibility_cache(), which can rebuild resident seen data.
+        for( const int z : dirty_lightmap_levels ) {
+            auto &c = get_cache( z );
+            std::fill( c.sm.begin(), c.sm.end(), 0.0f );
+            std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
+            c.light_source_points.clear();
+            std::ranges::fill( c.lm, 0.0f );
+        }
+        pending_gpu_lighting = cata_gpu::begin_gpu_lighting( gpu_device, {
+            .m            = this,
+            .dirty_levels = &dirty_lightmap_levels,
+            .seen_dirty_levels = &dirty_seen_cache_levels,
+            .player_x     = p.x(),
+            .player_y     = p.y(),
+            .player_zlev  = zlev,
+            .transparency_dirty = gpu_transparency_dirty,
+            .transparency_dirty_levels = &gpu_transparency_dirty_levels,
+            .floor_dirty = gpu_floor_dirty,
+            .floor_dirty_levels = &gpu_floor_dirty_levels,
+            .vehicle_floor_dirty = gpu_vehicle_floor_dirty,
+            .vehicle_floor_dirty_levels = &gpu_vehicle_floor_dirty_levels,
+            .rebuild_seen_cache = false,
+            .download_seen_cache = false,
+            .download_lightmap = true,
+            .angled_sunlight_shadows = angled_sunlight_shadows,
+            .direct_sunlight = m_solar.direct_active,
+            .sun_dx_per_z = m_solar.dx_per_z,
+            .sun_dy_per_z = m_solar.dy_per_z,
+        } );
+        if( pending_gpu_lighting.id == 0 ) {
+            debugmsg( "SDL_GPU lighting dispatch failed; see debug.log for details" );
+            return;
+        }
+    }
+#endif
+
+    {
+        ZoneScopedN( "Phase3_sound_absorption" );
+        // Absorption cache relies upon the floor, outside, and vehicle caches all being completed.
+        for( int z = minz; z <= maxz; z++ ) {
+            build_absorption_cache( z );
+        }
+    }
+
+    seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
+    if( seen_cache_dirty ) {
+        skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
+    }
+    const auto need_seen_rebuild = seen_cache_dirty || force_seen_rebuild_for_gpu_residency ||
+                                   m_last_seen_cache_origin != p;
+    TracyPlot( "Map Need Seen Rebuild", need_seen_rebuild ? int64_t{ 1 } : int64_t{ 0 } );
+    if( need_seen_rebuild ) {
+#if defined( CATA_SDL )
+        if( gpu_device == nullptr ) {
+            debugmsg( "SDL_GPU lighting is required for 3D visibility, but no GPU device is available" );
+            return;
+        }
+        m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+#else
+        build_seen_cache( p, zlev );
+        m_last_seen_cache_origin = p;
+#endif
+        // seen_cache changed (or will be updated by GPU pass); mark visibility stale.
+        get_cache( zlev ).visibility_cache_dirty = true;
+    }
+    if( !skip_lightmap ) {
+#if defined( CATA_SDL )
         if( gpu_device != nullptr ) {
-            update_solar_params();
-            // GPU path: rebuild lm only for lightmap-dirty levels. A player
-            // movement / FoV-only update can reuse resident lm and run just
-            // the seen-cache pass.
-            if( !dirty_lightmap_levels.empty() || need_seen_rebuild ) {
-                for( const int z : dirty_lightmap_levels ) {
-                    auto &c = get_cache( z );
-                    std::fill( c.sm.begin(), c.sm.end(), 0.0f );
-                    std::fill( c.light_source_buffer.begin(), c.light_source_buffer.end(), 0.0f );
-                    c.light_source_points.clear();
-                    std::ranges::fill( c.lm, 0.0f );
-                }
-                const bool gpu_lighting_ok = cata_gpu::run_gpu_lighting( gpu_device, {
-                    .m            = this,
-                    .dirty_levels = &dirty_lightmap_levels,
-                    .seen_dirty_levels = &dirty_seen_cache_levels,
-                    .player_x     = p.x(),
-                    .player_y     = p.y(),
-                    .player_zlev  = zlev,
-                    .transparency_dirty = gpu_transparency_dirty,
-                    .transparency_dirty_levels = &gpu_transparency_dirty_levels,
-                    .floor_dirty = gpu_floor_dirty,
-                    .floor_dirty_levels = &gpu_floor_dirty_levels,
-                    .vehicle_floor_dirty = gpu_vehicle_floor_dirty,
-                    .vehicle_floor_dirty_levels = &gpu_vehicle_floor_dirty_levels,
-                    .rebuild_seen_cache = need_seen_rebuild,
-                    .download_seen_cache = false,
-                    .download_lightmap = true,
-                    .angled_sunlight_shadows = angled_sunlight_shadows,
-                    .direct_sunlight = m_solar.direct_active,
-                    .sun_dx_per_z = m_solar.dx_per_z,
-                    .sun_dy_per_z = m_solar.dy_per_z,
-                } );
+            if( !dirty_lightmap_levels.empty() ) {
+                ZoneScopedN( "Phase4_lightmap_finish" );
+                const bool gpu_lighting_ok = cata_gpu::finish_gpu_lighting( gpu_device,
+                                             pending_gpu_lighting );
                 if( !gpu_lighting_ok ) {
-                    debugmsg( "SDL_GPU lighting dispatch failed; see debug.log for details" );
+                    debugmsg( "SDL_GPU lighting completion failed; see debug.log for details" );
                     return;
                 }
 
@@ -10521,12 +10555,6 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     get_cache( z ).lightmap_dirty = false;
                     get_cache( z ).visibility_cache_dirty = true;
                 } );
-                if( need_seen_rebuild ) {
-                    auto &origin_cache = get_cache( zlev );
-                    std::fill( origin_cache.camera_cache.begin(), origin_cache.camera_cache.end(), 0.0f );
-                    m_last_seen_cache_origin = p;
-                    get_cache( zlev ).visibility_cache_dirty = true;
-                }
             }
         } else {
             if( !dirty_lightmap_levels.empty() ) {
