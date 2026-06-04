@@ -10,6 +10,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <string>
 #include <utility>
@@ -57,6 +58,11 @@
 #include "pimpl.h"
 #include "player.h"
 #include "player_activity.h"
+#include "procgen/proc_fact.h"
+#include "procgen/proc_item.h"
+#include "procgen/proc_recipe.h"
+#include "procgen/proc_ui.h"
+#include "popup.h"
 #include "point.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
@@ -104,6 +110,14 @@ static const std::string flag_BLIND_IMPOSSIBLE( "BLIND_IMPOSSIBLE" );
 static const std::string flag_FULL_MAGAZINE( "FULL_MAGAZINE" );
 static const std::string flag_NO_RESIZE( "NO_RESIZE" );
 static const std::string flag_UNCRAFT_LIQUIDS_CONTAINED( "UNCRAFT_LIQUIDS_CONTAINED" );
+
+namespace
+{
+
+struct start_proc_craft_options;
+auto start_proc_craft( const start_proc_craft_options &opts ) -> item *; // *NOPAD*
+
+} // namespace
 
 static bool crafting_allowed( const Character &who, const recipe &rec )
 {
@@ -662,6 +676,18 @@ void Character::make_craft_with_command( const recipe_id &id_to_make, int batch_
         return;
     }
 
+    if( recipe_to_make.is_proc() ) {
+        if( const auto result = proc::open_builder( *this, recipe_to_make ) ) {
+            start_proc_craft( {
+                .who = *this,
+                .rec = recipe_to_make,
+                .is_long = is_long,
+                .result = *result
+            } );
+        }
+        return;
+    }
+
     *last_craft = craft_command( &recipe_to_make, batch_size, is_long, this, loc );
     last_craft->execute();
 }
@@ -777,6 +803,222 @@ static void set_item_inventory( Character &who, detached_ptr<item> &&newit )
     return set_item_map_or_vehicle( who, who.bub_pos(), std::move( newit ) );
 }
 
+namespace
+{
+
+struct start_craft_item_options {
+    Character &who;
+    detached_ptr<item> craft;
+    skill_id skill_used;
+    int batch_size = 1;
+    std::vector<comp_selection<item_comp>> item_selections;
+    std::vector<comp_selection<tool_comp>> tool_selections;
+    bool tools_prepaid = false;
+    bool is_long = false;
+};
+
+struct start_proc_craft_options {
+    Character &who;
+    const recipe &rec;
+    bool is_long;
+    const proc::ui_result &result;
+};
+
+auto start_craft_item( start_craft_item_options &&opts ) -> item * // *NOPAD*
+{
+    auto &who = opts.who;
+    auto &craft = opts.craft;
+    if( !craft ) {
+        return nullptr;
+    }
+
+    const auto &making = craft->get_making();
+    if( who.get_skill_level( opts.skill_used ) > making.difficulty * 1.25 ) {
+        character_funcs::show_skill_capped_notice( who, opts.skill_used );
+    }
+
+    if( !craft->get_components().empty() ) {
+        who.reset_encumbrance();
+    }
+
+    const auto bench = find_best_bench( who, *craft );
+    const auto best_found_bench = crafting::best_bench_here( *craft,
+                                  abs_to_bub( bench.position ),
+                                  bench.type == bench_type::hands );
+    if( best_found_bench.second < 1.0f ) {
+        who.add_msg_if_player( m_info, pgettext( "in progress craft",
+                               "You can't hold %s in your hands and there is no good work surface nearby." ), craft->tname() );
+    }
+
+    auto *craft_in_world = &*craft;
+    set_item_inventory( who, std::move( craft ) );
+
+    auto actor = std::make_unique<craft_activity_actor>(
+                     &making,
+                     opts.batch_size,
+                     craft_in_world->get_counter(),
+                     bench.position,
+                     std::move( opts.item_selections ),
+                     std::move( opts.tool_selections ),
+                     opts.tools_prepaid,
+                     opts.is_long
+                 );
+    auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
+    craft_activity->targets.emplace_back( craft_in_world );
+    who.assign_activity( std::move( craft_activity ) );
+
+    who.add_msg_player_or_npc(
+        pgettext( "in progress craft", "You start working on the %s." ),
+        pgettext( "in progress craft", "<npcname> starts working on the %s." ),
+        craft_in_world->tname() );
+    return craft_in_world;
+}
+
+auto prepare_proc_craft_tools( Character &who, const recipe &rec,
+                               const std::vector<proc::part_fact> &facts,
+                               std::vector<comp_selection<tool_comp>> &tool_selections ) -> bool
+{
+    const auto requirements = proc::recipe_requirements( rec, facts );
+    const auto deduped_requirements = deduped_requirement_data( requirements, rec.ident() );
+
+    if( !deduped_requirements.can_make_with_inventory( who.crafting_inventory(),
+            rec.get_component_filter(), 1 ) ) {
+        if( deduped_requirements.can_make_with_inventory( who.crafting_inventory(),
+                rec.get_component_filter(), 1, cost_adjustment::start_only ) ) {
+            if( !query_yn( _( "You don't have enough charges to complete the %s.\n"
+                              "Start crafting anyway?" ), rec.result_name() ) ) {
+                return false;
+            }
+        } else {
+            debugmsg( "Tried to start proc craft without sufficient charges" );
+            return false;
+        }
+    }
+
+    auto flags = recipe_filter_flags::no_rotten;
+    if( !deduped_requirements.can_make_with_inventory( who.crafting_inventory(),
+            rec.get_component_filter( flags ), 1, cost_adjustment::start_only ) ) {
+        if( !query_yn( _( "This craft will use rotten components.\n"
+                          "Start crafting anyway?" ) ) ) {
+            return false;
+        }
+        flags = recipe_filter_flags::none;
+    }
+
+    const auto filter = rec.get_component_filter( flags );
+    const auto *needs = deduped_requirements.select_alternative( who, filter, 1,
+                        cost_adjustment::start_only );
+    if( needs == nullptr ) {
+        return false;
+    }
+
+    auto map_inv = inventory{};
+    map_inv.form_from_map( who.pos(), PICKUP_RANGE, &who );
+    tool_selections.clear();
+    std::ranges::for_each( needs->get_tools(), [&]( const std::vector<tool_comp> &alternatives ) {
+        if( !tool_selections.empty() && tool_selections.back().use_from == usage_from::cancel ) {
+            return;
+        }
+        tool_selections.push_back( crafting::select_tool_component( alternatives, 1, map_inv, &who,
+                                   true, DEFAULT_HOTKEYS, cost_adjustment::start_only ) );
+    } );
+    return std::ranges::none_of( tool_selections, []( const comp_selection<tool_comp> &selection ) {
+        return selection.use_from == usage_from::cancel;
+    } );
+}
+
+auto consume_proc_items( const std::vector<proc::ui_pick> &picks ) ->
+std::vector<detached_ptr<item>>
+{
+    auto used = std::vector<detached_ptr<item>> {};
+    used.reserve( picks.size() );
+    std::ranges::for_each( picks, [&]( const proc::ui_pick & pick ) {
+        if( pick.src == nullptr ) {
+            return;
+        }
+        if( auto detached = pick.src->split( pick.fact.chg ) ) {
+            used.push_back( std::move( detached ) );
+        }
+    } );
+    return used;
+}
+
+auto restore_consumed_proc_items( Character &who, std::vector<detached_ptr<item>> &used ) -> void
+{
+    std::ranges::for_each( used, [&]( detached_ptr<item> &entry ) {
+        if( entry ) {
+            who.i_add( std::move( entry ) );
+        }
+    } );
+}
+
+auto selected_proc_slots( const proc::ui_result &result ) -> std::vector<proc::slot_id>
+{
+    auto slots = std::vector<proc::slot_id> {};
+    slots.reserve( result.picks.size() );
+    std::ranges::for_each( result.picks, [&]( const proc::ui_pick & pick ) {
+        slots.push_back( pick.slot );
+    } );
+    return slots;
+}
+
+auto selected_proc_facts( const proc::ui_result &result ) -> std::vector<proc::part_fact>
+{
+    auto facts = std::vector<proc::part_fact> {};
+    facts.reserve( result.picks.size() );
+    std::ranges::for_each( result.picks, [&]( const proc::ui_pick & pick ) {
+        facts.push_back( pick.fact );
+    } );
+    return facts;
+}
+
+auto start_proc_craft( const start_proc_craft_options &opts ) -> item * // *NOPAD*
+{
+    auto &who = opts.who;
+    const auto &rec = opts.rec;
+    const auto &result = opts.result;
+    const auto debug_hammerspace = who.has_trait( trait_DEBUG_HS );
+    const auto facts = selected_proc_facts( result );
+
+    auto tool_selections = std::vector<comp_selection<tool_comp>> {};
+    if( !debug_hammerspace && !prepare_proc_craft_tools( who, rec, facts, tool_selections ) ) {
+        return nullptr;
+    }
+
+    auto used = debug_hammerspace ? std::vector<detached_ptr<item>> {} :
+                consume_proc_items( result.picks );
+    if( !debug_hammerspace && used.size() != result.picks.size() ) {
+        restore_consumed_proc_items( who, used );
+        popup( _( "Selected procedural components are no longer available." ) );
+        return nullptr;
+    }
+
+    auto craft = item::spawn( &rec, 1, std::move( used ), std::vector<item_comp> {} );
+    craft->set_cached_tool_selections( tool_selections );
+    craft->set_tools_to_continue( true );
+    if( !debug_hammerspace ) {
+        who.craft_consume_tools( *craft, 1, true );
+        craft->set_next_failure_point( who );
+    }
+    proc::write_craft_plan( *craft, {
+        .mode = proc::get( rec.proc_id() ).hist.def,
+        .slots = selected_proc_slots( result ),
+        .facts = facts
+    } );
+    return start_craft_item( {
+        .who = who,
+        .craft = std::move( craft ),
+        .skill_used = rec.skill_used,
+        .batch_size = 1,
+        .item_selections = {},
+        .tool_selections = std::move( tool_selections ),
+        .tools_prepaid = false,
+        .is_long = opts.is_long
+    } );
+}
+
+} // namespace
+
 item *Character::start_craft( craft_command &command, const tripoint_bub_ms & )
 {
     if( command.empty() ) {
@@ -784,54 +1026,22 @@ item *Character::start_craft( craft_command &command, const tripoint_bub_ms & )
         return nullptr;
     }
 
-    detached_ptr<item> craft = command.create_in_progress_craft();
+    auto craft = command.create_in_progress_craft();
     if( !craft ) {
         debugmsg( "start_craft: create_in_progress_craft failed for %s", command.get_skill_id().str() );
         return nullptr;
     }
-    const recipe &making = craft->get_making();
-    if( get_skill_level( command.get_skill_id() ) > making.difficulty * 1.25 ) {
-        character_funcs::show_skill_capped_notice( *this, command.get_skill_id() );
-    }
-
-    // In case we were wearing something just consumed
-    if( !craft->get_components().empty() ) {
-        reset_encumbrance();
-    }
-
-    bench_location bench = find_best_bench( *this, *craft );
-    std::pair<bench_type, float> best_found_bench = crafting::best_bench_here( *craft,
-            abs_to_bub( bench.position ),
-            bench.type == bench_type::hands );
-    if( best_found_bench.second < 1.0f ) {
-        add_msg_if_player( m_info, pgettext( "in progress craft",
-                                             "You can't hold %s in your hands and there is no good work surface nearby." ), craft->tname() );
-    }
-
-    // Regardless of whether a workbench exists or not,
-    // we still craft in inventory or under player, because QoL.
-    item *craft_in_world = &*craft;
-    set_item_inventory( *this, std::move( craft ) );
-
-    auto actor = std::make_unique<craft_activity_actor>(
-                     &making,
-                     command.get_batch_size(),
-                     craft_in_world->get_counter(),
-                     bench.position,
-                     command.get_item_selections(),
-                     command.get_tool_selections(),
-                     craft_in_world->get_var( "craft_tools_fully_prepaid", 0 ) == 1,
-                     command.is_long()
-                 );
-    auto craft_activity = std::make_unique<player_activity>( std::move( actor ) );
-    craft_activity->targets.emplace_back( craft_in_world );
-    assign_activity( std::move( craft_activity ) );
-
-    add_msg_player_or_npc(
-        pgettext( "in progress craft", "You start working on the %s." ),
-        pgettext( "in progress craft", "<npcname> starts working on the %s." ),
-        craft_in_world->tname() );
-    return craft_in_world;
+    const auto tools_prepaid = craft->get_var( "craft_tools_fully_prepaid", 0 ) == 1;
+    return start_craft_item( {
+        .who = *this,
+        .craft = std::move( craft ),
+        .skill_used = command.get_skill_id(),
+        .batch_size = command.get_batch_size(),
+        .item_selections = command.get_item_selections(),
+        .tool_selections = command.get_tool_selections(),
+        .tools_prepaid = tools_prepaid,
+        .is_long = command.is_long()
+    } );
 }
 
 void Character::craft_skill_gain( const item &craft, const int &multiplier )
@@ -1106,6 +1316,53 @@ void complete_craft( Character &who, item &craft )
     }
     const double relative_rot = craft.get_relative_rot();
     const bool ignore_component = making.has_flag( "NUTRIENT_OVERRIDE" );
+
+    if( making.is_proc() ) {
+        if( !proc::has( making.proc_id() ) ) {
+            debugmsg( "complete_craft() called on proc craft with missing schema %s",
+                      making.proc_id().c_str() );
+            return;
+        }
+        const auto &sch = proc::get( making.proc_id() );
+        const auto plan = proc::read_craft_plan( craft );
+        auto facts = plan ? plan->facts : std::vector<proc::part_fact> {};
+        if( facts.empty() ) {
+            facts.reserve( used_items.size() );
+            std::ranges::for_each( std::views::iota( size_t{ 0 }, used_items.size() ), [&]( const size_t idx ) {
+                facts.push_back( proc::normalize_part_fact( *used_items[idx], {
+                    .ix = static_cast<proc::part_ix>( idx ),
+                    .charges = used_items[idx]->count_by_charges() ? used_items[idx]->charges : 0,
+                    .uses = 1
+                } ) );
+            } );
+        }
+        auto used_const = std::vector<const item *> {};
+        used_const.reserve( used_items.size() );
+        std::ranges::for_each( used_items, [&]( const item * entry ) {
+            used_const.push_back( entry );
+        } );
+
+        auto newit = proc::make_item( sch, facts, {
+            .mode = plan ? plan->mode : sch.hist.def,
+            .rec = &making,
+            .used = std::move( used_const ),
+            .slots = plan ? plan->slots : std::vector<proc::slot_id> {}
+        } );
+        add_msg( who.knows_recipe( &making ) ? m_info : m_good,
+                 who.knows_recipe( &making ) ? _( "You craft %s from memory." ) :
+                 _( "You craft %s using a book as a reference." ), newit->tname() );
+        if( newit->goes_bad() ) {
+            newit->set_relative_rot( relative_rot );
+        }
+        newit->set_owner( who.get_faction()->id );
+        if( newit->made_of( LIQUID ) ) {
+            liquid_handler::handle_all_liquid( std::move( newit ), PICKUP_RANGE );
+        } else {
+            set_item_inventory( who, std::move( newit ) );
+        }
+        who.inv_restack();
+        return;
+    }
 
     // Set up the new item, and assign an inventory letter if available
     std::vector<detached_ptr<item>> newits = making.create_results( batch_size );
@@ -2294,6 +2551,14 @@ void crafting::complete_disassemble( Character &who, const iuse_location &target
     // If the components aren't empty, we want items exactly identical to them
     // Even if the best-fit recipe does not involve those items
     location_vector<item> &components = dis_item.get_components();
+
+    if( const auto payload = proc::read_payload( dis_item ); payload &&
+        payload->mode == proc::hist::compact ) {
+        auto restored = proc::restore_parts( *payload );
+        std::ranges::for_each( restored, [&]( detached_ptr<item> &entry ) {
+            components.push_back( std::move( entry ) );
+        } );
+    }
 
     // If the components are empty, item is the default kind and made of default components
     if( components.empty() ) {

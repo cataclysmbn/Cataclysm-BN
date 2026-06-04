@@ -118,7 +118,7 @@ if (TILES)
             cataclysm-bn-tiles-common OBJECT
             ${CATACLYSM_BN_SOURCES}
             ${CATACLYSM_BN_HEADERS})
-    target_include_directories(cataclysm-bn-tiles-common INTERFACE ${CMAKE_SOURCE_DIR}/src)
+    target_include_directories(cataclysm-bn-tiles-common PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
     if (WIN32)
         add_definitions(-DUSE_WINMAIN)
@@ -199,7 +199,7 @@ if (CURSES)
     add_library(cataclysm-bn-common OBJECT
             ${CATACLYSM_BN_SOURCES}
             ${CATACLYSM_BN_HEADERS})
-    target_include_directories(cataclysm-bn-common INTERFACE ${CMAKE_SOURCE_DIR}/src)
+    target_include_directories(cataclysm-bn-common PUBLIC ${CMAKE_SOURCE_DIR}/src)
 
     if (WIN32)
         add_executable(cataclysm-bn

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "proc_axe_generic",
+    "type": "GENERIC",
+    "copy-from": "hatchet",
+    "name": { "str": "axe" },
+    "description": "A melee weapon assembled from an axe head, handle, and other selected parts.",
+    "weight": "900 g",
+    "volume": "1 L",
+    "bashing": 8,
+    "cutting": 10,
+    "to_hit": 0
+  },
+  {
+    "id": "proc_spear_generic",
+    "type": "GENERIC",
+    "copy-from": "spear_wood",
+    "name": { "str": "spear" },
+    "description": "A melee weapon assembled from a point, shaft, and other selected parts.",
+    "weight": "1000 g",
+    "volume": "1750 ml",
+    "bashing": 4,
+    "cutting": 8,
+    "to_hit": 0
+  },
+  {
+    "id": "proc_knife_generic",
+    "type": "TOOL",
+    "copy-from": "knife_hunting",
+    "name": { "str": "knife" },
+    "description": "A cutting weapon assembled from a blade, handle, and other selected parts.",
+    "weight": "250 g",
+    "volume": "250 ml",
+    "cutting": 8,
+    "to_hit": 0
+  }
+]

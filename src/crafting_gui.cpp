@@ -42,6 +42,7 @@
 #include "output.h"
 #include "player.h"
 #include "point.h"
+#include "procgen/proc_recipe.h"
 #include "recipe.h"
 #include "recipe_dictionary.h"
 #include "requirements.h"
@@ -704,6 +705,10 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
             item_info_cache.last_recipe = rec;
             item_info_cache.batch_size = count;
             item_info_cache.dummy = rec->create_result();
+            if( rec->is_proc() && !rec->builder_name().translated().empty() ) {
+                item_info_cache.dummy->set_var( "name", rec->builder_name().translated() );
+                item_info_cache.dummy->set_var( "description", proc::recipe_preview_description( *rec ) );
+            }
             item_info_cache.dummy->set_var( "recipe_exemplar", rec->ident().str() );
             apply_craft_result_hooks( {
                 .crafter = crafter,
@@ -944,8 +949,9 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
             if( batch ) {
                 tmp_name = string_format( _( "%2dx %s" ), i + 1, current[i]->result_name( true ) );
             } else {
-                tmp_name = std::string( indent[i], ' ' ) +
-                           current[i]->result_name( /*decorated=*/true );
+                const auto recipe_name = current[i]->is_proc() && !current[i]->builder_name().translated().empty() ?
+                                         current[i]->builder_name().translated() : current[i]->result_name( /*decorated=*/true );
+                tmp_name = std::string( indent[i], ' ' ) + recipe_name;
             }
             const bool rcp_known = available_recipes.contains( *current[i] );
             const bool rcp_read = !highlight_unread_recipes ||

@@ -728,5 +728,42 @@
     "id": "multi_cooker_filled",
     "type": "MIGRATION",
     "replace": "multi_cooker"
+  },
+  {
+    "id": [ "sword_metal", "sword_wood", "sword_nail", "sword_crude", "sword_bone" ],
+    "type": "MIGRATION",
+    "replace": "proc_sword_generic"
+  },
+  {
+    "id": [ "hand_axe", "makeshift_axe" ],
+    "type": "MIGRATION",
+    "replace": "proc_axe_generic"
+  },
+  {
+    "id": [ "spear_spike", "spear_knife", "spear_knife_superior", "spear_stone", "spear_steel" ],
+    "type": "MIGRATION",
+    "replace": "proc_spear_generic"
+  },
+  {
+    "id": [
+      "blt",
+      "sandwich_t",
+      "sandwich_veggy",
+      "sandwich_cheese",
+      "sandwich_sauce",
+      "sandwich_honey",
+      "sandwich_jam",
+      "sandwich_pb",
+      "sandwich_pbj",
+      "sandwich_pbh",
+      "sandwich_pbm",
+      "sandwich_deluxe",
+      "sandwich_okay",
+      "sandwich_deluxe_nocheese",
+      "fish_sandwich",
+      "sandwich_cucumber"
+    ],
+    "type": "MIGRATION",
+    "replace": "sandwich_generic"
   }
 ]

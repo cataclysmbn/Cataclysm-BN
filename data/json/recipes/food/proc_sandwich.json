@@ -1,0 +1,18 @@
+[
+  {
+    "type": "recipe",
+    "result": "sandwich_generic",
+    "category": "CC_FOOD",
+    "subcategory": "CSC_FOOD_MEAT",
+    "skill_used": "cooking",
+    "difficulty": 1,
+    "time": 100,
+    "proc": true,
+    "proc_id": "sandwich",
+    "builder_name": { "str": "Sandwich" },
+    "builder_desc": { "str": "Pick bread and fillings." },
+    "qualities": [  ],
+    "tools": [  ],
+    "components": [  ]
+  }
+]

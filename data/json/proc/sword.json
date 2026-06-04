@@ -1,0 +1,36 @@
+[
+  {
+    "type": "PROC",
+    "id": "sword",
+    "cat": "weapon",
+    "res": "proc_sword_generic",
+    "lua": { "full": "procgen.gear.full", "make": "procgen.gear.make" },
+    "hist": { "def": "full", "ok": [ "compact", "full" ] },
+    "slot": [
+      {
+        "id": "blade",
+        "role": "blade",
+        "min": 1,
+        "max": 1,
+        "ok": [ "itype:steel_chunk", "itype:scrap", "itype:bone", "itype:stick_long" ]
+      },
+      {
+        "id": "guard",
+        "role": "guard",
+        "min": 0,
+        "max": 1,
+        "ok": [ "itype:scrap", "itype:steel_chunk", "itype:bone" ]
+      },
+      { "id": "handle", "role": "handle", "min": 1, "max": 1, "ok": [ "itype:stick_long", "itype:bone" ] },
+      { "id": "grip", "role": "grip", "min": 1, "max": 1, "ok": [ "itype:leather", "itype:rag" ] },
+      {
+        "id": "reinforcement",
+        "role": "reinforcement",
+        "min": 0,
+        "max": 4,
+        "rep": true,
+        "ok": [ "itype:nail", "itype:scrap" ]
+      }
+    ]
+  }
+]
