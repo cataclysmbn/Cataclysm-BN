@@ -54,28 +54,6 @@ _G.locale = { gettext = gettext }
 ---@return FakeCoord
 local make_tripoint = function(x, y, z) return { x = x, y = y, z = z } end
 
-_G.TripointAbsOmt = { new = make_tripoint }
-
-local hub_omt_min_x = 10
-local hub_omt_min_y = 20
-local map_squares_per_omt = 24
-local hub_omts = {}
-local hub_zlevels = { 0, -2 }
-for _, z in ipairs(hub_zlevels) do
-  for x = 10, 13 do
-    for y = 20, 21 do
-      hub_omts[x .. "," .. y .. "," .. z] = true
-    end
-  end
-end
-
----@param _otype string
----@param _match_type integer
----@param omt FakeCoord
----@return boolean
-local check_ot = function(_otype, _match_type, omt) return hub_omts[omt.x .. "," .. omt.y .. "," .. omt.z] == true end
-_G.overmapbuffer = { check_ot = check_ot }
-
 ---@class FakeCharacter
 
 ---@class FakePlayer: FakeCharacter
@@ -97,19 +75,12 @@ player.global_square_location = function(_self)
   return { to_omt = to_omt }
 end
 
----@class FakeMap
-local map = {}
-
----@param _self FakeMap
----@return integer
-map.get_map_size = function(_self) return 96 end
-
----@param _self FakeMap
----@param abs_pos FakeCoord
----@return FakeCoord
-map.abs_to_bub = function(_self, abs_pos)
-  return make_tripoint(abs_pos.x - hub_omt_min_x * map_squares_per_omt, abs_pos.y - hub_omt_min_y * map_squares_per_omt, abs_pos.z)
-end
+---@param _otype string
+---@param _match_type integer
+---@param omt FakeCoord
+---@return boolean
+local check_ot = function(_otype, _match_type, omt) return omt.x == 11 and omt.y == 20 and omt.z == 0 end
+_G.overmapbuffer = { check_ot = check_ot }
 
 ---@class FakeNpc
 local npc = {}
@@ -145,64 +116,53 @@ local monster = {}
 ---@return FakeStringId
 monster.get_type = function(_self) return make_string_id("mon_robofac_turret_light") end
 
-local npc_point_lookups = 0
-local monster_point_lookups = 0
+local npc_omt_queries = 0
+local monster_omt_queries = 0
+local npc_query_radius = -1
+local monster_query_radius = -1
+local npc_query_ignores_z = false
+local monster_query_ignores_z = false
 
----@param point FakeCoord
----@param _allow_hallucination boolean
----@return FakeNpc?
-local get_npc_at = function(point, _allow_hallucination)
-  npc_point_lookups = npc_point_lookups + 1
-  if point.x == 25 and point.y == 1 and point.z == -2 then return npc end
-  return nil
+---@param center FakeCoord
+---@param radius integer
+---@param ignore_z boolean
+---@return FakeNpc[]
+local get_npcs_near_omt = function(center, radius, ignore_z)
+  npc_omt_queries = npc_omt_queries + 1
+  npc_query_radius = radius
+  npc_query_ignores_z = ignore_z
+  if center.x == 11 and center.y == 20 and center.z == 0 then return { npc } end
+  return {}
 end
 
----@param point FakeCoord
----@param _allow_hallucination boolean
----@return FakeMonster?
-local get_monster_at = function(point, _allow_hallucination)
-  monster_point_lookups = monster_point_lookups + 1
-  if point.x == 26 and point.y == 1 and point.z == -2 then return monster end
-  return nil
+---@param center FakeCoord
+---@param radius integer
+---@param ignore_z boolean
+---@return FakeMonster[]
+local get_monsters_near_omt = function(center, radius, ignore_z)
+  monster_omt_queries = monster_omt_queries + 1
+  monster_query_radius = radius
+  monster_query_ignores_z = ignore_z
+  if center.x == 11 and center.y == 20 and center.z == 0 then return { monster } end
+  return {}
 end
 
 ---@return nil
-local fail_get_all = function() error("regression: global active creature scan was used") end
+local fail_slow_scan = function() error("regression: slow creature scan was used") end
 
 ---@return FakePlayer
 local get_avatar = function() return player end
 
----@return FakeMap
-local get_map = function() return map end
-
 _G.gapi = {
   get_avatar = get_avatar,
-  get_map = get_map,
-  get_npc_at = get_npc_at,
-  get_monster_at = get_monster_at,
-  get_all_npcs = fail_get_all,
-  get_all_monsters = fail_get_all,
+  get_npcs_near_omt = get_npcs_near_omt,
+  get_monsters_near_omt = get_monsters_near_omt,
+  get_all_npcs = fail_slow_scan,
+  get_all_monsters = fail_slow_scan,
+  get_npc_at = fail_slow_scan,
+  get_monster_at = fail_slow_scan,
 }
 
----@return FakeCoord[]
-local overmap_terrain_tiles = function()
-  local offsets = {}
-  for x = 0, map_squares_per_omt - 1 do
-    for y = 0, map_squares_per_omt - 1 do
-      offsets[#offsets + 1] = make_tripoint(x, y, 0)
-    end
-  end
-  return offsets
-end
-
----@param omt FakeCoord
----@param offset FakeCoord
----@return FakeCoord
-local project_combine = function(omt, offset)
-  return make_tripoint(omt.x * map_squares_per_omt + offset.x, omt.y * map_squares_per_omt + offset.y, omt.z)
-end
-
-_G.coords = { overmap_terrain_tiles = overmap_terrain_tiles, project_combine = project_combine }
 _G.game = _G.game or {}
 _G.game.current_mod_path = "data/json"
 package.path = package.path .. ";data/json/?.lua"
@@ -211,10 +171,12 @@ package.loaded["lua.robofac"] = nil
 local robofac = require("lua.robofac")
 robofac.authorize_hub01_after_dialogue()
 
-local expected_hub_points = 16 * map_squares_per_omt * map_squares_per_omt
 test_data.npc_authorized = npc_authorized
 test_data.npc_attitude_cleared = npc_attitude_cleared
 test_data.monster_authorized = monster.faction == "robofac_authorized:int"
-test_data.npc_point_lookups = npc_point_lookups
-test_data.monster_point_lookups = monster_point_lookups
-test_data.expected_hub_points = expected_hub_points
+test_data.npc_omt_queries = npc_omt_queries
+test_data.monster_omt_queries = monster_omt_queries
+test_data.npc_query_radius = npc_query_radius
+test_data.monster_query_radius = monster_query_radius
+test_data.npc_query_ignores_z = npc_query_ignores_z
+test_data.monster_query_ignores_z = monster_query_ignores_z

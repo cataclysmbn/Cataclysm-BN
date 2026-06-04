@@ -974,8 +974,12 @@ TEST_CASE( "robofac_authorization_scans_nearby_hub01_tiles", "[lua][robofac]" )
     CHECK( test_data.get<bool>( "npc_authorized" ) );
     CHECK( test_data.get<bool>( "npc_attitude_cleared" ) );
     CHECK( test_data.get<bool>( "monster_authorized" ) );
-    CHECK( test_data.get<int>( "npc_point_lookups" ) == test_data.get<int>( "expected_hub_points" ) );
-    CHECK( test_data.get<int>( "monster_point_lookups" ) == test_data.get<int>( "expected_hub_points" ) );
+    CHECK( test_data.get<int>( "npc_omt_queries" ) == 1 );
+    CHECK( test_data.get<int>( "monster_omt_queries" ) == 1 );
+    CHECK( test_data.get<int>( "npc_query_radius" ) == 4 );
+    CHECK( test_data.get<int>( "monster_query_radius" ) == 4 );
+    CHECK( test_data.get<bool>( "npc_query_ignores_z" ) );
+    CHECK( test_data.get<bool>( "monster_query_ignores_z" ) );
 }
 
 TEST_CASE( "lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]" )

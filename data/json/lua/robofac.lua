@@ -11,10 +11,6 @@ local hub01_turret = "mon_robofac_turret_light"
 local hub01_turret_id = MonsterTypeId.new(hub01_turret)
 local hub01_light_retrieval_complete = "npctalk_var_dialogue_intercom_completed_robofac_intercom_3"
 local nearby_hub01_scan_radius_omt = 4
-local min_hub01_scan_z = -10
-local max_hub01_scan_z = 10
----@type PointOmtMs[]
-local hub01_tile_offsets = coords.overmap_terrain_tiles()
 
 ---@class RobofacElevatorTryUseParams
 ---@field player Avatar?
@@ -42,40 +38,27 @@ local is_in_hub01 = function(ch)
   return overmapbuffer.check_ot("robofachq_", OtMatchType.PREFIX, ch:global_square_location():to_omt())
 end
 
----@return TripointBubMs[]
-local nearby_hub01_points = function()
+---@return TripointAbsOmt?
+local hub01_scan_center = function()
   ---@type Avatar?
   local player = gapi.get_avatar()
-  if not has_hub01_clearance(player) then return {} end
-  if not is_in_hub01(player) then return {} end
+  if not has_hub01_clearance(player) then return nil end
+  if not is_in_hub01(player) then return nil end
+  return player:global_square_location():to_omt()
+end
 
-  ---@type Map
-  local here = gapi.get_map()
-  ---@type integer
-  local map_size = here:get_map_size()
-  ---@type TripointAbsOmt
-  local center_omt = player:global_square_location():to_omt()
-  ---@type TripointBubMs[]
-  local points = {}
+---@return NPC[]
+local nearby_hub01_npcs = function()
+  local center = hub01_scan_center()
+  if center == nil then return {} end
+  return gapi.get_npcs_near_omt(center, nearby_hub01_scan_radius_omt, true)
+end
 
-  for omt_z = min_hub01_scan_z, max_hub01_scan_z do
-    for omt_x = center_omt.x - nearby_hub01_scan_radius_omt, center_omt.x + nearby_hub01_scan_radius_omt do
-      for omt_y = center_omt.y - nearby_hub01_scan_radius_omt, center_omt.y + nearby_hub01_scan_radius_omt do
-        local omt = TripointAbsOmt.new(omt_x, omt_y, omt_z)
-        if overmapbuffer.check_ot("robofachq_", OtMatchType.PREFIX, omt) then
-          for _, offset in ipairs(hub01_tile_offsets) do
-            ---@type TripointAbsMs
-            local abs_pos = coords.project_combine(omt, offset)
-            local point = here:abs_to_bub(abs_pos)
-            if point.x >= 0 and point.y >= 0 and point.x < map_size and point.y < map_size then
-              points[#points + 1] = point
-            end
-          end
-        end
-      end
-    end
-  end
-  return points
+---@return Monster[]
+local nearby_hub01_monsters = function()
+  local center = hub01_scan_center()
+  if center == nil then return {} end
+  return gapi.get_monsters_near_omt(center, nearby_hub01_scan_radius_omt, true)
 end
 
 ---@param params RobofacElevatorTryUseParams
@@ -113,12 +96,11 @@ M.authorize_hub01_security = function(params)
   return true
 end
 
----@param points TripointBubMs[]?
+---@param npcs NPC[]?
 ---@return boolean?
-M.authorize_active_hub01_security = function(points)
-  for _, point in ipairs(points or nearby_hub01_points()) do
-    local npc = gapi.get_npc_at(point, false)
-    if npc then M.authorize_hub01_security({ npc = npc }) end
+M.authorize_active_hub01_security = function(npcs)
+  for _, npc in ipairs(npcs or nearby_hub01_npcs()) do
+    M.authorize_hub01_security({ npc = npc })
   end
   return true
 end
@@ -145,12 +127,11 @@ M.authorize_hub01_turret = function(params)
   return true
 end
 
----@param points TripointBubMs[]?
+---@param monsters Monster[]?
 ---@return boolean?
-M.authorize_active_hub01_turrets = function(points)
-  for _, point in ipairs(points or nearby_hub01_points()) do
-    local monster = gapi.get_monster_at(point, false)
-    if monster then M.authorize_hub01_turret({ monster = monster }) end
+M.authorize_active_hub01_turrets = function(monsters)
+  for _, monster in ipairs(monsters or nearby_hub01_monsters()) do
+    M.authorize_hub01_turret({ monster = monster })
   end
   return true
 end
@@ -161,17 +142,15 @@ M.authorize_active_hub01 = function()
   if not has_hub01_clearance(player) then return true end
   if not is_in_hub01(player) then return true end
 
-  local points = nearby_hub01_points()
-  M.authorize_active_hub01_security(points)
-  M.authorize_active_hub01_turrets(points)
+  M.authorize_active_hub01_security()
+  M.authorize_active_hub01_turrets()
   return true
 end
 
 ---@return boolean?
 M.authorize_hub01_after_dialogue = function()
-  local points = nearby_hub01_points()
-  M.authorize_active_hub01_security(points)
-  M.authorize_active_hub01_turrets(points)
+  M.authorize_active_hub01_security()
+  M.authorize_active_hub01_turrets()
 end
 
 return M
