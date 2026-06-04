@@ -131,49 +131,13 @@
     "volume": "5ml"
   },
   {
-    "id": "40x46mm_m212_casing",
+    "id": "40x46mm_casing",
     "type": "GENERIC",
     "category": "spare_parts",
-    "name": { "str": "40x46mm M212 casing" },
-    "description": "A large canister from a spent 40mm cartridge, used by M1006 stun rounds.  With an ammunition press, it can be reconditioned for other 40x46mm handloads.",
+    "name": { "str": "40x46mm casing" },
+    "description": "A large canister from a spent 40x46mm grenade cartridge.  With an ammunition press, it can be reconditioned for 40x46mm handloads.",
     "weight": "50 g",
     "volume": "55ml",
-    "material": "steel",
-    "symbol": "=",
-    "color": "dark_gray"
-  },
-  {
-    "id": "40x46mm_m118_casing",
-    "type": "GENERIC",
-    "category": "spare_parts",
-    "name": { "str": "40x46mm M118 casing" },
-    "description": "A large canister from a spent 40mm cartridge, used by M433 HEDP rounds.  It could be repurposed for makeshift buckshot and other handloads.",
-    "weight": "50 g",
-    "volume": "58ml",
-    "material": "steel",
-    "symbol": "=",
-    "color": "dark_gray"
-  },
-  {
-    "id": "40x46mm_m199_casing",
-    "type": "GENERIC",
-    "category": "spare_parts",
-    "name": { "str": "40x46mm M199 casing" },
-    "description": "A large canister from a spent 40mm cartridge, used by M576 buckshot rounds.  It could be reused to make new buckshot or other makeshift handloads.",
-    "weight": "50 g",
-    "volume": "59ml",
-    "material": "steel",
-    "symbol": "=",
-    "color": "dark_gray"
-  },
-  {
-    "id": "40x46mm_m195_casing",
-    "type": "GENERIC",
-    "category": "spare_parts",
-    "name": { "str": "40x46mm M195 casing" },
-    "description": "A large canister from a spent 40mm cartridge, used by M651 teargas rounds.  With an ammunition press, it can be reconditioned for other 40x46mm handloads.",
-    "weight": "50 g",
-    "volume": "45ml",
     "material": "steel",
     "symbol": "=",
     "color": "dark_gray"

@@ -379,7 +379,27 @@
   {
     "id": "40mm_casing",
     "type": "MIGRATION",
-    "replace": "40x46mm_m118_casing"
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m118_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m195_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m199_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
+  },
+  {
+    "id": "40x46mm_m212_casing",
+    "type": "MIGRATION",
+    "replace": "40x46mm_casing"
   },
   {
     "id": "solar_panel_v3",
