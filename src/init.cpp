@@ -15,6 +15,7 @@
 #include <ranges>
 
 #include "achievement.h"
+#include "action.h"
 #include "activity_type.h"
 #include "ammo.h"
 #include "ammo_effect.h"
@@ -269,6 +270,7 @@ void DynamicDataLoader::initialize()
     add( "ammo_effect", &ammo_effects::load );
     add( "emit", &emit::load_emit );
     add( "activity_type", &activity_type::load );
+    add( "contextual_action", &load_contextual_action );
     add( "vitamin", &vitamin::load_vitamin );
     add( "material", &materials::load );
     add( "bionic", &bionic_data::load_bionic );
@@ -572,6 +574,7 @@ void DynamicDataLoader::unload_data()
     charge_removal_blacklist::reset();
     clear_techniques_and_martial_arts();
     clothing_mods::reset();
+    reset_contextual_actions();
     construction_categories::reset();
     construction_groups::reset();
     constructions::reset();

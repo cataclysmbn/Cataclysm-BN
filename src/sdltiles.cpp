@@ -3073,7 +3073,8 @@ static void CheckMessages()
                         }
 
                         // Check for actions that work on nearby tiles and own tile
-                        if( can_interact_at( ACTION_PICKUP, pos ) ) {
+                        if( can_interact_at( ACTION_PICKUP, pos ) &&
+                            !examine_action_can_pickup_items_at( pos ) ) {
                             actions.insert( ACTION_PICKUP );
                         }
                     }
@@ -3404,7 +3405,8 @@ static void CheckMessages()
             case SDL_EVENT_MOUSE_BUTTON_UP:
                 switch( ev.button.button ) {
                     case SDL_BUTTON_LEFT:
-                        last_input = input_event( MOUSE_BUTTON_LEFT, input_event_t::mouse );
+                        last_input = input_event( SDL_GetModState() & SDL_KMOD_SHIFT ? MOUSE_BUTTON_SHIFT_LEFT :
+                                                  MOUSE_BUTTON_LEFT, input_event_t::mouse );
                         break;
                     case SDL_BUTTON_RIGHT:
                         last_input = input_event( MOUSE_BUTTON_RIGHT, input_event_t::mouse );

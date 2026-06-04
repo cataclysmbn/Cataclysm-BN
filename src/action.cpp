@@ -9,6 +9,7 @@
 #include <ranges>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include "avatar.h"
 #include "cata_utility.h"
@@ -24,6 +25,7 @@
 #include "input.h"
 #include "item.h"
 #include "item_functions.h"
+#include "json.h"
 #include "lua_action_menu.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -57,6 +59,166 @@ static const std::string flag_SWIMMABLE( "SWIMMABLE" );
 static const trait_flag_str_id trait_flag_MUTATION_SWIM( "MUTATION_SWIM" );
 
 class inventory;
+
+namespace
+{
+
+enum class contextual_target {
+    self,
+    adjacent,
+    self_or_adjacent,
+};
+
+struct contextual_action_entry {
+    action_id action = ACTION_NULL;
+    contextual_target target = contextual_target::adjacent;
+    bool right_click = true;
+    bool action_menu = true;
+    bool walk_to = true;
+};
+
+auto contextual_action_entries() -> std::vector<contextual_action_entry> & // *NOPAD*
+{
+    static auto entries = std::vector<contextual_action_entry> {};
+    return entries;
+}
+
+auto examine_action_has_non_item_effect_at( const tripoint_bub_ms &p ) -> bool
+{
+    auto &here = get_map();
+    auto &u = get_player_character();
+    if( here.veh_at( p ) || here.has_flag( flag_CONSOLE, p ) ) {
+        return true;
+    }
+
+    const auto &xfurn_t = here.furn( p ).obj();
+    const auto &xter_t = here.ter( p ).obj();
+    if( ( here.has_furn( p ) && xfurn_t.examine != &iexamine::none ) ||
+        xter_t.examine != &iexamine::none ) {
+        return true;
+    }
+
+    const auto *const creature = g->critter_at( p );
+    return ( creature != nullptr && p != u.bub_pos() ) || here.can_see_trap_at( p, u );
+}
+
+auto remove_redundant_item_action( std::vector<contextual_action> &actions,
+                                   const tripoint_bub_ms &p ) -> void
+{
+    namespace ranges = std::ranges;
+    const auto has_examine = ranges::any_of( actions, []( const auto & entry ) {
+        return entry.action == ACTION_EXAMINE;
+    } );
+    if( !has_examine || !examine_action_can_pickup_items_at( p ) ) {
+        return;
+    }
+
+    const auto redundant_action = examine_action_has_non_item_effect_at( p ) ? ACTION_PICKUP :
+                                  ACTION_EXAMINE;
+    std::erase_if( actions, [redundant_action]( const auto & entry ) {
+        return entry.action == redundant_action;
+    } );
+}
+
+auto parse_contextual_target( const JsonObject &jo, const std::string &target ) -> contextual_target
+{
+    if( target == "self" ) {
+        return contextual_target::self;
+    }
+    if( target == "adjacent" ) {
+        return contextual_target::adjacent;
+    }
+    if( target == "self_or_adjacent" ) {
+        return contextual_target::self_or_adjacent;
+    }
+    jo.throw_error( "invalid contextual action target: " + target, "target" );
+    return contextual_target::adjacent;
+}
+
+auto contextual_target_matches( const contextual_target target, const tripoint_bub_ms &p,
+                                const tripoint_bub_ms &from ) -> bool
+{
+    if( p.z() != from.z() ) {
+        return false;
+    }
+    switch( target ) {
+        case contextual_target::self:
+            return p == from;
+        case contextual_target::adjacent:
+            return p != from && square_dist( p.xy(), from.xy() ) <= 1;
+        case contextual_target::self_or_adjacent:
+            return square_dist( p.xy(), from.xy() ) <= 1;
+    }
+    debugmsg( "unhandled contextual_target" );
+    return false;
+}
+
+auto make_contextual_action( const contextual_action_entry &entry ) -> contextual_action
+{
+    return { .action = entry.action, .walk_to = entry.walk_to };
+}
+
+} // namespace
+
+auto load_contextual_action( const JsonObject &jo ) -> void
+{
+    jo.get_string( "id", "" );
+    const auto action = look_up_action( jo.get_string( "action" ) );
+    if( action == ACTION_NULL ) {
+        jo.throw_error( "invalid contextual action", "action" );
+    }
+
+    contextual_action_entries().push_back( {
+        .action = action,
+        .target = parse_contextual_target( jo, jo.get_string( "target", "adjacent" ) ),
+        .right_click = jo.get_bool( "right_click", true ),
+        .action_menu = jo.get_bool( "action_menu", true ),
+        .walk_to = jo.get_bool( "walk_to", true ),
+    } );
+}
+
+auto reset_contextual_actions() -> void
+{
+    contextual_action_entries().clear();
+}
+
+auto contextual_actions_for_target( const tripoint_bub_ms &p,
+                                    const bool right_click_only ) -> std::vector<contextual_action>
+{
+    auto actions = std::vector<contextual_action> {};
+    auto matching_entries = contextual_action_entries() | std::views::filter( [&](
+    const auto & entry ) {
+        return ( !right_click_only || entry.right_click ) && can_interact_at( entry.action, p );
+    } ) | std::views::transform( []( const auto & entry ) { return make_contextual_action( entry ); } );
+    std::ranges::copy( matching_entries, std::back_inserter( actions ) );
+    remove_redundant_item_action( actions, p );
+    return actions;
+}
+
+auto contextual_actions_at( const tripoint_bub_ms &p, const bool right_click_only,
+                            const tripoint_bub_ms &from ) -> std::vector<contextual_action>
+{
+    auto actions = std::vector<contextual_action> {};
+    auto matching_entries = contextual_action_entries() | std::views::filter( [&](
+    const auto & entry ) {
+        return ( !right_click_only || entry.right_click ) &&
+               ( right_click_only || entry.action_menu ) &&
+               can_interact_at( entry.action, p ) &&
+               contextual_target_matches( entry.target, p, from );
+    } ) | std::views::transform( []( const auto & entry ) { return make_contextual_action( entry ); } );
+    std::ranges::copy( matching_entries, std::back_inserter( actions ) );
+    remove_redundant_item_action( actions, p );
+    return actions;
+}
+
+auto contextual_action_is_valid_from( const action_id action, const tripoint_bub_ms &target,
+                                      const tripoint_bub_ms &from ) -> bool
+{
+    return std::ranges::any_of( contextual_action_entries(), [&]( const auto & entry ) {
+        return entry.action == action && can_interact_at( entry.action, target ) &&
+               contextual_target_matches( entry.target, target, from );
+    } );
+}
 
 std::vector<char> keys_bound_to( action_id act, const bool restrict_to_printable )
 {
@@ -351,6 +513,8 @@ std::string action_ident( action_id act )
             return "SELECT";
         case ACTION_SEC_SELECT:
             return "SEC_SELECT";
+        case ACTION_DESCRIBE_TILE:
+            return "DESCRIBE_TILE";
         case ACTION_AUTOATTACK:
             return "autoattack";
         case ACTION_MAIN_MENU:
@@ -670,6 +834,28 @@ static bool can_pickup_at( const tripoint_bub_ms &p )
     return ( here.has_items( p ) && !here.has_flag( flag_SEALED, p ) ) || veh_has_items;
 }
 
+auto examine_action_can_pickup_items_at( const tripoint_bub_ms &p ) -> bool
+{
+    map &here = get_map();
+    Character &u = get_player_character();
+    if( u.is_mounted() || !here.has_items( p ) || here.has_flag( flag_SEALED, p ) ||
+        here.veh_at( p ) || here.has_flag( flag_CONSOLE, p ) ) {
+        return false;
+    }
+
+    Creature *const creature = g->critter_at( p );
+    if( creature != nullptr && creature != &u ) {
+        return false;
+    }
+
+    const furn_t &xfurn_t = here.furn( p ).obj();
+    return !( ( here.has_flag( TFLAG_FIRE_CONTAINER, p ) &&
+                xfurn_t.examine == &iexamine::fireplace ) ||
+              xfurn_t.examine == &iexamine::fluid_grid_fixture ||
+              xfurn_t.examine == &iexamine::workbench ||
+              xfurn_t.examine == &iexamine::transform );
+}
+
 bool can_interact_at( action_id action, const tripoint_bub_ms &p )
 {
     map &here = get_map();
@@ -811,38 +997,6 @@ action_id handle_action_menu()
     if( here.veh_at( g->u.bub_pos() ) ) {
         // Make it 300 to prioritize it before examining the vehicle.
         action_weightings[ACTION_CONTROL_VEHICLE] = 300;
-    }
-
-    // Check if we can perform one of our actions on nearby terrain. If so,
-    // display that action at the top of the list.
-    for( const tripoint_bub_ms &pos : here.points_in_radius( g->u.bub_pos(), 1 ) ) {
-        if( pos != g->u.bub_pos() ) {
-            // Check for actions that work on nearby tiles, skipping tiles blocked by vehicles
-            if( here.obstructed_by_vehicle_rotation( g->u.bub_pos(), pos ) ) {
-                continue;
-            }
-
-            if( can_interact_at( ACTION_OPEN, pos ) ) {
-                action_weightings[ACTION_OPEN] = 200;
-            }
-            if( can_interact_at( ACTION_CLOSE, pos ) ) {
-                action_weightings[ACTION_CLOSE] = 200;
-            }
-            if( can_interact_at( ACTION_EXAMINE, pos ) ) {
-                action_weightings[ACTION_EXAMINE] = 200;
-            }
-        } else {
-            // Check for actions that work on own tile only
-            if( can_interact_at( ACTION_BUTCHER, pos ) ) {
-                action_weightings[ACTION_BUTCHER] = 200;
-            }
-            if( can_interact_at( ACTION_MOVE_UP, pos ) ) {
-                action_weightings[ACTION_MOVE_UP] = 200;
-            }
-            if( can_interact_at( ACTION_MOVE_DOWN, pos ) ) {
-                action_weightings[ACTION_MOVE_DOWN] = 200;
-            }
-        }
     }
 
     // sort the map by its weightings

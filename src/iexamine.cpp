@@ -250,7 +250,17 @@ static const time_duration milling_time = 6_hours;
  */
 void iexamine::none( player &/*p*/, const tripoint_bub_ms &examp )
 {
-    add_msg( _( "That is a %s." ), get_map().name( examp ) );
+    map &here = get_map();
+    const map_data_common_t &terrain_or_furniture = here.has_furn( examp ) ?
+            static_cast<const map_data_common_t &>( here.furn( examp ).obj() ) :
+            static_cast<const map_data_common_t &>( here.ter( examp ).obj() );
+    add_msg( _( "That is a %s." ),
+             colorize( terrain_or_furniture.name(), terrain_or_furniture.color() ) );
+
+    const auto description = terrain_or_furniture.description.translated();
+    if( !description.empty() ) {
+        add_msg( "%s", colorize( description, c_light_gray ) );
+    }
 }
 
 /**

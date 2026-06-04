@@ -129,6 +129,7 @@
 #include "map_functions.h"
 #include "map_item_stack.h"
 #include "map_iterator.h"
+#include "map_memory.h"
 #include "map_selector.h"
 #include "mapbuffer.h"
 #include "mapbuffer_registry.h"
@@ -793,6 +794,104 @@ void game::load_map( const tripoint_abs_sm &pos_sm, const bool pump_events )
     }
 }
 
+namespace
+{
+
+auto contextual_action_display_name( const action_id action ) -> std::string
+{
+    return get_default_mode_input_context().get_action_name( action_ident( action ) );
+}
+
+auto choose_contextual_action( const std::vector<contextual_action> &actions,
+                               const std::string &title ) -> std::optional<contextual_action>
+{
+    if( actions.empty() ) {
+        return std::nullopt;
+    }
+    if( actions.size() == 1 ) {
+        return actions.front();
+    }
+
+    uilist menu;
+    menu.settext( title );
+    for( size_t i = 0; i < actions.size(); ++i ) {
+        menu.addentry( static_cast<int>( i ), true, MENU_AUTOASSIGN,
+                       contextual_action_display_name( actions[i].action ) );
+    }
+    menu.query();
+    if( menu.ret < 0 || static_cast<size_t>( menu.ret ) >= actions.size() ) {
+        return std::nullopt;
+    }
+    return actions[menu.ret];
+}
+
+auto memorized_terrain_has_stair_flag( const memorized_terrain_tile &memory,
+                                       const bool going_up, const bool going_down ) -> bool
+{
+    if( memory.tile.empty() ) {
+        return false;
+    }
+
+    const auto terrain = ter_str_id( memory.tile );
+    if( !terrain.is_valid() ) {
+        return false;
+    }
+
+    const auto &terrain_obj = terrain.obj();
+    return ( going_up && ( terrain_obj.has_flag( TFLAG_GOES_UP ) ||
+                           terrain_obj.has_flag( TFLAG_ELEVATOR ) ||
+                           terrain_obj.has_flag( TFLAG_RAMP ) ||
+                           terrain_obj.has_flag( TFLAG_RAMP_UP ) ) ) ||
+           ( going_down && ( terrain_obj.has_flag( TFLAG_GOES_DOWN ) ||
+                             terrain_obj.has_flag( TFLAG_ELEVATOR ) ||
+                             terrain_obj.has_flag( TFLAG_RAMP_DOWN ) ) );
+}
+
+auto terrain_leads_to_zlevel( map &here, const tripoint_bub_ms &candidate, const bool going_up,
+                              const bool going_down ) -> bool
+{
+    return ( going_up && ( here.has_flag( TFLAG_GOES_UP, candidate ) ||
+                           here.has_flag( TFLAG_ELEVATOR, candidate ) ||
+                           here.has_flag( TFLAG_RAMP, candidate ) ||
+                           here.has_flag( TFLAG_RAMP_UP, candidate ) ) ) ||
+           ( going_down && ( here.has_flag( TFLAG_GOES_DOWN, candidate ) ||
+                             here.has_flag( TFLAG_ELEVATOR, candidate ) ||
+                             here.has_flag( TFLAG_RAMP_DOWN, candidate ) ) );
+}
+
+auto terrain_leads_to_zlevel( map &here, const tripoint_bub_ms &candidate, const int movez ) -> bool
+{
+    return terrain_leads_to_zlevel( here, candidate, movez == 1, movez == -1 );
+}
+
+struct avatar_remembers_stairs_at_options {
+    const avatar &you;
+    map &here;
+    tripoint_bub_ms candidate;
+    bool going_up = false;
+    bool going_down = false;
+};
+
+auto avatar_remembers_stairs_at( const avatar_remembers_stairs_at_options &opts ) -> bool
+{
+    const auto abs_candidate = opts.here.bub_to_abs( opts.candidate );
+    return memorized_terrain_has_stair_flag( opts.you.get_terrain_tile( abs_candidate ), opts.going_up,
+            opts.going_down ) ||
+           memorized_terrain_has_stair_flag( opts.you.get_memorized_tile( abs_candidate ), opts.going_up,
+                   opts.going_down );
+}
+
+auto avatar_knows_zlevel_transition_at( const avatar &you, map &here,
+                                        const tripoint_bub_ms &candidate, const bool going_up,
+                                        const bool going_down ) -> bool
+{
+    return terrain_leads_to_zlevel( here, candidate, going_up, going_down ) ||
+           avatar_remembers_stairs_at( { .you = you, .here = here, .candidate = candidate,
+                                         .going_up = going_up, .going_down = going_down } );
+}
+
+} // namespace
+
 std::optional<tripoint_bub_ms> game::find_local_stairs_leading_to( map &mp, const int z_after )
 {
     const int movez = z_after - get_levz();
@@ -801,10 +900,7 @@ std::optional<tripoint_bub_ms> game::find_local_stairs_leading_to( map &mp, cons
 
     //i tried 40, 80, and 100 here and got the same result almost every time? works for our purposes though
     for( const tripoint_bub_ms &candidate : closest_points_first( u.bub_pos(), 80 ) ) {
-        if( ( going_up && ( mp.has_flag( TFLAG_GOES_UP, candidate ) ||
-                            mp.has_flag( TFLAG_ELEVATOR, candidate ) ) ) ||
-            ( going_down && ( mp.has_flag( TFLAG_GOES_DOWN, candidate ) ||
-                              mp.has_flag( TFLAG_ELEVATOR, candidate ) ) ) ) {
+        if( avatar_knows_zlevel_transition_at( u, mp, candidate, going_up, going_down ) ) {
             return candidate;
         }
     }
@@ -812,25 +908,35 @@ std::optional<tripoint_bub_ms> game::find_local_stairs_leading_to( map &mp, cons
     return std::nullopt;
 }
 
-void game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction )
+bool game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction )
 {
     const bool can_autowalk_stairs = get_option<bool>( "SUGGEST_AUTOWALK_STAIRCASE" );
 
     if( !can_autowalk_stairs ) {
-        return;
+        return false;
     }
 
     const int z_after = direction == "up" ? u.bub_pos().z() + 1 : u.bub_pos().z() - 1;
-    std::optional<tripoint_bub_ms> stair_pos = find_local_stairs_leading_to( m, z_after );
+    const int movez = z_after - get_levz();
+    const bool going_down = movez == -1;
+    const bool going_up = movez == 1;
+    std::optional<tripoint_bub_ms> stair_pos;
+    std::vector<tripoint_bub_ms> route;
 
-    if( !stair_pos || !u.sees( *stair_pos ) ) {
-        return;
+    for( const tripoint_bub_ms &candidate : closest_points_first( u.bub_pos(), 80 ) ) {
+        if( !avatar_knows_zlevel_transition_at( get_avatar(), m, candidate, going_up, going_down ) ) {
+            continue;
+        }
+        route = m.route( u.bub_pos(), candidate, u.get_legacy_pathfinding_settings(),
+                         u.get_legacy_path_avoid() );
+        if( !route.empty() ) {
+            stair_pos = candidate;
+            break;
+        }
     }
 
-    auto route = m.route( u.bub_pos(), *stair_pos, u.get_legacy_pathfinding_settings(),
-                          u.get_legacy_path_avoid() );
-    if( route.size() <= 1 ) {
-        return;
+    if( !stair_pos ) {
+        return false;
     }
 
     // Detect if it's an elevator
@@ -841,10 +947,12 @@ void game::suggest_auto_walk_to_stairs( Character &u, map &m, const std::string 
         dir_text = direction == "up" ? " (up)" : " (down)";
     }
     if( query_yn( "Walk to %s%s?", m.ter( *stair_pos ).obj().name(), dir_text ) ) {
-        route.pop_back();
+        route.emplace_back( stair_pos->xy(), z_after );
         u.set_destination( route, u.remove_activity() );
         u.activity = std::make_unique<player_activity>();
+        return true;
     }
+    return false;
 }
 
 // Set up all default values for a new game
@@ -3311,6 +3419,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "SEC_SELECT" );
+    ctxt.register_action( "DESCRIBE_TILE" );
     return ctxt;
 }
 
@@ -3388,46 +3497,148 @@ bool game::try_get_left_click_action( action_id &act, const tripoint_bub_ms &mou
 
 bool game::try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target )
 {
-    const bool cleared_destination = !destination_preview.empty();
-    u.clear_destination();
-    destination_preview.clear();
+    namespace ranges = std::ranges;
+    using namespace std::views;
 
-    if( cleared_destination ) {
-        // Produce no-op if auto-move had just been cleared on this action
-        // e.g. from a previous single left mouse click. This has the effect
-        // of right-click canceling an auto-move before it is initiated.
-        return false;
-    }
+    if( !destination_preview.empty() ) {
+        const auto action_position = destination_preview.back();
+        const auto select_action = [&]( const std::vector<contextual_action> &actions,
+        const std::optional<std::string> &target_name ) -> bool {
+            const auto walk_to_actions = actions
+            | filter( []( const auto & entry ) { return entry.walk_to; } )
+            | ranges::to<std::vector>();
+            if( walk_to_actions.empty() )
+            {
+                return false;
+            }
 
-    const bool is_adjacent = square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 1;
-    const bool is_self = square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 0;
-    if( const monster *const mon = critter_at<monster>( mouse_target ) ) {
-        if( !u.sees( *mon ) ) {
-            add_msg( _( "Nothing relevant here." ) );
-            return false;
+            const auto selected = choose_contextual_action( walk_to_actions, _( "Choose action" ) );
+            if( !selected )
+            {
+                return true;
+            }
+
+            if( !contextual_action_is_valid_from( selected->action, mouse_target, action_position ) )
+            {
+                add_msg( _( "Nothing relevant here." ) );
+                return true;
+            }
+
+            if( !check_safe_mode_allowed() )
+            {
+                destination_preview.clear();
+                previewed_right_click_action_.reset();
+                invalidate_main_ui_adaptor();
+                return true;
+            }
+
+            const auto action_name = contextual_action_display_name( selected->action );
+            const auto action_target_name = target_name.value_or( m.name( mouse_target ) );
+            if( !query_yn( _( "Walk to %s and %s?" ), action_target_name, action_name ) )
+            {
+                destination_preview.clear();
+                previewed_right_click_action_.reset();
+                invalidate_main_ui_adaptor();
+                return true;
+            }
+
+            queued_right_click_action_ = {
+                .action = selected->action,
+                .target = m.bub_to_abs( mouse_target ),
+                .target_name = action_target_name,
+                .action_name = action_name,
+            };
+            u.set_destination( destination_preview );
+            destination_preview.clear();
+            previewed_right_click_action_.reset();
+            invalidate_main_ui_adaptor();
+            return true;
+        };
+
+        if( const auto *const np = critter_at<npc>( mouse_target ); np != nullptr && u.sees( *np ) ) {
+            if( select_action( contextual_actions_at( mouse_target, true, action_position ),
+                               np->disp_name() ) ) {
+                return false;
+            }
+        } else {
+            if( select_action( contextual_actions_at( mouse_target, true, action_position ),
+                               std::nullopt ) ) {
+                return false;
+            }
         }
 
-        if( !u.primary_weapon().is_gun() ) {
-            add_msg( m_info, _( "You are not wielding a ranged weapon." ) );
-            return false;
-        }
-
-        // TODO: Add weapon range check. This requires weapon to be reloaded.
-
-        act = ACTION_FIRE;
-    } else if( is_adjacent &&
-               m.close_door( tripoint_bub_ms( mouse_target.xy(), u.bub_pos().z() ), !m.is_outside( u.bub_pos() ),
-                             true ) ) {
-        act = ACTION_CLOSE;
-    } else if( is_self ) {
-        act = ACTION_PICKUP;
-    } else if( is_adjacent ) {
-        act = ACTION_EXAMINE;
-    } else {
         add_msg( _( "Nothing relevant here." ) );
         return false;
     }
 
+    u.clear_destination();
+    queued_right_click_action_.reset();
+
+    if( const auto *const np = critter_at<npc>( mouse_target ); np != nullptr && u.sees( *np ) ) {
+        const auto actions = contextual_actions_at( mouse_target, true, u.bub_pos() );
+        if( !actions.empty() ) {
+            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
+            if( selected ) {
+                act = selected->action;
+                return true;
+            }
+        }
+
+    } else if( const auto *const mon = critter_at<monster>( mouse_target ); mon != nullptr &&
+               u.sees( *mon ) ) {
+        act = u.primary_weapon().is_gun() ? ACTION_FIRE : ACTION_AUTOATTACK;
+        return true;
+    } else {
+        const auto actions = contextual_actions_at( mouse_target, true, u.bub_pos() );
+        if( !actions.empty() ) {
+            const auto selected = choose_contextual_action( actions, _( "Choose action" ) );
+            if( selected ) {
+                act = selected->action;
+                return true;
+            }
+        }
+    }
+
+    if( square_dist( mouse_target.xy(), u.bub_pos().xy() ) <= 1 ) {
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
+    }
+
+    destination_preview = m.route( u.bub_pos(), mouse_target, u.get_legacy_pathfinding_settings(),
+                                   u.get_legacy_path_avoid() );
+    if( destination_preview.empty() ) {
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
+    }
+
+    previewed_right_click_action_.reset();
+    invalidate_main_ui_adaptor();
+    return false;
+}
+
+auto game::try_get_queued_right_click_action( action_id &act,
+        std::optional<tripoint_bub_ms> &mouse_target ) -> bool
+{
+    if( !queued_right_click_action_ ) {
+        return false;
+    }
+
+    const auto target = m.abs_to_bub( queued_right_click_action_->target );
+    const auto abs_target = m.bub_to_abs( target );
+    const auto target_has_memory =
+        u.should_show_map_memory() &&
+        ( ter_str_id( u.get_terrain_tile( abs_target ).tile ).is_valid() ||
+          ter_str_id( u.get_memorized_tile( abs_target ).tile ).is_valid() );
+    if( ( !u.sees( target ) && !target_has_memory ) ||
+        !contextual_action_is_valid_from( queued_right_click_action_->action, target, u.bub_pos() ) ) {
+        queued_right_click_action_.reset();
+        add_msg( _( "Nothing relevant here." ) );
+        return false;
+    }
+
+    act = queued_right_click_action_->action;
+    mouse_target = target;
+    queued_right_click_action_.reset();
     return true;
 }
 
@@ -8164,6 +8375,100 @@ static std::string get_fire_fuel_string( const tripoint_bub_ms &examp )
     return {};
 }
 
+namespace
+{
+
+enum class map_examine_target : int {
+    terrain,
+    furniture,
+};
+
+template<typename MapPart>
+auto describe_map_part( const MapPart &part, const tripoint_bub_ms &target ) -> void
+{
+    const auto distance = rl_dist( get_player_character().bub_pos(), target );
+    add_msg( _( "That is a %s. It's about %d tiles away." ),
+             colorize( part.name(), part.color() ), distance );
+
+    const auto description = part.description.translated();
+    if( !description.empty() ) {
+        add_msg( "%s", colorize( description, c_light_gray ) );
+    }
+}
+
+auto describe_monster( const monster &mon, const tripoint_bub_ms &target ) -> void
+{
+    const auto distance = rl_dist( get_player_character().bub_pos(), target );
+    add_msg( _( "That is a %s. It's about %d tiles away." ),
+             colorize( mon.name(), mon.symbol_color() ), distance );
+
+    const auto description = mon.type->get_description();
+    if( !description.empty() ) {
+        add_msg( "%s", colorize( description, c_light_gray ) );
+    }
+}
+
+template<typename MapPart>
+auto maybe_play_describe_sound( const tripoint_bub_ms &target, const MapPart &part ) -> void
+{
+    if( !get_option<bool>( "DESCRIBE_TILE_SOUND" ) || part.bash.sound_fail.empty() ) {
+        return;
+    }
+
+    const auto variant = part.id.str();
+    const auto heard_volume = sfx::get_heard_volume( target );
+
+    if( sfx::has_variant_sound( "smash_fail", variant ) ) {
+        sfx::play_variant_sound( "smash_fail", variant, heard_volume );
+    } else if( sfx::has_variant_sound( "smash_success", variant ) ) {
+        sfx::play_variant_sound( "smash_success", variant, heard_volume );
+    }
+}
+
+auto describe_memorized_terrain( const memorized_terrain_tile &memory,
+                                 const tripoint_bub_ms &target ) -> bool
+{
+    if( memory.tile.empty() ) {
+        return false;
+    }
+
+    const auto terrain = ter_str_id( memory.tile );
+    if( !terrain.is_valid() ) {
+        return false;
+    }
+
+    describe_map_part( terrain.obj(), target );
+    return true;
+}
+
+auto choose_map_examine_target( map &here, const tripoint_bub_ms &examp )
+-> std::optional<map_examine_target>
+{
+    if( !here.has_furn( examp ) ) {
+        return map_examine_target::terrain;
+    }
+
+    const auto &terrain = here.ter( examp ).obj();
+    const auto &furniture = here.furn( examp ).obj();
+    uilist menu;
+    menu.text = _( "Describe what?" );
+    menu.addentry( static_cast<int>( map_examine_target::furniture ), true, 'f',
+                   _( "%s" ), colorize( furniture.name(), furniture.color() ) );
+    menu.addentry( static_cast<int>( map_examine_target::terrain ), true, 't',
+                   _( "%s" ), colorize( terrain.name(), terrain.color() ) );
+    menu.query();
+
+    if( menu.ret == static_cast<int>( map_examine_target::terrain ) ) {
+        return map_examine_target::terrain;
+    }
+    if( menu.ret == static_cast<int>( map_examine_target::furniture ) ) {
+        return map_examine_target::furniture;
+    }
+    return std::nullopt;
+}
+
+} // namespace
+
 void game::examine( const tripoint_bub_ms &examp )
 {
 
@@ -8246,15 +8551,17 @@ void game::examine( const tripoint_bub_ms &examp )
     const auto player_pos = u.bub_pos();
 
     if( m.has_furn( examp ) && !u.is_mounted() ) {
-        xfurn_t.examine( u, examp );
+        if( xfurn_t.examine != &iexamine::none ) {
+            xfurn_t.examine( u, examp );
+        }
     } else if( m.has_furn( examp ) && u.is_mounted() ) {
         add_msg( m_warning, _( "You cannot do that while mounted." ) );
     } else {
         if( !u.is_mounted() ) {
-            xter_t.examine( u, examp );
-        } else if( u.is_mounted() && xter_t.examine == &iexamine::none ) {
-            xter_t.examine( u, examp );
-        } else {
+            if( xter_t.examine != &iexamine::none ) {
+                xter_t.examine( u, examp );
+            }
+        } else if( xter_t.examine != &iexamine::none ) {
             add_msg( m_warning, _( "You cannot do that while mounted." ) );
         }
     }
@@ -8313,6 +8620,63 @@ void game::examine( const tripoint_bub_ms &examp )
             }
         }
     }
+}
+
+auto game::describe_tile( const tripoint_bub_ms &target ) -> void
+{
+    if( !u.sees( target ) ) {
+        if( u.should_show_map_memory() ) {
+            const auto abs_target = m.bub_to_abs( target );
+            if( describe_memorized_terrain( u.get_terrain_tile( abs_target ), target ) ||
+                describe_memorized_terrain( u.get_memorized_tile( abs_target ), target ) ) {
+                return;
+            }
+        }
+
+        add_msg( _( "Nothing relevant here." ) );
+        return;
+    }
+
+    if( const auto *const mon = critter_at<monster>( target ); mon != nullptr && u.sees( *mon ) ) {
+        describe_monster( *mon, target );
+        return;
+    }
+
+    const auto map_target = choose_map_examine_target( m, target );
+    if( !map_target ) {
+        return;
+    }
+
+    if( *map_target == map_examine_target::furniture ) {
+        const auto &furniture = m.furn( target ).obj();
+        maybe_play_describe_sound( target, furniture );
+        describe_map_part( furniture, target );
+    } else {
+        const auto &terrain = m.ter( target ).obj();
+        maybe_play_describe_sound( target, terrain );
+        describe_map_part( terrain, target );
+    }
+}
+
+auto game::mouse_attack( const tripoint_bub_ms &target ) -> void
+{
+    Creature *const target_critter = critter_at<Creature>( target, true );
+    if( target_critter == nullptr || target_critter == &u || !u.sees( *target_critter ) ) {
+        add_msg( _( "Nothing relevant here." ) );
+        return;
+    }
+
+    if( square_dist( u.bub_pos().xy(), target.xy() ) <= 1 ) {
+        u.melee_attack( *target_critter, true );
+        return;
+    }
+
+    if( rl_dist( u.bub_pos(), target ) <= u.primary_weapon().reach_range( u ) ) {
+        u.reach_attack( target );
+        return;
+    }
+
+    add_msg( m_info, _( "That is too far away to attack." ) );
 }
 
 void game::pickup()
@@ -13815,6 +14179,11 @@ static std::optional<tripoint_bub_ms> find_empty_spot_nearby( const tripoint_bub
 
 void game::vertical_move( int movez, bool force, bool peeking )
 {
+    if( u.is_auto_moving() && !check_safe_mode_allowed() ) {
+        u.clear_destination();
+        return;
+    }
+
     if( u.is_mounted() ) {
         auto mons = u.mounted_creature.get();
         if( mons->has_flag( MF_RIDEABLE_MECH ) ) {
@@ -13832,16 +14201,13 @@ void game::vertical_move( int movez, bool force, bool peeking )
     const bool can_noclip = character_funcs::can_noclip( get_avatar() );
     int move_cost = 100;
     tripoint_bub_ms stairs( u.bub_pos().x(), u.bub_pos().y(), u.bub_pos().z() + movez );
-    if( m.has_zlevels() && !force && movez == 1 && !m.has_flag( "GOES_UP", u.bub_pos() ) &&
+    if( m.has_zlevels() && !force && movez == 1 && !terrain_leads_to_zlevel( m, u.bub_pos(), movez ) &&
         !u.is_underwater() && !can_fly ) {
 
         // Climbing
         if( m.has_floor_or_support( stairs ) ) {
             add_msg( m_info, _( "You can't climb here - there's a ceiling above your head." ) );
-            // Don't prompt the player if they're already standing on stairs, they might've just hit the wrong key
-            if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "up" );
-            }
+            suggest_auto_walk_to_stairs( u, m, "up" );
             return;
         }
 
@@ -13877,9 +14243,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
 
             } else {
                 add_msg( m_info, _( "You can't climb here - you need walls and/or furniture to brace against." ) );
-                if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                    suggest_auto_walk_to_stairs( u, m, "up" );
-                }
+                suggest_auto_walk_to_stairs( u, m, "up" );
             }
             return;
 
@@ -13888,9 +14252,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         if( pts.empty() ) {
             add_msg( m_info,
                      _( "You can't climb here - there is no terrain above you that would support your weight." ) );
-            if( !m.has_flag( "GOES_DOWN", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "up" );
-            }
+            suggest_auto_walk_to_stairs( u, m, "up" );
             return;
         } else {
             // TODO: Make it an extended action
@@ -13905,7 +14267,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
         }
     }
 
-    if( !climbing && !force && movez == 1 && !m.has_flag( "GOES_UP", u.bub_pos() ) &&
+    if( !climbing && !force && movez == 1 && !terrain_leads_to_zlevel( m, u.bub_pos(), movez ) &&
         !u.is_underwater() ) {
 
         const auto dest = u.bub_pos() + tripoint_above;
@@ -13915,6 +14277,9 @@ void game::vertical_move( int movez, bool force, bool peeking )
         const auto &mutations = get_avatar().get_mutations();
 
         if( !can_fly ) {
+            if( suggest_auto_walk_to_stairs( u, m, "up" ) ) {
+                return;
+            }
             add_msg( m_info, _( "You can't go up here!" ) );
             return;
         }
@@ -13948,7 +14313,7 @@ void game::vertical_move( int movez, bool force, bool peeking )
             // add flying flavor text here
         }
 
-    } else if( !force && movez == -1 && !m.has_flag( "GOES_DOWN", u.bub_pos() ) &&
+    } else if( !force && movez == -1 && !terrain_leads_to_zlevel( m, u.bub_pos(), movez ) &&
                !u.is_underwater() ) {
 
         const auto dest = u.bub_pos() + tripoint_below;
@@ -13958,19 +14323,19 @@ void game::vertical_move( int movez, bool force, bool peeking )
         const bool standing_on_air = here_terrain == t_open_air;
 
         if( !can_fly ) {
-            add_msg( m_info, _( "You can't go down here!" ) );
-            if( !m.has_flag( "GOES_UP", u.bub_pos() ) ) {
-                suggest_auto_walk_to_stairs( u, m, "down" );
+            if( suggest_auto_walk_to_stairs( u, m, "down" ) ) {
+                return;
             }
+            add_msg( m_info, _( "You can't go down here!" ) );
             return;
         }
 
         if( m.impassable( dest ) || !standing_on_air ) {
             if( !can_noclip ) {
-                add_msg( m_info, _( "You can't go down here!" ) );
-                if( !m.has_flag( "GOES_UP", u.bub_pos() ) ) {
-                    suggest_auto_walk_to_stairs( u, m, "down" );
+                if( suggest_auto_walk_to_stairs( u, m, "down" ) ) {
+                    return;
                 }
+                add_msg( m_info, _( "You can't go down here!" ) );
                 return;
             } else {
                 if( dest.z() < -OVERMAP_DEPTH ) {
@@ -14698,8 +15063,17 @@ std::optional<tripoint_bub_ms> game::find_stairs( map &mp, const int z_after, bo
     if( movez.z() == -1 && mp.has_flag( TFLAG_GOES_UP, bub_pos + movez ) ) {
         return bub_pos + movez;
     }
+    if( movez.z() == -1 && mp.has_flag( TFLAG_RAMP_DOWN, bub_pos ) &&
+        mp.valid_move( bub_pos, bub_pos + movez, false, true, true ) ) {
+        return bub_pos + movez;
+    }
     if( movez.z() == 1 && mp.has_flag( TFLAG_GOES_DOWN, bub_pos + movez ) &&
         !mp.has_flag( TFLAG_DEEP_WATER, bub_pos + movez ) ) {
+        return bub_pos + movez;
+    }
+    if( movez.z() == 1 && ( mp.has_flag( TFLAG_RAMP, bub_pos ) ||
+                            mp.has_flag( TFLAG_RAMP_UP, bub_pos ) ) &&
+        mp.valid_move( bub_pos, bub_pos + movez, false, true, true ) ) {
         return bub_pos + movez;
     }
     // We did not find stairs directly above or below, so search the map for them

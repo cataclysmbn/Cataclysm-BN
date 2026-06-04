@@ -1544,6 +1544,13 @@ void options_manager::add_options_general()
 
     get_option( "SOUND_EFFECT_VOLUME" ).setPrerequisite( "SOUND_ENABLED" );
 
+    add( "DESCRIBE_TILE_SOUND", general, translate_marker( "Describe tile sound" ),
+         translate_marker( "If true, describing a terrain or furniture tile will play its smash sound." ),
+         false, COPT_NO_SOUND_HIDE
+       );
+
+    get_option( "DESCRIBE_TILE_SOUND" ).setPrerequisite( "SOUND_ENABLED" );
+
     add( "AMBIENT_SOUND_VOLUME", general, translate_marker( "Ambient sound volume" ),
          translate_marker( "Adjust the volume of ambient sounds being played by the game." ),
          0, 128, 100, COPT_NO_SOUND_HIDE

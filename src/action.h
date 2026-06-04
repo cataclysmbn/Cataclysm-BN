@@ -10,6 +10,7 @@
 #include "coordinates.h"
 #include "map.h"
 
+class JsonObject;
 struct tripoint;
 struct point;
 
@@ -26,6 +27,8 @@ enum action_id : int {
     ACTION_SELECT,
     /** Click on a point with secondary mouse button (usually right button) */
     ACTION_SEC_SELECT,
+    /** Shift-click on a point with primary mouse button */
+    ACTION_DESCRIBE_TILE,
     /**@}*/
 
     // Character movement actions
@@ -569,6 +572,20 @@ action_id handle_action_menu();
  */
 action_id handle_main_menu();
 
+struct contextual_action {
+    action_id action = ACTION_NULL;
+    bool walk_to = true;
+};
+
+auto load_contextual_action( const JsonObject &jo ) -> void;
+auto reset_contextual_actions() -> void;
+auto contextual_actions_at( const tripoint_bub_ms &p, bool right_click_only,
+                            const tripoint_bub_ms &from ) -> std::vector<contextual_action>;
+auto contextual_actions_for_target( const tripoint_bub_ms &p,
+                                    bool right_click_only ) -> std::vector<contextual_action>;
+auto contextual_action_is_valid_from( action_id action, const tripoint_bub_ms &target,
+                                      const tripoint_bub_ms &from ) -> bool;
+
 /**
  * Test whether it is possible to perform a given action.
  *
@@ -583,6 +600,17 @@ action_id handle_main_menu();
  * @returns true if movement is possible in the indicated direction
  */
 bool can_interact_at( action_id action, const tripoint_bub_ms &p );
+
+/**
+ * Test whether ACTION_PICKUP is redundant with ACTION_EXAMINE at this point.
+ *
+ * Checks whether examining this tile would proceed to the item pickup prompt after any tile
+ * interaction, making a separate pickup action unnecessary for contextual UI.
+ *
+ * @param p Point to perform the test at
+ * @returns true if examine would offer to pick up items at this point, otherwise false
+ */
+auto examine_action_can_pickup_items_at( const tripoint_bub_ms &p ) -> bool;
 
 /**
  * Test whether it is possible to perform butcher action

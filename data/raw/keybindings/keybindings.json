@@ -1143,6 +1143,12 @@
   },
   {
     "type": "keybinding",
+    "id": "DESCRIBE_TILE",
+    "name": "Describe tile",
+    "bindings": [ { "input_method": "mouse", "key": "MOUSE_SHIFT_LEFT" } ]
+  },
+  {
+    "type": "keybinding",
     "id": "MOUSE_MOVE",
     "name": "Mouse Move",
     "bindings": [ { "input_method": "mouse", "key": "MOUSE_MOVE" } ]

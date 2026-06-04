@@ -7,6 +7,7 @@
 #include <bitset>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <fstream>
 #include <iterator>
@@ -6504,12 +6505,14 @@ void cata_tiles::draw_line()
     if( line_trajectory.empty() ) {
         return;
     }
-    static std::string line_overlay = "animation_line";
-    if( !is_target_line || g->u.sees( tripoint_bub_ms( line_pos ) ) ) {
-        for( auto it = line_trajectory.begin(); it != line_trajectory.end() - 1; ++it ) {
+    static const auto line_overlay = std::string{ "animation_line" };
+    if( !is_target_line || g->u.sees( tripoint_bub_ms( line_pos ) ) ||
+        has_memory_at( tripoint_bub_ms( line_pos ) ) ) {
+        for( const auto &p : line_trajectory | std::views::take(
+                 static_cast<std::ptrdiff_t>( line_trajectory.size() - 1 ) ) ) {
             draw_from_id_string(
             {line_overlay, C_NONE, empty_string, 0, 0},
-            *it, std::nullopt, std::nullopt,
+            p, std::nullopt, std::nullopt,
             lit_level::LIT, false, 0, false
             );
         }

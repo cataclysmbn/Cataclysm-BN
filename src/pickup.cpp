@@ -18,6 +18,7 @@
 #include "activity_actor_definitions.h"
 #include "auto_pickup.h"
 #include "avatar.h"
+#include "avatar_functions.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "character.h"
@@ -35,6 +36,7 @@
 #include "item_contents.h"
 #include "item_search.h"
 #include "item_stack.h"
+#include "itype.h"
 #include "json.h"
 #include "line.h"
 #include "make_static.h"
@@ -146,11 +148,51 @@ enum pickup_answer : int {
     CANCEL = -1,
     WIELD,
     WEAR,
+    ACTIVATE,
     SPILL,
     EMPTY,
     STASH,
     NUM_ANSWERS
 };
+
+static auto item_used_for_pickup_activation( const item &it ) -> const item & // *NOPAD*
+{
+    if( !it.is_container_empty() && it.get_contained().is_medication() &&
+        it.get_contained().type->has_use() ) {
+        return it.get_contained();
+    }
+    return it;
+}
+
+static auto pickup_item_has_activation( const item &it ) -> bool
+{
+    return item_used_for_pickup_activation( it ).type->has_use();
+}
+
+static auto can_activate_from_pickup( const player &u, const item &it ) -> ret_val<bool>
+{
+    const item &usable = item_used_for_pickup_activation( it );
+    if( !usable.type->has_use() ) {
+        return ret_val<bool>::make_failure( _( "You can't do anything interesting with your %s." ),
+                                            it.tname() );
+    }
+
+    const auto &uses = usable.type->use_methods;
+    if( uses.size() == 1 ) {
+        const auto ret = uses.begin()->second.can_call( u, usable, false, u.bub_pos() );
+        if( !ret.success() ) {
+            return ret;
+        }
+    }
+
+    if( !u.has_enough_charges( usable, false ) ) {
+        return ret_val<bool>::make_failure(
+                   vgettext( "Needs at least %d charge", "Needs at least %d charges",
+                             usable.ammo_required() ), usable.ammo_required() );
+    }
+
+    return ret_val<bool>::make_success();
+}
 
 struct pick_one_up_options {
     pickup::pick_drop_selection &selection;
@@ -179,6 +221,10 @@ static pickup_answer handle_problematic_pickup( const item &it, bool &offered_sw
     // TODO: Calculate required hands vs freed hands
     if( it.is_armor() ) {
         amenu.addentry( WEAR, u.can_wear( it ).success(), 'W', _( "Wear %s" ), it.display_name() );
+    }
+    if( pickup_item_has_activation( it ) ) {
+        amenu.addentry( ACTIVATE, can_activate_from_pickup( u, it ).success(), 'a',
+                        _( "Activate %s" ), it.display_name() );
     }
     if( u.is_armed() ) {
         amenu.addentry( WIELD, !u.primary_weapon().has_flag( STATIC( flag_id( "NO_UNWIELD" ) ) ), 'w',
@@ -359,6 +405,12 @@ static auto pick_one_up( const pick_one_up_options &opts ) -> bool
                 newloc = u.wear_item( std::move( newloc ) );
                 picked_up = !newloc;
                 break;
+            case ACTIVATE: {
+                item &added = u.i_add( std::move( newloc ) );
+                picked_up = true;
+                avatar_funcs::use_item( get_avatar(), added );
+                break;
+            }
             case WIELD: {
                 const ret_val<bool> wield_check = u.can_wield( *newloc );
                 if( wield_check.success() ) {
@@ -735,6 +787,7 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
         ctxt.register_action( "FILTER" );
         ctxt.register_action( "WEAR", to_translation( "Wear" ) );
         ctxt.register_action( "WIELD", to_translation( "Wield" ) );
+        ctxt.register_action( "ACTIVATE", to_translation( "Activate" ) );
 #if defined(__ANDROID__)
         ctxt.allow_text_entry = true; // allow user to specify pickup amount
 #endif
@@ -980,12 +1033,14 @@ auto pick_up_from_items( const std::vector<item_stack::iterator> &here, const in
                     filter_changed = true;
                 }
             } else if( selected >= 0 && selected < static_cast<int>( matches.size() ) &&
-                       ( action == "WEAR" || action == "WIELD" ) ) {
+                       ( action == "WEAR" || action == "WIELD" || action == "ACTIVATE" ) ) {
                 const auto true_idx = matches[selected];
                 const auto &selected_item = **stacked_here[true_idx].front();
-                const auto preferred_option = action == "WEAR" ? WEAR : WIELD;
+                const auto preferred_option = action == "WEAR" ? WEAR : action == "WIELD" ? WIELD :
+                                              ACTIVATE;
                 const auto can_handle = preferred_option == WEAR ? g->u.can_wear( selected_item ) :
-                                        g->u.can_wield( selected_item );
+                                        preferred_option == WIELD ? g->u.can_wield( selected_item ) :
+                                        can_activate_from_pickup( g->u, selected_item );
                 if( !can_handle.success() ) {
                     add_msg( m_info, "%s", can_handle.c_str() );
                 } else {

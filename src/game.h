@@ -668,7 +668,9 @@ class game : public submap_load_listener
         void add_artifact_dreams( );
 
         std::optional<tripoint_bub_ms> find_local_stairs_leading_to( map &mp, const int z_after );
-        void suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
+        bool suggest_auto_walk_to_stairs( Character &u, map &m, const std::string &direction );
+        auto describe_tile( const tripoint_bub_ms &target ) -> void;
+        auto mouse_attack( const tripoint_bub_ms &target ) -> void;
 
         void peek();
         void peek( const tripoint_bub_ms &p );
@@ -799,7 +801,7 @@ class game : public submap_load_listener
 
         // Animation related functions
         void draw_bullet( const tripoint_bub_ms &t, int i, const std::vector<tripoint_bub_ms> &trajectory,
-                          char bullet, const std::string &custom_sprite = {} );
+        char bullet, const std::string &custom_sprite = {} );
         void draw_hit_mon( const tripoint_bub_ms &p, const monster &m, bool dead = false );
         void draw_hit_player( const Character &p, int dam );
         void draw_line( const tripoint_bub_ms &p, const tripoint_bub_ms &center_point,
@@ -1035,6 +1037,8 @@ class game : public submap_load_listener
         void handle_key_blocking_activity(); // Abort reading etc.
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
         bool handle_action();
+        auto try_get_queued_right_click_action( action_id &act,
+                                                std::optional<tripoint_bub_ms> &mouse_target ) -> bool;
         bool try_get_right_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
         bool try_get_left_click_action( action_id &act, const tripoint_bub_ms &mouse_target );
 
@@ -1252,6 +1256,16 @@ class game : public submap_load_listener
 
         // Preview for auto move route
         std::vector<tripoint_bub_ms> destination_preview;
+
+        struct queued_right_click_action {
+            action_id action = ACTION_NULL;
+            tripoint_abs_ms target = tripoint_abs_ms::zero();
+            std::string target_name;
+            std::string action_name;
+        };
+
+        std::optional<queued_right_click_action> previewed_right_click_action_;
+        std::optional<queued_right_click_action> queued_right_click_action_;
 
         std::chrono::time_point<std::chrono::steady_clock> last_mouse_edge_scroll;
         tripoint_rel_ms last_mouse_edge_scroll_vector_terrain;
