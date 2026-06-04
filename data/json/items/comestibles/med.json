@@ -821,6 +821,7 @@
     "quench": -5,
     "stim": -10,
     "healthy": -1,
+    "fun": 15,
     "addiction_potential": 5,
     "flags": [ "NO_INGEST" ],
     "use_action": {
