@@ -969,6 +969,23 @@ bool game::start_game()
         calendar::set_active_world_type( default_wt.str() );
     }
 
+    const auto scenario_dimension = scen->start_dimension();
+    if( scenario_dimension.is_valid() && scenario_dimension != world_types::get_default() ) {
+        const auto &scenario_world_type = scenario_dimension.obj();
+        const auto start_dimension_id = dimension_id( scenario_dimension.str() );
+        loaded_dimensions_[start_dimension_id] = dimension_info{
+            .id = start_dimension_id,
+            .world_type   = scenario_dimension,
+            .display_name = scenario_world_type.name.translated(),
+            .pocket_info = std::nullopt
+        };
+        set_active_dimension_id( start_dimension_id );
+        m.bind_dimension( start_dimension_id );
+        get_overmapbuffer( current_dimension_id_ ).current_region_type =
+            scenario_world_type.region_settings_id;
+        calendar::set_active_world_type( scenario_dimension.str() );
+    }
+
     u.setID( assign_npc_id() ); // should be as soon as possible, but *after* load_master
 
     const start_location &start_loc = u.random_start_location ? scen->random_start_location().obj() :

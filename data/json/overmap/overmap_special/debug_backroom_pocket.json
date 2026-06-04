@@ -1,8 +1,0 @@
-[
-  {
-    "type": "city_building",
-    "id": "debug_backroom_pocket",
-    "locations": [ "land" ],
-    "overmaps": [ { "point": [ 0, 0, 0 ], "overmap": "hdwr_large_backroom_south" } ]
-  }
-]

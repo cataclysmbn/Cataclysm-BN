@@ -48,6 +48,7 @@ class scenario
         std::set<std::string> flags; // flags for some special properties of the scenario
         std::string _map_extra;
         std::vector<mission_type_id> _missions;
+        world_type_id _start_dimension = world_type_id( "default" );
 
         vproto_id _starting_vehicle = vproto_id::NULL_ID();
 
@@ -80,6 +81,7 @@ class scenario
         start_location_id start_location() const;
         start_location_id random_start_location() const;
         std::string start_name() const;
+        const world_type_id &start_dimension() const;
         int start_location_count() const;
         int start_location_targets_count() const;
 

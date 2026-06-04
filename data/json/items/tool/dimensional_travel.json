@@ -56,7 +56,7 @@
     "type": "TOOL",
     "copy-from": "pocketwatch",
     "name": { "str": "debug backroom key" },
-    "description": "DEBUG ITEM: Activating this key noclips you into or out of a pocket backroom dimension.",
+    "description": "DEBUG ITEM: Activating this key noclips you into the Backroom dimension.",
     "looks_like": "pocketwatch",
     "weight": "50 g",
     "volume": "10 ml",
@@ -67,11 +67,33 @@
     "stackable": false,
     "use_action": [
       {
-        "type": "pocket_dimension",
-        "pocket_name": "Backroom",
-        "entry_mapgen": "debug_backroom_pocket",
+        "type": "dimension_travel",
+        "destination": "backroom",
+        "travel_radius": 5,
         "need_charges": 0,
-        "persistent": true
+        "transform_to": "debug_backroom_key_return",
+        "transform_message": "The key retunes itself.",
+        "fail_message": "The key hums, but nothing happens.",
+        "success_message": "You noclip out of reality and into the Backrooms."
+      }
+    ]
+  },
+  {
+    "id": "debug_backroom_key_return",
+    "type": "TOOL",
+    "copy-from": "debug_backroom_key",
+    "name": { "str": "debug backroom key (return)" },
+    "description": "DEBUG ITEM: Activating this key noclips you out of the Backroom dimension.",
+    "use_action": [
+      {
+        "type": "dimension_travel",
+        "destination": "default",
+        "travel_radius": 5,
+        "need_charges": 0,
+        "transform_to": "debug_backroom_key",
+        "transform_message": "The key retunes itself.",
+        "fail_message": "The key hums, but nothing happens.",
+        "success_message": "You noclip back into reality."
       }
     ]
   },

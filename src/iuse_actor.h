@@ -1558,6 +1558,8 @@ class iuse_dimension_travel : public iuse_actor
         world_type_id destination;
         int travel_radius = 1;
         int need_charges = 1;
+        itype_id transform_to = itype_id::NULL_ID();
+        std::string transform_message;
         std::string fail_message;
         std::string success_message;
 
@@ -1569,7 +1571,7 @@ class iuse_dimension_travel : public iuse_actor
                                const tripoint_bub_ms & ) const override;
         std::unique_ptr<iuse_actor> clone() const override;
     private:
-        void dimension_travel( player &p, item &, const tripoint_bub_ms &pos ) const;
+        bool dimension_travel( player &p, item &, const tripoint_bub_ms &pos ) const;
 };
 
 /**
