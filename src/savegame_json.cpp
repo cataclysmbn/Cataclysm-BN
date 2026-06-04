@@ -2811,15 +2811,11 @@ void item::io( Archive &archive )
     if( charges != 0 && !type->can_have_charges() ) {
         // Types that are known to have charges, but should not have them.
         // We fix it here, but it's expected from bugged saves and does not require a message.
-        const auto to_split = charges - 1;
-        charges = 0;
-        curammo = nullptr;
-
         if( !charge_removal_blacklist::get().contains( type->get_id() ) ) {
             debugmsg( "Item %s was loaded with charges, but can not have any!", type->get_id() );
-        } else if( to_split > 0 ) {
-            charge_removal_blacklist::defer( this, to_split );
         }
+        charges = 0;
+        curammo = nullptr;
     }
 
     // Relic check. Kinda late, but that's how relics have to be
