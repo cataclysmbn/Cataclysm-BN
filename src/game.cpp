@@ -12054,8 +12054,9 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
 
     const trap &tr = m.tr_at( dest_loc );
     if( !u.is_blind() || u.clairvoyance() < 1 || tr.can_see( dest_loc, u ) ) {
-        const bool boardable = static_cast<bool>( m.veh_at( dest_loc ).part_with_feature( "BOARDABLE",
+        const auto boardable = static_cast<bool>( m.veh_at( dest_loc ).part_with_feature( "BOARDABLE",
                                true ) );
+        const auto already_in_same_trap = m.tr_at( u.bub_pos() ).loadid == tr.loadid;
         // HACK: Hack for now, later ledge should stop being a trap
         // Note: in non-z-level mode, ledges obey different rules and so should be handled as regular traps
         if( tr.loadid == tr_ledge && m.has_zlevels() ) {
@@ -12064,7 +12065,8 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
                     harmful_stuff.emplace_back( tr.name() );
                 }
             }
-        } else if( tr.can_see( dest_loc, u ) && !tr.is_benign() && !boardable ) {
+        } else if( tr.can_see( dest_loc, u ) && !tr.is_benign() && !boardable &&
+                   !already_in_same_trap ) {
             harmful_stuff.emplace_back( tr.name() );
         }
 
