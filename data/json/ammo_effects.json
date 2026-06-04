@@ -467,8 +467,10 @@
     "type": "ammo_effect",
     "explosion": {
       "damage": 70,
-      "radius": 1,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 60, "armor_multiplier": 1.6 }, "range": 7 }
+      "radius": 2,
+      "terrain_damage_mult": 0.08,
+      "vehicle_damage_mult": 0.15,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 75, "armor_penetration": 8, "armor_multiplier": 1.2 }, "range": 7 }
     }
   },
   {
