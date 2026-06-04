@@ -3263,13 +3263,12 @@ void monster::die( Creature *nkiller )
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
+            if( critter.sees( *this ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && killer_faction.is_valid() ) {
@@ -3884,13 +3883,12 @@ void monster::on_hit( Creature *source, bodypart_id, dealt_projectile_attack con
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
+            if( critter.sees( *this ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && attacker_faction.is_valid() ) {
