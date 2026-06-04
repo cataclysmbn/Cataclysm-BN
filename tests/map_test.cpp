@@ -49,6 +49,30 @@ TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
     CHECK( get_map().check_submap_active_item_consistency().empty() );
 }
 
+TEST_CASE( "dangerous_pit_warning_ignores_same_pit" )
+{
+    clear_all_state();
+    auto &here = get_map();
+    const auto player_pos = tripoint_bub_ms( 60, 60, 0 );
+    const auto pit_pos = player_pos + tripoint_rel_ms::east();
+    const auto floor = ter_str_id( "t_floor" );
+    const auto pit = ter_str_id( "t_pit" );
+    const auto spiked_pit = ter_str_id( "t_pit_spiked" );
+
+    here.ter_set( player_pos, floor );
+    here.ter_set( pit_pos, pit );
+    g->u.setpos( player_pos );
+    g->u.add_known_trap( pit_pos, here.tr_at( pit_pos ) );
+    CHECK( g->is_dangerous_tile( pit_pos ) );
+
+    here.ter_set( player_pos, pit );
+    CHECK_FALSE( g->is_dangerous_tile( pit_pos ) );
+
+    here.ter_set( pit_pos, spiked_pit );
+    g->u.add_known_trap( pit_pos, here.tr_at( pit_pos ) );
+    CHECK( g->is_dangerous_tile( pit_pos ) );
+}
+
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )
 {
     os << tid.id().c_str();
