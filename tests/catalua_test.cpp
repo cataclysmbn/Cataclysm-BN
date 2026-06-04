@@ -1021,6 +1021,7 @@ TEST_CASE( "robofac_authorization_scans_nearby_hub01_tiles", "[lua][robofac]" )
     CHECK( test_data.get<bool>( "npc_authorized" ) );
     CHECK( test_data.get<bool>( "npc_attitude_cleared" ) );
     CHECK( test_data.get<bool>( "monster_authorized" ) );
+    CHECK( test_data.get<std::string>( "hub01_prefix" ) == "robofachq" );
     CHECK( test_data.get<int>( "npc_omt_queries" ) == 1 );
     CHECK( test_data.get<int>( "monster_omt_queries" ) == 1 );
     CHECK( test_data.get<int>( "npc_query_radius" ) == 4 );

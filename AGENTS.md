@@ -68,6 +68,7 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 - **MUST** use options struct for functions with more than 3 parameters. Use designated initializers at call sites.
 - **MUST NOT** manually write an options/struct type at a call site when the function parameter type makes it inferable; use `{ .field = value }` instead of `options_type{ .field = value }`.
 - **SHOULD** search for existing solution because it's a large, legacy codebase.
+- **MUST** verify helper-specific matching semantics before relying on string prefixes. For overmap terrain `OtMatchType.PREFIX` / `is_ot_match`, pass the base token without a trailing separator, e.g. `"robofachq"`, because the matcher itself requires the following character to be `_`.
 
 ## Workflow
 

@@ -39,7 +39,7 @@ local has_hub01_clearance = function(ch) return ch ~= nil and ch:get_value(hub01
 ---@return boolean
 local is_in_hub01 = function(ch)
   if ch == nil then return false end
-  return overmapbuffer.check_ot("robofachq_", OtMatchType.PREFIX, ch:global_square_location():to_omt())
+  return overmapbuffer.check_ot("robofachq", OtMatchType.PREFIX, ch:global_square_location():to_omt())
 end
 
 ---@return TripointAbsOmt?

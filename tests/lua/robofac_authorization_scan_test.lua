@@ -81,7 +81,10 @@ local player_is_in_hub01 = true
 ---@param _match_type integer
 ---@param omt FakeCoord
 ---@return boolean
-local check_ot = function(_otype, _match_type, omt) return player_is_in_hub01 and omt.x == 11 and omt.y == 20 and omt.z == 0 end
+local check_ot = function(otype, _match_type, omt)
+  test_data.hub01_prefix = otype
+  return player_is_in_hub01 and otype == "robofachq" and omt.x == 11 and omt.y == 20 and omt.z == 0
+end
 _G.overmapbuffer = { check_ot = check_ot }
 
 ---@class FakeNpc
