@@ -1183,7 +1183,7 @@ static int calc_gun_volume( const item &gun )
         noise += gun.ammo_data()->ammo->loudness;
         // Speed of sound at sea level is around 343 meters per second.
         if( gun.ammo_data()->ammo->speed > 342 ) {
-            noise = std::max( 120, noise );
+            noise = std::min( 120, noise );
         }
     }
     for( const auto mod : parent.gunmods() ) {
