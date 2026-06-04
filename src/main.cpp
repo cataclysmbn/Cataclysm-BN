@@ -265,7 +265,7 @@ int main( int argc, char *argv[] )
                 },
                 {
                     "--check-mods", "[mods…]",
-                    "Checks the json files belonging to BN mods",
+                    "Checks the json files belonging to default or specified BN mods",
                     section_default,
                     [&check_mods, &opts]( int n, const char *params[] ) -> int {
                         check_mods = true;

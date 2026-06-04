@@ -1030,15 +1030,13 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         to_check.emplace( id );
     }
 
-    // If no specific mods specified check all non-obsolete mods
+    // If no specific mods specified check mods enabled for newly created worlds.
     if( to_check.empty() ) {
-        for( const mod_id &mod : world_generator->get_mod_manager().all_mods() ) {
-            if( !mod->obsolete ) {
-                to_check.emplace( mod );
-            }
+        for( const mod_id &mod : world_generator->get_mod_manager().get_default_mods() ) {
+            to_check.emplace( mod );
         }
     }
-    // If no mods are available then test core data only
+    // If no default mods are available then test core data only
     if( to_check.empty() ) {
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }
