@@ -151,6 +151,11 @@ enum {
     UPGRADE_MAX_ITERS = 5
 };
 
+static int scaled_animal_days( const int days )
+{
+    return std::max( 1, static_cast<int>( std::ceil( days * calendar::season_ratio() ) ) );
+}
+
 static const std::map<creature_size, translation> size_names {
     { creature_size::tiny, to_translation( "size adj", "tiny" ) },
     { creature_size::small, to_translation( "size adj", "small" ) },
@@ -426,7 +431,10 @@ void monster::allow_upgrade()
 int monster::next_upgrade_time()
 {
     if( type->age_grow > 0 ) {
-        return type->age_grow;
+        const int scaled_grow_days = type->has_flag( MF_ANIMAL ) &&
+                                     get_option<bool>( "ANIMAL_LIFE_CYCLE_SEASON_SCALING" ) ?
+                                     scaled_animal_days( type->age_grow ) : type->age_grow;
+        return scaled_grow_days;
     }
     const int scaled_half_life = type->half_life * get_option<float>( "MONSTER_UPGRADE_FACTOR" );
     int day = 1; // 1 day of guaranteed evolve time
@@ -520,10 +528,16 @@ void monster::try_reproduce()
     if( !type->baby_timer ) {
         return;
     }
+    const int base_days = to_days<int>( *type->baby_timer );
+    const int scaled_days = type->has_flag( MF_ANIMAL ) &&
+                            get_option<bool>( "ANIMAL_LIFE_CYCLE_SEASON_SCALING" ) ?
+                            scaled_animal_days( base_days ) :
+                            base_days;
+    const time_duration repro_interval = time_duration::from_days( scaled_days );
 
     if( !baby_timer ) {
         // Assume this is a freshly spawned monster (because baby_timer is not set yet), set the point when it reproduce to somewhere in the future.
-        baby_timer.emplace( calendar::turn + *type->baby_timer );
+        baby_timer.emplace( calendar::turn + repro_interval );
     }
 
     bool season_spawn = false;
@@ -561,7 +575,7 @@ void monster::try_reproduce()
         if( ( season_match && female && one_in( chance ) ) ) {
             reproduce();
         }
-        *baby_timer += *type->baby_timer;
+        *baby_timer += repro_interval;
     }
 }
 

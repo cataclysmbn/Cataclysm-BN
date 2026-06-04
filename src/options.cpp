@@ -2902,6 +2902,12 @@ void options_manager::add_options_world_default()
          translate_marker( "When reaching the maximum half lives, instead of never evolving they will evolve at that time." ),
          false );
 
+    add( "ANIMAL_LIFE_CYCLE_SEASON_SCALING", world_default,
+         translate_marker( "Animal life cycle season scaling" ),
+         translate_marker( "If true, animal reproduction and growth timers are multiplied by "
+                           "the current season length ratio." ),
+         true );
+
     add_empty_line();
 
     add( "RESTOCK_DELAY_MULT", world_default, translate_marker( "Merchant restock scaling factor" ),
