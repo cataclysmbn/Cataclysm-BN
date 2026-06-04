@@ -15,7 +15,6 @@
     "category": "scrap_metal",
     "price": "60 USD",
     "price_postapoc": "1 USD",
-    "flags": [ "FRAGILE_MELEE" ],
     "qualities": [ [ "COOK", 1 ] ],
     "stackable": true
   },

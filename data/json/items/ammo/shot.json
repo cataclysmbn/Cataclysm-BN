@@ -85,7 +85,6 @@
     "damage": { "damage_type": "bullet", "amount": 16, "armor_penetration": 8 },
     "recoil": 2500,
     "loudness": 160,
-    "flags": [ "FRAGILE_MELEE" ],
     "effects": [ "COOKOFF", "SHOT" ]
   },
   {
