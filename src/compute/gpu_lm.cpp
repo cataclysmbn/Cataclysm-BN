@@ -36,6 +36,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -74,6 +75,7 @@ auto preferred_fmt(SDL_GPUShaderFormat const fmts) -> SDL_GPUShaderFormat {
 SDL_GPUComputePipeline* s_ambient_pipeline = nullptr;
 SDL_GPUComputePipeline* s_raytrace_pipeline = nullptr;
 auto* s_clear_seen_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
+auto* s_clear_seen_view_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 SDL_GPUComputePipeline* s_seen_pipeline = nullptr;
 SDL_GPUComputePipeline* s_seen_walls_pipeline = nullptr;
 SDL_GPUComputePipeline* s_visibility_pipeline = nullptr;
@@ -142,6 +144,11 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
             device, "lm_clear_seen_compute",
             /*ro=*/0, /*rw=*/2, 64, 1);
     }
+    if (s_clear_seen_view_pipeline == nullptr) {
+        s_clear_seen_view_pipeline = load_pipeline(
+            device, "lm_clear_seen_view_compute",
+            /*ro=*/0, /*rw=*/2, 8, 8);
+    }
     if (s_seen_pipeline == nullptr) {
         s_seen_pipeline = load_pipeline(
             device, "lm_seen_compute",
@@ -153,8 +160,8 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
             /*ro=*/3, /*rw=*/1, 8, 8);
     }
     return s_ambient_pipeline != nullptr && s_raytrace_pipeline != nullptr
-        && s_clear_seen_pipeline != nullptr && s_seen_pipeline != nullptr &&
-        s_seen_walls_pipeline != nullptr;
+        && s_clear_seen_pipeline != nullptr && s_clear_seen_view_pipeline != nullptr &&
+        s_seen_pipeline != nullptr && s_seen_walls_pipeline != nullptr;
 }
 
 auto ensure_visibility_pipeline(SDL_GPUDevice* const device) -> bool {
@@ -236,6 +243,9 @@ struct lighting_resource_cache {
     lighting_input_residency inputs;
     std::vector<int> camera_nonzero_levels;
     bool seen_valid = false;
+    bool seen_origin_valid = false;
+    int seen_origin_x = 0;
+    int seen_origin_y = 0;
     bool camera_valid = false;
     bool source_map_valid = false;
     bool lighting_outputs_valid = false;
@@ -317,6 +327,18 @@ struct lm_clear_seen_push_constants {
 };
 static_assert(sizeof(lm_clear_seen_push_constants) == 16);
 
+struct lm_clear_seen_view_push_constants {
+    int32_t player_x;
+    int32_t player_y;
+    int32_t cache_x;
+    int32_t cache_y;
+    int32_t cache_xy;
+    int32_t z_count;
+    int32_t view_radius;
+    uint32_t _pad;
+};
+static_assert(sizeof(lm_clear_seen_view_push_constants) == 32);
+
 struct lm_shift_float_push_constants {
     int32_t cache_x;
     int32_t cache_y;
@@ -375,6 +397,7 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.inputs = {};
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.seen_valid = false;
+    s_lighting_resources.seen_origin_valid = false;
     s_lighting_resources.camera_valid = false;
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.lighting_outputs_valid = false;
@@ -608,7 +631,7 @@ struct source_accumulator {
     map const& m;
     std::vector<int> const& dirty_levels;
     int cache_xy = 0;
-    std::vector<int> source_indices;
+    std::unordered_map<std::size_t, std::size_t> source_indices;
     std::vector<GpuLightSource> sources;
 };
 
@@ -631,14 +654,13 @@ auto add_source(source_accumulator& acc, tripoint_bub_ms const& pos, float const
     auto const source_slot =
         static_cast<std::size_t>(level_index) * static_cast<std::size_t>(acc.cache_xy) +
         static_cast<std::size_t>(lc.idx(pos.x(), pos.y()));
-    auto& source_index = acc.source_indices[source_slot];
-    if (source_index < 0) {
-        source_index = static_cast<int>(acc.sources.size());
+    auto const [iter, inserted] = acc.source_indices.emplace(source_slot, acc.sources.size());
+    if (inserted) {
         acc.sources.push_back(make_source(pos.x(), pos.y(), pos.z(), luminance));
         return;
     }
 
-    auto& source = acc.sources[static_cast<std::size_t>(source_index)];
+    auto& source = acc.sources[iter->second];
     if (luminance > source.luminance) {
         source.luminance = luminance;
         source.radius = compute_light_radius(luminance);
@@ -852,11 +874,10 @@ auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
         .m = m,
         .dirty_levels = dirty_levels,
         .cache_xy = lc0.cache_x * lc0.cache_y,
-        .source_indices = std::vector<int>(
-            dirty_levels.size() * static_cast<std::size_t>(lc0.cache_x * lc0.cache_y),
-            -1),
+        .source_indices = {},
         .sources = {},
     };
+    acc.source_indices.reserve(256);
 
     add_static_emitter_sources(acc);
     add_field_sources(acc);
@@ -921,6 +942,7 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
             std::vector<char>(static_cast<std::size_t>(z_count), '\0'),
     };
     s_lighting_resources.seen_valid = false;
+    s_lighting_resources.seen_origin_valid = false;
     s_lighting_resources.camera_valid = false;
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
@@ -1348,6 +1370,7 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 
     std::swap(s_lighting_resources.transparency, s_lighting_resources.shift_float_scratch);
     clear_transparency_shader_update_marks();
+    s_lighting_resources.seen_origin_valid = false;
     return true;
 }
 
@@ -1684,8 +1707,10 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         }
 
         if (rebuild_seen) {
+            auto const diam = static_cast<Uint32>(2 * MAX_VIEW_DISTANCE + 1);
+            auto const g_seen = (diam + 7) / 8;
+
             {
-                ZoneScopedN( "gpu_lm_record_clear_seen" );
                 auto const rw_seen = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{
                     SDL_GPUStorageBufferReadWriteBinding{
                         .buffer = seen_raw_buf,
@@ -1702,17 +1727,39 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                         .padding3 = 0,
                     },
                 };
-                auto* const cp = SDL_BeginGPUComputePass(
-                    cmd, nullptr, 0, rw_seen.data(), static_cast<Uint32>(rw_seen.size()));
-                SDL_BindGPUComputePipeline(cp, s_clear_seen_pipeline);
+                if (s_lighting_resources.seen_origin_valid) {
+                    ZoneScopedN( "gpu_lm_record_clear_seen_view" );
+                    auto* const cp = SDL_BeginGPUComputePass(
+                        cmd, nullptr, 0, rw_seen.data(), static_cast<Uint32>(rw_seen.size()));
+                    SDL_BindGPUComputePipeline(cp, s_clear_seen_view_pipeline);
 
-                auto const clear_push = lm_clear_seen_push_constants{
-                    .total_tiles = volume_tiles,
-                    ._pad = {},
-                };
-                SDL_PushGPUComputeUniformData(cmd, 0, &clear_push, sizeof(clear_push));
-                SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
-                SDL_EndGPUComputePass(cp);
+                    auto const clear_push = lm_clear_seen_view_push_constants{
+                        .player_x = s_lighting_resources.seen_origin_x,
+                        .player_y = s_lighting_resources.seen_origin_y,
+                        .cache_x = cache_x,
+                        .cache_y = cache_y,
+                        .cache_xy = cache_xy,
+                        .z_count = z_count,
+                        .view_radius = MAX_VIEW_DISTANCE,
+                        ._pad = 0u,
+                    };
+                    SDL_PushGPUComputeUniformData(cmd, 0, &clear_push, sizeof(clear_push));
+                    SDL_DispatchGPUCompute(cp, g_seen, g_seen, static_cast<Uint32>(z_count));
+                    SDL_EndGPUComputePass(cp);
+                } else {
+                    ZoneScopedN( "gpu_lm_record_clear_seen_full" );
+                    auto* const cp = SDL_BeginGPUComputePass(
+                        cmd, nullptr, 0, rw_seen.data(), static_cast<Uint32>(rw_seen.size()));
+                    SDL_BindGPUComputePipeline(cp, s_clear_seen_pipeline);
+
+                    auto const clear_push = lm_clear_seen_push_constants{
+                        .total_tiles = volume_tiles,
+                        ._pad = {},
+                    };
+                    SDL_PushGPUComputeUniformData(cmd, 0, &clear_push, sizeof(clear_push));
+                    SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
+                    SDL_EndGPUComputePass(cp);
+                }
             }
 
             auto const seen_push = lm_seen_push_constants{
@@ -1727,8 +1774,6 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                 .z_scale = Z_LEVEL_SCALE,
                 ._pad = {},
             };
-            auto const diam = static_cast<Uint32>(2 * MAX_VIEW_DISTANCE + 1);
-            auto const g_seen = (diam + 7) / 8;
 
             // [Pass 4] Compute: raw seen_cache ray casting from player.
             {
@@ -1889,6 +1934,9 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     commit_input_upload_plan(input_uploads);
     if (rebuild_seen) {
         s_lighting_resources.seen_valid = true;
+        s_lighting_resources.seen_origin_valid = true;
+        s_lighting_resources.seen_origin_x = p.player_x;
+        s_lighting_resources.seen_origin_y = p.player_y;
     }
     s_lighting_resources.source_map_valid = true;
     s_lighting_resources.lighting_outputs_valid = true;
@@ -2183,6 +2231,10 @@ auto shutdown_lm() -> void {
     if (s_clear_seen_pipeline != nullptr) {
         SDL_ReleaseGPUComputePipeline(device, s_clear_seen_pipeline);
         s_clear_seen_pipeline = nullptr;
+    }
+    if (s_clear_seen_view_pipeline != nullptr) {
+        SDL_ReleaseGPUComputePipeline(device, s_clear_seen_view_pipeline);
+        s_clear_seen_view_pipeline = nullptr;
     }
     if (s_seen_pipeline != nullptr) {
         SDL_ReleaseGPUComputePipeline(device, s_seen_pipeline);
