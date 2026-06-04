@@ -21,6 +21,7 @@
 #include "crafting.h"
 #include "distribution_grid.h"
 #include "game.h"
+#include "game_constants.h"
 #include "item.h"
 #include "itype.h"
 #include "map.h"
@@ -40,6 +41,10 @@
 
 class inventory;
 
+static const auto itype_battery = itype_id( "battery" );
+static const auto itype_light_plus_battery_cell = itype_id( "light_plus_battery_cell" );
+static const auto itype_medium_plus_battery_cell = itype_id( "medium_plus_battery_cell" );
+static const auto itype_plut_cell = itype_id( "plut_cell" );
 static const trait_id trait_DEBUG_HS( "DEBUG_HS" );
 static const trait_id trait_DEBUG_STORAGE( "DEBUG_STORAGE" );
 
@@ -452,6 +457,108 @@ TEST_CASE( "tools use charge to craft", "[crafting][charge]" )
             }
         }
     }
+}
+
+TEST_CASE( "crafting consumes tool charges before loaded battery components", "[crafting][charge]" )
+{
+    clear_all_state();
+    std::vector<detached_ptr<item>> tools;
+
+    add_tool( tools, "screwdriver" );
+    add_tool( tools, "solder_wire", 10 );
+    add_tool( tools, "scrap", 4 );
+    add_tool( tools, "cable", 5 );
+    add_tool( tools, "light_plus_battery_cell", 4 );
+
+    auto soldering_iron = item::spawn( "soldering_iron" );
+    auto loaded_cell = item::spawn( "light_plus_battery_cell" );
+    loaded_cell->ammo_set( itype_battery, 150 );
+    soldering_iron->put_in( std::move( loaded_cell ) );
+    REQUIRE( soldering_iron->magazine_current() != nullptr );
+    REQUIRE( soldering_iron->magazine_current()->typeId() == itype_light_plus_battery_cell );
+    REQUIRE( soldering_iron->ammo_remaining() == 150 );
+    tools.push_back( std::move( soldering_iron ) );
+
+    const auto recipe_to_make = recipe_id( "medium_plus_battery_cell" );
+    prep_craft( recipe_to_make, tools, true );
+    set_time( midday );
+    auto &you = get_avatar();
+    const recipe &rec = recipe_to_make.obj();
+    you.learn_recipe( &rec );
+    you.set_skill_level( rec.skill_used, 10 );
+    for( const auto &required_skill : rec.required_skills ) {
+        you.set_skill_level( required_skill.first, 10 );
+    }
+    REQUIRE( !you.activity );
+
+    you.make_craft( recipe_to_make, 1 );
+
+    REQUIRE( you.activity );
+    while( you.activity && you.activity->id() == activity_id( "ACT_CRAFT" ) ) {
+        you.moves = 100;
+        you.activity->do_turn( you );
+    }
+
+    const auto results = you.items_with( []( const auto & it ) {
+        return it.typeId() == itype_medium_plus_battery_cell;
+    } );
+    REQUIRE( results.size() == 1 );
+    CHECK( results.front()->ammo_current() == itype_battery );
+    CHECK( results.front()->ammo_remaining() == 140 );
+    CHECK( you.charges_of( itype_battery ) == 0 );
+    CHECK( get_remaining_charges( "soldering_iron" ) == 0 );
+}
+
+TEST_CASE( "crafting with charged magazines recovers ammo", "[crafting][charge]" )
+{
+    clear_all_state();
+    clear_avatar();
+    auto &you = get_avatar();
+    you.wear_item( item::spawn( "backpack" ), false );
+
+    auto battery = item::spawn( "light_plus_battery_cell" );
+    battery->ammo_set( itype_battery, 42 );
+    REQUIRE( battery->ammo_remaining() == 42 );
+
+    remove_ammo( *battery, you );
+
+    CHECK( battery->ammo_remaining() == 0 );
+    CHECK( you.charges_of( itype_battery ) == 42 );
+}
+
+TEST_CASE( "partial plutonium charges do not leave empty fuel cells", "[crafting][charge]" )
+{
+    clear_all_state();
+    clear_avatar();
+    auto &you = get_avatar();
+    you.wear_item( item::spawn( "backpack" ), false );
+
+    auto tool = item::spawn( "adv_UPS_off", calendar::turn, PLUTONIUM_CHARGES - 1 );
+    REQUIRE( tool->ammo_current() == itype_plut_cell );
+
+    remove_ammo( *tool, you );
+
+    CHECK( tool->ammo_remaining() == 0 );
+    CHECK( you.items_with( []( const auto & it ) { return it.typeId() == itype_plut_cell; } ).empty() );
+}
+
+TEST_CASE( "crafting with mixed plutonium charges recovers only complete cells",
+           "[crafting][charge]" )
+{
+    clear_all_state();
+    clear_avatar();
+    auto &you = get_avatar();
+    you.wear_item( item::spawn( "backpack" ), false );
+
+    auto tool = item::spawn( "adv_UPS_off", calendar::turn, PLUTONIUM_CHARGES * 2 + 10 );
+    REQUIRE( tool->ammo_current() == itype_plut_cell );
+
+    remove_ammo( *tool, you );
+
+    const auto recovered = you.items_with( []( const auto & it ) { return it.typeId() == itype_plut_cell; } );
+    REQUIRE( recovered.size() == 1 );
+    CHECK( recovered.front()->charges == 2 );
+    CHECK( tool->ammo_remaining() == 0 );
 }
 
 TEST_CASE( "tool_use", "[crafting][tool]" )
