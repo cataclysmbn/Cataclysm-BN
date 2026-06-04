@@ -26,6 +26,7 @@
 #include "weather.h"
 #include "line.h"
 #include "lua_action_menu.h"
+#include "world_type.h"
 
 namespace
 {
@@ -82,6 +83,12 @@ void cata::detail::reg_game_api( sol::state &lua )
     luna::set_fx( lib, "place_player_overmap_at", []( const tripoint_abs_omt & p ) -> void { g->place_player_overmap( p ); } );
     DOC( "Teleports player to local coordinates within active map" );
     luna::set_fx( lib, "place_player_local_at", []( const tripoint_bub_ms & p ) -> void { g->place_player( p ); } );
+    luna::set_fx( lib, "get_current_dimension_id", []() -> std::string { return g->get_current_dimension_id().str(); } );
+    luna::set_fx( lib, "travel_to_dimension", []( const std::string & id ) -> bool {
+        const auto destination = world_type_id( id );
+        return !destination.is_empty() && destination.is_valid() &&
+        g->travel_to_dimension( dimension_id( id == "default" ? std::string{} : id ), destination );
+    } );
     luna::set_fx( lib, "current_turn", []() -> time_point { return calendar::turn; } );
     luna::set_fx( lib, "turn_zero", []() -> time_point { return calendar::turn_zero; } );
     luna::set_fx( lib, "before_time_starts", []() -> time_point { return calendar::before_time_starts; } );
