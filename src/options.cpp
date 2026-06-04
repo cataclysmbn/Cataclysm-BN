@@ -1377,6 +1377,12 @@ void options_manager::add_options_general()
     "ALWAYS"
        );
 
+    add( "REPEAT_DANGEROUS_TERRAIN_WARNINGS", general,
+         translate_marker( "Repeat dangerous terrain warnings" ),
+         translate_marker( "If false, moving from a visible trap into the same trap type will not show another dangerous terrain warning.  Moving into a different trap type, such as from a pit to a spiked pit, is still warned." ),
+         true
+       );
+
     add_empty_line();
 
     add( "SAFEMODE", general, translate_marker( "Safe mode" ),

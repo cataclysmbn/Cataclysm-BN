@@ -10,6 +10,7 @@
 #include "game_constants.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "options_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -49,7 +50,7 @@ TEST_CASE( "place_player_can_safely_move_multiple_submaps" )
     CHECK( get_map().check_submap_active_item_consistency().empty() );
 }
 
-TEST_CASE( "dangerous_pit_warning_ignores_same_pit" )
+TEST_CASE( "dangerous_pit_warning_repeat_option" )
 {
     clear_all_state();
     auto &here = get_map();
@@ -66,11 +67,20 @@ TEST_CASE( "dangerous_pit_warning_ignores_same_pit" )
     CHECK( g->is_dangerous_tile( pit_pos ) );
 
     here.ter_set( player_pos, pit );
-    CHECK_FALSE( g->is_dangerous_tile( pit_pos ) );
 
-    here.ter_set( pit_pos, spiked_pit );
-    g->u.add_known_trap( pit_pos, here.tr_at( pit_pos ) );
-    CHECK( g->is_dangerous_tile( pit_pos ) );
+    SECTION( "same trap warnings repeat when enabled" ) {
+        const auto repeat_warning = override_option( "REPEAT_DANGEROUS_TERRAIN_WARNINGS", "true" );
+        CHECK( g->is_dangerous_tile( pit_pos ) );
+    }
+
+    SECTION( "same trap warnings are skipped when disabled" ) {
+        const auto repeat_warning = override_option( "REPEAT_DANGEROUS_TERRAIN_WARNINGS", "false" );
+        CHECK_FALSE( g->is_dangerous_tile( pit_pos ) );
+
+        here.ter_set( pit_pos, spiked_pit );
+        g->u.add_known_trap( pit_pos, here.tr_at( pit_pos ) );
+        CHECK( g->is_dangerous_tile( pit_pos ) );
+    }
 }
 
 static std::ostream &operator<<( std::ostream &os, const ter_id &tid )
