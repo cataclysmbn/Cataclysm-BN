@@ -1291,17 +1291,5 @@
       ]
     },
     "overmap_feature_flag_settings": { "clear_blacklist": false, "blacklist": [  ], "clear_whitelist": false, "whitelist": [  ] }
-  },
-  {
-    "type": "region_settings",
-    "id": "backroom",
-    "copy-from": "default",
-    "default_oter": "hdwr_large_backroom_south",
-    "display_oter": "hdwr_large_backroom_south",
-    "cities": "no_cities",
-    "rivers": null,
-    "lakes": null,
-    "forests": null,
-    "forest_trails": null
   }
 ]
