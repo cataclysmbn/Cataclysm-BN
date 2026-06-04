@@ -10418,6 +10418,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         std::ranges::sort( dirty_lightmap_levels );
         dirty_lightmap_levels.erase( std::ranges::unique( dirty_lightmap_levels ).begin(),
                                      dirty_lightmap_levels.end() );
+        TracyPlot( "Map Dirty LM Levels", static_cast<int64_t>( dirty_lightmap_levels.size() ) );
+        TracyPlot( "Map Need Seen Rebuild", need_seen_rebuild ? int64_t{ 1 } : int64_t{ 0 } );
 
 #if defined( CATA_SDL )
         if( gpu_device != nullptr ) {
@@ -11430,8 +11432,10 @@ void map::invalidate_lightmap_caches_if_light_state_changed()
     const auto signature = current_lightmap_source_signature();
     if( m_last_lightmap_source_signature_valid &&
         signature == m_last_lightmap_source_signature ) {
+        TracyPlot( "Light Source Signature Changed", int64_t{ 0 } );
         return;
     }
+    TracyPlot( "Light Source Signature Changed", int64_t{ 1 } );
     m_last_lightmap_source_signature = signature;
     m_last_lightmap_source_signature_valid = true;
     invalidate_lightmap_caches();

@@ -26,6 +26,7 @@
 #include <SDL3/SDL_gpu.h>
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
 #include <cstring>
 #include <fstream>
@@ -81,6 +82,8 @@ SDL_GPUComputePipeline* s_seen_walls_pipeline = nullptr;
 SDL_GPUComputePipeline* s_visibility_pipeline = nullptr;
 auto* s_vehicle_optics_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 auto* s_shift_float_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
+auto* s_fill_uint_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
+auto* s_max_uint_pipeline = static_cast<SDL_GPUComputePipeline*>(nullptr);
 
 auto load_pipeline(
     SDL_GPUDevice* const device, std::string_view const name, int const ro_bufs, int const rw_bufs,
@@ -132,7 +135,7 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
     if (s_ambient_pipeline == nullptr) {
         s_ambient_pipeline = load_pipeline(
             device, "lm_ambient_compute",
-            /*ro=*/2, /*rw=*/1, 64, 1);
+            /*ro=*/2, /*rw=*/2, 64, 1);
     }
     if (s_raytrace_pipeline == nullptr) {
         s_raytrace_pipeline = load_pipeline(
@@ -191,6 +194,24 @@ auto ensure_shift_float_pipeline(SDL_GPUDevice* const device) -> bool {
     return s_shift_float_pipeline != nullptr;
 }
 
+auto ensure_fill_uint_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (s_fill_uint_pipeline == nullptr) {
+        s_fill_uint_pipeline = load_pipeline(
+            device, "lm_fill_uint_compute",
+            /*ro=*/0, /*rw=*/1, 64, 1);
+    }
+    return s_fill_uint_pipeline != nullptr;
+}
+
+auto ensure_max_uint_pipeline(SDL_GPUDevice* const device) -> bool {
+    if (s_max_uint_pipeline == nullptr) {
+        s_max_uint_pipeline = load_pipeline(
+            device, "lm_max_uint_compute",
+            /*ro=*/1, /*rw=*/1, 64, 1);
+    }
+    return s_max_uint_pipeline != nullptr;
+}
+
 // ---------------------------------------------------------------------------
 // Persistent GPU lighting resources
 // ---------------------------------------------------------------------------
@@ -225,6 +246,8 @@ struct lighting_resource_cache {
     gpu_buffer_slot vehicle_optics;
     gpu_buffer_slot source_map;
     gpu_buffer_slot sources;
+    gpu_buffer_slot env_lm;
+    gpu_buffer_slot static_lm;
     gpu_buffer_slot lm;
     gpu_buffer_slot seen_raw;
     gpu_buffer_slot seen;
@@ -248,6 +271,13 @@ struct lighting_resource_cache {
     int seen_origin_y = 0;
     bool camera_valid = false;
     bool source_map_valid = false;
+    bool static_lighting_valid = false;
+    bool static_ambient_signature_valid = false;
+    std::size_t static_ambient_signature = 0;
+    bool static_source_signature_valid = false;
+    std::size_t static_source_signature = 0;
+    bool static_structural_signature_valid = false;
+    std::size_t static_structural_signature = 0;
     bool lighting_outputs_valid = false;
 };
 
@@ -275,6 +305,8 @@ struct lighting_buffer_sizes {
     Uint32 vehicle_optics_bytes;
     Uint32 source_map_bytes;
     Uint32 source_bytes;
+    Uint32 env_lm_bytes;
+    Uint32 static_lm_bytes;
     Uint32 output_bytes;
     Uint32 lm_download_bytes;
     Uint32 visibility_download_bytes;
@@ -351,6 +383,19 @@ struct lm_shift_float_push_constants {
 };
 static_assert(sizeof(lm_shift_float_push_constants) == 32);
 
+struct lm_fill_uint_push_constants {
+    uint32_t total_tiles;
+    uint32_t value;
+    uint32_t _pad[2];
+};
+static_assert(sizeof(lm_fill_uint_push_constants) == 16);
+
+struct lm_max_uint_push_constants {
+    uint32_t total_tiles;
+    uint32_t _pad[3];
+};
+static_assert(sizeof(lm_max_uint_push_constants) == 16);
+
 lighting_resource_cache s_lighting_resources;
 
 auto reset_input_residency_for_shape(int cache_x, int cache_y, int z_count) -> void;
@@ -379,6 +424,8 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_buffer_slot(device, s_lighting_resources.vehicle_optics);
     release_buffer_slot(device, s_lighting_resources.source_map);
     release_buffer_slot(device, s_lighting_resources.sources);
+    release_buffer_slot(device, s_lighting_resources.env_lm);
+    release_buffer_slot(device, s_lighting_resources.static_lm);
     release_buffer_slot(device, s_lighting_resources.lm);
     release_buffer_slot(device, s_lighting_resources.seen_raw);
     release_buffer_slot(device, s_lighting_resources.seen);
@@ -400,6 +447,13 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.seen_origin_valid = false;
     s_lighting_resources.camera_valid = false;
     s_lighting_resources.source_map_valid = false;
+    s_lighting_resources.static_lighting_valid = false;
+    s_lighting_resources.static_ambient_signature_valid = false;
+    s_lighting_resources.static_ambient_signature = 0;
+    s_lighting_resources.static_source_signature_valid = false;
+    s_lighting_resources.static_source_signature = 0;
+    s_lighting_resources.static_structural_signature_valid = false;
+    s_lighting_resources.static_structural_signature = 0;
     s_lighting_resources.lighting_outputs_valid = false;
     s_lighting_resources.device = nullptr;
 }
@@ -517,6 +571,20 @@ auto ensure_lighting_resources(SDL_GPUDevice* const device, lighting_buffer_size
            })
         && ensure_gpu_buffer({
                .device = device,
+               .slot = &s_lighting_resources.env_lm,
+               .usage = read_write_usage,
+               .required_bytes = sizes.env_lm_bytes,
+               .name = "env_lm",
+           })
+        && ensure_gpu_buffer({
+               .device = device,
+               .slot = &s_lighting_resources.static_lm,
+               .usage = read_write_usage,
+               .required_bytes = sizes.static_lm_bytes,
+               .name = "static_lm",
+           })
+        && ensure_gpu_buffer({
+               .device = device,
                .slot = &s_lighting_resources.lm,
                .usage = read_write_usage,
                .required_bytes = sizes.output_bytes,
@@ -627,13 +695,236 @@ auto make_source(int const x, int const y, int const zlev, float const luminance
     };
 }
 
+enum class light_source_kind : int {
+    static_emitter,
+    field,
+    active_item,
+    vehicle,
+    character,
+    monster,
+};
+
+struct source_collection_stats {
+    int static_sources = 0;
+    int field_sources = 0;
+    int active_item_sources = 0;
+    int vehicle_sources = 0;
+    int character_sources = 0;
+    int monster_sources = 0;
+};
+
+struct source_collection {
+    std::vector<GpuLightSource> sources;
+    std::vector<GpuLightSource> static_sources;
+    std::vector<GpuLightSource> dynamic_sources;
+    source_collection_stats stats;
+};
+
+struct raytrace_source_bucket {
+    Uint32 source_offset = 0;
+    Uint32 source_count = 0;
+    int max_radius = 0;
+    Uint32 groups_xy = 0;
+};
+
 struct source_accumulator {
     map const& m;
     std::vector<int> const& dirty_levels;
     int cache_xy = 0;
     std::unordered_map<std::size_t, std::size_t> source_indices;
+    std::unordered_map<std::size_t, std::size_t> static_source_indices;
+    std::unordered_map<std::size_t, std::size_t> dynamic_source_indices;
     std::vector<GpuLightSource> sources;
+    std::vector<GpuLightSource> static_sources;
+    std::vector<GpuLightSource> dynamic_sources;
+    std::vector<light_source_kind> source_kinds;
 };
+
+struct structural_signature_params {
+    map const& m;
+    std::vector<int> const& levels;
+    int cache_x;
+    int cache_y;
+};
+
+auto increment_source_stat(source_collection_stats& stats, light_source_kind const kind) -> void {
+    switch (kind) {
+        case light_source_kind::static_emitter:
+            ++stats.static_sources;
+            break;
+        case light_source_kind::field:
+            ++stats.field_sources;
+            break;
+        case light_source_kind::active_item:
+            ++stats.active_item_sources;
+            break;
+        case light_source_kind::vehicle:
+            ++stats.vehicle_sources;
+            break;
+        case light_source_kind::character:
+            ++stats.character_sources;
+            break;
+        case light_source_kind::monster:
+            ++stats.monster_sources;
+            break;
+    }
+}
+
+auto make_source_stats(std::vector<light_source_kind> const& kinds) -> source_collection_stats {
+    auto stats = source_collection_stats{};
+    for (auto const kind : kinds) {
+        increment_source_stat(stats, kind);
+    }
+    return stats;
+}
+
+auto upsert_source(std::vector<GpuLightSource>& sources,
+                   std::unordered_map<std::size_t, std::size_t>& indices,
+                   std::size_t const source_slot, tripoint_bub_ms const& pos,
+                   float const luminance) -> std::size_t {
+    auto const [iter, inserted] = indices.emplace(source_slot, sources.size());
+    if (inserted) {
+        sources.push_back(make_source(pos.x(), pos.y(), pos.z(), luminance));
+        return sources.size() - 1;
+    }
+
+    auto& source = sources[iter->second];
+    if (luminance > source.luminance) {
+        source.luminance = luminance;
+        source.radius = compute_light_radius(luminance);
+    }
+    return iter->second;
+}
+
+auto source_is_static(light_source_kind const kind) -> bool {
+    return kind == light_source_kind::static_emitter;
+}
+
+auto source_radius_ceiling(GpuLightSource const& source) -> int {
+    return std::max(0, static_cast<int>(std::ceil(source.radius)));
+}
+
+auto raytrace_groups_for_radius(int const radius) -> Uint32 {
+    return static_cast<Uint32>((2 * radius + 1 + 7) / 8);
+}
+
+auto make_raytrace_buckets(std::vector<GpuLightSource>& sources, Uint32 const base_offset = 0)
+    -> std::vector<raytrace_source_bucket> {
+    if (sources.empty()) { return {}; }
+
+    std::ranges::sort(sources, [](GpuLightSource const& lhs, GpuLightSource const& rhs) {
+        auto const lhs_groups = raytrace_groups_for_radius(source_radius_ceiling(lhs));
+        auto const rhs_groups = raytrace_groups_for_radius(source_radius_ceiling(rhs));
+        if (lhs_groups != rhs_groups) {
+            return lhs_groups < rhs_groups;
+        }
+        return lhs.radius < rhs.radius;
+    });
+
+    auto buckets = std::vector<raytrace_source_bucket>{};
+    auto next_offset = base_offset;
+    for (auto const& source : sources) {
+        auto const radius = source_radius_ceiling(source);
+        auto const groups_xy = raytrace_groups_for_radius(radius);
+        if (buckets.empty() || buckets.back().groups_xy != groups_xy) {
+            buckets.push_back(raytrace_source_bucket{
+                .source_offset = next_offset,
+                .source_count = 0,
+                .max_radius = radius,
+                .groups_xy = groups_xy,
+            });
+        }
+        auto& bucket = buckets.back();
+        ++bucket.source_count;
+        bucket.max_radius = std::max(bucket.max_radius, radius);
+        ++next_offset;
+    }
+    return buckets;
+}
+
+auto raytrace_work_units(std::vector<raytrace_source_bucket> const& buckets) -> int64_t {
+    auto work = int64_t{0};
+    for (auto const& bucket : buckets) {
+        auto const groups = static_cast<int64_t>(bucket.groups_xy);
+        work += static_cast<int64_t>(bucket.source_count) * groups * groups;
+    }
+    return work;
+}
+
+auto source_z_level_count(GpuLightSource const& source, int const z_count) -> int {
+    auto const z_span = static_cast<int>(std::ceil(source.radius / Z_LEVEL_SCALE));
+    auto const z_min = std::max(0, source.z_idx - z_span);
+    auto const z_max = std::min(z_count - 1, source.z_idx + z_span);
+    return std::max(0, z_max - z_min + 1);
+}
+
+auto raytrace_z_work_units(std::vector<GpuLightSource> const& sources) -> int64_t {
+    auto work = int64_t{0};
+    for (auto const& source : sources) {
+        auto const groups = static_cast<int64_t>(
+            raytrace_groups_for_radius(source_radius_ceiling(source)));
+        work += groups * groups * static_cast<int64_t>(source_z_level_count(source, OVERMAP_LAYERS));
+    }
+    return work;
+}
+
+auto mix_signature(std::size_t& seed, std::size_t const value) -> void {
+    seed ^= value + 0x9e3779b97f4a7c15ull + (seed << 6) + (seed >> 2);
+}
+
+auto quantized_signature_float(float const value, float const scale) -> std::size_t {
+    return static_cast<std::size_t>(std::lround(value * scale));
+}
+
+auto ambient_signature(lm_ambient_push_constants const& ambient) -> std::size_t {
+    auto seed = std::size_t{0};
+    mix_signature(seed, static_cast<std::size_t>(ambient.angled_sunlight_shadows));
+    mix_signature(seed, static_cast<std::size_t>(ambient.direct_sunlight));
+    mix_signature(seed, quantized_signature_float(ambient.sun_dx_per_z, 8.0f));
+    mix_signature(seed, quantized_signature_float(ambient.sun_dy_per_z, 8.0f));
+    mix_signature(seed, quantized_signature_float(ambient.inside_light, 4.0f));
+    for (auto const& natural_light : ambient.natural_light) {
+        for (auto const value : natural_light) {
+            mix_signature(seed, quantized_signature_float(value, 4.0f));
+        }
+    }
+    return seed;
+}
+
+auto source_signature(std::vector<GpuLightSource> const& sources) -> std::size_t {
+    auto seed = std::size_t{0};
+    mix_signature(seed, sources.size());
+    for (auto const& source : sources) {
+        mix_signature(seed, static_cast<std::size_t>(source.x));
+        mix_signature(seed, static_cast<std::size_t>(source.y));
+        mix_signature(seed, static_cast<std::size_t>(source.z_idx));
+        mix_signature(seed, quantized_signature_float(source.luminance, 4.0f));
+    }
+    return seed;
+}
+
+auto structural_signature(structural_signature_params const& p) -> std::size_t {
+    auto seed = std::size_t{0};
+    mix_signature(seed, static_cast<std::size_t>(p.cache_x));
+    mix_signature(seed, static_cast<std::size_t>(p.cache_y));
+    mix_signature(seed, p.levels.size());
+
+    for (auto const z : p.levels) {
+        auto const& lc = p.m.get_cache_ref(z);
+        mix_signature(seed, static_cast<std::size_t>(z + OVERMAP_DEPTH));
+        for (auto const value : lc.transparency_cache) {
+            mix_signature(seed, static_cast<std::size_t>(std::bit_cast<uint32_t>(value)));
+        }
+        for (auto const value : lc.floor_cache) {
+            mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
+        }
+        for (auto const value : lc.vehicle_floor_cache) {
+            mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
+        }
+    }
+
+    return seed;
+}
 
 auto dirty_level_index(source_accumulator const& acc, int const zlev) -> int {
     auto const iter = std::ranges::find(acc.dirty_levels, zlev);
@@ -641,8 +932,8 @@ auto dirty_level_index(source_accumulator const& acc, int const zlev) -> int {
     return static_cast<int>(std::distance(acc.dirty_levels.begin(), iter));
 }
 
-auto add_source(source_accumulator& acc, tripoint_bub_ms const& pos, float const luminance)
-    -> void {
+auto add_source(source_accumulator& acc, tripoint_bub_ms const& pos, float const luminance,
+                light_source_kind const kind) -> void {
     if (luminance <= LIGHT_AMBIENT_LOW || !acc.m.inbounds(pos)) { return; }
 
     auto const level_index = dirty_level_index(acc, pos.z());
@@ -654,16 +945,21 @@ auto add_source(source_accumulator& acc, tripoint_bub_ms const& pos, float const
     auto const source_slot =
         static_cast<std::size_t>(level_index) * static_cast<std::size_t>(acc.cache_xy) +
         static_cast<std::size_t>(lc.idx(pos.x(), pos.y()));
-    auto const [iter, inserted] = acc.source_indices.emplace(source_slot, acc.sources.size());
-    if (inserted) {
-        acc.sources.push_back(make_source(pos.x(), pos.y(), pos.z(), luminance));
-        return;
+    auto const old_size = acc.sources.size();
+    auto const source_index =
+        upsert_source(acc.sources, acc.source_indices, source_slot, pos, luminance);
+    if (acc.sources.size() != old_size) {
+        acc.source_kinds.push_back(kind);
+    } else if (acc.sources[source_index].luminance <= luminance) {
+        acc.source_kinds[source_index] = kind;
     }
 
-    auto& source = acc.sources[iter->second];
-    if (luminance > source.luminance) {
-        source.luminance = luminance;
-        source.radius = compute_light_radius(luminance);
+    if (source_is_static(kind)) {
+        upsert_source(
+            acc.static_sources, acc.static_source_indices, source_slot, pos, luminance);
+    } else {
+        upsert_source(
+            acc.dynamic_sources, acc.dynamic_source_indices, source_slot, pos, luminance);
     }
 }
 
@@ -674,7 +970,7 @@ auto add_item_sources(source_accumulator& acc, tripoint_bub_ms const& pos,
         auto width = 0_degrees;
         auto direction = 0_degrees;
         if (itm->getlight(luminance, width, direction)) {
-            add_source(acc, pos, luminance);
+            add_source(acc, pos, luminance, light_source_kind::active_item);
         }
     }
 }
@@ -683,7 +979,7 @@ auto add_field_sources(source_accumulator& acc, tripoint_bub_ms const& pos,
                        field const& fields) -> void {
     for (auto const& field_pair : fields) {
         if (!field_pair.first.is_valid()) { continue; }
-        add_source(acc, pos, field_pair.second.light_emitted());
+        add_source(acc, pos, field_pair.second.light_emitted(), light_source_kind::field);
     }
 }
 
@@ -717,10 +1013,12 @@ auto add_static_emitter_sources(source_accumulator& acc) -> void {
                 for (auto const sm_ms : static_emitter_tiles(*sm)) {
                     auto const pos = project_combine(grid, sm_ms);
                     auto const terrain = sm->get_ter(sm_ms);
-                    add_source(acc, pos, static_cast<float>(terrain->light_emitted));
+                    add_source(acc, pos, static_cast<float>(terrain->light_emitted),
+                               light_source_kind::static_emitter);
 
                     auto const furniture = sm->get_furn(sm_ms);
-                    add_source(acc, pos, static_cast<float>(furniture->light_emitted));
+                    add_source(acc, pos, static_cast<float>(furniture->light_emitted),
+                               light_source_kind::static_emitter);
                 }
             }
         }
@@ -760,12 +1058,13 @@ auto add_active_item_sources(source_accumulator& acc) -> void {
             if (itm == nullptr) { continue; }
             auto luminance = 0.0f;
             auto width = 0_degrees;
-            auto direction = 0_degrees;
-            if (itm->getlight(luminance, width, direction)) {
-                add_source(acc, tripoint_bub_ms(itm->position()), luminance);
+                auto direction = 0_degrees;
+                if (itm->getlight(luminance, width, direction)) {
+                    add_source(acc, tripoint_bub_ms(itm->position()), luminance,
+                               light_source_kind::active_item);
+                }
             }
         }
-    }
 }
 
 auto add_vehicle_sources(source_accumulator& acc) -> void {
@@ -795,20 +1094,20 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
             if (info.has_flag(VPFLAG_CONE_LIGHT) ||
                 info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) {
                 if (vehicle_luminance > lit_level::LIT) {
-                    add_source(acc, pos, static_cast<float>(M_SQRT2));
-                    add_source(acc, pos, vehicle_luminance);
+                    add_source(acc, pos, static_cast<float>(M_SQRT2), light_source_kind::vehicle);
+                    add_source(acc, pos, vehicle_luminance, light_source_kind::vehicle);
                 }
             } else if (info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT)) {
-                add_source(acc, pos, static_cast<float>(M_SQRT2));
-                add_source(acc, pos, static_cast<float>(info.bonus));
+                add_source(acc, pos, static_cast<float>(M_SQRT2), light_source_kind::vehicle);
+                add_source(acc, pos, static_cast<float>(info.bonus), light_source_kind::vehicle);
             } else if (info.has_flag(VPFLAG_CIRCLE_LIGHT)) {
                 if ((odd_turn && info.has_flag(VPFLAG_ODDTURN)) ||
                     (!odd_turn && info.has_flag(VPFLAG_EVENTURN)) ||
                     (!(info.has_flag(VPFLAG_EVENTURN) || info.has_flag(VPFLAG_ODDTURN)))) {
-                    add_source(acc, pos, static_cast<float>(info.bonus));
+                    add_source(acc, pos, static_cast<float>(info.bonus), light_source_kind::vehicle);
                 }
             } else {
-                add_source(acc, pos, static_cast<float>(info.bonus));
+                add_source(acc, pos, static_cast<float>(info.bonus), light_source_kind::vehicle);
             }
         }
 
@@ -826,7 +1125,7 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
                 auto width = 0_degrees;
                 auto direction = 0_degrees;
                 if (itm->getlight(luminance, width, direction)) {
-                    add_source(acc, pos, luminance);
+                    add_source(acc, pos, luminance, light_source_kind::vehicle);
                 }
             }
         }
@@ -841,9 +1140,9 @@ auto add_character_sources(source_accumulator& acc) -> void {
         auto const& pos = ch.bub_pos();
         if (!acc.m.inbounds(pos)) { return; }
         if (ch.has_effect(effect_onfire)) {
-            add_source(acc, pos, 8.0f);
+            add_source(acc, pos, 8.0f, light_source_kind::character);
         }
-        add_source(acc, pos, ch.active_light());
+        add_source(acc, pos, ch.active_light(), light_source_kind::character);
     };
 
     add_char(get_player_character());
@@ -859,14 +1158,15 @@ auto add_monster_sources(source_accumulator& acc) -> void {
         auto const& pos = critter.bub_pos();
         if (!acc.m.inbounds(pos)) { continue; }
         if (critter.has_effect(effect_onfire)) {
-            add_source(acc, pos, 8.0f);
+            add_source(acc, pos, 8.0f, light_source_kind::monster);
         }
-        add_source(acc, pos, static_cast<float>(critter.type->luminance));
+        add_source(acc, pos, static_cast<float>(critter.type->luminance),
+                   light_source_kind::monster);
     }
 }
 
 auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
-    -> std::vector<GpuLightSource> {
+    -> source_collection {
     if (dirty_levels.empty()) { return {}; }
 
     auto const& lc0 = m.get_cache_ref(dirty_levels.front());
@@ -875,9 +1175,17 @@ auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
         .dirty_levels = dirty_levels,
         .cache_xy = lc0.cache_x * lc0.cache_y,
         .source_indices = {},
+        .static_source_indices = {},
+        .dynamic_source_indices = {},
         .sources = {},
+        .static_sources = {},
+        .dynamic_sources = {},
+        .source_kinds = {},
     };
     acc.source_indices.reserve(256);
+    acc.static_source_indices.reserve(256);
+    acc.dynamic_source_indices.reserve(256);
+    acc.source_kinds.reserve(256);
 
     add_static_emitter_sources(acc);
     add_field_sources(acc);
@@ -886,7 +1194,12 @@ auto collect_sources(map const& m, std::vector<int> const& dirty_levels)
     add_character_sources(acc);
     add_monster_sources(acc);
 
-    return std::move(acc.sources);
+    return source_collection{
+        .sources = std::move(acc.sources),
+        .static_sources = std::move(acc.static_sources),
+        .dynamic_sources = std::move(acc.dynamic_sources),
+        .stats = make_source_stats(acc.source_kinds),
+    };
 }
 
 auto source_is_on_dirty_level(std::vector<int> const& dirty_levels, int const zlev) -> bool {
@@ -946,6 +1259,13 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
     s_lighting_resources.camera_valid = false;
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
+    s_lighting_resources.static_lighting_valid = false;
+    s_lighting_resources.static_ambient_signature_valid = false;
+    s_lighting_resources.static_ambient_signature = 0;
+    s_lighting_resources.static_source_signature_valid = false;
+    s_lighting_resources.static_source_signature = 0;
+    s_lighting_resources.static_structural_signature_valid = false;
+    s_lighting_resources.static_structural_signature = 0;
     s_lighting_resources.lighting_outputs_valid = false;
 }
 
@@ -1307,6 +1627,26 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     reset_input_residency_for_shape(p.cache_x, p.cache_y, p.z_count);
 
     auto& inputs = s_lighting_resources.inputs;
+
+    // map::shift changes bubble coordinates.  Only resident transparency has
+    // a GPU shift path today; invalidate every other coordinate-dependent
+    // buffer so the next lighting pass rebuilds it from shifted CPU caches.
+    inputs.floor_valid = false;
+    inputs.vehicle_floor_valid = false;
+    s_lighting_resources.seen_valid = false;
+    s_lighting_resources.seen_origin_valid = false;
+    s_lighting_resources.camera_valid = false;
+    s_lighting_resources.camera_nonzero_levels = {};
+    s_lighting_resources.source_map_valid = false;
+    s_lighting_resources.static_lighting_valid = false;
+    s_lighting_resources.static_ambient_signature_valid = false;
+    s_lighting_resources.static_ambient_signature = 0;
+    s_lighting_resources.static_source_signature_valid = false;
+    s_lighting_resources.static_source_signature = 0;
+    s_lighting_resources.static_structural_signature_valid = false;
+    s_lighting_resources.static_structural_signature = 0;
+    s_lighting_resources.lighting_outputs_valid = false;
+
     auto const has_valid_transparency =
         std::ranges::any_of(inputs.transparency_valid_levels, [](char const value) {
         return value != '\0';
@@ -1362,15 +1702,20 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
         SDL_EndGPUComputePass(cp);
     }
 
-    if (!SDL_SubmitGPUCommandBuffer(cmd)) {
+    auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
+    if (fence == nullptr) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: lm: shift command buffer submission failed: " << SDL_GetError();
         return false;
     }
+    {
+        ZoneScopedN( "gpu_lm_shift_fence_wait" );
+        SDL_WaitForGPUFences(p.device, true, &fence, 1);
+    }
+    SDL_ReleaseGPUFence(p.device, fence);
 
     std::swap(s_lighting_resources.transparency, s_lighting_resources.shift_float_scratch);
     clear_transparency_shader_update_marks();
-    s_lighting_resources.seen_origin_valid = false;
     return true;
 }
 
@@ -1399,29 +1744,35 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     auto const cache_y = lc0.cache_y;
     auto const cache_xy = cache_x * cache_y;
     auto const z_count = OVERMAP_LAYERS;
+    auto const all_levels = make_all_levels(z_count);
 
     // ── Collect light sources ────────────────────────────────────────────────
-    auto sources = std::vector<GpuLightSource>{};
+    auto all_sources = std::vector<GpuLightSource>{};
+    auto static_sources = std::vector<GpuLightSource>{};
+    auto dynamic_sources = std::vector<GpuLightSource>{};
+    auto source_stats = source_collection_stats{};
     if (!lightmap_levels.empty()) {
         ZoneScopedN( "gpu_lm_collect_sources" );
-        sources = collect_sources(*p.m, lightmap_levels);
-        write_source_map_to_level_caches(*p.m, lightmap_levels, sources);
+        auto collection = collect_sources(*p.m, lightmap_levels);
+        source_stats = collection.stats;
+        all_sources = std::move(collection.sources);
+        dynamic_sources = std::move(collection.dynamic_sources);
+        if (lightmap_levels == all_levels) {
+            static_sources = std::move(collection.static_sources);
+        } else {
+            ZoneScopedN( "gpu_lm_collect_static_sources_full" );
+            auto static_collection = collect_sources(*p.m, all_levels);
+            static_sources = std::move(static_collection.static_sources);
+            source_stats.static_sources = static_sources.size();
+        }
+        write_source_map_to_level_caches(*p.m, lightmap_levels, all_sources);
     }
-    auto const num_src = static_cast<Uint32>(sources.size());
-
-    // Compute max dispatch radius (clamp to 0 when no sources).
-    auto max_radius = 0;
-    for (auto const& src : sources) {
-        max_radius = std::max(max_radius, static_cast<int>(std::ceil(src.radius)));
-    }
-    auto const groups_xy = static_cast<Uint32>((2 * max_radius + 1 + 7) / 8);
 
     // ── Pack CPU input buffers into compact upload slices ────────────────────
     // Full-volume uploads are still used when residency is invalid or precise
     // dirty levels are unavailable.  Otherwise each packed level is uploaded
     // into its resident 3D-buffer slice.
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
-    auto const all_levels = make_all_levels(z_count);
     auto const input_uploads = make_input_upload_plan(p, all_levels);
     clear_transparency_shader_update_marks();
     if (!s_lighting_resources.source_map_valid && lightmap_levels.empty()) {
@@ -1487,10 +1838,72 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         ambient_push.direct_sunlight = p.direct_sunlight ? 1u : 0u;
         ambient_push.sun_dx_per_z = p.sun_dx_per_z;
         ambient_push.sun_dy_per_z = p.sun_dy_per_z;
-        for (int zi = 0; zi < OVERMAP_LAYERS; ++zi) {
+        for (auto const zi : std::views::iota(0, OVERMAP_LAYERS)) {
             ambient_push.natural_light[zi / 4][zi % 4] = g->natural_light_level(zi - OVERMAP_DEPTH);
         }
     }
+    auto const current_ambient_signature = ambient_signature(ambient_push);
+    auto const ambient_changed =
+        !s_lighting_resources.static_ambient_signature_valid ||
+        s_lighting_resources.static_ambient_signature != current_ambient_signature;
+    auto const structural_upload = has_structural_upload(input_uploads);
+    auto current_structural_signature = s_lighting_resources.static_structural_signature;
+    auto structural_changed = false;
+    if (!lightmap_levels.empty() &&
+        (structural_upload || !s_lighting_resources.static_structural_signature_valid)) {
+        ZoneScopedN( "gpu_lm_structural_signature" );
+        current_structural_signature = structural_signature({
+            .m = *p.m,
+            .levels = all_levels,
+            .cache_x = cache_x,
+            .cache_y = cache_y,
+        });
+        structural_changed =
+            !s_lighting_resources.static_structural_signature_valid ||
+            s_lighting_resources.static_structural_signature != current_structural_signature;
+    }
+    auto const current_static_source_signature = source_signature(static_sources);
+    auto const static_sources_changed =
+        !lightmap_levels.empty() &&
+        (!s_lighting_resources.static_source_signature_valid ||
+         s_lighting_resources.static_source_signature != current_static_source_signature);
+    auto const rebuild_static_lighting =
+        !lightmap_levels.empty() &&
+        (!s_lighting_resources.static_lighting_valid ||
+         structural_changed ||
+         static_sources_changed);
+
+    auto static_raytrace_buckets = std::vector<raytrace_source_bucket>{};
+    auto dynamic_raytrace_buckets = std::vector<raytrace_source_bucket>{};
+    auto trace_sources = std::vector<GpuLightSource>{};
+    if (rebuild_static_lighting) {
+        static_raytrace_buckets = make_raytrace_buckets(static_sources);
+        trace_sources = static_sources;
+    }
+    auto const dynamic_source_offset = static_cast<Uint32>(trace_sources.size());
+    if (!dynamic_sources.empty()) {
+        dynamic_raytrace_buckets = make_raytrace_buckets(dynamic_sources, dynamic_source_offset);
+        std::ranges::move(dynamic_sources, std::back_inserter(trace_sources));
+    }
+    auto const raytrace_buckets = [&]() {
+        auto buckets = static_raytrace_buckets;
+        std::ranges::copy(dynamic_raytrace_buckets, std::back_inserter(buckets));
+        return buckets;
+    }();
+    auto const num_src = static_cast<Uint32>(trace_sources.size());
+    auto const all_num_src = static_cast<Uint32>(all_sources.size());
+
+    auto max_radius = 0;
+    for (auto const& src : trace_sources) {
+        max_radius = std::max(max_radius, static_cast<int>(std::ceil(src.radius)));
+    }
+    auto const raytrace_work = raytrace_work_units(raytrace_buckets);
+    auto const raytrace_z_work = raytrace_z_work_units(trace_sources);
+    auto const legacy_raytrace_groups = raytrace_groups_for_radius(max_radius);
+    auto const legacy_raytrace_work = static_cast<int64_t>(num_src) *
+                                      static_cast<int64_t>(legacy_raytrace_groups) *
+                                      static_cast<int64_t>(legacy_raytrace_groups);
+    auto const legacy_raytrace_z_work = legacy_raytrace_work * static_cast<int64_t>(z_count);
 
     // ── Ensure GPU buffers ───────────────────────────────────────────────────
     auto const volume_tiles = static_cast<Uint32>(z_count * cache_xy);
@@ -1506,9 +1919,10 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     auto const lm_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
     auto const lm_download_bytes =
         static_cast<Uint32>(lightmap_levels.size()) * lm_level_bytes;
-    auto const src_bytes =
-        num_src > 0 ? static_cast<Uint32>(num_src * sizeof(GpuLightSource))
-                    : static_cast<Uint32>(sizeof(GpuLightSource)); // dummy slot
+    auto const source_upload_bytes =
+        num_src > 0 ? static_cast<Uint32>(num_src * sizeof(GpuLightSource)) : Uint32{0};
+    auto const source_buffer_bytes =
+        std::max(source_upload_bytes, static_cast<Uint32>(sizeof(GpuLightSource)));
 
     auto const seen_was_valid = s_lighting_resources.seen_valid;
     auto const rebuild_seen = p.rebuild_seen_cache || !seen_was_valid;
@@ -1525,12 +1939,49 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         static_cast<Uint32>(input_uploads.vehicle_floor_levels.size()) * uint_level_bytes;
     auto const source_map_upload_bytes =
         static_cast<Uint32>(source_map_upload_levels.size()) * float_level_bytes;
-    auto upload_total = src_bytes;
+    auto upload_total = source_upload_bytes;
     upload_total += transparency_upload_bytes;
     upload_total += floor_upload_bytes;
     upload_total += vehicle_floor_upload_bytes;
     upload_total += source_map_upload_bytes;
+    auto const upload_buffer_bytes = std::max(upload_total, Uint32{1});
     auto const visibility_upload_total = camera_bytes;
+
+    TracyPlot( "GPU LM Dirty Levels", static_cast<int64_t>( lightmap_levels.size() ) );
+    TracyPlot( "GPU LM Rebuild Seen", rebuild_seen ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Sources", static_cast<int64_t>( all_num_src ) );
+    TracyPlot( "GPU LM Trace Sources", static_cast<int64_t>( num_src ) );
+    TracyPlot( "GPU LM Static Rebuild", rebuild_static_lighting ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Ambient Changed", ambient_changed ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Static Sources Changed",
+               static_sources_changed ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Structural Upload", structural_upload ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Structural Changed", structural_changed ? int64_t{ 1 } : int64_t{ 0 } );
+    TracyPlot( "GPU LM Sources Static", static_cast<int64_t>( source_stats.static_sources ) );
+    TracyPlot( "GPU LM Sources Field", static_cast<int64_t>( source_stats.field_sources ) );
+    TracyPlot( "GPU LM Sources Active Item",
+               static_cast<int64_t>( source_stats.active_item_sources ) );
+    TracyPlot( "GPU LM Sources Vehicle", static_cast<int64_t>( source_stats.vehicle_sources ) );
+    TracyPlot( "GPU LM Sources Character", static_cast<int64_t>( source_stats.character_sources ) );
+    TracyPlot( "GPU LM Sources Monster", static_cast<int64_t>( source_stats.monster_sources ) );
+    TracyPlot( "GPU LM Max Radius", static_cast<int64_t>( max_radius ) );
+    TracyPlot( "GPU LM Raytrace Buckets", static_cast<int64_t>( raytrace_buckets.size() ) );
+    TracyPlot( "GPU LM Raytrace Work", raytrace_work );
+    TracyPlot( "GPU LM Raytrace Work Legacy", legacy_raytrace_work );
+    TracyPlot( "GPU LM Raytrace Z Work", raytrace_z_work );
+    TracyPlot( "GPU LM Raytrace Z Work Legacy", legacy_raytrace_z_work );
+    TracyPlot( "GPU LM Source Map Levels", static_cast<int64_t>( source_map_upload_levels.size() ) );
+    TracyPlot( "GPU LM Input Upload Levels",
+               static_cast<int64_t>( input_uploads.transparency_levels.size() +
+                                     input_uploads.floor_levels.size() +
+                                     input_uploads.vehicle_floor_levels.size() ) );
+    TracyPlot( "GPU LM Transparency Upload Levels",
+               static_cast<int64_t>( input_uploads.transparency_levels.size() ) );
+    TracyPlot( "GPU LM Floor Upload Levels",
+               static_cast<int64_t>( input_uploads.floor_levels.size() ) );
+    TracyPlot( "GPU LM Vehicle Floor Upload Levels",
+               static_cast<int64_t>( input_uploads.vehicle_floor_levels.size() ) );
+    TracyPlot( "GPU LM Upload KiB", static_cast<int64_t>( upload_total / 1024u ) );
 
     {
         ZoneScopedN( "gpu_lm_ensure_resources" );
@@ -1541,15 +1992,21 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                 .camera_bytes = camera_bytes,
                 .vehicle_optics_bytes = static_cast<Uint32>(sizeof(GpuVehicleOptic)),
                 .source_map_bytes = source_map_bytes,
-                .source_bytes = src_bytes,
+                .source_bytes = source_buffer_bytes,
+                .env_lm_bytes = out_bytes,
+                .static_lm_bytes = out_bytes,
                 .output_bytes = out_bytes,
                 .lm_download_bytes = std::max(lm_download_bytes, 1u),
                 .visibility_download_bytes = out_bytes,
-                .upload_bytes = upload_total,
+                .upload_bytes = upload_buffer_bytes,
                 .visibility_upload_bytes = visibility_upload_total,
             })) {
             return false;
         }
+    }
+    if (!lightmap_levels.empty() &&
+        (!ensure_fill_uint_pipeline(device) || !ensure_max_uint_pipeline(device))) {
+        return false;
     }
 
     auto* const t_buf = s_lighting_resources.transparency.buffer;
@@ -1557,6 +2014,8 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     auto* const vf_buf = s_lighting_resources.vehicle_floor.buffer;
     auto* const source_map_buf = s_lighting_resources.source_map.buffer;
     auto* const src_buf = s_lighting_resources.sources.buffer;
+    auto* const env_lm_buf = s_lighting_resources.env_lm.buffer;
+    auto* const static_lm_buf = s_lighting_resources.static_lm.buffer;
     auto* const lm_buf = s_lighting_resources.lm.buffer;
     auto* const seen_raw_buf = s_lighting_resources.seen_raw.buffer;
     auto* const seen_buf = s_lighting_resources.seen.buffer;
@@ -1565,7 +2024,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     auto* const seen_dl_tbuf = s_lighting_resources.seen_download.buffer;
 
     // ── Upload: single transfer buffer covering all inputs ───────────────────
-    {
+    if (upload_total > 0) {
         ZoneScopedN( "gpu_lm_stage_upload" );
         auto* const mapped = static_cast<std::byte*>(
             SDL_MapGPUTransferBuffer(device, upload_tbuf, false));
@@ -1591,12 +2050,9 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             std::memcpy(mapped + off, source_map_cpu.data(), source_map_upload_bytes);
             off += source_map_upload_bytes;
         }
-        if (num_src > 0) {
-            std::memcpy(mapped + off, sources.data(), src_bytes);
-        } else {
-            std::memset(mapped + off, 0, src_bytes);
+        if (source_upload_bytes > 0) {
+            std::memcpy(mapped + off, trace_sources.data(), source_upload_bytes);
         }
-        off += src_bytes;
         SDL_UnmapGPUTransferBuffer(device, upload_tbuf);
     }
 
@@ -1613,7 +2069,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         ZoneScopedN( "gpu_lm_record_commands" );
 
         // [Pass 1] Copy: upload all input buffers.
-        {
+        if (upload_total > 0) {
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
             auto off = Uint32{0};
 
@@ -1653,57 +2109,116 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             upload_levels(f_buf, input_uploads.floor_levels, uint_level_bytes);
             upload_levels(vf_buf, input_uploads.vehicle_floor_levels, uint_level_bytes);
             upload_levels(source_map_buf, source_map_upload_levels, float_level_bytes);
-            upload_whole(src_buf, src_bytes);
+            if (source_upload_bytes > 0) {
+                upload_whole(src_buf, source_upload_bytes);
+            }
 
             SDL_EndGPUCopyPass(cp);
         }
 
-        // [Pass 2] Compute: ambient initialisation.
-        // Writes lm_all[tile] = asuint(ambient_value) for every tile.
-        // Uses terrain floor_all and transparency_all to determine sky access
-        // physically.  Vehicle roofs do not affect sunlight.
         if (!lightmap_levels.empty()) {
-            auto const rw_lm = SDL_GPUStorageBufferReadWriteBinding{
-                .buffer = lm_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
-            auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
-            SDL_BindGPUComputePipeline(cp, s_ambient_pipeline);
+            auto dispatch_raytrace = [&](SDL_GPUBuffer* const target_buf,
+            std::vector<raytrace_source_bucket> const& buckets) {
+                if (buckets.empty()) { return; }
 
-            auto const ro_bufs = std::array<SDL_GPUBuffer*, 2>{f_buf, t_buf};
-            SDL_BindGPUComputeStorageBuffers(
-                cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+                auto const rw_lm = SDL_GPUStorageBufferReadWriteBinding{
+                    .buffer = target_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
+                auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
+                SDL_BindGPUComputePipeline(cp, s_raytrace_pipeline);
 
-            SDL_PushGPUComputeUniformData(cmd, 0, &ambient_push, sizeof(ambient_push));
+                auto const ro_bufs = std::array<SDL_GPUBuffer*, 4>{t_buf, f_buf, vf_buf, src_buf};
+                SDL_BindGPUComputeStorageBuffers(
+                    cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
-            auto const total_tiles = static_cast<Uint32>(z_count * cache_xy);
-            SDL_DispatchGPUCompute(cp, (total_tiles + 63) / 64, 1, 1);
-            SDL_EndGPUComputePass(cp);
-        }
-
-        // [Pass 3] Compute: per-source ray casting.
-        // InterlockedMax(lm_all[tile], asuint(intensity)) for each source.
-        if (!lightmap_levels.empty() && num_src > 0) {
-            auto const rw_lm = SDL_GPUStorageBufferReadWriteBinding{
-                .buffer = lm_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
-            auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
-            SDL_BindGPUComputePipeline(cp, s_raytrace_pipeline);
-
-            auto const ro_bufs = std::array<SDL_GPUBuffer*, 4>{t_buf, f_buf, vf_buf, src_buf};
-            SDL_BindGPUComputeStorageBuffers(
-                cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
-
-            auto const raytrace_push = lm_raytrace_push_constants{
-                .cache_x = cache_x,
-                .cache_y = cache_y,
-                .cache_xy = cache_xy,
-                .z_count = z_count,
-                .z_scale = Z_LEVEL_SCALE,
-                .num_sources = num_src,
-                .max_radius = max_radius,
-                ._pad = 0u,
+                for (auto const& bucket : buckets) {
+                    auto const raytrace_push = lm_raytrace_push_constants{
+                        .cache_x = cache_x,
+                        .cache_y = cache_y,
+                        .cache_xy = cache_xy,
+                        .z_count = z_count,
+                        .z_scale = Z_LEVEL_SCALE,
+                        .num_sources = bucket.source_count,
+                        .max_radius = bucket.max_radius,
+                        .source_offset = bucket.source_offset,
+                    };
+                    SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
+                    SDL_DispatchGPUCompute(cp, bucket.source_count, bucket.groups_xy, bucket.groups_xy);
+                }
+                SDL_EndGPUComputePass(cp);
             };
-            SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
-            SDL_DispatchGPUCompute(cp, num_src, groups_xy, groups_xy);
-            SDL_EndGPUComputePass(cp);
+
+            auto fill_uint_buffer = [&](SDL_GPUBuffer* const target_buf, uint32_t const value) {
+                auto const rw_target = SDL_GPUStorageBufferReadWriteBinding{
+                    .buffer = target_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
+                auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_target, 1);
+                SDL_BindGPUComputePipeline(cp, s_fill_uint_pipeline);
+                auto const fill_push = lm_fill_uint_push_constants{
+                    .total_tiles = volume_tiles,
+                    .value = value,
+                    ._pad = {},
+                };
+                SDL_PushGPUComputeUniformData(cmd, 0, &fill_push, sizeof(fill_push));
+                SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
+                SDL_EndGPUComputePass(cp);
+            };
+
+            if (rebuild_static_lighting) {
+                // [Pass 2] Compute: static terrain/furniture source contribution.
+                fill_uint_buffer(static_lm_buf, 0u);
+                dispatch_raytrace(static_lm_buf, static_raytrace_buckets);
+            }
+
+            // [Pass 3] Compute: ambient/weather/sun base for this frame.
+            {
+                auto const rw_lm = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{
+                    SDL_GPUStorageBufferReadWriteBinding{
+                        .buffer = env_lm_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0,
+                    },
+                    SDL_GPUStorageBufferReadWriteBinding{
+                        .buffer = lm_buf,
+                        .cycle = false,
+                        .padding1 = 0,
+                        .padding2 = 0,
+                        .padding3 = 0,
+                    },
+                };
+                auto* const cp = SDL_BeginGPUComputePass(
+                    cmd, nullptr, 0, rw_lm.data(), static_cast<Uint32>(rw_lm.size()));
+                SDL_BindGPUComputePipeline(cp, s_ambient_pipeline);
+
+                auto const ro_bufs = std::array<SDL_GPUBuffer*, 2>{f_buf, t_buf};
+                SDL_BindGPUComputeStorageBuffers(
+                    cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+
+                SDL_PushGPUComputeUniformData(cmd, 0, &ambient_push, sizeof(ambient_push));
+                SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
+                SDL_EndGPUComputePass(cp);
+            }
+
+            // [Pass 4] Compute: max cached static-source contribution into frame lm.
+            {
+                auto const rw_lm = SDL_GPUStorageBufferReadWriteBinding{
+                    .buffer = lm_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
+                auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
+                SDL_BindGPUComputePipeline(cp, s_max_uint_pipeline);
+                auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{static_lm_buf};
+                SDL_BindGPUComputeStorageBuffers(
+                    cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+                auto const max_push = lm_max_uint_push_constants{
+                    .total_tiles = volume_tiles,
+                    ._pad = {},
+                };
+                SDL_PushGPUComputeUniformData(cmd, 0, &max_push, sizeof(max_push));
+                SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
+                SDL_EndGPUComputePass(cp);
+            }
+
+            // [Pass 5] Compute: dynamic per-source ray casting over ambient/static base.
+            dispatch_raytrace(lm_buf, dynamic_raytrace_buckets);
         }
 
         if (rebuild_seen) {
@@ -1932,6 +2447,17 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     }
 
     commit_input_upload_plan(input_uploads);
+    if (!lightmap_levels.empty()) {
+        s_lighting_resources.static_ambient_signature_valid = true;
+        s_lighting_resources.static_ambient_signature = current_ambient_signature;
+    }
+    if (rebuild_static_lighting) {
+        s_lighting_resources.static_lighting_valid = true;
+        s_lighting_resources.static_source_signature_valid = true;
+        s_lighting_resources.static_source_signature = current_static_source_signature;
+        s_lighting_resources.static_structural_signature_valid = true;
+        s_lighting_resources.static_structural_signature = current_structural_signature;
+    }
     if (rebuild_seen) {
         s_lighting_resources.seen_valid = true;
         s_lighting_resources.seen_origin_valid = true;
@@ -2008,6 +2534,8 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
             .vehicle_optics_bytes = vehicle_optics_buffer_bytes,
             .source_map_bytes = float_volume_bytes,
             .source_bytes = source_bytes,
+            .env_lm_bytes = uint_volume_bytes,
+            .static_lm_bytes = uint_volume_bytes,
             .output_bytes = uint_volume_bytes,
             .lm_download_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t)),
             .visibility_download_bytes = uint_volume_bytes,
@@ -2255,6 +2783,14 @@ auto shutdown_lm() -> void {
     if (s_shift_float_pipeline != nullptr) {
         SDL_ReleaseGPUComputePipeline(device, s_shift_float_pipeline);
         s_shift_float_pipeline = nullptr;
+    }
+    if (s_fill_uint_pipeline != nullptr) {
+        SDL_ReleaseGPUComputePipeline(device, s_fill_uint_pipeline);
+        s_fill_uint_pipeline = nullptr;
+    }
+    if (s_max_uint_pipeline != nullptr) {
+        SDL_ReleaseGPUComputePipeline(device, s_max_uint_pipeline);
+        s_max_uint_pipeline = nullptr;
     }
 }
 

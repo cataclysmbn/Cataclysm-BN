@@ -68,7 +68,7 @@ struct lm_raytrace_push_constants {
     float z_scale;        //  4 bytes
     uint32_t num_sources; //  4 bytes
     int32_t max_radius;   //  4 bytes
-    uint32_t _pad;        //  4 bytes = 32
+    uint32_t source_offset; //  4 bytes = 32
 };
 static_assert(sizeof(lm_raytrace_push_constants) == 32);
 

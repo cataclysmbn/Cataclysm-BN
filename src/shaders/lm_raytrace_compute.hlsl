@@ -22,8 +22,9 @@
 //   space2  uniform / cbuffer          (b registers)
 //
 // Thread group: [8, 8, 1]
-// Dispatch: (num_sources, ceil((2*max_radius+1)/8), ceil((2*max_radius+1)/8))
-//   group_id.x = source index
+// Dispatch per radius bucket:
+//   (bucket_source_count, ceil((2*bucket_max_radius+1)/8), ceil((2*bucket_max_radius+1)/8))
+//   group_id.x = source index inside the bucket
 //   group_id.y = x-chunk index (determines dx offset)
 //   group_id.z = y-chunk index (determines dy offset)
 
@@ -52,7 +53,7 @@ cbuffer Constants : register(b0, space2)
     float z_scale;      // Z_LEVEL_SCALE = 1.8
     uint  num_sources;
     int   max_radius;   // bounding-box half-extent for dispatch
-    uint  _pad0;
+    uint  source_offset;
 };
 
 StructuredBuffer<float>         transparency_all : register(t0, space0);
@@ -73,7 +74,7 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         return;
     }
 
-    GpuLightSource src = light_sources[group_id.x];
+    GpuLightSource src = light_sources[source_offset + group_id.x];
 
     // Compute 2D offset from source centre; may be negative.
     int dx = (int)( group_id.y * 8 + thread_id.x ) - max_radius;
@@ -87,7 +88,11 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
         return;
     }
 
-    for( int tz = 0; tz < z_count; ++tz ) {
+    int z_span = (int)ceil( src.radius / z_scale );
+    int z_min = max( 0, src.z_idx - z_span );
+    int z_max = min( z_count - 1, src.z_idx + z_span );
+
+    for( int tz = z_min; tz <= z_max; ++tz ) {
         int dz = tz - src.z_idx;
         float fdx  = (float)dx;
         float fdy  = (float)dy;
