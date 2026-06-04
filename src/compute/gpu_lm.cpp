@@ -2258,18 +2258,21 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
 
     if (p.m == nullptr || p.dirty_levels == nullptr) { return {}; }
     if (s_pending_lighting_work.active) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: lighting begin requested while previous "
-                                         "lighting work is pending";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: lighting begin requested while previous "
+               "lighting work is pending";
         return {};
     }
     if (s_pending_visibility_work.active) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: lighting begin requested while visibility "
-                                         "work is pending";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: lighting begin requested while visibility "
+               "work is pending";
         return {};
     }
     if (s_pending_sight_pairs_work.active) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: lighting begin requested while sight-pair "
-                                         "work is pending";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: lighting begin requested while sight-pair "
+               "work is pending";
         return {};
     }
     ensure_resource_device(device);
@@ -2316,8 +2319,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto input_uploads = make_input_upload_plan(p, all_levels);
     clear_transparency_shader_update_marks();
     if (!s_lighting_resources.source_map_valid && lightmap_levels.empty()) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: seen-only rebuild requested before resident "
-                                         "source-map is valid";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: seen-only rebuild requested before resident "
+               "source-map is valid";
         return {};
     }
     auto source_map_upload_levels =
@@ -3065,18 +3069,21 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
 
     if (p.m == nullptr) { return {}; }
     if (s_pending_visibility_work.active) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: visibility begin requested while previous "
-                                         "visibility work is pending";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility begin requested while previous "
+               "visibility work is pending";
         return {};
     }
     if (s_pending_lighting_work.active) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: visibility begin requested while lighting "
-                                         "work is pending";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility begin requested while lighting "
+               "work is pending";
         return {};
     }
     if (s_pending_sight_pairs_work.active) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: visibility begin requested while sight-pair "
-                                         "work is pending";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility begin requested while sight-pair "
+               "work is pending";
         return {};
     }
     ensure_resource_device(device);
@@ -3136,15 +3143,17 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
 
     if (!s_lighting_resources.inputs.transparency_valid || !s_lighting_resources.source_map_valid
         || !s_lighting_resources.lighting_outputs_valid) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: visibility requested before resident "
-                                         "lighting inputs are valid";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility requested before resident "
+               "lighting inputs are valid";
         return {};
     }
     if (rebuild_seen
         && (!s_lighting_resources.inputs.floor_valid
             || !s_lighting_resources.inputs.vehicle_floor_valid)) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: seen rebuild requested before resident "
-                                         "structural inputs are valid";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: seen rebuild requested before resident "
+               "structural inputs are valid";
         return {};
     }
     TracyPlot("GPU Visibility Rebuild Seen", rebuild_seen ? int64_t{1} : int64_t{0});
@@ -3392,21 +3401,24 @@ auto finish_gpu_visibility(SDL_GPUDevice* const device, gpu_visibility_work cons
 
     if (work.id == 0) { return false; }
     if (!s_pending_visibility_work.active || s_pending_visibility_work.id != work.id) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: finish requested for missing visibility "
-                                         "work";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: finish requested for missing visibility "
+               "work";
         return false;
     }
     if (s_pending_visibility_work.device != device) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: visibility finish requested on a different "
-                                         "GPU device";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility finish requested on a different "
+               "GPU device";
         return false;
     }
 
     auto pending = std::move(s_pending_visibility_work);
     s_pending_visibility_work = {};
     if (pending.fence == nullptr) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: visibility finish requested without a GPU "
-                                         "fence";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: visibility finish requested without a GPU "
+               "fence";
         return false;
     }
     auto wait_succeeded = true;
@@ -3476,8 +3488,9 @@ auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_pa
     if (p.pairs->empty()) { return {}; }
     if (s_pending_lighting_work.active || s_pending_visibility_work.active
         || s_pending_sight_pairs_work.active) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: sight pair batch requested while other lm "
-                                         "GPU work is pending";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight pair batch requested while other lm "
+               "GPU work is pending";
         return {};
     }
     ensure_resource_device(device);
@@ -3730,21 +3743,24 @@ auto finish_gpu_sight_pairs(
         return true;
     }
     if (!s_pending_sight_pairs_work.active || s_pending_sight_pairs_work.id != work.id) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: finish requested for missing sight-pair "
-                                         "work";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: finish requested for missing sight-pair "
+               "work";
         return false;
     }
     if (s_pending_sight_pairs_work.device != device) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: sight-pair finish requested on a different "
-                                         "GPU device";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight-pair finish requested on a different "
+               "GPU device";
         return false;
     }
 
     auto pending = std::move(s_pending_sight_pairs_work);
     s_pending_sight_pairs_work = {};
     if (pending.fence == nullptr) {
-        DebugLog(DL::Error, DC::Main) << "SDL_GPU: lm: sight-pair finish requested without a GPU "
-                                         "fence";
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: lm: sight-pair finish requested without a GPU "
+               "fence";
         return false;
     }
 
