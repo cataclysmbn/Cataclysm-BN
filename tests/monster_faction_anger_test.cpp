@@ -25,6 +25,18 @@ TEST_CASE( "monster_faction_attitude_to_npc_faction", "[monster][faction][npc]" 
     CHECK( turret.generic_npc_attitude_to( guard.get_monster_faction() ) == Attitude::A_FRIENDLY );
 }
 
+TEST_CASE( "unauthorized_robofac_turrets_attack_player", "[monster][faction]" )
+{
+    clear_all_state();
+
+    auto &you = get_avatar();
+    you.remove_value( "npctalk_var_dialogue_intercom_completed_robofac_intercom_3" );
+    auto &turret = spawn_test_monster( "mon_robofac_turret_light", tripoint_bub_ms( 5, 5, 0 ) );
+    put_player_underground();
+
+    CHECK( turret.attitude( &you ) == MATT_ATTACK );
+}
+
 TEST_CASE( "authorized_robofac_turrets_use_faction_attitude", "[monster][faction][npc]" )
 {
     clear_all_state();

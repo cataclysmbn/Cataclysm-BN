@@ -1570,11 +1570,20 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
 
     if( u != nullptr ) {
         if( has_flag( MF_FACTION_MEMORY ) ) {
+            const auto anger_towards_faction = [&]( const mfaction_id & target_faction ) {
+                const auto remembered_anger = get_faction_anger( target_faction );
+                if( faction.obj().attitude( target_faction ) == MFA_BY_MOOD ) {
+                    return std::max( remembered_anger, anger );
+                }
+                return remembered_anger;
+            };
             const monster *u_as_monster = u->as_monster();
             if( u_as_monster != nullptr ) {
-                effective_anger = get_faction_anger( u_as_monster->faction );
-            } else if( u->is_player() || u->is_npc() ) {
-                effective_anger = get_faction_anger( mfaction_id( "player" ) );
+                effective_anger = anger_towards_faction( u_as_monster->faction );
+            } else if( np != nullptr ) {
+                effective_anger = anger_towards_faction( np->get_monster_faction() );
+            } else if( u->is_player() ) {
+                effective_anger = anger_towards_faction( mfaction_id( "player" ) );
             }
         }
 
@@ -1740,8 +1749,10 @@ auto monster::generic_npc_attitude_to( const mfaction_id &who_faction ) const ->
     }
 
     if( has_flag( MF_FACTION_MEMORY ) ) {
-        static const mfaction_id player_faction( "player" );
-        effective_anger = get_faction_anger( player_faction );
+        effective_anger = get_faction_anger( who_faction );
+        if( faction_att == MFA_BY_MOOD ) {
+            effective_anger = std::max( effective_anger, anger );
+        }
     }
 
     if( effective_morale < 0 ) {
