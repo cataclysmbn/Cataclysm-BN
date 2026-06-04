@@ -276,8 +276,8 @@ struct lighting_resource_cache {
     std::size_t static_ambient_signature = 0;
     bool static_source_signature_valid = false;
     std::size_t static_source_signature = 0;
-    bool static_structural_signature_valid = false;
-    std::size_t static_structural_signature = 0;
+    std::vector<char> static_structural_level_signature_valid;
+    std::vector<std::size_t> static_structural_level_signatures;
     bool lighting_outputs_valid = false;
 };
 
@@ -452,8 +452,8 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.static_ambient_signature = 0;
     s_lighting_resources.static_source_signature_valid = false;
     s_lighting_resources.static_source_signature = 0;
-    s_lighting_resources.static_structural_signature_valid = false;
-    s_lighting_resources.static_structural_signature = 0;
+    s_lighting_resources.static_structural_level_signature_valid = {};
+    s_lighting_resources.static_structural_level_signatures = {};
     s_lighting_resources.lighting_outputs_valid = false;
     s_lighting_resources.device = nullptr;
 }
@@ -742,13 +742,6 @@ struct source_accumulator {
     std::vector<light_source_kind> source_kinds;
 };
 
-struct structural_signature_params {
-    map const& m;
-    std::vector<int> const& levels;
-    int cache_x;
-    int cache_y;
-};
-
 auto increment_source_stat(source_collection_stats& stats, light_source_kind const kind) -> void {
     switch (kind) {
         case light_source_kind::static_emitter:
@@ -917,24 +910,22 @@ auto source_signature(std::vector<GpuLightSource> const& sources) -> std::size_t
     return seed;
 }
 
-auto structural_signature(structural_signature_params const& p) -> std::size_t {
+auto structural_level_signature(map const& m, int const z, int const cache_x, int const cache_y)
+    -> std::size_t {
     auto seed = std::size_t{0};
-    mix_signature(seed, static_cast<std::size_t>(p.cache_x));
-    mix_signature(seed, static_cast<std::size_t>(p.cache_y));
-    mix_signature(seed, p.levels.size());
+    mix_signature(seed, static_cast<std::size_t>(cache_x));
+    mix_signature(seed, static_cast<std::size_t>(cache_y));
+    mix_signature(seed, static_cast<std::size_t>(z + OVERMAP_DEPTH));
 
-    for (auto const z : p.levels) {
-        auto const& lc = p.m.get_cache_ref(z);
-        mix_signature(seed, static_cast<std::size_t>(z + OVERMAP_DEPTH));
-        for (auto const value : lc.transparency_cache) {
-            mix_signature(seed, static_cast<std::size_t>(std::bit_cast<uint32_t>(value)));
-        }
-        for (auto const value : lc.floor_cache) {
-            mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
-        }
-        for (auto const value : lc.vehicle_floor_cache) {
-            mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
-        }
+    auto const& lc = m.get_cache_ref(z);
+    for (auto const value : lc.transparency_cache) {
+        mix_signature(seed, static_cast<std::size_t>(std::bit_cast<uint32_t>(value)));
+    }
+    for (auto const value : lc.floor_cache) {
+        mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
+    }
+    for (auto const value : lc.vehicle_floor_cache) {
+        mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
     }
 
     return seed;
@@ -1278,6 +1269,10 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.static_lighting_valid = false;
+    s_lighting_resources.static_structural_level_signature_valid =
+        std::vector<char>(static_cast<std::size_t>(z_count), '\0');
+    s_lighting_resources.static_structural_level_signatures =
+        std::vector<std::size_t>(static_cast<std::size_t>(z_count), std::size_t{0});
     s_lighting_resources.lighting_outputs_valid = false;
 }
 
@@ -1853,23 +1848,37 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         !s_lighting_resources.static_ambient_signature_valid ||
         s_lighting_resources.static_ambient_signature != current_ambient_signature;
     auto const structural_upload = has_structural_upload(input_uploads);
-    auto current_structural_signature = s_lighting_resources.static_structural_signature;
-    auto current_structural_signature_valid = false;
+    auto structural_upload_levels = std::vector<int>{};
+    if (structural_upload) {
+        std::ranges::copy(input_uploads.transparency_levels,
+                          std::back_inserter(structural_upload_levels));
+        std::ranges::copy(input_uploads.floor_levels,
+                          std::back_inserter(structural_upload_levels));
+        std::ranges::copy(input_uploads.vehicle_floor_levels,
+                          std::back_inserter(structural_upload_levels));
+        structural_upload_levels = sorted_unique(std::move(structural_upload_levels));
+    }
+    auto checked_structural_signatures = std::vector<std::pair<int, std::size_t>>{};
     auto structural_changed = false;
     if (!lightmap_levels.empty() &&
         s_lighting_resources.static_lighting_valid &&
-        structural_upload) {
+        !structural_upload_levels.empty()) {
         ZoneScopedN( "gpu_lm_structural_signature" );
-        current_structural_signature = structural_signature({
-            .m = *p.m,
-            .levels = all_levels,
-            .cache_x = cache_x,
-            .cache_y = cache_y,
-        });
-        current_structural_signature_valid = true;
-        structural_changed =
-            !s_lighting_resources.static_structural_signature_valid ||
-            s_lighting_resources.static_structural_signature != current_structural_signature;
+        checked_structural_signatures.reserve(structural_upload_levels.size());
+        for (auto const z : structural_upload_levels) {
+            auto const signature = structural_level_signature(*p.m, z, cache_x, cache_y);
+            checked_structural_signatures.emplace_back(z, signature);
+            auto const zi = z_to_resident_index(z);
+            auto const valid_idx = resident_index_is_valid(
+                zi, s_lighting_resources.static_structural_level_signature_valid);
+            if (!valid_idx ||
+                s_lighting_resources.static_structural_level_signature_valid
+                [static_cast<std::size_t>(zi)] == '\0' ||
+                s_lighting_resources.static_structural_level_signatures
+                [static_cast<std::size_t>(zi)] != signature) {
+                structural_changed = true;
+            }
+        }
     }
     auto const current_static_source_signature = source_signature(static_sources);
     auto const static_sources_changed =
@@ -1980,7 +1989,9 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                static_sources_changed ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Structural Upload", structural_upload ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Structural Signature Checked",
-               current_structural_signature_valid ? int64_t{ 1 } : int64_t{ 0 } );
+               checked_structural_signatures.empty() ? int64_t{ 0 } : int64_t{ 1 } );
+    TracyPlot( "GPU LM Structural Signature Levels",
+               static_cast<int64_t>( checked_structural_signatures.size() ) );
     TracyPlot( "GPU LM Structural Changed", structural_changed ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Sources Static", static_cast<int64_t>( source_stats.static_sources ) );
     TracyPlot( "GPU LM Sources Static Local",
@@ -2512,9 +2523,16 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         s_lighting_resources.static_lighting_valid = true;
         s_lighting_resources.static_source_signature_valid = true;
         s_lighting_resources.static_source_signature = current_static_source_signature;
-        s_lighting_resources.static_structural_signature_valid = current_structural_signature_valid;
-        if (current_structural_signature_valid) {
-            s_lighting_resources.static_structural_signature = current_structural_signature;
+        for (auto const& [z, signature] : checked_structural_signatures) {
+            auto const zi = z_to_resident_index(z);
+            if (!resident_index_is_valid(
+                    zi, s_lighting_resources.static_structural_level_signature_valid)) {
+                continue;
+            }
+            s_lighting_resources.static_structural_level_signature_valid
+            [static_cast<std::size_t>(zi)] = '\1';
+            s_lighting_resources.static_structural_level_signatures
+            [static_cast<std::size_t>(zi)] = signature;
         }
     }
     if (rebuild_seen) {
