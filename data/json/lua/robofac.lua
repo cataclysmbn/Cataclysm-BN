@@ -11,6 +11,8 @@ local hub01_turret = "mon_robofac_turret_light"
 local hub01_turret_id = MonsterTypeId.new(hub01_turret)
 local hub01_light_retrieval_complete = "npctalk_var_dialogue_intercom_completed_robofac_intercom_3"
 local nearby_hub01_scan_radius_omt = 4
+local min_hub01_scan_z = -10
+local max_hub01_scan_z = 10
 ---@type PointOmtMs[]
 local hub01_tile_offsets = coords.overmap_terrain_tiles()
 
@@ -56,16 +58,18 @@ local nearby_hub01_points = function()
   ---@type TripointBubMs[]
   local points = {}
 
-  for omt_x = center_omt.x - nearby_hub01_scan_radius_omt, center_omt.x + nearby_hub01_scan_radius_omt do
-    for omt_y = center_omt.y - nearby_hub01_scan_radius_omt, center_omt.y + nearby_hub01_scan_radius_omt do
-      local omt = TripointAbsOmt.new(omt_x, omt_y, center_omt.z)
-      if overmapbuffer.check_ot("robofachq_", OtMatchType.PREFIX, omt) then
-        for _, offset in ipairs(hub01_tile_offsets) do
-          ---@type TripointAbsMs
-          local abs_pos = coords.project_combine(omt, offset)
-          local point = here:abs_to_bub(abs_pos)
-          if point.x >= 0 and point.y >= 0 and point.x < map_size and point.y < map_size then
-            points[#points + 1] = point
+  for omt_z = min_hub01_scan_z, max_hub01_scan_z do
+    for omt_x = center_omt.x - nearby_hub01_scan_radius_omt, center_omt.x + nearby_hub01_scan_radius_omt do
+      for omt_y = center_omt.y - nearby_hub01_scan_radius_omt, center_omt.y + nearby_hub01_scan_radius_omt do
+        local omt = TripointAbsOmt.new(omt_x, omt_y, omt_z)
+        if overmapbuffer.check_ot("robofachq_", OtMatchType.PREFIX, omt) then
+          for _, offset in ipairs(hub01_tile_offsets) do
+            ---@type TripointAbsMs
+            local abs_pos = coords.project_combine(omt, offset)
+            local point = here:abs_to_bub(abs_pos)
+            if point.x >= 0 and point.y >= 0 and point.x < map_size and point.y < map_size then
+              points[#points + 1] = point
+            end
           end
         end
       end

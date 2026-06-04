@@ -60,9 +60,12 @@ local hub_omt_min_x = 10
 local hub_omt_min_y = 20
 local map_squares_per_omt = 24
 local hub_omts = {}
-for x = 10, 13 do
-  for y = 20, 21 do
-    hub_omts[x .. "," .. y .. ",0"] = true
+local hub_zlevels = { 0, -2 }
+for _, z in ipairs(hub_zlevels) do
+  for x = 10, 13 do
+    for y = 20, 21 do
+      hub_omts[x .. "," .. y .. "," .. z] = true
+    end
   end
 end
 
@@ -150,7 +153,7 @@ local monster_point_lookups = 0
 ---@return FakeNpc?
 local get_npc_at = function(point, _allow_hallucination)
   npc_point_lookups = npc_point_lookups + 1
-  if point.x == 25 and point.y == 1 and point.z == 0 then return npc end
+  if point.x == 25 and point.y == 1 and point.z == -2 then return npc end
   return nil
 end
 
@@ -159,7 +162,7 @@ end
 ---@return FakeMonster?
 local get_monster_at = function(point, _allow_hallucination)
   monster_point_lookups = monster_point_lookups + 1
-  if point.x == 26 and point.y == 1 and point.z == 0 then return monster end
+  if point.x == 26 and point.y == 1 and point.z == -2 then return monster end
   return nil
 end
 
@@ -208,7 +211,7 @@ package.loaded["lua.robofac"] = nil
 local robofac = require("lua.robofac")
 robofac.authorize_hub01_after_dialogue()
 
-local expected_hub_points = 8 * map_squares_per_omt * map_squares_per_omt
+local expected_hub_points = 16 * map_squares_per_omt * map_squares_per_omt
 test_data.npc_authorized = npc_authorized
 test_data.npc_attitude_cleared = npc_attitude_cleared
 test_data.monster_authorized = monster.faction == "robofac_authorized:int"
