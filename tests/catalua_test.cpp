@@ -100,6 +100,27 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_npc_avatar_name == "nil" );
 }
 
+TEST_CASE( "robofac_authorization_updates_real_active_creatures", "[lua][robofac]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto &security = spawn_npc( point_bub_ms{ 50, 50 }, "hub_security" );
+    security.set_attitude( NPCATT_KILL );
+    auto &turret = spawn_test_monster( "mon_robofac_turret_light", tripoint_bub_ms{ 51, 50, 0 } );
+    test_data["security"] = &security;
+    test_data["turret"] = &turret;
+
+    run_lua_test_script( lua, "robofac_actual_authorization_test.lua" );
+
+    CHECK( test_data.get<std::string>( "security_faction" ) == "robofac_auxiliaries" );
+    CHECK( test_data.get<npc_attitude>( "security_attitude" ) == NPCATT_NULL );
+    CHECK( test_data.get<bool>( "turret_authorized" ) );
+}
+
 TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][creature]" )
 {
     clear_all_state();
@@ -120,6 +141,10 @@ TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][cre
     CHECK( test_data.get<int>( "monster_count" ) == 1 );
     CHECK( test_data.get<bool>( "found_expected_npc" ) );
     CHECK( test_data.get<bool>( "found_expected_monster" ) );
+    CHECK( test_data.get<int>( "active_npc_count" ) == 1 );
+    CHECK( test_data.get<int>( "active_monster_count" ) == 1 );
+    CHECK( test_data.get<bool>( "found_expected_active_npc" ) );
+    CHECK( test_data.get<bool>( "found_expected_active_monster" ) );
 }
 
 TEST_CASE( "lua_typed_coords_projection", "[lua]" )
@@ -1002,6 +1027,11 @@ TEST_CASE( "robofac_authorization_scans_nearby_hub01_tiles", "[lua][robofac]" )
     CHECK( test_data.get<int>( "monster_query_radius" ) == 4 );
     CHECK( test_data.get<bool>( "npc_query_ignores_z" ) );
     CHECK( test_data.get<bool>( "monster_query_ignores_z" ) );
+    CHECK( test_data.get<bool>( "fallback_npc_authorized" ) );
+    CHECK( test_data.get<bool>( "fallback_npc_attitude_cleared" ) );
+    CHECK( test_data.get<bool>( "fallback_monster_authorized" ) );
+    CHECK( test_data.get<int>( "active_npc_queries" ) == 1 );
+    CHECK( test_data.get<int>( "active_monster_queries" ) == 1 );
 }
 
 TEST_CASE( "lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]" )

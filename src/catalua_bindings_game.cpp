@@ -304,6 +304,19 @@ void cata::detail::reg_game_api( sol::state &lua )
         return out;
     } );
 
+    DOC( "Returns all active NPCs as a Lua array without a Lua-side creature scan." );
+    luna::set_fx( lib, "get_active_npcs", []( sol::this_state s ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        auto idx = 1;
+        std::ranges::for_each(
+            g->raw_npcs() | std::views::filter( []( const shared_ptr_fast<npc> &sp ) -> bool {
+                return sp && !sp->is_dead() && !sp->marked_for_death;
+            } ),
+        [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        return out;
+    } );
+
     DOC( "Returns active monsters near an absolute overmap terrain tile as a Lua array.  " );
     DOC( "Pass `true` as the third argument to ignore z-level." );
     luna::set_fx( lib, "get_monsters_near_omt", []( sol::this_state s, const tripoint_abs_omt & p,
@@ -320,6 +333,20 @@ void cata::detail::reg_game_api( sol::state &lua )
                 }
                 const auto pos = project_to<coords::omt>( sp->abs_pos() );
                 return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
+            } ),
+        [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
+        return out;
+    } );
+
+    DOC( "Returns all active monsters as a Lua array without a Lua-side creature scan." );
+    luna::set_fx( lib, "get_active_monsters", []( sol::this_state s ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        auto idx = 1;
+        std::ranges::for_each(
+            g->critter_tracker->get_monsters_list()
+            | std::views::filter( []( const shared_ptr_fast<monster> &sp ) -> bool {
+                return sp && !sp->is_dead();
             } ),
         [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
         return out;

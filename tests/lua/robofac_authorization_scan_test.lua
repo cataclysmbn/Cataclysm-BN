@@ -75,11 +75,13 @@ player.global_square_location = function(_self)
   return { to_omt = to_omt }
 end
 
+local player_is_in_hub01 = true
+
 ---@param _otype string
 ---@param _match_type integer
 ---@param omt FakeCoord
 ---@return boolean
-local check_ot = function(_otype, _match_type, omt) return omt.x == 11 and omt.y == 20 and omt.z == 0 end
+local check_ot = function(_otype, _match_type, omt) return player_is_in_hub01 and omt.x == 11 and omt.y == 20 and omt.z == 0 end
 _G.overmapbuffer = { check_ot = check_ot }
 
 ---@class FakeNpc
@@ -122,6 +124,8 @@ local npc_query_radius = -1
 local monster_query_radius = -1
 local npc_query_ignores_z = false
 local monster_query_ignores_z = false
+local active_npc_queries = 0
+local active_monster_queries = 0
 
 ---@param center FakeCoord
 ---@param radius integer
@@ -147,6 +151,18 @@ local get_monsters_near_omt = function(center, radius, ignore_z)
   return {}
 end
 
+---@return FakeNpc[]
+local get_active_npcs = function()
+  active_npc_queries = active_npc_queries + 1
+  return { npc }
+end
+
+---@return FakeMonster[]
+local get_active_monsters = function()
+  active_monster_queries = active_monster_queries + 1
+  return { monster }
+end
+
 ---@return nil
 local fail_slow_scan = function() error("regression: slow creature scan was used") end
 
@@ -157,6 +173,8 @@ _G.gapi = {
   get_avatar = get_avatar,
   get_npcs_near_omt = get_npcs_near_omt,
   get_monsters_near_omt = get_monsters_near_omt,
+  get_active_npcs = get_active_npcs,
+  get_active_monsters = get_active_monsters,
   get_all_npcs = fail_slow_scan,
   get_all_monsters = fail_slow_scan,
   get_npc_at = fail_slow_scan,
@@ -180,3 +198,15 @@ test_data.npc_query_radius = npc_query_radius
 test_data.monster_query_radius = monster_query_radius
 test_data.npc_query_ignores_z = npc_query_ignores_z
 test_data.monster_query_ignores_z = monster_query_ignores_z
+
+npc_authorized = false
+npc_attitude_cleared = false
+monster.faction = nil
+player_is_in_hub01 = false
+robofac.authorize_hub01_after_dialogue()
+
+test_data.fallback_npc_authorized = npc_authorized
+test_data.fallback_npc_attitude_cleared = npc_attitude_cleared
+test_data.fallback_monster_authorized = monster.faction == "robofac_authorized:int"
+test_data.active_npc_queries = active_npc_queries
+test_data.active_monster_queries = active_monster_queries
