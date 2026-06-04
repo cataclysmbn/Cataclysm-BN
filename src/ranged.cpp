@@ -1180,10 +1180,14 @@ static int calc_gun_volume( const item &gun )
     int noise = parent.type->gun->loudness;
     // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
     if( gun.ammo_data() ) {
-        noise += gun.ammo_data()->ammo->loudness;
-        // Speed of sound at sea level is around 343 meters per second.
-        if( gun.ammo_data()->ammo->speed > 342 ) {
-            noise = std::max( 120, noise );
+        // if ammo loudness is explicitly set to 0, it should always be quiet. Speed gets used strangely
+        // in too many ammo types and we shouldn't trust that it is always true speed.
+        if ( gun.ammo_data()->ammo->loudness > 0) {
+            noise += gun.ammo_data()->ammo->loudness;
+            // Speed of sound at sea level is around 343 meters per second.
+            if( gun.ammo_data()->ammo->speed > 342 ) {
+                noise = std::max( 120, noise );
+            }
         }
     }
     for( const auto mod : parent.gunmods() ) {
