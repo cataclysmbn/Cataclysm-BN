@@ -73,7 +73,7 @@ set(GIT_BINARY "" CACHE STRING "Git binary name or path.")
 set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
 option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
-option(CATA_SDL "Link SDL3 core for GPU platform services (automatically enabled by TILES)." "OFF")
+option(CATA_SDL "Link SDL3 core for GPU platform services used by existing game targets." "OFF")
 option(CATA_GPU_VERIFY "Enable GPU output verification against CPU reference via readback (development only, requires CATA_SDL)." "OFF")
 set(CATA_SHADERS OFF)
 
@@ -195,7 +195,11 @@ endif ()
 # Can't compile curses and tiles build's at same time
 if (TILES)
     set(CURSES OFF)
-    set(CATA_SDL ON)
+endif ()
+
+if (TILES OR CURSES OR SOUND)
+    set(CATA_SDL ON CACHE BOOL
+        "Link SDL3 core for GPU platform services used by existing game targets." FORCE)
 endif ()
 
 # Can't use both home and xdg directories
@@ -383,8 +387,7 @@ if (CATA_SDL)
     if (NOT (SDL3_FOUND OR TARGET SDL3::SDL3 OR TARGET SDL3::SDL3-static))
         message(FATAL_ERROR
                 "This project requires SDL3 to be installed for SDL platform services. \
-                 Please install the SDL3 development libraries, \
-                 or disable with -DCATA_SDL=OFF (or -DTILES=OFF for tile builds). \
+                 Please install the SDL3 development libraries. \
                  See CMake compiling guide for details and more info.")
     endif ()
     add_definitions(-DCATA_SDL)
@@ -550,8 +553,7 @@ endif ()
 if (SOUND)
     if (NOT CATA_SDL)
         message(FATAL_ERROR
-                "You must enable SDL core with -DCATA_SDL=1 (or -DTILES=1) \
-                to be able to enable sound support. \
+                "Sound support requires SDL core. Existing game targets should enable CATA_SDL automatically. \
                 See CMake compiling guide for details and more info.")
     endif ()
 
@@ -781,14 +783,21 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/gfx" "${CATA_OSX_RESOURCES_DIR}/gfx")
     endif()
+    if (CATA_SDL)
+        list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
+            COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/shaders" "${CATA_OSX_DATA_DIR}/shaders")
+    endif()
     if (SOUND)
         list(APPEND CATA_OSX_COPY_RESOURCE_COMMANDS
             COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_SOURCE_DIR}/data/sound" "${CATA_OSX_DATA_DIR}/sound")
     endif()
 
     set(CATA_OSX_COPY_FRAMEWORK_COMMANDS)
-    if (TILES AND CATA_OSX_FRAMEWORKS_DIR)
-        set(CATA_OSX_FRAMEWORK_NAMES SDL3 SDL3_image SDL3_ttf)
+    if (CATA_SDL AND CATA_OSX_FRAMEWORKS_DIR)
+        set(CATA_OSX_FRAMEWORK_NAMES SDL3)
+        if (TILES)
+            list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL3_image SDL3_ttf)
+        endif()
         if (SOUND)
             list(APPEND CATA_OSX_FRAMEWORK_NAMES SDL3_mixer)
         endif()

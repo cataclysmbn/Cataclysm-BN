@@ -54,15 +54,19 @@
 
 class ui_adaptor;
 
+#if defined(CATA_SDL)
+#   if !defined(SDL_MAIN_HANDLED)
+#       define SDL_MAIN_HANDLED
+#   endif
+#   include <SDL3/SDL.h>
+#   include "compute/gpu_platform.h"
+#endif
 #if defined(TILES)
-#   define SDL_MAIN_HANDLED
 #   include <SDL3/SDL_main.h>
 #   include "sdl_wrappers.h"
 #endif
-#if defined(CATA_SDL)
-#   include "compute/gpu_platform.h"
-#endif
 #include "preload_config.h"
+#include "sdlsound.h"
 
 #if defined(__ANDROID__)
 #include <SDL3/SDL.h>
@@ -180,6 +184,24 @@ struct arg_handler {
     const char *help_group; //!< Section of the help message in which to include this argument.
     handler_method handler;  //!< The callback to be invoked when this argument is encountered.
 };
+
+#if defined(CATA_SDL) && !defined(TILES)
+auto init_sdl_platform() -> bool
+{
+    auto init_flags = SDL_InitFlags{ 0 };
+#if defined(SDL_SOUND)
+    init_flags |= SDL_INIT_AUDIO;
+#endif
+
+    if( !SDL_Init( init_flags ) ) {
+        DebugLog( DL::Error, DC::Main ) << "SDL_Init failed: " << SDL_GetError();
+        return false;
+    }
+
+    atexit( SDL_Quit );
+    return true;
+}
+#endif
 
 void printHelpMessage( const arg_handler *first_pass_arguments, size_t num_first_pass_arguments,
                        const arg_handler *second_pass_arguments, size_t num_second_pass_arguments );
@@ -721,7 +743,7 @@ int main( int argc, char *argv[] )
         exit_handler( -999 );
     }
 
-#if defined(TILES)
+#if defined(CATA_SDL)
     DebugLog( DL::Info, DC::Main ) << "SDL version used during compile is "
                                    << SDL_MAJOR_VERSION << "."
                                    << SDL_MINOR_VERSION << "."
@@ -739,6 +761,11 @@ int main( int argc, char *argv[] )
     get_options().load();
     get_options().save();
     set_language(); // Have to set locale before initializing ncurses
+#if defined(CATA_SDL)
+    if( !test_mode && !init_sdl_platform() ) {
+        return 1;
+    }
+#endif
 #endif
 
     // in test mode don't initialize curses to avoid escape sequences being inserted into output stream
@@ -756,6 +783,12 @@ int main( int argc, char *argv[] )
         }
 #if defined(CATA_SDL)
         cata_gpu::init();
+        atexit( cata_gpu::shutdown );
+#endif
+#if defined(SDL_SOUND) && !defined(TILES)
+        init_sound();
+        atexit( shutdown_sound );
+        load_soundset();
 #endif
     }
 

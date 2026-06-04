@@ -112,6 +112,24 @@ function(setup_common_target_properties target_name)
     endif ()
 endfunction()
 
+function(link_sdl_core target_name)
+    if (NOT DYNAMIC_LINKING)
+        target_link_libraries(${target_name} PUBLIC SDL3::SDL3-static)
+    else()
+        target_link_libraries(${target_name} PUBLIC SDL3::SDL3)
+    endif ()
+    target_compile_definitions(${target_name} PUBLIC CATA_SDL)
+endfunction()
+
+function(link_sdl_mixer target_name)
+    if (NOT DYNAMIC_LINKING)
+        target_link_libraries(${target_name} PUBLIC SDL3_mixer::SDL3_mixer-static)
+    else()
+        target_link_libraries(${target_name} PUBLIC SDL3_mixer::SDL3_mixer)
+    endif ()
+    target_compile_definitions(${target_name} PUBLIC SDL_SOUND)
+endfunction()
+
 # Build tiles version if requested
 if (TILES)
     add_library(
@@ -137,7 +155,7 @@ if (TILES)
 
     # Tiles-specific setup
     target_compile_definitions(cataclysm-bn-tiles-common PUBLIC TILES)
-    target_compile_definitions(cataclysm-bn-tiles-common PUBLIC CATA_SDL)
+    link_sdl_core(cataclysm-bn-tiles-common)
     if (DYNAMIC_ATLAS)
         target_compile_definitions(cataclysm-bn-tiles-common PUBLIC DYNAMIC_ATLAS)
     endif()
@@ -153,29 +171,18 @@ if (TILES)
 
     if (NOT DYNAMIC_LINKING)
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL3::SDL3-static
             SDL3_image::SDL3_image-static
             SDL3_ttf::SDL3_ttf-static
         )
     else()
         target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-            SDL3::SDL3
             SDL3_image::SDL3_image
             SDL3_ttf::SDL3_ttf
         )
     endif ()
 
     if (SOUND)
-        if (NOT DYNAMIC_LINKING)
-            target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL3_mixer::SDL3_mixer-static
-            )
-        else()
-            target_link_libraries(cataclysm-bn-tiles-common PUBLIC
-                SDL3_mixer::SDL3_mixer
-            )
-        endif()
-        add_definitions(-DSDL_SOUND)
+        link_sdl_mixer(cataclysm-bn-tiles-common)
     endif ()
 
     if (RELEASE)
@@ -223,12 +230,10 @@ if (CURSES)
     target_include_directories(cataclysm-bn-common PUBLIC ${CURSES_INCLUDE_DIR})
     target_link_libraries(cataclysm-bn-common PUBLIC ${CURSES_LIBRARIES})
     if (CATA_SDL)
-        target_compile_definitions(cataclysm-bn-common PUBLIC CATA_SDL)
-        if (NOT DYNAMIC_LINKING)
-            target_link_libraries(cataclysm-bn-common PUBLIC SDL3::SDL3-static)
-        else()
-            target_link_libraries(cataclysm-bn-common PUBLIC SDL3::SDL3)
-        endif()
+        link_sdl_core(cataclysm-bn-common)
+    endif()
+    if (SOUND)
+        link_sdl_mixer(cataclysm-bn-common)
     endif()
     target_link_libraries(cataclysm-bn PRIVATE cataclysm-bn-common)
 
