@@ -61,6 +61,45 @@ TEST_CASE( "authorized_robofac_turrets_use_faction_attitude", "[monster][faction
     CHECK( authorized_turret.attitude( &you ) == MATT_ATTACK );
 }
 
+TEST_CASE( "authorized_robofac_turrets_alert_visible_security", "[monster][faction][npc]" )
+{
+    clear_all_state();
+
+    const auto attacked_pos = tripoint_bub_ms( 10, 10, 0 );
+    const auto east_pos = tripoint_bub_ms( 12, 10, 0 );
+    const auto south_pos = tripoint_bub_ms( 10, 12, 0 );
+    const auto southeast_pos = tripoint_bub_ms( 12, 12, 0 );
+    auto &attacked_turret = spawn_test_monster( "mon_robofac_turret_light", attacked_pos );
+    auto &east_turret = spawn_test_monster( "mon_robofac_turret_light", east_pos );
+    auto &south_turret = spawn_test_monster( "mon_robofac_turret_light", south_pos );
+    auto &southeast_turret = spawn_test_monster( "mon_robofac_turret_light", southeast_pos );
+
+    for( monster *security : { &attacked_turret, &east_turret, &south_turret, &southeast_turret } ) {
+        security->faction = mfaction_id( "robofac_authorized" );
+        security->friendly = 0;
+    }
+
+    auto &you = get_avatar();
+    put_player_underground();
+    const auto player_faction = mfaction_id( "player" );
+
+    REQUIRE( east_turret.sees( attacked_turret ) );
+    REQUIRE( south_turret.sees( attacked_turret ) );
+    REQUIRE( southeast_turret.sees( attacked_turret ) );
+    CHECK( east_turret.attitude( &you ) == MATT_FRIEND );
+    CHECK( south_turret.attitude( &you ) == MATT_FRIEND );
+    CHECK( southeast_turret.attitude( &you ) == MATT_FRIEND );
+
+    attacked_turret.on_hit( &you, bodypart_id( "torso" ), nullptr, false );
+
+    CHECK( east_turret.get_faction_anger( player_faction ) >= 10 );
+    CHECK( south_turret.get_faction_anger( player_faction ) >= 10 );
+    CHECK( southeast_turret.get_faction_anger( player_faction ) >= 10 );
+    CHECK( east_turret.attitude( &you ) == MATT_ATTACK );
+    CHECK( south_turret.attitude( &you ) == MATT_ATTACK );
+    CHECK( southeast_turret.attitude( &you ) == MATT_ATTACK );
+}
+
 TEST_CASE( "authorized_robofac_turrets_defend_hub_guards", "[monster][faction][npc]" )
 {
     clear_all_state();
