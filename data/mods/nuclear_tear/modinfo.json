@@ -4,8 +4,9 @@
     "id": "nuclear_tear",
     "name": "Closable tear in reality",
     "authors": [ "Cataclysm-BN Team" ],
-    "description": "Make high-damage explosions (like mininukes) to seal or destabilize tears in reality.",
+    "description": "Obsolete compatibility stub. High-damage explosions now seal or destabilize tears in reality in the BN core content pack.",
     "category": "rebalance",
+    "obsolete": true,
     "lua_api_version": 2,
     "dependencies": [ "bn" ]
   }
