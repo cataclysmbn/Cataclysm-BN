@@ -41,6 +41,10 @@ Checks the BN json files.
 
 Checks the json files belonging to default or specified BN mods.
 
+### `--check-all-mods`
+
+Checks the json files belonging to all non-obsolete BN mods.
+
 ### `--dump-stats <what> [mode = TSV] [opts…]`
 
 Dumps item stats.
