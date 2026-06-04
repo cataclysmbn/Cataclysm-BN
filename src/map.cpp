@@ -8171,6 +8171,8 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
         }
     }
     reset_vehicle_cache( );
+
+    charge_removal_blacklist::split_deferred();
 }
 
 
