@@ -10219,6 +10219,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     bool gpu_vehicle_floor_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
     std::vector<int> gpu_transparency_dirty_levels;
+    std::vector<int> gpu_transparency_residency_invalid_levels;
     std::vector<int> gpu_floor_dirty_levels;
     std::vector<int> gpu_vehicle_floor_dirty_levels;
 
@@ -10364,15 +10365,25 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
         // otherwise such changes might be overwritten by main cache-building logic.
         // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
+        auto const mark_vehicle_gpu_structural_levels = [&]( const vehicle *const veh ) {
+            if( veh == nullptr ) {
+                return;
+            }
+            for( const vpart_reference &vp : veh->get_all_parts() ) {
+                const auto &part_pos = veh->bub_part_location( vp.part() );
+                if( !inbounds( part_pos ) || vp.part().removed ) {
+                    continue;
+                }
+                add_gpu_dirty_level( gpu_transparency_dirty_levels, part_pos.z() );
+                add_gpu_dirty_level( gpu_transparency_residency_invalid_levels, part_pos.z() );
+                add_gpu_dirty_level( gpu_floor_dirty_levels, part_pos.z() );
+            }
+        };
         for( int z = minz; z <= maxz; z++ ) {
             if( get_cache( z ).veh_in_active_range ) {
-                gpu_transparency_dirty = true;
-                gpu_floor_dirty = true;
-                add_all_gpu_dirty_levels( gpu_transparency_dirty_levels );
-                add_all_gpu_dirty_levels( gpu_floor_dirty_levels );
-#if defined( CATA_SDL )
-                cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_dirty_levels );
-#endif
+                for( const vehicle *const veh : get_cache( z ).vehicle_list ) {
+                    mark_vehicle_gpu_structural_levels( veh );
+                }
                 do_vehicle_caching( z );
             }
         }
@@ -10393,9 +10404,25 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
 
     seen_cache_dirty |= build_vision_transparency_cache( get_player_character() );
     normalize_gpu_dirty_levels( gpu_transparency_dirty_levels );
+    normalize_gpu_dirty_levels( gpu_transparency_residency_invalid_levels );
     normalize_gpu_dirty_levels( gpu_floor_dirty_levels );
     normalize_gpu_dirty_levels( gpu_vehicle_floor_dirty_levels );
+    gpu_transparency_dirty = !gpu_transparency_dirty_levels.empty();
+    gpu_floor_dirty = !gpu_floor_dirty_levels.empty();
     gpu_vehicle_floor_dirty = !gpu_vehicle_floor_dirty_levels.empty();
+#if defined( CATA_SDL )
+    if( !gpu_transparency_residency_invalid_levels.empty() ) {
+        cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
+    }
+#endif
+    TracyPlot( "Map GPU Transparency Dirty Levels",
+               static_cast<int64_t>( gpu_transparency_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Floor Dirty Levels",
+               static_cast<int64_t>( gpu_floor_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Vehicle Floor Dirty Levels",
+               static_cast<int64_t>( gpu_vehicle_floor_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Transparency Invalidated Levels",
+               static_cast<int64_t>( gpu_transparency_residency_invalid_levels.size() ) );
 
     if( seen_cache_dirty ) {
         skew_vision_cache.assign( vision_cache_slots, vision_cache_slot{} );
