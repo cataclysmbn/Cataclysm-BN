@@ -135,7 +135,7 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
     if (s_ambient_pipeline == nullptr) {
         s_ambient_pipeline = load_pipeline(
             device, "lm_ambient_compute",
-            /*ro=*/2, /*rw=*/2, 64, 1);
+            /*ro=*/3, /*rw=*/2, 64, 1);
     }
     if (s_raytrace_pipeline == nullptr) {
         s_raytrace_pipeline = load_pipeline(
@@ -697,6 +697,7 @@ auto make_source(int const x, int const y, int const zlev, float const luminance
 
 enum class light_source_kind : int {
     static_emitter,
+    static_local_emitter,
     field,
     active_item,
     vehicle,
@@ -706,6 +707,7 @@ enum class light_source_kind : int {
 
 struct source_collection_stats {
     int static_sources = 0;
+    int static_local_sources = 0;
     int field_sources = 0;
     int active_item_sources = 0;
     int vehicle_sources = 0;
@@ -752,6 +754,9 @@ auto increment_source_stat(source_collection_stats& stats, light_source_kind con
         case light_source_kind::static_emitter:
             ++stats.static_sources;
             break;
+        case light_source_kind::static_local_emitter:
+            ++stats.static_local_sources;
+            break;
         case light_source_kind::field:
             ++stats.field_sources;
             break;
@@ -796,8 +801,17 @@ auto upsert_source(std::vector<GpuLightSource>& sources,
     return iter->second;
 }
 
-auto source_is_static(light_source_kind const kind) -> bool {
+auto source_is_static_raytrace(light_source_kind const kind) -> bool {
     return kind == light_source_kind::static_emitter;
+}
+
+auto source_is_raytraced(light_source_kind const kind) -> bool {
+    return kind != light_source_kind::static_local_emitter;
+}
+
+auto static_emitter_kind(map_data_common_t const& data) -> light_source_kind {
+    return data.has_flag("LOCAL_LIGHT") ? light_source_kind::static_local_emitter :
+           light_source_kind::static_emitter;
 }
 
 auto source_radius_ceiling(GpuLightSource const& source) -> int {
@@ -954,7 +968,11 @@ auto add_source(source_accumulator& acc, tripoint_bub_ms const& pos, float const
         acc.source_kinds[source_index] = kind;
     }
 
-    if (source_is_static(kind)) {
+    if (!source_is_raytraced(kind)) {
+        return;
+    }
+
+    if (source_is_static_raytrace(kind)) {
         upsert_source(
             acc.static_sources, acc.static_source_indices, source_slot, pos, luminance);
     } else {
@@ -1014,11 +1032,11 @@ auto add_static_emitter_sources(source_accumulator& acc) -> void {
                     auto const pos = project_combine(grid, sm_ms);
                     auto const terrain = sm->get_ter(sm_ms);
                     add_source(acc, pos, static_cast<float>(terrain->light_emitted),
-                               light_source_kind::static_emitter);
+                               static_emitter_kind(terrain.obj()));
 
                     auto const furniture = sm->get_furn(sm_ms);
                     add_source(acc, pos, static_cast<float>(furniture->light_emitted),
-                               light_source_kind::static_emitter);
+                               static_emitter_kind(furniture.obj()));
                 }
             }
         }
@@ -1260,12 +1278,6 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
     s_lighting_resources.camera_nonzero_levels = {};
     s_lighting_resources.source_map_valid = false;
     s_lighting_resources.static_lighting_valid = false;
-    s_lighting_resources.static_ambient_signature_valid = false;
-    s_lighting_resources.static_ambient_signature = 0;
-    s_lighting_resources.static_source_signature_valid = false;
-    s_lighting_resources.static_source_signature = 0;
-    s_lighting_resources.static_structural_signature_valid = false;
-    s_lighting_resources.static_structural_signature = 0;
     s_lighting_resources.lighting_outputs_valid = false;
 }
 
@@ -1917,8 +1929,22 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     auto const float_level_bytes = static_cast<Uint32>(cache_xy * sizeof(float));
     auto const uint_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
     auto const lm_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
-    auto const lm_download_bytes =
+    auto const full_lm_download_bytes =
         static_cast<Uint32>(lightmap_levels.size()) * lm_level_bytes;
+    auto const download_lm_levels = p.download_lightmap && !lightmap_levels.empty();
+    auto const download_player_light =
+        !download_lm_levels &&
+        !lightmap_levels.empty() &&
+        std::ranges::find(lightmap_levels, p.player_zlev) != lightmap_levels.end() &&
+        p.player_zlev >= -OVERMAP_DEPTH &&
+        p.player_zlev <= OVERMAP_HEIGHT &&
+        p.player_x >= 0 &&
+        p.player_x < cache_x &&
+        p.player_y >= 0 &&
+        p.player_y < cache_y;
+    auto const lm_download_bytes =
+        (download_lm_levels ? full_lm_download_bytes : Uint32{0}) +
+        (download_player_light ? static_cast<Uint32>(sizeof(uint32_t)) : Uint32{0});
     auto const source_upload_bytes =
         num_src > 0 ? static_cast<Uint32>(num_src * sizeof(GpuLightSource)) : Uint32{0};
     auto const source_buffer_bytes =
@@ -1958,6 +1984,8 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     TracyPlot( "GPU LM Structural Upload", structural_upload ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Structural Changed", structural_changed ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Sources Static", static_cast<int64_t>( source_stats.static_sources ) );
+    TracyPlot( "GPU LM Sources Static Local",
+               static_cast<int64_t>( source_stats.static_local_sources ) );
     TracyPlot( "GPU LM Sources Field", static_cast<int64_t>( source_stats.field_sources ) );
     TracyPlot( "GPU LM Sources Active Item",
                static_cast<int64_t>( source_stats.active_item_sources ) );
@@ -1971,6 +1999,10 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
     TracyPlot( "GPU LM Raytrace Z Work", raytrace_z_work );
     TracyPlot( "GPU LM Raytrace Z Work Legacy", legacy_raytrace_z_work );
     TracyPlot( "GPU LM Source Map Levels", static_cast<int64_t>( source_map_upload_levels.size() ) );
+    TracyPlot( "GPU LM Download Levels",
+               download_lm_levels ? static_cast<int64_t>( lightmap_levels.size() ) : int64_t{ 0 } );
+    TracyPlot( "GPU LM Download Player Light",
+               download_player_light ? int64_t{ 1 } : int64_t{ 0 } );
     TracyPlot( "GPU LM Input Upload Levels",
                static_cast<int64_t>( input_uploads.transparency_levels.size() +
                                      input_uploads.floor_levels.size() +
@@ -2190,7 +2222,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                     cmd, nullptr, 0, rw_lm.data(), static_cast<Uint32>(rw_lm.size()));
                 SDL_BindGPUComputePipeline(cp, s_ambient_pipeline);
 
-                auto const ro_bufs = std::array<SDL_GPUBuffer*, 2>{f_buf, t_buf};
+                auto const ro_bufs = std::array<SDL_GPUBuffer*, 3>{f_buf, t_buf, source_map_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
@@ -2328,20 +2360,37 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
 
             auto lm_download_offset = Uint32{0};
-            for (int const z : lightmap_levels) {
-                auto const zi = z + OVERMAP_DEPTH;
-                auto const lm_buffer_offset = static_cast<Uint32>(zi) * lm_level_bytes;
+            if (download_lm_levels) {
+                for (int const z : lightmap_levels) {
+                    auto const zi = z + OVERMAP_DEPTH;
+                    auto const lm_buffer_offset = static_cast<Uint32>(zi) * lm_level_bytes;
+                    auto const src_lm = SDL_GPUBufferRegion{
+                        .buffer = lm_buf,
+                        .offset = lm_buffer_offset,
+                        .size = lm_level_bytes,
+                    };
+                    auto const dst_lm = SDL_GPUTransferBufferLocation{
+                        .transfer_buffer = lm_dl_tbuf,
+                        .offset = lm_download_offset,
+                    };
+                    SDL_DownloadFromGPUBuffer(cp, &src_lm, &dst_lm);
+                    lm_download_offset += lm_level_bytes;
+                }
+            }
+            if (download_player_light) {
+                auto const zi = p.player_zlev + OVERMAP_DEPTH;
+                auto const player_idx =
+                    static_cast<Uint32>(zi * cache_xy + p.player_x * cache_y + p.player_y);
                 auto const src_lm = SDL_GPUBufferRegion{
                     .buffer = lm_buf,
-                    .offset = lm_buffer_offset,
-                    .size = lm_level_bytes,
+                    .offset = static_cast<Uint32>(player_idx * sizeof(uint32_t)),
+                    .size = static_cast<Uint32>(sizeof(uint32_t)),
                 };
                 auto const dst_lm = SDL_GPUTransferBufferLocation{
                     .transfer_buffer = lm_dl_tbuf,
                     .offset = lm_download_offset,
                 };
                 SDL_DownloadFromGPUBuffer(cp, &src_lm, &dst_lm);
-                lm_download_offset += lm_level_bytes;
             }
             if (!seen_download_levels.empty()) {
                 auto seen_download_offset = Uint32{0};
@@ -2388,7 +2437,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         // lm_all stores uint (bit-reinterpretation of positive floats).
         // Copying uint bytes directly into float storage is valid since the
         // bit pattern is preserved.
-        auto const* lm_mapped = lightmap_levels.empty()
+        auto const* lm_mapped = lm_download_bytes == 0
                                 ? nullptr
                                 : static_cast<uint32_t const*>(
                                     SDL_MapGPUTransferBuffer(device, lm_dl_tbuf, false));
@@ -2396,7 +2445,7 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
                                   ? nullptr
                                   : static_cast<float const*>(
                                       SDL_MapGPUTransferBuffer(device, seen_dl_tbuf, false));
-        if ((!lightmap_levels.empty() && lm_mapped == nullptr) ||
+        if ((lm_download_bytes > 0 && lm_mapped == nullptr) ||
             (!seen_download_levels.empty() && seen_mapped == nullptr)) {
             DebugLog(DL::Error, DC::Main)
                 << "SDL_GPU: lm: download transfer buffer map failed: " << SDL_GetError();
@@ -2406,17 +2455,26 @@ auto run_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params const
         }
 
         auto lm_level_index = std::size_t{0};
-        for (int const z : lightmap_levels) {
-            // get_cache_ref is the public accessor; const_cast is safe because the
-            // underlying level_cache is non-const — the const qualifier is only on
-            // the return type of the accessor.
-            auto& lc = const_cast<level_cache&>(p.m->get_cache_ref(z));
-            auto const sz = static_cast<std::size_t>(cache_xy);
+        if (download_lm_levels) {
+            for (int const z : lightmap_levels) {
+                // get_cache_ref is the public accessor; const_cast is safe because the
+                // underlying level_cache is non-const — the const qualifier is only on
+                // the return type of the accessor.
+                auto& lc = const_cast<level_cache&>(p.m->get_cache_ref(z));
+                auto const sz = static_cast<std::size_t>(cache_xy);
 
-            auto const* lm_src = lm_mapped + lm_level_index * cache_xy;
-            // Reinterpret uint bits as float values for lm.
-            std::memcpy(lc.lm.data(), lm_src, sz * sizeof(float));
-            ++lm_level_index;
+                auto const* lm_src = lm_mapped + lm_level_index * cache_xy;
+                // Reinterpret uint bits as float values for lm.
+                std::memcpy(lc.lm.data(), lm_src, sz * sizeof(float));
+                ++lm_level_index;
+            }
+        }
+        if (download_player_light) {
+            auto& lc = const_cast<level_cache&>(p.m->get_cache_ref(p.player_zlev));
+            auto const player_tile_idx = lc.idx(p.player_x, p.player_y);
+            auto const* player_light_src =
+                lm_mapped + (download_lm_levels ? lightmap_levels.size() * cache_xy : 0);
+            std::memcpy(&lc.lm[player_tile_idx], player_light_src, sizeof(float));
         }
 
         if (!seen_download_levels.empty()) {

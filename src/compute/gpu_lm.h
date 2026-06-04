@@ -142,6 +142,7 @@ struct run_gpu_lighting_params {
     std::vector<int> const* vehicle_floor_dirty_levels = nullptr;
     bool rebuild_seen_cache;
     bool download_seen_cache = false;
+    bool download_lightmap = true;
     bool angled_sunlight_shadows;
     bool direct_sunlight;
     float sun_dx_per_z;

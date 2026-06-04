@@ -1426,6 +1426,11 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
         return lit_level::BRIGHT;
     }
     const auto &map_cache = get_cache_ref( p.z() );
+#if defined( CATA_SDL )
+    if( cache.variables_set && !map_cache.visibility_cache_dirty ) {
+        return map_cache.visibility_cache[map_cache.idx( p.x(), p.y() )];
+    }
+#endif
     const apparent_light_info a = apparent_light_helper( map_cache, p, cache.visibility_scale_factor );
 
     float apparent_light = a.apparent_light;
@@ -1494,15 +1499,11 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
         return false;
     }
 
-    const auto &player_cache = get_cache_ref( player_pos.z() );
-    if( !player_cache.inbounds( player_pos.xy() ) ) {
-        return false;
-    }
-
-    const auto light_at_player = player_cache.lm[player_cache.idx( player_pos.x(), player_pos.y() )];
-    const auto tile_idx = map_cache.idx( t.x(), t.y() );
-    return map_cache.lm[tile_idx] >= g->u.get_vision_threshold( light_at_player ) ||
-           map_cache.sm[tile_idx] > 0.0f;
+    // Transitional SDL path: normal gameplay should consume GPU-generated
+    // visibility_cache.  If a caller asks before that cache is refreshed, avoid
+    // consulting stale CPU lm data; answer geometry only until this becomes a
+    // sparse GPU visibility query.
+    return true;
 #else
     const auto &map_cache = get_cache_ref( t.z() );
     const auto visibility_scale_factor = 60.0f / static_cast<float>( g_max_view_distance );

@@ -8448,26 +8448,53 @@ void map::shift( const point_rel_sm &sp )
             point_bub_ms( g_mapsize_x, g_mapsize_y ) );
     const point_rel_ms shift_offset_pt( -sp.x() * SEEX, -sp.y() * SEEY );
 
-    auto const shift_flat_cache = [&]( auto &cache, level_cache &gc, const auto fill_value ) {
-        auto old_cache = cache;
+    auto const shift_flat_cache = [&]( auto &cache, auto &scratch, level_cache &gc,
+    const auto fill_value ) {
+        using cache_value = std::ranges::range_value_t<std::remove_reference_t<decltype( cache )>>;
+        scratch.assign( cache.begin(), cache.end() );
+
         const auto source_offset_x = sp.x() * SEEX;
         const auto source_offset_y = sp.y() * SEEY;
+        const auto fill = static_cast<cache_value>( fill_value );
+        const auto row_size = gc.cache_y;
+        const auto valid_y_count = std::max( 0, row_size - std::abs( source_offset_y ) );
+        const auto dst_y_begin = std::max( 0, -source_offset_y );
+        const auto source_y_begin = dst_y_begin + source_offset_y;
+
+        auto const fill_row = [&]( const auto x ) {
+            std::fill_n( cache.begin() + gc.idx( x, 0 ), row_size, fill );
+        };
+
+        if( valid_y_count <= 0 ) {
+            for( const auto x : std::views::iota( 0, gc.cache_x ) ) {
+                fill_row( x );
+            }
+            return;
+        }
 
         for( const auto x : std::views::iota( 0, gc.cache_x ) ) {
             const auto source_x = x + source_offset_x;
-            for( const auto y : std::views::iota( 0, gc.cache_y ) ) {
-                const auto source_y = y + source_offset_y;
-                const auto dst_idx = static_cast<size_t>( gc.idx( x, y ) );
-                if( source_x >= 0 && source_x < gc.cache_x && source_y >= 0 &&
-                    source_y < gc.cache_y ) {
-                    const auto src_idx = static_cast<size_t>( gc.idx( source_x, source_y ) );
-                    cache[dst_idx] = old_cache[src_idx];
-                } else {
-                    cache[dst_idx] = fill_value;
-                }
+            if( source_x < 0 || source_x >= gc.cache_x ) {
+                fill_row( x );
+                continue;
+            }
+
+            if( dst_y_begin > 0 ) {
+                std::fill_n( cache.begin() + gc.idx( x, 0 ), dst_y_begin, fill );
+            }
+            std::copy_n( scratch.begin() + gc.idx( source_x, source_y_begin ), valid_y_count,
+                         cache.begin() + gc.idx( x, dst_y_begin ) );
+            const auto dst_y_end = dst_y_begin + valid_y_count;
+            if( dst_y_end < row_size ) {
+                std::fill_n( cache.begin() + gc.idx( x, dst_y_end ), row_size - dst_y_end, fill );
             }
         }
     };
+    auto float_shift_scratch = std::vector<float> {};
+    auto char_shift_scratch = std::vector<char> {};
+    auto short_shift_scratch = std::vector<short> {};
+    auto bool_shift_scratch = std::vector<bool> {};
+
     auto const shift_submap_dirty_bits = [&]( cata_dynamic_bitset &dirty_bits, level_cache &gc ) {
         const auto old_dirty = dirty_bits;
         dirty_bits.reset();
@@ -8588,10 +8615,11 @@ void map::shift( const point_rel_sm &sp )
             {
                 ZoneScopedN( "shift_prerequisite_caches" );
                 auto &gc = get_cache( gridz );
-                shift_flat_cache( gc.transparency_cache, gc, LIGHT_TRANSPARENCY_OPEN_AIR );
-                shift_flat_cache( gc.floor_cache, gc, '\x01' );
-                shift_flat_cache( gc.outside_cache, gc, '\0' );
-                shift_flat_cache( gc.sheltered_cache, gc, '\x01' );
+                shift_flat_cache( gc.transparency_cache, float_shift_scratch, gc,
+                                  LIGHT_TRANSPARENCY_OPEN_AIR );
+                shift_flat_cache( gc.floor_cache, char_shift_scratch, gc, '\x01' );
+                shift_flat_cache( gc.outside_cache, char_shift_scratch, gc, '\0' );
+                shift_flat_cache( gc.sheltered_cache, char_shift_scratch, gc, '\x01' );
                 shift_submap_dirty_bits( gc.transparency_cache_dirty, gc );
                 shift_submap_dirty_bits( gc.floor_cache_dirty, gc );
                 shift_submap_dirty_bits( gc.outside_cache_dirty, gc );
@@ -8599,8 +8627,9 @@ void map::shift( const point_rel_sm &sp )
             {
                 ZoneScopedN( "shift_absorption_cache" );
                 auto &gc = get_cache( gridz );
-                shift_flat_cache( gc.absorption_cache, gc, static_cast<short>( SOUND_ABSORPTION_OPEN_FIELD ) );
-                shift_flat_cache( gc.sound_wall_cache, gc, false );
+                shift_flat_cache( gc.absorption_cache, short_shift_scratch, gc,
+                                  static_cast<short>( SOUND_ABSORPTION_OPEN_FIELD ) );
+                shift_flat_cache( gc.sound_wall_cache, bool_shift_scratch, gc, false );
                 shift_submap_dirty_bits( gc.absorption_cache_dirty, gc );
             }
             // Iterate in shift-direction order so copy_grid never reads an
@@ -10450,6 +10479,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     .vehicle_floor_dirty_levels = &gpu_vehicle_floor_dirty_levels,
                     .rebuild_seen_cache = need_seen_rebuild,
                     .download_seen_cache = false,
+                    .download_lightmap = true,
                     .angled_sunlight_shadows = angled_sunlight_shadows,
                     .direct_sunlight = m_solar.direct_active,
                     .sun_dx_per_z = m_solar.dx_per_z,

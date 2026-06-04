@@ -47,6 +47,7 @@ static const float LIGHT_AMBIENT_LIT        = 10.0;
 
 StructuredBuffer<uint>  floor_all        : register(t0, space0);
 StructuredBuffer<float> transparency_all : register(t1, space0);
+StructuredBuffer<float> source_map_all   : register(t2, space0);
 
 RWStructuredBuffer<uint> env_lm_all : register(u0, space1);
 RWStructuredBuffer<uint> lm_all     : register(u1, space1);
@@ -172,6 +173,7 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
     if( !has_sky && has_diffuse_daylight( x, y, (int)z_idx, use_angled_sun ) ) {
         ambient = max( ambient, min( natural_light[z_idx / 4][z_idx % 4], LIGHT_AMBIENT_LIT ) );
     }
+    ambient = max( ambient, source_map_all[idx] );
     uint packed_ambient = asuint( ambient );
     env_lm_all[idx] = packed_ambient;
     lm_all[idx] = packed_ambient;
