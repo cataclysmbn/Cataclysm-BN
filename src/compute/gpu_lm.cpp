@@ -224,8 +224,7 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
             /*ro=*/4, /*rw=*/1, 8, 8);
     }
     return s_ambient_pipeline != nullptr && s_daylight_diffuse_pipeline != nullptr
-        && s_raytrace_pipeline != nullptr
-        && ensure_seen_pipelines(device);
+        && s_raytrace_pipeline != nullptr && ensure_seen_pipelines(device);
 }
 
 auto ensure_visibility_pipeline(SDL_GPUDevice* const device) -> bool {
@@ -2444,11 +2443,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         ambient_push.direct_sunlight = p.direct_sunlight ? 1u : 0u;
         ambient_push.sun_dx_per_z = p.sun_dx_per_z;
         ambient_push.sun_dy_per_z = p.sun_dy_per_z;
-        auto const max_shadow_light = static_cast<float>(default_daylight_level()) *
-            solar_shadow_scatter;
-        ambient_push.solar_shadow_light =
-            std::max(static_cast<float>(LIGHT_AMBIENT_LOW),
-                     std::min(g->natural_light_level(0), max_shadow_light));
+        auto const max_shadow_light =
+            static_cast<float>(default_daylight_level()) * solar_shadow_scatter;
+        ambient_push.solar_shadow_light = std::
+            max(static_cast<float>(LIGHT_AMBIENT_LOW),
+                std::min(g->natural_light_level(0), max_shadow_light));
         for (auto const zi : std::views::iota(0, OVERMAP_LAYERS)) {
             ambient_push.natural_light[zi / 4][zi % 4] = g->natural_light_level(zi - OVERMAP_DEPTH);
         }
@@ -2859,21 +2858,20 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 auto dispatch_daylight_diffusion =
                     [&](SDL_GPUBuffer* const source_buf, SDL_GPUBuffer* const target_buf,
                         float const diffuse_decay) {
-                        auto const rw_bufs =
-                            std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{
-                                SDL_GPUStorageBufferReadWriteBinding{
-                                    .buffer = target_buf,
-                                    .cycle = false,
-                                    .padding1 = 0,
-                                    .padding2 = 0,
-                                    .padding3 = 0},
-                                SDL_GPUStorageBufferReadWriteBinding{
-                                    .buffer = lm_buf,
-                                    .cycle = false,
-                                    .padding1 = 0,
-                                    .padding2 = 0,
-                                    .padding3 = 0},
-                            };
+                        auto const rw_bufs = std::array<SDL_GPUStorageBufferReadWriteBinding, 2>{
+                            SDL_GPUStorageBufferReadWriteBinding{
+                                .buffer = target_buf,
+                                .cycle = false,
+                                .padding1 = 0,
+                                .padding2 = 0,
+                                .padding3 = 0},
+                            SDL_GPUStorageBufferReadWriteBinding{
+                                .buffer = lm_buf,
+                                .cycle = false,
+                                .padding1 = 0,
+                                .padding2 = 0,
+                                .padding3 = 0},
+                        };
                         auto* const cp = SDL_BeginGPUComputePass(
                             cmd, nullptr, 0, rw_bufs.data(), static_cast<Uint32>(rw_bufs.size()));
                         SDL_BindGPUComputePipeline(cp, s_daylight_diffuse_pipeline);
@@ -2891,8 +2889,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                             .min_light = LIGHT_AMBIENT_LOW,
                             ._pad = 0,
                         };
-                        SDL_PushGPUComputeUniformData(
-                            cmd, 0, &diffuse_push, sizeof(diffuse_push));
+                        SDL_PushGPUComputeUniformData(cmd, 0, &diffuse_push, sizeof(diffuse_push));
                         SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
                         SDL_EndGPUComputePass(cp);
                     };
