@@ -429,11 +429,11 @@ int monster::next_upgrade_time()
         const int scaling = get_option<int>( "ANIMAL_LIFE_CYCLE_SCALING" );
         if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
             return std::max( 1, static_cast<int>( std::ceil( type->age_grow *
-                                      calendar::season_ratio() ) ) );
+                                                  calendar::season_ratio() ) ) );
         }
         if( type->has_flag( MF_ANIMAL ) ) {
             return std::max( 1, static_cast<int>( std::ceil( type->age_grow * scaling /
-                                      100.0 ) ) );
+                                                  100.0 ) ) );
         }
         return type->age_grow;
     }
@@ -534,11 +534,11 @@ void monster::try_reproduce()
     if( type->has_flag( MF_ANIMAL ) && scaling == 0 ) {
         baby_timer_scaling = time_duration::from_days( std::max( 1,
                              static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
-                                                calendar::season_ratio() ) ) ) );
+                                               calendar::season_ratio() ) ) ) );
     } else if( type->has_flag( MF_ANIMAL ) ) {
         baby_timer_scaling = time_duration::from_days( std::max( 1,
                              static_cast<int>( std::ceil( to_days<int>( *type->baby_timer ) *
-                                                scaling / 100.0 ) ) ) );
+                                               scaling / 100.0 ) ) ) );
     }
 
     if( !baby_timer ) {
