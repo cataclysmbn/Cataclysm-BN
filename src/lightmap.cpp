@@ -91,7 +91,7 @@ struct ambient_cache_key {
 
 struct ambient_cache_key_hash {
     auto operator()( const ambient_cache_key &key ) const -> std::size_t {
-        auto seed = std::hash<const map *>{}( key.owner );
+        auto seed = std::hash<const map *> {}( key.owner );
         seed ^= static_cast<std::size_t>( key.x ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
                 ( seed >> 2 );
         seed ^= static_cast<std::size_t>( key.y ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
@@ -112,7 +112,7 @@ struct ambient_cache_entry {
     bool occupied = false;
 };
 
-constexpr auto ambient_cache_slots = std::size_t{ 4096 };
+constexpr auto ambient_cache_slots = std::size_t { 4096 };
 
 auto ambient_cache_index( const ambient_cache_key &key ) -> std::size_t
 {
@@ -132,7 +132,7 @@ struct ambient_read_location_key {
 
 struct ambient_read_location_hash {
     auto operator()( const ambient_read_location_key &key ) const -> std::size_t {
-        auto seed = std::hash<const char *>{}( key.file );
+        auto seed = std::hash<const char *> {}( key.file );
         seed ^= static_cast<std::size_t>( key.line ) + 0x9e3779b97f4a7c15ull + ( seed << 6 ) +
                 ( seed >> 2 );
         return seed;
@@ -148,8 +148,8 @@ struct ambient_read_location_counts {
 
 std::mutex cpu_lm_ambient_location_mutex;
 std::unordered_map<ambient_read_location_key, ambient_read_location_counts,
-                   ambient_read_location_hash>
-                   cpu_lm_ambient_location_counts;
+    ambient_read_location_hash>
+    cpu_lm_ambient_location_counts;
 
 auto basename_view( const char *path ) -> std::string_view
 {
@@ -176,7 +176,7 @@ void record_cpu_lm_ambient_location( const bool valid, const std::source_locatio
         .file = location.file_name(),
         .line = location.line(),
     };
-    const auto guard = std::lock_guard<std::mutex>{ cpu_lm_ambient_location_mutex };
+    const auto guard = std::lock_guard<std::mutex> { cpu_lm_ambient_location_mutex };
     auto [iter, inserted] = cpu_lm_ambient_location_counts.try_emplace( key );
     if( inserted ) {
         iter->second.valid_plot = ambient_read_plot_name( location, "Valid" );
@@ -188,7 +188,7 @@ void record_cpu_lm_ambient_location( const bool valid, const std::source_locatio
 
 void flush_cpu_lm_ambient_location_counters()
 {
-    const auto guard = std::lock_guard<std::mutex>{ cpu_lm_ambient_location_mutex };
+    const auto guard = std::lock_guard<std::mutex> { cpu_lm_ambient_location_mutex };
     for( auto &[key, counts] : cpu_lm_ambient_location_counts ) {
         static_cast<void>( key );
         TracyPlot( counts.valid_plot.c_str(), counts.valid );
@@ -359,17 +359,17 @@ bool map::build_transparency_cache( const int zlev )
         const auto resident_level_was_valid =
             cata_gpu::lighting_transparency_level_is_valid( zlev );
         if( !cata_gpu::dispatch_transparency( {
-                .device = gpu_device,
-                .luts = &luts,
-                .submaps = &inputs,
-                .push = push,
-                .cache_size = cache_size,
-                .out_buffer = &gpu_result,
-                .output = {
-                    .buffer = resident_output.buffer,
-                    .output_offset = resident_output.output_offset,
-                },
-            } ) || gpu_result.empty() ) {
+        .device = gpu_device,
+        .luts = &luts,
+        .submaps = &inputs,
+        .push = push,
+        .cache_size = cache_size,
+        .out_buffer = &gpu_result,
+        .output = {
+            .buffer = resident_output.buffer,
+            .output_offset = resident_output.output_offset,
+        },
+    } ) || gpu_result.empty() ) {
             debugmsg( "SDL_GPU transparency dispatch failed; see debug.log for details" );
             return false;
         }
@@ -558,7 +558,8 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
             .resident_level_was_valid = cata_gpu::lighting_transparency_level_is_valid( zlev ),
         };
 
-        refs.reserve( refs.size() + static_cast<size_t>( map_cache.cache_mapsize * map_cache.cache_mapsize ) );
+        refs.reserve( refs.size() + static_cast<size_t>( map_cache.cache_mapsize *
+                      map_cache.cache_mapsize ) );
         for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
             for( const auto smy : std::views::iota( 0, my_MAPSIZE ) ) {
                 if( !rebuild_all && !map_cache.transparency_cache_dirty.test(
@@ -628,17 +629,17 @@ auto map::build_transparency_caches( const int minz, const int maxz ) -> std::ve
 
     static auto gpu_result = std::vector<float> {};
     if( !cata_gpu::dispatch_transparency( {
-            .device = gpu_device,
-            .luts = &luts,
-            .submaps = &inputs,
-            .push = push,
-            .cache_size = cache_size,
-            .out_buffer = &gpu_result,
-            .output = {
-                .buffer = resident_buffer,
-                .output_offset = 0,
-            },
-        } ) || gpu_result.empty() ) {
+    .device = gpu_device,
+    .luts = &luts,
+    .submaps = &inputs,
+    .push = push,
+    .cache_size = cache_size,
+    .out_buffer = &gpu_result,
+    .output = {
+        .buffer = resident_buffer,
+        .output_offset = 0,
+    },
+} ) || gpu_result.empty() ) {
         debugmsg( "SDL_GPU batched transparency dispatch failed; see debug.log for details" );
         return dirty_levels;
     }
@@ -1094,7 +1095,7 @@ void map::generate_lightmap_worker( const int zlev )
      * Step 4: Profit!
     */
     auto &light_source_buffer = map_cache.light_source_buffer;
-    auto add_deferred_point_light = [&]( const tripoint_bub_ms &source, const float luminance ) {
+    auto add_deferred_point_light = [&]( const tripoint_bub_ms & source, const float luminance ) {
         add_light_source( source, luminance );
     };
 
@@ -1421,7 +1422,7 @@ float map::ambient_light_at( const tripoint_bub_ms &p,
             .generation = map_cache.lm_cpu_cache_generation,
         };
         thread_local auto cpu_lm_ambient_cache =
-            std::array<ambient_cache_entry, ambient_cache_slots>{};
+            std::array<ambient_cache_entry, ambient_cache_slots> {};
         auto &entry = cpu_lm_ambient_cache[ambient_cache_index( key )];
         if( entry.occupied && entry.key == key ) {
             cpu_lm_ambient_cache_hits.fetch_add( 1, std::memory_order_relaxed );
@@ -2193,8 +2194,8 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
         }
     }
 
-    auto apply_camera_visibility = [&]( const tripoint_bub_ms &camera_pos,
-                                        const int camera_range ) {
+    auto apply_camera_visibility = [&]( const tripoint_bub_ms & camera_pos,
+    const int camera_range ) {
         if( camera_range <= 0 || !target_cache.inbounds( camera_pos.xy() ) ) {
             return;
         }
@@ -2234,7 +2235,7 @@ void map::apply_vehicle_optics( const tripoint_bub_ms &origin, const int target_
 
                     ++transparent_steps;
                     cumulative_transparency = accumulate_transparency( cumulative_transparency,
-                                                step_transparency, transparent_steps );
+                                              step_transparency, transparent_steps );
                 }
 
                 if( blocked ) {

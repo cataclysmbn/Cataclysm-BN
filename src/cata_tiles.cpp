@@ -3166,366 +3166,366 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
 
 
 
-            // Add scent value to the overlay_strings list for every visible tile when displaying scent
-            if( g->display_overlay_state( ACTION_DISPLAY_SCENT ) && !invis ) {
-                const int scent_value = g->scent.get( {temp_x, temp_y, center.z()} );
-                if( scent_value > 0 ) {
+                // Add scent value to the overlay_strings list for every visible tile when displaying scent
+                if( g->display_overlay_state( ACTION_DISPLAY_SCENT ) && !invis ) {
+                    const int scent_value = g->scent.get( {temp_x, temp_y, center.z()} );
+                    if( scent_value > 0 ) {
+                        overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
+                                                 0 ),
+                                                 formatted_text( std::to_string( scent_value ), 8 + catacurses::yellow,
+                                                         direction::NORTH ) );
+                    }
+                }
+
+                // Add scent type to the overlay_strings list for every visible tile when displaying scent
+                if( g->display_overlay_state( ACTION_DISPLAY_SCENT_TYPE ) && !invis ) {
+                    const scenttype_id scent_type = g->scent.get_type( {temp_x, temp_y, center.z()} );
+                    if( !scent_type.is_empty() ) {
+                        overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
+                                                 0 ),
+                                                 formatted_text( scent_type.c_str(), 8 + catacurses::yellow,
+                                                         direction::NORTH ) );
+                    }
+                }
+
+                if( g->display_overlay_state( ACTION_DISPLAY_RADIATION ) ) {
+                    const auto rad_override = radiation_override.find( {temp_x, temp_y, center.z()} );
+                    const bool rad_overridden = rad_override != radiation_override.end();
+                    if( rad_overridden || !invis ) {
+                        const int rad_value = rad_overridden ? rad_override->second : here.get_radiation( {temp_x, temp_y, center.z()} );
+                        catacurses::base_color col;
+                        if( rad_value > 0 ) {
+                            col = catacurses::green;
+                        } else {
+                            col = catacurses::cyan;
+                        }
+                        overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
+                                                 0 ),
+                                                 formatted_text( std::to_string( rad_value ), 8 + col, direction::NORTH ) );
+                    }
+                }
+
+                // Add temperature value to the overlay_strings list for every visible tile when displaying temperature
+                if( g->display_overlay_state( ACTION_DISPLAY_TEMPERATURE ) && !invis ) {
+                    const auto temp = get_weather().get_temperature( tripoint_abs_omt{temp_x, temp_y, center.z()} );
+                    short color;
+                    const short bold = 8;
+                    if( temp > 40_c ) {
+                        color = catacurses::red;
+                    } else if( temp > 25_c ) {
+                        color = catacurses::yellow + bold;
+                    } else if( temp > 10_c ) {
+                        color = catacurses::green + bold;
+                    } else if( temp > 0_c ) {
+                        color = catacurses::white + bold;
+                    } else if( temp > -10_c ) {
+                        color = catacurses::cyan + bold;
+                    } else {
+                        color = catacurses::blue + bold;
+                    }
+                    const auto display_option = get_option<std::string>( "USE_CELSIUS" );
+                    const int temp_value = display_option == "kelvin" ? units::to_kelvins( temp )
+                                           : display_option == "fahrenheit" ? units::to_fahrenheit( temp )
+                                           : units::to_celsius( temp );
+
                     overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
                                              0 ),
-                                             formatted_text( std::to_string( scent_value ), 8 + catacurses::yellow,
+                                             formatted_text( std::to_string( temp_value ), color,
                                                      direction::NORTH ) );
                 }
-            }
 
-            // Add scent type to the overlay_strings list for every visible tile when displaying scent
-            if( g->display_overlay_state( ACTION_DISPLAY_SCENT_TYPE ) && !invis ) {
-                const scenttype_id scent_type = g->scent.get_type( {temp_x, temp_y, center.z()} );
-                if( !scent_type.is_empty() ) {
-                    overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
-                                             0 ),
-                                             formatted_text( scent_type.c_str(), 8 + catacurses::yellow,
-                                                     direction::NORTH ) );
-                }
-            }
+                if( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) &&
+                    g->displaying_visibility_creature && !invis ) {
+                    const bool visibility = g->displaying_visibility_creature->sees( {temp_x, temp_y, center.z()} );
 
-            if( g->display_overlay_state( ACTION_DISPLAY_RADIATION ) ) {
-                const auto rad_override = radiation_override.find( {temp_x, temp_y, center.z()} );
-                const bool rad_overridden = rad_override != radiation_override.end();
-                if( rad_overridden || !invis ) {
-                    const int rad_value = rad_overridden ? rad_override->second : here.get_radiation( {temp_x, temp_y, center.z()} );
-                    catacurses::base_color col;
-                    if( rad_value > 0 ) {
-                        col = catacurses::green;
-                    } else {
-                        col = catacurses::cyan;
-                    }
-                    overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
-                                             0 ),
-                                             formatted_text( std::to_string( rad_value ), 8 + col, direction::NORTH ) );
-                }
-            }
-
-            // Add temperature value to the overlay_strings list for every visible tile when displaying temperature
-            if( g->display_overlay_state( ACTION_DISPLAY_TEMPERATURE ) && !invis ) {
-                const auto temp = get_weather().get_temperature( tripoint_abs_omt{temp_x, temp_y, center.z()} );
-                short color;
-                const short bold = 8;
-                if( temp > 40_c ) {
-                    color = catacurses::red;
-                } else if( temp > 25_c ) {
-                    color = catacurses::yellow + bold;
-                } else if( temp > 10_c ) {
-                    color = catacurses::green + bold;
-                } else if( temp > 0_c ) {
-                    color = catacurses::white + bold;
-                } else if( temp > -10_c ) {
-                    color = catacurses::cyan + bold;
-                } else {
-                    color = catacurses::blue + bold;
-                }
-                const auto display_option = get_option<std::string>( "USE_CELSIUS" );
-                const int temp_value = display_option == "kelvin" ? units::to_kelvins( temp )
-                                       : display_option == "fahrenheit" ? units::to_fahrenheit( temp )
-                                       : units::to_celsius( temp );
-
-                overlay_strings.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 2,
-                                         0 ),
-                                         formatted_text( std::to_string( temp_value ), color,
-                                                 direction::NORTH ) );
-            }
-
-            if( g->display_overlay_state( ACTION_DISPLAY_VISIBILITY ) &&
-                g->displaying_visibility_creature && !invis ) {
-                const bool visibility = g->displaying_visibility_creature->sees( {temp_x, temp_y, center.z()} );
-
-                // color overlay.
-                auto block_color = visibility ? windowsPalette[catacurses::green] : SDL_Color{ 192, 192, 192, 255 };
-                block_color.a = 100;
-                color_blocks.first = SDL_BLENDMODE_BLEND;
-                color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
-
-                // overlay string
-                std::string visibility_str = visibility ? "+" : "-";
-                overlay_strings.emplace(
-                    player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
-                    formatted_text( visibility_str, catacurses::black, direction::NORTH ) );
-            }
-
-            static std::vector<SDL_Color> lighting_colors;
-            // color hue in the range of [0..10], 0 being white,  10 being blue
-            auto draw_debug_tile = [&]( const int color_hue, const std::string & text ) {
-                if( lighting_colors.empty() ) {
-                    SDL_Color white = { 255, 255, 255, 255 };
-                    SDL_Color blue = { 0, 0, 255, 255 };
-                    lighting_colors = color_linear_interpolate( white, blue, 9 );
-                }
-                point tile_pos = player_to_screen( point_bub_ms( temp_x, temp_y ) );
-
-                // color overlay
-                SDL_Color color = lighting_colors[std::min( std::max( 0, color_hue ), 10 )];
-                color.a = 100;
-                color_blocks.first = SDL_BLENDMODE_BLEND;
-                color_blocks.second.emplace( tile_pos, color );
-
-                // string overlay
-                overlay_strings.emplace( tile_pos + quarter_tile, formatted_text( text, catacurses::black,
-                                         direction::NORTH ) );
-            };
-
-            if( g->display_overlay_state( ACTION_DISPLAY_LIGHTING ) ) {
-                if( g->displaying_lighting_condition == 0 ) {
-                    const float light = here.ambient_light_at( {temp_x, temp_y, center.z()} );
-                    // note: lighting will be constrained in the [1.0, 11.0] range.
-                    const int intensity = static_cast<int>( std::max( 1.0, LIGHT_AMBIENT_LIT - light + 1.0 ) ) - 1;
-                    draw_debug_tile( intensity, string_format( "%.1f", light ) );
-                }
-            }
-
-            if( g->display_overlay_state( ACTION_DISPLAY_TRANSPARENCY ) ) {
-                const float tr = here.light_transparency( {temp_x, temp_y, center.z()} );
-                const int intensity =  tr <= LIGHT_TRANSPARENCY_SOLID ? 10 :  static_cast<int>
-                                       ( ( tr - LIGHT_TRANSPARENCY_OPEN_AIR ) * 8 );
-                draw_debug_tile( intensity, string_format( "%.2f", tr ) );
-            }
-
-            if( g->display_overlay_state( ACTION_DISPLAY_OUTSIDE ) ) {
-                // Use the flat level_cache directly: it includes Phase3 vehicle overrides
-                // (outside=false / sheltered=true for covered vehicle tiles) that the
-                // lazy per-submap rebuild path does not reflect.
-                const auto &ov_ch = here.access_cache( center.z() );
-                if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
-                    const int ov_idx = ov_ch.idx( temp_x, temp_y );
-                    const bool outside = ov_ch.outside_cache[ov_idx];
-                    const bool sheltered = ov_ch.sheltered_cache[ov_idx];
-                    // Three states: open field (green), overhang (yellow), indoors (red)
-                    SDL_Color block_color;
-                    std::string label;
-                    if( outside && !sheltered ) {
-                        block_color = { 0, 200, 0, 100 };   // green - fully open
-                        label = "O";
-                    } else if( outside && sheltered ) {
-                        block_color = { 200, 200, 0, 100 };  // yellow - overhang
-                        label = "S";
-                    } else {
-                        block_color = { 200, 0, 0, 100 };    // red - indoors
-                        label = "I";
-                    }
+                    // color overlay.
+                    auto block_color = visibility ? windowsPalette[catacurses::green] : SDL_Color{ 192, 192, 192, 255 };
+                    block_color.a = 100;
                     color_blocks.first = SDL_BLENDMODE_BLEND;
                     color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
+
+                    // overlay string
+                    std::string visibility_str = visibility ? "+" : "-";
                     overlay_strings.emplace(
                         player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
-                        formatted_text( label, catacurses::black, direction::NORTH ) );
+                        formatted_text( visibility_str, catacurses::black, direction::NORTH ) );
                 }
-            }
 
-            if( g->display_overlay_state( ACTION_DISPLAY_SOUND_ABSORPTION ) ) {
-                const auto &ov_ch = here.access_cache( center.z() );
-                if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
-                    const int ov_idx = ov_ch.idx( temp_x, temp_y );
-                    const auto absorption = ov_ch.absorption_cache[ov_idx];
-                    // We have 3 states of base terrain absorption, 3 states of furniture/wall provided absorption, and possibly snow.
-                    catacurses::base_color col;
-                    SDL_Color block_color;
-
-                    // Step through our most likely options.
-                    if( absorption == SOUND_ABSORPTION_OPEN_FIELD ) {
-                        block_color = { 0, 255, 0, 100 };   // Light Green - Open, no sound absorption
-                        col = catacurses::black;
-                    } else if( absorption == SOUND_ABSORPTION_LIGHT_VEGITATION ) {
-                        block_color = { 0, 200, 0, 100 };    // Green - Light Vegitation/Farmland
-                        col = catacurses::white;
-                    } else if( absorption == SOUND_ABSORPTION_FOREST_FALL ) {
-                        block_color = { 150, 150, 0, 100 };    // Yellow - Forest-Fall
-                        col = catacurses::red;
-                    } else if( absorption == SOUND_ABSORPTION_FOREST ) {
-                        block_color = { 0, 150, 0, 100 };    // Dark Green - Forest
-                        col = catacurses::white;
-                    } else if( absorption > SOUND_ABSORPTION_WALL ) {
-                        block_color = { 150, 50, 200, 100 };   // Purple-Ish - Sound absorption higher than that of a wall. Something Funky has happened.
-                        col = catacurses::red;
-                    } else if( absorption == SOUND_ABSORPTION_WALL ) {
-                        block_color = { 200, 0, 0, 100 };  // Red - Wall
-                        col = catacurses::blue;
-                    } else if( absorption > SOUND_ABSORPTION_THICK_BARRIER ) {
-                        block_color = { 200, 80, 0, 100 };    // Orange - Thick Barrier +
-                        col = catacurses::red;
-                    } else if( absorption == SOUND_ABSORPTION_THICK_BARRIER ) {
-                        block_color = { 255, 130, 0, 100 };    // Light Orange - Thick Barrier
-                        col = catacurses::white;
-                    } else if( absorption > SOUND_ABSORPTION_BARRIER ) {
-                        block_color = { 0, 0, 255, 100 };    // Blue - Barrier +
-                        col = catacurses::red;
-                    } else if( absorption == SOUND_ABSORPTION_BARRIER ) {
-                        block_color = { 0, 0, 150, 100 };    // Light Blue - Barrier
-                        col = catacurses::white;
-                    } else {
-                        // Our remaining case is if a tile has more absorption than a forest but less than a barrier, which means snow.
-                        block_color = { 255, 255, 255, 255 };    // White - Snow
-                        col = catacurses::black;
+                static std::vector<SDL_Color> lighting_colors;
+                // color hue in the range of [0..10], 0 being white,  10 being blue
+                auto draw_debug_tile = [&]( const int color_hue, const std::string & text ) {
+                    if( lighting_colors.empty() ) {
+                        SDL_Color white = { 255, 255, 255, 255 };
+                        SDL_Color blue = { 0, 0, 255, 255 };
+                        lighting_colors = color_linear_interpolate( white, blue, 9 );
                     }
+                    point tile_pos = player_to_screen( point_bub_ms( temp_x, temp_y ) );
+
+                    // color overlay
+                    SDL_Color color = lighting_colors[std::min( std::max( 0, color_hue ), 10 )];
+                    color.a = 100;
                     color_blocks.first = SDL_BLENDMODE_BLEND;
-                    color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
-                    overlay_strings.emplace(
-                        player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
-                        formatted_text( std::to_string( absorption ), 8 + col, direction::NORTH ) );
-                }
-            }
+                    color_blocks.second.emplace( tile_pos, color );
 
-            if( g->display_overlay_state( ACTION_DISPLAY_SOUND_WALLS ) ) {
-                const auto &ov_ch = here.access_cache( center.z() );
-                if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
-                    const int ov_idx = ov_ch.idx( temp_x, temp_y );
-                    const bool swall = ov_ch.sound_wall_cache[ov_idx];
-                    // Two: open field (green), Sound wall (red)
-                    SDL_Color block_color;
-                    std::string label;
-                    if( !swall ) {
-                        block_color = { 0, 200, 0, 100 };   // green - No sound wall
-                        label = "O";
-                    } else {
-                        block_color = { 200, 0, 0, 100 };    // red - Sound wall
-                        label = "W";
-                    }
-                    color_blocks.first = SDL_BLENDMODE_BLEND;
-                    color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
-                    overlay_strings.emplace(
-                        player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
-                        formatted_text( label, catacurses::black, direction::NORTH ) );
-                }
-            }
+                    // string overlay
+                    overlay_strings.emplace( tile_pos + quarter_tile, formatted_text( text, catacurses::black,
+                                             direction::NORTH ) );
+                };
 
-            lit_level ll = lit_level::BLANK;
-            int last_vis = center.z() + 1;
-            lit_level last_vis_ll = lit_level::BLANK;
-            bool drew_occluded_overlay = false;
-            bool had_visible_open_air = false;
-            const int &x = temp_x;
-            const int &y = temp_y;
-            const auto queue_draw_point = [&]( tile_render_info info ) {
-                info.screen_row = row;
-                draw_points.push_back( info );
-            };
-
-            const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
-                                         x <= max_visible_x );
-            for( int z = center.z(); z >= -OVERMAP_DEPTH; z-- ) {
-                const auto &ch = here.access_cache( z );
-
-                const tripoint_bub_ms pos( temp_x, temp_y, z );
-
-                const bool in_map_bounds = here.inbounds( pos );
-
-                const bool has_memory = has_memory_at( pos );
-
-                const bool stop_on_memory = z != center.z() && has_memory &&
-                                            ( !in_map_bounds || here.ter( pos ) != t_open_air );
-
-                ll = ch.inbounds( {x, y} ) ? ch.visibility_cache[ch.idx( x, y )] : lit_level::BLANK;
-                const auto visibility = here.get_visibility( ll, cache );
-                if( in_map_bounds ) {
-                    if( !would_apply_vision_effects( visibility ) ) {
-                        if( here.ter( pos ) != t_open_air ) {
-                            last_vis = z;
-                            last_vis_ll = ll;
-                        } else {
-                            had_visible_open_air = true;
-                        }
-                    } else if( !has_memory && z < center.z() &&
-                               visibility == visibility_type::VIS_HIDDEN ) {
-                        if( !drew_occluded_overlay ) {
-                            drew_occluded_overlay = true;
-                            // Draw a depth-faded semi-transparent overlay for the topmost occluded tile.
-                            const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
-                                                                empty_string, 0, 0 };
-                            draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
-                                                 lit_level::LIT, false, center.z() - z, false );
-                        }
+                if( g->display_overlay_state( ACTION_DISPLAY_LIGHTING ) ) {
+                    if( g->displaying_lighting_condition == 0 ) {
+                        const float light = here.ambient_light_at( {temp_x, temp_y, center.z()} );
+                        // note: lighting will be constrained in the [1.0, 11.0] range.
+                        const int intensity = static_cast<int>( std::max( 1.0, LIGHT_AMBIENT_LIT - light + 1.0 ) ) - 1;
+                        draw_debug_tile( intensity, string_format( "%.1f", light ) );
                     }
                 }
 
-                const auto low_override = draw_below_override.find( pos );
-                const bool low_overridden = low_override != draw_below_override.end();
-                if( low_overridden ? !low_override->second :
-                    ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || stop_on_memory ) )
-                    || ( !in_map_bounds && ( has_memory || pos.z() <= 0 ) ) ) {
-                    // invisible to normal eyes
-                    bool invisible[5];
-                    invisible[0] = false;
+                if( g->display_overlay_state( ACTION_DISPLAY_TRANSPARENCY ) ) {
+                    const float tr = here.light_transparency( {temp_x, temp_y, center.z()} );
+                    const int intensity =  tr <= LIGHT_TRANSPARENCY_SOLID ? 10 :  static_cast<int>
+                                           ( ( tr - LIGHT_TRANSPARENCY_OPEN_AIR ) * 8 );
+                    draw_debug_tile( intensity, string_format( "%.2f", tr ) );
+                }
 
-                    if( !in_vis_bounds ) {
-                        if( has_memory ) {
-                            ll = lit_level::MEMORIZED;
-                            invisible[0] = true;
-                        } else if( has_draw_override( pos ) ) {
-                            ll = lit_level::DARK;
-                            invisible[0] = true;
+                if( g->display_overlay_state( ACTION_DISPLAY_OUTSIDE ) ) {
+                    // Use the flat level_cache directly: it includes Phase3 vehicle overrides
+                    // (outside=false / sheltered=true for covered vehicle tiles) that the
+                    // lazy per-submap rebuild path does not reflect.
+                    const auto &ov_ch = here.access_cache( center.z() );
+                    if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
+                        const int ov_idx = ov_ch.idx( temp_x, temp_y );
+                        const bool outside = ov_ch.outside_cache[ov_idx];
+                        const bool sheltered = ov_ch.sheltered_cache[ov_idx];
+                        // Three states: open field (green), overhang (yellow), indoors (red)
+                        SDL_Color block_color;
+                        std::string label;
+                        if( outside && !sheltered ) {
+                            block_color = { 0, 200, 0, 100 };   // green - fully open
+                            label = "O";
+                        } else if( outside && sheltered ) {
+                            block_color = { 200, 200, 0, 100 };  // yellow - overhang
+                            label = "S";
                         } else {
-                            apply_vision_effects( pos, offscreen_type );
-                            break;
+                            block_color = { 200, 0, 0, 100 };    // red - indoors
+                            label = "I";
                         }
+                        color_blocks.first = SDL_BLENDMODE_BLEND;
+                        color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
+                        overlay_strings.emplace(
+                            player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
+                            formatted_text( label, catacurses::black, direction::NORTH ) );
                     }
+                }
 
-                    const auto height_3d = ( pos.z() - center.z() ) * tileset_ptr->get_zlevel_height();
+                if( g->display_overlay_state( ACTION_DISPLAY_SOUND_ABSORPTION ) ) {
+                    const auto &ov_ch = here.access_cache( center.z() );
+                    if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
+                        const int ov_idx = ov_ch.idx( temp_x, temp_y );
+                        const auto absorption = ov_ch.absorption_cache[ov_idx];
+                        // We have 3 states of base terrain absorption, 3 states of furniture/wall provided absorption, and possibly snow.
+                        catacurses::base_color col;
+                        SDL_Color block_color;
 
-                    for( const auto i : std::views::iota( 0, 4 ) ) {
-                        const tripoint np = pos.raw() + neighborhood[i];
-                        invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
-                                           np.x < min_visible_x || np.x > max_visible_x ||
-                                           would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
-                                                   cache ) );
-                    }
-
-                    if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
-                        // Vehicle tiles are blocked from the 3D FOV by their own floor cache,
-                        // but are physically visible when the player descends through open air.
-                        // Check this before the has_memory branch so that a memorized roof tile
-                        // doesn't suppress the live visible render on subsequent frames.
-                        if( had_visible_open_air && in_map_bounds && here.veh_at( pos ).has_value() ) {
-                            const auto &ch_above = here.access_cache( pos.z() + 1 );
-                            const lit_level above_ll = ch_above.inbounds( { pos.x(), pos.y() } )
-                                                       ? ch_above.visibility_cache[ch_above.idx( pos.x(), pos.y() )]
-                                                       : lit_level::BLANK;
-                            invisible[0] = above_ll == lit_level::BLANK;
-                            const auto vehicle_ll = above_ll != lit_level::BLANK ? above_ll : ll;
-                            min_z = std::min( pos.z(), min_z );
-                            queue_draw_point( tile_render_info( pos, height_3d, vehicle_ll, invisible ) );
+                        // Step through our most likely options.
+                        if( absorption == SOUND_ABSORPTION_OPEN_FIELD ) {
+                            block_color = { 0, 255, 0, 100 };   // Light Green - Open, no sound absorption
+                            col = catacurses::black;
+                        } else if( absorption == SOUND_ABSORPTION_LIGHT_VEGITATION ) {
+                            block_color = { 0, 200, 0, 100 };    // Green - Light Vegitation/Farmland
+                            col = catacurses::white;
+                        } else if( absorption == SOUND_ABSORPTION_FOREST_FALL ) {
+                            block_color = { 150, 150, 0, 100 };    // Yellow - Forest-Fall
+                            col = catacurses::red;
+                        } else if( absorption == SOUND_ABSORPTION_FOREST ) {
+                            block_color = { 0, 150, 0, 100 };    // Dark Green - Forest
+                            col = catacurses::white;
+                        } else if( absorption > SOUND_ABSORPTION_WALL ) {
+                            block_color = { 150, 50, 200, 100 };   // Purple-Ish - Sound absorption higher than that of a wall. Something Funky has happened.
+                            col = catacurses::red;
+                        } else if( absorption == SOUND_ABSORPTION_WALL ) {
+                            block_color = { 200, 0, 0, 100 };  // Red - Wall
+                            col = catacurses::blue;
+                        } else if( absorption > SOUND_ABSORPTION_THICK_BARRIER ) {
+                            block_color = { 200, 80, 0, 100 };    // Orange - Thick Barrier +
+                            col = catacurses::red;
+                        } else if( absorption == SOUND_ABSORPTION_THICK_BARRIER ) {
+                            block_color = { 255, 130, 0, 100 };    // Light Orange - Thick Barrier
+                            col = catacurses::white;
+                        } else if( absorption > SOUND_ABSORPTION_BARRIER ) {
+                            block_color = { 0, 0, 255, 100 };    // Blue - Barrier +
+                            col = catacurses::red;
+                        } else if( absorption == SOUND_ABSORPTION_BARRIER ) {
+                            block_color = { 0, 0, 150, 100 };    // Light Blue - Barrier
+                            col = catacurses::white;
                         } else {
-                            if( has_draw_override( pos ) || has_memory ) {
-                                invisible[0] = true;
+                            // Our remaining case is if a tile has more absorption than a forest but less than a barrier, which means snow.
+                            block_color = { 255, 255, 255, 255 };    // White - Snow
+                            col = catacurses::black;
+                        }
+                        color_blocks.first = SDL_BLENDMODE_BLEND;
+                        color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
+                        overlay_strings.emplace(
+                            player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
+                            formatted_text( std::to_string( absorption ), 8 + col, direction::NORTH ) );
+                    }
+                }
+
+                if( g->display_overlay_state( ACTION_DISPLAY_SOUND_WALLS ) ) {
+                    const auto &ov_ch = here.access_cache( center.z() );
+                    if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
+                        const int ov_idx = ov_ch.idx( temp_x, temp_y );
+                        const bool swall = ov_ch.sound_wall_cache[ov_idx];
+                        // Two: open field (green), Sound wall (red)
+                        SDL_Color block_color;
+                        std::string label;
+                        if( !swall ) {
+                            block_color = { 0, 200, 0, 100 };   // green - No sound wall
+                            label = "O";
+                        } else {
+                            block_color = { 200, 0, 0, 100 };    // red - Sound wall
+                            label = "W";
+                        }
+                        color_blocks.first = SDL_BLENDMODE_BLEND;
+                        color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
+                        overlay_strings.emplace(
+                            player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
+                            formatted_text( label, catacurses::black, direction::NORTH ) );
+                    }
+                }
+
+                lit_level ll = lit_level::BLANK;
+                int last_vis = center.z() + 1;
+                lit_level last_vis_ll = lit_level::BLANK;
+                bool drew_occluded_overlay = false;
+                bool had_visible_open_air = false;
+                const int &x = temp_x;
+                const int &y = temp_y;
+                const auto queue_draw_point = [&]( tile_render_info info ) {
+                    info.screen_row = row;
+                    draw_points.push_back( info );
+                };
+
+                const bool in_vis_bounds = ( y >= min_visible_y && y <= max_visible_y && x >= min_visible_x &&
+                                             x <= max_visible_x );
+                for( int z = center.z(); z >= -OVERMAP_DEPTH; z-- ) {
+                    const auto &ch = here.access_cache( z );
+
+                    const tripoint_bub_ms pos( temp_x, temp_y, z );
+
+                    const bool in_map_bounds = here.inbounds( pos );
+
+                    const bool has_memory = has_memory_at( pos );
+
+                    const bool stop_on_memory = z != center.z() && has_memory &&
+                                                ( !in_map_bounds || here.ter( pos ) != t_open_air );
+
+                    ll = ch.inbounds( {x, y} ) ? ch.visibility_cache[ch.idx( x, y )] : lit_level::BLANK;
+                    const auto visibility = here.get_visibility( ll, cache );
+                    if( in_map_bounds ) {
+                        if( !would_apply_vision_effects( visibility ) ) {
+                            if( here.ter( pos ) != t_open_air ) {
+                                last_vis = z;
+                                last_vis_ll = ll;
+                            } else {
+                                had_visible_open_air = true;
                             }
-                            for( int cz = pos.z(); !invisible[0] && cz <= -center.z(); cz++ ) {
-                                const Creature *critter = g->critter_at( { pos.xy(), cz }, true );
-                                if( critter && ( g->u.sees_with_infrared( *critter ) ||
-                                                 g->u.sees_with_specials( *critter ) ) ) {
+                        } else if( !has_memory && z < center.z() &&
+                                   visibility == visibility_type::VIS_HIDDEN ) {
+                            if( !drew_occluded_overlay ) {
+                                drew_occluded_overlay = true;
+                                // Draw a depth-faded semi-transparent overlay for the topmost occluded tile.
+                                const tile_search_params dark_tile{ "lighting_lowlight_dark", C_LIGHTING,
+                                                                    empty_string, 0, 0 };
+                                draw_from_id_string( dark_tile, pos, std::nullopt, std::nullopt,
+                                                     lit_level::LIT, false, center.z() - z, false );
+                            }
+                        }
+                    }
+
+                    const auto low_override = draw_below_override.find( pos );
+                    const bool low_overridden = low_override != draw_below_override.end();
+                    if( low_overridden ? !low_override->second :
+                        ( in_map_bounds && ( here.dont_draw_lower_floor( pos ) || stop_on_memory ) )
+                        || ( !in_map_bounds && ( has_memory || pos.z() <= 0 ) ) ) {
+                        // invisible to normal eyes
+                        bool invisible[5];
+                        invisible[0] = false;
+
+                        if( !in_vis_bounds ) {
+                            if( has_memory ) {
+                                ll = lit_level::MEMORIZED;
+                                invisible[0] = true;
+                            } else if( has_draw_override( pos ) ) {
+                                ll = lit_level::DARK;
+                                invisible[0] = true;
+                            } else {
+                                apply_vision_effects( pos, offscreen_type );
+                                break;
+                            }
+                        }
+
+                        const auto height_3d = ( pos.z() - center.z() ) * tileset_ptr->get_zlevel_height();
+
+                        for( const auto i : std::views::iota( 0, 4 ) ) {
+                            const tripoint np = pos.raw() + neighborhood[i];
+                            invisible[1 + i] = np.y < min_visible_y || np.y > max_visible_y ||
+                                               np.x < min_visible_x || np.x > max_visible_x ||
+                                               would_apply_vision_effects( here.get_visibility( ch.visibility_cache[ch.idx( np.x, np.y )],
+                                                       cache ) );
+                        }
+
+                        if( !invisible[0] && apply_vision_effects( pos, visibility ) ) {
+                            // Vehicle tiles are blocked from the 3D FOV by their own floor cache,
+                            // but are physically visible when the player descends through open air.
+                            // Check this before the has_memory branch so that a memorized roof tile
+                            // doesn't suppress the live visible render on subsequent frames.
+                            if( had_visible_open_air && in_map_bounds && here.veh_at( pos ).has_value() ) {
+                                const auto &ch_above = here.access_cache( pos.z() + 1 );
+                                const lit_level above_ll = ch_above.inbounds( { pos.x(), pos.y() } )
+                                                           ? ch_above.visibility_cache[ch_above.idx( pos.x(), pos.y() )]
+                                                           : lit_level::BLANK;
+                                invisible[0] = above_ll == lit_level::BLANK;
+                                const auto vehicle_ll = above_ll != lit_level::BLANK ? above_ll : ll;
+                                min_z = std::min( pos.z(), min_z );
+                                queue_draw_point( tile_render_info( pos, height_3d, vehicle_ll, invisible ) );
+                            } else {
+                                if( has_draw_override( pos ) || has_memory ) {
                                     invisible[0] = true;
                                 }
+                                for( int cz = pos.z(); !invisible[0] && cz <= -center.z(); cz++ ) {
+                                    const Creature *critter = g->critter_at( { pos.xy(), cz }, true );
+                                    if( critter && ( g->u.sees_with_infrared( *critter ) ||
+                                                     g->u.sees_with_specials( *critter ) ) ) {
+                                        invisible[0] = true;
+                                    }
+                                }
+                                if( invisible[0] ) {
+                                    min_z = std::min( pos.z(), min_z );
+                                    queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
+                                } else if( last_vis != center.z() + 1 ) {
+                                    min_z = std::min( last_vis, min_z );
+                                    queue_draw_point( tile_render_info( tripoint_bub_ms( pos.xy(), last_vis ),
+                                                                        height_3d, last_vis_ll, invisible ) );
+                                } else if( had_visible_open_air && in_map_bounds ) {
+                                    // No vehicle and no solid last_vis — placeholder so cross-z
+                                    // sprite draws (player character above) still execute.
+                                    min_z = std::min( pos.z(), min_z );
+                                    invisible[0] = true;
+                                    queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
+                                }
                             }
-                            if( invisible[0] ) {
-                                min_z = std::min( pos.z(), min_z );
-                                queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
-                            } else if( last_vis != center.z() + 1 ) {
-                                min_z = std::min( last_vis, min_z );
-                                queue_draw_point( tile_render_info( tripoint_bub_ms( pos.xy(), last_vis ),
-                                                                    height_3d, last_vis_ll, invisible ) );
-                            } else if( had_visible_open_air && in_map_bounds ) {
-                                // No vehicle and no solid last_vis — placeholder so cross-z
-                                // sprite draws (player character above) still execute.
-                                min_z = std::min( pos.z(), min_z );
-                                invisible[0] = true;
-                                queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
-                            }
-                        }
 
-                    } else {
-                        min_z = std::min( pos.z(), min_z );
-                        queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
+                        } else {
+                            min_z = std::min( pos.z(), min_z );
+                            queue_draw_point( tile_render_info( pos, height_3d, ll, invisible ) );
+                        }
+                        break;
                     }
-                    break;
                 }
             }
-        }
 
-    }
+        }
 
     }
 
@@ -3672,7 +3672,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     void_draw_below_override();
     void_monster_override();
 
-    const auto memorize_live_terrain = [&]( const tripoint_bub_ms &p,
+    const auto memorize_live_terrain = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
         if( invisible[0] ) {
             return;
@@ -3702,7 +3702,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
     };
 
-    const auto memorize_live_furniture = [&]( const tripoint_bub_ms &p,
+    const auto memorize_live_furniture = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
         if( invisible[0] ) {
             return;
@@ -3730,7 +3730,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
     };
 
-    const auto memorize_live_trap = [&]( const tripoint_bub_ms &p,
+    const auto memorize_live_trap = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
         if( invisible[0] ) {
             return;
@@ -3754,7 +3754,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
     };
 
-    const auto clear_projected_rope_memory = [&]( const tripoint_bub_ms &p ) {
+    const auto clear_projected_rope_memory = [&]( const tripoint_bub_ms & p ) {
         if( !here.has_rope_at( p ) ) {
             return;
         }
@@ -3782,7 +3782,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
     };
 
-    const auto memorize_live_vehicle = [&]( const tripoint_bub_ms &p,
+    const auto memorize_live_vehicle = [&]( const tripoint_bub_ms & p,
     const bool( &invisible )[5] ) {
         if( invisible[0] ) {
             return;
@@ -3812,7 +3812,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
     {
         ZoneScopedN( "cata_tiles_memorize_offscreen_seen" );
         const auto already_drawn = half_open_rectangle<point>(
-                                      point( min_col, min_row ), point( max_col, max_row ) );
+                                       point( min_col, min_row ), point( max_col, max_row ) );
         const auto &_cz = here.access_cache( center.z() );
         auto offscreen_scan_count = int64_t{ 0 };
         auto offscreen_refresh_count = int64_t{ 0 };
@@ -3888,8 +3888,10 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                     continue;
                 }
                 ++offscreen_refresh_count;
-                offscreen_dirty_memory_count += dirty_memory ? int64_t{ 1 } : int64_t{ 0 };
-                offscreen_connecting_refresh_count += connecting_refresh ? int64_t{ 1 } : int64_t{ 0 };
+                offscreen_dirty_memory_count += dirty_memory ? int64_t{ 1 } :
+                                                int64_t{ 0 };
+                offscreen_connecting_refresh_count += connecting_refresh ? int64_t{ 1 } :
+                                                      int64_t{ 0 };
                 bool invisible[5];
                 invisible[0] = false;
                 for( const auto i : std::views::iota( 0, 4 ) ) {

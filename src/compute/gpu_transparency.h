@@ -58,9 +58,9 @@ struct transparency_luts {
 // std140 layout requires the struct to be padded to a multiple of 16 bytes.
 // ---------------------------------------------------------------------------
 struct transparency_push_constants {
-    float sight_penalty;  // weather sight_penalty (1.0 = clear, <1.0 = rain/fog/etc.)
-    int32_t cache_y;      // flat level-cache y-stride (= SEEY * mapsize)
-    uint32_t num_submaps; // number of entries in the per-submap storage buffer
+    float sight_penalty;        // weather sight_penalty (1.0 = clear, <1.0 = rain/fog/etc.)
+    int32_t cache_y;            // flat level-cache y-stride (= SEEY * mapsize)
+    uint32_t num_submaps;       // number of entries in the per-submap storage buffer
     uint32_t output_offset = 0; // float elements from start of full resident output buffer
 };
 static_assert(sizeof(transparency_push_constants) == 16);

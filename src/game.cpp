@@ -6184,7 +6184,7 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             if( gpu_sight_work.id != 0 ) {
                 ZoneScopedN( "monmove_finish_gpu_sight_prewarm" );
                 if( !cata_gpu::finish_gpu_sight_pairs( gpu_sight_device, gpu_sight_work,
-                                                        gpu_results ) ) {
+                                                       gpu_results ) ) {
                     debugmsg( "SDL_GPU sight pair completion failed; see debug.log for details" );
                 } else {
                     auto &here = get_map();

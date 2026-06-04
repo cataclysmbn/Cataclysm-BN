@@ -2056,7 +2056,8 @@ bool game::handle_action()
                     auto dest_delta = [&]() {
                         ZoneScopedN( "handle_action_get_move_delta" );
                         return get_delta_from_movement_action( act, iso_rotate::yes );
-                    }();
+                    }
+                    ();
                     if( auto_travel_mode && !u.is_auto_moving() ) {
                         ZoneScopedN( "handle_action_auto_travel_route" );
                         for( int i = 0; i < SEEX; i++ ) {

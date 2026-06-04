@@ -7157,7 +7157,7 @@ void map::update_visibility_cache( const int zlev )
         60.0f / static_cast<float>( g_max_view_distance );
 
 #if defined( CATA_SDL )
-    auto const mark_overmap_seen_from_visibility = [this]( const level_cache &vc_cache ) {
+    auto const mark_overmap_seen_from_visibility = [this]( const level_cache & vc_cache ) {
         auto sm_squares_seen = std::vector<int>( static_cast<size_t>( my_MAPSIZE ) * my_MAPSIZE, 0 );
         for( const auto x : std::views::iota( 0, vc_cache.cache_x ) ) {
             for( const auto y : std::views::iota( 0, vc_cache.cache_y ) ) {
@@ -7180,7 +7180,7 @@ void map::update_visibility_cache( const int zlev )
         debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
         return;
     }
-    auto visibility_download_levels = std::vector<int>{};
+    auto visibility_download_levels = std::vector<int> {};
     if( zlevels ) {
         std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, zlev + 1 ),
                            std::back_inserter( visibility_download_levels ) );
@@ -8461,7 +8461,7 @@ void map::shift( const point_rel_sm &sp )
             point_bub_ms( g_mapsize_x, g_mapsize_y ) );
     const point_rel_ms shift_offset_pt( -sp.x() * SEEX, -sp.y() * SEEY );
 
-    auto const shift_flat_cache = [&]( auto &cache, auto &scratch, level_cache &gc,
+    auto const shift_flat_cache = [&]( auto & cache, auto & scratch, level_cache & gc,
     const auto fill_value ) {
         using cache_value = std::ranges::range_value_t<std::remove_reference_t<decltype( cache )>>;
         scratch.assign( cache.begin(), cache.end() );
@@ -8508,7 +8508,7 @@ void map::shift( const point_rel_sm &sp )
     auto short_shift_scratch = std::vector<short> {};
     auto bool_shift_scratch = std::vector<bool> {};
 
-    auto const shift_submap_dirty_bits = [&]( cata_dynamic_bitset &dirty_bits, level_cache &gc ) {
+    auto const shift_submap_dirty_bits = [&]( cata_dynamic_bitset & dirty_bits, level_cache & gc ) {
         const auto old_dirty = dirty_bits;
         dirty_bits.reset();
         for( const auto smx : std::views::iota( 0, my_MAPSIZE ) ) {
@@ -8558,21 +8558,21 @@ void map::shift( const point_rel_sm &sp )
         ZoneScopedN( "shift_mark_map_caches_dirty" );
         auto &gc = get_cache( gridz );
 
-        auto const mark_floor = [&]( const tripoint_bub_sm &smp ) {
+        auto const mark_floor = [&]( const tripoint_bub_sm & smp ) {
             gc.floor_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
             auto *sm = get_submap_at_grid( smp );
             if( sm != nullptr ) {
                 sm->floor_dirty = true;
             }
         };
-        auto const mark_outside = [&]( const tripoint_bub_sm &smp ) {
+        auto const mark_outside = [&]( const tripoint_bub_sm & smp ) {
             gc.outside_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
             auto *sm = get_submap_at_grid( smp );
             if( sm != nullptr ) {
                 sm->outside_dirty = true;
             }
         };
-        auto const mark_transparency = [&]( const tripoint_bub_sm &smp ) {
+        auto const mark_transparency = [&]( const tripoint_bub_sm & smp ) {
             gc.transparency_cache_dirty.set( static_cast<size_t>( gc.bidx( smp.x(), smp.y() ) ) );
             auto *sm = get_submap_at_grid( smp );
             if( sm != nullptr ) {
@@ -8584,8 +8584,8 @@ void map::shift( const point_rel_sm &sp )
         mark_shifted_submap_bands( gridz, 3, mark_outside );
         mark_shifted_submap_bands( gridz, 3, mark_transparency );
     };
-    auto const mark_shifted_absorption_cache_dirty = [&]( level_cache &gc, const int gridz ) {
-        auto const mark = [&]( const tripoint_bub_sm &smp ) {
+    auto const mark_shifted_absorption_cache_dirty = [&]( level_cache & gc, const int gridz ) {
+        auto const mark = [&]( const tripoint_bub_sm & smp ) {
             if( smp.x() < 0 || smp.x() >= my_MAPSIZE || smp.y() < 0 || smp.y() >= my_MAPSIZE ) {
                 return;
             }
@@ -10228,7 +10228,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
     flush_lightmap_cpu_read_counters();
     const auto valid_lm_levels = std::ranges::count_if(
-                                     std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
+    std::views::iota( minz, maxz + 1 ), [this]( const int z ) {
         return get_cache_ref( z ).lm_cpu_cache_valid;
     } );
     TracyPlot( "Map CPU LM Valid Levels", static_cast<int64_t>( valid_lm_levels ) );
@@ -10244,21 +10244,21 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     std::vector<int> gpu_floor_dirty_levels;
     std::vector<int> gpu_vehicle_floor_dirty_levels;
 
-    auto add_gpu_dirty_level = []( auto &levels, const int z ) {
+    auto add_gpu_dirty_level = []( auto & levels, const int z ) {
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
             levels.push_back( z );
         }
     };
-    auto add_all_gpu_dirty_levels = [&]( auto &levels ) {
+    auto add_all_gpu_dirty_levels = [&]( auto & levels ) {
         std::ranges::for_each( std::views::iota( minz, maxz + 1 ), [&]( const int z ) {
             add_gpu_dirty_level( levels, z );
         } );
     };
-    auto normalize_gpu_dirty_levels = []( auto &levels ) {
+    auto normalize_gpu_dirty_levels = []( auto & levels ) {
         std::ranges::sort( levels );
         levels.erase( std::ranges::unique( levels ).begin(), levels.end() );
     };
-    auto level_has_vehicle_floor = []( const level_cache &ch ) {
+    auto level_has_vehicle_floor = []( const level_cache & ch ) {
         return std::ranges::any_of( ch.vehicle_floor_cache, []( const char c ) {
             return c != '\0';
         } );
@@ -10386,7 +10386,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         // needs a separate pass as it changes the caches on neighbour z-levels (e.g. floor_cache);
         // otherwise such changes might be overwritten by main cache-building logic.
         // This pass must remain serial: do_vehicle_caching() writes to neighbor z-level caches.
-        auto const mark_vehicle_gpu_structural_levels = [&]( const vehicle *const veh ) {
+        auto const mark_vehicle_gpu_structural_levels = [&]( const vehicle * const veh ) {
             if( veh == nullptr ) {
                 return;
             }
@@ -10443,18 +10443,18 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     if( !skip_lightmap && gpu_device != nullptr ) {
         const auto &visibility_cache = get_cache_ref( zlev );
         if( !cata_gpu::resident_lighting_ready_for_visibility( {
-                .device = gpu_device,
-                .cache_x = visibility_cache.cache_x,
-                .cache_y = visibility_cache.cache_y,
-                .z_count = OVERMAP_LAYERS,
-            } ) ) {
+        .device = gpu_device,
+        .cache_x = visibility_cache.cache_x,
+        .cache_y = visibility_cache.cache_y,
+        .z_count = OVERMAP_LAYERS,
+    } ) ) {
             force_seen_rebuild_for_gpu_residency = true;
             invalidate_lightmap_caches();
             get_cache( zlev ).visibility_cache_dirty = true;
         }
     }
 #endif
-    auto dirty_lightmap_levels = std::vector<int>{};
+    auto dirty_lightmap_levels = std::vector<int> {};
     if( !skip_lightmap ) {
         ZoneScopedN( "Phase4_lightmap_prepare" );
         invalidate_lightmap_caches_if_light_state_changed();
@@ -10474,7 +10474,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     }
 
 #if defined( CATA_SDL )
-    auto pending_gpu_lighting = cata_gpu::gpu_lighting_work{};
+    auto pending_gpu_lighting = cata_gpu::gpu_lighting_work {};
     if( !skip_lightmap && gpu_device != nullptr && !dirty_lightmap_levels.empty() ) {
         ZoneScopedN( "Phase4_lightmap_begin" );
         update_solar_params();
@@ -11457,7 +11457,7 @@ auto map::current_lightmap_source_signature() -> std::size_t
         if( sm == nullptr || sm->active_items.empty() ) {
             continue;
         }
-        for( item * const itm : sm->active_items.get() ) {
+        for( item *const itm : sm->active_items.get() ) {
             if( itm != nullptr ) {
                 hash_light_item( seed, tripoint_bub_ms( itm->position() ), *itm );
             }

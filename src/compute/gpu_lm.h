@@ -61,13 +61,13 @@ static_assert(sizeof(lm_ambient_push_constants) == 144);
 // 32 bytes.
 // ---------------------------------------------------------------------------
 struct lm_raytrace_push_constants {
-    int32_t cache_x;      //  4 bytes
-    int32_t cache_y;      //  4 bytes
-    int32_t cache_xy;     //  4 bytes
-    int32_t z_count;      //  4 bytes = 16
-    float z_scale;        //  4 bytes
-    uint32_t num_sources; //  4 bytes
-    int32_t max_radius;   //  4 bytes
+    int32_t cache_x;        //  4 bytes
+    int32_t cache_y;        //  4 bytes
+    int32_t cache_xy;       //  4 bytes
+    int32_t z_count;        //  4 bytes = 16
+    float z_scale;          //  4 bytes
+    uint32_t num_sources;   //  4 bytes
+    int32_t max_radius;     //  4 bytes
     uint32_t source_offset; //  4 bytes = 32
 };
 static_assert(sizeof(lm_raytrace_push_constants) == 32);
@@ -78,18 +78,18 @@ static_assert(sizeof(lm_raytrace_push_constants) == 32);
 // 48 bytes.
 // ---------------------------------------------------------------------------
 struct lm_seen_push_constants {
-    int32_t player_x;     //  4 bytes
-    int32_t player_y;     //  4 bytes
-    int32_t player_z_idx; //  4 bytes
-    int32_t cache_x;      //  4 bytes = 16
-    int32_t cache_y;      //  4 bytes
-    int32_t cache_xy;     //  4 bytes
-    int32_t z_count;      //  4 bytes
-    int32_t view_radius;  //  4 bytes = 32
-    float z_scale;        //  4 bytes
-    int32_t z_start_idx;  //  4 bytes
+    int32_t player_x;         //  4 bytes
+    int32_t player_y;         //  4 bytes
+    int32_t player_z_idx;     //  4 bytes
+    int32_t cache_x;          //  4 bytes = 16
+    int32_t cache_y;          //  4 bytes
+    int32_t cache_xy;         //  4 bytes
+    int32_t z_count;          //  4 bytes
+    int32_t view_radius;      //  4 bytes = 32
+    float z_scale;            //  4 bytes
+    int32_t z_start_idx;      //  4 bytes
     int32_t dispatch_z_count; // 4 bytes
-    uint32_t _pad;        //  4 bytes = 48
+    uint32_t _pad;            //  4 bytes = 48
 };
 static_assert(sizeof(lm_seen_push_constants) == 48);
 
@@ -99,22 +99,22 @@ static_assert(sizeof(lm_seen_push_constants) == 48);
 // 64 bytes.
 // ---------------------------------------------------------------------------
 struct lm_visibility_push_constants {
-    int32_t player_x;                 //  4 bytes
-    int32_t player_y;                 //  4 bytes
-    int32_t player_z_idx;             //  4 bytes
-    int32_t cache_x;                  //  4 bytes = 16
-    int32_t cache_y;                  //  4 bytes
-    int32_t cache_xy;                 //  4 bytes
-    int32_t z_count;                  //  4 bytes
-    uint32_t trigdist;                //  4 bytes = 32
-    int32_t u_clairvoyance;           //  4 bytes
-    int32_t u_unimpaired_range;       //  4 bytes
-    int32_t g_light_level;            //  4 bytes
-    float vision_threshold;           //  4 bytes = 48
-    float visibility_scale_factor;    //  4 bytes
-    float visible_threshold;          //  4 bytes
-    int32_t z_start_idx;              //  4 bytes
-    int32_t dispatch_z_count;         //  4 bytes = 64
+    int32_t player_x;              //  4 bytes
+    int32_t player_y;              //  4 bytes
+    int32_t player_z_idx;          //  4 bytes
+    int32_t cache_x;               //  4 bytes = 16
+    int32_t cache_y;               //  4 bytes
+    int32_t cache_xy;              //  4 bytes
+    int32_t z_count;               //  4 bytes
+    uint32_t trigdist;             //  4 bytes = 32
+    int32_t u_clairvoyance;        //  4 bytes
+    int32_t u_unimpaired_range;    //  4 bytes
+    int32_t g_light_level;         //  4 bytes
+    float vision_threshold;        //  4 bytes = 48
+    float visibility_scale_factor; //  4 bytes
+    float visible_threshold;       //  4 bytes
+    int32_t z_start_idx;           //  4 bytes
+    int32_t dispatch_z_count;      //  4 bytes = 64
 };
 static_assert(sizeof(lm_visibility_push_constants) == 64);
 
@@ -131,10 +131,11 @@ auto compute_light_radius(float luminance) -> float;
 // than three parameters.
 // ---------------------------------------------------------------------------
 struct run_gpu_lighting_params {
-    map const* m;                         // source of all level caches
-    std::vector<int> const* dirty_levels; // z-levels whose lm needs rebuild
-    std::vector<int> const* seen_dirty_levels = nullptr; // CPU seen slices to refresh when seen rebuilds
-    int player_x;                         // player tile coordinates (flat map space)
+    map const* m;                                        // source of all level caches
+    std::vector<int> const* dirty_levels;                // z-levels whose lm needs rebuild
+    std::vector<int> const* seen_dirty_levels = nullptr; // CPU seen slices to refresh when seen
+                                                         // rebuilds
+    int player_x;                                        // player tile coordinates (flat map space)
     int player_y;
     int player_zlev; // actual game z-level (not z_idx)
     bool transparency_dirty;
@@ -172,8 +173,8 @@ struct prepare_lighting_transparency_output_params {
 // Ensure the lighting input transparency buffer exists and return the resident
 // output binding for one z-level.  Used by transparency_compute so a successful
 // transparency dispatch can seed the lighting input buffer directly.
-auto prepare_lighting_transparency_output(
-    prepare_lighting_transparency_output_params const& p) -> resident_transparency_output;
+auto prepare_lighting_transparency_output(prepare_lighting_transparency_output_params const& p)
+    -> resident_transparency_output;
 
 // Mark levels whose resident transparency slice was written by the transparency
 // shader this cache cycle.  Later CPU-side transparency mutations, such as
@@ -189,8 +190,7 @@ struct resident_lighting_visibility_params {
     int z_count = 0;
 };
 
-auto resident_lighting_ready_for_visibility(
-    resident_lighting_visibility_params const& p) -> bool;
+auto resident_lighting_ready_for_visibility(resident_lighting_visibility_params const& p) -> bool;
 
 struct shift_lighting_residency_params {
     SDL_GPUDevice* device = nullptr;
@@ -297,8 +297,8 @@ struct gpu_sight_pairs_work {
 auto begin_gpu_sight_pairs(SDL_GPUDevice* device, begin_gpu_sight_pairs_params const& p)
     -> gpu_sight_pairs_work;
 auto finish_gpu_sight_pairs(
-    SDL_GPUDevice* device, gpu_sight_pairs_work const& work, std::vector<uint32_t>& results)
-    -> bool;
+    SDL_GPUDevice* device, gpu_sight_pairs_work const& work,
+    std::vector<uint32_t>& results) -> bool;
 auto run_gpu_sight_pairs(SDL_GPUDevice* device, run_gpu_sight_pairs_params const& p) -> bool;
 
 // Release all GPU pipeline objects owned by the lm module.

@@ -109,16 +109,12 @@ auto lut_signature(std::vector<uint32_t> const& values) -> std::size_t {
 }
 
 auto release_buffer_slot(SDL_GPUDevice* const device, gpu_buffer_slot& slot) -> void {
-    if (slot.buffer != nullptr) {
-        SDL_ReleaseGPUBuffer(device, slot.buffer);
-    }
+    if (slot.buffer != nullptr) { SDL_ReleaseGPUBuffer(device, slot.buffer); }
     slot = {};
 }
 
 auto release_transfer_slot(SDL_GPUDevice* const device, gpu_transfer_slot& slot) -> void {
-    if (slot.buffer != nullptr) {
-        SDL_ReleaseGPUTransferBuffer(device, slot.buffer);
-    }
+    if (slot.buffer != nullptr) { SDL_ReleaseGPUTransferBuffer(device, slot.buffer); }
     slot = {};
 }
 
@@ -192,9 +188,7 @@ auto release_pipeline(SDL_GPUDevice* const device) -> void {
     if (s_pipeline == nullptr) { return; }
     SDL_ReleaseGPUComputePipeline(device, s_pipeline);
     s_pipeline = nullptr;
-    if (s_pipeline_device == device) {
-        s_pipeline_device = nullptr;
-    }
+    if (s_pipeline_device == device) { s_pipeline_device = nullptr; }
 }
 
 auto ensure_pipeline_device(SDL_GPUDevice* const device) -> bool {
@@ -340,9 +334,9 @@ auto prepare_transparency_inputs(
 }
 
 auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
-    ZoneScopedN( "dispatch_transparency" );
-    if (p.device == nullptr || p.luts == nullptr || p.submaps == nullptr || p.submaps->empty() ||
-        p.cache_size <= 0 || p.out_buffer == nullptr) {
+    ZoneScopedN("dispatch_transparency");
+    if (p.device == nullptr || p.luts == nullptr || p.submaps == nullptr || p.submaps->empty()
+        || p.cache_size <= 0 || p.out_buffer == nullptr) {
         return false;
     }
 
@@ -360,8 +354,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto const submap_bytes = static_cast<Uint32>(submaps.size() * sizeof(transparency_submap_in));
     auto const ter_lut_bytes = static_cast<Uint32>(luts.ter_transparent.size() * sizeof(uint32_t));
     auto const fur_lut_bytes = static_cast<Uint32>(luts.furn_transparent.size() * sizeof(uint32_t));
-    auto const compact_output_bytes =
-        static_cast<Uint32>(submaps.size() * SEEX * SEEY * sizeof(float));
+    auto const compact_output_bytes = static_cast<Uint32>(
+        submaps.size() * SEEX * SEEY * sizeof(float));
     auto const full_output_bytes = static_cast<Uint32>(p.cache_size * sizeof(float));
 
     if (ter_lut_bytes == 0 || fur_lut_bytes == 0) {
@@ -395,9 +389,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         })) {
         return false;
     }
-    if (old_ter_lut_buf != s_resources.ter_lut.buffer) {
-        s_resources.ter_lut_valid = false;
-    }
+    if (old_ter_lut_buf != s_resources.ter_lut.buffer) { s_resources.ter_lut_valid = false; }
     if (!ensure_buffer({
             .device = device,
             .slot = &s_resources.furn_lut,
@@ -407,9 +399,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         })) {
         return false;
     }
-    if (old_furn_lut_buf != s_resources.furn_lut.buffer) {
-        s_resources.furn_lut_valid = false;
-    }
+    if (old_furn_lut_buf != s_resources.furn_lut.buffer) { s_resources.furn_lut_valid = false; }
     if (!ensure_buffer({
             .device = device,
             .slot = &s_resources.compact_output,
@@ -419,7 +409,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         })) {
         return false;
     }
-    if (!use_external_output && !ensure_buffer({
+    if (!use_external_output
+        && !ensure_buffer({
             .device = device,
             .slot = &s_resources.full_output,
             .usage = write_usage,
@@ -472,7 +463,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
 
     // --- Map upload buffer and copy input data ---
     {
-        ZoneScopedN( "gpu_transparency_stage_upload" );
+        ZoneScopedN("gpu_transparency_stage_upload");
         auto* const mapped = static_cast<std::byte*>(
             SDL_MapGPUTransferBuffer(device, upload_tbuf, false));
         if (mapped == nullptr) {
@@ -501,7 +492,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     }
 
     {
-        ZoneScopedN( "gpu_transparency_record_commands" );
+        ZoneScopedN("gpu_transparency_record_commands");
         // --- Copy pass: upload all inputs ---
         auto* const cp = SDL_BeginGPUCopyPass(cmd);
 
@@ -582,7 +573,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     }
     auto wait_succeeded = true;
     {
-        ZoneScopedN( "gpu_transparency_fence_wait" );
+        ZoneScopedN("gpu_transparency_fence_wait");
         wait_succeeded = SDL_WaitForGPUFences(device, true, &fence, 1);
     }
     SDL_ReleaseGPUFence(device, fence);
@@ -601,11 +592,10 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     }
 
     // --- Map download buffer and copy results out ---
-    auto const compact_output_count =
-        submaps.size() * static_cast<std::size_t>(SEEX * SEEY);
+    auto const compact_output_count = submaps.size() * static_cast<std::size_t>(SEEX * SEEY);
     p.out_buffer->resize(compact_output_count);
     {
-        ZoneScopedN( "gpu_transparency_unpack_download" );
+        ZoneScopedN("gpu_transparency_unpack_download");
         auto const* const mapped = static_cast<float const*>(
             SDL_MapGPUTransferBuffer(device, download_tbuf, false));
         if (mapped == nullptr) {
@@ -691,8 +681,9 @@ auto verify_transparency_against_cpu(map const& m, int const zlev, float const s
             auto const cx = ref.offset_x + p.x();
             auto const cy = ref.offset_y + p.y();
             auto const flat_idx = static_cast<std::size_t>(cx * push.cache_y + cy);
-            auto const compact_idx = ref_index * static_cast<std::size_t>(SEEX * SEEY) +
-                                     static_cast<std::size_t>(p.x() * SEEY + p.y());
+            auto const compact_idx =
+                ref_index * static_cast<std::size_t>(SEEX * SEEY)
+                + static_cast<std::size_t>(p.x() * SEEY + p.y());
             auto const gpu_val = s_gpu_result[compact_idx];
             auto const cpu_val = ref.sm->transparency_cache[p.x()][p.y()];
             if (std::fabs(gpu_val - cpu_val) > threshold) {
