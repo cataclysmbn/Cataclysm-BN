@@ -425,6 +425,7 @@ auto submap_load_manager::complete_lazy_omt_result_on_main_thread( const omt_key
     auto &mb = MAPBUFFER_REGISTRY.get( key.first );
     auto completed = load_lazy_omt_zlevel_data( mb, key.second, {
         .defer_postprocess_hooks = true,
+        .worker_safe = false,
         .use_selected_mapgen = true,
         .selected_mapgen = result.generation.selected_mapgen,
     } );
@@ -515,6 +516,9 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> bool
     if( get_thread_pool().num_workers() == 0 || is_any_omt_zlevel_loaded( mb, key.second ) ) {
         auto result = load_lazy_omt_zlevel_data( mb, key.second, {
             .defer_postprocess_hooks = true,
+            .worker_safe = false,
+            .use_selected_mapgen = false,
+            .selected_mapgen = nullptr,
         } );
         apply_lazy_omt_result( key, result );
         return true;
@@ -528,6 +532,7 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> bool
             if( mapgen_function_needs_main_thread( selected_mapgen ) ) {
                 auto result = load_lazy_omt_zlevel_data( mb, key.second, {
                     .defer_postprocess_hooks = true,
+                    .worker_safe = false,
                     .use_selected_mapgen = true,
                     .selected_mapgen = selected_mapgen,
                 } );
@@ -553,6 +558,8 @@ auto submap_load_manager::start_lazy_omt_job( const omt_key &key ) -> bool
         return load_lazy_omt_zlevel_data( mb, omt_addr, {
             .defer_postprocess_hooks = true,
             .worker_safe = true,
+            .use_selected_mapgen = false,
+            .selected_mapgen = nullptr,
         } );
     } ) );
     return true;
@@ -765,7 +772,7 @@ auto submap_load_manager::has_lazy_border_work_pending() const -> bool
 }
 
 auto submap_load_manager::process_or_defer_lazy_border_work( const bool defer_lazy_border_work )
-- > void
+-> void
 {
     if( !has_lazy_border_work_pending() ) {
         lazy_border_work_deferred_ = false;
@@ -985,6 +992,9 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
                     ++generated_zlevels;
                     mb.generate_omt( omt_addr, {
                         .defer_postprocess_hooks = true,
+                        .worker_safe = false,
+                        .use_selected_mapgen = false,
+                        .selected_mapgen = nullptr,
                     } );
                 }
             }
