@@ -70,7 +70,7 @@ auto compute_accel_to_string( compute_accel val ) -> std::string_view
 {
     switch( val ) {
         case compute_accel::software:
-            return "off";
+            return "software";
         case compute_accel::force:
             return "force";
         default:

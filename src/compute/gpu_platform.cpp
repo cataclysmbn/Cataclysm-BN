@@ -2,15 +2,20 @@
 #include "gpu_platform.h"
 
 #include "debug.h"
+#include "filesystem.h"
 #include "gpu_lm.h"
 #include "gpu_transparency.h"
 #include "path_info.h"
 #include "preload_config.h"
+#include "string_utils.h"
 
 #include <SDL3/SDL_gpu.h>
+#include <SDL3/SDL_properties.h>
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <ranges>
 #include <string>
@@ -30,6 +35,193 @@ struct gpu_device_create_attempt {
     bool require_vulkan_hardware = false;
     bool prefer_low_power = false;
 };
+
+struct gpu_device_info {
+    std::string name;
+    std::string driver_name;
+    std::string driver_version;
+    std::string driver_info;
+};
+
+auto env_is_set(char const* const name) -> bool {
+    auto const* const value = std::getenv(name);
+    return value != nullptr && value[0] != '\0';
+}
+
+auto set_env_if_empty(char const* const name, std::string const& value) -> bool {
+    if (env_is_set(name)) { return false; }
+#if defined(_WIN32)
+    return _putenv_s(name, value.c_str()) == 0;
+#else
+    return setenv(name, value.c_str(), 0) == 0;
+#endif
+}
+
+#if defined(_WIN32)
+auto sibling_path(std::string const& path, std::string_view const filename) -> std::string {
+    auto const separator = path.find_last_of("/\\");
+    if (separator == std::string::npos) { return std::string{filename}; }
+    return path.substr(0, separator + 1) + std::string{filename};
+}
+
+auto lavapipe_manifest_has_runtime(std::string const& manifest_path) -> bool {
+    auto const runtime_path = sibling_path(manifest_path, "vulkan_lvp.dll");
+    if (file_exist(runtime_path)) { return true; }
+
+    DebugLog(DL::Warn, DC::Main)
+        << "SDL_GPU: Lavapipe ICD manifest found without sibling vulkan_lvp.dll: "
+        << manifest_path;
+    return false;
+}
+#else
+auto lavapipe_manifest_has_runtime(std::string const&) -> bool {
+    return true;
+}
+#endif
+
+auto path_for_vulkan_icd_env(std::string const& path) -> std::string {
+    try {
+        return std::filesystem::absolute(std::filesystem::path{path}).lexically_normal().string();
+    } catch (std::filesystem::filesystem_error const&) {
+        return path;
+    }
+}
+
+auto find_lavapipe_icd_manifest() -> std::string {
+    auto const candidates = std::vector<std::string>{
+        PATH_INFO::base_path() + "mesa/x64/lvp_icd.x86_64.json",
+        PATH_INFO::base_path() + "build-data/mesa/x64/lvp_icd.x86_64.json",
+        PATH_INFO::base_path() + "mesa/lvp_icd.x86_64.json",
+        PATH_INFO::base_path() + "mesa/lvp_icd.json",
+        PATH_INFO::base_path() + "lvp_icd.x86_64.json",
+        PATH_INFO::base_path() + "lvp_icd.json",
+        PATH_INFO::base_path() + "vulkan/icd.d/lvp_icd.x86_64.json",
+        PATH_INFO::base_path() + "vulkan/icd.d/lvp_icd.json",
+        PATH_INFO::base_path() + "share/vulkan/icd.d/lvp_icd.x86_64.json",
+        PATH_INFO::base_path() + "share/vulkan/icd.d/lvp_icd.json",
+        PATH_INFO::datadir() + "vulkan/icd.d/lvp_icd.x86_64.json",
+        PATH_INFO::datadir() + "vulkan/icd.d/lvp_icd.json",
+        "mesa/x64/lvp_icd.x86_64.json",
+        "build-data/mesa/x64/lvp_icd.x86_64.json",
+        "mesa/lvp_icd.x86_64.json",
+        "mesa/lvp_icd.json",
+        "lvp_icd.x86_64.json",
+        "lvp_icd.json",
+        "vulkan/icd.d/lvp_icd.x86_64.json",
+        "vulkan/icd.d/lvp_icd.json",
+        "data/vulkan/icd.d/lvp_icd.x86_64.json",
+        "data/vulkan/icd.d/lvp_icd.json",
+#if defined(_WIN32)
+        PATH_INFO::base_path() + "lvp_icd.x86.json",
+        PATH_INFO::base_path() + "mesa/x86/lvp_icd.x86.json",
+        PATH_INFO::base_path() + "build-data/mesa/x86/lvp_icd.x86.json",
+        PATH_INFO::base_path() + "mesa/lvp_icd.x86.json",
+        PATH_INFO::base_path() + "vulkan/icd.d/lvp_icd.x86.json",
+        "lvp_icd.x86.json",
+        "mesa/x86/lvp_icd.x86.json",
+        "build-data/mesa/x86/lvp_icd.x86.json",
+        "mesa/lvp_icd.x86.json",
+        "vulkan/icd.d/lvp_icd.x86.json",
+#else
+        "/usr/share/vulkan/icd.d/lvp_icd.json",
+        "/usr/local/share/vulkan/icd.d/lvp_icd.json",
+        "/usr/share/vulkan/icd.d/lvp_icd.x86_64.json",
+        "/usr/local/share/vulkan/icd.d/lvp_icd.x86_64.json",
+        "/usr/share/vulkan/icd.d/lvp_icd.aarch64.json",
+        "/usr/local/share/vulkan/icd.d/lvp_icd.aarch64.json",
+        "/usr/share/vulkan/icd.d/lvp_icd.i686.json",
+        "/usr/local/share/vulkan/icd.d/lvp_icd.i686.json",
+#endif
+    };
+
+    for (auto const& path : candidates) {
+        if (file_exist(path) && lavapipe_manifest_has_runtime(path)) { return path; }
+    }
+    return {};
+}
+
+auto pin_lavapipe_icd_for_software_mode() -> void {
+    if (env_is_set("VK_DRIVER_FILES") || env_is_set("VK_ICD_FILENAMES")) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: software mode using existing Vulkan ICD environment override";
+        return;
+    }
+
+    auto const icd_manifest = find_lavapipe_icd_manifest();
+    if (icd_manifest.empty()) {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: software mode requested, but no Lavapipe ICD manifest was found";
+        return;
+    }
+
+    auto const env_icd_manifest = path_for_vulkan_icd_env(icd_manifest);
+    auto const driver_files_set = set_env_if_empty("VK_DRIVER_FILES", env_icd_manifest);
+    auto const icd_filenames_set = set_env_if_empty("VK_ICD_FILENAMES", env_icd_manifest);
+    if (driver_files_set || icd_filenames_set) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: software mode pinned Vulkan ICD manifest: " << env_icd_manifest;
+    } else {
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: failed to pin Lavapipe ICD manifest for software mode: "
+            << env_icd_manifest;
+    }
+}
+
+auto get_gpu_device_info(SDL_GPUDevice* const device) -> gpu_device_info {
+#if defined(SDL_PROP_GPU_DEVICE_NAME_STRING)
+    auto const gpu_device_property_string = [](SDL_PropertiesID const props, char const* const name)
+        -> std::string {
+        auto const* const value = SDL_GetStringProperty(props, name, "");
+        return value != nullptr ? std::string{value} : std::string{};
+    };
+    auto const props = SDL_GetGPUDeviceProperties(device);
+    if (props == 0) { return {}; }
+    return {
+        .name = gpu_device_property_string(props, SDL_PROP_GPU_DEVICE_NAME_STRING),
+        .driver_name = gpu_device_property_string(props, SDL_PROP_GPU_DEVICE_DRIVER_NAME_STRING),
+        .driver_version =
+            gpu_device_property_string(props, SDL_PROP_GPU_DEVICE_DRIVER_VERSION_STRING),
+        .driver_info = gpu_device_property_string(props, SDL_PROP_GPU_DEVICE_DRIVER_INFO_STRING),
+    };
+#else
+    (void)device;
+    return {};
+#endif
+}
+
+auto device_string_for_log(std::string value) -> std::string {
+    std::ranges::replace(value, '\n', ' ');
+    std::ranges::replace(value, '\r', ' ');
+    return value.empty() ? std::string{"unknown"} : value;
+}
+
+auto log_gpu_device_info(gpu_device_info const& info) -> void {
+    DebugLog(DL::Info, DC::Main)
+        << "SDL_GPU: device=" << device_string_for_log(info.name)
+        << "  driver_name=" << device_string_for_log(info.driver_name)
+        << "  driver_version=" << device_string_for_log(info.driver_version);
+    if (!info.driver_info.empty()) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: driver_info=" << device_string_for_log(info.driver_info);
+    }
+}
+
+auto is_recognized_software_device(gpu_device_info const& info) -> bool {
+    auto const combined = info.name + " " + info.driver_name + " " + info.driver_version + " "
+        + info.driver_info;
+    static constexpr std::array<std::string_view, 7> markers{{
+        "lavapipe",
+        "llvmpipe",
+        "swiftshader",
+        "microsoft basic render driver",
+        "microsoft basic renderer",
+        "software rasterizer",
+        "warp",
+    }};
+    return std::ranges::any_of(markers, [&combined](std::string_view const marker) {
+        return lcmatch(combined, std::string{marker});
+    });
+}
 
 auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevice* {
     auto const props = SDL_CreateProperties();
@@ -73,15 +265,9 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
 auto software_attempts() -> std::vector<gpu_device_create_attempt> {
     return {
         {
-            .label = "vulkan software-capable",
+            .label = "vulkan software-required",
             .driver = "vulkan",
             .require_vulkan_hardware = false,
-        },
-        {
-            .label = "default software-capable",
-            .driver = "",
-            .require_vulkan_hardware = false,
-            .prefer_low_power = true,
         },
     };
 }
@@ -104,9 +290,8 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     if (backend == "software") {
         accel = compute_accel::software;
         backend.clear();
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: backend override 'software' selects the "
-               "software-capable policy";
+        DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override 'software' selects the "
+                                        "software-required policy";
     }
 
     auto attempts = std::vector<gpu_device_create_attempt>{};
@@ -115,7 +300,7 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
             add_attempt(
                 attempts,
                 {
-                    .label = backend + " software-capable",
+                    .label = backend + " software-required",
                     .driver = backend,
                     .require_vulkan_hardware = false,
                     .prefer_low_power = true,
@@ -235,25 +420,40 @@ auto init() -> void {
 
     if (s_device != nullptr) { return; }
 
-    auto const accel = preload_config::get_compute_accel();
-
     auto const backend_sv = preload_config::get_gpu_backend_override();
     auto const backend_str = std::string{backend_sv};
+    auto const accel = preload_config::get_compute_accel();
+    auto const require_software_device =
+        accel == compute_accel::software || backend_str == "software";
+    if (require_software_device) { pin_lavapipe_icd_for_software_mode(); }
+
     if (!backend_str.empty()) {
         DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override: " << backend_str;
     }
 
     auto* device = static_cast<SDL_GPUDevice*>(nullptr);
+    auto selected_device_info = gpu_device_info{};
     for (auto const& attempt : make_device_attempts(accel, backend_str)) {
         device = create_gpu_device(attempt);
         if (device != nullptr) {
+            selected_device_info = get_gpu_device_info(device);
+            if (require_software_device && !is_recognized_software_device(selected_device_info)) {
+                DebugLog(DL::Warn, DC::Main)
+                    << "SDL_GPU: rejected device for software-required policy: "
+                    << attempt.label;
+                log_gpu_device_info(selected_device_info);
+                SDL_DestroyGPUDevice(device);
+                device = nullptr;
+                continue;
+            }
             DebugLog(DL::Info, DC::Main) << "SDL_GPU: selected device policy: " << attempt.label;
             break;
         }
     }
 
     if (device == nullptr) {
-        auto const level = (accel == compute_accel::force) ? DL::Error : DL::Warn;
+        auto const level =
+            (accel == compute_accel::force || require_software_device) ? DL::Error : DL::Warn;
         DebugLog(level, DC::Main) << "SDL_GPU: device creation failed; install/enable a hardware "
                                      "GPU driver or "
                                   << "a software Vulkan driver such as Lavapipe for the shader "
@@ -266,6 +466,7 @@ auto init() -> void {
 
     DebugLog(DL::Info, DC::Main) << "SDL_GPU: driver=" << (driver != nullptr ? driver : "unknown")
                                  << "  formats=" << shader_formats_to_string(formats);
+    log_gpu_device_info(selected_device_info);
 
     auto const [fmt, ext] = select_shader_format(formats);
     if (fmt != SDL_GPU_SHADERFORMAT_INVALID) { probe_shader(device, fmt, ext); }

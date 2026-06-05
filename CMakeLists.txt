@@ -458,8 +458,13 @@ if (CATA_SDL)
         add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
     else ()
         message(STATUS "shadercross not found — shaders will not be compiled (install sdl3-shadercross via vcpkg or place shadercross on PATH)")
-    endif ()
 endif ()
+endif ()
+
+if (WIN32 AND CATA_SDL)
+    include(${CMAKE_SOURCE_DIR}/build-scripts/WindowsLavapipe.cmake)
+    cata_setup_windows_lavapipe_runtime()
+endif()
 
 if (TILES)
     # Find SDL3_ttf & SDL3_image for tile rendering
@@ -756,6 +761,11 @@ if (RELEASE)
         install(DIRECTORY ${CMAKE_SOURCE_DIR}/mods
             DESTINATION .)
     endif()
+endif()
+
+if (WIN32 AND CATA_SDL AND TARGET cata_windows_lavapipe_runtime)
+    install(DIRECTORY "${CATA_WINDOWS_LAVAPIPE_RUNTIME_DIR}/"
+        DESTINATION "mesa/x64")
 endif()
 
 if (APPLE AND RELEASE AND (TILES OR CURSES))

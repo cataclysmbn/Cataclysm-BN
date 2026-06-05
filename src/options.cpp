@@ -179,7 +179,10 @@ options_manager::options_manager()
     pages_.emplace_back( android, to_translation( "Android" ) );
 #endif
 
-    mMigrateOption = { {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } } };
+    mMigrateOption = {
+        {"DELETE_WORLD", { "WORLD_END", { {"no", "keep" }, {"yes", "delete"} } } },
+        {"COMPUTE_ACCELERATION", { "COMPUTE_ACCELERATION", { {"off", "software"} } } },
+    };
 
     enable_json( "DEFAULT_REGION" );
     // to allow class based init_data functions to add values to a 'string' type option, add:
@@ -2336,7 +2339,7 @@ void options_manager::add_options_graphics()
          translate_marker( "Controls SDL_GPU compute device selection for lighting and visibility.  Requires restart." ),
     {
         { "auto", translate_marker( "Auto" ) },
-        { "off", translate_marker( "Software" ) },
+        { "software", translate_marker( "Software" ) },
         { "force", translate_marker( "Force hardware" ) }
     },
     "auto" );

@@ -190,6 +190,9 @@ if (TILES)
     endif ()
 
     set_target_properties(cataclysm-bn-tiles PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+    if (COMMAND cata_copy_windows_lavapipe_runtime)
+        cata_copy_windows_lavapipe_runtime(cataclysm-bn-tiles)
+    endif()
 
     if( LUA_DOCS_ON_BUILD AND DENO_BINARY )
         add_custom_command(
@@ -244,4 +247,7 @@ if (CURSES)
     if (RELEASE)
         install(TARGETS cataclysm-bn RUNTIME)
     endif ()
+    if (COMMAND cata_copy_windows_lavapipe_runtime)
+        cata_copy_windows_lavapipe_runtime(cataclysm-bn)
+    endif()
 endif ()
