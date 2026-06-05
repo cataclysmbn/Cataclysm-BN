@@ -47,6 +47,7 @@ struct rl_vec2d;
 
 enum vpart_bitflags : int;
 enum ter_bitflags : int;
+enum dedicated_vpmount_slot_enum : int;
 template<typename feature_type>
 class vehicle_part_with_feature_range;
 
@@ -331,10 +332,74 @@ class veh_mount_slot
         vehicle *get_veh() const {
             return veh;
         } 
-        // Initialize our dedicated slot vector with dummies
-        std::vector<vehicle_part> dedicated_slots = get_dummy_dedicated_slot_table( this );
+        // Dedicated slots will be initialized with dummy parts on mount creation.
+        // While not set initially, the size of this vector is ALWAYS equal to NUM_DVPM_SLOTS after initialization.
+        std::vector<vehicle_part> dedicated_slots;
 
-        
+        // all vehicle parts that that 
+        std::vector<vehicle_part> other_parts;
+
+        // Consider culling getters that dont need to be accessed very frequently.
+        // Also cull any listings where there could be multiples of its type in a single vehicle tile.
+        vehicle_part &get_STRUCTURE();
+        const vehicle_part &STRUCTURE();
+
+        vehicle_part &get_ENGINE();
+        const vehicle_part &ENGINE();
+
+        vehicle_part &get_WHEEL();
+        const vehicle_part &WHEEL();
+
+        vehicle_part &get_BOARD();
+        const vehicle_part &BOARD();
+
+        vehicle_part &get_CENTER();
+        const vehicle_part &CENTER();
+
+        vehicle_part &get_STORAGE();
+        const vehicle_part &STORAGE();
+
+        vehicle_part &get_ROOF();
+        const vehicle_part &ROOF();
+
+        vehicle_part &get_ARMOR();
+        const vehicle_part &ARMOR();
+
+        vehicle_part &get_VEHICLE_CONTROLS();
+        const vehicle_part &VEHICLE_CONTROLS();
+
+        vehicle_part &get_TURRET_CONTROLS();
+        const vehicle_part &TURRET_CONTROLS();
+
+        vehicle_part &get_BATTERY();
+        const vehicle_part &BATTERY();
+
+        vehicle_part &get_LIQUID_TANK();
+        const vehicle_part &LIQUID_TANK();
+
+        vehicle_part &get_LIGHT();
+        const vehicle_part &LIGHT();
+
+        vehicle_part &get_TURRET();
+        const vehicle_part &TURRET();
+
+        vehicle_part &get_AUTOLOADER();
+        const vehicle_part &AUTOLOADER();
+
+        vehicle_part &get_ROTOR();
+        const vehicle_part &ROTOR();
+
+        vehicle_part &get_PROPELLER();
+        const vehicle_part &PROPELLER();
+
+        vehicle_part &get_WING();
+        const vehicle_part &WING();
+
+        vehicle_part &get_BALLOON();
+        const vehicle_part &BALLOON();
+
+        vehicle_part &get_AISLE();
+        const vehicle_part &AISLE();
 
 };
 
@@ -1666,6 +1731,11 @@ class vehicle
         std::set<tripoint_abs_ms> occupied_points;
 
         std::vector<vehicle_part> parts;   // Parts which occupy different tiles
+
+        // Map of vehicle mount slots, keyed to the vehicle mount tripoint they inhabit. 
+        // Mount slots contain all the vehicle parts in their respective tripoint.
+        std::unordered_map<tripoint_mnt_veh, veh_mount_slot> mount_slots; 
+
     public:
         // Number of parts contained in this vehicle
         int part_count() const;

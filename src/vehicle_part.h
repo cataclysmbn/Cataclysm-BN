@@ -369,26 +369,26 @@ struct vehicle_part {
  * We assign constexpr values to come of our slots that will be used very often for checks.
  * This way we can also forgo the enum list if we know exactly what we want to be polling and use the contexpr index
  */
-static constexpr uint8_t DVPMS_STRUCTURE_Index = 0;
-static constexpr uint8_t DVPMS_ENGINE_Index = 1;
-static constexpr uint8_t DVPMS_WHEEL_Index = 2;
-static constexpr uint8_t DVPMS_BOARD_Index = 3;
-static constexpr uint8_t DVPMS_CENTER_Index = 4;
-static constexpr uint8_t DVPMS_STORAGE_Index = 5;
-static constexpr uint8_t DVPMS_ROOF_Index = 6;
-static constexpr uint8_t DVPMS_ARMOR_Index = 7;
-static constexpr uint8_t DVPMS_VEHICLE_CONTROLS_Index = 8;
-static constexpr uint8_t DVPMS_TURRET_CONTROLS_Index = 9;
-static constexpr uint8_t DVPMS_BATTERY_Index = 10;
-static constexpr uint8_t DVPMS_LIQUID_TANK_Index = 11;
-static constexpr uint8_t DVPMS_LIGHT_Index = 12;
-static constexpr uint8_t DVPMS_TURRET_Index = 13;
-static constexpr uint8_t DVPMS_AUTOLOADER_Index = 14;
-static constexpr uint8_t DVPMS_ROTOR_Index = 15;
-static constexpr uint8_t DVPMS_PROPELLER_Index = 16;
-static constexpr uint8_t DVPMS_WING_Index = 17;
-static constexpr uint8_t DVPMS_BALLOON_Index = 18;
-static constexpr uint8_t DVPMS_AISLE_Index = 19;
+static constexpr uint8_t VMDS_STRUCTURE_Index = 0;
+static constexpr uint8_t VMDS_ENGINE_Index = 1;
+static constexpr uint8_t VMDS_WHEEL_Index = 2;
+static constexpr uint8_t VMDS_BOARD_Index = 3;
+static constexpr uint8_t VMDS_CENTER_Index = 4;
+static constexpr uint8_t VMDS_STORAGE_Index = 5;
+static constexpr uint8_t VMDS_ROOF_Index = 6;
+static constexpr uint8_t VMDS_ARMOR_Index = 7;
+static constexpr uint8_t VMDS_VEHICLE_CONTROLS_Index = 8;
+static constexpr uint8_t VMDS_TURRET_CONTROLS_Index = 9;
+static constexpr uint8_t VMDS_BATTERY_Index = 10;
+static constexpr uint8_t VMDS_LIQUID_TANK_Index = 11;
+static constexpr uint8_t VMDS_LIGHT_Index = 12;
+static constexpr uint8_t VMDS_TURRET_Index = 13;
+static constexpr uint8_t VMDS_AUTOLOADER_Index = 14;
+static constexpr uint8_t VMDS_ROTOR_Index = 15;
+static constexpr uint8_t VMDS_PROPELLER_Index = 16;
+static constexpr uint8_t VMDS_WING_Index = 17;
+static constexpr uint8_t VMDS_BALLOON_Index = 18;
+static constexpr uint8_t VMDS_AISLE_Index = 19;
 /**
  * Each dedicated vehicle part mount slot enum equals the index to queary a veh_mount_slot.dedicated_slots vector for the part in question.
  * The dedicated parts vectors resize as needed based on the number of dedicated slots desired.
@@ -399,36 +399,36 @@ static constexpr uint8_t DVPMS_AISLE_Index = 19;
  * 
  */
 enum dedicated_vpmount_slot_enum : int {
-    DVPM_SLOT_STRUCTURE = DVPMS_STRUCTURE_Index,
-    DVPM_SLOT_ENGINE = DVPMS_ENGINE_Index,
-    DVPM_SLOT_WHEEL = DVPMS_WHEEL_Index,
-    DVPM_SLOT_BOARD = DVPMS_BOARD_Index,
-    DVPM_SLOT_CENTER = DVPMS_CENTER_Index,
-    DVPM_SLOT_STORAGE = DVPMS_STORAGE_Index,
-    DVPM_SLOT_ROOF = DVPMS_ROOF_Index,
-    DVPM_SLOT_ARMOR = DVPMS_ARMOR_Index,
-    DVPM_SLOT_VEHICLE_CONTROLS = DVPMS_VEHICLE_CONTROLS_Index,
-    DVPM_SLOT_TURRET_CONTROLS = DVPMS_TURRET_CONTROLS_Index,
-    DVPM_SLOT_BATTERY = DVPMS_BATTERY_Index,
-    DVPM_SLOT_LIQUID_TANK = DVPMS_LIQUID_TANK_Index,
-    DVPM_SLOT_LIGHT = DVPMS_LIGHT_Index,
-    DVPM_SLOT_TURRET = DVPMS_TURRET_Index,
-    DVPM_SLOT_AUTOLOADER = DVPMS_AUTOLOADER_Index,
-    DVPM_SLOT_ROTOR = DVPMS_ROTOR_Index,
-    DVPM_SLOT_PROPELLER = DVPMS_PROPELLER_Index,
-    DVPM_SLOT_WING = DVPMS_WING_Index,
-    DVPM_SLOT_BALLOON = DVPMS_BALLOON_Index,
-    DVPM_SLOT_AISLE = DVPMS_AISLE_Index,
-    NUM_DVPM_SLOTS // Leave this undeclared so that we can always get the right sized dedicated slots vector.
+    VMD_SLOT_STRUCTURE = VMDS_STRUCTURE_Index,
+    VMD_SLOT_ENGINE = VMDS_ENGINE_Index,
+    VMD_SLOT_WHEEL = VMDS_WHEEL_Index,
+    VMD_SLOT_BOARD = VMDS_BOARD_Index,
+    VMD_SLOT_CENTER = VMDS_CENTER_Index,
+    VMD_SLOT_STORAGE = VMDS_STORAGE_Index,
+    VMD_SLOT_ROOF = VMDS_ROOF_Index,
+    VMD_SLOT_ARMOR = VMDS_ARMOR_Index,
+    VMD_SLOT_VEHICLE_CONTROLS = VMDS_VEHICLE_CONTROLS_Index,
+    VMD_SLOT_TURRET_CONTROLS = VMDS_TURRET_CONTROLS_Index,
+    VMD_SLOT_BATTERY = VMDS_BATTERY_Index,
+    VMD_SLOT_LIQUID_TANK = VMDS_LIQUID_TANK_Index,
+    VMD_SLOT_LIGHT = VMDS_LIGHT_Index,
+    VMD_SLOT_TURRET = VMDS_TURRET_Index,
+    VMD_SLOT_AUTOLOADER = VMDS_AUTOLOADER_Index,
+    VMD_SLOT_ROTOR = VMDS_ROTOR_Index,
+    VMD_SLOT_PROPELLER = VMDS_PROPELLER_Index,
+    VMD_SLOT_WING = VMDS_WING_Index,
+    VMD_SLOT_BALLOON = VMDS_BALLOON_Index,
+    VMD_SLOT_AISLE = VMDS_AISLE_Index,
+    NUM_VMD_SLOTS // Leave this undeclared so that we can always get the right sized dedicated slots vector.
 
 };
 
 template<>
 struct enum_traits<dedicated_vpmount_slot_enum> {
-    static constexpr auto last = dedicated_vpmount_slot_enum::NUM_DVPM_SLOTS;
+    static constexpr auto last = dedicated_vpmount_slot_enum::NUM_VMD_SLOTS;
 };
-// This way we can size our dedicated_vmount arrays to our maximum number of s
-static constexpr int number_of_dedicated_vmount_slots = NUM_DVPM_SLOTS;
+// This way we can size our dedicated_slots vectors to the number of VMD slot enums
+static constexpr int number_of_dedicated_vmount_slots = NUM_VMD_SLOTS;
 
 static constexpr std::vector<vehicle_part> get_dummy_dedicated_slot_table( veh_mount_slot *mnt )
 {
@@ -443,69 +443,69 @@ static constexpr int get_dedicated_veh_mount_slot_index( const dedicated_vpmount
 {
     switch (vpslot) {
 
-    case DVPM_SLOT_STRUCTURE:
-        return DVPMS_STRUCTURE_Index;
+    case VMD_SLOT_STRUCTURE:
+        return VMDS_STRUCTURE_Index;
 
-    case DVPM_SLOT_ENGINE:
-        return DVPMS_ENGINE_Index;
+    case VMD_SLOT_ENGINE:
+        return VMDS_ENGINE_Index;
 
-    case DVPM_SLOT_WHEEL:
-        return DVPMS_WHEEL_Index;
+    case VMD_SLOT_WHEEL:
+        return VMDS_WHEEL_Index;
 
-    case DVPM_SLOT_BOARD:
-        return DVPMS_BOARD_Index;
+    case VMD_SLOT_BOARD:
+        return VMDS_BOARD_Index;
 
-    case DVPM_SLOT_CENTER:
-        return DVPMS_CENTER_Index;
+    case VMD_SLOT_CENTER:
+        return VMDS_CENTER_Index;
 
-    case DVPM_SLOT_STORAGE:
-        return DVPMS_STORAGE_Index;
+    case VMD_SLOT_STORAGE:
+        return VMDS_STORAGE_Index;
 
-    case DVPM_SLOT_ROOF:
-        return DVPMS_ROOF_Index;
+    case VMD_SLOT_ROOF:
+        return VMDS_ROOF_Index;
 
-    case DVPM_SLOT_ARMOR:
-        return DVPMS_ARMOR_Index;
+    case VMD_SLOT_ARMOR:
+        return VMDS_ARMOR_Index;
 
-    case DVPM_SLOT_VEHICLE_CONTROLS:
-        return DVPMS_VEHICLE_CONTROLS_Index;
+    case VMD_SLOT_VEHICLE_CONTROLS:
+        return VMDS_VEHICLE_CONTROLS_Index;
 
-    case DVPM_SLOT_TURRET_CONTROLS:
-        return DVPMS_TURRET_CONTROLS_Index;
+    case VMD_SLOT_TURRET_CONTROLS:
+        return VMDS_TURRET_CONTROLS_Index;
 
-    case DVPM_SLOT_BATTERY:
-        return DVPMS_BATTERY_Index;
+    case VMD_SLOT_BATTERY:
+        return VMDS_BATTERY_Index;
 
-    case DVPM_SLOT_LIQUID_TANK:
-        return DVPMS_LIQUID_TANK_Index;
+    case VMD_SLOT_LIQUID_TANK:
+        return VMDS_LIQUID_TANK_Index;
 
-    case DVPM_SLOT_LIGHT:
-        return DVPMS_LIGHT_Index;
+    case VMD_SLOT_LIGHT:
+        return VMDS_LIGHT_Index;
 
-    case DVPM_SLOT_TURRET:
-        return DVPMS_TURRET_Index;
+    case VMD_SLOT_TURRET:
+        return VMDS_TURRET_Index;
 
-    case DVPM_SLOT_AUTOLOADER:
-        return DVPMS_AUTOLOADER_Index;
+    case VMD_SLOT_AUTOLOADER:
+        return VMDS_AUTOLOADER_Index;
 
-    case DVPM_SLOT_ROTOR:
-        return DVPMS_ROTOR_Index;
+    case VMD_SLOT_ROTOR:
+        return VMDS_ROTOR_Index;
 
-    case DVPM_SLOT_PROPELLER:
-        return DVPMS_PROPELLER_Index;
+    case VMD_SLOT_PROPELLER:
+        return VMDS_PROPELLER_Index;
 
-    case DVPM_SLOT_WING:
-        return DVPMS_WING_Index;
+    case VMD_SLOT_WING:
+        return VMDS_WING_Index;
 
-    case DVPM_SLOT_BALLOON:
-        return DVPMS_BALLOON_Index;
+    case VMD_SLOT_BALLOON:
+        return VMDS_BALLOON_Index;
 
-    case DVPM_SLOT_AISLE:
-        return DVPMS_AISLE_Index;
+    case VMD_SLOT_AISLE:
+        return VMDS_AISLE_Index;
 
-    case NUM_DVPM_SLOTS:
+    case NUM_VMD_SLOTS:
         // If something asks for our number of slots enum instead of a proper one redirect them to structure.
-        return DVPMS_STRUCTURE_Index;
+        return VMDS_STRUCTURE_Index;
     } 
     
 };
