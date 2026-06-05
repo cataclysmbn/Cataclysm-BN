@@ -5500,6 +5500,8 @@ void Character::update_body( const time_duration &duration )
     update_stamina( to_turns<int>( duration ) );
     update_stomach( duration );
     recalculate_enchantment_cache();
+    // heal hearing loss.
+    update_hearing_loss( duration );
 
     int three_mins = calendar::ticks_between( duration, 3_minutes );
     for( ; three_mins > 0; three_mins-- ) {
@@ -5523,6 +5525,7 @@ void Character::update_body( const time_duration &duration )
 
     int thirty_mins = calendar::ticks_between( duration, 30_minutes );
     for( ; thirty_mins > 0; thirty_mins-- ) {
+        update_hearing_loss( duration, true );
         // Radiation kills health even at low doses
         update_health( has_trait( trait_RADIOGENIC ) ? 0 : -get_rad() );
     }
@@ -11587,6 +11590,32 @@ bool Character::avoid_trap( const tripoint_bub_ms &pos, const trap &tr ) const
     }
 
     return myroll >= traproll;
+}
+
+void Character::handle_hearing_loss( const short &vol, const bool &hearing_protection_applied )
+{
+
+}
+// Update and possibly recover hearing loss.
+void Character::update_hearing_loss( const time_duration &duration, const bool &longterm )
+{
+    if (longterm){
+        // We use sound absorption open field as it is a convenient constexpr equal to zero.
+        hearing_loss_stats.hearing_loss_longterm = std::max(0, hearing_loss_stats.hearing_loss_longterm - 1);
+        return;
+    } else {
+        int secondspassed = calendar::ticks_between( duration, 1_seconds );
+        hearing_loss_stats.hearing_loss_temp = std::max( 0 , hearing_loss_stats.hearing_loss_temp - secondspassed);
+        return;
+    }
+}
+
+// Returns the total mdB spl perceived volume adjustment due to a character's hearing loss.
+short Character::total_hearing_loss() const
+{
+    int total_loss = hearing_loss_stats.hearing_loss_temp + hearing_loss_stats.hearing_loss_longterm + hearing_loss_stats.hearing_loss_permanant;
+    total_loss = std::max( 0, std::min( static_cast<int>( MAXIMUM_VOLUME_ATMOSPHERE ), total_loss ) );
+    return static_cast<short>( total_loss );
 }
 
 bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) const

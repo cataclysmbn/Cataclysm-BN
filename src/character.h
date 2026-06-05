@@ -221,6 +221,22 @@ struct needs_rates {
     float recovery = 0.0f;
 };
 
+/** Contains information on the temporary and long term hearing loss suffered by a character.
+ *  All values are in mdB spl.
+ *  While we do track permanant hearing loss here and account for it, we do not currently ever increment it. Permanant hearing loss is the realm of starting traits or mutations.
+ */
+struct hearing_loss_data {
+    // Short term hearing loss in mdB spl. Recovers relatively quickly.
+    short hearing_loss_temp = 0;
+    // Long term hearing loss in mdB spl. 
+    short hearing_loss_longterm = 0;
+    // Permanant hearing loss in mdB spl. Not gained by interactions with sound in normal play, so that all characters dont inevitably become deaf.
+    short hearing_loss_permanant = 0;
+    // Weather or not the characters eardrums have been ruptured. Character has the deaf status until they heal. 
+    // We track the bool because once the eardrums are ruptured, there is not too much more damage sounds can do for a while so we dont inflict additional deaf duration.
+    bool ruptured_eardrums = false; 
+};
+
 struct char_trait_data {
     /** Whether the mutation is activated. */
     bool powered = false;
@@ -2250,10 +2266,21 @@ class Character : public Creature, public location_visitable<Character>
         std::vector<std::string> short_description_parts() const;
         std::string short_description() const;
         int print_info( const catacurses::window &w, int vStart, int vLines, int column ) const override;
+
+        // Hearing loss data for our character
+        hearing_loss_data hearing_loss_stats;
+
+        void handle_hearing_loss( const short &vol, const bool &hearing_protection_applied = false );
+        // Update and possibly recover hearing loss.
+        void update_hearing_loss( const time_duration &duration, const bool &longterm = false );
+
         // Checks whether a player can hear a sound at a given volume and location.
         bool can_hear( const tripoint_bub_ms &source, int volume ) const;
         // Returns a multiplier indicating the keenness of a player's hearing.
         float hearing_ability() const;
+
+        // Returns the total mdB spl perceived volume adjustment due to a character's hearing loss.
+        short total_hearing_loss() const;
 
         using trap_map = std::map<tripoint_abs_ms, std::string>;
         bool knows_trap( const tripoint_bub_ms &pos ) const;
