@@ -2334,9 +2334,11 @@ void options_manager::add_options_graphics()
     add_empty_line();
     add( "COMPUTE_ACCELERATION", graphics, translate_marker( "Compute Acceleration" ),
          translate_marker( "Controls SDL_GPU compute device selection for lighting and visibility.  Requires restart." ),
-    { { "auto", translate_marker( "Auto" ) },
+    {
+        { "auto", translate_marker( "Auto" ) },
         { "off", translate_marker( "Software" ) },
-        { "force", translate_marker( "Force hardware" ) } },
+        { "force", translate_marker( "Force hardware" ) }
+    },
     "auto" );
 #endif
 

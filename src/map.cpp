@@ -7152,18 +7152,18 @@ auto map::update_visibility_cache( const int zlev,
     const auto visibility_cache_x = visibility_cache_for_residency.cache_x;
     const auto visibility_cache_y = visibility_cache_for_residency.cache_y;
     if( !cata_gpu::resident_lighting_ready_for_visibility( {
-            .device = gpu_device,
-            .cache_x = visibility_cache_x,
-            .cache_y = visibility_cache_y,
-            .z_count = OVERMAP_LAYERS,
-        } ) ) {
+    .device = gpu_device,
+    .cache_x = visibility_cache_x,
+    .cache_y = visibility_cache_y,
+    .z_count = OVERMAP_LAYERS,
+} ) ) {
         build_map_cache( zlev );
         if( !cata_gpu::resident_lighting_ready_for_visibility( {
-                .device = gpu_device,
-                .cache_x = visibility_cache_x,
-                .cache_y = visibility_cache_y,
-                .z_count = OVERMAP_LAYERS,
-            } ) ) {
+        .device = gpu_device,
+        .cache_x = visibility_cache_x,
+        .cache_y = visibility_cache_y,
+        .z_count = OVERMAP_LAYERS,
+    } ) ) {
             debugmsg( "SDL_GPU visibility residency bootstrap failed; see debug.log for details" );
             return;
         }
