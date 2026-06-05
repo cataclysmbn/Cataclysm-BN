@@ -1817,7 +1817,12 @@ void static try_remove_webs( Character &c )
     }
 }
 
-bool Character::move_effects( bool attacking )
+auto Character::move_effects( const bool attacking ) -> bool
+{
+    return move_effects( attacking, false );
+}
+
+auto Character::move_effects( const bool attacking, const bool skip_pit_escape ) -> bool
 {
     if( has_effect( effect_downed ) ) {
         try_remove_downed( *this );
@@ -1848,7 +1853,7 @@ bool Character::move_effects( bool attacking )
 
     // Currently we only have one thing that forces movement if you succeed, should we get more
     // than this will need to be reworked to only have success effects if /all/ checks succeed
-    if( has_effect( effect_in_pit ) ) {
+    if( has_effect( effect_in_pit ) && !skip_pit_escape ) {
         /** @EFFECT_STR increases chance to escape pit */
 
         /** @EFFECT_DEX increases chance to escape pit, slightly */

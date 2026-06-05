@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "avatar.h"
+#include "creature_tracker.h"
 #include "distribution_grid.h"
 #include "game.h"
 #include "lightmap.h"
@@ -282,6 +283,60 @@ void cata::detail::reg_game_api( sol::state &lua )
         }
         return out;
     } );
+
+    DOC( "Returns active NPCs near an absolute overmap terrain tile as a Lua array.  " );
+    DOC( "Takes a table with keys: `center`, `radius`, and optional `ignore_z`." );
+    luna::set_fx( lib, "get_npcs_near_omt", []( sol::this_state s, sol::table params ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        const auto p = params["center"].get<tripoint_abs_omt>();
+        const auto radius = params["radius"].get_or( 0 );
+        const auto all_z = params["ignore_z"].get_or( false );
+        auto idx = 1;
+        auto npcs = g->all_npcs();
+        if( npcs.items )
+        {
+            std::ranges::for_each(
+                *npcs.items
+            | std::views::transform( []( const weak_ptr_fast<npc> &wp ) { return wp.lock(); } )
+            | std::views::filter( [&]( const shared_ptr_fast<npc> &sp ) -> bool {
+                if( !sp || sp->is_dead() || sp->marked_for_death )
+                {
+                    return false;
+                }
+                const auto pos = sp->abs_omt_pos();
+                return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
+            } ),
+            [&out, &idx]( const shared_ptr_fast<npc> &sp ) { out[idx++] = sp.get(); } );
+        }
+        return out;
+    } );
+
+
+    DOC( "Returns active monsters near an absolute overmap terrain tile as a Lua array.  " );
+    DOC( "Takes a table with keys: `center`, `radius`, and optional `ignore_z`." );
+    luna::set_fx( lib, "get_monsters_near_omt", []( sol::this_state s,
+    sol::table params ) -> sol::table {
+        sol::state_view lua( s );
+        auto out = lua.create_table();
+        const auto p = params["center"].get<tripoint_abs_omt>();
+        const auto radius = params["radius"].get_or( 0 );
+        const auto all_z = params["ignore_z"].get_or( false );
+        auto idx = 1;
+        std::ranges::for_each(
+            g->critter_tracker->get_monsters_list()
+        | std::views::filter( [&]( const shared_ptr_fast<monster> &sp ) -> bool {
+            if( !sp || sp->is_dead() )
+            {
+                return false;
+            }
+            const auto pos = project_to<coords::omt>( sp->abs_pos() );
+            return ( all_z || pos.z() == p.z() ) && square_dist( pos.xy(), p.xy() ) <= radius;
+        } ),
+        [&out, &idx]( const shared_ptr_fast<monster> &sp ) { out[idx++] = sp.get(); } );
+        return out;
+    } );
+
 
     DOC( "Returns NPCs in simulated (fully loaded, AI-eligible) submaps as a Lua array." );
     luna::set_fx( lib, "get_simulated_npcs", []( sol::this_state s ) -> sol::table {

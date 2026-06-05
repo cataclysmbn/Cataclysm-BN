@@ -2174,8 +2174,8 @@
     "//": "this is a distribution for the gun, reasonable number of backup mags, and some ammo to repack",
     "subtype": "collection",
     "entries": [
-      { "item": "longrifle_flintlock", "ammo-group": "on_hand_flintlock", "charges": [ 0, 1 ] },
-      { "group": "on_hand_flintlock", "charges": [ 10, 20 ], "count": [ 1, 2 ] }
+      { "item": "longrifle_flintlock", "ammo-group": "on_hand_longrifle_flintlock", "charges": [ 0, 1 ] },
+      { "group": "on_hand_longrifle_flintlock", "charges": [ 10, 20 ], "count": [ 1, 2 ] }
     ]
   },
   {

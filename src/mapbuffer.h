@@ -138,9 +138,9 @@ class mapbuffer
          * version already existed.  Must be called on the main thread after all
          * preload_omt() futures have been joined.
          *
-         * safe_reference<T>, cache_reference<T>, and cata_arena<T> all rely on
-         * unsynchronised global statics; destructing submaps (and their items) on
-         * worker threads would race on those statics.  preload_omt() defers such
+         * safe_reference<T> relies on unsynchronised global statics; destructing
+         * submaps (and their items) on worker threads would race on those statics.
+         * preload_omt() defers such
          * destruction here instead of letting it happen on the worker.
          */
         auto drain_pending_submap_destroy() -> void;
@@ -177,8 +177,8 @@ class mapbuffer
 
         /// Submaps that preload_omt() could not add (duplicate already in memory).
         /// Their destruction is deferred here and drained on the main thread via
-        /// drain_pending_submap_destroy() to avoid racing on the global statics
-        /// inside safe_reference<T>, cache_reference<T>, and cata_arena<T>.
+        /// drain_pending_submap_destroy() to avoid racing on safe_reference<T>
+        /// global statics.
         mutable std::mutex pending_destroy_mutex_;
         std::vector<std::unique_ptr<submap>> pending_destroy_submaps_;
 

@@ -1475,6 +1475,12 @@ class item : public location_visitable<item>, public game_object<item>
          */
         bool can_holster( const item &obj, bool ignore = false ) const;
 
+        /** Checks if item is a bandolier and currently capable of storing obj
+         *  @param obj object that we want to holster
+         *  @param ignore only check item is compatible and ignore any existing contents
+         */
+        bool can_put_in_bandolier( const item &obj, bool ignore = false ) const;
+
         /**
          * Callback when a character starts wearing the item. The item is already in the worn
          * items vector and is called from there.
@@ -2644,6 +2650,8 @@ namespace charge_removal_blacklist
 {
 const std::set<itype_id> &get();
 void load( const JsonObject &jo );
+void defer( item *, int );
+void split_deferred();
 void reset();
 } // namespace charge_removal_blacklist
 

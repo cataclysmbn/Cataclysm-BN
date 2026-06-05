@@ -607,8 +607,7 @@ bool mapbuffer::preload_omt( const tripoint_abs_omt &omt_addr )
                                               "preload_omt: submap %d,%d,%d already loaded; keeping in-memory version",
                                               pos.x(), pos.y(), pos.z() );
             // Do NOT let sm destruct here on the worker thread.  Submap/item destruction
-            // touches safe_reference<T>::records_by_pointer, cache_reference<T>::reference_map,
-            // and cata_arena<T>::pending_deletion — all unsynchronised global statics.
+            // touches safe_reference<T>::records_by_pointer, which remains main-thread-only.
             // Defer to drain_pending_submap_destroy(), called on the main thread after join.
             if( sm ) {
                 auto lk = std::lock_guard( pending_destroy_mutex_ );
