@@ -5495,7 +5495,7 @@ void game::world_tick()
                 auto has_fire = false;
                 if( sm_ptr->field_count > 0 ) {
                     ZoneScopedN( "wtd_process_fields" );
-                    has_fire = process_fields_in_submap( *sm_ptr, pos_sm, mb );
+                    has_fire = process_fields_in_submap( dim, *sm_ptr, pos_sm, mb );
                 }
                 sm_ptr->last_touched = calendar::turn;
 

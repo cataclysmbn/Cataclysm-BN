@@ -117,7 +117,7 @@
     "id": "SAW_M",
     "name": { "str": "metal sawing" },
     "usages": [ [ 2, [ "HACKSAW", "saw_barrel" ] ] ],
-    "salvagable_materials": [ "steel", "budget_steel", "tin", "lead", "silver", "gold", "copper", "platinum", "iron", "bronze", "zinc" ]
+    "salvagable_materials": [ "steel", "budget_steel", "tin", "lead", "silver", "gold", "copper", "platinum", "iron", "bronze", "brass", "zinc" ]
   },
   {
     "type": "tool_quality",

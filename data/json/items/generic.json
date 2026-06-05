@@ -3376,6 +3376,15 @@
   },
   {
     "type": "GENERIC",
+    "id": "broken_robofac_turret_light",
+    "symbol": ",",
+    "color": "green",
+    "name": { "str": "broken Hub 01 light turret" },
+    "weight": "30 kg",
+    "copy-from": "broken_turret"
+  },
+  {
+    "type": "GENERIC",
     "id": "broken_turret_medium",
     "symbol": ",",
     "color": "green",

@@ -550,6 +550,7 @@ void npc::assess_danger()
         }
     }
 
+    const auto npc_monster_faction = get_monster_faction();
     {
         ZoneScopedN( "assess_all_monsters" );
         for( const shared_ptr_fast<monster> &mon_ptr : g->critter_tracker->get_monsters_list() ) {
@@ -563,15 +564,17 @@ void npc::assess_danger()
             }
             Attitude att;
             if( !has_special_attitude_traits &&
-                critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch ) {
+                critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch &&
+                critter.cached_npc_attitude_faction == npc_monster_faction ) {
                 ZoneScopedN( "npc_monster_attitude_cache_hit" );
                 att = critter.cached_npc_attitude;
             } else {
                 ZoneScopedN( "npc_monster_attitude_cache_miss" );
                 att = has_special_attitude_traits ? critter.attitude_to( *this ) :
-                      critter.generic_npc_attitude_to();
+                      critter.generic_npc_attitude_to( npc_monster_faction );
                 if( !has_special_attitude_traits ) {
                     critter.cached_npc_attitude_epoch = g_npcmove_attitude_epoch;
+                    critter.cached_npc_attitude_faction = npc_monster_faction;
                     critter.cached_npc_attitude = att;
                 }
             }
