@@ -79,7 +79,7 @@
     "warmth": 5,
     "material_thickness": 2,
     "valid_mods": [ "resized_large", "resized_small" ],
-    "flags": [ "BELTED", "ALLOWS_TAIL_SNAKE", "ALLOWS_TAIL", "ALLOWS_WINGS" ]
+    "flags": [ "BELTED", "ALLOWS_TAIL_SNAKE", "ALLOWS_TAIL", "ALLOWS_WINGS", "OVERSIZE" ]
   },
   {
     "id": "backpack_leather",
