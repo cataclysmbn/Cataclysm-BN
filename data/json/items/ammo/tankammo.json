@@ -131,7 +131,7 @@
     },
     "extend": { "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ] },
     "explode_in_fire": true,
-    "explosion": { "damage": 25, "radius": 2 }
+    "explosion": { "damage": 60, "radius": 2, "terrain_damage_mult": 0.05, "vehicle_damage_mult": 0.1 }
   },
   {
     "id": "bp_25mm_he_reloaded",
@@ -172,7 +172,7 @@
     "loudness": 184,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
-    "explosion": { "damage": 100, "radius": 2 }
+    "explosion": { "damage": 350, "radius": 3, "terrain_damage_mult": 0.1, "vehicle_damage_mult": 0.2 }
   },
   {
     "type": "AMMO",
@@ -253,7 +253,7 @@
     },
     "extend": { "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ] },
     "explode_in_fire": true,
-    "explosion": { "damage": 150, "radius": 4 }
+    "explosion": { "damage": 900, "radius": 5, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
   },
   {
     "id": "bp_105mm_he_reloaded",
@@ -293,7 +293,7 @@
     "loudness": 186,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
-    "explosion": { "damage": 150, "radius": 3 }
+    "explosion": { "damage": 500, "radius": 3, "terrain_damage_mult": 0.1, "vehicle_damage_mult": 0.25 }
   },
   {
     "type": "AMMO",
@@ -409,7 +409,7 @@
     },
     "extend": { "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ] },
     "explode_in_fire": true,
-    "explosion": { "damage": 200, "radius": 6 }
+    "explosion": { "damage": 1200, "radius": 6, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.35 }
   },
   {
     "id": "bp_120mm_usable_he_reloaded",
@@ -448,7 +448,7 @@
     "loudness": 190,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
-    "explosion": { "damage": 200, "radius": 5 }
+    "explosion": { "damage": 750, "radius": 5, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
   },
   {
     "type": "AMMO",
@@ -562,7 +562,7 @@
     },
     "extend": { "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ] },
     "explode_in_fire": true,
-    "explosion": { "damage": 250, "radius": 10 }
+    "explosion": { "damage": 1600, "radius": 8, "terrain_damage_mult": 0.2, "vehicle_damage_mult": 0.4 }
   },
   {
     "id": "bp_155mm_he_reloaded",

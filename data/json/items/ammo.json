@@ -452,7 +452,9 @@
     "recoil": 30,
     "speed": 1600,
     "loudness": 188,
-    "effects": [ "EXPLOSIVE_HUGE", "TRAIL" ]
+    "effects": [ "CUSTOM_EXPLOSION", "TRAIL", "NO_PENETRATE_OBSTACLES" ],
+    "explode_in_fire": true,
+    "explosion": { "damage": 500, "radius": 3, "terrain_damage_mult": 0.1, "vehicle_damage_mult": 0.25 }
   },
   {
     "type": "AMMO",

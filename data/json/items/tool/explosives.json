@@ -1473,9 +1473,11 @@
     "looks_like": "tool_improvised_barrel_bomb",
     "explode_in_fire": true,
     "explosion": {
-      "damage": 300,
-      "radius": 15,
-      "fragment": { "impact": { "damage_type": "bullet", "amount": 200, "armor_multiplier": 2 }, "range": 30 }
+      "damage": 2500,
+      "radius": 12,
+      "terrain_damage_mult": 0.25,
+      "vehicle_damage_mult": 0.5,
+      "fragment": { "impact": { "damage_type": "bullet", "amount": 300, "armor_penetration": 30, "armor_multiplier": 1.2 }, "range": 30 }
     },
     "use_action": {
       "target": "aerial_bomb_armed",
@@ -1506,9 +1508,11 @@
     "drop_action": {
       "type": "explosion",
       "explosion": {
-        "damage": 300,
-        "radius": 15,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 200, "armor_multiplier": 2 }, "range": 30 }
+        "damage": 2500,
+        "radius": 12,
+        "terrain_damage_mult": 0.25,
+        "vehicle_damage_mult": 0.5,
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 300, "armor_penetration": 30, "armor_multiplier": 1.2 }, "range": 30 }
       }
     },
     "extend": { "flags": [ "TRADER_AVOID" ] }
