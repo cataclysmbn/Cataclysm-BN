@@ -36,7 +36,7 @@ local function store_red_room_items(obelisk_pos)
   -- Scan area inside the red room (not including walls)
   for dx = -RED_ROOM_RANGE, RED_ROOM_RANGE do
     for dy = -RED_ROOM_RANGE, RED_ROOM_RANGE do
-      local check_pos = Tripoint.new(
+      local check_pos = TripointBubMs.new(
         obelisk_pos.x + dx,
         obelisk_pos.y + dy,
         obelisk_pos.z
@@ -193,8 +193,8 @@ local function get_player_omt()
   if not player then return nil end
 
   local pos_ms = player:get_pos_ms()
-  local abs_ms = gapi.get_map():get_abs_ms(pos_ms)
-  local omt, _ = coords.ms_to_omt(abs_ms)
+  local abs_ms = gapi.get_map():bub_to_abs(pos_ms)
+  local omt = abs_ms:to_omt()
   return omt
 end
 
@@ -270,7 +270,7 @@ local function find_safe_position(player, additional_filter)
       for dy = -radius, radius do
         -- Only check the edge of the square (optimization)
         if math.abs(dx) == radius or math.abs(dy) == radius then
-          local check_pos = Tripoint.new(
+          local check_pos = TripointBubMs.new(
             current_pos.x + dx,
             current_pos.y + dy,
             current_pos.z
@@ -305,7 +305,7 @@ local function teleport_to_omt(omt, offset_tiles, spawn_filter)
     -- If offset specified, move player after teleport
     if offset_tiles then
       local current_pos = player:get_pos_ms()
-      local new_pos = Tripoint.new(
+      local new_pos = TripointBubMs.new(
         current_pos.x + offset_tiles.x,
         current_pos.y + offset_tiles.y,
         current_pos.z + offset_tiles.z
@@ -533,7 +533,7 @@ function teleport.use_warp_obelisk(who, item, pos, storage, missions, warp_sickn
   -- Store home location as absolute MS coordinates (for resurrection) - only once
   if not storage.home_location then
     local player_pos_ms = who:get_pos_ms()
-    local home_abs_ms = gapi.get_map():get_abs_ms(player_pos_ms)
+    local home_abs_ms = gapi.get_map():bub_to_abs(player_pos_ms)
     storage.home_location = { x = home_abs_ms.x, y = home_abs_ms.y, z = home_abs_ms.z }
     util.debug_log(string.format("Home location set to: %d, %d, %d", home_abs_ms.x, home_abs_ms.y, home_abs_ms.z))
   end
@@ -682,7 +682,7 @@ function teleport.use_warp_obelisk(who, item, pos, storage, missions, warp_sickn
   params:set_search_layers(loc_config.z_level, loc_config.z_level)
 
   -- Use ground-level origin for searching (sky islands are at z > 0)
-  local search_origin = Tripoint.new(home_omt.x, home_omt.y, loc_config.z_level)
+  local search_origin = TripointAbsOmt.new(home_omt.x, home_omt.y, loc_config.z_level)
 
   util.debug_log(string.format("Searching for %s terrain in range %d-%d at z=%d from (%d, %d, %d)",
     loc_config.terrain_type, config.min_distance, config.max_distance, loc_config.z_level,
@@ -732,7 +732,7 @@ function teleport.use_warp_obelisk(who, item, pos, storage, missions, warp_sickn
   -- Two-stage teleport to prevent map revelation from z=10
   -- First teleport: Move to z=0 at home x,y (ground level should exist below sky island)
   -- Second teleport: Move to actual destination
-  local intermediate_omt = Tripoint.new(home_omt.x, home_omt.y, 0)
+  local intermediate_omt = TripointAbsOmt.new(home_omt.x, home_omt.y, 0)
   util.debug_log("Intermediate teleport to z=0 to prevent map revelation")
   gapi.place_player_overmap_at(intermediate_omt)
 
@@ -754,7 +754,7 @@ function teleport.use_warp_obelisk(who, item, pos, storage, missions, warp_sickn
     local reveal_radius = scouting_level == 1 and 1 or 2  -- 3x3 or 5x5
     for dx = -reveal_radius, reveal_radius do
       for dy = -reveal_radius, reveal_radius do
-        local reveal_pos = Tripoint.new(dest_omt.x + dx, dest_omt.y + dy, dest_omt.z)
+        local reveal_pos = TripointAbsOmt.new(dest_omt.x + dx, dest_omt.y + dy, dest_omt.z)
         overmapbuffer.set_seen(reveal_pos, true)
       end
     end
@@ -846,15 +846,15 @@ function teleport.use_return_obelisk(who, item, pos, storage, missions, warp_sic
     end
 
     -- Convert stored abs_ms coordinates to OMT for teleportation
-    local home_abs_ms = Tripoint.new(
+    local home_abs_ms = TripointAbsMs.new(
       storage.home_location.x,
       storage.home_location.y,
       storage.home_location.z
     )
-    local home_omt = coords.ms_to_omt(home_abs_ms)
+    local home_omt = home_abs_ms:to_omt()
 
     -- Offset 1 tile north (negative Y in map coordinates)
-    teleport_to_omt(home_omt, Tripoint.new(0, -1, 0))
+    teleport_to_omt(home_omt, TripointRelOmt.new(0, -1, 0))
 
     -- Retrieve stored items and place them at home
     if items_stored > 0 then
@@ -925,15 +925,15 @@ function teleport.return_home_success(storage, missions, warp_sickness)
   end
 
   -- Convert stored abs_ms coordinates to OMT for teleportation
-  local home_abs_ms = Tripoint.new(
+  local home_abs_ms = TripointAbsMs.new(
     storage.home_location.x,
     storage.home_location.y,
     storage.home_location.z
   )
-  local home_omt = coords.ms_to_omt(home_abs_ms)
+  local home_omt = home_abs_ms:to_omt()
 
   -- Offset 1 tile north (negative Y in map coordinates)
-  teleport_to_omt(home_omt, Tripoint.new(0, -1, 0))
+  teleport_to_omt(home_omt, TripointRelOmt.new(0, -1, 0))
 
   -- Complete missions when returning home
   local player = gapi.get_avatar()
@@ -1028,18 +1028,18 @@ function teleport.resurrect_at_home(storage, missions, warp_sickness)
   end
 
   -- Build home position from stored abs_ms coordinates
-  local home_abs_ms = Tripoint.new(
+  local home_abs_ms = TripointAbsMs.new(
     storage.home_location.x,
     storage.home_location.y,
     storage.home_location.z
   )
 
   -- Convert abs_ms to OMT for overmap placement
-  local home_omt = coords.ms_to_omt(home_abs_ms)
+  local home_omt = home_abs_ms:to_omt()
   gapi.place_player_overmap_at(home_omt)
 
   -- Convert abs_ms to local_ms for exact positioning
-  local local_pos = gapi.get_map():get_local_ms(home_abs_ms)
+  local local_pos = gapi.get_map():abs_to_bub(home_abs_ms)
   gapi.place_player_local_at(local_pos)
 
   -- Fail all raid missions on death
