@@ -1216,8 +1216,9 @@ auto structural_level_signature(map const& m, int const z, int const cache_x, in
         mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
     }
     for (auto const& value : lc.vehicle_obscured_cache) {
-        auto const packed = (value.nw ? std::size_t{1} : std::size_t{0})
-                            | (value.ne ? std::size_t{2} : std::size_t{0});
+        auto const packed =
+            (value.nw ? std::size_t{1} : std::size_t{0})
+            | (value.ne ? std::size_t{2} : std::size_t{0});
         mix_signature(seed, packed);
     }
 
@@ -1703,8 +1704,8 @@ auto make_input_upload_plan(run_gpu_lighting_params const& p, std::vector<int> c
             p.vehicle_floor_dirty, inputs.vehicle_floor_valid, p.vehicle_floor_dirty_levels,
             all_levels),
         .vehicle_obscured_levels = select_input_upload_levels(
-            p.vehicle_obscured_dirty, inputs.vehicle_obscured_valid, p.vehicle_obscured_dirty_levels,
-            all_levels),
+            p.vehicle_obscured_dirty, inputs.vehicle_obscured_valid,
+            p.vehicle_obscured_dirty_levels, all_levels),
     };
 }
 
@@ -1949,8 +1950,8 @@ auto pack_vehicle_obscured_cache_uint(
     for (auto const z : levels) {
         auto const& lc = m.get_cache_ref(z);
         auto* dst = out.data() + level_index * cache_xy;
-        std::ranges::transform(
-            lc.vehicle_obscured_cache, dst, [](diagonal_blocks const& value) -> uint32_t {
+        std::ranges::
+            transform(lc.vehicle_obscured_cache, dst, [](diagonal_blocks const& value) -> uint32_t {
                 return (value.nw ? 1u : 0u) | (value.ne ? 2u : 0u);
             });
         ++level_index;
@@ -2061,9 +2062,9 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
         auto* const cp = SDL_BeginGPUComputePass(p.cmd, nullptr, 0, &rw_seen, 1);
         SDL_BindGPUComputePipeline(cp, s_seen_pipeline);
 
-        auto const ro_bufs =
-            std::array<SDL_GPUBuffer*, 4>{
-                p.transparency_buf, p.floor_buf, p.vehicle_floor_buf, p.vehicle_obscured_buf};
+        auto const ro_bufs = std::array<
+            SDL_GPUBuffer*,
+            4>{p.transparency_buf, p.floor_buf, p.vehicle_floor_buf, p.vehicle_obscured_buf};
         SDL_BindGPUComputeStorageBuffers(cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
         SDL_PushGPUComputeUniformData(p.cmd, 0, &seen_push, sizeof(seen_push));
@@ -2077,9 +2078,9 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
         auto* const cp = SDL_BeginGPUComputePass(p.cmd, nullptr, 0, &rw_seen, 1);
         SDL_BindGPUComputePipeline(cp, s_seen_walls_pipeline);
 
-        auto const ro_bufs =
-            std::array<SDL_GPUBuffer*, 4>{
-                p.transparency_buf, p.seen_raw_buf, p.vehicle_floor_buf, p.vehicle_obscured_buf};
+        auto const ro_bufs = std::array<
+            SDL_GPUBuffer*,
+            4>{p.transparency_buf, p.seen_raw_buf, p.vehicle_floor_buf, p.vehicle_obscured_buf};
         SDL_BindGPUComputeStorageBuffers(cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
         SDL_PushGPUComputeUniformData(p.cmd, 0, &seen_push, sizeof(seen_push));
@@ -2327,9 +2328,8 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
                               s_lighting_resources.shift_vehicle_floor_scratch.buffer, 0u);
         }
         if (shift_vehicle_obscured) {
-            record_uint_shift(
-                s_lighting_resources.vehicle_obscured.buffer,
-                s_lighting_resources.shift_vehicle_obscured_scratch.buffer, 0u);
+            record_uint_shift(s_lighting_resources.vehicle_obscured.buffer,
+                              s_lighting_resources.shift_vehicle_obscured_scratch.buffer, 0u);
         }
     }
 

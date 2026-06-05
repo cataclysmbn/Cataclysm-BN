@@ -79,20 +79,20 @@ static_assert(sizeof(lm_raytrace_push_constants) == 32);
 // 64 bytes.
 // ---------------------------------------------------------------------------
 struct lm_seen_push_constants {
-    int32_t player_x;         //  4 bytes
-    int32_t player_y;         //  4 bytes
-    int32_t player_z_idx;     //  4 bytes
-    int32_t cache_x;          //  4 bytes = 16
-    int32_t cache_y;          //  4 bytes
-    int32_t cache_xy;         //  4 bytes
-    int32_t z_count;          //  4 bytes
-    int32_t view_radius;      //  4 bytes = 32
-    float z_scale;            //  4 bytes
-    int32_t z_start_idx;      //  4 bytes
-    int32_t dispatch_z_count; // 4 bytes
-    uint32_t trigdist;        //  4 bytes = 48
+    int32_t player_x;           //  4 bytes
+    int32_t player_y;           //  4 bytes
+    int32_t player_z_idx;       //  4 bytes
+    int32_t cache_x;            //  4 bytes = 16
+    int32_t cache_y;            //  4 bytes
+    int32_t cache_xy;           //  4 bytes
+    int32_t z_count;            //  4 bytes
+    int32_t view_radius;        //  4 bytes = 32
+    float z_scale;              //  4 bytes
+    int32_t z_start_idx;        //  4 bytes
+    int32_t dispatch_z_count;   // 4 bytes
+    uint32_t trigdist;          //  4 bytes = 48
     uint32_t vision_block_mask; // 4 bytes
-    uint32_t _pad[3];         // 12 bytes = 64
+    uint32_t _pad[3];           // 12 bytes = 64
 };
 static_assert(sizeof(lm_seen_push_constants) == 64);
 

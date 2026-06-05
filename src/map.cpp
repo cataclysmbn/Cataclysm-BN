@@ -10487,11 +10487,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     if( !skip_lightmap && gpu_device != nullptr ) {
         const auto &visibility_cache = get_cache_ref( zlev );
         if( !cata_gpu::resident_lighting_ready_for_visibility( {
-                .device = gpu_device,
-                .cache_x = visibility_cache.cache_x,
-                .cache_y = visibility_cache.cache_y,
-                .z_count = OVERMAP_LAYERS,
-            } ) ) {
+        .device = gpu_device,
+        .cache_x = visibility_cache.cache_x,
+        .cache_y = visibility_cache.cache_y,
+        .z_count = OVERMAP_LAYERS,
+    } ) ) {
             force_seen_rebuild_for_gpu_residency = true;
             invalidate_lightmap_caches();
             get_cache( zlev ).visibility_cache_dirty = true;

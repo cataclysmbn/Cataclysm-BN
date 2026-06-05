@@ -104,8 +104,9 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     if (backend == "software") {
         accel = compute_accel::software;
         backend.clear();
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override 'software' selects the "
-                                        "software-capable policy";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: backend override 'software' selects the "
+               "software-capable policy";
     }
 
     auto attempts = std::vector<gpu_device_create_attempt>{};
