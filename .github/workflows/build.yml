@@ -230,7 +230,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install gcc-14 libncursesw5-dev \
-            libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev
+            libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version

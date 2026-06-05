@@ -47,7 +47,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install \
             cmake gettext ninja-build mold jq \
-            sqlite3 libsqlite3-dev zlib1g-dev
+            sqlite3 libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb
 
           VERSION=20
           wget https://apt.llvm.org/llvm.sh
