@@ -163,7 +163,7 @@
     "bashing": 1,
     "ammo_type": "105mm",
     "casing": "105mm_casing",
-    "damage": { "damage_type": "bullet", "amount": 2500, "armor_penetration": 1250 },
+    "damage": { "damage_type": "bullet", "amount": 3000, "armor_penetration": 6000 },
     "range": 75,
     "dispersion": 150,
     "recoil": 375000,
@@ -172,7 +172,7 @@
     "loudness": 184,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
-    "explosion": { "damage": 350, "radius": 3, "terrain_damage_mult": 0.1, "vehicle_damage_mult": 0.2 }
+    "explosion": { "damage": 650, "radius": 4, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
   },
   {
     "type": "AMMO",
@@ -253,7 +253,7 @@
     },
     "extend": { "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ] },
     "explode_in_fire": true,
-    "explosion": { "damage": 900, "radius": 5, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
+    "explosion": { "damage": 930, "radius": 5, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
   },
   {
     "id": "bp_105mm_he_reloaded",
@@ -284,7 +284,7 @@
     "bashing": 1,
     "ammo_type": "120mm_usable",
     "casing": "120mm_case_base",
-    "damage": { "damage_type": "bullet", "amount": 4000, "armor_penetration": 2000 },
+    "damage": { "damage_type": "bullet", "amount": 4500, "armor_penetration": 9000 },
     "range": 90,
     "dispersion": 200,
     "recoil": 900000,
@@ -293,7 +293,7 @@
     "loudness": 186,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
-    "explosion": { "damage": 500, "radius": 3, "terrain_damage_mult": 0.1, "vehicle_damage_mult": 0.25 }
+    "explosion": { "damage": 840, "radius": 4, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
   },
   {
     "type": "AMMO",
@@ -439,7 +439,7 @@
     "weight": "62 kg",
     "bashing": 1,
     "ammo_type": "155mm",
-    "damage": { "damage_type": "bullet", "amount": 5000, "armor_penetration": 2500 },
+    "damage": { "damage_type": "bullet", "amount": 6500, "armor_penetration": 13000 },
     "range": 120,
     "dispersion": 275,
     "recoil": 1031250,
@@ -448,7 +448,7 @@
     "loudness": 190,
     "effects": [ "CUSTOM_EXPLOSION", "NO_PENETRATE_OBSTACLES" ],
     "explode_in_fire": true,
-    "explosion": { "damage": 750, "radius": 5, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
+    "explosion": { "damage": 1120, "radius": 6, "terrain_damage_mult": 0.15, "vehicle_damage_mult": 0.3 }
   },
   {
     "type": "AMMO",
