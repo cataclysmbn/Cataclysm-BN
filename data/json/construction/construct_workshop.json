@@ -673,6 +673,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridhotplate",
+    "group": "place_hotplate",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "hotplate", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridhotplate"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridsolderingiron",
     "group": "place_soldering_iron",
     "category": "WORKSHOP",

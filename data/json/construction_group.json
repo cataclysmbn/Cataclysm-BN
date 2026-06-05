@@ -1321,6 +1321,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_hotplate",
+    "name": "Plug In hotplate"
+  },
+  {
+    "type": "construction_group",
     "id": "place_soldering_iron",
     "name": "Plug In soldering iron"
   },
