@@ -978,10 +978,10 @@
       "sound_msg": "Tick.",
       "no_deactivate_msg": "You've already set the %s's timer, you might want to get away from it.",
       "explosion": {
-        "damage": 10000,
-        "radius": 20,
-        "terrain_damage_mult": 0.05,
-        "fragment": { "impact": { "damage_type": "heat", "amount": 10000, "armor_multiplier": 2 }, "range": 24 }
+        "damage": 80000,
+        "radius": 24,
+        "terrain_damage_mult": 0.08,
+        "fragment": { "impact": { "damage_type": "heat", "amount": 80000, "armor_multiplier": 2 }, "range": 24 }
       }
     },
     "//": "Allowed to 'use' remotely so that triggering the message telling you to run won't put it back in your inventory and cause a YASD",
