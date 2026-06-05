@@ -1,9 +1,10 @@
 #include "achievement.h"
 
-#include <cassert>
+#include "achievement_runtime.h"
+
+#include <algorithm>
 #include <cstdlib>
-#include <set>
-#include <tuple>
+#include <ranges>
 #include <utility>
 
 #include "character.h"
@@ -20,42 +21,27 @@
 #include "stats_tracker.h"
 #include "string_formatter.h"
 
-// Some details about how achievements work
-// ========================================
-//
-// Achievements are built on the stats_tracker, which is in turn built on the
-// event_bus.  Each of these layers involves subscription / callback style
-// interfaces, so the code flow may now be obvious.  Here's a quick outline of
-// the execution flow to help clarify how it all fits together.
-//
-// * Various core game code paths generate events via the event bus.
-// * The stats_tracker subscribes to the event bus, and receives these events.
-// * Events contribute to event_multisets managed by the stats_tracker.
-// * (In the docs, these event_multisets are described as "event streams").
-// * (Optionally) event_transformations transform these event_multisets into
-//   other event_multisets based on json-defined transformation rules.  These
-//   are also managed by stats_tracker.
-// * event_statistics monitor these event_multisets and summarize them into
-//   single values.  These are also managed by stats_tracker.
-// * Each achievement requirement has a corresponding requirement_watcher which
-//   is alerted to statistic changes via the stats_tracker's watch interface.
-// * Each requirement_watcher notifies its achievement_tracker (of which there
-//   is one per achievement) of the requirement's status on each change to a
-//   statistic.
-// * The achievement_tracker keeps track of which requirements are currently
-//   satisfied and which are not.
-// * When all the requirements are satisfied, the achievement_tracker tells the
-//   achievement_tracker (only one of these exists per game).
-// * The achievement_tracker calls the achievement_attained_callback it was
-//   given at construction time.  This hooks into the actual game logic (e.g.
-//   telling the player they just got an achievement).
+// Achievement state transitions are evaluated by the Lua runtime via the
+// on_stat_changed hook.  C++ retains definition loading, UI formatting and the
+// save/load wrapper so the serialized format remains unchanged.
 
 namespace
 {
 
 generic_factory<achievement> achievement_factory( "achievement" );
+achievements_tracker *active_tracker_instance = nullptr;
 
 } // namespace
+
+auto achievement_runtime::set_active_tracker( achievements_tracker *tracker ) -> void
+{
+    active_tracker_instance = tracker;
+}
+
+auto achievement_runtime::active_tracker() -> achievements_tracker *
+{
+    return active_tracker_instance;
+}
 
 /** @relates string_id */
 template<>
@@ -697,50 +683,6 @@ static std::string text_for_requirement( const achievement_requirement &req,
     return colorize( result, c );
 }
 
-class requirement_watcher : stat_watcher
-{
-    public:
-        requirement_watcher( achievement_tracker &tracker, const achievement_requirement &req,
-                             stats_tracker &stats ) :
-            current_value_( req.statistic->value( stats ) ),
-            tracker_( &tracker ),
-            requirement_( &req ) {
-            stats.add_watcher( req.statistic, this );
-        }
-
-        const cata_variant &current_value() const {
-            return current_value_;
-        }
-
-        const achievement_requirement &requirement() const {
-            return *requirement_;
-        }
-
-        void new_value( const cata_variant &new_value, stats_tracker & ) override;
-
-        bool is_satisfied( stats_tracker &stats ) {
-            return requirement_->satisifed_by( requirement_->statistic->value( stats ) );
-        }
-
-        std::string ui_text() const {
-            return text_for_requirement( *requirement_, current_value_ );
-        }
-    private:
-        cata_variant current_value_;
-        achievement_tracker *tracker_;
-        const achievement_requirement *requirement_;
-};
-
-void requirement_watcher::new_value( const cata_variant &new_value, stats_tracker & )
-{
-    if( !tracker_->has_failed() ) {
-        current_value_ = new_value;
-    }
-    // set_requirement can result in this being deleted, so it must be the last
-    // thing in this function
-    tracker_->set_requirement( this, requirement_->satisifed_by( current_value_ ) );
-}
-
 namespace io
 {
 template<>
@@ -808,158 +750,186 @@ void achievement_state::deserialize( JsonIn &jsin )
     jo.read( "last_state_change", last_state_change );
 }
 
-achievement_tracker::achievement_tracker( const achievement &a, achievements_tracker &tracker,
-        stats_tracker &stats ) :
-    achievement_( &a ),
-    tracker_( &tracker )
+namespace
 {
-    for( const achievement_requirement &req : a.requirements() ) {
-        watchers_.push_back( std::make_unique<requirement_watcher>( *this, req, stats ) );
-    }
 
-    for( const std::unique_ptr<requirement_watcher> &watcher : watchers_ ) {
-        bool is_satisfied = watcher->is_satisfied( stats );
-        sorted_watchers_[is_satisfied].insert( watcher.get() );
-    }
+auto current_value_for_requirement( const achievement_requirement &req,
+                                    stats_tracker &stats ) -> cata_variant
+{
+    return req.statistic->value( stats );
 }
 
-void achievement_tracker::set_requirement( requirement_watcher *watcher, bool is_satisfied )
+auto current_values_for_achievement( const achievement &ach,
+                                     stats_tracker &stats ) -> std::vector<cata_variant>
 {
-    if( sorted_watchers_[is_satisfied].insert( watcher ).second ) {
-        // Remove from other; check for completion.
-        sorted_watchers_[!is_satisfied].erase( watcher );
-        assert( sorted_watchers_[0].size() + sorted_watchers_[1].size() == watchers_.size() );
-    }
-
-    achievement_completion time_comp = time_req_completed( *achievement_ );
-    achievement_completion skill_comp = skill_req_completed( *achievement_ );
-    achievement_completion kill_comp = kill_req_completed( *achievement_, *tracker_->kills() );
-    bool all_clear = time_comp == achievement_completion::completed &&
-                     skill_comp == achievement_completion::completed && kill_comp == achievement_completion::completed;
-
-    if( sorted_watchers_[false].empty() && all_clear ) {
-        // report_achievement can result in this being deleted, so it must be
-        // the last thing in the function
-        tracker_->report_achievement( achievement_, achievement_completion::completed );
-        return;
-    }
-
-    if( time_comp == achievement_completion::failed || kill_comp == achievement_completion::failed ||
-        ( !is_satisfied && watcher->requirement().becomes_false ) ) {
-        // report_achievement can result in this being deleted, so it must be
-        // the last thing in the function
-        tracker_->report_achievement( achievement_, achievement_completion::failed );
-    }
+    return ach.requirements()
+    | std::views::transform( [&]( const achievement_requirement & req ) {
+        return current_value_for_requirement( req, stats );
+    } )
+    | std::ranges::to<std::vector>();
 }
 
-bool achievement_tracker::has_failed() const
+auto has_failed_requirement( const achievement &ach, stats_tracker &stats ) -> bool
 {
-    bool failed = time_req_completed( *achievement_ ) == achievement_completion::failed ||
-                  skill_req_completed( *achievement_ ) == achievement_completion::failed ||
-                  kill_req_completed( *achievement_, *tracker_->kills() ) == achievement_completion::failed;
-    return failed;
+    return std::ranges::any_of( ach.requirements(), [&]( const achievement_requirement & req ) {
+        return req.becomes_false && !req.satisifed_by( current_value_for_requirement( req, stats ) );
+    } );
 }
 
-std::vector<cata_variant> achievement_tracker::current_values() const
-{
-    std::vector<cata_variant> result;
-    result.reserve( watchers_.size() );
-    for( const std::unique_ptr<requirement_watcher> &watcher : watchers_ ) {
-        result.push_back( watcher->current_value() );
-    }
-    return result;
-}
-
-std::string achievement_tracker::ui_text() const
-{
-    // Determine overall achievement status
-    if( has_failed() ) {
-        return achievement_state{
-            achievement_completion::failed,
-            calendar::turn,
-            current_values()
-        }. ui_text( achievement_, *tracker_->kills() );
-    }
-
-    // First: the achievement name and description
-    nc_color c = color_from_completion( achievement_completion::pending );
-    std::string result = colorize( achievement_->name(), c ) + "\n";
-    if( !achievement_->description().empty() ) {
-        result += "  " + colorize( achievement_->description(), c ) + "\n";
-    }
-
-    // Next: the time constraint, skill requirements and kill_requirements, if any
-    result += achievement_->ui_text( achievement_completion::pending, *tracker_->kills() );
-
-    // Next: the requirements
-    for( const std::unique_ptr<requirement_watcher> &watcher : watchers_ ) {
-        result += "  " + watcher->ui_text() + "\n";
-    }
-
-    return result;
-}
+} // namespace
 
 achievements_tracker::achievements_tracker(
     stats_tracker &stats, kill_tracker &kt,
     const std::function<void( const achievement * )> &achievement_attained_callback ) :
     stats_( &stats ),
     kill_tracker_( &kt ),
-    achievement_attained_callback_( achievement_attained_callback )
-{}
+    achievement_attained_callback_( achievement_attained_callback ),
+    previous_active_tracker_( achievement_runtime::active_tracker() )
+{
+    achievement_runtime::set_active_tracker( this );
+    activate_statistics();
+}
 
-achievements_tracker::~achievements_tracker() = default;
+achievements_tracker::~achievements_tracker()
+{
+    if( achievement_runtime::active_tracker() == this ) {
+        achievement_runtime::set_active_tracker( previous_active_tracker_ );
+    }
+}
 
-const kill_tracker *achievements_tracker::kills() const
+auto achievements_tracker::stats() -> stats_tracker &
+{
+    return *stats_;
+}
+
+auto achievements_tracker::stats() const -> const stats_tracker &
+{
+    return *stats_;
+}
+
+auto achievements_tracker::kills() const -> const kill_tracker *
 {
     return kill_tracker_;
 }
 
-std::vector<const achievement *> achievements_tracker::valid_achievements() const
+auto achievements_tracker::valid_achievements() const -> std::vector<const achievement *>
 {
-    std::vector<const achievement *> result;
-    for( const achievement &ach : achievement::get_all() ) {
-        result.push_back( &ach );
+    return achievement::get_all()
+    | std::views::transform( []( const achievement & ach ) {
+        return &ach;
+    } )
+    | std::ranges::to<std::vector>();
+}
+
+auto achievements_tracker::current_values_for( const achievement &ach ) const ->
+std::vector<cata_variant>
+{
+    return current_values_for_achievement( ach, *stats_ );
+}
+
+auto achievements_tracker::activate_statistics() -> void
+{
+    auto tracked_statistics = achievement::get_all()
+    | std::views::transform( []( const achievement & ach ) {
+        return ach.requirements()
+        | std::views::transform( []( const achievement_requirement & req ) {
+            return req.statistic;
+        } );
+    } )
+    | std::views::join;
+
+    for( const string_id<event_statistic> &statistic : tracked_statistics ) {
+        stats_->activate_stat( statistic );
     }
+}
+
+auto achievements_tracker::has_failed( const achievement &ach ) const -> bool
+{
+    return time_req_completed( ach ) == achievement_completion::failed ||
+           skill_req_completed( ach ) == achievement_completion::failed ||
+           kill_req_completed( ach, *kill_tracker_ ) == achievement_completion::failed ||
+           has_failed_requirement( ach, *stats_ );
+}
+
+auto achievements_tracker::pending_ui_text_for( const achievement &ach ) const -> std::string
+{
+    if( has_failed( ach ) ) {
+        return achievement_state{
+            achievement_completion::failed,
+            calendar::turn,
+            current_values_for( ach )
+        }.ui_text( &ach, *kill_tracker_ );
+    }
+
+    auto result = colorize( ach.name(),
+                            color_from_completion( achievement_completion::pending ) ) + "\n";
+    if( !ach.description().empty() ) {
+        result += "  " + colorize( ach.description(), c_yellow ) + "\n";
+    }
+
+    result += ach.ui_text( achievement_completion::pending, *kill_tracker_ );
+    for( const achievement_requirement &req : ach.requirements() ) {
+        result += "  " + text_for_requirement( req, current_value_for_requirement( req, *stats_ ) ) + "\n";
+    }
+
     return result;
 }
 
-void achievements_tracker::report_achievement( const achievement *a,
-        achievement_completion comp )
+auto achievements_tracker::report_achievement( const achievement *a,
+        achievement_completion comp ) -> void
 {
-    assert( comp != achievement_completion::pending );
-    assert( !achievements_status_.count( a->id ) );
+    if( comp == achievement_completion::pending || achievements_status_.contains( a->id ) ) {
+        return;
+    }
 
-    auto tracker_it = trackers_.find( a->id );
     achievements_status_.emplace(
         a->id,
     achievement_state{
         comp,
         calendar::turn,
-        tracker_it->second.current_values()
+        current_values_for( *a )
     }
     );
+
     if( comp == achievement_completion::completed ) {
         achievement_attained_callback_( a );
     }
-    trackers_.erase( tracker_it );
 }
 
-achievement_completion achievements_tracker::is_completed( const string_id<achievement> &id )
-const
+auto achievements_tracker::report_achievement( const string_id<achievement> &id,
+        achievement_completion comp ) -> void
 {
-    auto it = achievements_status_.find( id );
-    if( it == achievements_status_.end() ) {
-        // It might still have failed; check for other criteria
-        auto tracker_it = trackers_.find( id );
-        if( tracker_it != trackers_.end() && tracker_it->second.has_failed() ) {
-            return achievement_completion::failed;
-        }
-        return achievement_completion::pending;
+    if( !id.is_valid() ) {
+        return;
     }
-    return it->second.completion;
+
+    report_achievement( &id.obj(), comp );
 }
 
-bool achievements_tracker::is_hidden( const achievement *ach ) const
+auto achievements_tracker::recorded_completion( const string_id<achievement> &id ) const ->
+achievement_completion
+{
+    const auto iter = achievements_status_.find( id );
+    return iter == achievements_status_.end() ? achievement_completion::pending :
+           iter->second.completion;
+}
+
+auto achievements_tracker::is_completed( const string_id<achievement> &id ) const ->
+achievement_completion
+{
+    const auto recorded = recorded_completion( id );
+    if( recorded != achievement_completion::pending ) {
+        return recorded;
+    }
+
+    if( id.is_valid() && has_failed( id.obj() ) ) {
+        return achievement_completion::failed;
+    }
+
+    return achievement_completion::pending;
+}
+
+auto achievements_tracker::is_hidden( const achievement *ach ) const -> bool
 {
     if( is_completed( ach->id ) == achievement_completion::completed ) {
         return false;
@@ -970,61 +940,38 @@ bool achievements_tracker::is_hidden( const achievement *ach ) const
             return true;
         }
     }
+
     return false;
 }
 
-std::string achievements_tracker::ui_text_for( const achievement *ach ) const
+auto achievements_tracker::ui_text_for( const achievement *ach ) const -> std::string
 {
-    auto state_it = achievements_status_.find( ach->id );
-    if( state_it != achievements_status_.end() ) {
-        return state_it->second.ui_text( ach, *kills() );
+    const auto iter = achievements_status_.find( ach->id );
+    if( iter != achievements_status_.end() ) {
+        return iter->second.ui_text( ach, *kill_tracker_ );
     }
-    auto tracker_it = trackers_.find( ach->id );
-    if( tracker_it == trackers_.end() ) {
-        return colorize( ach->description() + _( "\nInternal error: achievement lacks watcher." ),
-                         c_red );
-    }
-    return tracker_it->second.ui_text();
+
+    return pending_ui_text_for( *ach );
 }
 
-void achievements_tracker::clear()
+auto achievements_tracker::clear() -> void
 {
-    trackers_.clear();
     achievements_status_.clear();
+    activate_statistics();
 }
 
-void achievements_tracker::notify( const cata::event &e )
-{
-    if( e.type() == event_type::game_start ) {
-        init_watchers();
-    }
-}
-
-void achievements_tracker::serialize( JsonOut &jsout ) const
+auto achievements_tracker::serialize( JsonOut &jsout ) const -> void
 {
     jsout.start_object();
     jsout.member( "achievements_status", achievements_status_ );
     jsout.end_object();
 }
 
-void achievements_tracker::deserialize( JsonIn &jsin )
+auto achievements_tracker::deserialize( JsonIn &jsin ) -> void
 {
     JsonObject jo = jsin.get_object();
     jo.read( "achievements_status", achievements_status_ );
-
-    init_watchers();
-}
-
-void achievements_tracker::init_watchers()
-{
-    for( const achievement *a : valid_achievements() ) {
-        if( achievements_status_.contains( a->id ) ) {
-            continue;
-        }
-        trackers_.emplace(
-            std::piecewise_construct, std::forward_as_tuple( a->id ),
-            std::forward_as_tuple( *a, *this, *stats_ ) );
-    }
+    activate_statistics();
 }
 
 void achievement_requirement::deserialize( JsonIn &jin )

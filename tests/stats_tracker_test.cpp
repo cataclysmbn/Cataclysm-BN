@@ -3,6 +3,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include "achievement.h"
@@ -16,6 +17,7 @@
 #include "event_statistics.h"
 #include "game.h"
 #include "game_constants.h"
+#include "json.h"
 #include "kill_tracker.h"
 #include "options_helpers.h"
 #include "stats_tracker.h"
@@ -472,7 +474,6 @@ TEST_CASE( "achievements_tracker", "[stats]" )
     achievements_tracker a( s, k, [&]( const achievement * a ) {
         achievements_completed.emplace( a->id, a );
     } );
-    b.subscribe( &a );
 
     SECTION( "time" ) {
         calendar::turn = calendar::start_of_game;
@@ -716,6 +717,32 @@ TEST_CASE( "achievements_tracker", "[stats]" )
                 }
             }
         }
+    }
+
+    SECTION( "serialize_format" ) {
+        const character_id u_id = g->u.getID();
+        const mtype_id mon_zombie( "mon_zombie" );
+        const cata::event avatar_zombie_kill =
+            cata::event::make<event_type::character_kills_monster>( u_id, mon_zombie );
+        const string_id<achievement> a_kill_zombie( "achievement_kill_zombie" );
+
+        b.send<event_type::game_start>( u_id );
+        b.send( avatar_zombie_kill );
+
+        std::ostringstream serialized;
+        JsonOut jsout( serialized );
+        a.serialize( jsout );
+
+        CHECK( serialized.str().find( "\"achievements_status\"" ) != std::string::npos );
+        CHECK( serialized.str().find( "\"achievement_kill_zombie\"" ) != std::string::npos );
+        CHECK( serialized.str().find( "\"completion\":\"completed\"" ) != std::string::npos );
+
+        achievements_tracker loaded( s, k, [&]( const achievement * ) {} );
+        std::istringstream input( serialized.str() );
+        JsonIn jsin( input );
+        loaded.deserialize( jsin );
+
+        CHECK( loaded.recorded_completion( a_kill_zombie ) == achievement_completion::completed );
     }
 }
 
