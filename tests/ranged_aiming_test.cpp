@@ -40,12 +40,12 @@ static void set_up_player_vision()
 
     calendar::turn = calendar::turn_zero + 12_hours;
 
-    g->m.update_visibility_cache( shooter_pos.z() );
     g->m.invalidate_map_cache( shooter_pos.z() );
     g->m.build_map_cache( shooter_pos.z() );
     g->m.update_visibility_cache( shooter_pos.z() );
     g->m.invalidate_map_cache( shooter_pos.z() );
     g->m.build_map_cache( shooter_pos.z() );
+    g->m.update_visibility_cache( shooter_pos.z() );
 }
 
 TEST_CASE( "Aiming at a clearly visible target", "[ranged][aiming]" )

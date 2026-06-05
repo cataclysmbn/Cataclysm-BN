@@ -171,12 +171,12 @@ static void full_map_test( const std::vector<std::string> &setup,
     // player's vision_threshold is based on the previous lighting level (so
     // they might, for example, have poor nightvision due to having just been
     // in daylight)
-    here.update_visibility_cache( origin.z() );
     here.invalidate_map_cache( origin.z() );
     here.build_map_cache( origin.z() );
     here.update_visibility_cache( origin.z() );
     here.invalidate_map_cache( origin.z() );
     here.build_map_cache( origin.z() );
+    here.update_visibility_cache( origin.z() );
 
     const level_cache &cache = here.access_cache( origin.z() );
     const level_cache &above_cache = here.access_cache( origin.z() + 1 );
@@ -418,7 +418,7 @@ TEST_CASE( "vision_light_shining_in", "[shadowcasting][vision]" )
             "1144444444",
         },
         midday,
-        // 3D FOV gives different results here due to it seeing round corners more
+        // Legacy 2D-only expectation; current visibility is always cross-z.
         vision_test_flags::no_3d
     };
 

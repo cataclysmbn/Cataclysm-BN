@@ -6,7 +6,6 @@
 #include "coordinates.h"
 #include "game.h"
 #include "map.h"
-#include "options_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
 
@@ -46,8 +45,6 @@ TEST_CASE( "opening_floor_rebuilds_below_light", "[vision][zlevel]" )
 {
     clear_all_state();
 
-    override_option fov3d( "FOV_3D", "false" );
-
     map &here = get_map();
 
     const ter_id t_floor( "t_floor" );
@@ -56,12 +53,15 @@ TEST_CASE( "opening_floor_rebuilds_below_light", "[vision][zlevel]" )
     g->place_player( tripoint_bub_ms( 60, 60, 1 ) );
 
     calendar::turn = calendar::turn_zero + 12_hours;
+    g->reset_light_level();
 
     const auto hole_pos = g->u.bub_pos() + point_east;
 
     here.ter_set( hole_pos, t_open_air );
     here.ter_set( hole_pos + tripoint_below, t_floor );
 
+    here.invalidate_map_cache( hole_pos.z() );
+    here.invalidate_map_cache( hole_pos.z() - 1 );
     here.build_map_cache( g->u.bub_pos().z() );
     here.update_visibility_cache( g->u.bub_pos().z() );
 
