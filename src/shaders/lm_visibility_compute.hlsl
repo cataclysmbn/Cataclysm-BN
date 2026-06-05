@@ -112,6 +112,46 @@ float visible_surface_light( int x, int y, int z )
     return best;
 }
 
+float tile_visibility( int idx )
+{
+    return max( seen_all[idx], asfloat( camera_all[idx] ) );
+}
+
+uint classify_light(
+    int dist, bool obstructed, float apparent_light, bool source_light )
+{
+    if( dist > u_unimpaired_range ) {
+        if( !obstructed && source_light ) {
+            return LIT_BRIGHT_ONLY;
+        }
+        return LIT_DARK;
+    }
+
+    if( obstructed ) {
+        if( apparent_light > LIGHT_AMBIENT_LIT ) {
+            if( apparent_light > (float)g_light_level ) {
+                return LIT_BRIGHT_ONLY;
+            }
+            return LIT_LOW;
+        }
+        if( apparent_light > vision_threshold ) {
+            return LIT_LOW;
+        }
+        return LIT_BLANK;
+    }
+
+    if( apparent_light > LIGHT_SOURCE_BRIGHT || source_light ) {
+        return LIT_BRIGHT;
+    }
+    if( apparent_light > LIGHT_AMBIENT_LIT ) {
+        return LIT_LIT;
+    }
+    if( apparent_light > vision_threshold ) {
+        return LIT_LOW;
+    }
+    return LIT_BLANK;
+}
+
 [numthreads(64, 1, 1)]
 void main( uint3 dispatch_id : SV_DispatchThreadID )
 {
@@ -141,7 +181,7 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
         return;
     }
 
-    float vis = max( seen_all[idx], asfloat( camera_all[idx] ) );
+    float vis = tile_visibility( idx );
     bool obstructed = vis <= visible_threshold;
     float scaled_vis = scaled_visibility_for_view_distance( vis );
     bool opaque = is_opaque( x, y, z );
@@ -153,37 +193,6 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
         apparent_light = scaled_vis * asfloat( lm_all[idx] );
     }
 
-    if( dist > u_unimpaired_range ) {
-        if( !obstructed && source_map_all[idx] > 0.0 ) {
-            visibility_all[idx] = LIT_BRIGHT_ONLY;
-        } else {
-            visibility_all[idx] = LIT_DARK;
-        }
-        return;
-    }
-
-    if( obstructed ) {
-        if( apparent_light > LIGHT_AMBIENT_LIT ) {
-            if( apparent_light > (float)g_light_level ) {
-                visibility_all[idx] = LIT_BRIGHT_ONLY;
-            } else {
-                visibility_all[idx] = LIT_LOW;
-            }
-        } else if( apparent_light > vision_threshold ) {
-            visibility_all[idx] = LIT_LOW;
-        } else {
-            visibility_all[idx] = LIT_BLANK;
-        }
-        return;
-    }
-
-    if( apparent_light > LIGHT_SOURCE_BRIGHT || source_map_all[idx] > 0.0 ) {
-        visibility_all[idx] = LIT_BRIGHT;
-    } else if( apparent_light > LIGHT_AMBIENT_LIT ) {
-        visibility_all[idx] = LIT_LIT;
-    } else if( apparent_light > vision_threshold ) {
-        visibility_all[idx] = LIT_LOW;
-    } else {
-        visibility_all[idx] = LIT_BLANK;
-    }
+    visibility_all[idx] =
+        classify_light( dist, obstructed, apparent_light, source_map_all[idx] > 0.0 );
 }

@@ -925,7 +925,7 @@ void map::destroy_vehicle( vehicle *veh )
 }
 
 void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max,
-                            const int &smz )
+                             const int &smz )
 {
     ZoneScoped;
 
@@ -936,6 +936,10 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     auto &ch = get_cache( smz );
     invalidate_lightmap_caches();
     set_seen_cache_dirty( smz );
+    ch.visibility_cache_dirty = true;
+#if defined( CATA_SDL )
+    cata_gpu::invalidate_lighting_transparency_levels( std::vector<int> { smz } );
+#endif
 
     const auto for_clamped_submaps = [&]( const point_bub_sm & range_min,
     const point_bub_sm & range_max, const auto & callback ) {
@@ -982,6 +986,7 @@ void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm
     if( inbounds_z( above_z ) ) {
         auto &ch_above = get_cache( above_z );
         set_seen_cache_dirty( above_z );
+        ch_above.visibility_cache_dirty = true;
         for_clamped_submaps( sm_min.xy(), sm_max.xy(), [&]( const point_bub_sm & p ) {
             ch_above.floor_cache_dirty.set(
                 static_cast<size_t>( ch_above.bidx( p.x(), p.y() ) ) );
@@ -2000,20 +2005,21 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         }
     }
 
-    // Capture the old footprint in submap grid coordinates BEFORE parts are
-    // updated by advance_precalc_mounts.
-    tripoint_bub_sm veh_sm_min = { INT_MAX, INT_MAX, INT_MAX };
-    tripoint_bub_sm veh_sm_max = { INT_MIN, INT_MIN, INT_MIN };
+    // Capture the old footprint in absolute submap coordinates BEFORE parts
+    // are updated by advance_precalc_mounts.  The player may shift the map
+    // origin below, so bubble coordinates would be stale by on_vehicle_moved().
+    auto veh_abs_sm_min = tripoint_abs_sm( INT_MAX, INT_MAX, INT_MAX );
+    auto veh_abs_sm_max = tripoint_abs_sm( INT_MIN, INT_MIN, INT_MIN );
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
-        const auto p = abs_to_bub( project_to<coords::sm>( base + tripoint_rel_ms(
-                                       prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) ) );
-        veh_sm_min.x() = std::min( veh_sm_min.x(), p.x() );
-        veh_sm_min.y() = std::min( veh_sm_min.y(), p.y() );
-        veh_sm_min.z() = std::min( veh_sm_min.z(), p.z() );
-        veh_sm_max.x() = std::max( veh_sm_max.x(), p.x() );
-        veh_sm_max.y() = std::max( veh_sm_max.y(), p.y() );
-        veh_sm_max.z() = std::max( veh_sm_max.z(), p.z() );
+        const auto p = project_to<coords::sm>( base + tripoint_rel_ms(
+                           prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
+        veh_abs_sm_min.x() = std::min( veh_abs_sm_min.x(), p.x() );
+        veh_abs_sm_min.y() = std::min( veh_abs_sm_min.y(), p.y() );
+        veh_abs_sm_min.z() = std::min( veh_abs_sm_min.z(), p.z() );
+        veh_abs_sm_max.x() = std::max( veh_abs_sm_max.x(), p.x() );
+        veh_abs_sm_max.y() = std::max( veh_abs_sm_max.y(), p.y() );
+        veh_abs_sm_max.z() = std::max( veh_abs_sm_max.z(), p.z() );
     };
 
     for( const vpart_reference &vpr : veh.get_all_parts() ) {
@@ -2085,6 +2091,28 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         veh.update_overmap( prev );
     }
 
+    //
+    //global positions of vehicle loot zones have changed.
+    veh.zones_dirty = true;
+
+    auto vehicle_moved_marked = false;
+    auto const mark_vehicle_moved = [&]() {
+        if( vehicle_moved_marked ) {
+            return;
+        }
+        std::ranges::for_each( smzs, [&]( const int vsmz ) {
+            const auto smz = dest.z() + vsmz;
+            const auto veh_sm_min = abs_to_bub( tripoint_abs_sm( veh_abs_sm_min.xy(), smz ) );
+            const auto veh_sm_max = abs_to_bub( tripoint_abs_sm( veh_abs_sm_max.xy(), smz ) );
+            on_vehicle_moved( veh_sm_min, veh_sm_max, smz );
+        } );
+        vehicle_moved_marked = true;
+    };
+
+    if( need_update && !z_change && src.z() == dest.z() ) {
+        mark_vehicle_moved();
+    }
+
     if( need_update ) {
         g->update_map( g->u );
     }
@@ -2118,14 +2146,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
         // Has to be after update_map or coordinates won't be valid
         g->setremoteveh( &veh );
     }
-
-    //
-    //global positions of vehicle loot zones have changed.
-    veh.zones_dirty = true;
-
-    std::ranges::for_each( smzs, [&]( const int vsmz ) {
-        on_vehicle_moved( veh_sm_min, veh_sm_max, dest.z() + vsmz );
-    } );
+    mark_vehicle_moved();
     return true;
 }
 
@@ -8454,16 +8475,16 @@ void map::shift( const point_rel_sm &sp )
         debugmsg( "map::shift called with a shift of more than one submap" );
     }
 
+    vehicle *remoteveh = g->remoteveh();
     const tripoint_abs_sm abs = get_abs_sub();
 
     set_abs_sub( abs + sp );
 
     g->shift_destination_preview( -project_to<coords::ms>( sp ) );
 
-    vehicle *remoteveh = g->remoteveh();
-
     const int zmin = zlevels ? -OVERMAP_DEPTH : abs.z();
     const int zmax = zlevels ? OVERMAP_HEIGHT : abs.z();
+    m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
 #if defined( CATA_SDL )
     auto *const gpu_device = cata_gpu::get_device();
     const auto &shift_cache = get_cache_ref( zmin );
@@ -8723,6 +8744,7 @@ void map::shift( const point_rel_sm &sp )
             }
             mark_shifted_map_caches_dirty( gridz );
             set_seen_cache_dirty( gridz );
+            get_cache( gridz ).visibility_cache_dirty = true;
             set_pathfinding_cache_dirty( gridz );
             set_suspension_cache_dirty( gridz );
             mark_shifted_absorption_cache_dirty( get_cache( gridz ), gridz );

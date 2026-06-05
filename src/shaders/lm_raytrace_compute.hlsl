@@ -1,70 +1,176 @@
-// GPU Lighting — Per-Source Ray-Cast Pass
+// GPU Lighting - Per-Source Ray-Cast Pass
 //
 // Accumulates per-light-source contributions into lm_all using InterlockedMax.
-// One workgroup per light source; threads cover the 2D bounding box of the
-// source's effective radius, looping over z-levels internally.
-//
-// Algorithm per thread:
-//   1. Compute 2D offset (dx, dy) from source via group/thread IDs.
-//   2. Loop over every z-level in the overmap volume.
-//   3. Compute 3D Euclidean distance; skip if > radius.
-//   4. Trace a DDA ray from target back toward source, accumulating the
-//      running-average transparency (mirrors accumulate_transparency on CPU).
-//      Vertical steps check floor_all/vehicle_floor_all to block the ray.
-//   5. Compute intensity = luminance / (exp(avg_transparency * distance) * distance^2).
-//      The /distance falloff formula is commented below for easy comparison.
-//   6. Atomically update lm_all[target] = max(lm_all[target], intensity).
-//      Positive-float bit-reinterpretation as uint makes InterlockedMax correct.
-//
-// Binding layout (SDL3 GPU / shadercross HLSL conventions):
-//   space0  read-only storage buffers  (t registers)
-//   space1  read-write storage buffers (u registers)
-//   space2  uniform / cbuffer          (b registers)
-//
-// Thread group: [8, 8, 1]
-// Dispatch per radius bucket:
-//   (bucket_source_count, ceil((2*bucket_max_radius+1)/8), ceil((2*bucket_max_radius+1)/8))
-//   group_id.x = source index inside the bucket
-//   group_id.y = x-chunk index (determines dx offset)
-//   group_id.z = y-chunk index (determines dy offset)
 
-static const float LIGHT_TRANSPARENCY_SOLID    = 0.0;
+static const float LIGHT_TRANSPARENCY_SOLID = 0.0;
 static const float LIGHT_TRANSPARENCY_OPEN_AIR = 0.038376418216;
-static const float LIGHT_AMBIENT_LOW           = 3.5;
+static const float LIGHT_AMBIENT_LOW = 3.5;
+static const float DEFAULT_TARGET_Z_FRAC = 0.5;
+static const float VEHICLE_INTERIOR_TARGET_Z_FRAC = 0.35;
+static const float VEHICLE_ROOF_SURFACE_Z_FRAC = 0.70;
+static const float VEHICLE_ROOF_EPSILON = 0.001;
+static const uint  LIGHT_SOURCE_DIRECTIONAL = 1u;
+static const uint  LIGHT_SOURCE_EXTERNAL_VEHICLE = 2u;
 
 struct GpuLightSource
 {
     int   x;
     int   y;
     int   z_idx;
+    uint  flags;
     float luminance;
     float radius;
+    float dir_x;
+    float dir_y;
+    float cone_cos;
+    float z_frac;
     uint  _pad0;
     uint  _pad1;
-    uint  _pad2;
 };
 
 cbuffer Constants : register(b0, space2)
 {
     int   cache_x;
     int   cache_y;
-    int   cache_xy;     // = cache_x * cache_y
+    int   cache_xy;
     int   z_count;
-    float z_scale;      // Z_LEVEL_SCALE = 1.8
+    float z_scale;
     uint  num_sources;
-    int   max_radius;   // bounding-box half-extent for dispatch
+    int   max_radius;
     uint  source_offset;
 };
 
-StructuredBuffer<float>         transparency_all : register(t0, space0);
-StructuredBuffer<uint>          floor_all        : register(t1, space0);
-StructuredBuffer<uint>          vehicle_floor_all: register(t2, space0);
-StructuredBuffer<GpuLightSource> light_sources   : register(t3, space0);
-RWStructuredBuffer<uint>        lm_all           : register(u0, space1);
+StructuredBuffer<float>          transparency_all : register(t0, space0);
+StructuredBuffer<uint>           floor_all        : register(t1, space0);
+StructuredBuffer<uint>           vehicle_floor_all: register(t2, space0);
+StructuredBuffer<GpuLightSource> light_sources    : register(t3, space0);
+RWStructuredBuffer<uint>         lm_all           : register(u0, space1);
+
+int tile_index( int x, int y, int z )
+{
+    return z * cache_xy + x * cache_y + y;
+}
 
 int round_nearest_int( float value )
 {
     return value >= 0.0 ? (int)floor( value + 0.5 ) : (int)ceil( value - 0.5 );
+}
+
+bool has_vehicle_surface( int x, int y, int z )
+{
+    int roof_z = z + 1;
+    if( roof_z < 0 || roof_z >= z_count ) {
+        return false;
+    }
+    return vehicle_floor_all[tile_index( x, y, roof_z )] != 0u;
+}
+
+bool target_vehicle_surface_blocks_source(
+    GpuLightSource src, int tx, int ty, int tz, float target_frac )
+{
+    if( !has_vehicle_surface( tx, ty, tz ) ) {
+        return false;
+    }
+
+    float roof_plane = (float)tz + VEHICLE_ROOF_SURFACE_Z_FRAC;
+    float source_h = (float)src.z_idx + src.z_frac;
+    float target_h = (float)tz + target_frac;
+
+    return source_h > roof_plane + VEHICLE_ROOF_EPSILON
+           && target_h < roof_plane - VEHICLE_ROOF_EPSILON;
+}
+
+float open_target_z_frac( GpuLightSource src )
+{
+    return src.z_frac > VEHICLE_ROOF_SURFACE_Z_FRAC + VEHICLE_ROOF_EPSILON ?
+           VEHICLE_ROOF_SURFACE_Z_FRAC : DEFAULT_TARGET_Z_FRAC;
+}
+
+bool ray_sample_is_above_vehicle_surface( int x, int y, int z, float ray_h )
+{
+    if( !has_vehicle_surface( x, y, z ) ) {
+        return false;
+    }
+    float roof_plane = (float)z + VEHICLE_ROOF_SURFACE_Z_FRAC;
+    return ray_h >= roof_plane - VEHICLE_ROOF_EPSILON;
+}
+
+bool vehicle_target_roof_blocks(
+    GpuLightSource src, int tx, int ty, int tz, float target_frac )
+{
+    return target_vehicle_surface_blocks_source( src, tx, ty, tz, target_frac );
+}
+
+float trace_intensity(
+    GpuLightSource src, int tx, int ty, int tz, int dx, int dy, float target_frac )
+{
+    float fdx = (float)dx;
+    float fdy = (float)dy;
+    float fdz = ( (float)tz + target_frac - ( (float)src.z_idx + src.z_frac ) ) * z_scale;
+    float dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
+
+    if( dist > src.radius ) {
+        return 0.0;
+    }
+
+    if( dist < 0.5 ) {
+        return src.luminance;
+    }
+
+    int sdx = src.x - tx;
+    int sdy = src.y - ty;
+    int sdz = src.z_idx - tz;
+    if( vehicle_target_roof_blocks( src, tx, ty, tz, target_frac ) ) {
+        return 0.0;
+    }
+
+    int steps = max( abs( sdx ), max( abs( sdy ), (int)ceil( abs( fdz ) ) ) );
+    steps = max( steps, 1 );
+
+    float avg_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
+
+    if( sdz != 0 ) {
+        int sign_z = sdz > 0 ? 1 : -1;
+        int crossings = abs( sdz );
+        for( int k = 0; k < crossings; ++k ) {
+            float t_z = ( (float)k + 0.5 ) / (float)crossings;
+            int ix_z = clamp( tx + round_nearest_int( (float)sdx * t_z ), 0, cache_x - 1 );
+            int iy_z = clamp( ty + round_nearest_int( (float)sdy * t_z ), 0, cache_y - 1 );
+            int floor_z = sign_z > 0 ? tz + k + 1 : tz - k;
+            if( floor_z >= 0 && floor_z < z_count ) {
+                int fl_idx = tile_index( ix_z, iy_z, floor_z );
+                if( floor_all[fl_idx] != 0u ) {
+                    return 0.0;
+                }
+                if( vehicle_floor_all[fl_idx] != 0u &&
+                    ( src.flags & LIGHT_SOURCE_EXTERNAL_VEHICLE ) == 0u ) {
+                    return 0.0;
+                }
+            }
+        }
+    }
+
+    for( int i = 1; i < steps; ++i ) {
+        float t = (float)i / (float)steps;
+        int ix = clamp( tx + round_nearest_int( (float)sdx * t ), 0, cache_x - 1 );
+        int iy = clamp( ty + round_nearest_int( (float)sdy * t ), 0, cache_y - 1 );
+        int iz = clamp( tz + round_nearest_int( (float)sdz * t ), 0, z_count - 1 );
+
+        float t_val = transparency_all[tile_index( ix, iy, iz )];
+        if( t_val <= LIGHT_TRANSPARENCY_SOLID ) {
+            float source_h = (float)src.z_idx + src.z_frac;
+            float target_h = (float)tz + target_frac;
+            float ray_h = target_h + ( source_h - target_h ) * t;
+            if( ray_sample_is_above_vehicle_surface( ix, iy, iz, ray_h ) ) {
+                continue;
+            }
+            return 0.0;
+        }
+
+        avg_transparency = ( (float)( i - 1 ) * avg_transparency + t_val ) / (float)i;
+    }
+
+    return min( src.luminance, src.luminance / ( exp( avg_transparency * dist ) * dist * dist ) );
 }
 
 [numthreads(8, 8, 1)]
@@ -76,16 +182,26 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
 
     GpuLightSource src = light_sources[source_offset + group_id.x];
 
-    // Compute 2D offset from source centre; may be negative.
     int dx = (int)( group_id.y * 8 + thread_id.x ) - max_radius;
     int dy = (int)( group_id.z * 8 + thread_id.y ) - max_radius;
-
     int tx = src.x + dx;
     int ty = src.y + dy;
 
-    // Bounds check target 2D position.
     if( tx < 0 || ty < 0 || tx >= cache_x || ty >= cache_y ) {
         return;
+    }
+
+    float fdx = (float)dx;
+    float fdy = (float)dy;
+    float dist_xy_sq = fdx * fdx + fdy * fdy;
+    if( ( src.flags & LIGHT_SOURCE_DIRECTIONAL ) != 0u ) {
+        if( dist_xy_sq <= 0.0001 ) {
+            return;
+        }
+        float cone_dot = ( fdx * src.dir_x + fdy * src.dir_y ) * rsqrt( dist_xy_sq );
+        if( cone_dot < src.cone_cos ) {
+            return;
+        }
     }
 
     int z_span = (int)ceil( src.radius / z_scale );
@@ -93,100 +209,13 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
     int z_max = min( z_count - 1, src.z_idx + z_span );
 
     for( int tz = z_min; tz <= z_max; ++tz ) {
-        int dz = tz - src.z_idx;
-        float fdx  = (float)dx;
-        float fdy  = (float)dy;
-        float fdz  = (float)dz * z_scale;
-        float dist = sqrt( fdx * fdx + fdy * fdy + fdz * fdz );
-
-        if( dist > src.radius ) {
-            continue;
+        int idx = tile_index( tx, ty, tz );
+        bool vehicle_surface = has_vehicle_surface( tx, ty, tz );
+        float target_frac =
+            vehicle_surface ? VEHICLE_INTERIOR_TARGET_Z_FRAC : open_target_z_frac( src );
+        float intensity = trace_intensity( src, tx, ty, tz, dx, dy, target_frac );
+        if( intensity > LIGHT_AMBIENT_LOW ) {
+            InterlockedMax( lm_all[idx], asuint( intensity ) );
         }
-
-        float intensity;
-
-        if( dist < 0.5 ) {
-            // Source tile itself: use luminance directly.
-            intensity = src.luminance;
-        } else {
-            // Trace a DDA ray from target (tx,ty,tz) toward source (sx,sy,sz).
-            // sdx/sdy/sdz are the step direction (source - target).
-            int sdx = src.x - tx;
-            int sdy = src.y - ty;
-            int sdz = src.z_idx - tz;
-
-            int steps = max( abs( sdx ), max( abs( sdy ), (int)ceil( (float)abs( sdz ) * z_scale ) ) );
-            steps = max( steps, 1 );
-
-            float avg_transparency = LIGHT_TRANSPARENCY_OPEN_AIR;
-            bool  blocked          = false;
-
-            // Explicit z-crossing floor check — same half-step boundary rule as
-            // lm_seen_compute.  Floors live between z-level centres, not at the
-            // source or target centre.
-            if( sdz != 0 ) {
-                const int sign_z = ( sdz > 0 ) ? 1 : -1;
-                const int crossings = abs( sdz );
-                for( int k = 0; k < crossings; ++k ) {
-                    const float t_z  = ( (float)k + 0.5 ) / (float)crossings;
-                    const int   ix_z = clamp( tx + round_nearest_int( (float)sdx * t_z ),
-                                              0, cache_x - 1 );
-                    const int   iy_z = clamp( ty + round_nearest_int( (float)sdy * t_z ),
-                                              0, cache_y - 1 );
-                    const int floor_z = sign_z > 0 ? tz + k + 1 : tz - k;
-                    if( floor_z >= 0 && floor_z < z_count ) {
-                        const int fl_idx = floor_z * cache_xy + ix_z * cache_y + iy_z;
-                        if( floor_all[fl_idx] != 0u || vehicle_floor_all[fl_idx] != 0u ) {
-                            blocked = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            for( int i = 1; i < steps; ++i ) {
-                // Interpolate from target toward source.
-                float t  = (float)i / (float)steps;
-                int   ix = tx + round_nearest_int( (float)sdx * t );
-                int   iy = ty + round_nearest_int( (float)sdy * t );
-                int   iz = tz + round_nearest_int( (float)sdz * t );
-
-                // Clamp to valid range.
-                ix = clamp( ix, 0, cache_x - 1 );
-                iy = clamp( iy, 0, cache_y - 1 );
-                iz = clamp( iz, 0, z_count - 1 );
-
-                float t_val = transparency_all[iz * cache_xy + ix * cache_y + iy];
-                if( t_val <= LIGHT_TRANSPARENCY_SOLID ) {
-                    blocked = true;
-                    break;
-                }
-
-                // Running-average transparency (mirrors accumulate_transparency on CPU).
-                avg_transparency = ( (float)( i - 1 ) * avg_transparency + t_val ) / (float)i;
-            }
-
-            if( blocked ) {
-                continue;
-            }
-
-            // Intensity formula: luminance / (exp(avg * dist) * dist^2)
-            // k=2 (inverse square): physically correct, sharper falloff.
-            intensity = src.luminance / ( exp( avg_transparency * dist ) * dist * dist );
-            // k=1 (inverse distance): softer falloff — swap in if needed.
-            // intensity = src.luminance / ( exp( avg_transparency * dist ) * dist );
-        }
-
-        // Clamp to avoid spurious overflow when distance is very small.
-        intensity = min( intensity, src.luminance );
-
-        if( intensity <= LIGHT_AMBIENT_LOW ) {
-            continue;
-        }
-
-        // Atomically update lm_all with the maximum contribution.
-        // Positive IEEE 754 floats compare correctly as uint32.
-        int lm_idx = tz * cache_xy + tx * cache_y + ty;
-        InterlockedMax( lm_all[lm_idx], asuint( intensity ) );
     }
 }

@@ -18,6 +18,7 @@
 #include "profile.h"
 #include "shadowcasting.h"
 #include "submap.h"
+#include "units_angle.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vehicle_part.h"
@@ -48,6 +49,8 @@ namespace {
 
 static constexpr auto solar_shadow_scatter = 0.09f;
 static constexpr auto daylight_diffusion_passes = 16;
+static constexpr auto light_source_default_z_frac = 0.5f;
+static constexpr auto light_source_vehicle_external_z_frac = 0.8f;
 
 // ---------------------------------------------------------------------------
 // Pipeline management
@@ -211,7 +214,7 @@ auto ensure_pipelines(SDL_GPUDevice* const device) -> bool {
     if (s_ambient_pipeline == nullptr) {
         s_ambient_pipeline = load_pipeline(
             device, "lm_ambient_compute",
-            /*ro=*/3, /*rw=*/2, 64, 1);
+            /*ro=*/4, /*rw=*/2, 64, 1);
     }
     if (s_daylight_diffuse_pipeline == nullptr) {
         s_daylight_diffuse_pipeline = load_pipeline(
@@ -972,16 +975,35 @@ auto ensure_uint_shift_scratch(
 // Light source collection
 // ---------------------------------------------------------------------------
 
-auto make_source(int const x, int const y, int const zlev, float const luminance)
+auto make_source(
+    int const x, int const y, int const zlev, float const luminance,
+    uint32_t const flags = 0u)
     -> GpuLightSource {
     return GpuLightSource{
         .x = x,
         .y = y,
         .z_idx = zlev + OVERMAP_DEPTH,
+        .flags = flags,
         .luminance = luminance,
         .radius = compute_light_radius(luminance),
+        .dir_x = 0.0f,
+        .dir_y = 0.0f,
+        .cone_cos = 1.0f,
+        .z_frac = (flags & light_source_external_vehicle) != 0u ?
+                  light_source_vehicle_external_z_frac : light_source_default_z_frac,
         ._pad = {},
     };
+}
+
+auto make_directional_source(
+    tripoint_bub_ms const& pos, float const luminance, units::angle const direction,
+    units::angle const width, uint32_t const flags) -> GpuLightSource {
+    auto source = make_source(
+        pos.x(), pos.y(), pos.z(), luminance, flags | light_source_directional);
+    source.dir_x = static_cast<float>(units::cos(direction));
+    source.dir_y = static_cast<float>(units::sin(direction));
+    source.cone_cos = static_cast<float>(units::cos(width / 2.0));
+    return source;
 }
 
 enum class light_source_kind : int {
@@ -1079,6 +1101,10 @@ auto upsert_source(
         source.radius = compute_light_radius(luminance);
     }
     return iter->second;
+}
+
+auto source_pos(GpuLightSource const& source) -> tripoint_bub_ms {
+    return tripoint_bub_ms(source.x, source.y, source.z_idx - OVERMAP_DEPTH);
 }
 
 auto source_is_static_raytrace(light_source_kind const kind) -> bool {
@@ -1193,7 +1219,12 @@ auto source_signature(std::vector<GpuLightSource> const& sources) -> std::size_t
         mix_signature(seed, static_cast<std::size_t>(source.x));
         mix_signature(seed, static_cast<std::size_t>(source.y));
         mix_signature(seed, static_cast<std::size_t>(source.z_idx));
+        mix_signature(seed, static_cast<std::size_t>(source.flags));
         mix_signature(seed, quantized_signature_float(source.luminance, 4.0f));
+        mix_signature(seed, quantized_signature_float(source.dir_x, 1024.0f));
+        mix_signature(seed, quantized_signature_float(source.dir_y, 1024.0f));
+        mix_signature(seed, quantized_signature_float(source.cone_cos, 1024.0f));
+        mix_signature(seed, quantized_signature_float(source.z_frac, 1024.0f));
     }
     return seed;
 }
@@ -1260,6 +1291,31 @@ auto add_source(
         upsert_source(acc.static_sources, acc.static_source_indices, source_slot, pos, luminance);
     } else {
         upsert_source(acc.dynamic_sources, acc.dynamic_source_indices, source_slot, pos, luminance);
+    }
+}
+
+auto append_source(
+    source_accumulator& acc, GpuLightSource const& source, light_source_kind const kind) -> void {
+    if (source.luminance <= LIGHT_AMBIENT_LOW) { return; }
+
+    auto const pos = source_pos(source);
+    if (!acc.m.inbounds(pos)) { return; }
+
+    auto const level_index = dirty_level_index(acc, pos.z());
+    if (level_index < 0) { return; }
+
+    auto const& lc = acc.m.get_cache_ref(pos.z());
+    if (!lc.inbounds(pos.xy())) { return; }
+
+    acc.sources.push_back(source);
+    acc.source_kinds.push_back(kind);
+
+    if (!source_is_raytraced(kind)) { return; }
+
+    if (source_is_static_raytrace(kind)) {
+        acc.static_sources.push_back(source);
+    } else {
+        acc.dynamic_sources.push_back(source);
     }
 }
 
@@ -1368,6 +1424,45 @@ auto add_active_item_sources(source_accumulator& acc) -> void {
     }
 }
 
+auto active_vehicle_light_parts(vehicle& veh) -> std::vector<vpart_reference> {
+    auto lights = std::vector<vpart_reference>{};
+    for (vpart_reference const& part : veh.get_all_parts()) {
+        auto const& vehicle_part = part.part();
+        if (vehicle_part.enabled && vehicle_part.is_available() && vehicle_part.is_light()) {
+            lights.push_back(part);
+        }
+    }
+    return lights;
+}
+
+auto vehicle_light_is_directional(vpart_info const& info) -> bool {
+    return info.has_flag(VPFLAG_CONE_LIGHT) || info.has_flag(VPFLAG_WIDE_CONE_LIGHT)
+           || info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT);
+}
+
+auto vehicle_light_arc_width(vpart_info const& info) -> units::angle {
+    if (info.has_flag(VPFLAG_CONE_LIGHT)) { return 45_degrees; }
+    if (info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) { return 90_degrees; }
+    if (info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT)) { return 180_degrees; }
+    return 360_degrees;
+}
+
+auto vehicle_light_is_external(vpart_reference const& part) -> bool {
+    auto const& info = part.info();
+    return info.location == "on_roof" || vehicle_light_is_directional(info);
+}
+
+auto vehicle_light_flags(vpart_reference const& part) -> uint32_t {
+    return vehicle_light_is_external(part) ? light_source_external_vehicle : uint32_t{0};
+}
+
+auto vehicle_circle_light_is_active(vpart_info const& info, bool const odd_turn) -> bool {
+    if (!info.has_flag(VPFLAG_CIRCLE_LIGHT)) { return true; }
+    return (odd_turn && info.has_flag(VPFLAG_ODDTURN))
+           || (!odd_turn && info.has_flag(VPFLAG_EVENTURN))
+           || (!(info.has_flag(VPFLAG_EVENTURN) || info.has_flag(VPFLAG_ODDTURN)));
+}
+
 auto add_vehicle_sources(source_accumulator& acc) -> void {
     ZoneScopedN("gpu_lm_collect_vehicle_sources");
     auto const odd_turn = calendar::once_every(2_turns);
@@ -1375,38 +1470,53 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
         auto* const veh = wrapped.v;
         if (veh == nullptr) { continue; }
 
-        auto const lights = veh->lights(true);
+        auto const lights = active_vehicle_light_parts(*veh);
         auto vehicle_luminance = 0.0f;
         auto iteration = 1.0f;
-        for (auto const* const part : lights) {
-            auto const& info = part->info();
+        for (vpart_reference const& part : lights) {
+            auto const& info = part.info();
             if (info.has_flag(VPFLAG_CONE_LIGHT) || info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) {
                 vehicle_luminance += info.bonus / iteration;
                 iteration = iteration * 1.1f;
             }
         }
 
-        for (auto const* const part : lights) {
-            auto const& info = part->info();
-            auto const pos = veh->bub_part_location(*part);
+        for (vpart_reference const& part : lights) {
+            auto const& info = part.info();
+            auto const& vehicle_part = part.part();
+            auto const pos = part.pos();
             if (!acc.m.inbounds(pos)) { continue; }
 
+            auto const flags = vehicle_light_flags(part);
             if (info.has_flag(VPFLAG_CONE_LIGHT) || info.has_flag(VPFLAG_WIDE_CONE_LIGHT)) {
                 if (vehicle_luminance > lit_level::LIT) {
-                    add_source(acc, pos, static_cast<float>(M_SQRT2), light_source_kind::vehicle);
-                    add_source(acc, pos, vehicle_luminance, light_source_kind::vehicle);
+                    append_source(
+                        acc,
+                        make_directional_source(
+                            pos, vehicle_luminance, veh->face.dir() + vehicle_part.direction,
+                            vehicle_light_arc_width(info), flags),
+                        light_source_kind::vehicle);
                 }
             } else if (info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT)) {
-                add_source(acc, pos, static_cast<float>(M_SQRT2), light_source_kind::vehicle);
-                add_source(acc, pos, static_cast<float>(info.bonus), light_source_kind::vehicle);
+                append_source(
+                    acc,
+                    make_directional_source(
+                        pos, static_cast<float>(info.bonus),
+                        veh->face.dir() + vehicle_part.direction, vehicle_light_arc_width(info),
+                        flags),
+                    light_source_kind::vehicle);
             } else if (info.has_flag(VPFLAG_CIRCLE_LIGHT)) {
-                if ((odd_turn && info.has_flag(VPFLAG_ODDTURN))
-                    || (!odd_turn && info.has_flag(VPFLAG_EVENTURN))
-                    || (!(info.has_flag(VPFLAG_EVENTURN) || info.has_flag(VPFLAG_ODDTURN)))) {
-                    add_source(acc, pos, static_cast<float>(info.bonus), light_source_kind::vehicle);
+                if (vehicle_circle_light_is_active(info, odd_turn)) {
+                    append_source(
+                        acc, make_source(pos.x(), pos.y(), pos.z(), static_cast<float>(info.bonus),
+                                         flags),
+                        light_source_kind::vehicle);
                 }
             } else {
-                add_source(acc, pos, static_cast<float>(info.bonus), light_source_kind::vehicle);
+                append_source(
+                    acc,
+                    make_source(pos.x(), pos.y(), pos.z(), static_cast<float>(info.bonus), flags),
+                    light_source_kind::vehicle);
             }
         }
 
@@ -1510,6 +1620,7 @@ auto write_source_map_to_level_caches(
         std::ranges::fill(lc.sm, 0.0f);
     }
     for (auto const& source : sources) {
+        if ((source.flags & light_source_external_vehicle) != 0u) { continue; }
         auto const zlev = source.z_idx - OVERMAP_DEPTH;
         if (!source_is_on_dirty_level(dirty_levels, zlev)) { continue; }
         auto& lc = const_cast<level_cache&>(m.get_cache_ref(zlev));
@@ -1846,13 +1957,24 @@ auto make_camera_zero_plan(
     };
 }
 
+auto find_vehicle_for_optics_origin(map const& m, tripoint_bub_ms const& origin) -> vehicle* {
+    auto const vp = m.veh_at(origin);
+    if (vp) { return &vp->vehicle(); }
+
+    auto const& origin_cache = m.get_cache_ref(origin.z());
+    auto const it = std::ranges::find_if(origin_cache.vehicle_list, [&](vehicle* const candidate) {
+        if (candidate == nullptr) { return false; }
+        return !candidate->get_parts_at(origin, std::string{}, part_status_flag::any).empty();
+    });
+    return it != origin_cache.vehicle_list.end() ? *it : nullptr;
+}
+
 auto collect_vehicle_optics(map const& m, tripoint_bub_ms const& origin, int const target_z)
     -> std::vector<GpuVehicleOptic> {
     auto optics = std::vector<GpuVehicleOptic>{};
-    auto const vp = m.veh_at(origin);
-    if (!vp) { return optics; }
+    auto* const veh = find_vehicle_for_optics_origin(m, origin);
+    if (veh == nullptr) { return optics; }
 
-    auto* const veh = &vp->vehicle();
     auto const& target_cache = m.get_cache_ref(target_z);
     auto optic_parts = std::vector<int>{};
     auto cam_control = -1;
@@ -2166,10 +2288,18 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     reset_input_residency_for_shape(p.cache_x, p.cache_y, p.z_count);
 
     auto& inputs = s_lighting_resources.inputs;
+    auto invalidate_shift_inputs = [&]() {
+        std::ranges::fill(inputs.transparency_valid_levels, '\0');
+        std::ranges::fill(inputs.transparency_shader_updated_levels, '\0');
+        refresh_transparency_valid_flag();
+        inputs.floor_valid = false;
+        inputs.vehicle_floor_valid = false;
+        inputs.vehicle_obscured_valid = false;
+    };
 
-    // map::shift changes bubble coordinates.  Source-derived outputs are still
-    // invalidated; structural input buffers are shifted below and patched by
-    // dirty edge-band uploads during the next map-cache build.
+    // map::shift changes bubble coordinates.  Derived outputs are invalidated,
+    // while structural inputs are shifted in-place so the next lighting build
+    // only uploads newly dirty edge bands.
     reset_seen_residency(p.z_count);
     s_lighting_resources.camera_valid = false;
     s_lighting_resources.camera_nonzero_levels = {};
@@ -2177,8 +2307,8 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     s_lighting_resources.static_lighting_valid = false;
     s_lighting_resources.lighting_outputs_valid = false;
 
-    auto const has_valid_transparency = std::ranges::
-        any_of(inputs.transparency_valid_levels, [](char const value) { return value != '\0'; });
+    auto const has_valid_transparency = std::ranges::any_of(
+        inputs.transparency_valid_levels, [](char const value) { return value != '\0'; });
     auto const shift_transparency =
         has_valid_transparency && s_lighting_resources.transparency.buffer != nullptr;
     auto const shift_floor = inputs.floor_valid && s_lighting_resources.floor.buffer != nullptr;
@@ -2199,15 +2329,6 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     if (!shift_transparency && !shift_floor && !shift_vehicle_floor && !shift_vehicle_obscured) {
         return true;
     }
-
-    auto invalidate_shift_inputs = [&]() {
-        std::ranges::fill(inputs.transparency_valid_levels, '\0');
-        std::ranges::fill(inputs.transparency_shader_updated_levels, '\0');
-        refresh_transparency_valid_flag();
-        inputs.floor_valid = false;
-        inputs.vehicle_floor_valid = false;
-        inputs.vehicle_obscured_valid = false;
-    };
 
     if (shift_transparency && !ensure_shift_float_pipeline(p.device)) {
         invalidate_shift_inputs();
@@ -2259,7 +2380,6 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 
     {
         ZoneScopedN("gpu_lm_shift_record_commands");
-
         auto const record_float_shift =
             [&](SDL_GPUBuffer* const src_buf, SDL_GPUBuffer* const dst_buf,
                 float const fill_value) {
@@ -2267,11 +2387,9 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
                     .buffer = dst_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
                 auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_shifted, 1);
                 SDL_BindGPUComputePipeline(cp, s_shift_float_pipeline);
-
                 auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{src_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
-
                 auto const push = lm_shift_float_push_constants{
                     .cache_x = p.cache_x,
                     .cache_y = p.cache_y,
@@ -2294,11 +2412,9 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
                     .buffer = dst_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
                 auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_shifted, 1);
                 SDL_BindGPUComputePipeline(cp, s_shift_uint_pipeline);
-
                 auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{src_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
-
                 auto const push = lm_shift_uint_push_constants{
                     .cache_x = p.cache_x,
                     .cache_y = p.cache_y,
@@ -2320,16 +2436,19 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
                 s_lighting_resources.shift_float_scratch.buffer, LIGHT_TRANSPARENCY_OPEN_AIR);
         }
         if (shift_floor) {
-            record_uint_shift(s_lighting_resources.floor.buffer,
-                              s_lighting_resources.shift_floor_scratch.buffer, 0u);
+            record_uint_shift(
+                s_lighting_resources.floor.buffer, s_lighting_resources.shift_floor_scratch.buffer,
+                0u);
         }
         if (shift_vehicle_floor) {
-            record_uint_shift(s_lighting_resources.vehicle_floor.buffer,
-                              s_lighting_resources.shift_vehicle_floor_scratch.buffer, 0u);
+            record_uint_shift(
+                s_lighting_resources.vehicle_floor.buffer,
+                s_lighting_resources.shift_vehicle_floor_scratch.buffer, 0u);
         }
         if (shift_vehicle_obscured) {
-            record_uint_shift(s_lighting_resources.vehicle_obscured.buffer,
-                              s_lighting_resources.shift_vehicle_obscured_scratch.buffer, 0u);
+            record_uint_shift(
+                s_lighting_resources.vehicle_obscured.buffer,
+                s_lighting_resources.shift_vehicle_obscured_scratch.buffer, 0u);
         }
     }
 
@@ -2360,12 +2479,14 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
         std::swap(s_lighting_resources.floor, s_lighting_resources.shift_floor_scratch);
     }
     if (shift_vehicle_floor) {
-        std::swap(s_lighting_resources.vehicle_floor,
-                  s_lighting_resources.shift_vehicle_floor_scratch);
+        std::swap(
+            s_lighting_resources.vehicle_floor,
+            s_lighting_resources.shift_vehicle_floor_scratch);
     }
     if (shift_vehicle_obscured) {
-        std::swap(s_lighting_resources.vehicle_obscured,
-                  s_lighting_resources.shift_vehicle_obscured_scratch);
+        std::swap(
+            s_lighting_resources.vehicle_obscured,
+            s_lighting_resources.shift_vehicle_obscured_scratch);
     }
     TracyPlot("GPU LM Shift Transparency", shift_transparency ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Shift Floor", shift_floor ? int64_t{1} : int64_t{0});
@@ -2869,8 +2990,10 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     .cycle = false,
                     .padding1 = 0,
                     .padding2 = 0,
-                    .padding3 = 0};
-                auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
+                    .padding3 = 0,
+                };
+                auto* const cp = SDL_BeginGPUComputePass(
+                    cmd, nullptr, 0, &rw_lm, 1);
                 SDL_BindGPUComputePipeline(cp, s_raytrace_pipeline);
 
                 auto const ro_bufs = std::array<SDL_GPUBuffer*, 4>{t_buf, f_buf, vf_buf, src_buf};
@@ -2940,7 +3063,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     cmd, nullptr, 0, rw_bufs.data(), static_cast<Uint32>(rw_bufs.size()));
                 SDL_BindGPUComputePipeline(cp, s_ambient_pipeline);
 
-                auto const ro_bufs = std::array<SDL_GPUBuffer*, 3>{f_buf, t_buf, source_map_buf};
+                auto const ro_bufs =
+                    std::array<SDL_GPUBuffer*, 4>{f_buf, t_buf, source_map_buf, vf_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
@@ -3001,12 +3125,12 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             }
 
             // [Pass 5] Compute: max cached static-source contribution into frame lm.
-            {
+            auto max_uint_buffer = [&](SDL_GPUBuffer* const target_buf, SDL_GPUBuffer* const source_buf) {
                 auto const rw_lm = SDL_GPUStorageBufferReadWriteBinding{
-                    .buffer = lm_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
+                    .buffer = target_buf, .cycle = false, .padding1 = 0, .padding2 = 0, .padding3 = 0};
                 auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_lm, 1);
                 SDL_BindGPUComputePipeline(cp, s_max_uint_pipeline);
-                auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{static_lm_buf};
+                auto const ro_bufs = std::array<SDL_GPUBuffer*, 1>{source_buf};
                 SDL_BindGPUComputeStorageBuffers(
                     cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
                 auto const max_push = lm_max_uint_push_constants{
@@ -3016,7 +3140,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 SDL_PushGPUComputeUniformData(cmd, 0, &max_push, sizeof(max_push));
                 SDL_DispatchGPUCompute(cp, (volume_tiles + 63) / 64, 1, 1);
                 SDL_EndGPUComputePass(cp);
-            }
+            };
+            max_uint_buffer(lm_buf, static_lm_buf);
 
             // [Pass 6] Compute: dynamic per-source ray casting over ambient/static base.
             dispatch_raytrace(lm_buf, dynamic_raytrace_buckets);
@@ -3347,6 +3472,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     if (rebuild_seen && !ensure_seen_pipelines(device)) { return {}; }
     auto const visibility_download_bytes =
         static_cast<Uint32>(visibility_download_levels.size()) * uint_level_bytes;
+    auto const visibility_download_total_bytes = visibility_download_bytes;
     auto vehicle_optics = collect_vehicle_optics(
         *p.m, tripoint_bub_ms{p.player_x, p.player_y, p.player_zlev}, p.zlev);
     if (!vehicle_optics.empty() && !ensure_vehicle_optics_pipeline(device)) { return {}; }
@@ -3358,6 +3484,10 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     }
     if (!camera_zero.upload_levels.empty() && !ensure_fill_float_pipeline(device)) { return {}; }
     auto const num_optics = static_cast<Uint32>(vehicle_optics.size());
+    auto const camera_optics = static_cast<int64_t>(
+        std::ranges::count_if(vehicle_optics, [](GpuVehicleOptic const& optic) {
+            return optic.kind == vehicle_optic_camera;
+        }));
     auto const vehicle_optics_upload_bytes =
         num_optics > 0 ? static_cast<Uint32>(num_optics * sizeof(GpuVehicleOptic)) : Uint32{0};
     auto const vehicle_optics_buffer_bytes =
@@ -3399,6 +3529,9 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     TracyPlot("GPU Visibility Camera Clear Ranges",
               static_cast<int64_t>(camera_clear_ranges.size()));
     TracyPlot("GPU Visibility Camera Clear Tiles", camera_clear_tiles);
+    TracyPlot("GPU Visibility Vehicle Optics", static_cast<int64_t>(num_optics));
+    TracyPlot("GPU Visibility Camera Optics", camera_optics);
+    TracyPlot("GPU Visibility Mirror Optics", static_cast<int64_t>(num_optics) - camera_optics);
 
     if (!ensure_lighting_resources(
             device,
@@ -3415,7 +3548,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .static_lm_bytes = uint_volume_bytes,
                 .output_bytes = uint_volume_bytes,
                 .lm_download_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t)),
-                .visibility_download_bytes = std::max(visibility_download_bytes, Uint32{1}),
+                .visibility_download_bytes = std::max(visibility_download_total_bytes, Uint32{1}),
                 .upload_bytes = float_volume_bytes,
                 .visibility_upload_bytes = visibility_upload_total,
             })) {
@@ -3550,12 +3683,14 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .cycle = false,
                 .padding1 = 0,
                 .padding2 = 0,
-                .padding3 = 0};
-            auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_visibility, 1);
+                .padding3 = 0,
+            };
+            auto* const cp = SDL_BeginGPUComputePass(
+                cmd, nullptr, 0, &rw_visibility, 1);
             SDL_BindGPUComputePipeline(cp, s_visibility_pipeline);
 
-            auto const ro_bufs =
-                std::array<SDL_GPUBuffer*, 5>{t_buf, lm_buf, seen_buf, camera_buf, source_map_buf};
+            auto const ro_bufs = std::array<SDL_GPUBuffer*, 5>{
+                t_buf, lm_buf, seen_buf, camera_buf, source_map_buf};
             SDL_BindGPUComputeStorageBuffers(
                 cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 

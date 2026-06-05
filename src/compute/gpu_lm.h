@@ -13,19 +13,27 @@ namespace cata_gpu {
 
 // ---------------------------------------------------------------------------
 // GpuLightSource
-// One omnidirectional point light source record.  Uploaded every frame as a
-// single storage buffer.  One shader workgroup processes one source.
-// 32 bytes; C++ layout matches HLSL struct exactly.
+// One light source record.  Uploaded every frame as a single storage buffer.
+// One shader workgroup processes one source.
+// 48 bytes; C++ layout matches HLSL struct exactly.
 // ---------------------------------------------------------------------------
+inline constexpr auto light_source_directional = uint32_t{1u << 0};
+inline constexpr auto light_source_external_vehicle = uint32_t{1u << 1};
+
 struct GpuLightSource {
-    int32_t x;        // flat map tile x coordinate
-    int32_t y;        // flat map tile y coordinate
-    int32_t z_idx;    // z-level index: zlev + OVERMAP_DEPTH  (0..OVERMAP_LAYERS-1)
-    float luminance;  // emitted intensity
-    float radius;     // effective range in tiles (pre-computed from luminance)
-    uint32_t _pad[3]; // pad to 32 bytes
+    int32_t x;       // flat map tile x coordinate
+    int32_t y;       // flat map tile y coordinate
+    int32_t z_idx;   // z-level index: zlev + OVERMAP_DEPTH  (0..OVERMAP_LAYERS-1)
+    uint32_t flags;  // light_source_* bitfield
+    float luminance; // emitted intensity
+    float radius;    // effective range in tiles (pre-computed from luminance)
+    float dir_x;     // normalized horizontal direction for cone lights
+    float dir_y;
+    float cone_cos;    // cosine of half-angle for cone lights
+    float z_frac;      // fractional source height inside z_idx
+    uint32_t _pad[2];  // pad to 48 bytes
 };
-static_assert(sizeof(GpuLightSource) == 32);
+static_assert(sizeof(GpuLightSource) == 48);
 
 // ---------------------------------------------------------------------------
 // lm_ambient_push_constants

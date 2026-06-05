@@ -6,9 +6,10 @@
 // Direct-sun tiles receive natural_light[z_idx]; roofed indoor tiles receive
 // inside_light; open-sky tiles in angled sunlight shadow receive
 // solar_shadow_light. Sky access is derived from physical terrain floor caches
-// by tracing from the tile upward to OVERMAP_HEIGHT. When angled sunlight
-// shadows are enabled during daytime, wall transparency is checked along the
-// ray back toward the sun. Vehicle roofs do not affect sunlight.
+// by tracing from the tile upward to OVERMAP_HEIGHT. Vehicle roofs block direct
+// sunlight into the vehicle interior as vertical cover, but do not cast angled
+// sunlight shadows. When angled sunlight shadows are enabled during daytime,
+// wall transparency is checked along the ray back toward the sun.
 //
 // lm_all and daylight_seed_all store uint — the bit-reinterpretation of positive floats.
 // This allows the raytrace pass to use InterlockedMax on the same buffer.
@@ -50,6 +51,7 @@ static const int SUN_DIRECT = 2;
 StructuredBuffer<uint>  floor_all        : register(t0, space0);
 StructuredBuffer<float> transparency_all : register(t1, space0);
 StructuredBuffer<float> source_map_all   : register(t2, space0);
+StructuredBuffer<uint>  vehicle_floor_all: register(t3, space0);
 
 RWStructuredBuffer<uint> lm_all             : register(u0, space1);
 RWStructuredBuffer<uint> daylight_seed_all  : register(u1, space1);
@@ -73,7 +75,7 @@ int sunlight_state( int x, int y, int z_idx, bool use_angled_sun )
 {
     for( int step = 1; z_idx + step < z_count; ++step ) {
         uint above_idx = (uint)tile_index( x, y, z_idx + step );
-        if( floor_all[above_idx] != 0u ) {
+        if( floor_all[above_idx] != 0u || vehicle_floor_all[above_idx] != 0u ) {
             return SUN_NONE;
         }
     }

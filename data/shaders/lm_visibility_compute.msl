@@ -120,9 +120,7 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
             visibility_all._m0[_104] = 4u;
             break;
         }
-        float _151 = seen_all._m0[_104];
-        uint _153 = camera_all._m0[_104];
-        float _155 = precise::max(_151, as_type<float>(_153));
+        float _155 = precise::max(seen_all._m0[_104], as_type<float>(camera_all._m0[_104]));
         bool _158 = _155 <= Constants.visible_threshold;
         float _173;
         do
@@ -261,84 +259,59 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
         {
             _269 = _173 * as_type<float>(lm_all._m0[_104]);
         }
-        if (_143 > Constants.u_unimpaired_range)
+        bool _272 = source_map_all._m0[_104] > 0.0;
+        uint _312;
+        do
         {
-            bool _281;
-            if (!_158)
+            if (_143 > Constants.u_unimpaired_range)
             {
-                _281 = source_map_all._m0[_104] > 0.0;
-            }
-            else
-            {
-                _281 = false;
-            }
-            if (_281)
-            {
-                visibility_all._m0[_104] = 2u;
-            }
-            else
-            {
-                visibility_all._m0[_104] = 0u;
-            }
-            break;
-        }
-        if (_158)
-        {
-            if (_269 > 10.0)
-            {
-                if (_269 > float(Constants.g_light_level))
+                if ((!_158) ? _272 : false)
                 {
-                    visibility_all._m0[_104] = 2u;
+                    _312 = 2u;
+                    break;
                 }
-                else
-                {
-                    visibility_all._m0[_104] = 1u;
-                }
+                _312 = 0u;
+                break;
             }
-            else
+            if (_158)
             {
+                if (_269 > 10.0)
+                {
+                    if (_269 > float(Constants.g_light_level))
+                    {
+                        _312 = 2u;
+                        break;
+                    }
+                    _312 = 1u;
+                    break;
+                }
                 if (_269 > Constants.vision_threshold)
                 {
-                    visibility_all._m0[_104] = 1u;
+                    _312 = 1u;
+                    break;
                 }
-                else
-                {
-                    visibility_all._m0[_104] = 6u;
-                }
+                _312 = 6u;
+                break;
             }
-            break;
-        }
-        bool _316;
-        if ((isunordered(_269, 10.0) || _269 <= 10.0))
-        {
-            _316 = source_map_all._m0[_104] > 0.0;
-        }
-        else
-        {
-            _316 = true;
-        }
-        if (_316)
-        {
-            visibility_all._m0[_104] = 4u;
-        }
-        else
-        {
+            if ((isunordered(_269, 10.0) || _269 <= 10.0) ? _272 : true)
+            {
+                _312 = 4u;
+                break;
+            }
             if (_269 > 10.0)
             {
-                visibility_all._m0[_104] = 3u;
+                _312 = 3u;
+                break;
             }
-            else
+            if (_269 > Constants.vision_threshold)
             {
-                if (_269 > Constants.vision_threshold)
-                {
-                    visibility_all._m0[_104] = 1u;
-                }
-                else
-                {
-                    visibility_all._m0[_104] = 6u;
-                }
+                _312 = 1u;
+                break;
             }
-        }
+            _312 = 6u;
+            break;
+        } while(false);
+        visibility_all._m0[_104] = _312;
         break;
     } while(false);
 }

@@ -5452,23 +5452,84 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
         // get the vpart_id
         char part_mod = 0;
         const Creature *critter = g->critter_at( p, true );
-        // Use the roof/top-down variant only for non-structural interior parts (floor, seat,
-        // cargo etc.). If any part at this mount is an obstacle (board, windshield, door),
-        // pass roof=false so part_displayed_at returns that obstacle part instead of the
-        // on_roof tile. part_info(veh_part) only reflects the cached part (often the frame),
-        // so search all parts at the position via part_with_feature.
-        const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
-        const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+        const auto displayed_part_is_roof_hidden = [&]() {
+            const auto displayed_part = vp.part_displayed();
+            if( !displayed_part ) {
+                return false;
+            }
+            if( displayed_part->has_feature( VPFLAG_ROOF ) ||
+                displayed_part->info().location == "on_roof" ||
+                displayed_part->info().has_flag( "NO_ROOF_NEEDED" ) ) {
+                return false;
+            }
+            return veh.roof_at_part( static_cast<int>( displayed_part->part_index() ) ) >= 0;
+        };
+        const auto use_exterior_surface_lighting = z_drop > 0 && critter == nullptr;
+        const auto use_roof_variant = use_exterior_surface_lighting &&
+                                      displayed_part_is_roof_hidden();
         const auto roof_lit_level = [&]() {
-            if( !use_roof_variant || p.z() >= OVERMAP_HEIGHT ) {
+            if( !use_exterior_surface_lighting ) {
                 return ll;
             }
-            const auto &roof_cache = here.access_cache( p.z() + 1 );
-            if( !roof_cache.inbounds( p.xy() ) ) {
-                return ll;
+            const auto light_rank = []( const lit_level level ) {
+                switch( level ) {
+                    case lit_level::BLANK:
+                    case lit_level::MEMORIZED:
+                        return -1;
+                    case lit_level::DARK:
+                        return 0;
+                    case lit_level::LOW:
+                        return 1;
+                    case lit_level::BRIGHT_ONLY:
+                        return 2;
+                    case lit_level::LIT:
+                        return 3;
+                    case lit_level::BRIGHT:
+                        return 4;
+                }
+                return -1;
+            };
+            const auto lit_level_for_light = []( const float light ) {
+                if( light > LIGHT_SOURCE_BRIGHT ) {
+                    return lit_level::BRIGHT;
+                }
+                if( light > LIGHT_AMBIENT_LIT ) {
+                    return lit_level::LIT;
+                }
+                if( light >= LIGHT_AMBIENT_LOW ) {
+                    return lit_level::LOW;
+                }
+                return lit_level::BLANK;
+            };
+            auto best = ll;
+            const auto use_if_brighter = [&]( const lit_level candidate ) {
+                if( light_rank( candidate ) > light_rank( best ) ) {
+                    best = candidate;
+                }
+            };
+            const auto sample_level = [&]( const int z, const int x, const int y ) {
+                const auto &cache = here.access_cache( z );
+                if( cache.inbounds( { x, y } ) ) {
+                    use_if_brighter( lit_level_for_light( cache.lm[cache.idx( x, y )] ) );
+                }
+            };
+            if( p.z() < OVERMAP_HEIGHT ) {
+                sample_level( p.z() + 1, p.x(), p.y() );
             }
-            const lit_level roof_ll = roof_cache.visibility_cache[roof_cache.idx( p.x(), p.y() )];
-            return roof_ll != lit_level::BLANK ? roof_ll : ll;
+            constexpr auto roof_light_sample_radius = 3;
+            for( const auto dx : std::views::iota( -roof_light_sample_radius,
+                                                   roof_light_sample_radius + 1 ) ) {
+                for( const auto dy : std::views::iota( -roof_light_sample_radius,
+                                                       roof_light_sample_radius + 1 ) ) {
+                    const auto sample_x = p.x() + dx;
+                    const auto sample_y = p.y() + dy;
+                    sample_level( p.z(), sample_x, sample_y );
+                    if( p.z() < OVERMAP_HEIGHT ) {
+                        sample_level( p.z() + 1, sample_x, sample_y );
+                    }
+                }
+            }
+            return best;
         };
         if( use_roof_variant ) {
             auto res = get_vpart_color( vp, here, p, true );
@@ -5496,9 +5557,10 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
             const bool draw_highlight =
                 cargopart && !veh.get_items( cargopart->part_index() ).empty();
             const tile_search_params tile = {vpname, C_VEHICLE_PART, empty_string, subtile, rotation};
+            const auto vpart_lit_level = use_exterior_surface_lighting ? roof_lit_level() : ll;
             const bool ret = draw_from_id_string(
                                  tile, p, bgCol, fgCol,
-                                 roof_lit_level(), true, z_drop, false, height_3d );
+                                 vpart_lit_level, true, z_drop, false, height_3d );
             if( ret && draw_highlight ) {
                 draw_item_highlight( p );
             }
@@ -5538,8 +5600,20 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
             const int veh_part = vp->part_index();
             char part_mod = 0;
             const Creature *critter = g->critter_at( p, true );
-            const bool has_obstacle_here = vp.part_with_feature( VPFLAG_OBSTACLE, false ).has_value();
-            const bool use_roof_variant = z_drop > 0 && critter == nullptr && !has_obstacle_here;
+            const auto displayed_part_is_roof_hidden = [&]() {
+                const auto displayed_part = vp.part_displayed();
+                if( !displayed_part ) {
+                    return false;
+                }
+                if( displayed_part->has_feature( VPFLAG_ROOF ) ||
+                    displayed_part->info().location == "on_roof" ||
+                    displayed_part->info().has_flag( "NO_ROOF_NEEDED" ) ) {
+                    return false;
+                }
+                return veh.roof_at_part( static_cast<int>( displayed_part->part_index() ) ) >= 0;
+            };
+            const auto use_roof_variant = z_drop > 0 && critter == nullptr &&
+                                          displayed_part_is_roof_hidden();
             if( use_roof_variant ) {
                 auto res = get_vpart_color( vp, here, p, true );
                 bgCol = res.first;
