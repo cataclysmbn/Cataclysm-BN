@@ -150,6 +150,29 @@ static float item_blast_percentage( float range, float distance )
     return radius_reduction;
 }
 
+namespace
+{
+auto shrapnel_damage_scale( const int range, const int distance ) -> float
+{
+    if( distance > range ) {
+        return 0.0f;
+    }
+    if( range <= 0 ) {
+        return 1.0f;
+    }
+
+    const auto half_range = static_cast<float>( range ) / 2.0f;
+    if( distance <= half_range ) {
+        return 1.0f;
+    }
+
+    const auto max_range_reduction = 0.75f;
+    const auto falloff_distance = static_cast<float>( distance ) - half_range;
+    return std::max( 1.0f - max_range_reduction * falloff_distance / half_range,
+                     1.0f - max_range_reduction );
+}
+} // namespace
+
 explosion_data load_explosion_data( const JsonObject &jo )
 {
     explosion_data ret;
@@ -675,6 +698,9 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
 
     projectile fragment = shrapnel.value();
     fragment.add_effect( ammo_effect_NULL_SOURCE );
+    auto shrapnel_impact = fragment.impact;
+    shrapnel_impact.mult_damage( shrapnel_damage_scale( fragment.range, rl_dist( center, position ) ),
+                                 true );
 
     auto critter = g->critter_at( position );
     if( critter && !is_dead_for_explosion( *critter ) ) {
@@ -686,17 +712,17 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
                 // TODO: Apply projectile effects
                 // TODO: Penalize low coverage armor
                 // Halve damage to be closer to what monsters take
-                damage_instance half_impact = fragment.impact;
+                auto half_impact = shrapnel_impact;
                 half_impact.mult_damage( 0.5f );
                 dealt_damage_instance dealt = critter->deal_damage( emitter.value_or( nullptr ), bp,
-                                              fragment.impact );
+                                              half_impact );
                 if( dealt.total_damage() > 0 ) {
                     damage_taken += dealt.total_damage();
                 }
             }
         } else {
             dealt_damage_instance dealt = critter->deal_damage( emitter.value_or( nullptr ), bps[0],
-                                          fragment.impact );
+                                          shrapnel_impact );
             if( dealt.total_damage() > 0 ) {
                 damage_taken += dealt.total_damage();
             }
@@ -730,7 +756,7 @@ void ExplosionProcess::project_shrapnel( const tripoint_bub_ms position )
     }
 
     if( here.impassable( position ) ) {
-        const auto base_damage = fragment.impact.total_damage() *
+        const auto base_damage = shrapnel_impact.total_damage() *
                                  ExplosionConstants::SHRAPNEL_OBSTACLE_REDUCTION;
         if( optional_vpart_position vp = here.veh_at( position ) ) {
             const auto damage = static_cast<int>( base_damage * vehicle_damage_mult );

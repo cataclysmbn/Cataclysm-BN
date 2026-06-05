@@ -649,7 +649,7 @@
         "radius": 1,
         "terrain_damage_mult": 0.05,
         "vehicle_damage_mult": 0.1,
-        "fragment": { "impact": { "damage_type": "bullet", "amount": 85, "armor_penetration": 12, "armor_multiplier": 1.0 }, "range": 8 }
+        "fragment": { "impact": { "damage_type": "bullet", "amount": 85, "armor_penetration": 12 }, "range": 8 }
       }
     },
     "flags": [ "BOMB", "TRADER_AVOID" ]

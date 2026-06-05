@@ -51,6 +51,14 @@ auto set_off_explosion( const explosion_data &explosion, const tripoint_bub_ms &
     explosion_handler::get_explosion_queue().execute();
 }
 
+auto test_fragment( const int damage, const int range ) -> projectile
+{
+    auto fragment = projectile{};
+    fragment.impact = damage_instance( DT_BULLET, damage );
+    fragment.range = range;
+    return fragment;
+}
+
 void check_lethality( const std::string &explosive_id, const int range, float lethality,
                       float margin, outcome_type expected_outcome )
 {
@@ -210,6 +218,24 @@ TEST_CASE( "explosion_obstacle_damage_multipliers", "[explosion][balance]" )
     }, explosion_position );
 
     CHECK( get_part_hp( target_vehicle ) == before_hp );
+}
+
+TEST_CASE( "shrapnel damage falls off with range", "[grenade][explosion][balance]" )
+{
+    clear_all_state();
+    put_player_underground();
+    const auto origin = tripoint_bub_ms( 30, 30, 0 );
+    const auto near_position = origin + point_east;
+    const auto far_position = origin + 4 * point_east;
+    auto &near_target = spawn_test_monster( "mon_zombie", near_position );
+    auto &far_target = spawn_test_monster( "mon_zombie", far_position );
+
+    auto explosion = explosion_data{};
+    explosion.fragment = test_fragment( 40, 4 );
+    set_off_explosion( explosion, origin );
+
+    CHECK( near_target.get_hp() < far_target.get_hp() );
+    CHECK( far_target.hp_percentage() < 100 );
 }
 
 TEST_CASE( "shrapnel behind wall", "[grenade][explosion][balance]" )
