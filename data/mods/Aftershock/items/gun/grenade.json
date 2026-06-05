@@ -13,7 +13,7 @@
     "count": 4,
     "stack_size": 4,
     "ammo_type": "40x53mm",
-    "casing": "40x46mm_m118_casing",
+    "casing": "40x46mm_casing",
     "range": 40,
     "bashing": 5,
     "dispersion": 30,

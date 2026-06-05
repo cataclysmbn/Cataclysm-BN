@@ -1,7 +1,8 @@
 #pragma once
 
-#include <unordered_map>
+#include <mutex>
 #include <set>
+#include <unordered_map>
 
 #include "safe_reference.h"
 
@@ -10,6 +11,7 @@ class cata_arena
 {
     private:
         std::set<T *> pending_deletion;
+        std::mutex pending_deletion_mutex;
 
         static cata_arena<T> &get_instance() {
             // Heap-allocated and never deleted — intentional. This avoids the static
@@ -22,19 +24,25 @@ class cata_arena
         }
 
         void mark_for_destruction_internal( T *alloc ) {
-            pending_deletion.insert( alloc );
+            auto lk = std::lock_guard( pending_deletion_mutex );
             safe_reference<T>::mark_destroyed( alloc );
             cache_reference<T>::mark_destroyed( alloc );
+            pending_deletion.insert( alloc );
         }
 
         bool cleanup_internal() {
-            if( pending_deletion.empty() ) {
-                return false;
+            auto dcopy = std::set<T *> {};
+            {
+                auto lk = std::lock_guard( pending_deletion_mutex );
+                if( pending_deletion.empty() ) {
+                    return false;
+                }
+                dcopy.swap( pending_deletion );
+                for( T * const &p : dcopy ) {
+                    safe_reference<T>::mark_deallocated( p );
+                }
             }
-            std::set<T *> dcopy = std::set<T *>( pending_deletion );
-            pending_deletion.clear();
             for( T * const &p : dcopy ) {
-                safe_reference<T>::mark_deallocated( p );
                 delete p;
             }
             return true;

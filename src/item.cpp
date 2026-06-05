@@ -10045,6 +10045,21 @@ bool item::can_holster( const item &obj, bool ignore ) const
     return true;
 }
 
+bool item::can_put_in_bandolier( const item &obj, bool ) const
+{
+    if( !type->can_use( "bandolier" ) ) {
+        return false; // item is not a holster
+    }
+
+    const auto *ptr = dynamic_cast<const bandolier_actor *>
+                      ( type->get_use( "bandolier" )->get_actor_ptr() );
+    if( !ptr->can_store( *this, obj ) ) {
+        return false; // item is not a suitable holster for obj
+    }
+
+    return true;
+}
+
 std::string item::components_to_string() const
 {
     using t_count_map = std::map<std::string, int>;

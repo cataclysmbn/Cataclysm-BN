@@ -229,6 +229,22 @@
     ]
   },
   {
+    "id": "crate_stack_smaller",
+    "type": "item_group",
+    "subtype": "distribution",
+    "items": [
+      [ "null", 100 ],
+      { "group": "crate_clothes", "prob": 30 },
+      { "group": "crate_linens", "prob": 25 },
+      { "group": "crate_kitchen", "prob": 20 },
+      { "group": "crate_winter", "prob": 20 },
+      { "group": "crate_toys", "prob": 10 },
+      { "group": "crate_wine", "prob": 5 },
+      { "group": "crate_sports", "prob": 5 },
+      { "group": "crate_creepy", "prob": 1 }
+    ]
+  },
+  {
     "id": "crate_clothes",
     "type": "item_group",
     "subtype": "collection",

@@ -772,7 +772,7 @@ auto submap_load_manager::has_lazy_border_work_pending() const -> bool
 }
 
 auto submap_load_manager::process_or_defer_lazy_border_work( const bool defer_lazy_border_work )
-- > void
+-> void
 {
     if( !has_lazy_border_work_pending() ) {
         lazy_border_work_deferred_ = false;
@@ -960,7 +960,7 @@ auto submap_load_manager::update( const bool defer_lazy_border_work ) -> void
     TracyPlot( "New Sim OMT Z Preload Attempts", static_cast<int64_t>( preloaded_zlevels ) );
 
     // Drain duplicate submaps created by concurrent preload_omt workers.
-    // Must happen on the main thread (safe_reference / cata_arena not thread-safe).
+    // Must happen on the main thread (safe_reference remains main-thread-only).
     {
         auto drained_dims = std::set<std::string> {};
         std::ranges::transform( new_omts, std::inserter( drained_dims, drained_dims.end() ),

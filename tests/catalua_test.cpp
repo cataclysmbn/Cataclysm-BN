@@ -100,6 +100,49 @@ TEST_CASE( "lua_global_functions", "[lua]" )
     REQUIRE( lua_npc_avatar_name == "nil" );
 }
 
+TEST_CASE( "robofac_authorization_updates_real_active_creatures", "[lua][robofac]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto &security = spawn_npc( point_bub_ms{ 50, 50 }, "hub_security" );
+    security.set_attitude( NPCATT_KILL );
+    auto &turret = spawn_test_monster( "mon_robofac_turret_light", tripoint_bub_ms{ 51, 50, 0 } );
+    test_data["security"] = &security;
+    test_data["turret"] = &turret;
+
+    run_lua_test_script( lua, "robofac_actual_authorization_test.lua" );
+
+    CHECK( test_data.get<std::string>( "security_faction" ) == "robofac_auxiliaries" );
+    CHECK( test_data.get<npc_attitude>( "security_attitude" ) == NPCATT_NULL );
+    CHECK( test_data.get<bool>( "turret_authorized" ) );
+}
+
+TEST_CASE( "lua_nearby_omt_creature_queries_return_active_creatures", "[lua][creature]" )
+{
+    clear_all_state();
+    auto lua = make_lua_state();
+
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    auto &nearby_npc = spawn_npc( point_bub_ms{ 50, 50 }, "test_talker" );
+    auto &nearby_monster = spawn_test_monster( "mon_zombie", tripoint_bub_ms{ 51, 50, 0 } );
+    test_data["center"] = nearby_npc.abs_omt_pos();
+    test_data["expected_npc"] = &nearby_npc;
+    test_data["expected_monster"] = &nearby_monster;
+
+    run_lua_test_script( lua, "nearby_omt_creature_query_test.lua" );
+
+    CHECK( test_data.get<int>( "npc_count" ) == 1 );
+    CHECK( test_data.get<int>( "monster_count" ) == 1 );
+    CHECK( test_data.get<bool>( "found_expected_npc" ) );
+    CHECK( test_data.get<bool>( "found_expected_monster" ) );
+}
+
 TEST_CASE( "lua_typed_coords_projection", "[lua]" )
 {
     auto lua = make_lua_state();
@@ -961,6 +1004,26 @@ TEST_CASE( "lua_require_dotted", "[lua]" )
 
     REQUIRE( result_add == 30 );  // 10 + 20
     REQUIRE( result_mul == 21 );  // 3 * 7
+}
+
+TEST_CASE( "robofac_authorization_scans_nearby_hub01_tiles", "[lua][robofac]" )
+{
+    auto lua = make_lua_state();
+    auto test_data = lua.create_table();
+    lua.globals()["test_data"] = test_data;
+
+    run_lua_test_script( lua, "robofac_authorization_scan_test.lua" );
+
+    CHECK( test_data.get<bool>( "npc_authorized" ) );
+    CHECK( test_data.get<bool>( "npc_attitude_cleared" ) );
+    CHECK( test_data.get<bool>( "monster_authorized" ) );
+    CHECK( test_data.get<std::string>( "hub01_prefix" ) == "robofachq" );
+    CHECK( test_data.get<int>( "npc_omt_queries" ) == 1 );
+    CHECK( test_data.get<int>( "monster_omt_queries" ) == 1 );
+    CHECK( test_data.get<int>( "npc_query_radius" ) == 4 );
+    CHECK( test_data.get<int>( "monster_query_radius" ) == 4 );
+    CHECK( test_data.get<bool>( "npc_query_ignores_z" ) );
+    CHECK( test_data.get<bool>( "monster_query_ignores_z" ) );
 }
 
 TEST_CASE( "lua_cooking_enjoy_bonus_applies_to_unheated_comestibles", "[lua][cooking]" )

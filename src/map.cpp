@@ -4985,7 +4985,9 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle and stop the shot.
-            add_msg( _( "The shot strikes the %s!" ), furnname( p ) );
+            if( get_avatar().sees( p ) ) {
+                add_msg( _( "The shot strikes the %s!" ), furnname( p ) );
+            }
             if( phys ) {
                 bash( p, dam, false );
             }
@@ -5034,7 +5036,9 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle if it was a thrown rock or the like, then stop the shot.
-            add_msg( _( "The shot strikes the %s!" ), tername( p ) );
+            if( get_avatar().sees( p ) ) {
+                add_msg( _( "The shot strikes the %s!" ), tername( p ) );
+            }
             if( phys ) {
                 bash( p, dam, false );
             }
@@ -5075,14 +5079,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         dam = 0;
     }
 
-    for( const ammo_effect_str_id &ae_id : proj.get_ammo_effects() ) {
-        const ammo_effect &ae = *ae_id;
-        if( ae.trail_field_type ) {
-            if( x_in_y( ae.trail_chance, 100 ) ) {
-                add_field( p, ae.trail_field_type, rng( ae.trail_intensity_min, ae.trail_intensity_max ) );
-            }
-        }
-    }
+    apply_ammo_trail_effects( p, proj.get_ammo_effects(), 1.0 );
 
     // Check fields?
     const field_entry *fieldhit = get_field( p, fd_web );
@@ -8330,6 +8327,8 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
         }
     }
     reset_vehicle_cache( );
+
+    charge_removal_blacklist::split_deferred();
 }
 
 

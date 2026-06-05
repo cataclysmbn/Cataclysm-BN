@@ -584,6 +584,7 @@ class Character : public Creature, public location_visitable<Character>
         /** Processes effects which may prevent the Character from moving (bear traps, crushed, etc.).
          *  Returns false if movement is stopped. */
         bool move_effects( bool attacking ) override;
+        auto move_effects( bool attacking, bool skip_pit_escape ) -> bool;
 
         void wait_effects();
 

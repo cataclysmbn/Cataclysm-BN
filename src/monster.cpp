@@ -1551,16 +1551,39 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         return MATT_ZLAVE;
     }
 
+    const auto *np = u == nullptr ? nullptr : u->as_npc();
+    if( np != nullptr ) {
+        const auto faction_att = faction.obj().attitude( np->get_monster_faction() );
+        if( faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
+        }
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
+    }
+
     int effective_anger  = anger;
     int effective_morale = morale;
 
     if( u != nullptr ) {
         if( has_flag( MF_FACTION_MEMORY ) ) {
+            const auto anger_towards_faction = [&]( const mfaction_id & target_faction ) {
+                const auto remembered_anger = get_faction_anger( target_faction );
+                if( faction.obj().attitude( target_faction ) == MFA_BY_MOOD ) {
+                    return std::max( remembered_anger, anger );
+                }
+                return remembered_anger;
+            };
             const monster *u_as_monster = u->as_monster();
             if( u_as_monster != nullptr ) {
-                effective_anger = get_faction_anger( u_as_monster->faction );
-            } else if( u->is_player() || u->is_npc() ) {
-                effective_anger = get_faction_anger( mfaction_id( "player" ) );
+                effective_anger = anger_towards_faction( u_as_monster->faction );
+            } else if( np != nullptr ) {
+                effective_anger = anger_towards_faction( np->get_monster_faction() );
+            } else if( u->is_player() ) {
+                effective_anger = anger_towards_faction( mfaction_id( "player" ) );
             }
         }
 
@@ -1654,6 +1677,20 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
     }
 
 
+    if( u != nullptr && u->is_player() ) {
+        static const auto player_faction = mfaction_id( "player" );
+        const auto faction_att = faction.obj().attitude( player_faction );
+        if( faction_att == MFA_HATE ) {
+            return MATT_ATTACK;
+        }
+        if( effective_anger < 10 && faction_att == MFA_FRIENDLY ) {
+            return MATT_FRIEND;
+        }
+        if( effective_anger < 10 && faction_att == MFA_NEUTRAL ) {
+            return MATT_IGNORE;
+        }
+    }
+
     if( effective_morale < 0 ) {
         if( effective_morale + effective_anger > 0 && get_hp() > get_hp_max() / 3 ) {
             return MATT_FOLLOW;
@@ -1672,14 +1709,15 @@ auto monster::attitude( const Character *u ) const -> monster_attitude
         return MATT_FOLLOW;
     }
 
-    if( u != nullptr && !aggro_character && !u->is_monster() ) {
+    if( u != nullptr && !aggro_character && !u->is_monster() &&
+        !( has_flag( MF_FACTION_MEMORY ) && effective_anger >= 10 ) ) {
         return MATT_IGNORE;
     }
 
     return MATT_ATTACK;
 }
 
-auto monster::generic_npc_attitude_to() const -> Attitude
+auto monster::generic_npc_attitude_to( const mfaction_id &who_faction ) const -> Attitude
 {
     auto effective_anger = anger;
     auto effective_morale = morale;
@@ -1699,9 +1737,22 @@ auto monster::generic_npc_attitude_to() const -> Attitude
         return Attitude::A_FRIENDLY;
     }
 
+    const auto faction_att = faction.obj().attitude( who_faction );
+    if( faction_att == MFA_FRIENDLY ) {
+        return Attitude::A_FRIENDLY;
+    }
+    if( faction_att == MFA_NEUTRAL ) {
+        return Attitude::A_NEUTRAL;
+    }
+    if( faction_att == MFA_HATE ) {
+        return Attitude::A_HOSTILE;
+    }
+
     if( has_flag( MF_FACTION_MEMORY ) ) {
-        static const mfaction_id player_faction( "player" );
-        effective_anger = get_faction_anger( player_faction );
+        effective_anger = get_faction_anger( who_faction );
+        if( faction_att == MFA_BY_MOOD ) {
+            effective_anger = std::max( effective_anger, anger );
+        }
     }
 
     if( effective_morale < 0 ) {
@@ -3212,13 +3263,12 @@ void monster::die( Creature *nkiller )
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
+            if( critter.sees( *this ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && killer_faction.is_valid() ) {
@@ -3833,13 +3883,12 @@ void monster::on_hit( Creature *source, bodypart_id, dealt_projectile_attack con
     }
 
     if( anger_adjust != 0 || morale_adjust != 0 ) {
-        int light = g->light_level( bub_pos().z() );
         for( monster &critter : g->all_monsters() ) {
             if( critter.faction != this->faction ) {
                 continue;
             }
 
-            if( g->m.sees( critter.bub_pos(), bub_pos(), light ) ) {
+            if( critter.sees( *this ) ) {
                 critter.morale += morale_adjust;
 
                 if( critter.has_flag( MF_FACTION_MEMORY ) && attacker_faction.is_valid() ) {

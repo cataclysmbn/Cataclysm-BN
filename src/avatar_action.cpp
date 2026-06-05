@@ -49,6 +49,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
+#include "utils/pit_trap_helpers.h"
 #include "player_activity.h"
 #include "profile.h"
 #include "projectile.h"
@@ -263,7 +264,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         attacking = true;
     }
 
-    if( !you.move_effects( attacking ) ) {
+    const auto skip_pit_escape = pit_trap_helpers::skips_pit_escape_check( m.tr_at( you.bub_pos() ),
+                                 m.tr_at( dest_loc ) );
+    if( !you.move_effects( attacking, skip_pit_escape ) ) {
         you.moves -= 100;
         return false;
     }

@@ -2,6 +2,8 @@
 #include <optional>
 
 #include "cata_algo.h"
+#include "catalua_coord.h"
+#include "catalua_hooks.h"
 #include "game.h"
 #include "iexamine.h"
 #include "mapdata.h"
@@ -233,8 +235,19 @@ auto move_player( player &p, const int movez, tripoint_abs_ms old_abs_pos ) -> v
 void iexamine::elevator( player &p, const tripoint_bub_ms &examp )
 {
     map &here = get_map();
-    const tripoint_abs_ms old_abs_pos = p.abs_pos();
-    const tripoint_abs_omt this_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
+    const auto this_omt = project_to<coords::omt>( here.bub_to_abs( examp ) );
+    const auto om_terrain = get_overmapbuffer( here.get_bound_dimension() ).ter_existing(
+                                this_omt ).id().str();
+    const auto hook_results = cata::run_hooks( "on_elevator_try_use", [&]( auto & params ) {
+        params["player"] = &p;
+        params["pos"] = cata::detail::lua_coords::to_lua( examp );
+        params["om_terrain"] = om_terrain;
+    }, { .exit_early = true } );
+    if( !hook_results.get_or( "allowed", true ) ) {
+        return;
+    }
+
+    const auto old_abs_pos = p.abs_pos();
     const auto sm_orig = here.abs_to_bub( project_to<coords::ms>( this_omt ) );
 
     const auto elevator_here = elevator::here( p );

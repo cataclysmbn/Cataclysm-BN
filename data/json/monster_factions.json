@@ -62,7 +62,18 @@
   {
     "type": "MONSTER_FACTION",
     "name": "bot",
-    "neutral": [ "cop_bot", "defense_bot", "utility_bot", "small_animal" ]
+    "neutral": [ "cop_bot", "defense_bot", "utility_bot", "small_animal", "robofac" ]
+  },
+  {
+    "type": "MONSTER_FACTION",
+    "name": "robofac",
+    "base_faction": "bot"
+  },
+  {
+    "type": "MONSTER_FACTION",
+    "name": "robofac_authorized",
+    "base_faction": "robofac",
+    "friendly": [ "player" ]
   },
   {
     "type": "MONSTER_FACTION",
