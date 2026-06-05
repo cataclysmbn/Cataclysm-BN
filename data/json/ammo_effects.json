@@ -189,10 +189,10 @@
       "check_sees_radius": 3
     },
     "explosion": {
-      "damage": 80000,
+      "damage": 10000,
       "radius": 24,
       "terrain_damage_mult": 0.08,
-      "fragment": { "impact": { "damage_type": "heat", "amount": 80000, "armor_multiplier": 2 }, "range": 24 }
+      "fragment": { "impact": { "damage_type": "heat", "amount": 10000, "armor_multiplier": 2 }, "range": 24 }
     }
   },
   {
