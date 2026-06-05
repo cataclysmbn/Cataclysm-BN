@@ -771,8 +771,7 @@ auto submap_load_manager::has_lazy_border_work_pending() const -> bool
            retained_omt_index_.size() > retained_omt_soft_cap();
 }
 
-auto submap_load_manager::process_or_defer_lazy_border_work( const bool defer_lazy_border_work )
-- > void
+void submap_load_manager::process_or_defer_lazy_border_work( const bool defer_lazy_border_work )
 {
     if( !has_lazy_border_work_pending() ) {
         lazy_border_work_deferred_ = false;
