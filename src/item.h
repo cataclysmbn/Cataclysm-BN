@@ -2649,6 +2649,8 @@ namespace charge_removal_blacklist
 {
 const std::set<itype_id> &get();
 void load( const JsonObject &jo );
+void defer( item *, int );
+void split_deferred();
 void reset();
 } // namespace charge_removal_blacklist
 

@@ -398,7 +398,7 @@ class monster : public Creature, public location_visitable<monster>
         // Combat
         bool is_fleeing( Character &who ) const; // True if we're fleeing
         auto attitude( const Character *u = nullptr ) const -> monster_attitude; // See the enum above
-        auto generic_npc_attitude_to() const -> Attitude;
+        auto generic_npc_attitude_to( const mfaction_id &who_faction ) const -> Attitude;
         Attitude attitude_to( const Creature &other ) const override;
         void process_triggers(); // Process things that anger/scare us
 
@@ -619,8 +619,10 @@ class monster : public Creature, public location_visitable<monster>
         int anger = 0;
         int morale = 0;
         // Per-npcmove-pass cache of attitude_to() result for a generic NPC (no special traits).
-        // Valid when cached_npc_attitude_epoch == g_npcmove_attitude_epoch.
+        // Valid when cached_npc_attitude_epoch == g_npcmove_attitude_epoch and
+        // cached_npc_attitude_faction matches the assessing NPC's monster faction.
         uint32_t cached_npc_attitude_epoch = 0;
+        mfaction_id cached_npc_attitude_faction;
         Attitude cached_npc_attitude = A_NEUTRAL;
         std::unordered_map<mfaction_id, int> faction_anger;  //< Per-faction anger tracking
         // Our faction (species, for most monsters)

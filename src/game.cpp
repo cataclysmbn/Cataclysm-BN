@@ -157,6 +157,7 @@
 #include "path_info.h"
 #include "pathfinding.h"
 #include "pickup.h"
+#include "utils/pit_trap_helpers.h"
 #include "player.h"
 #include "player_activity.h"
 #include "point_float.h"
@@ -12053,6 +12054,9 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
     }
 
     const trap &tr = m.tr_at( dest_loc );
+    const auto regular_pit_move = pit_trap_helpers::is_regular_pit_destination_from_pit( m.tr_at(
+                                      u.bub_pos() ),
+                                  tr );
     if( !u.is_blind() || u.clairvoyance() < 1 || tr.can_see( dest_loc, u ) ) {
         const bool boardable = static_cast<bool>( m.veh_at( dest_loc ).part_with_feature( "BOARDABLE",
                                true ) );
@@ -12064,7 +12068,8 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
                     harmful_stuff.emplace_back( tr.name() );
                 }
             }
-        } else if( tr.can_see( dest_loc, u ) && !tr.is_benign() && !boardable ) {
+        } else if( tr.can_see( dest_loc, u ) && !tr.is_benign() && !boardable &&
+                   !regular_pit_move ) {
             harmful_stuff.emplace_back( tr.name() );
         }
 
@@ -12527,6 +12532,9 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp )
 
 auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab ) -> point_rel_sm
 {
+    const auto regular_pit_move = pit_trap_helpers::is_regular_pit_destination_from_pit( m.tr_at(
+                                      u.bub_pos() ),
+                                  m.tr_at( dest_loc ) );
     const optional_vpart_position vp1 = m.veh_at( dest_loc );
     if( const std::optional<std::string> label = vp1.get_label() ) {
         add_msg( m_info, _( "Label here: %s" ), *label );
@@ -12762,10 +12770,12 @@ auto game::place_player( const tripoint_bub_ms &dest_loc, const bool keep_grab )
     // Traps!
     // Try to detect.
     character_funcs::search_surroundings( u );
-    if( u.is_mounted() ) {
-        m.creature_on_trap( *u.mounted_creature );
-    } else {
-        m.creature_on_trap( u );
+    if( !regular_pit_move ) {
+        if( u.is_mounted() ) {
+            m.creature_on_trap( *u.mounted_creature );
+        } else {
+            m.creature_on_trap( u );
+        }
     }
     // Drench the player if swimmable
     if( m.has_flag( "SWIMMABLE", u.bub_pos() ) &&

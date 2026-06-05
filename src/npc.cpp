@@ -1607,8 +1607,20 @@ void npc::on_attacked( const Creature &attacker )
         die( nullptr );
     }
     if( attacker.is_player() && !is_enemy() ) {
+        const auto attacked_faction = get_monster_faction();
         make_angry();
         hit_by_player = true;
+
+        static const auto player_faction = mfaction_id( "player" );
+        for( monster &critter : g->all_monsters() ) {
+            if( !critter.type->has_anger_trigger( mon_trigger::FRIEND_ATTACKED ) ) {
+                continue;
+            }
+            if( critter.generic_npc_attitude_to( attacked_faction ) != Attitude::A_FRIENDLY ) {
+                continue;
+            }
+            critter.add_faction_anger( player_faction, 15 );
+        }
     }
 }
 
