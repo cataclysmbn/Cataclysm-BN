@@ -1184,7 +1184,8 @@ static int calc_gun_volume( const item &gun )
         // Speed of sound at sea level is around 343 meters per second.
         // While it would be ideal to be based on speed of sound
         // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs
-        // NOTE: If speed gets more standardized, this is a better spot for a cap then below
+        // NOTE: If supersonic ever gets implented, use it here 
+        noise = std::max( 160, noise );
     }
     for( const auto mod : parent.gunmods() ) {
         noise += mod->type->gunmod->loudness;
@@ -1192,7 +1193,7 @@ static int calc_gun_volume( const item &gun )
 
 
     // Cap it like it gets capped when making a sound
-    noise = std::max( std::min( 191, noise ), 0 );
+    noise = std::max( noise, 0 );
     return noise;
 }
 
