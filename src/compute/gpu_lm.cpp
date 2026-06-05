@@ -195,12 +195,12 @@ auto ensure_seen_pipelines(SDL_GPUDevice* const device) -> bool {
     if (s_seen_pipeline == nullptr) {
         s_seen_pipeline = load_pipeline(
             device, "lm_seen_compute",
-            /*ro=*/3, /*rw=*/1, 8, 8);
+            /*ro=*/4, /*rw=*/1, 8, 8);
     }
     if (s_seen_walls_pipeline == nullptr) {
         s_seen_walls_pipeline = load_pipeline(
             device, "lm_seen_walls_compute",
-            /*ro=*/3, /*rw=*/1, 8, 8);
+            /*ro=*/4, /*rw=*/1, 8, 8);
     }
     return s_clear_seen_pipeline != nullptr && s_clear_seen_view_pipeline != nullptr
         && s_seen_pipeline != nullptr && s_seen_walls_pipeline != nullptr;
@@ -329,6 +329,7 @@ struct lighting_input_residency {
     bool transparency_valid = false;
     bool floor_valid = false;
     bool vehicle_floor_valid = false;
+    bool vehicle_obscured_valid = false;
     std::vector<char> transparency_valid_levels;
     std::vector<char> transparency_shader_updated_levels;
 };
@@ -338,6 +339,7 @@ struct lighting_resource_cache {
     gpu_buffer_slot transparency;
     gpu_buffer_slot floor;
     gpu_buffer_slot vehicle_floor;
+    gpu_buffer_slot vehicle_obscured;
     gpu_buffer_slot camera;
     gpu_buffer_slot vehicle_optics;
     gpu_buffer_slot source_map;
@@ -355,6 +357,7 @@ struct lighting_resource_cache {
     gpu_buffer_slot shift_float_scratch;
     gpu_buffer_slot shift_floor_scratch;
     gpu_buffer_slot shift_vehicle_floor_scratch;
+    gpu_buffer_slot shift_vehicle_obscured_scratch;
     gpu_transfer_slot upload;
     gpu_transfer_slot visibility_upload;
     gpu_transfer_slot lm_download;
@@ -365,6 +368,7 @@ struct lighting_resource_cache {
     std::vector<float> transparency_staging;
     std::vector<uint32_t> floor_staging;
     std::vector<uint32_t> vehicle_floor_staging;
+    std::vector<uint32_t> vehicle_obscured_staging;
     std::vector<float> source_map_staging;
     lighting_input_residency inputs;
     std::vector<int> camera_nonzero_levels;
@@ -405,6 +409,7 @@ struct lighting_buffer_sizes {
     Uint32 transparency_bytes;
     Uint32 floor_bytes;
     Uint32 vehicle_floor_bytes;
+    Uint32 vehicle_obscured_bytes;
     Uint32 camera_bytes;
     Uint32 vehicle_optics_bytes;
     Uint32 source_map_bytes;
@@ -422,6 +427,7 @@ struct input_upload_plan {
     std::vector<int> transparency_levels;
     std::vector<int> floor_levels;
     std::vector<int> vehicle_floor_levels;
+    std::vector<int> vehicle_obscured_levels;
 };
 
 struct camera_zero_plan {
@@ -653,6 +659,7 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_buffer_slot(device, s_lighting_resources.transparency);
     release_buffer_slot(device, s_lighting_resources.floor);
     release_buffer_slot(device, s_lighting_resources.vehicle_floor);
+    release_buffer_slot(device, s_lighting_resources.vehicle_obscured);
     release_buffer_slot(device, s_lighting_resources.camera);
     release_buffer_slot(device, s_lighting_resources.vehicle_optics);
     release_buffer_slot(device, s_lighting_resources.source_map);
@@ -670,6 +677,7 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     release_buffer_slot(device, s_lighting_resources.shift_float_scratch);
     release_buffer_slot(device, s_lighting_resources.shift_floor_scratch);
     release_buffer_slot(device, s_lighting_resources.shift_vehicle_floor_scratch);
+    release_buffer_slot(device, s_lighting_resources.shift_vehicle_obscured_scratch);
     release_transfer_slot(device, s_lighting_resources.upload);
     release_transfer_slot(device, s_lighting_resources.visibility_upload);
     release_transfer_slot(device, s_lighting_resources.lm_download);
@@ -680,6 +688,7 @@ auto release_lighting_resources(SDL_GPUDevice* const device) -> void {
     s_lighting_resources.transparency_staging = {};
     s_lighting_resources.floor_staging = {};
     s_lighting_resources.vehicle_floor_staging = {};
+    s_lighting_resources.vehicle_obscured_staging = {};
     s_lighting_resources.source_map_staging = {};
     s_lighting_resources.inputs = {};
     s_lighting_resources.camera_nonzero_levels = {};
@@ -785,6 +794,13 @@ auto ensure_lighting_resources(SDL_GPUDevice* const device, lighting_buffer_size
             .usage = read_write_usage,
             .required_bytes = sizes.vehicle_floor_bytes,
             .name = "vehicle_floor",
+        })
+        && ensure_gpu_buffer({
+            .device = device,
+            .slot = &s_lighting_resources.vehicle_obscured,
+            .usage = read_write_usage,
+            .required_bytes = sizes.vehicle_obscured_bytes,
+            .name = "vehicle_obscured",
         })
         && ensure_gpu_buffer({
             .device = device,
@@ -1199,6 +1215,11 @@ auto structural_level_signature(map const& m, int const z, int const cache_x, in
     for (auto const value : lc.vehicle_floor_cache) {
         mix_signature(seed, static_cast<std::size_t>(static_cast<unsigned char>(value)));
     }
+    for (auto const& value : lc.vehicle_obscured_cache) {
+        auto const packed = (value.nw ? std::size_t{1} : std::size_t{0})
+                            | (value.ne ? std::size_t{2} : std::size_t{0});
+        mix_signature(seed, packed);
+    }
 
     return seed;
 }
@@ -1522,6 +1543,7 @@ auto reset_input_residency_for_shape(int const cache_x, int const cache_y, int c
         .transparency_valid = false,
         .floor_valid = false,
         .vehicle_floor_valid = false,
+        .vehicle_obscured_valid = false,
         .transparency_valid_levels = std::vector<char>(static_cast<std::size_t>(z_count), '\0'),
         .transparency_shader_updated_levels =
             std::vector<char>(static_cast<std::size_t>(z_count), '\0'),
@@ -1680,12 +1702,15 @@ auto make_input_upload_plan(run_gpu_lighting_params const& p, std::vector<int> c
         .vehicle_floor_levels = select_input_upload_levels(
             p.vehicle_floor_dirty, inputs.vehicle_floor_valid, p.vehicle_floor_dirty_levels,
             all_levels),
+        .vehicle_obscured_levels = select_input_upload_levels(
+            p.vehicle_obscured_dirty, inputs.vehicle_obscured_valid, p.vehicle_obscured_dirty_levels,
+            all_levels),
     };
 }
 
 auto has_structural_upload(input_upload_plan const& plan) -> bool {
     return !plan.transparency_levels.empty() || !plan.floor_levels.empty()
-        || !plan.vehicle_floor_levels.empty();
+        || !plan.vehicle_floor_levels.empty() || !plan.vehicle_obscured_levels.empty();
 }
 
 auto commit_input_upload_plan(input_upload_plan const& plan) -> void {
@@ -1695,6 +1720,7 @@ auto commit_input_upload_plan(input_upload_plan const& plan) -> void {
     }
     if (!plan.floor_levels.empty()) { inputs.floor_valid = true; }
     if (!plan.vehicle_floor_levels.empty()) { inputs.vehicle_floor_valid = true; }
+    if (!plan.vehicle_obscured_levels.empty()) { inputs.vehicle_obscured_valid = true; }
 }
 
 auto sorted_unique(std::vector<int> levels) -> std::vector<int> {
@@ -1915,11 +1941,28 @@ auto pack_char_cache_uint(
     }
 }
 
+auto pack_vehicle_obscured_cache_uint(
+    map const& m, std::vector<int> const& levels, int const cache_xy,
+    std::vector<uint32_t>& out) -> void {
+    out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
+    auto level_index = std::size_t{0};
+    for (auto const z : levels) {
+        auto const& lc = m.get_cache_ref(z);
+        auto* dst = out.data() + level_index * cache_xy;
+        std::ranges::transform(
+            lc.vehicle_obscured_cache, dst, [](diagonal_blocks const& value) -> uint32_t {
+                return (value.nw ? 1u : 0u) | (value.ne ? 2u : 0u);
+            });
+        ++level_index;
+    }
+}
+
 struct record_seen_rebuild_params {
     SDL_GPUCommandBuffer* cmd = nullptr;
     SDL_GPUBuffer* transparency_buf = nullptr;
     SDL_GPUBuffer* floor_buf = nullptr;
     SDL_GPUBuffer* vehicle_floor_buf = nullptr;
+    SDL_GPUBuffer* vehicle_obscured_buf = nullptr;
     SDL_GPUBuffer* seen_raw_buf = nullptr;
     SDL_GPUBuffer* seen_buf = nullptr;
     int player_x = 0;
@@ -1931,6 +1974,7 @@ struct record_seen_rebuild_params {
     int z_count = 0;
     int z_start_idx = 0;
     int dispatch_z_count = OVERMAP_LAYERS;
+    uint32_t vision_block_mask = 0;
 };
 
 auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
@@ -2007,6 +2051,8 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
         .z_start_idx = p.z_start_idx,
         .dispatch_z_count = p.dispatch_z_count,
         .trigdist = trigdist ? 1u : 0u,
+        .vision_block_mask = p.vision_block_mask,
+        ._pad = {},
     };
 
     {
@@ -2016,7 +2062,8 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
         SDL_BindGPUComputePipeline(cp, s_seen_pipeline);
 
         auto const ro_bufs =
-            std::array<SDL_GPUBuffer*, 3>{p.transparency_buf, p.floor_buf, p.vehicle_floor_buf};
+            std::array<SDL_GPUBuffer*, 4>{
+                p.transparency_buf, p.floor_buf, p.vehicle_floor_buf, p.vehicle_obscured_buf};
         SDL_BindGPUComputeStorageBuffers(cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
         SDL_PushGPUComputeUniformData(p.cmd, 0, &seen_push, sizeof(seen_push));
@@ -2031,7 +2078,8 @@ auto record_seen_rebuild(record_seen_rebuild_params const& p) -> void {
         SDL_BindGPUComputePipeline(cp, s_seen_walls_pipeline);
 
         auto const ro_bufs =
-            std::array<SDL_GPUBuffer*, 3>{p.transparency_buf, p.seen_raw_buf, p.vehicle_floor_buf};
+            std::array<SDL_GPUBuffer*, 4>{
+                p.transparency_buf, p.seen_raw_buf, p.vehicle_floor_buf, p.vehicle_obscured_buf};
         SDL_BindGPUComputeStorageBuffers(cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
         SDL_PushGPUComputeUniformData(p.cmd, 0, &seen_push, sizeof(seen_push));
@@ -2099,7 +2147,8 @@ auto resident_lighting_ready_for_visibility(resident_lighting_visibility_params 
 
     auto const& inputs = s_lighting_resources.inputs;
     return inputs.cache_x == p.cache_x && inputs.cache_y == p.cache_y && inputs.z_count == p.z_count
-        && inputs.transparency_valid && s_lighting_resources.source_map_valid
+        && inputs.transparency_valid && inputs.floor_valid && inputs.vehicle_floor_valid
+        && inputs.vehicle_obscured_valid && s_lighting_resources.source_map_valid
         && s_lighting_resources.lighting_outputs_valid;
 }
 
@@ -2134,6 +2183,8 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     auto const shift_floor = inputs.floor_valid && s_lighting_resources.floor.buffer != nullptr;
     auto const shift_vehicle_floor =
         inputs.vehicle_floor_valid && s_lighting_resources.vehicle_floor.buffer != nullptr;
+    auto const shift_vehicle_obscured =
+        inputs.vehicle_obscured_valid && s_lighting_resources.vehicle_obscured.buffer != nullptr;
 
     if (has_valid_transparency && !shift_transparency) {
         std::ranges::fill(inputs.transparency_valid_levels, '\0');
@@ -2141,7 +2192,12 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
     }
     if (inputs.floor_valid && !shift_floor) { inputs.floor_valid = false; }
     if (inputs.vehicle_floor_valid && !shift_vehicle_floor) { inputs.vehicle_floor_valid = false; }
-    if (!shift_transparency && !shift_floor && !shift_vehicle_floor) { return true; }
+    if (inputs.vehicle_obscured_valid && !shift_vehicle_obscured) {
+        inputs.vehicle_obscured_valid = false;
+    }
+    if (!shift_transparency && !shift_floor && !shift_vehicle_floor && !shift_vehicle_obscured) {
+        return true;
+    }
 
     auto invalidate_shift_inputs = [&]() {
         std::ranges::fill(inputs.transparency_valid_levels, '\0');
@@ -2149,13 +2205,15 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
         refresh_transparency_valid_flag();
         inputs.floor_valid = false;
         inputs.vehicle_floor_valid = false;
+        inputs.vehicle_obscured_valid = false;
     };
 
     if (shift_transparency && !ensure_shift_float_pipeline(p.device)) {
         invalidate_shift_inputs();
         return false;
     }
-    if ((shift_floor || shift_vehicle_floor) && !ensure_shift_uint_pipeline(p.device)) {
+    if ((shift_floor || shift_vehicle_floor || shift_vehicle_obscured)
+        && !ensure_shift_uint_pipeline(p.device)) {
         invalidate_shift_inputs();
         return false;
     }
@@ -2179,6 +2237,13 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
         && !ensure_uint_shift_scratch(
             p.device, s_lighting_resources.shift_vehicle_floor_scratch, uint_bytes,
             "shift_vehicle_floor_scratch")) {
+        invalidate_shift_inputs();
+        return false;
+    }
+    if (shift_vehicle_obscured
+        && !ensure_uint_shift_scratch(
+            p.device, s_lighting_resources.shift_vehicle_obscured_scratch, uint_bytes,
+            "shift_vehicle_obscured_scratch")) {
         invalidate_shift_inputs();
         return false;
     }
@@ -2261,6 +2326,11 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
             record_uint_shift(s_lighting_resources.vehicle_floor.buffer,
                               s_lighting_resources.shift_vehicle_floor_scratch.buffer, 0u);
         }
+        if (shift_vehicle_obscured) {
+            record_uint_shift(
+                s_lighting_resources.vehicle_obscured.buffer,
+                s_lighting_resources.shift_vehicle_obscured_scratch.buffer, 0u);
+        }
     }
 
     auto* const fence = SDL_SubmitGPUCommandBufferAndAcquireFence(cmd);
@@ -2293,9 +2363,14 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
         std::swap(s_lighting_resources.vehicle_floor,
                   s_lighting_resources.shift_vehicle_floor_scratch);
     }
+    if (shift_vehicle_obscured) {
+        std::swap(s_lighting_resources.vehicle_obscured,
+                  s_lighting_resources.shift_vehicle_obscured_scratch);
+    }
     TracyPlot("GPU LM Shift Transparency", shift_transparency ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Shift Floor", shift_floor ? int64_t{1} : int64_t{0});
     TracyPlot("GPU LM Shift Vehicle Floor", shift_vehicle_floor ? int64_t{1} : int64_t{0});
+    TracyPlot("GPU LM Shift Vehicle Obscured", shift_vehicle_obscured ? int64_t{1} : int64_t{0});
     return true;
 }
 
@@ -2395,6 +2470,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto& transparency_cpu = s_lighting_resources.transparency_staging;
     auto& floor_cpu = s_lighting_resources.floor_staging;
     auto& vehicle_floor_cpu = s_lighting_resources.vehicle_floor_staging;
+    auto& vehicle_obscured_cpu = s_lighting_resources.vehicle_obscured_staging;
     auto& source_map_cpu = s_lighting_resources.source_map_staging;
 
     if (has_structural_upload(input_uploads)) {
@@ -2420,6 +2496,10 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     return lc.vehicle_floor_cache;
                 },
                 vehicle_floor_cpu);
+        }
+        if (!input_uploads.vehicle_obscured_levels.empty()) {
+            pack_vehicle_obscured_cache_uint(
+                *p.m, input_uploads.vehicle_obscured_levels, cache_xy, vehicle_obscured_cpu);
         }
     }
     {
@@ -2464,6 +2544,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         std::ranges::copy(input_uploads.floor_levels, std::back_inserter(structural_upload_levels));
         std::ranges::
             copy(input_uploads.vehicle_floor_levels, std::back_inserter(structural_upload_levels));
+        std::ranges::copy(
+            input_uploads.vehicle_obscured_levels, std::back_inserter(structural_upload_levels));
         structural_upload_levels = sorted_unique(std::move(structural_upload_levels));
     }
     auto checked_structural_signatures = std::vector<std::pair<int, std::size_t>>{};
@@ -2536,6 +2618,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const t_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
     auto const f_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
     auto const vf_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
+    auto const vo_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
     auto const camera_bytes = t_bytes;
     auto const source_map_bytes = t_bytes;
     // lm and seen buffers cover all z_count * cache_xy tiles.
@@ -2572,12 +2655,15 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         static_cast<Uint32>(input_uploads.floor_levels.size()) * uint_level_bytes;
     auto const vehicle_floor_upload_bytes =
         static_cast<Uint32>(input_uploads.vehicle_floor_levels.size()) * uint_level_bytes;
+    auto const vehicle_obscured_upload_bytes =
+        static_cast<Uint32>(input_uploads.vehicle_obscured_levels.size()) * uint_level_bytes;
     auto const source_map_upload_bytes =
         static_cast<Uint32>(source_map_upload_levels.size()) * float_level_bytes;
     auto upload_total = source_upload_bytes;
     upload_total += transparency_upload_bytes;
     upload_total += floor_upload_bytes;
     upload_total += vehicle_floor_upload_bytes;
+    upload_total += vehicle_obscured_upload_bytes;
     upload_total += source_map_upload_bytes;
     auto const upload_buffer_bytes = std::max(upload_total, Uint32{1});
     auto const visibility_upload_total = camera_bytes;
@@ -2620,12 +2706,15 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         "GPU LM Input Upload Levels",
         static_cast<int64_t>(
             input_uploads.transparency_levels.size() + input_uploads.floor_levels.size()
-            + input_uploads.vehicle_floor_levels.size()));
+            + input_uploads.vehicle_floor_levels.size()
+            + input_uploads.vehicle_obscured_levels.size()));
     TracyPlot("GPU LM Transparency Upload Levels",
               static_cast<int64_t>(input_uploads.transparency_levels.size()));
     TracyPlot("GPU LM Floor Upload Levels", static_cast<int64_t>(input_uploads.floor_levels.size()));
     TracyPlot("GPU LM Vehicle Floor Upload Levels",
               static_cast<int64_t>(input_uploads.vehicle_floor_levels.size()));
+    TracyPlot("GPU LM Vehicle Obscured Upload Levels",
+              static_cast<int64_t>(input_uploads.vehicle_obscured_levels.size()));
     TracyPlot("GPU LM Upload KiB", static_cast<int64_t>(upload_total / 1024u));
 
     {
@@ -2636,6 +2725,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     .transparency_bytes = t_bytes,
                     .floor_bytes = f_bytes,
                     .vehicle_floor_bytes = vf_bytes,
+                    .vehicle_obscured_bytes = vo_bytes,
                     .camera_bytes = camera_bytes,
                     .vehicle_optics_bytes = static_cast<Uint32>(sizeof(GpuVehicleOptic)),
                     .source_map_bytes = source_map_bytes,
@@ -2659,6 +2749,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto* const t_buf = s_lighting_resources.transparency.buffer;
     auto* const f_buf = s_lighting_resources.floor.buffer;
     auto* const vf_buf = s_lighting_resources.vehicle_floor.buffer;
+    auto* const vo_buf = s_lighting_resources.vehicle_obscured.buffer;
     auto* const source_map_buf = s_lighting_resources.source_map.buffer;
     auto* const src_buf = s_lighting_resources.sources.buffer;
     auto* const daylight_seed_buf = s_lighting_resources.daylight_seed.buffer;
@@ -2694,6 +2785,10 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         if (vehicle_floor_upload_bytes > 0) {
             std::memcpy(mapped + off, vehicle_floor_cpu.data(), vehicle_floor_upload_bytes);
             off += vehicle_floor_upload_bytes;
+        }
+        if (vehicle_obscured_upload_bytes > 0) {
+            std::memcpy(mapped + off, vehicle_obscured_cpu.data(), vehicle_obscured_upload_bytes);
+            off += vehicle_obscured_upload_bytes;
         }
         if (source_map_upload_bytes > 0) {
             std::memcpy(mapped + off, source_map_cpu.data(), source_map_upload_bytes);
@@ -2757,6 +2852,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             upload_levels(t_buf, input_uploads.transparency_levels, float_level_bytes);
             upload_levels(f_buf, input_uploads.floor_levels, uint_level_bytes);
             upload_levels(vf_buf, input_uploads.vehicle_floor_levels, uint_level_bytes);
+            upload_levels(vo_buf, input_uploads.vehicle_obscured_levels, uint_level_bytes);
             upload_levels(source_map_buf, source_map_upload_levels, float_level_bytes);
             if (source_upload_bytes > 0) { upload_whole(src_buf, source_upload_bytes); }
 
@@ -2932,6 +3028,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 .transparency_buf = t_buf,
                 .floor_buf = f_buf,
                 .vehicle_floor_buf = vf_buf,
+                .vehicle_obscured_buf = vo_buf,
                 .seen_raw_buf = seen_raw_buf,
                 .seen_buf = seen_buf,
                 .player_x = p.player_x,
@@ -2943,6 +3040,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 .z_count = z_count,
                 .z_start_idx = 0,
                 .dispatch_z_count = z_count,
+                .vision_block_mask = p.vision_block_mask,
             });
         }
 
@@ -3281,7 +3379,8 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     }
     if (rebuild_seen
         && (!s_lighting_resources.inputs.floor_valid
-            || !s_lighting_resources.inputs.vehicle_floor_valid)) {
+            || !s_lighting_resources.inputs.vehicle_floor_valid
+            || !s_lighting_resources.inputs.vehicle_obscured_valid)) {
         DebugLog(DL::Error, DC::Main)
             << "SDL_GPU: lm: seen rebuild requested before resident "
                "structural inputs are valid";
@@ -3307,6 +3406,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .transparency_bytes = float_volume_bytes,
                 .floor_bytes = uint_volume_bytes,
                 .vehicle_floor_bytes = uint_volume_bytes,
+                .vehicle_obscured_bytes = uint_volume_bytes,
                 .camera_bytes = float_volume_bytes,
                 .vehicle_optics_bytes = vehicle_optics_buffer_bytes,
                 .source_map_bytes = float_volume_bytes,
@@ -3328,6 +3428,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     auto* const t_buf = s_lighting_resources.transparency.buffer;
     auto* const f_buf = s_lighting_resources.floor.buffer;
     auto* const vf_buf = s_lighting_resources.vehicle_floor.buffer;
+    auto* const vo_buf = s_lighting_resources.vehicle_obscured.buffer;
     auto* const lm_buf = s_lighting_resources.lm.buffer;
     auto* const seen_raw_buf = s_lighting_resources.seen_raw.buffer;
     auto* const seen_buf = s_lighting_resources.seen.buffer;
@@ -3400,6 +3501,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .transparency_buf = t_buf,
                 .floor_buf = f_buf,
                 .vehicle_floor_buf = vf_buf,
+                .vehicle_obscured_buf = vo_buf,
                 .seen_raw_buf = seen_raw_buf,
                 .seen_buf = seen_buf,
                 .player_x = p.player_x,
@@ -3411,6 +3513,7 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .z_count = z_count,
                 .z_start_idx = visibility_dispatch.z_start_idx,
                 .dispatch_z_count = visibility_dispatch.z_count,
+                .vision_block_mask = p.vision_block_mask,
             });
         }
         if (num_optics > 0) {

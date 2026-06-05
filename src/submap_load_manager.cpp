@@ -765,7 +765,7 @@ auto submap_load_manager::has_lazy_border_work_pending() const -> bool
 }
 
 auto submap_load_manager::process_or_defer_lazy_border_work( const bool defer_lazy_border_work )
-- > void
+-> void
 {
     if( !has_lazy_border_work_pending() ) {
         lazy_border_work_deferred_ = false;

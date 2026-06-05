@@ -17,6 +17,8 @@ struct type_Constants
     int z_start_idx;
     int dispatch_z_count;
     uint trigdist;
+    uint vision_block_mask;
+    packed_uint3 _pad;
 };
 
 struct type_StructuredBuffer_float
@@ -34,282 +36,559 @@ struct type_RWStructuredBuffer_float
     float _m0[1];
 };
 
-kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_StructuredBuffer_float& transparency_all [[buffer(1)]], device type_StructuredBuffer_uint& floor_all [[buffer(2)]], device type_StructuredBuffer_uint& vehicle_floor_all [[buffer(3)]], device type_RWStructuredBuffer_float& seen_all [[buffer(4)]], uint3 gl_WorkGroupID [[threadgroup_position_in_grid]], uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
+kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_StructuredBuffer_float& transparency_all [[buffer(1)]], device type_StructuredBuffer_uint& floor_all [[buffer(2)]], device type_StructuredBuffer_uint& vehicle_floor_all [[buffer(3)]], device type_StructuredBuffer_uint& vehicle_obscured_all [[buffer(4)]], device type_RWStructuredBuffer_float& seen_all [[buffer(5)]], uint3 gl_WorkGroupID [[threadgroup_position_in_grid]], uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
 {
     do
     {
-        int _68 = (Constants.player_x + int((gl_WorkGroupID.x * 8u) + gl_LocalInvocationID.x)) - Constants.view_radius;
-        int _79 = (Constants.player_y + int((gl_WorkGroupID.y * 8u) + gl_LocalInvocationID.y)) - Constants.view_radius;
-        int _85 = Constants.z_start_idx + int(gl_WorkGroupID.z);
-        bool _90;
-        if (_68 >= 0)
+        int _77 = (Constants.player_x + int((gl_WorkGroupID.x * 8u) + gl_LocalInvocationID.x)) - Constants.view_radius;
+        int _88 = (Constants.player_y + int((gl_WorkGroupID.y * 8u) + gl_LocalInvocationID.y)) - Constants.view_radius;
+        int _94 = Constants.z_start_idx + int(gl_WorkGroupID.z);
+        bool _99;
+        if (_77 >= 0)
         {
-            _90 = _79 < 0;
+            _99 = _88 < 0;
         }
         else
         {
-            _90 = true;
+            _99 = true;
         }
-        bool _97;
-        if (!_90)
+        bool _106;
+        if (!_99)
         {
-            _97 = _68 >= Constants.cache_x;
+            _106 = _77 >= Constants.cache_x;
         }
         else
         {
-            _97 = true;
+            _106 = true;
         }
-        bool _104;
-        if (!_97)
+        bool _113;
+        if (!_106)
         {
-            _104 = _79 >= Constants.cache_y;
+            _113 = _88 >= Constants.cache_y;
         }
         else
         {
-            _104 = true;
+            _113 = true;
         }
-        bool _112;
-        if (!_104)
+        bool _121;
+        if (!_113)
         {
-            _112 = gl_WorkGroupID.z >= uint(Constants.dispatch_z_count);
+            _121 = gl_WorkGroupID.z >= uint(Constants.dispatch_z_count);
         }
         else
         {
-            _112 = true;
+            _121 = true;
         }
-        bool _119;
-        if (!_112)
+        bool _128;
+        if (!_121)
         {
-            _119 = _85 >= Constants.z_count;
+            _128 = _94 >= Constants.z_count;
         }
         else
         {
-            _119 = true;
+            _128 = true;
         }
-        if (_119)
+        if (_128)
         {
             break;
         }
-        int _122 = _68 - Constants.player_x;
-        int _123 = abs(_122);
-        int _124 = _79 - Constants.player_y;
-        int _125 = abs(_124);
-        int _128 = _85 - Constants.player_z_idx;
-        int _129 = abs(_128);
-        int _148;
+        int _131 = _77 - Constants.player_x;
+        int _132 = abs(_131);
+        int _133 = _88 - Constants.player_y;
+        int _134 = abs(_133);
+        int _137 = _94 - Constants.player_z_idx;
+        int _138 = abs(_137);
+        int _157;
         do
         {
             if (Constants.trigdist == 0u)
             {
-                _148 = max(_123, max(_125, _129));
+                _157 = max(_132, max(_134, _138));
                 break;
             }
-            _148 = int(rint(sqrt(float(((_123 * _123) + (_125 * _125)) + (_129 * _129)))));
+            _157 = int(rint(sqrt(float(((_132 * _132) + (_134 * _134)) + (_138 * _138)))));
             break;
         } while(false);
-        int _155 = _68 * Constants.cache_y;
-        int _157 = ((_85 * Constants.cache_xy) + _155) + _79;
-        if (_148 == 0)
+        int _164 = _77 * Constants.cache_y;
+        int _166 = ((_94 * Constants.cache_xy) + _164) + _88;
+        if (_157 == 0)
         {
-            seen_all._m0[uint(_157)] = 1.0;
+            seen_all._m0[uint(_166)] = 1.0;
             break;
         }
-        if (_148 > Constants.view_radius)
+        if (_157 > Constants.view_radius)
         {
-            seen_all._m0[uint(_157)] = 0.0;
+            seen_all._m0[uint(_166)] = 0.0;
             break;
         }
-        float _168 = float(_129);
-        int _176 = max(max(_123, max(_125, int(ceil(_168 * Constants.z_scale)))), 1);
-        bool _269;
-        if (_128 != 0)
+        float _177 = float(_138);
+        int _185 = max(max(_132, max(_134, int(ceil(_177 * Constants.z_scale)))), 1);
+        bool _278;
+        if (_137 != 0)
         {
-            int _181 = (_128 > 0) ? 1 : (-1);
-            bool _268;
-            int _183 = 0;
+            int _190 = (_137 > 0) ? 1 : (-1);
+            bool _277;
+            int _192 = 0;
             for (;;)
             {
-                if (_183 < _129)
+                if (_192 < _138)
                 {
-                    float _191 = (float(_183) + 0.5) / _168;
-                    float _193 = float(_122) * _191;
-                    int _204;
-                    if (_193 >= 0.0)
+                    float _200 = (float(_192) + 0.5) / _177;
+                    float _202 = float(_131) * _200;
+                    int _213;
+                    if (_202 >= 0.0)
                     {
-                        _204 = int(floor(_193 + 0.5));
+                        _213 = int(floor(_202 + 0.5));
                     }
                     else
                     {
-                        _204 = int(ceil(_193 - 0.5));
+                        _213 = int(ceil(_202 - 0.5));
                     }
-                    int _209 = clamp(Constants.player_x + _204, 0, Constants.cache_x - 1);
-                    float _211 = float(_124) * _191;
-                    int _222;
-                    if (_211 >= 0.0)
+                    int _218 = clamp(Constants.player_x + _213, 0, Constants.cache_x - 1);
+                    float _220 = float(_133) * _200;
+                    int _231;
+                    if (_220 >= 0.0)
                     {
-                        _222 = int(floor(_211 + 0.5));
-                    }
-                    else
-                    {
-                        _222 = int(ceil(_211 - 0.5));
-                    }
-                    int _225 = clamp(Constants.player_y + _222, 0, Constants.cache_y - 1);
-                    bool _230;
-                    if (_181 < 0)
-                    {
-                        _230 = _183 == 0;
+                        _231 = int(floor(_220 + 0.5));
                     }
                     else
                     {
-                        _230 = false;
+                        _231 = int(ceil(_220 - 0.5));
                     }
-                    bool _234;
-                    if (_230)
+                    int _234 = clamp(Constants.player_y + _231, 0, Constants.cache_y - 1);
+                    bool _239;
+                    if (_190 < 0)
                     {
-                        _234 = _209 == Constants.player_x;
-                    }
-                    else
-                    {
-                        _234 = false;
-                    }
-                    bool _238;
-                    if (_234)
-                    {
-                        _238 = _225 == Constants.player_y;
+                        _239 = _192 == 0;
                     }
                     else
                     {
-                        _238 = false;
+                        _239 = false;
                     }
-                    if (_238)
+                    bool _243;
+                    if (_239)
                     {
-                        int _184 = _183 + 1;
-                        _183 = _184;
+                        _243 = _218 == Constants.player_x;
+                    }
+                    else
+                    {
+                        _243 = false;
+                    }
+                    bool _247;
+                    if (_243)
+                    {
+                        _247 = _234 == Constants.player_y;
+                    }
+                    else
+                    {
+                        _247 = false;
+                    }
+                    if (_247)
+                    {
+                        int _193 = _192 + 1;
+                        _192 = _193;
                         continue;
                     }
-                    int _248;
-                    if (_181 > 0)
+                    int _257;
+                    if (_190 > 0)
                     {
-                        _248 = (Constants.player_z_idx + _183) + 1;
+                        _257 = (Constants.player_z_idx + _192) + 1;
                     }
                     else
                     {
-                        _248 = Constants.player_z_idx - _183;
+                        _257 = Constants.player_z_idx - _192;
                     }
-                    bool _255;
-                    if (_248 >= 0)
+                    bool _264;
+                    if (_257 >= 0)
                     {
-                        _255 = _248 < Constants.z_count;
+                        _264 = _257 < Constants.z_count;
                     }
                     else
                     {
-                        _255 = false;
+                        _264 = false;
                     }
-                    if (_255)
+                    if (_264)
                     {
-                        if (floor_all._m0[uint(((_248 * Constants.cache_xy) + (_209 * Constants.cache_y)) + _225)] != 0u)
+                        if (floor_all._m0[uint(((_257 * Constants.cache_xy) + (_218 * Constants.cache_y)) + _234)] != 0u)
                         {
-                            _268 = true;
+                            _277 = true;
                             break;
                         }
                     }
-                    int _184 = _183 + 1;
-                    _183 = _184;
+                    int _193 = _192 + 1;
+                    _192 = _193;
                     continue;
                 }
                 else
                 {
-                    _268 = false;
+                    _277 = false;
                     break;
                 }
             }
-            _269 = _268;
+            _278 = _277;
         }
         else
         {
-            _269 = false;
+            _278 = false;
         }
-        float _271;
-        _271 = 0.0383764170110225677490234375;
-        float _272;
-        bool _348;
-        int _274 = 1;
+        float _280;
+        _280 = 0.0383764170110225677490234375;
+        float _281;
+        bool _544;
+        int _283 = 1;
         for (;;)
         {
-            if (_274 < _176)
+            if (_283 < _185)
             {
-                float _279 = float(_274);
-                float _281 = _279 / float(_176);
-                float _283 = float(_122) * _281;
-                int _294;
-                if (_283 >= 0.0)
+                float _288 = float(_131);
+                float _290 = float(_283 - 1);
+                float _291 = float(_185);
+                float _292 = _290 / _291;
+                float _293 = _288 * _292;
+                int _304;
+                if (_293 >= 0.0)
                 {
-                    _294 = int(floor(_283 + 0.5));
+                    _304 = int(floor(_293 + 0.5));
                 }
                 else
                 {
-                    _294 = int(ceil(_283 - 0.5));
+                    _304 = int(ceil(_293 - 0.5));
                 }
-                float _297 = float(_124) * _281;
-                int _308;
-                if (_297 >= 0.0)
+                float _306 = float(_133);
+                float _307 = _306 * _292;
+                int _318;
+                if (_307 >= 0.0)
                 {
-                    _308 = int(floor(_297 + 0.5));
-                }
-                else
-                {
-                    _308 = int(ceil(_297 - 0.5));
-                }
-                float _311 = float(_128) * _281;
-                int _322;
-                if (_311 >= 0.0)
-                {
-                    _322 = int(floor(_311 + 0.5));
+                    _318 = int(floor(_307 + 0.5));
                 }
                 else
                 {
-                    _322 = int(ceil(_311 - 0.5));
+                    _318 = int(ceil(_307 - 0.5));
                 }
-                uint _338 = uint(((clamp(Constants.player_z_idx + _322, 0, Constants.z_count - 1) * Constants.cache_xy) + (clamp(Constants.player_x + _294, 0, Constants.cache_x - 1) * Constants.cache_y)) + clamp(Constants.player_y + _308, 0, Constants.cache_y - 1));
-                if (transparency_all._m0[_338] <= 0.0)
+                float _321 = float(_283);
+                float _322 = _321 / _291;
+                float _323 = _288 * _322;
+                int _334;
+                if (_323 >= 0.0)
                 {
-                    _348 = true;
+                    _334 = int(floor(_323 + 0.5));
+                }
+                else
+                {
+                    _334 = int(ceil(_323 - 0.5));
+                }
+                float _336 = _306 * _322;
+                int _347;
+                if (_336 >= 0.0)
+                {
+                    _347 = int(floor(_336 + 0.5));
+                }
+                else
+                {
+                    _347 = int(ceil(_336 - 0.5));
+                }
+                float _349 = float(_137) * _322;
+                int _360;
+                if (_349 >= 0.0)
+                {
+                    _360 = int(floor(_349 + 0.5));
+                }
+                else
+                {
+                    _360 = int(ceil(_349 - 0.5));
+                }
+                int _364 = Constants.cache_x - 1;
+                int _365 = clamp(Constants.player_x + _304, 0, _364);
+                int _366 = Constants.cache_y - 1;
+                int _367 = clamp(Constants.player_y + _318, 0, _366);
+                int _371 = clamp(Constants.player_x + _334, 0, _364);
+                int _372 = clamp(Constants.player_y + _347, 0, _366);
+                int _373 = clamp(Constants.player_z_idx + _360, 0, Constants.z_count - 1);
+                bool _447;
+                do
+                {
+                    bool _382;
+                    if (Constants.vision_block_mask != 0u)
+                    {
+                        _382 = _373 != Constants.player_z_idx;
+                    }
+                    else
+                    {
+                        _382 = true;
+                    }
+                    if (_382)
+                    {
+                        _447 = false;
+                        break;
+                    }
+                    int _385 = _371 - Constants.player_x;
+                    int _386 = _372 - Constants.player_y;
+                    uint _440;
+                    do
+                    {
+                        bool _389 = _385 == 0;
+                        bool _393;
+                        if (_389)
+                        {
+                            _393 = _386 == (-1);
+                        }
+                        else
+                        {
+                            _393 = false;
+                        }
+                        if (_393)
+                        {
+                            _440 = 1u;
+                            break;
+                        }
+                        bool _396 = _385 == 1;
+                        bool _400;
+                        if (_396)
+                        {
+                            _400 = _386 == (-1);
+                        }
+                        else
+                        {
+                            _400 = false;
+                        }
+                        if (_400)
+                        {
+                            _440 = 2u;
+                            break;
+                        }
+                        bool _406;
+                        if (_396)
+                        {
+                            _406 = _386 == 0;
+                        }
+                        else
+                        {
+                            _406 = false;
+                        }
+                        if (_406)
+                        {
+                            _440 = 4u;
+                            break;
+                        }
+                        bool _412;
+                        if (_396)
+                        {
+                            _412 = _386 == 1;
+                        }
+                        else
+                        {
+                            _412 = false;
+                        }
+                        if (_412)
+                        {
+                            _440 = 8u;
+                            break;
+                        }
+                        bool _418;
+                        if (_389)
+                        {
+                            _418 = _386 == 1;
+                        }
+                        else
+                        {
+                            _418 = false;
+                        }
+                        if (_418)
+                        {
+                            _440 = 16u;
+                            break;
+                        }
+                        bool _421 = _385 == (-1);
+                        bool _425;
+                        if (_421)
+                        {
+                            _425 = _386 == 1;
+                        }
+                        else
+                        {
+                            _425 = false;
+                        }
+                        if (_425)
+                        {
+                            _440 = 32u;
+                            break;
+                        }
+                        bool _431;
+                        if (_421)
+                        {
+                            _431 = _386 == 0;
+                        }
+                        else
+                        {
+                            _431 = false;
+                        }
+                        if (_431)
+                        {
+                            _440 = 64u;
+                            break;
+                        }
+                        bool _437;
+                        if (_421)
+                        {
+                            _437 = _386 == (-1);
+                        }
+                        else
+                        {
+                            _437 = false;
+                        }
+                        if (_437)
+                        {
+                            _440 = 128u;
+                            break;
+                        }
+                        _440 = 0u;
+                        break;
+                    } while(false);
+                    bool _446;
+                    if (_440 != 0u)
+                    {
+                        _446 = (Constants.vision_block_mask & _440) != 0u;
+                    }
+                    else
+                    {
+                        _446 = false;
+                    }
+                    _447 = _446;
+                    break;
+                } while(false);
+                if (_447)
+                {
+                    _544 = true;
                     break;
                 }
-                _272 = ((float(_274 - 1) * _271) + transparency_all._m0[_338]) / _279;
-                _271 = _272;
-                _274++;
+                bool _529;
+                do
+                {
+                    int _452 = _371 - _365;
+                    int _453 = _372 - _367;
+                    bool _458;
+                    if (_373 >= 0)
+                    {
+                        _458 = _373 >= Constants.z_count;
+                    }
+                    else
+                    {
+                        _458 = true;
+                    }
+                    bool _464;
+                    if (!_458)
+                    {
+                        _464 = abs(_452) != 1;
+                    }
+                    else
+                    {
+                        _464 = true;
+                    }
+                    bool _470;
+                    if (!_464)
+                    {
+                        _470 = abs(_453) != 1;
+                    }
+                    else
+                    {
+                        _470 = true;
+                    }
+                    if (_470)
+                    {
+                        _529 = false;
+                        break;
+                    }
+                    bool _473 = _452 == (-1);
+                    bool _477;
+                    if (_473)
+                    {
+                        _477 = _453 == (-1);
+                    }
+                    else
+                    {
+                        _477 = false;
+                    }
+                    if (_477)
+                    {
+                        _529 = (vehicle_obscured_all._m0[uint(((_373 * Constants.cache_xy) + (_365 * Constants.cache_y)) + _367)] & 1u) != 0u;
+                        break;
+                    }
+                    bool _493;
+                    if (_452 == 1)
+                    {
+                        _493 = _453 == (-1);
+                    }
+                    else
+                    {
+                        _493 = false;
+                    }
+                    if (_493)
+                    {
+                        _529 = (vehicle_obscured_all._m0[uint(((_373 * Constants.cache_xy) + (_365 * Constants.cache_y)) + _367)] & 2u) != 0u;
+                        break;
+                    }
+                    bool _508;
+                    if (_473)
+                    {
+                        _508 = _453 == 1;
+                    }
+                    else
+                    {
+                        _508 = false;
+                    }
+                    if (_508)
+                    {
+                        _529 = (vehicle_obscured_all._m0[uint(((_373 * Constants.cache_xy) + (_371 * Constants.cache_y)) + _372)] & 2u) != 0u;
+                        break;
+                    }
+                    _529 = (vehicle_obscured_all._m0[uint(((_373 * Constants.cache_xy) + (_371 * Constants.cache_y)) + _372)] & 1u) != 0u;
+                    break;
+                } while(false);
+                if (_529)
+                {
+                    _544 = true;
+                    break;
+                }
+                uint _536 = uint(((_373 * Constants.cache_xy) + (_371 * Constants.cache_y)) + _372);
+                if (transparency_all._m0[_536] <= 0.0)
+                {
+                    _544 = true;
+                    break;
+                }
+                _281 = ((_290 * _280) + transparency_all._m0[_536]) / _321;
+                _280 = _281;
+                _283++;
                 continue;
             }
             else
             {
-                _348 = _269;
+                _544 = _278;
                 break;
             }
         }
-        if (_348)
+        if (_544)
         {
-            seen_all._m0[uint(_157)] = 0.0;
+            seen_all._m0[uint(_166)] = 0.0;
             break;
         }
-        bool _360;
-        if (_85 < Constants.player_z_idx)
+        bool _556;
+        if (_94 < Constants.player_z_idx)
         {
-            _360 = (_85 + 1) < Constants.z_count;
+            _556 = (_94 + 1) < Constants.z_count;
         }
         else
         {
-            _360 = false;
+            _556 = false;
         }
-        if (_360)
+        if (_556)
         {
-            if (vehicle_floor_all._m0[uint((((_85 + 1) * Constants.cache_xy) + _155) + _79)] != 0u)
+            if (vehicle_floor_all._m0[uint((((_94 + 1) * Constants.cache_xy) + _164) + _88)] != 0u)
             {
-                seen_all._m0[uint(_157)] = 0.0;
+                seen_all._m0[uint(_166)] = 0.0;
                 break;
             }
         }
-        seen_all._m0[uint(_157)] = exp((-_271) * float(_148));
+        seen_all._m0[uint(_166)] = exp((-_280) * float(_157));
         break;
     } while(false);
 }

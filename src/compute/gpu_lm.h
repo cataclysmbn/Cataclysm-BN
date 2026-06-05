@@ -76,7 +76,7 @@ static_assert(sizeof(lm_raytrace_push_constants) == 32);
 // ---------------------------------------------------------------------------
 // lm_seen_push_constants
 // Uniform data for the seen_cache ray-casting pass.
-// 48 bytes.
+// 64 bytes.
 // ---------------------------------------------------------------------------
 struct lm_seen_push_constants {
     int32_t player_x;         //  4 bytes
@@ -91,8 +91,10 @@ struct lm_seen_push_constants {
     int32_t z_start_idx;      //  4 bytes
     int32_t dispatch_z_count; // 4 bytes
     uint32_t trigdist;        //  4 bytes = 48
+    uint32_t vision_block_mask; // 4 bytes
+    uint32_t _pad[3];         // 12 bytes = 64
 };
-static_assert(sizeof(lm_seen_push_constants) == 48);
+static_assert(sizeof(lm_seen_push_constants) == 64);
 
 // ---------------------------------------------------------------------------
 // lm_visibility_push_constants
@@ -145,9 +147,12 @@ struct run_gpu_lighting_params {
     std::vector<int> const* floor_dirty_levels = nullptr;
     bool vehicle_floor_dirty;
     std::vector<int> const* vehicle_floor_dirty_levels = nullptr;
+    bool vehicle_obscured_dirty;
+    std::vector<int> const* vehicle_obscured_dirty_levels = nullptr;
     bool rebuild_seen_cache;
     bool download_seen_cache = false;
     bool download_lightmap = true; // transitional CPU readback request
+    uint32_t vision_block_mask = 0;
     bool angled_sunlight_shadows;
     bool direct_sunlight;
     float sun_dx_per_z;
@@ -248,6 +253,7 @@ struct run_gpu_visibility_params {
     int u_unimpaired_range;
     float vision_threshold;
     float visibility_scale_factor;
+    uint32_t vision_block_mask = 0;
     bool rebuild_seen_cache = false;
 };
 

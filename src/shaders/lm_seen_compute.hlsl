@@ -42,11 +42,14 @@ cbuffer Constants : register(b0, space2)
     int   z_start_idx;
     int   dispatch_z_count;
     uint  trigdist;
+    uint  vision_block_mask;
+    uint3 _pad;
 };
 
 StructuredBuffer<float> transparency_all  : register(t0, space0);
 StructuredBuffer<uint>  floor_all         : register(t1, space0);
 StructuredBuffer<uint>  vehicle_floor_all : register(t2, space0);
+StructuredBuffer<uint>  vehicle_obscured_all : register(t3, space0);
 
 RWStructuredBuffer<float> seen_all : register(u0, space1);
 
@@ -61,6 +64,57 @@ int visibility_distance( int dx, int dy, int dz )
         return max( dx, max( dy, dz ) );
     }
     return (int)round( sqrt( (float)( dx * dx + dy * dy + dz * dz ) ) );
+}
+
+uint adjacent_block_bit( int rx, int ry )
+{
+    if( rx ==  0 && ry == -1 ) { return 1u << 0; }
+    if( rx ==  1 && ry == -1 ) { return 1u << 1; }
+    if( rx ==  1 && ry ==  0 ) { return 1u << 2; }
+    if( rx ==  1 && ry ==  1 ) { return 1u << 3; }
+    if( rx ==  0 && ry ==  1 ) { return 1u << 4; }
+    if( rx == -1 && ry ==  1 ) { return 1u << 5; }
+    if( rx == -1 && ry ==  0 ) { return 1u << 6; }
+    if( rx == -1 && ry == -1 ) { return 1u << 7; }
+    return 0u;
+}
+
+bool blocked_by_player_vision_adjustment( int x, int y, int z )
+{
+    if( vision_block_mask == 0u || z != player_z_idx ) {
+        return false;
+    }
+    uint bit = adjacent_block_bit( x - player_x, y - player_y );
+    return bit != 0u && ( vision_block_mask & bit ) != 0u;
+}
+
+int tile_index( int x, int y, int z )
+{
+    return z * cache_xy + x * cache_y + y;
+}
+
+bool blocked_by_vehicle_diagonal( int from_x, int from_y, int from_z, int to_x, int to_y, int to_z )
+{
+    int z = to_z;
+    int dx = to_x - from_x;
+    int dy = to_y - from_y;
+    if( from_z != to_z ) {
+        dx = to_x - from_x;
+        dy = to_y - from_y;
+    }
+    if( z < 0 || z >= z_count || abs( dx ) != 1 || abs( dy ) != 1 ) {
+        return false;
+    }
+    if( dx == -1 && dy == -1 ) {
+        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 1u ) != 0u;
+    }
+    if( dx == 1 && dy == -1 ) {
+        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 2u ) != 0u;
+    }
+    if( dx == -1 && dy == 1 ) {
+        return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 2u ) != 0u;
+    }
+    return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 1u ) != 0u;
 }
 
 [numthreads(8, 8, 1)]
@@ -136,16 +190,31 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
     }
 
     for( int i = 1; i < steps; ++i ) {
+        int prev_ix = player_x + round_nearest_int( (float)sdx * ( (float)( i - 1 ) / (float)steps ) );
+        int prev_iy = player_y + round_nearest_int( (float)sdy * ( (float)( i - 1 ) / (float)steps ) );
+        int prev_iz = player_z_idx + round_nearest_int( (float)sdz * ( (float)( i - 1 ) / (float)steps ) );
         float t  = (float)i / (float)steps;
         int   ix = player_x + round_nearest_int( (float)sdx * t );
         int   iy = player_y + round_nearest_int( (float)sdy * t );
         int   iz = player_z_idx + round_nearest_int( (float)sdz * t );
 
+        prev_ix = clamp( prev_ix, 0, cache_x - 1 );
+        prev_iy = clamp( prev_iy, 0, cache_y - 1 );
+        prev_iz = clamp( prev_iz, 0, z_count - 1 );
         ix = clamp( ix, 0, cache_x - 1 );
         iy = clamp( iy, 0, cache_y - 1 );
         iz = clamp( iz, 0, z_count - 1 );
 
-        float t_val = transparency_all[iz * cache_xy + ix * cache_y + iy];
+        if( blocked_by_player_vision_adjustment( ix, iy, iz ) ) {
+            blocked = true;
+            break;
+        }
+        if( blocked_by_vehicle_diagonal( prev_ix, prev_iy, prev_iz, ix, iy, iz ) ) {
+            blocked = true;
+            break;
+        }
+
+        float t_val = transparency_all[tile_index( ix, iy, iz )];
         if( t_val <= LIGHT_TRANSPARENCY_SOLID ) {
             blocked = true;
             break;
@@ -161,7 +230,7 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
     }
 
     if( tz < player_z_idx && tz + 1 < z_count ) {
-        int roof_idx = ( tz + 1 ) * cache_xy + tx * cache_y + ty;
+        int roof_idx = tile_index( tx, ty, tz + 1 );
         if( vehicle_floor_all[roof_idx] != 0u ) {
             seen_all[seen_idx] = 0.0;
             return;

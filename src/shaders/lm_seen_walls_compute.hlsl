@@ -31,6 +31,7 @@ cbuffer Constants : register(b0, space2)
 StructuredBuffer<float> transparency_all : register(t0, space0);
 StructuredBuffer<float> seen_src_all     : register(t1, space0);
 StructuredBuffer<uint>  vehicle_floor_all : register(t2, space0);
+StructuredBuffer<uint>  vehicle_obscured_all : register(t3, space0);
 
 RWStructuredBuffer<float> seen_dst_all : register(u0, space1);
 
@@ -45,6 +46,25 @@ int visibility_distance( int dx, int dy, int dz )
         return max( dx, max( dy, dz ) );
     }
     return (int)round( sqrt( (float)( dx * dx + dy * dy + dz * dz ) ) );
+}
+
+bool blocked_by_vehicle_diagonal( int from_x, int from_y, int to_x, int to_y, int z )
+{
+    int dx = to_x - from_x;
+    int dy = to_y - from_y;
+    if( abs( dx ) != 1 || abs( dy ) != 1 ) {
+        return false;
+    }
+    if( dx == -1 && dy == -1 ) {
+        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 1u ) != 0u;
+    }
+    if( dx == 1 && dy == -1 ) {
+        return ( vehicle_obscured_all[tile_index( from_x, from_y, z )] & 2u ) != 0u;
+    }
+    if( dx == -1 && dy == 1 ) {
+        return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 2u ) != 0u;
+    }
+    return ( vehicle_obscured_all[tile_index( to_x, to_y, z )] & 1u ) != 0u;
 }
 
 [numthreads(8, 8, 1)]
@@ -104,6 +124,9 @@ void main( uint3 group_id : SV_GroupID, uint3 thread_id : SV_GroupThreadID )
 
         int nidx = tile_index( nx, ny, tz );
         if( transparency_all[nidx] <= LIGHT_TRANSPARENCY_SOLID ) {
+            continue;
+        }
+        if( blocked_by_vehicle_diagonal( nx, ny, tx, ty, tz ) ) {
             continue;
         }
 

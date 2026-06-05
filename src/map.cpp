@@ -7223,6 +7223,7 @@ auto map::update_visibility_cache( const int zlev,
         .u_unimpaired_range = visibility_variables_cache.u_unimpaired_range,
         .vision_threshold = visibility_variables_cache.vision_threshold,
         .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
+        .vision_block_mask = vision_transparency_block_mask(),
         .rebuild_seen_cache = rebuild_seen_cache,
     } );
     if( gpu_visibility_work.id == 0 ) {
@@ -10271,11 +10272,13 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     bool gpu_transparency_dirty = false;
     bool gpu_floor_dirty = false;
     bool gpu_vehicle_floor_dirty = false;
+    bool gpu_vehicle_obscured_dirty = false;
     std::vector<int> dirty_seen_cache_levels;
     std::vector<int> gpu_transparency_dirty_levels;
     std::vector<int> gpu_transparency_residency_invalid_levels;
     std::vector<int> gpu_floor_dirty_levels;
     std::vector<int> gpu_vehicle_floor_dirty_levels;
+    std::vector<int> gpu_vehicle_obscured_dirty_levels;
 
     auto add_gpu_dirty_level = []( auto & levels, const int z ) {
         if( z >= -OVERMAP_DEPTH && z <= OVERMAP_HEIGHT ) {
@@ -10363,6 +10366,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     const diagonal_blocks fill = {false, false};
                     std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
                     std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
+                    std::lock_guard<std::mutex> lock( dirty_mutex );
+                    add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
                 }
 
                 const bool level_seen_dirty = ch.seen_cache_dirty;
@@ -10390,6 +10395,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                     const diagonal_blocks fill = {false, false};
                     std::fill( ch.vehicle_obscured_cache.begin(), ch.vehicle_obscured_cache.end(), fill );
                     std::fill( ch.vehicle_obstructed_cache.begin(), ch.vehicle_obstructed_cache.end(), fill );
+                    add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, z );
                 }
 
                 const bool level_seen_dirty = ch.seen_cache_dirty;
@@ -10431,6 +10437,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                 add_gpu_dirty_level( gpu_transparency_dirty_levels, part_pos.z() );
                 add_gpu_dirty_level( gpu_transparency_residency_invalid_levels, part_pos.z() );
                 add_gpu_dirty_level( gpu_floor_dirty_levels, part_pos.z() );
+                add_gpu_dirty_level( gpu_vehicle_obscured_dirty_levels, part_pos.z() );
             }
         };
         for( int z = minz; z <= maxz; z++ ) {
@@ -10452,9 +10459,11 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
     normalize_gpu_dirty_levels( gpu_transparency_residency_invalid_levels );
     normalize_gpu_dirty_levels( gpu_floor_dirty_levels );
     normalize_gpu_dirty_levels( gpu_vehicle_floor_dirty_levels );
+    normalize_gpu_dirty_levels( gpu_vehicle_obscured_dirty_levels );
     gpu_transparency_dirty = !gpu_transparency_dirty_levels.empty();
     gpu_floor_dirty = !gpu_floor_dirty_levels.empty();
     gpu_vehicle_floor_dirty = !gpu_vehicle_floor_dirty_levels.empty();
+    gpu_vehicle_obscured_dirty = !gpu_vehicle_obscured_dirty_levels.empty();
 #if defined( CATA_SDL )
     if( !gpu_transparency_residency_invalid_levels.empty() ) {
         cata_gpu::invalidate_lighting_transparency_levels( gpu_transparency_residency_invalid_levels );
@@ -10466,6 +10475,8 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
                static_cast<int64_t>( gpu_floor_dirty_levels.size() ) );
     TracyPlot( "Map GPU Vehicle Floor Dirty Levels",
                static_cast<int64_t>( gpu_vehicle_floor_dirty_levels.size() ) );
+    TracyPlot( "Map GPU Vehicle Obscured Dirty Levels",
+               static_cast<int64_t>( gpu_vehicle_obscured_dirty_levels.size() ) );
     TracyPlot( "Map GPU Transparency Invalidated Levels",
                static_cast<int64_t>( gpu_transparency_residency_invalid_levels.size() ) );
 
@@ -10536,9 +10547,12 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             .floor_dirty_levels = &gpu_floor_dirty_levels,
             .vehicle_floor_dirty = gpu_vehicle_floor_dirty,
             .vehicle_floor_dirty_levels = &gpu_vehicle_floor_dirty_levels,
+            .vehicle_obscured_dirty = gpu_vehicle_obscured_dirty,
+            .vehicle_obscured_dirty_levels = &gpu_vehicle_obscured_dirty_levels,
             .rebuild_seen_cache = false,
             .download_seen_cache = false,
             .download_lightmap = true,
+            .vision_block_mask = vision_transparency_block_mask(),
             .angled_sunlight_shadows = angled_sunlight_shadows,
             .direct_sunlight = m_solar.direct_active,
             .sun_dx_per_z = m_solar.dx_per_z,

@@ -188,6 +188,7 @@ static void full_map_test( const std::vector<std::string> &setup,
     std::ostringstream seen;
     std::ostringstream lm;
     std::ostringstream apparent_light;
+    std::ostringstream visibility_cache_dump;
     std::ostringstream obstructed;
     std::ostringstream floor_above;
     transparency << std::setprecision( 3 );
@@ -210,6 +211,8 @@ static void full_map_test( const std::vector<std::string> &setup,
             seen << std::setw( 6 ) << cache.seen_cache[cache.idx( p.x(), p.y() )] << ' ';
             lm << std::setw( 6 ) << cache.lm[cache.idx( p.x(), p.y() )] << ' ';
             apparent_light << std::setw( 6 ) << al.apparent_light << ' ';
+            visibility_cache_dump << std::setw( 6 )
+                                  << cache.visibility_cache[cache.idx( p.x(), p.y() )] << ' ';
             obstructed << ( al.obstructed ? '#' : '.' ) << ' ';
             floor_above << ( above_cache.floor_cache[above_cache.idx( p.x(), p.y() )] ? '#' : '.' ) << ' ';
         }
@@ -218,6 +221,7 @@ static void full_map_test( const std::vector<std::string> &setup,
         seen << '\n';
         lm << '\n';
         apparent_light << '\n';
+        visibility_cache_dump << '\n';
         obstructed << '\n';
         floor_above << '\n';
     }
@@ -232,7 +236,8 @@ static void full_map_test( const std::vector<std::string> &setup,
     INFO( "transparency:\n" << transparency.str() );
     INFO( "seen:\n" << seen.str() );
     INFO( "lm:\n" << lm.str() );
-    INFO( "apparent_light:\n" << apparent_light.str() );
+    INFO( "apparent_light_from_downloaded_seen:\n" << apparent_light.str() );
+    INFO( "visibility_cache:\n" << visibility_cache_dump.str() );
     INFO( "obstructed:\n" << obstructed.str() );
     INFO( "floor_above:\n" << floor_above.str() );
 
@@ -580,7 +585,7 @@ TEST_CASE( "vision_single_tile_skylight", "[shadowcasting][vision]" )
 {
     clear_all_state();
     /**
-     * Light shines through the single-tile hole in the roof. Apparent light should be symmetrical.
+     * Diffused sunlight through the single-tile roof opening should be symmetrical.
      */
     vision_test_case t {
         {
@@ -598,15 +603,15 @@ TEST_CASE( "vision_single_tile_skylight", "[shadowcasting][vision]" )
         },
         {
             "66666666666",
-            "66611111666",
-            "66111111166",
-            "61111111116",
-            "61111411116",
-            "61114441116",
-            "61111411116",
-            "61111111116",
-            "66111111166",
-            "66611111666",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
+            "64444444446",
             "66666666666",
         },
         midday,
@@ -664,11 +669,11 @@ TEST_CASE( "vision_see_out_of_vehicle", "[shadowcasting][vision]" )
         {
             "66666666666666666",
             "66666666666666666",
-            "66666666664111666",
-            "66666666641114666",
-            "66666666411146666",
-            "66666664111466666",
-            "66666661114666666",
+            "66666666664444666",
+            "66666666444444666",
+            "66666666444446666",
+            "66666664444466666",
+            "66666664444466666",
             "66666666666666666",
         },
         midday,
@@ -696,14 +701,14 @@ TEST_CASE( "vision_see_into_vehicle", "[shadowcasting][vision]" )
             "                 ",
         },
         {
+            "66666666666666666",
             "66666666666666664",
-            "66666666666666644",
             "66666666666666444",
             "66666666666664444",
-            "66666666666644444",
             "66666666666444444",
-            "66666666664444444",
+            "66666666666444444",
             "66666666644444444",
+            "66666666664444444",
         },
         midday,
         vision_test_flags::none,

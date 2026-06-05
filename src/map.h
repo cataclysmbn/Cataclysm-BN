@@ -2378,6 +2378,7 @@ class map : public submap_load_listener
         void generate_lightmap_worker( int zlev );
         void flush_lightmap_cpu_read_counters() const;
         void build_seen_cache( const tripoint_bub_ms &origin, int target_z );
+        auto vision_transparency_block_mask() const -> uint32_t;
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.
         void apply_vehicle_optics( const tripoint_bub_ms &origin, int target_z );

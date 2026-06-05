@@ -758,6 +758,17 @@ bool map::build_vision_transparency_cache( const Character &player )
     return dirty;
 }
 
+auto map::vision_transparency_block_mask() const -> uint32_t
+{
+    auto mask = uint32_t{ 0 };
+    for( const auto index : std::views::iota( std::size_t{ 0 }, std::size_t{ 8 } ) ) {
+        if( vision_transparency_cache[index] == VISION_ADJUST_SOLID ) {
+            mask |= uint32_t{ 1 } << index;
+        }
+    }
+    return mask;
+}
+
 void map::apply_character_light( Character &p )
 {
     if( p.has_effect( effect_onfire ) ) {

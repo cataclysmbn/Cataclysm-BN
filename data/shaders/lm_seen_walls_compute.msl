@@ -75,164 +75,234 @@ struct type_RWStructuredBuffer_float
     float _m0[1];
 };
 
-constant spvUnsafeArray<int2, 8> _64 = spvUnsafeArray<int2, 8>({ int2(0, 1), int2(0, -1), int2(1, 0), int2(1), int2(1, -1), int2(-1, 0), int2(-1, 1), int2(-1) });
+constant spvUnsafeArray<int2, 8> _67 = spvUnsafeArray<int2, 8>({ int2(0, 1), int2(0, -1), int2(1, 0), int2(1), int2(1, -1), int2(-1, 0), int2(-1, 1), int2(-1) });
 
-kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_StructuredBuffer_float& transparency_all [[buffer(1)]], device type_StructuredBuffer_float& seen_src_all [[buffer(2)]], device type_StructuredBuffer_uint& vehicle_floor_all [[buffer(3)]], device type_RWStructuredBuffer_float& seen_dst_all [[buffer(4)]], uint3 gl_WorkGroupID [[threadgroup_position_in_grid]], uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
+kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_StructuredBuffer_float& transparency_all [[buffer(1)]], device type_StructuredBuffer_float& seen_src_all [[buffer(2)]], device type_StructuredBuffer_uint& vehicle_floor_all [[buffer(3)]], device type_StructuredBuffer_uint& vehicle_obscured_all [[buffer(4)]], device type_RWStructuredBuffer_float& seen_dst_all [[buffer(5)]], uint3 gl_WorkGroupID [[threadgroup_position_in_grid]], uint3 gl_LocalInvocationID [[thread_position_in_threadgroup]])
 {
     do
     {
-        int _81 = (Constants.player_x + int((gl_WorkGroupID.x * 8u) + gl_LocalInvocationID.x)) - Constants.view_radius;
-        int _92 = (Constants.player_y + int((gl_WorkGroupID.y * 8u) + gl_LocalInvocationID.y)) - Constants.view_radius;
-        int _98 = Constants.z_start_idx + int(gl_WorkGroupID.z);
-        bool _103;
-        if (_81 >= 0)
+        int _84 = (Constants.player_x + int((gl_WorkGroupID.x * 8u) + gl_LocalInvocationID.x)) - Constants.view_radius;
+        int _95 = (Constants.player_y + int((gl_WorkGroupID.y * 8u) + gl_LocalInvocationID.y)) - Constants.view_radius;
+        int _101 = Constants.z_start_idx + int(gl_WorkGroupID.z);
+        bool _106;
+        if (_84 >= 0)
         {
-            _103 = _92 < 0;
+            _106 = _95 < 0;
         }
         else
         {
-            _103 = true;
+            _106 = true;
         }
-        bool _110;
-        if (!_103)
+        bool _113;
+        if (!_106)
         {
-            _110 = _81 >= Constants.cache_x;
+            _113 = _84 >= Constants.cache_x;
         }
         else
         {
-            _110 = true;
+            _113 = true;
         }
-        bool _117;
-        if (!_110)
+        bool _120;
+        if (!_113)
         {
-            _117 = _92 >= Constants.cache_y;
+            _120 = _95 >= Constants.cache_y;
         }
         else
         {
-            _117 = true;
+            _120 = true;
         }
-        bool _125;
-        if (!_117)
+        bool _128;
+        if (!_120)
         {
-            _125 = gl_WorkGroupID.z >= uint(Constants.dispatch_z_count);
+            _128 = gl_WorkGroupID.z >= uint(Constants.dispatch_z_count);
         }
         else
         {
-            _125 = true;
+            _128 = true;
         }
-        bool _132;
-        if (!_125)
+        bool _135;
+        if (!_128)
         {
-            _132 = _98 >= Constants.z_count;
+            _135 = _101 >= Constants.z_count;
         }
         else
         {
-            _132 = true;
+            _135 = true;
         }
-        if (_132)
+        if (_135)
         {
             break;
         }
-        int _136 = abs(_81 - Constants.player_x);
-        int _138 = abs(_92 - Constants.player_y);
-        int _142 = abs(_98 - Constants.player_z_idx);
-        int _161;
+        int _139 = abs(_84 - Constants.player_x);
+        int _141 = abs(_95 - Constants.player_y);
+        int _145 = abs(_101 - Constants.player_z_idx);
+        int _164;
         do
         {
             if (Constants.trigdist == 0u)
             {
-                _161 = max(_136, max(_138, _142));
+                _164 = max(_139, max(_141, _145));
                 break;
             }
-            _161 = int(rint(sqrt(float(((_136 * _136) + (_138 * _138)) + (_142 * _142)))));
+            _164 = int(rint(sqrt(float(((_139 * _139) + (_141 * _141)) + (_145 * _145)))));
             break;
         } while(false);
-        int _164 = _98 * Constants.cache_xy;
-        int _167 = _81 * Constants.cache_y;
-        int _169 = (_164 + _167) + _92;
-        if (_161 == 0)
+        int _167 = _101 * Constants.cache_xy;
+        int _170 = _84 * Constants.cache_y;
+        int _172 = (_167 + _170) + _95;
+        if (_164 == 0)
         {
-            seen_dst_all._m0[uint(_169)] = 1.0;
+            seen_dst_all._m0[uint(_172)] = 1.0;
             break;
         }
-        if (_161 > Constants.view_radius)
+        if (_164 > Constants.view_radius)
         {
-            seen_dst_all._m0[uint(_169)] = 0.0;
+            seen_dst_all._m0[uint(_172)] = 0.0;
             break;
         }
-        uint _180 = uint(_169);
-        float _182 = seen_src_all._m0[_180];
-        if (transparency_all._m0[_180] == 0.0383764170110225677490234375)
+        uint _183 = uint(_172);
+        float _185 = seen_src_all._m0[_183];
+        if (transparency_all._m0[_183] == 0.0383764170110225677490234375)
         {
-            seen_dst_all._m0[_180] = _182;
+            seen_dst_all._m0[_183] = _185;
             break;
         }
-        float _190;
-        _190 = _182;
-        float _191;
-        for (int _193 = 0; _193 < 8; _190 = _191, _193++)
+        float _193;
+        _193 = _185;
+        float _194;
+        for (int _196 = 0; _196 < 8; _193 = _194, _196++)
         {
-            int _200 = _81 + _64[_193].x;
-            int _203 = _92 + _64[_193].y;
-            bool _208;
-            if (_200 >= 0)
+            int _203 = _84 + _67[_196].x;
+            int _206 = _95 + _67[_196].y;
+            bool _211;
+            if (_203 >= 0)
             {
-                _208 = _203 < 0;
+                _211 = _206 < 0;
             }
             else
             {
-                _208 = true;
+                _211 = true;
             }
-            bool _215;
-            if (!_208)
+            bool _218;
+            if (!_211)
             {
-                _215 = _200 >= Constants.cache_x;
-            }
-            else
-            {
-                _215 = true;
-            }
-            bool _220;
-            if (!_215)
-            {
-                _220 = _203 >= Constants.cache_y;
+                _218 = _203 >= Constants.cache_x;
             }
             else
             {
-                _220 = true;
+                _218 = true;
             }
-            if (_220)
+            bool _223;
+            if (!_218)
             {
-                _191 = _190;
+                _223 = _206 >= Constants.cache_y;
+            }
+            else
+            {
+                _223 = true;
+            }
+            if (_223)
+            {
+                _194 = _193;
                 continue;
             }
-            uint _226 = uint((_164 + (_200 * Constants.cache_y)) + _203);
-            if (transparency_all._m0[_226] <= 0.0)
+            uint _229 = uint((_167 + (_203 * Constants.cache_y)) + _206);
+            if (transparency_all._m0[_229] <= 0.0)
             {
-                _191 = _190;
+                _194 = _193;
                 continue;
             }
-            _191 = precise::max(_190, seen_src_all._m0[_226]);
+            bool _284;
+            do
+            {
+                int _237 = _84 - _203;
+                int _238 = _95 - _206;
+                bool _245;
+                if (abs(_237) == 1)
+                {
+                    _245 = abs(_238) != 1;
+                }
+                else
+                {
+                    _245 = true;
+                }
+                if (_245)
+                {
+                    _284 = false;
+                    break;
+                }
+                bool _248 = _237 == (-1);
+                bool _252;
+                if (_248)
+                {
+                    _252 = _238 == (-1);
+                }
+                else
+                {
+                    _252 = false;
+                }
+                if (_252)
+                {
+                    _284 = (vehicle_obscured_all._m0[_229] & 1u) != 0u;
+                    break;
+                }
+                bool _263;
+                if (_237 == 1)
+                {
+                    _263 = _238 == (-1);
+                }
+                else
+                {
+                    _263 = false;
+                }
+                if (_263)
+                {
+                    _284 = (vehicle_obscured_all._m0[_229] & 2u) != 0u;
+                    break;
+                }
+                bool _273;
+                if (_248)
+                {
+                    _273 = _238 == 1;
+                }
+                else
+                {
+                    _273 = false;
+                }
+                if (_273)
+                {
+                    _284 = (vehicle_obscured_all._m0[_183] & 2u) != 0u;
+                    break;
+                }
+                _284 = (vehicle_obscured_all._m0[_183] & 1u) != 0u;
+                break;
+            } while(false);
+            if (_284)
+            {
+                _194 = _193;
+                continue;
+            }
+            _194 = precise::max(_193, seen_src_all._m0[_229]);
         }
-        bool _242;
-        if (_98 < Constants.player_z_idx)
+        bool _297;
+        if (_101 < Constants.player_z_idx)
         {
-            _242 = (_98 + 1) < Constants.z_count;
+            _297 = (_101 + 1) < Constants.z_count;
         }
         else
         {
-            _242 = false;
+            _297 = false;
         }
-        float _254;
-        if (_242)
+        float _309;
+        if (_297)
         {
-            _254 = (vehicle_floor_all._m0[uint((((_98 + 1) * Constants.cache_xy) + _167) + _92)] != 0u) ? 0.0 : _190;
+            _309 = (vehicle_floor_all._m0[uint((((_101 + 1) * Constants.cache_xy) + _170) + _95)] != 0u) ? 0.0 : _193;
         }
         else
         {
-            _254 = _190;
+            _309 = _193;
         }
-        seen_dst_all._m0[_180] = _254;
+        seen_dst_all._m0[_183] = _309;
         break;
     } while(false);
 }
