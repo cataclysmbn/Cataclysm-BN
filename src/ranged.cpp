@@ -1184,7 +1184,7 @@ static int calc_gun_volume( const item &gun )
         // Speed of sound at sea level is around 343 meters per second.
         // While it would be ideal to be based on speed of sound
         // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs
-        noise = std::min( 140, noise );
+        noise = std::min( 191, noise );
     }
     for( const auto mod : parent.gunmods() ) {
         noise += mod->type->gunmod->loudness;
