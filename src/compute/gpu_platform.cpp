@@ -221,6 +221,19 @@ auto is_recognized_software_device(gpu_device_info const& info) -> bool {
     });
 }
 
+auto compiled_gpu_drivers_to_string() -> std::string {
+    auto const count = SDL_GetNumGPUDrivers();
+    if (count <= 0) { return "(none)"; }
+
+    auto drivers = std::string{};
+    for (auto const index : std::views::iota(0, count)) {
+        auto const* const driver = SDL_GetGPUDriver(index);
+        if (!drivers.empty()) { drivers += ' '; }
+        drivers += driver != nullptr ? driver : "unknown";
+    }
+    return drivers;
+}
+
 auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevice* {
     auto const props = SDL_CreateProperties();
     if (props == 0) {
@@ -231,7 +244,28 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
 
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, false);
 #if defined(SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN)
+#if defined(__ANDROID__)
+    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN, true);
+#else
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN, false);
+#endif
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_CLIP_DISTANCE_BOOLEAN)
+    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_CLIP_DISTANCE_BOOLEAN, false);
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_DEPTH_CLAMPING_BOOLEAN)
+    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_DEPTH_CLAMPING_BOOLEAN, false);
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN)
+    SDL_SetBooleanProperty(
+        props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_INDIRECT_DRAW_FIRST_INSTANCE_BOOLEAN, false);
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN)
+    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_FEATURE_ANISOTROPY_BOOLEAN, false);
+#endif
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN)
+    SDL_SetBooleanProperty(
+        props, SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN, true);
 #endif
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
@@ -261,6 +295,9 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
 }
 
 auto software_attempts() -> std::vector<gpu_device_create_attempt> {
+#if defined(__ANDROID__)
+    return {};
+#else
     return {
         {
             .label = "vulkan software-required",
@@ -268,6 +305,7 @@ auto software_attempts() -> std::vector<gpu_device_create_attempt> {
             .require_vulkan_hardware = false,
         },
     };
+#endif
 }
 
 auto add_attempt(
@@ -295,6 +333,11 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
 
     auto attempts = std::vector<gpu_device_create_attempt>{};
     if (accel == compute_accel::software) {
+#if defined(__ANDROID__)
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: software compute acceleration is not available on Android; "
+               "hardware Vulkan 1.1 is required";
+#endif
         if (!backend.empty()) {
             add_attempt(
                 attempts,
@@ -309,13 +352,32 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
         return attempts;
     }
 
-    add_attempt(
-        attempts,
-        {
-            .label = backend.empty() ? "default hardware" : backend + " hardware",
-            .driver = backend,
-            .require_vulkan_hardware = true,
-        });
+    if (backend.empty()) {
+#if defined(__ANDROID__)
+        add_attempt(
+            attempts,
+            {
+                .label = "vulkan hardware",
+                .driver = "vulkan",
+                .require_vulkan_hardware = true,
+            });
+#endif
+        add_attempt(
+            attempts,
+            {
+                .label = "default hardware",
+                .driver = backend,
+                .require_vulkan_hardware = true,
+            });
+    } else {
+        add_attempt(
+            attempts,
+            {
+                .label = backend + " hardware",
+                .driver = backend,
+                .require_vulkan_hardware = true,
+            });
+    }
 
     if (accel != compute_accel::force) {
         if (!backend.empty() && backend != "vulkan") {
@@ -429,6 +491,8 @@ auto init() -> void {
     if (!backend_str.empty()) {
         DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override: " << backend_str;
     }
+    DebugLog(DL::Info, DC::Main)
+        << "SDL_GPU: compiled drivers=" << compiled_gpu_drivers_to_string();
 
     auto* device = static_cast<SDL_GPUDevice*>(nullptr);
     auto selected_device_info = gpu_device_info{};
@@ -450,6 +514,12 @@ auto init() -> void {
     }
 
     if (device == nullptr) {
+#if defined(__ANDROID__)
+        DebugLog(DL::Error, DC::Main)
+            << "SDL_GPU: device creation failed; Android builds require Vulkan 1.1-capable "
+               "hardware and a working system Vulkan loader";
+        return;
+#else
         auto const level =
             (accel == compute_accel::force || require_software_device) ? DL::Error : DL::Warn;
         DebugLog(level, DC::Main) << "SDL_GPU: device creation failed; install/enable a hardware "
@@ -457,6 +527,7 @@ auto init() -> void {
                                   << "a software Vulkan driver such as Lavapipe for the shader "
                                      "fallback path";
         return;
+#endif
     }
 
     const char* const driver = SDL_GetGPUDeviceDriver(device);

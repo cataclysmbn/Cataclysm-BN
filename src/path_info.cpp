@@ -288,7 +288,10 @@ std::string PATH_INFO::distraction()
 std::string PATH_INFO::savedir()
 {
 #if defined(__ANDROID__)
-    if( get_option<bool>( "LOAD_FROM_EXTERNAL" ) ) {
+    const auto load_from_external =
+        get_options().has_option( "LOAD_FROM_EXTERNAL" ) &&
+        get_option<bool>( "LOAD_FROM_EXTERNAL" );
+    if( load_from_external ) {
         return base_path_value + "/save/";
     } else {
         return savedir_value;
