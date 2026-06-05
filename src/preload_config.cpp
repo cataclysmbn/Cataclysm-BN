@@ -61,6 +61,7 @@ auto set_gpu_backend_override( std::string_view s ) -> void
 
 auto compute_accel_from_string( std::string_view s ) -> compute_accel
 {
+    if( s == "off" || s == "software" ) { return compute_accel::software; }
     if( s == "force" ) { return compute_accel::force; }
     return compute_accel::auto_select;
 }
@@ -68,6 +69,8 @@ auto compute_accel_from_string( std::string_view s ) -> compute_accel
 auto compute_accel_to_string( compute_accel val ) -> std::string_view
 {
     switch( val ) {
+        case compute_accel::software:
+            return "off";
         case compute_accel::force:
             return "force";
         default:

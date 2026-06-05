@@ -185,12 +185,16 @@ struct arg_handler {
     handler_method handler;  //!< The callback to be invoked when this argument is encountered.
 };
 
-#if defined(CATA_SDL) && !defined(TILES)
-auto init_sdl_platform() -> bool
+#if defined(CATA_SDL)
+auto init_sdl_platform( bool init_audio ) -> bool
 {
-    auto init_flags = SDL_InitFlags{ 0 };
+    auto init_flags = SDL_InitFlags{ SDL_INIT_VIDEO };
 #if defined(SDL_SOUND)
-    init_flags |= SDL_INIT_AUDIO;
+    if( init_audio ) {
+        init_flags |= SDL_INIT_AUDIO;
+    }
+#else
+    ( void )init_audio;
 #endif
 
     if( !SDL_Init( init_flags ) ) {
@@ -774,10 +778,14 @@ int main( int argc, char *argv[] )
     get_options().save();
     set_language(); // Have to set locale before initializing ncurses
 #if defined(CATA_SDL)
-    if( !test_mode && !init_sdl_platform() ) {
+    if( !init_sdl_platform( !test_mode ) ) {
         return 1;
     }
 #endif
+#elif defined(CATA_SDL)
+    if( test_mode && !init_sdl_platform( false ) ) {
+        return 1;
+    }
 #endif
 
     // in test mode don't initialize curses to avoid escape sequences being inserted into output stream
@@ -793,16 +801,17 @@ int main( int argc, char *argv[] )
             DebugLog( DL::Error, DC::Main ) << "Error while initializing the interface: " << err.what();
             return 1;
         }
-#if defined(CATA_SDL)
-        cata_gpu::init();
-        atexit( cata_gpu::shutdown );
-#endif
 #if defined(SDL_SOUND) && !defined(TILES)
         init_sound();
         atexit( shutdown_sound );
         load_soundset();
 #endif
     }
+
+#if defined(CATA_SDL)
+    cata_gpu::init();
+    atexit( cata_gpu::shutdown );
+#endif
 
 #if defined(TILES)
     if( test_mode ) {

@@ -24,6 +24,137 @@ namespace {
 
 SDL_GPUDevice* s_device = nullptr;
 
+struct gpu_device_create_attempt {
+    std::string label;
+    std::string driver;
+    bool require_vulkan_hardware = false;
+    bool prefer_low_power = false;
+};
+
+auto create_gpu_device( gpu_device_create_attempt const &attempt ) -> SDL_GPUDevice *
+{
+    auto const props = SDL_CreateProperties();
+    if( props == 0 ) {
+        DebugLog( DL::Warn, DC::Main ) << "SDL_GPU: property creation failed for "
+                                       << attempt.label << ": " << SDL_GetError();
+        return nullptr;
+    }
+
+    SDL_SetBooleanProperty( props, SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, false );
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN)
+    SDL_SetBooleanProperty( props, SDL_PROP_GPU_DEVICE_CREATE_VERBOSE_BOOLEAN, false );
+#endif
+    SDL_SetBooleanProperty( props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true );
+    SDL_SetBooleanProperty( props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true );
+    SDL_SetBooleanProperty( props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true );
+    if( attempt.prefer_low_power ) {
+        SDL_SetBooleanProperty( props, SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN, true );
+    }
+    if( !attempt.driver.empty() ) {
+        SDL_SetStringProperty( props, SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING,
+                               attempt.driver.c_str() );
+    }
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_VULKAN_REQUIRE_HARDWARE_ACCELERATION_BOOLEAN)
+    if( attempt.driver.empty() || attempt.driver == "vulkan" ) {
+        SDL_SetBooleanProperty( props,
+                                SDL_PROP_GPU_DEVICE_CREATE_VULKAN_REQUIRE_HARDWARE_ACCELERATION_BOOLEAN,
+                                attempt.require_vulkan_hardware );
+    }
+#endif
+
+    auto *const device = SDL_CreateGPUDeviceWithProperties( props );
+    auto const error = std::string{ SDL_GetError() };
+    SDL_DestroyProperties( props );
+    if( device == nullptr ) {
+        DebugLog( DL::Info, DC::Main ) << "SDL_GPU: device creation attempt failed ("
+                                       << attempt.label << "): " << error;
+    }
+    return device;
+}
+
+auto software_attempts() -> std::vector<gpu_device_create_attempt>
+{
+    return {
+        {
+            .label = "vulkan software-capable",
+            .driver = "vulkan",
+            .require_vulkan_hardware = false,
+        },
+        {
+            .label = "default software-capable",
+            .driver = "",
+            .require_vulkan_hardware = false,
+            .prefer_low_power = true,
+        },
+    };
+}
+
+auto add_attempt( std::vector<gpu_device_create_attempt> &attempts,
+                  gpu_device_create_attempt attempt ) -> void
+{
+    auto const duplicate = std::ranges::any_of( attempts, [&attempt]( auto const &existing ) {
+        return existing.driver == attempt.driver &&
+               existing.require_vulkan_hardware == attempt.require_vulkan_hardware &&
+               existing.prefer_low_power == attempt.prefer_low_power;
+    } );
+    if( !duplicate ) {
+        attempts.emplace_back( std::move( attempt ) );
+    }
+}
+
+auto make_device_attempts( preload_config::compute_accel accel,
+                           std::string backend ) -> std::vector<gpu_device_create_attempt>
+{
+    using preload_config::compute_accel;
+
+    if( backend == "auto" ) {
+        backend.clear();
+    }
+    if( backend == "software" ) {
+        accel = compute_accel::software;
+        backend.clear();
+        DebugLog( DL::Info, DC::Main )
+            << "SDL_GPU: backend override 'software' selects the software-capable policy";
+    }
+
+    auto attempts = std::vector<gpu_device_create_attempt>{};
+    if( accel == compute_accel::software ) {
+        if( !backend.empty() ) {
+            add_attempt( attempts, {
+                .label = backend + " software-capable",
+                .driver = backend,
+                .require_vulkan_hardware = false,
+                .prefer_low_power = true,
+            } );
+        }
+        for( auto attempt : software_attempts() ) {
+            add_attempt( attempts, std::move( attempt ) );
+        }
+        return attempts;
+    }
+
+    add_attempt( attempts, {
+        .label = backend.empty() ? "default hardware" : backend + " hardware",
+        .driver = backend,
+        .require_vulkan_hardware = true,
+    } );
+
+    if( accel != compute_accel::force ) {
+        if( !backend.empty() && backend != "vulkan" ) {
+            add_attempt( attempts, {
+                .label = backend + " selected",
+                .driver = backend,
+                .require_vulkan_hardware = false,
+            } );
+        }
+        for( auto attempt : software_attempts() ) {
+            add_attempt( attempts, std::move( attempt ) );
+        }
+    }
+
+    return attempts;
+}
+
 auto shader_formats_to_string(SDL_GPUShaderFormat const formats) -> std::string {
     using entry_t = std::pair<SDL_GPUShaderFormat, std::string_view>;
     static constexpr std::array<entry_t, 3> entries{{
@@ -108,6 +239,10 @@ auto probe_shader(
 auto init() -> void {
     using preload_config::compute_accel;
 
+    if( s_device != nullptr ) {
+        return;
+    }
+
     auto const accel = preload_config::get_compute_accel();
 
     auto const backend_sv = preload_config::get_gpu_backend_override();
@@ -116,13 +251,21 @@ auto init() -> void {
         DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override: " << backend_str;
     }
 
-    auto* const device = SDL_CreateGPUDevice(
-        SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL | SDL_GPU_SHADERFORMAT_MSL, false,
-        backend_str.empty() ? nullptr : backend_str.c_str());
+    auto *device = static_cast<SDL_GPUDevice *>( nullptr );
+    for( auto const &attempt : make_device_attempts( accel, backend_str ) ) {
+        device = create_gpu_device( attempt );
+        if( device != nullptr ) {
+            DebugLog( DL::Info, DC::Main ) << "SDL_GPU: selected device policy: "
+                                           << attempt.label;
+            break;
+        }
+    }
 
     if (device == nullptr) {
         auto const level = (accel == compute_accel::force) ? DL::Error : DL::Warn;
-        DebugLog(level, DC::Main) << "SDL_GPU: device creation failed: " << SDL_GetError();
+        DebugLog(level, DC::Main)
+            << "SDL_GPU: device creation failed; install/enable a hardware GPU driver or "
+            << "a software Vulkan driver such as Lavapipe for the shader fallback path";
         return;
     }
 

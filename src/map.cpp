@@ -7142,6 +7142,33 @@ auto map::update_visibility_cache( const int zlev,
 {
     ZoneScopedN( "update_visibility_cache" );
     const auto player_pos = g->u.bub_pos();
+#if defined( CATA_SDL )
+    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
+    if( gpu_device == nullptr ) {
+        debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
+        return;
+    }
+    const auto &visibility_cache_for_residency = get_cache_ref( zlev );
+    const auto visibility_cache_x = visibility_cache_for_residency.cache_x;
+    const auto visibility_cache_y = visibility_cache_for_residency.cache_y;
+    if( !cata_gpu::resident_lighting_ready_for_visibility( {
+            .device = gpu_device,
+            .cache_x = visibility_cache_x,
+            .cache_y = visibility_cache_y,
+            .z_count = OVERMAP_LAYERS,
+        } ) ) {
+        build_map_cache( zlev );
+        if( !cata_gpu::resident_lighting_ready_for_visibility( {
+                .device = gpu_device,
+                .cache_x = visibility_cache_x,
+                .cache_y = visibility_cache_y,
+                .z_count = OVERMAP_LAYERS,
+            } ) ) {
+            debugmsg( "SDL_GPU visibility residency bootstrap failed; see debug.log for details" );
+            return;
+        }
+    }
+#endif
     visibility_variables_cache.variables_set = true; // Not used yet
     visibility_variables_cache.g_light_level = static_cast<int>( g->light_level( zlev ) );
     {
@@ -7176,11 +7203,6 @@ auto map::update_visibility_cache( const int zlev,
         }
     };
 
-    SDL_GPUDevice *const gpu_device = cata_gpu::get_device();
-    if( gpu_device == nullptr ) {
-        debugmsg( "SDL_GPU visibility is required, but no GPU device is available" );
-        return;
-    }
     auto visibility_download_levels = std::vector<int> {};
     if( zlevels ) {
         std::ranges::copy( std::views::iota( -OVERMAP_DEPTH, OVERMAP_HEIGHT + 1 ),

@@ -6,6 +6,7 @@ namespace preload_config
 
 enum class compute_accel : int {
     auto_select,
+    software,
     force,
 };
 
