@@ -446,7 +446,7 @@
     "volume": "250 ml",
     "weight": "22725 g",
     "ammo_type": "120mm",
-    "damage": { "damage_type": "bullet", "amount": 4500, "armor_penetration": 5000 },
+    "damage": { "damage_type": "bullet", "amount": 3300, "armor_penetration": 2800 },
     "range": 80,
     "dispersion": 5,
     "recoil": 30,
