@@ -68,23 +68,19 @@ auto lavapipe_manifest_has_runtime(std::string const& manifest_path) -> bool {
     auto const runtime_path = sibling_path(manifest_path, "vulkan_lvp.dll");
     if (file_exist(runtime_path)) { return true; }
 
-    DebugLog(DL::Warn, DC::Main)
-        << "SDL_GPU: Lavapipe ICD manifest found without sibling vulkan_lvp.dll: "
-        << manifest_path;
+    DebugLog(DL::Warn, DC::Main) << "SDL_GPU: Lavapipe ICD manifest found without sibling "
+                                    "vulkan_lvp.dll: "
+                                 << manifest_path;
     return false;
 }
 #else
-auto lavapipe_manifest_has_runtime(std::string const&) -> bool {
-    return true;
-}
+auto lavapipe_manifest_has_runtime(std::string const&) -> bool { return true; }
 #endif
 
 auto path_for_vulkan_icd_env(std::string const& path) -> std::string {
     try {
         return std::filesystem::absolute(std::filesystem::path{path}).lexically_normal().string();
-    } catch (std::filesystem::filesystem_error const&) {
-        return path;
-    }
+    } catch (std::filesystem::filesystem_error const&) { return path; }
 }
 
 auto find_lavapipe_icd_manifest() -> std::string {
@@ -142,15 +138,15 @@ auto find_lavapipe_icd_manifest() -> std::string {
 
 auto pin_lavapipe_icd_for_software_mode() -> void {
     if (env_is_set("VK_DRIVER_FILES") || env_is_set("VK_ICD_FILENAMES")) {
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: software mode using existing Vulkan ICD environment override";
+        DebugLog(DL::Info, DC::Main) << "SDL_GPU: software mode using existing Vulkan ICD "
+                                        "environment override";
         return;
     }
 
     auto const icd_manifest = find_lavapipe_icd_manifest();
     if (icd_manifest.empty()) {
-        DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: software mode requested, but no Lavapipe ICD manifest was found";
+        DebugLog(DL::Warn, DC::Main) << "SDL_GPU: software mode requested, but no Lavapipe ICD "
+                                        "manifest was found";
         return;
     }
 
@@ -169,8 +165,8 @@ auto pin_lavapipe_icd_for_software_mode() -> void {
 
 auto get_gpu_device_info(SDL_GPUDevice* const device) -> gpu_device_info {
 #if defined(SDL_PROP_GPU_DEVICE_NAME_STRING)
-    auto const gpu_device_property_string = [](SDL_PropertiesID const props, char const* const name)
-        -> std::string {
+    auto const gpu_device_property_string =
+        [](SDL_PropertiesID const props, char const* const name) -> std::string {
         auto const* const value = SDL_GetStringProperty(props, name, "");
         return value != nullptr ? std::string{value} : std::string{};
     };
@@ -196,10 +192,10 @@ auto device_string_for_log(std::string value) -> std::string {
 }
 
 auto log_gpu_device_info(gpu_device_info const& info) -> void {
-    DebugLog(DL::Info, DC::Main)
-        << "SDL_GPU: device=" << device_string_for_log(info.name)
-        << "  driver_name=" << device_string_for_log(info.driver_name)
-        << "  driver_version=" << device_string_for_log(info.driver_version);
+    DebugLog(DL::Info, DC::Main) << "SDL_GPU: device=" << device_string_for_log(info.name)
+                                 << "  driver_name=" << device_string_for_log(info.driver_name)
+                                 << "  driver_version="
+                                 << device_string_for_log(info.driver_version);
     if (!info.driver_info.empty()) {
         DebugLog(DL::Info, DC::Main)
             << "SDL_GPU: driver_info=" << device_string_for_log(info.driver_info);
@@ -207,8 +203,8 @@ auto log_gpu_device_info(gpu_device_info const& info) -> void {
 }
 
 auto is_recognized_software_device(gpu_device_info const& info) -> bool {
-    auto const combined = info.name + " " + info.driver_name + " " + info.driver_version + " "
-        + info.driver_info;
+    auto const combined =
+        info.name + " " + info.driver_name + " " + info.driver_version + " " + info.driver_info;
     static constexpr std::array<std::string_view, 7> markers{{
         "lavapipe",
         "llvmpipe",
@@ -290,8 +286,9 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
     if (backend == "software") {
         accel = compute_accel::software;
         backend.clear();
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override 'software' selects the "
-                                        "software-required policy";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: backend override 'software' selects the "
+               "software-required policy";
     }
 
     auto attempts = std::vector<gpu_device_create_attempt>{};
@@ -439,8 +436,7 @@ auto init() -> void {
             selected_device_info = get_gpu_device_info(device);
             if (require_software_device && !is_recognized_software_device(selected_device_info)) {
                 DebugLog(DL::Warn, DC::Main)
-                    << "SDL_GPU: rejected device for software-required policy: "
-                    << attempt.label;
+                    << "SDL_GPU: rejected device for software-required policy: " << attempt.label;
                 log_gpu_device_info(selected_device_info);
                 SDL_DestroyGPUDevice(device);
                 device = nullptr;
