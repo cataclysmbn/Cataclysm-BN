@@ -138,15 +138,17 @@ auto find_lavapipe_icd_manifest() -> std::string {
 
 auto pin_lavapipe_icd_for_software_mode() -> void {
     if (env_is_set("VK_DRIVER_FILES") || env_is_set("VK_ICD_FILENAMES")) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: software mode using existing Vulkan ICD "
-                                        "environment override";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: software mode using existing Vulkan ICD "
+               "environment override";
         return;
     }
 
     auto const icd_manifest = find_lavapipe_icd_manifest();
     if (icd_manifest.empty()) {
-        DebugLog(DL::Warn, DC::Main) << "SDL_GPU: software mode requested, but no Lavapipe ICD "
-                                        "manifest was found";
+        DebugLog(DL::Warn, DC::Main)
+            << "SDL_GPU: software mode requested, but no Lavapipe ICD "
+               "manifest was found";
         return;
     }
 
