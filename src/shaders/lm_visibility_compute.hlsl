@@ -134,7 +134,7 @@ uint classify_light(
             }
             return LIT_LOW;
         }
-        if( apparent_light > vision_threshold ) {
+        if( apparent_light >= vision_threshold ) {
             return LIT_LOW;
         }
         return LIT_BLANK;
@@ -146,7 +146,7 @@ uint classify_light(
     if( apparent_light > LIGHT_AMBIENT_LIT ) {
         return LIT_LIT;
     }
-    if( apparent_light > vision_threshold ) {
+    if( apparent_light >= vision_threshold ) {
         return LIT_LOW;
     }
     return LIT_BLANK;

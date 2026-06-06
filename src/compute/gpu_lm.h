@@ -322,10 +322,18 @@ struct begin_gpu_sight_pairs_params {
     int zlev = 0;
 };
 
+struct resident_sight_pair_inputs_params {
+    SDL_GPUDevice* device = nullptr;
+    map const* m = nullptr;
+    std::vector<GpuSightPair> const* pairs = nullptr;
+    int zlev = 0;
+};
+
 struct gpu_sight_pairs_work {
     uint64_t id = 0;
 };
 
+auto resident_lighting_ready_for_sight_pairs(resident_sight_pair_inputs_params const& p) -> bool;
 auto begin_gpu_sight_pairs(SDL_GPUDevice* device, begin_gpu_sight_pairs_params const& p)
     -> gpu_sight_pairs_work;
 auto finish_gpu_sight_pairs(

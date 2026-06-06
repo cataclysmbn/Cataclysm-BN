@@ -285,7 +285,7 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
                     _312 = 1u;
                     break;
                 }
-                if (_269 > Constants.vision_threshold)
+                if (_269 >= Constants.vision_threshold)
                 {
                     _312 = 1u;
                     break;
@@ -303,7 +303,7 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
                 _312 = 3u;
                 break;
             }
-            if (_269 > Constants.vision_threshold)
+            if (_269 >= Constants.vision_threshold)
             {
                 _312 = 1u;
                 break;

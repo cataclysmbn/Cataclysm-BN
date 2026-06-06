@@ -6116,13 +6116,29 @@ auto game::monmove( const monster_activity_ai_mode mode, activity_monmove_cache 
             if( gpu_sight_device == nullptr ) {
                 debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
             } else {
-                gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
-                    .m = &m,
-                    .pairs = &gpu_pairs,
-                    .zlev = get_levz(),
-                } );
-                if( gpu_sight_work.id == 0 ) {
+                const auto sight_inputs_ready = [&]() {
+                    return cata_gpu::resident_lighting_ready_for_sight_pairs( {
+                        .device = gpu_sight_device,
+                        .m = &m,
+                        .pairs = &gpu_pairs,
+                        .zlev = get_levz(),
+                    } );
+                };
+                if( !sight_inputs_ready() ) {
+                    ZoneScopedN( "monmove_bootstrap_gpu_sight_inputs" );
+                    m.build_map_cache( get_levz() );
+                }
+                if( !sight_inputs_ready() ) {
                     debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                } else {
+                    gpu_sight_work = cata_gpu::begin_gpu_sight_pairs( gpu_sight_device, {
+                        .m = &m,
+                        .pairs = &gpu_pairs,
+                        .zlev = get_levz(),
+                    } );
+                    if( gpu_sight_work.id == 0 ) {
+                        debugmsg( "SDL_GPU sight pair dispatch failed; see debug.log for details" );
+                    }
                 }
             }
 #else

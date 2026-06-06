@@ -4265,6 +4265,47 @@ auto run_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params c
     return finish_gpu_visibility(device, work);
 }
 
+auto sight_pair_levels(std::vector<GpuSightPair> const& pairs, int const z_count)
+    -> std::vector<int> {
+    auto levels = std::vector<int>{};
+    levels.reserve(pairs.size());
+    for (auto const& pair : pairs) {
+        auto const min_z_idx = std::min(pair.from_z_idx, pair.to_z_idx);
+        auto const max_z_idx = std::max(pair.from_z_idx, pair.to_z_idx);
+        std::ranges::copy(
+            std::views::iota(min_z_idx, max_z_idx + 1)
+                | std::views::filter([z_count](int const z_idx) {
+                      return z_idx >= 0 && z_idx < z_count;
+                  })
+                | std::views::transform([](int const z_idx) { return z_idx - OVERMAP_DEPTH; }),
+            std::back_inserter(levels));
+    }
+    return sorted_unique(std::move(levels));
+}
+
+auto resident_lighting_ready_for_sight_pairs(resident_sight_pair_inputs_params const& p) -> bool {
+    if (p.device == nullptr || p.m == nullptr || p.pairs == nullptr || p.pairs->empty()) {
+        return false;
+    }
+
+    ensure_resource_device(p.device);
+
+    auto const& lc0 = p.m->get_cache_ref(p.zlev);
+    auto const cache_x = lc0.cache_x;
+    auto const cache_y = lc0.cache_y;
+    auto const z_count = OVERMAP_LAYERS;
+    reset_input_residency_for_shape(cache_x, cache_y, z_count);
+
+    auto const levels = sight_pair_levels(*p.pairs, z_count);
+    auto const& inputs = s_lighting_resources.inputs;
+    return inputs.cache_x == cache_x && inputs.cache_y == cache_y && inputs.z_count == z_count
+        && inputs.floor_valid && s_lighting_resources.floor.buffer != nullptr
+        && s_lighting_resources.transparency.buffer != nullptr
+        && std::ranges::all_of(levels, [](int const z) {
+               return transparency_level_is_valid(z);
+           });
+}
+
 auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_params const& p)
     -> gpu_sight_pairs_work {
     ZoneScopedN("begin_gpu_sight_pairs");
@@ -4288,20 +4329,7 @@ auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_pa
     auto const z_count = OVERMAP_LAYERS;
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
 
-    auto sight_levels = std::vector<int>{};
-    sight_levels.reserve(p.pairs->size());
-    for (auto const& pair : *p.pairs) {
-        auto const min_z_idx = std::min(pair.from_z_idx, pair.to_z_idx);
-        auto const max_z_idx = std::max(pair.from_z_idx, pair.to_z_idx);
-        std::ranges::copy(
-            std::views::iota(min_z_idx, max_z_idx + 1)
-                | std::views::filter([z_count](int const z_idx) {
-                      return z_idx >= 0 && z_idx < z_count;
-                  })
-                | std::views::transform([](int const z_idx) { return z_idx - OVERMAP_DEPTH; }),
-            std::back_inserter(sight_levels));
-    }
-    sight_levels = sorted_unique(std::move(sight_levels));
+    auto const sight_levels = sight_pair_levels(*p.pairs, z_count);
     auto const& inputs = s_lighting_resources.inputs;
     auto const resident_terrain_ready =
         inputs.floor_valid
