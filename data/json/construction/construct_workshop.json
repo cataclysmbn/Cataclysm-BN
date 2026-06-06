@@ -453,6 +453,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridcon_mix",
+    "group": "place_con_mix",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "con_mix", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridcon_mix"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridwelderrig",
     "group": "place_welding_rig",
     "category": "WORKSHOP",

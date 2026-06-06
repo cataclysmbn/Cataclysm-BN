@@ -1584,6 +1584,29 @@
   },
   {
     "type": "furniture",
+    "id": "f_gridcon_mix",
+    "looks_like": "con_mix",
+    "name": "grid concrete mixer",
+    "symbol": "U",
+    "description": "A portable concrete mixer bolted down and wired into a building's electrical grid.  Has a built-in heater for cold-weather use.",
+    "color": "dark_gray",
+    "move_cost_mod": -1,
+    "coverage": 10,
+    "required_str": -1,
+    "crafting_pseudo_item": "fake_gridcon_mix",
+    "examine_action": "use_furn_fake_item",
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "con_mix", "count": 1 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 16,
+      "sound": "crunch!",
+      "sound_fail": "whump.",
+      "items": [ { "item": "con_mix", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_welderrig",
     "copy-from": "f_gridwelder",
     "looks_like": "weldrig",

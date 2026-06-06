@@ -1246,6 +1246,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_con_mix",
+    "name": "Place Concrete Mixer"
+  },
+  {
+    "type": "construction_group",
     "id": "place_autoclave",
     "name": "Place Autoclave"
   },

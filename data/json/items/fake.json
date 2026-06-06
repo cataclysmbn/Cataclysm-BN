@@ -638,6 +638,16 @@
     "flags": [ "USES_GRID_POWER" ]
   },
   {
+    "id": "fake_gridcon_mix",
+    "copy-from": "fake_item",
+    "looks_like": "con_mix",
+    "type": "TOOL",
+    "name": { "str": "grid concrete mixer" },
+    "sub": "con_mix",
+    "max_charges": 2500,
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
     "id": "fake_gridforge",
     "copy-from": "fake_item",
     "type": "TOOL",
