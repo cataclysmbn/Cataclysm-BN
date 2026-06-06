@@ -21,6 +21,7 @@
 
 #include "action.h"
 #include "avatar.h"
+#include "cached_options.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "character_state_provider.h"
@@ -171,6 +172,76 @@ struct draw_zone_overlay_options {
     int alpha = 64;
     bool draw_label = true;
 };
+
+auto render_light_tint_from_packed( const uint32_t packed ) -> render_light_tint
+{
+    const auto rank = static_cast<uint8_t>( packed >> 24 );
+    const auto color_rgb = packed & 0x00ffffffu;
+    if( rank == 0 || color_rgb == 0 ) {
+        return {};
+    }
+
+    constexpr auto alpha_base = 40.0;
+    constexpr auto alpha_span = 136.0;
+    const auto rank_fraction = static_cast<double>( rank ) / 255.0;
+    const auto alpha_value = alpha_base + alpha_span * std::sqrt( rank_fraction );
+    const auto alpha = static_cast<uint8_t>( std::clamp<int>(
+                           static_cast<int>( std::lround( alpha_value ) ), 40, 176 ) );
+    return render_light_tint{
+        .color = SDL_Color{
+            .r = static_cast<uint8_t>( color_rgb >> 16 ),
+            .g = static_cast<uint8_t>( color_rgb >> 8 ),
+            .b = static_cast<uint8_t>( color_rgb ),
+            .a = alpha
+        },
+        .alpha = alpha
+    };
+}
+
+struct colored_light_tint_options {
+    map &here;
+    const tile_search_params &tile;
+    const tripoint_bub_ms &pos;
+    lit_level ll = lit_level::DARK;
+    bool apply_visual_effects = false;
+    bool as_independent_entity = false;
+    int overlay_count = 0;
+    bool nv_goggles = false;
+    bool env_goggles = false;
+};
+
+auto colored_light_tint_for_tile( const colored_light_tint_options &opt ) -> render_light_tint
+{
+    if( !colored_lighting || opt.as_independent_entity || opt.tile.category == C_OVERMAP_TERRAIN ||
+        opt.tile.category == C_OVERMAP_WEATHER || opt.ll == lit_level::MEMORIZED ||
+        opt.ll == lit_level::BLANK ) {
+        return {};
+    }
+    if( opt.apply_visual_effects &&
+        ( opt.nv_goggles || opt.env_goggles || g->u.is_underwater() ) ) {
+        return {};
+    }
+    if( !opt.here.inbounds( opt.pos ) ) {
+        return {};
+    }
+
+    const auto &lc = opt.here.get_cache_ref( opt.pos.z() );
+    if( !lc.colored_light_cache_active || !lc.inbounds( opt.pos.xy() ) ) {
+        return {};
+    }
+    if( opt.tile.category == C_TERRAIN && opt.here.ter( opt.pos ) == t_open_air ) {
+        return {};
+    }
+    if( opt.tile.category == C_VEHICLE_PART && opt.overlay_count <= 0 && opt.pos.z() < OVERMAP_HEIGHT ) {
+        const auto &above = opt.here.get_cache_ref( opt.pos.z() + 1 );
+        if( above.inbounds( opt.pos.xy() ) &&
+            above.vehicle_floor_cache[above.idx( opt.pos.x(), opt.pos.y() )] ) {
+            return {};
+        }
+    }
+
+    return render_light_tint_from_packed( lc.colored_light_cache[lc.idx( opt.pos.x(), opt.pos.y() )] );
+}
 
 void draw_zone_overlay( const draw_zone_overlay_options &opt )
 {
@@ -4417,6 +4488,17 @@ bool cata_tiles::draw_from_id_string(
     // TODO: faster solution here
     unsigned int seed = 0;
     map &here = get_map();
+    const auto light_tint = colored_light_tint_for_tile( {
+        .here = here,
+        .tile = tile,
+        .pos = pos,
+        .ll = ll,
+        .apply_visual_effects = apply_visual_effects,
+        .as_independent_entity = as_independent_entity,
+        .overlay_count = overlay_count,
+        .nv_goggles = nv_goggles_activated,
+        .env_goggles = env_goggles_activated,
+    } );
     // TODO: determine ways other than category to differentiate more types of sprites
     switch( tile.category ) {
         case C_TERRAIN:
@@ -4567,14 +4649,15 @@ bool cata_tiles::draw_from_id_string(
         && overmap_transparency ) {
         draw_sprite_at( display_tile, screen_pos, loc_rand, /*fg:*/ true,
                         true_rota, fg_tint, ll, apply_visual_effects,
-                        base_overlay_alpha * overlay_count, &height_3d, retract );
+                        base_overlay_alpha * overlay_count, &height_3d, retract,
+                        TILESET_NO_WARP, light_tint );
         return true;
     }
 
     //draw it!
     draw_tile_at( display_tile, screen_pos, loc_rand, true_rota,
                   bg_tint, fg_tint, ll, apply_visual_effects, height_3d,
-                  base_overlay_alpha * overlay_count, retract );
+                  base_overlay_alpha * overlay_count, retract, light_tint );
 
     return true;
 }
@@ -4608,7 +4691,8 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
                                  unsigned int loc_rand, bool is_fg, int rota,
                                  const tint_config &tint, lit_level ll,
                                  bool apply_visual_effects, int overlay_count,
-                                 int *height_3d, int retract, size_t warp_hash )
+                                 int *height_3d, int retract, size_t warp_hash,
+                                 const render_light_tint &light_tint )
 {
 
 
@@ -4724,12 +4808,40 @@ bool cata_tiles::draw_sprite_at( const tile_type &tile, point_bub_ms p,
     destination.w = width * tile_width * tile.pixelscale / tileset_ptr->get_tile_width();
     destination.h = height * tile_height * tile.pixelscale / tileset_ptr->get_tile_height();
 
+    const auto should_apply_light_tint = light_tint.has_value() &&
+                                         ( fx_type == tileset_fx_type::none ||
+                                           fx_type == tileset_fx_type::shadow );
+
+    auto render_dynamic_light_tint = [&]( const int rotation, const SDL_FlipMode flip ) {
+        uint8_t old_r = 255;
+        uint8_t old_g = 255;
+        uint8_t old_b = 255;
+        uint8_t old_alpha = 255;
+        SDL_BlendMode old_blend_mode = SDL_BLENDMODE_BLEND;
+        sprite_tex->get_color_mod( &old_r, &old_g, &old_b );
+        sprite_tex->get_alpha_mod( &old_alpha );
+        sprite_tex->get_blend_mode( &old_blend_mode );
+
+        sprite_tex->set_blend_mode( SDL_BLENDMODE_BLEND );
+        sprite_tex->set_color_mod( light_tint.color.r, light_tint.color.g, light_tint.color.b );
+        sprite_tex->set_alpha_mod( light_tint.alpha );
+        const auto ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+
+        sprite_tex->set_color_mod( old_r, old_g, old_b );
+        sprite_tex->set_alpha_mod( old_alpha );
+        sprite_tex->set_blend_mode( old_blend_mode );
+        return ret;
+    };
+
     auto render = [&]( const int rotation, const SDL_FlipMode flip ) {
         int ret = 0;
 
         // UV warping is now handled in get_or_default, so we just render normally
         sprite_tex->set_alpha_mod( 255 );
         ret = sprite_tex->render_copy_ex( renderer, &destination, rotation, nullptr, flip );
+        if( should_apply_light_tint && !render_dynamic_light_tint( rotation, flip ) ) {
+            ret = 0;
+        }
 
         if( !static_z_effect && overlay_count > 0 ) {
             const auto [overlay_tex, overlay_warp_offset] =
@@ -4841,12 +4953,15 @@ bool cata_tiles::draw_tile_at( const tile_type &tile, point_bub_ms p,
                                const tint_config &bg_tint,
                                const tint_config &fg_tint, lit_level ll,
                                bool apply_visual_effects, int &height_3d,
-                               int overlay_count, int retract )
+                               int overlay_count, int retract,
+                               const render_light_tint &light_tint )
 {
     draw_sprite_at( tile, p, loc_rand, /*fg:*/ false, rota, bg_tint, ll,
-                    apply_visual_effects, overlay_count, nullptr, retract );
+                    apply_visual_effects, overlay_count, nullptr, retract,
+                    TILESET_NO_WARP, light_tint );
     draw_sprite_at( tile, p, loc_rand, /*fg:*/ true, rota, fg_tint, ll,
-                    apply_visual_effects, overlay_count, &height_3d, retract );
+                    apply_visual_effects, overlay_count, &height_3d, retract,
+                    TILESET_NO_WARP, light_tint );
     return true;
 }
 
@@ -5513,21 +5628,9 @@ bool cata_tiles::draw_vpart( const tripoint_bub_ms &p, lit_level ll, int &height
                     use_if_brighter( lit_level_for_light( cache.lm[cache.idx( x, y )] ) );
                 }
             };
+            sample_level( p.z(), p.x(), p.y() );
             if( p.z() < OVERMAP_HEIGHT ) {
                 sample_level( p.z() + 1, p.x(), p.y() );
-            }
-            constexpr auto roof_light_sample_radius = 3;
-            for( const auto dx : std::views::iota( -roof_light_sample_radius,
-                                                   roof_light_sample_radius + 1 ) ) {
-                for( const auto dy : std::views::iota( -roof_light_sample_radius,
-                                                       roof_light_sample_radius + 1 ) ) {
-                    const auto sample_x = p.x() + dx;
-                    const auto sample_y = p.y() + dy;
-                    sample_level( p.z(), sample_x, sample_y );
-                    if( p.z() < OVERMAP_HEIGHT ) {
-                        sample_level( p.z() + 1, sample_x, sample_y );
-                    }
-                }
             }
             return best;
         };

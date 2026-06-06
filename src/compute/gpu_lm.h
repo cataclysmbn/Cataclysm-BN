@@ -35,6 +35,22 @@ struct GpuLightSource {
 };
 static_assert(sizeof(GpuLightSource) == 48);
 
+struct GpuColoredLightSource {
+    int32_t x;
+    int32_t y;
+    int32_t z_idx;
+    uint32_t flags;
+    float luminance;
+    float radius;
+    float dir_x;
+    float dir_y;
+    float cone_cos;
+    float z_frac;
+    uint32_t color_rgb;
+    uint32_t _pad;
+};
+static_assert(sizeof(GpuColoredLightSource) == 48);
+
 // ---------------------------------------------------------------------------
 // lm_ambient_push_constants
 // Uniform data for the ambient initialisation pass.

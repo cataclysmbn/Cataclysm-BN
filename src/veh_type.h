@@ -218,6 +218,7 @@ class vpart_info
         nc_color color_broken = c_light_gray;
 
         RGBColorPair default_color = {};
+        std::optional<RGBColor> light_color;
         /**
          * Symbol of part which will be translated as follows:
          * y, u, n, b to NW, NE, SE, SW lines correspondingly

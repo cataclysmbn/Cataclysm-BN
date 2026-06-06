@@ -1395,6 +1395,7 @@ void map_data_common_t::load( const JsonObject &jo, const std::string &src )
     mandatory( jo, was_loaded, "description", description );
     optional( jo, was_loaded, "message", message );
     optional( jo, was_loaded, "prompt", prompt );
+    assign( jo, "light_color", light_color, is_json_check_strict( src ) );
 
     assign( jo, "flags", flags );
     assign( jo, "default_vars", default_vars );

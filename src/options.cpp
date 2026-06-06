@@ -2107,6 +2107,17 @@ void options_manager::add_options_graphics()
          true, COPT_CURSES_HIDE
        );
 
+#if defined(__ANDROID__)
+    const auto default_colored_lighting = false;
+#else
+    const auto default_colored_lighting = true;
+#endif
+    add( "COLORED_LIGHTING", graphics, translate_marker( "Colored lighting" ),
+         translate_marker( "If true, map tiles and entities can be tinted by colored light sources." ),
+         default_colored_lighting, COPT_CURSES_HIDE
+       );
+    get_option( "COLORED_LIGHTING" ).setPrerequisite( "USE_TILES" );
+
     add( "TILES", graphics, translate_marker( "Choose tileset" ),
          translate_marker( "Choose the tileset you want to use." ),
          build_tilesets_list(), "UNDEAD_PEOPLE_BASE", COPT_CURSES_HIDE
@@ -4301,9 +4312,11 @@ void options_manager::cache_to_globals()
     trigdist = ::get_option<bool>( "CIRCLEDIST" );
 #if defined(TILES)
     use_tiles = ::get_option<bool>( "USE_TILES" );
+    colored_lighting = use_tiles && ::get_option<bool>( "COLORED_LIGHTING" );
     use_tiles_overmap = ::get_option<bool>( "USE_TILES_OVERMAP" );
 #else
     use_tiles = false;
+    colored_lighting = false;
     use_tiles_overmap = false;
 #endif
     use_pinyin_search = ::get_option<bool>( "USE_PINYIN_SEARCH" );

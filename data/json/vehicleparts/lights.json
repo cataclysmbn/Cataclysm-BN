@@ -34,6 +34,7 @@
     "symbol": "*",
     "broken_symbol": "*",
     "color": "light_blue",
+    "light_color": "#b8ffc0",
     "durability": 20,
     "description": "A bright light, self-powered by an atomic decay reaction that never stops.  When turned on, it illuminates several squares inside the vehicle.",
     "bonus": 30,
@@ -230,6 +231,7 @@
     "item": "light_emergency_blue",
     "color": "blue",
     "broken_color": "blue",
+    "light_color": "#7fa6ff",
     "rotating_light": { "phase": 90 },
     "extend": { "flags": [ "EVENTURN" ] }
   },
@@ -241,6 +243,7 @@
     "item": "light_emergency_red",
     "color": "red",
     "broken_color": "red",
+    "light_color": "#ff7f7f",
     "rotating_light": { "phase": 0 },
     "extend": { "flags": [ "ODDTURN" ] }
   },

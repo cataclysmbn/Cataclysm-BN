@@ -529,6 +529,7 @@ void vpart_info::load( const JsonObject &jo, const std::string &src )
     assign( jo, "floor_bedding_warmth", def.floor_bedding_warmth );
     assign( jo, "bonus_fire_warmth_feet", def.bonus_fire_warmth_feet );
     assign( jo, "default_color", def.default_color );
+    assign( jo, "light_color", def.light_color );
 
     if( jo.has_member( "transform_terrain" ) ) {
         JsonObject jttd = jo.get_object( "transform_terrain" );

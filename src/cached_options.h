@@ -29,6 +29,8 @@ extern bool json_report_strict;
  * but can be toggled in sdl build.
  */
 extern bool use_tiles;
+/** Render-only colored light tinting. Always false for non-TILES builds. */
+extern bool colored_lighting;
 
 /**
  * Enable pinyin-based fallback matching for Chinese search text.

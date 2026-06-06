@@ -11321,6 +11321,7 @@ level_cache::level_cache( int mx, int my )
       seen_cache( static_cast<size_t>( mx * my ), 0.0f ),
       camera_cache( static_cast<size_t>( mx * my ), 0.0f ),
       visibility_cache( static_cast<size_t>( mx * my ), lit_level::DARK ),
+      colored_light_cache( static_cast<size_t>( mx * my ), 0u ),
       map_memory_seen_cache( static_cast<size_t>( mx * my ) ),
       veh_exists_at( static_cast<size_t>( mx * my ), false ),
       absorption_cache( static_cast<size_t>( mx * my ), 0 ),

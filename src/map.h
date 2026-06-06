@@ -420,6 +420,9 @@ struct level_cache {
     // stores resulting apparent brightness to player, calculated by map::apparent_light_at
     std::vector<lit_level>          visibility_cache;
 
+    std::vector<uint32_t>           colored_light_cache;
+    bool colored_light_cache_active = false;
+
     // per-tile map-memory seen bitset (size: cache_x * cache_y), indexed [x + y * cache_x]
     cata_dynamic_bitset             map_memory_seen_cache;
 
