@@ -2441,26 +2441,22 @@ void sounds::process_sounds_npc()
             bool is_deaf = who.is_deaf();
             const auto &loc = who.bub_pos();
             const auto &level_cache = map.get_cache_ref( loc.z() );
-            const float volume_multiplier = who.hearing_ability();
+            const auto &volume_multiplier = who.hearing_ability();
             // Deafening is based on the loudest volume at that tile.
             // A deaf npc might not "hear" the deafening sound but still suffer additional hearing loss.
             // The average pain threshold is generally taken as 120dB.
             // The maximum threshold for pain and garunteed instant hearing loss is generally taken as 140dB spl
             // The NIOSH daily safe exposure for 115dB sounds is ~28 seconds, 120dB sounds have a daily safe exposure of less than 2 seconds.
             // Deafening in game is temporary, and effectively simulates the ear being unable to distinguish any sound due to spontaneous damage.
-            // Threshold for instant hearing loss is 12000mdB
-            // Volume for garunteed deafening is 14000mdB
-            const short deafening_threshold = std::max( 0.0f,
-                                              std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
-            const short deafening_garuntee = std::max( 0.0f,
-                                             std::floor( 14000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
+            // Deafening now handled in character to consolidate behavior between NPCs an the avatar.
+
             // How far below ambient can this character hear? Default of 20dB, caps out at 30dB below ambient for sanity.
             // The player character gets a better calc, but these are NPCs and we dont love them enough.
             const short below_ambient = std::min( 3000.0f,
                                                   ( std::floor( 1500 + 500 * volume_multiplier ) ) );
 
-            const auto charx = loc.x();
-            const auto chary = loc.y();
+            const auto &charx = loc.x();
+            const auto &chary = loc.y();
             const auto npc_indoors = !level_cache.outside_cache[level_cache.idx( charx, chary )];
             const auto ambient_vol = ambient( loc.z(), npc_indoors );
             // Passive sound dampening reduces all heard volume by a set amount, but protects against hearing loss by 2x this amount.
@@ -2471,7 +2467,7 @@ void sounds::process_sounds_npc()
             // Passive sound dampening reduces the "heard" volume of all sounds, including ambient volume.
             // In a perfect simulation most hearing protection absorbs high frequency sounds much more than low frequency sounds.
             // We cap our minimum at 10dB to prevent underground NPCs from hearing everything everywhere on the entire map.
-            const short min_vol = std::max( 1000, ( ambient_vol - below_ambient + passive_sound_dampening ) );
+            const short min_vol = std::max( 1000, ( ambient_vol - below_ambient + passive_sound_dampening + who.total_hearing_loss() ) );
             const short npc_t_absorb = level_cache.absorption_cache[level_cache.idx( charx, chary )];
 
             // dBspl is a root-mean-square value so while all the volumes in the tile should be cumulative,
@@ -2479,8 +2475,9 @@ void sounds::process_sounds_npc()
             // In general practice unless there are only 20+ copies of the same sound in a tile the volume is dominated by the loudest sound volume.
             // 100dB + 20dB + 80dB +70dB = ~101dB  So we just take the loudest.
             for( auto &element : sound_vector ) {
-                //Skip sounds that NPCs have already heard, if for whatever reason they manage to hear such a sound.
-                if( element.heard_by_npcs ) {
+                // Skip sounds that NPCs have already heard, if for whatever reason they manage to hear such a sound.
+                // Or if their eardrums have been blown out.
+                if( element.heard_by_npcs || who.hearing_loss_stats.ruptured_eardrums ) {
                     continue;
                 }
                 const auto &average_t_absorp = ( npc_t_absorb == 0 &&
@@ -2489,13 +2486,9 @@ void sounds::process_sounds_npc()
                 // Do an early filter for sounds that would always be indaudible.
                 // Check to see if the NPC is deaf here as well, as we may deafen them part way through the process.
                 const auto tile_vol = svol_at( element, who.bub_pos(), average_t_absorp,
-                                               npc_indoors, who.sees( element.origin ) );
+                                               npc_indoors, who.sees( element.origin , element.from_player ) );
 
-                if( tile_vol <= min_vol ) {
-                    continue;
-                }
-
-                if( tile_vol  > min_vol && !who.is_deaf() ) {
+                if( tile_vol  > min_vol && !is_deaf ) {
 
                     // We only want to feed NPC AI sounds they should react to.
                     // This is more than a bit hackey and gives the NPCs a bit of omniscience,
@@ -2508,42 +2501,17 @@ void sounds::process_sounds_npc()
                 }
                 // Deafening is based on the felt volume, as an NPC may be too deaf to
                 // hear the deafening sound but still suffer additional hearing loss.
-                // Threshold for instant hearing loss is 14000mdB
-                // Volume for garunteed deafening is 17000mdB
                 if( tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening )  >=
-                    deafening_threshold ) {
-                    const bool is_sound_deafening = ( tile_vol - ( ( passive_sound_dampening * 2 ) +
-                                                      active_sound_dampening ) )
-                                                    >= rng( deafening_threshold, deafening_garuntee );
+                    8500 ) {
+                    const short def_vol = tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening );
+                    who.handle_hearing_loss(def_vol,true);
 
-                    // Deaf NPCs hear no sound, but still are at risk of additional hearing loss.
-                    if( is_deaf ) {
-                        if( is_sound_deafening && !who.is_immune_effect( effect_deaf ) ) {
-                            who.add_effect( effect_deaf, std::min( 4_minutes,
-                                                                   time_duration::from_turns( mdBspl_to_dBspl( tile_vol - ( ( passive_sound_dampening * 2 ) +
-                                                                           active_sound_dampening ) ) - 130 ) ) );
-                            if( !who.has_trait( trait_id( "NOPAIN" ) ) ) {
-                                if( who.get_pain() < 10 ) {
-                                    who.mod_pain( rng( 0, 2 ) );
-                                }
-                            }
-                        }
-
-                    }
-
-                    if( is_sound_deafening && !who.is_immune_effect( effect_deaf ) ) {
-                        const time_duration deafness_duration = time_duration::from_turns( mdBspl_to_dBspl(
-                                tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening ) ) - 130 );
-                        who.add_effect( effect_deaf, deafness_duration );
-                        if( who.is_deaf() && !is_deaf ) {
-                            is_deaf = true;
-
-                        }
-                    }
                 }
+
             }
 
         }
+
     }
     // Set our current sound caches to heard_by_npcs instead of doing it repeatedly with each NPC.
     for( auto &element : sound_vector ) {
@@ -2596,12 +2564,7 @@ void sounds::process_sound_markers( Character *who )
     // The maximum threshold for pain and garunteed instant hearing loss is generally taken as 140dB spl
     // The NIOSH daily safe exposure for 115dB sounds is ~28 seconds, 120dB sounds have a daily safe exposure of less than 2 seconds.
     // Deafening in game is temporary, and effectively simulates the ear being unable to distinguish any sound due to spontaneous damage.
-    // Threshold for instant hearing loss is 12000mdB
-    // Volume for garunteed deafening is 14000mdB
-    const short deafening_threshold = std::max( 0.0f,
-                                      std::floor( 12000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
-    const short deafening_garuntee = std::max( 0.0f,
-                                     std::floor( 14000 - ( 200 * ( volume_multiplier - 1 ) ) ) ) ;
+    // Deafening is now handled in character to consolidate behavior between NPCs and the avatar.
 
     // Lets figure out our loudest volume in tile, and a few other bits of diagnostic information.
     short loudest_vol = 0;
@@ -2625,13 +2588,17 @@ void sounds::process_sound_markers( Character *who )
         // Skip sounds the player has already heard.
         if( element.heard_by_player ) {
             continue;
-        }
+        } 
+
         num_sounds_checked++;
         const int distance_to_sound = rl_dist( loc, element.origin );
+
         if( element.approximate_minvol_distance >= distance_to_sound ) {
+
             num_sounds_in_minvol_dist++;
         }
         if( element.in_envelope( loc.xy() ) ) {
+
             num_sound_in_envelope++;
         }
         // And set the sound as having been heard by the player, before we potentially skip it for volume reasons.
@@ -2643,6 +2610,11 @@ void sounds::process_sound_markers( Character *who )
                      element.sound.description, element.sound.origin.x(), element.sound.origin.y(),
                      element.sound.origin.z(),
                      element.sound.volume );
+            continue;
+        }
+
+        if ( who->hearing_loss_stats.ruptured_eardrums  ){
+            // We have already blown out the players eardrums, nothing more to check here.
             continue;
         }
         const short average_t_absorp = ( player_t_absorp == 0 &&
@@ -2681,38 +2653,13 @@ void sounds::process_sound_markers( Character *who )
             // Passive sound dampening counts 2x for protecting against hearing loss compared to is normal volume adjustment to approximate hearing protection working more effectively against harmful high frequency sounds.
             const short deafening_vol = std::max( 0,
                                                   tile_vol - ( active_sound_dampening + passive_sound_dampening + passive_sound_dampening ) );
-            const bool is_sound_deafening =  deafening_vol >= rng( deafening_threshold, deafening_garuntee );
-            if( is_sound_deafening ) {
 
-                // A deaf player hear no sound, but they are still at risk of additional hearing loss.
-                if( is_deaf ) {
-                    if( is_sound_deafening && !who->is_immune_effect( effect_deaf ) ) {
-                        who->add_effect( effect_deaf, std::min( 4_minutes,
-                                                                time_duration::from_turns( mdBspl_to_dBspl( deafening_vol ) - 130 ) ) );
-                        if( !who->has_trait( trait_id( "NOPAIN" ) ) ) {
-                            who->add_msg_if_player( m_bad, _( "Your eardrums suddenly ache!" ) );
-                            if( who->get_pain() < 10 ) {
+            who->handle_hearing_loss( deafening_vol, true);
 
-                                who->mod_pain( rng( 0, 2 ) );
-                            }
-                        }
-                    }
-                    continue;
-                }
-
-                if( is_sound_deafening && !who->is_immune_effect( effect_deaf ) ) {
-                    const time_duration deafness_duration = time_duration::from_turns( mdBspl_to_dBspl(
-                            deafening_vol ) - 130 );
-                    who->add_effect( effect_deaf, deafness_duration );
-                    if( who->is_deaf() && !is_deaf ) {
-                        is_deaf = true;
-                        continue;
-                    }
-                }
-            }
             if( is_deaf ) {
                 continue;
             }
+
             // Secure the flag before wake_up() clears the effect
             bool slept_through = who->has_effect( effect_slept_through_alarm );
             // Grab the decibel value of our adjusted vol for use with comparisons etc.
@@ -2845,7 +2792,7 @@ void sounds::process_sound_markers( Character *who )
              num_sounds_checked, num_sounds_in_minvol_dist, num_sound_in_envelope, ambient_vol, vol_threshold );
     if( loudest_vol > 0 ) {
         add_msg( m_debug,
-                 _( "Loudest Sound: Description:[%1s], Origin vol:%i dB at [%i:%i:%i], Minvol distance:%i, Floodfill radius:%i" ),
+                 _( "Loudest Heard Sound: Description:[%1s], Origin vol:%i dB at [%i:%i:%i], Minvol distance:%i, Floodfill radius:%i" ),
                  loudest_sound_dummy.description, loudest_sound_dummy.volume, loudest_sound_dummy.origin.x(),
                  loudest_sound_dummy.origin.y(), loudest_sound_dummy.origin.z(), loudest_sound_minvol_radius,
                  loudest_sound_flood_radius );
