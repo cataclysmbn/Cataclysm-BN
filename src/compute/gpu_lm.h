@@ -123,7 +123,7 @@ static_assert(sizeof(lm_seen_push_constants) == 64);
 // ---------------------------------------------------------------------------
 // lm_visibility_push_constants
 // Uniform data for final apparent-light classification.
-// 64 bytes.
+// 80 bytes.
 // ---------------------------------------------------------------------------
 struct lm_visibility_push_constants {
     int32_t player_x;              //  4 bytes
@@ -140,10 +140,12 @@ struct lm_visibility_push_constants {
     float vision_threshold;        //  4 bytes = 48
     float visibility_scale_factor; //  4 bytes
     float visible_threshold;       //  4 bytes
-    int32_t z_start_idx;           //  4 bytes
-    int32_t dispatch_z_count;      //  4 bytes = 64
+    float detail_range;            //  4 bytes
+    int32_t z_start_idx;           //  4 bytes = 64
+    int32_t dispatch_z_count;      //  4 bytes
+    uint32_t _pad[3];              // 12 bytes = 80
 };
-static_assert(sizeof(lm_visibility_push_constants) == 64);
+static_assert(sizeof(lm_visibility_push_constants) == 80);
 
 // ---------------------------------------------------------------------------
 // Compute a conservative dispatch radius from source luminance.
@@ -277,6 +279,7 @@ struct run_gpu_visibility_params {
     int u_unimpaired_range;
     float vision_threshold;
     float visibility_scale_factor;
+    float detail_range;
     uint32_t vision_block_mask = 0;
     bool rebuild_seen_cache = false;
 };

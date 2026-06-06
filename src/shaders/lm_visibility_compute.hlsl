@@ -32,8 +32,12 @@ cbuffer Constants : register(b0, space2)
     float vision_threshold;
     float visibility_scale_factor;
     float visible_threshold;
+    float detail_range;
     int   z_start_idx;
     int   dispatch_z_count;
+    int   _pad0;
+    int   _pad1;
+    int   _pad2;
 };
 
 StructuredBuffer<float> transparency_all : register(t0, space0);
@@ -112,19 +116,20 @@ float visible_surface_light( int x, int y, int z )
     return best;
 }
 
-float tile_visibility( int idx )
-{
-    return max( seen_all[idx], asfloat( camera_all[idx] ) );
-}
-
 uint classify_light(
-    int dist, bool obstructed, float apparent_light, bool source_light )
+    int dist, bool obstructed, float apparent_light, bool source_light, bool camera_visible )
 {
     if( dist > u_unimpaired_range ) {
         if( !obstructed && source_light ) {
             return LIT_BRIGHT_ONLY;
         }
         return LIT_DARK;
+    }
+    if( (float)dist > detail_range && !camera_visible ) {
+        if( !obstructed && source_light ) {
+            return LIT_BRIGHT_ONLY;
+        }
+        return LIT_BLANK;
     }
 
     if( obstructed ) {
@@ -181,7 +186,8 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
         return;
     }
 
-    float vis = tile_visibility( idx );
+    float camera_vis = asfloat( camera_all[idx] );
+    float vis = max( seen_all[idx], camera_vis );
     bool obstructed = vis <= visible_threshold;
     float scaled_vis = scaled_visibility_for_view_distance( vis );
     bool opaque = is_opaque( x, y, z );
@@ -194,5 +200,6 @@ void main( uint3 dispatch_id : SV_DispatchThreadID )
     }
 
     visibility_all[idx] =
-        classify_light( dist, obstructed, apparent_light, source_map_all[idx] > 0.0 );
+        classify_light( dist, obstructed, apparent_light, source_map_all[idx] > 0.0,
+                        camera_vis > LIGHT_TRANSPARENCY_SOLID );
 }

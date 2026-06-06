@@ -2584,6 +2584,17 @@ void options_manager::add_options_performance()
                                "Larger values increase the loaded area and memory usage; "
                                "smaller values reduce both. " ),
              0, REALITY_BUBBLE_SIZE_MAX, is_android ? 4 : 6 );
+        add( "VISIBILITY_SCALING", page_id,
+             translate_marker( "Visibility Scaling" ),
+             translate_marker( "Controls how clear-air visibility attenuation scales with the reality bubble.  "
+                               "Perfect scales directly with the current bubble size.  Smart keeps visibility "
+                               "near the size 6 baseline while still giving small bubbles less range and large "
+                               "bubbles more range.  None keeps visibility at the size 6 baseline and only uses "
+                               "bubble size as a hard view cap." ), {
+                 { "perfect", translate_marker( "Perfect Scale" ) },
+                 { "smart", translate_marker( "Smart Scale" ) },
+                 { "none", translate_marker( "No Scale" ) }
+             }, "smart" );
         add( "LAZY_BORDER", page_id,
              translate_marker( "Pre-load Border" ),
              translate_marker( "Preload a one-overmap-tile border around the reality bubble over several turns.  "
@@ -4349,6 +4360,12 @@ void options_manager::cache_to_globals()
     // corresponding options are commented out above.
     reality_bubble_fire_spread = false;
     fire_spread_submap_cap = 0;
+    {
+        const auto opt = ::get_option<std::string>( "VISIBILITY_SCALING" );
+        visibility_scaling = opt == "perfect" ? visibility_scaling_mode::perfect
+                             : opt == "none" ? visibility_scaling_mode::no_scale
+                             : visibility_scaling_mode::smart;
+    }
 
     {
         const auto psl_str = ::get_option<std::string>( "POCKET_SIMULATION_LEVEL" );

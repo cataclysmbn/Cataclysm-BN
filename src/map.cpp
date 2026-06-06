@@ -7192,20 +7192,7 @@ auto map::update_visibility_cache( const int zlev,
         }
     }
 #endif
-    visibility_variables_cache.variables_set = true; // Not used yet
-    visibility_variables_cache.g_light_level = static_cast<int>( g->light_level( zlev ) );
-    {
-        const level_cache &plr_ch = get_cache_ref( player_pos.z() );
-        visibility_variables_cache.vision_threshold = g->u.get_vision_threshold(
-                    plr_ch.lm[plr_ch.idx( player_pos.x(), player_pos.y() )] );
-    }
-
-    visibility_variables_cache.u_clairvoyance = g->u.clairvoyance();
-    visibility_variables_cache.u_unimpaired_range = g->u.unimpaired_range();
-    visibility_variables_cache.u_sight_impaired = g->u.sight_impaired();
-    visibility_variables_cache.u_is_boomered = g->u.has_effect( effect_boomered );
-    visibility_variables_cache.visibility_scale_factor =
-        60.0f / static_cast<float>( g_max_view_distance );
+    visibility_variables_cache = make_visibility_variables( zlev );
 
 #if defined( CATA_SDL )
     auto const mark_overmap_seen_from_visibility = [this]( const level_cache & vc_cache ) {
@@ -7246,6 +7233,7 @@ auto map::update_visibility_cache( const int zlev,
         .u_unimpaired_range = visibility_variables_cache.u_unimpaired_range,
         .vision_threshold = visibility_variables_cache.vision_threshold,
         .visibility_scale_factor = visibility_variables_cache.visibility_scale_factor,
+        .detail_range = visibility_variables_cache.detail_range,
         .vision_block_mask = vision_transparency_block_mask(),
         .rebuild_seen_cache = rebuild_seen_cache,
     } );

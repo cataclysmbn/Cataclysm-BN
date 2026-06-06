@@ -230,6 +230,8 @@ static void full_map_test( const std::vector<std::string> &setup,
     INFO( "origin: " << origin );
     INFO( "player: " << player_character.bub_pos() );
     INFO( "unimpaired_range: " << player_character.unimpaired_range() );
+    INFO( "visibility_range: " << vvcache.visibility_range );
+    INFO( "detail_range: " << vvcache.detail_range );
     INFO( "vision_threshold: " << vvcache.vision_threshold );
     INFO( "time: " << to_string( time ) );
     INFO( "fields:\n" << fields.str() );

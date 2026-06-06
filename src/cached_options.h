@@ -115,6 +115,14 @@ extern int  activity_skip_monster_lod_gate;
 /** Out-of-bubble world-tick options. */
 extern bool reality_bubble_fire_spread;
 
+/** How visibility attenuation scales relative to the reality bubble hard cap. */
+enum class visibility_scaling_mode {
+    perfect,
+    smart,
+    no_scale
+};
+extern visibility_scaling_mode visibility_scaling;
+
 extern bool lazy_border_enabled;
 extern int retained_omt_cache_multiplier;
 

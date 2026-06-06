@@ -225,6 +225,7 @@ auto take_counter( std::atomic<int64_t> &counter ) -> int64_t
 } // namespace
 
 static const efftype_id effect_haslight( "haslight" );
+static const efftype_id effect_boomered( "boomered" );
 static const efftype_id effect_onfire( "onfire" );
 
 void map::add_light_from_items( const tripoint_bub_ms &p, const item_stack::iterator &begin,
@@ -1508,6 +1509,14 @@ float map::light_transparency( const tripoint_bub_ms &p ) const
 static auto scaled_visibility_for_view_distance( const float vis,
         const float visibility_scale_factor ) -> float
 {
+    static constexpr auto lut_steps = size_t { 16384 };
+    struct visibility_scale_lut {
+        float factor = 0.0f;
+        std::array<float, lut_steps + 1> values = {};
+        bool valid = false;
+    };
+    static thread_local auto lut = visibility_scale_lut {};
+
     if( vis <= LIGHT_TRANSPARENCY_SOLID ) {
         return 0.0f;
     }
@@ -1517,7 +1526,105 @@ static auto scaled_visibility_for_view_distance( const float vis,
     if( visibility_scale_factor == 1.0f ) {
         return vis;
     }
-    return std::pow( vis, visibility_scale_factor );
+    if( !lut.valid || std::fabs( lut.factor - visibility_scale_factor ) > 0.0001f ) {
+        lut.factor = visibility_scale_factor;
+        lut.valid = true;
+        for( const auto i : std::views::iota( size_t { 0 }, lut_steps + 1 ) ) {
+            const auto sample = static_cast<float>( i ) / static_cast<float>( lut_steps );
+            lut.values[i] = std::pow( sample, visibility_scale_factor );
+        }
+    }
+
+    const auto scaled_index = vis * static_cast<float>( lut_steps );
+    const auto lower_index = static_cast<size_t>( scaled_index );
+    const auto upper_index = std::min( lower_index + 1, lut_steps );
+    const auto blend = scaled_index - static_cast<float>( lower_index );
+    return std::lerp( lut.values[lower_index], lut.values[upper_index], blend );
+}
+
+static auto smart_visibility_range() -> float
+{
+    static constexpr auto baseline_bubble_size = 6;
+    static constexpr auto baseline_range = 84.0f;
+    static constexpr auto lower_slope = 5.0f;
+    static constexpr auto upper_slope = 8.0f;
+
+    const auto delta = g_reality_bubble_size - baseline_bubble_size;
+    if( delta < 0 ) {
+        return baseline_range - lower_slope * std::log2( 1.0f + static_cast<float>( std::abs( delta ) ) );
+    }
+    if( delta > 0 ) {
+        return baseline_range + upper_slope * std::log2( 1.0f + static_cast<float>( delta ) );
+    }
+    return baseline_range;
+}
+
+static auto visibility_range_scale() -> float
+{
+    static constexpr auto baseline_range = 84.0f;
+
+    switch( visibility_scaling ) {
+        case visibility_scaling_mode::perfect:
+            return static_cast<float>( g_max_view_distance ) / baseline_range;
+        case visibility_scaling_mode::smart:
+            return smart_visibility_range() / baseline_range;
+        case visibility_scaling_mode::no_scale:
+            return 1.0f;
+    }
+    return 1.0f;
+}
+
+static auto clamp_visibility_range( const float range ) -> float
+{
+    return clamp( range, 1.0f, static_cast<float>( g_max_view_distance ) );
+}
+
+static auto scaled_visibility_range( const float base_range ) -> float
+{
+    return clamp_visibility_range( base_range * visibility_range_scale() );
+}
+
+static auto perception_visibility_range_base( const Character &viewer ) -> float
+{
+    static constexpr auto baseline_range = 84.0f;
+    static constexpr auto perception_baseline = 10;
+    static constexpr auto visibility_perception_divisor = 6.0f;
+    return baseline_range + static_cast<float>( viewer.get_per() - perception_baseline ) /
+           visibility_perception_divisor;
+}
+
+static auto perception_detail_range_base( const Character &viewer ) -> float
+{
+    static constexpr auto baseline_range = 84.0f;
+    static constexpr auto perception_baseline = 10;
+    return baseline_range + static_cast<float>( viewer.get_per() - perception_baseline );
+}
+
+static auto visibility_scale_factor_from_range( const float visibility_range ) -> float
+{
+    return 60.0f / std::max( 1.0f, visibility_range );
+}
+
+auto map::make_visibility_variables( const int zlev ) const -> visibility_variables
+{
+    auto variables = visibility_variables {};
+    const auto player_pos = g->u.bub_pos();
+    variables.variables_set = true;
+    variables.g_light_level = static_cast<int>( g->light_level( zlev ) );
+    const auto &plr_ch = get_cache_ref( player_pos.z() );
+    variables.vision_threshold = g->u.get_vision_threshold(
+                                     plr_ch.lm[plr_ch.idx( player_pos.x(), player_pos.y() )] );
+    variables.u_clairvoyance = g->u.clairvoyance();
+    variables.u_unimpaired_range = g->u.unimpaired_range();
+    variables.u_sight_impaired = g->u.sight_impaired();
+    variables.u_is_boomered = g->u.has_effect( effect_boomered );
+    variables.detail_range = scaled_visibility_range( perception_detail_range_base( g->u ) );
+    variables.visibility_range = std::max(
+                                     variables.detail_range,
+                                     scaled_visibility_range( perception_visibility_range_base( g->u ) ) );
+    variables.visibility_scale_factor =
+        visibility_scale_factor_from_range( variables.visibility_range );
+    return variables;
 }
 
 map::apparent_light_info map::apparent_light_helper( const level_cache &map_cache,
@@ -1525,10 +1632,10 @@ map::apparent_light_info map::apparent_light_helper( const level_cache &map_cach
 {
     const float vis = std::max( map_cache.seen_cache[map_cache.idx( p.x(), p.y() )],
                                 map_cache.camera_cache[map_cache.idx( p.x(), p.y() )] );
-    // Use g_visible_threshold which scales with g_max_view_distance.
+    // Use the hard view cutoff so the visible area remains circular inside the loaded square.
     const bool obstructed = vis <= LIGHT_TRANSPARENCY_SOLID + g_visible_threshold;
 
-    // vis^(60/g_max) stretches the 1/exp(t*d) decay curve to match the current bubble size.
+    // The visibility scale factor maps ray attenuation to the selected visibility range.
     const auto scaled_vis = scaled_visibility_for_view_distance( vis, visibility_scale_factor );
 
     auto is_opaque = [&map_cache]( point_bub_ms  p ) {
@@ -1605,6 +1712,12 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
             return lit_level::DARK;
         }
     }
+    const auto cache_idx = map_cache.idx( p.x(), p.y() );
+    const auto source_light = map_cache.sm[cache_idx] > 0.0;
+    const auto camera_visible = map_cache.camera_cache[cache_idx] > LIGHT_TRANSPARENCY_SOLID;
+    if( static_cast<float>( dist ) > cache.detail_range && !camera_visible ) {
+        return !a.obstructed && source_light ? lit_level::BRIGHT_ONLY : lit_level::BLANK;
+    }
     if( a.obstructed ) {
         if( apparent_light > LIGHT_AMBIENT_LIT ) {
             if( apparent_light > cache.g_light_level ) {
@@ -1624,7 +1737,7 @@ lit_level map::apparent_light_at( const tripoint_bub_ms &p,
         }
     }
     // Then we just search for the light level in descending order.
-    if( apparent_light > LIGHT_SOURCE_BRIGHT || map_cache.sm[map_cache.idx( p.x(), p.y() )] > 0.0 ) {
+    if( apparent_light > LIGHT_SOURCE_BRIGHT || source_light ) {
         return lit_level::BRIGHT;
     }
     if( apparent_light > LIGHT_AMBIENT_LIT ) {
@@ -1666,14 +1779,8 @@ bool map::pl_sees( const tripoint_bub_ms &t, const int max_range ) const
     // sparse GPU visibility query.
     return true;
 #else
-    const auto &map_cache = get_cache_ref( t.z() );
-    const auto visibility_scale_factor = 60.0f / static_cast<float>( g_max_view_distance );
-    const apparent_light_info a = apparent_light_helper( map_cache, t, visibility_scale_factor );
-    const float light_at_player = map_cache.lm[map_cache.idx( g->u.bub_pos().x(),
-                                                 g->u.bub_pos().y() )];
-    return !a.obstructed &&
-           ( a.apparent_light >= g->u.get_vision_threshold( light_at_player ) ||
-             map_cache.sm[map_cache.idx( t.x(), t.y() )] > 0.0 );
+    const auto variables = make_visibility_variables( t.z() );
+    return get_visibility( apparent_light_at( t, variables ), variables ) == VIS_CLEAR;
 #endif
 }
 

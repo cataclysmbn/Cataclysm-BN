@@ -38,6 +38,7 @@ int  lod_group_morale_max_tier = 0;
 int  activity_skip_monster_lod_gate = 1;
 
 bool reality_bubble_fire_spread = false;
+visibility_scaling_mode visibility_scaling = visibility_scaling_mode::smart;
 bool lazy_border_enabled        = false;
 int  retained_omt_cache_multiplier = 4;
 int  fire_spread_submap_cap    = 25;

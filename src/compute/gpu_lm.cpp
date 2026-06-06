@@ -4124,8 +4124,10 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
                 .vision_threshold = p.vision_threshold,
                 .visibility_scale_factor = p.visibility_scale_factor,
                 .visible_threshold = g_visible_threshold,
+                .detail_range = p.detail_range,
                 .z_start_idx = visibility_dispatch.z_start_idx,
                 .dispatch_z_count = visibility_dispatch.z_count,
+                ._pad = {},
             };
             SDL_PushGPUComputeUniformData(cmd, 0, &visibility_push, sizeof(visibility_push));
             SDL_DispatchGPUCompute(cp, (visibility_dispatch.tiles + 63) / 64, 1, 1);

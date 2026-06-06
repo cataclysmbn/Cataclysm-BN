@@ -2112,8 +2112,11 @@ float Character::get_vision_threshold( float light_level ) const
     static const float threshold_cap = vision::threshold_for_nv_range( 1 - 1 ) * LIGHT_AMBIENT_LOW /
                                        LIGHT_AMBIENT_MINIMAL;
 
+    static constexpr auto perception_visibility_baseline_shift = 2.0f / 3.0f;
+    const auto effective_nv_range = nv_range - perception_visibility_baseline_shift;
+
     return std::min( {static_cast<float>( LIGHT_AMBIENT_LOW ),
-                      vision::threshold_for_nv_range( nv_range - 1 ) * dimming_from_light,
+                      vision::threshold_for_nv_range( effective_nv_range - 1 ) * dimming_from_light,
                       threshold_cap
                      } );
 }
