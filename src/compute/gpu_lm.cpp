@@ -1215,11 +1215,8 @@ auto source_pos(GpuLightSource const& source) -> tripoint_bub_ms {
 }
 
 auto source_is_static_raytrace(light_source_kind const kind) -> bool {
-    return kind == light_source_kind::static_emitter;
-}
-
-auto source_is_raytraced(light_source_kind const kind) -> bool {
-    return kind != light_source_kind::static_local_emitter;
+    return kind == light_source_kind::static_emitter
+           || kind == light_source_kind::static_local_emitter;
 }
 
 auto static_emitter_kind(map_data_common_t const& data) -> light_source_kind {
@@ -1456,8 +1453,6 @@ auto add_source(
         acc.source_kinds[source_index] = kind;
     }
 
-    if (!source_is_raytraced(kind)) { return; }
-
     if (source_is_static_raytrace(kind)) {
         upsert_source(acc.static_sources, acc.static_source_indices, source_slot, pos, luminance);
     } else {
@@ -1480,8 +1475,6 @@ auto append_source(
 
     acc.sources.push_back(source);
     acc.source_kinds.push_back(kind);
-
-    if (!source_is_raytraced(kind)) { return; }
 
     if (source_is_static_raytrace(kind)) {
         acc.static_sources.push_back(source);
