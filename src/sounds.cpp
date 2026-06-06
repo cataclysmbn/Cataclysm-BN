@@ -49,6 +49,7 @@
 #include "safemode_ui.h"
 #include "string_formatter.h"
 #include "string_id.h"
+#include "thread_pool.h"
 #include "translations.h"
 #include "type_id.h"
 #include "units.h"
@@ -1849,6 +1850,13 @@ static std::unordered_map<tripoint_bub_ms, sound_event> sound_markers;
 
 void sounds::sound( const sound_event &soundevent )
 {
+    // Worker-safe mapgen (e.g. a building collapse bash during background OMT
+    // generation) can reach this, but the sound system mutates the global player
+    // map's sound cache, which is not thread-safe and would be meaningless for an
+    // area still being generated. Drop sounds raised off the main thread.
+    if( is_pool_worker_thread() ) {
+        return;
+    }
     // Make a copy so that when our referenced sound event inevitably goes out of scope things dont explode.
     auto temp_se = soundevent;
     // Make sure our sound came from a valid inbounds location.

@@ -28,6 +28,7 @@ game.add_hook("on_npc_loaded", function(...) return mod.robofac.authorize_hub01_
 game.add_hook("on_monster_spawn", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_monster_loaded", function(...) return mod.robofac.authorize_hub01_turret(...) end)
 game.add_hook("on_craft_result", function(...) return mod.cooking.on_craft_result(...) end)
+game.add_hook("on_explosion_start", function(...) return mod.nuclear_tear.on_explosion(...) end)
 
 -- Mapgen
 game.mapgen_functions["slimepit"] = function(...) return mod.slimepit.draw(...) end
