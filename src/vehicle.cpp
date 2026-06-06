@@ -1506,7 +1506,7 @@ void vehicle::backfire( const int e ) const
     const auto pos = bub_part_location( engines[e] );
     sound_event se;
     se.origin = pos;
-    se.volume = std::min( 160, 40 + power / 10000 );
+    se.volume = 100 + rng( 0, 20 ) + rng( 0, 20 );
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
     se.description = string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)

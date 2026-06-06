@@ -2173,8 +2173,8 @@ void sounds::process_sounds()
     // Monsters ignore movement sounds from their own faction, a bit omiscient but it simplifies things.
     for( monster &critter : g->all_monsters() ) {
 
-        // Monster is deaf, skip. We also skip hallucinations.
-        if( !critter.can_hear() || critter.is_hallucination() ) {
+        // Monster is deaf, skip. We also skip hallucinations and monsters not loaded in.
+        if( !critter.can_hear() || critter.is_hallucination() || !map.inbounds( critter.bub_pos() ) ) {
             continue;
         }
         sound_filter_key filter_key;
