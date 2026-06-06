@@ -164,7 +164,7 @@ float trace_intensity(
         avg_transparency = ( (float)( i - 1 ) * avg_transparency + t_val ) / (float)i;
     }
 
-    return min( src.luminance, src.luminance / ( exp( avg_transparency * dist ) * dist * dist ) );
+    return min( src.luminance, src.luminance / ( exp( avg_transparency * dist ) * dist ) );
 }
 
 uint packed_color_value( float intensity, uint color_rgb )

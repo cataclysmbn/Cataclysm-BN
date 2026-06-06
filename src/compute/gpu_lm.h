@@ -147,8 +147,8 @@ static_assert(sizeof(lm_visibility_push_constants) == 64);
 
 // ---------------------------------------------------------------------------
 // Compute a conservative dispatch radius from source luminance.
-// This is the inverse-square upper bound for lm_raytrace_compute.hlsl before
-// exponential attenuation is applied.
+// Matches lm_raytrace_compute.hlsl: exponential attenuation divided by linear
+// distance, capped to the runtime view radius.
 // ---------------------------------------------------------------------------
 auto compute_light_radius(float luminance) -> float;
 

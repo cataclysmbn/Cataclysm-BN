@@ -2755,8 +2755,16 @@ auto shift_lighting_resident_inputs(shift_lighting_residency_params const& p) ->
 
 auto compute_light_radius(float const luminance) -> float {
     if (luminance <= LIGHT_AMBIENT_LOW) { return 0.0f; }
-    auto const raw = std::sqrt(luminance / LIGHT_AMBIENT_LOW);
-    return std::min(raw, static_cast<float>(MAX_VIEW_DISTANCE));
+
+    auto radius = 0;
+    for (auto const distance : std::views::iota(1, g_max_view_distance + 1)) {
+        auto const intensity =
+            luminance / (std::exp(LIGHT_TRANSPARENCY_OPEN_AIR * static_cast<float>(distance))
+                         * static_cast<float>(distance));
+        if (intensity <= LIGHT_AMBIENT_LOW) { break; }
+        radius = distance;
+    }
+    return static_cast<float>(radius);
 }
 
 auto daylight_diffusion_decay_for_pass(int const pass) -> float {

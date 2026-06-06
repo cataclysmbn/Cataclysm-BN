@@ -432,12 +432,12 @@ kernel void main0(constant type_Constants& Constants [[buffer(0)]], device type_
                     _168 = _464;
                     break;
                 }
-                _168 = precise::min(light_sources._m0[_79].luminance, light_sources._m0[_79].luminance / ((exp(_357 * _216) * _216) * _216));
+                _168 = precise::min(light_sources._m0[_79].luminance, light_sources._m0[_79].luminance / (exp(_357 * _216) * _216));
                 break;
             } while(false);
             if (_168 > 3.5)
             {
-                uint _485 = atomic_fetch_max_explicit((device atomic_uint*)&color_all._m0[uint(((_170 * Constants.cache_xy) + _180) + _112)], (uint(fast::clamp(rint(_168 * 2.0), 1.0, 255.0)) << 24u) | (light_sources._m0[_79].color_rgb & 16777215u), memory_order_relaxed);
+                uint _484 = atomic_fetch_max_explicit((device atomic_uint*)&color_all._m0[uint(((_170 * Constants.cache_xy) + _180) + _112)], (uint(fast::clamp(rint(_168 * 2.0), 1.0, 255.0)) << 24u) | (light_sources._m0[_79].color_rgb & 16777215u), memory_order_relaxed);
             }
         }
         break;

@@ -2337,7 +2337,7 @@ float fastexp( float x )
 static float light_calc( const float &numerator, const float &transparency,
                          const int &distance )
 {
-    // Light needs inverse square falloff in addition to attenuation.
+    // Light uses exponential attenuation divided by linear distance.
     return numerator  / ( fastexp( transparency * distance ) * distance );
 }
 
@@ -2353,7 +2353,7 @@ static float light_from_lookup( const float &numerator, const float &transparenc
 }
 
 // Light model for apply_light_source / apply_directional_light.
-// Uses fastexp + inverse-square falloff; lookup_calc provides the matching fast
+// Uses fastexp plus linear distance falloff; lookup_calc provides the matching fast
 // path for the common open-air / weather transparency cases.
 static const light_model k_light_model = {
     light_calc, light_check, update_light, nullptr, light_from_lookup,
