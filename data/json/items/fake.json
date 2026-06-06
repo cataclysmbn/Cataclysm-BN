@@ -565,6 +565,31 @@
     "flags": [ "USES_GRID_POWER" ]
   },
   {
+    "id": "fake_gridsmallgunkit",
+    "copy-from": "fake_item",
+    "type": "TOOL",
+    "name": { "str": "grid firearm repair kit" },
+    "sub": "small_repairkit",
+    "max_charges": 1000,
+    "charges_per_use": 25,
+    "qualities": [
+      [ "HAMMER_FINE", 1 ],
+      [ "HAMMER", 3 ],
+      [ "PRY", 1 ],
+      [ "SAW_M_FINE", 1 ],
+      [ "SAW_M", 2 ],
+      [ "SAW_W", 1 ],
+      [ "WRENCH_FINE", 1 ],
+      [ "WRENCH", 2 ],
+      [ "SCREW_FINE", 1 ],
+      [ "SCREW", 1 ],
+      [ "CHISEL", 3 ],
+      [ "CASING_FORMING", 1 ]
+    ],
+    "use_action": [ "GUN_CLEAN", "GUN_REPAIR" ],
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
     "id": "fake_gridgunkit",
     "copy-from": "fake_item",
     "type": "TOOL",
@@ -584,7 +609,8 @@
       [ "SCREW", 1 ],
       [ "CHISEL", 3 ],
       [ "DRILL", 3 ],
-      [ "PULL", 2 ]
+      [ "PULL", 2 ],
+      [ "CASING_FORMING", 1 ]
     ],
     "use_action": [ "GUN_CLEAN", "GUN_REPAIR" ],
     "flags": [ "USES_GRID_POWER" ]

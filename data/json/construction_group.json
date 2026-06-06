@@ -1236,6 +1236,11 @@
   },
   {
     "type": "construction_group",
+    "id": "place_firearm_kit",
+    "name": "Plug In Firearm Kit"
+  },
+  {
+    "type": "construction_group",
     "id": "place_gunsmith_kit",
     "name": "Plug In Gunsmith Kit"
   },

@@ -1538,6 +1538,29 @@
   },
   {
     "type": "furniture",
+    "id": "f_gridsmallgunkit",
+    "looks_like": "smalll_repairkit",
+    "name": "grid firearm repair kit",
+    "symbol": "#",
+    "description": "A firearm repair kit connected to an electrical grid.",
+    "color": "red",
+    "move_cost_mod": -1,
+    "coverage": 10,
+    "required_str": -1,
+    "crafting_pseudo_item": "fake_gridsmallgunkit",
+    "examine_action": "use_furn_fake_item",
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "small_repairkit", "count": 1 } ] },
+    "bash": {
+      "str_min": 4,
+      "str_max": 30,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [ { "item": "small_repairkit", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_gridgunkit",
     "looks_like": "large_repairkit",
     "name": "grid gunsmith repair kit",
