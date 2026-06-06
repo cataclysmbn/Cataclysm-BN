@@ -274,6 +274,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_multicooker_improved",
+    "group": "install_multicooker_improved",
+    "category": "WORKSHOP",
+    "required_skills": [  ],
+    "time": "10 m",
+    "qualities": [  ],
+    "components": [ [ [ "multi_cooker_improved", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_multicooker_improved"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridfridge",
     "group": "install_refrigerator",
     "category": "WORKSHOP",
@@ -942,11 +955,7 @@
     "time": "30 m",
     "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
     "using": [ [ "soldering_standard", 20 ] ],
-    "components": [
-      [ [ "analytical_set_basic", 1 ] ],
-      [ [ "cable", 5 ] ],
-      [ [ "power_supply", 1 ] ]
-    ],
+    "components": [ [ [ "analytical_set_basic", 1 ] ], [ [ "cable", 5 ] ], [ [ "power_supply", 1 ] ] ],
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_gridanalytical_set"

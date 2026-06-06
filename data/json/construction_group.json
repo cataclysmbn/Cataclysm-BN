@@ -1021,6 +1021,11 @@
   },
   {
     "type": "construction_group",
+    "id": "install_multicooker_improved",
+    "name": "Plug In Improved Multi Cooker"
+  },
+  {
+    "type": "construction_group",
     "id": "install_refrigerator",
     "name": "Plug In Refrigerator"
   },
