@@ -2948,6 +2948,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         if (upload_total > 0) {
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
             auto off = Uint32{0};
+            auto upload_copy_commands = Uint32{0};
 
             auto upload_whole = [&](SDL_GPUBuffer* dst, Uint32 const bytes) {
                 auto const src_loc = SDL_GPUTransferBufferLocation{
@@ -2961,23 +2962,28 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 };
                 SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
                 off += bytes;
+                ++upload_copy_commands;
             };
             auto upload_levels =
                 [&](SDL_GPUBuffer* dst, std::vector<int> const& levels, Uint32 const level_bytes) {
-                    auto level_index = Uint32{0};
-                    std::ranges::for_each(levels, [&](auto const z) {
+                    auto packed_level_index = Uint32{0};
+                    for (auto const& range : make_z_level_ranges(levels)) {
+                        auto const range_bytes =
+                            static_cast<Uint32>(range.z_count) * level_bytes;
                         auto const src_loc = SDL_GPUTransferBufferLocation{
                             .transfer_buffer = upload_tbuf,
-                            .offset = off + level_index * level_bytes,
+                            .offset = off + packed_level_index * level_bytes,
                         };
                         auto const dst_reg = SDL_GPUBufferRegion{
                             .buffer = dst,
-                            .offset = static_cast<Uint32>(z + OVERMAP_DEPTH) * level_bytes,
-                            .size = level_bytes,
+                            .offset = static_cast<Uint32>(range.z_start + OVERMAP_DEPTH)
+                                      * level_bytes,
+                            .size = range_bytes,
                         };
                         SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
-                        ++level_index;
-                    });
+                        packed_level_index += static_cast<Uint32>(range.z_count);
+                        ++upload_copy_commands;
+                    }
                     off += static_cast<Uint32>(levels.size()) * level_bytes;
                 };
 
@@ -2987,6 +2993,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             upload_levels(vo_buf, input_uploads.vehicle_obscured_levels, uint_level_bytes);
             upload_levels(source_map_buf, source_map_upload_levels, float_level_bytes);
             if (source_upload_bytes > 0) { upload_whole(src_buf, source_upload_bytes); }
+            TracyPlot("GPU LM Upload Copy Commands", static_cast<int64_t>(upload_copy_commands));
 
             SDL_EndGPUCopyPass(cp);
         }
@@ -4009,43 +4016,46 @@ auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_pa
         ZoneScopedN("gpu_sight_record_commands");
         {
             auto* const cp = SDL_BeginGPUCopyPass(cmd);
-            auto transparency_offset = Uint32{0};
-            auto floor_offset = floor_upload_offset;
-            for (auto const z : upload_levels) {
-                auto const z_idx = static_cast<Uint32>(z + OVERMAP_DEPTH);
-                auto const src_transparency = SDL_GPUTransferBufferLocation{
+            auto upload_copy_commands = Uint32{0};
+            auto upload_level_ranges =
+                [&](SDL_GPUBuffer* const dst, Uint32 const base_offset, Uint32 const level_bytes) {
+                    auto packed_level_index = Uint32{0};
+                    for (auto const& range : make_z_level_ranges(upload_levels)) {
+                        auto const range_bytes =
+                            static_cast<Uint32>(range.z_count) * level_bytes;
+                        auto const z_idx = static_cast<Uint32>(range.z_start + OVERMAP_DEPTH);
+                        auto const src = SDL_GPUTransferBufferLocation{
+                            .transfer_buffer = s_lighting_resources.sight_upload.buffer,
+                            .offset = base_offset + packed_level_index * level_bytes,
+                        };
+                        auto const dst_region = SDL_GPUBufferRegion{
+                            .buffer = dst,
+                            .offset = z_idx * level_bytes,
+                            .size = range_bytes,
+                        };
+                        SDL_UploadToGPUBuffer(cp, &src, &dst_region, false);
+                        packed_level_index += static_cast<Uint32>(range.z_count);
+                        ++upload_copy_commands;
+                    }
+                };
+            upload_level_ranges(
+                s_lighting_resources.transparency.buffer, Uint32{0}, float_level_bytes);
+            upload_level_ranges(
+                s_lighting_resources.floor.buffer, floor_upload_offset, uint_level_bytes);
+            if (pair_bytes > 0) {
+                auto const src_pairs = SDL_GPUTransferBufferLocation{
                     .transfer_buffer = s_lighting_resources.sight_upload.buffer,
-                    .offset = transparency_offset,
+                    .offset = pair_upload_offset,
                 };
-                auto const dst_transparency = SDL_GPUBufferRegion{
-                    .buffer = s_lighting_resources.transparency.buffer,
-                    .offset = z_idx * float_level_bytes,
-                    .size = float_level_bytes,
+                auto const dst_pairs = SDL_GPUBufferRegion{
+                    .buffer = s_lighting_resources.sight_pairs.buffer,
+                    .offset = 0,
+                    .size = pair_bytes,
                 };
-                SDL_UploadToGPUBuffer(cp, &src_transparency, &dst_transparency, false);
-                auto const src_floor = SDL_GPUTransferBufferLocation{
-                    .transfer_buffer = s_lighting_resources.sight_upload.buffer,
-                    .offset = floor_offset,
-                };
-                auto const dst_floor = SDL_GPUBufferRegion{
-                    .buffer = s_lighting_resources.floor.buffer,
-                    .offset = z_idx * uint_level_bytes,
-                    .size = uint_level_bytes,
-                };
-                SDL_UploadToGPUBuffer(cp, &src_floor, &dst_floor, false);
-                transparency_offset += float_level_bytes;
-                floor_offset += uint_level_bytes;
+                SDL_UploadToGPUBuffer(cp, &src_pairs, &dst_pairs, false);
+                ++upload_copy_commands;
             }
-            auto const src_pairs = SDL_GPUTransferBufferLocation{
-                .transfer_buffer = s_lighting_resources.sight_upload.buffer,
-                .offset = pair_upload_offset,
-            };
-            auto const dst_pairs = SDL_GPUBufferRegion{
-                .buffer = s_lighting_resources.sight_pairs.buffer,
-                .offset = 0,
-                .size = pair_bytes,
-            };
-            SDL_UploadToGPUBuffer(cp, &src_pairs, &dst_pairs, false);
+            TracyPlot("GPU Sight Upload Copy Commands", static_cast<int64_t>(upload_copy_commands));
             SDL_EndGPUCopyPass(cp);
         }
         {
