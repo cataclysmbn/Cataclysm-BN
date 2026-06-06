@@ -40,6 +40,7 @@ val abiArm64 = gradleProperty("abi_arm_64").toBoolean()
 val abiX8632 = gradleProperty("abi_x86_32").toBoolean()
 val abiX8664 = gradleProperty("abi_x86_64").toBoolean()
 val deps = gradleProperty("deps")
+val shadercross = gradleProperty("shadercross").ifEmpty { System.getenv("SHADERCROSS") ?: "shadercross" }
 val overrideVersion = gradleProperty("override_version")
 val versionHeaderPath = gradleProperty("version_header_path")
 val overrideCompileSdkVersion = gradleProperty("override_compileSdkVersion").toInt()
@@ -52,6 +53,7 @@ val versionHeaderFile = rootProject.file(versionHeaderPath)
 println("Using [              njobs]: $njobs")
 println("Using [           localize]: $localize")
 println("Using [               deps]: $deps")
+println("Using [        shadercross]: $shadercross")
 println("Using [   override_version]: $overrideVersion")
 println("Using [version_header_path]: $versionHeaderPath")
 println("Using [  compileSdkVersion]: $overrideCompileSdkVersion")
@@ -121,12 +123,52 @@ val compileLocalization by tasks.registering(Exec::class) {
     }
 }
 
+val shaderSourceDir = rootProject.file("../src/shaders")
+val shaderOutputDir = rootProject.file("../data/shaders")
+val compileAndroidShaders by tasks.registering {
+    val shaderInputs = fileTree(shaderSourceDir) { include("*.hlsl") }
+    inputs.files(shaderInputs).withPropertyName("hlslShaders")
+    outputs.dir(shaderOutputDir).withPropertyName("spirvShaders")
+
+    doLast {
+        val shaders = shaderInputs.files.sortedBy { it.name }
+        if (shaders.isEmpty()) {
+            throw GradleException("No HLSL shaders found in ${shaderSourceDir.absolutePath}")
+        }
+
+        shaderOutputDir.mkdirs()
+        shaderOutputDir.listFiles { _, name -> name.endsWith(".spv") }?.forEach(File::delete)
+        shaders.forEach { shader ->
+            val shaderName = shader.nameWithoutExtension
+            val stage = when {
+                shaderName.endsWith("_vertex") -> "vertex"
+                shaderName.endsWith("_fragment") -> "fragment"
+                else -> "compute"
+            }
+            exec {
+                commandLine(
+                    shadercross,
+                    shader.absolutePath,
+                    "-s",
+                    "hlsl",
+                    "-d",
+                    "spirv",
+                    "-t",
+                    stage,
+                    "-o",
+                    File(shaderOutputDir, "$shaderName.spv").absolutePath,
+                )
+            }
+        }
+    }
+}
+
 unzipDeps.configure { dependsOn(compileLocalization) }
-tasks.named("preBuild") { dependsOn(unzipDeps, unzipSqlite) }
+tasks.named("preBuild") { dependsOn(unzipDeps, unzipSqlite, compileAndroidShaders) }
 
 tasks.configureEach {
     if (name.startsWith("configureCMake") || name.startsWith("externalNativeBuild")) {
-        dependsOn(unzipDeps, unzipSqlite)
+        dependsOn(unzipDeps, unzipSqlite, compileAndroidShaders)
     }
 }
 

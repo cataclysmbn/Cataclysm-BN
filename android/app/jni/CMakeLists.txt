@@ -13,7 +13,7 @@ file(GLOB CATA_ANDROID_SPV_SHADERS CONFIGURE_DEPENDS "${CATA_SOURCE_DIR}/data/sh
 if(CATA_ANDROID_SPV_SHADERS STREQUAL "")
     message(FATAL_ERROR
         "Android SDL_GPU compute requires compiled SPIR-V shaders in data/shaders. "
-        "Run the shadercross shader build before packaging Android assets.")
+        "Run Gradle's compileAndroidShaders task before packaging Android assets.")
 endif()
 
 if(NOT EXISTS "${CATA_SRC_DIR}/version.h")
