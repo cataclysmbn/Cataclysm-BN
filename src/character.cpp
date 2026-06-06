@@ -1137,6 +1137,8 @@ int Character::swim_speed() const
     // base swim speed.
     ret = ( 440 * mutation_value( "movecost_swim_modifier" ) ) + weight_carried() /
           ( 60_gram / mutation_value( "movecost_swim_modifier" ) ) - 50 * get_skill_level( skill_swimming );
+    ret = bonus_from_enchantments( ret, enchant_vals::mod::SWIM_MOVE_COST );
+
     /** @EFFECT_STR increases swim speed bonus from PAWS */
     if( has_trait( trait_PAWS ) ) {
         ret -= hand_bonus_mult * ( 20 + str_cur * 3 );
@@ -1960,6 +1962,7 @@ void Character::calc_all_parts_hp( float hp_mod, float hp_adjustment, int str_ma
             new_max *= 0.8;
         }
 
+        new_max += bonus_from_enchantments( new_max, enchant_vals::mod::HEALTH_POINTS );
         new_max = std::max( new_max, 1 );
         int new_cur = std::ceil( static_cast<float>( new_max ) * hp_ratio );
 
@@ -4231,6 +4234,7 @@ int Character::read_speed( bool return_stat_effect ) const
     }
 
     ret *= mutation_value( "reading_speed_multiplier" );
+    ret += bonus_from_enchantments( ret, enchant_vals::mod::READING_SPEED );
 
     if( ret < to_moves<int>( 1_seconds ) ) {
         ret = to_moves<int>( 1_seconds );
@@ -5478,6 +5482,19 @@ void Character::update_health( int external_modifiers )
         // Side effect: dependency
         mod_healthy_mod( -50, -200 );
         effective_healthy_mod = 100;
+    }
+
+    // Apply enchantment healthy_rate as a multiplier to the target health level
+    // healthy_rate > 1.0 boosts health toward max, < 1.0 reduces it toward negative
+    float enchant_healthy_rate = bonus_from_enchantments( 1.0, enchant_vals::mod::HEALTHY_MULT );
+    if( enchant_healthy_rate > 1.0f ) {
+        // Positive effect: push effective_healthy_mod toward get_max_healthy()
+        effective_healthy_mod = effective_healthy_mod +
+                                ( get_max_healthy() - effective_healthy_mod ) * ( enchant_healthy_rate - 1.0f );
+    } else if( enchant_healthy_rate < 1.0f ) {
+        // Negative effect: push effective_healthy_mod toward -200
+        effective_healthy_mod = effective_healthy_mod +
+                                ( -200.0f - effective_healthy_mod ) * ( 1.0f - enchant_healthy_rate );
     }
 
     // Health tends toward healthy_mod.
@@ -8942,6 +8959,9 @@ void Character::recalculate_enchantment_cache()
     }
 
     rebuild_mutation_cache();
+
+    // Enchantments can give HP now, so recalc it
+    recalc_hp();
 }
 
 void Character::rebuild_mutation_cache()
@@ -11357,6 +11377,7 @@ int Character::run_cost( int base_cost, bool diag ) const
     if( !is_mounted() ) {
         if( movecost > 100 ) {
             movecost *= mutation_value( "movecost_obstacle_modifier" );
+            movecost += bonus_from_enchantments( movecost, enchant_vals::mod::OBSTACLE_MOVE_COST );
             if( movecost < 100 ) {
                 movecost = 100;
             }
@@ -11376,6 +11397,7 @@ int Character::run_cost( int base_cost, bool diag ) const
         movecost *= mutation_value( "movecost_modifier" );
         if( flatground ) {
             movecost *= mutation_value( "movecost_flatground_modifier" );
+            movecost += bonus_from_enchantments( movecost, enchant_vals::mod::FLAT_MOVE_COST );
         }
         if( has_trait( trait_PADDED_FEET ) && !footwear_factor() ) {
             movecost *= .9f;

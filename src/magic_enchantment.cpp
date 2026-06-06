@@ -475,7 +475,9 @@ double enchantment::get_value_multiply( const enchant_vals::mod value ) const
 
 double enchantment::calc_bonus( enchant_vals::mod value, double base, bool round ) const
 {
+    // I honestly dont know why the first one was there in the first place...
     bool use_add = true;
+    bool use_mult = true;
     switch( value ) {
         case enchant_vals::mod::METABOLISM:
         case enchant_vals::mod::MANA_REGEN:
@@ -489,7 +491,7 @@ double enchantment::calc_bonus( enchant_vals::mod value, double base, bool round
             break;
     }
     double add = use_add ? get_value_add( value ) : 0.0;
-    double mul = get_value_multiply( value );
+    double mul = use_mult ? get_value_multiply( value ) : 1.0;
     double ret = add + base * mul;
     if( round ) {
         ret = trunc( ret );
@@ -620,13 +622,6 @@ void enchantment::check() const
         if( !mut->mods.empty() ) {
             problems.push_back(
                 string_format( "\nmutation %s which has stat adjustments (not supported)", mut.str() ) );
-        }
-
-        // TODO: Implement or also list glass jaw
-        if( !is_set_value<&mutation_branch::hp_modifier, &mutation_branch::hp_modifier_secondary, &mutation_branch::hp_adjustment>
-            ( mut, 0.0f ) ) {
-            problems.push_back( string_format( "\nmutation %s which adjusts hp (not supported)",
-                                               mut.str() ) );
         }
     }
 

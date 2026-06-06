@@ -22,14 +22,30 @@ namespace enchant_vals
 // the different types of values that can be modified by enchantments
 // either the item directly or the Character, whichever is more appropriate
 enum class mod : int {
-    // effects for the Character
+    // Character Wide Effects
+
+    // Stats, Supports mult and add, as expected
     STRENGTH,
     DEXTERITY,
     PERCEPTION,
     INTELLIGENCE,
+    HEALTH_POINTS,
+
+    // General Speed
     SPEED,
     ATTACK_COST,
     MOVE_COST,
+    FLAT_MOVE_COST,
+    OBSTACLE_MOVE_COST,
+    SWIM_MOVE_COST,
+
+    // Misc Speed
+    READING_SPEED,
+    CRAFTING_SPEED,
+    CONSTRUCTION_SPEED,
+    SKILLRUST_SPEED,    
+
+    // Consume & Regen Speed
     METABOLISM,
     MANA_CAP,
     MANA_REGEN,
@@ -37,6 +53,35 @@ enum class mod : int {
     STAMINA_REGEN,
     THIRST,
     FATIGUE,
+    MENDING_MULT,
+
+
+    // Perception & Sneaky Stuff
+    HEARING,
+    NOISE,
+    SCENT,
+    STEALTH,
+
+    // Temp
+    BODYTEMP_MIN,
+    BODYTEMP_MAX,
+    BODYTEMP_SLEEP,
+    BODYTEMP_SPEED,
+    
+    // Social
+    LIE,
+    PERSUADE,
+    INTIMIDATE,
+
+    // Misc
+    HEALTHY_MULT,
+    FALL_DAMAGE_MULT,
+    CARRY_STORAGE,
+    CARRY_WEIGHT,
+    OVERMAP_SIGHT,
+    EFFECTIVE_FOCUS,
+
+    // Defense
     BONUS_DODGE,
     ARMOR_BASH,
     ARMOR_CUT,
@@ -50,7 +95,25 @@ enum class mod : int {
     ARMOR_ELEC,
     ARMOR_ACID,
     ARMOR_BIO,
-    // effects for the item that has the enchantment
+
+    // Damage
+    UNARMED_DAMAGE_BASH,
+    UNARMED_DAMAGE_CUT,
+    UNARMED_DAMAGE_STAB,
+    UNARMED_DAMAGE_FIRE,
+    UNARMED_DAMAGE_ACID,
+    UNARMED_DAMAGE_BIO,
+    UNARMED_DAMAGE_COLD,
+    UNARMED_DAMAGE_DARK,
+    UNARMED_DAMAGE_LIGHT,
+    UNARMED_DAMAGE_PSI,
+    UNARMED_DAMAGE_BULLET,
+    UNARMED_DAMAGE_ELECTRIC,
+    UNARMED_DAMAGE_TRUE,
+
+    // Object Only Effects
+
+    // Damage
     ITEM_DAMAGE_BASH,
     ITEM_DAMAGE_CUT,
     ITEM_DAMAGE_STAB,
@@ -64,6 +127,8 @@ enum class mod : int {
     ITEM_DAMAGE_BULLET,
     ITEM_DAMAGE_ELECTRIC,
     ITEM_DAMAGE_TRUE,
+
+    // Defense
     ITEM_ARMOR_BASH,
     ITEM_ARMOR_CUT,
     ITEM_ARMOR_DARK,
@@ -77,7 +142,8 @@ enum class mod : int {
     ITEM_ARMOR_ACID,
     ITEM_ARMOR_BIO,
     ITEM_ATTACK_COST,
-    // effects for ranged bonuses
+
+    // Guns
     RANGED_DISPERSION,
     RANGED_DAMAGE_BULLET,
     RANGED_ARMOR_PENETRATION,
@@ -85,6 +151,7 @@ enum class mod : int {
     RANGED_RECOIL,
     RANGED_RELOAD_TIME,
     RANGED_AIM_SPEED,
+
     NUM_MOD
 };
 } // namespace enchant_vals

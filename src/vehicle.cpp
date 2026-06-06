@@ -5838,11 +5838,9 @@ void traverse( StartPoint &start,
     using tvr = traverse_visitor_result;
     constexpr bool IsConst = std::is_const_v<StartPoint>;
     struct hash {
-        const std::hash<char> char_hash = std::hash<char>();
-        const std::hash<size_t> ptr_hash = std::hash<size_t>();
         auto operator()( const vehicle_or_grid<IsConst> &elem ) const {
-            return char_hash( static_cast<char>( elem.type ) ) ^
-                   ptr_hash(
+            return std::hash<char> {}( static_cast<char>( elem.type ) ) ^
+                   std::hash<size_t> {}(
                        // Because only one of pointers is not nullptr, binary OR would get value of set pointer.
                        reinterpret_cast<size_t>( elem.veh ) | reinterpret_cast<size_t>( elem.grid )
                    );
