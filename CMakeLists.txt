@@ -73,6 +73,7 @@ set(GIT_BINARY "" CACHE STRING "Git binary name or path.")
 set(LINKER "" CACHE STRING "Custom Linker to use")
 set(GETTEXT_MSGFMT_BINARY "" CACHE FILEPATH "msgfmt binary name or path.")
 option(BUILD_SDL3 "Force builds SDL3 and its modules from source, instead of using system packages" "OFF")
+option(BUILD_SHADERCROSS "Build SDL_shadercross from source when shadercross is not on PATH" "ON")
 option(CATA_SDL "Link SDL3 core for GPU platform services used by existing game targets." "OFF")
 option(CATA_GPU_VERIFY "Enable GPU output verification against CPU reference via readback (development only, requires CATA_SDL)." "OFF")
 set(CATA_SHADERS OFF)
@@ -396,13 +397,85 @@ if (CATA_SDL)
     endif ()
 
     # --- SDL_shadercross: HLSL shader compiler (build-time tool only, library not linked) ---
-    # Install via: vcpkg (sdl3-shadercross in msvc-full-features/vcpkg.json) or place shadercross on PATH.
-    # FetchContent is not viable — no release tags, project uses git submodules for DXC/SPIRV-Cross.
     message(STATUS "Searching for shadercross (HLSL compiler) --")
 
     find_program(SHADERCROSS_EXE
         NAMES shadercross
         HINTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/sdl3-shadercross")
+
+    if (NOT SHADERCROSS_EXE AND TILES AND BUILD_SHADERCROSS)
+        message(STATUS "Installing SDL_shadercross from Source")
+        FetchContent_Declare(
+                SDL3_SHADERCROSS
+                GIT_REPOSITORY https://github.com/libsdl-org/SDL_shadercross.git
+                GIT_TAG main
+                GIT_SHALLOW TRUE
+                GIT_SUBMODULES_RECURSE TRUE
+        )
+        FetchContent_GetProperties(SDL3_SHADERCROSS)
+        if (NOT sdl3_shadercross_POPULATED)
+            cmake_policy(PUSH)
+            if (POLICY CMP0169)
+                cmake_policy(SET CMP0169 OLD)
+            endif ()
+            FetchContent_Populate(SDL3_SHADERCROSS)
+            cmake_policy(POP)
+        endif ()
+
+        set(SHADERCROSS_DXC_ROOT "${sdl3_shadercross_BINARY_DIR}/DirectXShaderCompiler-binaries")
+        set(DXC_ROOT "${SHADERCROSS_DXC_ROOT}")
+        include("${sdl3_shadercross_SOURCE_DIR}/build-scripts/download-prebuilt-DirectXShaderCompiler.cmake")
+        set(DirectXShaderCompiler_ROOT "${SHADERCROSS_DXC_ROOT}")
+        if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+            set(DirectXShaderCompiler_INCLUDE_PATH "${SHADERCROSS_DXC_ROOT}/linux/include/dxc")
+            set(DirectXShaderCompiler_dxcompiler_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxcompiler.so")
+            set(DirectXShaderCompiler_dxil_LIBRARY "${SHADERCROSS_DXC_ROOT}/linux/lib/libdxil.so")
+        endif ()
+
+        set(CATA_SAVED_CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+        set(CATA_SAVED_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        set(CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+        set(CMAKE_C_FLAGS "")
+        set(CMAKE_CXX_FLAGS "")
+        set(CMAKE_CXX_FLAGS_DEBUG "")
+
+        set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+        set(SPIRV_CROSS_SKIP_INSTALL ON)
+        set(SPIRV_CROSS_CLI OFF)
+        set(SPIRV_CROSS_ENABLE_TESTS OFF)
+        set(SPIRV_CROSS_STATIC ON)
+        set(SPIRV_CROSS_SHARED OFF)
+        set(SPIRV_CROSS_FORCE_PIC ON)
+        add_subdirectory(
+                "${sdl3_shadercross_SOURCE_DIR}/external/SPIRV-Cross"
+                "${sdl3_shadercross_BINARY_DIR}/external/SPIRV-Cross"
+                EXCLUDE_FROM_ALL)
+        if (TARGET spirv-cross-c AND NOT TARGET spirv_cross_c)
+            add_library(spirv_cross_c ALIAS spirv-cross-c)
+        endif ()
+
+        set(SDLSHADERCROSS_CLI ON)
+        set(SDLSHADERCROSS_DXC ON)
+        set(SDLSHADERCROSS_INSTALL OFF)
+        set(SDLSHADERCROSS_SHARED ON)
+        set(SDLSHADERCROSS_STATIC OFF)
+        set(SDLSHADERCROSS_SPIRVCROSS_SHARED OFF)
+        set(SDLSHADERCROSS_TESTS OFF)
+        set(SDLSHADERCROSS_VENDORED OFF)
+        set(SDLSHADERCROSS_WERROR OFF)
+
+        add_subdirectory(
+                "${sdl3_shadercross_SOURCE_DIR}"
+                "${sdl3_shadercross_BINARY_DIR}"
+                EXCLUDE_FROM_ALL)
+        set(CMAKE_C_FLAGS "${CATA_SAVED_CMAKE_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CATA_SAVED_CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CATA_SAVED_CMAKE_CXX_FLAGS_DEBUG}")
+        set_target_properties(shadercross PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${sdl3_shadercross_BINARY_DIR}")
+
+        set(SHADERCROSS_EXE $<TARGET_FILE:shadercross>)
+        set(SHADERCROSS_TARGET shadercross)
+    endif ()
 
     if (SHADERCROSS_EXE)
         set(CATA_SHADERS ON)
@@ -429,6 +502,7 @@ if (CATA_SDL)
 
             add_custom_command(
                 OUTPUT "${SPV_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
                 COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d spirv -t ${STAGE} -o "${SPV_OUT}"
                 DEPENDS "${HLSL_SRC}"
                 COMMENT "Compiling ${SHADER_NAME}.hlsl -> SPIR-V"
@@ -437,6 +511,7 @@ if (CATA_SDL)
 
             add_custom_command(
                 OUTPUT "${MSL_OUT}"
+                COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
                 COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d msl -t ${STAGE} -o "${MSL_OUT}"
                 DEPENDS "${HLSL_SRC}"
                 COMMENT "Compiling ${SHADER_NAME}.hlsl -> MSL"
@@ -447,6 +522,7 @@ if (CATA_SDL)
                 set(DXIL_OUT "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
                 add_custom_command(
                     OUTPUT "${DXIL_OUT}"
+                    COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
                     COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxil -t ${STAGE} -o "${DXIL_OUT}"
                     DEPENDS "${HLSL_SRC}"
                     COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXIL"
@@ -456,9 +532,16 @@ if (CATA_SDL)
         endforeach ()
 
         add_custom_target(cata_shaders ALL DEPENDS ${CATA_SHADER_OUTPUTS})
+        if (SHADERCROSS_TARGET)
+            add_dependencies(cata_shaders ${SHADERCROSS_TARGET})
+        endif ()
+    elseif (TILES)
+        message(FATAL_ERROR
+            "shadercross not found — tiles builds require compiled shaders. "
+            "Either enable BUILD_SHADERCROSS or place shadercross on PATH.")
     else ()
-        message(STATUS "shadercross not found — shaders will not be compiled (install sdl3-shadercross via vcpkg or place shadercross on PATH)")
-endif ()
+        message(STATUS "shadercross not found — shaders will not be compiled")
+    endif ()
 endif ()
 
 if (WIN32 AND CATA_SDL)
