@@ -11571,11 +11571,25 @@ auto map::current_lightmap_source_signature() -> std::size_t
             cata::hash_combine( seed, vp.has_flag( VPFLAG_WIDE_CONE_LIGHT ) );
             cata::hash_combine( seed, vp.has_flag( VPFLAG_HALF_CIRCLE_LIGHT ) );
             cata::hash_combine( seed, vp.has_flag( VPFLAG_CIRCLE_LIGHT ) );
-            const auto uses_turn_gated_light = vp.has_flag( VPFLAG_CIRCLE_LIGHT ) &&
-                                               ( vp.has_flag( VPFLAG_ODDTURN ) ||
-                                                 vp.has_flag( VPFLAG_EVENTURN ) );
-            cata::hash_combine( seed, uses_turn_gated_light );
-            if( uses_turn_gated_light ) {
+            cata::hash_combine( seed, vp.rotating_light.has_value() );
+            if( vp.rotating_light ) {
+                const auto base_direction = veh->face.dir() + pt->direction;
+                const auto active_direction = vp.rotating_light->direction_at( base_direction,
+                                              calendar::turn );
+                cata::hash_combine( seed, quantized_angle_signature_value(
+                                        vp.rotating_light->arc_width() ) );
+                cata::hash_combine( seed, vp.rotating_light->beam_count() );
+                cata::hash_combine( seed, quantized_angle_signature_value(
+                                        vp.rotating_light->beam_spacing() ) );
+                cata::hash_combine( seed, quantized_angle_signature_value( active_direction ) );
+                cata::hash_combine( seed, to_turns<int>( vp.rotating_light->period ) );
+            }
+            const auto uses_flash_gated_light = !vp.rotating_light &&
+                                                vp.has_flag( VPFLAG_CIRCLE_LIGHT ) &&
+                                                ( vp.has_flag( VPFLAG_ODDTURN ) ||
+                                                  vp.has_flag( VPFLAG_EVENTURN ) );
+            cata::hash_combine( seed, uses_flash_gated_light );
+            if( uses_flash_gated_light ) {
                 cata::hash_combine( seed, odd_turn );
             }
         }

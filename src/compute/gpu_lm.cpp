@@ -1449,7 +1449,8 @@ auto vehicle_light_arc_width(vpart_info const& info) -> units::angle {
 
 auto vehicle_light_is_external(vpart_reference const& part) -> bool {
     auto const& info = part.info();
-    return info.location == "on_roof" || vehicle_light_is_directional(info);
+    return info.location == "on_roof" || vehicle_light_is_directional(info)
+           || info.rotating_light.has_value();
 }
 
 auto vehicle_light_flags(vpart_reference const& part) -> uint32_t {
@@ -1495,6 +1496,20 @@ auto add_vehicle_sources(source_accumulator& acc) -> void {
                         make_directional_source(
                             pos, vehicle_luminance, veh->face.dir() + vehicle_part.direction,
                             vehicle_light_arc_width(info), flags),
+                        light_source_kind::vehicle);
+                }
+            } else if (info.rotating_light) {
+                auto const& rotating_light = *info.rotating_light;
+                auto const base_direction = veh->face.dir() + vehicle_part.direction;
+                auto const direction = rotating_light.direction_at(base_direction, calendar::turn);
+                for (auto const beam_index : std::views::iota(0, rotating_light.beam_count())) {
+                    auto const beam_direction = direction + rotating_light.beam_spacing() *
+                                                static_cast<double>(beam_index);
+                    append_source(
+                        acc,
+                        make_directional_source(
+                            pos, static_cast<float>(info.bonus), beam_direction,
+                            rotating_light.arc_width(), flags),
                         light_source_kind::vehicle);
                 }
             } else if (info.has_flag(VPFLAG_HALF_CIRCLE_LIGHT)) {

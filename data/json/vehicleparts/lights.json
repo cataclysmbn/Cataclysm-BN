@@ -196,10 +196,10 @@
     "symbol": "*",
     "broken_symbol": "-",
     "durability": 20,
-    "description": "Emergency lights, like a police car's or ambulance's, mounted on the vehicle's roof.  Flashes between red and blue when turned on, attracting attention without illuminating the area.",
+    "description": "Emergency lights, like a police car's or ambulance's, mounted on the vehicle's roof.  When turned on, they sweep colored beams around the vehicle.",
     "//": "essentially a pair of overpowered RGB LED flashlights",
     "epower": -10,
-    "bonus": 500,
+    "bonus": 1200,
     "damage_modifier": 10,
     "folded_volume": "500 ml",
     "breaks_into": [
@@ -219,6 +219,7 @@
       }
     },
     "flags": [ "CIRCLE_LIGHT", "FOLDABLE", "ENABLED_DRAINS_EPOWER", "SHOCK_RESISTANT" ],
+    "rotating_light": { "arc": 30, "step": 90, "phase": 0, "period": "1 turns", "beams": 2 },
     "damage_reduction": { "all": 6 }
   },
   {
@@ -229,6 +230,7 @@
     "item": "light_emergency_blue",
     "color": "blue",
     "broken_color": "blue",
+    "rotating_light": { "phase": 90 },
     "extend": { "flags": [ "EVENTURN" ] }
   },
   {
@@ -239,6 +241,7 @@
     "item": "light_emergency_red",
     "color": "red",
     "broken_color": "red",
+    "rotating_light": { "phase": 0 },
     "extend": { "flags": [ "ODDTURN" ] }
   },
   {

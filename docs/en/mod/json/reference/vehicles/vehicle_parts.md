@@ -39,12 +39,19 @@ Vehicle components when installed on a vehicle.
   {"item": "scrap", "count": [0,5]} // instead of an array, this can be an inline item group,
 ],
 "breaks_into" : "some_item_group", // or just the id of an item group.
-"flags": [                    // Flags associated with the part
-     "EXTERNAL", "MOUNT_OVER", "WHEEL", "MOUNT_POINT", "VARIABLE_SIZE"
-],
-"damage_reduction" : {        // Flat reduction of damage, as described below. If not specified, set to zero
-    "all" : 10,
-    "physical" : 5
+	"flags": [                    // Flags associated with the part
+	     "EXTERNAL", "MOUNT_OVER", "WHEEL", "MOUNT_POINT", "VARIABLE_SIZE"
+	],
+	"rotating_light": {           // Optional for light parts. Emits rotating directional cone light instead of the light flag's normal shape.
+	  "arc": 30,                  // Cone width in degrees. Default 30.
+	  "step": 90,                 // Degrees advanced every period. Negative values rotate in reverse. Default 90.
+	  "phase": 0,                 // Initial direction offset in degrees. Default 0.
+	  "period": "1 turns",        // Time between rotation steps. Can also be an integer turn count. Default 1 turn.
+	  "beams": 2                  // Number of simultaneous evenly spaced beams. Default 2.
+	},
+	"damage_reduction" : {        // Flat reduction of damage, as described below. If not specified, set to zero
+	    "all" : 10,
+	    "physical" : 5
 },
                               // The following optional fields are specific to ENGINEs.
 "m2c": 50,                    // Mandatory field for parts with the ENGINE flag, indicates ratio of cruise power to maximum power
