@@ -599,6 +599,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridcoffeemaker",
+    "group": "place_coffeemaker",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "coffeemaker", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridcoffeemaker"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridsoda_machine",
     "group": "place_soda_machine",
     "category": "WORKSHOP",

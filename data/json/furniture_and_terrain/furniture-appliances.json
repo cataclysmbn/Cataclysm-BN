@@ -1769,6 +1769,29 @@
   },
   {
     "type": "furniture",
+    "id": "f_gridcoffeemaker",
+    "looks_like": "coffeemaker",
+    "name": "grid coffeemaker",
+    "symbol": "=",
+    "description": "A coffeemaker connected to an electrical grid, providing hot water for coffee and other drinks.",
+    "color": "light_gray",
+    "move_cost_mod": -1,
+    "coverage": 10,
+    "required_str": -1,
+    "crafting_pseudo_item": "fake_gridcoffeemaker",
+    "examine_action": "use_furn_fake_item",
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "coffeemaker", "count": 1 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 30,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [ { "item": "coffeemaker", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_gridsoda_machine",
     "looks_like": "food_processor",
     "name": "soda machine",

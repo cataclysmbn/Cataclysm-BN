@@ -702,6 +702,16 @@
     "flags": [ "USES_GRID_POWER" ]
   },
   {
+    "id": "fake_gridcoffeemaker",
+    "copy-from": "fake_item",
+    "looks_like": "coffeemaker",
+    "type": "TOOL",
+    "name": { "str": "grid coffeemaker" },
+    "sub": "coffeemaker",
+    "max_charges": 2500,
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
     "id": "fake_gridsoda_machine",
     "copy-from": "fake_item",
     "type": "TOOL",
