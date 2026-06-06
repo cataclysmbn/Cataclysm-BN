@@ -491,8 +491,7 @@ auto init() -> void {
     if (!backend_str.empty()) {
         DebugLog(DL::Info, DC::Main) << "SDL_GPU: backend override: " << backend_str;
     }
-    DebugLog(DL::Info, DC::Main)
-        << "SDL_GPU: compiled drivers=" << compiled_gpu_drivers_to_string();
+    DebugLog(DL::Info, DC::Main) << "SDL_GPU: compiled drivers=" << compiled_gpu_drivers_to_string();
 
     auto* device = static_cast<SDL_GPUDevice*>(nullptr);
     auto selected_device_info = gpu_device_info{};

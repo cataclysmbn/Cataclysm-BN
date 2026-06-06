@@ -925,7 +925,7 @@ void map::destroy_vehicle( vehicle *veh )
 }
 
 void map::on_vehicle_moved( const tripoint_bub_sm &sm_min, const tripoint_bub_sm &sm_max,
-                             const int &smz )
+                            const int &smz )
 {
     ZoneScoped;
 
@@ -2013,7 +2013,7 @@ bool map::displace_vehicle( vehicle &veh, const tripoint_rel_ms &dp )
 
     auto expand_bounds = [&]( const tripoint_abs_ms & base, const vehicle_part & prt ) {
         const auto p = project_to<coords::sm>( base + tripoint_rel_ms(
-                           prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
+                prt.precalc[0], prt.mount.z() + prt.z_terrain[0] ) );
         veh_abs_sm_min.x() = std::min( veh_abs_sm_min.x(), p.x() );
         veh_abs_sm_min.y() = std::min( veh_abs_sm_min.y(), p.y() );
         veh_abs_sm_min.z() = std::min( veh_abs_sm_min.z(), p.z() );

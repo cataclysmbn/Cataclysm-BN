@@ -29,9 +29,9 @@ struct GpuLightSource {
     float radius;    // effective range in tiles (pre-computed from luminance)
     float dir_x;     // normalized horizontal direction for cone lights
     float dir_y;
-    float cone_cos;    // cosine of half-angle for cone lights
-    float z_frac;      // fractional source height inside z_idx
-    uint32_t _pad[2];  // pad to 48 bytes
+    float cone_cos;   // cosine of half-angle for cone lights
+    float z_frac;     // fractional source height inside z_idx
+    uint32_t _pad[2]; // pad to 48 bytes
 };
 static_assert(sizeof(GpuLightSource) == 48);
 
