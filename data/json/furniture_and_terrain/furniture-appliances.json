@@ -1790,6 +1790,28 @@
   },
   {
     "type": "furniture",
+    "id": "f_gridmakeshift_sealer",
+    "looks_like": "makeshift_sealer",
+    "name": "grid makeshift vacuum sealer",
+    "symbol": "U",
+    "description": "A portable homemade heat sealer unit, connected to a electrical grid.  It could be used for vacuum-packing food to preserve it.",
+    "color": "blue",
+    "move_cost_mod": -1,
+    "coverage": 10,
+    "required_str": -1,
+    "crafting_pseudo_item": "fake_gridmakeshift_sealer",
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "makeshift_sealer", "count": 1 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 16,
+      "sound": "crunch!",
+      "sound_fail": "whump.",
+      "items": [ { "item": "makeshift_sealer", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
     "id": "f_craftrig",
     "looks_like": "craftrig",
     "name": "grid FOODCO kitchen buddy",

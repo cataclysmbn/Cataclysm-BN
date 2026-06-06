@@ -611,6 +611,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridmakeshift_sealer",
+    "group": "place_makeshift_sealer",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "makeshift_sealer", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridmakeshift_sealer"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridwater_purifier",
     "group": "install_water_purifier",
     "category": "WORKSHOP",
