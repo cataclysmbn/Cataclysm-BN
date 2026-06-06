@@ -932,5 +932,47 @@
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_cloning_vat"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridanalytical_set",
+    "group": "place_analytical_set_basic",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "electronics", 1 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
+    "using": [ [ "soldering_standard", 20 ] ],
+    "components": [
+      [ [ "analytical_set_basic", 1 ] ],
+      [ [ "cable", 5 ] ],
+      [ [ "power_supply", 1 ] ]
+    ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridanalytical_set"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridmicrocentrifuge",
+    "group": "place_microcentrifuge",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "microcentrifuge", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridmicrocentrifuge"
+  },
+  {
+    "type": "construction",
+    "id": "constr_griddna_editor",
+    "group": "place_dna_editor",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "dna_editor", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_griddna_editor"
   }
 ]

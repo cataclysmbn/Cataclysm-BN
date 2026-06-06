@@ -237,6 +237,17 @@
     "qualities": [ [ "CONCENTRATE", 1 ], [ "SEPARATE", 1 ], [ "ANALYSIS", 1 ] ]
   },
   {
+    "id": "fake_gridmicrocentrifuge",
+    "copy-from": "fake_item",
+    "looks_like": "microcentrifuge",
+    "type": "TOOL",
+    "name": { "str": "grid microcentrifuge" },
+    "sub": "microcentrifuge",
+    "max_charges": 2500,
+    "qualities": [ [ "CONCENTRATE", 1 ], [ "SEPARATE", 1 ] ],
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
     "id": "fake_oven",
     "copy-from": "fake_item",
     "type": "TOOL",
@@ -776,6 +787,29 @@
     "sub": "chemistry_set_basic",
     "qualities": [ [ "DISTILL", 1 ], [ "CHEM", 3 ], [ "BOIL", 1 ] ],
     "max_charges": 2500,
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
+    "id": "fake_gridanalytical_set",
+    "copy-from": "fake_item",
+    "looks_like": "analytical_set_basic",
+    "type": "TOOL",
+    "name": { "str": "grid basic analysis kit" },
+    "sub": "analytical_set_basic",
+    "max_charges": 2500,
+    "qualities": [ [ "ANALYSIS", 1 ] ],
+    "flags": [ "USES_GRID_POWER" ]
+  },
+  {
+    "id": "fake_griddna_editor",
+    "copy-from": "fake_item",
+    "looks_like": "dna_editor",
+    "type": "TOOL",
+    "name": { "str": "grid genome workstation" },
+    "sub": "dna_editor",
+    "charges_per_use": 5,
+    "max_charges": 2500,
+    "use_action": { "type": "dna_editor", "charges_to_use": 5 },
     "flags": [ "USES_GRID_POWER" ]
   },
   {

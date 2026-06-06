@@ -3116,5 +3116,87 @@
         }
       }
     ]
+  },
+  {
+    "type": "furniture",
+    "id": "f_gridanalytical_set",
+    "looks_like": "analytical_set_basic",
+    "name": "grid basic analysis kit",
+    "symbol": "=",
+    "description": "A basic laboratory analysis kit connected to an electrical grid, drawing power instead of batteries.  Its spectrophotometer, pH meter, and other instruments work just as well as the portable version.",
+    "color": "blue",
+    "move_cost_mod": -1,
+    "coverage": 10,
+    "required_str": -1,
+    "crafting_pseudo_item": [ "fake_gridanalytical_set" ],
+    "examine_action": "use_furn_fake_item",
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": {
+      "items": [
+        { "item": "solder_wire", "charges": 20 },
+        { "item": "analytical_set_basic", "count": 1 },
+        { "item": "cable", "charges": 5 },
+        { "item": "power_supply", "count": 1 }
+      ]
+    },
+    "bash": {
+      "str_min": 12,
+      "str_max": 40,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [
+        { "item": "solder_wire", "charges": [ 10, 20 ] },
+        { "item": "scrap", "count": [ 1, 4 ] },
+        { "item": "steel_chunk", "count": [ 0, 1 ] },
+        { "item": "sheet_metal_small", "count": [ 2, 5 ] },
+        { "item": "cable", "charges": [ 1, 3 ] }
+      ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_gridmicrocentrifuge",
+    "looks_like": "f_centrifuge",
+    "name": "grid microcentrifuge",
+    "symbol": "=",
+    "description": "A microcentrifuge connected to an electrical grid, drawing power instead of batteries.  Bench-sized but still very fast.",
+    "color": "blue",
+    "move_cost_mod": -1,
+    "coverage": 10,
+    "required_str": -1,
+    "crafting_pseudo_item": [ "fake_gridmicrocentrifuge" ],
+    "examine_action": "use_furn_fake_item",
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "microcentrifuge", "count": 1 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 30,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [ { "item": "microcentrifuge", "count": 1 } ]
+    }
+  },
+  {
+    "type": "furniture",
+    "id": "f_griddna_editor",
+    "looks_like": "f_centrifuge",
+    "name": "grid genome workstation",
+    "symbol": "=",
+    "description": "A genome workstation connected to an electrical grid, drawing power instead of batteries.  Can scan genetic samples and produce DNA samples for cloning.",
+    "color": "blue",
+    "move_cost_mod": -1,
+    "coverage": 10,
+    "required_str": -1,
+    "crafting_pseudo_item": [ "fake_griddna_editor" ],
+    "examine_action": "use_furn_fake_item",
+    "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
+    "deconstruct": { "items": [ { "item": "dna_editor", "count": 1 } ] },
+    "bash": {
+      "str_min": 8,
+      "str_max": 30,
+      "sound": "metal screeching!",
+      "sound_fail": "clang!",
+      "items": [ { "item": "dna_editor", "count": 1 } ]
+    }
   }
 ]

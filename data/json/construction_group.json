@@ -1301,6 +1301,21 @@
   },
   {
     "type": "construction_group",
+    "id": "place_analytical_set_basic",
+    "name": "Plug In Basic Analysis Kit"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_microcentrifuge",
+    "name": "Plug In  Microcentrifuge"
+  },
+  {
+    "type": "construction_group",
+    "id": "place_dna_editor",
+    "name": "Plug In Genome Workstation"
+  },
+  {
+    "type": "construction_group",
     "id": "place_food_dehydrator",
     "name": "Plug In Food Dehydrator"
   },
