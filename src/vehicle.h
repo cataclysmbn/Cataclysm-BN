@@ -1365,7 +1365,8 @@ class vehicle
         // must exceed certain threshold to be subtracted from hp
         // (a lot light collisions will not destroy parts)
         // Returns damage bypassed
-        int damage( int p, int dmg, damage_type type = DT_BASH, bool aimed = true );
+        int damage( int p, int dmg, damage_type type = DT_BASH, bool aimed = true,
+                    bool random_part = true );
 
         // damage all parts (like shake from strong collision), range from dmg1 to dmg2
         void damage_all( int dmg1, int dmg2, damage_type type, const tripoint_mnt_veh &impact );

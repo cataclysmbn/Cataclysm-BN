@@ -598,6 +598,10 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             }
         }
 
+        // If the target's in a vehicle and we're at a different height, hit the vehicle instead, unless you're firing down into a roof-less vehicle.
+        const bool z_level_vehicle = here.veh_at( tp ) && ( source.z() < tp.z() || ( source.z() > tp.z() &&
+                                     here.veh_at( tp )->part_with_feature( "ROOF", true ) ) );
+
         // Penalize damage and/or range on overpenetration.
         auto apply_overpenetration_penalty = [&]( bool modify_damage ) {
             traj_len *= overpenetration_modifier;
@@ -609,7 +613,7 @@ auto projectile_attack( const projectile &proj_arg, const tripoint_bub_ms &sourc
             }
         };
 
-        if( critter != nullptr && cur_missed_by < 1.0 ) {
+        if( critter != nullptr && cur_missed_by < 1.0 && !z_level_vehicle ) {
             if( in_veh != nullptr && veh_pointer_or_null( here.veh_at( tp ) ) == in_veh &&
                 critter->is_player() ) {
                 // Turret either was aimed by the player (who is now ducking) and shoots from above
