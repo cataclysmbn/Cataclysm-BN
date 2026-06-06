@@ -1579,7 +1579,7 @@
   {
     "type": "furniture",
     "id": "f_gridsmallgunkit",
-    "looks_like": "smalll_repairkit",
+    "looks_like": "small_repairkit",
     "name": "grid firearm repair kit",
     "symbol": "#",
     "description": "A firearm repair kit connected to an electrical grid.",
@@ -1634,7 +1634,6 @@
     "coverage": 10,
     "required_str": -1,
     "crafting_pseudo_item": "fake_gridcon_mix",
-    "examine_action": "use_furn_fake_item",
     "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
     "deconstruct": { "items": [ { "item": "con_mix", "count": 1 } ] },
     "bash": {
@@ -1842,7 +1841,6 @@
     "coverage": 10,
     "required_str": -1,
     "crafting_pseudo_item": "fake_gridcoffeemaker",
-    "examine_action": "use_furn_fake_item",
     "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
     "deconstruct": { "items": [ { "item": "coffeemaker", "count": 1 } ] },
     "bash": {
@@ -3169,7 +3167,6 @@
     "coverage": 10,
     "required_str": -1,
     "crafting_pseudo_item": [ "fake_gridanalytical_set" ],
-    "examine_action": "use_furn_fake_item",
     "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
     "deconstruct": {
       "items": [
@@ -3205,7 +3202,6 @@
     "coverage": 10,
     "required_str": -1,
     "crafting_pseudo_item": [ "fake_gridmicrocentrifuge" ],
-    "examine_action": "use_furn_fake_item",
     "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
     "deconstruct": { "items": [ { "item": "microcentrifuge", "count": 1 } ] },
     "bash": {
@@ -3222,12 +3218,12 @@
     "looks_like": "f_centrifuge",
     "name": "grid genome workstation",
     "symbol": "=",
-    "description": "A genome workstation connected to an electrical grid, drawing power instead of batteries.  Can scan genetic samples and produce DNA samples for cloning.",
+    "description": "A genome workstation connected to an electrical grid, drawing power instead of batteries.  Can scan genetic samples and produce DNA samples for cloning. It can also be used as a microcentrifuge in a pinch.",
     "color": "blue",
     "move_cost_mod": -1,
     "coverage": 10,
     "required_str": -1,
-    "crafting_pseudo_item": [ "fake_griddna_editor" ],
+    "crafting_pseudo_item": [ "fake_griddna_editor, fake_gridmicrocentrifuge" ],
     "examine_action": "use_furn_fake_item",
     "flags": [ "TRANSPARENT", "MOUNTABLE", "EASY_DECONSTRUCT" ],
     "deconstruct": { "items": [ { "item": "dna_editor", "count": 1 } ] },
