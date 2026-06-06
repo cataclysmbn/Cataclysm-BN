@@ -232,7 +232,8 @@ auto colored_light_tint_for_tile( const colored_light_tint_options &opt ) -> ren
     if( opt.tile.category == C_TERRAIN && opt.here.ter( opt.pos ) == t_open_air ) {
         return {};
     }
-    if( opt.tile.category == C_VEHICLE_PART && opt.overlay_count <= 0 && opt.pos.z() < OVERMAP_HEIGHT ) {
+    if( opt.tile.category == C_VEHICLE_PART && opt.overlay_count <= 0 &&
+        opt.pos.z() < OVERMAP_HEIGHT ) {
         const auto &above = opt.here.get_cache_ref( opt.pos.z() + 1 );
         if( above.inbounds( opt.pos.xy() ) &&
             above.vehicle_floor_cache[above.idx( opt.pos.x(), opt.pos.y() )] ) {

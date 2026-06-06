@@ -1070,7 +1070,7 @@ auto color_is_set(RGBColor const& color) -> bool {
 
 auto pack_rgb(RGBColor const& color) -> uint32_t {
     return (static_cast<uint32_t>(color.r) << 16) | (static_cast<uint32_t>(color.g) << 8)
-           | static_cast<uint32_t>(color.b);
+         | static_cast<uint32_t>(color.b);
 }
 
 auto make_colored_source(GpuLightSource const& source, uint32_t const color_rgb)
@@ -1228,8 +1228,7 @@ auto static_emitter_kind(map_data_common_t const& data) -> light_source_kind {
              : light_source_kind::static_emitter;
 }
 
-template<typename Source>
-auto source_radius_ceiling(Source const& source) -> int {
+template <typename Source> auto source_radius_ceiling(Source const& source) -> int {
     return std::max(0, static_cast<int>(std::ceil(source.radius)));
 }
 
@@ -1237,7 +1236,7 @@ auto raytrace_groups_for_radius(int const radius) -> Uint32 {
     return static_cast<Uint32>((2 * radius + 1 + 7) / 8);
 }
 
-template<typename Source>
+template <typename Source>
 auto make_raytrace_buckets(std::vector<Source>& sources, Uint32 const base_offset = 0)
     -> std::vector<raytrace_source_bucket> {
     if (sources.empty()) { return {}; }
@@ -1279,7 +1278,7 @@ auto raytrace_work_units(std::vector<raytrace_source_bucket> const& buckets) -> 
     return work;
 }
 
-template<typename Source>
+template <typename Source>
 auto source_z_level_count(Source const& source, int const z_count) -> int {
     auto const z_span = static_cast<int>(std::ceil(source.radius / Z_LEVEL_SCALE));
     auto const z_min = std::max(0, source.z_idx - z_span);
@@ -1287,7 +1286,7 @@ auto source_z_level_count(Source const& source, int const z_count) -> int {
     return std::max(0, z_max - z_min + 1);
 }
 
-template<typename Source>
+template <typename Source>
 auto raytrace_z_work_units(std::vector<Source> const& sources) -> int64_t {
     auto work = int64_t{0};
     for (auto const& source : sources) {
@@ -1378,7 +1377,8 @@ auto color_rgb_from_optional(std::optional<RGBColor> const& color) -> std::optio
     return pack_rgb(*color);
 }
 
-auto colored_source_can_be_added(source_accumulator const& acc, GpuLightSource const& source) -> bool {
+auto colored_source_can_be_added(source_accumulator const& acc, GpuLightSource const& source)
+    -> bool {
     if (source.luminance <= LIGHT_AMBIENT_LOW) { return false; }
 
     auto const pos = source_pos(source);
@@ -1399,8 +1399,7 @@ auto add_colored_source(add_colored_source_options const& opt) -> void {
 auto add_colored_point_source(add_colored_point_source_options const& opt) -> void {
     add_colored_source({
         .acc = opt.acc,
-        .source =
-            make_source(opt.pos.x(), opt.pos.y(), opt.pos.z(), opt.luminance, opt.flags),
+        .source = make_source(opt.pos.x(), opt.pos.y(), opt.pos.z(), opt.luminance, opt.flags),
         .color_rgb = opt.color_rgb,
     });
 }
@@ -1414,8 +1413,7 @@ auto character_colored_item_light(Character const& ch) -> std::optional<colored_
     ch.has_item_with([&best](item const& itm) {
         auto const color_rgb = item_light_color(itm);
         auto const luminance = static_cast<float>(itm.getlight_emit());
-        if (color_rgb && luminance > LIGHT_AMBIENT_LOW
-            && (!best || luminance > best->luminance)) {
+        if (color_rgb && luminance > LIGHT_AMBIENT_LOW && (!best || luminance > best->luminance)) {
             best = colored_item_light{
                 .luminance = luminance,
                 .color_rgb = *color_rgb,
@@ -1831,8 +1829,8 @@ auto add_monster_sources(source_accumulator& acc) -> void {
 }
 
 auto collect_sources(
-    map const& m, std::vector<int> const& dirty_levels, bool const collect_colored_sources)
-    -> source_collection {
+    map const& m, std::vector<int> const& dirty_levels,
+    bool const collect_colored_sources) -> source_collection {
     if (dirty_levels.empty()) { return {}; }
 
     auto const& lc0 = m.get_cache_ref(dirty_levels.front());
@@ -3116,7 +3114,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     TracyPlot("GPU LM Download Player Light", download_player_light ? int64_t{1} : int64_t{0});
     TracyPlot(
         "GPU LM Colored Download Levels",
-        download_colored_light ? static_cast<int64_t>(colored_light_download_levels.size()) : int64_t{0});
+        download_colored_light
+            ? static_cast<int64_t>(colored_light_download_levels.size())
+            : int64_t{0});
     TracyPlot(
         "GPU LM Input Upload Levels",
         static_cast<int64_t>(
@@ -3271,16 +3271,15 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 [&](SDL_GPUBuffer* dst, std::vector<int> const& levels, Uint32 const level_bytes) {
                     auto packed_level_index = Uint32{0};
                     for (auto const& range : make_z_level_ranges(levels)) {
-                        auto const range_bytes =
-                            static_cast<Uint32>(range.z_count) * level_bytes;
+                        auto const range_bytes = static_cast<Uint32>(range.z_count) * level_bytes;
                         auto const src_loc = SDL_GPUTransferBufferLocation{
                             .transfer_buffer = upload_tbuf,
                             .offset = off + packed_level_index * level_bytes,
                         };
                         auto const dst_reg = SDL_GPUBufferRegion{
                             .buffer = dst,
-                            .offset = static_cast<Uint32>(range.z_start + OVERMAP_DEPTH)
-                                      * level_bytes,
+                            .offset =
+                                static_cast<Uint32>(range.z_start + OVERMAP_DEPTH) * level_bytes,
                             .size = range_bytes,
                         };
                         SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
@@ -3341,42 +3340,41 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 SDL_EndGPUComputePass(cp);
             };
 
-            auto dispatch_color_raytrace =
-                [&](std::vector<raytrace_source_bucket> const& buckets) {
-                    if (buckets.empty()) { return; }
+            auto dispatch_color_raytrace = [&](std::vector<raytrace_source_bucket> const& buckets) {
+                if (buckets.empty()) { return; }
 
-                    auto const rw_color = SDL_GPUStorageBufferReadWriteBinding{
-                        .buffer = colored_light_buf,
-                        .cycle = false,
-                        .padding1 = 0,
-                        .padding2 = 0,
-                        .padding3 = 0,
-                    };
-                    auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_color, 1);
-                    SDL_BindGPUComputePipeline(cp, s_color_raytrace_pipeline);
-
-                    auto const ro_bufs =
-                        std::array<SDL_GPUBuffer*, 4>{t_buf, f_buf, vf_buf, colored_src_buf};
-                    SDL_BindGPUComputeStorageBuffers(
-                        cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
-
-                    for (auto const& bucket : buckets) {
-                        auto const raytrace_push = lm_raytrace_push_constants{
-                            .cache_x = cache_x,
-                            .cache_y = cache_y,
-                            .cache_xy = cache_xy,
-                            .z_count = z_count,
-                            .z_scale = Z_LEVEL_SCALE,
-                            .num_sources = bucket.source_count,
-                            .max_radius = bucket.max_radius,
-                            .source_offset = bucket.source_offset,
-                        };
-                        SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
-                        SDL_DispatchGPUCompute(
-                            cp, bucket.source_count, bucket.groups_xy, bucket.groups_xy);
-                    }
-                    SDL_EndGPUComputePass(cp);
+                auto const rw_color = SDL_GPUStorageBufferReadWriteBinding{
+                    .buffer = colored_light_buf,
+                    .cycle = false,
+                    .padding1 = 0,
+                    .padding2 = 0,
+                    .padding3 = 0,
                 };
+                auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, &rw_color, 1);
+                SDL_BindGPUComputePipeline(cp, s_color_raytrace_pipeline);
+
+                auto const ro_bufs =
+                    std::array<SDL_GPUBuffer*, 4>{t_buf, f_buf, vf_buf, colored_src_buf};
+                SDL_BindGPUComputeStorageBuffers(
+                    cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
+
+                for (auto const& bucket : buckets) {
+                    auto const raytrace_push = lm_raytrace_push_constants{
+                        .cache_x = cache_x,
+                        .cache_y = cache_y,
+                        .cache_xy = cache_xy,
+                        .z_count = z_count,
+                        .z_scale = Z_LEVEL_SCALE,
+                        .num_sources = bucket.source_count,
+                        .max_radius = bucket.max_radius,
+                        .source_offset = bucket.source_offset,
+                    };
+                    SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
+                    SDL_DispatchGPUCompute(
+                        cp, bucket.source_count, bucket.groups_xy, bucket.groups_xy);
+                }
+                SDL_EndGPUComputePass(cp);
+            };
 
             auto fill_uint_buffer = [&](SDL_GPUBuffer* const target_buf, uint32_t const value) {
                 auto const rw_target = SDL_GPUStorageBufferReadWriteBinding{
@@ -3781,11 +3779,12 @@ auto finish_gpu_lighting(SDL_GPUDevice* const device, gpu_lighting_work const& w
             for (auto const z : pending.colored_light_download_levels) {
                 auto& lc = const_cast<level_cache&>(pending.m->get_cache_ref(z));
                 auto const sz = static_cast<std::size_t>(pending.cache_xy);
-                auto const* color_src = colored_light_mapped + colored_level_index * pending.cache_xy;
+                auto const* color_src =
+                    colored_light_mapped + colored_level_index * pending.cache_xy;
                 auto const color_span = std::span{color_src, sz};
                 std::ranges::copy(color_span, lc.colored_light_cache.begin());
-                lc.colored_light_cache_active =
-                    std::ranges::any_of(color_span, [](uint32_t const value) { return value != 0u; });
+                lc.colored_light_cache_active = std::ranges::
+                    any_of(color_span, [](uint32_t const value) { return value != 0u; });
                 ++colored_level_index;
             }
         }
@@ -4301,9 +4300,7 @@ auto resident_lighting_ready_for_sight_pairs(resident_sight_pair_inputs_params c
     return inputs.cache_x == cache_x && inputs.cache_y == cache_y && inputs.z_count == z_count
         && inputs.floor_valid && s_lighting_resources.floor.buffer != nullptr
         && s_lighting_resources.transparency.buffer != nullptr
-        && std::ranges::all_of(levels, [](int const z) {
-               return transparency_level_is_valid(z);
-           });
+        && std::ranges::all_of(levels, [](int const z) { return transparency_level_is_valid(z); });
 }
 
 auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_params const& p)
@@ -4332,10 +4329,9 @@ auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_pa
     auto const sight_levels = sight_pair_levels(*p.pairs, z_count);
     auto const& inputs = s_lighting_resources.inputs;
     auto const resident_terrain_ready =
-        inputs.floor_valid
-        && std::ranges::all_of(sight_levels, [](int const z) {
-               return transparency_level_is_valid(z);
-           });
+        inputs.floor_valid && std::ranges::all_of(sight_levels, [](int const z) {
+            return transparency_level_is_valid(z);
+        });
     if (!resident_terrain_ready || s_lighting_resources.transparency.buffer == nullptr
         || s_lighting_resources.floor.buffer == nullptr) {
         DebugLog(DL::Error, DC::Main)

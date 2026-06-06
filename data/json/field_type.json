@@ -981,14 +981,7 @@
     "type": "field_type",
     "legacy_enum_id": 38,
     "intensity_levels": [
-      {
-        "name": "smoke",
-        "sym": "8",
-        "dangerous": true,
-        "light_emitted": 20,
-        "light_color": "#ffd08a",
-        "translucency": 1
-      },
+      { "name": "smoke", "sym": "8", "dangerous": true, "light_emitted": 20, "light_color": "#ffd08a", "translucency": 1 },
       {
         "name": "airborne incendiary",
         "color": "light_red",
