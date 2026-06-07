@@ -1597,7 +1597,8 @@ static auto perception_detail_range_base( const Character &viewer ) -> float
 {
     static constexpr auto baseline_range = 84.0f;
     static constexpr auto perception_baseline = 10;
-    return baseline_range + static_cast<float>( viewer.get_per() - perception_baseline );
+    return baseline_range + static_cast<float>( viewer.get_per() - perception_baseline ) +
+           viewer.mutation_value( "local_detail_sight" );
 }
 
 static auto visibility_scale_factor_from_range( const float visibility_range ) -> float

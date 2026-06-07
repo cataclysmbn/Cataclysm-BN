@@ -1999,7 +1999,8 @@ void Character::recalc_sight_limits()
         // You can kinda see out a bit.
         sight_max = 2;
     } else if( ( has_trait( trait_MYOPIC ) || has_trait( trait_URSINE_EYE ) ) &&
-               !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) ) {
+               !worn_with_flag( flag_FIX_NEARSIGHT ) && !has_effect( effect_contacts ) &&
+               !has_bionic( bio_eye_optic ) ) {
         sight_max = 4;
     } else if( has_trait( trait_PER_SLIME ) ) {
         sight_max = 6;
@@ -7606,6 +7607,7 @@ mutation_value_map = {
     { "overmap_sight", calc_mutation_value_multiplicative<&mutation_branch::overmap_sight> },
     { "overmap_multiplier", calc_mutation_value_multiplicative<&mutation_branch::overmap_multiplier> },
     { "night_vision_range", calc_mutation_value<&mutation_branch::night_vision_range> },
+    { "local_detail_sight", calc_mutation_value_additive<&mutation_branch::local_detail_sight> },
     { "reading_speed_multiplier", calc_mutation_value_multiplicative<&mutation_branch::reading_speed_multiplier> },
     { "skill_rust_multiplier", calc_mutation_value_multiplicative<&mutation_branch::skill_rust_multiplier> }
 };
