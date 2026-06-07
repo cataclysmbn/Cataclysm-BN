@@ -43,8 +43,33 @@ jobs:
         with:
           paths_ignore: '["docs/**", "doxygen_doc/**", "lgtm/**", "utilities/**", "scripts/**", "**.md", "**.mdx"]'
 
-  varied_builds:
+  shader-artifacts:
     needs: skip-duplicates
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shadercross dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
+      - name: Generate shaders
+        run: bash build-scripts/generate-shaders.sh
+
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders/
+          if-no-files-found: error
+
+  varied_builds:
+    needs: [skip-duplicates, shader-artifacts]
     strategy:
       fail-fast: ${{ github.ref_name == 'main' }}
       max-parallel: ${{ github.ref_name == 'main' && 20 || 2 }}
@@ -81,6 +106,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+
+      - name: Download generated shaders
+        if: ${{ env.SKIP == 'false' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders-ci
+          path: data/shaders
 
       - name: install dependencies (ubuntu)
         if: ${{ env.SKIP == 'false' }}
@@ -121,10 +153,6 @@ jobs:
       - name: prepare
         if: ${{ env.SKIP == 'false' }}
         run: bash ./build-scripts/requirements.sh
-
-      - name: Install shadercross
-        if: ${{ env.SKIP == 'false' && (env.TILES == '1' || env.TILES == 'true') }}
-        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Setup ccache
         if: ${{ env.SKIP == 'false' }}
