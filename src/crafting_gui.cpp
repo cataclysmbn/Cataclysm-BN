@@ -1091,7 +1091,7 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
 
             if( batch ) {
                 current.clear();
-                for( int i = 1; i <= 50; i++ ) {
+                for( int i = 1; i <= 1000; i++ ) {
                     current.push_back( chosen );
                     available.emplace_back( crafter, chosen, i,
                                             available_recipes.contains( *chosen ) );
