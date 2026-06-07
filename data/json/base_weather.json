@@ -1,0 +1,56 @@
+[
+  {
+    "type": "weather_pattern",
+    "id": "acidic",
+    "multiplier": 8.0,
+    "active_threshold": 1.0,
+    "acidic": true
+  },
+  {
+    "type": "base_weather",
+    "id": "default",
+    "spring_temp": 8,
+    "summer_temp": 16,
+    "autumn_temp": 7,
+    "winter_temp": -14,
+    "base_humidity": 70,
+    "summer_humidity_manual_mod": -17,
+    "winter_humidity_manual_mod": 17,
+    "base_pressure": 1016,
+    "base_wind": 10,
+    "base_wind_distrib_peaks": 100,
+    "base_wind_season_variation": 30,
+    "weather_types": [
+      "clear",
+      "sunny",
+      "cloudy",
+      "light_drizzle",
+      "drizzle",
+      "rain",
+      "heavy_rain",
+      "thunder",
+      "lightning",
+      "acid_drizzle",
+      "acid_rain",
+      "light_flurries",
+      "flurries",
+      "snowing",
+      "snowstorm"
+    ]
+  },
+  {
+    "type": "base_weather",
+    "id": "desert_test",
+    "spring_temp": 35,
+    "summer_temp": 44,
+    "autumn_temp": 32,
+    "winter_temp": 26,
+    "base_humidity": 16,
+    "base_pressure": 850,
+    "summer_humidity_manual_mod": -5,
+    "winter_humidity_manual_mod": -7,
+    "base_wind": 35,
+    "base_wind_season_variation": 10,
+    "weather_types": [ "clear", "sunny" ]
+  }
+]

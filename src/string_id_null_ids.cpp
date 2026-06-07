@@ -48,6 +48,7 @@ MAKE_CLASS_NULL_ID( vitamin, "" )
 MAKE_CLASS_NULL_ID( gun_mode, "" )
 MAKE_CLASS_NULL_ID( fault, "null" )
 MAKE_CLASS_NULL_ID( weapon_category, "" )
+MAKE_CLASS_NULL_ID( weather_generator, "null" )
 
 #define MAKE_STRUCT_NULL_ID( type, ... ) \
     struct type; \
