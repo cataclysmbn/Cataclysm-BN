@@ -472,7 +472,7 @@ struct common_ranged_data {
     * A bonus of 0.25 is +25% damage, up to the crit mult max.
     */
     double aimedcritbonus = 0.0;
-    
+
 };
 
 struct islot_engine {

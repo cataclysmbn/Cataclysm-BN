@@ -8352,7 +8352,7 @@ int item::gun_speed( bool with_ammo ) const
         return 10;
     }
     // If we dont have an ammo given, assume that it is a firearm.
-    int ret = (with_ammo && ammo_data()) ? ammo_data()->ammo->speed : 1000;
+    int ret = ( with_ammo && ammo_data() ) ? ammo_data()->ammo->speed : 1000;
     for( const item *mod : gunmods() ) {
         ret += mod->type->gunmod->speed;
     }

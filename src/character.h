@@ -228,13 +228,13 @@ struct needs_rates {
 struct hearing_loss_data {
     // Short term hearing loss in mdB spl. Recovers relatively quickly.
     short hearing_loss_temp = 0;
-    // Long term hearing loss in mdB spl. 
+    // Long term hearing loss in mdB spl.
     short hearing_loss_longterm = 0;
     // Permanant hearing loss in mdB spl. Not gained by interactions with sound in normal play, so that all characters dont inevitably become deaf.
     short hearing_loss_permanant = 0;
-    // Weather or not the characters eardrums have been ruptured. Character has the deaf status until they heal. 
+    // Weather or not the characters eardrums have been ruptured. Character has the deaf status until they heal.
     // We track the bool because once the eardrums are ruptured, there is not too much more damage sounds can do for a while so we dont inflict additional deaf duration.
-    bool ruptured_eardrums = false; 
+    bool ruptured_eardrums = false;
 };
 
 struct char_trait_data {

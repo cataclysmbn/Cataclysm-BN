@@ -1491,7 +1491,8 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
         // We could technically run through checking adjacent tiles as we do below, but vehicles are dynamic and rechecking all of the vehicles tiles every turn would not provide enough benifit.
         if( const auto &vp = m.veh_at( btri ) ) {
             if( vp.part_with_feature( "FULL_BOARD", true ) || ( vp.obstacle_at_part() &&
-                    (vp.part_with_feature( VPFLAG_OPENABLE, true ) || vp->part_with_feature( VPFLAG_WINDOW, true ) ) ) ) {
+                    ( vp.part_with_feature( VPFLAG_OPENABLE, true ) ||
+                      vp->part_with_feature( VPFLAG_WINDOW, true ) ) ) ) {
                 absorption_cache[sp.x()][sp.y()] = SOUND_ABSORPTION_THICK_BARRIER;
                 sound_wall_cache[sp.x()][sp.y()] = true;
                 continue;
@@ -2475,7 +2476,8 @@ void sounds::process_sounds_npc()
             // Passive sound dampening reduces the "heard" volume of all sounds, including ambient volume.
             // In a perfect simulation most hearing protection absorbs high frequency sounds much more than low frequency sounds.
             // We cap our minimum at 10dB to prevent underground NPCs from hearing everything everywhere on the entire map.
-            const short min_vol = std::max( 1000, ( ambient_vol - below_ambient + passive_sound_dampening + who.total_hearing_loss() ) );
+            const short min_vol = std::max( 1000,
+                                            ( ambient_vol - below_ambient + passive_sound_dampening + who.total_hearing_loss() ) );
             const short npc_t_absorb = level_cache.absorption_cache[level_cache.idx( charx, chary )];
 
             // dBspl is a root-mean-square value so while all the volumes in the tile should be cumulative,
@@ -2494,7 +2496,7 @@ void sounds::process_sounds_npc()
                 // Do an early filter for sounds that would always be indaudible.
                 // Check to see if the NPC is deaf here as well, as we may deafen them part way through the process.
                 const auto tile_vol = svol_at( element, who.bub_pos(), average_t_absorp,
-                                               npc_indoors, who.sees( element.origin , element.from_player ) );
+                                               npc_indoors, who.sees( element.origin, element.from_player ) );
 
                 if( tile_vol  > min_vol && !is_deaf ) {
 
@@ -2512,7 +2514,7 @@ void sounds::process_sounds_npc()
                 if( tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening )  >=
                     8500 ) {
                     const short def_vol = tile_vol - ( ( passive_sound_dampening * 2 ) + active_sound_dampening );
-                    who.handle_hearing_loss(def_vol,true);
+                    who.handle_hearing_loss( def_vol, true );
 
                 }
 
@@ -2596,7 +2598,7 @@ void sounds::process_sound_markers( Character *who )
         // Skip sounds the player has already heard.
         if( element.heard_by_player ) {
             continue;
-        } 
+        }
 
         num_sounds_checked++;
         const int distance_to_sound = rl_dist( loc, element.origin );
@@ -2621,7 +2623,7 @@ void sounds::process_sound_markers( Character *who )
             continue;
         }
 
-        if ( who->hearing_loss_stats.ruptured_eardrums  ){
+        if( who->hearing_loss_stats.ruptured_eardrums ) {
             // We have already blown out the players eardrums, nothing more to check here.
             continue;
         }
@@ -2662,7 +2664,7 @@ void sounds::process_sound_markers( Character *who )
             const short deafening_vol = std::max( 0,
                                                   tile_vol - ( active_sound_dampening + passive_sound_dampening + passive_sound_dampening ) );
 
-            who->handle_hearing_loss( deafening_vol, true);
+            who->handle_hearing_loss( deafening_vol, true );
 
             if( is_deaf ) {
                 continue;
@@ -2799,8 +2801,9 @@ void sounds::process_sound_markers( Character *who )
              "Avatar sound processing diagnostic: Checked:%i, Within minvol distance:%i, Within flood envelope:%i, Ambient Vol:%i mdB, Vol Threshold:%i mdB",
              num_sounds_checked, num_sounds_in_minvol_dist, num_sound_in_envelope, ambient_vol, vol_threshold );
     add_msg( m_debug,
-    _( "Current Avatar Hearing Loss: Temporary:%i mdB, Longterm:%i mdB, Permanant:%i mdB" ),
-    who->hearing_loss_stats.hearing_loss_temp, who->hearing_loss_stats.hearing_loss_longterm, who->hearing_loss_stats.hearing_loss_permanant );
+             _( "Current Avatar Hearing Loss: Temporary:%i mdB, Longterm:%i mdB, Permanant:%i mdB" ),
+             who->hearing_loss_stats.hearing_loss_temp, who->hearing_loss_stats.hearing_loss_longterm,
+             who->hearing_loss_stats.hearing_loss_permanant );
     if( loudest_vol > 0 ) {
         add_msg( m_debug,
                  _( "Loudest Heard Sound: Description:[%1s], Origin vol:%i dB at [%i:%i:%i], Minvol distance:%i, Floodfill radius:%i" ),

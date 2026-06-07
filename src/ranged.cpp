@@ -1180,7 +1180,7 @@ static int calc_gun_volume( const item &gun )
     // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will still make a sonic boom.
     // Start our noise at zero.
     int noise = 0;
-    int speed = parent.gun_speed(am_dat); 
+    int speed = parent.gun_speed( am_dat );
     bool suppressed = false;
     if( am_dat ) {
         noise = parent.ammo_data()->ammo->loudness;
@@ -1195,14 +1195,14 @@ static int calc_gun_volume( const item &gun )
     }
     // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
     for( const auto mod : parent.gunmods() ) {
-        if(mod->type->gunmod->loudness < -20){
+        if( mod->type->gunmod->loudness < -20 ) {
             suppressed = true;
         }
         noise += mod->type->gunmod->loudness;
     }
-    if ( suppressed ){
+    if( suppressed ) {
         // Speed of sound in atmosphere @ seat level is 343 m/s
-        if ( speed < 344 ){
+        if( speed < 344 ) {
             // We are suppressed and subsonic. We take the least of 100 or current noise.
             noise = std::min( 100, noise );
         } else {

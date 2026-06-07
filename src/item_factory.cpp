@@ -296,7 +296,7 @@ void Item_factory::finalize_pre( itype &obj )
         // for ammo not specifying loudness (or an explicit less than zero) derive value from other properties
         // 343 is the speed of sound in atmosphere, but guns are still loud.
         // Very few firearms have projectiles with speeds lower than 342m/s, so we use that as the cutoff.
-        // For reference, arrows/bolts are sub 140 speed. 
+        // For reference, arrows/bolts are sub 140 speed.
         // If a supersonic yet silent ammunition is desired, set loudness to zero.
         if( obj.ammo->loudness < 0 ) {
             if( obj.ammo->speed > 342 ) {
@@ -1797,7 +1797,7 @@ void Item_factory::load( islot_milling &slot, const JsonObject &jo, const std::s
 
 void islot_ammo::load( const JsonObject &jo )
 {
-    
+
     mandatory( jo, was_loaded, "ammo_type", type );
     optional( jo, was_loaded, "casing", casing, std::nullopt );
     optional( jo, was_loaded, "drop", drop, itype_id::NULL_ID() );
@@ -1810,7 +1810,8 @@ void islot_ammo::load( const JsonObject &jo )
     assign( jo, "dispersion", dispersion );
     assign( jo, "recoil", recoil );
     optional( jo, was_loaded, "count", def_charges, 1 );
-    assign( jo, "loudness", loudness, false, -1, 191 ); // Measured in dB spl. -1 means the game will auto comp the loudness.
+    assign( jo, "loudness", loudness, false, -1,
+            191 ); // Measured in dB spl. -1 means the game will auto comp the loudness.
     assign( jo, "speed", speed, false, 0, 299792458 ); // Capped at the speed of light.
     assign( jo, "effects", ammo_effects );
     optional( jo, was_loaded, "show_stats", force_stat_display, std::nullopt );
@@ -1823,7 +1824,7 @@ void islot_ammo::load( const JsonObject &jo )
     }
     assign( jo, "aimedcritmaxbonus", aimedcritmaxbonus );
     assign( jo, "aimedcritbonus", aimedcritbonus );
-    
+
 }
 
 void islot_ammo::deserialize( JsonIn &jsin )
