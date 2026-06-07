@@ -728,7 +728,6 @@ void map::add_vehicle_to_cache( vehicle *veh )
         // DANGER: Unlike what you think where you can just use vpr.has_flag( VPFLAG_NOCOLLIDE )
         // THAT DOES NOT WORK DO NOT TRY AND CHANGE THIS MESS
         if( !ch.veh_cached_parts.contains( p ) ||
-            ch.veh_cached_parts[p].first != veh ||
             ( !veh->part_info( vpr.part_index() ).has_flag( VPFLAG_NOCOLLIDE ) ) ) {
             ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
         }
