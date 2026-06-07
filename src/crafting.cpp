@@ -295,11 +295,11 @@ float crafting_speed_multiplier( const Character &who, const recipe &rec, bool )
 {
     const auto tools_multi = crafting_tools_speed_multiplier( who, rec );
     auto result = morale_crafting_speed_multiplier( who, rec ) *
-                        lighting_crafting_speed_multiplier( who,
-                                rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
-                                        ? 9999
-                                        : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
-                        who.mutation_value( "crafting_speed_modifier" );
+                  lighting_crafting_speed_multiplier( who,
+                          rec ) * tools_multi * ( get_option<int>( "CRAFTING_SPEED_MULT" ) == 0
+                                  ? 9999
+                                  : 100.0f / get_option<int>( "CRAFTING_SPEED_MULT" ) ) *
+                  who.mutation_value( "crafting_speed_modifier" );
     result += who.bonus_from_enchantments( result, enchant_vals::mod::CRAFTING_SPEED );
 
     return result;

@@ -43,7 +43,6 @@ enum class mod : int {
     READING_SPEED,
     CRAFTING_SPEED,
     CONSTRUCTION_SPEED,
-    SKILLRUST_SPEED,    
 
     // Consume & Regen Speed
     METABOLISM,
@@ -67,7 +66,7 @@ enum class mod : int {
     BODYTEMP_MAX,
     BODYTEMP_SLEEP,
     BODYTEMP_SPEED,
-    
+
     // Social
     LIE,
     PERSUADE,
@@ -95,21 +94,6 @@ enum class mod : int {
     ARMOR_ELEC,
     ARMOR_ACID,
     ARMOR_BIO,
-
-    // Damage
-    UNARMED_DAMAGE_BASH,
-    UNARMED_DAMAGE_CUT,
-    UNARMED_DAMAGE_STAB,
-    UNARMED_DAMAGE_FIRE,
-    UNARMED_DAMAGE_ACID,
-    UNARMED_DAMAGE_BIO,
-    UNARMED_DAMAGE_COLD,
-    UNARMED_DAMAGE_DARK,
-    UNARMED_DAMAGE_LIGHT,
-    UNARMED_DAMAGE_PSI,
-    UNARMED_DAMAGE_BULLET,
-    UNARMED_DAMAGE_ELECTRIC,
-    UNARMED_DAMAGE_TRUE,
 
     // Object Only Effects
 

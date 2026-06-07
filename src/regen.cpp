@@ -17,8 +17,9 @@ auto has_broken_limb_penalty( const Character &c, const bodypart_id &bp ) -> boo
 /// Broken limbs without splint heal slower default 25%, capped at 0
 auto mending_modifier( const Character &c ) -> float
 {
-    auto val = 0.25 + c.mutation_value( "mending_modifier" ) + c.bonus_from_enchantments( 0.25, enchant_vals::mod::MENDING_MULT)
-    return clamp( val, 0.0f, 1.0f );
+    auto val = 0.25 + c.mutation_value( "mending_modifier" ) + c.bonus_from_enchantments( 0.25,
+               enchant_vals::mod::MENDING_MULT );
+    return clamp( val, 0.0, 1.0 );
 }
 
 } // namespace

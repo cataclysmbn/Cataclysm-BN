@@ -1832,6 +1832,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 3;
             chance += u_mods.lie;
 
+            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::LIE );
             //come on, who would suspect a robot of lying?
             if( u.has_bionic( bio_voice ) ) {
                 chance += 10;
@@ -1846,6 +1847,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.trust * 2 + p.op_of_u.value;
             chance += u_mods.persuade;
 
+            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::PERSUADE );
             if( u.has_bionic( bio_face_mask ) ) {
                 chance += 10;
             }
@@ -1862,6 +1864,7 @@ int talk_trial::calc_chance( const dialogue &d ) const
                       p.op_of_u.fear * 2 - p.personality.bravery * 2;
             chance += u_mods.intimidate;
 
+            chance += u.bonus_from_enchantments( chance, enchant_vals::mod::INTIMIDATE );
             if( u.has_bionic( bio_face_mask ) ) {
                 chance += 10;
             }

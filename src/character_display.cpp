@@ -980,7 +980,10 @@ static void draw_speed_tab( const catacurses::window &w_speed,
         ++line;
     }
 
-    const float temperature_speed_modifier = you.mutation_value( "temperature_speed_modifier" );
+    float temperature_speed_modifier = you.mutation_value( "temperature_speed_modifier" );
+    temperature_speed_modifier += you.bonus_from_enchantments( temperature_speed_modifier,
+                                  enchant_vals::mod::BODYTEMP_SPEED );
+
     if( temperature_speed_modifier != 0 ) {
         nc_color pen_color;
         std::string pen_sign;
