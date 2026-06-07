@@ -339,7 +339,7 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
                                     vertical_escape_vol > sound_inst.base_distance_vol_by_dir[san_dir] ) ? ( (
                                                 sound_inst.origin.z() <= tri.z() ) ? SDI_UP : SDI_DOWN ) : san_dir;
         add_msg( m_debug,
-                 _( "Error in sounds::svol:at(). Sound [ %1s ] from %i:%i:%i with origin volume of %i dB, has impossible escape vol in %i direction of %i mdB." ),
+                 "Error in sounds::svol:at(). Sound [ %1s ] from %i:%i:%i with origin volume of %i dB, has impossible escape vol in %i direction of %i mdB.",
                  sound_inst.sound.description, sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
                  sound_inst.sound.origin.z(), sound_inst.sound.volume, actualdir, vol_escape );
     }
@@ -352,7 +352,7 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
     if( zadj < 0 || zadj > MAXIMUM_VOLUME_ATMOSPHERE || cumulative_dist_loss < 0 ||
         cumulative_dist_loss > MAXIMUM_VOLUME_ATMOSPHERE ) {
         add_msg( m_debug,
-                 _( "Error in sounds::svol:at(). Calced Escape Vol of %i mdB, Calced vol_z_adjust of %i mdB, Calced cumulative distance loss of %i mdB across %i tiles from heard sound [ %1s ] at %i:%i:%i to heard location %i:%i:%i" ),
+                 "Error in sounds::svol:at(). Calced Escape Vol of %i mdB, Calced vol_z_adjust of %i mdB, Calced cumulative distance loss of %i mdB across %i tiles from heard sound [ %1s ] at %i:%i:%i to heard location %i:%i:%i",
                  vol_escape, zadj, cumulative_dist_loss, distance, sound_inst.sound.description,
                  sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
                  sound_inst.sound.origin.z(), tri.x(), tri.y(), tri.z() );
@@ -364,7 +364,7 @@ static short svol_at( const sound_instance_cache &sound_inst, const tripoint_bub
                                     vertical_escape_vol > sound_inst.base_distance_vol_by_dir[san_dir] ) ? ( (
                                                 sound_inst.origin.z() <= tri.z() ) ? SDI_UP : SDI_DOWN ) : san_dir;
         add_msg( m_debug,
-                 _( "Error in sounds::svol:at(). Sound [ %1s ] from %i:%i:%i with origin volume of %i dB, has impossible heard vol in %i direction of %i mdB at a distance of %i manhattan.xt" ),
+                 "Error in sounds::svol:at(). Sound [ %1s ] from %i:%i:%i with origin volume of %i dB, has impossible heard vol in %i direction of %i mdB at a distance of %i manhattan.xt",
                  sound_inst.sound.description, sound_inst.sound.origin.x(), sound_inst.sound.origin.y(),
                  sound_inst.sound.origin.z(), sound_inst.sound.volume, actualdir, heard_volume, distance );
     }
@@ -866,7 +866,7 @@ void map::flood_fill_sound( const sound_event soundevent, const int zlev )
 
         // The sound cache should be built out by now.
         // Add our new sound cache to the games sound_caches vector.
-        // add_msg(m_debug, _("Attempting to add sound_cache with origin %i x: %i y: %i z and source volume %i to sound_caches vector ."), temp_sound_cache.sound.origin.x, temp_sound_cache.sound.origin.y, temp_sound_cache.sound.origin.z, temp_sound_cache.sound.volume );
+        // add_msg(m_debug, "Attempting to add sound_cache with origin %i x: %i y: %i z and source volume %i to sound_caches vector .", temp_sound_cache.sound.origin.x, temp_sound_cache.sound.origin.y, temp_sound_cache.sound.origin.z, temp_sound_cache.sound.volume );
         m_sound_cache.sound_instances.push_back( temp_sound_cache );
     }
 
@@ -1243,9 +1243,9 @@ void map::batch_flood_fill_sounds()
 
                 // The sound cache should be built out by now.
                 // Add our new sound cache to the games sound_caches vector.
-                // add_msg(m_debug, _("Attempting to add sound_cache with origin %i x: %i y: %i z and source volume %i to sound_caches vector ."), temp_sound_cache.sound.origin.x, temp_sound_cache.sound.origin.y, temp_sound_cache.sound.origin.z, temp_sound_cache.sound.volume );
+                // add_msg(m_debug, "Attempting to add sound_cache with origin %i x: %i y: %i z and source volume %i to sound_caches vector .", temp_sound_cache.sound.origin.x, temp_sound_cache.sound.origin.y, temp_sound_cache.sound.origin.z, temp_sound_cache.sound.volume );
                 m_sound_cache.sound_instances.push_back( temp_sound_cache );
-                // add_msg(m_debug, _("Sound cache added to vector"));
+                // add_msg(m_debug, "Sound cache added to vector");
                 if( temp_sound_cache.from_monster ) {
                     num_processed_mon_sounds++;
                 } else if( temp_sound_cache.from_npc ) {
@@ -1867,10 +1867,10 @@ void sounds::sound( const sound_event &soundevent )
         map.m_sound_cache.sounds_this_turn++;
     } else {
         add_msg( m_debug,
-                 _( "Maximum number of attempted floodfills in a turn reached!" ) );
+                 "Maximum number of attempted floodfills in a turn reached!" );
         map.m_sound_cache.sounds_this_turn = 0;
         add_msg( m_debug,
-                 _( "Sound instances vector contained %i sounds before emergency flush." ),
+                 "Sound instances vector contained %i sounds before emergency flush.",
                  map.m_sound_cache.sound_instances.size() );
         map.m_sound_cache.sound_instances.clear();
 
@@ -1892,7 +1892,7 @@ void sounds::sound( const sound_event &soundevent )
     if( temp_se.volume < 16 ) {
 
         add_msg( m_debug,
-                 _( "Sound with description [ %1s ] at %i:%i with a volume %i too quiet for propagation." ),
+                 "Sound with description [ %1s ] at %i:%i with a volume %i too quiet for propagation.",
                  temp_se.description, temp_se.origin.x(), temp_se.origin.y(),
                  temp_se.volume );
 
@@ -1907,7 +1907,7 @@ void sounds::sound( const sound_event &soundevent )
     //}
     else if( temp_se.volume > mdBspl_to_dBspl( MAXIMUM_VOLUME_ATMOSPHERE ) ) {
         add_msg( m_debug,
-                 _( "Sound with description [ %1s ] at %i:%i attempted to propagate with a volume of %i dB which is louder than possible in atmosphere!" ),
+                 "Sound with description [ %1s ] at %i:%i attempted to propagate with a volume of %i dB which is louder than possible in atmosphere!",
                  temp_se.description, temp_se.origin.x(), temp_se.origin.y(),
                  temp_se.volume );
     }
@@ -2033,7 +2033,7 @@ static int get_signal_for_hordes( const sound_event centr, const short ambient_v
         sig_power = std::max( sig_power, min_sig_cap );
         //Capping extremely high signal to hordes
         sig_power = std::min( sig_power, max_sig_cap );
-        add_msg( m_debug, _( "vol %i  vol_hordes %i sig_power %i " ), centr.volume, vol, sig_power );
+        add_msg( m_debug, "vol %i  vol_hordes %i sig_power %i ", centr.volume, vol, sig_power );
         return sig_power;
     }
 }
@@ -2203,7 +2203,7 @@ void sounds::process_sounds()
         // We should have a fancy new filtered list by now. If we still dont, skip this monster because something funky happened.
         if( !filtered_sounds.contains( filter_key ) ) {
             add_msg( m_debug,
-                     _( "Monster %1s at %i:%i:%i attempted to make a filtered sound list but could not find it after generation!" ),
+                     "Monster %1s at %i:%i:%i attempted to make a filtered sound list but could not find it after generation!",
                      critter.disp_name(), critterloc.x(), critterloc.y(), critterloc.z() );
             continue;
         }
@@ -2647,7 +2647,7 @@ void sounds::process_sound_markers( Character *who )
         if( element.sound.volume >= mdBspl_to_dBspl( MAXIMUM_VOLUME_ATMOSPHERE ) ) {
             // Dont count impossibly loud sounds.
             add_msg( m_debug,
-                     _( "Player given sound louder than possible in Atmosphere! Sound with description [ %1s ] from %i:%i:%i with an origin volume of %i dB is louder than possible." ),
+                     "Player given sound louder than possible in Atmosphere! Sound with description [ %1s ] from %i:%i:%i with an origin volume of %i dB is louder than possible.",
                      element.sound.description, element.sound.origin.x(), element.sound.origin.y(),
                      element.sound.origin.z(),
                      element.sound.volume );
@@ -2849,16 +2849,16 @@ void sounds::process_sound_markers( Character *who )
     // We can make a copy of the much smaller sound event rather than the whole sound instance, and just record bits of relevant info.
     // We want these so we can figure out if anything is wrong with hearing sounds / terrain interaction.
     add_msg( m_debug,
-             _( "Avatar sound processing diagnostic: Checked:%i, Within minvol distance:%i, Within flood envelope:%i, Ambient Vol:%i mdB, Vol Threshold:%i mdB" ),
+             "Avatar sound processing diagnostic: Checked:%i, Within minvol distance:%i, Within flood envelope:%i, Ambient Vol:%i mdB, Vol Threshold:%i mdB",
              num_sounds_checked, num_sounds_in_minvol_dist, num_sound_in_envelope, ambient_vol, vol_threshold );
     if( loudest_vol > 0 ) {
         add_msg( m_debug,
-                 _( "Loudest Sound: Description:[%1s], Origin vol:%i dB at [%i:%i:%i], Minvol distance:%i, Floodfill radius:%i" ),
+                 "Loudest Sound: Description:[%1s], Origin vol:%i dB at [%i:%i:%i], Minvol distance:%i, Floodfill radius:%i",
                  loudest_sound_dummy.description, loudest_sound_dummy.volume, loudest_sound_dummy.origin.x(),
                  loudest_sound_dummy.origin.y(), loudest_sound_dummy.origin.z(), loudest_sound_minvol_radius,
                  loudest_sound_flood_radius );
         add_msg( m_debug,
-                 _( "Heard vol:%i mdB at [%i:%i:%i], Distance:%i, SDI from sound to Avatar:%i, with envelope escape vol in that SDI:%i mdB" ),
+                 "Heard vol:%i mdB at [%i:%i:%i], Distance:%i, SDI from sound to Avatar:%i, with envelope escape vol in that SDI:%i mdB",
                  loudest_vol, loc.x(), loc.y(), loc.z(), rl_dist( loc, loudest_sound_dummy.origin ),
                  loudest_sound_escape_dir, loudest_sound_escape_vol );
     }
@@ -2920,20 +2920,20 @@ void sounds::clear_floodfill_que( const bool &soundperf )
 
     if( !soundperf ) {
         add_msg( m_debug,
-                 _( "Attempted to floodfill %i total sounds. Flooding attempted on %i deafening, %i movement, %i from NPCs, %i from monsters, %i non-batch floods." ),
+                 "Attempted to floodfill %i total sounds. Flooding attempted on %i deafening, %i movement, %i from NPCs, %i from monsters, %i non-batch floods.",
                  map.m_sound_cache.sounds_this_turn, map.m_sound_cache.attempted_potential_deafening_sounds,
                  map.m_sound_cache.attempted_movement_sounds, map.m_sound_cache.attempted_NPC_sounds,
                  map.m_sound_cache.attempted_monster_sounds, map.m_sound_cache.attempted_non_batch_floodfills );
         add_msg( m_debug,
-                 _( "Batch flooded %i sounds from monsters and %i sounds from NPCs. %i sounds invalidated during batch flooding." ),
+                 "Batch flooded %i sounds from monsters and %i sounds from NPCs. %i sounds invalidated during batch flooding.",
                  map.m_sound_cache.batch_flooded_monster_sounds, map.m_sound_cache.batch_flooded_NPC_sounds,
                  map.m_sound_cache.invalidated_batch_sounds );
         add_msg( m_debug,
-                 _( "Caught %i sounds still in floodfill que. Cleared %i sound filter lists out of %i sound filter lists made." ),
+                 "Caught %i sounds still in floodfill que. Cleared %i sound filter lists out of %i sound filter lists made.",
                  sound_batch_floodfill_que.size(),
                  map.m_sound_cache.filtered_sound_lists_cleared, map.m_sound_cache.filtered_sound_lists_made );
         add_msg( m_debug,
-                 _( "Culled %i sounds this turn. Sounds vector size %i end of turn. Prior turn sound vector size %i" ),
+                 "Culled %i sounds this turn. Sounds vector size %i end of turn. Prior turn sound vector size %i",
                  map.m_sound_cache.sounds_culled_this_turn, sound_batch_floodfill_que.size(),
                  map.m_sound_cache.filtered_sound_lists_cleared, map.m_sound_cache.filtered_sound_lists_made );
     }
