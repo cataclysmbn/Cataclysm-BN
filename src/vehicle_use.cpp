@@ -1137,16 +1137,6 @@ bool vehicle::start_engine( const int e )
     if( einfo.engine_backfire_threshold() ) {
         if( ( 1 - dmg ) < einfo.engine_backfire_threshold() && one_in( einfo.engine_backfire_freq() ) ) {
             backfire( e );
-        } else {
-            sound_event se;
-            se.origin = pos;
-            se.volume = std::min( 135, std::max( start_moves, 85 ) );
-            se.category = sounds::sound_t::movement;
-            se.movement_noise = true;
-            se.description = string_format( _( "the %s bang as it starts" ), eng.name() );
-            se.id = "vehicle";
-            se.variant = "engine_bangs_start";
-            sounds::sound( se );
         }
     }
 

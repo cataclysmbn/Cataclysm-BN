@@ -4,14 +4,116 @@
 #include <vector>
 
 #include "avatar.h"
+#include "avatar_action.h"
 #include "coordinates.h"
 #include "enums.h"
 #include "game.h"
 #include "game_constants.h"
 #include "map.h"
 #include "map_helpers.h"
+#include "options_helpers.h"
 #include "state_helpers.h"
 #include "type_id.h"
+
+namespace
+{
+
+static const auto effect_in_pit = efftype_id( "in_pit" );
+static const auto skill_dodge = skill_id( "dodge" );
+
+struct adjacent_pit_move {
+    tripoint_bub_ms origin;
+    tripoint_bub_ms destination;
+};
+
+auto setup_adjacent_pit_move( const ter_id &origin_terrain,
+                              const ter_id &destination_terrain ) -> adjacent_pit_move
+{
+    clear_all_state();
+    auto &here = get_map();
+    const auto origin = tripoint_bub_ms( 60, 60, 0 );
+    const auto destination = origin + tripoint_rel_ms::east();
+
+    g->place_player( origin );
+    here.ter_set( origin, origin_terrain );
+    here.ter_set( destination, destination_terrain );
+    g->u.add_known_trap( origin, here.tr_at( origin ) );
+    g->u.add_known_trap( destination, here.tr_at( destination ) );
+    g->u.add_effect( effect_in_pit, 1_turns, bodypart_str_id::NULL_ID() );
+    g->u.str_cur = 0;
+    g->u.dex_cur = 0;
+    g->u.set_skill_level( skill_dodge, 0 );
+    g->u.moves = 1000;
+
+    return { .origin = origin, .destination = destination };
+}
+
+auto setup_adjacent_pit_move( const ter_id &terrain ) -> adjacent_pit_move
+{
+    return setup_adjacent_pit_move( terrain, terrain );
+}
+
+} // namespace
+
+TEST_CASE( "moving_between_adjacent_pit_traps" )
+{
+    SECTION( "regular pit movement skips warning, escape check, and repeated damage" ) {
+        const auto positions = setup_adjacent_pit_move( ter_id( "t_pit" ) );
+        const auto hp_before = g->u.get_hp();
+
+        CHECK( g->get_dangerous_tile( positions.destination ).empty() );
+        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+
+        CHECK( g->u.bub_pos() == positions.destination );
+        CHECK( g->u.get_hp() == hp_before );
+        CHECK( g->u.has_effect( effect_in_pit ) );
+    }
+
+    SECTION( "same spiked pit movement skips only the escape check" ) {
+        const auto positions = setup_adjacent_pit_move( ter_id( "t_pit_spiked" ) );
+        const auto dangerous_prompt = override_option( "DANGEROUS_TERRAIN_WARNING_PROMPT", "IGNORE" );
+        const auto hp_before = g->u.get_hp();
+
+        CHECK_FALSE( g->get_dangerous_tile( positions.destination ).empty() );
+        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+
+        CHECK( g->u.bub_pos() == positions.destination );
+        CHECK( g->u.get_hp() < hp_before );
+    }
+
+    SECTION( "same glass pit movement skips only the escape check" ) {
+        const auto positions = setup_adjacent_pit_move( ter_id( "t_pit_glass" ) );
+        const auto dangerous_prompt = override_option( "DANGEROUS_TERRAIN_WARNING_PROMPT", "IGNORE" );
+        const auto hp_before = g->u.get_hp();
+
+        CHECK_FALSE( g->get_dangerous_tile( positions.destination ).empty() );
+        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+
+        CHECK( g->u.bub_pos() == positions.destination );
+        CHECK( g->u.get_hp() < hp_before );
+    }
+
+    SECTION( "glass pit to regular pit skips warning, escape check, and repeated damage" ) {
+        const auto positions = setup_adjacent_pit_move( ter_id( "t_pit_glass" ), ter_id( "t_pit" ) );
+        const auto hp_before = g->u.get_hp();
+
+        CHECK( g->get_dangerous_tile( positions.destination ).empty() );
+        REQUIRE( avatar_action::move( g->u, get_map(), tripoint_rel_ms::east() ) );
+
+        CHECK( g->u.bub_pos() == positions.destination );
+        CHECK( g->u.get_hp() == hp_before );
+        CHECK( g->u.has_effect( effect_in_pit ) );
+    }
+
+    SECTION( "different pit trap movement remains dangerous" ) {
+        const auto positions = setup_adjacent_pit_move( ter_id( "t_pit" ) );
+        auto &here = get_map();
+        here.ter_set( positions.destination, ter_id( "t_pit_spiked" ) );
+        g->u.add_known_trap( positions.destination, here.tr_at( positions.destination ) );
+
+        CHECK_FALSE( g->get_dangerous_tile( positions.destination ).empty() );
+    }
+}
 
 TEST_CASE( "destroy_grabbed_furniture" )
 {
