@@ -18,7 +18,7 @@ if [ -z "${triplet}" ]; then
             ;;
         Darwin)
             echo "vcpkg sdl3-shadercross is not supported on macOS because directx-dxc is unsupported there." >&2
-            echo "Use the CMake BUILD_SHADERCROSS fallback on macOS instead." >&2
+            echo "Use generated shader artifacts for macOS builds instead." >&2
             exit 1
             ;;
         *)

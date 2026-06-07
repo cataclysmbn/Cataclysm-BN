@@ -45,7 +45,7 @@ jobs:
       - name: install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install \
+          sudo apt-get install -y \
             cmake gettext ninja-build mold jq \
             sqlite3 libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
             autoconf autoconf-archive automake libtool libltdl-dev

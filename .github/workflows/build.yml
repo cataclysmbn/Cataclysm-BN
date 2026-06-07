@@ -89,7 +89,32 @@ env:
   EMMYLUA_CHECK_VERSION: "0.22.0"
 
 jobs:
+  shader-artifacts:
+    name: Generate shader artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shadercross dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf autoconf-archive automake libtool libltdl-dev
+
+      - name: Install shadercross
+        run: bash build-scripts/install-shadercross-vcpkg.sh
+
+      - name: Generate shaders
+        run: bash build-scripts/generate-shaders.sh
+
+      - name: Upload generated shaders
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders/
+          if-no-files-found: error
+
   builds:
+    needs: shader-artifacts
     strategy:
       fail-fast: false
       matrix:
@@ -99,6 +124,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download generated shaders
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-shaders
+          path: data/shaders
 
       - name: Download translation artifacts
         if: inputs.download-translations
@@ -269,7 +300,7 @@ jobs:
       - name: Install build dependencies (mac)
         if: runner.os == 'macOS'
         run: |
-          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja ncurses flac pkg-config autoconf autoconf-archive automake libtool
+          HOMEBREW_NO_AUTO_UPDATE=yes HOMEBREW_NO_INSTALL_CLEANUP=yes brew install sdl3 sdl3_image sdl3_ttf sdl3_mixer gettext parallel llvm@20 astyle sqlite3 zlib cmake ninja ncurses flac pkg-config
           python3 -m venv ./venv
           source ./venv/bin/activate
           pip3 install mac_alias==2.2.0 dmgbuild==1.6.1 biplist polib luaparser
@@ -477,7 +508,7 @@ jobs:
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install cmake gettext ninja-build autoconf autoconf-archive automake libtool libltdl-dev
+          sudo apt-get install -y cmake gettext ninja-build autoconf autoconf-archive automake libtool libltdl-dev
 
       - name: Install shadercross (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'

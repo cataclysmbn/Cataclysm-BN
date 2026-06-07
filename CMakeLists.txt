@@ -403,7 +403,12 @@ if (CATA_SDL)
         NAMES shadercross
         HINTS "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/sdl3-shadercross")
 
-    if (NOT SHADERCROSS_EXE AND TILES AND BUILD_SHADERCROSS)
+    if (APPLE AND SHADERCROSS_EXE)
+        message(STATUS "shadercross found on macOS; using precompiled MSL shaders instead")
+        set(SHADERCROSS_EXE "")
+    endif ()
+
+    if (NOT SHADERCROSS_EXE AND TILES AND BUILD_SHADERCROSS AND NOT APPLE)
         message(STATUS "Installing SDL_shadercross from Source")
         FetchContent_Declare(
                 SDL3_SHADERCROSS
@@ -477,13 +482,29 @@ if (CATA_SDL)
         set(SHADERCROSS_TARGET shadercross)
     endif ()
 
+    file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/data/shaders")
+
+    file(GLOB_RECURSE CATA_HLSL_SOURCES CONFIGURE_DEPENDS
+         "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
+
+    set(CATA_PRECOMPILED_SHADER_OUTPUTS "")
+    foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
+        get_filename_component(SHADER_NAME ${HLSL_SRC} NAME_WE)
+        if (WIN32)
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.dxil")
+        elseif (APPLE)
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.msl")
+        else ()
+            list(APPEND CATA_PRECOMPILED_SHADER_OUTPUTS
+                 "${CMAKE_SOURCE_DIR}/data/shaders/${SHADER_NAME}.spv")
+        endif ()
+    endforeach ()
+
     if (SHADERCROSS_EXE)
         set(CATA_SHADERS ON)
         message(STATUS "shadercross: ${SHADERCROSS_EXE}")
-        file(MAKE_DIRECTORY "${CMAKE_SOURCE_DIR}/data/shaders")
-
-        file(GLOB_RECURSE CATA_HLSL_SOURCES CONFIGURE_DEPENDS
-             "${CMAKE_SOURCE_DIR}/src/shaders/*.hlsl")
         set(CATA_SHADER_OUTPUTS "")
 
         foreach (HLSL_SRC ${CATA_HLSL_SOURCES})
@@ -535,6 +556,24 @@ if (CATA_SDL)
         if (SHADERCROSS_TARGET)
             add_dependencies(cata_shaders ${SHADERCROSS_TARGET})
         endif ()
+    elseif (TILES AND CATA_PRECOMPILED_SHADER_OUTPUTS)
+        set(CATA_MISSING_PRECOMPILED_SHADERS "")
+        foreach (SHADER_OUT ${CATA_PRECOMPILED_SHADER_OUTPUTS})
+            if (NOT EXISTS "${SHADER_OUT}")
+                list(APPEND CATA_MISSING_PRECOMPILED_SHADERS "${SHADER_OUT}")
+            endif ()
+        endforeach ()
+
+        if (CATA_MISSING_PRECOMPILED_SHADERS)
+            message(FATAL_ERROR
+                "shadercross not found and precompiled platform shaders are missing: "
+                "${CATA_MISSING_PRECOMPILED_SHADERS}. "
+                "Run a shader generation job or place shadercross on PATH.")
+        endif ()
+
+        set(CATA_SHADERS ON)
+        message(STATUS "shadercross not found; using precompiled shaders from data/shaders")
+        add_custom_target(cata_shaders DEPENDS ${CATA_PRECOMPILED_SHADER_OUTPUTS})
     elseif (TILES)
         message(FATAL_ERROR
             "shadercross not found — tiles builds require compiled shaders. "
