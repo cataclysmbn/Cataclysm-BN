@@ -17,6 +17,8 @@
     "damage": { "damage_type": "bullet", "amount": 80 },
     "dispersion": 30,
     "recoil": 6000,
+    "loudness": 145,
+    "speed": 241,
     "effects": [ "COOKOFF", "NEVER_MISFIRES" ]
   },
   {

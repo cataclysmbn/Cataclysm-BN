@@ -370,7 +370,7 @@
     "min_cycle_recoil": 380,
     "handling": 20,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
-    "loudness": 25,
+    "loudness": 4,
     "barrel_volume": "250 ml",
     "magazines": [ [ "9mm", [ "survivor9mm_mag", "stenmag" ] ] ]
   },

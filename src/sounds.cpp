@@ -1486,11 +1486,11 @@ auto submap::rebuild_absorption_cache( const map &m, const tripoint_bub_sm &grid
     for( const auto &sp : submap_tiles() ) {
         const tripoint_bub_ms &btri = abs_trip + sp.raw();
         // See if there is a vehicle in our given tripoint.
-        // If there is, if there is a full board or a closed door, return thick barrier sound absorption.
+        // If there is, if there is a full board, a closed door, or a window, return thick barrier sound absorption.
         // We could technically run through checking adjacent tiles as we do below, but vehicles are dynamic and rechecking all of the vehicles tiles every turn would not provide enough benifit.
         if( const auto &vp = m.veh_at( btri ) ) {
             if( vp.part_with_feature( "FULL_BOARD", true ) || ( vp.obstacle_at_part() &&
-                    vp.part_with_feature( "OPENABLE", true ) ) ) {
+                    (vp.part_with_feature( VPFLAG_OPENABLE, true ) || vp->part_with_feature( VPFLAG_WINDOW, true ) ) ) ) {
                 absorption_cache[sp.x()][sp.y()] = SOUND_ABSORPTION_THICK_BARRIER;
                 sound_wall_cache[sp.x()][sp.y()] = true;
                 continue;
@@ -2790,6 +2790,9 @@ void sounds::process_sound_markers( Character *who )
     add_msg( m_debug,
              _( "Avatar sound processing diagnostic: Checked:%i, Within minvol distance:%i, Within flood envelope:%i, Ambient Vol:%i mdB, Vol Threshold:%i mdB" ),
              num_sounds_checked, num_sounds_in_minvol_dist, num_sound_in_envelope, ambient_vol, vol_threshold );
+    add_msg( m_debug,
+    _( "Current Avatar Hearing Loss: Temporary:%i mdB, Longterm:%i mdB, Permanant:%i mdB" ),
+    who->hearing_loss_stats.hearing_loss_temp, who->hearing_loss_stats.hearing_loss_longterm, who->hearing_loss_stats.hearing_loss_permanant );
     if( loudest_vol > 0 ) {
         add_msg( m_debug,
                  _( "Loudest Heard Sound: Description:[%1s], Origin vol:%i dB at [%i:%i:%i], Minvol distance:%i, Floodfill radius:%i" ),
@@ -3311,14 +3314,14 @@ void sfx::generate_gun_sound( const tripoint_bub_ms &source, const item &firing,
         const auto mods = firing.gunmods();
         if( std::ranges::any_of( mods,
         []( const item * e ) {
-        return e->type->gunmod->loudness < 0;
+        return e->type->gunmod->loudness < -20;
     } ) ) {
             weapon_id = itype_weapon_fire_suppressed;
         }
 
     } else {
         angle = get_heard_angle( source );
-        if( heard_volume >= 60 ) {
+        if( heard_volume >= 100 ) {
             selected_sound = "fire_gun";
         } else {
             selected_sound = "fire_gun_distant";

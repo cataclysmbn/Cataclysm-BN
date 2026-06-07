@@ -8346,13 +8346,12 @@ int item::gun_speed( bool with_ammo ) const
     if( !is_gun() ) {
         return 10;
     }
-    int ret = type->gun->speed;
+    // If we dont have an ammo given, assume that it is a firearm.
+    int ret = (with_ammo && ammo_data()) ? ammo_data()->ammo->speed : 1000;
     for( const item *mod : gunmods() ) {
         ret += mod->type->gunmod->speed;
     }
-    if( with_ammo && ammo_data() ) {
-        ret += ammo_data()->ammo->speed;
-    }
+    ret += type->gun->speed;
     return std::max( 0, ret );
 }
 

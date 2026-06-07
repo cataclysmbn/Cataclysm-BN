@@ -5515,6 +5515,7 @@ void Character::update_body( const time_duration &duration )
     const int five_mins = calendar::ticks_between( duration, 5_minutes );
     if( five_mins > 0 ) {
         check_needs_extremes();
+        update_hearing_loss( duration, true );
         update_needs( five_mins );
         regen( five_mins );
     }
@@ -5526,7 +5527,6 @@ void Character::update_body( const time_duration &duration )
 
     int thirty_mins = calendar::ticks_between( duration, 30_minutes );
     for( ; thirty_mins > 0; thirty_mins-- ) {
-        update_hearing_loss( duration, true );
         // Radiation kills health even at low doses
         update_health( has_trait( trait_RADIOGENIC ) ? 0 : -get_rad() );
     }
@@ -11707,16 +11707,18 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     const short inst_dam_thresh = 13000 + ( HLTH ) - ( 200 * ( hab - 1 ) );
 
     const short over_thresh = effective_vol - damage_threshold;
-
+    short temp_loss_gain = 0;
     if ( over_thresh <= 100 ){
 
-        temp_loss += rng(2,4);
+        temp_loss_gain =  rng( 8, 12 );
 
     } else {
-
-        temp_loss += std::max( 4, ( over_thresh / 2 ) - long_loss - ( temp_loss / 10 ) );
+        // We want the amount of temp loss gained to fall off as other hearing loss accumulates.
+        temp_loss_gain = std::max( 12, ( over_thresh / 10 ) - long_loss - ( temp_loss / 10 ) );
 
     }
+    // Cap temp loss at 100dB
+    temp_loss = std::min( static_cast<int>( dBspl_to_mdBspl( 100 ) ) , temp_loss + temp_loss_gain );
 
     if (effective_vol < inst_dam_thresh ){
 
@@ -11751,6 +11753,8 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
             }
         }
     }
+    // Cap long loss at 100dB as well.
+    long_loss = std::min( dBspl_to_mdBspl( 100 ) , long_loss );
 
     if ( !is_deaf() && total_hearing_loss() > damage_threshold ){
         // If we have accumulated more than ~85dB of total hearing loss, the character is effectively deaf anyways. Deafen them so they know they dun goofed.
@@ -11765,7 +11769,7 @@ void Character::update_hearing_loss( const time_duration &duration, const bool &
     const auto &HLTH = static_cast<int>( std::round( healthy * 0.01 ) );
     if (longterm){
         // We use sound absorption open field as it is a convenient constexpr equal to zero.
-        hearing_loss_stats.hearing_loss_longterm = std::max(static_cast<int>(SOUND_ABSORPTION_OPEN_FIELD), hearing_loss_stats.hearing_loss_longterm - std::max(1,  2 + HLTH ) );
+        hearing_loss_stats.hearing_loss_longterm = std::max(static_cast<int>(SOUND_ABSORPTION_OPEN_FIELD), hearing_loss_stats.hearing_loss_longterm - (  3 + HLTH ) );
 
         const auto &cur_loss = hearing_loss_stats.hearing_loss_longterm + hearing_loss_stats.hearing_loss_temp;
 
@@ -11858,7 +11862,7 @@ void Character::update_hearing_loss( const time_duration &duration, const bool &
 
         const int secondspassed = calendar::ticks_between( duration, 1_seconds );
         // Heal temporary loss based on how many seconds have passed.
-        hearing_loss_stats.hearing_loss_temp = std::max( 0 , hearing_loss_stats.hearing_loss_temp - std::max(secondspassed, secondspassed * HLTH ) );
+        hearing_loss_stats.hearing_loss_temp = std::max( 0 , hearing_loss_stats.hearing_loss_temp - std::max(secondspassed, secondspassed *( 2 + HLTH ) ) );
 
         return;
 
@@ -11888,7 +11892,7 @@ bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) cons
     const float volume_multiplier = hearing_ability();
     const auto tabsp = ( get_map().inbounds( bub_pos() ) ) ? cache.absorption_cache[cache.idx(
                            bub_pos().x(), bub_pos().y() )] : 0;
-    return ( ( 100 * volume ) - get_cumulative_vol_dist_loss( 3, dist,
+    return ( ( dBspl_to_mdBspl( volume ) ) - get_cumulative_vol_dist_loss( 3, dist,
              tabsp ) ) >= ( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION - ( ( volume_multiplier * 100 ) - 100 ) );
 }
 

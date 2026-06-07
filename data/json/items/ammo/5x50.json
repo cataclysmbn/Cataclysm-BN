@@ -19,6 +19,8 @@
     "damage": { "damage_type": "bullet", "amount": 30, "armor_penetration": 50 },
     "dispersion": 60,
     "recoil": 400,
+    "speed": 1000,
+    "loudness": 164,
     "price_postapoc": "18 USD",
     "effects": [ "COOKOFF", "NEVER_MISFIRES" ]
   },

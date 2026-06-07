@@ -15,6 +15,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -1 },
     "dispersion": 150,
     "min_cycle_recoil": 1350,
+    "loudness": 4,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "barrel_volume": "250 ml",
     "built_in_mods": [ "folding_stock" ],
@@ -57,6 +58,7 @@
     "ammo": "223",
     "dispersion": 150,
     "durability": 7,
+    "loudness": -2,
     "min_cycle_recoil": 1350,
     "magazines": [
       [
@@ -98,6 +100,7 @@
     "color": "dark_gray",
     "ammo": "223",
     "range": -6,
+    "loudness": 8,
     "ranged_damage": { "damage_type": "bullet", "amount": -9 },
     "dispersion": 380,
     "durability": 6,
@@ -188,6 +191,7 @@
     "material": [ "steel", "plastic" ],
     "color": "dark_gray",
     "ammo": "223",
+    "loudness": 2,
     "ranged_damage": { "damage_type": "bullet", "amount": -2 },
     "dispersion": 180,
     "min_cycle_recoil": 1350,
@@ -230,6 +234,7 @@
     "ammo": "223",
     "dispersion": 150,
     "min_cycle_recoil": 1350,
+    "loudness": -2,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "magazines": [ [ "223", [ "g36mag_30rd", "g36mag_100rd" ] ] ]
   },
@@ -296,6 +301,7 @@
     "ascii_picture": "m27_iar",
     "description": "A H&K416 carbine outfitted with a heavier barrel to enable higher amounts of suppressive fire while retaining a good degree of mobility.",
     "weight": "3710 g",
+    "loudness": 4,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "magazines": [
       [
@@ -338,6 +344,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -2 },
     "dispersion": 180,
     "durability": 6,
+    "loudness": 2,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "AUTO", "auto", 4 ] ],
     "magazines": [
@@ -378,6 +385,7 @@
     "ammo": "223",
     "dispersion": 150,
     "durability": 7,
+    "loudness": -2,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ] ],
     "magazines": [
@@ -430,6 +438,7 @@
     "color": "dark_gray",
     "ammo": "223",
     "range": -6,
+    "loudness": 2,
     "ranged_damage": { "damage_type": "bullet", "amount": -9 },
     "dispersion": 380,
     "durability": 6,
@@ -563,6 +572,7 @@
     "ammo": "223",
     "dispersion": 180,
     "durability": 9,
+    "loudness": 4,
     "min_cycle_recoil": 1350,
     "modes": [ [ "DEFAULT", "semi", 1 ], [ "BURST", "burst", 3 ], [ "AUTO", "auto", 4 ] ],
     "built_in_mods": [ "folding_stock" ],
@@ -641,7 +651,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": -4 },
     "dispersion": 550,
     "durability": 6,
-    "loudness": 25,
+    "loudness": 2,
     "reload": 200,
     "valid_mod_locations": [
       [ "accessories", 2 ],

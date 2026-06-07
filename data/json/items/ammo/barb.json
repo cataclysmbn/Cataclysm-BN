@@ -16,6 +16,7 @@
     "damage": { "damage_type": "stab", "amount": 5, "armor_penetration": 5 },
     "dispersion": 120,
     "loudness": 0,
+    "speed": 20,
     "count": 10,
     "show_stats": true,
     "effects": [ "PARALYZEPOISON" ]

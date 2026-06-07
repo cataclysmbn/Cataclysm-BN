@@ -20,6 +20,8 @@
     "damage": { "damage_type": "bullet", "amount": 57, "armor_penetration": 25 },
     "dispersion": 20,
     "recoil": 4300,
+    "loudness": 168,
+    "speed": 410,
     "effects": [ "COOKOFF" ]
   },
   {
@@ -31,6 +33,8 @@
     "price": "175 cent",
     "price_postapoc": "6 USD",
     "count": 10,
+    "loudness": 166,
+    "speed": 600,
     "//": "Balanced as +P.",
     "relative": { "range": 2, "damage": { "damage_type": "bullet", "amount": 14 }, "recoil": 300 }
   },

@@ -21,7 +21,7 @@
       "ranged_damage": { "damage_type": "stab", "amount": 28 },
       "dispersion": 387,
       "durability": 10,
-      "loudness": 10,
+      "loudness": 40,
       "clip_size": 1
     },
     "dispersion_modifier": 60,

@@ -145,7 +145,7 @@
     "blackpowder_tolerance": 24,
     "min_cycle_recoil": 456,
     "modes": [ [ "DEFAULT", "burst", 5 ] ],
-    "loudness": 25,
+    "loudness": 4,
     "barrel_volume": "250 ml",
     "handling": 20,
     "valid_mod_locations": [
@@ -183,7 +183,7 @@
     "ranged_damage": { "damage_type": "bullet", "amount": 2 },
     "dispersion": 620,
     "durability": 7,
-    "loudness": 25,
+    "loudness": 4,
     "clip_size": 5
   },
   {

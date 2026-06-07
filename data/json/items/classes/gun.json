@@ -279,7 +279,7 @@
     "dispersion": 550,
     "durability": 6,
     "blackpowder_tolerance": 72,
-    "loudness": 25,
+    "loudness": 6,
     "clip_size": 1,
     "reload": 200,
     "valid_mod_locations": [
