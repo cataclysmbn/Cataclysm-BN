@@ -41,6 +41,18 @@ TEST_CASE( "throwing distance test", "[throwing], [balance]" )
     CHECK( thrower.throw_range( grenade ) <= 35 );
 }
 
+TEST_CASE( "throwing heavier items scales with strength", "[throwing], [balance]" )
+{
+    clear_all_state();
+    const auto weak_thrower = standard_npc( "WeakThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 8, 10,
+                                            10, 10 );
+    const auto strong_thrower = standard_npc( "StrongThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 14,
+                                              10, 10, 10 );
+    item &bronze_anvil = *item::spawn_temporary( "anvil_bronze" );
+
+    CHECK( weak_thrower.throw_range( bronze_anvil ) < strong_thrower.throw_range( bronze_anvil ) );
+}
+
 TEST_CASE( "grabbed creature throw stamina cost is bounded", "[throwing], [balance]" )
 {
     CHECK( creature_throw::grabbed_stamina_cost( 1.0f ) == creature_throw::min_stamina_cost );
@@ -56,15 +68,25 @@ TEST_CASE( "grabbed creature throw velocity follows selected distance", "[throwi
 
 TEST_CASE( "grabbed creature throw eligibility follows size class", "[throwing], [balance]" )
 {
-    const auto player_size = creature_size::medium;
+    const auto medium_player_size = creature_size::medium;
 
-    CHECK( creature_throw::can_throw_grabbed_creature_size( player_size, 8,
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 8,
             creature_size::small ) );
-    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( player_size, 8,
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 8,
                  creature_size::medium ) );
-    CHECK( creature_throw::can_throw_grabbed_creature_size( player_size,
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
             creature_throw::equal_size_throw_min_str, creature_size::medium ) );
-    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( player_size, 20,
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 15,
+                 creature_size::large ) );
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
+            creature_throw::larger_size_throw_min_str, creature_size::large ) );
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( medium_player_size, 19,
+                 creature_size::huge ) );
+    CHECK( creature_throw::can_throw_grabbed_creature_size( medium_player_size,
+            creature_throw::much_larger_size_throw_min_str, creature_size::huge ) );
+
+    const auto small_player_size = creature_size::small;
+    CHECK_FALSE( creature_throw::can_throw_grabbed_creature_size( small_player_size, 20,
                  creature_size::huge ) );
 }
 

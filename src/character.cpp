@@ -7154,17 +7154,19 @@ int Character::throw_range( const item &it ) const
         tmp.charges = 1;
     }
 
-    /** @EFFECT_STR determines maximum weight that can be thrown */
-    if( ( tmp.weight() / 100_gram ) > static_cast<int>( str_cur * 15 ) ) {
-        return 0;
-    }
-    // Increases as weight decreases until 150 g, then decreases again
-    /** @EFFECT_STR increases throwing range, vs item weight (high or low) */
-    int str_override = str_cur;
+    auto str_override = str_cur;
     if( is_mounted() ) {
         auto mons = mounted_creature.get();
         str_override = mons->mech_str_addition() != 0 ? mons->mech_str_addition() : str_cur;
     }
+
+    /** @EFFECT_STR determines maximum weight that can be thrown */
+    const auto max_throw_weight = str_override * 15 + std::max( 0, str_override - 8 ) * 5;
+    if( ( tmp.weight() / 100_gram ) > max_throw_weight ) {
+        return 0;
+    }
+    // Increases as weight decreases until 150 g, then decreases again
+    /** @EFFECT_STR increases throwing range, vs item weight (high or low) */
     const int divisor = tmp.weight() >= 150_gram
                         ? tmp.weight() / 100_gram
                         : 10 - static_cast<int>( tmp.weight() / 15_gram );
@@ -7177,7 +7179,7 @@ int Character::throw_range( const item &it ) const
     if( ret < 1 ) {
         return 1;
     }
-    // Cap at double our strength + skill
+    // Cap at triple our strength + skill
     /** @EFFECT_STR caps throwing range */
 
     /** @EFFECT_THROW caps throwing range */

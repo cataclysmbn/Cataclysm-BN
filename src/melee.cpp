@@ -885,34 +885,38 @@ auto choose_melee_technique( Character &self, Creature &target, const item &weap
         .weapon = weapon,
         .critical_hit = critical_hit,
         .use_weighting = false,
-        .allow_counter_techniques = true,
-        .allow_defensive_techniques = true,
+        .allow_counter_techniques = false,
+        .allow_defensive_techniques = false,
     };
 
     for( const matec_id &tec_id : unique_techniques ) {
         const ma_technique &technique = tec_id.obj();
-        if( technique.name.empty() || technique.dummy ) {
+        const auto from_weapon = weapon_techniques.contains( tec_id );
+        if( technique.name.empty() ) {
+            continue;
+        }
+        if( technique.dummy && !from_weapon ) {
             continue;
         }
 
         const auto source_count = std::ranges::count( all_techniques, tec_id );
-        const auto from_weapon = weapon_techniques.contains( tec_id );
         const auto from_martial_art = source_count > 1 || !from_weapon;
         const auto source_group = from_weapon && from_martial_art
                                   ? technique_menu_entry::source_group_t::shared
                                   : from_weapon
                                   ? technique_menu_entry::source_group_t::weapon
                                   : technique_menu_entry::source_group_t::martial_art;
-        const auto reason = technique_unavailable_reason( self, target, options, technique );
+        const auto reason = technique.dummy ? _( "automatic defensive technique" ) :
+                            technique_unavailable_reason( self, target, options, technique );
         const auto iter = entry_index_by_name.find( technique.name );
         if( iter == entry_index_by_name.end() ) {
             entry_index_by_name.emplace( technique.name, menu_entries.size() );
             menu_entries.push_back( technique_menu_entry{
                 .name = technique.name,
                 .technique = tec_id,
-                .enabled = reason.empty(),
+                .enabled = reason.empty() || technique.dummy,
                 .source_group = source_group,
-                .selectable = reason.empty(),
+                .selectable = reason.empty() && !technique.dummy,
                 .requirements = technique_requirement_summary( technique ),
                 .why_unavailable = reason,
                 .description = replace_colors( technique.get_description() ),

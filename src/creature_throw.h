@@ -12,6 +12,8 @@ namespace creature_throw
 constexpr auto min_stamina_cost = 100;
 constexpr auto max_stamina_cost = 800;
 constexpr auto equal_size_throw_min_str = 12;
+constexpr auto larger_size_throw_min_str = 16;
+constexpr auto much_larger_size_throw_min_str = 20;
 constexpr auto obstacle_bash_reference_weight_grams = 60000;
 constexpr auto min_obstacle_bash_weight_percent = 10;
 constexpr auto max_obstacle_bash_weight_percent = 200;
@@ -27,7 +29,16 @@ inline auto can_throw_grabbed_creature_size( const creature_size thrower_size,
         return true;
     }
 
-    return target_size_value == thrower_size_value && thrower_str >= equal_size_throw_min_str;
+    if( target_size_value == thrower_size_value ) {
+        return thrower_str >= equal_size_throw_min_str;
+    }
+
+    if( target_size_value == thrower_size_value + 1 ) {
+        return thrower_str >= larger_size_throw_min_str;
+    }
+
+    return target_size_value == thrower_size_value + 2 &&
+           thrower_str >= much_larger_size_throw_min_str;
 }
 
 inline auto flung_creature_bash_damage( const creature_size size, const int weight_in_grams,
