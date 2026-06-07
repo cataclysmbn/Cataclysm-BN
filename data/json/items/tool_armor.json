@@ -2785,7 +2785,7 @@
     "color": "green",
     "name": { "str_sp": "tactical headset" },
     "description": "An active headset used by the military.  Without batteries or when turned off they function like normal earmuffs and block all sound.  They will block sounds over a certain decibel amount as well as function as a two-way radio when turned on.  The headset is currently off.",
-    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "SKINTIGHT" ],
+    "flags": [ "OVERSIZE", "ALLOWS_NATURAL_ATTACKS", "COMBAT_NPC_USE", "SKINTIGHT", "POWERARMOR_COMPATIBLE" ],
     "price": "250 USD",
     "price_postapoc": "15 USD",
     "material": [ "plastic" ],
