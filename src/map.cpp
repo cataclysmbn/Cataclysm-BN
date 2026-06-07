@@ -11449,6 +11449,7 @@ auto map::current_lightmap_source_signature() -> std::size_t
     const auto minz = zlevels ? -OVERMAP_DEPTH : abs_sub.z();
     const auto maxz = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
 
+    cata::hash_combine( seed, to_hours<int>( calendar::turn - calendar::turn_zero ) );
     update_solar_params();
     cata::hash_combine( seed, angled_sunlight_shadows );
     cata::hash_combine( seed, m_solar.direct_active );
