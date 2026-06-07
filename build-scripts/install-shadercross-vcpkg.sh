@@ -17,14 +17,9 @@ if [ -z "${triplet}" ]; then
             triplet="x64-linux"
             ;;
         Darwin)
-            case "$(uname -m)" in
-                arm64)
-                    triplet="arm64-osx"
-                    ;;
-                *)
-                    triplet="x64-osx"
-                    ;;
-            esac
+            echo "vcpkg sdl3-shadercross is not supported on macOS because directx-dxc is unsupported there." >&2
+            echo "Use the CMake BUILD_SHADERCROSS fallback on macOS instead." >&2
+            exit 1
             ;;
         *)
             echo "Unsupported host platform for automatic shadercross install: $(uname -s)" >&2
@@ -46,7 +41,7 @@ fi
 
 if [ ${#missing_tools[@]} -ne 0 ]; then
     echo "Missing shadercross vcpkg prerequisites: ${missing_tools[*]}" >&2
-    echo "Install autoconf, autoconf-archive, automake, and libtool before running this script." >&2
+    echo "Install autoconf, autoconf-archive, automake, libtool, and libltdl-dev before running this script." >&2
     exit 1
 fi
 

@@ -231,7 +231,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install gcc-14 libncursesw5-dev \
             libpulse-dev mold gettext parallel libsqlite3-dev zlib1g-dev libvulkan-dev mesa-vulkan-drivers xvfb \
-            autoconf autoconf-archive automake libtool
+            autoconf autoconf-archive automake libtool libltdl-dev
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-14 100
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-14 100
           g++ --version
@@ -290,8 +290,8 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
-      - name: Install shadercross (Linux/macOS)
-        if: runner.os != 'Windows' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
+      - name: Install shadercross (Linux)
+        if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
         run: bash build-scripts/install-shadercross-vcpkg.sh
 
       # Build with CMake (Linux)
@@ -477,7 +477,7 @@ jobs:
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
         run: |
           sudo apt-get update
-          sudo apt-get install cmake gettext ninja-build autoconf autoconf-archive automake libtool
+          sudo apt-get install cmake gettext ninja-build autoconf autoconf-archive automake libtool libltdl-dev
 
       - name: Install shadercross (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
