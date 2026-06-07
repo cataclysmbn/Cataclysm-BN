@@ -728,6 +728,7 @@ void map::add_vehicle_to_cache( vehicle *veh )
         // DANGER: Unlike what you think where you can just use vpr.has_flag( VPFLAG_NOCOLLIDE )
         // THAT DOES NOT WORK DO NOT TRY AND CHANGE THIS MESS
         if( !ch.veh_cached_parts.contains( p ) ||
+            ch.veh_cached_parts[p].first != veh ||
             ( !veh->part_info( vpr.part_index() ).has_flag( VPFLAG_NOCOLLIDE ) ) ) {
             ch.veh_cached_parts[p] = std::make_pair( veh,  static_cast<int>( vpr.part_index() ) );
         }
@@ -4739,7 +4740,7 @@ bash_results map::bash_vehicle( const tripoint_bub_ms &p, const bash_params &par
     bash_results result;
     // Smash vehicle if present
     if( const optional_vpart_position vp = veh_at( p ) ) {
-        vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH );
+        vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH, true );
         if( !params.silent ) {
             sound_event se;
             se.origin = p;
