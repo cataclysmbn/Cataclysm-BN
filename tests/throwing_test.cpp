@@ -47,7 +47,7 @@ TEST_CASE( "throwing heavier items scales with strength", "[throwing], [balance]
     const auto weak_thrower = standard_npc( "WeakThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 8, 10,
                                             10, 10 );
     const auto strong_thrower = standard_npc( "StrongThrower", tripoint_bub_ms( 60, 60, 0 ), {}, 4, 14,
-                                              10, 10, 10 );
+                                10, 10, 10 );
     item &bronze_anvil = *item::spawn_temporary( "anvil_bronze" );
 
     CHECK( weak_thrower.throw_range( bronze_anvil ) < strong_thrower.throw_range( bronze_anvil ) );
