@@ -5390,7 +5390,7 @@ void Character::regen( int rate_multiplier )
 
     float rest = rest_quality();
     float heal_rate = healing_rate( rest ) * to_turns<int>( 5_minutes );
-    const float broken_regen_mod = clamp( mutation_value( "mending_modifier" ), 0.25f, 1.0f );
+    const float broken_regen_mod = clamp( 0.25 + mutation_value( "mending_modifier" ) + bonus_from_enchantments( 0.25, enchant_vals::mod::MENDING_MULT ), 0.0f, 1.0f );
     if( heal_rate > 0.0f ) {
         const int heal = roll_remainder( rate_multiplier * heal_rate );
 
@@ -11651,6 +11651,8 @@ float Character::hearing_ability() const
     }
 
     volume_multiplier *= Character::mutation_value( "hearing_modifier" );
+
+    volume_multiplier += bonus_from_enchantments( volume_multiplier, enchant_vals::mod::HEARING );
 
     if( has_effect( effect_deaf ) ) {
         // Scale linearly up to 30 minutes

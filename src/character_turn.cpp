@@ -267,7 +267,7 @@ void Character::process_turn()
         for( const trait_id &mut : get_mutations() ) {
             norm_scent *= mut.obj().scent_modifier;
         }
-
+        norm_scent += bonus_from_enchantments( norm_scent, enchant_vals::mod::SCENT );
         // Scent increases fast at first, and slows down as it approaches normal levels.
         // Estimate it will take about norm_scent * 2 turns to go from 0 - norm_scent / 2
         // Without smelly trait this is about 1.5 hrs. Slows down significantly after that.
