@@ -1006,7 +1006,8 @@ void init::load_world_modfiles( loading_ui &ui, const world *world,
     load_and_finalize_packs( ui, _( "Loading files" ), mods );
 }
 
-bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opts )
+auto init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opts,
+                                  const check_mods_mode mode ) -> bool
 {
     const dependency_tree &tree = world_generator->get_mod_manager().get_tree();
 
@@ -1030,15 +1031,20 @@ bool init::check_mods_for_errors( loading_ui &ui, const std::vector<mod_id> &opt
         to_check.emplace( id );
     }
 
-    // If no specific mods specified check all non-obsolete mods
     if( to_check.empty() ) {
-        for( const mod_id &mod : world_generator->get_mod_manager().all_mods() ) {
-            if( !mod->obsolete ) {
+        if( mode == check_mods_mode::all_mods ) {
+            for( const mod_id &mod : world_generator->get_mod_manager().all_mods() ) {
+                if( !mod->obsolete ) {
+                    to_check.emplace( mod );
+                }
+            }
+        } else {
+            for( const mod_id &mod : world_generator->get_mod_manager().get_default_mods() ) {
                 to_check.emplace( mod );
             }
         }
     }
-    // If no mods are available then test core data only
+    // If no mode-selected mods are available then test core data only
     if( to_check.empty() ) {
         to_check.emplace( mod_management::get_default_core_content_pack() );
     }

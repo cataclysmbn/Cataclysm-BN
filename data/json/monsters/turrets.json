@@ -209,6 +209,14 @@
     ]
   },
   {
+    "id": "mon_robofac_turret_light",
+    "type": "MONSTER",
+    "copy-from": "mon_turret_light",
+    "name": { "str": "Hub 01 light turret" },
+    "default_faction": "robofac",
+    "extend": { "anger_triggers": [ "HURT", "FRIEND_ATTACKED", "FRIEND_DIED" ], "flags": [ "FACTION_MEMORY" ] }
+  },
+  {
     "id": "mon_turret_medium",
     "type": "MONSTER",
     "name": { "str": "medium milspec turret" },

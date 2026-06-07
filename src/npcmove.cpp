@@ -550,6 +550,7 @@ void npc::assess_danger()
         }
     }
 
+    const auto npc_monster_faction = get_monster_faction();
     {
         ZoneScopedN( "assess_all_monsters" );
         for( const shared_ptr_fast<monster> &mon_ptr : g->critter_tracker->get_monsters_list() ) {
@@ -563,15 +564,17 @@ void npc::assess_danger()
             }
             Attitude att;
             if( !has_special_attitude_traits &&
-                critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch ) {
+                critter.cached_npc_attitude_epoch == g_npcmove_attitude_epoch &&
+                critter.cached_npc_attitude_faction == npc_monster_faction ) {
                 ZoneScopedN( "npc_monster_attitude_cache_hit" );
                 att = critter.cached_npc_attitude;
             } else {
                 ZoneScopedN( "npc_monster_attitude_cache_miss" );
                 att = has_special_attitude_traits ? critter.attitude_to( *this ) :
-                      critter.generic_npc_attitude_to();
+                      critter.generic_npc_attitude_to( npc_monster_faction );
                 if( !has_special_attitude_traits ) {
                     critter.cached_npc_attitude_epoch = g_npcmove_attitude_epoch;
+                    critter.cached_npc_attitude_faction = npc_monster_faction;
                     critter.cached_npc_attitude = att;
                 }
             }
@@ -786,6 +789,7 @@ void npc::regen_ai_cache()
     ai_cache.total_danger = 0.0f;
     ai_cache.my_weapon_value = npc_ai::wielded_value( *this );
     ai_cache.dangerous_explosives = find_dangerous_explosives();
+    ai_cache.warn_about_queue.clear();
 
     assess_danger();
     if( old_assessment > NPC_DANGER_VERY_LOW && ai_cache.danger_assessment <= 0 ) {
@@ -825,6 +829,13 @@ void npc::move()
         set_attitude( NPCATT_FLEE_TEMP );  // Only run for so many hours
     } else if( attitude == NPCATT_FLEE_TEMP && !has_effect( effect_npc_flee_player ) ) {
         set_attitude( NPCATT_NULL );
+    }
+    if( !ai_cache.warn_about_queue.empty() ) {
+        // Sound off about sound warnings right before we regenerate the AI cache, but after we apply sounds to NPC AIs.
+        for( auto &warning_sound : ai_cache.warn_about_queue ) {
+            warn_about( warning_sound.type, warning_sound.duration, warning_sound.name, warning_sound.range,
+                        warning_sound.danger_pos );
+        }
     }
     regen_ai_cache();
     adjust_power_cbms();
@@ -4619,6 +4630,7 @@ static std::string distance_string( int range )
     }
 }
 
+// This should really be in npctalk.cpp, along with complain_about and complain
 void npc::warn_about( const std::string &type, const time_duration &d, const std::string &name,
                       int range, const tripoint_bub_ms &danger_pos )
 {
@@ -4821,7 +4833,7 @@ void npc::do_reload( item &it )
 
     if( get_player_character().sees( *this ) ) {
         add_msg( _( "%1$s reloads their %2$s." ), name, it.tname() );
-        sfx::play_variant_sound( "reload", it.typeId().str(), sfx::get_heard_volume( bub_pos() ),
+        sfx::play_variant_sound( "reload", it.typeId().str(), sfx::get_heard_volume( bub_pos(), 60 ),
                                  sfx::get_heard_angle( bub_pos() ) );
     }
 

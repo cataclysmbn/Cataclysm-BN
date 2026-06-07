@@ -457,7 +457,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You snort a bump of coke.",
-      "effects": [ { "id": "cocaine_high", "duration": "60 minutes" } ],
+      "effects": [ { "id": "cocaine_high", "duration": "300 minutes" } ],
       "stat_adjustments": { "hunger": -10 }
     }
   },
@@ -550,9 +550,9 @@
       "type": "consume_drug",
       "activation_message": "You smoke your crack rocks.  Mother would be proud.",
       "effects": [
-        { "id": "cocaine_high", "duration": "10 minutes" },
-        { "id": "cocaine_high", "duration": "10 minutes" },
-        { "id": "cocaine_high", "duration": "10 minutes" }
+        { "id": "cocaine_high", "duration": "100 minutes" },
+        { "id": "cocaine_high", "duration": "100 minutes" },
+        { "id": "cocaine_high", "duration": "100 minutes" }
       ],
       "stat_adjustments": { "hunger": -10 },
       "fields_produced": { "fd_cracksmoke": 2 },
@@ -830,7 +830,7 @@
       "smoking_duration": 4,
       "do_weed_msg": true,
       "charges_needed": { "fire": 1 },
-      "effects": [ { "id": "weed_high", "duration": "15 s" }, { "id": "pkill1", "duration": "12 m" } ],
+      "effects": [ { "id": "weed_high", "duration": "90 m" }, { "id": "pkill1", "duration": "12 m" } ],
       "fields_produced": { "fd_weedsmoke": 2 }
     }
   },
@@ -861,7 +861,7 @@
       "charges_needed": { "fire": 1 },
       "do_weed_msg": true,
       "effects": [
-        { "id": "weed_high", "duration": "15 s" },
+        { "id": "weed_high", "duration": "120 m" },
         { "id": "cig", "duration": "15 s" },
         { "id": "pkill1", "duration": "12 m" }
       ],
@@ -1024,6 +1024,7 @@
     "phase": "liquid",
     "container": "bottle_plastic_small",
     "stim": -7,
+    "fun": 8,
     "addiction_potential": 20,
     "addiction_type": "sleeping pill",
     "use_action": "FLUSLEEP"
@@ -1497,7 +1498,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You smoke some weed.  Good stuff, man!",
-      "effects": [ { "id": "weed_high", "duration": 90 }, { "id": "pkill1", "duration": 360 } ],
+      "effects": [ { "id": "weed_high", "duration": "90 m" }, { "id": "pkill1", "duration": "6 m" } ],
       "stat_adjustments": { "hunger": 4, "thirst": 6 },
       "fields_produced": { "fd_weedsmoke": 2 },
       "charges_needed": { "fire": 1 },

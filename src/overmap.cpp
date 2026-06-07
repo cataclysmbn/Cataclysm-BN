@@ -5981,6 +5981,7 @@ void overmap::spawn_ores( const tripoint_abs_omt &p )
         here.set_transparency_cache_dirty( p.z() );
         here.set_outside_cache_dirty( p.z() );
         here.set_floor_cache_dirty( p.z() );
+        here.set_absorption_cache_dirty( p.z() );
         here.set_pathfinding_cache_dirty( p.z() );
         here.set_suspension_cache_dirty( p.z() );
 

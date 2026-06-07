@@ -3316,6 +3316,82 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 }
             }
 
+            if( g->display_overlay_state( ACTION_DISPLAY_SOUND_ABSORPTION ) ) {
+                const auto &ov_ch = here.access_cache( center.z() );
+                if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
+                    const int ov_idx = ov_ch.idx( temp_x, temp_y );
+                    const auto absorption = ov_ch.absorption_cache[ov_idx];
+                    // We have 3 states of base terrain absorption, 3 states of furniture/wall provided absorption, and possibly snow.
+                    catacurses::base_color col;
+                    SDL_Color block_color;
+
+                    // Step through our most likely options.
+                    if( absorption == SOUND_ABSORPTION_OPEN_FIELD ) {
+                        block_color = { 0, 255, 0, 100 };   // Light Green - Open, no sound absorption
+                        col = catacurses::black;
+                    } else if( absorption == SOUND_ABSORPTION_LIGHT_VEGITATION ) {
+                        block_color = { 0, 200, 0, 100 };    // Green - Light Vegitation/Farmland
+                        col = catacurses::white;
+                    } else if( absorption == SOUND_ABSORPTION_FOREST_FALL ) {
+                        block_color = { 150, 150, 0, 100 };    // Yellow - Forest-Fall
+                        col = catacurses::red;
+                    } else if( absorption == SOUND_ABSORPTION_FOREST ) {
+                        block_color = { 0, 150, 0, 100 };    // Dark Green - Forest
+                        col = catacurses::white;
+                    } else if( absorption > SOUND_ABSORPTION_WALL ) {
+                        block_color = { 150, 50, 200, 100 };   // Purple-Ish - Sound absorption higher than that of a wall. Something Funky has happened.
+                        col = catacurses::red;
+                    } else if( absorption == SOUND_ABSORPTION_WALL ) {
+                        block_color = { 200, 0, 0, 100 };  // Red - Wall
+                        col = catacurses::blue;
+                    } else if( absorption > SOUND_ABSORPTION_THICK_BARRIER ) {
+                        block_color = { 200, 80, 0, 100 };    // Orange - Thick Barrier +
+                        col = catacurses::red;
+                    } else if( absorption == SOUND_ABSORPTION_THICK_BARRIER ) {
+                        block_color = { 255, 130, 0, 100 };    // Light Orange - Thick Barrier
+                        col = catacurses::white;
+                    } else if( absorption > SOUND_ABSORPTION_BARRIER ) {
+                        block_color = { 0, 0, 255, 100 };    // Blue - Barrier +
+                        col = catacurses::red;
+                    } else if( absorption == SOUND_ABSORPTION_BARRIER ) {
+                        block_color = { 0, 0, 150, 100 };    // Light Blue - Barrier
+                        col = catacurses::white;
+                    } else {
+                        // Our remaining case is if a tile has more absorption than a forest but less than a barrier, which means snow.
+                        block_color = { 255, 255, 255, 255 };    // White - Snow
+                        col = catacurses::black;
+                    }
+                    color_blocks.first = SDL_BLENDMODE_BLEND;
+                    color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
+                    overlay_strings.emplace(
+                        player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
+                        formatted_text( std::to_string( absorption ), 8 + col, direction::NORTH ) );
+                }
+            }
+
+            if( g->display_overlay_state( ACTION_DISPLAY_SOUND_WALLS ) ) {
+                const auto &ov_ch = here.access_cache( center.z() );
+                if( ov_ch.inbounds( point_bub_ms( temp_x, temp_y ) ) ) {
+                    const int ov_idx = ov_ch.idx( temp_x, temp_y );
+                    const bool swall = ov_ch.sound_wall_cache[ov_idx];
+                    // Two: open field (green), Sound wall (red)
+                    SDL_Color block_color;
+                    std::string label;
+                    if( !swall ) {
+                        block_color = { 0, 200, 0, 100 };   // green - No sound wall
+                        label = "O";
+                    } else {
+                        block_color = { 200, 0, 0, 100 };    // red - Sound wall
+                        label = "W";
+                    }
+                    color_blocks.first = SDL_BLENDMODE_BLEND;
+                    color_blocks.second.emplace( player_to_screen( point_bub_ms( temp_x, temp_y ) ), block_color );
+                    overlay_strings.emplace(
+                        player_to_screen( point_bub_ms( temp_x, temp_y ) ) + point( tile_width / 4, tile_height / 4 ),
+                        formatted_text( label, catacurses::black, direction::NORTH ) );
+                }
+            }
+
             lit_level ll = lit_level::BLANK;
             int last_vis = center.z() + 1;
             lit_level last_vis_ll = lit_level::BLANK;

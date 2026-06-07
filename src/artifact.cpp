@@ -1152,8 +1152,8 @@ void it_artifact_tool::deserialize( const JsonObject &jo )
             materials.emplace_back( id );
         }
     }
-    volume = jo.get_int( "volume" ) * units::legacy_volume_factor;
-    weight = units::from_gram<std::int64_t>( jo.get_int( "weight" ) );
+    assign( jo, "volume", volume, false, 1_ml );
+    assign( jo, "weight", weight, false, 1_gram );
     melee[DT_BASH] = jo.get_int( "melee_dam" );
     melee[DT_CUT] = jo.get_int( "melee_cut" );
     m_to_hit = jo.get_int( "m_to_hit" );
@@ -1262,8 +1262,8 @@ void it_artifact_armor::deserialize( const JsonObject &jo )
             materials.emplace_back( id );
         }
     }
-    volume = jo.get_int( "volume" ) * units::legacy_volume_factor;
-    weight = units::from_gram<std::int64_t>( jo.get_int( "weight" ) );
+    assign( jo, "volume", volume, false, 1_ml );
+    assign( jo, "weight", weight, false, 1_gram );
     melee[DT_BASH] = jo.get_int( "melee_dam" );
     melee[DT_CUT] = jo.get_int( "melee_cut" );
     m_to_hit = jo.get_int( "m_to_hit" );
@@ -1278,7 +1278,7 @@ void it_artifact_armor::deserialize( const JsonObject &jo )
     armor->thickness = jo.get_int( "material_thickness" );
     armor->env_resist = jo.get_int( "env_resist" );
     armor->warmth = jo.get_int( "warmth" );
-    armor->storage = jo.get_int( "storage" ) * units::legacy_volume_factor;
+    assign( jo, "storage", armor->storage, false, 1_ml );
 
     for( const int entry : jo.get_array( "effects_worn" ) ) {
         artifact->effects_worn.push_back( static_cast<art_effect_passive>( entry ) );
@@ -1333,15 +1333,15 @@ void it_artifact_tool::serialize( JsonOut &json ) const
     json.member( "description", description.translated() );
     json.member( "sym", sym );
     json.member( "color", color );
-    json.member( "price", units::to_cent( price ) );
+    json.member( "price", price );
     json.member( "materials" );
     json.start_array();
     for( const material_id &mat : materials ) {
         json.write( mat );
     }
     json.end_array();
-    json.member( "volume", volume / units::legacy_volume_factor );
-    json.member( "weight", to_gram( weight ) );
+    json.member( "volume", volume );
+    json.member( "weight", weight );
 
     json.member( "melee_dam", melee[DT_BASH] );
     json.member( "melee_cut", melee[DT_CUT] );
@@ -1390,15 +1390,15 @@ void it_artifact_armor::serialize( JsonOut &json ) const
     json.member( "description", description.translated() );
     json.member( "sym", sym );
     json.member( "color", color );
-    json.member( "price", units::to_cent( price ) );
+    json.member( "price", price );
     json.member( "materials" );
     json.start_array();
     for( const material_id &mat : materials ) {
         json.write( mat );
     }
     json.end_array();
-    json.member( "volume", volume / units::legacy_volume_factor );
-    json.member( "weight", to_gram( weight ) );
+    json.member( "volume", volume );
+    json.member( "weight", weight );
 
     json.member( "melee_dam", melee[DT_BASH] );
     json.member( "melee_cut", melee[DT_CUT] );
@@ -1419,7 +1419,7 @@ void it_artifact_armor::serialize( JsonOut &json ) const
     json.member( "material_thickness", armor->thickness );
     json.member( "env_resist", armor->env_resist );
     json.member( "warmth", armor->warmth );
-    json.member( "storage", armor->storage / units::legacy_volume_factor );
+    json.member( "storage", armor->storage );
 
     // artifact data
     serialize_enum_vector_as_int( json, "effects_worn", artifact->effects_worn );

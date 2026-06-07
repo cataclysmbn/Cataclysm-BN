@@ -31,15 +31,14 @@
  *
  *   safe_reference<T>  — records_by_pointer / records_by_id are NOT mutex-protected.
  *     next_id is std::atomic (safe for concurrent serialize() calls from save workers).
- *     All other safe_reference operations (fill, remove, register_load, mark_destroyed,
- *     mark_deallocated, cleanup) must run on the main thread only.
+ *     Direct safe_reference operations other than serialize() must run on the main thread only.
+ *     cata_arena serializes its own mark_destroyed()/mark_deallocated() calls.
  *
- *   cata_arena<T>      — pending_deletion is NOT mutex-protected.
- *     mark_for_destruction() and cleanup() must run on the main thread only.
+ *   cata_arena<T>      — pending_deletion is mutex-protected.
+ *     mark_for_destruction() can overlap cleanup(), which drains outside the lock.
  *
  * In practice:
- *   • Submaps must not be destroyed on worker threads (destructor calls mark_for_destruction
- *     and safe_reference::mark_destroyed).  Use mapbuffer::drain_pending_submap_destroy()
+ *   • Submaps must not be destroyed on worker threads.  Use mapbuffer::drain_pending_submap_destroy()
  *     on the main thread after joining all preload_omt() futures.
  *   • Submap deserialisation IS safe from workers because
  *     active_item_cache constructs cache_reference objects, which are now mutex-guarded.

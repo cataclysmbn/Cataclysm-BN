@@ -1,5 +1,7 @@
 #include "map.h"
 
+#include "faction.h"
+#include "mapdata.h"
 #include "mapgen_async.h"
 
 #include <algorithm>
@@ -58,6 +60,7 @@
 #include "fluid_grid.h"
 #include "fungal_effects.h"
 #include "game.h"
+#include "game_constants.h"
 #include "harvest.h"
 #include "iexamine.h"
 #include "input.h"
@@ -92,6 +95,7 @@
 #include "overmapbuffer.h"
 #include "legacy_pathfinding.h"
 #include "player.h"
+#include "point.h"
 #include "point_float.h"
 #include "projectile.h"
 #include "profile.h"
@@ -571,6 +575,8 @@ void map::set_transparency_cache_dirty( const int zlev )
 {
     if( inbounds_z( zlev ) ) {
         get_cache( zlev ).transparency_cache_dirty.set();
+        // If we are invalidating the entire transparency cache for this zlevel, the sound absorption cache will also be invalidated.
+        get_cache( zlev ).absorption_cache_dirty.set();
         for( const auto p : bubble_submaps() ) {
             auto *sm = get_submap_at_grid( tripoint_bub_sm( p, zlev ) );
             if( sm ) { sm->transparency_dirty = true; }
@@ -668,6 +674,8 @@ void map::set_floor_cache_dirty( const int zlev )
     }
     // outside_cache and sheltered_cache at z-1 depend on floor_cache at z.
     set_outside_cache_dirty( zlev - 1 );
+    // This also means the absorption and sound wall caches are marked dirty there as well.
+    set_absorption_cache_dirty( zlev - 1 );
 }
 
 void map::set_floor_cache_dirty( const tripoint_bub_ms &p )
@@ -683,6 +691,8 @@ void map::set_floor_cache_dirty( const tripoint_bub_ms &p )
     // outside_cache and sheltered_cache at z-1 depend on floor_cache at z.
     // The 3×3 neighbourhood means adjacent submaps at z-1 may also be affected.
     set_outside_cache_dirty( p + tripoint_rel_ms::below() );
+    // Setting the floor cache for a submap dirty should also automatically set the absorption cache and sound_wall caches dirty.
+    set_absorption_cache_dirty( p + tripoint_rel_ms::below() );
 }
 
 void map::set_seen_cache_dirty( const int &zlevel )
@@ -701,6 +711,59 @@ void map::set_transparency_cache_dirty( const tripoint_bub_ms &p )
         ch.transparency_cache_dirty.set( static_cast<size_t>( ch.bidx( smp.x(), smp.y() ) ) );
         auto *sm = get_submap_at_grid( smp );
         if( sm ) { sm->transparency_dirty = true; }
+    }
+}
+
+void map::set_absorption_cache_dirty( const tripoint_bub_ms &p )
+{
+    // Logic lifted shamelessly from set_outside_cache_dirty
+    if( !inbounds( p ) ) {
+        return;
+    }
+    level_cache &ch = get_cache( p.z() );
+    const auto proj = project_remain<coords::sm>( p );
+    const auto smp = proj.quotient_tripoint;
+    const auto l = proj.remainder;
+
+    // Helper: mark one submap grid cell dirty in both the bitset and the submap flag.
+    auto mark = [&]( const tripoint_bub_sm & p ) {
+        if( p.x() < 0 || p.y() < 0 || p.x() >= my_MAPSIZE || p.y() >= my_MAPSIZE ) {
+            return;
+        }
+        ch.absorption_cache_dirty.set( static_cast<size_t>( ch.bidx( p.x(), p.y() ) ) );
+        auto *sm = get_submap_at_grid( tripoint_bub_sm{ p.x(), p.y(), p.z() } );
+        if( sm ) {
+            sm->absorption_dirty = true;
+        }
+    };
+
+    // Always mark the tile's own submap.
+    mark( smp );
+
+    // rebuild_absorption_cache checks a 3×3 tile neighbourhood, so a tile on a
+    // submap boundary can affect tiles in the adjacent submap.
+    const bool on_left   = ( l.x() == 0 );
+    const bool on_right  = ( l.x() == SEEX - 1 );
+    const bool on_top    = ( l.y() == 0 );
+    const bool on_bottom = ( l.y() == SEEY - 1 );
+
+    if( on_left )   { mark( smp + point_rel_sm::west() ); }
+    if( on_right )  { mark( smp + point_rel_sm::east() ); }
+    if( on_top )    { mark( smp + point_rel_sm::north() ); }
+    if( on_bottom ) { mark( smp + point_rel_sm::south() ); }
+
+    // Corner neighbours when on both x and y boundaries.
+    if( on_left  && on_top )    { mark( smp + point_rel_sm::north_west() ); }
+    if( on_right && on_top )    { mark( smp + point_rel_sm::north_east() ); }
+    if( on_left  && on_bottom ) { mark( smp + point_rel_sm::south_west() ); }
+    if( on_right && on_bottom ) { mark( smp + point_rel_sm::south_east() ); }
+
+}
+
+void map::set_absorption_cache_dirty( const int zlev )
+{
+    if( inbounds_z( zlev ) ) {
+        get_cache( zlev ).absorption_cache_dirty.set();
     }
 }
 
@@ -1353,10 +1416,16 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
     if( impulse > 0 ) {
         coll_turn = shake_vehicle( veh, velocity_before, facing.dir() );
         veh.stop_autodriving();
-        const int volume = std::min<int>( 100, std::sqrt( impulse ) );
+        const int volume = std::min<int>( 120, std::sqrt( impulse ) );
         // TODO: Center the sound at weighted (by impulse) average of collisions
-        sounds::sound( veh.bub_ms_location(), volume, sounds::sound_t::combat, _( "crash!" ),
-                       false, "smash_success", "hit_vehicle" );
+        sound_event se;
+        se.origin = veh.bub_ms_location();
+        se.volume = volume;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "crash!" );
+        se.id = "smash_success";
+        se.variant = "hit_vehicle";
+        sounds::sound( se );
     }
 
     if( veh_veh_coll_flag ) {
@@ -1437,8 +1506,15 @@ vehicle *map::move_vehicle( vehicle &veh, const tripoint_rel_ms &dp, const tiler
         for( auto &w : wheel_indices ) {
             const auto wheel_p = veh.bub_part_location( w );
             if( one_in( 2 ) && displace_water( wheel_p ) ) {
-                sounds::sound( wheel_p, 4,  sounds::sound_t::movement, _( "splash!" ), false,
-                               "environment", "splash" );
+                sound_event se;
+                se.origin = wheel_p;
+                se.volume = 50;
+                se.category = sounds::sound_t::movement;
+                se.movement_noise = true;
+                se.description = _( "splash!" );
+                se.id = "environment";
+                se.variant = "splash";
+                sounds::sound( se );
             }
 
             veh.handle_trap( wheel_p, w );
@@ -2264,6 +2340,11 @@ void map::furn_set( const tripoint_bub_ms &p, const furn_id &new_furniture,
         set_floor_cache_dirty( tripoint_bub_ms( p.xy(), p.z() + 1 ) );
     }
 
+    if( old_t.has_flag( TFLAG_BLOCK_WIND ) != new_t.has_flag( TFLAG_BLOCK_WIND ) ||
+        old_t.has_flag( TFLAG_CONNECT_TO_WALL ) != new_t.has_flag( TFLAG_CONNECT_TO_WALL ) ) {
+        set_absorption_cache_dirty( tripoint_bub_ms( p.xy(), p.z() ) );
+    }
+
     invalidate_max_populated_zlev( p.z() );
 
     set_memory_seen_cache_dirty( p );
@@ -2618,6 +2699,9 @@ bool map::ter_set( const tripoint_bub_ms &p, const ter_id &new_terrain )
         // Opening/closing a floor affects visibility on this and the level below.
         set_seen_cache_dirty( p.z() );
         set_seen_cache_dirty( p.z() - 1 );
+        // This also changes the sound absorption of both this tile and the tile below it.
+        set_absorption_cache_dirty( p );
+        set_absorption_cache_dirty( p.z() - 1 );
     }
 
     if( new_t.has_flag( TFLAG_Z_TRANSPARENT ) != old_t.has_flag( TFLAG_Z_TRANSPARENT ) ) {
@@ -2633,6 +2717,16 @@ bool map::ter_set( const tripoint_bub_ms &p, const ter_id &new_terrain )
             level_cache &ch = get_cache( p.z() );
             ch.suspension_cache.emplace_back( map_local_to_abs( *this, p ).xy() );
         }
+    }
+
+    if( new_t.has_flag( "BLOCK_WIND" ) != old_t.has_flag( "BLOCK_WIND" ) ) {
+        // Changing BLOCK_WIND prompts an absorption cache recalc around that tile.
+        set_absorption_cache_dirty( p );
+    }
+
+    if( new_t.has_flag( "CONNECT_TO_WALL" ) != old_t.has_flag( "CONNECT_TO_WALL" ) ) {
+        // Changing CONNECT_TO_WALL prompts an absorption cache recalc around that tile to see if a structure blocks sounds.
+        set_absorption_cache_dirty( p );
     }
 
     invalidate_max_populated_zlev( p.z() );
@@ -4216,12 +4310,26 @@ static bool furn_is_supported( const map &m, const tripoint_bub_ms &p )
     return false;
 }
 
-static int get_sound_volume( const map_bash_info &bash )
+static auto get_sound_volume( const map_bash_info &bash, const bash_params &params ) -> int
 {
-    int smin = bash.str_min;
-    int smax = bash.str_max;
-    // TODO: Consider setting this in finalize instead of calculating here
-    return bash.sound_vol.value_or( std::min( static_cast<int>( smin * 1.5 ), smax ) );
+    // Just take the minimum/base volume at 20dB.
+    const auto minvol = 20;
+    // Set maxvol to 140dB, which can be deafening for extreme impacts.
+    const auto maxvol = 140;
+    const auto impact_strength = params.destroy ? bash.str_max : params.strength;
+    return bash.sound_vol.value_or( std::clamp( minvol + impact_strength, minvol, maxvol ) );
+}
+
+static void set_bash_sound_source( sound_event &se, const bash_params &params )
+{
+    if( !params.caused_by_player ) {
+        return;
+    }
+
+    auto &player_character = get_avatar();
+    se.from_player = true;
+    se.faction = player_character.get_faction()->id;
+    se.monfaction = player_character.get_faction()->mon_faction;
 }
 
 bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params &params )
@@ -4264,9 +4372,16 @@ bash_results map::bash_ter_success( const tripoint_bub_ms &p, const bash_params 
 
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
-        int sound_volume = get_sound_volume( bash );
-        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
-                       soundfxid, soundfxvariant );
+        const auto sound_volume = get_sound_volume( bash, params );
+        sound_event se;
+        se.origin = p;
+        se.volume = sound_volume;
+        se.category = sounds::sound_t::combat;
+        se.description = bash.sound.translated();
+        se.id = soundfxid;
+        se.variant = soundfxvariant;
+        set_bash_sound_source( se, params );
+        sounds::sound( se );
     }
 
     if( !zlevels ) {
@@ -4448,9 +4563,16 @@ bash_results map::bash_furn_success( const tripoint_bub_ms &p, const bash_params
 
     if( !bash.sound.empty() && !params.silent ) {
         static const std::string soundfxid = "smash_success";
-        int sound_volume = get_sound_volume( bash );
-        sounds::sound( p, sound_volume, sounds::sound_t::combat, bash.sound, false,
-                       soundfxid, soundfxvariant );
+        const auto sound_volume = get_sound_volume( bash, params );
+        sound_event se;
+        se.origin = p;
+        se.volume = sound_volume;
+        se.category = sounds::sound_t::combat;
+        se.description = bash.sound.translated();
+        se.id = soundfxid;
+        se.variant = soundfxvariant;
+        set_bash_sound_source( se, params );
+        sounds::sound( se );
     }
 
     if( bash.explosive > 0 ) {
@@ -4504,8 +4626,14 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
 
     // TODO: what if silent is true?
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p, 40, sounds::sound_t::alarm, _( "an alarm go off!" ),
-                       false, "environment", "alarm" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 90;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "an alarm go off!" );
+        se.id = "environment";
+        se.variant = "alarm";
+        sounds::sound( se );
         // Blame nearby player
         if( rl_dist( g->u.bub_pos(), p ) <= 3 ) {
             g->events().send<event_type::triggers_alarm>( g->u.getID() );
@@ -4519,8 +4647,15 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
         // Nothing bashable here
         if( impassable( p ) ) {
             if( !params.silent ) {
-                sounds::sound( p, 18, sounds::sound_t::combat, _( "thump!" ),
-                               false, "smash_fail", "default" );
+                sound_event se;
+                se.origin = p;
+                se.volume = 80;
+                se.category = sounds::sound_t::combat;
+                se.description = _( "thump!" );
+                se.id = "smash_fail";
+                se.variant = "default";
+                set_bash_sound_source( se, params );
+                sounds::sound( se );
             }
 
             result.did_bash = true;
@@ -4567,12 +4702,20 @@ bash_results map::bash_ter_furn( const tripoint_bub_ms &p, const bash_params &pa
     }
 
     if( !result.success ) {
-        int sound_volume = bash->sound_fail_vol.value_or( 12 );
+        // Cap out bash volume to 120dB for sanity checking.
+        int sound_volume = std::min( 120, bash->sound_fail_vol.value_or( 70 ) );
 
         result.did_bash = true;
         if( !params.silent ) {
-            sounds::sound( p, sound_volume, sounds::sound_t::combat, bash->sound_fail, false,
-                           "smash_fail", soundfxvariant );
+            sound_event se;
+            se.origin = p;
+            se.volume = sound_volume;
+            se.category = sounds::sound_t::combat;
+            se.description = bash->sound_fail.translated();
+            se.id = "smash_fail";
+            se.variant = soundfxvariant;
+            set_bash_sound_source( se, params );
+            sounds::sound( se );
         }
 
         if( !smash_ter && smax > 0 ) {
@@ -4616,14 +4759,26 @@ bash_results map::bash( const tripoint_bub_ms &p, const int str,
                         bool silent, bool destroy, bool bash_floor,
                         const vehicle *bashing_vehicle )
 {
-    bash_params bsh{
-        str, silent, destroy, bash_floor, static_cast<float>( rng_float( 0, 1.0f ) ), false, true
+    const auto bsh = bash_params{
+        .strength = str,
+        .silent = silent,
+        .destroy = destroy,
+        .bash_floor = bash_floor,
+        .roll = static_cast<float>( rng_float( 0, 1.0f ) ),
+        .bashing_from_above = false,
+        .do_recurse = true
     };
+    return bash( p, bsh, bashing_vehicle );
+}
+
+bash_results map::bash( const tripoint_bub_ms &p, const bash_params &bsh,
+                        const vehicle *bashing_vehicle )
+{
     bash_results result;
 
     // Dimension bounds cannot be bashed - show message from boundary terrain
     if( is_out_of_bounds( tripoint_bub_ms( p ) ) ) {
-        if( !silent && pocket_info_ ) {
+        if( !bsh.silent && pocket_info_ ) {
             const ter_t &boundary_ter = pocket_info_->bounds.boundary_terrain.obj();
             if( !boundary_ter.bash.sound_fail.empty() ) {
                 add_msg( m_info, boundary_ter.bash.sound_fail.translated() );
@@ -4687,8 +4842,15 @@ bash_results map::bash_items( const tripoint_bub_ms &p, const bash_params &param
 
     // Add a glass sound even when something else also breaks
     if( smashed_glass && !params.silent ) {
-        sounds::sound( p, 12, sounds::sound_t::combat, _( "glass shattering" ), false,
-                       "smash_success", "smash_glass_contents" );
+        sound_event se;
+        se.origin = p;
+        se.volume = 70;
+        se.category = sounds::sound_t::combat;
+        se.description = _( "glass shattering" );
+        se.id = "smash_success";
+        se.variant = "smash_glass_contents";
+        set_bash_sound_source( se, params );
+        sounds::sound( se );
     }
     return result;
 }
@@ -4700,8 +4862,15 @@ bash_results map::bash_vehicle( const tripoint_bub_ms &p, const bash_params &par
     if( const optional_vpart_position vp = veh_at( p ) ) {
         vp->vehicle().damage( vp->part_index(), params.strength, DT_BASH );
         if( !params.silent ) {
-            sounds::sound( p, 18, sounds::sound_t::combat, _( "crash!" ), false,
-                           "smash_success", "hit_vehicle" );
+            sound_event se;
+            se.origin = p;
+            se.volume = 70;
+            se.category = sounds::sound_t::combat;
+            se.description = _( "crash!" );
+            se.id = "smash_success";
+            se.variant = "hit_vehicle";
+            set_bash_sound_source( se, params );
+            sounds::sound( se );
         }
 
         result.did_bash = true;
@@ -4843,9 +5012,15 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
     float pen = initial_arpen;
 
     if( has_flag( "ALARMED", p ) && !g->timed_events.queued( TIMED_EVENT_WANTED ) ) {
-        sounds::sound( p, 30, sounds::sound_t::alarm, _( "an alarm sound!" ), true, "environment",
-                       "alarm" );
-        const auto abs = project_to<coords::sm>( map_local_to_abs( *this, p ) );
+        sound_event se;
+        se.origin = p;
+        se.volume = 90;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "an alarm sound!" );
+        se.id = "environment";
+        se.variant = "alarm";
+        sounds::sound( se );
+        const auto abs = project_to<coords::sm>( bub_to_abs( p ) );
         g->timed_events.add( TIMED_EVENT_WANTED, calendar::turn + 30_minutes, 0, abs );
     }
 
@@ -4856,7 +5031,12 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
                       proj.impact.type_damage( DT_STAB ) > 0 ||
                       proj.impact.type_damage( DT_BULLET ) > 0;
     if( const optional_vpart_position vp = veh_at( p ) ) {
-        dam = vp->vehicle().damage( vp->part_index(), dam, inc ? DT_HEAT : DT_STAB, hit_items );
+        if( origin.z() > p.z() && vp->part_with_feature( "ROOF", true ) ) {
+            const int roof = vp->vehicle().roof_at_part( vp->part_index() );
+            dam = vp->vehicle().damage( roof, dam, inc ? DT_HEAT : DT_STAB, hit_items, false );
+        } else {
+            dam = vp->vehicle().damage( vp->part_index(), dam, inc ? DT_HEAT : DT_STAB, hit_items );
+        }
     }
 
     furn_id furn_here = furn( p );
@@ -4877,7 +5057,9 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle and stop the shot.
-            add_msg( _( "The shot strikes the %s!" ), furnname( p ) );
+            if( get_avatar().sees( p ) ) {
+                add_msg( _( "The shot strikes the %s!" ), furnname( p ) );
+            }
             if( phys ) {
                 bash( p, dam, false );
             }
@@ -4926,7 +5108,9 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         } else if( proj.has_effect( ammo_effect_NO_PENETRATE_OBSTACLES ) ) {
             // We shot something with a flamethrower or other non-penetrating weapon.
             // Try to bash the obstacle if it was a thrown rock or the like, then stop the shot.
-            add_msg( _( "The shot strikes the %s!" ), tername( p ) );
+            if( get_avatar().sees( p ) ) {
+                add_msg( _( "The shot strikes the %s!" ), tername( p ) );
+            }
             if( phys ) {
                 bash( p, dam, false );
             }
@@ -4967,14 +5151,7 @@ void map::shoot( const tripoint_bub_ms &origin, const tripoint_bub_ms &p, projec
         dam = 0;
     }
 
-    for( const ammo_effect_str_id &ae_id : proj.get_ammo_effects() ) {
-        const ammo_effect &ae = *ae_id;
-        if( ae.trail_field_type ) {
-            if( x_in_y( ae.trail_chance, 100 ) ) {
-                add_field( p, ae.trail_field_type, rng( ae.trail_intensity_min, ae.trail_intensity_max ) );
-            }
-        }
-    }
+    apply_ammo_trail_effects( p, proj.get_ammo_effects(), 1.0 );
 
     // Check fields?
     const field_entry *fieldhit = get_field( p, fd_web );
@@ -5167,9 +5344,15 @@ bool map::open_door_ter(
         return false;
     }
 
-    sounds::sound(
-        p, 6, sounds::sound_t::movement, _( "swish" ),
-        true, "open_door", ter.id.str() );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "open_door";
+    se.variant = ter.id.str();
+    sounds::sound( se );
     ter_set( p, ter.open );
 
     const auto is_schizo = std::visit( []<typename T>( T u ) -> bool {
@@ -5222,9 +5405,15 @@ bool map::open_door_furn(
         return false;
     }
 
-    sounds::sound(
-        p, 6, sounds::sound_t::movement, _( "swish" ),
-        true, "open_door", furn.id.str() );
+    sound_event se;
+    se.origin = p;
+    se.volume = 50;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "open_door";
+    se.variant = furn.id.str();
+    sounds::sound( se );
     furn_set( p, furn.open );
     return true;
 
@@ -5357,17 +5546,23 @@ bool map::close_door( const tripoint_bub_ms &p, const bool inside, const bool ch
 
     const auto &ter = this->ter( p ).obj();
     const auto &furn = this->furn( p ).obj();
+    sound_event se;
+    se.origin = p;
+    se.volume = 60;
+    se.category = sounds::sound_t::movement;
+    se.movement_noise = true;
+    se.description = _( "swish" );
+    se.id = "close_door";
+    se.variant = ter.id.str();
     if( ter.close && !furn.id ) {
         if( !check_only ) {
-            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
-                           "close_door", ter.id.str() );
+            sounds::sound( se );
             ter_set( p, ter.close );
         }
         return true;
     } else if( furn.close ) {
         if( !check_only ) {
-            sounds::sound( p, 10, sounds::sound_t::movement, _( "swish" ), true,
-                           "close_door", furn.id.str() );
+            sounds::sound( se );
             furn_set( p, furn.close );
         }
         return true;
@@ -8107,6 +8302,8 @@ void map::load( const tripoint_abs_sm &w, const bool update_vehicle, const bool 
         }
     }
     reset_vehicle_cache( );
+
+    charge_removal_blacklist::split_deferred();
 }
 
 
@@ -8369,6 +8566,7 @@ void map::shift( const point_rel_sm &sp )
             set_seen_cache_dirty( gridz );
             set_pathfinding_cache_dirty( gridz );
             set_suspension_cache_dirty( gridz );
+            set_absorption_cache_dirty( gridz );
         }
     } // shift_grid_copy_load
     // New edge submaps have stale solar cache data. Force a rebuild before the next draw.
@@ -8410,6 +8608,7 @@ void map::shift( const point_rel_sm &sp )
     if( !support_cache_dirty.empty() ) {
         shift_tripoint_set( support_cache_dirty, shift_offset_pt, boundaries_2d );
     }
+    sounds::shift_sound_positions( shift_offset_pt );
 
     invalidate_lightmap_caches();
 }
@@ -8528,11 +8727,13 @@ void map::loadn( const tripoint_bub_sm &grid, const bool update_vehicles,
             tmpsub->transparency_dirty = true;
             tmpsub->floor_dirty = true;
             tmpsub->outside_dirty = true;
+            tmpsub->absorption_dirty = true;
             tmpsub->pf_dirty = true;
         } else {
             set_transparency_cache_dirty( grid.z() );
             set_floor_cache_dirty( grid.z() );
             set_outside_cache_dirty( grid.z() );
+            set_absorption_cache_dirty( grid.z() );
             set_seen_cache_dirty( grid.z() );
             set_pathfinding_cache_dirty( grid.z() );
             set_suspension_cache_dirty( grid.z() );
@@ -9412,6 +9613,12 @@ bool map::inbounds( const tripoint_abs_sm &p ) const
     return inbounds( abs_to_map_local( *this, p ) );
 }
 
+bool map::inbounds( const point_bub_sm &p ) const
+{
+    const auto max_xy = my_MAPSIZE;
+    return p.x() >= 0 && p.x() < max_xy && p.y() >= 0 && p.y() < max_xy;
+}
+
 bool map::is_position_simulated( const tripoint_bub_sm &p ) const
 {
     return submap_loader.is_simulated( bound_dimension_, map_local_to_abs( *this, p ) );
@@ -9968,6 +10175,7 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         } else {
             for( int z = minz; z <= maxz; ++z ) {
                 level_cache &ch = get_cache( z );
+
                 // vehicle_floor_cache is written by vehicles one level below (via
                 // vehicle_caching_internal_above), so it must be cleared unconditionally —
                 // not gated on veh_in_active_range — to prevent stale entries after shifts.
@@ -10006,6 +10214,14 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             if( get_cache( z ).veh_in_active_range ) {
                 do_vehicle_caching( z );
             }
+        }
+    }
+
+    {
+        ZoneScopedN( "Phase3_sound_absorption" );
+        // Absorption cache relies upon the floor, outside, and vehicle caches all being completed.
+        for( int z = minz; z <= maxz; z++ ) {
+            build_absorption_cache( z );
         }
     }
 
@@ -10696,6 +10912,8 @@ level_cache::level_cache( int mx, int my )
       transparency_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
       outside_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
       floor_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
+      absorption_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
+      sound_wall_cache_dirty( static_cast<size_t>( mx / SEEX ) * ( my / SEEY ) ),
       lm( static_cast<size_t>( mx * my ), four_quadrants( 0.0f ) ),
       sm( static_cast<size_t>( mx * my ), 0.0f ),
       light_source_buffer( static_cast<size_t>( mx * my ), 0.0f ),
@@ -10711,13 +10929,47 @@ level_cache::level_cache( int mx, int my )
       camera_cache( static_cast<size_t>( mx * my ), 0.0f ),
       visibility_cache( static_cast<size_t>( mx * my ), lit_level::DARK ),
       map_memory_seen_cache( static_cast<size_t>( mx * my ) ),
-      veh_exists_at( static_cast<size_t>( mx * my ), false )
+      veh_exists_at( static_cast<size_t>( mx * my ), false ),
+      absorption_cache( static_cast<size_t>( mx * my ), 0 ),
+      sound_wall_cache( static_cast<size_t>( mx * my ), false )
+
 {
     transparency_cache_dirty.set();
+    absorption_cache_dirty.set();
+    sound_wall_cache_dirty.set();
     outside_cache_dirty.set();
     floor_cache_dirty.set();
 }
 
+// Default constructor: zero-sized null sentinel — not for normal use.
+sound_instance_cache::sound_instance_cache() = default;
+
+// Normal constructor. Use this in almost all cases, takes the originating sound event.
+// This is done so we can garuntee that the sound is sized to the reality bubble and the level_cache.
+sound_instance_cache::sound_instance_cache( sound_event &input_sound,
+        const sound_vol_for_flood_dist &d_e, const int &f_r )
+    : sound( input_sound ),
+      dist_enum( d_e ),
+      flood_radius( f_r ),
+      origin( input_sound.origin ),
+      envelope_index_point( tripoint( origin.x() - flood_radius, origin.y() - flood_radius,
+                                      origin.z() ) ),
+      offset_x( envelope_index_point.x() ),
+      offset_y( envelope_index_point.y() ),
+      // 4r^2 + 4r + 1 equals our total area, for some (2r + 1) by (2r + 1) flood envelope.
+      volume( static_cast<size_t>( ( 1 + ( 4 * flood_radius ) + ( 4 * ( flood_radius *
+                                     flood_radius ) ) ) ), 0 ),
+      movement_noise( input_sound.movement_noise ),
+      from_player( input_sound.from_player ),
+      from_monster( input_sound.from_monster ),
+      from_npc( input_sound.from_npc )
+{
+
+}
+
+sound_filter_key::sound_filter_key() = default;
+
+sound_cache::sound_cache() = default;
 
 void map::set_pathfinding_cache_dirty( const int zlev )
 {
@@ -10777,6 +11029,8 @@ void map::invalidate_map_cache( const int zlev )
         level_cache &ch = get_cache( zlev );
         ch.floor_cache_dirty.set();
         ch.transparency_cache_dirty.set();
+        ch.absorption_cache_dirty.set();
+        ch.sound_wall_cache_dirty.set();
         ch.seen_cache_dirty = true;
         ch.lightmap_dirty = true;
         ch.visibility_cache_dirty = true;

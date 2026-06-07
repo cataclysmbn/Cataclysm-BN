@@ -1817,7 +1817,12 @@ void static try_remove_webs( Character &c )
     }
 }
 
-bool Character::move_effects( bool attacking )
+auto Character::move_effects( const bool attacking ) -> bool
+{
+    return move_effects( attacking, false );
+}
+
+auto Character::move_effects( const bool attacking, const bool skip_pit_escape ) -> bool
 {
     if( has_effect( effect_downed ) ) {
         try_remove_downed( *this );
@@ -1848,7 +1853,7 @@ bool Character::move_effects( bool attacking )
 
     // Currently we only have one thing that forces movement if you succeed, should we get more
     // than this will need to be reworked to only have success effects if /all/ checks succeed
-    if( has_effect( effect_in_pit ) ) {
+    if( has_effect( effect_in_pit ) && !skip_pit_escape ) {
         /** @EFFECT_STR increases chance to escape pit */
 
         /** @EFFECT_DEX increases chance to escape pit, slightly */
@@ -4964,6 +4969,14 @@ float Character::get_healthy_mod() const
 {
     return healthy_mod;
 }
+int Character::get_char_hearing_protection( bool advanced ) const
+{
+    int ret = 0;
+    for( auto &item : worn ) {
+        ret += item->get_hearing_protection( advanced );
+    }
+    return ret;
+}
 
 /*
  * Innate stats setters
@@ -6298,8 +6311,17 @@ void Character::update_bodytemp( const map &m, const weather_manager &weather )
 
         // Because we don't actually model insulation very well at the moment, clothes are oppressive in Summer
         // So we make them half as effective at making you uncomfortably hot as they are at making you not-cold
-        if( bp_conv >= BODYTEMP_HOT ) {
-            bp_conv -= clothing_warmth_adjustment / 2;
+        if( bp_conv >= BODYTEMP_NORM ) {
+            int bp_without_clothes = bp_conv - clothing_warmth_adjustment;
+            if( bp_without_clothes >= BODYTEMP_NORM ) {
+                // If the heat is above normal, clothes start to contribute less
+                bp_conv -= clothing_warmth_adjustment / 2;
+            } else {
+                // Do the same to any clothing that contributes to above normal
+                int clothes_to_norm = BODYTEMP_NORM - bp_without_clothes;
+                bp_conv -= ( clothing_warmth_adjustment - clothes_to_norm ) / 2;
+
+            }
         }
 
         // FINAL CALCULATION : Increments current body temperature towards convergent.
@@ -7054,8 +7076,7 @@ bool Character::is_immune_effect( const efftype_id &eff ) const
         return is_immune_damage( DT_HEAT );
     } else if( eff == effect_deaf ) {
         return worn_with_flag( flag_DEAF ) || worn_with_flag( flag_PARTIAL_DEAF ) ||
-               has_bionic( bio_ears ) ||
-               is_wearing( itype_rm13_armor_on );
+               has_bionic( bio_ears );
     } else if( eff == effect_corroding ) {
         return is_immune_damage( DT_ACID ) || has_trait( trait_SLIMY ) || has_trait( trait_VISCOUS );
     } else if( eff == effect_nausea ) {
@@ -8558,9 +8579,18 @@ void Character::cough( bool harmful, int loudness )
     if( !is_npc() ) {
         add_msg( m_bad, _( "You cough heavily." ) );
     }
-    sounds::sound( bub_pos(), loudness, sounds::sound_t::speech, _( "a hacking cough." ), false,
-                   "misc",
-                   "cough" );
+    sound_event se;
+    se.origin = bub_pos();
+    se.volume = loudness;
+    se.category = sounds::sound_t::speech;
+    se.description = _( "a hacking cough." );
+    se.from_player = is_avatar();
+    se.from_npc = !se.from_player;
+    se.faction = get_faction()->id;
+    se.monfaction = get_faction()->mon_faction;
+    se.id = "misc";
+    se.variant = "cough";
+    sounds::sound( se );
 
     moves -= 80;
 
@@ -8582,16 +8612,17 @@ void Character::wake_up()
 
 int Character::get_shout_volume() const
 {
-    int base = 10;
+    // Base shout set at 65 dB
+    int base = 65;
     int shout_multiplier = 2;
 
     // Mutations make shouting louder, they also define the default message
     if( has_trait( trait_SHOUT3 ) ) {
-        shout_multiplier = 4;
-        base = 20;
-    } else if( has_trait( trait_SHOUT2 ) ) {
-        base = 15;
         shout_multiplier = 3;
+        base = 80;
+    } else if( has_trait( trait_SHOUT2 ) ) {
+        base = 70;
+        shout_multiplier = 2;
     }
 
     // You can't shout without your face
@@ -8605,12 +8636,12 @@ int Character::get_shout_volume() const
     // Balanced around whisper for wearing bondage mask
     // and noise ~= 10 (door smashing) for wearing dust mask for character with strength = 8
     /** @EFFECT_STR increases shouting volume */
-    const int penalty = encumb( body_part_mouth ) * 3 / 2;
-    int noise = base + str_cur * shout_multiplier - penalty;
+    const int penalty = std::floor( encumb( body_part_mouth ) * 1.5 );
+    int noise = base + std::floor( str_cur * shout_multiplier ) - penalty;
 
     // Minimum noise volume possible after all reductions.
-    // Volume 1 can't be heard even by player
-    constexpr int minimum_noise = 2;
+    // Volume 20dB or less is generally inaudible.
+    constexpr int minimum_noise = 20;
 
     if( noise <= base ) {
         noise = std::max( minimum_noise, noise );
@@ -8618,14 +8649,15 @@ int Character::get_shout_volume() const
 
     // Screaming underwater is not good for oxygen and harder to do overall
     if( is_underwater() ) {
-        noise = std::max( minimum_noise, noise / 2 );
+        noise = std::max( minimum_noise * 1.0, noise * 0.75 );
     }
-    return noise;
+    // Cap shouting to 180dB, which is already going to deafen people.
+    return std::min( 180, noise );
 }
 
 void Character::shout( std::string msg, bool order )
 {
-    int base = 10;
+    int base = 65;
     std::string shout;
 
     // You can't shout without your face
@@ -8638,12 +8670,12 @@ void Character::shout( std::string msg, bool order )
     // Mutations make shouting louder, they also define the default message
     if( msg.empty() ) {
         if( has_trait( trait_SHOUT3 ) ) {
-            base = 20;
+            base = 80;
             add_msg_if_player( m_warning, _( "You let out an ear-piercing howl!" ) );
             msg = is_player() ? _( "yourself let out an ear-piercing howl!" ) : _( "an ear-piercing howl!" );
             shout = "howl";
         } else if( has_trait( trait_SHOUT2 ) ) {
-            base = 15;
+            base = 70;
             add_msg_if_player( m_mixed, _( "You scream loudly!" ) );
             msg = is_player() ? _( "yourself scream loudly!" ) : _( "a loud scream!" );
             shout = "scream";
@@ -8662,8 +8694,8 @@ void Character::shout( std::string msg, bool order )
     int noise = get_shout_volume();
 
     // Minimum noise volume possible after all reductions.
-    // Volume 1 can't be heard even by player
-    constexpr int minimum_noise = 2;
+    // 20dB is generally inaudible.
+    constexpr int minimum_noise = 20;
 
     if( noise <= base ) {
         std::string dampened_shout;
@@ -8678,7 +8710,7 @@ void Character::shout( std::string msg, bool order )
         }
     }
 
-    const int penalty = encumb( body_part_mouth ) * 3 / 2;
+    const int penalty = std::floor( encumb( body_part_mouth ) * 1.5 );
     // TODO: indistinct noise descriptions should be handled in the sounds code
     if( noise <= minimum_noise ) {
         add_msg_if_player( m_warning,
@@ -8689,9 +8721,18 @@ void Character::shout( std::string msg, bool order )
         add_msg_if_player( m_warning, _( "The sound of your voice is significantly muffled!" ) );
     }
 
-    sounds::sound( bub_pos(), noise, order ? sounds::sound_t::order : sounds::sound_t::alert, msg,
-                   false,
-                   "shout", shout );
+    sound_event se;
+    se.origin = bub_pos();
+    se.volume = noise;
+    se.category = order ? sounds::sound_t::order : sounds::sound_t::alert;
+    se.description = msg;
+    se.from_player = is_avatar();
+    se.from_npc = !se.from_player;
+    se.faction = get_faction()->id;
+    se.monfaction = get_faction()->mon_faction;
+    se.id = "shout";
+    se.variant = shout;
+    sounds::sound( se );
 }
 
 void Character::signal_nemesis()
@@ -9870,8 +9911,19 @@ void Character::spores()
     map &here = get_map();
     fungal_effects fe( *g, here );
     //~spore-release sound
-    sounds::sound( bub_pos(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
-    for( const auto &sporep : here.points_in_radius( bub_pos(), 1 ) ) {
+    sound_event se;
+    se.origin = bub_pos();
+    se.volume = 50;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Pouf!" );
+    se.from_player = is_avatar();
+    se.from_npc = !se.from_player;
+    se.faction = get_faction()->id;
+    se.monfaction = get_faction()->mon_faction;
+    se.id = "misc";
+    se.variant = "puff";
+    sounds::sound( se );
+    for( const tripoint_bub_ms &sporep : here.points_in_radius( bub_pos(), 1 ) ) {
         if( sporep == bub_pos() ) {
             continue;
         }
@@ -9882,7 +9934,18 @@ void Character::spores()
 void Character::blossoms()
 {
     // Player blossoms are shorter-ranged, but you can fire much more frequently if you like.
-    sounds::sound( bub_pos(), 10, sounds::sound_t::combat, _( "Pouf!" ), false, "misc", "puff" );
+    sound_event se;
+    se.origin = bub_pos();
+    se.volume = 50;
+    se.category = sounds::sound_t::combat;
+    se.description = _( "Pouf!" );
+    se.from_player = is_avatar();
+    se.from_npc = !se.from_player;
+    se.faction = get_faction()->id;
+    se.monfaction = get_faction()->mon_faction;
+    se.id = "misc";
+    se.variant = "puff";
+    sounds::sound( se );
     map &here = get_map();
     for( const auto &tmp : here.points_in_radius( bub_pos(), 2 ) ) {
         here.add_field( tmp, fd_fungal_haze, rng( 1, 2 ) );
@@ -11538,12 +11601,16 @@ bool Character::can_hear( const tripoint_bub_ms &source, const int volume ) cons
     }
 
     // source is in-ear and at our square, we can hear it
-    if( source == bub_pos() && volume == 0 ) {
+    if( source == bub_pos() ) {
         return true;
     }
+    const auto cache = get_map().get_cache_ref( bub_pos().z() );
     const int dist = rl_dist( source, bub_pos() );
     const float volume_multiplier = hearing_ability();
-    return ( volume - get_weather().weather_id->sound_attn ) * volume_multiplier >= dist;
+    const auto tabsp = ( get_map().inbounds( bub_pos() ) ) ? cache.absorption_cache[cache.idx(
+                           bub_pos().x(), bub_pos().y() )] : 0;
+    return ( ( 100 * volume ) - get_cumulative_vol_dist_loss( 3, dist,
+             tabsp ) ) >= ( SOUND_MINIMUM_VOLUME_FOR_PROPAGATION - ( ( volume_multiplier * 100 ) - 100 ) );
 }
 
 float Character::hearing_ability() const

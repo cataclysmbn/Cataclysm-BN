@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "avatar.h"
+#include "catalua_hooks.h"
 #include "creature.h"
 #include "debug.h"
 #include "enum_conversions.h"
@@ -31,6 +32,7 @@
 #include "requirements.h"
 #include "string_formatter.h"
 #include "translations.h"
+#include "catalua_sol.h"
 
 mission mission_type::create( const character_id &npc_id ) const
 {
@@ -257,6 +259,10 @@ void mission::assign( avatar &u )
         }
         type->start( this );
         status = mission_status::in_progress;
+        cata::run_hooks( "on_mission_start", [&]( auto & params ) {
+            params["mission_type"] = this->type;
+            params["mission"] = this;
+        } );
     }
 }
 
@@ -268,6 +274,11 @@ void mission::fail()
     }
 
     type->fail( this );
+    cata::run_hooks( "on_mission_end", [&]( auto & params ) {
+        params["mission_type"] = this->type;
+        params["mission"] = this;
+    } );
+
 }
 
 void mission::set_target_to_mission_giver()
@@ -364,6 +375,10 @@ void mission::wrap_up()
     }
 
     type->end( this );
+    cata::run_hooks( "on_mission_end", [&]( auto & params ) {
+        params["mission_type"] = this->type;
+        params["mission"] = this;
+    } );
 }
 
 bool mission::is_complete( const character_id &_npc_id ) const

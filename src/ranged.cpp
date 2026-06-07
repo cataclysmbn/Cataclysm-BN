@@ -1175,14 +1175,24 @@ static int calc_gun_volume( const item &gun )
     // Inherit suppressor modifiers if relevant (e.g. KSG second mag) but still use current ammo
     const item &parent = ( gun.parent_item() != nullptr &&
                            gun.has_flag( flag_USE_PARENT_GUN ) ) ? *gun.parent_item() : gun;
+    // If our ammo is subsonic, loudness mods from the gun and gunmods can reduce noise freely.
+    // If the ammo is not subsonic, loudness cannot be reduced below 120 as the bullet will make a sonic boom.
     int noise = parent.type->gun->loudness;
+    // Check the ammo data first so that subsonic ammo is suppressable by gun mods.
+    if( gun.ammo_data() ) {
+        noise += gun.ammo_data()->ammo->loudness;
+        // Speed of sound at sea level is around 343 meters per second.
+        // While it would be ideal to be based on speed of sound
+        // EVERYTHING flies faster then the speed of sound so using that to force loud sounds makes little sense in the current state of affairs
+        // NOTE: If supersonic ever gets implented, use it here
+        noise = std::min( 160, noise );
+    }
     for( const auto mod : parent.gunmods() ) {
         noise += mod->type->gunmod->loudness;
     }
-    if( gun.ammo_data() ) {
-        noise += gun.ammo_data()->ammo->loudness;
-    }
 
+
+    // Cap it like it gets capped when making a sound
     noise = std::max( noise, 0 );
     return noise;
 }
@@ -2387,8 +2397,8 @@ static void cycle_action( item &weap, const tripoint_bub_ms &pos )
             } else {
                 vp->vehicle().add_item( *cargo.front(), item::spawn( casing ) );
             }
-
-            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( eject ),
+            // Take the dB volume of ejecting to be 60.
+            sfx::play_variant_sound( "fire_gun", "brass_eject", sfx::get_heard_volume( eject, 60 ),
                                      sfx::get_heard_angle( eject ) );
         }
     }
@@ -2412,10 +2422,63 @@ void ranged::make_gun_sound_effect( const Character &who, bool burst, const item
 {
     const item::sound_data data = gun.gun_noise( burst );
     if( data.volume > 0 ) {
-        sounds::sound( who.bub_pos(), data.volume, sounds::sound_t::combat,
-                       data.sound.empty() ? _( "Bang!" ) : data.sound );
+        sound_event se;
+        se.origin = who.bub_pos();
+        se.volume = std::min( 191, data.volume );
+        se.category = sounds::sound_t::combat;
+        se.description = data.sound.empty() ? _( "Bang!" ) : data.sound;
+        // Guns dont get to be ambient noise.
+        if( who.is_avatar() ) {
+            se.from_player = true;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+        } else if( who.is_npc() ) {
+            se.from_npc = true;
+            se.faction = who.get_faction()->id;
+            se.monfaction = who.get_faction()->mon_faction;
+        } else if( who.is_monster() ) {
+            se.from_monster = true;
+            se.monfaction = who.as_monster()->faction.id();
+        } else {
+            // If it was none of the above but is shooting a gun anyways, its almost certainly a monster
+            // of some kind with wierd shenanagins done to make it fire a gun without a fake gun or something.
+            // Had to pass a character, which may or may not include a tripoint.
+
+            Creature *const critter = g->critter_at<Creature>( who.bub_pos(), true );
+            if( critter ) {
+                if( !critter->is_hallucination() ) {
+                    if( critter->is_avatar() ) {
+                        se.from_player = true;
+                        se.faction = critter->as_avatar()->get_faction()->id;
+                        se.monfaction = critter->as_avatar()->get_faction()->mon_faction;
+                    } else if( critter->is_monster() ) {
+                        se.from_monster = true;
+                        se.monfaction = critter->as_monster()->faction.id();
+                    } else if( critter ->is_npc() ) {
+                        se.from_npc = true;
+                        se.faction = critter->as_npc()->get_faction()->id;
+                        se.monfaction = critter->as_npc()->get_faction()->mon_faction;
+                    } else {
+                        // Gunshots dont get to be ambient noise.
+                        se.from_monster = true;
+                    }
+                }
+
+            }
+
+        }
+        // We want to make our gun sound, and then check to see if our shooter is a hallucination.
+        // Hallucinations dont get to deafen the character.
+        sfx::generate_gun_sound( who.bub_pos(), gun, se.volume );
+        if( !who.is_hallucination() ) {
+            sounds::sound( se );
+        }
+
+        return;
     }
-    sfx::generate_gun_sound( who.bub_pos(), gun );
+    // If a perfectly silent gun shoots, does it make a sound?
+    // Yes because weapons like laser rifles or odd modded weapons exist.
+    sfx::generate_gun_sound( who.bub_pos(), gun, 60 );
 }
 
 item::sound_data item::gun_noise( const bool burst ) const
@@ -2434,7 +2497,7 @@ item::sound_data item::gun_noise( const bool burst ) const
             return { noise, burst ? _( "tz-tz-tzk!" ) : _( "tzk!" ) };
         } else if( noise < 80 ) {
             return { noise, burst ? _( "Brzzip!" ) : _( "tz-Zing!" ) };
-        } else if( noise < 200 ) {
+        } else if( noise < 160 ) {
             return { noise, burst ? _( "tzz-CR-CR-CRAck!" ) : _( "tz-CRACKck!" ) };
         } else {
             return { noise, burst ? _( "tzz-BOOOM!" ) : _( "tzk-BLAM!" ) };
@@ -2467,11 +2530,11 @@ item::sound_data item::gun_noise( const bool burst ) const
 
     if( type->weapon_category.contains( weapon_cat_ENERGY_WEAPONS ) ) {
         // Lasers and plasma
-        if( noise < 20 ) {
+        if( noise < 40 ) {
             return { noise, _( "Fzzt!" ) };
-        } else if( noise < 40 ) {
-            return { noise, _( "Pew!" ) };
         } else if( noise < 60 ) {
+            return { noise, _( "Pew!" ) };
+        } else if( noise < 80 ) {
             return { noise, _( "Tsewww!" ) };
         } else {
             return { noise, _( "Kra-kow!" ) };
@@ -2481,9 +2544,9 @@ item::sound_data item::gun_noise( const bool burst ) const
     } else if( noise > 0 ) {
         if( noise < 50 ) {
             return { noise, burst ? _( "Brrrip!" ) : _( "plink!" ) };
-        } else if( noise < 150 ) {
+        } else if( noise < 120 ) {
             return { noise, burst ? _( "Brrrap!" ) : _( "bang!" ) };
-        } else if( noise < 175 ) {
+        } else if( noise < 160 ) {
             return { noise, burst ? _( "P-p-p-pow!" ) : _( "blam!" ) };
         } else {
             return { noise, burst ? _( "Kaboom!" ) : _( "kerblam!" ) };

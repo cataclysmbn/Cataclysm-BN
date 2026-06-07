@@ -149,7 +149,7 @@
         ],
         "entries": [
           { "item": "water_clean", "container-item": "crt_canteen" },
-          { "item": "crt_solarpack", "contents-item": [ "crt_cqb_si_shotgun", "knife_crt" ] }
+          { "item": "crt_solarpack", "contents-group": "crit_gun_specops", "contents-item": "knife_crt" }
         ]
       },
       "male": [ "boxer_shorts" ],

@@ -7,7 +7,7 @@
     "skills_required": [ "launcher", 2 ],
     "time": "2 m 30 s",
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 30 ] ], [ [ "40x46mm_m212_casing", 1 ] ], [ [ "rubber_slug", 1 ] ] ],
+    "components": [ [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 30 ] ], [ [ "40x46mm_casing", 1 ] ], [ [ "rubber_slug", 1 ] ] ],
     "charges": 1
   },
   {
@@ -23,7 +23,7 @@
       [ [ "chem_compositionb", 30 ] ],
       [ [ "gunpowder", 30 ] ],
       [ [ "impact_fuze", 1 ] ],
-      [ [ "40x46mm_m118_casing", 1 ] ]
+      [ [ "40x46mm_casing", 1 ] ]
     ],
     "charges": 1
   },
@@ -40,7 +40,7 @@
       [ [ "chem_compositionb", 32 ] ],
       [ [ "gunpowder", 35 ] ],
       [ [ "impact_fuze", 1 ] ],
-      [ [ "40x46mm_m199_casing", 1 ] ]
+      [ [ "40x46mm_casing", 1 ] ]
     ],
     "charges": 1
   },
@@ -52,18 +52,7 @@
     "skills_required": [ "launcher", 2 ],
     "time": "2 m 30 s",
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 30 ] ], [ [ "40x46mm_m195_casing", 1 ] ] ],
-    "charges": 1
-  },
-  {
-    "result": "40x46mm_buckshot_m118",
-    "type": "uncraft",
-    "skill_used": "fabrication",
-    "difficulty": 4,
-    "skills_required": [ "launcher", 2 ],
-    "time": "2 m 30 s",
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "40x46mm_m118_casing", 1 ] ], [ [ "lead", 12 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
+    "components": [ [ [ "smpistol_primer", 1 ] ], [ [ "gunpowder", 30 ] ], [ [ "40x46mm_casing", 1 ] ] ],
     "charges": 1
   },
   {
@@ -74,51 +63,29 @@
     "skills_required": [ "launcher", 2 ],
     "time": "2 m 30 s",
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "40x46mm_m199_casing", 1 ] ], [ [ "lead", 12 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
+    "components": [ [ [ "40x46mm_casing", 1 ] ], [ [ "lead", 12 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
     "charges": 1
   },
   {
-    "result": "40x46mm_slug_m118",
+    "result": "40x46mm_slug",
     "type": "uncraft",
     "skill_used": "fabrication",
     "difficulty": 4,
     "skills_required": [ "launcher", 2 ],
     "time": "2 m 30 s",
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "40x46mm_m118_casing", 1 ] ], [ [ "lead", 12 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
+    "components": [ [ [ "40x46mm_casing", 1 ] ], [ [ "lead", 12 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
     "charges": 1
   },
   {
-    "result": "40x46mm_slug_m199",
+    "result": "40x46mm_flechette",
     "type": "uncraft",
     "skill_used": "fabrication",
     "difficulty": 4,
     "skills_required": [ "launcher", 2 ],
     "time": "2 m 30 s",
     "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "40x46mm_m199_casing", 1 ] ], [ [ "lead", 12 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
-    "charges": 1
-  },
-  {
-    "result": "40x46mm_flechette_m118",
-    "type": "uncraft",
-    "skill_used": "fabrication",
-    "difficulty": 4,
-    "skills_required": [ "launcher", 2 ],
-    "time": "2 m 30 s",
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "40x46mm_m118_casing", 1 ] ], [ [ "combatnail", 70 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
-    "charges": 1
-  },
-  {
-    "result": "40x46mm_flechette_m199",
-    "type": "uncraft",
-    "skill_used": "fabrication",
-    "difficulty": 4,
-    "skills_required": [ "launcher", 2 ],
-    "time": "2 m 30 s",
-    "qualities": [ { "id": "CUT", "level": 1 }, { "id": "PULL", "level": 1 } ],
-    "components": [ [ [ "40x46mm_m199_casing", 1 ] ], [ [ "combatnail", 70 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
+    "components": [ [ [ "40x46mm_casing", 1 ] ], [ [ "combatnail", 70 ] ], [ [ "gunpowder", 30 ] ], [ [ "smpistol_primer", 1 ] ] ],
     "charges": 1
   }
 ]

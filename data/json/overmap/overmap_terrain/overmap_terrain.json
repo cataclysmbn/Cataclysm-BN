@@ -100,8 +100,18 @@
     "id": "lighthouse_basement",
     "name": "lighthouse cellar",
     "sym": "0",
+    "looks_like": "basement",
     "color": "yellow",
     "see_cost": 5
+  },
+  {
+    "type": "overmap_terrain",
+    "id": [ "island_sand_column", "island_sand_lakebed" ],
+    "name": "island",
+    "sym": "%",
+    "color": "light_gray",
+    "looks_like": "empty_rock",
+    "see_cost": 1
   },
   {
     "type": "overmap_terrain",

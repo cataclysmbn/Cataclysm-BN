@@ -115,6 +115,7 @@
 #include "veh_type.h"
 #include "weather.h"
 #include "world_type.h"
+#include "faction.h"
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
 static const activity_id ACT_HAND_CRANK( "ACT_HAND_CRANK" );
@@ -643,8 +644,15 @@ int explosion_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &pos
 {
     if( t ) {
         if( sound_volume >= 0 ) {
-            sounds::sound( pos, sound_volume, sounds::sound_t::alarm,
-                           sound_msg.empty() ? _( "Tick." ) : _( sound_msg ), true, "misc", "bomb_ticking" );
+            sound_event se;
+            se.origin = pos;
+            se.volume = sound_volume;
+            se.category = sounds::sound_t::alarm;
+            se.movement_noise = true;
+            se.description = sound_msg.empty() ? _( "Tick." ) : _( sound_msg );
+            se.id = "misc";
+            se.variant = "bomb_ticking";
+            sounds::sound( se );
         }
     } else if( it.charges > 0 ) {
         if( p.has_item( it ) ) {
@@ -2345,7 +2353,16 @@ int fireweapon_off_actor::use( player &p, item &it, bool t, const tripoint_bub_m
     p.moves -= moves;
     if( rng( 0, 10 ) - it.damage_level( 4 ) > success_chance && !p.is_underwater() ) {
         if( noise > 0 ) {
-            sounds::sound( p.bub_pos(), noise, sounds::sound_t::combat, _( success_message ) );
+            sound_event se;
+            se.origin = p.bub_pos();
+            se.volume = noise;
+            se.category = sounds::sound_t::combat;
+            se.description = _( success_message );
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
         }
         p.add_msg_if_player( _( success_message ) );
         if( p.is_npc() && get_player_character().sees( p ) ) {
@@ -2421,7 +2438,16 @@ int fireweapon_on_actor::use( player &p, item &it, bool t, const tripoint_bub_ms
         return 0;
     } else if( one_in( noise_chance ) ) {
         if( noise > 0 ) {
-            sounds::sound( p.bub_pos(), noise, sounds::sound_t::combat, _( noise_message ) );
+            sound_event se;
+            se.origin = p.bub_pos();
+            se.volume = noise;
+            se.category = sounds::sound_t::combat;
+            se.description = _( noise_message );
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
         }
         p.add_msg_if_player( _( noise_message ) );
     }
@@ -2457,8 +2483,18 @@ int manualnoise_actor::use( player &p, item &it, bool t, const tripoint_bub_ms &
     {
         p.moves -= moves;
         if( noise > 0 ) {
-            sounds::sound( p.bub_pos(), noise, sounds::sound_t::activity,
-                           noise_message.empty() ? _( "Hsss" ) : _( noise_message ), true, noise_id, noise_variant );
+            sound_event se;
+            se.origin = p.bub_pos();
+            se.volume = noise;
+            se.category = sounds::sound_t::activity;
+            se.description = noise_message.empty() ? _( "Hsss" ) : _( noise_message );
+            se.id = noise_id;
+            se.variant = noise_variant;
+            se.from_player = p.is_avatar();
+            se.from_npc = !se.from_player;
+            se.faction = p.get_faction()->id;
+            se.monfaction = p.get_faction()->mon_faction;
+            sounds::sound( se );
         }
         p.add_msg_if_player( _( use_message ) );
     }
@@ -2576,19 +2612,28 @@ int musical_instrument_actor::use( player &p, item &it, bool t, const tripoint_b
             desc = _( "You produce an annoying sound" );
         } else {
             desc = string_format( _( "%s produces an annoying sound" ), p.disp_name( false ) );
-        }
-        // Continuous sound messages only print every so often, so this ensures when it does print it'll be the right one.
+        } // Continuous sound messages only print every so often, so this ensures when it does print it'll be the right one.
     } else if( !npc_descriptions.empty() && p.is_npc() ) {
         desc = string_format( _( "%1$s %2$s" ), p.disp_name( false ),
                               random_entry( npc_descriptions ) );
     }
 
+    sound_event se;
+    se.origin = p.bub_pos();
+    se.volume = volume;
+    se.category = sounds::sound_t::music;
+    se.description = desc;
+    se.from_player = p.is_avatar();
+    se.from_npc = !se.from_player;
+    se.faction = p.get_faction()->id;
     if( morale_effect >= 0 ) {
-        sounds::sound( p.bub_pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument",
-                       it.typeId().str() );
+        se.id = "musical_instrument";
+        se.variant = it.typeId().str();
+        sounds::sound( se );
     } else {
-        sounds::sound( p.bub_pos(), volume, sounds::sound_t::music, desc, true, "musical_instrument_bad",
-                       it.typeId().str() );
+        se.id = "musical_instrument_bad";
+        se.variant = it.typeId().str();
+        sounds::sound( se );
     }
 
     if( !p.has_effect( effect_music ) && p.can_hear( p.bub_pos(), volume ) ) {
@@ -3412,7 +3457,7 @@ bool repair_item_actor::can_repair_target( player &pl, const item &fix,
         }
         return false;
     }
-    if( fix.count_by_charges() || fix.has_flag( flag_NO_REPAIR ) ) {
+    if( ( fix.count_by_charges() && !fix.is_stackable() ) || fix.has_flag( flag_NO_REPAIR ) ) {
         if( print_msg ) {
             pl.add_msg_if_player( m_info, _( "You cannot repair this type of item." ) );
         }
@@ -4759,8 +4804,14 @@ int mutagen_iv_actor::use( player &p, item &it, bool, const tripoint_bub_ms & ) 
     if( p.is_player() && !( p.has_trait( trait_NOPAIN ) ) && m_category.iv_sound ) {
         p.mod_pain( m_category.iv_pain );
         /** @EFFECT_STR increases volume of painful shouting when using IV mutagen */
-        sounds::sound( p.bub_pos(), m_category.iv_noise + p.str_cur, sounds::sound_t::alert,
-                       m_category.iv_sound_message(), true, m_category.iv_sound_id(), m_category.iv_sound_variant() );
+        sound_event se;
+        se.origin = p.bub_pos();
+        se.volume = m_category.iv_noise + p.str_cur;
+        se.category = sounds::sound_t::alert;
+        se.description = m_category.iv_sound_message();
+        se.id = m_category.iv_sound_id();
+        se.variant = m_category.iv_sound_variant();
+        sounds::sound( se );
     }
 
     int mut_count = m_category.iv_min_mutations;
@@ -5501,7 +5552,15 @@ int cloning_syringe_iuse::use( player &p, item &it, bool, const tripoint_bub_ms 
     if( !x_in_y( chance, 100 ) ) {
         add_msg( m_bad, _( "The %s emits a loud error beep!  You failed to gather a sufficient sample." ),
                  it.display_name() );
-        sounds::sound( pos, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        //sounds::sound( pos, 8, sounds::sound_t::alarm, _( "beep!" ), true, "misc", "beep" );
+        sound_event se;
+        se.origin = pos;
+        se.volume = 50;
+        se.category = sounds::sound_t::alarm;
+        se.description = _( "beep!" );
+        se.id = "misc";
+        se.variant = "beep";
+        sounds::sound( se );
         // add actual noise here
         return charges_to_use;
     }
@@ -5828,7 +5887,15 @@ int multicooker_iuse::use( player &p, item &it, bool t, const tripoint_bub_ms &p
             it.erase_var( "BATCHCOUNT" );
             it.erase_var( "RESULT" );
 
-            sounds::sound( pos, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+            //sounds::sound( pos, 8, sounds::sound_t::alarm, _( "ding!" ), true, "misc", "ding" );
+            sound_event se;
+            se.origin = pos;
+            se.volume = 50;
+            se.category = sounds::sound_t::alarm;
+            se.description = _( "ding!" );
+            se.id = "misc";
+            se.variant = "ding";
+            sounds::sound( se );
 
             return 0;
         } else {

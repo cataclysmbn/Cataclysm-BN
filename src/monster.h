@@ -36,6 +36,7 @@
 #include "monster_plan.h"
 #include "mtype.h"
 #include "visitable.h"
+#include "sounds.h"
 
 class Character;
 class JsonIn;
@@ -397,7 +398,7 @@ class monster : public Creature, public location_visitable<monster>
         // Combat
         bool is_fleeing( Character &who ) const; // True if we're fleeing
         auto attitude( const Character *u = nullptr ) const -> monster_attitude; // See the enum above
-        auto generic_npc_attitude_to() const -> Attitude;
+        auto generic_npc_attitude_to( const mfaction_id &who_faction ) const -> Attitude;
         Attitude attitude_to( const Creature &other ) const override;
         void process_triggers(); // Process things that anger/scare us
 
@@ -560,11 +561,14 @@ class monster : public Creature, public location_visitable<monster>
         /**
          * Makes monster react to heard sound
          *
-         * @param source Location of the sound source
-         * @param vol Volume at the center of the sound source
-         * @param distance Distance to sound source (currently just rl_dist)
+         * @param source Sound event of the source sound.
+         * @param heard_vol Volume in mdB spl heard by the creature
+         * @param ambient Ambient volume in mdB spl
+         * @param reinforce_source Is the monster reinforcing the sound source, or should significantly prioritize heading to this sound over others?
+         * @param afraid_of_source Is the monster afraid of the sound source, fleeing it regardless of moral?
          */
-        void hear_sound( const tripoint_bub_ms &source, int vol, int distance );
+        void hear_sound( const sound_event &source, const short heard_vol, const short ambient,
+                         const bool reinforce_source = false, const bool afraid_of_source = false );
 
         bool is_hallucination() const override;    // true if the monster isn't actually real
 
@@ -606,13 +610,19 @@ class monster : public Creature, public location_visitable<monster>
         units::volume get_carried_volume() const;
 
         // DEFINING VALUES
+        // Is the monster friendly to the player.
+        // 0 = hostile
+        // -1 = Permanantly friendly/pet/allied
+        // >0 = freindly for x turns
         int friendly;
         int training_level = 0;
         int anger = 0;
         int morale = 0;
         // Per-npcmove-pass cache of attitude_to() result for a generic NPC (no special traits).
-        // Valid when cached_npc_attitude_epoch == g_npcmove_attitude_epoch.
+        // Valid when cached_npc_attitude_epoch == g_npcmove_attitude_epoch and
+        // cached_npc_attitude_faction matches the assessing NPC's monster faction.
         uint32_t cached_npc_attitude_epoch = 0;
+        mfaction_id cached_npc_attitude_faction;
         Attitude cached_npc_attitude = A_NEUTRAL;
         std::unordered_map<mfaction_id, int> faction_anger;  //< Per-faction anger tracking
         // Our faction (species, for most monsters)

@@ -220,7 +220,7 @@
     "start": {
       "assign_mission_target": { "om_terrain": "underground_lab_cargo_stationA_sub_station", "reveal_radius": 1, "search_range": 1000, "z": -4 },
       "update_mapgen": {
-        "faction_owner": [ { "id": "old_guard", "x": [ 5, 21 ], "y": [ 3, 17 ] } ],
+        "faction_owner": [ { "id": "tcl_holdouts", "x": [ 5, 21 ], "y": [ 3, 17 ] } ],
         "rows": [
           "                        ",
           "                        ",

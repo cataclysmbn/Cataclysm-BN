@@ -94,5 +94,17 @@
     "type": "enchantment",
     "id": "AEP_EVIL",
     "intermittent_activation": { "effects": [ { "frequency": "15 minutes", "spell_effects": [ { "id": "AEP_EVIL_SPELL" } ] } ] }
+  },
+  {
+    "type": "SPELL",
+    "id": "AEP_ATTENTION_SPELL",
+    "name": "Being Watched",
+    "description": "Grants nether attention for 30 minutes.",
+    "valid_targets": [ "self" ],
+    "flags": [ "NO_EXPLOSION_VFX" ],
+    "effect": "target_attack",
+    "effect_str": "attention",
+    "min_duration": 180000,
+    "max_duration": 180000
   }
 ]

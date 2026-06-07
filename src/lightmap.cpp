@@ -395,9 +395,11 @@ void map::build_sunlight_cache( int pzlev )
     //    ↓
     // when fully below ground: fully_outside=false, fully_inside=true  (fast fill)
 
-    // Rebuild the directional sunlight cache once per in-game hour (expensive path only).
+    // Rebuild the directional sunlight cache once per absolute in-game hour (expensive path only).
+    // Sunrise and sunset vary by date, so comparing only the hour of day can reuse stale
+    // sun state when a later day has a different dawn or dusk time.
     if( fov_3d_occlusion ) {
-        const auto current_hour = to_hours<int>( time_past_midnight( calendar::turn ) );
+        const auto current_hour = to_hours<int>( calendar::turn - calendar::turn_zero );
         if( current_hour != m_solar.last_built_hour ) {
             update_solar_params();
             std::ranges::for_each(
