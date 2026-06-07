@@ -33,6 +33,23 @@ if [ -z "${triplet}" ]; then
     esac
 fi
 
+missing_tools=()
+for tool in autoconf automake; do
+    if ! command -v "${tool}" >/dev/null 2>&1; then
+        missing_tools+=("${tool}")
+    fi
+done
+
+if ! command -v libtoolize >/dev/null 2>&1 && ! command -v glibtoolize >/dev/null 2>&1; then
+    missing_tools+=("libtoolize")
+fi
+
+if [ ${#missing_tools[@]} -ne 0 ]; then
+    echo "Missing shadercross vcpkg prerequisites: ${missing_tools[*]}" >&2
+    echo "Install autoconf, autoconf-archive, automake, and libtool before running this script." >&2
+    exit 1
+fi
+
 if [ ! -d "${vcpkg_root}" ]; then
     git clone --depth 1 https://github.com/microsoft/vcpkg "${vcpkg_root}"
 elif [ ! -x "${vcpkg_root}/vcpkg" ] && [ ! -f "${vcpkg_root}/bootstrap-vcpkg.sh" ]; then
