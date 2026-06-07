@@ -165,6 +165,10 @@ const weather_type_id &current_weather( const tripoint_abs_ms &location, const t
 {
     const weather_manager &weather = get_weather();
     const auto wgen = weather.get_cur_weather_gen();
+    if( const weather_type_id *omt_override = weather.get_omt_weather_override(
+              project_to<coords::omt>( location ) ) ) {
+        return *omt_override;
+    }
     if( weather.weather_override ) {
         return weather.weather_override;
     }
@@ -1118,7 +1122,7 @@ weather_manager::~weather_manager() = default;
 
 namespace
 {
-constexpr int weather_position_refresh_distance = 200;
+constexpr int weather_position_refresh_distance = 24;
 } // namespace
 
 const weather_generator &weather_manager::get_cur_weather_gen() const
@@ -1126,6 +1130,42 @@ const weather_generator &weather_manager::get_cur_weather_gen() const
     const overmap &om = g->get_cur_om();
     const regional_settings &settings = om.get_settings();
     return settings.weather;
+}
+
+auto weather_manager::get_omt_weather_override( const tripoint_abs_omt &location ) const
+-> const weather_type_id * // *NOPAD*
+{
+    const auto iter = omt_weather_overrides.find( location.xy() );
+    if( iter == omt_weather_overrides.end() ) {
+        return nullptr;
+    }
+    return &iter->second;
+}
+
+auto weather_manager::has_omt_weather_override( const tripoint_abs_omt &location ) const -> bool
+{
+    return omt_weather_overrides.contains( location.xy() );
+}
+
+auto weather_manager::set_omt_weather_override( const tripoint_abs_omt &center, const int radius,
+        const weather_type_id &weather ) -> void
+{
+    for( const tripoint_abs_omt &location : points_in_radius( center, radius ) ) {
+        omt_weather_overrides.insert_or_assign( location.xy(), weather );
+    }
+}
+
+auto weather_manager::clear_omt_weather_override( const tripoint_abs_omt &center,
+        const int radius ) -> void
+{
+    for( const tripoint_abs_omt &location : points_in_radius( center, radius ) ) {
+        omt_weather_overrides.erase( location.xy() );
+    }
+}
+
+auto weather_manager::clear_all_omt_weather_overrides() -> void
+{
+    omt_weather_overrides.clear();
 }
 
 auto weather_manager::needs_forced_position_refresh( const tripoint_abs_ms &current_pos ) const -> bool
@@ -1152,7 +1192,12 @@ void weather_manager::update_weather()
     const weather_generator &weather_gen = get_cur_weather_gen();
     w = weather_gen.get_weather( current_pos, calendar::turn, g->get_seed() );
     weather_type_id old_weather = weather_id;
-    weather_id = weather_override ? weather_override : weather_gen.get_weather_conditions( w );
+    if( const weather_type_id *omt_override = get_omt_weather_override(
+              project_to<coords::omt>( current_pos ) ) ) {
+        weather_id = *omt_override;
+    } else {
+        weather_id = weather_override ? weather_override : weather_gen.get_weather_conditions( w );
+    }
     if( !g->u.has_artifact_with( AEP_BAD_WEATHER ) ) {
         weather_override = weather_type_id::NULL_ID();
     }

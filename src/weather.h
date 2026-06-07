@@ -204,6 +204,14 @@ class weather_manager
         weather_type_id weather_override;
         bool eternal_seasons = false;
 
+        auto get_omt_weather_override( const tripoint_abs_omt &location ) const
+        -> const weather_type_id *; // *NOPAD*
+        auto has_omt_weather_override( const tripoint_abs_omt &location ) const -> bool;
+        auto set_omt_weather_override( const tripoint_abs_omt &center, int radius,
+                                       const weather_type_id &weather ) -> void;
+        auto clear_omt_weather_override( const tripoint_abs_omt &center, int radius ) -> void;
+        auto clear_all_omt_weather_overrides() -> void;
+
         // not only sets nextweather, but updates weather as well
         void set_nextweather( time_point t );
         // The time at which weather will shift next.
@@ -233,8 +241,8 @@ class weather_manager
     private:
         // Cached weather data
         w_point weather_precise;
+        std::unordered_map<point_abs_omt, weather_type_id> omt_weather_overrides;
         auto needs_forced_position_refresh( const tripoint_abs_ms &current_pos ) const -> bool;
 };
 
 weather_manager &get_weather();
-
