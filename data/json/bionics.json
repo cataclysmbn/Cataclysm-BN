@@ -691,18 +691,8 @@
     "time": 1,
     "points": 1,
     "bio_enchantments": [
-      {
-        "condition": "INACTIVE",
-        "values": [
-          { "value": "HEALTHY_MULT", "add": -0.5 }
-        ]
-      },
-      {
-        "condition": "ACTIVE",
-        "values": [
-          { "value": "HEALTHY_MULT", "add": 2 }
-        ]
-      }
+      { "condition": "INACTIVE", "values": [ { "value": "HEALTHY_MULT", "add": -0.5 } ] },
+      { "condition": "ACTIVE", "values": [ { "value": "HEALTHY_MULT", "add": 2 } ] }
     ]
   },
   {
@@ -1270,14 +1260,7 @@
     "react_cost": "6 J",
     "time": 1,
     "points": 2,
-    "bio_enchantments": [
-      {
-        "condition": "ACTIVE",
-        "values": [
-          { "value": "SWIM_MOVE_COST", "multiply": -0.25 }
-        ]
-      }
-    ]
+    "bio_enchantments": [ { "condition": "ACTIVE", "values": [ { "value": "SWIM_MOVE_COST", "multiply": -0.25 } ] } ]
   },
   {
     "id": "bio_ups",
