@@ -1216,7 +1216,7 @@ auto source_pos(GpuLightSource const& source) -> tripoint_bub_ms {
 
 auto source_is_static_raytrace(light_source_kind const kind) -> bool {
     return kind == light_source_kind::static_emitter
-           || kind == light_source_kind::static_local_emitter;
+        || kind == light_source_kind::static_local_emitter;
 }
 
 auto static_emitter_kind(map_data_common_t const& data) -> light_source_kind {
@@ -2759,8 +2759,9 @@ auto compute_light_radius(float const luminance) -> float {
     auto radius = 0;
     for (auto const distance : std::views::iota(1, g_max_view_distance + 1)) {
         auto const intensity =
-            luminance / (std::exp(LIGHT_TRANSPARENCY_OPEN_AIR * static_cast<float>(distance))
-                         * static_cast<float>(distance));
+            luminance
+            / (std::exp(LIGHT_TRANSPARENCY_OPEN_AIR * static_cast<float>(distance))
+               * static_cast<float>(distance));
         if (intensity <= LIGHT_AMBIENT_LOW) { break; }
         radius = distance;
     }

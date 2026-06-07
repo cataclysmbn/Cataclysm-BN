@@ -1512,7 +1512,7 @@ static auto scaled_visibility_for_view_distance( const float vis,
     static constexpr auto lut_steps = size_t { 16384 };
     struct visibility_scale_lut {
         float factor = 0.0f;
-        std::array<float, lut_steps + 1> values = {};
+        std::array < float, lut_steps + 1 > values = {};
         bool valid = false;
     };
     static thread_local auto lut = visibility_scale_lut {};

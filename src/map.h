@@ -2695,7 +2695,7 @@ class map : public submap_load_listener
         auto get_pf_special( const tripoint_bub_ms &p ) const -> pf_special;
 
         auto update_visibility_cache( int zlev,
-                                      const std::function<void()> &while_gpu_pending = {} ) -> void;
+        const std::function<void()> &while_gpu_pending = {} ) -> void;
         auto make_visibility_variables( int zlev ) const -> visibility_variables;
         const visibility_variables &get_visibility_variables_cache() const;
 

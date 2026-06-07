@@ -2590,11 +2590,11 @@ void options_manager::add_options_performance()
                                "Perfect scales directly with the current bubble size.  Smart keeps visibility "
                                "near the size 6 baseline while still giving small bubbles less range and large "
                                "bubbles more range.  None keeps visibility at the size 6 baseline and only uses "
-                               "bubble size as a hard view cap." ), {
-                 { "perfect", translate_marker( "Perfect Scale" ) },
-                 { "smart", translate_marker( "Smart Scale" ) },
-                 { "none", translate_marker( "No Scale" ) }
-             }, "smart" );
+        "bubble size as a hard view cap." ), {
+            { "perfect", translate_marker( "Perfect Scale" ) },
+            { "smart", translate_marker( "Smart Scale" ) },
+            { "none", translate_marker( "No Scale" ) }
+        }, "smart" );
         add( "LAZY_BORDER", page_id,
              translate_marker( "Pre-load Border" ),
              translate_marker( "Preload a one-overmap-tile border around the reality bubble over several turns.  "
