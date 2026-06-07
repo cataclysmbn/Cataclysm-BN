@@ -274,6 +274,19 @@
   },
   {
     "type": "construction",
+    "id": "constr_multicooker_improved",
+    "group": "install_multicooker_improved",
+    "category": "WORKSHOP",
+    "required_skills": [  ],
+    "time": "10 m",
+    "qualities": [  ],
+    "components": [ [ [ "multi_cooker_improved", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_multicooker_improved"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridfridge",
     "group": "install_refrigerator",
     "category": "WORKSHOP",
@@ -429,6 +442,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridsmallgunkit",
+    "group": "place_firearm_kit",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "small_repairkit", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridsmallgunkit"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridgunkit",
     "group": "place_gunsmith_kit",
     "category": "WORKSHOP",
@@ -438,6 +463,18 @@
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_gridgunkit"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridcon_mix",
+    "group": "place_con_mix",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "con_mix", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridcon_mix"
   },
   {
     "type": "construction",
@@ -587,6 +624,18 @@
   },
   {
     "type": "construction",
+    "id": "constr_gridcoffeemaker",
+    "group": "place_coffeemaker",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "coffeemaker", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridcoffeemaker"
+  },
+  {
+    "type": "construction",
     "id": "constr_gridsoda_machine",
     "group": "place_soda_machine",
     "category": "WORKSHOP",
@@ -608,6 +657,18 @@
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_gridvac_sealer"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridmakeshift_sealer",
+    "group": "place_makeshift_sealer",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "makeshift_sealer", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridmakeshift_sealer"
   },
   {
     "type": "construction",
@@ -670,6 +731,18 @@
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_rvoven"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridhotplate",
+    "group": "place_hotplate",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "hotplate", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridhotplate"
   },
   {
     "type": "construction",
@@ -872,5 +945,43 @@
     "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
     "pre_special": "check_empty",
     "post_furniture": "f_cloning_vat"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridanalytical_set",
+    "group": "place_analytical_set_basic",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "electronics", 1 ] ],
+    "time": "30 m",
+    "qualities": [ [ { "id": "SCREW", "level": 1 } ] ],
+    "using": [ [ "soldering_standard", 20 ] ],
+    "components": [ [ [ "analytical_set_basic", 1 ] ], [ [ "cable", 5 ] ], [ [ "power_supply", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridanalytical_set"
+  },
+  {
+    "type": "construction",
+    "id": "constr_gridmicrocentrifuge",
+    "group": "place_microcentrifuge",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "microcentrifuge", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_gridmicrocentrifuge"
+  },
+  {
+    "type": "construction",
+    "id": "constr_griddna_editor",
+    "group": "place_dna_editor",
+    "category": "WORKSHOP",
+    "required_skills": [ [ "fabrication", 0 ] ],
+    "time": "10 s",
+    "components": [ [ [ "dna_editor", 1 ] ] ],
+    "pre_note": "Will only work if constructed in/on a building that has an electric grid with a mounted battery.",
+    "pre_special": "check_empty",
+    "post_furniture": "f_griddna_editor"
   }
 ]

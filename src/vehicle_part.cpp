@@ -268,7 +268,7 @@ double vehicle_part::damage_percent() const
 /** parts are considered broken at zero health */
 bool vehicle_part::is_broken() const
 {
-    return base->count_by_charges() ? false : base->damage() >= base->max_damage();
+    return base->damage() >= base->max_damage();
 }
 
 bool vehicle_part::is_unavailable( const bool carried ) const

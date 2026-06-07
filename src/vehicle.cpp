@@ -1506,7 +1506,7 @@ void vehicle::backfire( const int e ) const
     const auto pos = bub_part_location( engines[e] );
     sound_event se;
     se.origin = pos;
-    se.volume = std::min( 160, 40 + power / 10000 );
+    se.volume = 100 + rng( 0, 20 ) + rng( 0, 20 );
     se.category = sounds::sound_t::movement;
     se.movement_noise = true;
     se.description = string_format( _( "a loud BANG! from the %s" ), // NOLINT(cata-text-style)
@@ -7299,7 +7299,7 @@ void vehicle::unboard_all()
     }
 }
 
-int vehicle::damage( int p, int dmg, damage_type type, bool aimed )
+int vehicle::damage( int p, int dmg, damage_type type, bool aimed, bool random_part )
 {
     if( dmg < 1 ) {
         return dmg;
@@ -7326,7 +7326,16 @@ int vehicle::damage( int p, int dmg, damage_type type, bool aimed )
         }
     }
 
-    int target_part = part_info( p ).rotor_diameter() ? p : random_entry( pl );
+    int target_part = [&]() {
+        if( random_part ) {
+            if( part_info( p ).rotor_diameter() && one_in( 2 ) ) {
+                return p;
+            }
+            return random_entry( pl );
+        }
+        return p;
+    }
+    ();
 
     // door motor mechanism is protected by closed doors
     if( part_flag( target_part, "DOOR_MOTOR" ) ) {
