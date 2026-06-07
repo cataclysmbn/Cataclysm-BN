@@ -124,7 +124,7 @@ jobs:
 
       - name: Install shadercross
         if: ${{ env.SKIP == 'false' && (env.TILES == '1' || env.TILES == 'true') }}
-        run: build-scripts/install-shadercross-vcpkg.sh
+        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Setup ccache
         if: ${{ env.SKIP == 'false' }}

@@ -40,7 +40,7 @@ elif [ ! -x "${vcpkg_root}/vcpkg" ] && [ ! -f "${vcpkg_root}/bootstrap-vcpkg.sh"
     exit 1
 fi
 
-"${vcpkg_root}/bootstrap-vcpkg.sh" -disableMetrics
+bash "${vcpkg_root}/bootstrap-vcpkg.sh" -disableMetrics
 "${vcpkg_root}/vcpkg" install "sdl3-shadercross:${triplet}"
 
 shadercross_dir="${vcpkg_root}/installed/${triplet}/tools/sdl3-shadercross"

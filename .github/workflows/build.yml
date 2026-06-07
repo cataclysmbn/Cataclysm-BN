@@ -291,7 +291,7 @@ jobs:
 
       - name: Install shadercross (Linux/macOS)
         if: runner.os != 'Windows' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
-        run: build-scripts/install-shadercross-vcpkg.sh
+        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       # Build with CMake (Linux)
       - name: Configure and Build with CMake (Linux)
@@ -480,7 +480,7 @@ jobs:
 
       - name: Install shadercross (android host)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
-        run: build-scripts/install-shadercross-vcpkg.sh
+        run: bash build-scripts/install-shadercross-vcpkg.sh
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
