@@ -289,6 +289,10 @@ jobs:
           verbose: 2
           save: ${{ github.event_name != 'pull_request' }}
 
+      - name: Install shadercross (Linux/macOS)
+        if: runner.os != 'Windows' && (matrix.android == '' || matrix.android == 'none') && matrix.tiles == true
+        run: build-scripts/install-shadercross-vcpkg.sh
+
       # Build with CMake (Linux)
       - name: Configure and Build with CMake (Linux)
         if: runner.os == 'Linux' && (matrix.android == '' || matrix.android == 'none')
@@ -473,6 +477,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install cmake gettext ninja-build
+
+      - name: Install shadercross (android host)
+        if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'
+        run: build-scripts/install-shadercross-vcpkg.sh
 
       - name: Setup ccache (android)
         if: runner.os == 'Linux' && matrix.android != '' && matrix.android != 'none'

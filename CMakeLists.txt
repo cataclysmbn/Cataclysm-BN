@@ -457,8 +457,8 @@ if (CATA_SDL)
         set(SDLSHADERCROSS_CLI ON)
         set(SDLSHADERCROSS_DXC ON)
         set(SDLSHADERCROSS_INSTALL OFF)
-        set(SDLSHADERCROSS_SHARED ON)
-        set(SDLSHADERCROSS_STATIC OFF)
+        set(SDLSHADERCROSS_SHARED OFF)
+        set(SDLSHADERCROSS_STATIC ON)
         set(SDLSHADERCROSS_SPIRVCROSS_SHARED OFF)
         set(SDLSHADERCROSS_TESTS OFF)
         set(SDLSHADERCROSS_VENDORED OFF)
@@ -504,7 +504,7 @@ if (CATA_SDL)
                 OUTPUT "${SPV_OUT}"
                 COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
                 COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d spirv -t ${STAGE} -o "${SPV_OUT}"
-                DEPENDS "${HLSL_SRC}"
+                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
                 COMMENT "Compiling ${SHADER_NAME}.hlsl -> SPIR-V"
                 VERBATIM)
             list(APPEND CATA_SHADER_OUTPUTS "${SPV_OUT}")
@@ -513,7 +513,7 @@ if (CATA_SDL)
                 OUTPUT "${MSL_OUT}"
                 COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
                 COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d msl -t ${STAGE} -o "${MSL_OUT}"
-                DEPENDS "${HLSL_SRC}"
+                DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
                 COMMENT "Compiling ${SHADER_NAME}.hlsl -> MSL"
                 VERBATIM)
             list(APPEND CATA_SHADER_OUTPUTS "${MSL_OUT}")
@@ -524,7 +524,7 @@ if (CATA_SDL)
                     OUTPUT "${DXIL_OUT}"
                     COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/data/shaders"
                     COMMAND "${SHADERCROSS_EXE}" "${HLSL_SRC}" -s hlsl -d dxil -t ${STAGE} -o "${DXIL_OUT}"
-                    DEPENDS "${HLSL_SRC}"
+                    DEPENDS "${HLSL_SRC}" ${SHADERCROSS_TARGET}
                     COMMENT "Compiling ${SHADER_NAME}.hlsl -> DXIL"
                     VERBATIM)
                 list(APPEND CATA_SHADER_OUTPUTS "${DXIL_OUT}")
