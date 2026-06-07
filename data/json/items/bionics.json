@@ -217,6 +217,7 @@
     "id": "bio_cable_upgrade",
     "bionic_id": "bio_cable_mkII",
     "copy-from": "bionic_general",
+    "looks_like": "bio_power_storage_mkII",
     "type": "BIONIC_ITEM",
     "name": { "str": "Cable Charger Upgrade CBM" },
     "description": "A kit for upgrading a pre-installed cable charger with enhanced power throughput.",
@@ -849,6 +850,7 @@
   {
     "id": "bio_atomic_battery",
     "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_power_storage_mkII",
     "type": "BIONIC_ITEM",
     "name": { "str": "Atomic Battery CBM" },
     "description": " Effectively a plutonium fuel cell converted into an alphavoltaic battery, this bionic will provide a limitless source of power at a steady 50 watts when active, with only minimal exposure to radiation while in use.",
@@ -859,6 +861,7 @@
     "id": "bio_atomic_battery_upgrade",
     "bionic_id": "bio_reactor",
     "copy-from": "bionic_general_npc_usable",
+    "looks_like": "bio_power_storage_mkII",
     "type": "BIONIC_ITEM",
     "name": { "str": "Atomic Battery Upgrade CBM" },
     "description": "A kit for upgrading a pre-installed atomic battery into a Microreactor, providing options for significantly more power generation potential and fuel capacity at the cost of increased radiation exposure.",
