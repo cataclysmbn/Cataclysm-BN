@@ -1,0 +1,28 @@
+[
+  {
+    "id": "portal_storm",
+    "type": "weather_type",
+    "name": "Portal Storm",
+    "color": "c_magenta",
+    "map_color": "c_magenta",
+    "glyph": "@",
+    "ranged_penalty": 5,
+    "sight_penalty": 1.3,
+    "light_modifier": -50,
+    "sound_attn": 10,
+    "dangerous": true,
+    "precip": "none",
+    "rains": false,
+    "acidic": false,
+    "animation": { "factor": 0.02, "color": "c_magenta", "glyph": "~", "tile": "weather_lightning" },
+    "sound_category": "thunder",
+    "sun_intensity": "none",
+    "requirements": {
+      "pressure_max": 1002,
+      "humidity_min": 85,
+      "humidity_and_pressure": false,
+      "required_weathers": [ "rain", "heavy_rain", "thunder", "lightning" ],
+      "required_weather_patterns": { "portal_storm_activity": 0.4 }
+    }
+  }
+]

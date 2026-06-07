@@ -1,0 +1,7 @@
+[
+  {
+    "type": "region_overlay",
+    "regions": [ "default" ],
+    "base_weather": "portal_storm_example_default"
+  }
+]

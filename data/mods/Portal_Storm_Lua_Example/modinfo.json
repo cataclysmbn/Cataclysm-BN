@@ -1,0 +1,14 @@
+[
+  {
+    "type": "MOD_INFO",
+    "id": "portal_storm_lua_example",
+    "name": "Portal Storm Lua Example",
+    "authors": [ "OpenAI" ],
+    "description": "Example mod that adds a simple portal storm weather and uses Lua to spawn nearby nether enemies while it is active.",
+    "category": "content",
+    "dependencies": [ "bn" ],
+    "lua_api_version": 2,
+    "version": "1",
+    "obsolete": false
+  }
+]
