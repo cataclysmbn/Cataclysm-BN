@@ -408,7 +408,7 @@ if (CATA_SDL)
         set(SHADERCROSS_EXE "")
     endif ()
 
-    if (NOT SHADERCROSS_EXE AND TILES AND BUILD_SHADERCROSS AND NOT APPLE)
+    if (NOT SHADERCROSS_EXE AND BUILD_SHADERCROSS AND NOT APPLE)
         message(STATUS "Installing SDL_shadercross from Source")
         FetchContent_Declare(
                 SDL3_SHADERCROSS
