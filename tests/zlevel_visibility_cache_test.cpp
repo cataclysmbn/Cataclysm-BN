@@ -18,7 +18,8 @@ TEST_CASE( "solar_cache_uses_date_sensitive_hour", "[vision][zlevel][sun]" )
     clear_all_state();
 
     const auto fov3d_occlusion = override_option( "FOV_3D_OCCLUSION", "true" );
-    const auto restore_angled_sunlight_shadows = restore_on_out_of_scope<bool>( angled_sunlight_shadows );
+    const auto restore_angled_sunlight_shadows = restore_on_out_of_scope<bool>
+            ( angled_sunlight_shadows );
     angled_sunlight_shadows = true;
 
     auto &here = get_map();
