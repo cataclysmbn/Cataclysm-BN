@@ -6249,7 +6249,9 @@ detached_ptr<item> vehicle::add_charges( int part, detached_ptr<item> &&itm )
     itm_copy->charges = amount;
     itm->charges -= amount;
     detached_ptr<item> remaining = add_item( part, std::move( itm_copy ) );
-    itm->charges += remaining->charges;
+    if( remaining ) {
+        itm->charges += remaining->charges;
+    }
     return itm->charges > 0 ? std::move( itm ) : detached_ptr<item>();
 }
 
