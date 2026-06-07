@@ -791,6 +791,7 @@
     "material": [ "steel", "plastic" ],
     "symbol": ";",
     "color": "green",
+    "looks_like": "bot_antimateriel",
     "use_action": {
       "type": "place_monster",
       "monster_id": "mon_turret_antimateriel",
