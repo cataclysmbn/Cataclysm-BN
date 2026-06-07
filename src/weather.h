@@ -208,6 +208,7 @@ class weather_manager
         void set_nextweather( time_point t );
         // The time at which weather will shift next.
         time_point nextweather;
+        tripoint_abs_ms last_weather_position = tripoint_abs_ms::zero();
 
         /** temperature cache, cleared every turn, sparse map of map tripoints to temperatures */
         mutable std::unordered_map< tripoint_abs_ms, units::temperature > temperature_cache;
@@ -232,8 +233,8 @@ class weather_manager
     private:
         // Cached weather data
         w_point weather_precise;
+        auto needs_forced_position_refresh( const tripoint_abs_ms &current_pos ) const -> bool;
 };
 
 weather_manager &get_weather();
-
 

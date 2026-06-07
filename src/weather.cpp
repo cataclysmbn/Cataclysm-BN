@@ -1116,6 +1116,11 @@ weather_manager::weather_manager()
 
 weather_manager::~weather_manager() = default;
 
+namespace
+{
+constexpr int weather_position_refresh_distance = 200;
+} // namespace
+
 const weather_generator &weather_manager::get_cur_weather_gen() const
 {
     const overmap &om = g->get_cur_om();
@@ -1123,19 +1128,29 @@ const weather_generator &weather_manager::get_cur_weather_gen() const
     return settings.weather;
 }
 
+auto weather_manager::needs_forced_position_refresh( const tripoint_abs_ms &current_pos ) const -> bool
+{
+    if( weather_id == weather_type_id::NULL_ID() ) {
+        return true;
+    }
+    return rl_dist( current_pos, last_weather_position ) >= weather_position_refresh_distance;
+}
+
 void weather_manager::update_weather()
 {
     ZoneScoped;
 
+    const tripoint_abs_ms current_pos = g->u.abs_pos();
     w_point &w = weather_precise;
     winddirection = wind_direction_override.value_or( w.winddirection );
     windspeed = windspeed_override.value_or( w.windpower );
-    if( weather_id && calendar::turn < nextweather ) {
+    if( weather_id && calendar::turn < nextweather &&
+        !needs_forced_position_refresh( current_pos ) ) {
         return;
     }
 
     const weather_generator &weather_gen = get_cur_weather_gen();
-    w = weather_gen.get_weather( g->u.abs_pos(), calendar::turn, g->get_seed() );
+    w = weather_gen.get_weather( current_pos, calendar::turn, g->get_seed() );
     weather_type_id old_weather = weather_id;
     weather_id = weather_override ? weather_override : weather_gen.get_weather_conditions( w );
     if( !g->u.has_artifact_with( AEP_BAD_WEATHER ) ) {
@@ -1144,6 +1159,7 @@ void weather_manager::update_weather()
 
     sfx::do_ambient();
     temperature = w.temperature;
+    last_weather_position = current_pos;
     lightning_active = false;
     // Check weather every few turns, instead of every turn.
     // TODO: predict when the weather changes and use that time.
@@ -1168,7 +1184,7 @@ void weather_manager::update_weather()
     }
 
     water_temperature = weather_gen.get_water_temperature(
-                            tripoint_abs_ms( g->u.abs_pos() ),
+                            current_pos,
                             calendar::turn, calendar::config, g->get_seed() ) ;
 
     // Only call on_weather_changed if old_weather was a valid weather type (not initial state)
