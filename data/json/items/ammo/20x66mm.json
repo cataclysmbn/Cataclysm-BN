@@ -11,7 +11,7 @@
     "loudness": 145,
     "speed": 150,
     "damage": { "damage_type": "bash", "amount": 6 },
-    "proportional": { "recoil": 0.4, "loudness": 0.6 },
+    "proportional": { "recoil": 0.4 },
     "extend": { "effects": [ "LARGE_BEANBAG", "NOGIB" ] }
   },
   {

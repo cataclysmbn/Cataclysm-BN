@@ -11714,11 +11714,10 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
 
     } else {
         // We want the amount of temp loss gained to fall off as other hearing loss accumulates.
-        temp_loss_gain = std::max( 12, ( over_thresh / 10 ) - long_loss - ( temp_loss / 10 ) );
+        temp_loss_gain = std::max( 12, ( over_thresh / 20 ) - ( long_loss / 5 ) - ( temp_loss / 10 ) );
 
     }
-    // Cap temp loss at 100dB
-    temp_loss = std::min( static_cast<int>( dBspl_to_mdBspl( 100 ) ) , temp_loss + temp_loss_gain );
+    temp_loss += temp_loss_gain;
 
     if (effective_vol < inst_dam_thresh ){
 
@@ -11726,7 +11725,7 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
         if ( rng( damage_threshold, inst_dam_thresh ) < effective_vol ){
 
             // add more long term damage. 
-            long_loss += std::max(1, ( over_thresh / 10 ) - ( long_loss / 10 ) );
+            long_loss += std::max(1, ( over_thresh / 20 ) - ( long_loss / 5 ) );
 
             if( !has_trait( trait_id( "NOPAIN" ) ) ) {
                 add_msg_if_player( m_info, _( "Your eardrums hurt a bit." ) );
@@ -11742,8 +11741,8 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
     } else {
 
         // At or past our instant damage threshold, there will alwasy be some long term loss.
-        long_loss += std::max(1, ( over_thresh / 10 ) - ( long_loss / 10 ) );
-        // From no hearing loss, a 160dB sound should inflict ~37.5dB of temp loss and 7.5dB of long loss at averagge health and hearing ability
+        long_loss += std::max(1, ( over_thresh / 20 ) - ( long_loss / 5 ) );
+
         if( !has_trait( trait_id( "NOPAIN" ) ) ) {
             add_msg_if_player( m_bad, _( "Your eardrums ache." ) );
 
@@ -11753,6 +11752,9 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
             }
         }
     }
+    // Cap temp loss at 100dB
+    temp_loss = std::min( dBspl_to_mdBspl( 100 ), temp_loss );
+    
     // Cap long loss at 100dB as well.
     long_loss = std::min( dBspl_to_mdBspl( 100 ) , long_loss );
 
