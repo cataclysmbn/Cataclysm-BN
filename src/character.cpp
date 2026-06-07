@@ -11714,7 +11714,7 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
 
     } else {
         // We want the amount of temp loss gained to fall off as other hearing loss accumulates.
-        temp_loss_gain = std::max( 12, ( over_thresh / 20 ) - ( long_loss / 5 ) - ( temp_loss / 10 ) );
+        temp_loss_gain = std::max( 12, ( over_thresh / 10 ) - ( long_loss / 5 ) );
 
     }
     temp_loss += temp_loss_gain;
@@ -11748,7 +11748,7 @@ void Character::handle_hearing_loss( const short &vol, const bool &hearing_prote
 
             if( get_pain() < 10 ) {
 
-                mod_pain( rng( 1, 2 ) );
+                mod_pain( 1 );
             }
         }
     }
