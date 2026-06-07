@@ -200,7 +200,7 @@
     "description": "Emergency lights, like a police car's or ambulance's, mounted on the vehicle's roof.  When turned on, they sweep colored beams around the vehicle.",
     "//": "essentially a pair of overpowered RGB LED flashlights",
     "epower": -10,
-    "bonus": 1200,
+    "bonus": 500,
     "damage_modifier": 10,
     "folded_volume": "500 ml",
     "breaks_into": [
