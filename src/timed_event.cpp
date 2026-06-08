@@ -6,6 +6,7 @@
 #include <optional>
 #include <vector>
 
+#include "action_time_scale.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "debug.h"
@@ -275,16 +276,17 @@ void timed_event::per_turn()
 
         case TIMED_EVENT_SPAWN_WYRMS:
             if( g->get_levz() >= 0 ) {
-                when -= 1_turns;
+                when -= action_time_scale::calendar_duration_this_tick();
                 return;
             }
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) && !g->u.is_deaf() ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) &&
+                !g->u.is_deaf() ) {
                 add_msg( m_warning, _( "You hear screeches from the rock above and around you!" ) );
             }
             break;
 
         case TIMED_EVENT_AMIGARA:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The entire cavern shakes!" ) );
             }
             break;
@@ -298,7 +300,7 @@ void timed_event::per_turn()
                 }
             }
 
-            if( calendar::once_every( 10_seconds ) && faults ) {
+            if( action_time_scale::once_every_this_tick( 10_seconds ) && faults ) {
                 add_msg( m_info, "You hear someone whispering \"%s\"",
                          SNIPPET.random_from_category( "amigara_whispers" ).value_or( translation() ) );
             }
@@ -306,7 +308,7 @@ void timed_event::per_turn()
         break;
 
         case TIMED_EVENT_TEMPLE_OPEN:
-            if( calendar::once_every( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
+            if( action_time_scale::once_every_this_tick( time_duration::from_seconds( rng( 2, 3 ) ) ) ) {
                 add_msg( m_warning, _( "The earth rumbles." ) );
             }
             break;

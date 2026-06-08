@@ -1027,6 +1027,9 @@ class game : public submap_load_listener
         void overmap_npc_move(); // NPC overmap movement
         void process_voluntary_act_interrupt(); // Process
         void process_activity(); // Processes and enacts the player's activity
+        auto debug_infinite_speed_can_freeze_time() const -> bool;
+        auto restore_debug_infinite_speed_moves( int minimum_moves ) -> void;
+        auto advance_time_action_tick() -> int;
         auto try_activity_fixed_window_skip() -> bool;
         auto activity_fixed_window_duration() -> time_duration;
         auto execute_activity_fixed_window_skip( const time_duration &duration ) -> int;
@@ -1225,6 +1228,7 @@ class game : public submap_load_listener
         int next_mission_id = 0;
         std::set<character_id> follower_ids; // Keep track of follower NPC IDs
         int moves_since_last_save = 0;
+        int time_action_scale_turn_remainder = 0;
         bool saving_blocked_by_failed_load = false;
         time_t last_save_timestamp;
         mutable std::array<float, OVERMAP_LAYERS> latest_lightlevels;

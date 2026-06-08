@@ -11,6 +11,7 @@
 #include <ostream>
 #include <tuple>
 
+#include "action_time_scale.h"
 #include "active_item_cache.h"
 #include "activity_handlers.h"
 #include "creature_tracker.h"
@@ -2876,7 +2877,7 @@ void npc::move_pause()
     if( has_new_items ) {
         scan_new_items();
     }
-    if( calendar::once_every( 1_hours ) ) {
+    if( action_time_scale::once_every_this_tick( 1_hours ) ) {
         deactivate_bionic_by_id( bio_soporific );
         for( const bionic_id &bio_id : health_cbms ) {
             activate_bionic_by_id( bio_id );

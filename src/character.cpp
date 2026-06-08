@@ -17,6 +17,7 @@
 #include <ranges>
 
 #include "action.h"
+#include "action_time_scale.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "anatomy.h"
@@ -5851,7 +5852,7 @@ void Character::check_needs_extremes()
             add_msg_if_player( m_bad, _( "You have starved to death." ) );
             g->events().send<event_type::dies_of_starvation>( getID() );
             set_part_hp_cur( bodypart_id( "torso" ), 0 );
-        } else if( calendar::once_every( 6_hours ) ) {
+        } else if( action_time_scale::once_every_this_tick( 6_hours ) ) {
             std::string category;
             if( get_kcal_percent() < 0.1f ) {
                 category = "empty_starving";
@@ -5877,12 +5878,12 @@ void Character::check_needs_extremes()
             g->events().send<event_type::dies_of_thirst>( getID() );
             set_part_hp_cur( bodypart_id( "torso" ), 0 );
         } else if( get_thirst() >= lerp( +thirst_levels::parched, +thirst_levels::dead, 0.333f ) &&
-                   calendar::once_every( 30_minutes ) ) {
+                   action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "Even your eyes feel dry…" ) );
         } else if( get_thirst() >= lerp( +thirst_levels::parched, +thirst_levels::dead, 0.666f ) &&
-                   calendar::once_every( 30_minutes ) ) {
+                   action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "You are THIRSTY!" ) );
-        } else if( calendar::once_every( 30_minutes ) ) {
+        } else if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "Your mouth feels so dry…" ) );
         }
     }
@@ -5894,9 +5895,9 @@ void Character::check_needs_extremes()
             g->events().send<event_type::falls_asleep_from_exhaustion>( getID() );
             mod_fatigue( -10 );
             fall_asleep();
-        } else if( get_fatigue() >= 800 && calendar::once_every( 30_minutes ) ) {
+        } else if( get_fatigue() >= 800 && action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "Anywhere would be a good place to sleep…" ) );
-        } else if( calendar::once_every( 30_minutes ) ) {
+        } else if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "You feel like you haven't slept in days." ) );
         }
     }
@@ -5905,7 +5906,7 @@ void Character::check_needs_extremes()
     // Penalties start at Dead Tired and go from there
     if( get_fatigue() >= fatigue_levels::dead_tired && !in_sleep_state() ) {
         if( get_fatigue() >= 700 ) {
-            if( calendar::once_every( 30_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
                 add_msg_if_player( m_warning, _( "You're too physically tired to stop yawning." ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
@@ -5914,7 +5915,7 @@ void Character::check_needs_extremes()
                 fall_asleep( 30_seconds );
             }
         } else if( get_fatigue() >= fatigue_levels::exhausted ) {
-            if( calendar::once_every( 30_minutes ) ) {
+            if( action_time_scale::once_every_this_tick( 30_minutes ) ) {
                 add_msg_if_player( m_warning, _( "How much longer until bedtime?" ) );
                 add_effect( effect_lack_sleep, 30_minutes + 1_turns );
             }
@@ -5922,7 +5923,8 @@ void Character::check_needs_extremes()
             if( one_in( 100 + int_cur ) ) {
                 fall_asleep( 30_seconds );
             }
-        } else if( get_fatigue() >= fatigue_levels::dead_tired && calendar::once_every( 30_minutes ) ) {
+        } else if( get_fatigue() >= fatigue_levels::dead_tired &&
+                   action_time_scale::once_every_this_tick( 30_minutes ) ) {
             add_msg_if_player( m_warning, _( "*yawn* You should really get some sleep." ) );
             add_effect( effect_lack_sleep, 30_minutes + 1_turns );
         }
@@ -5934,7 +5936,7 @@ void Character::check_needs_extremes()
                                   ( sleep_deprivation_levels::massive );
 
     if( sleep_deprivation >= sleep_deprivation_levels::harmless && !in_sleep_state() &&
-        calendar::once_every( 60_minutes ) &&
+        action_time_scale::once_every_this_tick( 60_minutes ) &&
         ( !has_effect( effect_meth ) || sleep_deprivation >= sleep_deprivation_levels::massive ) ) {
         if( sleep_deprivation < sleep_deprivation_levels::minor ) {
             add_msg_if_player( m_warning,
@@ -5974,7 +5976,8 @@ void Character::check_needs_extremes()
 
 
         if( sleep_deprivation >= sleep_deprivation_levels::massive ||
-            ( ( calendar::once_every( 10_minutes ) && sleep_deprivation >= sleep_deprivation_levels::major &&
+            ( ( action_time_scale::once_every_this_tick( 10_minutes ) &&
+                sleep_deprivation >= sleep_deprivation_levels::major &&
                 /** @EFFECT_PER slightly increases resilience against passing out from sleep deprivation */
                 one_in( static_cast<int>( ( 1.0f - sleep_deprivation_pct ) * 100 ) + get_per() ) ) ) ) {
             add_msg_player_or_npc( m_bad,
