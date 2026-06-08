@@ -3157,8 +3157,9 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
     auto const dxbc_lighting_checkpoints = shader_format_is_dxbc(
         preferred_fmt(SDL_GetGPUShaderFormats(device)));
     if (dxbc_lighting_checkpoints && !s_logged_dxbc_lighting_checkpoints) {
-        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC lighting checkpoints enabled for long "
-                                        "command buffers";
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: lm: DXBC lighting checkpoints enabled for long "
+               "command buffers";
         s_logged_dxbc_lighting_checkpoints = true;
     }
 
