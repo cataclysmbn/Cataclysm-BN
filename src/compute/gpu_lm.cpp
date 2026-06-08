@@ -3154,11 +3154,11 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
               static_cast<int64_t>(input_uploads.vehicle_obscured_levels.size()));
     TracyPlot("GPU LM Upload KiB", static_cast<int64_t>(upload_total / 1024u));
 
-    auto const dxbc_lighting_checkpoints =
-        shader_format_is_dxbc(preferred_fmt(SDL_GetGPUShaderFormats(device)));
+    auto const dxbc_lighting_checkpoints = shader_format_is_dxbc(
+        preferred_fmt(SDL_GetGPUShaderFormats(device)));
     if (dxbc_lighting_checkpoints && !s_logged_dxbc_lighting_checkpoints) {
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: lm: DXBC lighting checkpoints enabled for long command buffers";
+        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC lighting checkpoints enabled for long "
+                                        "command buffers";
         s_logged_dxbc_lighting_checkpoints = true;
     }
 
@@ -3367,10 +3367,10 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         }
 
         if (!lightmap_levels.empty()) {
-            auto dispatch_raytrace = [&](SDL_GPUBuffer* const target_buf,
-                                         std::vector<raytrace_source_bucket> const& buckets,
-                                         bool const checkpoint_after_final)
-                -> bool {
+            auto dispatch_raytrace =
+                [&](SDL_GPUBuffer* const target_buf,
+                    std::vector<raytrace_source_bucket> const& buckets,
+                    bool const checkpoint_after_final) -> bool {
                 if (buckets.empty()) { return true; }
 
                 auto bind_and_dispatch_chunk =
@@ -3401,8 +3401,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                             .max_radius = bucket.max_radius,
                             .source_offset = bucket.source_offset + offset,
                         };
-                        SDL_PushGPUComputeUniformData(
-                            cmd, 0, &raytrace_push, sizeof(raytrace_push));
+                        SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
                         SDL_DispatchGPUCompute(cp, count, bucket.groups_xy, bucket.groups_xy);
                         SDL_EndGPUComputePass(cp);
                     };
@@ -3417,8 +3416,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                             auto const count =
                                 std::min(dxbc_raytrace_source_chunk, bucket.source_count - offset);
                             bind_and_dispatch_chunk(bucket, offset, count);
-                            auto const last_chunk = last_bucket
-                                && offset + count >= bucket.source_count;
+                            auto const last_chunk =
+                                last_bucket && offset + count >= bucket.source_count;
                             if ((!last_chunk || checkpoint_after_final)
                                 && !submit_dxbc_checkpoint("raytrace")) {
                                 return false;
@@ -3494,8 +3493,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                             .max_radius = bucket.max_radius,
                             .source_offset = bucket.source_offset + offset,
                         };
-                        SDL_PushGPUComputeUniformData(
-                            cmd, 0, &raytrace_push, sizeof(raytrace_push));
+                        SDL_PushGPUComputeUniformData(cmd, 0, &raytrace_push, sizeof(raytrace_push));
                         SDL_DispatchGPUCompute(cp, count, bucket.groups_xy, bucket.groups_xy);
                         SDL_EndGPUComputePass(cp);
                     };
@@ -3510,8 +3508,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                             auto const count =
                                 std::min(dxbc_raytrace_source_chunk, bucket.source_count - offset);
                             bind_and_dispatch_chunk(bucket, offset, count);
-                            auto const last_chunk = last_bucket
-                                && offset + count >= bucket.source_count;
+                            auto const last_chunk =
+                                last_bucket && offset + count >= bucket.source_count;
                             if ((!last_chunk || checkpoint_after_final)
                                 && !submit_dxbc_checkpoint("colored raytrace")) {
                                 return false;
@@ -3578,9 +3576,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 // [Pass 2] Compute: static terrain/furniture source contribution.
                 fill_uint_buffer(static_lm_buf, 0u);
                 if (!submit_dxbc_checkpoint("static lm clear")) { return {}; }
-                if (!dispatch_raytrace(
-                        static_lm_buf, static_raytrace_buckets,
-                        /*checkpoint_after_final=*/true)) {
+                if (!dispatch_raytrace(static_lm_buf, static_raytrace_buckets,
+                                       /*checkpoint_after_final=*/true)) {
                     return {};
                 }
             }
@@ -3698,9 +3695,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             }
 
             // [Pass 6] Compute: dynamic per-source ray casting over ambient/static base.
-            if (!dispatch_raytrace(
-                    lm_buf, dynamic_raytrace_buckets,
-                    download_colored_light || rebuild_seen || needs_download_copy)) {
+            if (!dispatch_raytrace(lm_buf, dynamic_raytrace_buckets,
+                                   download_colored_light || rebuild_seen || needs_download_copy)) {
                 return {};
             }
 
