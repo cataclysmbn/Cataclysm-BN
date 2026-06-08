@@ -258,6 +258,8 @@ std::vector<title_candidate>
         .option_prefix = builtin_option_prefix,
         .root = PATH_INFO::datadir() + "title/",
         .languages = languages,
+        .mod = std::nullopt,
+        .mod_name = std::nullopt,
         .skip_root_language_titles = true
     } );
 
@@ -268,6 +270,7 @@ std::vector<title_candidate>
         }
         for( const auto &root : get_mod_search_roots( mod ) ) {
             add_title_files_from_root( candidates, title_scan_options{
+                .option_prefix = mod_option_prefix,
                 .root = root,
                 .languages = languages,
                 .mod = ident,

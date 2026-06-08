@@ -1758,24 +1758,6 @@ auto append_source(
     }
 }
 
-auto add_item_sources(
-    source_accumulator& acc, tripoint_bub_ms const& pos, location_vector<item> const& items)
-    -> void {
-    for (auto const& itm : items) {
-        auto luminance = 0.0f;
-        auto width = 0_degrees;
-        auto direction = 0_degrees;
-        if (itm->getlight(luminance, width, direction)) {
-            add_source(acc, pos, luminance, light_source_kind::active_item);
-            add_colored_point_source({
-                .acc = acc,
-                .pos = pos,
-                .luminance = luminance,
-                .color_rgb = item_light_color(*itm),
-            });
-        }
-    }
-}
 
 auto add_field_sources(source_accumulator& acc, tripoint_bub_ms const& pos, field const& fields)
     -> void {
@@ -4479,7 +4461,6 @@ auto begin_gpu_visibility(SDL_GPUDevice* const device, run_gpu_visibility_params
     auto const volume_tiles = static_cast<Uint32>(z_count * cache_xy);
     auto const float_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(float));
     auto const uint_volume_bytes = static_cast<Uint32>(volume_tiles * sizeof(uint32_t));
-    auto const float_level_bytes = static_cast<Uint32>(cache_xy * sizeof(float));
     auto const uint_level_bytes = static_cast<Uint32>(cache_xy * sizeof(uint32_t));
     auto const source_bytes = static_cast<Uint32>(sizeof(GpuLightSource));
     reset_input_residency_for_shape(cache_x, cache_y, z_count);
