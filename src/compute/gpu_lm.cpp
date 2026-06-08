@@ -3421,26 +3421,16 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             };
 
             auto upload_levels_dxbc = [&](dxbc_upload_levels_params const& p) -> bool {
-                auto packed_level_index = Uint32{0};
-                for (auto const z : *p.levels) {
-                    auto const src_loc = SDL_GPUTransferBufferLocation{
-                        .transfer_buffer = upload_tbuf,
-                        .offset = off + packed_level_index * p.level_bytes,
-                    };
-                    auto const dst_reg = SDL_GPUBufferRegion{
-                        .buffer = p.dst,
-                        .offset = static_cast<Uint32>(z + OVERMAP_DEPTH) * p.level_bytes,
-                        .size = p.level_bytes,
-                    };
-                    auto* const cp = SDL_BeginGPUCopyPass(cmd);
-                    SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
-                    SDL_EndGPUCopyPass(cp);
-                    ++packed_level_index;
-                    ++upload_copy_commands;
-                    if (!submit_dxbc_checkpoint(p.label)) { return false; }
-                }
-                off += static_cast<Uint32>(p.levels->size()) * p.level_bytes;
-                return true;
+                if (p.levels->empty()) { return true; }
+                auto* const cp = SDL_BeginGPUCopyPass(cmd);
+                upload_level_ranges({
+                    .cp = cp,
+                    .dst = p.dst,
+                    .levels = p.levels,
+                    .level_bytes = p.level_bytes,
+                });
+                SDL_EndGPUCopyPass(cp);
+                return submit_dxbc_checkpoint(p.label);
             };
 
             if (dxbc_lighting_checkpoints) {
