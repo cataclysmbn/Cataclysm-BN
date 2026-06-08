@@ -2865,8 +2865,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
         }
     }
     if (dxbc_backend && !s_logged_dxbc_single_submit_lighting) {
-        DebugLog(DL::Info, DC::Main)
-            << "SDL_GPU: lm: DXBC uses single-submit lighting command buffers";
+        DebugLog(DL::Info, DC::Main) << "SDL_GPU: lm: DXBC uses single-submit lighting command "
+                                        "buffers";
         s_logged_dxbc_single_submit_lighting = true;
     }
 
@@ -3561,8 +3561,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                     upload_whole_region(cp, src_buf, source_upload_bytes, dxbc_backend);
                 }
                 if (colored_source_upload_bytes > 0) {
-                    upload_whole_region(cp, colored_src_buf, colored_source_upload_bytes,
-                                        dxbc_backend);
+                    upload_whole_region(
+                        cp, colored_src_buf, colored_source_upload_bytes, dxbc_backend);
                 }
                 SDL_EndGPUCopyPass(cp);
             }
