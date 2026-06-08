@@ -38,6 +38,7 @@
 #include "npc.h"
 #include "options.h"
 #include "player_activity.h"
+#include "units_utility.h"
 #include "mod_manager.h"
 #include "output.h"
 #include "player.h"
@@ -661,7 +662,9 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     return ctxt;
 }
 
-const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
+const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter,
+                                       const recipe *resume_recipe,
+                                       int resume_batch_size )
 {
     struct {
         const recipe *recp = nullptr;
@@ -860,6 +863,10 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
     int num_recipe = 0;
     int batch_line = 0;
     const recipe *chosen = nullptr;
+
+    const recipe *resume_rec = resume_recipe;
+    int resume_bs = resume_batch_size;
+    bool resume_batch = ( resume_bs > 1 );
 
     const inventory &crafting_inv = crafter.crafting_inventory();
     const std::vector<npc *> helpers = character_funcs::get_crafting_helpers( crafter );
@@ -1308,6 +1315,34 @@ const recipe *select_crafting_recipe( int &batch_size_out, Character &crafter )
                     }
                     ++rcp_idx;
                 }
+            }
+
+            if( resume_rec != nullptr ) {
+                int rcp_idx = 0;
+                bool found = false;
+                for( const recipe *const rcp : current ) {
+                    if( rcp == resume_rec ) {
+                        line = rcp_idx;
+                        found = true;
+                        break;
+                    }
+                    ++rcp_idx;
+                }
+                if( found && resume_batch && resume_bs > 0 ) {
+                    batch = true;
+                    batch_line = line;
+                    chosen = current[line];
+                    current.clear();
+                    available.clear();
+                    for( int i = 1; i <= 250; i++ ) {
+                        current.push_back( chosen );
+                        available.emplace_back( crafter, chosen, i,
+                                                available_recipes.contains( *chosen ) );
+                    }
+                    line = std::max( 0, std::min( 249, resume_bs - 1 ) );
+                }
+                resume_rec = nullptr;
+                resume_batch = false;
             }
         }
         keepline = false;
@@ -2020,4 +2055,16 @@ bool lcmatch_any( const std::vector< std::vector<T> > &list_of_list, const std::
         }
     }
     return false;
+}
+
+auto query_large_volume( units::volume total_volume ) -> bool
+{
+    const int ml = units::to_milliliter<int>( total_volume );
+    const double user_vol = convert_volume( ml );
+    const double user_thresh = convert_volume( 1000000 );
+    const char *unit = volume_units_abbr();
+    const std::string msg = string_format(
+        _( "The volume of the inputs for this recipe is <color_red>%.2f %s</color> / %.0f %s and may be too large to work on.\n\nContinue?" ),
+        user_vol, unit, user_thresh, unit );
+    return query_yn( msg );
 }

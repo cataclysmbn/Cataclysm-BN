@@ -383,12 +383,25 @@ bool Character::has_morale_to_craft() const
 
 void Character::craft( const tripoint_bub_ms &loc )
 {
-    int batch_size = 0;
-    const recipe *rec = select_crafting_recipe( batch_size, *this );
-    if( rec ) {
-        if( crafting_allowed( *this, *rec ) ) {
-            make_craft( rec->ident(), batch_size, loc );
+    const recipe *resume_rec = nullptr;
+    int resume_batch = 0;
+    while( true ) {
+        int batch_size = 0;
+        const recipe *rec = select_crafting_recipe( batch_size, *this, resume_rec, resume_batch );
+        if( !rec ) {
+            return;
         }
+        if( !crafting_allowed( *this, *rec ) ) {
+            return;
+        }
+        make_craft( rec->ident(), batch_size, loc );
+        if( last_craft->is_volume_warning_canceled() ) {
+            *last_craft = craft_command();
+            resume_rec = rec;
+            resume_batch = batch_size;
+            continue;
+        }
+        return;
     }
 }
 
@@ -403,12 +416,25 @@ void Character::recraft( const tripoint_bub_ms &loc )
 
 void Character::long_craft( const tripoint_bub_ms &loc )
 {
-    int batch_size = 0;
-    const recipe *rec = select_crafting_recipe( batch_size, *this );
-    if( rec ) {
-        if( crafting_allowed( *this, *rec ) ) {
-            make_all_craft( rec->ident(), batch_size, loc );
+    const recipe *resume_rec = nullptr;
+    int resume_batch = 0;
+    while( true ) {
+        int batch_size = 0;
+        const recipe *rec = select_crafting_recipe( batch_size, *this, resume_rec, resume_batch );
+        if( !rec ) {
+            return;
         }
+        if( !crafting_allowed( *this, *rec ) ) {
+            return;
+        }
+        make_all_craft( rec->ident(), batch_size, loc );
+        if( last_craft->is_volume_warning_canceled() ) {
+            *last_craft = craft_command();
+            resume_rec = rec;
+            resume_batch = batch_size;
+            continue;
+        }
+        return;
     }
 }
 
