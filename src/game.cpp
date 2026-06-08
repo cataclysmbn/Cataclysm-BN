@@ -5195,6 +5195,31 @@ void game::mon_info_update( )
 {
     ZoneScoped;
 
+#if defined( CATA_SDL )
+    {
+        ZoneScopedN( "mon_info_update_visibility_refresh" );
+        const auto zlev = get_levz();
+        const auto minz = m.has_zlevels() ? -OVERMAP_DEPTH : zlev;
+        const auto maxz = m.has_zlevels() ? OVERMAP_HEIGHT : zlev;
+        const auto stale_gameplay_visibility = [&]() {
+            return std::ranges::any_of( std::views::iota( minz, maxz + 1 ), [this]( const auto z ) {
+                const auto &cache = m.get_cache_ref( z );
+                return cache.lightmap_dirty || cache.visibility_cache_dirty;
+            } );
+        };
+
+        if( stale_gameplay_visibility() ) {
+            m.build_map_cache( zlev );
+            if( stale_gameplay_visibility() ) {
+                m.update_visibility_cache( zlev );
+            }
+            if( stale_gameplay_visibility() ) {
+                return;
+            }
+        }
+    }
+#endif
+
     int newseen = 0;
     const auto iProxyDist = ( safe_mode_proximity <= 0 ) ? g_max_view_distance : safe_mode_proximity;
 
