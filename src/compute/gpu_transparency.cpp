@@ -137,8 +137,7 @@ auto lut_signature(std::vector<uint32_t> const& values) -> std::size_t {
 }
 
 auto pack_shader_inputs(
-    std::vector<transparency_submap_in> const& submaps,
-    transparency_shader_inputs& out) -> void {
+    std::vector<transparency_submap_in> const& submaps, transparency_shader_inputs& out) -> void {
     out.ids.clear();
     out.meta.clear();
     out.ids.reserve(submaps.size());
@@ -406,10 +405,10 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     static auto shader_inputs = transparency_shader_inputs{};
     pack_shader_inputs(submaps, shader_inputs);
 
-    auto const submap_ids_bytes =
-        static_cast<Uint32>(shader_inputs.ids.size() * sizeof(transparency_submap_ids_in));
-    auto const submap_meta_bytes =
-        static_cast<Uint32>(shader_inputs.meta.size() * sizeof(transparency_submap_meta_in));
+    auto const submap_ids_bytes = static_cast<Uint32>(
+        shader_inputs.ids.size() * sizeof(transparency_submap_ids_in));
+    auto const submap_meta_bytes = static_cast<Uint32>(
+        shader_inputs.meta.size() * sizeof(transparency_submap_meta_in));
     auto const ter_lut_bytes = static_cast<Uint32>(luts.ter_transparent.size() * sizeof(uint32_t));
     auto const fur_lut_bytes = static_cast<Uint32>(luts.furn_transparent.size() * sizeof(uint32_t));
     auto const compact_output_bytes = static_cast<Uint32>(
@@ -623,9 +622,8 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
                 cmd, nullptr, 0, rw_bindings.data(), static_cast<Uint32>(rw_bindings.size()));
             SDL_BindGPUComputePipeline(cp, pipeline);
 
-            auto const ro_bufs = std::array<SDL_GPUBuffer*, 4>{
-                submap_ids_buf, submap_meta_buf, ter_lut_buf, fur_lut_buf
-            };
+            auto const ro_bufs = std::array<
+                SDL_GPUBuffer*, 4>{submap_ids_buf, submap_meta_buf, ter_lut_buf, fur_lut_buf};
             SDL_BindGPUComputeStorageBuffers(
                 cp, 0, ro_bufs.data(), static_cast<Uint32>(ro_bufs.size()));
 
