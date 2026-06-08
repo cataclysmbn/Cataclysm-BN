@@ -7805,15 +7805,21 @@ void color_to_vars(
     switch( layer ) {
         default:
         case iuse_paint_stuff_config::both:
-            vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
-            vars.erase( TINT_COLOR_FG_VAR_NAME );
-            vars.erase( TINT_COLOR_BG_VAR_NAME );
+            if ( col.fg == col.bg ) {
+                vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
+                vars.erase( TINT_COLOR_FG_VAR_NAME );
+                vars.erase( TINT_COLOR_BG_VAR_NAME );
+            } else {
+                vars.erase( TINT_COLOR_VAR_NAME );
+                vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
+                vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col.bg );
+            }
             break;
         case iuse_paint_stuff_config::fg:
             vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.fg );
             break;
         case iuse_paint_stuff_config::bg:
-            vars.set<RGBColor>( TINT_COLOR_FG_VAR_NAME, col.bg );
+            vars.set<RGBColor>( TINT_COLOR_BG_VAR_NAME, col.bg );
             break;
     }
 }
@@ -8446,8 +8452,9 @@ void iuse_paint_stuff_config::set_color( item &it )
     lst.query();
 
     if( lst.ret >= 0 ) {
-        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR,
-                              *RGBColor::try_parse( lst.entries[lst.ret].txt ) );
+        const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or({});
+        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col);
+        color_to_vars(it.item_vars(), {col,col}, both);
     }
 }
 
