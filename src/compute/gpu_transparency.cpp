@@ -303,8 +303,8 @@ auto gather_transparency_refs(map const& m, int const zlev)
 }
 
 auto prepare_transparency_inputs(
-    std::span<transparency_submap_ref const> refs,
-    std::vector<transparency_submap_in>& out) -> void {
+    std::span<transparency_submap_ref const> refs, std::vector<transparency_submap_in>& out)
+    -> void {
     out.clear();
     out.reserve(refs.size());
 

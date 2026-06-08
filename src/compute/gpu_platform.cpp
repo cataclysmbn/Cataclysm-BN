@@ -435,8 +435,8 @@ auto select_shader_format(SDL_GPUShaderFormat const formats)
 }
 
 auto probe_shader(
-    SDL_GPUDevice* const device, SDL_GPUShaderFormat const fmt,
-    std::string_view const ext) -> void {
+    SDL_GPUDevice* const device, SDL_GPUShaderFormat const fmt, std::string_view const ext)
+    -> void {
     auto const path = PATH_INFO::shaders() + "test_compute" + std::string{ext};
     auto const blob = read_file_bytes(path);
     if (blob.empty()) {

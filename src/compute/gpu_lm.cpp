@@ -1034,8 +1034,8 @@ auto ensure_uint_shift_scratch(
 // ---------------------------------------------------------------------------
 
 auto make_source(
-    int const x, int const y, int const zlev, float const luminance,
-    uint32_t const flags = 0u) -> GpuLightSource {
+    int const x, int const y, int const zlev, float const luminance, uint32_t const flags = 0u)
+    -> GpuLightSource {
     return GpuLightSource{
         .x = x,
         .y = y,
@@ -1194,8 +1194,8 @@ auto make_source_stats(std::vector<light_source_kind> const& kinds) -> source_co
 
 auto upsert_source(
     std::vector<GpuLightSource>& sources, std::unordered_map<std::size_t, std::size_t>& indices,
-    std::size_t const source_slot, tripoint_bub_ms const& pos,
-    float const luminance) -> std::size_t {
+    std::size_t const source_slot, tripoint_bub_ms const& pos, float const luminance)
+    -> std::size_t {
     auto const [iter, inserted] = indices.emplace(source_slot, sources.size());
     if (inserted) {
         sources.push_back(make_source(pos.x(), pos.y(), pos.z(), luminance));
@@ -1484,8 +1484,8 @@ auto append_source(
 }
 
 auto add_item_sources(
-    source_accumulator& acc, tripoint_bub_ms const& pos,
-    location_vector<item> const& items) -> void {
+    source_accumulator& acc, tripoint_bub_ms const& pos, location_vector<item> const& items)
+    -> void {
     for (auto const& itm : items) {
         auto luminance = 0.0f;
         auto width = 0_degrees;
@@ -1671,8 +1671,8 @@ auto vehicle_light_color(vpart_reference const& part) -> std::optional<uint32_t>
 }
 
 auto append_vehicle_source(
-    source_accumulator& acc, GpuLightSource const& source,
-    std::optional<uint32_t> const color_rgb) -> void {
+    source_accumulator& acc, GpuLightSource const& source, std::optional<uint32_t> const color_rgb)
+    -> void {
     append_source(acc, source, light_source_kind::vehicle);
     add_colored_source({
         .acc = acc,
@@ -1822,8 +1822,8 @@ auto add_monster_sources(source_accumulator& acc) -> void {
 }
 
 auto collect_sources(
-    map const& m, std::vector<int> const& dirty_levels,
-    bool const collect_colored_sources) -> source_collection {
+    map const& m, std::vector<int> const& dirty_levels, bool const collect_colored_sources)
+    -> source_collection {
     if (dirty_levels.empty()) { return {}; }
 
     auto const& lc0 = m.get_cache_ref(dirty_levels.front());
@@ -1867,8 +1867,8 @@ auto source_is_on_dirty_level(std::vector<int> const& dirty_levels, int const zl
 }
 
 auto write_source_map_to_level_caches(
-    map const& m, std::vector<int> const& dirty_levels,
-    std::vector<GpuLightSource> const& sources) -> void {
+    map const& m, std::vector<int> const& dirty_levels, std::vector<GpuLightSource> const& sources)
+    -> void {
     for (int const z : dirty_levels) {
         auto& lc = const_cast<level_cache&>(m.get_cache_ref(z));
         std::ranges::fill(lc.sm, 0.0f);
@@ -2105,8 +2105,8 @@ auto sorted_unique(std::vector<int> levels) -> std::vector<int> {
 }
 
 auto make_seen_download_levels(
-    run_gpu_lighting_params const& p, bool const seen_was_valid,
-    std::vector<int> const& all_levels) -> std::vector<int> {
+    run_gpu_lighting_params const& p, bool const seen_was_valid, std::vector<int> const& all_levels)
+    -> std::vector<int> {
     if (!seen_was_valid) { return all_levels; }
 
     auto levels = std::vector<int>{};
@@ -2170,8 +2170,8 @@ auto make_z_level_ranges(std::vector<int> const& levels) -> std::vector<z_level_
 }
 
 auto make_visibility_dispatch_plan(
-    std::vector<int> const& levels, int const cache_xy,
-    int const total_z_count) -> visibility_dispatch_plan {
+    std::vector<int> const& levels, int const cache_xy, int const total_z_count)
+    -> visibility_dispatch_plan {
     auto fallback = visibility_dispatch_plan{
         .z_start_idx = 0,
         .z_count = total_z_count,
@@ -2328,8 +2328,8 @@ auto pack_char_cache_uint(
 }
 
 auto pack_vehicle_obscured_cache_uint(
-    map const& m, std::vector<int> const& levels, int const cache_xy,
-    std::vector<uint32_t>& out) -> void {
+    map const& m, std::vector<int> const& levels, int const cache_xy, std::vector<uint32_t>& out)
+    -> void {
     out.resize(levels.size() * static_cast<std::size_t>(cache_xy));
     auto level_index = std::size_t{0};
     for (auto const z : levels) {
@@ -4494,8 +4494,8 @@ auto begin_gpu_sight_pairs(SDL_GPUDevice* const device, begin_gpu_sight_pairs_pa
 }
 
 auto finish_gpu_sight_pairs(
-    SDL_GPUDevice* const device, gpu_sight_pairs_work const& work,
-    std::vector<uint32_t>& results) -> bool {
+    SDL_GPUDevice* const device, gpu_sight_pairs_work const& work, std::vector<uint32_t>& results)
+    -> bool {
     ZoneScopedN("finish_gpu_sight_pairs");
 
     if (work.id == 0) {
