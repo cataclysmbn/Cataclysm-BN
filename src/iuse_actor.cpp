@@ -7805,7 +7805,7 @@ void colors_to_vars(
     switch( layer ) {
         default:
         case iuse_paint_stuff_config::both:
-            if ( col.fg == col.bg ) {
+            if( col.fg == col.bg ) {
                 vars.set<RGBColor>( TINT_COLOR_VAR_NAME, col.fg );
                 vars.erase( TINT_COLOR_FG_VAR_NAME );
                 vars.erase( TINT_COLOR_BG_VAR_NAME );
@@ -8452,9 +8452,9 @@ void iuse_paint_stuff_config::set_color( item &it )
     lst.query();
 
     if( lst.ret >= 0 ) {
-        const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or({});
-        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col);
-        colors_to_vars(it.item_vars(), {col,col}, both);
+        const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or( {} );
+        it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col );
+        colors_to_vars( it.item_vars(), {col, col}, both );
     }
 }
 
