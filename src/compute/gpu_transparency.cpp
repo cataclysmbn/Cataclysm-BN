@@ -200,8 +200,7 @@ auto pack_compact_shader_inputs(pack_compact_shader_inputs_params const& p) -> v
             auto const ter_id = static_cast<std::size_t>(submap.ter_ids[tile]);
             auto const furn_id = static_cast<std::size_t>(submap.furn_ids[tile]);
             p.out.tiles[base + tile] = {
-                .ter_transparent =
-                    ter_id < p.ter_lut.size() && p.ter_lut[ter_id] != 0u ? 1u : 0u,
+                .ter_transparent = ter_id < p.ter_lut.size() && p.ter_lut[ter_id] != 0u ? 1u : 0u,
                 .furn_transparent =
                     furn_id < p.furn_lut.size() && p.furn_lut[furn_id] != 0u ? 1u : 0u,
                 .field_opacity = submap.field_opacity[tile],
@@ -644,8 +643,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
         }
         auto offset = Uint32{0};
         if (use_compact_shader) {
-            std::memcpy(mapped + offset, compact_shader_inputs.tiles.data(),
-                        compact_input_bytes);
+            std::memcpy(mapped + offset, compact_shader_inputs.tiles.data(), compact_input_bytes);
         } else {
             std::memcpy(mapped + offset, shader_inputs.ids.data(), submap_ids_bytes);
             offset += submap_ids_bytes;
@@ -740,8 +738,7 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
                     .padding3 = 0,
                 },
             }};
-            auto const rw_count =
-                static_cast<Uint32>(use_compact_shader ? 1 : rw_bindings.size());
+            auto const rw_count = static_cast<Uint32>(use_compact_shader ? 1 : rw_bindings.size());
             auto* const cp = SDL_BeginGPUComputePass(cmd, nullptr, 0, rw_bindings.data(), rw_count);
             SDL_BindGPUComputePipeline(cp, pipeline);
 

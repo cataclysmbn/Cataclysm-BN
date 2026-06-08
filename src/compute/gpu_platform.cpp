@@ -598,9 +598,8 @@ auto probe_shader(
 
     if (mismatch_index != probe_count) {
         DebugLog(DL::Warn, DC::Main)
-            << "SDL_GPU: shader probe returned " << mismatch_value << " at index "
-            << mismatch_index << ", expected "
-            << (probe_value ^ static_cast<uint32_t>(mismatch_index));
+            << "SDL_GPU: shader probe returned " << mismatch_value << " at index " << mismatch_index
+            << ", expected " << (probe_value ^ static_cast<uint32_t>(mismatch_index));
         return false;
     }
 
