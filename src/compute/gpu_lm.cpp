@@ -628,7 +628,6 @@ auto s_pending_lighting_work = pending_gpu_lighting_work{};
 auto s_next_lighting_work_id = uint64_t{1};
 auto s_logged_dxbc_lighting_checkpoints = false;
 auto s_logged_dxbc_full_transparency_upload = false;
-auto s_logged_dxbc_recreated_transparency_buffer = false;
 auto s_logged_dxbc_cycled_full_uploads = false;
 
 struct pending_gpu_visibility_work {
@@ -2884,26 +2883,6 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 << "SDL_GPU: lm: DXBC expands dirty transparency uploads to "
                    "the full resident volume";
             s_logged_dxbc_full_transparency_upload = true;
-        }
-    }
-    if (dxbc_lighting_checkpoints && !input_uploads.transparency_levels.empty()
-        && s_lighting_resources.inputs.transparency_valid
-        && s_lighting_resources.transparency.buffer != nullptr) {
-        if (!SDL_WaitForGPUIdle(device)) {
-            DebugLog(DL::Error, DC::Main)
-                << "SDL_GPU: lm: DXBC wait for idle before transparency "
-                   "buffer recreation failed: "
-                << SDL_GetError();
-            return {};
-        }
-        release_buffer_slot(device, s_lighting_resources.transparency);
-        invalidate_resident_transparency();
-        s_lighting_resources.lighting_outputs_valid = false;
-        if (!s_logged_dxbc_recreated_transparency_buffer) {
-            DebugLog(DL::Info, DC::Main)
-                << "SDL_GPU: lm: DXBC recreates the resident transparency "
-                   "buffer before CPU reupload";
-            s_logged_dxbc_recreated_transparency_buffer = true;
         }
     }
     if (dxbc_lighting_checkpoints && !s_logged_dxbc_cycled_full_uploads) {
