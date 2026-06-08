@@ -19,6 +19,8 @@
 #include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
+#include "catalua_hooks.h"
+#include "catalua_sol.h"
 #include "character_martial_arts.h"
 #include "character.h"
 #include "color.h"
@@ -1085,6 +1087,18 @@ void spell_effect::translocate( const spell &sp, Creature &caster, const tripoin
     }
     you->translocators->translocate( spell_effect_area( sp, target, spell_effect_blast, caster,
                                      true ) );
+}
+
+auto spell_effect::lua( const spell &sp, Creature &caster, const tripoint_bub_ms &target ) -> void
+{
+    cata::run_hooks( "on_lua_spell_effect", [ &, id = sp.id(), effect_data = sp.effect_data() ]( auto & params ) {
+        params["caster"] = &caster;
+        params["target"] = target;
+        params["spell_id"] = id.str();
+        params["effect_id"] = effect_data;
+        params["level"] = sp.get_level();
+        params["damage"] = sp.damage();
+    } );
 }
 
 void spell_effect::none( const spell &sp, Creature &, const tripoint_bub_ms & )

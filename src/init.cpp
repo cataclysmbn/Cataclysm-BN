@@ -37,6 +37,7 @@
 #include "crafting_gui.h"
 #include "creature.h"
 #include "cursesdef.h"
+#include "damage.h"
 #include "debug.h"
 #include "dependency_tree.h"
 #include "dialogue.h"
@@ -468,6 +469,7 @@ void DynamicDataLoader::initialize()
     add( "SPELL", &spell_type::load_spell );
     add( "clothing_mod", &clothing_mods::load );
     add( "ter_furn_transform", &ter_furn_transform::load_transform );
+    add( "damage_type", &load_damage_type );
     add( "event_transformation", &event_transformation::load_transformation );
     add( "event_statistic", &event_statistic::load_statistic );
     add( "score", &score::load_score );
@@ -577,6 +579,7 @@ void DynamicDataLoader::unload_data()
     constructions::reset();
     Creature::reset_hit_range();
     disease_type::reset();
+    reset_damage_types();
     dreams::clear();
     emit::reset();
     enchantment::reset();

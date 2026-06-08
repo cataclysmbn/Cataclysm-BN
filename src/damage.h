@@ -2,6 +2,7 @@
 
 #include <array>
 #include <map>
+#include <set>
 #include <vector>
 #include <string>
 
@@ -108,7 +109,7 @@ struct damage_instance {
 };
 
 struct dealt_damage_instance {
-    std::array<int, NUM_DT> dealt_dams;
+    std::map<damage_type, int> dealt_dams;
     bodypart_str_id bp_hit;
 
     dealt_damage_instance();
@@ -133,8 +134,15 @@ struct resistances {
 };
 
 const std::map<std::string, damage_type> &get_dt_map();
+const std::vector<damage_type> &get_all_damage_types();
 damage_type dt_by_name( const std::string &name );
 std::string name_by_dt( const damage_type &dt );
+auto damage_type_is_valid( damage_type dt ) -> bool;
+auto damage_type_is_no_resist( damage_type dt ) -> bool;
+auto damage_type_immune_flags( damage_type dt ) -> const std::set<std::string> &; // *NOPAD*
+auto damage_type_mon_immune_flags( damage_type dt ) -> const std::set<std::string> &; // *NOPAD*
+auto load_damage_type( const JsonObject &jo, const std::string &src ) -> void;
+auto reset_damage_types() -> void;
 
 const skill_id &skill_by_dt( damage_type dt );
 

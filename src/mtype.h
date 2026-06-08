@@ -207,6 +207,28 @@ enum m_flag : int {
     MF_FACTION_MEMORY,      // This monster tracks anger separately per faction
     MF_COMBAT_MOUNT,        // This monster is trained for combat
     MF_CANT_TRAIN,            // This monster can't be trained for combat
+    MF_BIOLOGICALPROOF,    // Immune to biological damage, DDA alias
+    MF_BULLETPROOF,        // Immune to bullet damage
+    MF_CAN_BE_CULLED,      // This monster can be culled by population effects
+    MF_CONVERSATION,       // This monster can use conversation behavior
+    MF_COPY_SUMMONER_LOOK, // This monster copies summoner appearance
+    MF_CORNERED_FIGHTER,   // This monster fights harder when cornered
+    MF_DRACULIN_IMMUNE,    // Immune to draculin effects
+    MF_EATS,               // This monster can eat
+    MF_ENERVATE_IMMUNE,    // Immune to enervation damage
+    MF_GUILT_HUMAN,        // Killing this monster causes human-like guilt
+    MF_HAS_MIND,           // This monster has a mind for psionics
+    MF_HIVE_MIND,          // This monster is part of a hive mind
+    MF_KEEP_DISTANCE,      // This monster prefers to keep distance from targets
+    MF_MIND_SEEING,        // This monster can sense minds
+    MF_PHOTOKIN_MONSTER_IMMUNE, // Immune to photokinetic damage
+    MF_SILENTMOVES,        // This monster moves silently
+    MF_TEEP_IMMUNE,        // Immune to telepathic damage
+    MF_TELEKIN_IMMUNE,     // Immune to telekinetic damage
+    MF_TELEPORT_IMMUNE,    // Immune to forced teleportation
+    MF_ALL_SEEING,         // This monster has supernatural all-around perception
+    MF_PATH_AVOID_DANGER,  // This monster avoids dangerous paths
+    MF_WIELDED_WEAPON,     // This monster has a wielded weapon
 
     MF_MAX                  // Sets the length of the flags - obviously must be LAST
 };

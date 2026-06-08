@@ -42,6 +42,7 @@ enum spell_flag {
     HOSTILE_50, // summoned monster spawns friendly 50% of the time
     SILENT, // spell makes no noise at target
     NO_EXPLOSION_VFX, // spell has no visual explosion
+    NO_EXPLOSION_SFX, // spell has no explosion sound
     LOUD, // spell makes extra noise at target
     VERBAL, // spell makes noise at caster location, mouth encumbrance affects fail %
     SOMATIC, // arm encumbrance affects fail % and casting time (slightly)
@@ -51,18 +52,33 @@ enum spell_flag {
     CONCENTRATE, // focus affects spell fail %
     RANDOM_AOE, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_DAMAGE, // picks random number between min+increment*level and max instead of normal behavior
+    IGNITE_FLAMMABLE, // spell can ignite flammable targets
     DIVIDE_DAMAGE, // divides damage equally among all the targets of the spell
+    SPLIT_DAMAGE, // splits damage across affected targets
     RANDOM_DURATION, // picks random number between min+increment*level and max instead of normal behavior
     RANDOM_TARGET, // picks a random valid target within your range instead of normal behavior.
+    RANDOM_CRITTER, // picks a random creature target.
     MUTATE_THRESH, // allows mutate spell_effect to try and cross thresholds for the category provided, accuracy optionally defines highest tier of threshold to test for (default of 1).
     MUTATE_TRAIT, // overrides the mutate spell_effect to use a specific trait_id instead of a category
     WONDER, // instead of casting each of the extra_spells, it picks N of them and casts them (where N is std::min( damage(), number_of_spells ))
+    EXTRA_EFFECTS_FIRST, // resolves extra effects before the primary spell effect
     PAIN_NORESIST, // pain altering spells can't be resisted (like with the deadened trait)
     NO_FAIL, // this spell cannot fail when you cast it
     BRAWL, // this spell can be used by brawlers
     DUPE_SOUND, // this spell will play 'duplicate' sounds, if relevant to the spell effect
     ADD_MELEE_DAM, // Add melee damage to the spell's damage. Legacy method, "melee_dam" vector is preferred instead
     PHYSICAL, // IMPLIES BRAWL. This spell is actually a Physical Technique / Weapon Arte / similar, and is sort-of a replacement of martial arts.
+    PSIONIC, // This spell is a psionic power.
+    NON_MAGICAL, // This spell is not treated as magic.
+    PERCENTAGE_DAMAGE, // spell damage is treated as a percentage.
+    TARGET_TELEPORT, // spell teleports the target.
+    TOUCH_REQUIRED, // spell requires touch range.
+    NO_PROJECTILE, // spell has no projectile.
+    CHARM_PET, // spell can charm pets.
+    RECHARM, // spell can refresh charm effects.
+    SPAWN_GROUP, // spell spawns a group.
+    SPAWN_WITH_DEATH_DROPS, // spawned monster keeps death drops.
+    MUST_HAVE_CLASS_TO_LEARN, // spell requires class to learn.
     MOD_MELEE_MOVES, // Use melee attack cost as a base and add spell cost on top
     MOD_MELEE_STAM, // Use melee stamina cost as a base and add spell cost on top
     LAST
@@ -84,6 +100,7 @@ enum valid_target {
     target_ground,
     target_none,
     target_item,
+    target_vehicle,
     target_fd_fire,
     target_fd_blood,
     _LAST
@@ -627,6 +644,7 @@ void charm_monster( const spell &sp, Creature &caster, const tripoint_bub_ms &ta
 void mutate( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
 void bash( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
 void dash( const spell &sp, Creature &caster, const tripoint_bub_ms &target );
+auto lua( const spell &sp, Creature &caster, const tripoint_bub_ms &target ) -> void;
 void none( const spell &sp, Creature &, const tripoint_bub_ms &target );
 } // namespace spell_effect
 

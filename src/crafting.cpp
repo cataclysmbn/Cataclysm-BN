@@ -1271,6 +1271,12 @@ void complete_craft( Character &who, item &craft )
         }
     }
 
+    cata::run_hooks( "on_craft_completed", [ & ]( auto & params ) {
+        params["character"] = &who;
+        params["recipe_id"] = making.ident().str();
+        params["batch_size"] = batch_size;
+    } );
+
     who.inv_restack( );
 }
 

@@ -61,12 +61,24 @@ void material_type::load( const JsonObject &jsobj, const std::string & )
 {
     mandatory( jsobj, was_loaded, "name", _name );
 
-    mandatory( jsobj, was_loaded, "bash_resist", _bash_resist );
-    mandatory( jsobj, was_loaded, "cut_resist", _cut_resist );
-    mandatory( jsobj, was_loaded, "acid_resist", _acid_resist );
-    mandatory( jsobj, was_loaded, "elec_resist", _elec_resist );
-    mandatory( jsobj, was_loaded, "fire_resist", _fire_resist );
-    mandatory( jsobj, was_loaded, "bullet_resist", _bullet_resist );
+    if( jsobj.has_object( "resist" ) ) {
+        const auto resist = jsobj.get_object( "resist" );
+        auto read_resist = [&]( const std::string &name, int &value ) { value = static_cast<int>( resist.get_float( name, 0.0f ) ); };
+        read_resist( "bash", _bash_resist );
+        read_resist( "cut", _cut_resist );
+        read_resist( "acid", _acid_resist );
+        read_resist( "electric", _elec_resist );
+        read_resist( "heat", _fire_resist );
+        read_resist( "bullet", _bullet_resist );
+        resist.allow_omitted_members();
+    } else {
+        mandatory( jsobj, was_loaded, "bash_resist", _bash_resist );
+        mandatory( jsobj, was_loaded, "cut_resist", _cut_resist );
+        mandatory( jsobj, was_loaded, "acid_resist", _acid_resist );
+        mandatory( jsobj, was_loaded, "elec_resist", _elec_resist );
+        mandatory( jsobj, was_loaded, "fire_resist", _fire_resist );
+        mandatory( jsobj, was_loaded, "bullet_resist", _bullet_resist );
+    }
     mandatory( jsobj, was_loaded, "chip_resist", _chip_resist );
     mandatory( jsobj, was_loaded, "density", _density );
 

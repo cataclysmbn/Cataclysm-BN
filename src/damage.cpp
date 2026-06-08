@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <map>
 #include <numeric>
+#include <optional>
+#include <set>
+#include <string>
 #include <utility>
 
 #include "assign.h"
@@ -17,6 +20,109 @@
 #include "mtype.h"
 #include "translations.h"
 
+namespace
+{
+
+struct damage_type_definition {
+    damage_type type = DT_NULL;
+    std::string id;
+    std::string name;
+    skill_id skill = skill_id::NULL_ID();
+    std::optional<std::pair<damage_type, float>> derived_from;
+    std::set<std::string> immune_flags;
+    std::set<std::string> mon_immune_flags;
+    bool physical = false;
+    bool no_resist = false;
+};
+
+struct builtin_damage_type_definition {
+    damage_type type;
+    std::string id;
+    std::string name;
+    bool physical;
+};
+
+const auto builtin_damage_type_definitions = std::array{
+    builtin_damage_type_definition{ .type = DT_TRUE, .id = "true", .name = "true", .physical = false },
+    builtin_damage_type_definition{ .type = DT_BIOLOGICAL, .id = "biological", .name = "biological", .physical = false },
+    builtin_damage_type_definition{ .type = DT_BASH, .id = "bash", .name = "bash", .physical = true },
+    builtin_damage_type_definition{ .type = DT_CUT, .id = "cut", .name = "cut", .physical = true },
+    builtin_damage_type_definition{ .type = DT_ACID, .id = "acid", .name = "acid", .physical = false },
+    builtin_damage_type_definition{ .type = DT_STAB, .id = "stab", .name = "stab", .physical = true },
+    builtin_damage_type_definition{ .type = DT_BULLET, .id = "bullet", .name = "bullet", .physical = true },
+    builtin_damage_type_definition{ .type = DT_HEAT, .id = "heat", .name = "heat", .physical = false },
+    builtin_damage_type_definition{ .type = DT_COLD, .id = "cold", .name = "cold", .physical = false },
+    builtin_damage_type_definition{ .type = DT_DARK, .id = "dark", .name = "dark", .physical = false },
+    builtin_damage_type_definition{ .type = DT_LIGHT, .id = "light", .name = "light", .physical = false },
+    builtin_damage_type_definition{ .type = DT_PSI, .id = "psi", .name = "psionic", .physical = false },
+    builtin_damage_type_definition{ .type = DT_ELECTRIC, .id = "electric", .name = "electric", .physical = false },
+};
+
+auto damage_type_definitions() -> std::vector<damage_type_definition> & // *NOPAD*
+{
+    static auto defs = std::vector<damage_type_definition> {};
+    return defs;
+}
+
+auto damage_type_ids() -> std::vector<damage_type> & // *NOPAD*
+{
+    static auto ids = std::vector<damage_type> {};
+    return ids;
+}
+
+auto damage_type_map() -> std::map<std::string, damage_type> & // *NOPAD*
+{
+    static auto map = std::map<std::string, damage_type> {};
+    return map;
+}
+
+auto empty_damage_type_flags() -> const std::set<std::string> & // *NOPAD*
+{
+    static const auto flags = std::set<std::string> {};
+    return flags;
+}
+
+auto find_damage_type_definition( damage_type dt ) -> const damage_type_definition * // *NOPAD*
+{
+    auto &defs = damage_type_definitions();
+    const auto iter = std::ranges::find_if( defs, [dt]( const auto & def ) { return def.type == dt; } );
+    return iter == defs.end() ? nullptr : &*iter;
+}
+
+auto find_mutable_damage_type_definition( damage_type dt ) -> damage_type_definition * // *NOPAD*
+{
+    auto &defs = damage_type_definitions();
+    const auto iter = std::ranges::find_if( defs, [dt]( const auto & def ) { return def.type == dt; } );
+    return iter == defs.end() ? nullptr : &*iter;
+}
+
+auto ensure_builtin_damage_types() -> void
+{
+    if( !damage_type_definitions().empty() ) {
+        return;
+    }
+    reset_damage_types();
+}
+
+auto read_damage_type_name( const JsonObject &jo, const std::string &fallback ) -> std::string
+{
+    if( jo.has_string( "name" ) ) {
+        return jo.get_string( "name" );
+    }
+    if( jo.has_object( "name" ) ) {
+        return jo.get_object( "name" ).get_string( "str", fallback );
+    }
+    return fallback;
+}
+
+auto get_float_optional( const JsonObject &jo, const std::string &name,
+                                const std::optional<float> fallback = std::nullopt ) -> std::optional<float>
+{
+    return jo.has_member( name ) ? std::make_optional<float>( jo.get_float( name, 0.0f ) ) : fallback;
+}
+
+} // namespace
+
 bool damage_unit::operator==( const damage_unit &other ) const
 {
     return type == other.type &&
@@ -28,39 +134,7 @@ bool damage_unit::operator==( const damage_unit &other ) const
 
 const std::string damage_unit::get_name() const
 {
-    switch( type ) {
-        case DT_NULL:
-            return "Null";
-        case DT_TRUE:
-            return "True";
-        case DT_BIOLOGICAL:
-            return "Biological";
-        case DT_BASH:
-            return "Bash";
-        case DT_CUT:
-            return "Cut";
-        case DT_ACID:
-            return "Acid";
-        case DT_STAB:
-            return "Pierce";
-        case DT_HEAT:
-            return "Heat";
-        case DT_COLD:
-            return "Cold";
-        case DT_DARK:
-            return "Dark";
-        case DT_LIGHT:
-            return "Light";
-        case DT_PSI:
-            return "Psionic";
-        case DT_ELECTRIC:
-            return "Electric";
-        case DT_BULLET:
-            return "Ballistic";
-        case NUM_DT:
-            return std::to_string( NUM_DT );
-    }
-    return std::to_string( NUM_DT );
+    return name_by_dt( type );
 }
 
 damage_instance::damage_instance() = default;
@@ -227,15 +301,12 @@ void damage_instance::deserialize( JsonIn &jsin )
     }
 }
 
-dealt_damage_instance::dealt_damage_instance()
-{
-    dealt_dams.fill( 0 );
-}
+dealt_damage_instance::dealt_damage_instance() = default;
 
 void dealt_damage_instance::set_damage( damage_type dt, int amount )
 {
-    if( dt < 0 || dt >= NUM_DT ) {
-        debugmsg( "Tried to set invalid damage type %d. NUM_DT is %d", dt, NUM_DT );
+    if( !damage_type_is_valid( dt ) ) {
+        debugmsg( "Tried to set invalid damage type %d.", dt );
         return;
     }
 
@@ -243,15 +314,13 @@ void dealt_damage_instance::set_damage( damage_type dt, int amount )
 }
 int dealt_damage_instance::type_damage( damage_type dt ) const
 {
-    if( static_cast<size_t>( dt ) < dealt_dams.size() ) {
-        return dealt_dams[dt];
-    }
-
-    return 0;
+    const auto iter = dealt_dams.find( dt );
+    return iter == dealt_dams.end() ? 0 : iter->second;
 }
 int dealt_damage_instance::total_damage() const
 {
-    return std::accumulate( dealt_dams.begin(), dealt_dams.end(), 0 );
+    return std::accumulate( dealt_dams.begin(), dealt_dams.end(), 0,
+    []( const int sum, const auto & entry ) { return sum + entry.second; } );
 }
 
 resistances::resistances() = default;
@@ -261,7 +330,7 @@ resistances::resistances( const item &armor, bool to_self )
     // Armors protect, but all items can resist
     if( to_self || armor.is_armor() ) {
         for( int i = 0; i < NUM_DT; i++ ) {
-            damage_type dt = static_cast<damage_type>( i );
+            const auto dt = static_cast<damage_type>( i );
             set_resist( dt, armor.damage_resist( dt, to_self ) );
         }
     }
@@ -274,7 +343,7 @@ void resistances::set_resist( damage_type dt, float amount )
 float resistances::type_resist( damage_type dt ) const
 {
     auto iter = flat.find( dt );
-    if( iter != flat.end() ) {
+    if( iter != flat.end() && !damage_type_is_no_resist( dt ) ) {
         return iter->second;
     }
     return 0.0f;
@@ -331,59 +400,158 @@ std::string io::enum_to_string<damage_type>( damage_type dt )
         case NUM_DT:
             break;
     }
-    debugmsg( "Invalid damage_type" );
-    abort();
+    ensure_builtin_damage_types();
+    if( const auto *def = find_damage_type_definition( dt ); def != nullptr ) {
+        return def->id;
+    }
+    return "DT_NULL";
 }
-
-static const std::map<std::string, damage_type> dt_map = {
-    { translate_marker_context( "damage type", "true" ), DT_TRUE },
-    { translate_marker_context( "damage type", "biological" ), DT_BIOLOGICAL },
-    { translate_marker_context( "damage type", "bash" ), DT_BASH },
-    { translate_marker_context( "damage type", "cut" ), DT_CUT },
-    { translate_marker_context( "damage type", "acid" ), DT_ACID },
-    { translate_marker_context( "damage type", "stab" ), DT_STAB },
-    { translate_marker_context( "damage_type", "bullet" ), DT_BULLET },
-    { translate_marker_context( "damage type", "heat" ), DT_HEAT },
-    { translate_marker_context( "damage type", "cold" ), DT_COLD },
-    { translate_marker_context( "damage type", "dark" ), DT_DARK },
-    { translate_marker_context( "damage type", "light" ), DT_LIGHT },
-    { translate_marker_context( "damage type", "psionic" ), DT_PSI },
-    { translate_marker_context( "damage type", "electric" ), DT_ELECTRIC }
-};
 
 const std::map<std::string, damage_type> &get_dt_map()
 {
-    return dt_map;
+    ensure_builtin_damage_types();
+    return damage_type_map();
+}
+
+const std::vector<damage_type> &get_all_damage_types()
+{
+    ensure_builtin_damage_types();
+    return damage_type_ids();
 }
 
 damage_type dt_by_name( const std::string &name )
 {
-    const auto &iter = dt_map.find( name );
-    if( iter == dt_map.end() ) {
-        return DT_NULL;
-    }
-
-    return iter->second;
+    ensure_builtin_damage_types();
+    const auto &map = damage_type_map();
+    const auto iter = map.find( name );
+    return iter == map.end() ? DT_NULL : iter->second;
 }
 
 std::string name_by_dt( const damage_type &dt )
 {
-    auto iter = dt_map.cbegin();
-    while( iter != dt_map.cend() ) {
-        if( iter->second == dt ) {
-            return pgettext( "damage type", iter->first.c_str() );
-        }
-        iter++;
+    ensure_builtin_damage_types();
+    const auto *def = find_damage_type_definition( dt );
+    if( def == nullptr ) {
+        return "dt_not_found";
     }
-    static const std::string err_msg( "dt_not_found" );
-    return err_msg;
+    return pgettext( "damage type", def->name.c_str() );
+}
+
+auto damage_type_is_valid( damage_type dt ) -> bool
+{
+    ensure_builtin_damage_types();
+    return find_damage_type_definition( dt ) != nullptr;
+}
+
+auto damage_type_is_no_resist( damage_type dt ) -> bool
+{
+    ensure_builtin_damage_types();
+    const auto *def = find_damage_type_definition( dt );
+    return def != nullptr && def->no_resist;
+}
+
+auto damage_type_immune_flags( damage_type dt ) -> const std::set<std::string> & // *NOPAD*
+{
+    ensure_builtin_damage_types();
+    const auto *def = find_damage_type_definition( dt );
+    return def == nullptr ? empty_damage_type_flags() : def->immune_flags;
+}
+
+auto damage_type_mon_immune_flags( damage_type dt ) -> const std::set<std::string> & // *NOPAD*
+{
+    ensure_builtin_damage_types();
+    const auto *def = find_damage_type_definition( dt );
+    return def == nullptr ? empty_damage_type_flags() : def->mon_immune_flags;
+}
+
+auto reset_damage_types() -> void
+{
+    auto &defs = damage_type_definitions();
+    auto &ids = damage_type_ids();
+    auto &map = damage_type_map();
+    defs.clear();
+    ids.clear();
+    map.clear();
+    for( const auto &builtin : builtin_damage_type_definitions ) {
+        defs.push_back( {
+            .type = builtin.type,
+            .id = builtin.id,
+            .name = builtin.name,
+            .skill = skill_id::NULL_ID(),
+            .derived_from = std::nullopt,
+            .immune_flags = {},
+            .mon_immune_flags = {},
+            .physical = builtin.physical,
+            .no_resist = false,
+        } );
+        ids.push_back( builtin.type );
+        map[builtin.id] = builtin.type;
+    }
+    map["pure"] = DT_TRUE;
+    map["psionic"] = DT_PSI;
+}
+
+auto load_damage_type( const JsonObject &jo, const std::string & ) -> void
+{
+    ensure_builtin_damage_types();
+    const auto id = jo.get_string( "id" );
+    auto dt = dt_by_name( id );
+    if( dt == DT_NULL ) {
+        dt = static_cast<damage_type>( static_cast<int>( get_all_damage_types().back() ) + 1 );
+        damage_type_ids().push_back( dt );
+        damage_type_map()[id] = dt;
+        damage_type_definitions().push_back( {
+            .type = dt,
+            .id = id,
+            .name = id,
+            .skill = skill_id::NULL_ID(),
+            .derived_from = std::nullopt,
+            .immune_flags = {},
+            .mon_immune_flags = {},
+            .physical = false,
+            .no_resist = false,
+        } );
+    }
+
+    auto *def = find_mutable_damage_type_definition( dt );
+    if( def == nullptr ) {
+        jo.throw_error( "failed to register damage type" );
+    }
+
+    def->name = read_damage_type_name( jo, id );
+    def->skill = jo.has_string( "skill" ) ? skill_id( jo.get_string( "skill" ) ) : def->skill;
+    def->physical = jo.has_bool( "physical" ) ? jo.get_bool( "physical" ) : def->physical;
+    def->no_resist = jo.has_bool( "no_resist" ) ? jo.get_bool( "no_resist" ) : def->no_resist;
+    if( jo.has_array( "derived_from" ) ) {
+        const auto ja = jo.get_array( "derived_from" );
+        const auto base = dt_by_name( ja.get_string( 0 ) );
+        if( base != DT_NULL ) {
+            def->derived_from = std::make_pair( base, static_cast<float>( ja.get_float( 1 ) ) );
+        }
+    }
+    if( jo.has_object( "immune_flags" ) ) {
+        const auto flags = jo.get_object( "immune_flags" );
+        if( flags.has_array( "character" ) ) {
+            def->immune_flags.clear();
+            for( const auto flag : flags.get_array( "character" ) ) {
+                def->immune_flags.insert( flag );
+            }
+        }
+        if( flags.has_array( "monster" ) ) {
+            def->mon_immune_flags.clear();
+            for( const auto flag : flags.get_array( "monster" ) ) {
+                def->mon_immune_flags.insert( flag );
+            }
+        }
+    }
+    jo.allow_omitted_members();
 }
 
 const skill_id &skill_by_dt( damage_type dt )
 {
-    static skill_id skill_bashing( "bashing" );
-    static skill_id skill_cutting( "cutting" );
-    static skill_id skill_stabbing( "stabbing" );
+    static const auto skill_bashing = skill_id( "bashing" );
+    static const auto skill_cutting = skill_id( "cutting" );
+    static const auto skill_stabbing = skill_id( "stabbing" );
 
     switch( dt ) {
         case DT_BASH:
@@ -396,6 +564,10 @@ const skill_id &skill_by_dt( damage_type dt )
             return skill_stabbing;
 
         default:
+            ensure_builtin_damage_types();
+            if( const auto *def = find_damage_type_definition( dt ); def != nullptr ) {
+                return def->skill;
+            }
             return skill_id::NULL_ID();
     }
 }
@@ -455,8 +627,8 @@ static damage_instance blank_damage_instance()
 {
     damage_instance ret;
 
-    for( int i = 0; i < NUM_DT; ++i ) {
-        ret.add_damage( static_cast<damage_type>( i ), 0.0f );
+    for( const auto dt : get_all_damage_types() ) {
+        ret.add_damage( dt, 0.0f );
     }
 
     return ret;
@@ -497,40 +669,6 @@ damage_instance load_damage_instance_inherit( const JsonArray &jarr, const damag
     return di;
 }
 
-namespace
-{
-
-struct DamageMapping { std::string name; damage_type type; };
-
-constexpr auto physical_damage_mappings = std::array<DamageMapping, 4>
-{{
-        { .name = "bash",       .type = DT_BASH,       },
-        { .name = "cut",        .type = DT_CUT,        },
-        { .name = "stab",       .type = DT_STAB,       },
-        { .name = "bullet",     .type = DT_BULLET,     },
-    }
-};
-constexpr auto non_physical_damage_mappings = std::array<DamageMapping, 8>
-{{
-        { .name = "biological", .type = DT_BIOLOGICAL, },
-        { .name = "acid",       .type = DT_ACID,       },
-        { .name = "heat",       .type = DT_HEAT,       },
-        { .name = "cold",       .type = DT_COLD,       },
-        { .name = "dark",       .type = DT_DARK,       },
-        { .name = "light",      .type = DT_LIGHT,      },
-        { .name = "psi",        .type = DT_PSI,        },
-        { .name = "electric",   .type = DT_ELECTRIC,   },
-    }
-};
-
-auto get_float_optional( const JsonObject &jo, const std::string &name,
-                         const std::optional<float> fallback = std::nullopt ) -> std::optional<float>
-{
-    return jo.has_member( name ) ? std::make_optional<float>( jo.get_float( name, 0.0f ) ) : fallback;
-}
-
-} // namespace
-
 auto load_damage_map( const JsonObject &jo ) -> std::map<damage_type, float>
 {
     const auto all_fallback = get_float_optional( jo, "all" );
@@ -538,17 +676,30 @@ auto load_damage_map( const JsonObject &jo ) -> std::map<damage_type, float>
     const auto non_phys_fallback = get_float_optional( jo, "non_physical", all_fallback );
 
     auto ret = std::map<damage_type, float> {};
-
-    for( const auto &mapping : physical_damage_mappings ) {
-        auto value = get_float_optional( jo, mapping.name ).or_else( [&] { return physical_fallback; } );
-        if( value ) {
-            ret[mapping.type] = *value;
+    for( const JsonMember member : jo ) {
+        const auto &name = member.name();
+        if( name == "all" || name == "physical" || name == "non_physical" ) {
+            continue;
+        }
+        const auto dt = dt_by_name( name );
+        if( dt != DT_NULL ) {
+            ret[dt] = member.get_float();
         }
     }
-    for( const auto &mapping : non_physical_damage_mappings ) {
-        auto value = get_float_optional( jo, mapping.name ).or_else( [&] { return non_phys_fallback; } );
-        if( value ) {
-            ret[mapping.type] = *value;
+
+    for( const auto dt : get_all_damage_types() ) {
+        if( ret.contains( dt ) ) {
+            continue;
+        }
+        const auto *def = find_damage_type_definition( dt );
+        const auto fallback = def != nullptr && def->physical ? physical_fallback : non_phys_fallback;
+        if( fallback ) {
+            ret[dt] = *fallback;
+        } else if( def != nullptr && def->derived_from ) {
+            const auto derived = *def->derived_from;
+            if( ret.contains( derived.first ) ) {
+                ret[dt] = ret[derived.first] * derived.second;
+            }
         }
     }
     // DT_TRUE should never be resisted
@@ -580,25 +731,17 @@ bool assign( const JsonObject &jo,
     if( relative.has_member( name ) ) {
         err = relative;
         JsonObject jo_relative = err.get_member( name );
-        const resistances tmp = load_resistances_instance( err );
-        for( size_t i = 0; i < val.flat.size(); i++ ) {
-            damage_type dt = static_cast<damage_type>( i );
-            auto iter = tmp.flat.find( dt );
-            if( iter != tmp.flat.end() ) {
-                val.flat[dt] += iter->second;
-            }
+        const resistances tmp = load_resistances_instance( jo_relative );
+        for( const auto &[dt, amount] : tmp.flat ) {
+            val.flat[dt] += amount;
         }
 
     } else if( proportional.has_member( name ) ) {
-        err = relative;
+        err = proportional;
         JsonObject jo_proportional = err.get_member( name );
-        resistances tmp = load_resistances_instance( err );
-        for( size_t i = 0; i < val.flat.size(); i++ ) {
-            damage_type dt = static_cast<damage_type>( i );
-            auto iter = tmp.flat.find( dt );
-            if( iter != tmp.flat.end() ) {
-                val.flat[dt] *= iter->second;
-            }
+        const resistances tmp = load_resistances_instance( jo_proportional );
+        for( const auto &[dt, amount] : tmp.flat ) {
+            val.flat[dt] *= amount;
         }
 
     } else if( jo.has_object( name ) ) {
