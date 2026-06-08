@@ -199,7 +199,7 @@ auto dynamic_atlas::readback_find( const texture &tex ) -> std::tuple<bool, SDL_
 
 auto dynamic_atlas::get_or_create_sprite(
     const int w, const int h, const std::optional<size_t> &id, const sprite_callback &cb )
-- > atlas_texture
+-> atlas_texture
 {
     const auto existing = id.has_value() ? find_sprite( id.value() ) : std::nullopt;
     if( existing.has_value() ) { return existing.value(); }
@@ -208,7 +208,7 @@ auto dynamic_atlas::get_or_create_sprite(
 
 auto dynamic_atlas::create_sprite( const int w, const int h, const std::optional<size_t> &id,
                                    const sprite_callback &blitFn )
-- > atlas_texture
+-> atlas_texture
 {
     // TODO: Update sprite instead of allocating a new one if ID already exists?
     auto atl_tex = allocate_sprite_internal( w, h );
