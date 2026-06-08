@@ -3169,9 +3169,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             << " floor_levels=" << input_uploads.floor_levels.size()
             << " vehicle_floor_levels=" << input_uploads.vehicle_floor_levels.size()
             << " vehicle_obscured_levels=" << input_uploads.vehicle_obscured_levels.size()
-            << " source_map_levels=" << source_map_upload_levels.size()
-            << " sources_bytes=" << source_upload_bytes
-            << " colored_sources_bytes=" << colored_source_upload_bytes;
+            << " source_map_levels=" << source_map_upload_levels.size() << " sources_bytes="
+            << source_upload_bytes << " colored_sources_bytes=" << colored_source_upload_bytes;
     }
 
     {
@@ -3349,24 +3348,23 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
 
             auto upload_whole_region =
                 [&](SDL_GPUCopyPass* const cp, SDL_GPUBuffer* const dst, Uint32 const bytes) {
-                auto const src_loc = make_upload_location(off);
-                auto const dst_reg = SDL_GPUBufferRegion{
-                    .buffer = dst,
-                    .offset = 0,
-                    .size = bytes,
+                    auto const src_loc = make_upload_location(off);
+                    auto const dst_reg = SDL_GPUBufferRegion{
+                        .buffer = dst,
+                        .offset = 0,
+                        .size = bytes,
+                    };
+                    SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
+                    off += bytes;
+                    ++upload_copy_commands;
                 };
-                SDL_UploadToGPUBuffer(cp, &src_loc, &dst_reg, false);
-                off += bytes;
-                ++upload_copy_commands;
-            };
 
-            auto upload_level_ranges =
-                [&](upload_level_ranges_params const& p) {
+            auto upload_level_ranges = [&](upload_level_ranges_params const& p) {
                 auto packed_level_index = Uint32{0};
                 for (auto const& range : make_z_level_ranges(*p.levels)) {
                     auto const range_bytes = static_cast<Uint32>(range.z_count) * p.level_bytes;
-                    auto const src_loc =
-                        make_upload_location(off + packed_level_index * p.level_bytes);
+                    auto const src_loc = make_upload_location(
+                        off + packed_level_index * p.level_bytes);
                     auto const dst_reg = SDL_GPUBufferRegion{
                         .buffer = p.dst,
                         .offset =
@@ -3381,8 +3379,8 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
             };
 
             auto upload_whole_dxbc =
-                [&](std::string_view const label, SDL_GPUBuffer* const dst,
-                    Uint32 const bytes) -> bool {
+                [&](std::string_view const label, SDL_GPUBuffer* const dst, Uint32 const bytes)
+                -> bool {
                 if (bytes == 0) { return true; }
                 auto* const cp = SDL_BeginGPUCopyPass(cmd);
                 upload_whole_region(cp, dst, bytes);
@@ -3390,8 +3388,7 @@ auto begin_gpu_lighting(SDL_GPUDevice* const device, run_gpu_lighting_params con
                 return submit_dxbc_checkpoint(label);
             };
 
-            auto upload_levels_dxbc =
-                [&](dxbc_upload_levels_params const& p) -> bool {
+            auto upload_levels_dxbc = [&](dxbc_upload_levels_params const& p) -> bool {
                 auto packed_level_index = Uint32{0};
                 for (auto const z : *p.levels) {
                     auto const src_loc = SDL_GPUTransferBufferLocation{
