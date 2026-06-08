@@ -1303,7 +1303,7 @@ auto json_topic_to_yarn_node( const std::string &id,
     node.title = id;
 
     // Speaker effects (pre-dialogue effects from "speaker_effect")
-    auto add_speaker_effects = [&]( const JsonObject & ejo, const std::string &topic_context ) {
+    auto add_speaker_effects = [&]( const JsonObject & ejo, const std::string & topic_context ) {
         auto elems = json_speaker_effect_to_elements( ejo, topic_context );
         node.elements.insert( node.elements.end(), elems.begin(), elems.end() );
     };
