@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstring>
 #include <fstream>
 #include <ranges>
@@ -466,6 +467,47 @@ auto dispatch_transparency(dispatch_transparency_params const& p) -> bool {
     auto const use_compact_shader = !s_pipeline_writes_resident_output;
     auto const write_resident_output = use_external_output && s_pipeline_writes_resident_output;
     if (p.resident_output_written != nullptr) { *p.resident_output_written = false; }
+
+    static constexpr auto dxbc_compact_submaps_per_dispatch = std::size_t{64};
+    if (use_compact_shader && submaps.size() > dxbc_compact_submaps_per_dispatch) {
+        DebugLog(DL::Info, DC::Main)
+            << "SDL_GPU: transparency DXBC compact dispatch chunked: submaps="
+            << submaps.size() << " chunk=" << dxbc_compact_submaps_per_dispatch;
+
+        p.out_buffer->clear();
+        p.out_buffer->reserve(submaps.size() * static_cast<std::size_t>(SEEX * SEEY));
+
+        auto offset = std::size_t{0};
+        auto chunk_submaps = std::vector<transparency_submap_in>{};
+        auto chunk_result = std::vector<float>{};
+        while (offset < submaps.size()) {
+            auto const end =
+                std::min(offset + dxbc_compact_submaps_per_dispatch, submaps.size());
+            chunk_submaps.assign(submaps.begin() + static_cast<std::ptrdiff_t>(offset),
+                                 submaps.begin() + static_cast<std::ptrdiff_t>(end));
+            chunk_result.clear();
+
+            auto chunk_push = p.push;
+            chunk_push.num_submaps = static_cast<uint32_t>(chunk_submaps.size());
+            if (!dispatch_transparency({
+                    .device = device,
+                    .luts = p.luts,
+                    .submaps = &chunk_submaps,
+                    .push = chunk_push,
+                    .cache_size = static_cast<int>(
+                        chunk_submaps.size() * static_cast<std::size_t>(SEEX * SEEY)),
+                    .out_buffer = &chunk_result,
+                    .output = {},
+                    .resident_output_written = nullptr,
+                })) {
+                return false;
+            }
+
+            p.out_buffer->insert(p.out_buffer->end(), chunk_result.begin(), chunk_result.end());
+            offset = end;
+        }
+        return true;
+    }
 
     static auto shader_inputs = transparency_shader_inputs{};
     static auto compact_shader_inputs = transparency_compact_shader_inputs{};
