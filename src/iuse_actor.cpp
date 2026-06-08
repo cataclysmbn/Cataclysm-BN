@@ -8009,7 +8009,7 @@ struct ter_furn_painter {
 
     static bool set_color( const tripoint_bub_ms &p, const RGBColorPair &col,
                            const paint_layer layer ) {
-        color_to_vars( *get_vars( p ), col, layer );
+        colors_to_vars( *get_vars( p ), col, layer );
         return true;
     }
 };
@@ -8452,9 +8452,9 @@ void iuse_paint_stuff_config::set_color( item &it )
     lst.query();
 
     if( lst.ret >= 0 ) {
-        const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or( {} );
+        const auto col = RGBColor::try_parse( lst.entries[lst.ret].txt ).value_or( RGBColor{} );
         it.set_var<RGBColor>( iuse_paint_stuff::PAINT_VAR, col );
-        colors_to_vars( it.item_vars(), {col, col}, both );
+        colors_to_vars( it.item_vars(), RGBColorPair{.bg=col, .fg=col}, both );
     }
 }
 
