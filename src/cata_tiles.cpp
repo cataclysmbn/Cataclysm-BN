@@ -3831,7 +3831,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         }
         const auto &tname = t.id().str();
         if( here.check_seen_cache( p ) ) {
-            const auto abs_pos = here.bub_to_abs( p );
+            const auto abs_pos = bub_to_abs( p );
             if( !t->has_flag( TFLAG_NO_MEMORY ) && !t->has_flag( TFLAG_Z_TRANSPARENT ) ) {
                 g->u.memorize_tile( abs_pos, tname, subtile, rotation );
                 g->u.memorize_terrain_tile( abs_pos, tname, subtile, rotation );
@@ -3865,7 +3865,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
             get_tile_values_with_ter( p, f.to_i(), neighborhood_ids.data(), subtile, rotation );
         }
         if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( here.bub_to_abs( p ), f.id().str(), subtile, rotation );
+            g->u.memorize_tile( bub_to_abs( p ), f.id().str(), subtile, rotation );
         }
     };
 
@@ -3889,7 +3889,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         auto rotation = 0;
         get_tile_values( tr_id.to_i(), neighborhood_ids.data(), subtile, rotation );
         if( here.check_seen_cache( p ) ) {
-            g->u.memorize_tile( here.bub_to_abs( p ), tr_id.id().str(), subtile, rotation );
+            g->u.memorize_tile( bub_to_abs( p ), tr_id.id().str(), subtile, rotation );
         }
     };
 
@@ -3915,7 +3915,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
         const auto &vp_id = veh->part( veh_part ).info().get_id();
         const auto vpname = std::string( "vp_" ) + vp_id.str();
         auto &you = get_avatar();
-        const auto abs_pos = here.bub_to_abs( p );
+        const auto abs_pos = bub_to_abs( p );
         if( you.get_memorized_tile( abs_pos ).tile == vpname ) {
             you.clear_memorized_overlay( abs_pos );
         }
@@ -3940,7 +3940,7 @@ void cata_tiles::draw( point dest, const tripoint_bub_ms &center, int width, int
                 veh_part, false ) ) ) );
         const auto vpname = std::string( "vp_" ) + vp_id.str();
         auto &you = get_avatar();
-        const auto abs_pos = here.bub_to_abs( p );
+        const auto abs_pos = bub_to_abs( p );
         if( veh.forward_velocity() ) {
             you.clear_memorized_overlay( abs_pos );
         } else {
