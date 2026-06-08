@@ -98,7 +98,7 @@ namespace
 
 auto report_missing_lua_ai( const std::string &method ) -> void
 {
-    static auto warned = std::unordered_set<std::string>{};
+    static auto warned = std::unordered_set<std::string> {};
     if( !warned.insert( method ).second ) {
         return;
     }
@@ -108,7 +108,7 @@ auto report_missing_lua_ai( const std::string &method ) -> void
 auto report_invalid_lua_ai_return( const std::string &method, const sol::object &value,
                                    sol::state &lua ) -> void
 {
-    static auto warned = std::unordered_set<std::string>{};
+    static auto warned = std::unordered_set<std::string> {};
     if( !warned.insert( method ).second ) {
         return;
     }

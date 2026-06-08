@@ -375,7 +375,8 @@ void cata::detail::reg_game_api( sol::state &lua )
         auto out = lua.create_table();
         auto rng = g->all_monsters();
         auto idx = 1;
-        if( rng.items ) {
+        if( rng.items )
+        {
             std::ranges::for_each(
                 *rng.items
             | std::views::transform( []( const weak_ptr_fast<monster> &wp ) { return wp.lock(); } )

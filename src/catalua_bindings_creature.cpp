@@ -353,8 +353,9 @@ void cata::detail::reg_monster( sol::state &lua )
         luna::set_fx( ut, "set_move_target", []( monster & mon, const tripoint_bub_ms & p ) -> void {
             mon.set_dest( p );
         } );
-        luna::set_fx( ut, "set_target", []( monster & mon, Creature *target ) -> void {
-            if( target == nullptr ) {
+        luna::set_fx( ut, "set_target", []( monster & mon, Creature * target ) -> void {
+            if( target == nullptr )
+            {
                 mon.unset_dest();
                 return;
             }
