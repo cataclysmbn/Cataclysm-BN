@@ -268,6 +268,9 @@ auto create_gpu_device(gpu_device_create_attempt const& attempt) -> SDL_GPUDevic
         props, SDL_PROP_GPU_DEVICE_CREATE_D3D12_ALLOW_FEWER_RESOURCE_SLOTS_BOOLEAN, true);
 #endif
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN, true);
+#if defined(SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN)
+    SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN, true);
+#endif
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN, true);
     SDL_SetBooleanProperty(props, SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN, true);
     if (attempt.prefer_low_power) {
@@ -397,8 +400,13 @@ auto make_device_attempts(preload_config::compute_accel accel, std::string backe
 
 auto shader_formats_to_string(SDL_GPUShaderFormat const formats) -> std::string {
     using entry_t = std::pair<SDL_GPUShaderFormat, std::string_view>;
-    static constexpr std::array<entry_t, 3> entries{{
+    static constexpr std::array<entry_t, 4> entries{{
         {SDL_GPU_SHADERFORMAT_SPIRV, "SPIRV"},
+#if defined(SDL_GPU_SHADERFORMAT_DXBC)
+        {SDL_GPU_SHADERFORMAT_DXBC, "DXBC"},
+#else
+        {SDL_GPU_SHADERFORMAT_INVALID, ""},
+#endif
         {SDL_GPU_SHADERFORMAT_DXIL, "DXIL"},
         {SDL_GPU_SHADERFORMAT_MSL, "MSL"},
     }};
@@ -425,10 +433,13 @@ auto read_file_bytes(std::string const& path) -> std::vector<std::byte> {
 }
 
 // Select the preferred shader format and corresponding file extension for the device.
-// Priority: DXIL (D3D12/Windows) > SPIRV (Vulkan) > MSL (Metal).
+// Priority: DXIL (modern D3D12) > DXBC (older D3D12) > SPIRV (Vulkan) > MSL (Metal).
 auto select_shader_format(SDL_GPUShaderFormat const formats)
     -> std::pair<SDL_GPUShaderFormat, std::string_view> {
     if (formats & SDL_GPU_SHADERFORMAT_DXIL) { return {SDL_GPU_SHADERFORMAT_DXIL, ".dxil"}; }
+#if defined(SDL_GPU_SHADERFORMAT_DXBC)
+    if (formats & SDL_GPU_SHADERFORMAT_DXBC) { return {SDL_GPU_SHADERFORMAT_DXBC, ".dxbc"}; }
+#endif
     if (formats & SDL_GPU_SHADERFORMAT_SPIRV) { return {SDL_GPU_SHADERFORMAT_SPIRV, ".spv"}; }
     if (formats & SDL_GPU_SHADERFORMAT_MSL) { return {SDL_GPU_SHADERFORMAT_MSL, ".msl"}; }
     return {SDL_GPU_SHADERFORMAT_INVALID, ""};

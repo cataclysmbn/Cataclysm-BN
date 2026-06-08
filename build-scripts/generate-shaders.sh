@@ -16,7 +16,7 @@ if [ ! -d "${source_dir}" ]; then
 fi
 
 mkdir -p "${output_dir}"
-find "${output_dir}" -maxdepth 1 \( -name '*.spv' -o -name '*.msl' -o -name '*.dxil' \) -delete
+find "${output_dir}" -maxdepth 1 \( -name '*.spv' -o -name '*.msl' -o -name '*.dxil' -o -name '*.dxbc' \) -delete
 
 shopt -s nullglob
 for shader in "${source_dir}"/*.hlsl; do
@@ -32,4 +32,5 @@ for shader in "${source_dir}"/*.hlsl; do
     "${shadercross}" "${shader}" -s hlsl -d spirv -t "${stage}" -o "${output_dir}/${shader_name}.spv"
     "${shadercross}" "${shader}" -s hlsl -d msl -t "${stage}" -o "${output_dir}/${shader_name}.msl"
     "${shadercross}" "${shader}" -s hlsl -d dxil -t "${stage}" -o "${output_dir}/${shader_name}.dxil"
+    "${shadercross}" "${shader}" -s hlsl -d dxbc -t "${stage}" -o "${output_dir}/${shader_name}.dxbc"
 done

@@ -38,6 +38,9 @@ auto read_blob(std::string const& path) -> std::vector<std::byte> {
 
 auto preferred_shader_format(SDL_GPUShaderFormat const fmts) -> SDL_GPUShaderFormat {
     if (fmts & SDL_GPU_SHADERFORMAT_DXIL) { return SDL_GPU_SHADERFORMAT_DXIL; }
+#if defined(SDL_GPU_SHADERFORMAT_DXBC)
+    if (fmts & SDL_GPU_SHADERFORMAT_DXBC) { return SDL_GPU_SHADERFORMAT_DXBC; }
+#endif
     if (fmts & SDL_GPU_SHADERFORMAT_SPIRV) { return SDL_GPU_SHADERFORMAT_SPIRV; }
     if (fmts & SDL_GPU_SHADERFORMAT_MSL) { return SDL_GPU_SHADERFORMAT_MSL; }
     return SDL_GPU_SHADERFORMAT_INVALID;
@@ -45,6 +48,9 @@ auto preferred_shader_format(SDL_GPUShaderFormat const fmts) -> SDL_GPUShaderFor
 
 auto preferred_shader_ext(SDL_GPUShaderFormat const fmts) -> std::string_view {
     if (fmts & SDL_GPU_SHADERFORMAT_DXIL) { return ".dxil"; }
+#if defined(SDL_GPU_SHADERFORMAT_DXBC)
+    if (fmts & SDL_GPU_SHADERFORMAT_DXBC) { return ".dxbc"; }
+#endif
     if (fmts & SDL_GPU_SHADERFORMAT_SPIRV) { return ".spv"; }
     if (fmts & SDL_GPU_SHADERFORMAT_MSL) { return ".msl"; }
     return {};
