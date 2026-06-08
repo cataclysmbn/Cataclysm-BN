@@ -2918,7 +2918,7 @@
     "copy-from": "f_olight_base",
     "name": "ceiling lamp (on)",
     "description": "A working lamp installed on the ceiling, this one is turned on.",
-    "extend": { "flags": [ "L_ON" ] },
+    "extend": { "flags": [ "L_ON", "LOCAL_LIGHT" ] },
     "examine_action": "transform",
     "transforms_into": "f_olight_off",
     "prompt": "Switch off the ceiling lamp.",

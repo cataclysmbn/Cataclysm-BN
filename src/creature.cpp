@@ -314,10 +314,6 @@ bool Creature::sees( const Creature &critter ) const
         return false;
     }
 
-    if( !fov_3d && !debug_mode && bub_pos().z() != critter.bub_pos().z() ) {
-        return false;
-    }
-
     // This check is ridiculously expensive so defer it to after everything else.
     auto visible = []( const Character * ch ) {
         return ch == nullptr || !ch->is_invisible();
@@ -383,10 +379,6 @@ bool Creature::sees( const Creature &critter ) const
 bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) const
 {
     ZoneScoped;
-    if( !fov_3d && bub_pos().z() != t.z() ) {
-        return false;
-    }
-
     map &here = get_map();
     // A creature in a different dimension from the current render map cannot
     // perform a valid sight check through that map's terrain data.
@@ -412,10 +404,13 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
         tl_range.range_max  = std::max( tl_range.range_day, tl_range.range_night );
     }
     const auto range_max = tl_range.range_max;
+    const auto wanted_range = rl_dist( bub_pos(), t );
+    if( wanted_range > range_max ) {
+        return false;
+    }
     const auto ambient = here.ambient_light_at( t );
     const auto range_cur = sight_range( ambient );
     const auto range_min = std::min( range_cur, range_max );
-    const auto wanted_range = rl_dist( bub_pos(), t );
     const auto natural_light = g->natural_light_level( t.z() );
     const auto is_lit = ambient > natural_light;
     if( wanted_range <= range_min ||
@@ -427,22 +422,7 @@ bool Creature::sees( const tripoint_bub_ms &t, bool is_avatar, int range_mod ) c
         if( range_mod > 0 ) {
             range = std::min( range, range_mod );
         }
-        if( is_avatar && bub_pos().z() == t.z() ) {
-            // Only use seen_cache when on the same z-level
-            // Special case monster -> player visibility, forcing it to be symmetric with player vision.
-            const auto player_visibility_factor = g->u.visibility() / 100.0f;
-            const auto adj_range = static_cast<int>( std::floor( range * player_visibility_factor ) );
-            const auto &_mc = here.get_cache_ref( bub_pos().z() );
-            // seen_cache is only valid within the render area; out-of-render entities
-            // are not visible to the player by definition.
-            if( !_mc.inbounds( bub_pos().xy() ) ) {
-                return false;
-            }
-            return adj_range >= wanted_range &&
-                   _mc.seen_cache[_mc.idx( bub_pos().x(), bub_pos().y() )] > LIGHT_TRANSPARENCY_SOLID;
-        } else {
-            return here.sees( bub_pos(), t, range );
-        }
+        return here.sees( bub_pos(), t, range );
     } else {
         return false;
     }

@@ -13,6 +13,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <set>
+#include <source_location>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -133,15 +134,17 @@ class map_stack : public item_stack
 
 struct visibility_variables {
     // Is this struct initialized for current z-level
-    bool variables_set;
-    bool u_sight_impaired;
-    bool u_is_boomered;
+    bool variables_set = false;
+    bool u_sight_impaired = false;
+    bool u_is_boomered = false;
     // Cached values for map visibility calculations
-    int g_light_level;
-    int u_clairvoyance;
-    int u_unimpaired_range;
-    float vision_threshold;
-    float visibility_scale_factor;
+    int g_light_level = 0;
+    int u_clairvoyance = 0;
+    int u_unimpaired_range = 0;
+    float vision_threshold = 0.0f;
+    float visibility_range = 60.0f;
+    float detail_range = 60.0f;
+    float visibility_scale_factor = 1.0f;
 };
 
 struct bash_params {
@@ -348,10 +351,14 @@ struct level_cache {
     cata_dynamic_bitset sound_wall_cache_dirty;
 
     bool seen_cache_dirty = false;
-    // Set to true at the start of each game turn; cleared after generate_lightmap
-    // completes for this level.  Allows subsequent redraws within the same turn
-    // to skip the full lightmap rebuild when nothing has changed.
+    // Set by map mutations and dynamic light-state changes; cleared after
+    // generate_lightmap completes for this level.
     bool lightmap_dirty = true;
+    // True when CPU lm contains current lighting for the whole level. SDL GPU
+    // lighting may keep resident GPU lm current while leaving this false.
+    bool lm_cpu_cache_valid = false;
+    // Incremented whenever CPU lm contents are invalidated before a rebuild.
+    uint64_t lm_cpu_cache_generation = 0;
     // Set to true at the start of each game turn; cleared after update_visibility_cache
     // completes.  Allows repeated draws within the same turn (animations, UI refreshes)
     // to skip the full visibility rebuild when nothing has changed.
@@ -364,11 +371,13 @@ struct level_cache {
 
     // ---- 12 tile-coordinate arrays (size: cache_x * cache_y) ----
     // All indexed as: vec[x * cache_y + y]  (X-outer layout, matching old C-array [MAPSIZE_X][MAPSIZE_Y])
-    std::vector<four_quadrants>     lm;
+    std::vector<float>              lm;
     std::vector<float>              sm;
     // To prevent redundant ray casting into neighbors: precalculate bulk light source positions.
     // This is only valid for the duration of generate_lightmap
     std::vector<float>              light_source_buffer;
+    // Source tiles touched in light_source_buffer.
+    std::vector<point_bub_ms>        light_source_points;
 
     // True when the tile has sky access via the 3×3 overhang rule (top-down floor cascade).
     // False means fully enclosed — protected from rain, wind, weather effects.
@@ -377,12 +386,6 @@ struct level_cache {
     // True when at least one tile within 3×3 above has overhead coverage (floor or sheltered
     // tile at z+1).  Distinct from outside_cache: a tile can be outside yet sheltered (overhang).
     std::vector<char>               sheltered_cache;
-
-    // True when this tile has an unobstructed ray to the sun for the current in-game hour.
-    // Rebuilt by map::build_angled_sunlight_cache() when the hour changes.
-    // Consulted by build_sunlight_cache() to distinguish direct-sun tiles (full
-    // outside_light_level) from scatter-lit outdoor tiles (reduced ambient level).
-    std::vector<char>               angled_sunlight_cache;
 
     // true when vehicle below has "ROOF" or "OPAQUE" part, furniture below has "SUN_ROOF_ABOVE"
     //      or terrain doesn't have "NO_FLOOR" flag
@@ -418,6 +421,9 @@ struct level_cache {
 
     // stores resulting apparent brightness to player, calculated by map::apparent_light_at
     std::vector<lit_level>          visibility_cache;
+
+    std::vector<uint32_t>           colored_light_cache;
+    bool colored_light_cache_active = false;
 
     // per-tile map-memory seen bitset (size: cache_x * cache_y), indexed [x + y * cache_x]
     cata_dynamic_bitset             map_memory_seen_cache;
@@ -854,8 +860,7 @@ class map : public submap_load_listener
 
         void invalidate_map_cache( const int zlev );
 
-        /// Mark lightmap_dirty for every loaded z-level.  Call once per game turn
-        /// so that only the first redraw of each turn runs generate_lightmap.
+        /// Mark lightmap_dirty for every loaded z-level.
         void invalidate_lightmap_caches();
 
         /// Mark visibility_cache_dirty for every loaded z-level.  Call once per game turn
@@ -2104,7 +2109,8 @@ class map : public submap_load_listener
         // Assumes 0,0 is light map center
         lit_level light_at( const tripoint_bub_ms &p ) const;
         // Raw values for tilesets
-        float ambient_light_at( const tripoint_bub_ms &p ) const;
+        float ambient_light_at( const tripoint_bub_ms &p,
+                                std::source_location location = std::source_location::current() ) const;
         /**
          * Returns whether the tile at `p` is transparent(you can look past it).
          */
@@ -2317,6 +2323,7 @@ class map : public submap_load_listener
         // Builds a transparency cache and returns true if the cache was invalidated.
         // Used to determine if seen cache should be rebuilt.
         bool build_transparency_cache( int zlev );
+        auto build_transparency_caches( int minz, int maxz ) -> std::vector<int>;
         // Refreshes the weather-transparency lookup table if the sight penalty
         // has changed.  Must be called once serially before any parallel call to
         // build_transparency_cache() to avoid a data race on the shared table.
@@ -2325,11 +2332,17 @@ class map : public submap_load_listener
         // fills lm with sunlight. pzlev is current player's zlevel
         void build_sunlight_cache( int pzlev );
         // Recomputes sun direction and scatter factor from the current game time.
-        // Called once per in-game hour from build_sunlight_cache.
         void update_solar_params();
-        // Traces a parallel sun ray from each tile at zlev upward and writes
-        // angled_sunlight_cache.  Reads floor_cache across all z-levels above zlev.
-        void build_angled_sunlight_cache( int zlev );
+        enum class direct_sunlight_state : int {
+            none,
+            shadow,
+            direct
+        };
+        // Distinguishes roofed tiles, angled-sun shadow, and full direct sun.
+        auto direct_sunlight_state_at( point_bub_ms p, int zlev ) const -> direct_sunlight_state;
+        auto has_direct_sunlight_at( point_bub_ms p, int zlev ) const -> bool;
+        auto current_lightmap_source_signature() -> std::size_t;
+        void invalidate_lightmap_caches_if_light_state_changed();
     public:
         // Rebuilds outside_caches for zlev top-down:
         // A tile is outside if any neighbour in the 3×3 at z+1
@@ -2366,7 +2379,9 @@ class map : public submap_load_listener
         // matches zlev, avoiding cross-level cache writes for parallel safety.
         void generate_lightmap( int zlev );
         void generate_lightmap_worker( int zlev );
+        void flush_lightmap_cpu_read_counters() const;
         void build_seen_cache( const tripoint_bub_ms &origin, int target_z );
+        auto vision_transparency_block_mask() const -> uint32_t;
         // Applies vehicle mirror/camera FOV from @p origin's vehicle.
         // Separated from build_seen_cache for readability and Tracy granularity.
         void apply_vehicle_optics( const tripoint_bub_ms &origin, int target_z );
@@ -2409,11 +2424,13 @@ class map : public submap_load_listener
         // Reset to tripoint_min by invalidate_map_cache so any full-cache invalidation
         // forces a seen_cache rebuild regardless of whether the player moved.
         tripoint_bub_ms m_last_seen_cache_origin = tripoint_bub_ms( tripoint_min );
+        std::size_t m_last_lightmap_source_signature = 0;
+        bool m_last_lightmap_source_signature_valid = false;
 
-        // State for the directional sunlight system.  Rebuilt once per absolute in-game hour by
-        // update_solar_params() and build_angled_sunlight_cache().
+        // State for the directional sunlight system.  Rebuilt by update_solar_params().
         struct solar_params {
-            // Sun ray horizontal displacement per z-level.
+            // Horizontal shadow displacement per z-level.  The sky-access ray
+            // back toward the sun uses the inverse of this vector.
             // Positive dx_per_z = east (+x); negative = west.
             // SUN_EAST_SIGN in update_solar_params() flips the axis if needed.
             // dy_per_z is always 0 (no latitude tilt modelled).
@@ -2421,8 +2438,6 @@ class map : public submap_load_listener
             float dy_per_z     = 0.f;
             // False at night; true for all daylight hours (day/night boundary only).
             bool  direct_active  = false;
-            // Absolute game-hour when the cache was last rebuilt; -1 forces a rebuild on first use.
-            int   last_built_hour = -1;
         };
         solar_params m_solar;
 
@@ -2678,7 +2693,9 @@ class map : public submap_load_listener
         /// pf_cache if it has been marked dirty.  Works for any loaded position.
         auto get_pf_special( const tripoint_bub_ms &p ) const -> pf_special;
 
-        void update_visibility_cache( int zlev );
+        auto update_visibility_cache( int zlev,
+        const std::function<void()> &while_gpu_pending = {} ) -> void;
+        auto make_visibility_variables( int zlev ) const -> visibility_variables;
         const visibility_variables &get_visibility_variables_cache() const;
 
         void update_submap_active_item_status( const tripoint_bub_ms &p );

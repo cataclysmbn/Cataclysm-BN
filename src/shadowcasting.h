@@ -103,8 +103,8 @@ struct exp_lookup {
 // directly compatible with these signatures — no adapters needed.
 //
 // Null fields are legal when the feature is unused:
-//   update_float     — null when writing to four_quadrants output.
-//   update_quadrants — null when writing to float output.
+//   update_float     — null to skip writes (unusual; most passes provide one).
+//   update_quadrants — reserved for future use; currently always null.
 //   lookup_calc      — null to disable the exp-lookup fast path entirely.
 struct light_model {
     using calc_fn  = float( * )( const float &numerator,
@@ -212,16 +212,6 @@ void castLightAll(
     const light_model &model,
     const exp_lookup *weather_lookup = nullptr );
 
-/// 2D light cast — writes to a flat four_quadrants array (lm).
-void castLightAll_q(
-    four_quadrants *output_cache,
-    const float *input_array,
-    const diagonal_blocks *blocked_array,
-    int sx, int sy,
-    point_bub_ms offset, int offset_distance, float numerator,
-    const light_model &model,
-    const exp_lookup *weather_lookup = nullptr );
-
 // ── Octant bitmasks ───────────────────────────────────────────────────────────
 // Bit i selects k_octant_xforms[i].  Used by map::apply_light_source and
 // map::apply_directional_light to cast only the relevant half-space.
@@ -230,11 +220,11 @@ inline constexpr uint8_t OCTANT_EAST  = 0x44u; ///< octants 2, 6  (xy = -1 half)
 inline constexpr uint8_t OCTANT_SOUTH = 0x0Au; ///< octants 1, 3  (yy = +1 half)
 inline constexpr uint8_t OCTANT_WEST  = 0x11u; ///< octants 0, 4  (xy = +1 half)
 
-/// 2D light cast — writes to a flat four_quadrants array, casting only the
+/// 2D light cast — writes to a flat float array (lm), casting only the
 /// octants selected by @p octant_mask.  Bit i of octant_mask enables
 /// k_octant_xforms[i].  Use OCTANT_NORTH/EAST/SOUTH/WEST constants.
-void castLightOctants_q(
-    four_quadrants *output_cache,
+void castLightOctants(
+    float *output_cache,
     const float *input_array,
     const diagonal_blocks *blocked_array,
     int sx, int sy,

@@ -16,12 +16,16 @@ build
 !build-scripts
 !build-data
 build-data/gettext
+build-data/mesa
+build-data/mesa*
+build-data/mesa/*
 test_user_dir*
 /build-start-time
 /cmake-build-debug/
 /config/
 /data/*.template
 /data/mods/user-default-mods.json
+/data/shaders/
 /dep/
 /doxygen_doc/html/*
 /doxygen_doc/latex/*

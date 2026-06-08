@@ -11,8 +11,6 @@
 #include "avatar.h"
 #include "avatar_action.h"
 #include "calendar.h"
-#include "cached_options.h"
-#include "cata_utility.h"
 #include "coordinates.h"
 #include "game.h"
 #include "map.h"
@@ -42,12 +40,12 @@ static void set_up_player_vision()
 
     calendar::turn = calendar::turn_zero + 12_hours;
 
-    g->m.update_visibility_cache( shooter_pos.z() );
     g->m.invalidate_map_cache( shooter_pos.z() );
     g->m.build_map_cache( shooter_pos.z() );
     g->m.update_visibility_cache( shooter_pos.z() );
     g->m.invalidate_map_cache( shooter_pos.z() );
     g->m.build_map_cache( shooter_pos.z() );
+    g->m.update_visibility_cache( shooter_pos.z() );
 }
 
 TEST_CASE( "Aiming at a clearly visible target", "[ranged][aiming]" )
@@ -99,14 +97,9 @@ TEST_CASE( "Aiming at a clearly visible target", "[ranged][aiming]" )
     }
 }
 
-TEST_CASE( "Aiming at a loaded target outside 3D z range", "[ranged][aiming][zlevel]" )
+TEST_CASE( "Aiming at a loaded target on another z-level", "[ranged][aiming][zlevel]" )
 {
     clear_all_state();
-
-    const auto restore_fov_3d = restore_on_out_of_scope<bool>( fov_3d );
-    const auto restore_fov_3d_z_range = restore_on_out_of_scope<int>( fov_3d_z_range );
-    fov_3d = true;
-    fov_3d_z_range = 0;
 
     g->place_player( shooter_pos );
     auto &shooter = g->u;
@@ -129,7 +122,7 @@ TEST_CASE( "Aiming at a loaded target outside 3D z range", "[ranged][aiming][zle
     REQUIRE( max_range >= 10 );
 
     const auto targets = ranged::targetable_creatures( shooter, max_range );
-    CHECK( std::count( targets.begin(), targets.end(), &z ) == 0 );
+    CHECK( std::count( targets.begin(), targets.end(), &z ) == 1 );
 }
 
 TEST_CASE( "Aiming at a target behind wall", "[ranged][aiming]" )
