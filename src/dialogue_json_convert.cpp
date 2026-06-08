@@ -641,7 +641,8 @@ auto opinion_to_elements( const JsonObject &jo ) -> std::vector<yarn::node_eleme
 }
 
 // Convert a single sub-effect object to node_elements.
-auto json_sub_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn::node_element>
+auto json_sub_effect_to_elements( const JsonObject &jo,
+                                  const std::string &context = "" ) -> std::vector<yarn::node_element>
 {
     jo.allow_omitted_members();
     std::vector<yarn::node_element> out;
@@ -731,6 +732,8 @@ auto json_sub_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn::no
         auto id    = jo.get_string( "npc_consume_item" );
         auto count = jo.get_int( "count", 1 );
         out.push_back( make_command( "npc_consume_item", { lit_str( id ), lit_num( static_cast<double>( count ) ) } ) );
+    } else if( jo.has_string( "u_learn_recipe" ) ) {
+        out.push_back( make_command( "u_learn_recipe", { lit_str( jo.get_string( "u_learn_recipe" ) ) } ) );
     } else if( jo.has_string( "u_remove_item_with" ) ) {
         out.push_back( make_command( "u_remove_item_with", { lit_str( jo.get_string( "u_remove_item_with" ) ) } ) );
     } else if( jo.has_string( "npc_remove_item_with" ) ) {
@@ -795,7 +798,9 @@ auto json_sub_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn::no
         auto op_elems   = opinion_to_elements( opinion_jo );
         out.insert( out.end(), op_elems.begin(), op_elems.end() );
     } else {
-        debugmsg( "dialogue_convert: unrecognized sub-effect: %s", jo.str() );
+        debugmsg( "dialogue_convert: unrecognized sub-effect%s at %s: %s",
+                  context.empty() ? "" : string_format( " in %s", context ),
+                  jo.line_number(), jo.str() );
     }
 
     return out;
@@ -803,7 +808,8 @@ auto json_sub_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn::no
 
 // Convert the "effect" member + optional "opinion" of a talk_effect JSON to node_elements.
 // Does NOT include the "topic" jump — that is handled separately.
-auto json_effect_member_to_elements( const JsonObject &jo ) -> std::vector<yarn::node_element>
+auto json_effect_member_to_elements( const JsonObject &jo,
+                                     const std::string &context = "" ) -> std::vector<yarn::node_element>
 {
     jo.allow_omitted_members();
     std::vector<yarn::node_element> out;
@@ -822,14 +828,14 @@ auto json_effect_member_to_elements( const JsonObject &jo ) -> std::vector<yarn:
     if( jo.has_string( "effect" ) ) {
         out.push_back( make_command( jo.get_string( "effect" ) ) );
     } else if( jo.has_object( "effect" ) ) {
-        auto sub = json_sub_effect_to_elements( jo.get_object( "effect" ) );
+        auto sub = json_sub_effect_to_elements( jo.get_object( "effect" ), context );
         out.insert( out.end(), sub.begin(), sub.end() );
     } else if( jo.has_array( "effect" ) ) {
         for( const JsonValue &entry : jo.get_array( "effect" ) ) {
             if( entry.test_string() ) {
                 out.push_back( make_command( entry.get_string() ) );
             } else if( entry.test_object() ) {
-                auto sub = json_sub_effect_to_elements( entry.get_object() );
+                auto sub = json_sub_effect_to_elements( entry.get_object(), context );
                 out.insert( out.end(), sub.begin(), sub.end() );
             }
         }
@@ -1012,7 +1018,8 @@ auto topic_to_terminal( const std::string &topic_id ) -> std::vector<yarn::node_
 // Convert a talk_effect JSON object to node_elements + terminal.
 // The terminal jump/stop/return is appended.
 auto json_talk_effect_to_elements( const JsonObject &jo,
-                                   std::vector<yarn::yarn_node> &out_nodes ) -> std::vector<yarn::node_element>;
+                                   std::vector<yarn::yarn_node> &out_nodes,
+                                   const std::string &context = "" ) -> std::vector<yarn::node_element>;
 
 // Forward declaration for inline topic handling.
 auto json_topic_to_yarn_node( const std::string &id,
@@ -1020,10 +1027,11 @@ auto json_topic_to_yarn_node( const std::string &id,
                               std::vector<yarn::yarn_node> &out_nodes ) -> yarn::yarn_node;
 
 auto json_talk_effect_to_elements( const JsonObject &jo,
-                                   std::vector<yarn::yarn_node> &out_nodes ) -> std::vector<yarn::node_element>
+                                   std::vector<yarn::yarn_node> &out_nodes,
+                                   const std::string &context ) -> std::vector<yarn::node_element>
 {
     jo.allow_omitted_members();
-    auto elements = json_effect_member_to_elements( jo );
+    auto elements = json_effect_member_to_elements( jo, context );
 
     // Opinion at the talk_effect level
     if( jo.has_member( "opinion" ) && !jo.has_object( "effect" ) ) {
@@ -1055,7 +1063,8 @@ auto json_talk_effect_to_elements( const JsonObject &jo,
 // Speaker effects → command elements
 // ============================================================
 
-auto json_speaker_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn::node_element>
+auto json_speaker_effect_to_elements( const JsonObject &jo,
+                                      const std::string &context ) -> std::vector<yarn::node_element>
 {
     jo.allow_omitted_members();
     // Speaker effects have: optional "condition", optional "effect", optional "opinion"
@@ -1070,14 +1079,14 @@ auto json_speaker_effect_to_elements( const JsonObject &jo ) -> std::vector<yarn
         if( jo.has_string( "effect" ) ) {
             body.push_back( make_command( jo.get_string( "effect" ) ) );
         } else if( jo.has_object( "effect" ) ) {
-            auto sub = json_sub_effect_to_elements( jo.get_object( "effect" ) );
+            auto sub = json_sub_effect_to_elements( jo.get_object( "effect" ), context );
             body.insert( body.end(), sub.begin(), sub.end() );
         } else if( jo.has_array( "effect" ) ) {
             for( const JsonValue &entry : jo.get_array( "effect" ) ) {
                 if( entry.test_string() ) {
                     body.push_back( make_command( entry.get_string() ) );
                 } else if( entry.test_object() ) {
-                    auto sub = json_sub_effect_to_elements( entry.get_object() );
+                    auto sub = json_sub_effect_to_elements( entry.get_object(), context );
                     body.insert( body.end(), sub.begin(), sub.end() );
                 }
             }
@@ -1294,16 +1303,17 @@ auto json_topic_to_yarn_node( const std::string &id,
     node.title = id;
 
     // Speaker effects (pre-dialogue effects from "speaker_effect")
-    auto add_speaker_effects = [&]( const JsonObject & ejo, const std::string & ) {
-        auto elems = json_speaker_effect_to_elements( ejo );
+    auto add_speaker_effects = [&]( const JsonObject & ejo, const std::string &topic_context ) {
+        auto elems = json_speaker_effect_to_elements( ejo, topic_context );
         node.elements.insert( node.elements.end(), elems.begin(), elems.end() );
     };
 
     if( jo.has_object( "speaker_effect" ) ) {
-        add_speaker_effects( jo.get_object( "speaker_effect" ), id );
+        add_speaker_effects( jo.get_object( "speaker_effect" ),
+                             string_format( "topic '%s' speaker_effect", id ) );
     } else if( jo.has_array( "speaker_effect" ) ) {
         for( JsonObject se : jo.get_array( "speaker_effect" ) ) {
-            add_speaker_effects( se, id );
+            add_speaker_effects( se, string_format( "topic '%s' speaker_effect", id ) );
         }
     }
 
